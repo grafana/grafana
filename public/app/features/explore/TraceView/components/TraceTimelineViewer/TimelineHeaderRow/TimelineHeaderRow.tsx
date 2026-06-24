@@ -14,13 +14,14 @@
 
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import Ticks from '../Ticks';
 import TimelineRow from '../TimelineRow';
-import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
+import { type TUpdateViewRangeTimeFunction, type ViewRangeTime, type ViewRangeTimeUpdate } from '../types';
 
 import { TimelineCollapser } from './TimelineCollapser';
 import TimelineColumnResizer from './TimelineColumnResizer';
@@ -91,7 +92,9 @@ export default function TimelineHeaderRow(props: TimelineHeaderRowProps) {
   return (
     <TimelineRow className={styles.TimelineHeaderRow} data-testid="TimelineHeaderRow">
       <TimelineRow.Cell className={styles.TimelineHeaderWrapper} width={nameColumnWidth}>
-        <h4 className={styles.TimelineHeaderRowTitle}>Service &amp; Operation</h4>
+        <h4 className={styles.TimelineHeaderRowTitle}>
+          <Trans i18nKey="explore.timeline-header-row.title">Service &amp; Operation</Trans>
+        </h4>
         <TimelineCollapser
           onCollapseAll={onCollapseAll}
           onExpandAll={onExpandAll}

@@ -1,5 +1,5 @@
 import { chunk, clamp } from 'lodash';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function usePagination<T>(items: T[], initialPage = 1, itemsPerPage: number) {
   const [page, setPage] = useState(initialPage);
@@ -26,4 +26,22 @@ export function usePagination<T>(items: T[], initialPage = 1, itemsPerPage: numb
   useEffect(() => setPage(1), [numberOfPages]);
 
   return { page, onPageChange, numberOfPages, pageItems, pageStart, pageEnd, nextPage, previousPage };
+}
+
+export function useContinuousPagination<T>(items: T[], itemsPerPage: number) {
+  const [pageIndex, setPageIndex] = useState(1);
+
+  const hasMore = items.length > itemsPerPage * pageIndex;
+  const pageItems = items.slice(0, itemsPerPage * pageIndex);
+
+  const loadMore = useCallback(() => {
+    setPageIndex((index) => index + 1);
+  }, []);
+
+  return {
+    pageItems,
+    pageIndex,
+    loadMore,
+    hasMore,
+  };
 }

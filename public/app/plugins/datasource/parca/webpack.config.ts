@@ -1,3 +1,3 @@
-import config from '@grafana/plugin-configs/webpack.config';
+import config, { type Env } from '@grafana/plugin-configs/webpack.config.ts';
 
-export default config;
+export default (env: Env) => config(env, import.meta.dirname);

@@ -1,25 +1,25 @@
 import { css } from '@emotion/css';
 import { groupBy, size, upperFirst } from 'lodash';
-import { Fragment, ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, dateTime } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
 import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';
 import { useDeleteContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { type GrafanaNotifierType, type NotifierStatus } from 'app/features/alerting/unified/types/alerting';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
-import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
 import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/ReceiverMetadataBadge';
-import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
+import { type ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { ContactPointWithMetadata, getReceiverDescription, ReceiverConfigWithMetadata } from './utils';
+import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, getReceiverDescription } from './utils';
 
 interface ContactPointProps {
   contactPoint: ContactPointWithMetadata;
@@ -47,13 +47,7 @@ export const ContactPoint = ({ contactPoint }: ContactPointProps) => {
             })
           }
         />
-        {receivers.length === 0 && (
-          <div className={styles.noIntegrationsContainer}>
-            <MetaText color="warning" icon="exclamation-circle">
-              <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
-            </MetaText>
-          </div>
-        )}
+
         {showFullMetadata ? (
           <div>
             {receivers.map((receiver, index) => {
@@ -117,14 +111,14 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
   );
 };
 
-export interface ContactPointReceiverTitleRowProps {
+interface ContactPointReceiverTitleRowProps {
   name: string;
   type: GrafanaNotifierType | string;
   description?: ReactNode;
   pluginMetadata?: ReceiverPluginMetadata;
 }
 
-export function ContactPointReceiverTitleRow(props: ContactPointReceiverTitleRowProps) {
+function ContactPointReceiverTitleRow(props: ContactPointReceiverTitleRowProps) {
   const { name, type, description, pluginMetadata } = props;
 
   const iconName = INTEGRATION_ICONS[type];
@@ -176,6 +170,11 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
   return (
     <Stack direction="column" gap={0}>
       <Stack direction="row" alignItems="center" gap={1}>
+        {integrationsShown.length === 0 && (
+          <MetaText color="warning" icon="exclamation-triangle">
+            <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
+          </MetaText>
+        )}
         {integrationsShown.map(([type, receivers], index) => {
           const iconName = INTEGRATION_ICONS[type];
           const receiverName = receiverTypeNames[type] ?? upperFirst(type);
@@ -198,7 +197,7 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
                 {iconName && <Icon name={iconName} />}
                 <span>
                   {receiverName}
-                  {receivers.length > 1 && receivers.length}
+                  {receivers.length > 1 && ` (${receivers.length})`}
                 </span>
               </Stack>
               {!isLastItem && '⋅'}
@@ -224,15 +223,13 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
       <Stack direction="row" gap={1}>
         {/* this is shown when the last delivery failed – we don't show any additional metadata */}
         {failedToSend ? (
-          <>
-            <MetaText color="error" icon="exclamation-circle">
-              <Tooltip content={diagnostics.lastNotifyAttemptError!}>
-                <span>
-                  <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
-                </span>
-              </Tooltip>
-            </MetaText>
-          </>
+          <MetaText color="error" icon="exclamation-circle">
+            <Tooltip content={diagnostics.lastNotifyAttemptError!}>
+              <span>
+                <Trans i18nKey="alerting.contact-points.last-delivery-failed">Last delivery attempt failed</Trans>
+              </span>
+            </Tooltip>
+          </MetaText>
         ) : (
           <>
             {/* this is shown when we have a last delivery attempt */}
@@ -276,17 +273,15 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({
-    borderRadius: `${theme.shape.radius.default}`,
+    borderRadius: theme.shape.radius.lg,
     border: `solid 1px ${theme.colors.border.weak}`,
-    borderBottom: 'none',
+    overflow: 'hidden',
   }),
   integrationWrapper: css({
     position: 'relative',
 
     background: `${theme.colors.background.primary}`,
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
-
-    borderBottom: `solid 1px ${theme.colors.border.weak}`,
   }),
   metadataRow: css({
     borderBottomLeftRadius: `${theme.shape.radius.default}`,

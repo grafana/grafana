@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -12,7 +13,7 @@ import (
 
 func TestService_validateExternal(t *testing.T) {
 	cfg := setting.NewCfg()
-	cfg.PluginSettings = setting.PluginSettings{
+	cfg.PluginSettings = config.PluginSettings{
 		"grafana-testdata-datasource": map[string]string{
 			"as_external": "true",
 		},

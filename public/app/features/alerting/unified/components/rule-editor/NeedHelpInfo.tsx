@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import type { JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Text, Toggletip, useStyles2, Stack } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Icon, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
 
 interface NeedHelpInfoProps {
   contentText: string | JSX.Element;
@@ -39,7 +41,7 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Nee
         <Stack direction="row" alignItems="center" gap={0.5}>
           <Icon name="question-circle" size="sm" />
           <Text variant="bodySmall" color="primary">
-            Need help?
+            <Trans i18nKey="alerting.need-help-info.need-help">Need help?</Trans>
           </Text>
         </Stack>
       </div>

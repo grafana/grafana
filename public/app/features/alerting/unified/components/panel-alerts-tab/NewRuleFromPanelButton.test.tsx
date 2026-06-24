@@ -2,15 +2,15 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import * as analytics from '../../Analytics';
 
 import { NewRuleFromPanelButton } from './NewRuleFromPanelButton';
 
-jest.mock('app/types', () => {
-  const original = jest.requireActual('app/types');
+jest.mock('app/types/store', () => {
+  const original = jest.requireActual('app/types/store');
   return {
     ...original,
     useSelector: jest.fn(),
@@ -22,6 +22,20 @@ jest.spyOn(analytics, 'logInfo');
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
   useAsync: () => ({ loading: false, value: {} }),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      createAlertRuleFromPanel: true,
+    },
+  },
+}));
+
+jest.mock('../../components/AlertRuleDrawerForm', () => ({
+  AlertRuleDrawerForm: () => null,
 }));
 
 describe('Analytics', () => {

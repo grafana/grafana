@@ -4,12 +4,18 @@ This package contains the authorization server implementation.
 
 ## Feature toggles
 
-The following feature toggles need to be activated:
+The following feature toggle needs to be activated:
 
 ```ini
 [feature_toggles]
 authZGRPCServer = true
-grpcServer = true
+```
+
+The gRPC server also needs to be enabled:
+
+```ini
+[grpc_server]
+enabled = true
 ```
 
 ## Configuration
@@ -18,7 +24,7 @@ To configure the authorization server and client, use the "authorization" sectio
 
 The `remote_address` setting, specifies the address where the authorization server is located (ex: `server.example.org:10000`). 
 
-The `mode` setting can be set to either `grpc` or `inproc`. When set to `grpc`, the client will connect to the specified address. When set to `inproc` the client will use inprocgrpc (relying on go channels) to wrap a local instantiation of the server. 
+The `mode` setting can be set to either `cloud`, `grpc` or `inproc`. When set to `cloud` (or `grpc`), the client will connect to the specified address. When set to `inproc` the client will use inprocgrpc (relying on go channels) to wrap a local instantiation of the server. 
 
 The `listen` setting determines whether the authorization server should listen for incoming requests. When set to `true`, the authorization service will be registered to the Grafana GRPC server.
 
@@ -29,6 +35,13 @@ The default configuration does not register the authorization service on the Gra
 remote_address = ""
 listen = false
 mode = "inproc"
+```
+
+For load balancing you would want to enable the load balancing configuration. This sets sane default for multiple pods to be evenly distributed with load across the different pods.
+
+```ini
+[authorization]
+load_balancing_enabled = true
 ```
 
 ### Example
@@ -60,7 +73,7 @@ stack_id = 11
 
 [authorization]
 remote_address = "server.example.org:10000"
-mode = "grpc"
+mode = "cloud"
 listen = false
 
 [grpc_client_authentication]

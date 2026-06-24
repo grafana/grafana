@@ -1,32 +1,24 @@
-import { AdHocVariableModel } from '@grafana/data';
-import { Dashboard, Panel } from '@grafana/schema';
+import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { type Dashboard, type VariableModel } from '@grafana/schema';
+import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { adHocVariableFiltersEqual, getDashboardChanges, getPanelChanges } from './getDashboardChanges';
+import { adHocVariableFiltersEqual, getRawDashboardChanges, getRawDashboardV2Changes } from './getDashboardChanges';
 
 describe('adHocVariableFiltersEqual', () => {
   it('should compare empty filters', () => {
-    expect(
-      adHocVariableFiltersEqual(
-        { filters: [] } as unknown as AdHocVariableModel,
-        { filters: [] } as unknown as AdHocVariableModel
-      )
-    ).toBeTruthy();
+    expect(adHocVariableFiltersEqual([], [])).toBeTruthy();
   });
 
   it('should compare different length filter arrays', () => {
-    expect(
-      adHocVariableFiltersEqual(
-        { filters: [] } as unknown as AdHocVariableModel,
-        { filters: [{ value: '', key: '', operator: '' }] } as unknown as AdHocVariableModel
-      )
-    ).toBeFalsy();
+    expect(adHocVariableFiltersEqual([], [{ value: '', key: '', operator: '' }])).toBeFalsy();
   });
 
   it('should compare equal filter arrays', () => {
     expect(
       adHocVariableFiltersEqual(
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel,
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }],
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }]
       )
     ).toBeTruthy();
   });
@@ -34,8 +26,8 @@ describe('adHocVariableFiltersEqual', () => {
   it('should compare different filter arrays where operator differs', () => {
     expect(
       adHocVariableFiltersEqual(
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel,
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'weee' }] } as unknown as AdHocVariableModel
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }],
+        [{ value: 'asd', key: 'qwe', operator: 'weee' }]
       )
     ).toBeFalsy();
   });
@@ -43,8 +35,8 @@ describe('adHocVariableFiltersEqual', () => {
   it('should compare different filter arrays where key differs', () => {
     expect(
       adHocVariableFiltersEqual(
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel,
-        { filters: [{ value: 'asd', key: 'qwer', operator: 'wer' }] } as unknown as AdHocVariableModel
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }],
+        [{ value: 'asd', key: 'qwer', operator: 'wer' }]
       )
     ).toBeFalsy();
   });
@@ -52,38 +44,25 @@ describe('adHocVariableFiltersEqual', () => {
   it('should compare different filter arrays where value differs', () => {
     expect(
       adHocVariableFiltersEqual(
-        { filters: [{ value: 'asd', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel,
-        { filters: [{ value: 'asdio', key: 'qwe', operator: 'wer' }] } as unknown as AdHocVariableModel
+        [{ value: 'asd', key: 'qwe', operator: 'wer' }],
+        [{ value: 'asdio', key: 'qwe', operator: 'wer' }]
       )
     ).toBeFalsy();
   });
 
-  describe('when filter property is undefined', () => {
-    afterAll(() => {
-      jest.clearAllMocks();
-    });
-
+  describe('when filter property is undefined or empty', () => {
     it('should compare two adhoc variables where both are missing the filter property and return true', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-      expect(
-        adHocVariableFiltersEqual({} as unknown as AdHocVariableModel, {} as unknown as AdHocVariableModel)
-      ).toBeTruthy();
-
-      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
+      expect(adHocVariableFiltersEqual(undefined, undefined)).toBeTruthy();
     });
 
-    it('should compare two adhoc variables where one has no filter property and return false', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-      expect(
-        adHocVariableFiltersEqual(
-          {} as unknown as AdHocVariableModel,
-          {
-            filters: [{ value: 'asdio', key: 'qwe', operator: 'wer' }],
-          } as unknown as AdHocVariableModel
-        )
-      ).toBeFalsy();
+    it('should compare undefined filters with empty array and return true', () => {
+      expect(adHocVariableFiltersEqual(undefined, [])).toBeTruthy();
+      expect(adHocVariableFiltersEqual([], undefined)).toBeTruthy();
+    });
 
-      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
+    it('should compare two adhoc variables where one is undefined and the other has filters and return false', () => {
+      expect(adHocVariableFiltersEqual(undefined, [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
+      expect(adHocVariableFiltersEqual([], [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
     });
   });
 });
@@ -134,7 +113,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -165,7 +144,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(newDashInitial, changed, false, false, false);
+    const result = getRawDashboardChanges(newDashInitial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -195,7 +174,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -236,7 +215,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, true, false, false);
+    const result = getRawDashboardChanges(initial, changed, true, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -263,7 +242,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: true,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -301,7 +280,7 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: true,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, true);
+    const result = getRawDashboardChanges(initial, changed, false, false, true);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -341,7 +320,65 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, false, false);
+    const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+    expect(result).toEqual(expectedChanges);
+  });
+
+  it('should not see any changes on modified textbox var when we do not update variable values', () => {
+    const newDashboard: Dashboard = {
+      ...initial,
+      templating: {
+        list: [
+          {
+            name: 'var1',
+            type: 'textbox',
+            query: '',
+            current: {
+              value: 'value1',
+              text: 'text1',
+            },
+            options: [],
+          },
+        ],
+      },
+    };
+
+    const changedDashboard: Dashboard = {
+      ...newDashboard,
+      templating: {
+        list: [
+          {
+            name: 'var1',
+            type: 'textbox',
+            query: 'query',
+            current: {
+              value: 'value1',
+              text: 'text1',
+            },
+            options: [],
+          },
+        ],
+      },
+    };
+
+    const expectedChanges = {
+      initialSaveModel: {
+        ...newDashboard,
+      },
+      changedSaveModel: {
+        ...changedDashboard,
+      },
+      diffs: {},
+      diffCount: 0,
+      hasChanges: false,
+      hasTimeChanges: false,
+      isNew: false,
+      hasVariableValueChanges: false,
+      hasRefreshChange: false,
+    };
+
+    const result = getRawDashboardChanges(newDashboard, changedDashboard, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -392,119 +429,287 @@ describe('getDashboardChanges', () => {
       hasRefreshChange: false,
     };
 
-    const result = getDashboardChanges(initial, changed, false, true, false);
+    const result = getRawDashboardChanges(initial, changed, false, true, false);
 
     expect(result).toEqual(expectedChanges);
   });
 });
 
-describe('getPanelChanges', () => {
-  const initial: Panel = {
-    id: 1,
-    type: 'graph',
-    title: 'Panel 1',
-    gridPos: {
-      x: 0,
-      y: 0,
-      w: 12,
-      h: 8,
-    },
-    targets: [
-      {
-        refId: 'A',
-        query: 'query1',
+describe('getDashboardChanges with adHocFilterDefaultValues', () => {
+  const makeDashboardWithAdhoc = (filters: AdHocVariableFilter[]): Dashboard => {
+    return {
+      id: 1,
+      title: 'Dashboard',
+      time: { from: 'now-7d', to: 'now' },
+      refresh: '1h',
+      version: 1,
+      schemaVersion: 1,
+      templating: {
+        list: [{ name: 'adhoc0', type: 'adhoc', filters } as unknown as VariableModel],
       },
-    ],
+    };
   };
 
-  it('should return the correct result when no changes', () => {
-    const changed = { ...initial };
-
-    const expectedChanges = {
-      initialSaveModel: {
-        ...initial,
-      },
-      changedSaveModel: {
-        ...changed,
-      },
-      diffs: {},
-      diffCount: 0,
-      hasChanges: false,
-    };
-
-    expect(getPanelChanges(initial, changed)).toEqual(expectedChanges);
+  afterEach(() => {
+    config.featureToggles.adHocFilterDefaultValues = false;
   });
 
-  it('should return the correct result when there is some changes', () => {
-    const changed = {
-      ...initial,
-      title: 'Panel 2',
-      type: 'table',
-      gridPos: {
-        ...initial.gridPos,
-        x: 1,
+  describe('when feature flag is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+    });
+
+    it('should not report variable value changes when only origin filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+    });
+
+    it('should report variable value changes when runtime filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(true);
+    });
+
+    it('should keep both origin and runtime filters when saveVariables is true', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, true, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+    });
+
+    it('should preserve origin filters and restore runtime filters when saveVariables is false', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'env', operator: '=', value: 'prod' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'staging' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, false, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+    });
+
+    it('should detect schema changes when origin filters are added', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+
+    it('should detect schema changes when origin filters are removed', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+      const changed = makeDashboardWithAdhoc([]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+      expect(result.hasChanges).toBe(true);
+    });
+  });
+
+  describe('when feature flag is disabled', () => {
+    beforeEach(() => {
+      config.featureToggles.adHocFilterDefaultValues = false;
+    });
+
+    it('should not report variable value changes when only origin filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+    });
+
+    it('should reset all filters when saveVariables is false', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'a', operator: '=', value: '1' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'a', operator: '=', value: '1' },
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, false, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([{ key: 'a', operator: '=', value: '1' }]);
+    });
+  });
+});
+
+describe('getRawDashboardV2Changes - section variables', () => {
+  const makeSectionVariable = (value: string): VariableKind => ({
+    kind: 'CustomVariable',
+    spec: {
+      name: 'env',
+      label: 'Environment',
+      query: 'dev,prod',
+      current: { text: value, value },
+      options: [{ text: value, value, selected: true }],
+      multi: false,
+      includeAll: false,
+      hide: 'dontHide',
+      skipUrlSync: false,
+      allowCustomValue: false,
+    },
+  });
+
+  const getCurrentValue = (variables?: VariableKind[]): string | undefined => {
+    const v = variables?.[0];
+    if (v?.kind === 'CustomVariable') {
+      return v.spec.current?.value?.toString();
+    }
+    return undefined;
+  };
+
+  const makeV2Dashboard = (sectionValue: string): DashboardV2Spec => ({
+    title: 'Dashboard V2',
+    description: '',
+    cursorSync: 'Crosshair',
+    editable: true,
+    links: [],
+    tags: [],
+    preload: false,
+    liveNow: false,
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '5m',
+      autoRefreshIntervals: [],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [],
+    elements: {},
+    annotations: [],
+    layout: {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Row with vars',
+              collapse: false,
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+              variables: [makeSectionVariable(sectionValue)],
+            },
+          },
+        ],
       },
-      targets: [
-        {
-          refId: 'A',
-          query: 'query2',
+    },
+  });
+
+  it('restores section variable defaults when saveVariables is false', () => {
+    const initial = makeV2Dashboard('dev');
+    const changed = makeV2Dashboard('prod');
+
+    const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+
+    const row =
+      result.changedSaveModel.layout.kind === 'RowsLayout' ? result.changedSaveModel.layout.spec.rows[0] : undefined;
+    expect(getCurrentValue(row?.spec.variables)).toBe('dev');
+    expect(result.hasVariableValueChanges).toBe(true);
+    expect(result.hasChanges).toBe(false);
+  });
+
+  it('persists section variable defaults when saveVariables is true', () => {
+    const initial = makeV2Dashboard('dev');
+    const changed = makeV2Dashboard('prod');
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+
+    const row =
+      result.changedSaveModel.layout.kind === 'RowsLayout' ? result.changedSaveModel.layout.spec.rows[0] : undefined;
+    expect(getCurrentValue(row?.spec.variables)).toBe('prod');
+    expect(result.hasVariableValueChanges).toBe(true);
+    expect(result.hasChanges).toBe(true);
+  });
+
+  it('restores nested section variable defaults when saveVariables is false', () => {
+    const makeNested = (value: string): DashboardV2Spec => ({
+      title: 'Nested Dashboard',
+      description: '',
+      cursorSync: 'Crosshair',
+      editable: true,
+      links: [],
+      tags: [],
+      preload: false,
+      liveNow: false,
+      timeSettings: {
+        from: 'now-6h',
+        to: 'now',
+        autoRefresh: '5m',
+        autoRefreshIntervals: [],
+        hideTimepicker: false,
+        fiscalYearStartMonth: 0,
+      },
+      variables: [],
+      elements: {},
+      annotations: [],
+      layout: {
+        kind: 'TabsLayout',
+        spec: {
+          tabs: [
+            {
+              kind: 'TabsLayoutTab',
+              spec: {
+                title: 'Main',
+                layout: {
+                  kind: 'RowsLayout',
+                  spec: {
+                    rows: [
+                      {
+                        kind: 'RowsLayoutRow',
+                        spec: {
+                          title: 'Nested Row',
+                          collapse: false,
+                          layout: { kind: 'GridLayout', spec: { items: [] } },
+                          variables: [makeSectionVariable(value)],
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
         },
-      ],
-    } as Panel;
+      },
+    });
 
-    const expectedChanges = {
-      initialSaveModel: {
-        ...initial,
-      },
-      changedSaveModel: {
-        ...changed,
-      },
-      diffs: {
-        title: [
-          {
-            endLineNumber: 3,
-            op: 'replace',
-            originalValue: 'Panel 1',
-            path: ['title'],
-            startLineNumber: 3,
-            value: 'Panel 2',
-          },
-        ],
-        type: [
-          {
-            endLineNumber: 2,
-            op: 'replace',
-            originalValue: 'graph',
-            path: ['type'],
-            startLineNumber: 2,
-            value: 'table',
-          },
-        ],
-        gridPos: [
-          {
-            endLineNumber: 5,
-            op: 'replace',
-            originalValue: 0,
-            path: ['gridPos', 'x'],
-            startLineNumber: 5,
-            value: 1,
-          },
-        ],
-        targets: [
-          {
-            endLineNumber: 13,
-            op: 'replace',
-            originalValue: 'query1',
-            path: ['targets', '0', 'query'],
-            startLineNumber: 13,
-            value: 'query2',
-          },
-        ],
-      },
-      diffCount: 4,
-      hasChanges: true,
-    };
+    const initial = makeNested('dev');
+    const changed = makeNested('prod');
 
-    expect(getPanelChanges(changed, initial)).toEqual(expectedChanges);
+    const result = getRawDashboardV2Changes(initial, changed, false, false, false);
+    const tab =
+      result.changedSaveModel.layout.kind === 'TabsLayout' ? result.changedSaveModel.layout.spec.tabs[0] : undefined;
+    const row = tab?.spec.layout.kind === 'RowsLayout' ? tab.spec.layout.spec.rows[0] : undefined;
+
+    expect(getCurrentValue(row?.spec.variables)).toBe('dev');
+    expect(result.hasVariableValueChanges).toBe(true);
+    expect(result.hasChanges).toBe(false);
   });
 });

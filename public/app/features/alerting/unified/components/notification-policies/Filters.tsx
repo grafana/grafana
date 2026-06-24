@@ -1,54 +1,67 @@
-import { css } from '@emotion/css';
-import { debounce, isEqual } from 'lodash';
-import { useCallback, useEffect, useRef } from 'react';
+import { compact, isEqual } from 'lodash';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useDebounce } from 'react-use';
 
-import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
-import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import {
+  ContactPointSelector as GrafanaManagedContactPointSelector,
+  RoutingTreeSelector,
+} from '@grafana/alerting/unstable';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
+import { ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
+import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { matcherToObjectMatcher } from '../../utils/alertmanager';
 import {
   normalizeMatchers,
   parsePromQLStyleMatcherLoose,
   parsePromQLStyleMatcherLooseSafe,
+  unquoteIfRequired,
 } from '../../utils/matchers';
+
+import { ExternalAlertmanagerContactPointSelector } from './ContactPointSelector';
 
 interface NotificationPoliciesFilterProps {
   onChangeMatchers: (labels: ObjectMatcher[]) => void;
   onChangeReceiver: (receiver: string | undefined) => void;
-  matchingCount: number;
 }
 
-const NotificationPoliciesFilter = ({
-  onChangeReceiver,
-  onChangeMatchers,
-  matchingCount,
-}: NotificationPoliciesFilterProps) => {
+const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: NotificationPoliciesFilterProps) => {
+  const { granted: canSeeContactPoints } = useContactPointAbility({ action: ContactPointAction.View });
+  const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
-  const styles = useStyles2(getStyles);
+  const { hasFilters, clearFilters, selectedPolicyTreeNames } = useNotificationPoliciesFilters();
 
-  const handleChangeLabels = useCallback(() => debounce(onChangeMatchers, 500), [onChangeMatchers]);
+  const matchers = useMemo(
+    () => parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher),
+    [queryString]
+  );
+
+  useDebounce(
+    () => {
+      onChangeMatchers(matchers);
+    },
+    500,
+    [matchers, onChangeMatchers]
+  );
 
   useEffect(() => {
     onChangeReceiver(contactPoint);
   }, [contactPoint, onChangeReceiver]);
 
-  useEffect(() => {
-    const matchers = parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher);
-    handleChangeLabels()(matchers);
-  }, [handleChangeLabels, queryString]);
-
-  const clearFilters = useCallback(() => {
-    if (searchInputRef.current) {
-      searchInputRef.current.value = '';
-    }
-    setSearchParams({ contactPoint: '', queryString: undefined });
-  }, [setSearchParams]);
-
-  const hasFilters = queryString || contactPoint;
+  const handlePolicyTreeFilterChange = useCallback(
+    (trees: RoutingTree[]) => {
+      const names = compact(trees.map((tree) => tree.metadata.name));
+      setSearchParams({ includeTree: names.length > 0 ? names : undefined });
+    },
+    [setSearchParams]
+  );
 
   let inputValid = Boolean(queryString && queryString.length > 3);
   try {
@@ -64,17 +77,17 @@ const NotificationPoliciesFilter = ({
   return (
     <Stack direction="row" alignItems="flex-end" gap={1}>
       <Field
-        className={styles.noBottom}
+        noMargin
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Search by matchers</span>
+              <Trans i18nKey="alerting.common.search-by-matchers">Search by matchers</Trans>
               <Tooltip
                 content={
-                  <div>
-                    Filter notification policies by using a comma separated list of matchers, e.g.:
+                  <Trans i18nKey="alerting.policies.filter-description">
+                    Filter routes by using a comma separated list of matchers, e.g.:
                     <pre>severity=critical, region=EMEA</pre>
-                  </div>
+                  </Trans>
                 }
               >
                 <Icon name="info-circle" size="sm" />
@@ -86,42 +99,75 @@ const NotificationPoliciesFilter = ({
         error={!inputValid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
-          ref={searchInputRef}
           data-testid="search-query-input"
-          placeholder="Search"
+          placeholder={t('alerting.notification-policies-filter.search-query-input-placeholder-search', 'Search')}
           width={46}
           prefix={<Icon name="search" />}
           onChange={(event) => {
             setSearchParams({ queryString: event.currentTarget.value });
           }}
-          defaultValue={queryString}
+          value={queryString ?? ''}
         />
       </Field>
-      <Field label="Search by contact point" style={{ marginBottom: 0 }}>
-        <ContactPointSelector
-          selectProps={{
-            id: 'receiver',
-            'aria-label': 'Search by contact point',
-            onChange: (option) => {
-              setSearchParams({ contactPoint: option?.value?.name });
-            },
-            width: 28,
-            isClearable: true,
-          }}
-          selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
-        />
-      </Field>
+      {canSeeContactPoints && (
+        <Field
+          label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Contact point')}
+          noMargin
+        >
+          {isGrafanaAlertmanager ? (
+            <GrafanaManagedContactPointSelector
+              placeholder={t(
+                'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                'Choose a contact point'
+              )}
+              id="receiver"
+              onChange={(contactPoint) => {
+                // clearing the contact point will return "null"
+                if (!contactPoint) {
+                  setSearchParams({ contactPoint: undefined });
+                } else {
+                  setSearchParams({ contactPoint: contactPoint.spec.title });
+                }
+              }}
+              width={28}
+              isClearable
+              value={searchParams.get('contactPoint') ?? undefined}
+            />
+          ) : (
+            <ExternalAlertmanagerContactPointSelector
+              selectProps={{
+                id: 'receiver',
+                'aria-label': 'Search by contact point',
+                onChange: (option) => {
+                  setSearchParams({ contactPoint: option?.value?.name });
+                },
+                width: 28,
+                isClearable: true,
+                placeholder: t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                ),
+              }}
+              selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
+            />
+          )}
+        </Field>
+      )}
+      {isGrafanaAlertmanager && config.featureToggles.alertingMultiplePolicies && (
+        <Field label={t('alerting.multiple-policies-view.policy-tree-filter-label', 'Policy')} noMargin>
+          <RoutingTreeSelector
+            multi
+            value={selectedPolicyTreeNames}
+            onChange={handlePolicyTreeFilterChange}
+            placeholder={t('alerting.multiple-policies-view.policy-tree-filter-placeholder', 'Select policy trees')}
+            width={40}
+          />
+        </Field>
+      )}
       {hasFilters && (
-        <Stack alignItems="center">
-          <Button variant="secondary" icon="times" onClick={clearFilters}>
-            Clear filters
-          </Button>
-          <Text variant="bodySmall" color="secondary">
-            {matchingCount === 0 && 'No policies matching filters.'}
-            {matchingCount === 1 && `${matchingCount} policy matches the filters.`}
-            {matchingCount > 1 && `${matchingCount} policies match the filters.`}
-          </Text>
-        </Stack>
+        <Button variant="secondary" icon="times" onClick={clearFilters}>
+          <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
+        </Button>
       )}
     </Stack>
   );
@@ -169,20 +215,43 @@ export function findRoutesMatchingPredicate(
 }
 
 export function findRoutesByMatchers(route: RouteWithID, labelMatchersFilter: ObjectMatcher[]): boolean {
-  const routeMatchers = normalizeMatchers(route);
-
-  return labelMatchersFilter.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
+  const filters = labelMatchersFilter.map(unquoteMatchersIfRequired);
+  const routeMatchers = normalizeMatchers(route).map(unquoteMatchersIfRequired);
+  return filters.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
 }
+
+/**
+ * This function is mostly used for decoding matchers like "test"="test" into test=test to remove quotes when they're not needed.
+ * This mimicks the behaviour in Alertmanager where it decodes the label matchers in the same way and makes searching for policies
+ * easier in case the label keys or values are quoted when they shouldn't really be.
+ */
+const unquoteMatchersIfRequired = ([key, operator, value]: ObjectMatcher): ObjectMatcher => {
+  return [unquoteIfRequired(key), operator, unquoteIfRequired(value)];
+};
 
 const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   queryString: searchParams.get('queryString') ?? undefined,
   contactPoint: searchParams.get('contactPoint') ?? undefined,
 });
 
-const getStyles = () => ({
-  noBottom: css({
-    marginBottom: 0,
-  }),
-});
+export function useNotificationPoliciesFilters() {
+  const [searchParams, setSearchParams] = useURLSearchParams();
+  const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
+
+  const selectedPolicyTreeNames = useMemo(() => searchParams.getAll('includeTree').filter(Boolean), [searchParams]);
+
+  const labelMatchers = useMemo(
+    () => parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher),
+    [queryString]
+  );
+
+  const hasFilters = Boolean(queryString || contactPoint || selectedPolicyTreeNames.length > 0);
+
+  const clearFilters = useCallback(() => {
+    setSearchParams({ contactPoint: undefined, queryString: undefined, includeTree: undefined });
+  }, [setSearchParams]);
+
+  return { hasFilters, clearFilters, selectedPolicyTreeNames, contactPoint, labelMatchers };
+}
 
 export { NotificationPoliciesFilter };

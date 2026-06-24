@@ -1,8 +1,8 @@
 import { get as lodashGet } from 'lodash';
 
-import { DataFrame, FieldConfigPropertyItem, FieldConfigSource } from '@grafana/data';
+import { type DataFrame, type FieldConfigPropertyItem, type FieldConfigSource } from '@grafana/data';
 
-import { OptionPaneItemOverrideInfo } from '../types';
+import { type OptionPaneItemOverrideInfo } from '../types';
 
 export const dataOverrideTooltipDescription =
   'Some data fields have this option pre-configured. Add a field override rule to override the pre-configured value.';

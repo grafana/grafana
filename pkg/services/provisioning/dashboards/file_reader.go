@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -27,6 +30,27 @@ var (
 	// ErrGetOrCreateFolder is returned when there is a failure to fetch or create a provisioning folder.
 	ErrGetOrCreateFolder = errors.New("failed to get or create provisioning folder")
 )
+
+// folderPathCacheEntry holds id and uid for a folder path.
+// Used by getOrCreateFolderFullpath to avoid redundant Get/Create calls for the same path during a single walkDisk.
+// The cache is not thread-safe and is scoped to one provisioning cycle (walkDisk).
+type folderPathCacheEntry struct {
+	id  int64
+	uid string
+}
+
+// splitFolderFullpath splits folderFullpath by "/" and returns non-empty segments.
+// The path comes from the filesystem (filepath.Rel + ReplaceAll), so no escape handling is needed.
+func splitFolderFullpath(folderFullpath string) []string {
+	parts := strings.Split(folderFullpath, "/")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
 
 // FileReader is responsible for reading dashboards from disk and
 // insert/update dashboards to the Grafana database using
@@ -39,6 +63,7 @@ type FileReader struct {
 	dashboardStore               utils.DashboardStore
 	FoldersFromFilesStructure    bool
 	folderService                folder.Service
+	settingCfg                   *setting.Cfg
 
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
@@ -47,7 +72,7 @@ type FileReader struct {
 
 // NewDashboardFileReader returns a new filereader based on `config`
 func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService,
-	dashboardStore utils.DashboardStore, folderService folder.Service) (*FileReader, error) {
+	dashboardStore utils.DashboardStore, folderService folder.Service, settingCfg *setting.Cfg) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -72,23 +97,69 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 		dashboardStore:               dashboardStore,
 		folderService:                folderService,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
+		settingCfg:                   settingCfg,
 		usageTracker:                 newUsageTracker(),
 	}, nil
 }
 
 // pollChanges periodically runs walkDisk based on interval specified in the config.
 func (fr *FileReader) pollChanges(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
+	interval := fr.Cfg.UpdateIntervalSeconds
+	if interval <= 10 { // the minimum time
+		err := fr.watchChanges(ctx)
+		if err == nil {
+			return // finished
+		}
+		fr.log.Warn("error watching folder: %w", err)
+		interval = 30
+	}
+
+	ticker := time.NewTicker(time.Duration(int64(time.Second) * interval))
 	for {
 		select {
 		case <-ticker.C:
 			if err := fr.walkDisk(ctx); err != nil {
-				fr.log.Error("failed to search for dashboards", "error", err)
+				fr.log.Error("failed to walk provisioned dashboards", "error", err)
 			}
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (fr *FileReader) watchChanges(ctx context.Context) error {
+	watcher, err := local.NewFileWatcher(fr.resolvedPath(), func(name string) bool {
+		return strings.HasSuffix(name, ".json")
+	})
+	if err != nil {
+		return err
+	}
+
+	changed := false
+	events := make(chan string, 10)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case _, ok := <-events:
+				// channel closed
+				if !ok {
+					return
+				}
+				changed = true
+			case <-time.After(time.Second * 5): // 5s maximum refresh
+				if changed {
+					if err := fr.walkDisk(ctx); err != nil {
+						fr.log.Error("failed to walk provisioned dashboards", "error", err)
+					}
+					changed = false
+				}
+			}
+		}
+	}()
+	watcher.Watch(ctx, events)
+	return nil
 }
 
 // walkDisk traverses the file system for the defined path, reading dashboard definition files,
@@ -100,7 +171,7 @@ func (fr *FileReader) walkDisk(ctx context.Context) error {
 		return err
 	}
 
-	provisionedDashboardRefs, err := getProvisionedDashboardsByPath(ctx, fr.dashboardProvisioningService, fr.Cfg.Name)
+	provisionedDashboardRefs, err := fr.getProvisionedDashboardsByPath(ctx, fr.dashboardProvisioningService, fr.Cfg.Name)
 	if err != nil {
 		return err
 	}
@@ -147,7 +218,9 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, usageTracker *usageTracker) error {
-	folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
+	ctx, _ = identity.WithServiceIdentity(ctx, fr.Cfg.OrgID)
+
+	folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return fmt.Errorf("%w with name %q: %w", ErrGetOrCreateFolder, fr.Cfg.Folder, err)
 	}
@@ -167,26 +240,45 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
 // in Grafana as they are in on the filesystem.
+// folderPathCache is created per walk and passed to getOrCreateFolderFullpath to avoid redundant Get/Create
+// for shared ancestor paths. It is not thread-safe and must not be shared across provisioning cycles.
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
-	for path, fileInfo := range filesFoundOnDisk {
-		folderName := ""
+	ctx, _ = identity.WithServiceIdentity(ctx, fr.Cfg.OrgID)
+	folderPathCache := make(map[string]folderPathCacheEntry)
 
+	for path, fileInfo := range filesFoundOnDisk {
 		dashboardsFolder := filepath.Dir(path)
-		if dashboardsFolder != resolvedPath {
-			folderName = filepath.Base(dashboardsFolder)
+		relPath, err := filepath.Rel(resolvedPath, dashboardsFolder)
+		if err != nil {
+			return fmt.Errorf("failed to calculate relative path from %q to %q: %w", resolvedPath, dashboardsFolder, err)
 		}
 
-		folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
-		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
-			return fmt.Errorf("%w with name %q from file system structure: %w", ErrGetOrCreateFolder, folderName, err)
+		// Replace the OS separator with a forward slash to get the full path of the folder
+		folderFullpath := strings.ReplaceAll(relPath, string(filepath.Separator), "/")
+		if folderFullpath == "." || folderFullpath == "" {
+			folderFullpath = ""
+		}
+
+		var folderID int64
+		var folderUID string
+		if folderFullpath == "" {
+			folderID = 0
+			folderUID = ""
+		} else {
+			folderID, folderUID, err = fr.getOrCreateFolderFullpath(ctx, folderFullpath, fr.Cfg.OrgID, folderPathCache)
+			if err != nil {
+				return fmt.Errorf("%w with full path %q from file system structure: %w", ErrGetOrCreateFolder, folderFullpath, err)
+			}
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, folderUID, fileInfo, dashboardRefs)
-		usageTracker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "file", path, "error", err)
+			continue
 		}
+
+		usageTracker.track(provisioningMetadata)
 	}
 	return nil
 }
@@ -254,31 +346,6 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	// nolint:staticcheck
 	provisioningMetadata.identity = dashboardIdentity{title: dash.Dashboard.Title, folderID: dash.Dashboard.FolderID}
 
-	// fix empty folder_uid from already provisioned dashboards
-	if upToDate && folderUID != "" {
-		// search for root dashboard with the specified uid or title
-		d, err := fr.dashboardStore.GetDashboard(
-			ctx,
-			&dashboards.GetDashboardQuery{
-				OrgID:     jsonFile.dashboard.OrgID,
-				UID:       jsonFile.dashboard.Dashboard.UID,
-				Title:     &jsonFile.dashboard.Dashboard.Title,
-				FolderUID: util.Pointer(""),
-			},
-		)
-		if err != nil {
-			// if no problematic entry is found it's safe to ignore
-			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return provisioningMetadata, err
-			}
-		} else {
-			// inconsistency is detected so force updating the dashboard
-			if d.FolderUID != folderUID {
-				upToDate = false
-			}
-		}
-	}
-
 	if upToDate {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 		// nolint:staticcheck
@@ -304,6 +371,8 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			Name:       fr.Cfg.Name,
 			Updated:    resolvedFileInfo.ModTime().Unix(),
 			CheckSum:   jsonFile.checkSum,
+			// adds `grafana.app/managerAllowsEdits` to the provisioned dashboards in unified storage. not used if in legacy.
+			AllowUIUpdates: fr.Cfg.AllowUIUpdates,
 		}
 		_, err := fr.dashboardProvisioningService.SaveProvisionedDashboard(ctx, dash, dp)
 		if err != nil {
@@ -319,7 +388,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	return provisioningMetadata, nil
 }
 
-func getProvisionedDashboardsByPath(ctx context.Context, service dashboards.DashboardProvisioningService, name string) (
+func (fr *FileReader) getProvisionedDashboardsByPath(ctx context.Context, service dashboards.DashboardProvisioningService, name string) (
 	map[string]*dashboards.DashboardProvisioning, error) {
 	arr, err := service.GetProvisionedDashboardData(ctx, name)
 	if err != nil {
@@ -328,50 +397,83 @@ func getProvisionedDashboardsByPath(ctx context.Context, service dashboards.Dash
 
 	byPath := map[string]*dashboards.DashboardProvisioning{}
 	for _, pd := range arr {
+		// as a part of the migration of dashboards to unified storage, the dashboard provisiong data will be stored as
+		// an annotation on the dashboard. in modes 0-2, that will only return the relative path. however, we will be comparing
+		// that to the data stored in the dashboard_provisioning table, so we need to change it into the resolved path
+		if !strings.HasPrefix(pd.ExternalID, fr.resolvedPath()) {
+			pd.ExternalID = fr.resolvedPath() + "/" + pd.ExternalID
+		}
+
 		byPath[pd.ExternalID] = pd
 	}
 
 	return byPath, nil
 }
 
-func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, service dashboards.DashboardProvisioningService, folderName string) (int64, string, error) {
+// getOrCreateFolderInternal is the shared logic for getting or creating a folder.
+// - explicitUID: if non-nil and non-empty, used for lookup and creation; otherwise lookup by Title+ParentUID and generate UID on create
+// - parentUID: optional parent for nested folders
+func (fr *FileReader) getOrCreateFolderInternal(ctx context.Context, orgID int64, folderName string, parentUID *string, explicitUID *string) (int64, string, error) {
 	if folderName == "" {
 		return 0, "", ErrFolderNameMissing
 	}
 
-	// TODO use folder service instead
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
-	cmd := &dashboards.GetDashboardQuery{
-		FolderID: util.Pointer(int64(0)), // nolint:staticcheck
-		OrgID:    cfg.OrgID,
+	user, reqErr := identity.GetRequester(ctx)
+	if reqErr != nil {
+		return 0, "", reqErr
 	}
 
-	if cfg.FolderUID != "" {
-		cmd.UID = cfg.FolderUID
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
+	cmd := &folder.GetFolderQuery{
+		OrgID:        orgID,
+		SignedInUser: user,
+	}
+
+	if explicitUID != nil && *explicitUID != "" {
+		cmd.UID = explicitUID
 	} else {
 		cmd.Title = &folderName
+		cmd.ParentUID = parentUID
 	}
 
-	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
-
-	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+	result, err := fr.folderService.Get(ctx, cmd)
+	if err != nil && !errors.Is(err, dashboards.ErrFolderNotFound) {
 		return 0, "", err
 	}
 
+	// do not allow the creation of folder with uid "general"
+	if result != nil && result.UID == accesscontrol.GeneralFolderUID {
+		return 0, "", folder.ErrInvalidUID
+	}
+
+	if err == nil && result != nil && result.ManagedBy == "" {
+		result, err = fr.dashboardProvisioningService.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
+		if err != nil {
+			return 0, "", fmt.Errorf("unable to update provisioned folder")
+		}
+	}
+
 	// dashboard folder not found. create one.
-	if errors.Is(err, dashboards.ErrDashboardNotFound) {
-		// set dashboard folderUid if given
-		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
-			return 0, "", dashboards.ErrFolderInvalidUID
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		// Generate a new UID for the folder if not provided
+		uid := util.GenerateShortUID()
+		if explicitUID != nil {
+			uid = *explicitUID
 		}
 
 		createCmd := &folder.CreateFolderCommand{
-			OrgID: cfg.OrgID,
-			UID:   cfg.FolderUID,
-			Title: folderName,
+			OrgID:        orgID,
+			UID:          uid,
+			Title:        folderName,
+			SignedInUser: user,
 		}
 
-		f, err := service.SaveFolderForProvisionedDashboards(ctx, createCmd)
+		// If a parent UID is provided, set it as the parent of the new folder
+		if parentUID != nil {
+			createCmd.ParentUID = *parentUID
+		}
+
+		f, err := fr.dashboardProvisioningService.SaveFolderForProvisionedDashboards(ctx, createCmd, fr.Cfg.Name)
 		if err != nil {
 			return 0, "", err
 		}
@@ -380,11 +482,64 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return f.ID, f.UID, nil
 	}
 
-	if !result.IsFolder {
-		return 0, "", fmt.Errorf("got invalid response. expected folder, found dashboard")
+	// nolint:staticcheck
+	return result.ID, result.UID, nil
+}
+
+func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, folderName string) (int64, string, error) {
+	// Ensures Requester for getOrCreateFolderInternal when callers bypass storeDashboardsInFolder (e.g. tests); redundant if parent already wrapped ctx.
+	ctx, _ = identity.WithServiceIdentity(ctx, cfg.OrgID)
+	var explicitUID *string
+	if cfg.FolderUID != "" {
+		explicitUID = &cfg.FolderUID
+	}
+	return fr.getOrCreateFolderInternal(ctx, cfg.OrgID, folderName, nil, explicitUID)
+}
+
+// getOrCreateFolderFullpath creates the nested folder hierarchy for folderFullpath (e.g. "level1/level2"),
+// reusing cached entries when cache is provided to avoid redundant Get/Create for shared ancestors.
+func (fr *FileReader) getOrCreateFolderFullpath(ctx context.Context, folderFullpath string, orgID int64, cache map[string]folderPathCacheEntry) (int64, string, error) {
+	// Same contract as getOrCreateFolder: direct callers/tests need identity; harmless duplicate when storeDashboardsInFoldersFromFileStructure already wrapped ctx.
+	ctx, _ = identity.WithServiceIdentity(ctx, orgID)
+	folderTitles := splitFolderFullpath(folderFullpath)
+	if len(folderTitles) == 0 {
+		return 0, "", fmt.Errorf("invalid folder full path: %s", folderFullpath)
 	}
 
-	return result.ID, result.UID, nil
+	maxDepth := fr.settingCfg.MaxNestedFolderDepth
+	if len(folderTitles) > maxDepth {
+		return 0, "", fmt.Errorf("nested folder depth %d exceeds maximum %d", len(folderTitles), maxDepth)
+	}
+
+	// folderUID: UID of the current folder in the chain (becomes the parent for the next).
+	// parentForNext: pointer to folderUID, passed to getOrCreateFolderInternal. nil for the first level.
+	var folderUID string
+	var parentForNext *string
+	var folderID int64 // deprecated but still required for compatibility
+	for i := range folderTitles {
+		cumulativePath := strings.Join(folderTitles[:i+1], "/")
+		if cache != nil {
+			if entry, ok := cache[cumulativePath]; ok {
+				// Cache hit: reuse folder from a previous file in the same walk.
+				folderID = entry.id
+				folderUID = entry.uid
+				parentForNext = &folderUID
+				continue
+			}
+		}
+
+		id, uid, err := fr.getOrCreateFolderInternal(ctx, orgID, folderTitles[i], parentForNext, nil)
+		if err != nil {
+			return 0, "", err
+		}
+		folderID = id
+		folderUID = uid
+		parentForNext = &folderUID
+		if cache != nil {
+			cache[cumulativePath] = folderPathCacheEntry{id: id, uid: uid}
+		}
+	}
+	return folderID, folderUID, nil
 }
 
 func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {

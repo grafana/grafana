@@ -1,17 +1,15 @@
 import { createContext, useCallback, useContext } from 'react';
-import { useObservable } from 'react-use';
 
-import { GrafanaConfig } from '@grafana/data';
-import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
+import { type LocationService, locationService, type BackendSrv, type GrafanaBootConfig } from '@grafana/runtime';
 
-import { AppChromeService } from '../components/AppChrome/AppChromeService';
-import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
-import { KeybindingSrv } from '../services/keybindingSrv';
+import { type AppChromeService } from '../components/AppChrome/AppChromeService';
+import { type NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
+import { type KeybindingSrv } from '../services/keybindingSrv';
 
 export interface GrafanaContextType {
   backend: BackendSrv;
   location: LocationService;
-  config: GrafanaConfig;
+  config: GrafanaBootConfig;
   chrome: AppChromeService;
   keybindings: KeybindingSrv;
   newAssetsChecker: NewFrontendAssetsChecker;
@@ -43,7 +41,10 @@ export function useReturnToPreviousInternal() {
   );
 }
 
-export function useChromeHeaderHeight() {
+// Implementation of useMegaMenuOpen that's made available through
+// @grafana/runtime
+export function useMegaMenuOpenInternal() {
   const { chrome } = useGrafana();
-  return useObservable(chrome.headerHeightObservable, 0);
+  const state = chrome.useState();
+  return [state.megaMenuOpen, chrome.setMegaMenuOpen] as const;
 }

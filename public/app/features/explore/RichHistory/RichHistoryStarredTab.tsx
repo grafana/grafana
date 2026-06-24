@@ -2,18 +2,14 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
-import {
-  createDatasourcesList,
-  SortOrder,
-  RichHistorySearchFilters,
-  RichHistorySettings,
-} from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
-import { RichHistoryQuery } from 'app/types/explore';
+import { createDatasourcesList } from 'app/core/utils/richHistory';
+import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { type RichHistoryQuery } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { selectExploreDSMaps } from '../state/selectors';
 

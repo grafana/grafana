@@ -48,13 +48,13 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 1. Run the following command to generate a 2048-bit RSA private key, which is used to decrypt traffic:
 
    ```bash
-   $ sudo openssl genrsa -out /etc/grafana/grafana.key 2048
+   sudo openssl genrsa -out /etc/grafana/grafana.key 2048
    ```
 
 1. Run the following command to generate a certificate, using the private key from the previous step.
 
    ```bash
-   $ sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
+   sudo openssl req -new -key /etc/grafana/grafana.key -out /etc/grafana/grafana.csr
    ```
 
    When prompted, answer the questions, which might include your fully-qualified domain name, email address, country code, and others. The following example is similar to the prompts you will see.
@@ -107,9 +107,9 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 
 The examples in this section use LetsEncrypt because it is free.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The instructions provided in this section are for a Debian-based Linux system. For other distributions and operating systems, please refer to the [certbot instructions](https://certbot.eff.org/instructions). Also, these instructions require you to have a domain name that you are in control of. Dynamic domain names like those from Amazon EC2 or DynDNS providers will not function.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Install `snapd` and `certbot`
 
@@ -131,7 +131,6 @@ The instructions provided in this section are for a Debian-based Linux system. F
    ```
 
    These commands:
-
    - Uninstall `certbot` from your system if it has been installed using a package manager
    - Install `certbot` using `snapd`
 
@@ -209,7 +208,7 @@ To adjust permissions, perform the following steps:
    $ sudo chgrp -R grafana /etc/letsencrypt/*
    $ sudo chmod -R g+rx /etc/letsencrypt/*
    $ sudo chgrp -R grafana /etc/grafana/grafana.crt /etc/grafana/grafana.key
-   $ sudo chmod 400 /etc/grafana/grafana.crt /etc/grafana/grafana.key
+   $ sudo chmod 440 /etc/grafana/grafana.crt /etc/grafana/grafana.key
    ```
 
 1. Run the following command to verify that the `grafana` group can read the symlinks:
@@ -224,7 +223,7 @@ To adjust permissions, perform the following steps:
 
 ## Configure Grafana HTTPS and restart Grafana
 
-In this section you edit the `grafana.ini` file so that it includes the certificate you created. If you need help identifying where to find this file, or what each key means, refer to [Configuration file location]({{< relref "./configure-grafana#configuration-file-location" >}}).
+In this section you edit the `grafana.ini` file so that it includes the certificate you created. If you need help identifying where to find this file, or what each key means, refer to [Configuration file location](../configure-grafana/#configuration-file-location).
 
 To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
@@ -244,7 +243,9 @@ To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
    > **Note**: The standard port for SSL traffic is 443, which you can use instead of Grafana's default port 3000. This change might require additional operating system privileges or configuration to bind to lower-numbered privileged ports.
 
-1. [Restart the Grafana server]({{< relref "./start-restart-grafana#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
+1. Optional. From Grafana v11.2, edit the `cert_pass` configuration option with the decryption password if you are using encrypted certificates.
+
+1. [Restart the Grafana server](../start-restart-grafana/#linux) using `systemd`, `init.d`, or the binary as appropriate for your environment.
 
 ## Troubleshooting
 

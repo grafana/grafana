@@ -9,12 +9,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestLogTableToFrame(t *testing.T) {
@@ -56,7 +57,7 @@ func TestLogTableToFrame(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadTestFileWithNumber(t, tt.testFile)
-			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, dataquery.ResultFormatTable, false)
+			frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeLogAnalytics, dataquery.ResultFormatTable, false)
 			appendErrorNotice(frame, res.Error)
 			require.NoError(t, err)
 
@@ -107,7 +108,7 @@ func TestTraceTableToFrame(t *testing.T) {
 			name:         "single trace as trace format from exemplars query",
 			testFile:     "traces/2-traces-single-table.json",
 			resultFormat: dataquery.ResultFormatTrace,
-			queryType:    dataquery.AzureQueryTypeTraceql,
+			queryType:    dataquery.AzureQueryTypeTraceExemplar,
 		},
 	}
 
@@ -136,13 +137,13 @@ func TestLargeLogsResponse(t *testing.T) {
 					}},
 			},
 		}
-		rows := [][]any{}
+		rows := make([][]any, 0, 30000)
 		for i := 0; i <= 30000; i++ {
 			rows = append(rows, []any{json.Number(strconv.Itoa(i))})
 		}
 		res.Tables[0].Rows = rows
 		resultFormat := dataquery.ResultFormatLogs
-		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, resultFormat, false)
+		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeLogAnalytics, resultFormat, false)
 		appendErrorNotice(frame, res.Error)
 		require.NoError(t, err)
 		require.Equal(t, frame.Rows(), 30000)
@@ -165,13 +166,13 @@ func TestLargeLogsResponse(t *testing.T) {
 					}},
 			},
 		}
-		rows := [][]any{}
-		for i := 0; i < 40000; i++ {
+		rows := make([][]any, 0, 40000)
+		for i := range 40000 {
 			rows = append(rows, []any{json.Number(strconv.Itoa(i))})
 		}
 		res.Tables[0].Rows = rows
 		resultFormat := dataquery.ResultFormatLogs
-		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, resultFormat, true)
+		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeLogAnalytics, resultFormat, true)
 		appendErrorNotice(frame, res.Error)
 		require.NoError(t, err)
 		require.Equal(t, frame.Rows(), 40000)

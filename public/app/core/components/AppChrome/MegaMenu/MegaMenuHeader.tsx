@@ -1,16 +1,18 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
+import { HomeLink } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
+import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
 export interface Props {
-  handleMegaMenu: () => void;
   handleDockedMenu: () => void;
   onClose: () => void;
 }
@@ -18,25 +20,20 @@ export interface Props {
 export const DOCK_MENU_BUTTON_ID = 'dock-menu-button';
 export const MEGA_MENU_HEADER_TOGGLE_ID = 'mega-menu-header-toggle';
 
-export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Props) {
-  const theme = useTheme2();
+export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const styles = getStyles(theme);
+  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   return (
     <div className={styles.header}>
-      <Stack alignItems="center" minWidth={0} gap={0.25}>
-        <ToolbarButton
-          narrow
-          id={MEGA_MENU_HEADER_TOGGLE_ID}
-          onClick={handleMegaMenu}
-          tooltip={t('navigation.megamenu.close', 'Close menu')}
-        >
-          <Branding.MenuLogo className={styles.img} />
-        </ToolbarButton>
+      <Stack alignItems="center" minWidth={0} gap={1}>
+        <HomeLink homeNav={homeNav} inMegaMenuOverlay={!state.megaMenuDocked} />
         <OrganizationSwitcher />
       </Stack>
+      <div className={styles.flexGrow} />
       <IconButton
         id={DOCK_MENU_BUTTON_ID}
         className={styles.dockMenuButton}
@@ -50,11 +47,11 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
         variant="secondary"
       />
       <IconButton
-        className={styles.mobileCloseButton}
+        aria-label={t('navigation.megamenu.close', 'Close menu')}
         tooltip={t('navigation.megamenu.close', 'Close menu')}
         name="times"
         onClick={onClose}
-        size="xl"
+        size="lg"
         variant="secondary"
       />
     </div>
@@ -63,7 +60,7 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
 
 MegaMenuHeader.displayName = 'MegaMenuHeader';
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   dockMenuButton: css({
     display: 'none',
 
@@ -73,22 +70,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   header: css({
     alignItems: 'center',
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    borderBottom: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
     display: 'flex',
     gap: theme.spacing(1),
     justifyContent: 'space-between',
-    padding: theme.spacing(0, 1, 0, 0.75),
-    height: TOP_BAR_LEVEL_HEIGHT,
-    minHeight: TOP_BAR_LEVEL_HEIGHT,
+    padding: theme.spacing(0, 1, 0, 1),
+    height: getChromeHeaderLevelHeight(),
+    flexShrink: 0,
   }),
-  img: css({
-    alignSelf: 'center',
-    height: theme.spacing(3),
-    width: theme.spacing(3),
-  }),
-  mobileCloseButton: css({
-    [theme.breakpoints.up('md')]: {
-      display: 'none',
-    },
-  }),
+  flexGrow: css({ flexGrow: 1 }),
 });

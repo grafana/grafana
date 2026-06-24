@@ -2,299 +2,258 @@ package graphite
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
-	"net/http"
-	"reflect"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func TestFixIntervalFormat(t *testing.T) {
-	testCases := []struct {
-		name     string
-		target   string
-		expected string
+func Test_CreateRequest(t *testing.T) {
+	ctx := context.Background()
+
+	service := &Service{}
+	dsInfo := &datasourceInfo{
+		URL: "http://graphite.example.com",
+	}
+
+	tests := []struct {
+		name           string
+		dsInfo         *datasourceInfo
+		params         URLParams
+		expectedURL    string
+		expectedMethod string
+		expectedError  string
+		checkHeaders   map[string]string
+		checkQuery     map[string][]string
 	}{
 		{
-			name:     "should transform 1m to graphite unit (1min) when used as interval string",
-			target:   "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1m'), 4)",
-			expected: "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1min'), 4)",
+			name:           "basic request with default GET method",
+			dsInfo:         dsInfo,
+			params:         URLParams{},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
 		},
 		{
-			name:     "should transform 1M to graphite unit (1mon) when used as interval string",
-			target:   "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1M'), 4)",
-			expected: "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1mon'), 4)",
+			name:   "request with subpath",
+			dsInfo: dsInfo,
+			params: URLParams{
+				SubPath: "/metrics/find",
+			},
+			expectedURL:    "http://graphite.example.com/metrics/find",
+			expectedMethod: "GET",
 		},
 		{
-			name:     "should not transform 1m when not used as interval string",
-			target:   "app.grafana.*.dashboards.views.1m.count",
-			expected: "app.grafana.*.dashboards.views.1m.count",
+			name:   "request with custom method",
+			dsInfo: dsInfo,
+			params: URLParams{
+				Method: "POST",
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "POST",
 		},
 		{
-			name:     "should not transform 1M when not used as interval string",
-			target:   "app.grafana.*.dashboards.views.1M.count",
-			expected: "app.grafana.*.dashboards.views.1M.count",
+			name:   "request with query parameters",
+			dsInfo: dsInfo,
+			params: URLParams{
+				QueryParams: map[string][]string{
+					"query":  {"stats.counters.*"},
+					"format": {"json"},
+				},
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
+			checkQuery: map[string][]string{
+				"query":  {"stats.counters.*"},
+				"format": {"json"},
+			},
+		},
+		{
+			name:   "request with headers",
+			dsInfo: dsInfo,
+			params: URLParams{
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
+			checkHeaders: map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+		{
+			name:   "request with body",
+			dsInfo: dsInfo,
+			params: URLParams{
+				Method: "POST",
+				Body:   strings.NewReader(`{"test": "data"}`),
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "POST",
+		},
+		{
+			name:   "complex request with all parameters",
+			dsInfo: dsInfo,
+			params: URLParams{
+				SubPath: "/metrics/expand",
+				Method:  "POST",
+				QueryParams: map[string][]string{
+					"groupByExpr": {"true"},
+					"leavesOnly":  {"false"},
+				},
+				Headers: map[string]string{
+					"X-Custom-Header": "test-value",
+				},
+				Body: strings.NewReader(`{"query": "stats.*"}`),
+			},
+			expectedURL:    "http://graphite.example.com/metrics/expand",
+			expectedMethod: "POST",
+			checkQuery: map[string][]string{
+				"groupByExpr": {"true"},
+				"leavesOnly":  {"false"},
+			},
+			checkHeaders: map[string]string{
+				"X-Custom-Header": "test-value",
+			},
+		},
+		{
+			name: "invalid URL in datasource",
+			dsInfo: &datasourceInfo{
+				URL: "://invalid-url",
+			},
+			params:        URLParams{},
+			expectedError: "missing protocol scheme",
+		},
+		{
+			name:   "empty query parameter values",
+			dsInfo: dsInfo,
+			params: URLParams{
+				QueryParams: map[string][]string{
+					"empty": {""},
+					"valid": {"value"},
+				},
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
+			checkQuery: map[string][]string{
+				"empty": {""},
+				"valid": {"value"},
+			},
+		},
+		{
+			name:   "multi-valued query parameter",
+			dsInfo: dsInfo,
+			params: URLParams{
+				QueryParams: map[string][]string{
+					"valid": {"value1", "value2"},
+				},
+			},
+			expectedURL:    "http://graphite.example.com",
+			expectedMethod: "GET",
+			checkQuery: map[string][]string{
+				"valid": {"value1", "value2"},
+			},
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			tr := fixIntervalFormat(tc.target)
-			assert.Equal(t, tc.expected, tr)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := service.createRequest(ctx, tt.dsInfo, tt.params)
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, req)
+
+			// Check URL (base URL without query parameters)
+			baseURL := req.URL.Scheme + "://" + req.URL.Host + req.URL.Path
+			assert.Equal(t, tt.expectedURL, baseURL)
+			assert.Equal(t, tt.expectedMethod, req.Method)
+
+			if tt.checkQuery != nil {
+				for key, expectedValues := range tt.checkQuery {
+					actualValue := req.URL.Query()[key]
+					assert.NotZero(t, len(actualValue))
+
+					for _, expectedValue := range expectedValues {
+						assert.Contains(t, actualValue, expectedValue, "Query parameter %s", key)
+					}
+				}
+			}
+
+			if tt.checkHeaders != nil {
+				for key, expectedValue := range tt.checkHeaders {
+					actualValue := req.Header.Get(key)
+					assert.Equal(t, expectedValue, actualValue, "Header %s", key)
+				}
+			}
+
+			if tt.params.Body != nil {
+				bodyBytes, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+
+				expectedContent := ""
+				switch tt.name {
+				case "request with body":
+					expectedContent = `{"test": "data"}`
+				case "complex request with all parameters":
+					expectedContent = `{"query": "stats.*"}`
+				}
+				assert.Equal(t, expectedContent, string(bodyBytes))
+			}
 		})
 	}
 }
 
-func TestProcessQueries(t *testing.T) {
+func Test_CreateRequest_Body(t *testing.T) {
+	ctx := context.Background()
 	service := &Service{}
-	log := logger.FromContext(context.Background())
-	t.Run("Parses single valid query", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-		}
-		targets, invalids, mapping, err := service.processQueries(log, queries)
-		assert.NoError(t, err)
-		assert.Empty(t, invalids)
-		assert.Len(t, mapping, 1)
-		assert.Len(t, targets, 1)
-		assert.Equal(t, "aliasSub(app.grafana.*.dashboards.views.1M.count,\"(^.*$)\",\"\\1 A\")", targets[0])
-	})
+	dsInfo := &datasourceInfo{URL: "http://graphite.example.com"}
 
-	t.Run("Parses multiple valid queries with refId mappings", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-			{
-				RefID: "query B",
-				JSON: []byte(`{
-					"target": "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1mon'), 4)"
-				}`),
-			},
-		}
-		targets, invalids, mapping, err := service.processQueries(log, queries)
-		assert.NoError(t, err)
-		assert.Empty(t, invalids)
-		assert.Len(t, mapping, 2)
-		assert.Len(t, targets, 2)
-		assert.Equal(t, "aliasSub(app.grafana.*.dashboards.views.1M.count,\"(^.*$)\",\"\\1 A\")", targets[0])
-		assert.Equal(t, "aliasSub(aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1mon'), 4),\"(^.*$)\",\"\\1 query_B\")", targets[1])
-	})
-
-	t.Run("Parses multiple queries with one invalid", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"target": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-			{
-				RefID: "B",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-		}
-		targets, invalids, mapping, err := service.processQueries(log, queries)
-		assert.NoError(t, err)
-		assert.Len(t, invalids, 1)
-		assert.Len(t, mapping, 1)
-		assert.Len(t, targets, 1)
-		json, _ := simplejson.NewJson(queries[1].JSON)
-		expectedInvalid := fmt.Sprintf("Query: %v has no target", json)
-		assert.Equal(t, expectedInvalid, invalids[0])
-	})
-
-	t.Run("QueryData with no valid queries returns an error", func(t *testing.T) {
-		queries := []backend.DataQuery{
-			{
-				RefID: "A",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
-			{
-				RefID: "B",
-				JSON: []byte(`{
-					"query": "app.grafana.*.dashboards.views.1M.count"
-				}`),
-			},
+	t.Run("string reader body", func(t *testing.T) {
+		bodyContent := `{"query": "stats.*", "format": "json"}`
+		params := URLParams{
+			Method: "POST",
+			Body:   strings.NewReader(bodyContent),
 		}
 
-		service.im = fakeInstanceManager{}
-		_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
-			Queries: queries,
-		})
-		assert.Error(t, err)
-		assert.Equal(t, err.Error(), "no query target found for the alert rule")
-	})
-}
-
-func TestConvertResponses(t *testing.T) {
-	service := &Service{}
-
-	t.Run("Converts response without tags to data frames", func(*testing.T) {
-		body := `
-		[
-			{
-				"target": "target A",
-				"datapoints": [[50, 1], [null, 2], [100, 3]]
-			}
-		]`
-		a := 50.0
-		b := 100.0
-		expectedFrame := data.NewFrame("A",
-			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
-			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
-		)
-		expectedFrames := data.Frames{expectedFrame}
-
-		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{})
-
+		req, err := service.createRequest(ctx, dsInfo, params)
 		require.NoError(t, err)
-		if !reflect.DeepEqual(expectedFrames, dataFrames) {
-			expectedFramesJSON, _ := json.Marshal(expectedFrames)
-			dataFramesJSON, _ := json.Marshal(dataFrames)
-			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
-		}
-	})
 
-	t.Run("Converts response with tags to data frames", func(*testing.T) {
-		body := `
-		[
-			{
-				"target": "target A",
-				"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
-				"datapoints": [[50, 1], [null, 2], [100, 3]]
-			}
-		]`
-		a := 50.0
-		b := 100.0
-		expectedFrame := data.NewFrame("A",
-			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
-			data.NewField("value", data.Labels{
-				"fooTag": "fooValue",
-				"barTag": "barValue",
-				"int":    "100",
-				"float":  "3.14",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
-		)
-		expectedFrames := data.Frames{expectedFrame}
-
-		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{})
-
+		// Read the body to verify content
+		bodyBytes, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
-		if !reflect.DeepEqual(expectedFrames, dataFrames) {
-			expectedFramesJSON, _ := json.Marshal(expectedFrames)
-			dataFramesJSON, _ := json.Marshal(dataFrames)
-			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
-		}
+		assert.Equal(t, bodyContent, string(bodyBytes))
 	})
 
-	t.Run("Converts response with multiple targets", func(*testing.T) {
-		body := `
-		[
-			{
-				"target": "target 1 A",
-				"datapoints": [[50, 1], [null, 2], [100, 3]]
-			},
-			{
-				"target": "target 2 B",
-				"datapoints": [[50, 1], [null, 2], [100, 3]]
-			}
-		]`
-		a := 50.0
-		b := 100.0
-		expectedFrameA := data.NewFrame("A",
-			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
-			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target 1"}),
-		)
-		expectedFrameB := data.NewFrame("B",
-			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
-			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target 2"}),
-		)
-		expectedFrames := data.Frames{expectedFrameA, expectedFrameB}
+	t.Run("nil body", func(t *testing.T) {
+		params := URLParams{
+			Method: "GET",
+			Body:   nil,
+		}
 
-		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{})
-
+		req, err := service.createRequest(ctx, dsInfo, params)
 		require.NoError(t, err)
-		if !reflect.DeepEqual(expectedFrames, dataFrames) {
-			expectedFramesJSON, _ := json.Marshal(expectedFrames)
-			dataFramesJSON, _ := json.Marshal(dataFrames)
-			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
-		}
+		assert.Nil(t, req.Body)
 	})
 
-	t.Run("Converts response with refId mapping", func(*testing.T) {
-		body := `
-		[
-			{
-				"target": "target A_A",
-				"datapoints": [[50, 1], [null, 2], [100, 3]]
-			}
-		]`
-		a := 50.0
-		b := 100.0
-		expectedFrame := data.NewFrame("A A",
-			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
-			data.NewField("value", data.Labels{}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
-		)
-		expectedFrames := data.Frames{expectedFrame}
+	t.Run("empty body reader", func(t *testing.T) {
+		params := URLParams{
+			Method: "POST",
+			Body:   strings.NewReader(""),
+		}
 
-		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{"A_A": "A A"})
-
+		req, err := service.createRequest(ctx, dsInfo, params)
 		require.NoError(t, err)
-		if !reflect.DeepEqual(expectedFrames, dataFrames) {
-			expectedFramesJSON, _ := json.Marshal(expectedFrames)
-			dataFramesJSON, _ := json.Marshal(dataFrames)
-			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
-		}
+
+		bodyBytes, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		assert.Empty(t, string(bodyBytes))
 	})
-
-	t.Run("Chokes on response with invalid target name", func(*testing.T) {
-		body := `
-		[
-			{
-				"target": "target",
-				"datapoints": [[50, 1], [null, 2], [100, 3]]
-			}
-		]`
-		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		_, err := service.toDataFrames(logger, httpResponse, map[string]string{})
-		require.Error(t, err)
-	})
-}
-
-type fakeInstanceManager struct{}
-
-func (f fakeInstanceManager) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
-	return datasourceInfo{}, nil
-}
-
-func (f fakeInstanceManager) Do(_ context.Context, _ backend.PluginContext, _ instancemgmt.InstanceCallbackFunc) error {
-	return nil
 }

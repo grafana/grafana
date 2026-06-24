@@ -1,9 +1,9 @@
-import { TypedVariableModel } from '@grafana/data';
+import { type TypedVariableModel } from '@grafana/data';
 import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { PanelModel } from '../../../state';
+import { type PanelModel } from '../../../state/PanelModel';
 import { shareDashboardType } from '../utils';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
@@ -95,7 +95,7 @@ export const generatePublicDashboardConfigUrl = (dashboardUid: string, dashboard
 export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
 
 export const isPublicDashboardsEnabled = () => {
-  return Boolean(config.featureToggles.publicDashboards) && config.publicDashboardsEnabled;
+  return config.publicDashboardsEnabled;
 };
 
 export const isEmailSharingEnabled = () =>

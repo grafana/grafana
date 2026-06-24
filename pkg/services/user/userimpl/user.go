@@ -2,535 +2,271 @@ package userimpl
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"strings"
-	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userk8s"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
-	store        store
-	orgService   org.Service
-	teamService  team.Service
-	cacheService *localcache.CacheService
-	cfg          *setting.Cfg
-	tracer       tracing.Tracer
+	legacyService     user.Service
+	k8sService        user.Service
+	openFeatureClient *openfeature.Client
+	logger            log.Logger
+	tracer            tracing.Tracer
+	cfg               *setting.Cfg
 }
 
-func ProvideService(
-	db db.DB,
+var _ user.Service = (*Service)(nil)
+
+func ProvideService(db db.DB,
 	orgService org.Service,
 	cfg *setting.Cfg,
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
-) (user.Service, error) {
-	store := ProvideStore(db, cfg)
-	s := &Service{
-		store:        &store,
-		orgService:   orgService,
-		cfg:          cfg,
-		teamService:  teamService,
-		cacheService: cacheService,
-		tracer:       tracer,
-	}
-
-	defaultLimits, err := readQuotaConfig(cfg)
+	configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
+	legacyService, err := NewLegacyService(db, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry)
 	if err != nil {
-		return s, err
+		return nil, err
 	}
 
-	if err := quotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     quota.TargetSrv(user.QuotaTargetSrv),
-		DefaultLimits: defaultLimits,
-		Reporter:      s.usage,
-	}); err != nil {
-		return s, err
-	}
+	k8sService := userk8s.NewUserK8sService(log.New("user.k8s"), cfg, configProvider, tracer)
 
-	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
-	return s, nil
-}
-
-func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
-	stats := map[string]any{}
-	basicAuthStrongPasswordPolicyVal := 0
-	if s.cfg.BasicAuthStrongPasswordPolicy {
-		basicAuthStrongPasswordPolicyVal = 1
-	}
-
-	stats["stats.password_policy.count"] = basicAuthStrongPasswordPolicyVal
-
-	count, err := s.store.CountUserAccountsWithEmptyRole(ctx)
-	if err != nil {
-		return nil
-	}
-
-	stats["stats.user.role_none.count"] = count
-
-	return stats
+	return &Service{
+		legacyService:     legacyService,
+		k8sService:        k8sService,
+		openFeatureClient: openfeature.NewDefaultClient(),
+		logger:            log.New("user"),
+		tracer:            tracer,
+		cfg:               cfg,
+	}, nil
 }
 
 func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.Create")
-	defer span.End()
-
-	if len(cmd.Login) == 0 {
-		cmd.Login = cmd.Email
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.Create(s.k8sCtxWithIdentity(ctx), cmd)
 	}
 
-	// if login is still empty both email and login field is missing
-	if len(cmd.Login) == 0 {
-		return nil, user.ErrEmptyUsernameAndEmail.Errorf("user cannot be created with empty username and email")
-	}
+	return s.legacyService.Create(ctx, cmd)
+}
 
-	cmdOrg := org.GetOrgIDForNewUserCommand{
-		Email:        cmd.Email,
-		Login:        cmd.Login,
-		OrgID:        cmd.OrgID,
-		OrgName:      cmd.OrgName,
-		SkipOrgSetup: cmd.SkipOrgSetup,
-	}
-	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
-	if err != nil {
-		return nil, err
-	}
-	if cmd.Email == "" {
-		cmd.Email = cmd.Login
-	}
-
-	if err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email); err != nil {
-		return nil, user.ErrUserAlreadyExists
-	}
-
-	// create user
-	usr := &user.User{
-		UID:              cmd.UID,
-		Email:            strings.ToLower(cmd.Email),
-		Name:             cmd.Name,
-		Login:            strings.ToLower(cmd.Login),
-		Company:          cmd.Company,
-		IsAdmin:          cmd.IsAdmin,
-		IsDisabled:       cmd.IsDisabled,
-		OrgID:            orgID,
-		EmailVerified:    cmd.EmailVerified,
-		Created:          timeNow(),
-		Updated:          timeNow(),
-		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
-		IsServiceAccount: cmd.IsServiceAccount,
-	}
-
-	salt, err := util.GetRandomString(10)
-	if err != nil {
-		return nil, err
-	}
-	usr.Salt = salt
-	rands, err := util.GetRandomString(10)
-	if err != nil {
-		return nil, err
-	}
-	usr.Rands = rands
-
-	if len(cmd.Password) > 0 {
-		if err := cmd.Password.Validate(s.cfg); err != nil {
-			return nil, err
-		}
-
-		usr.Password, err = cmd.Password.Hash(usr.Salt)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	_, err = s.store.Insert(ctx, usr)
-	if err != nil {
-		return nil, err
-	}
-
-	// create org user link
-	if !cmd.SkipOrgSetup {
-		orgUser := org.OrgUser{
-			OrgID:   orgID,
-			UserID:  usr.ID,
-			Role:    org.RoleAdmin,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
-		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
-			if len(cmd.DefaultOrgRole) > 0 {
-				orgUser.Role = org.RoleType(cmd.DefaultOrgRole)
-			} else {
-				orgUser.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
-			}
-		}
-		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
-		if err != nil {
-			err := s.store.Delete(ctx, usr.ID)
-			return usr, err
-		}
-	}
-	return usr, nil
+func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	return s.legacyService.CreateServiceAccount(ctx, cmd)
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
-	ctx, span := s.tracer.Start(ctx, "user.Delete", trace.WithAttributes(
-		attribute.Int64("userID", cmd.UserID),
-	))
-	defer span.End()
-
-	_, err := s.store.GetByID(ctx, cmd.UserID)
-	if err != nil {
-		return err
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.Delete(s.k8sCtxWithIdentity(ctx), cmd)
 	}
 
-	return s.store.Delete(ctx, cmd.UserID)
+	return s.legacyService.Delete(ctx, cmd)
 }
 
-func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByID", trace.WithAttributes(
-		attribute.Int64("userID", query.ID),
+func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetByID", trace.WithAttributes(
+		attribute.Int64("userID", cmd.ID),
 	))
 	defer span.End()
 
-	return s.store.GetByID(ctx, query.ID)
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		result, err := s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetByID failed, falling back to legacy", "userID", cmd.ID, "err", err)
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
+	return s.legacyService.GetByID(ctx, cmd)
 }
 
-func (s *Service) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByUID", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-		attribute.String("userUID", query.UID),
+func (s *Service) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetByUID", trace.WithAttributes(
+		attribute.String("userUID", cmd.UID),
 	))
 	defer span.End()
 
-	return s.store.GetByUID(ctx, query.OrgID, query.UID)
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		result, err := s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetByUID failed, falling back to legacy", "userUID", cmd.UID, "err", err)
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
+	return s.legacyService.GetByUID(ctx, cmd)
 }
 
-func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByLogin")
+func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.ListByIdOrUID")
 	defer span.End()
 
-	return s.store.GetByLogin(ctx, query)
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		result, err := s.k8sService.ListByIdOrUID(s.k8sCtxWithIdentity(ctx), uids, ids)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s ListByIdOrUID failed, falling back to legacy", "err", err)
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
+	return s.legacyService.ListByIdOrUID(ctx, uids, ids)
 }
 
-func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByEmail")
-	defer span.End()
+func (s *Service) GetByLoginWithPassword(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
+	// Redirect to legacy service as support for passwords is not implemented in the k8s service
+	return s.legacyService.GetByLoginWithPassword(ctx, cmd)
+}
 
-	return s.store.GetByEmail(ctx, query)
+func (s *Service) GetByLogin(ctx context.Context, cmd *user.GetUserByLoginQuery) (*user.User, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.GetByLogin(s.k8sCtxWithIdentity(ctx), cmd)
+	}
+
+	return s.legacyService.GetByLogin(ctx, cmd)
+}
+
+func (s *Service) GetByEmail(ctx context.Context, cmd *user.GetUserByEmailQuery) (*user.User, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.GetByEmail(s.k8sCtxWithIdentity(ctx), cmd)
+	}
+
+	return s.legacyService.GetByEmail(ctx, cmd)
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	ctx, span := s.tracer.Start(ctx, "user.Update", trace.WithAttributes(
-		attribute.Int64("userID", cmd.UserID),
-	))
-	defer span.End()
-
-	usr, err := s.store.GetByID(ctx, cmd.UserID)
-	if err != nil {
-		return err
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.Update(s.k8sCtxWithIdentity(ctx), cmd)
 	}
 
-	if cmd.OldPassword != nil {
-		old, err := cmd.OldPassword.Hash(usr.Salt)
-		if err != nil {
-			return err
-		}
-
-		if old != usr.Password {
-			return user.ErrPasswordMissmatch.Errorf("old password does not match stored password")
-		}
-	}
-
-	if cmd.Password != nil {
-		if err := cmd.Password.Validate(s.cfg); err != nil {
-			return err
-		}
-
-		hashed, err := cmd.Password.Hash(usr.Salt)
-		if err != nil {
-			return err
-		}
-		cmd.Password = &hashed
-	}
-
-	if cmd.OrgID != nil {
-		orgs, err := s.orgService.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: cmd.UserID})
-		if err != nil {
-			return err
-		}
-
-		valid := false
-		for _, org := range orgs {
-			if org.OrgID == *cmd.OrgID {
-				valid = true
-			}
-		}
-
-		if !valid {
-			return fmt.Errorf("user does not belong to org")
-		}
-	}
-
-	return s.store.Update(ctx, cmd)
+	return s.legacyService.Update(ctx, cmd)
 }
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
-	ctx, span := s.tracer.Start(ctx, "user.UpdateLastSeen", trace.WithAttributes(
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.UpdateLastSeenAt(s.k8sCtxWithIdentity(ctx), cmd)
+	}
+
+	return s.legacyService.UpdateLastSeenAt(ctx, cmd)
+}
+
+func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetSignedInUser", trace.WithAttributes(
 		attribute.Int64("userID", cmd.UserID),
-	))
-	defer span.End()
-
-	u, err := s.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
-		UserID: cmd.UserID,
-		OrgID:  cmd.OrgID,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if !s.shouldUpdateLastSeen(u.LastSeenAt) {
-		return user.ErrLastSeenUpToDate
-	}
-
-	return s.store.UpdateLastSeenAt(ctx, cmd)
-}
-
-func (s *Service) shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > s.cfg.UserLastSeenUpdateInterval
-}
-
-func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetSignedInUser", trace.WithAttributes(
-		attribute.Int64("userID", query.UserID),
-		attribute.Int64("orgID", query.OrgID),
-	))
-	defer span.End()
-
-	var signedInUser *user.SignedInUser
-
-	// only check cache if we have a user ID and an org ID in query
-	if s.cacheService != nil {
-		if query.OrgID > 0 && query.UserID > 0 {
-			cacheKey := newSignedInUserCacheKey(query.OrgID, query.UserID)
-			if cached, found := s.cacheService.Get(cacheKey); found {
-				cachedUser := cached.(user.SignedInUser)
-				signedInUser = &cachedUser
-				return signedInUser, nil
-			}
-		}
-	}
-
-	result, err := s.getSignedInUser(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	if s.cacheService != nil {
-		cacheKey := newSignedInUserCacheKey(result.OrgID, result.UserID)
-		s.cacheService.Set(cacheKey, *result, time.Second*5)
-	}
-
-	return result, nil
-}
-
-func newSignedInUserCacheKey(orgID, userID int64) string {
-	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
-}
-
-func (s *Service) getSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	ctx, span := s.tracer.Start(ctx, "user.getSignedInUser", trace.WithAttributes(
-		attribute.Int64("userID", query.UserID),
-		attribute.Int64("orgID", query.OrgID),
-	))
-	defer span.End()
-
-	usr, err := s.store.GetSignedInUser(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	usr.Teams, err = s.teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{
-		OrgID:  usr.OrgID,
-		UserID: usr.UserID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return usr, err
-}
-
-func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
-	ctx, span := s.tracer.Start(ctx, "user.Search", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
-	))
-	defer span.End()
-
-	return s.store.Search(ctx, query)
-}
-
-func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	ctx, span := s.tracer.Start(ctx, "user.BatchDisableUsers", trace.WithAttributes(
-		attribute.Int64Slice("userIDs", cmd.UserIDs),
-	))
-	defer span.End()
-
-	return s.store.BatchDisableUsers(ctx, cmd)
-}
-
-func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetProfile", trace.WithAttributes(
-		attribute.Int64("userID", query.UserID),
-	))
-	defer span.End()
-
-	return s.store.GetProfile(ctx, query)
-}
-
-// CreateServiceAccount creates a service account in the user table and adds service account to an organisation in the org_user table
-func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.CreateServiceAccount", trace.WithAttributes(
 		attribute.Int64("orgID", cmd.OrgID),
 	))
 	defer span.End()
 
-	cmd.Email = cmd.Login
-	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email)
-	if err != nil {
-		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		k8sCmd := *cmd
+		if !hasOrgID(ctx) && k8sCmd.OrgID == 0 {
+			k8sCmd.OrgID = s.cfg.DefaultOrgID()
+		}
+
+		result, err := s.k8sService.GetSignedInUser(s.k8sCtxWithIdentity(ctx), &k8sCmd)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
 	}
 
-	// create user
-	usr := &user.User{
-		Email:            cmd.Email,
-		Name:             cmd.Name,
-		Login:            cmd.Login,
-		IsDisabled:       cmd.IsDisabled,
-		OrgID:            cmd.OrgID,
-		Created:          time.Now(),
-		Updated:          time.Now(),
-		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-		IsServiceAccount: true,
-	}
-
-	salt, err := util.GetRandomString(10)
-	if err != nil {
-		return nil, err
-	}
-	usr.Salt = salt
-	rands, err := util.GetRandomString(10)
-	if err != nil {
-		return nil, err
-	}
-	usr.Rands = rands
-
-	_, err = s.store.Insert(ctx, usr)
-	if err != nil {
-		return nil, err
-	}
-
-	// create org user link
-	orgCmd := &org.AddOrgUserCommand{
-		OrgID:                     cmd.OrgID,
-		UserID:                    usr.ID,
-		Role:                      org.RoleType(cmd.DefaultOrgRole),
-		AllowAddingServiceAccount: true,
-	}
-	if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
-		return nil, err
-	}
-
-	return usr, nil
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
+	return s.legacyService.GetSignedInUser(ctx, cmd)
 }
 
-func (s *Service) supportBundleCollector() supportbundles.Collector {
-	collectorFn := func(ctx context.Context) (*supportbundles.SupportItem, error) {
-		query := &user.SearchUsersQuery{
-			SignedInUser: &user.SignedInUser{
-				Login:            "sa-supportbundle",
-				OrgRole:          "Admin",
-				IsGrafanaAdmin:   true,
-				IsServiceAccount: true,
-				Permissions:      map[int64]map[string][]string{ac.GlobalOrgID: {ac.ActionUsersRead: {ac.ScopeGlobalUsersAll}}},
-			},
-			OrgID:      0,
-			Query:      "",
-			Page:       0,
-			Limit:      0,
-			AuthModule: "",
-			Filters:    []user.Filter{},
-			IsDisabled: new(bool),
-		}
-		res, err := s.Search(ctx, query)
-		if err != nil {
-			return nil, err
-		}
-
-		userBytes, err := json.MarshalIndent(res.Users, "", " ")
-		if err != nil {
-			return nil, err
-		}
-
-		return &supportbundles.SupportItem{
-			Filename:  "users.json",
-			FileBytes: userBytes,
-		}, nil
+func (s *Service) Search(ctx context.Context, cmd *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.Search(s.k8sCtxWithIdentity(ctx), cmd)
 	}
 
-	return supportbundles.Collector{
-		UID:               "users",
-		DisplayName:       "User information",
-		Description:       "List users belonging to the Grafana instance",
-		IncludedByDefault: false,
-		Default:           false,
-		Fn:                collectorFn,
-	}
+	return s.legacyService.Search(ctx, cmd)
 }
 
-func (s *Service) usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
-	u := &quota.Map{}
-	if used, err := s.store.Count(ctx); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
-		if err != nil {
-			return u, err
-		}
-		u.Set(tag, used)
-	}
-	return u, nil
+func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return s.legacyService.BatchDisableUsers(ctx, cmd)
 }
 
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
+func (s *Service) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		return s.k8sService.GetProfile(s.k8sCtxWithIdentity(ctx), cmd)
 	}
 
-	globalQuotaTag, err := quota.NewTag(quota.TargetSrv(user.QuotaTargetSrv), quota.Target(user.QuotaTarget), quota.GlobalScope)
-	if err != nil {
-		return limits, err
+	return s.legacyService.GetProfile(ctx, cmd)
+}
+
+// k8sCtxWithIdentity returns ctx unchanged when auth info is already present;
+// otherwise it injects a service identity so internal lookups (e.g. authn
+// post-auth user-sync) don't go out as User "" and 403 with "invalid org".
+func (s *Service) k8sCtxWithIdentity(ctx context.Context) context.Context {
+	if _, ok := claims.AuthInfoFrom(ctx); ok {
+		return ctx
+	}
+	orgID := s.cfg.DefaultOrgID()
+	if id, ok := identity.OrgIDFrom(ctx); ok && id != 0 {
+		orgID = id
+	}
+	ctx, _ = identity.WithServiceIdentity(ctx, orgID)
+	return ctx
+}
+
+func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
+	return s.legacyService.GetUsageStats(ctx)
+}
+
+func (s *Service) isKubernetesUserServiceEnabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
 	}
 
-	limits.Set(globalQuotaTag, cfg.Quota.Global.User)
-	return limits, nil
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+}
+
+// shouldFallbackToLegacy determines whether to fall back to the legacy service
+// for a given request. The k8s redirect path builds its rest.Config from the
+// request context's *contextmodel.ReqContext so that the K8s apiserver sees
+// the original end-user identity; non-HTTP callers (authn sign-in sync,
+// grafana-cli) run as a service identity with no ReqContext on the context
+// and must keep working via the legacy path.
+func (s *Service) shouldFallbackToLegacy(ctx context.Context) bool {
+	return identity.IsServiceIdentity(ctx) && contexthandler.FromContext(ctx) == nil
+}
+
+func hasOrgID(ctx context.Context) bool {
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		return requester.GetOrgID() != 0
+	}
+
+	orgID, ok := identity.OrgIDFrom(ctx)
+	return ok && orgID != 0
 }

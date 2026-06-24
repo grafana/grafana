@@ -3,7 +3,7 @@
  * `npx rtk-query-codegen-openapi ./scripts/generate-alerting-rtk-apis.ts`
  */
 
-import { ConfigFile } from '@rtk-query/codegen-openapi';
+import { type ConfigFile } from '@rtk-query/codegen-openapi';
 import { accessSync } from 'fs';
 
 const schemaFile = '../data/alerting/openapi.json';
@@ -61,6 +61,18 @@ const config: ConfigFile = {
         'deleteNamespacedTemplateGroup',
       ],
       exportName: 'generatedTemplatesApi',
+    },
+    '../public/app/features/alerting/unified/openapi/routesApi.gen.ts': {
+      apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
+      apiImport: 'alertingApi',
+      filterEndpoints: [
+        'listNamespacedRoutingTree',
+        'createNamespacedRoutingTree',
+        'readNamespacedRoutingTree',
+        'replaceNamespacedRoutingTree',
+        'deleteNamespacedRoutingTree',
+      ],
+      exportName: 'generatedRoutesApi',
       flattenArg: false,
     },
   },

@@ -8,15 +8,16 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 )
 
 func TestQueryData(t *testing.T) {
 	t.Run("Empty registry should return not registered error", func(t *testing.T) {
-		registry := fakes.NewFakePluginRegistry()
+		registry := pluginfakes.NewFakePluginRegistry()
 		client := ProvideService(registry)
 		_, err := client.QueryData(context.Background(), &backend.QueryDataRequest{})
 		require.Error(t, err)
@@ -25,30 +26,45 @@ func TestQueryData(t *testing.T) {
 
 	t.Run("Non-empty registry", func(t *testing.T) {
 		tcs := []struct {
-			err           error
-			expectedError error
+			err               error
+			expectedError     error
+			shouldPassThrough bool
 		}{
 			{
-				err:           plugins.ErrPluginUnavailable,
-				expectedError: plugins.ErrPluginUnavailable,
+				err:               plugins.ErrPluginUnavailable,
+				expectedError:     plugins.ErrPluginUnavailable,
+				shouldPassThrough: true,
 			},
 			{
-				err:           plugins.ErrMethodNotImplemented,
-				expectedError: plugins.ErrMethodNotImplemented,
+				err:               plugins.ErrMethodNotImplemented,
+				expectedError:     plugins.ErrMethodNotImplemented,
+				shouldPassThrough: true,
 			},
 			{
-				err:           errors.New("surprise surprise"),
-				expectedError: plugins.ErrPluginDownstreamErrorBase,
+				err:               errors.New("surprise surprise"),
+				expectedError:     plugins.ErrPluginRequestFailureErrorBase,
+				shouldPassThrough: false,
 			},
 			{
-				err:           context.Canceled,
-				expectedError: plugins.ErrPluginRequestCanceledErrorBase,
+				err:               context.Canceled,
+				expectedError:     plugins.ErrPluginRequestCanceledErrorBase,
+				shouldPassThrough: false,
+			},
+			{
+				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
+				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
+				shouldPassThrough: true,
+			},
+			{
+				err:               plugins.ErrPluginGrpcResourceExhaustedBase.Errorf("exhausted"),
+				expectedError:     plugins.ErrPluginGrpcResourceExhaustedBase.Errorf("exhausted"),
+				shouldPassThrough: true,
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(fmt.Sprintf("Plugin client error %q should return expected error", tc.err), func(t *testing.T) {
-				registry := fakes.NewFakePluginRegistry()
+				registry := pluginfakes.NewFakePluginRegistry()
 				p := &plugins.Plugin{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
@@ -69,7 +85,11 @@ func TestQueryData(t *testing.T) {
 					},
 				})
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
+				if tc.shouldPassThrough {
+					require.Equal(t, tc.err, err)
+				} else {
+					require.ErrorIs(t, err, tc.expectedError)
+				}
 			})
 		}
 	})
@@ -77,7 +97,7 @@ func TestQueryData(t *testing.T) {
 
 func TestCheckHealth(t *testing.T) {
 	t.Run("empty plugin registry should return plugin not registered error", func(t *testing.T) {
-		registry := fakes.NewFakePluginRegistry()
+		registry := pluginfakes.NewFakePluginRegistry()
 		client := ProvideService(registry)
 		_, err := client.CheckHealth(context.Background(), &backend.CheckHealthRequest{})
 		require.Error(t, err)
@@ -110,7 +130,7 @@ func TestCheckHealth(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(fmt.Sprintf("Plugin client error %q should return expected error", tc.err), func(t *testing.T) {
-				registry := fakes.NewFakePluginRegistry()
+				registry := pluginfakes.NewFakePluginRegistry()
 				p := &plugins.Plugin{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
@@ -138,7 +158,7 @@ func TestCheckHealth(t *testing.T) {
 }
 
 func TestCallResource(t *testing.T) {
-	registry := fakes.NewFakePluginRegistry()
+	registry := pluginfakes.NewFakePluginRegistry()
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID: "pid",

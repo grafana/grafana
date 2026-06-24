@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/cloud-monitoring/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export interface CloudMonitoringQuery extends common.DataQuery {

@@ -1,29 +1,59 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil } from '@grafana/data';
-import { HorizontalGroup, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
+import {
+  type GrafanaTheme2,
+  dateTimeFormat,
+  systemDateFormats,
+  textUtil,
+  type LinkModel,
+  type ActionModel,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Stack, IconButton, Tag, usePanelContext, useStyles2, VizTooltipFooter } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
+
+import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
 
 interface Props {
   annoVals: Record<string, any[]>;
   annoIdx: number;
   timeZone: string;
+  isPinned: boolean;
+  onClose: () => void;
   onEdit: () => void;
+  links?: LinkModel[];
+  actions?: ActionModel[];
 }
 
 const retFalse = () => false;
 
-export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Props) => {
+export const AnnotationTooltip2 = ({
+  annoVals,
+  annoIdx,
+  timeZone,
+  isPinned,
+  onClose,
+  onEdit,
+  links = [],
+  actions = [],
+}: Props) => {
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
-
+  const focusRef = React.useRef<HTMLButtonElement | null>(null);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
-
   const dashboardUID = annoVals.dashboardUID?.[annoIdx];
-  const canEdit = canEditAnnotations(dashboardUID);
-  const canDelete = canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
+
+  // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. The id being 0 is the best indicator the annotation came from loki
+  const canEdit = annoId !== 0 && canEditAnnotations(dashboardUID);
+  const canDelete = annoId !== 0 && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
+
+  React.useEffect(() => {
+    if (isPinned) {
+      focusRef.current?.focus();
+    }
+  }, [isPinned]);
 
   const timeFormatter = (value: number) =>
     dateTimeFormat(value, {
@@ -62,7 +92,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <HorizontalGroup justify={'space-between'} align={'center'} spacing={'md'}>
+        <Stack gap={2} basis="100%" justifyContent="space-between" alignItems="center">
           <div className={styles.meta}>
             <span>
               {avatar}
@@ -70,31 +100,54 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
             </span>
             {time}
           </div>
-          {(canEdit || canDelete) && (
-            <div className={styles.editControls}>
-              {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} tooltip="Edit" />}
+          {(canEdit || canDelete || isPinned) && (
+            <div className={styles.controls}>
+              {canEdit && (
+                <IconButton
+                  ref={focusRef}
+                  name={'pen'}
+                  size={'sm'}
+                  onClick={onEdit}
+                  tooltip={t('timeseries.annotation-tooltip2.tooltip-edit', 'Edit')}
+                />
+              )}
               {canDelete && (
                 <IconButton
+                  ref={canEdit ? null : focusRef}
                   name={'trash-alt'}
                   size={'sm'}
                   onClick={() => onAnnotationDelete(annoId)}
-                  tooltip="Delete"
+                  tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
+                />
+              )}
+              {isPinned && (
+                <AnnotationTooltipHeaderCloseIcon
+                  forwardRef={canEdit || canDelete ? null : focusRef}
+                  onClick={(e) => {
+                    // Don't trigger onClick
+                    e.stopPropagation();
+                    onClose();
+                  }}
                 />
               )}
             </div>
           )}
-        </HorizontalGroup>
+        </Stack>
       </div>
 
       <div className={styles.body}>
         {text && <div className={styles.text} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text) }} />}
         {alertText}
         <div>
-          <HorizontalGroup spacing="xs" wrap>
-            {annoVals.tags?.[annoIdx]?.map((t: string, i: number) => <Tag name={t} key={`${t}-${i}`} />)}
-          </HorizontalGroup>
+          <Stack gap={0.5} wrap={true}>
+            {annoVals.tags?.[annoIdx]?.map((t: string, i: number) => (
+              <Tag data-testid={'annotation-tag'} name={t} key={`${t}-${i}`} />
+            ))}
+          </Stack>
         </div>
       </div>
+
+      {(links.length > 0 || actions.length > 0) && <VizTooltipFooter dataLinks={links} actions={actions} />}
     </div>
   );
 };
@@ -104,9 +157,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'initial',
     borderRadius: theme.shape.radius.default,
-    background: theme.colors.background.primary,
+    background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z2,
+    boxShadow: theme.shadows.z3,
     userSelect: 'text',
   }),
   header: css({
@@ -119,13 +172,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   meta: css({
     display: 'flex',
-    justifyContent: 'space-between',
     color: theme.colors.text.primary,
     fontWeight: 400,
   }),
-  editControls: css({
+  controls: css({
     display: 'flex',
-    alignItems: 'center',
     '> :last-child': {
       marginLeft: 0,
     },

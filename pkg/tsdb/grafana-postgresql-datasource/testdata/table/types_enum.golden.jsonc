@@ -1,0 +1,65 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "executedQueryString": "SELECT * FROM tbl WHERE current_mood = 'happy';"
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 1 Rows
+//  +-----------------+--------------------+
+//  | Name: name      | Name: current_mood |
+//  | Labels:         | Labels:            |
+//  | Type: []*string | Type: []*string    |
+//  +-----------------+--------------------+
+//  | Moe             | happy              |
+//  +-----------------+--------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "executedQueryString": "SELECT * FROM tbl WHERE current_mood = 'happy';"
+        },
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "current_mood",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "Moe"
+          ],
+          [
+            "happy"
+          ]
+        ]
+      }
+    }
+  ]
+}

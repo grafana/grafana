@@ -1,7 +1,5 @@
 import Feature from 'ol/Feature';
-import Map from 'ol/Map';
-import { Coordinate } from 'ol/coordinate';
-import { MultiLineString } from 'ol/geom';
+import type OpenLayersMap from 'ol/Map';
 import Point from 'ol/geom/Point';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -12,16 +10,14 @@ import DayNight from 'ol-ext/source/DayNight';
 import { Subscription } from 'rxjs';
 
 import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
-  EventBus,
-  DataHoverEvent,
-  DataHoverClearEvent,
+  type MapLayerRegistryItem,
+  type MapLayerOptions,
+  type PanelData,
+  type GrafanaTheme2,
+  type EventBus
 } from '@grafana/data';
 
-export enum ShowTime {
+enum ShowTime {
   From = 'from',
   To = 'to',
 }
@@ -39,15 +35,7 @@ const defaultConfig: DayNightConfig = {
   nightColor: '#a7a6ba4D',
 };
 
-export const DAY_NIGHT_LAYER_ID = 'dayNight';
-
-// Used by default when nothing is configured
-export const defaultDayNightConfig: MapLayerOptions<DayNightConfig> = {
-  type: DAY_NIGHT_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultConfig,
-  tooltip: true,
-};
+const DAY_NIGHT_LAYER_ID = 'dayNight';
 
 /**
  * Map layer configuration for circle overlay
@@ -64,7 +52,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<DayNightConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<DayNightConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultConfig,
@@ -74,8 +62,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     // DayNight source
     const source = new DayNight({});
     const sourceMethods = Object.getPrototypeOf(source);
-    const sourceLine = new DayNight({});
-    const sourceLineMethods = Object.getPrototypeOf(sourceLine);
 
     // Night polygon
     const vectorLayer = new VectorImage({
@@ -160,44 +146,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     // Crosshair sharing subscriptions
     const subscriptions = new Subscription();
 
-    if (false) {
-      subscriptions.add(
-        eventBus.subscribe(DataHoverEvent, (event) => {
-          const time = event.payload?.point?.time;
-          if (time) {
-            const lineTime = new Date(time);
-            const nightLinePoints = sourceLine.getCoordinates(lineTime.toString(), 'line');
-            nightLineLayer.getSource()?.clear();
-            const lineStringArray: Coordinate[][] = [];
-            for (let l = 0; l < nightLinePoints.length - 1; l++) {
-              const x1: number = Object.values(nightLinePoints[l])[0];
-              const y1: number = Object.values(nightLinePoints[l])[1];
-              const x2: number = Object.values(nightLinePoints[l + 1])[0];
-              const y2: number = Object.values(nightLinePoints[l + 1])[1];
-              const lineString = [fromLonLat([x1, y1]), fromLonLat([x2, y2])];
-              lineStringArray.push(lineString);
-            }
-            nightLineLayer.getSource()?.addFeature(
-              new Feature({
-                geometry: new MultiLineString(lineStringArray),
-              })
-            );
-
-            let sunLinePos: number[] = [];
-            sunLinePos = sourceLineMethods.getSunPosition(lineTime);
-            sunLineFeature.getGeometry()?.setCoordinates(fromLonLat(sunLinePos));
-            sunLineFeature.setStyle([sunLineStyle, sunLineStyleDash]);
-          }
-        })
-      );
-
-      subscriptions.add(
-        eventBus.subscribe(DataHoverClearEvent, (event) => {
-          nightLineLayer.getSource()?.clear();
-          sunLineFeature.setStyle(new Style({}));
-        })
-      );
-    }
 
     return {
       init: () => layer,

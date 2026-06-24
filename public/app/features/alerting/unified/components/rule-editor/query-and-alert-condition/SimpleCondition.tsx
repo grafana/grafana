@@ -1,31 +1,27 @@
 import { css } from '@emotion/css';
 import { produce } from 'immer';
-import { Dispatch, FormEvent } from 'react';
-import { UnknownAction } from 'redux';
+import { type Dispatch, type FormEvent } from 'react';
+import { type UnknownAction } from 'redux';
 
-import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
-import { ButtonSelect, InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { type GrafanaTheme2, type PanelData, ReducerID, type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
-import { getReducerType } from 'app/features/expressions/utils/expressionTypes';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
+import {
+  type ExpressionQuery,
+  ExpressionQueryType,
+  reducerTypes,
+  thresholdFunctions,
+} from 'app/features/expressions/types';
+import { getReducerType, isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { ToLabel } from '../../../../../expressions/components/ToLabel';
+import { type SimpleCondition } from '../../../types/rule-form';
 import { ExpressionResult } from '../../expressions/Expression';
 
 import { updateExpression } from './reducer';
-
-export const SIMPLE_CONDITION_QUERY_ID = 'A';
-export const SIMPLE_CONDITION_REDUCER_ID = 'B';
-export const SIMPLE_CONDITION_THRESHOLD_ID = 'C';
-
-export interface SimpleCondition {
-  whenField: string;
-  evaluator: {
-    params: number[];
-    type: EvalFunction;
-  };
-}
 
 /**
  * This is the simple condition editor if the user is in the simple mode in the query section
@@ -57,9 +53,7 @@ export const SimpleConditionEditor = ({
     updateReduceExpression(value.value ?? ReducerID.last, expressionQueriesList, dispatch);
   };
 
-  const isRange =
-    simpleCondition.evaluator.type === EvalFunction.IsWithinRange ||
-    simpleCondition.evaluator.type === EvalFunction.IsOutsideRange;
+  const isRange = isRangeEvaluator(simpleCondition.evaluator.type);
 
   const thresholdFunction = thresholdFunctions.find((fn) => fn.value === simpleCondition.evaluator?.type);
 
@@ -73,24 +67,17 @@ export const SimpleConditionEditor = ({
     updateThresholdFunction(value.value ?? EvalFunction.IsAbove, expressionQueriesList, dispatch);
   };
 
-  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index?: number) => {
-    if (isRange) {
-      const newParams = produce(simpleCondition.evaluator.params, (draft) => {
-        draft[index ?? 0] = parseFloat(event.currentTarget.value);
-      });
-      // update the condition kept in the parent
-      onChange({ ...simpleCondition, evaluator: { ...simpleCondition.evaluator, params: newParams } });
-      // update the reducer state where we store the queries
-      updateThresholdValue(parseFloat(event.currentTarget.value), index ?? 0, expressionQueriesList, dispatch);
-    } else {
-      // update the condition kept in the parent
-      onChange({
-        ...simpleCondition,
-        evaluator: { ...simpleCondition.evaluator, params: [parseFloat(event.currentTarget.value)] },
-      });
-      // update the reducer state where we store the queries
-      updateThresholdValue(parseFloat(event.currentTarget.value), 0, expressionQueriesList, dispatch);
-    }
+  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index = 0) => {
+    const value = event.currentTarget.value;
+    const numericValue = parseFloat(value) || 0; // try to convert input to a number that isn't NaN
+
+    onChange(
+      produce(simpleCondition, (draftCondition) => {
+        draftCondition.evaluator.params[index] = numericValue;
+      })
+    );
+
+    updateThresholdValue(numericValue, index, expressionQueriesList, dispatch);
   };
 
   const styles = useStyles2(getStyles);
@@ -104,46 +91,59 @@ export const SimpleConditionEditor = ({
           </Text>
         </header>
         <InlineFieldRow className={styles.condition.container}>
-          <InlineField label="WHEN">
-            <Select
-              options={reducerTypes}
-              value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
-              onChange={onReducerTypeChange}
-              width={20}
-            />
-          </InlineField>
-          <InlineField label="OF QUERY">
-            <Stack direction="row" gap={1} alignItems="center">
-              <ButtonSelect
-                className={styles.buttonSelectText}
-                options={thresholdFunctions}
-                onChange={onEvalFunctionChange}
-                value={thresholdFunction}
+          {simpleCondition.whenField && (
+            <InlineField label={t('alerting.simple-condition-editor.label-when', 'WHEN')}>
+              <Select
+                options={reducerTypes}
+                value={reducerTypes.find((o) => o.value === simpleCondition.whenField)}
+                onChange={onReducerTypeChange}
+                width={20}
               />
+            </InlineField>
+          )}
+          <InlineField
+            label={
+              simpleCondition.whenField
+                ? t('alerting.simple-condition-editor.label-of-query', 'OF QUERY')
+                : t('alerting.simple-condition-editor.label-when-query', 'WHEN QUERY')
+            }
+          >
+            <Stack direction="row" gap={1} alignItems="center">
+              <ThresholdSelect onChange={onEvalFunctionChange} value={thresholdFunction} />
               {isRange ? (
                 <>
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[0]}
-                    onChange={(event) => onEvaluateValueChange(event, 0)}
+                    // by using the key prop we can force the input to re-render whenever the defaultValue updates
+                    // this is because we have a useEffect() that updates the data structure but "defaultValue" will memoize the
+                    // first value before the useEffect() runs
+                    key={simpleCondition.evaluator.params[0]}
+                    defaultValue={simpleCondition.evaluator.params[0] ?? ''}
+                    onBlur={(event) => {
+                      onEvaluateValueChange(event, 0);
+                    }}
                   />
-                  <div className={styles.condition.button}>
-                    <Trans i18nKey="alerting.simpleCondition.ofQuery.To">TO</Trans>
-                  </div>
+                  <ToLabel />
                   <Input
                     type="number"
                     width={10}
-                    value={simpleCondition.evaluator.params[1]}
-                    onChange={(event) => onEvaluateValueChange(event, 1)}
+                    key={simpleCondition.evaluator.params[1]}
+                    defaultValue={simpleCondition.evaluator.params[1] ?? ''}
+                    onBlur={(event) => {
+                      onEvaluateValueChange(event, 1);
+                    }}
                   />
                 </>
               ) : (
                 <Input
                   type="number"
                   width={10}
-                  onChange={onEvaluateValueChange}
-                  value={simpleCondition.evaluator.params[0]}
+                  key={simpleCondition.evaluator.params[0]}
+                  defaultValue={simpleCondition.evaluator.params[0] ?? ''}
+                  onBlur={(event) => {
+                    onEvaluateValueChange(event, 0);
+                  }}
                 />
               )}
             </Stack>
@@ -160,15 +160,22 @@ function updateReduceExpression(
   expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
-  const reduceExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.model.refId === SIMPLE_CONDITION_REDUCER_ID
-  );
+  // 1. make sure have have a reduce expression and that it is pointing to the data query
+  const reduceExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.reduce);
 
   const newReduceExpression = reduceExpression
     ? produce(reduceExpression?.model, (draft) => {
-        if (draft && draft.conditions) {
+        if (draft && draft.conditions?.[0]) {
           draft.reducer = reducer;
-          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+          const reducerType = getReducerType(reducer) ?? ReducerID.last;
+          // API-loaded rules may have conditions without a reducer object (e.g. provisioned rules
+          // or rules created by older versions). Backfill it to keep conditions[0].reducer.type
+          // in sync with draft.reducer rather than silently skipping the update.
+          if (!draft.conditions[0].reducer) {
+            draft.conditions[0].reducer = { params: [], type: reducerType };
+          } else {
+            draft.conditions[0].reducer.type = reducerType;
+          }
         }
       })
     : undefined;
@@ -180,12 +187,10 @@ function updateThresholdFunction(
   expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
-  const thresholdExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.model.refId === SIMPLE_CONDITION_THRESHOLD_ID
-  );
+  const thresholdExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.threshold);
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.model.conditions) {
+    if (draft && draft.model.conditions?.[0]) {
       draft.model.conditions[0].evaluator.type = evaluator;
     }
   });
@@ -198,12 +203,10 @@ function updateThresholdValue(
   expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
-  const thresholdExpression = expressionQueriesList.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.model.refId === SIMPLE_CONDITION_THRESHOLD_ID
-  );
+  const thresholdExpression = expressionQueriesList.find((query) => query.model.type === ExpressionQueryType.threshold);
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.model.conditions) {
+    if (draft && draft.model.conditions?.[0]) {
       draft.model.conditions[0].evaluator.params[index] = value;
     }
   });
@@ -211,14 +214,10 @@ function updateThresholdValue(
 }
 
 export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<ExpressionQuery>>): SimpleCondition {
-  const reduceExpression = expressions.find(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
-  );
-  const thresholdExpression = expressions.find(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
-  );
+  const reduceExpression = expressions.find((query) => query.model.type === ExpressionQueryType.reduce);
+  const thresholdExpression = expressions.find((query) => query.model.type === ExpressionQueryType.threshold);
   const conditionsFromThreshold = thresholdExpression?.model.conditions ?? [];
-  const whenField = reduceExpression?.model.reducer ?? ReducerID.last;
+  const whenField = reduceExpression?.model.reducer;
   const params = conditionsFromThreshold[0]?.evaluator?.params
     ? [...conditionsFromThreshold[0]?.evaluator?.params]
     : [0];
@@ -260,20 +259,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
       borderBottom: `solid 1px ${theme.colors.border.weak}`,
       flex: 1,
-    }),
-    button: css({
-      height: '32px',
-      color: theme.colors.primary.text,
-      fontSize: theme.typography.bodySmall.fontSize,
-      textTransform: 'uppercase',
-      display: 'flex',
-      alignItems: 'center',
-      borderRadius: theme.shape.radius.default,
-      fontWeight: theme.typography.fontWeightBold,
-      border: `1px solid ${theme.colors.border.medium}`,
-      whiteSpace: 'nowrap',
-      padding: `0 ${theme.spacing(1)}`,
-      backgroundColor: theme.colors.background.primary,
     }),
   },
 });

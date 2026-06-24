@@ -1,6 +1,6 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
-import { LanguageDefinition } from './register';
+import { type LanguageDefinition } from './register';
 
 export type CompletionItem = monacoTypes.languages.CompletionItem;
 
@@ -25,21 +25,45 @@ export enum StatementPosition {
   // sql
   SelectKeyword,
   AfterSelectKeyword,
+  SelectExpression,
+  AfterSelectExpression,
   AfterSelectFuncFirstArgument,
-  AfterFromKeyword,
-  SchemaFuncFirstArgument,
-  SchemaFuncExtraArgument,
+  PredefinedFunctionArgument,
   FromKeyword,
   AfterFrom,
+  AfterFromKeyword,
+  AfterFromArguments,
+  SchemaFuncFirstArgument,
+  SchemaFuncExtraArgument,
   WhereKey,
   WhereComparisonOperator,
   WhereValue,
   AfterWhereValue,
+  HavingKey,
+  HavingComparisonOperator,
+  HavingValue,
+  AfterHavingValue,
+  CaseKey,
+  CaseComparisonOperator,
+  CaseValue,
+  AfterCaseValue,
+  WhenKey,
+  WhenComparisonOperator,
+  WhenValue,
+  AfterWhenValue,
+  ThenExpression,
+  AfterThenExpression,
+  AfterElseKeyword,
+  OnKey,
+  OnComparisonOperator,
+  OnValue,
+  AfterOnValue,
   AfterGroupByKeywords,
   AfterGroupBy,
   AfterOrderByKeywords,
   AfterOrderByFunction,
   AfterOrderByDirection,
+  Subquery,
   // metric math
   PredefinedFunction,
   SearchFuncSecondArg,
@@ -79,6 +103,10 @@ export enum StatementPosition {
   LikeKeyword,
   AfterLikeKeyword,
 
+  DiffKeyword,
+  AfterDiffKeyword,
+  DiffModifierArg,
+
   Function,
   FunctionArg,
   CommandArg,
@@ -90,13 +118,36 @@ export enum StatementPosition {
   BooleanOperatorArg,
   ComparisonOperator,
   ComparisonOperatorArg,
+
+  //PPL
+  BeforeLogicalExpression,
+  AfterArithmeticOperator,
+  AfterINKeyword,
+  SortField,
+  AfterHeadCommand,
+  AfterFieldsCommand,
+  FieldList,
+  AfterDedupFieldNames,
+  AfterStatsCommand,
+  StatsFunctionArgument,
+  AfterStatsBy,
+  AfterBooleanArgument,
+  EvalClause,
+  Expression,
+  SortFieldExpression,
 }
 
 export enum SuggestionKind {
   SelectKeyword,
+  AfterSelectKeyword,
+  AfterSelectExpression,
   FunctionsWithArguments,
   Metrics,
   FromKeyword,
+  AfterFromKeyword,
+  AfterFromArguments,
+  JoinKeywords,
+  HavingKeywords,
   SchemaKeyword,
   Namespaces,
   LabelKeys,
@@ -109,6 +160,10 @@ export enum SuggestionKind {
   ComparisonOperators,
   LabelValues,
   LogicalOperators,
+  CaseKeyword,
+  WhenKeyword,
+  ThenKeyword,
+  AfterThenExpression,
 
   // metricmath,
   KeywordArguments,
@@ -120,6 +175,21 @@ export enum SuggestionKind {
   Command,
   Function,
   InKeyword,
+  DiffModifier,
+
+  // PPL
+  BooleanFunction,
+  LogicalExpression,
+  ValueExpression,
+  FieldOperators,
+  Field,
+  BooleanLiteral,
+  DedupParameter,
+  StatsParameter,
+  BooleanArgument,
+  StatsFunctions,
+  SpanClause,
+  SortFunctions,
 }
 
 export enum CompletionItemPriority {
@@ -130,16 +200,16 @@ export enum CompletionItemPriority {
   Low = 'q',
 }
 
-export interface Editor {
+interface Editor {
   tokenize: (value: string, languageId: string) => monacoTypes.Token[][];
 }
 
-export interface Range {
+interface Range {
   containsPosition: (range: monacoTypes.IRange, position: monacoTypes.IPosition) => boolean;
   fromPositions: (start: monacoTypes.IPosition, end?: monacoTypes.IPosition) => monacoTypes.Range;
 }
 
-export interface Languages {
+interface Languages {
   CompletionItemInsertTextRule: {
     InsertAsSnippet: 4;
   };

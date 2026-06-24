@@ -1,0 +1,26 @@
+/**
+ * THESE APIS MUST NOT BE USED IN COMMUNITY PLUGINS.
+ *
+ * Unstable APIs are still in development and are subject to breaking changes
+ * at any point, like feature flags but for APIS. They must only be used in
+ * Grafana core and internal plugins where we can coordinate changes.
+ *
+ * Once mature, they will be moved to the main export, be available to plugins via the standard import path,
+ * and be subject to the standard policies
+ */
+
+export { clearLoggerRegistry, getLogger, initializeLoggersRegistry, setLogger } from './services/logging/registry';
+export { type LoggerSource } from './services/logging/loggers';
+export { defineFeatureEvents } from './analyticsFramework/main';
+export type { EventProperty, Event } from './analyticsFramework/types';
+export { getPluginSettings } from './services/pluginSettings/getPluginSettings';
+export { updateAppPluginSettings } from './services/pluginSettings/updateAppPluginSettings';
+export { usePluginSettings } from './services/pluginSettings/hooks';
+export { getDataSourceInstanceSettings, reloadDataSourceInstanceSettings } from './services/dataSource/settings';
+export { getDataSourceInstance, registerRuntimeDataSourceInstance } from './services/dataSource/dataSource';
+export {
+  useDataSourceInstanceSettings,
+  useDataSourceInstance,
+  type UseDataSourceInstanceSettingsResult,
+  type UseDataSourceInstanceResult,
+} from './services/dataSource/hooks';

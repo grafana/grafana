@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps } from '@grafana/scenes';
+import { Trans, t } from '@grafana/i18n';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import ShareInternallyConfiguration from '../../ShareInternallyConfiguration';
-import { ShareLinkTab, ShareLinkTabState } from '../../ShareLinkTab';
+import { ShareLinkTab, type ShareLinkTabState } from '../../ShareLinkTab';
 import { getShareLinkConfiguration, updateShareLinkConfiguration } from '../utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareInternally;

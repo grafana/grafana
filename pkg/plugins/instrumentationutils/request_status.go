@@ -33,7 +33,9 @@ func RequestStatusFromError(err error) RequestStatus {
 	status := RequestStatusOK
 	if err != nil {
 		status = RequestStatusError
-		if errors.Is(err, context.Canceled) || grpcstatus.Code(err) == grpccodes.Canceled {
+		if errors.Is(err, context.Canceled) {
+			status = RequestStatusCancelled
+		} else if s, ok := grpcstatus.FromError(err); ok && s.Code() == grpccodes.Canceled || s.Code() == grpccodes.DeadlineExceeded {
 			status = RequestStatusCancelled
 		}
 	}
@@ -101,4 +103,13 @@ func RequestStatusFromProtoQueryDataResponse(res *pluginv2.QueryDataResponse, er
 	}
 
 	return status
+}
+
+// RequestStatusFromHTTPStatus maps an HTTP status code to a RequestStatus.
+// It returns RequestStatusError for 4xx and 5xx codes, otherwise RequestStatusOK.
+func RequestStatusFromHTTPStatus(statusCode int) RequestStatus {
+	if statusCode >= 400 {
+		return RequestStatusError
+	}
+	return RequestStatusOK
 }

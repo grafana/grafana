@@ -3,14 +3,19 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+var redirectAllowRe = regexp.MustCompile(`^/?[a-zA-Z0-9-_./]*$`)
+
+// Do not allow redirect URLs that contain "//" or ".."
+var redirectDenyRe = regexp.MustCompile(`(//|\.\.)`)
 
 // OrgRedirect changes org and redirects users if the
 // querystring `orgId` doesn't match the active org.
@@ -32,6 +37,11 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 			return
 		}
 
+		if !validRedirectPath(c.Req.URL.Path) {
+			// Do not switch orgs or perform the redirect because the new path is not valid
+			return
+		}
+
 		if err := userSvc.Update(ctx.Req.Context(), &user.UpdateUserCommand{UserID: ctx.UserID, OrgID: &orgId}); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)
@@ -50,8 +60,16 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 			qs = fmt.Sprintf("%s&kiosk", urlParams.Encode())
 		}
 
-		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), qs)
+		newURL := fmt.Sprintf("%s%s?%s", cfg.AppSubURL, c.Req.URL.Path, qs)
 
 		c.Redirect(newURL, 302)
 	}
+}
+
+func validRedirectPath(p string) bool {
+	if redirectDenyRe.MatchString(p) {
+		return false
+	}
+
+	return p == "" || p == "/" || redirectAllowRe.MatchString(p)
 }

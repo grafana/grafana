@@ -1,0 +1,130 @@
+name: "MT Service Compatibility"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-separation:
+    # This check is only meaningful in grafana/grafana; the workflow file is mirrored to
+    # grafana-security-mirror, where it shouldn't run.
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Detect changes
+        id: changed-files
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files_yaml: |
+            frontend_strict:
+              - 'public/**'
+              - 'packages/**'
+              - 'scripts/webpack/**'
+              - '.eslintrc*'
+              - '.prettierrc*'
+              - '.stylelintrc*'
+              - 'tsconfig*'
+              - 'yarn.lock'
+              - 'package.json'
+              - '.betterer*'
+              - 'jest.config*'
+              - 'playwright**'
+              - '!**/*.gen.ts'
+              - '!**/*.gen.d.ts'
+              - '!packages/grafana-openapi/**'
+              - '!public/api-enterprise-spec.json'
+              - '!public/api-merged.json'
+              - '!public/openapi3.json'
+              # decoupled plugins are deployed via backend
+              - '!public/app/plugins/datasource/azuremonitor/**'
+              - '!public/app/plugins/datasource/cloud-monitoring/**'
+              - '!public/app/plugins/datasource/grafana-postgresql-datasource/**'
+              - '!public/app/plugins/datasource/grafana-pyroscope-datasource/**'
+              - '!public/app/plugins/datasource/grafana-testdata-datasource/**'
+              - '!public/app/plugins/datasource/graphite/**'
+              - '!public/app/plugins/datasource/influxdb/**'
+              - '!public/app/plugins/datasource/jaeger/**'
+              - '!public/app/plugins/datasource/loki/**'
+              - '!public/app/plugins/datasource/mssql/**'
+              - '!public/app/plugins/datasource/mysql/**'
+              - '!public/app/plugins/datasource/parca/**'
+            backend_strict:
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
+              - 'Makefile'
+              - 'conf/**'
+              - '.golangci*'
+              - 'apiserver/**'
+              - 'pkg-gen/**'
+              - 'scripts/drone/**'
+              - 'scripts/go/**'
+              - '.air.toml'
+              - '!pkg/services/featuremgmt/registry.go'
+              - '!pkg/services/featuremgmt/toggles_gen.csv'
+              - '!pkg/services/featuremgmt/toggles_gen.go'
+              - '!pkg/services/featuremgmt/toggles_gen.json'
+              # decoupled plugins are deployed via backend
+              - 'public/app/plugins/datasource/azuremonitor/**'
+              - 'public/app/plugins/datasource/cloud-monitoring/**'
+              - 'public/app/plugins/datasource/grafana-postgresql-datasource/**'
+              - 'public/app/plugins/datasource/grafana-pyroscope-datasource/**'
+              - 'public/app/plugins/datasource/grafana-testdata-datasource/**'
+              - 'public/app/plugins/datasource/graphite/**'
+              - 'public/app/plugins/datasource/influxdb/**'
+              - 'public/app/plugins/datasource/jaeger/**'
+              - 'public/app/plugins/datasource/loki/**'
+              - 'public/app/plugins/datasource/mssql/**'
+              - 'public/app/plugins/datasource/mysql/**'
+              - 'public/app/plugins/datasource/parca/**'
+
+      - name: Check for exception label
+        if: steps.changed-files.outputs.frontend_strict_any_changed == 'true' && steps.changed-files.outputs.backend_strict_any_changed == 'true'
+        run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json labels --jq '.labels[].name')
+          if echo "$LABELS" | grep -q "no-check-mt-service-compatibility"; then
+            echo "✅ Mixed changes allowed - exception label 'no-check-mt-service-compatibility' is present"
+            exit 0
+          else
+            echo "❌ This PR contains changes that may not be deployed together."
+            echo ""
+            echo "Why this check failed:"
+            echo "• Frontend, backend, and some data sources are deployed independently in our SaaS architecture"
+            echo "• Frontend changes are deployed on a seperate cadance from backend/RRC"
+            echo "• Mixed changes break compatibility between frontend and backend versions"
+            echo ""
+            echo "How to fix:"
+            echo "• Split this PR into two separate PRs (recommended):"
+            echo "  - One PR for frontend changes (public/, packages/, *.ts, *.tsx)"
+            echo "  - One PR for backend changes (pkg/, *.go, go.mod)"
+            echo "• Ensure that these two changes are independently compatible without the other"
+            echo ""
+            echo "Exception process (if changes MUST be coupled):"
+            echo "• Add the 'no-check-mt-service-compatibility' label to this PR"
+            echo "• Explain in the PR description why these changes cannot be separated"
+            echo ""
+            echo "For more details, see: https://enghub.grafana-ops.net/docs/default/component/deployment-tools/grafana-frontend-service/#guide-for-development-process-in-a-decoupled-deployment"
+            echo "If you need help or have feedback, reach us in #proj-mt-frontend"
+            echo ""
+            echo "Frontend changed files:"
+            echo "${{ steps.changed-files.outputs.frontend_strict_all_changed_files }}" | tr ' ' '\n' | sed 's/^/- /'
+            echo ""
+            echo "Backend changed files:"
+            echo "${{ steps.changed-files.outputs.backend_strict_all_changed_files }}" | tr ' ' '\n' | sed 's/^/- /'
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

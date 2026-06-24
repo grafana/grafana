@@ -1,18 +1,25 @@
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { ExportAsJson } from '../ExportButton/ExportAsJson';
+import { ExportAsCode } from '../ExportButton/ExportAsCode';
+import { ExportAsImage } from '../ExportButton/ExportAsImage';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
 import { ShareInternally } from '../ShareButton/share-internally/ShareInternally';
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
 import { ShareLibraryPanelTab } from '../ShareLibraryPanelTab';
 import { SharePanelEmbedTab } from '../SharePanelEmbedTab';
 import { SharePanelInternally } from '../panel-share/SharePanelInternally';
-import { ModalSceneObjectLike, SceneShareTabState, ShareView } from '../types';
+import { type ModalSceneObjectLike, type SceneShareTabState, type ShareView } from '../types';
 
 import { ShareDrawerContext } from './ShareDrawerContext';
 
@@ -38,7 +45,9 @@ export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements Mo
   }
 
   onDismiss = () => {
-    if (this.state.panelRef) {
+    if (this.state.activeShare?.onDismiss) {
+      this.state.activeShare.onDismiss();
+    } else if (this.state.panelRef) {
       const dashboard = getDashboardSceneFor(this);
       dashboard.closeModal();
     } else {
@@ -63,7 +72,12 @@ function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
   const dashboard = getDashboardSceneFor(model);
 
   return (
-    <Drawer title={activeShare?.getTabLabel()} onClose={model.onDismiss} size="md">
+    <Drawer
+      title={activeShare?.getTabLabel()}
+      subtitle={activeShare?.getSubtitle?.()}
+      onClose={model.onDismiss}
+      size="md"
+    >
       <ShareDrawerContext.Provider value={{ dashboard, onDismiss: model.onDismiss }}>
         {activeShare && <activeShare.Component model={activeShare} />}
       </ShareDrawerContext.Provider>
@@ -90,7 +104,9 @@ function getShareView(
     case shareDashboardType.snapshot:
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
     case shareDashboardType.export:
-      return new ExportAsJson({ onDismiss });
+      return new ExportAsCode({ onDismiss });
+    case shareDashboardType.image:
+      return new ExportAsImage({ onDismiss });
     default:
       return new ShareInternally({ onDismiss });
   }

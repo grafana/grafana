@@ -1,11 +1,15 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
-import { RangeSlider } from '@grafana/ui';
+import { RangeSlider } from './RangeSlider';
+import mdx from './RangeSlider.mdx';
 
 const meta: Meta<typeof RangeSlider> = {
-  title: 'Forms/Slider/Range',
+  title: 'Inputs/RangeSlider',
   component: RangeSlider,
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: ['tooltipAlwaysVisible'],
     },

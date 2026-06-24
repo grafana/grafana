@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	dashboardFolderMigrations "github.com/grafana/grafana/pkg/services/dashboards/database/migrations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
@@ -35,13 +34,13 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	addStarMigrations(mg)
 	addOrgMigrations(mg)
 	addDashboardMigration(mg) // Do NOT add more migrations to this function.
+	addDashboardUIDStarMigrations(mg)
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
 	addQuotaMigration(mg)
 	addAppSettingsMigration(mg)
 	addSessionMigration(mg)
-	addPlaylistMigrations(mg)
 	addPreferencesMigrations(mg)
 	addAlertMigrations(mg)
 	addAnnotationMig(mg)
@@ -75,15 +74,12 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	addCorrelationsMigrations(mg)
 
-	addEntityEventsTableMigration(mg)
-
 	addPublicDashboardMigration(mg)
 	addDbFileStorageMigration(mg)
 
 	accesscontrol.AddManagedPermissionsMigration(mg, accesscontrol.ManagedPermissionsMigrationID)
 	accesscontrol.AddManagedFolderAlertActionsMigration(mg)
 	accesscontrol.AddActionNameMigrator(mg)
-	addPlaylistUIDMigration(mg)
 
 	ualert.UpdateRuleGroupIndexMigration(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatMigration(mg)
@@ -102,16 +98,13 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.MigrationServiceMigration(mg)
 	ualert.CreatedFoldersMigration(mg)
 
-	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
+	AddDashboardFolderMigrations(mg)
 
 	ssosettings.AddMigration(mg)
 
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
 
-	// https://github.com/grafana/identity-access-team/issues/546: tracks removal of the feature toggle from the annotation permission migration
-	if oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagAnnotationPermissionUpdate) {
-		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
-	}
+	accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
 
 	addCloudMigrationsMigrations(mg)
 
@@ -120,14 +113,13 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddRuleNotificationSettingsColumns(mg)
 
 	accesscontrol.AddAlertingScopeRemovalMigration(mg)
+	accesscontrol.AddAnnotationsAllScopeReplacementMigration(mg)
 
 	accesscontrol.AddManagedFolderAlertingSilencesActionsMigrator(mg)
 
 	ualert.AddRecordingRuleColumns(mg)
 
 	ualert.AddStateResolvedAtColumns(mg)
-
-	enableTraceQLStreaming(mg, oss.features != nil && oss.features.IsEnabledGlobally(featuremgmt.FlagTraceQLStreaming))
 
 	ualert.AddReceiverActionScopesMigration(mg)
 
@@ -137,22 +129,51 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	accesscontrol.AddActionSetPermissionsMigrator(mg)
 
+	accesscontrol.AddSAActionSetPermissionsMigrator(mg)
+
 	externalsession.AddMigration(mg)
-}
 
-func addStarMigrations(mg *Migrator) {
-	starV1 := Table{
-		Name: "star",
-		Columns: []*Column{
-			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "user_id", Type: DB_BigInt, Nullable: false},
-			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
-		},
-		Indices: []*Index{
-			{Cols: []string{"user_id", "dashboard_id"}, Type: UniqueIndex},
-		},
-	}
+	accesscontrol.AddReceiverCreateScopeMigration(mg)
 
-	mg.AddMigration("create star table", NewAddTableMigration(starV1))
-	mg.AddMigration("add unique index star.user_id_dashboard_id", NewAddIndexMigration(starV1, starV1.Indices[0]))
+	ualert.AddAlertRuleUpdatedByMigration(mg)
+
+	ualert.AddAlertRuleStateTable(mg)
+
+	ualert.AddAlertRuleGuidMigration(mg)
+
+	ualert.AddAlertRuleKeepFiringFor(mg)
+
+	ualert.AddAlertRuleMissingSeriesEvalsToResolve(mg)
+
+	accesscontrol.AddDatasourceDrilldownRemovalMigration(mg)
+
+	ualert.DropTitleUniqueIndexMigration(mg)
+
+	ualert.AddStateFiredAtColumn(mg)
+
+	ualert.CollateAlertRuleGroup(mg)
+
+	ualert.ExpandAlertRuleUpdatedByMigration(mg)
+
+	ualert.AddAlertRuleGroupIndexMigration(mg)
+
+	ualert.AddStateAnnotationsColumn(mg)
+
+	ualert.CollateBinAlertRuleNamespace(mg)
+
+	ualert.CollateBinAlertRuleGroup(mg)
+
+	accesscontrol.AddReceiverProtectedFieldsEditor(mg)
+
+	ualert.AddStateEvaluationDurationColumn(mg)
+	ualert.AddStateLastErrorColumn(mg)
+	ualert.AddStateLastResultColumn(mg)
+
+	accesscontrol.AddScopedReceiverTestingPermissions(mg)
+
+	ualert.AddAlertRuleFolderFullpath(mg)
+
+	ualert.AddRuleAlertRoutingColumns(mg)
+
+	accesscontrol.AddManagedRoutesPermissions(mg)
 }

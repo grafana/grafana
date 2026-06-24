@@ -1,7 +1,8 @@
-import { connect, ConnectedProps } from 'react-redux';
+import type { JSX } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import { Alert } from '@grafana/ui';
-import { StoreState } from 'app/types';
+import { type StoreState } from 'app/types/store';
 
 import { resetError, resetWarning } from './state/reducers';
 
@@ -18,19 +19,23 @@ const mapDispatchToProps = {
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
-export type Props = ConnectedProps<typeof connector>;
+type Props = ConnectedProps<typeof connector>;
 
-export const ErrorContainerUnconnected = ({ error, warning, resetError, resetWarning }: Props): JSX.Element => {
+const ErrorContainerUnconnected = ({ error, warning, resetError, resetWarning }: Props): JSX.Element => {
   return (
     <div>
       {error && (
         <Alert title={error.message} onRemove={() => resetError()}>
-          {error.errors?.map((e, i) => <div key={i}>{e}</div>)}
+          {error.errors?.map((e, i) => (
+            <div key={i}>{e}</div>
+          ))}
         </Alert>
       )}
       {warning && (
         <Alert title={warning.message} onRemove={() => resetWarning()} severity="warning">
-          {warning.errors?.map((e, i) => <div key={i}>{e}</div>)}
+          {warning.errors?.map((e, i) => (
+            <div key={i}>{e}</div>
+          ))}
         </Alert>
       )}
     </div>

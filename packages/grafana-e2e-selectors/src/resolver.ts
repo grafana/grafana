@@ -1,15 +1,15 @@
 import { gte, compare, valid } from 'semver';
 
 import {
-  FunctionSelector,
-  Selectors,
-  SelectorsOf,
-  StringSelector,
-  VersionedSelectorGroup,
-  VersionedSelectors,
-  CssSelector,
-  UrlSelector,
-  FunctionSelectorTwoArgs,
+  type FunctionSelector,
+  type Selectors,
+  type SelectorsOf,
+  type StringSelector,
+  type VersionedSelectorGroup,
+  type VersionedSelectors,
+  type CssSelector,
+  type UrlSelector,
+  type FunctionSelectorTwoArgs,
 } from './types';
 
 /**
@@ -21,7 +21,10 @@ export function resolveSelectors<T extends VersionedSelectorGroup>(
 ): SelectorsOf<T> {
   const version = grafanaVersion.replace(/\-.*/, '');
 
-  return resolveSelectorGroup(versionedSelectors, version);
+  // If version is empty or invalid after regex replacement, use 'latest'
+  const finalVersion = version && valid(version) ? version : 'latest';
+
+  return resolveSelectorGroup(versionedSelectors, finalVersion);
 }
 
 function resolveSelectorGroup<T extends VersionedSelectorGroup>(group: T, grafanaVersion: string): SelectorsOf<T> {

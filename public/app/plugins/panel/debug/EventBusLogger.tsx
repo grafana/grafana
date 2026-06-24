@@ -1,23 +1,11 @@
-import { PureComponent } from 'react';
-import { PartialObserver, Unsubscribable } from 'rxjs';
+import { memo, useEffect, useState } from 'react';
+import { type PartialObserver, type Unsubscribable } from 'rxjs';
 
-import {
-  BusEvent,
-  CircularVector,
-  DataHoverEvent,
-  DataHoverClearEvent,
-  DataSelectEvent,
-  EventBus,
-} from '@grafana/data';
+import { type BusEvent, DataHoverEvent, DataHoverClearEvent, DataSelectEvent, type EventBus } from '@grafana/data';
 import { CustomScrollbar } from '@grafana/ui';
 
 interface Props {
   eventBus: EventBus;
-}
-
-interface State {
-  isError?: boolean;
-  counter: number;
 }
 
 interface BusEventEx {
@@ -28,50 +16,46 @@ interface BusEventEx {
 }
 let counter = 100;
 
-export class EventBusLoggerPanel extends PureComponent<Props, State> {
-  history = new CircularVector<BusEventEx>({ capacity: 40, append: 'head' });
-  subs: Unsubscribable[];
+export const EventBusLoggerPanel = memo(({ eventBus }: Props) => {
+  const [history, setHistory] = useState<BusEventEx[]>([]);
 
-  constructor(props: Props) {
-    super(props);
-
-    this.state = { counter };
+  useEffect(() => {
+    const eventObserver: PartialObserver<BusEvent> = {
+      next: (event: BusEvent) => {
+        const origin: any = event.origin;
+        const busEvent: BusEventEx = {
+          key: counter++,
+          type: event.type,
+          path: origin?.path,
+          payload: event.payload,
+        };
+        // only show the last 40 events
+        setHistory((prev) => [busEvent, ...prev].slice(0, 40));
+      },
+    };
 
     const subs: Unsubscribable[] = [];
-    subs.push(props.eventBus.getStream(DataHoverEvent).subscribe(this.eventObserver));
-    subs.push(props.eventBus.getStream(DataHoverClearEvent).subscribe(this.eventObserver));
-    subs.push(props.eventBus.getStream(DataSelectEvent).subscribe(this.eventObserver));
-    this.subs = subs;
-  }
+    subs.push(eventBus.getStream(DataHoverEvent).subscribe(eventObserver));
+    subs.push(eventBus.getStream(DataHoverClearEvent).subscribe(eventObserver));
+    subs.push(eventBus.getStream(DataSelectEvent).subscribe(eventObserver));
 
-  componentWillUnmount() {
-    for (const sub of this.subs) {
-      sub.unsubscribe();
-    }
-  }
+    return () => {
+      for (const sub of subs) {
+        sub.unsubscribe();
+      }
+    };
+  }, [eventBus]);
 
-  eventObserver: PartialObserver<BusEvent> = {
-    next: (event: BusEvent) => {
-      const origin: any = event.origin;
-      this.history.add({
-        key: counter++,
-        type: event.type,
-        path: origin?.path,
-        payload: event.payload,
-      });
-      this.setState({ counter });
-    },
-  };
+  return (
+    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+      {history.map((v) => (
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        <div key={v.key}>
+          {JSON.stringify(v.path)} {v.type} / X:{JSON.stringify(v.payload.x)} / Y:{JSON.stringify(v.payload.y)}
+        </div>
+      ))}
+    </CustomScrollbar>
+  );
+});
 
-  render() {
-    return (
-      <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-        {this.history.map((v, idx) => (
-          <div key={v.key}>
-            {JSON.stringify(v.path)} {v.type} / X:{JSON.stringify(v.payload.x)} / Y:{JSON.stringify(v.payload.y)}
-          </div>
-        ))}
-      </CustomScrollbar>
-    );
-  }
-}
+EventBusLoggerPanel.displayName = 'EventBusLoggerPanel';

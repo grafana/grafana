@@ -75,16 +75,12 @@ func (f FakeAccessControl) Evaluate(ctx context.Context, user identity.Requester
 func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 }
 
-func (f FakeAccessControl) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
-	return false, nil
-}
-
-func (f FakeAccessControl) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
-	return nil, nil
-}
-
 func (f FakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return f
+}
+
+func (f FakeAccessControl) InvalidateResolverCache(orgID int64, scope string) {
+	// No-op for fake implementation
 }
 
 type FakeStore struct {
@@ -129,6 +125,10 @@ func (f FakeStore) SaveExternalServiceRole(ctx context.Context, cmd accesscontro
 }
 
 func (f FakeStore) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	return f.ExpectedErr
+}
+
+func (f FakeStore) CleanupPluginRBAC(_ context.Context, _ []string) error {
 	return f.ExpectedErr
 }
 

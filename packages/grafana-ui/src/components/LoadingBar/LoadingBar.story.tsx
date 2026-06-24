@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingBar, LoadingBarProps, useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
 
+import { useStyles2 } from '../../themes/ThemeContext';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
+import { LoadingBar, type LoadingBarProps } from './LoadingBar';
 import mdx from './LoadingBar.mdx';
 
 const meta: Meta<typeof LoadingBar> = {
-  title: 'General/LoadingBar',
+  title: 'Information/LoadingBar',
   component: LoadingBar,
   parameters: {
     controls: {},

@@ -13,18 +13,12 @@
 // limitations under the License.
 
 import { round as _round, dropWhile as _dropWhile } from 'lodash';
-import moment from 'moment-timezone';
 
-import { toFloatPrecision } from './number';
-
-export const STANDARD_DATE_FORMAT = 'YYYY-MM-DD';
-export const STANDARD_TIME_FORMAT = 'HH:mm';
 export const ONE_MILLISECOND = 1000;
 export const ONE_SECOND = 1000 * ONE_MILLISECOND;
 export const ONE_MINUTE = 60 * ONE_SECOND;
 export const ONE_HOUR = 60 * ONE_MINUTE;
 export const ONE_DAY = 24 * ONE_HOUR;
-export const DEFAULT_MS_PRECISION = Math.log10(ONE_MILLISECOND);
 
 const UNIT_STEPS: Array<{ unit: string; microseconds: number; ofPrevious: number }> = [
   { unit: 'd', microseconds: ONE_DAY, ofPrevious: 24 },
@@ -34,43 +28,6 @@ const UNIT_STEPS: Array<{ unit: string; microseconds: number; ofPrevious: number
   { unit: 'ms', microseconds: ONE_MILLISECOND, ofPrevious: 1000 },
   { unit: 'μs', microseconds: 1, ofPrevious: 1000 },
 ];
-
-const quantizeDuration = (duration: number, floatPrecision: number, conversionFactor: number) =>
-  toFloatPrecision(duration / conversionFactor, floatPrecision) * conversionFactor;
-
-/**
- * @param {number} duration (in microseconds)
- * @returns {string} formatted, unit-labelled string with time in milliseconds
- */
-export function formatDate(duration: number) {
-  return moment(duration / ONE_MILLISECOND).format(STANDARD_DATE_FORMAT);
-}
-
-/**
- * @param {number} duration (in microseconds)
- * @returns {string} formatted, unit-labelled string with time in milliseconds
- */
-export function formatTime(duration: number) {
-  return moment(duration / ONE_MILLISECOND).format(STANDARD_TIME_FORMAT);
-}
-
-/**
- * @param {number} duration (in microseconds)
- * @returns {string} formatted, unit-labelled string with time in milliseconds
- */
-export function formatMillisecondTime(duration: number) {
-  const targetDuration = quantizeDuration(duration, DEFAULT_MS_PRECISION, ONE_MILLISECOND);
-  return `${moment.duration(targetDuration / ONE_MILLISECOND).asMilliseconds()}ms`;
-}
-
-/**
- * @param {number} duration (in microseconds)
- * @returns {string} formatted, unit-labelled string with time in seconds
- */
-export function formatSecondTime(duration: number) {
-  const targetDuration = quantizeDuration(duration, DEFAULT_MS_PRECISION, ONE_SECOND);
-  return `${moment.duration(targetDuration / ONE_MILLISECOND).asSeconds()}s`;
-}
 
 /**
  * Humanizes the duration for display.
@@ -95,9 +52,24 @@ export function formatDuration(duration: number): string {
     return `${_round(duration / primaryUnit.microseconds, 2)}${primaryUnit.unit}`;
   }
 
-  const primaryValue = Math.floor(duration / primaryUnit.microseconds);
+  let primaryValue = Math.floor(duration / primaryUnit.microseconds);
+  let secondaryValue = (duration / secondaryUnit.microseconds) % primaryUnit.ofPrevious;
+  const secondaryValueRounded = Math.round(secondaryValue);
+
+  // Handle rollover case before rounding (e.g., 60s should become 1m, not 0m 60s)
+  if (secondaryValueRounded === primaryUnit.ofPrevious) {
+    primaryValue += 1;
+    secondaryValue = 0;
+  } else {
+    secondaryValue = secondaryValueRounded;
+  }
+
   const primaryUnitString = `${primaryValue}${primaryUnit.unit}`;
-  const secondaryValue = Math.round((duration / secondaryUnit.microseconds) % primaryUnit.ofPrevious);
+
+  if (secondaryValue === 0) {
+    return primaryUnitString;
+  }
+
   const secondaryUnitString = `${secondaryValue}${secondaryUnit.unit}`;
-  return secondaryValue === 0 ? primaryUnitString : `${primaryUnitString} ${secondaryUnitString}`;
+  return `${primaryUnitString} ${secondaryUnitString}`;
 }

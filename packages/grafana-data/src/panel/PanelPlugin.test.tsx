@@ -1,13 +1,18 @@
+import { createDataFrame } from '../dataframe/processDataFrame';
 import { identityOverrideProcessor } from '../field/overrides/processors';
 import {
-  StandardEditorsRegistryItem,
+  type StandardEditorsRegistryItem,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
 } from '../field/standardFieldConfigEditorRegistry';
-import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { FieldType } from '../types/dataFrame';
+import { FieldConfigProperty, type FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { type PanelMigrationModel } from '../types/panel';
+import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '../types/suggestions';
 import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 
 import { PanelPlugin } from './PanelPlugin';
+import { getPanelDataSummary } from './suggestions/getPanelDataSummary';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
@@ -306,6 +311,283 @@ describe('PanelPlugin', () => {
           });
         });
       });
+    });
+  });
+
+  describe('setMigrationHandler', () => {
+    it('should handle synchronous migrations', () => {
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+      const mockMigration = () => ({
+        newOption: 'migrated',
+      });
+
+      panel.setMigrationHandler(mockMigration);
+
+      const migrationModel: PanelMigrationModel = {
+        id: 1,
+        type: 'test-panel',
+        options: { oldOption: 'value' },
+        fieldConfig: { defaults: {}, overrides: [] },
+        pluginVersion: '1.0.0',
+      };
+
+      expect(panel.onPanelMigration).toBeDefined();
+      expect(panel.onPanelMigration!(migrationModel)).toEqual({
+        newOption: 'migrated',
+      });
+    });
+
+    it('should handle async migrations', async () => {
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+      const mockAsyncMigration = async () => {
+        return Promise.resolve({
+          newOption: 'async-migrated',
+        });
+      };
+
+      panel.setMigrationHandler(mockAsyncMigration);
+
+      const migrationModel: PanelMigrationModel = {
+        id: 1,
+        type: 'test-panel',
+        options: { oldOption: 'value' },
+        fieldConfig: { defaults: {}, overrides: [] },
+      };
+
+      const result = await panel.onPanelMigration!(migrationModel);
+      expect(result).toEqual({
+        newOption: 'async-migrated',
+      });
+    });
+
+    it('should handle complex panel migrations with advanced transformations', () => {
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+
+      const mockMigration = (model: PanelMigrationModel) => {
+        const { options, fieldConfig, title, id, type, pluginVersion } = model;
+
+        //notice many of these migrations don't make sense in real code but are here
+        //to make sure the attributes of the PanelMigrationModel are used and tested
+        const baseMigration = {
+          ...options,
+          display: {
+            ...options.display,
+            mode: options.display?.type === 'legacy' ? 'modern' : options.display?.mode,
+            title: title?.toLowerCase() ?? 'untitled',
+            panelId: `${type}-${id}`,
+          },
+          thresholds: options.thresholds?.map((t: { value: string | number; color: string }) => ({
+            ...t,
+            value: typeof t.value === 'string' ? parseInt(t.value, 10) : t.value,
+            // Use fieldConfig defaults for threshold colors if available
+            color: fieldConfig.defaults?.color ?? t.color,
+          })),
+          metadata: {
+            migrationVersion: pluginVersion ? `${pluginVersion} -> 2.0.0` : '2.0.0',
+            migratedFields: Object.keys(fieldConfig.defaults ?? {}),
+            overrideCount: fieldConfig.overrides?.length ?? 0,
+          },
+          // Merge custom field defaults into options
+          customDefaults: fieldConfig.defaults?.custom ?? {},
+          // Transform overrides into a map
+          overrideMap: fieldConfig.overrides?.reduce(
+            (acc, override) => ({
+              ...acc,
+              [override.matcher.id]: override.properties,
+            }),
+            {}
+          ),
+        };
+
+        // Apply panel type specific migrations
+        if (type.includes('visualization')) {
+          return {
+            ...baseMigration,
+            visualizationSpecific: {
+              enhanced: true,
+              legacyFormat: false,
+            },
+          };
+        }
+
+        return baseMigration;
+      };
+
+      panel.setMigrationHandler(mockMigration);
+
+      const complexModel: PanelMigrationModel = {
+        id: 123,
+        type: 'visualization-panel',
+        title: 'Complex METRICS',
+        pluginVersion: '1.0.0',
+        options: {
+          display: {
+            type: 'legacy',
+            showHeader: true,
+          },
+          thresholds: [
+            { value: '90', color: 'red' },
+            { value: '50', color: 'yellow' },
+          ],
+          queries: ['A', 'B'],
+        },
+        fieldConfig: {
+          defaults: {
+            color: { mode: 'thresholds' },
+            custom: {
+              lineWidth: 1,
+              fillOpacity: 0.5,
+            },
+            mappings: [],
+          },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'cpu' },
+              properties: [{ id: 'color', value: 'red' }],
+            },
+            {
+              matcher: { id: 'byValue', options: 'memory' },
+              properties: [{ id: 'unit', value: 'bytes' }],
+            },
+          ],
+        },
+      };
+
+      const result = panel.onPanelMigration!(complexModel);
+
+      expect(result).toMatchObject({
+        display: {
+          mode: 'modern',
+          showHeader: true,
+          title: 'complex metrics',
+          panelId: 'visualization-panel-123',
+        },
+        thresholds: [
+          { value: 90, color: { mode: 'thresholds' } },
+          { value: 50, color: { mode: 'thresholds' } },
+        ],
+        queries: ['A', 'B'],
+        metadata: {
+          migrationVersion: '1.0.0 -> 2.0.0',
+          migratedFields: ['color', 'custom', 'mappings'],
+          overrideCount: 2,
+        },
+        customDefaults: {
+          lineWidth: 1,
+          fillOpacity: 0.5,
+        },
+        overrideMap: {
+          byName: [{ id: 'color', value: 'red' }],
+          byValue: [{ id: 'unit', value: 'bytes' }],
+        },
+        visualizationSpecific: {
+          enhanced: true,
+          legacyFormat: false,
+        },
+      });
+    });
+  });
+
+  describe('suggestions', () => {
+    it('should register a suggestions supplier', () => {
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+      panel.meta = panel.meta || {};
+      panel.meta.id = 'test-panel';
+      panel.meta.name = 'Test Panel';
+
+      panel.setSuggestionsSupplier((ds) => {
+        if (!ds.hasFieldType(FieldType.number)) {
+          return;
+        }
+
+        return [
+          {
+            name: 'Number Panel',
+            score: VisualizationSuggestionScore.Good,
+          },
+        ];
+      });
+
+      const suggestions = panel.getSuggestions(
+        getPanelDataSummary([createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] })])
+      );
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions![0].pluginId).toBe(panel.meta.id);
+      expect(suggestions![0].name).toBe('Number Panel');
+
+      expect(
+        panel.getSuggestions(
+          getPanelDataSummary([createDataFrame({ fields: [{ type: FieldType.string, name: 'Value' }] })])
+        )
+      ).toBeUndefined();
+    });
+
+    it('should not throw for the old syntax, but also should not register suggestions', () => {
+      jest.spyOn(console, 'warn').mockImplementation();
+
+      class DeprecatedSuggestionsSupplier {
+        getSuggestionsForData(builder: VisualizationSuggestionsBuilder): void {
+          const appender = builder.getListAppender({
+            name: 'Deprecated Suggestion',
+            pluginId: 'deprecated-plugin',
+            options: {},
+          });
+
+          if (builder.dataSummary.hasNumberField) {
+            appender.append({});
+          }
+        }
+      }
+
+      const panel = new PanelPlugin(() => <div>Panel</div>);
+
+      expect(() => {
+        panel.setSuggestionsSupplier(new DeprecatedSuggestionsSupplier());
+      }).not.toThrow();
+      expect(console.warn).toHaveBeenCalled();
+      expect(
+        panel.getSuggestions(
+          getPanelDataSummary([
+            createDataFrame({
+              fields: [{ type: FieldType.number, name: 'Value', values: [1, 2, 3, 4, 5] }],
+            }),
+          ])
+        )
+      ).toBeUndefined();
+    });
+
+    it('should support the deprecated pattern of getSuggestionsSupplier with builder', () => {
+      jest.spyOn(console, 'warn').mockImplementation();
+
+      const panel = new PanelPlugin(() => <div>Panel</div>).setSuggestionsSupplier((ds) => {
+        if (!ds.hasFieldType(FieldType.number)) {
+          return;
+        }
+
+        return [
+          {
+            name: 'Number Panel',
+            score: VisualizationSuggestionScore.Good,
+          },
+        ];
+      });
+
+      const oldSupplier = panel.getSuggestionsSupplier();
+      const builder1 = new VisualizationSuggestionsBuilder([
+        createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] }),
+      ]);
+      oldSupplier.getSuggestionsForData(builder1);
+      const suggestions1 = builder1.getList();
+      expect(suggestions1).toHaveLength(1);
+      expect(suggestions1![0].pluginId).toBe(panel.meta.id);
+      expect(suggestions1![0].name).toBe('Number Panel');
+
+      const builder2 = new VisualizationSuggestionsBuilder([
+        createDataFrame({ fields: [{ type: FieldType.string, name: 'Value' }] }),
+      ]);
+      oldSupplier.getSuggestionsForData(builder2);
+      const suggestions2 = builder2.getList();
+      expect(suggestions2).toHaveLength(0);
     });
   });
 });

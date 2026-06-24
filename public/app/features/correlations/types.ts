@@ -1,17 +1,7 @@
-import { DataLinkTransformationConfig } from '@grafana/data';
+import { type CorrelationExternal, type CorrelationQuery } from '@grafana/runtime';
 
-export interface AddCorrelationResponse {
-  correlation: Correlation;
-}
-
-export type GetCorrelationsResponse = Correlation[];
-
-export interface CorrelationsApiResponse {
+interface CorrelationsApiResponse {
   message: string;
-}
-
-export interface CorrelationsErrorResponse extends CorrelationsApiResponse {
-  error: string;
 }
 
 export interface CreateCorrelationResponse extends CorrelationsApiResponse {
@@ -27,40 +17,6 @@ export interface RemoveCorrelationResponse {
 }
 
 export type CorrelationType = 'query' | 'external';
-
-export type ExternalTypeTarget = { url: string };
-
-export type CorrelationConfigQuery = {
-  field: string;
-  target: object; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic.
-  transformations?: DataLinkTransformationConfig[];
-};
-
-export type CorrelationConfigExternal = {
-  field: string;
-  target: ExternalTypeTarget; // For external, this simply contains a URL
-  transformations?: DataLinkTransformationConfig[];
-};
-
-type CorrelationBase = {
-  uid: string;
-  sourceUID: string;
-  label?: string;
-  description?: string;
-  provisioned: boolean;
-  orgId?: number;
-};
-
-export type CorrelationExternal = CorrelationBase & {
-  type: 'external';
-  config: CorrelationConfigExternal;
-};
-
-export type CorrelationQuery = CorrelationBase & {
-  type: 'query';
-  config: CorrelationConfigQuery;
-  targetUID: string;
-};
 
 export type Correlation = CorrelationExternal | CorrelationQuery;
 

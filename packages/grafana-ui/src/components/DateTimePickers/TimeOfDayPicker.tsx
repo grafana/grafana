@@ -1,163 +1,99 @@
-import { css, cx } from '@emotion/css';
-import RcTimePicker from 'rc-time-picker';
+import { useMemo, useState } from 'react';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
+import { dateTime, type DateTime } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
-import { inputSizes } from '../Forms/commonStyles';
-import { FormInputSize } from '../Forms/types';
-import { Icon } from '../Icon/Icon';
+import { Combobox } from '../Combobox/Combobox';
+import { type ComboboxOption } from '../Combobox/types';
 
-import 'rc-time-picker/assets/index.css';
-
-export interface Props {
-  onChange: (value: DateTime) => void;
+interface BaseProps {
+  onChange: (value: DateTime) => void | ((value?: DateTime) => void);
   value?: DateTime;
-  showHour?: boolean;
   showSeconds?: boolean;
-  minuteStep?: number;
-  size?: FormInputSize;
+  minuteStep?: 5 | 10 | 15 | 20 | 30;
   disabled?: boolean;
   disabledHours?: () => number[];
-  disabledMinutes?: () => number[];
-  disabledSeconds?: () => number[];
+  placeholder?: string;
+  allowEmpty?: boolean;
+  id?: string;
 }
 
-export const POPUP_CLASS_NAME = 'time-of-day-picker-panel';
+interface AllowEmptyProps extends BaseProps {
+  allowEmpty: true;
+  onChange: (value?: DateTime) => void;
+}
+
+interface NoAllowEmptyProps extends BaseProps {
+  allowEmpty?: false;
+  onChange: (value: DateTime) => void;
+}
+
+export type Props = AllowEmptyProps | NoAllowEmptyProps;
 
 export const TimeOfDayPicker = ({
-  minuteStep = 1,
-  showHour = true,
+  minuteStep = 15,
   showSeconds = false,
-  onChange,
   value,
-  size = 'auto',
   disabled,
   disabledHours,
-  disabledMinutes,
-  disabledSeconds,
+  id,
+  placeholder,
+  allowEmpty = false,
+  onChange,
 }: Props) => {
-  const styles = useStyles2(getStyles);
+  const opts = useMemo(() => {
+    // technically not correct to only call this on callback identity change, but unlikely to matter in practice
+    const skipHours = new Set(disabledHours?.());
+
+    const opts: Array<ComboboxOption<string>> = [];
+
+    for (let h = 0; h < 24; h++) {
+      if (!skipHours.has(h)) {
+        for (let m = 0; m < 60; m += minuteStep) {
+          opts.push({ value: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}` });
+        }
+      }
+    }
+
+    return opts;
+  }, [minuteStep, disabledHours]);
+
+  const initValue = useMemo(
+    () => (value ? value.format(showSeconds ? 'HH:mm:ss' : 'HH:mm') : null),
+    [value, showSeconds]
+  );
+
+  const [selected, setSelected] = useState<string | null>(initValue);
 
   return (
-    <RcTimePicker
-      className={cx(inputSizes()[size], styles.input)}
-      popupClassName={cx(styles.picker, POPUP_CLASS_NAME)}
-      defaultValue={dateTimeAsMoment()}
-      onChange={(value) => {
-        if (isDateTimeInput(value)) {
-          return onChange(dateTime(value));
-        }
-      }}
-      allowEmpty={false}
-      showSecond={showSeconds}
-      value={dateTimeAsMoment(value)}
-      showHour={showHour}
-      minuteStep={minuteStep}
-      inputIcon={<Caret wrapperStyle={styles.caretWrapper} />}
+    <Combobox
+      id={id}
+      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+      placeholder={placeholder ?? (showSeconds ? 'HH:mm:ss' : 'HH:mm')}
       disabled={disabled}
-      disabledHours={disabledHours}
-      disabledMinutes={disabledMinutes}
-      disabledSeconds={disabledSeconds}
+      createCustomValue={true}
+      options={opts}
+      value={selected}
+      isClearable={allowEmpty}
+      width={showSeconds ? 14 : 12}
+      onChange={(option?: ComboboxOption<string> | null) => {
+        // todo: ensure valid format
+
+        const optVal = option?.value ?? '00:00:00';
+
+        const [HH, mm, ss] = optVal.split(':').map(Number);
+
+        // copy original or create new dateTime
+        const newValue = value != null ? dateTime(value) : dateTime();
+
+        newValue.set('hour', HH ?? 0);
+        newValue.set('minute', mm ?? 0);
+        newValue.set('second', ss ?? 0);
+
+        // always show as selected or entered
+        setSelected(option?.value ?? null);
+
+        onChange(newValue);
+      }}
     />
   );
-};
-
-interface CaretProps {
-  wrapperStyle?: string;
-}
-
-const Caret = ({ wrapperStyle = '' }: CaretProps) => {
-  return (
-    <div className={wrapperStyle}>
-      <Icon name="angle-down" />
-    </div>
-  );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  const bgColor = theme.components.input.background;
-  const menuShadowColor = theme.v1.palette.black;
-  const optionBgHover = theme.colors.background.secondary;
-  const borderRadius = theme.shape.radius.default;
-  const borderColor = theme.components.input.borderColor;
-  return {
-    caretWrapper: css({
-      position: 'absolute',
-      right: '8px',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      display: 'inline-block',
-      textAlign: 'right',
-      color: theme.colors.text.secondary,
-    }),
-    picker: css({
-      '.rc-time-picker-panel-select': {
-        fontSize: '14px',
-        backgroundColor: bgColor,
-        color: theme.colors.text.secondary,
-        borderColor,
-        li: {
-          outlineWidth: '2px',
-          '&.rc-time-picker-panel-select-option-selected': {
-            backgroundColor: 'inherit',
-            border: `1px solid ${theme.v1.palette.orange}`,
-            borderRadius,
-            color: theme.colors.text.primary,
-          },
-
-          '&:hover': {
-            background: optionBgHover,
-            color: theme.colors.text.primary,
-          },
-
-          '&.rc-time-picker-panel-select-option-disabled': {
-            color: theme.colors.action.disabledText,
-          },
-        },
-      },
-
-      '.rc-time-picker-panel-inner': {
-        boxShadow: `0px 4px 4px ${menuShadowColor}`,
-        backgroundColor: bgColor,
-        borderColor,
-        borderRadius,
-        marginTop: '3px',
-
-        '.rc-time-picker-panel-input-wrap': {
-          marginRight: '2px',
-
-          '&, .rc-time-picker-panel-input': {
-            backgroundColor: bgColor,
-            paddingTop: '2px',
-          },
-        },
-
-        '.rc-time-picker-panel-combobox': {
-          display: 'flex',
-        },
-      },
-    }),
-    input: css({
-      '.rc-time-picker-input': {
-        backgroundColor: bgColor,
-        borderRadius,
-        borderColor,
-        color: theme.colors.text.primary,
-        height: theme.spacing(4),
-
-        '&:focus': getFocusStyles(theme),
-
-        '&:disabled': {
-          backgroundColor: theme.colors.action.disabledBackground,
-          color: theme.colors.action.disabledText,
-          border: `1px solid ${theme.colors.action.disabledBackground}`,
-          '&:focus': {
-            boxShadow: 'none',
-          },
-        },
-      },
-    }),
-  };
 };

@@ -1,0 +1,21 @@
+{
+  "orgId": -1,
+  "name": "Hello testdata",
+  "type": "grafana-testdata-datasource",
+  "access": "",
+  "url": "",
+  "user": "",
+  "database": "",
+  "basicAuth": false,
+  "basicAuthUser": "",
+  "withCredentials": false,
+  "isDefault": false,
+  "jsonData": null,
+  "secureJsonData": {},
+  "readOnly": false,
+  "uid": "cejobd88i85j4d",
+  "apiVersion": "",
+  "IsPrunable": false,
+  "created": "0001-01-01T00:00:00Z",
+  "updated": "0001-01-01T00:00:00Z"
+}

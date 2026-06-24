@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles } from '../../themes/mixins';
-import { ComponentSize } from '../../types/size';
+import { type ComponentSize } from '../../types/size';
 
 export const getFocusStyle = (theme: GrafanaTheme2) =>
   css({
@@ -72,37 +72,6 @@ export const inputPadding = (theme: GrafanaTheme2) => {
   return css({
     padding: theme.spacing(0, 1, 0, 1),
   });
-};
-
-export const inputSizes = () => {
-  return {
-    sm: css({
-      width: inputSizesPixels('sm'),
-    }),
-    md: css({
-      width: inputSizesPixels('md'),
-    }),
-    lg: css({
-      width: inputSizesPixels('lg'),
-    }),
-    auto: css({
-      width: inputSizesPixels('auto'),
-    }),
-  };
-};
-
-export const inputSizesPixels = (size: string) => {
-  switch (size) {
-    case 'sm':
-      return '200px';
-    case 'md':
-      return '320px';
-    case 'lg':
-      return '580px';
-    case 'auto':
-    default:
-      return 'auto';
-  }
 };
 
 export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme2) {

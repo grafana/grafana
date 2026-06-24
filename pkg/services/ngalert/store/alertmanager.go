@@ -60,10 +60,10 @@ func (st *DBstore) GetAllLatestAlertmanagerConfiguration(ctx context.Context) ([
 
 // SaveAlertmanagerConfiguration creates an alertmanager configuration.
 func (st DBstore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	return st.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
+	return st.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(models.AlertConfiguration) error { return nil })
 }
 
-type SaveCallback func() error
+type SaveCallback func(models.AlertConfiguration) error
 
 // SaveAlertmanagerConfigurationWithCallback creates an alertmanager configuration version and then executes a callback.
 // If the callback results in error it rolls back the transaction.
@@ -99,7 +99,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			st.Logger.Warn("Failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 
-		if err := callback(); err != nil {
+		if err := callback(config); err != nil {
 			return err
 		}
 
@@ -110,9 +110,24 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 // UpdateAlertmanagerConfiguration replaces an alertmanager configuration with optimistic locking. It assumes that an existing revision of the configuration exists in the store, and will return an error otherwise.
 func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		newConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration)))
+		// check for no-op update
+		if newConfigHash == cmd.FetchedConfigurationHash {
+			// double check that the configuration with this hash is in the db
+			ok, err := sess.Table("alert_configuration").
+				Where("org_id = ? AND configuration_hash = ?", cmd.OrgID, cmd.FetchedConfigurationHash).
+				Exist()
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return ErrVersionLockedObjectNotFound
+			}
+			return nil
+		}
 		config := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
-			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
+			ConfigurationHash:         newConfigHash,
 			ConfigurationVersion:      cmd.ConfigurationVersion,
 			Default:                   cmd.Default,
 			OrgID:                     cmd.OrgID,

@@ -1,10 +1,11 @@
 import 'core-js/stable/structured-clone';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import type { JSX } from 'react';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import EditContactPoint from 'app/features/alerting/unified/components/contact-points/EditContactPoint';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -14,6 +15,20 @@ setupMswServer();
 const Index = () => {
   return <div>redirected</div>;
 };
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: function CodeEditor({ value, onBlur }: { value: string; onBlur: (newValue: string) => void }) {
+    return <input data-testid="mockeditor" value={value} onChange={(e) => onBlur(e.currentTarget.value)} />;
+  },
+}));
+
+jest.mock(
+  'react-virtualized-auto-sizer',
+  () =>
+    ({ children }: { children: ({ height, width }: { height: number; width: number }) => JSX.Element }) =>
+      children({ height: 500, width: 400 })
+);
 
 const renderEditContactPoint = (contactPointUid: string) =>
   render(
@@ -31,11 +46,12 @@ beforeEach(() => {
 });
 
 const getTemplatePreviewContent = async () =>
-  await screen.findByRole('presentation', { description: /Preview with the default payload/i });
+  within(await screen.findByTestId('template-preview')).findByTestId('mockeditor');
 
 const templatesSelectorTestId = 'existing-templates-selector';
 
 describe('Edit contact point', () => {
+  jest.retryTimes(2);
   it('can edit a contact point with existing template field values', async () => {
     const { user } = renderEditContactPoint('lotsa-emails');
 
@@ -43,11 +59,11 @@ describe('Edit contact point', () => {
     await user.click(await screen.findByText(/optional email settings/i));
     await user.click(await screen.findByRole('button', { name: /edit message/i }));
     expect(await screen.findByRole('dialog', { name: /edit message/i })).toBeInTheDocument();
-    expect(await getTemplatePreviewContent()).toHaveTextContent(/some example preview for slack-template/i);
+    expect(await getTemplatePreviewContent()).toHaveValue(`some example preview for {{ template "slack-template" . }}`);
 
     // Change the preset template and check that the preview updates correctly
     await clickSelectOption(screen.getByTestId(templatesSelectorTestId), 'custom-email');
-    expect(await getTemplatePreviewContent()).toHaveTextContent(/some example preview for custom-email/i);
+    expect(await getTemplatePreviewContent()).toHaveValue(`some example preview for {{ template "custom-email" . }}`);
 
     // Close the drawer
     await user.click(screen.getByRole('button', { name: /^save$/i }));
@@ -58,10 +74,10 @@ describe('Edit contact point', () => {
     // If this isn't correct, then we haven't set the correct initial state for the radio buttons/tabs
     expect(await screen.findByLabelText(/custom template value/i)).toHaveValue('some custom value');
 
-    await user.click(screen.getByRole('radio', { name: /select existing template/i }));
+    await user.click(screen.getByRole('radio', { name: /select notification template/i }));
     await clickSelectOption(screen.getByTestId(templatesSelectorTestId), 'slack-template');
 
-    expect(await getTemplatePreviewContent()).toHaveTextContent(/some example preview for slack-template/i);
+    expect(await getTemplatePreviewContent()).toHaveValue(`some example preview for {{ template "slack-template" . }}`);
 
     // Close the drawer
     await user.click(screen.getByRole('button', { name: /^save$/i }));
@@ -72,5 +88,5 @@ describe('Edit contact point', () => {
     await user.click(screen.getByRole('button', { name: /save contact point/i }));
 
     expect(await screen.findByText(/redirected/i)).toBeInTheDocument();
-  });
+  }, 600000);
 });

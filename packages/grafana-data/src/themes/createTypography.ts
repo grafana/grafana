@@ -1,8 +1,9 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
+import { z } from 'zod';
 
-import { ThemeColors } from './createColors';
+import { type ThemeColors } from './createColors';
 
 /** @beta */
 export interface ThemeTypography extends ThemeTypographyVariantTypes {
@@ -40,20 +41,22 @@ export interface ThemeTypographyVariant {
   letterSpacing?: string;
 }
 
-export interface ThemeTypographyInput {
-  fontFamily?: string;
-  fontFamilyMonospace?: string;
-  fontSize?: number;
-  fontWeightLight?: number;
-  fontWeightRegular?: number;
-  fontWeightMedium?: number;
-  fontWeightBold?: number;
-  // hat's the font-size on the html element.
+export const ThemeTypographyInputSchema = z.object({
+  fontFamily: z.string().optional(),
+  fontFamilyMonospace: z.string().optional(),
+  fontSize: z.number().positive().optional(),
+  fontWeightLight: z.number().positive().optional(),
+  fontWeightRegular: z.number().positive().optional(),
+  fontWeightMedium: z.number().positive().optional(),
+  fontWeightBold: z.number().positive().optional(),
+  // what's the font-size on the html element.
   // 16px is the default font-size used by browsers.
-  htmlFontSize?: number;
-}
+  htmlFontSize: z.number().positive().optional(),
+});
 
-const defaultFontFamily = '"Inter", "Helvetica", "Arial", sans-serif';
+export type ThemeTypographyInput = z.infer<typeof ThemeTypographyInputSchema>;
+
+const defaultFontFamily = "'Inter', 'Helvetica', 'Arial', sans-serif";
 const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
 
 export function createTypography(colors: ThemeColors, typographyInput: ThemeTypographyInput = {}): ThemeTypography {

@@ -1,67 +1,113 @@
-import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
-import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { type ChangeEvent } from 'react';
 
-/**
- * @alpha
- */
+import { type PanelOptionsEditorBuilder, standardEditorsRegistry, type StatsPickerConfigSettings } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { LegendDisplayMode, type OptionsWithLegend } from '@grafana/schema';
+
+import { Input } from '../../components/Input/Input';
+
+/** @public */
 export function addLegendOptions<T extends OptionsWithLegend>(
   builder: PanelOptionsEditorBuilder<T>,
   includeLegendCalcs = true,
   showLegend = true
 ) {
+  const category = [t('grafana-ui.builder.legend.category', 'Legend')];
+
   builder
     .addBooleanSwitch({
       path: 'legend.showLegend',
-      name: 'Visibility',
-      category: ['Legend'],
+      name: t('grafana-ui.builder.legend.name-visibility', 'Visibility'),
+      category,
       description: '',
       defaultValue: showLegend,
     })
     .addRadio({
       path: 'legend.displayMode',
-      name: 'Mode',
-      category: ['Legend'],
+      name: t('grafana-ui.builder.legend.name-mode', 'Mode'),
+      category,
       description: '',
       defaultValue: LegendDisplayMode.List,
       settings: {
         options: [
-          { value: LegendDisplayMode.List, label: 'List' },
-          { value: LegendDisplayMode.Table, label: 'Table' },
+          { value: LegendDisplayMode.List, label: t('grafana-ui.builder.legend.mode-options.label-list', 'List') },
+          { value: LegendDisplayMode.Table, label: t('grafana-ui.builder.legend.mode-options.label-table', 'Table') },
         ],
       },
       showIf: (c) => c.legend.showLegend,
     })
     .addRadio({
       path: 'legend.placement',
-      name: 'Placement',
-      category: ['Legend'],
+      name: t('grafana-ui.builder.legend.name-placement', 'Placement'),
+      category,
       description: '',
       defaultValue: 'bottom',
       settings: {
         options: [
-          { value: 'bottom', label: 'Bottom' },
-          { value: 'right', label: 'Right' },
+          { value: 'bottom', label: t('grafana-ui.builder.legend.placement-options.label-bottom', 'Bottom') },
+          { value: 'right', label: t('grafana-ui.builder.legend.placement-options.label-right', 'Right') },
         ],
       },
       showIf: (c) => c.legend.showLegend,
     })
-    .addNumberInput({
+    .addCustomEditor({
+      id: 'legend.width',
       path: 'legend.width',
-      name: 'Width',
-      category: ['Legend'],
-      settings: {
-        placeholder: 'Auto',
-      },
+      name: t('grafana-ui.builder.legend.name-width', 'Width'),
+      category,
       showIf: (c) => c.legend.showLegend && c.legend.placement === 'right',
+      editor: ({ onChange, ...props }) => {
+        return (
+          <Input
+            {...props}
+            placeholder={t('grafana-ui.builder.legend.placeholder-width', 'Auto, px, or % (e.g. 220 or 35%)')}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              let value: string | undefined = e.currentTarget.value.trim();
+
+              if (value === '') {
+                value = undefined;
+              }
+
+              let numeric = Number(value);
+              onChange(Number.isNaN(numeric) ? value : numeric);
+            }}
+            // this is needed as a work-around for _something_ in an ancestor causing a blur/onChange/remount happen on every keypress
+            onInputCapture={(e) => {
+              e.stopPropagation();
+            }}
+          />
+        );
+      },
+    })
+    .addRadio({
+      path: 'legend.overflow',
+      name: t('grafana-ui.builder.legend.name-overflow', 'Overflow'),
+      category,
+      description: '',
+      defaultValue: 'ellipsis',
+      settings: {
+        options: [
+          { value: 'ellipsis', label: t('grafana-ui.builder.legend.overflow-options.label-ellipsis', 'Ellipsis') },
+          { value: 'wrap', label: t('grafana-ui.builder.legend.overflow-options.label-wrap', 'Wrap') },
+        ],
+      },
+      showIf: (c) => c.legend.showLegend && c.legend.displayMode === LegendDisplayMode.Table,
+    })
+    .addNumberInput({
+      path: 'legend.limit',
+      name: t('grafana-ui.builder.legend.name-limit', 'Limit'),
+      category,
+      description: t('grafana-ui.builder.legend.description-limit', 'Limits how many items are shown by default'),
+      showIf: (c) => c.legend.showLegend,
     });
 
   if (includeLegendCalcs) {
     builder.addCustomEditor<StatsPickerConfigSettings, string[]>({
       id: 'legend.calcs',
       path: 'legend.calcs',
-      name: 'Values',
-      category: ['Legend'],
-      description: 'Select values or calculations to show in legend',
+      name: t('grafana-ui.builder.legend.name-values', 'Values'),
+      category,
+      description: t('grafana-ui.builder.legend.description-values', 'Select values or calculations to show in legend'),
       editor: standardEditorsRegistry.get('stats-picker').editor,
       defaultValue: [],
       settings: {

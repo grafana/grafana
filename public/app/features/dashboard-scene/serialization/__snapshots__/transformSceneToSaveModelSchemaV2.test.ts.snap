@@ -1,0 +1,366 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model schema v2 1`] = `
+{
+  "annotations": [
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "query1",
+        "query": {
+          "datasource": {
+            "name": "-- Grafana --",
+          },
+          "group": "grafana",
+          "kind": "DataQuery",
+          "spec": {},
+          "version": "v0",
+        },
+      },
+    },
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "enable": true,
+        "hide": true,
+        "iconColor": "blue",
+        "name": "query2",
+        "query": {
+          "datasource": {
+            "name": "abcdef",
+          },
+          "group": "prometheus",
+          "kind": "DataQuery",
+          "spec": {},
+          "version": "v0",
+        },
+      },
+    },
+  ],
+  "cursorSync": "Crosshair",
+  "description": "Test Description",
+  "editable": true,
+  "elements": {
+    "panel-1": {
+      "kind": "Panel",
+      "spec": {
+        "data": {
+          "kind": "QueryGroup",
+          "spec": {
+            "queries": [],
+            "queryOptions": {},
+            "transformations": [],
+          },
+        },
+        "description": "Test Description",
+        "id": 1,
+        "links": [
+          {
+            "targetBlank": true,
+            "title": "Test Link 1",
+            "url": "http://test1.com",
+          },
+          {
+            "title": "Test Link 2",
+            "url": "http://test2.com",
+          },
+        ],
+        "title": "Test Panel",
+        "transparent": true,
+        "vizConfig": {
+          "group": "timeseries",
+          "kind": "VizConfig",
+          "spec": {
+            "fieldConfig": {
+              "defaults": {},
+              "overrides": [],
+            },
+            "options": {},
+          },
+          "version": "7.0.0",
+        },
+      },
+    },
+  },
+  "layout": {
+    "kind": "GridLayout",
+    "spec": {
+      "items": [
+        {
+          "kind": "GridLayoutItem",
+          "spec": {
+            "element": {
+              "kind": "ElementReference",
+              "name": "panel-1",
+            },
+            "height": 10,
+            "width": 0,
+            "x": 0,
+            "y": 0,
+          },
+        },
+      ],
+    },
+  },
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Test Link",
+      "tooltip": "",
+      "type": "link",
+      "url": "http://test.com",
+    },
+  ],
+  "liveNow": true,
+  "preload": true,
+  "tags": [
+    "tag1",
+    "tag2",
+  ],
+  "timeSettings": {
+    "autoRefresh": "5s",
+    "autoRefreshIntervals": [
+      "5s",
+      "10s",
+      "30s",
+    ],
+    "fiscalYearStartMonth": 1,
+    "from": "now-1h",
+    "hideTimepicker": false,
+    "nowDelay": "1m",
+    "timezone": "UTC",
+    "to": "now",
+    "weekStart": "monday",
+  },
+  "title": "Test Dashboard",
+  "variables": [
+    {
+      "kind": "QueryVariable",
+      "spec": {
+        "allValue": "*",
+        "allowCustomValue": true,
+        "current": {
+          "text": "text1",
+          "value": "value1",
+        },
+        "definition": "definition1",
+        "description": "A query variable",
+        "hide": "hideLabel",
+        "includeAll": true,
+        "label": "Query Variable",
+        "multi": true,
+        "name": "queryVar",
+        "options": [],
+        "query": {
+          "datasource": {
+            "name": "datasource1",
+          },
+          "group": "prometheus",
+          "kind": "DataQuery",
+          "spec": {
+            "expr": "label_values(node_boot_time_seconds)",
+            "refId": "A",
+          },
+          "version": "v0",
+        },
+        "refresh": "onDashboardLoad",
+        "regex": "regex1",
+        "regexApplyTo": "value",
+        "skipUrlSync": false,
+        "sort": "alphabeticalDesc",
+      },
+    },
+    {
+      "kind": "CustomVariable",
+      "spec": {
+        "allValue": "All",
+        "allowCustomValue": true,
+        "current": {
+          "text": "option1",
+          "value": "option1",
+        },
+        "description": "A custom variable",
+        "hide": "dontHide",
+        "includeAll": true,
+        "label": "Custom Variable",
+        "multi": true,
+        "name": "customVar",
+        "options": [],
+        "query": "option1, option2",
+        "skipUrlSync": false,
+        "valuesFormat": "csv",
+      },
+    },
+    {
+      "kind": "DatasourceVariable",
+      "spec": {
+        "allowCustomValue": true,
+        "current": {
+          "text": "text1",
+          "value": "value1",
+        },
+        "description": "A datasource variable",
+        "hide": "dontHide",
+        "includeAll": false,
+        "label": "Datasource Variable",
+        "multi": false,
+        "name": "datasourceVar",
+        "options": [],
+        "pluginId": "datasource1",
+        "refresh": "onDashboardLoad",
+        "regex": "regex1",
+        "skipUrlSync": false,
+      },
+    },
+    {
+      "kind": "ConstantVariable",
+      "spec": {
+        "current": {
+          "text": "value4",
+          "value": "value4",
+        },
+        "description": "A constant variable",
+        "hide": "dontHide",
+        "label": "Constant Variable",
+        "name": "constantVar",
+        "query": "value4",
+        "skipUrlSync": true,
+      },
+    },
+    {
+      "kind": "IntervalVariable",
+      "spec": {
+        "auto": false,
+        "auto_count": 10,
+        "auto_min": "1m",
+        "current": {
+          "text": "1m",
+          "value": "1m",
+        },
+        "description": "An interval variable",
+        "hide": "dontHide",
+        "label": "Interval Variable",
+        "name": "intervalVar",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m",
+          },
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m",
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m",
+          },
+        ],
+        "query": "1m,5m,10m",
+        "refresh": "onTimeRangeChanged",
+        "skipUrlSync": false,
+      },
+    },
+    {
+      "kind": "TextVariable",
+      "spec": {
+        "current": {
+          "text": "value6",
+          "value": "value6",
+        },
+        "description": "A text variable",
+        "hide": "dontHide",
+        "label": "Text Variable",
+        "name": "textVar",
+        "query": "value6",
+        "skipUrlSync": false,
+      },
+    },
+    {
+      "datasource": {
+        "name": "datasource2",
+      },
+      "group": "prometheus",
+      "kind": "GroupByVariable",
+      "spec": {
+        "current": {
+          "text": "text7",
+          "value": "value7",
+        },
+        "description": "A group by variable",
+        "hide": "dontHide",
+        "label": "Group By Variable",
+        "multi": false,
+        "name": "groupByVar",
+        "options": [
+          {
+            "text": "option1",
+            "value": "option1",
+          },
+          {
+            "text": "option2",
+            "value": "option2",
+          },
+        ],
+        "skipUrlSync": false,
+      },
+    },
+    {
+      "datasource": {
+        "name": "datasource3",
+      },
+      "group": "prometheus",
+      "kind": "AdhocVariable",
+      "spec": {
+        "allowCustomValue": true,
+        "baseFilters": [
+          {
+            "condition": "AND",
+            "key": "key1",
+            "operator": "=",
+            "value": "value1",
+          },
+          {
+            "condition": "OR",
+            "key": "key2",
+            "operator": "=",
+            "value": "value2",
+          },
+        ],
+        "defaultKeys": [
+          {
+            "expandable": true,
+            "group": "defaultGroup1",
+            "text": "defaultKey1",
+            "value": "defaultKey1",
+          },
+        ],
+        "description": "An adhoc variable",
+        "enableGroupBy": false,
+        "filters": [
+          {
+            "condition": "AND",
+            "key": "key3",
+            "operator": "=",
+            "value": "value3",
+          },
+        ],
+        "hide": "dontHide",
+        "label": "Adhoc Variable",
+        "name": "adhocVar",
+        "skipUrlSync": false,
+      },
+    },
+  ],
+}
+`;

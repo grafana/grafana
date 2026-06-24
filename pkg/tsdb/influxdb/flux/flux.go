@@ -8,12 +8,11 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 var (
-	glog = log.New("tsdb.influx_flux")
+	glog = backend.NewLoggerWith("logger", "tsdb.influx_flux")
 )
 
 // Query builds flux queries, executes them, and returns the results.
@@ -27,11 +26,13 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, tsdbQuery backend
 	}
 	defer r.client.Close()
 
-	timeRange := tsdbQuery.Queries[0].TimeRange
 	for _, query := range tsdbQuery.Queries {
-		qm, err := getQueryModel(query, timeRange, dsInfo)
+		qm, err := getQueryModel(query, query.TimeRange, dsInfo)
 		if err != nil {
-			tRes.Responses[query.RefID] = backend.DataResponse{Error: err}
+			tRes.Responses[query.RefID] = backend.DataResponse{
+				Error:       err,
+				ErrorSource: backend.ErrorSourceDownstream,
+			}
 			continue
 		}
 

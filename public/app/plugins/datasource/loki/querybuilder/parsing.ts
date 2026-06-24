@@ -1,6 +1,5 @@
-import { SyntaxNode } from '@lezer/common';
+import { type SyntaxNode } from '@lezer/common';
 
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/experimental';
 import {
   And,
   BinOpExpr,
@@ -54,6 +53,11 @@ import {
   OnOrIgnoringModifier,
   OrFilter,
 } from '@grafana/lezer-logql';
+import {
+  type QueryBuilderLabelFilter,
+  type QueryBuilderOperation,
+  type QueryBuilderOperationParamValue,
+} from '@grafana/plugin-ui';
 
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { checkParamsAreValid, getDefinitionById } from './operations';
@@ -66,7 +70,7 @@ import {
   makeError,
   replaceVariables,
 } from './parsingUtils';
-import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
+import { LokiOperationId, type LokiVisualQuery, type LokiVisualQueryBinary } from './types';
 
 interface Context {
   query: LokiVisualQuery;
@@ -120,7 +124,7 @@ export function buildVisualQueryFromString(expr: string): Context {
   return context;
 }
 
-export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
+function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   switch (node.type.id) {
     case Matcher: {
@@ -526,9 +530,13 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const params = [];
 
   const numberNode = node.getChild(NumberLezer);
+  const errorNode = node.getChild(ErrorId)?.getChild(Identifier);
 
   if (numberNode) {
     params.push(Number(getString(expr, numberNode)));
+  } else if (errorNode) {
+    // Variables get parsed as errors, so the value us an identifier within an error node.
+    params.push(getString(expr, errorNode));
   }
 
   if (grouping) {

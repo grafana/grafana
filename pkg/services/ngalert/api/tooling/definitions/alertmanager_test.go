@@ -1,173 +1,53 @@
 package definitions
 
 import (
+	"embed"
 	"encoding/json"
-	"os"
-	"strings"
+	"path"
+	"reflect"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
-func Test_GettableUserConfigUnmarshaling(t *testing.T) {
-	for _, tc := range []struct {
-		desc, input string
-		output      GettableUserConfig
-		err         bool
-	}{
-		{
-			desc:   "empty",
-			input:  ``,
-			output: GettableUserConfig{},
-		},
-		{
-			desc: "empty-ish",
-			input: `
-template_files: {}
-alertmanager_config: ""
-`,
-			output: GettableUserConfig{
-				TemplateFiles: map[string]string{},
-			},
-		},
-		{
-			desc: "bad type for template",
-			input: `
-template_files: abc
-alertmanager_config: ""
-`,
-			err: true,
-		},
-		{
-			desc: "existing templates",
-			input: `
-template_files:
-  foo: bar
-alertmanager_config: ""
-`,
-			output: GettableUserConfig{
-				TemplateFiles: map[string]string{"foo": "bar"},
-			},
-		},
-		{
-			desc: "existing templates inline",
-			input: `
-template_files: {foo: bar}
-alertmanager_config: ""
-`,
-			output: GettableUserConfig{
-				TemplateFiles: map[string]string{"foo": "bar"},
-			},
-		},
-		{
-			desc: "existing am config",
-			input: `
-template_files: {foo: bar}
-alertmanager_config: |
-                      route:
-                          receiver: am
-                          continue: false
-                          routes:
-                          - receiver: am
-                            continue: false
-                      templates: []
-                      receivers:
-                      - name: am
-                        email_configs:
-                        - to: foo
-                          from: bar
-                          headers:
-                            Bazz: buzz
-                          text: hi
-                          html: there
-`,
-			output: GettableUserConfig{
-				TemplateFiles: map[string]string{"foo": "bar"},
-				AlertmanagerConfig: GettableApiAlertingConfig{
-					Config: Config{
-						Templates: []string{},
-						Route: &Route{
-							Receiver: "am",
-							Routes: []*Route{
-								{
-									Receiver: "am",
-								},
-							},
-						},
-					},
-					Receivers: []*GettableApiReceiver{
-						{
-							Receiver: config.Receiver{
-								Name: "am",
-								EmailConfigs: []*config.EmailConfig{{
-									To:   "foo",
-									From: "bar",
-									Headers: map[string]string{
-										"Bazz": "buzz",
-									},
-									Text: "hi",
-									HTML: "there",
-								}},
-							},
-						},
-					},
-				},
-			},
-		},
-	} {
-		t.Run(tc.desc, func(t *testing.T) {
-			var out GettableUserConfig
-			err := yaml.Unmarshal([]byte(tc.input), &out)
-			if tc.err {
-				require.Error(t, err)
-				return
-			}
-			require.Nil(t, err)
-			// Override the map[string]any field for test simplicity.
-			// It's tested in Test_GettableUserConfigRoundtrip.
-			out.amSimple = nil
-			require.Equal(t, tc.output, out)
-		})
+//go:embed test-data/*.*
+var testData embed.FS
+
+func Test_GettableStatusUnmarshalJSON(t *testing.T) {
+	incoming, err := testData.ReadFile(path.Join("test-data", "gettable-status.json"))
+	require.Nil(t, err)
+
+	var actual GettableStatus
+	require.NoError(t, json.Unmarshal(incoming, &actual))
+
+	actualJson, err := json.Marshal(actual)
+	require.NoError(t, err)
+
+	expected, err := testData.ReadFile(path.Join("test-data", "gettable-status-expected.json"))
+	require.NoError(t, err)
+	assert.JSONEq(t, string(expected), string(actualJson))
+
+	v := reflect.ValueOf(actual.Config.Config)
+	ty := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldName := ty.Field(i).Name
+		assert.False(t, field.IsZero(), "Field %s should not be zero value", fieldName)
 	}
 }
 
-func Test_GettableUserConfigRoundtrip(t *testing.T) {
-	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
-	// the fields are not redacted.
-	yamlEncoded, err := os.ReadFile("alertmanager_test_artifact.yaml")
-	require.Nil(t, err)
-
-	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
-	require.Nil(t, err)
-
-	// test GettableUserConfig (yamlDecode -> jsonEncode)
-	var tmp GettableUserConfig
-	require.Nil(t, yaml.Unmarshal(yamlEncoded, &tmp))
-	out, err := json.MarshalIndent(&tmp, "", "  ")
-	require.Nil(t, err)
-	require.Equal(t, strings.TrimSpace(string(jsonEncoded)), string(out))
-
-	// test PostableUserConfig (jsonDecode -> yamlEncode)
-	var tmp2 PostableUserConfig
-	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp2))
-	out, err = yaml.Marshal(&tmp2)
-	require.Nil(t, err)
-	require.Equal(t, string(yamlEncoded), string(out))
-}
-
 func Test_Marshaling_Validation(t *testing.T) {
-	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := testData.ReadFile(path.Join("test-data", "alertmanager_test_artifact.json"))
 	require.Nil(t, err)
 
 	var tmp GettableUserConfig
 	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp))
 
 	expected := []model.LabelName{"alertname"}
-	require.Equal(t, expected, tmp.AlertmanagerConfig.Config.Route.GroupBy)
+	require.Equal(t, expected, tmp.AlertmanagerConfig.Route.GroupBy)
 }
 
 func Test_RawMessageMarshaling(t *testing.T) {
@@ -213,5 +93,169 @@ func Test_RawMessageMarshaling(t *testing.T) {
 
 		require.NoError(t, yaml.Unmarshal(data, &n))
 		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
+	})
+}
+
+func TestExtraConfiguration_Validate(t *testing.T) {
+	testCases := []struct {
+		name          string
+		config        ExtraConfiguration
+		expectedError string
+	}{
+		{
+			name: "valid configuration",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+		},
+		{
+			name: "empty identifier",
+			config: ExtraConfiguration{
+				Identifier:         "",
+				AlertmanagerConfig: `route: {receiver: default}`,
+			},
+			expectedError: "identifier is required",
+		},
+		{
+			name: "invalid YAML alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				AlertmanagerConfig: `invalid: yaml: content: [`,
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+		{
+			name: "missing route in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `receivers:
+  - name: default`,
+			},
+			expectedError: "no routes provided",
+		},
+		{
+			name: "missing receivers in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `route:
+  receiver: default`,
+			},
+			expectedError: "undefined receiver",
+		},
+		{
+			name: "empty alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				AlertmanagerConfig: "",
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.config.Validate()
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.expectedError)
+			}
+		})
+	}
+}
+
+// Regression test: upstream Mimir/Cortex-compat Alertmanagers return an empty,
+// null, or missing `alertmanager_config` when no config has been saved. Before
+// the fix, UnmarshalYAML/UnmarshalJSON left amSimple nil, which made the
+// subsequent MarshalJSON return a 500 on GET config requests.
+func Test_ExternalAlertmanagerConfig_EmptyUpstreamConfig_RoundTrip(t *testing.T) {
+	t.Run("YAML", func(t *testing.T) {
+		for _, tc := range []struct {
+			desc  string
+			input string
+		}{
+			{
+				desc: "empty string",
+				input: `
+template_files: {}
+alertmanager_config: ""
+`,
+			},
+			{
+				desc: "null",
+				input: `
+template_files: {}
+alertmanager_config: null
+`,
+			},
+			{
+				desc: "missing",
+				input: `
+template_files: {}
+`,
+			},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				var cfg ExternalAlertmanagerConfig
+				require.NoError(t, yaml.Unmarshal([]byte(tc.input), &cfg))
+				require.NotNil(t, cfg.amSimple, "amSimple must be non-nil so Marshal does not error")
+
+				out, err := yaml.Marshal(&cfg)
+				require.NoError(t, err, "YAML round-trip must not error for empty upstream config")
+				require.NotEmpty(t, out)
+
+				jsonOut, err := json.Marshal(&cfg)
+				require.NoError(t, err, "JSON re-encode must not error for empty upstream config")
+				require.NotEmpty(t, jsonOut)
+			})
+		}
+	})
+
+	t.Run("JSON", func(t *testing.T) {
+		for _, tc := range []struct {
+			desc  string
+			input string
+		}{
+			{
+				desc:  "null",
+				input: `{"template_files":{},"alertmanager_config":null}`,
+			},
+			{
+				desc:  "missing",
+				input: `{"template_files":{}}`,
+			},
+			{
+				desc:  "empty object",
+				input: `{"template_files":{},"alertmanager_config":{}}`,
+			},
+		} {
+			t.Run(tc.desc, func(t *testing.T) {
+				var cfg ExternalAlertmanagerConfig
+				require.NoError(t, json.Unmarshal([]byte(tc.input), &cfg))
+				require.NotNil(t, cfg.amSimple, "amSimple must be non-nil so Marshal does not error")
+
+				jsonOut, err := json.Marshal(&cfg)
+				require.NoError(t, err, "JSON round-trip must not error for empty upstream config")
+				require.NotEmpty(t, jsonOut)
+
+				yamlOut, err := yaml.Marshal(&cfg)
+				require.NoError(t, err, "YAML re-encode must not error for empty upstream config")
+				require.NotEmpty(t, yamlOut)
+			})
+		}
+	})
+
+	// Guard against accidental removal of the nil-check in Marshal: a
+	// zero-value struct that was never decoded must still error out.
+	t.Run("undecoded struct still errors on marshal", func(t *testing.T) {
+		var cfg ExternalAlertmanagerConfig
+		_, err := json.Marshal(&cfg)
+		require.Error(t, err)
+		_, err = yaml.Marshal(&cfg)
+		require.Error(t, err)
 	})
 }

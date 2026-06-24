@@ -6,24 +6,28 @@ on:
     branches: [main]
     paths:
       - "pkg/apis/**"
-      - "pkg/aggregator/apis/**"
       - "pkg/apimachinery/apis/**"
       - "hack/**"
+      - "apps/**"
       - "*.sum"
 
 jobs:
   check:
     name: K8s Codegen Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
+    permissions:
+      contents: read
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set go version
-      uses: actions/setup-go@v4
+      uses: actions/checkout@v5
       with:
-        go-version-file: go.mod
+        persist-credentials: false
+
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Update k8s codegen
       run: ./hack/update-codegen.sh

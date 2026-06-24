@@ -1,19 +1,21 @@
+import { cloneDeep } from 'lodash';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import appEvents from 'app/core/app_events';
+import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { useDispatch } from 'app/types';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
+import { trackDashboardCreatedOrSaved } from '../../utils/tracking';
 
-import { SaveDashboardOptions } from './types';
+import { type SaveDashboardOptions } from './types';
 
 const saveDashboard = async (
   saveModel: any,
@@ -37,7 +39,6 @@ const saveDashboard = async (
 };
 
 export const useDashboardSave = (isCopy = false) => {
-  const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
   const [state, onDashboardSave] = useAsyncFn(
@@ -46,25 +47,31 @@ export const useDashboardSave = (isCopy = false) => {
         const result = await saveDashboard(clone, options, dashboard, saveDashboardRtkQuery);
         dashboard.version = result.version;
 
+        // Altering the clone leads to an error due to the clone being immutable
+        clone = cloneDeep(clone);
         clone.version = result.version;
         dashboard.clearUnsavedChanges(clone, options);
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
+<<<<<<< HEAD
         notifyApp.success('Дашборд сохранен');
+=======
+        notifyApp.success(t('dashboard.save-dashboard.message-dashboard-saved', 'Dashboard saved'));
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 
-        //Update local storage dashboard to handle things like last used datasource
+        // Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(result.uid);
 
         if (isCopy) {
-          reportInteraction('grafana_dashboard_copied', {
-            name: dashboard.title,
-            url: result.url,
-          });
+          DashboardInteractions.dashboardCopied({ name: dashboard.title || '', url: result.url });
         } else {
-          reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
+          trackDashboardCreatedOrSaved(dashboard.uid?.length === 0, {
             name: dashboard.title,
             url: result.url,
+            uid: result.uid,
+            numPanels: dashboard.panels.filter((p) => p.type !== 'row').length,
+            numRows: dashboard.panels.filter((p) => p.type === 'row').length,
           });
         }
 
@@ -74,15 +81,6 @@ export const useDashboardSave = (isCopy = false) => {
         if (newUrl !== currentPath && result.url) {
           setTimeout(() => locationService.replace(newUrl));
         }
-        if (dashboard.meta.isStarred) {
-          dispatch(
-            updateDashboardName({
-              id: dashboard.uid,
-              title: dashboard.title,
-              url: newUrl,
-            })
-          );
-        }
         return result;
       } catch (error) {
         if (error instanceof Error) {
@@ -91,7 +89,7 @@ export const useDashboardSave = (isCopy = false) => {
         throw error;
       }
     },
-    [dispatch, notifyApp]
+    [notifyApp]
   );
 
   return { state, onDashboardSave };

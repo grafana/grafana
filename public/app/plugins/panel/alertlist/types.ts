@@ -1,14 +1,12 @@
+import { type ThresholdsConfig, ThresholdsMode, type ValueMapping } from '@grafana/data';
+import { type BigValueColorMode } from '@grafana/ui';
+
 export enum SortOrder {
   AlphaAsc = 1,
   AlphaDesc,
   Importance,
   TimeAsc,
   TimeDesc,
-}
-
-export enum ShowOption {
-  Current = 'current',
-  RecentChanges = 'changes',
 }
 
 export enum GroupMode {
@@ -21,29 +19,11 @@ export enum ViewMode {
   Stat = 'stat',
 }
 
-export interface AlertListOptions {
-  showOptions: ShowOption;
-  maxItems: number;
-  sortOrder: SortOrder;
-  dashboardAlerts: boolean;
-  alertName: string;
-  dashboardTitle: string;
-  tags: string[];
-  stateFilter: {
-    ok: boolean;
-    paused: boolean;
-    no_data: boolean;
-    execution_error: boolean;
-    alerting: boolean;
-    pending: boolean;
-  };
-  folderId: number;
-}
-
 export interface StateFilter {
   firing: boolean;
   pending: boolean;
   inactive?: boolean; // backwards compat
+  recovering: boolean;
   noData: boolean;
   normal: boolean;
   error: boolean;
@@ -57,9 +37,21 @@ export interface UnifiedAlertListOptions {
   groupBy: string[];
   alertName: string;
   showInstances: boolean;
-  folder: { id: number; title: string };
+  folder: { uid: string; title: string };
   stateFilter: StateFilter;
   alertInstanceLabelFilter: string;
   datasource: string;
   viewMode: ViewMode;
+  showInactiveAlerts: boolean;
+  statColorMode: BigValueColorMode;
+  statThresholds: ThresholdsConfig;
+  statValueMappings: ValueMapping[];
 }
+
+export const STAT_THRESHOLDS_DEFAULT: ThresholdsConfig = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 80, color: 'red' },
+  ],
+};

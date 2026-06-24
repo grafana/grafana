@@ -1,33 +1,33 @@
 import { customAlphabet } from 'nanoid';
-import { Unsubscribable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
+import { type Unsubscribable } from 'rxjs';
 
 import {
-  AdHocVariableFilter,
+  type AdHocVariableFilter,
   CoreApp,
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceRef,
   DefaultTimeZone,
   getNextRefId,
-  IntervalValues,
+  type IntervalValues,
   locationUtil,
   LogsDedupStrategy,
   LogsSortOrder,
   rangeUtil,
-  RawTimeRange,
-  ScopedVars,
-  TimeRange,
-  TimeZone,
+  type RawTimeRange,
+  type ScopedVars,
+  store,
+  type TimeRange,
+  type TimeZone,
   toURLRange,
   urlUtil,
+  generateUUID,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
-import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import { QueryOptions, QueryTransaction } from 'app/types/explore';
+import { type QueryOptions, type QueryTransaction } from 'app/types/explore';
 
 export const DEFAULT_UI_STATE = {
   dedupStrategy: LogsDedupStrategy.none,
@@ -93,7 +93,11 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     .map((q) => q.value);
 
   const exploreState = JSON.stringify({
-    [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
+    [generateExploreId()]: {
+      range: toURLRange(timeRange.raw),
+      queries: interpolatedQueries,
+      datasource: dsRef?.uid,
+    },
   });
   return locationUtil.assureBaseUrl(urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 }));
 }
@@ -162,7 +166,7 @@ export const safeStringifyValue = (value: unknown, space?: number) => {
 };
 
 export function generateKey(index = 0): string {
-  return `Q-${uuidv4()}-${index}`;
+  return `Q-${generateUUID()}-${index}`;
 }
 
 export async function generateEmptyQuery(

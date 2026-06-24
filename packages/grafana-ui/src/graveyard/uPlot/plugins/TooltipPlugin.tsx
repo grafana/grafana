@@ -19,7 +19,10 @@ import {
 } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
-import { Portal, SeriesTable, SeriesTableRowProps, UPlotConfigBuilder, VizTooltipContainer } from '../../../components';
+import { Portal } from '../../../components/Portal/Portal';
+import { SeriesTable, SeriesTableRowProps } from '../../../components/VizTooltip/SeriesTable';
+import { UPlotConfigBuilder } from '../../../components/uPlot/config/UPlotConfigBuilder';
+import { VizTooltipContainer } from '../../../components/VizTooltip/VizTooltipContainer';
 import { findMidPointYPosition } from '../../../components/uPlot/utils';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 
@@ -50,7 +53,7 @@ export const TooltipPlugin = ({
   renderTooltip,
   ...otherProps
 }: TooltipPluginProps) => {
-  const plotInstance = useRef<uPlot>();
+  const plotInstance = useRef<uPlot>(undefined);
   const theme = useTheme2();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
@@ -264,7 +267,7 @@ function isCursorOutsideCanvas({ left, top }: uPlot.Cursor, canvas: DOMRect) {
  * Tooltip is positioned relatively to a viewport
  * @internal
  **/
-export function positionTooltip(u: uPlot, bbox: DOMRect) {
+function positionTooltip(u: uPlot, bbox: DOMRect) {
   let x, y;
   const cL = u.cursor.left || 0;
   const cT = u.cursor.top || 0;

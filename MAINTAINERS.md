@@ -8,4 +8,4 @@
   - @davkal
 - Docs:
   - @chri2547
-  - @brendamuir
+  - @JohnnyK-Grafana

@@ -1,17 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { useState, HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
+import { useState, type HTMLAttributes, useMemo, useRef, useLayoutEffect } from 'react';
 import * as React from 'react';
 import { useWindowSize } from 'react-use';
 
-import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
+import { type Dimensions2D, type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getTooltipContainerStyles } from '../../themes/mixins';
 
 import { calculateTooltipPosition } from './utils';
 
 /**
- * @public
+ * @alpha
  */
 export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement> {
   position: { x: number; y: number };
@@ -21,7 +21,7 @@ export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement>
 }
 
 /**
- * @public
+ * @alpha
  */
 export const VizTooltipContainer = ({
   position: { x: positionX, y: positionY },

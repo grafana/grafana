@@ -22,9 +22,10 @@ func TestCachingMiddleware(t *testing.T) {
 		require.NoError(t, err)
 
 		cs := caching.NewFakeOSSCachingService()
+		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewCachingMiddleware(cs)),
+			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
 		)
 
 		jsonDataMap := map[string]any{}
@@ -75,9 +76,9 @@ func TestCachingMiddleware(t *testing.T) {
 		})
 
 		t.Run("If cache returns a miss, queries are issued and the update cache function is called", func(t *testing.T) {
-			origShouldCacheQuery := shouldCacheQuery
+			origShouldCacheQuery := caching.ShouldCacheQuery
 			var shouldCacheQueryCalled bool
-			shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+			caching.ShouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
 				shouldCacheQueryCalled = true
 				return true
 			}
@@ -85,7 +86,7 @@ func TestCachingMiddleware(t *testing.T) {
 			t.Cleanup(func() {
 				updateCacheCalled = false
 				shouldCacheQueryCalled = false
-				shouldCacheQuery = origShouldCacheQuery
+				caching.ShouldCacheQuery = origShouldCacheQuery
 				cs.Reset()
 			})
 
@@ -105,15 +106,16 @@ func TestCachingMiddleware(t *testing.T) {
 		})
 
 		t.Run("with async queries", func(t *testing.T) {
+			cachingServiceClient := caching.ProvideCachingServiceClient(cs, featuremgmt.WithFeatures(featuremgmt.FlagAwsAsyncQueryCaching))
 			asyncCdt := handlertest.NewHandlerMiddlewareTest(t,
 				WithReqContext(req, &user.SignedInUser{}),
 				handlertest.WithMiddlewares(
-					NewCachingMiddlewareWithFeatureManager(cs, featuremgmt.WithFeatures(featuremgmt.FlagAwsAsyncQueryCaching))),
+					NewCachingMiddleware(cachingServiceClient)),
 			)
 			t.Run("If shoudCacheQuery returns true update cache function is called", func(t *testing.T) {
-				origShouldCacheQuery := shouldCacheQuery
+				origShouldCacheQuery := caching.ShouldCacheQuery
 				var shouldCacheQueryCalled bool
-				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+				caching.ShouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
 					shouldCacheQueryCalled = true
 					return true
 				}
@@ -121,7 +123,7 @@ func TestCachingMiddleware(t *testing.T) {
 				t.Cleanup(func() {
 					updateCacheCalled = false
 					shouldCacheQueryCalled = false
-					shouldCacheQuery = origShouldCacheQuery
+					caching.ShouldCacheQuery = origShouldCacheQuery
 					cs.Reset()
 				})
 
@@ -141,9 +143,9 @@ func TestCachingMiddleware(t *testing.T) {
 			})
 
 			t.Run("If shoudCacheQuery returns false update cache function is not called", func(t *testing.T) {
-				origShouldCacheQuery := shouldCacheQuery
+				origShouldCacheQuery := caching.ShouldCacheQuery
 				var shouldCacheQueryCalled bool
-				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+				caching.ShouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
 					shouldCacheQueryCalled = true
 					return false
 				}
@@ -151,7 +153,7 @@ func TestCachingMiddleware(t *testing.T) {
 				t.Cleanup(func() {
 					updateCacheCalled = false
 					shouldCacheQueryCalled = false
-					shouldCacheQuery = origShouldCacheQuery
+					caching.ShouldCacheQuery = origShouldCacheQuery
 					cs.Reset()
 				})
 
@@ -196,9 +198,10 @@ func TestCachingMiddleware(t *testing.T) {
 		}
 
 		cs := caching.NewFakeOSSCachingService()
+		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewCachingMiddleware(cs)),
+			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
 			handlertest.WithResourceResponses([]*backend.CallResourceResponse{simulatedPluginResponse}),
 		)
 
@@ -272,9 +275,10 @@ func TestCachingMiddleware(t *testing.T) {
 		require.NoError(t, err)
 
 		cs := caching.NewFakeOSSCachingService()
+		cachingServiceClient := caching.ProvideCachingServiceClient(cs, nil)
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			// Skip the request context in this case
-			handlertest.WithMiddlewares(NewCachingMiddleware(cs)),
+			handlertest.WithMiddlewares(NewCachingMiddleware(cachingServiceClient)),
 		)
 		reqCtx := contexthandler.FromContext(req.Context())
 		require.Nil(t, reqCtx)

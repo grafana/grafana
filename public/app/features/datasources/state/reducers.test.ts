@@ -1,10 +1,10 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
-import { DataSourceSettingsState, DataSourcesState } from 'app/types';
+import { type PluginMeta, type PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
+import { type DataSourceSettingsState, type DataSourcesState } from 'app/types/datasources';
 
-import { getMockDataSource, getMockDataSources } from '../__mocks__';
-import { GenericDataSourcePlugin } from '../types';
+import { getMockDataSource, getMockDataSources } from '../mocks/dataSourcesMocks';
+import { type GenericDataSourcePlugin } from '../types';
 
 import {
   dataSourceLoaded,
@@ -18,11 +18,11 @@ import {
   initDataSourceSettingsSucceeded,
   initialDataSourceSettingsState,
   initialState,
-  setDataSourceName,
+  setNameAndVersion,
   setDataSourcesLayoutMode,
   setDataSourcesSearchQuery,
   setDataSourceTypeSearchQuery,
-  setIsDefault,
+  setDefaultAndVersion,
 } from './reducers';
 
 const mockPlugin = () =>
@@ -125,21 +125,21 @@ describe('dataSourcesReducer', () => {
     });
   });
 
-  describe('when setDataSourceName is dispatched', () => {
+  describe('when setNameAndVersion is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
-        .whenActionIsDispatched(setDataSourceName('some name'))
-        .thenStateShouldEqual({ ...initialState, dataSource: { name: 'some name' } } as DataSourcesState);
+        .whenActionIsDispatched(setNameAndVersion({ name: 'some name', version: 2 }))
+        .thenStateShouldEqual({ ...initialState, dataSource: { name: 'some name', version: 2 } } as DataSourcesState);
     });
   });
 
-  describe('when setIsDefault is dispatched', () => {
+  describe('when setDefaultAndVersion is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
-        .whenActionIsDispatched(setIsDefault(true))
-        .thenStateShouldEqual({ ...initialState, dataSource: { isDefault: true } } as DataSourcesState);
+        .whenActionIsDispatched(setDefaultAndVersion({ isDefault: true, version: 2 }))
+        .thenStateShouldEqual({ ...initialState, dataSource: { isDefault: true, version: 2 } } as DataSourcesState);
     });
   });
 });

@@ -4,12 +4,14 @@ aliases:
   - ../data-sources/influxdb/provision-influxdb/
   - ../features/datasources/influxdb/
   - provision-influxdb/
-description: Guide for using InfluxDB in Grafana
+description: Guide for using the InfluxDB data source in Grafana
 keywords:
   - grafana
   - influxdb
-  - guide
   - flux
+  - influxql
+  - sql
+  - time series
 labels:
   products:
     - cloud
@@ -18,243 +20,65 @@ labels:
 menuTitle: InfluxDB
 title: InfluxDB data source
 weight: 700
-refs:
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  build-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+review_date: 2026-05-01
 ---
 
 # InfluxDB data source
 
 {{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Grafana includes built-in support for InfluxDB.
-This topic explains options, variables, querying, and other features specific to the InfluxDB data source, which include
-its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor" >}}).
+Grafana includes a built-in InfluxDB data source plugin, enabling you to query and visualize data from InfluxDB without installing additional plugins. Grafana offers multiple configuration options for this data source, including a choice of three query languages (SQL, InfluxQL, and Flux). SQL and InfluxQL provide both visual builder and code editing modes, while Flux provides a code editor only.
 
-For instructions on how to add a data source to Grafana, refer to
-the [administration documentation](ref:data-source-management).
-Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning
-system.
+## Supported versions
 
-Once you've added the InfluxDB data source, you can [configure it](#configure-the-data-source) so that your Grafana
-instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when
-they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
+This data source supports the following InfluxDB products:
 
-## Configure the data source
+- InfluxDB OSS 1.x, 2.x, and 3.x
+- InfluxDB Enterprise 1.x and 3.x
+- InfluxDB Cloud Serverless
+- InfluxDB Cloud Dedicated
+- InfluxDB Cloud (TSM)
 
-To configure basic settings for the data source, complete the following steps:
+## Supported features
 
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `InfluxDB` in the search bar.
-1. Select **InfluxDB**.
+| Feature     | Supported |
+| ----------- | --------- |
+| Metrics     | Yes       |
+| Logs        | Yes       |
+| Traces      | No        |
+| Alerting    | Yes       |
+| Annotations | Yes       |
 
-   The **Settings** tab of the data source is displayed.
+## Get started
 
-1. Set the data source's basic configuration options carefully:
+The following documents help you set up and use the InfluxDB data source:
 
-| Name                  | Description                                                                                                                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Name**              | Sets the name you use to refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`.                                                                                    |
-| **Default**           | Sets whether the data source is pre-selected for new panels.                                                                                                                                                 |
-| **URL**               | The HTTP protocol, IP address, and port of your InfluxDB API. InfluxDB's default API port is 8086.                                                                                                           |
-| **Min time interval** | _(Optional)_ Refer to [Min time interval](#configure-min-time-interval).                                                                                                                                     |
-| **Max series**        | _(Optional)_ Limits the number of series and tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have many small time series and not all are shown. Defaults to 1,000. |
+- [Configure the InfluxDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/)
+- [InfluxDB query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/query-editor/)
+- [InfluxDB template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/template-variables/)
+- [InfluxDB annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/annotations/)
+- [InfluxDB alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/alerting/)
+- [Troubleshoot InfluxDB data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/troubleshooting/)
 
-You can also configure settings specific to the InfluxDB data source. These options are described in the sections below.
+## Additional features
 
-### Min time interval
+After configuring the data source, you can:
 
-The **Min time interval** setting defines a lower limit for the auto group-by time interval.
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to query data without building a dashboard.
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results.
+- Configure [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) for dynamic dashboards.
+- [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) to visualize your InfluxDB data.
+- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) rules based on your InfluxDB query results.
 
-This value _must_ be formatted as a number followed by a valid time identifier:
+## Plugin updates
 
-| Identifier | Description |
-| ---------- | ----------- |
-| `y`        | year        |
-| `M`        | month       |
-| `w`        | week        |
-| `d`        | day         |
-| `h`        | hour        |
-| `m`        | minute      |
-| `s`        | second      |
-| `ms`       | millisecond |
+Always ensure that your plugin version is up-to-date so you have access to all current features and improvements. Navigate to **Plugins and data** > **Plugins** to check for updates. Grafana recommends upgrading to the latest Grafana version, and this applies to plugins as well.
 
-We recommend setting this value to match your InfluxDB write frequency.
-For example, use `1m` if InfluxDB writes data every minute.
+{{< admonition type="note" >}}
+Plugins are automatically updated in Grafana Cloud.
+{{< /admonition >}}
 
-You can also override this setting in a dashboard panel under its data source options.
+## Related resources
 
-### Select a query language
-
-InfluxDB data source options differ depending on which query language you select:
-
-- [InfluxQL](https://docs.influxdata.com/influxdb/v1.8/query_language/explore-data/), a SQL-like language for querying
-  InfluxDB, with statements such as SELECT, FROM, WHERE, and GROUP BY that are familiar to SQL users.
-  InfluxQL is available in InfluxDB 1.0 onwards.
-- [SQL](https://www.influxdata.com/products/sql/) native SQL language with
-  support [FlightSQL](https://www.influxdata.com/glossary/apache-arrow-flight-sql/).
-- [Flux](https://docs.influxdata.com/influxdb/v2.0/query-data/get-started/), which provides significantly broader
-  functionality than InfluxQL. It supports not only queries but also built-in functions for data shaping, string
-  manipulation, and joining to non-InfluxDB data sources, but also processing time-series data.
-  It's similar to JavaScript with a functional style.
-
-To help choose the best language for your needs, refer to
-a [comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)
-and [why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
-
-{{% admonition type="note" %}}
-Though not required, we recommend that you append your query language choice to the data source's **Name** setting:
-
-- InfluxDB-InfluxQL
-- InfluxDB-SQL
-- InfluxDB-Flux
-
-{{% /admonition %}}
-
-### Configure InfluxQL
-
-Configure these options if you select the InfluxQL (classic InfluxDB) query language:
-
-| Name                | Description                                                                                                                                                                                         |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Allowed cookies** | Defines which cookies are forwarded to the data source. All other cookies are deleted.                                                                                                              |
-| **Database**        | Sets the ID of the bucket to query. Copy this from the [Buckets page](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) of the InfluxDB UI.                            |
-| **User**            | Sets the username to sign into InfluxDB.                                                                                                                                                            |
-| **Password**        | Defines the token you use to query the bucket defined in **Database**. Copy this from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI. |
-| **HTTP mode**       | Sets the HTTP method used to query your data source. The POST verb allows for larger queries that would return an error using the GET verb. Defaults to GET.                                        |
-
-### Configure SQL
-
-Configure these options if you select the SQL query language:
-
-| Name                    | Description                                                                                                                                                                                                                   |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Database**            | Sets the ID of the bucket to query. Copy this from the Buckets page of the InfluxDB UI.                                                                                                                                       |
-| **Token**               | API token used for SQL queries. It can be generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu. |
-| **Insecure Connection** | Disable gRPC TLS security.                                                                                                                                                                                                    |
-
-### Configure Flux
-
-Configure these options if you select the Flux query language:
-
-| Name               | Description                                                                                                                                                                                                                                                                                                                    |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Organization**   | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries. This is also used to for the `v.organization` query macro.                                                                                                                                                   |
-| **Token**          | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/). Token must be set as `Authorization` header with the value `Token <generated-token>`. For influx 1.8, the token is `username:password`. |
-| **Default bucket** | _(Optional)_ The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries.                                                                                                                                                                |
-
-### Provision the data source
-
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer
-to [Provisioning Grafana][provisioning-data-sources].
-
-{{% admonition type="note" %}}
-`database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).
-We suggest to use `dbName` field in `jsonData`. Please see the examples below.
-No need to change existing provisioning settings.
-{{% /admonition %}}
-
-#### Provisioning examples
-
-**InfluxDB 1.x example:**
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: InfluxDB_v1
-    type: influxdb
-    access: proxy
-    user: grafana
-    url: http://localhost:8086
-    jsonData:
-      dbName: site
-      httpMode: GET
-    secureJsonData:
-      password: grafana
-```
-
-**InfluxDB 2.x for Flux example:**
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: InfluxDB_v2_Flux
-    type: influxdb
-    access: proxy
-    url: http://localhost:8086
-    jsonData:
-      version: Flux
-      organization: organization
-      defaultBucket: bucket
-      tlsSkipVerify: true
-    secureJsonData:
-      token: token
-```
-
-**InfluxDB 2.x for InfluxQL example:**
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: InfluxDB_v2_InfluxQL
-    type: influxdb
-    access: proxy
-    url: http://localhost:8086
-    jsonData:
-      dbName: site
-      httpHeaderName1: 'Authorization'
-    secureJsonData:
-      httpHeaderValue1: 'Token <token>'
-```
-
-**InfluxDB 3.x for SQL example:**
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: InfluxDB_v3_InfluxQL
-    type: influxdb
-    access: proxy
-    url: http://localhost:8086
-    jsonData:
-      version: SQL
-      dbName: site
-      httpMode: POST
-      insecureGrpc: false
-    secureJsonData:
-      token: '<api-token>'
-```
-
-## Query the data source
-
-The InfluxDB data source's query editor has two modes, InfluxQL and Flux, depending on your choice of query language in
-the [data source configuration](#configure-the-data-source):
-
-For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
-
-## Use template variables
-
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed
-in your dashboard.
-Grafana refers to such variables as template variables.
-
-For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+- [Official InfluxDB documentation](https://docs.influxdata.com/)
+- [Grafana community forum](https://community.grafana.com/)

@@ -1,17 +1,18 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
-import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
-import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
-import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
-import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
+import { colorManipulator, type DataFrame, type Field, type InterpolateFunction, type LinkModel } from '@grafana/data';
+import {
+  VizTooltipColorIndicator,
+  type VizTooltipItem,
+  VizTooltipContent,
+  VizTooltipFooter,
+  VizTooltipHeader,
+  VizTooltipWrapper,
+} from '@grafana/ui';
 
-import { getDataLinks } from '../status-history/utils';
+import { getFieldActions } from '../status-history/utils';
 
-import { Options } from './panelcfg.gen';
-import { ScatterSeries } from './types';
+import { type XYSeries } from './types2';
 import { fmt } from './utils';
 
 export interface Props {
@@ -19,73 +20,124 @@ export interface Props {
   seriesIdx: number | null | undefined;
   isPinned: boolean;
   dismiss: () => void;
-  options: Options;
-  data: DataFrame[]; // source data
-  allSeries: ScatterSeries[];
+  data: DataFrame[];
+  xySeries: XYSeries[];
+  replaceVariables: InterpolateFunction;
+  dataLinks: LinkModel[];
+  canExecuteActions?: boolean;
 }
 
-export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, options, isPinned }: Props) => {
-  const rowIndex = dataIdxs.find((idx) => idx !== null);
-  // @todo: remove -1 when uPlot v2 arrive
-  // context: first value in dataIdxs always null and represent X series
-  const hoveredPointIndex = seriesIdx! - 1;
-
-  if (!allSeries || rowIndex == null) {
-    return null;
+function stripSeriesName(fieldName: string, seriesName: string) {
+  if (fieldName !== seriesName && fieldName.includes(' ')) {
+    fieldName = fieldName.replace(seriesName, '').trim();
   }
 
-  const series = allSeries[hoveredPointIndex];
-  const frame = series.frame(data);
-  const xField = series.x(frame);
-  const yField = series.y(frame);
+  return fieldName;
+}
 
-  let label = series.name;
-  if (options.seriesMapping === 'manual') {
-    label = options.series?.[hoveredPointIndex]?.name ?? `Series ${hoveredPointIndex + 1}`;
-  }
+function hideFromTooltip(field: Field) {
+  return field.config.custom.hideFrom?.tooltip ?? false;
+}
 
-  let colorThing = series.pointColor(frame);
+function getFieldName(field: Field) {
+  return field.state?.displayName ?? field.name;
+}
 
-  if (Array.isArray(colorThing)) {
-    colorThing = colorThing[rowIndex];
+export const XYChartTooltip = ({
+  dataIdxs,
+  seriesIdx,
+  data,
+  xySeries,
+  dismiss,
+  isPinned,
+  replaceVariables,
+  dataLinks,
+  canExecuteActions,
+}: Props) => {
+  const rowIndex = dataIdxs.find((idx) => idx !== null)!;
+
+  const series = xySeries[seriesIdx! - 1];
+  const xField = series.x.field;
+  const yField = series.y.field;
+
+  const sizeField = series.size.field;
+  const colorField = series.color.field;
+
+  let label = series.name.value;
+
+  let seriesColor = colorField?.display?.(colorField.values[rowIndex]).color ?? series.color.fixed ?? '#fff';
+  let fillOpacity = colorField?.config.custom?.fillOpacity;
+
+  // TODO: skip this if seriesColor already has an alpha component, such as opacity-by-value or opacity gradient schemes
+  if (fillOpacity != null) {
+    seriesColor = colorManipulator.alpha(seriesColor, fillOpacity / 100);
   }
 
   const headerItem: VizTooltipItem = {
     label,
     value: '',
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    color: alpha(colorThing as string, 0.5),
-    colorIndicator: ColorIndicator.marker_md,
+    color: seriesColor,
+    colorIndicator: VizTooltipColorIndicator.marker_md,
   };
 
-  const contentItems: VizTooltipItem[] = [
-    {
-      label: getFieldDisplayName(xField, frame),
-      value: fmt(xField, xField.values[rowIndex]),
-    },
-    {
-      label: getFieldDisplayName(yField, frame),
-      value: fmt(yField, yField.values[rowIndex]),
-    },
-  ];
+  const contentItems: VizTooltipItem[] = [];
+  const addedFields = new Set<Field>();
 
-  // add extra fields
-  const extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
-  if (extraFields) {
-    extraFields.forEach((field) => {
+  if (!hideFromTooltip(xField)) {
+    contentItems.push({
+      label: stripSeriesName(getFieldName(xField), label),
+      value: fmt(xField, xField.values[rowIndex]),
+    });
+    addedFields.add(xField);
+  }
+
+  if (!hideFromTooltip(yField)) {
+    contentItems.push({
+      label: stripSeriesName(getFieldName(yField), label),
+      value: fmt(yField, yField.values[rowIndex]),
+    });
+    addedFields.add(yField);
+  }
+
+  // mapped fields for size/color
+  if (sizeField != null && !addedFields.has(sizeField) && !hideFromTooltip(sizeField)) {
+    contentItems.push({
+      label: stripSeriesName(getFieldName(sizeField), label),
+      value: fmt(sizeField, sizeField.values[rowIndex]),
+    });
+    addedFields.add(sizeField);
+  }
+
+  if (colorField != null && !addedFields.has(colorField) && !hideFromTooltip(colorField)) {
+    contentItems.push({
+      label: stripSeriesName(getFieldName(colorField), label),
+      value: fmt(colorField, colorField.values[rowIndex]),
+    });
+    addedFields.add(colorField);
+  }
+
+  series._rest.forEach((field) => {
+    if (!hideFromTooltip(field)) {
       contentItems.push({
-        label: field.name,
+        label: stripSeriesName(field.state?.displayName ?? field.name, label),
         value: fmt(field, field.values[rowIndex]),
       });
-    });
-  }
+    }
+  });
 
   let footer: ReactNode;
 
-  if (isPinned && seriesIdx != null) {
-    const links = getDataLinks(yField, rowIndex);
+  if (seriesIdx != null) {
+    const hasOneClickLink = dataLinks?.some((dataLink) => dataLink.oneClick === true);
 
-    footer = <VizTooltipFooter dataLinks={links} />;
+    if (isPinned || hasOneClickLink) {
+      const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
+      const actions = canExecuteActions
+        ? getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex, 'xychart')
+        : [];
+
+      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} />;
+    }
   }
 
   return (

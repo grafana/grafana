@@ -1,14 +1,14 @@
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   getDisplayProcessor,
   getFieldColorModeForField,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   getFieldConfigWithMinMax,
 } from '@grafana/data';
-import { ColorDimensionConfig } from '@grafana/schema';
+import { type ColorDimensionConfig } from '@grafana/schema';
 
-import { DimensionSupplier } from './types';
+import { type DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
@@ -23,7 +23,7 @@ export function getColorDimension(
   return getColorDimensionForField(findField(frame, config.field), config, theme);
 }
 
-export function getColorDimensionForField(
+function getColorDimensionForField(
   field: Field | undefined,
   config: ColorDimensionConfig,
   theme: GrafanaTheme2

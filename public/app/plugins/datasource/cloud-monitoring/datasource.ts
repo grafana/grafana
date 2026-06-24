@@ -1,31 +1,32 @@
 import { chunk, flatten, isString, isArray, has, get, omit } from 'lodash';
-import { from, lastValueFrom, Observable, of } from 'rxjs';
+import { from, lastValueFrom, type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  QueryVariableModel,
-  ScopedVars,
-  SelectableValue,
-  TimeRange,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type QueryVariableModel,
+  type ScopedVars,
+  type SelectableValue,
+  type TimeRange,
   getDefaultTimeRange,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
   getBackendSrv,
   toDataQueryResponse,
-  BackendSrv,
+  type BackendSrv,
   getTemplateSrv,
-  TemplateSrv,
+  type TemplateSrv,
 } from '@grafana/runtime';
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
+import { QueryType, type MetricQuery, type Filter } from './dataquery.gen';
 import { getMetricType, setMetricType } from './functions';
-import { CloudMonitoringQuery, QueryType, MetricQuery, Filter } from './types/query';
-import { CloudMonitoringOptions, MetricDescriptor, PostResponse, Aggregation } from './types/types';
+import { type CloudMonitoringQuery } from './types/query';
+import { type CloudMonitoringOptions, type MetricDescriptor, type PostResponse, type Aggregation } from './types/types';
 import { CloudMonitoringVariableSupport } from './variables';
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
@@ -106,7 +107,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
             {
               projectName: this.templateSrv.replace(projectName),
               groupBys: this.interpolateGroupBys(aggregation?.groupBys || [], {}),
-              crossSeriesReducer: aggregation?.crossSeriesReducer ?? 'REDUCE_NONE',
+              // Use REDUCE_NONE to retrieve all available labels for the metric
+              crossSeriesReducer: 'REDUCE_NONE',
               view: 'HEADERS',
             },
             this.templateSrv.replace(metricType)

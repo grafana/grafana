@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Bose/minisentinel"
 	"github.com/alicebob/miniredis/v2"
 	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,6 +40,28 @@ func TestNewRedisPeerClusterMode(t *testing.T) {
 			CAPath:     certPaths.ca,
 			ServerName: "localhost",
 		}}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
+	require.NoError(t, err)
+
+	ping := redisPeer.redis.Ping(context.Background())
+	require.NoError(t, ping.Err())
+}
+
+func TestNewRedisPeerSentinelMode(t *testing.T) {
+	// Can't use RunTLS here because minisentinel does not support TLS.
+	mr, err := miniredis.Run()
+	require.NoError(t, err)
+	defer mr.Close()
+
+	ms := minisentinel.NewSentinel(mr, minisentinel.WithReplica(mr))
+	err = ms.Start()
+	require.NoError(t, err)
+	defer ms.Close()
+
+	redisPeer, err := newRedisPeer(redisConfig{
+		sentinelMode: true,
+		masterName:   ms.MasterInfo().Name,
+		addr:         ms.Addr(),
+	}, log.NewNopLogger(), prometheus.NewRegistry(), time.Second*60)
 	require.NoError(t, err)
 
 	ping := redisPeer.redis.Ping(context.Background())

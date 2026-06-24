@@ -1,14 +1,14 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { dateTime, ExploreUrlState } from '@grafana/data';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { dateTime, type ExploreUrlState, serializeStateToUrlParam } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { PanelModel } from 'app/features/dashboard/state';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type ExploreItemState, type ExploreState } from 'app/types/explore';
+import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { configureStore } from '../../../store/configureStore';
-import { ExploreItemState, ExploreState, StoreState, ThunkDispatch } from '../../../types';
 
 import { exploreReducer, navigateToExplore, splitClose, splitOpen } from './main';
 

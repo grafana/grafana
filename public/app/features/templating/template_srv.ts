@@ -2,20 +2,20 @@ import { escape, isString } from 'lodash';
 
 import {
   deprecationWarning,
-  ScopedVars,
-  TimeRange,
-  AdHocVariableFilter,
-  AdHocVariableModel,
-  TypedVariableModel,
-  ScopedVar,
+  type ScopedVars,
+  type TimeRange,
+  type AdHocVariableFilter,
+  type AdHocVariableModel,
+  type TypedVariableModel,
+  type ScopedVar,
 } from '@grafana/data';
 import {
   getDataSourceSrv,
   setTemplateSrv,
-  TemplateSrv as BaseTemplateSrv,
-  VariableInterpolation,
+  type TemplateSrv as BaseTemplateSrv,
+  type VariableInterpolation,
 } from '@grafana/runtime';
-import { sceneGraph, VariableCustomFormatterFn, SceneObject } from '@grafana/scenes';
+import { sceneGraph, type VariableCustomFormatterFn, type SceneObject } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';
@@ -200,6 +200,15 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (!target) {
       return false;
     }
+
+    // Scenes compatability
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      // We are just checking that this is a valid variable reference, and we are not looking up the variable
+      this.regex.lastIndex = 0;
+      const match = this.regex.exec(target);
+      return !!match;
+    }
+
     const name = this.getVariableName(target);
     const variable = name && this.getVariableAtIndex(name);
     return variable !== null && variable !== undefined;

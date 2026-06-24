@@ -9,7 +9,7 @@ import (
 	"errors"
 	"reflect"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 // Get retrieve one record from database, bean's non-empty fields
@@ -29,9 +29,9 @@ func (session *Session) get(bean any) (bool, error) {
 	}
 
 	beanValue := reflect.ValueOf(bean)
-	if beanValue.Kind() != reflect.Ptr {
+	if beanValue.Kind() != reflect.Pointer {
 		return false, errors.New("needs a pointer to a value")
-	} else if beanValue.Elem().Kind() == reflect.Ptr {
+	} else if beanValue.Elem().Kind() == reflect.Pointer {
 		return false, errors.New("a pointer to a pointer is not allowed")
 	}
 

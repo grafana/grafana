@@ -1,35 +1,84 @@
-import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
+import { cloneDeep } from 'lodash';
+import { from, type MonoTypeOperatorFunction, type Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { DataFrame } from '../types/dataFrame';
+import { type DataFrame } from '../types/dataFrame';
 import {
-  CustomTransformOperator,
-  DataTransformContext,
-  DataTransformerConfig,
-  FrameMatcher,
+  type CustomTransformOperator,
+  type DataTransformContext,
+  type DataTransformerConfig,
+  type DataTransformerInfo,
+  type FrameMatcher,
 } from '../types/transformations';
 
 import { getFrameMatchers } from './matchers';
-import { standardTransformersRegistry, TransformerRegistryItem } from './standardTransformersRegistry';
+import { standardTransformersRegistry, type TransformerRegistryItem } from './standardTransformersRegistry';
+
+// Cache in-flight (and resolved) transformation promises so concurrent callers
+// share a single resolution rather than each invoking info.transformation()
+// independently. Failures evict the entry so the next caller can retry.
+const transformationPromises = new Map<string, Promise<DataTransformerInfo>>();
+
+const getTransformation = (info: TransformerRegistryItem): Promise<DataTransformerInfo> => {
+  const pending = transformationPromises.get(info.id);
+  if (pending) {
+    return pending;
+  }
+
+  const promise = Promise.resolve()
+    .then(() => info.transformation())
+    .catch((err) => {
+      transformationPromises.delete(info.id);
+      throw err;
+    });
+
+  transformationPromises.set(info.id, promise);
+  return promise;
+};
+
+/**
+ * Test-only: clears the in-flight/resolved transformation promise cache so
+ * tests can start from a known state. Not exported from the package index.
+ */
+export const __resetTransformationCacheForTests = () => {
+  transformationPromises.clear();
+};
 
 const getOperator =
   (config: DataTransformerConfig, ctx: DataTransformContext): MonoTypeOperatorFunction<DataFrame[]> =>
   (source) => {
-    const info = standardTransformersRegistry.get(config.id);
+    const info = standardTransformersRegistry.getIfExists(config.id);
 
     if (!info) {
       return source;
     }
 
-    const defaultOptions = info.transformation.defaultOptions ?? {};
-    const options = { ...defaultOptions, ...config.options };
-
     const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
+
     return source.pipe(
       mergeMap((before) =>
-        of(filterInput(before, matcher)).pipe(
-          info.transformation.operator(options, ctx),
-          postProcessTransform(before, info, matcher)
+        from(getTransformation(info)).pipe(
+          mergeMap((transformation) => {
+            const defaultOptions = transformation.defaultOptions ?? {};
+            const options = { ...defaultOptions, ...config.options };
+
+            // when running within Scenes, we can skip var interpolation, since it's already handled upstream
+            const isScenes = window.__grafanaSceneContext != null;
+
+            const interpolated = isScenes
+              ? options
+              : deepIterate(cloneDeep(options), (v) => {
+                  if (typeof v === 'string') {
+                    return ctx.interpolate(v);
+                  }
+                  return v;
+                });
+
+            return of(filterInput(before, matcher)).pipe(
+              transformation.operator(interpolated, ctx),
+              postProcessTransform(before, info, matcher)
+            );
+          })
         )
       )
     );
@@ -43,11 +92,7 @@ function filterInput(data: DataFrame[], matcher?: FrameMatcher) {
 }
 
 const postProcessTransform =
-  (
-    before: DataFrame[],
-    info: TransformerRegistryItem<any>,
-    matcher?: FrameMatcher
-  ): MonoTypeOperatorFunction<DataFrame[]> =>
+  (before: DataFrame[], info: TransformerRegistryItem, matcher?: FrameMatcher): MonoTypeOperatorFunction<DataFrame[]> =>
   (source) =>
     source.pipe(
       map((after) => {
@@ -110,4 +155,22 @@ export function transformDataFrame(
 
 function isCustomTransformation(t: DataTransformerConfig | CustomTransformOperator): t is CustomTransformOperator {
   return typeof t === 'function';
+}
+
+function deepIterate<T extends object>(obj: T, doSomething: (current: any) => any): T;
+// eslint-disable-next-line no-redeclare
+function deepIterate(obj: any, doSomething: (current: any) => any): any {
+  if (Array.isArray(obj)) {
+    return obj.map((o) => deepIterate(o, doSomething));
+  }
+
+  if (typeof obj === 'object') {
+    for (const key in obj) {
+      obj[key] = deepIterate(obj[key], doSomething);
+    }
+
+    return obj;
+  } else {
+    return doSomething(obj) ?? obj;
+  }
 }

@@ -1,8 +1,15 @@
-import Map from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 
-import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, RegistryItem, Registry, EventBus } from '@grafana/data';
+import {
+  type MapLayerRegistryItem,
+  type MapLayerOptions,
+  type GrafanaTheme2,
+  type RegistryItem,
+  Registry,
+  type EventBus,
+} from '@grafana/data';
 
-import { xyzTiles, defaultXYZConfig, XYZConfig } from './generic';
+import { xyzTiles, defaultXYZConfig, type XYZConfig } from './generic';
 
 interface PublicServiceItem extends RegistryItem {
   slug: string;
@@ -11,7 +18,7 @@ interface PublicServiceItem extends RegistryItem {
 const CUSTOM_SERVICE = 'custom';
 const DEFAULT_SERVICE = 'streets';
 
-export const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
+const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   {
     id: DEFAULT_SERVICE,
     name: 'World Street Map',
@@ -50,17 +57,22 @@ export const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   },
 ]);
 
-export interface ESRIXYZConfig extends XYZConfig {
+interface ESRIXYZConfig extends XYZConfig {
   server: string;
 }
 
-export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
+const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
   description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
 
-  create: async (map: Map, options: MapLayerOptions<ESRIXYZConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<ESRIXYZConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     const cfg = { ...options.config };
     const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
     if (svc.id !== CUSTOM_SERVICE) {

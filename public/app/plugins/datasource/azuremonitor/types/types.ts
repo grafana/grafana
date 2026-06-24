@@ -1,21 +1,25 @@
-import { ScalarParameter, TabularParameter, Function, EntityGroup } from '@kusto/monaco-kusto';
+import { type EntityGroup, type Function, type ScalarParameter, type TabularParameter } from '@kusto/monaco-kusto';
 
+import { type AzureDataSourceJsonData, type AzureDataSourceSecureJsonData } from '@grafana/azure-sdk';
 import {
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceSettings,
-  PanelData,
-  SelectableValue,
-  TimeRange,
+  type DataSourceInstanceSettings,
+  type DataSourceSettings,
+  type PanelData,
+  type SelectableValue,
+  type TimeRange,
 } from '@grafana/data';
 
-import Datasource from '../datasource';
+import { type ResultFormat } from '../dataquery.gen';
+import type Datasource from '../datasource';
 
-import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
-import { AzureMonitorQuery, ResultFormat } from './query';
+import { type AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
+import { type AzureMonitorQuery } from './query';
 
-export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
-export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
+export type AzureMonitorDataSourceSettings = DataSourceSettings<
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData
+>;
+export type AzureMonitorDataSourceInstanceSettings = DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>;
 
 export interface DatasourceValidationResult {
   status: 'success' | 'error';
@@ -23,64 +27,9 @@ export interface DatasourceValidationResult {
   title?: string;
 }
 
-/**
- * Azure clouds known to Azure Monitor.
- */
-export enum AzureCloud {
-  Public = 'AzureCloud',
-  China = 'AzureChinaCloud',
-  USGovernment = 'AzureUSGovernment',
-  None = '',
-}
-
-export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity' | 'currentuser';
-
-export type ConcealedSecret = symbol;
-
-interface AzureCredentialsBase {
-  authType: AzureAuthType;
-}
-
-export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
-  authType: 'msi';
-}
-
-export interface AzureWorkloadIdentityCredentials extends AzureCredentialsBase {
-  authType: 'workloadidentity';
-}
-
-export interface AzureClientSecretCredentials extends AzureCredentialsBase {
-  authType: 'clientsecret';
-  azureCloud?: string;
-  tenantId?: string;
-  clientId?: string;
-  clientSecret?: string | ConcealedSecret;
-}
-export interface AadCurrentUserCredentials extends AzureCredentialsBase {
-  authType: 'currentuser';
-  serviceCredentials?:
-    | AzureClientSecretCredentials
-    | AzureManagedIdentityCredentials
-    | AzureWorkloadIdentityCredentials;
-  serviceCredentialsEnabled?: boolean;
-}
-
-export type AzureCredentials =
-  | AadCurrentUserCredentials
-  | AzureManagedIdentityCredentials
-  | AzureClientSecretCredentials
-  | AzureWorkloadIdentityCredentials;
-
-export interface AzureDataSourceJsonData extends DataSourceJsonData {
-  cloudName: string;
-  azureAuthType?: AzureAuthType;
-
+export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData {
   // monitor
-  tenantId?: string;
-  clientId?: string;
   subscriptionId?: string;
-  oauthPassThru?: boolean;
-  azureCredentials?: AzureCredentials;
   basicLogsEnabled?: boolean;
 
   // logs
@@ -99,10 +48,11 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   appInsightsAppId?: string;
 
   enableSecureSocksProxy?: boolean;
+  timeout?: number;
+  keepCookies?: string[];
 }
 
-export interface AzureDataSourceSecureJsonData {
-  clientSecret?: string;
+export interface AzureMonitorDataSourceSecureJsonData extends AzureDataSourceSecureJsonData {
   appInsightsApiKey?: string;
 }
 
@@ -115,7 +65,7 @@ export interface AzureMonitorMetricsMetadataResponse {
   value: AzureMonitorMetricMetadataItem[];
 }
 
-export interface AzureMonitorMetricMetadataItem {
+interface AzureMonitorMetricMetadataItem {
   id: string;
   resourceId: string;
   primaryAggregationType: string;
@@ -173,7 +123,7 @@ export interface EngineSchema {
   globalTabularParameters?: TabularParameter[];
 }
 
-export interface Database {
+interface Database {
   name: string;
   tables: AzureLogAnalyticsMetadataTable[];
   functions: Function[];
@@ -204,11 +154,14 @@ export interface AzureResourceSummaryItem {
 export interface RawAzureSubscriptionItem {
   subscriptionName: string;
   subscriptionId: string;
+  subscriptionURI: string;
+  count: number;
 }
 
 export interface RawAzureResourceGroupItem {
   resourceGroupURI: string;
   resourceGroupName: string;
+  count: number;
 }
 
 export interface RawAzureResourceItem {
@@ -244,23 +197,23 @@ export type GetMetricNamespacesQuery = AzureGetMetricNamespacesQuery | LegacyAzu
 export type GetMetricNamesQuery = AzureGetMetricNamesQuery | LegacyAzureGetMetricNamesQuery;
 export type GetMetricMetadataQuery = AzureGetMetricMetadataQuery | LegacyAzureGetMetricMetadataQuery;
 
-export interface AzureGetMetricNamespacesQuery {
+interface AzureGetMetricNamespacesQuery {
   resourceUri: string;
 }
-export interface LegacyAzureGetMetricNamespacesQuery {
+interface LegacyAzureGetMetricNamespacesQuery {
   subscription: string;
   resourceGroup: string;
   metricNamespace?: string;
   resourceName?: string;
 }
 
-export interface AzureGetMetricNamesQuery {
+interface AzureGetMetricNamesQuery {
   resourceUri: string;
   metricNamespace?: string;
   customNamespace?: string;
 }
 
-export interface LegacyAzureGetMetricNamesQuery {
+interface LegacyAzureGetMetricNamesQuery {
   subscription: string;
   resourceGroup: string;
   resourceName: string;
@@ -268,14 +221,14 @@ export interface LegacyAzureGetMetricNamesQuery {
   customNamespace?: string;
 }
 
-export interface AzureGetMetricMetadataQuery {
+interface AzureGetMetricMetadataQuery {
   resourceUri: string;
   metricNamespace: string;
   customNamespace?: string;
   metricName: string;
 }
 
-export interface LegacyAzureGetMetricMetadataQuery {
+interface LegacyAzureGetMetricMetadataQuery {
   subscription: string;
   resourceGroup: string;
   resourceName: string;
@@ -285,10 +238,11 @@ export interface LegacyAzureGetMetricMetadataQuery {
 }
 
 export interface AzureGetResourceNamesQuery {
-  subscriptionId: string;
+  subscriptionId?: string;
   resourceGroup?: string;
   metricNamespace?: string;
   region?: string;
+  uri?: string;
 }
 
 export interface AzureMonitorLocations {
@@ -302,7 +256,7 @@ export interface AzureMonitorProvidersResponse {
   resourceTypes: ProviderResourceType[];
 }
 
-export interface ProviderResourceType {
+interface ProviderResourceType {
   resourceType: string;
   locations: string[];
   apiVersions: string[];
@@ -374,40 +328,8 @@ export interface Workspace {
   tags: Record<string, string>;
 }
 
-export interface Resource {
-  changedTime: string;
-  createdTime: string;
-  extendedLocation: { name: string; type: string };
-  id: string;
-  identity: { principalId: string; tenantId: string; type: string; userAssignedIdentities: string[] };
-  kind: string;
-  location: string;
-  managedBy: string;
-  name: string;
-  plan: { name: string; product: string; promotionCode: string; publisher: string; version: string };
-  properties: Record<string, string>;
-  provisioningState: string;
-  sku: { capacity: number; family: string; model: string; name: string; size: string; tier: string };
-  tags: Record<string, string>;
-  type: string;
-}
-
-export interface ResourceGroup {
-  id: string;
-  location: string;
-  managedBy: string;
-  name: string;
-  properties: { provisioningState: string };
-  tags: object;
-  type: string;
-}
-
-export interface Namespace {
-  classification: {
-    Custom: string;
-    Platform: string;
-    Qos: string;
-  };
+export interface MetricNamespace {
+  classification: 'Custom' | 'Platform' | 'Qos';
   id: string;
   name: string;
   properties: { metricNamespaceName: string };
@@ -476,3 +398,66 @@ export type CheatsheetQueries = {
 export type DropdownCategories = {
   [key: string]: boolean;
 };
+
+export enum TablePlan {
+  Analytics = 'Analytics',
+  Basic = 'Basic',
+}
+
+export interface GetLogAnalyticsTableSuccessResponse {
+  properties: {
+    totalRetentionInDays: number;
+    archiveRetentionInDays: number;
+    lastPlanModifiedDate?: string;
+    plan: TablePlan;
+    restoredLogs?: Record<string, string | undefined>;
+    retentionInDaysAsDefault: boolean;
+    totalRetentionInDaysAsDefault: boolean;
+    schema: {
+      tableSubType: string;
+      name: string;
+      tableType: string;
+      columns: Array<Record<string, string | undefined>>;
+      standardColumns: Array<Record<string, string | undefined>>;
+      solutions: string[];
+      isTroubleshootingAllowed: boolean;
+      description?: string;
+      displayName?: string;
+      labels?: string[];
+      source?: string;
+    };
+    resultStatistics: Record<string, string | number | undefined>;
+    provisioningState: string;
+    retentionInDays: number;
+    searchResults?: Record<string, string | number | undefined>;
+    systemData?: Record<string, string | number | undefined>;
+  };
+  id: string;
+  name: string;
+  type?: string;
+}
+
+export interface GetLogAnalyticsTableErrorResponse {
+  error: {
+    target: string;
+    message: string;
+    code: string;
+  };
+}
+
+export type GetLogAnalyticsTableResponse = GetLogAnalyticsTableSuccessResponse | GetLogAnalyticsTableErrorResponse;
+
+export function instanceOfLogAnalyticsTableError(
+  response: GetLogAnalyticsTableSuccessResponse | GetLogAnalyticsTableErrorResponse
+): response is GetLogAnalyticsTableErrorResponse {
+  if (!response) {
+    return false;
+  }
+  return response.hasOwnProperty('error');
+}
+
+export interface ResourceGraphFilters {
+  subscriptions: string[];
+  types: string[];
+  locations: string[];
+}

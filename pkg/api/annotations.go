@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -38,9 +36,11 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	query := &annotations.ItemQuery{
 		From:         c.QueryInt64("from"),
 		To:           c.QueryInt64("to"),
-		OrgID:        c.SignedInUser.GetOrgID(),
+		OrgID:        c.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
+		UserUID:      c.Query("userUID"),
 		AlertID:      c.QueryInt64("alertId"),
+		AlertUID:     c.Query("alertUID"),
 		DashboardID:  c.QueryInt64("dashboardId"),
 		DashboardUID: c.Query("dashboardUID"),
 		PanelID:      c.QueryInt64("panelId"),
@@ -54,15 +54,14 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		query.Limit = defaultAnnotationsLimit
 	}
 
-	// When dashboard UID present in the request, we ignore dashboard ID
-	if query.DashboardUID != "" {
-		dq := dashboards.GetDashboardQuery{UID: query.DashboardUID, OrgID: c.SignedInUser.GetOrgID()}
+	// When dashboard ID exists without UID, find the UID from dashboards api
+	if query.DashboardID != 0 && query.DashboardUID == "" { // nolint:staticcheck
+		dq := dashboards.GetDashboardQuery{ID: query.DashboardID, OrgID: c.GetOrgID()} // nolint:staticcheck
 		dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
-			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
-		} else {
-			query.DashboardID = dqResult.ID
+			return response.Error(http.StatusBadRequest, "Invalid dashboard ID in annotation request", err)
 		}
+		query.DashboardUID = dqResult.UID
 	}
 
 	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
@@ -70,24 +69,9 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
 	}
 
-	// since there are several annotations per dashboard, we can cache dashboard uid
-	dashboardCache := make(map[int64]*string)
 	for _, item := range items {
 		if item.Email != "" {
 			item.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, item.Email)
-		}
-
-		if item.DashboardID != 0 {
-			if val, ok := dashboardCache[item.DashboardID]; ok {
-				item.DashboardUID = val
-			} else {
-				query := dashboards.GetDashboardQuery{ID: item.DashboardID, OrgID: c.SignedInUser.GetOrgID()}
-				queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
-				if err == nil && queryResult != nil {
-					item.DashboardUID = &queryResult.UID
-					dashboardCache[item.DashboardID] = &queryResult.UID
-				}
-			}
 		}
 	}
 
@@ -124,17 +108,25 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 
 	// overwrite dashboardId when dashboardUID is not empty
 	if cmd.DashboardUID != "" {
-		query := dashboards.GetDashboardQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.DashboardUID}
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), UID: cmd.DashboardUID}
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = queryResult.ID
 		}
 	}
 
-	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardId); err != nil || !canSave {
-		if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-			return dashboardGuardianResponse(err)
-		} else if err != nil {
+	// get dashboard uid if not provided
+	if cmd.DashboardId != 0 && cmd.DashboardUID == "" {
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), ID: cmd.DashboardId}
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "Invalid dashboard ID in annotation request", err)
+		}
+		cmd.DashboardUID = queryResult.UID
+	}
+
+	if canSave, err := hs.canCreateAnnotation(c, cmd.DashboardUID); err != nil || !canSave {
+		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
 		} else {
 			return response.Error(http.StatusForbidden, "Access denied to save the annotation", nil)
@@ -148,15 +140,16 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
-		OrgID:       c.SignedInUser.GetOrgID(),
-		UserID:      userID,
-		DashboardID: cmd.DashboardId,
-		PanelID:     cmd.PanelId,
-		Epoch:       cmd.Time,
-		EpochEnd:    cmd.TimeEnd,
-		Text:        cmd.Text,
-		Data:        cmd.Data,
-		Tags:        cmd.Tags,
+		OrgID:        c.GetOrgID(),
+		UserID:       userID,
+		DashboardID:  cmd.DashboardId,
+		DashboardUID: cmd.DashboardUID,
+		PanelID:      cmd.PanelId,
+		Epoch:        cmd.Time,
+		EpochEnd:     cmd.TimeEnd,
+		Text:         cmd.Text,
+		Data:         cmd.Data,
+		Tags:         cmd.Tags,
 	}
 
 	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
@@ -166,11 +159,9 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
 
-	startID := item.ID
-
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Annotation added",
-		"id":      startID,
+		"id":      item.ID,
 	})
 }
 
@@ -231,7 +222,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 
 	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
-		OrgID:  c.SignedInUser.GetOrgID(),
+		OrgID:  c.GetOrgID(),
 		UserID: userID,
 		Epoch:  cmd.When * 1000,
 		Text:   text,
@@ -271,29 +262,22 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
-	if resp != nil {
+	userID, _ := identity.UserIdentifier(c.GetID())
+
+	if _, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser); resp != nil {
 		return resp
 	}
 
-	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		if canSave, err := hs.canSaveAnnotation(c, annotation); err != nil || !canSave {
-			return dashboardGuardianResponse(err)
-		}
-	}
-
-	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
-		OrgID:    c.SignedInUser.GetOrgID(),
+		OrgID:    c.GetOrgID(),
 		UserID:   userID,
 		ID:       annotationID,
 		Epoch:    cmd.Time,
 		EpochEnd: cmd.TimeEnd,
 		Text:     cmd.Text,
 		Tags:     cmd.Tags,
-		Data:     annotation.Data,
 	}
-
+	// Data is omitted unless supplied; the repository preserves the stored value.
 	if cmd.Data != nil {
 		item.Data = cmd.Data
 	}
@@ -329,51 +313,46 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	userID, _ := identity.UserIdentifier(c.GetID())
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
 
-	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		if canSave, err := hs.canSaveAnnotation(c, annotation); err != nil || !canSave {
-			return dashboardGuardianResponse(err)
-		}
-	}
-
-	userID, _ := identity.UserIdentifier(c.GetID())
+	// Start from the stored annotation, then apply the supplied fields.
 	existing := annotations.Item{
-		OrgID:    c.SignedInUser.GetOrgID(),
+		OrgID:    c.GetOrgID(),
 		UserID:   userID,
 		ID:       annotationID,
 		Epoch:    annotation.Time,
 		EpochEnd: annotation.TimeEnd,
 		Text:     annotation.Text,
 		Tags:     annotation.Tags,
-		Data:     annotation.Data,
+		PanelID:  annotation.PanelID,
+	}
+	if annotation.DashboardUID != nil {
+		existing.DashboardUID = *annotation.DashboardUID
 	}
 
 	if cmd.Tags != nil {
 		existing.Tags = cmd.Tags
 	}
-
-	if cmd.Text != "" && cmd.Text != existing.Text {
+	if cmd.Text != "" {
 		existing.Text = cmd.Text
 	}
-
-	if cmd.Time > 0 && cmd.Time != existing.Epoch {
+	if cmd.Time > 0 {
 		existing.Epoch = cmd.Time
 	}
-
-	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
+	if cmd.TimeEnd > 0 {
 		existing.EpochEnd = cmd.TimeEnd
 	}
-
 	if cmd.Data != nil {
 		existing.Data = cmd.Data
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 	}
 
 	return response.Success("Annotation patched")
@@ -395,11 +374,20 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 	}
 
 	if cmd.DashboardUID != "" {
-		query := dashboards.GetDashboardQuery{OrgID: c.SignedInUser.GetOrgID(), UID: cmd.DashboardUID}
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), UID: cmd.DashboardUID}
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = queryResult.ID
 		}
+	}
+
+	if cmd.DashboardId != 0 && cmd.DashboardUID == "" {
+		query := dashboards.GetDashboardQuery{OrgID: c.GetOrgID(), ID: cmd.DashboardId}
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "Invalid dashboard ID in annotation request", err)
+		}
+		cmd.DashboardUID = queryResult.UID
 	}
 
 	if (cmd.DashboardId != 0 && cmd.PanelId == 0) || (cmd.PanelId != 0 && cmd.DashboardId == 0) {
@@ -411,32 +399,31 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *contextmodel.ReqContext) response
 
 	// validations only for RBAC. A user can mass delete all annotations in a (dashboard + panel) or a specific annotation
 	// if has access to that dashboard.
-	var dashboardId int64
+	var dashboardUID string
 
 	if cmd.AnnotationId != 0 {
 		annotation, respErr := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, cmd.AnnotationId, c.SignedInUser)
 		if respErr != nil {
 			return respErr
 		}
-		dashboardId = annotation.DashboardID
+		dashboardUID = *annotation.DashboardUID
 		deleteParams = &annotations.DeleteParams{
-			OrgID: c.SignedInUser.GetOrgID(),
+			OrgID: c.GetOrgID(),
 			ID:    cmd.AnnotationId,
 		}
 	} else {
-		dashboardId = cmd.DashboardId
+		dashboardUID = cmd.DashboardUID
 		deleteParams = &annotations.DeleteParams{
-			OrgID:       c.SignedInUser.GetOrgID(),
-			DashboardID: cmd.DashboardId,
-			PanelID:     cmd.PanelId,
+			OrgID:        c.GetOrgID(),
+			DashboardID:  cmd.DashboardId,
+			DashboardUID: cmd.DashboardUID,
+			PanelID:      cmd.PanelId,
 		}
 	}
 
-	canSave, err := hs.canMassDeleteAnnotations(c, dashboardId)
+	canSave, err := hs.canMassDeleteAnnotations(c, dashboardUID)
 	if err != nil || !canSave {
-		if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-			return dashboardGuardianResponse(err)
-		} else if err != nil {
+		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
 		} else {
 			return response.Error(http.StatusForbidden, "Access denied to mass delete annotations", nil)
@@ -495,19 +482,8 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
-		if resp != nil {
-			return resp
-		}
-
-		if canSave, err := hs.canSaveAnnotation(c, annotation); err != nil || !canSave {
-			return dashboardGuardianResponse(err)
-		}
-	}
-
 	err = hs.annotationsRepo.Delete(c.Req.Context(), &annotations.DeleteParams{
-		OrgID: c.SignedInUser.GetOrgID(),
+		OrgID: c.GetOrgID(),
 		ID:    annotationID,
 	})
 	if err != nil {
@@ -517,31 +493,10 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 	return response.Success("Annotation deleted")
 }
 
-func (hs *HTTPServer) canSaveAnnotation(c *contextmodel.ReqContext, annotation *annotations.ItemDTO) (bool, error) {
-	if annotation.GetType() == annotations.Dashboard {
-		return canEditDashboard(c, annotation.DashboardID)
-	} else {
-		return true, nil
-	}
-}
-
-func canEditDashboard(c *contextmodel.ReqContext, dashboardID int64) (bool, error) {
-	guard, err := guardian.New(c.Req.Context(), dashboardID, c.SignedInUser.GetOrgID(), c.SignedInUser)
-	if err != nil {
-		return false, err
-	}
-
-	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
-		return false, err
-	}
-
-	return true, nil
-}
-
-func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *user.SignedInUser) (*annotations.ItemDTO, response.Response) {
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user identity.Requester) (*annotations.ItemDTO, response.Response) {
 	query := &annotations.ItemQuery{
 		AnnotationID: annotationID,
-		OrgID:        user.OrgID,
+		OrgID:        user.GetOrgID(),
 		SignedInUser: user,
 	}
 	items, err := repo.Find(ctx, query)
@@ -569,7 +524,7 @@ func findAnnotationByID(ctx context.Context, repo annotations.Repository, annota
 // 500: internalServerError
 func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Response {
 	query := &annotations.TagsQuery{
-		OrgID: c.SignedInUser.GetOrgID(),
+		OrgID: c.GetOrgID(),
 		Tag:   c.Query("tag"),
 		Limit: c.QueryInt64("limit"),
 	}
@@ -585,9 +540,9 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 // AnnotationTypeScopeResolver provides an ScopeAttributeResolver able to
 // resolve annotation types. Scope "annotations:id:<id>" will be translated to "annotations:type:<type>,
 // where <type> is the type of annotation with id <id>.
-// If annotationPermissionUpdate feature toggle is enabled, dashboard annotation scope will be resolved to the corresponding
+// Dashboard annotation scope will be resolved to the corresponding
 // dashboard and folder scopes (eg, "dashboards:uid:<annotation_dashboard_uid>", "folders:uid:<parent_folder_uid>" etc).
-func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, folderStore folder.Store) (string, accesscontrol.ScopeAttributeResolver) {
+func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, folderSvc folder.Service) (string, accesscontrol.ScopeAttributeResolver) {
 	prefix := accesscontrol.ScopeAnnotationsProvider.GetResourceScope("")
 	return prefix, accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		scopeParts := strings.Split(initialScope, ":")
@@ -603,117 +558,57 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 
 		// tempUser is used to resolve annotation type.
 		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
-		tempUser := &user.SignedInUser{
-			OrgID: orgID,
-			Permissions: map[int64]map[string][]string{
-				orgID: {
-					dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
-					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
-				},
-			},
-		}
+		tmpCtx, tempUser := identity.WithServiceIdentity(ctx, orgID)
 
-		if features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-			tempUser = &user.SignedInUser{
-				OrgID: orgID,
-				Permissions: map[int64]map[string][]string{
-					orgID: {
-						accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeDashboardsAll},
-					},
-				},
-			}
-		}
-
-		annotation, resp := findAnnotationByID(ctx, annotationsRepo, int64(annotationId), tempUser)
+		annotation, resp := findAnnotationByID(tmpCtx, annotationsRepo, int64(annotationId), tempUser)
 		if resp != nil {
 			return nil, errors.New("could not resolve annotation type")
 		}
 
-		if !features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-			switch annotation.GetType() {
-			case annotations.Organization:
-				return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
-			case annotations.Dashboard:
-				return []string{accesscontrol.ScopeAnnotationsTypeDashboard}, nil
-			}
-		}
-
-		if annotation.DashboardID == 0 {
+		if annotation.DashboardUID == nil || *annotation.DashboardUID == "" {
 			return []string{accesscontrol.ScopeAnnotationsTypeOrganization}, nil
 		} else {
-			dashboard, err := dashSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: annotation.DashboardID, OrgID: orgID})
-			if err != nil {
-				return nil, err
-			}
-			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
-			// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
-			if dashboard.FolderUID != "" {
-				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
-				inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderStore)
+			return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
+				dashboard, err := dashSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: *annotation.DashboardUID, OrgID: orgID})
 				if err != nil {
 					return nil, err
 				}
-				scopes = append(scopes, inheritedScopes...)
-			} else {
-				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
-			}
-			return scopes, nil
+				scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
+				// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
+				if dashboard.FolderUID != "" {
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
+					inheritedScopes, err := folder.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+					if err != nil {
+						return nil, err
+					}
+					scopes = append(scopes, inheritedScopes...)
+				} else {
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+				}
+				return scopes, nil
+			})
 		}
 	})
 }
 
-func (hs *HTTPServer) canCreateAnnotation(c *contextmodel.ReqContext, dashboardId int64) (bool, error) {
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		if dashboardId != 0 {
-			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(dashboardId, 10)))
-			return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-		} else { // organization annotations
-			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
-			return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-		}
-	}
-
-	if dashboardId != 0 {
-		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeDashboard)
-		if canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator); err != nil || !canSave {
-			return canSave, err
-		}
-
-		return canEditDashboard(c, dashboardId)
+func (hs *HTTPServer) canCreateAnnotation(c *contextmodel.ReqContext, dashboardUID string) (bool, error) {
+	if dashboardUID != "" {
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID))
+		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 	} else { // organization annotations
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 	}
 }
 
-func (hs *HTTPServer) canMassDeleteAnnotations(c *contextmodel.ReqContext, dashboardID int64) (bool, error) {
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
-		if dashboardID == 0 {
-			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, accesscontrol.ScopeAnnotationsTypeOrganization)
-			return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-		} else {
-			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, dashboards.ScopeDashboardsProvider.GetResourceScope(strconv.FormatInt(dashboardID, 10)))
-			return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-		}
-	}
-
-	if dashboardID == 0 {
+func (hs *HTTPServer) canMassDeleteAnnotations(c *contextmodel.ReqContext, dashboardUID string) (bool, error) {
+	if dashboardUID == "" {
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, accesscontrol.ScopeAnnotationsTypeOrganization)
 		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-	} else {
-		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, accesscontrol.ScopeAnnotationsTypeDashboard)
-		canSave, err := hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-		if err != nil || !canSave {
-			return false, err
-		}
-
-		canSave, err = canEditDashboard(c, dashboardID)
-		if err != nil || !canSave {
-			return false, err
-		}
 	}
 
-	return true, nil
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID))
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 }
 
 // swagger:parameters getAnnotationByID
@@ -744,10 +639,19 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	UserID int64 `json:"userId"`
-	// Find annotations for a specified alert.
+	// Limit response to annotations created by a specific user, identified by UID.
+	// in:query
+	// required:false
+	UserUID string `json:"userUID"`
+	// Find annotations for a specified alert rule by its ID.
+	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
 	// in:query
 	// required:false
 	AlertID int64 `json:"alertId"`
+	// Find annotations for a specified alert rule by its UID.
+	// in:query
+	// required:false
+	AlertUID string `json:"alertUID"`
 	// Find annotations that are scoped to a specific dashboard
 	// in:query
 	// required:false

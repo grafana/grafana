@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { DataSourceInstanceSettings, QueryEditorProps } from '@grafana/data';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataSourceInstanceSettings, type QueryEditorProps } from '@grafana/data';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { config } from '../config';
-import { BackendSrv, BackendSrvRequest } from '../services';
+import { type BackendSrv, type BackendSrvRequest } from '../services';
 import { DataSourceWithBackend } from '../utils/DataSourceWithBackend';
-import { MigrationHandler } from '../utils/migrationHandler';
+import { type MigrationHandler } from '../utils/migrationHandler';
 
 import { QueryEditorWithMigration } from './QueryEditorWithMigration';
 

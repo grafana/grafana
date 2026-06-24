@@ -1,18 +1,28 @@
-import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
-import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
-import { SqlDatasource, DB, SQLQuery, formatSQL } from '@grafana/sql';
+import { type DataSourceInstanceSettings, type TimeRange, generateUUID } from '@grafana/data';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
+import {
+  COMMON_FNS,
+  type DB,
+  type FuncParameter,
+  MACRO_FUNCTIONS,
+  type SQLQuery,
+  SQLVariableSupport,
+  SqlDatasource,
+  formatSQL,
+} from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
-import { MySQLOptions } from './types';
+import { type MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
+    this.variables = new SQLVariableSupport(this);
   }
 
   getQueryModel() {
@@ -52,7 +62,7 @@ export class MySqlDatasource extends SqlDatasource {
       return [];
     }
     const queryString = buildColumnQuery(query.table, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: 'fields' });
+    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${generateUUID()}` });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],
@@ -84,6 +94,18 @@ export class MySqlDatasource extends SqlDatasource {
     }
   }
 
+  getFunctions = (): ReturnType<DB['functions']> => {
+    const fns = [...COMMON_FNS, { name: 'VARIANCE' }, { name: 'STDDEV' }];
+
+    const columnParam: FuncParameter = {
+      name: 'Column',
+      required: true,
+      options: (query) => this.fetchFields(query),
+    };
+
+    return [...MACRO_FUNCTIONS(columnParam), ...fns.map((fn) => ({ ...fn, parameters: [columnParam] }))];
+  };
+
   getDB(): DB {
     if (this.db !== undefined) {
       return this.db;
@@ -95,9 +117,8 @@ export class MySqlDatasource extends SqlDatasource {
       fields: (query: SQLQuery) => this.fetchFields(query),
       validateQuery: (query: SQLQuery, _range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
-      dsID: () => this.id,
       toRawSql,
-      functions: () => ['VARIANCE', 'STDDEV'],
+      functions: () => this.getFunctions(),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),
     };
   }

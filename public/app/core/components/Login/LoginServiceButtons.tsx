@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { pickBy } from 'lodash';
 
-import { GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
-import { Icon, IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { type GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Icon, type IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
 
 export interface LoginService {
   bgColor: string;
@@ -113,7 +113,7 @@ const LoginDivider = () => {
         <div className={styles.divider.line} />
       </div>
       <div>
-        <span>{!config.disableLoginForm && <span>or</span>}</span>
+        <span>{!config.disableLoginForm && <Trans i18nKey="login.divider.connecting-text">or</Trans>}</span>
       </div>
       <div>
         <div className={styles.divider.line} />

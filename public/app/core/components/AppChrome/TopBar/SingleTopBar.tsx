@@ -1,35 +1,46 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
-import { memo } from 'react';
+import React, { memo } from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Dropdown, Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
+import { type ScopesContextValue } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
+import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
+import { HomeLink } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
-import { enrichHelpItem } from '../MegaMenu/utils';
-import { NewsContainer } from '../News/NewsContainer';
+import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
+import { FeatureControlButton } from '../FeatureControl/FeatureControlButton';
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
-import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
+import { HelpTopBarButton } from './HelpTopBarButton';
+import { NavRightButton } from './InviteUserButton';
+import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
-import { TopNavBarMenu } from './TopNavBarMenu';
+import { SingleTopBarActions } from './SingleTopBarActions';
+import { TopBarExtensionPoint } from './TopBarExtensionPoint';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-
-export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
+import { getChromeHeaderLevelHeight } from './useChromeHeaderHeight';
 
 interface Props {
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
   onToggleMegaMenu(): void;
   onToggleKioskMode(): void;
+  actions?: React.ReactNode;
+  breadcrumbActions?: React.ReactNode;
+  scopes?: ScopesContextValue | undefined;
+  showToolbarLevel: boolean;
 }
 
 export const SingleTopBar = memo(function SingleTopBar({
@@ -37,86 +48,83 @@ export const SingleTopBar = memo(function SingleTopBar({
   onToggleKioskMode,
   pageNav,
   sectionNav,
+  scopes,
+  actions,
+  breadcrumbActions,
+  showToolbarLevel,
 }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const styles = useStyles2(getStyles, menuDockedAndOpen);
-  const navIndex = useSelector((state) => state.navIndex);
-
-  const helpNode = cloneDeep(navIndex['help']);
-  const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
-  const profileNode = navIndex['profile'];
+  const styles = useStyles2(getStyles, menuDockedAndOpen, visualRefreshEnabled);
+  const profileNode = useSelector((state) => state.navIndex['profile']);
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
+  const isLargeScreen = useMediaQueryMinWidth('lg');
+  const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
 
   return (
-    <div className={styles.layout}>
-      <Stack minWidth={0} gap={0.5} alignItems="center">
-        {!menuDockedAndOpen && (
-          <ToolbarButton
-            narrow
-            id={MEGA_MENU_TOGGLE_ID}
-            onClick={onToggleMegaMenu}
-            tooltip={t('navigation.megamenu.open', 'Open menu')}
-          >
-            <Stack gap={0} alignItems="center">
-              <Branding.MenuLogo className={styles.img} />
-              <Icon size="sm" name="angle-down" />
-            </Stack>
-          </ToolbarButton>
-        )}
-        <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-      </Stack>
-
-      <Stack gap={0.5} alignItems="center">
-        <TopSearchBarCommandPaletteTrigger />
-        <QuickAdd />
-        {enrichedHelpNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
-            <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
-          </Dropdown>
-        )}
-        {config.newsFeedEnabled && <NewsContainer />}
-        <ToolbarButton
-          icon="monitor"
-          className={styles.kioskToggle}
-          onClick={onToggleKioskMode}
-          tooltip="Enable kiosk mode"
-        />
-        {!contextSrv.user.isSignedIn && <SignInLink />}
-        {profileNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
+    <>
+      <div className={styles.layout}>
+        <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
+          {!menuDockedAndOpen && (
             <ToolbarButton
-              className={styles.profileButton}
-              imgSrc={contextSrv.user.gravatarUrl}
-              imgAlt="User avatar"
-              aria-label="Profile"
-            />
-          </Dropdown>
-        )}
-      </Stack>
-    </div>
+              narrow
+              id={MEGA_MENU_TOGGLE_ID}
+              onClick={onToggleMegaMenu}
+              tooltip={t('navigation.megamenu.open', 'Main menu')}
+              aria-expanded={state.megaMenuOpen}
+            >
+              <Stack gap={0} alignItems="center">
+                <Icon name="bars" size="xl" />
+              </Stack>
+            </ToolbarButton>
+          )}
+          {!menuDockedAndOpen && <HomeLink homeNav={homeNav} />}
+          {topLevelScopes ? <ScopesSelector /> : undefined}
+          <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
+          {!showToolbarLevel && breadcrumbActions}
+        </Stack>
+
+        <Stack
+          gap={0.5}
+          alignItems="center"
+          justifyContent={'flex-end'}
+          flex={1}
+          data-testid={!showToolbarLevel ? Components.NavToolbar.container : undefined}
+        >
+          <TopBarExtensionPoint />
+          <TopSearchBarCommandPaletteTrigger />
+          {!isSmallScreen && <QuickAdd />}
+          <FeatureControlButton />
+          <HelpTopBarButton isSmallScreen={isSmallScreen} />
+          <NavToolbarSeparator />
+          {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
+          {!showToolbarLevel && actions}
+          {!contextSrv.user.isSignedIn && <SignInLink />}
+          <NavRightButton />
+          {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
+        </Stack>
+      </div>
+      {showToolbarLevel && (
+        <SingleTopBarActions scopes={scopes} actions={actions} breadcrumbActions={breadcrumbActions} />
+      )}
+    </>
   );
 });
 
-const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean, visualRefreshEnabled: boolean) => ({
   layout: css({
-    height: TOP_BAR_LEVEL_HEIGHT,
+    height: getChromeHeaderLevelHeight(),
     display: 'flex',
     gap: theme.spacing(2),
     alignItems: 'center',
     padding: theme.spacing(0, 1),
-    paddingLeft: menuDockedAndOpen ? theme.spacing(3.5) : theme.spacing(0.75),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    paddingLeft: menuDockedAndOpen ? theme.spacing(visualRefreshEnabled ? 0.5 : 3.5) : theme.spacing(0.75),
+    borderBottom: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
-
-    [theme.breakpoints.up('lg')]: {
-      gridTemplateColumns: '2fr minmax(440px, 1fr)',
-      display: 'grid',
-
-      justifyContent: 'flex-start',
-    },
   }),
   breadcrumbsWrapper: css({
     display: 'flex',
@@ -129,15 +137,6 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     alignSelf: 'center',
     height: theme.spacing(3),
     width: theme.spacing(3),
-  }),
-  profileButton: css({
-    padding: theme.spacing(0, 0.5),
-    img: {
-      borderRadius: theme.shape.radius.circle,
-      height: '24px',
-      marginRight: 0,
-      width: '24px',
-    },
   }),
   kioskToggle: css({
     [theme.breakpoints.down('lg')]: {

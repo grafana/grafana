@@ -1,13 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
 import config from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 
-import { Props, QueryGroup } from './QueryGroup';
+import { type Props, QueryGroup } from './QueryGroup';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
@@ -19,22 +20,21 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
-      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-      getInstanceSettings: () => ({
-        ...mockDS,
-        meta: {
-          ...mockDS.meta,
-          alerting: true,
-          mixed: true,
-        },
-      }),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
+    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
+    getInstanceSettings: () => ({
+      ...mockDS,
+      meta: {
+        ...mockDS.meta,
+        alerting: true,
+        mixed: true,
+      },
     }),
-  };
-});
+  }),
+}));
 
 describe('QueryGroup', () => {
   // QueryGroup relies on this being present
@@ -78,7 +78,7 @@ describe('QueryGroup', () => {
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
     await userEvent.click(addExpressionButton);
 
-    const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
+    const lastQueryEditorRow = (await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).at(-1);
     const lastEditorToggleRow = (await screen.findAllByLabelText('Collapse query row')).at(-1);
 
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
@@ -95,7 +95,7 @@ describe('QueryGroup', () => {
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
     await userEvent.click(addQueryButton);
 
-    const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
+    const lastQueryEditorRow = (await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).at(-1);
     const lastEditorToggleRow = (await screen.findAllByLabelText('Collapse query row')).at(-1);
 
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
@@ -123,34 +123,10 @@ describe('QueryGroup', () => {
     expect(addExpressionButton).not.toBeInTheDocument();
   });
 
-  describe('Angular deprecation', () => {
-    const deprecationText = /legacy platform based on AngularJS/i;
-
-    const oldAngularDetected = mockDS.meta.angular?.detected ?? false;
-    const oldDatasources = config.datasources;
-
-    afterEach(() => {
-      mockDS.meta.angular = { detected: oldAngularDetected, hideDeprecation: false };
-      config.datasources = oldDatasources;
-    });
-
-    it('Should render angular deprecation notice for angular plugins', async () => {
-      mockDS.meta.angular = { detected: true, hideDeprecation: false };
-      config.datasources[mockDS.name] = mockDS;
-      renderScenario({});
-      await waitFor(async () => {
-        expect(await screen.findByText(deprecationText)).toBeInTheDocument();
-      });
-    });
-
-    it('Should not render angular deprecation notice for non-angular plugins', async () => {
-      mockDS.meta.angular = { detected: false, hideDeprecation: false };
-      config.datasources[mockDS.name] = mockDS;
-      renderScenario({});
-      await waitFor(async () => {
-        expect(await screen.queryByText(deprecationText)).not.toBeInTheDocument();
-      });
-    });
+  it('correctly renders query options', async () => {
+    renderScenario({});
+    expect(await screen.findByText('MD = 100')).toBeInTheDocument();
+    expect(await screen.findByText('Interval = 1m')).toBeInTheDocument();
   });
 });
 
@@ -163,6 +139,8 @@ function renderScenario(overrides: Partial<Props>) {
       getTransformations: jest.fn(),
     }),
     options: {
+      maxDataPoints: 100,
+      minInterval: '1m',
       queries: [
         {
           datasource: mockDS,

@@ -1,7 +1,8 @@
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 
 import { SelectionOptionsForm } from './SelectionOptionsForm';
 import { VariableLegend } from './VariableLegend';
@@ -13,6 +14,7 @@ interface DataSourceVariableFormProps {
   regex: string;
   multi: boolean;
   allValue?: string | null;
+  allowCustomValue?: boolean;
   includeAll: boolean;
   onChange: (option: SelectableValue) => void;
   optionTypes: Array<{ value: string; label: string }>;
@@ -20,6 +22,7 @@ interface DataSourceVariableFormProps {
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
+  onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   onQueryBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
   onAllValueBlur?: (event: FormEvent<HTMLInputElement>) => void;
 }
@@ -28,6 +31,7 @@ export function DataSourceVariableForm({
   query,
   regex,
   optionTypes,
+  allowCustomValue,
   onChange,
   onRegExBlur,
   multi,
@@ -36,14 +40,17 @@ export function DataSourceVariableForm({
   onMultiChange,
   onIncludeAllChange,
   onAllValueChange,
+  onAllowCustomValueChange,
 }: DataSourceVariableFormProps) {
-  const typeValue = optionTypes.find((o) => o.value === query) ?? optionTypes[0];
+  const typeValue = optionTypes.find((o) => o.value === query);
 
   return (
     <>
-      <VariableLegend>Data source options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.data-source-variable-form.data-source-options">Data source options</Trans>
+      </VariableLegend>
       <VariableSelectField
-        name="Type"
+        name={t('dashboard-scene.data-source-variable-form.name-type', 'Type')}
         value={typeValue}
         options={optionTypes}
         onChange={onChange}
@@ -52,27 +59,40 @@ export function DataSourceVariableForm({
 
       <VariableTextField
         defaultValue={regex}
-        name="Instance name filter"
+        name={t('dashboard-scene.data-source-variable-form.name-instance-name-filter', 'Instance name filter')}
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(.*)-.*/"
         onBlur={onRegExBlur}
         description={
           <div>
-            Regex filter for which data source instances to choose from in the variable value list. Leave empty for all.
+            <Trans i18nKey="dashboard-scene.data-source-variable-form.description-instance-name-filter">
+              Regex filter for which data source instances to choose from in the variable value list. Leave empty for
+              all.
+            </Trans>
             <br />
             <br />
-            Example: <code>/^prod/</code>
+            <Trans
+              i18nKey="dashboard-scene.data-source-variable-form.example-instance-name-filter"
+              components={{ codeExample: <code>/^prod/</code> }}
+            >
+              Example: {'<codeExample />'}
+            </Trans>
           </div>
         }
       />
 
-      <VariableLegend>Selection options</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.data-source-variable-form.selection-options">Selection options</Trans>
+      </VariableLegend>
       <SelectionOptionsForm
         multi={multi}
         includeAll={includeAll}
         allValue={allValue}
+        allowCustomValue={allowCustomValue}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
+        onAllowCustomValueChange={onAllowCustomValueChange}
       />
     </>
   );

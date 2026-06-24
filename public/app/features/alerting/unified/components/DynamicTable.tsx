@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 
 import { usePagination } from '../hooks/usePagination';
 import { getPaginationStyles } from '../styles/pagination';
@@ -127,7 +129,11 @@ export const DynamicTable = <T extends object>({
               {isExpandable && (
                 <div className={cx(styles.cell(), styles.expandCell)}>
                   <IconButton
-                    tooltip={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
+                    tooltip={
+                      isItemExpanded
+                        ? t('alerting.dynamic-table.tooltip-collapse-row', 'Collapse row')
+                        : t('alerting.dynamic-table.tooltip-expand-row', 'Expand row')
+                    }
                     data-testid={selectors.components.AlertRules.toggle}
                     name={isItemExpanded ? 'angle-down' : 'angle-right'}
                     onClick={() => toggleExpanded(item)}
@@ -194,10 +200,12 @@ const getStyles = <T extends unknown>(
     sizes.unshift('0');
   }
 
+  const containerBorderRadius = 'lg';
+
   return (theme: GrafanaTheme2) => ({
     container: css({
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius[containerBorderRadius],
       color: theme.colors.text.secondary,
     }),
     row: css({
@@ -205,12 +213,24 @@ const getStyles = <T extends unknown>(
       gridTemplateColumns: sizes.join(' '),
       gridTemplateRows: '1fr auto',
 
-      '&:nth-child(2n + 1)': {
+      '&:first-child': {
         backgroundColor: theme.colors.background.secondary,
+        borderTopLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: containerBorderRadius,
+        }),
+        borderTopRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: containerBorderRadius,
+        }),
       },
 
-      '&:nth-child(2n)': {
+      '&:last-child': {
         backgroundColor: theme.colors.background.primary,
+        borderBottomLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: containerBorderRadius,
+        }),
+        borderBottomRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: containerBorderRadius,
+        }),
       },
 
       [theme.breakpoints.down('sm')]: {

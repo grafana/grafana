@@ -1,19 +1,20 @@
 import { createAction, createReducer, isAnyOf } from '@reduxjs/toolkit';
 import { inRange } from 'lodash';
 
-import { EditableRuleIdentifier, GrafanaRuleIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
-import { PostableRuleDTO, PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import {
+  type EditableRuleIdentifier,
+  type GrafanaRuleIdentifier,
+  type RuleIdentifier,
+} from 'app/types/unified-alerting';
+import { type PostableRuleDTO, type PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { hashRulerRule } from '../../utils/rule-id';
-import {
-  isCloudRuleIdentifier,
-  isCloudRulerRule,
-  isGrafanaRuleIdentifier,
-  isGrafanaRulerRule,
-} from '../../utils/rules';
+import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, rulerRuleType } from '../../utils/rules';
 
 // rule-scoped actions
+// TOOD The interval field only make sense when adding a rule to a new rule group.
+// We need to split these into distinct actions and introduce a separete addNewRuleGroupAction.
 export const addRuleAction = createAction<{ rule: PostableRuleDTO; groupName?: string; interval?: string }>(
   'ruleGroup/rules/add'
 );
@@ -61,7 +62,7 @@ export const ruleGroupReducer = createReducer(initialState, (builder) => {
       const index = findRuleIndex(draft.rules, identifier);
       const matchingRule = draft.rules[index];
 
-      if (isGrafanaRulerRule(matchingRule)) {
+      if (rulerRuleType.grafana.rule(matchingRule)) {
         matchingRule.grafana_alert.is_paused = pause;
       } else {
         throw new Error('Matching rule is not a Grafana-managed rule');
@@ -98,8 +99,8 @@ const ruleFinder = (identifier: RuleIdentifier) => {
   const dataSourceManagedIdentifier = isCloudRuleIdentifier(identifier);
 
   return (rule: PostableRuleDTO) => {
-    const isGrafanaManagedRule = isGrafanaRulerRule(rule);
-    const isDataSourceManagedRule = isCloudRulerRule(rule);
+    const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule);
+    const isDataSourceManagedRule = rulerRuleType.dataSource.rule(rule);
 
     if (grafanaManagedIdentifier && isGrafanaManagedRule) {
       return rule.grafana_alert.uid === identifier.uid;

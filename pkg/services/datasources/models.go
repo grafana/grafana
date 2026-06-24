@@ -11,27 +11,29 @@ import (
 )
 
 const (
-	DS_ACCESS_DIRECT  = "direct"
-	DS_ACCESS_PROXY   = "proxy"
-	DS_ALERTMANAGER   = "alertmanager"
-	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
-	DS_DYNATRACE      = "grafana-dynatrace-datasource"
-	DS_ES             = "elasticsearch"
-	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
-	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
-	DS_GRAPHITE       = "graphite"
-	DS_INFLUXDB       = "influxdb"
-	DS_INFLUXDB_08    = "influxdb_08"
-	DS_JAEGER         = "jaeger"
-	DS_LOKI           = "loki"
-	DS_MSSQL          = "mssql"
-	DS_MYSQL          = "mysql"
-	DS_OPENTSDB       = "opentsdb"
-	DS_POSTGRES       = "grafana-postgresql-datasource"
-	DS_PROMETHEUS     = "prometheus"
-	DS_TEMPO          = "tempo"
-	DS_TESTDATA       = "grafana-testdata-datasource"
-	DS_ZIPKIN         = "zipkin"
+	DS_ACCESS_DIRECT     = "direct"
+	DS_ACCESS_PROXY      = "proxy"
+	DS_ALERTMANAGER      = "alertmanager"
+	DS_AZURE_MONITOR     = "grafana-azure-monitor-datasource"
+	DS_DYNATRACE         = "grafana-dynatrace-datasource"
+	DS_ES                = "elasticsearch"
+	DS_ES_OPEN_DISTRO    = "grafana-es-open-distro-datasource"
+	DS_ES_OPENSEARCH     = "grafana-opensearch-datasource"
+	DS_GRAPHITE          = "graphite"
+	DS_INFLUXDB          = "influxdb"
+	DS_INFLUXDB_08       = "influxdb_08"
+	DS_JAEGER            = "jaeger"
+	DS_LOKI              = "loki"
+	DS_MSSQL             = "mssql"
+	DS_MYSQL             = "mysql"
+	DS_OPENTSDB          = "opentsdb"
+	DS_POSTGRES          = "grafana-postgresql-datasource"
+	DS_PROMETHEUS        = "prometheus"
+	DS_AMAZON_PROMETHEUS = "grafana-amazonprometheus-datasource"
+	DS_AZURE_PROMETHEUS  = "grafana-azureprometheus-datasource"
+	DS_TEMPO             = "tempo"
+	DS_TESTDATA          = "grafana-testdata-datasource"
+	DS_ZIPKIN            = "zipkin"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.
@@ -70,6 +72,30 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+
+	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
+}
+
+func IsSecureSocksDSProxyEnabled(jsonData map[string]any) bool {
+	v, _ := jsonData["enableSecureSocksProxy"].(bool)
+	return v
+}
+
+func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
+	if ds.isSecureSocksDSProxyEnabled == nil {
+		enabled := IsSecureSocksDSProxyEnabled(ds.JsonDataMap())
+		ds.isSecureSocksDSProxyEnabled = &enabled
+	}
+	return *ds.isSecureSocksDSProxyEnabled
+}
+
+// JsonDataMap returns JsonData as a map[string]any, or empty map if unset
+func (ds *DataSource) JsonDataMap() map[string]any {
+	def := map[string]any{}
+	if ds.JsonData == nil {
+		return def
+	}
+	return ds.JsonData.MustMap(def)
 }
 
 type TeamHTTPHeadersJSONData struct {
@@ -77,19 +103,21 @@ type TeamHTTPHeadersJSONData struct {
 }
 
 type TeamHTTPHeaders struct {
-	Headers        TeamHeaders `json:"headers"`
-	RestrictAccess bool        `json:"restrictAccess"`
+	Headers TeamHeaders `json:"headers"`
 }
 
-type TeamHeaders map[string][]TeamHTTPHeader
+type TeamHeaders map[string][]AccessRule
 
-type TeamHTTPHeader struct {
+// a header is composed of a key:value. the key is the headername X-Prom-Label-Policy
+// a header value is composed of a tenantID:rule. the tenantID is the tenantID of the tenant that the rule is for.
+// the value is taken from https://grafana.com/docs/mimir/latest/manage/tools/mimirtool/#acl
+// and each rule is
+type AccessRule struct {
 	Header string `json:"header"`
-	Value  string `json:"value"`
-}
-
-func (ds DataSource) TeamHTTPHeaders() (*TeamHTTPHeaders, error) {
-	return GetTeamHTTPHeaders(ds.JsonData)
+	// the LBACRule is the rule that is used to restrict access to the data source
+	// currently <tenantid>:<promqlrule>
+	// LBAC rule (e.g., "tenant:{ label=value }")
+	LBACRule string `json:"value"`
 }
 
 func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
@@ -118,34 +146,13 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
 			if header.Header == "" {
 				return nil, errors.New("header name is missing or empty")
 			}
-			if header.Value == "" {
+			if header.LBACRule == "" {
 				return nil, errors.New("header value is missing or empty")
 			}
 		}
 	}
 
 	return teamHTTPHeaders, nil
-}
-
-// AllowedCookies parses the jsondata.keepCookies and returns a list of
-// allowed cookies, otherwise an empty list.
-func (ds DataSource) AllowedCookies() []string {
-	if ds.JsonData != nil {
-		if keepCookies := ds.JsonData.Get("keepCookies"); keepCookies != nil {
-			return keepCookies.MustStringArray()
-		}
-	}
-
-	return []string{}
-}
-
-// Specific error type for grpc secrets management so that we can show more detailed plugin errors to users
-type ErrDatasourceSecretsPluginUserFriendly struct {
-	Err string
-}
-
-func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
-	return e.Err
 }
 
 // ----------------------
@@ -157,8 +164,8 @@ type AddDataSourceCommand struct {
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
-	Database        string            `json:"database"`
 	User            string            `json:"user"`
+	Database        string            `json:"database"`
 	BasicAuth       bool              `json:"basicAuth"`
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
@@ -167,9 +174,9 @@ type AddDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
 	// swagger:ignore
-	APIVersion string `json:"apiVersion"`
+	APIVersion string `json:"apiVersion,omitempty"`
 	// swagger:ignore
-	IsPrunable bool
+	IsPrunable bool `json:"-"`
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -192,12 +199,15 @@ type UpdateDataSourceCommand struct {
 	IsDefault       bool              `json:"isDefault"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
-	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
 	// swagger:ignore
-	APIVersion string `json:"apiVersion"`
+	APIVersion string `json:"apiVersion,omitempty"`
 	// swagger:ignore
-	IsPrunable bool
+	IsPrunable bool `json:"-"`
+	// Everything above is identical in AddDataSourceCommand
+
+	// The previous version -- used for optimistic locking
+	Version int `json:"version"`
 
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`
@@ -238,7 +248,6 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgID           int64
 	DataSourceLimit int
-	User            *user.SignedInUser
 }
 
 type GetAllDataSourcesQuery struct{}
@@ -252,11 +261,21 @@ type GetDataSourcesByTypeQuery struct {
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
 // At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type GetDataSourceQuery struct {
-	ID   int64
-	UID  string
+	// Deprecated: use UID
+	ID int64
+
+	// The datasource unique id
+	UID string
+
+	// Deprecated: Use UID
 	Name string
 
+	// Required
 	OrgID int64
+
+	// Type is the datasource plugin type (e.g. "prometheus", "loki").
+	// When set alongside UID, it scopes the lookup to that specific type.
+	Type string
 }
 
 type DatasourcesPermissionFilterQuery struct {

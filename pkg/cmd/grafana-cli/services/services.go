@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 )
 
@@ -77,9 +76,7 @@ func GetLocalPlugin(pluginDir, pluginID string) (plugins.FoundPlugin, error) {
 }
 
 func GetLocalPlugins(pluginDir string) []*plugins.FoundBundle {
-	f := finder.NewLocalFinder(true)
-
-	res, err := f.Find(context.Background(), sources.NewLocalSource(plugins.ClassExternal, []string{pluginDir}))
+	res, err := sources.NewLocalSource(plugins.ClassExternal, []string{pluginDir}).Discover(context.Background())
 	if err != nil {
 		logger.Error("Could not get local plugins", err)
 		return make([]*plugins.FoundBundle, 0)

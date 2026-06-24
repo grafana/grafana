@@ -1,19 +1,30 @@
-import { PanelPlugin, PanelProps } from '@grafana/data';
-import { SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import { PanelPlugin, type PanelProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import {
+  type SceneObject,
+  SceneObjectBase,
+  type SceneObjectState,
+  sceneUtils,
+  VizPanel,
+  type VizPanelState,
+} from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
-import { PanelTimeRange } from './PanelTimeRange';
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { panelLinksBehavior } from './PanelMenuBehavior';
+import { PanelNotices } from './PanelNotices';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from './panel-timerange/utils';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
-  // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
-  title?: string;
   uid: string;
   name: string;
   isLoaded?: boolean;
@@ -48,34 +59,73 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const libPanelModel = new PanelModel(libPanel.model);
 
+    // Use dashboard panel ID for data layer filtering
+    const dashboardPanelId = getPanelIdForVizPanel(vizPanel);
+    libPanelModel.id = dashboardPanelId;
+
+    const titleItems: SceneObject[] = [];
+
+    titleItems.push(
+      new VizPanelLinks({
+        rawLinks: libPanelModel.links,
+        menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+      })
+    );
+    titleItems.push(new PanelNotices());
+
+    let title;
+    if (config.featureToggles.preferLibraryPanelTitle) {
+      title = libPanelModel.title ?? vizPanel.state.title;
+    } else {
+      title = vizPanel.state.title ?? libPanelModel.title;
+    }
+
+    const timeRange =
+      libPanelModel.timeFrom || libPanelModel.timeShift
+        ? new PanelTimeRange({
+            timeFrom: libPanelModel.timeFrom,
+            timeShift: libPanelModel.timeShift,
+            hideTimeOverride: libPanelModel.hideTimeOverride,
+          })
+        : undefined;
+
     const vizPanelState: VizPanelState = {
-      title: libPanelModel.title,
+      title,
+      hoverHeader: getUpdatedHoverHeader(title ?? '', timeRange?.state),
       options: libPanelModel.options ?? {},
       fieldConfig: libPanelModel.fieldConfig,
       pluginId: libPanelModel.type,
       pluginVersion: libPanelModel.pluginVersion,
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       description: libPanelModel.description,
+      titleItems: titleItems,
       $data: createPanelDataProvider(libPanelModel),
     };
 
-    if (libPanelModel.timeFrom || libPanelModel.timeShift) {
-      vizPanelState.$timeRange = new PanelTimeRange({
-        timeFrom: libPanelModel.timeFrom,
-        timeShift: libPanelModel.timeShift,
-        hideTimeOverride: libPanelModel.hideTimeOverride,
-      });
+    if (timeRange) {
+      vizPanelState.$timeRange = timeRange;
     }
 
     vizPanel.setState(vizPanelState);
     vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
 
-    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
 
     const layoutElement = vizPanel.parent!;
 
-    // Migrate repeat options to layout element
-    if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
+    // Skip migrating repeat options from library panel when using dynamic dashboards (dashboardNewLayouts),
+    // as repeat options should only come from the dashboard panel instance (grid item),
+    // not from the library panel definition.
+    // Exception: Public dashboards and scripted dashboards still need this migration
+    // even when dashboardNewLayouts is enabled. This is because public and scripted dashboard migrations are still handled in the frontend.
+    const dashboard = getDashboardSceneFor(this);
+    const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
+    const isScriptedDashboard = dashboard.state.meta.fromScript === true;
+    const shouldSkipRepeatMigration =
+      config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
+
+    // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
+    if (!shouldSkipRepeatMigration && libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
       layoutElement.setState({
         variableName: libPanelModel.repeat,
         repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',

@@ -1,8 +1,9 @@
 import { forwardRef, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Input, IconButton } from '@grafana/ui';
-import { Props as InputProps } from '@grafana/ui/src/components/Input/Input';
+import { type InputProps } from '@grafana/ui/internal';
 
 interface Props extends Omit<InputProps, 'type'> {}
 
@@ -24,7 +25,15 @@ export const PasswordField = forwardRef<HTMLInputElement, Props>((props, ref) =>
           onClick={() => {
             setShowPassword(!showPassword);
           }}
+<<<<<<< HEAD
           tooltip={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+=======
+          tooltip={
+            showPassword
+              ? t('grafana-ui.password-field.tooltip-hide', 'Hide password')
+              : t('grafana-ui.password-field.tooltip-show', 'Show password')
+          }
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         />
       }
     />

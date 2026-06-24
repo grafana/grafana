@@ -2,11 +2,12 @@ import { css, cx } from '@emotion/css';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
-import { GrafanaTheme2, store } from '@grafana/data';
+import { type GrafanaTheme2, store } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
+import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
-import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
+import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
@@ -154,11 +155,15 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
-      <CustomScrollbar>
+      <ScrollContainer>
         <div className={styles.content}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
-            tooltip={contentOutlineExpanded ? 'Collapse outline' : 'Expand outline'}
+            tooltip={
+              contentOutlineExpanded
+                ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
+                : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
+            }
             tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
             onClick={toggle}
             className={cx(styles.toggleContentOutlineButton, {
@@ -235,7 +240,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             );
           })}
         </div>
-      </CustomScrollbar>
+      </ScrollContainer>
     </PanelContainer>
   );
 }
@@ -255,7 +260,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
     }),
     content: css({
       label: 'content',
-      marginLeft: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.5),
       top: 0,
     }),
     buttonStyles: css({

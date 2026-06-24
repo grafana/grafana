@@ -1,18 +1,28 @@
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { of } from 'rxjs';
+
+import { getBackendSrv } from '@grafana/runtime';
+import { type RulerDataSourceConfig } from 'app/types/unified-alerting';
 
 import { mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { DataSourceType } from '../utils/datasource';
 
-import { rulerUrlBuilder } from './ruler';
+import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
+import {
+  RULER_CONFIG_API_PROBE_GROUP,
+  RULER_CONFIG_API_PROBE_NAMESPACE,
+  fetchTestRulerRulesGroup,
+  rulerUrlBuilder,
+} from './ruler';
 
-const grafanaConfig: RulerDataSourceConfig = {
-  dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-  apiVersion: 'legacy',
-};
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: jest.fn(),
+}));
 
 const mimirConfig: RulerDataSourceConfig = {
   dataSourceName: 'Mimir-cloud',
+  dataSourceUid: 'mimir-1',
   apiVersion: 'config',
 };
 
@@ -23,11 +33,16 @@ beforeAll(() => {
   );
 });
 
+beforeEach(() => {
+  jest.mocked(getBackendSrv).mockReset();
+});
+
 describe('rulerUrlBuilder', () => {
   it('Should use /api/v1/rules endpoint with subtype = cortex param for legacy api version', () => {
     // Arrange
     const config: RulerDataSourceConfig = {
       dataSourceName: 'Cortex',
+      dataSourceUid: 'cortex-1',
       apiVersion: 'legacy',
     };
 
@@ -121,7 +136,7 @@ describe('rulerUrlBuilder', () => {
     // GMA uses folderUIDs as namespaces and they should never contain slashes
     it('Should only replace the group segment for Grafana-managed rules', () => {
       // Act
-      const builder = rulerUrlBuilder(grafanaConfig);
+      const builder = rulerUrlBuilder(GRAFANA_RULER_CONFIG);
 
       const group = builder.namespaceGroup('test/ns', 'test/gr');
 
@@ -130,5 +145,24 @@ describe('rulerUrlBuilder', () => {
       expect(group.params).toHaveProperty('group');
       expect(group.params).not.toHaveProperty('namespace');
     });
+  });
+});
+
+describe('fetchTestRulerRulesGroup', () => {
+  it('passes the Mimir subtype parameter when probing a Mimir ruler', async () => {
+    const fetch = jest.fn().mockReturnValue(of({ data: null }));
+    jest.mocked(getBackendSrv).mockReturnValue({ fetch } as unknown as ReturnType<typeof getBackendSrv>);
+
+    await fetchTestRulerRulesGroup('Mimir-cloud', 'mimir');
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: `/api/ruler/mimir-1/api/v1/rules/${RULER_CONFIG_API_PROBE_NAMESPACE}/${RULER_CONFIG_API_PROBE_GROUP}`,
+        params: { subtype: 'mimir' },
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      })
+    );
   });
 });

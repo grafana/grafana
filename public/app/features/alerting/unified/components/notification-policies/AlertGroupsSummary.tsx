@@ -2,6 +2,7 @@ import pluralize from 'pluralize';
 import { Fragment } from 'react';
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 
 interface Props {
@@ -15,15 +16,45 @@ export const AlertGroupsSummary = ({ active = 0, suppressed = 0, unprocessed = 0
   const total = active + suppressed + unprocessed;
 
   if (active) {
-    statsComponents.push(<Badge color="red" key="firing" text={`${active} firing`} />);
+    statsComponents.push(
+      <Badge
+        color="red"
+        key="firing"
+        text={t('alerting.alert-groups-summary.text-firing', '', {
+          count: active,
+          defaultValue_one: '{{count}} firing',
+          defaultValue_other: '{{count}} firing',
+        })}
+      />
+    );
   }
 
   if (suppressed) {
-    statsComponents.push(<Badge color="blue" key="suppressed" text={`${suppressed} suppressed`} />);
+    statsComponents.push(
+      <Badge
+        color="blue"
+        key="suppressed"
+        text={t('alerting.alert-groups-summary.text-suppressed', '', {
+          count: suppressed,
+          defaultValue_one: '{{count}} suppressed',
+          defaultValue_other: '{{count}} suppressed',
+        })}
+      />
+    );
   }
 
   if (unprocessed) {
-    statsComponents.push(<Badge color="orange" key="unprocessed" text={`${unprocessed} unprocessed`} />);
+    statsComponents.push(
+      <Badge
+        color="orange"
+        key="unprocessed"
+        text={t('alerting.alert-groups-summary.text-unprocessed', '', {
+          count: unprocessed,
+          defaultValue_one: '{{count}} unprocessed',
+          defaultValue_other: '{{count}} unprocessed',
+        })}
+      />
+    );
   }
 
   // if we only have one category it's not really necessary to repeat the total

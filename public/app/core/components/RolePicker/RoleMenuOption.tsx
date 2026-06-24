@@ -1,26 +1,38 @@
 import { cx } from '@emotion/css';
-import { forwardRef, FormEvent } from 'react';
+import { forwardRef, type FormEvent } from 'react';
 
+import { t } from '@grafana/i18n';
 import { Checkbox, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { Role } from 'app/types';
+import { getSelectStyles } from '@grafana/ui/internal';
+import { type Role } from 'app/types/accessControl';
 
 import { getStyles } from './styles';
 
 interface RoleMenuOptionProps {
   data: Role;
   onChange: (value: Role) => void;
+  useFilteredDisplayName?: boolean;
   isSelected?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
+  mapped?: boolean;
   hideDescription?: boolean;
 }
 
 export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren<RoleMenuOptionProps>>(
-  ({ data, isFocused, isSelected, disabled, onChange, hideDescription }, ref) => {
+  ({ data, isFocused, isSelected, useFilteredDisplayName, disabled, mapped, onChange, hideDescription }, ref) => {
     const theme = useTheme2();
     const styles = getSelectStyles(theme);
     const customStyles = useStyles2(getStyles);
+
+    disabled = disabled || mapped;
+    let disabledMessage = '';
+    if (disabled) {
+      disabledMessage = 'You do not have permissions to assign this role.';
+      if (mapped) {
+        disabledMessage = 'Role assignment cannot be removed because the role is mapped through group sync.';
+      }
+    }
 
     const wrapperClassName = cx(
       styles.option,
@@ -40,7 +52,12 @@ export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren
     return (
       // TODO: fix keyboard a11y
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-      <div ref={ref} className={wrapperClassName} aria-label="Role picker option" onClick={onChangeInternal}>
+      <div
+        ref={ref}
+        className={wrapperClassName}
+        aria-label={t('role-picker.menu-option-aria-label', 'Role picker option')}
+        onClick={onChangeInternal}
+      >
         <Checkbox
           value={isSelected}
           className={customStyles.menuOptionCheckbox}
@@ -48,9 +65,14 @@ export const RoleMenuOption = forwardRef<HTMLDivElement, React.PropsWithChildren
           disabled={disabled}
         />
         <div className={cx(styles.optionBody, customStyles.menuOptionBody)}>
-          <span>{data.displayName || data.name}</span>
+          <span>{(useFilteredDisplayName && data.filteredDisplayName) || data.displayName || data.name}</span>
           {!hideDescription && data.description && <div className={styles.optionDescription}>{data.description}</div>}
         </div>
+        {disabledMessage && (
+          <Tooltip content={disabledMessage}>
+            <Icon name="lock" />
+          </Tooltip>
+        )}
         {data.description && (
           <Tooltip content={data.description}>
             <Icon name="info-circle" className={customStyles.menuOptionInfoSign} />

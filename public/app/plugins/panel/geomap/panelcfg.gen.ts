@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/geomap/panelcfg.cue file.
+
 import * as ui from '@grafana/schema';
 
 export interface Options {
@@ -24,6 +26,8 @@ export const defaultOptions: Partial<Options> = {
 
 export interface MapViewConfig {
   allLayers?: boolean;
+  dashboardVariable?: boolean;
+  dashboardVariableName?: string;
   id: string;
   lastOnly?: boolean;
   lat?: number;
@@ -31,6 +35,7 @@ export interface MapViewConfig {
   lon?: number;
   maxZoom?: number;
   minZoom?: number;
+  noRepeat?: boolean;
   padding?: number;
   shared?: boolean;
   zoom?: number;
@@ -41,6 +46,7 @@ export const defaultMapViewConfig: Partial<MapViewConfig> = {
   id: 'zero',
   lat: 0,
   lon: 0,
+  noRepeat: false,
   zoom: 1,
 };
 

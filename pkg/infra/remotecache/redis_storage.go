@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -39,6 +39,8 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		switch connKey {
 		case "addr":
 			options.Addr = connVal
+		case "username":
+			options.Username = connVal
 		case "password":
 			options.Password = connVal
 		case "db":
@@ -53,6 +55,8 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 				return nil, fmt.Errorf("%v: %w", "value for pool_size in redis connection string must be a number", err)
 			}
 			options.PoolSize = i
+		case "network":
+			options.Network = connVal
 		case "ssl":
 			if connVal != "true" && connVal != "false" && connVal != "insecure" {
 				return nil, fmt.Errorf("ssl must be set to 'true', 'false', or 'insecure' when present")
@@ -78,7 +82,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	return options, nil
 }
 
-func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
+func newRedisStorage(opts *setting.RemoteCacheSettings) (*redisStorage, error) {
 	opt, err := parseRedisConnStr(opts.ConnStr)
 	if err != nil {
 		return nil, err

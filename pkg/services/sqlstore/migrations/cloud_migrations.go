@@ -66,7 +66,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 	}))
 
 	// --- v2 - asynchronous workflow refactor
-	sessionTable := Table{
+	migrationSessionTable := Table{
 		Name: "cloud_migration_session",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -98,8 +98,17 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 			{Cols: []string{"uid"}, Type: UniqueIndex},
 		},
 	}
+	migrationSnapshotPartitionTable := Table{
+		Name: "cloud_migration_snapshot_partition",
+		Columns: []*Column{
+			{Name: "snapshot_uid", Type: DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "partition_number", Type: DB_Int, Nullable: false},
+			{Name: "resource_type", Type: DB_Varchar, Length: 255, Nullable: false},
+			{Name: "data", Type: DB_LongBlob, Nullable: false},
+		},
+	}
 
-	addTableReplaceMigrations(mg, migrationTable, sessionTable, 2, map[string]string{
+	addTableReplaceMigrations(mg, migrationTable, migrationSessionTable, 2, map[string]string{
 		"id":           "id",
 		"uid":          "uid",
 		"auth_token":   "auth_token",
@@ -171,9 +180,61 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Nullable: true,
 	}))
 
+	// -- Adds org_id column for for all elements - defaults to 1 (default org)
+	mg.AddMigration("add cloud_migration_session.org_id column", NewAddColumnMigration(migrationSessionTable, &Column{
+		Name: "org_id", Type: DB_BigInt, Nullable: false, Default: "1",
+	}))
+
 	mg.AddMigration("add cloud_migration_resource.error_code column", NewAddColumnMigration(migrationResourceTable, &Column{
 		Name:     "error_code",
 		Type:     DB_Text,
 		Nullable: true,
 	}))
+
+	// -- increase the length of resource_uid column
+	// -- not needed in sqlite as type is TEXT with length defined by SQLITE_MAX_LENGTH preprocessor macro
+	mg.AddMigration("increase resource_uid column length", NewRawSQLMigration("").
+		Mysql("ALTER TABLE cloud_migration_resource MODIFY resource_uid NVARCHAR(255);").
+		Postgres("ALTER TABLE cloud_migration_resource ALTER COLUMN resource_uid TYPE VARCHAR(255);"))
+
+	mg.AddMigration("create cloud_migration_snapshot_partition table v1", NewAddTableMigration(migrationSnapshotPartitionTable))
+	srpUniqueIndex := Index{
+		Name: "srp_unique",
+		Cols: []string{"snapshot_uid", "resource_type", "partition_number"}, Type: UniqueIndex,
+	}
+	mg.AddMigration("add cloud_migration_snapshot_partition srp_unique index", NewAddIndexMigration(migrationSnapshotPartitionTable, &srpUniqueIndex))
+	mg.AddMigration("add resource_storage_type column to cloud_migration_snapshot table", NewAddColumnMigration(migrationSnapshotTable, &Column{
+		Name:     "resource_storage_type",
+		Type:     DB_Varchar,
+		Length:   255,
+		Nullable: true,
+	}))
+	mg.AddMigration("add encryption_algo column to cloud_migration_snapshot table", NewAddColumnMigration(migrationSnapshotTable, &Column{
+		Name:     "encryption_algo",
+		Type:     DB_Varchar,
+		Length:   255,
+		Nullable: true,
+	}))
+	mg.AddMigration("add metadata column to cloud_migration_snapshot table", NewAddColumnMigration(migrationSnapshotTable, &Column{
+		Name:     "metadata",
+		Type:     DB_Blob,
+		Nullable: true,
+	}))
+	mg.AddMigration("add public_key column to cloud_migration_snapshot table", NewAddColumnMigration(migrationSnapshotTable, &Column{
+		Name:     "public_key",
+		Type:     DB_Blob,
+		Nullable: true,
+	}))
+
+	updatedCloudMigrationSnapshotPartitionTable := Table{
+		Name: "cloud_migration_snapshot_partition",
+		Columns: []*Column{
+			{Name: "snapshot_uid", Type: DB_NVarchar, Length: 40, Nullable: false, IsPrimaryKey: true},
+			{Name: "partition_number", Type: DB_Int, Nullable: false, IsPrimaryKey: true},
+			{Name: "resource_type", Type: DB_Varchar, Length: 255, Nullable: false, IsPrimaryKey: true},
+			{Name: "data", Type: DB_LongBlob, Nullable: false},
+		},
+		PrimaryKeys: []string{"snapshot_uid", "resource_type", "partition_number"},
+	}
+	ConvertUniqueKeyToPrimaryKey(mg, srpUniqueIndex, updatedCloudMigrationSnapshotPartitionTable)
 }

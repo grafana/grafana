@@ -1,0 +1,52 @@
+import {
+  DataFrameType,
+  type PanelDataSummary,
+  VisualizationSuggestionScore,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+
+import { type FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
+
+import { type Options } from './options/types';
+
+function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore | undefined {
+  if (dataSummary.hasPreferredVisualisationType('logs')) {
+    return VisualizationSuggestionScore.Best;
+  }
+
+  if (dataSummary.hasDataFrameType(DataFrameType.LogLines)) {
+    return VisualizationSuggestionScore.Best;
+  }
+
+  return undefined;
+}
+
+export const logstableSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, TableFieldConfig> = (
+  dataSummary
+) => {
+  if (!config.featureToggles.logsTablePanelNG) {
+    return;
+  }
+  const score = getTableSuggestionScore(dataSummary);
+  if (score === undefined) {
+    return;
+  }
+
+  return [
+    {
+      score,
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.options) {
+            s.options.showHeader = false;
+            s.options.disableKeyboardEvents = true;
+          }
+          if (s.fieldConfig && s.fieldConfig.defaults.custom) {
+            s.fieldConfig.defaults.custom.minWidth = 50;
+          }
+        },
+      },
+    },
+  ];
+};

@@ -1,35 +1,40 @@
 package zanzana
 
 import (
-	"fmt"
+	"context"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"github.com/openfga/openfga/pkg/server"
-	"github.com/openfga/openfga/pkg/storage"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/setting"
-
-	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
-func NewOpenFGAServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
-	return zserver.NewOpenFGA(&cfg.Zanzana, store, logger)
+type StoreInfo struct {
+	ID      string
+	Name    string
+	ModelID string
 }
 
-func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*zserver.Server, error) {
-	stackID := cfg.StackID
-	if stackID == "" {
-		stackID = "default"
-	}
-
-	return zserver.NewAuthz(
-		openfga,
-		zserver.WithTenantID(fmt.Sprintf("stacks-%s", stackID)),
-	)
+type Server interface {
+	authzv1.AuthzServiceServer
+	authzextv1.AuthzExtentionServiceServer
+	Close()
 }
 
-func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {
-	return zserver.StartOpenFGAHttpSever(cfg, srv, logger)
+type MTReconciler interface {
+	Run(ctx context.Context) error
+	// EnsureNamespace checks if namespace is not exists, and if not, it reconciles it.
+	EnsureNamespace(ctx context.Context, namespace string) error
+}
+
+type ServerInternal interface {
+	Server
+	RunReconciler(ctx context.Context) error
+	GetStore(ctx context.Context, namespace string) (*StoreInfo, error)
+	GetOrCreateStore(ctx context.Context, namespace string) (*StoreInfo, error)
+	DeleteStore(ctx context.Context, namespace string) error
+	ListAllStores(ctx context.Context) ([]StoreInfo, error)
+	WriteTuples(ctx context.Context, store *StoreInfo, writeTuples []*openfgav1.TupleKey, deleteTuples []*openfgav1.TupleKeyWithoutCondition) error
+	ReadTuples(ctx context.Context, store *StoreInfo, req *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error)
+	GetOpenFGAServer() openfgav1.OpenFGAServiceServer
 }

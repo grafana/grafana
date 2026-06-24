@@ -1,7 +1,7 @@
+import { render } from '@testing-library/react';
 import { OptionProps } from 'react-select';
-import renderer from 'react-test-renderer';
 
-import SelectOption from './SelectOption';
+import { SelectOption } from './SelectOption';
 
 const model: OptionProps = {
   data: jest.fn(),
@@ -37,16 +37,14 @@ const model: OptionProps = {
 
 describe('SelectOption', () => {
   it('renders correctly', () => {
-    const tree = renderer
-      .create(
-        <SelectOption
-          {...model}
-          data={{
-            imgUrl: 'url/to/avatar',
-          }}
-        />
-      )
-      .toJSON();
-    expect(tree).toMatchSnapshot();
+    const { container } = render(
+      <SelectOption
+        {...model}
+        data={{
+          imgUrl: 'url/to/avatar',
+        }}
+      />
+    );
+    expect(container).toMatchSnapshot();
   });
 });

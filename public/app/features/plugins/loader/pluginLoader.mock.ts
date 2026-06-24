@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
-export const mockSystemModule = `System.register(['./dependencyA'], function (_export, _context) {
+const mockSystemModule = `System.register(['./dependencyA'], function (_export, _context) {
   "use strict";
 
   var DependencyACtrl;
@@ -15,12 +15,17 @@ export const mockSystemModule = `System.register(['./dependencyA'], function (_e
   };
 });`;
 
-export const mockAmdModule = `define([], function() {
+const mockAmdModule = `define([], function() {
   return function() {
     console.log('AMD module loaded');
     var pluginPath = "/public/plugins/";
   }
 });`;
+
+const mockTranslation = (value: string) =>
+  `System.register([],function(e){return{execute:function(){e("default",{"testKey":"${value}"})}}})`;
+
+const mockTranslationWithNoDefaultExport = `System.register([],function(e){return{execute:function(){e({"testKey":"unknown"})}}})`;
 
 const server = setupServer(
   http.get(
@@ -49,7 +54,45 @@ const server = setupServer(
           'Content-Type': 'text/javascript',
         },
       })
-  )
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/en-US/test-panel.json',
+    () =>
+      new HttpResponse(mockTranslation('testValue'), {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
+    () =>
+      new HttpResponse(mockTranslation('valorDeTeste'), {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/en-US/no-default-export.json',
+    () =>
+      new HttpResponse(mockTranslationWithNoDefaultExport, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/pt-BR/no-default-export.json',
+    () =>
+      new HttpResponse(mockTranslationWithNoDefaultExport, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get('/public/plugins/test-panel/locales/en-US/unknown.json', () => HttpResponse.error()),
+  http.get('/public/plugins/test-panel/locales/pt-BR/unknown.json', () => HttpResponse.error())
 );
 
 export { server };

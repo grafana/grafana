@@ -1,23 +1,24 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 import pluralize from 'pluralize';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, IconButton, useStyles2, Spinner, IconName } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Icon, IconButton, useStyles2, Spinner, type IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { t, Trans } from 'app/core/internationalization';
 
-import { PlaylistItem } from './types';
+import { type PlaylistItemUI } from './types';
 
 interface Props {
-  items: PlaylistItem[];
+  items: PlaylistItemUI[];
   onDelete: (idx: number) => void;
 }
 
 export const PlaylistTableRows = ({ items, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
+
   if (!items?.length) {
     return (
       <div>
@@ -28,7 +29,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
     );
   }
 
-  const renderItem = (item: PlaylistItem) => {
+  const renderItem = (item: PlaylistItemUI) => {
     let icon: IconName = item.type === 'dashboard_by_tag' ? 'apps' : 'tag-alt';
     const info: ReactNode[] = [];
 
@@ -39,21 +40,44 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
       info.push(<TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />);
       if (!first) {
         icon = 'exclamation-triangle';
-        info.push(<span key="info">&nbsp; No dashboards found</span>);
+        info.push(
+          <span key="no-dashboards">
+            &nbsp;{' '}
+            <span key="info">
+              <Trans i18nKey="playlist.playlist-table-rows.no-dashboards-found">No dashboards found</Trans>
+            </span>
+          </span>
+        );
       } else {
         info.push(<span key="info">&nbsp; {pluralize('dashboard', item.dashboards.length, true)}</span>);
       }
     } else if (first) {
       info.push(
         item.dashboards.length > 1 ? (
-          <span key="info">Multiple items found: ${item.value}</span>
+          <span key="multiple-dashboards">
+            &nbsp;{' '}
+            <span key="info">
+              <Trans i18nKey="playlist.playlist-table-rows.multiple-dashboards-found" values={{ items: item.value }}>
+                Multiple items found: {'{{items}}'}
+              </Trans>
+            </span>
+          </span>
         ) : (
           <span key="info">{first.name ?? item.value}</span>
         )
       );
     } else {
       icon = 'exclamation-triangle';
-      info.push(<span key="info">&nbsp; Not found: {item.value}</span>);
+      info.push(
+        <span key="not-found">
+          &nbsp;{' '}
+          <span key="info">
+            <Trans i18nKey="playlist.playlist-table-rows.not-found" values={{ items: item.value }}>
+              Not found: {'{{items}}'}
+            </Trans>
+          </span>
+        </span>
+      );
     }
     return (
       <>
@@ -68,14 +92,16 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
       {items.map((item, index) => (
         <Draggable key={`${index}/${item.value}`} draggableId={`${index}`} index={index}>
           {(provided) => (
-            <div
-              className={styles.row}
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-              role="row"
-            >
-              <div className={styles.actions} role="cell" aria-label={`Playlist item, ${item.type}, ${item.value}`}>
+            <div className={styles.row} ref={provided.innerRef} {...provided.draggableProps} role="row">
+              <div
+                className={styles.actions}
+                role="cell"
+                aria-label={t(
+                  'playlist.playlist-table-rows.aria-label-playlist-item',
+                  'Playlist item, {{itemType}}, {{itemValue}}',
+                  { itemType: item.type, itemValue: item.value }
+                )}
+              >
                 {renderItem(item)}
               </div>
               <div className={styles.actions}>
@@ -86,11 +112,13 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                   data-testid={selectors.pages.PlaylistForm.itemDelete}
                   tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
                 />
-                <Icon
-                  title={t('playlist-edit.form.table-drag', 'Drag and drop to reorder')}
-                  name="draggabledots"
-                  size="md"
-                />
+                <div {...provided.dragHandleProps}>
+                  <Icon
+                    title={t('playlist-edit.form.table-drag', 'Reorder playlist item')}
+                    name="draggabledots"
+                    size="md"
+                  />
+                </div>
               </div>
             </div>
           )}

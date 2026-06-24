@@ -1,31 +1,34 @@
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
+import { Trans, t } from '@grafana/i18n';
+import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { type CombinedRuleGroup, type CombinedRuleNamespace, type RulesSource } from 'app/types/unified-alerting';
 
-import { LogMessages, logInfo } from '../../Analytics';
-import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
+import { isMergedUngroupedGroup } from '../../hooks/useCombinedRuleNamespaces';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
-import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
+import { makeFolderLink } from '../../utils/misc';
+import { groups } from '../../utils/navigation';
+import {
+  getPromGroupReadOnlyStatus,
+  getRulerGroupReadOnlyStatus,
+  isFederatedRuleGroup,
+  rulerRuleType,
+} from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
-import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
+import { FolderActionsButton } from '../folder-actions/FolderActionsButton';
 
 import { ActionIcon } from './ActionIcon';
-import { EditCloudGroupModal } from './EditRuleGroupModal';
-import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
-import { RulesTable } from './RulesTable';
+import { RulesTable, useIsRulesLoading } from './RulesTable';
 
 type ViewMode = 'grouped' | 'list';
 
@@ -38,48 +41,49 @@ interface Props {
 
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
-  const [deleteRuleGroup] = useDeleteRuleGroup();
+  const rulesSourceName = getRulesSourceName(rulesSource);
+  const rulerRulesLoaded = useIsRulesLoading(rulesSource);
+
   const styles = useStyles2(getStyles);
 
-  const [isEditingGroup, setIsEditingGroup] = useState(false);
-  const [isDeletingGroup, setIsDeletingGroup] = useState(false);
-  const [isReorderingGroup, setIsReorderingGroup] = useState(false);
-  const [isExporting, setIsExporting] = useState<'group' | 'folder' | undefined>(undefined);
+  const [isExporting, setIsExporting] = useState<'folder' | undefined>(undefined);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
-
-  const { canEditRules } = useRulesAccess();
 
   useEffect(() => {
     setIsCollapsed(!expandAll);
   }, [expandAll]);
 
-  const { hasRuler, rulerRulesLoaded } = useHasRuler(namespace.rulesSource);
+  const { hasRuler } = useHasRuler(namespace.rulesSource);
+
   const rulerRule = group.rules[0]?.rulerRule;
-  const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
+  const folderUID =
+    (rulerRule && rulerRuleType.grafana.rule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
+
+  const { canEditRules } = useRulesAccess();
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
   const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
-  // check if group has provisioned items
+  // check if group has provisioned items (badge-only — edit gating uses the status helper below)
   const isProvisioned = group.rules.some((rule) => {
-    return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
+    return rulerRuleType.grafana.rule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
   });
+
+  // CombinedRule wraps both API views of the same logical rule. Check each side with its own
+  // typed helper and OR the booleans — the consumer only needs the boolean for edit gating.
+  const rulerRules = group.rules.flatMap((r) => (r.rulerRule ? [r.rulerRule] : []));
+  const promRules = group.rules.flatMap((r) => (r.promRule ? [r.promRule] : []));
+  const groupReadOnly =
+    getRulerGroupReadOnlyStatus({ rules: rulerRules, source_tenants: group.source_tenants }).readOnly ||
+    getPromGroupReadOnlyStatus({ rules: promRules }).readOnly;
+  const canEditGroup = hasRuler && !groupReadOnly && canEditRules(rulesSourceName);
 
   // check what view mode we are in
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
-
-  const deleteGroup = async () => {
-    const namespaceName = decodeGrafanaNamespace(namespace).name;
-    const groupName = group.name;
-    const dataSourceName = getRulesSourceName(namespace.rulesSource);
-
-    const ruleGroupIdentifier: RuleGroupIdentifier = { namespaceName, groupName, dataSourceName };
-    await deleteRuleGroup.execute(ruleGroupIdentifier);
-    setIsDeletingGroup(false);
-  };
+  const isVirtualUngroupedGroup = isMergedUngroupedGroup(group);
 
   const actionIcons: React.ReactNode[] = [];
 
@@ -88,42 +92,44 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     actionIcons.push(
       <Stack key="is-deleting">
         <Spinner />
-        deleting
+        <Trans i18nKey="alerting.rules-group.deleting">Deleting</Trans>
       </Stack>
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     if (folderUID) {
       const baseUrl = makeFolderLink(folderUID);
-      if (folder?.canSave) {
-        if (isGroupView && !isProvisioned) {
+      // The virtual "Ungrouped" bucket is a UI-only construct — its name has no backend
+      // representation, so group-level details/edit URLs would 404. Skip those actions.
+      if (isGroupView && !isVirtualUngroupedGroup) {
+        actionIcons.push(
+          <ActionIcon
+            aria-label={t('alerting.rule-group-action.details', 'rule group details')}
+            key="rule-group-details"
+            icon="info-circle"
+            tooltip={t('alerting.rule-group-action.details', 'rule group details')}
+            to={groups.detailsPageLink('grafana', folderUID, group.name, { includeReturnTo: true })}
+          />
+        );
+        if (folder?.canSave && canEditGroup) {
           actionIcons.push(
             <ActionIcon
-              aria-label="edit rule group"
-              data-testid="edit-group"
-              key="edit"
+              aria-label={t('alerting.rule-group-action.edit', 'edit rule group')}
+              key="rule-group-edit"
               icon="pen"
-              tooltip="edit rule group"
-              onClick={() => setIsEditingGroup(true)}
-            />
-          );
-          actionIcons.push(
-            <ActionIcon
-              data-testid="reorder-group"
-              key="reorder"
-              icon="exchange-alt"
-              tooltip="reorder rules"
-              className={styles.rotate90}
-              onClick={() => setIsReorderingGroup(true)}
+              tooltip={t('alerting.rule-group-action.edit', 'edit rule group')}
+              to={groups.editPageLink('grafana', folderUID, group.name, { includeReturnTo: true })}
             />
           );
         }
+      }
+      if (folder?.canSave) {
         if (isListView) {
           actionIcons.push(
             <ActionIcon
-              aria-label="go to folder"
+              aria-label={t('alerting.rule-group-action.go-to-folder', 'go to folder')}
               key="goto"
               icon="folder-open"
-              tooltip="go to folder"
+              tooltip={t('alerting.rule-group-action.go-to-folder', 'go to folder')}
               to={baseUrl}
               target="__blank"
             />
@@ -132,10 +138,10 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           if (folder?.canAdmin) {
             actionIcons.push(
               <ActionIcon
-                aria-label="manage permissions"
+                aria-label={t('alerting.rule-group-action.manage-permissions', 'manage permissions')}
                 key="manage-perms"
                 icon="lock"
-                tooltip="manage permissions"
+                tooltip={t('alerting.rule-group-action.manage-permissions', 'manage permissions')}
                 to={baseUrl + '/permissions'}
                 target="__blank"
               />
@@ -145,79 +151,44 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       }
       if (folder) {
         if (isListView) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label="export rule folder"
-              data-testid="export-folder"
-              key="export-folder"
-              icon="download-alt"
-              tooltip="Export rules folder"
-              onClick={() => setIsExporting('folder')}
-            />
-          );
-        } else if (isGroupView) {
-          actionIcons.push(
-            <ActionIcon
-              aria-label="export rule group"
-              data-testid="export-group"
-              key="export-group"
-              icon="download-alt"
-              tooltip="Export rule group"
-              onClick={() => setIsExporting('group')}
-            />
-          );
+          actionIcons.push(<FolderActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
         }
       }
     }
-  } else if (canEditRules(rulesSource.name) && hasRuler) {
-    if (!isFederated) {
+  } else {
+    actionIcons.push(
+      <ActionIcon
+        aria-label={t('alerting.rule-group-action.details', 'rule group details')}
+        key="rule-group-details"
+        icon="info-circle"
+        tooltip={t('alerting.rule-group-action.details', 'rule group details')}
+        to={groups.detailsPageLink(rulesSource.uid, namespace.name, group.name, { includeReturnTo: true })}
+      />
+    );
+    if (canEditGroup) {
       actionIcons.push(
         <ActionIcon
-          aria-label="edit rule group"
-          data-testid="edit-group"
-          key="edit"
+          aria-label={t('alerting.rule-group-action.edit', 'edit rule group')}
+          key="rule-group-edit"
           icon="pen"
-          tooltip="edit rule group"
-          onClick={() => setIsEditingGroup(true)}
-        />
-      );
-      actionIcons.push(
-        <ActionIcon
-          data-testid="reorder-group"
-          key="reorder"
-          icon="exchange-alt"
-          tooltip="reorder rules"
-          className={styles.rotate90}
-          onClick={() => setIsReorderingGroup(true)}
+          tooltip={t('alerting.rule-group-action.edit', 'edit rule group')}
+          to={groups.editPageLink(rulesSource.uid, namespace.name, group.name, { includeReturnTo: true })}
         />
       );
     }
+  }
 
-    actionIcons.push(
-      <ActionIcon
-        aria-label="delete rule group"
-        data-testid="delete-group"
-        key="delete-group"
-        icon="trash-alt"
-        tooltip="delete rule group"
-        onClick={() => setIsDeletingGroup(true)}
+  let groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />;
+  if (isListView) {
+    groupName = <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />;
+  } else if (isVirtualUngroupedGroup) {
+    groupName = (
+      <RuleLocation
+        namespace={decodeGrafanaNamespace(namespace).name}
+        group={t('alerting.rules-group.ungrouped', 'Ungrouped')}
       />
     );
   }
-
-  // ungrouped rules are rules that are in the "default" group name
-  const groupName = isListView ? (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
-  ) : (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
-  );
-
-  const closeEditModal = (saved = false) => {
-    if (!saved) {
-      logInfo(LogMessages.leavingRuleGroupEdit);
-    }
-    setIsEditingGroup(false);
-  };
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">
@@ -234,7 +205,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         {
           // eslint-disable-next-line
           <div className={styles.groupName} onClick={() => setIsCollapsed(!isCollapsed)}>
-            {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+            {isFederated && <Badge color="purple" text={t('alerting.rules-group.text-federated', 'Federated')} />}{' '}
+            {groupName}
           </div>
         }
         <div className={styles.spacer} />
@@ -245,7 +217,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           <>
             <div className={styles.actionsSeparator}>|</div>
             <div className={styles.actionIcons}>
-              <Badge color="purple" text="Provisioned" />
+              <Badge color="purple" text={t('alerting.rules-group.text-provisioned', 'Provisioned')} />
             </div>
           </>
         )}
@@ -267,48 +239,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           rules={group.rules}
         />
       )}
-      {isEditingGroup && (
-        <EditCloudGroupModal
-          namespace={namespace}
-          group={group}
-          onClose={() => closeEditModal()}
-          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
-          folderUid={folderUID}
-        />
-      )}
-      {isReorderingGroup && (
-        <ReorderCloudGroupModal
-          group={group}
-          folderUid={folderUID}
-          namespace={namespace}
-          onClose={() => setIsReorderingGroup(false)}
-        />
-      )}
-      <ConfirmModal
-        isOpen={isDeletingGroup}
-        title="Delete group"
-        body={
-          <div>
-            <p>
-              Deleting &quot;<strong>{group.name}</strong>&quot; will permanently remove the group and{' '}
-              {group.rules.length} alert {pluralize('rule', group.rules.length)} belonging to it.
-            </p>
-            <p>Are you sure you want to delete this group?</p>
-          </div>
-        }
-        onConfirm={deleteGroup}
-        onDismiss={() => setIsDeletingGroup(false)}
-        confirmText="Delete"
-      />
       {folder && isExporting === 'folder' && (
         <GrafanaRuleFolderExporter folder={folder} onClose={() => setIsExporting(undefined)} />
-      )}
-      {folder && isExporting === 'group' && (
-        <GrafanaRuleGroupExporter
-          folderUid={folder.uid}
-          groupName={group.name}
-          onClose={() => setIsExporting(undefined)}
-        />
       )}
     </div>
   );
@@ -343,7 +275,7 @@ const FolderIcon = React.memo(({ isCollapsed }: { isCollapsed: boolean }) => {
 
 FolderIcon.displayName = 'FolderIcon';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({}),
     header: css({
@@ -406,7 +338,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin: `0 ${theme.spacing(2)}`,
     }),
     actionIcons: css({
-      width: '80px',
+      width: '120px',
       alignItems: 'center',
 
       flexShrink: 0,

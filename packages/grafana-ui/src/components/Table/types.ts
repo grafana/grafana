@@ -1,15 +1,23 @@
-import { Property } from 'csstype';
-import { FC } from 'react';
-import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
+import { type Property } from 'csstype';
+import { type FC } from 'react';
+import { type CellProps, type Column, type Row, type TableState, type UseExpandedRowProps } from 'react-table';
 
-import { DataFrame, Field, KeyValue, SelectableValue, TimeRange, FieldConfigSource, ActionModel } from '@grafana/data';
-import * as schema from '@grafana/schema';
+import {
+  type DataFrame,
+  type Field,
+  type KeyValue,
+  type SelectableValue,
+  type TimeRange,
+  type FieldConfigSource,
+  type ActionModel,
+  type InterpolateFunction,
+} from '@grafana/data';
+import type * as schema from '@grafana/schema';
 
-import { TableStyles } from './styles';
+import { type TableCellInspectorMode } from './TableCellInspector';
+import { type TableStyles } from './TableRT/styles';
 
 export {
-  type FieldTextAlignment,
-  TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   type TableAutoCellOptions,
   type TableSparklineCellOptions,
@@ -20,17 +28,20 @@ export {
   type TableJsonViewCellOptions,
 } from '@grafana/schema';
 
-export interface TableRow {
-  [x: string]: any;
-}
+export type InspectCell = { value: any; mode: TableCellInspectorMode };
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
-export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
-export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
-export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+export type TableColumnResizeActionCallback = (
+  fieldDisplayName: string,
+  width: number,
+  fieldScope?: schema.MatcherScope
+) => void;
+type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+export type TableInspectCellCallback = (state: InspectCell) => void;
 
 export interface TableSortByFieldState {
   displayName: string;
@@ -44,7 +55,8 @@ export interface TableCellProps extends CellProps<any> {
   onCellFilterAdded?: TableFilterActionCallback;
   innerWidth: number;
   frame: DataFrame;
-  actions?: ActionModel[];
+  actions?: ActionModel[]; // unused in NG
+  setInspectCell?: TableInspectCellCallback;
 }
 
 export type CellComponent = FC<TableCellProps>;
@@ -82,7 +94,8 @@ export interface TableStateReducerProps {
   data: DataFrame;
 }
 
-export interface Props {
+// export interface Props {
+export interface TableRTProps {
   ariaLabel?: string;
   data: DataFrame;
   width: number;
@@ -108,6 +121,7 @@ export interface Props {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
+  replaceVariables?: InterpolateFunction;
 }
 
 /**
@@ -157,5 +171,9 @@ export interface CellColors {
   bgHoverColor?: string;
 }
 
-// export type GetActionsFunction = (frame: DataFrame, field: Field, fieldScopedVars: any, replaceVariables: any, actions: Action[], config: any) => ActionModel[];
-export type GetActionsFunction = (frame: DataFrame, field: Field) => ActionModel[];
+export type GetActionsFunction = (
+  frame: DataFrame,
+  field: Field,
+  rowIndex: number,
+  replaceVariables?: InterpolateFunction
+) => ActionModel[];

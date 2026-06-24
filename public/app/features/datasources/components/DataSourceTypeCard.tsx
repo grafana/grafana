@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 
-import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourcePluginMeta, type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 
 export type Props = {
@@ -18,11 +19,11 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <Card className={cx(styles.card, 'card-parent')} onClick={isClickable ? onClick : () => {}}>
+    <Card noMargin className={cx(styles.card, 'card-parent')} onClick={isClickable ? onClick : () => {}}>
       {/* Name */}
       <Card.Heading
         className={styles.heading}
-        aria-label={e2eSelectors.pages.AddDataSource.dataSourcePluginsV2(dataSourcePlugin.name)}
+        data-testid={e2eSelectors.pages.AddDataSource.dataSourcePluginsV2(dataSourcePlugin.name)}
       >
         {dataSourcePlugin.name}
       </Card.Heading>
@@ -45,7 +46,11 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
       <Card.Actions className={styles.actions}>
         {learnMoreLink && (
           <LinkButton
-            aria-label={`${dataSourcePlugin.name}, learn more.`}
+            aria-label={t(
+              'datasources.data-source-type-card.aria-label-learn-more',
+              '{{dataSourcePluginName}}, learn more.',
+              { dataSourcePluginName: dataSourcePlugin.name }
+            )}
             href={`${learnMoreLink.url}?utm_source=grafana_add_ds`}
             onClick={(e) => e.stopPropagation()}
             rel="noopener"

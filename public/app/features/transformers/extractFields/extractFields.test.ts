@@ -1,17 +1,16 @@
 import {
-  DataFrame,
-  DataTransformerConfig,
+  type DataFrame,
+  type DataTransformerConfig,
   DataTransformerID,
-  Field,
+  type Field,
   FieldType,
   transformDataFrame,
+  toDataFrame,
 } from '@grafana/data';
-import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
-import { SortByTransformerOptions, sortByTransformer } from '@grafana/data/src/transformations/transformers/sortBy';
-import { mockTransformationsRegistry } from '@grafana/data/src/utils/tests/mockTransformationsRegistry';
+import { mockTransformationsRegistry, type SortByTransformerOptions, sortByTransformer } from '@grafana/data/internal';
 
 import { extractFieldsTransformer } from './extractFields';
-import { ExtractFieldsOptions, FieldExtractorID } from './types';
+import { type ExtractFieldsOptions, FieldExtractorID } from './types';
 
 describe('Fields from JSON', () => {
   it('adds fields from JSON in string', async () => {

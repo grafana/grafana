@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeTypographyVariant } from '@grafana/data';
 
 import { getFocusStyles } from '../mixins';
 
@@ -40,11 +40,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
       position: 'unset',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
-      // react select tries prevent scrolling by setting overflow/padding-right on the body
-      // Need type assertion here due to the use of !important
-      // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      overflowY: 'auto !important' as 'auto',
       paddingRight: '0 !important',
       '@media print': {
         overflow: 'visible',
@@ -54,7 +49,21 @@ export function getElementStyles(theme: GrafanaTheme2) {
         size: 'auto',
         padding: 0,
       },
+      // react select tries prevent scrolling by setting overflow/padding-right on the body
+      // Need type assertion here due to the use of !important
+      // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      overflowY: 'auto !important' as 'auto',
+      // disable contextual font ligatures. otherwise, in firefox and safari,
+      // an "x" between 2 numbers is replaced by a multiplication ligature
+      // see https://github.com/rsms/inter/issues/222
+      fontVariantLigatures: 'no-contextual',
       ...theme.typography.body,
+    },
+
+    'body *': {
+      scrollbarColor: `${theme.colors.scrollbar} transparent`,
+      scrollbarWidth: 'thin',
     },
 
     'h1, .h1': getVariantStyles(theme.typography.h1),
@@ -270,6 +279,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
     // 2. Correct font properties not being inherited.
     // 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
     'button, input, optgroup, select, textarea': {
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: 0,
       color: 'inherit',
       font: 'inherit',
@@ -447,7 +457,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
   });
 }
 
-export function getVariantStyles(variant: ThemeTypographyVariant) {
+function getVariantStyles(variant: ThemeTypographyVariant) {
   return {
     margin: 0,
     fontSize: variant.fontSize,

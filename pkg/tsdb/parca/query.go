@@ -10,10 +10,10 @@ import (
 	"time"
 
 	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
-	"github.com/apache/arrow/go/v15/arrow"
-	"github.com/apache/arrow/go/v15/arrow/array"
-	"github.com/apache/arrow/go/v15/arrow/ipc"
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
+	"github.com/apache/arrow-go/v18/arrow"
+	"github.com/apache/arrow-go/v18/arrow/array"
+	"github.com/apache/arrow-go/v18/arrow/ipc"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -22,7 +22,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/grafana/grafana/pkg/tsdb/parca/kinds/dataquery"
 )
 
@@ -64,7 +63,7 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 			return response
 		}
 
-		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, utils.Depointerizer(qm.ProfileTypeId))...)
+		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, qm.ProfileTypeId)...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
@@ -102,7 +101,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 			Mode: v1alpha1.QueryRequest_MODE_MERGE,
 			Options: &v1alpha1.QueryRequest_Merge{
 				Merge: &v1alpha1.MergeProfile{
-					Query: fmt.Sprintf("%s%s", utils.Depointerizer(qm.ProfileTypeId), utils.Depointerizer(qm.LabelSelector)),
+					Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
 					Start: &timestamppb.Timestamp{
 						Seconds: query.TimeRange.From.Unix(),
 					},
@@ -120,7 +119,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 func makeMetricRequest(qm queryModel, query backend.DataQuery) *connect.Request[v1alpha1.QueryRangeRequest] {
 	return &connect.Request[v1alpha1.QueryRangeRequest]{
 		Msg: &v1alpha1.QueryRangeRequest{
-			Query: fmt.Sprintf("%s%s", utils.Depointerizer(qm.ProfileTypeId), utils.Depointerizer(qm.LabelSelector)),
+			Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
 			Start: &timestamppb.Timestamp{
 				Seconds: query.TimeRange.From.Unix(),
 			},
@@ -155,7 +154,7 @@ func seriesToDataFrame(seriesResp *connect.Response[v1alpha1.QueryRangeResponse]
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
 		frames = append(frames, frame)
 
-		fields := data.Fields{}
+		fields := data.Fields{} //nolint:prealloc
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 
@@ -197,7 +196,7 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) (*data.Fram
 	defer arrowReader.Release()
 
 	arrowReader.Next()
-	rec := arrowReader.Record()
+	rec := arrowReader.RecordBatch()
 
 	fi, err := newFlamegraphIterator(rec)
 	if err != nil {
@@ -237,7 +236,7 @@ type flamegraphIterator struct {
 	addressBuilder *bytes.Buffer
 }
 
-func newFlamegraphIterator(rec arrow.Record) (*flamegraphIterator, error) {
+func newFlamegraphIterator(rec arrow.RecordBatch) (*flamegraphIterator, error) {
 	schema := rec.Schema()
 
 	columnChildren := rec.Column(schema.FieldIndices(FlamegraphFieldChildren)[0]).(*array.List)
@@ -283,11 +282,7 @@ func (fi *flamegraphIterator) iterate(fn func(name string, level, value, self in
 	cumulative := fi.columnCumulative(0)
 	fn("total", 0, cumulative, cumulative-childrenValue)
 
-	for {
-		if len(stack) == 0 {
-			break
-		}
-
+	for len(stack) != 0 {
 		// shift stack
 		node := stack[0]
 		stack = stack[1:]

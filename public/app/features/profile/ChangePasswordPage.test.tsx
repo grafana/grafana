@@ -6,13 +6,14 @@ import config from 'app/core/config';
 
 import { backendSrv } from '../../core/services/backend_srv';
 
-import { Props, ChangePasswordPage } from './ChangePasswordPage';
+import { type Props, ChangePasswordPage } from './ChangePasswordPage';
 import { initialUserState } from './state/reducers';
 
 const defaultProps: Props = {
   ...initialUserState,
   user: {
     id: 1,
+    uid: 'aaaaaa',
     name: 'Test User',
     email: 'test@test.com',
     login: 'test',

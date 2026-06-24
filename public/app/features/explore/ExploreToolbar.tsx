@@ -3,9 +3,11 @@ import { pick } from 'lodash';
 import { useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
-import { Components } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type RawTimeRange, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   defaultIntervals,
   PageToolbar,
@@ -15,20 +17,16 @@ import {
   ButtonGroup,
   useStyles2,
 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { t, Trans } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
-import { StoreState, useDispatch, useSelector } from 'app/types/store';
+import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
-import { contextSrv } from '../../core/core';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
-import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
-import { QueriesDrawerDropdown } from './QueriesDrawer/QueriesDrawerDropdown';
 import { ShortLinkButtonMenu } from './ShortLinkButtonMenu';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
@@ -45,7 +43,7 @@ import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntri
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
-const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
+const getStyles = (theme: GrafanaTheme2, splitted: Boolean, visualRefreshEnabled: boolean) => ({
   rotateIcon: css({
     '> div > svg': {
       transform: 'rotate(180deg)',
@@ -57,6 +55,11 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
     marginRight: theme.spacing(0.5),
     width: splitted && theme.spacing(6),
   }),
+  pageToolbar: css({
+    background: theme.colors.background.page,
+    borderTopLeftRadius: theme.shape.radius.lg,
+    borderTopRightRadius: theme.shape.radius.lg,
+  }),
 });
 
 interface Props {
@@ -67,9 +70,10 @@ interface Props {
 }
 
 export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
-  const styles = useStyles2(getStyles, splitted);
+  const styles = useStyles2(getStyles, splitted, visualRefreshEnabled);
 
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
@@ -91,17 +95,15 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
-  const isSingleTopNav = config.featureToggles.singleTopNav;
-  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
 
   const shouldRotateSplitIcon = useMemo(
     () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
     [isLeftPane, isLargerPane]
   );
 
-  const refreshPickerLabel = loading
-    ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
-    : t('explore.toolbar.refresh-picker-run', 'Run query');
+  const refreshPickerLabel = t('explore.toolbar.refresh-picker-run', 'Run query');
+  const refreshPickerCancelLabel = t('explore.toolbar.refresh-picker-cancel', 'Cancel');
+  const tooltipLabel = loading ? refreshPickerCancelLabel : refreshPickerLabel;
 
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
     if (!isCorrelationsEditorMode) {
@@ -205,47 +207,26 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
-  const navBarActions = [<ShortLinkButtonMenu key="share" />];
-
-  if (isSingleTopNav) {
-    if (queryLibraryAvailable) {
-      navBarActions.unshift(<QueriesDrawerDropdown key="queryLibrary" variant="full" />);
-    } else {
-      navBarActions.unshift(
-        <ToolbarButton
-          variant={drawerOpened ? 'active' : 'canvas'}
-          aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
-          onClick={() => setDrawerOpened(!drawerOpened)}
-          data-testid={Components.QueryTab.queryHistoryButton}
-          icon="history"
-        >
-          <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-        </ToolbarButton>
-      );
-    }
-  } else {
-    navBarActions.push(<div style={{ flex: 1 }} key="spacer0" />);
-  }
-
   return (
     <div>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
-      <AppChromeUpdate actions={navBarActions} />
       <PageToolbar
         aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
+        data-testid={selectors.pages.Explore.toolbar.bar}
         leftItems={[
           <ToolbarButton
             key="content-outline"
             variant="canvas"
-            tooltip="Content outline"
+            tooltip={t('explore.explore-toolbar.tooltip-content-outline', 'Content outline')}
+            data-testid={selectors.pages.Explore.toolbar.contentOutline}
             icon="list-ui-alt"
             iconOnly={splitted}
             onClick={onContentOutlineToogle}
             aria-expanded={isContentOutlineOpen}
-            aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
+            aria-controls={isContentOutlineOpen ? `content-outline-container-${exploreId}` : undefined}
             className={styles.toolbarButton}
           >
-            Outline
+            <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
           </ToolbarButton>,
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
@@ -255,15 +236,24 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
+          <ToolbarExtensionPoint
+            key="toolbar-extension-point"
+            exploreId={exploreId}
+            timeZone={timeZone}
+            extensionsToShow="queryless"
+          />,
         ].filter(Boolean)}
         forceShowLeftItems
+        className={cx({
+          [styles.pageToolbar]: visualRefreshEnabled,
+        })}
       >
         {[
-          !isSingleTopNav && <QueriesDrawerDropdown key="queryLibrary" variant={splitted ? 'compact' : 'full'} />,
           !splitted ? (
             <ToolbarButton
               variant="canvas"
               key="split"
+              data-testid={selectors.pages.Explore.toolbar.split}
               tooltip={t('explore.toolbar.split-tooltip', 'Split the pane')}
               onClick={onOpenSplitView}
               icon="columns"
@@ -295,7 +285,12 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} timeZone={timeZone} />,
+          <ToolbarExtensionPoint
+            key="toolbar-extension-point"
+            exploreId={exploreId}
+            timeZone={timeZone}
+            extensionsToShow="basic"
+          />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"
@@ -318,14 +313,17 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             value={refreshInterval}
             isLoading={loading}
             text={showSmallTimePicker ? undefined : refreshPickerLabel}
-            tooltip={showSmallTimePicker ? refreshPickerLabel : undefined}
+            loadingText={showSmallTimePicker ? undefined : refreshPickerCancelLabel}
+            tooltip={showSmallTimePicker ? tooltipLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
             noIntervalPicker={isLive}
             primary={true}
-            width={(showSmallTimePicker ? 35 : 108) + 'px'}
+            width={showSmallTimePicker ? '35px' : undefined}
+            data-testid={selectors.pages.Explore.toolbar.refreshPicker}
           />,
+          (!splitted || !isLeftPane) && <ShortLinkButtonMenu key="share" hideText={showSmallTimePicker} />,
           datasourceInstance?.meta.streaming && (
             <LiveTailControls key="liveControls" exploreId={exploreId}>
               {(c) => {

@@ -1,6 +1,6 @@
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
-import { State, StateTag } from '../StateTag';
+import { type State, StateTag } from '../StateTag';
 
 const silenceStateToState: Record<SilenceState, State> = {
   [SilenceState.Active]: 'good',

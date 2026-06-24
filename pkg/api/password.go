@@ -19,6 +19,8 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusUnauthorized, "Not allowed to reset password when login form is disabled", nil)
 	}
 
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
+
 	form := dtos.SendResetPasswordEmailForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -26,7 +28,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 
 	userQuery := user.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	usr, err := hs.userService.GetByLoginWithPassword(c.Req.Context(), &userQuery)
 	if err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail, "error", err)
 		return response.Error(http.StatusOK, "Email sent", nil)
@@ -39,8 +41,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
+		if hs.isProviderEnabled(hs.Cfg, authInfo.AuthModule) {
 			c.Logger.Info("Requested password reset for external user", nil)
 			return response.Error(http.StatusOK, "Email sent", nil)
 		}
@@ -60,6 +61,8 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 			"Not allowed to reset password when grafana authentication is disabled", nil)
 	}
 
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
+
 	form := dtos.ResetUserPasswordForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -77,7 +80,7 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 	getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
 		username = login
 		userQuery := user.GetUserByLoginQuery{LoginOrEmail: login}
-		usr, err := hs.userService.GetByLogin(ctx, &userQuery)
+		usr, err := hs.userService.GetByLoginWithPassword(ctx, &userQuery)
 		return usr, err
 	}
 

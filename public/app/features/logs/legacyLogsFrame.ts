@@ -1,6 +1,6 @@
-import { DataFrame, FieldCache, FieldType, Field, Labels, FieldWithIndex } from '@grafana/data';
+import { type DataFrame, FieldCache, FieldType, type Field, type Labels, type FieldWithIndex } from '@grafana/data';
 
-import { logFrameLabelsToLabels, LogsFrame } from './logsFrame';
+import { logFrameLabelsToLabels, type LogsFrame } from './logsFrame';
 
 // take the labels from the line-field, and "stretch" it into an array
 // with the length of the frame (so there are the same labels for every row)
@@ -45,7 +45,7 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
   }
 
   const timeNanosecondField = cache.getFieldByName('tsNs') ?? null;
-  const severityField = cache.getFieldByName('detected_level') ?? cache.getFieldByName('level') ?? null;
+  const severityField = cache.getFieldByName('level') ?? cache.getFieldByName('detected_level') ?? null;
   const idField = cache.getFieldByName('id') ?? null;
 
   // extracting the labels is done very differently for old-loki-style and simple-style

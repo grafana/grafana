@@ -1,15 +1,22 @@
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
-const DEFAULT_EMAIL = '<example@email.com>';
+import { type Receiver } from 'app/plugins/datasource/alertmanager/types';
+const DEFAULT_EMAIL = '<example@example.com>';
 
 export function isContactPointReady(defaultContactPoint: string, contactPoints: Receiver[]) {
-  // We consider the contact point ready if the default contact has the address filled
-
-  const defaultEmailUpdated = contactPoints.some(
-    (contactPoint: Receiver) =>
-      contactPoint.name === defaultContactPoint &&
-      contactPoint.grafana_managed_receiver_configs?.some(
-        (receiver) => receiver.name === defaultContactPoint && receiver.settings?.address !== DEFAULT_EMAIL
-      )
+  // We consider the contact point ready if the default contact is no longer referencing the default email address
+  const matchingDefaultContactPoint = contactPoints.find(
+    (contactPoint: Receiver) => contactPoint.name === defaultContactPoint
   );
-  return defaultEmailUpdated;
+
+  if (!matchingDefaultContactPoint) {
+    return false;
+  }
+
+  return matchingDefaultContactPoint.grafana_managed_receiver_configs?.some((receiver) => {
+    const isEmailReceiver = receiver.type === 'email';
+    if (isEmailReceiver) {
+      return receiver.settings?.addresses !== DEFAULT_EMAIL;
+    } else {
+      return true;
+    }
+  });
 }

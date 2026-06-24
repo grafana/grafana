@@ -1,9 +1,8 @@
-import { ReactElement } from 'react';
-import { Validate } from 'react-hook-form';
-import { UseFormSetValue } from 'react-hook-form/dist/types/form';
+import { type ReactElement } from 'react';
+import { type Validate, type UseFormSetValue } from 'react-hook-form';
 
-import { IconName, SelectableValue } from '@grafana/data';
-import { Settings } from 'app/types';
+import { type IconName, type SelectableValue } from '@grafana/data';
+import { type Settings } from 'app/types/settings';
 export interface AuthProviderInfo {
   id: string;
   type: string;
@@ -15,15 +14,19 @@ export interface AuthProviderInfo {
 export type GetStatusHook = () => Promise<AuthProviderStatus>;
 
 // Settings types common to the provider settings data when working with the API and forms
-export type SSOProviderSettingsBase = {
+type SSOProviderSettingsBase = {
   allowAssignGrafanaAdmin?: boolean;
   allowSignUp?: boolean;
   apiUrl?: string;
   authStyle?: string;
   authUrl?: string;
   autoLogin?: boolean;
+  clientAuthentication?: string;
   clientId: string;
   clientSecret: string;
+  managedIdentityClientId?: string;
+  federatedCredentialAudience?: string;
+  workloadIdentityTokenFile?: string;
   emailAttributeName?: string;
   emailAttributePath?: string;
   emptyScopes?: boolean;
@@ -45,6 +48,7 @@ export type SSOProviderSettingsBase = {
   tlsClientKey?: string;
   tlsSkipVerify?: boolean;
   tokenUrl?: string;
+  tokenExchangeTimeout?: string;
   type: string;
   usePkce?: boolean;
   useRefreshToken?: boolean;
@@ -57,8 +61,13 @@ export type SSOProviderSettingsBase = {
   tlsSkipVerifyInsecure?: boolean;
   // For Azure AD
   forceUseGraphApi?: boolean;
+  domainHint?: string;
+  loginPrompt?: string;
   // For Google
   validateHd?: boolean;
+  // For JWT ID token validation
+  validateIdToken?: boolean;
+  jwkSetUrl?: string;
 };
 
 // SSO data received from the API and sent to it
@@ -129,9 +138,24 @@ export type FieldData = {
   content?: (setValue: UseFormSetValue<SSOProviderDTO>) => ReactElement;
 };
 
+/** Configuration for conditionally disabling a field based on another field's value */
+type DisabledWhenConfig = {
+  /** The field name to watch */
+  field: keyof SSOProviderDTO;
+  /** The value that triggers the disabled state */
+  is: boolean | string;
+  /** The value to set when disabled */
+  disabledValue?: SelectableValue<string>;
+};
+
 export type SSOSettingsField =
   | keyof SSOProvider['settings']
-  | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings']; hidden?: boolean };
+  | {
+      name: keyof SSOProvider['settings'];
+      dependsOn?: keyof SSOProvider['settings'];
+      disabledWhen?: DisabledWhenConfig;
+      hidden?: boolean;
+    };
 
 export interface ServerDiscoveryFormData {
   url: string;

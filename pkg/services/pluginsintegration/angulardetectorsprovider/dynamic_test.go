@@ -43,7 +43,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 		t.Run("unknown pattern type is ignored silently", func(t *testing.T) {
 			// Tests that we can introduce new pattern types in the future without breaking old Grafana versions.
-			newPatterns := make(GCOMPatterns, len(mockGCOMPatterns))
+			newPatterns := make(GCOMPatterns, len(mockGCOMPatterns)) //nolint:prealloc
 			copy(newPatterns, mockGCOMPatterns)
 
 			// Add an unknown pattern at the end
@@ -337,7 +337,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 
 	t.Run("background service", func(t *testing.T) {
 		oldBackgroundJobInterval := backgroundJobIntervalOnPrem
-		backgroundJobIntervalOnPrem = time.Millisecond * 500
+		backgroundJobIntervalOnPrem = 10 * time.Millisecond
 		t.Cleanup(func() {
 			backgroundJobIntervalOnPrem = oldBackgroundJobInterval
 		})
@@ -387,7 +387,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 
 			lastJobTime := time.Now()
 			var jobCalls counter
-			const jobInterval = time.Millisecond * 500
+			const jobInterval = time.Millisecond * 20
 			done := make(chan struct{})
 			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
 				now := time.Now()

@@ -1,24 +1,23 @@
-import { render, screen, waitFor, within, userEvent } from 'test/test-utils';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { render, screen, waitFor, within } from 'test/test-utils';
+import { byRole, byText } from 'testing-library-selector';
 
+import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import 'core-js/stable/structured-clone';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
-import { Labels } from '../../../../../../types/unified-alerting-dto';
-import { mockApi, setupMswServer } from '../../../mockApi';
-import { grantUserPermissions, mockAlertQuery } from '../../../mocks';
+import { getMockConfig, setupMswServer } from '../../../mockApi';
+import { grantUserPermissions, mockAlertQuery, mockAlertmanagerAlert } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
+import { type Folder } from '../../../types/rule-form';
 import * as dataSource from '../../../utils/datasource';
 import {
-  AlertManagerDataSource,
+  type AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
-import { Folder } from '../RuleFolderPicker';
+import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 import { NotificationPreview } from './NotificationPreview';
-import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
 
 jest.mock('../../../useRouteGroupsMatcher');
 
@@ -34,18 +33,14 @@ const getAlertManagerDataSourcesByPermissionAndConfigMock =
   >;
 
 const ui = {
-  route: byTestId('matching-policy-route'),
-  routeButton: byRole('button', { name: /Expand policy route/ }),
-  routeMatchingInstances: byTestId('route-matching-instance'),
-  loadingIndicator: byText(/Loading/),
-  previewButton: byRole('button', { name: /preview routing/i }),
+  contactPointGroup: byRole('list'),
   grafanaAlertManagerLabel: byText(/alertmanager:grafana/i),
   otherAlertManagerLabel: byText(/alertmanager:other_am/i),
-  seeDetails: byText(/see details/i),
+  expandButton: byRole('button', { name: 'Expand policy route' }),
+  seeDetails: byRole('button', { name: 'View route' }),
   details: {
-    title: byRole('heading', { name: /routing details/i }),
-    modal: byRole('dialog'),
-    linkToContactPoint: byRole('link', { name: /see details/i }),
+    drawer: byRole('dialog'),
+    linkToPolicyTree: byRole('link', { name: /view notification policy tree/i }),
   },
 };
 
@@ -63,52 +58,33 @@ const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   hasConfigurationAPI: true,
 };
 
+const mockConfig = getMockConfig((amConfigBuilder) =>
+  amConfigBuilder
+    .withRoute((routeBuilder) =>
+      routeBuilder
+        .withReceiver('email')
+        .addRoute((rb) => rb.withReceiver('slack').addMatcher('tomato', MatcherOperator.equal, 'red'))
+        .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
+    )
+    .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
+    .addReceivers((b) => b.withName('slack'))
+    .addReceivers((b) => b.withName('opsgenie'))
+);
+
 function mockOneAlertManager() {
   getAlertManagerDataSourcesByPermissionAndConfigMock.mockReturnValue([grafanaAlertManagerDataSource]);
-  mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-    amConfigBuilder
-      .withRoute((routeBuilder) =>
-        routeBuilder
-          .withReceiver('email')
-          .addRoute((rb) => rb.withReceiver('slack').addMatcher('tomato', MatcherOperator.equal, 'red'))
-          .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-      )
-      .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-      .addReceivers((b) => b.withName('slack'))
-      .addReceivers((b) => b.withName('opsgenie'))
-  );
+
+  setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
 }
 
 function mockTwoAlertManagers() {
   getAlertManagerDataSourcesByPermissionAndConfigMock.mockReturnValue([
-    { name: 'OTHER_AM', imgUrl: '', hasConfigurationAPI: true },
     grafanaAlertManagerDataSource,
+    { name: 'OTHER_AM', imgUrl: '', hasConfigurationAPI: true },
   ]);
 
-  mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-    amConfigBuilder
-      .withRoute((routeBuilder) =>
-        routeBuilder
-          .withReceiver('email')
-          .addRoute((rb) => rb.withReceiver('slack').addMatcher('tomato', MatcherOperator.equal, 'red'))
-          .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-      )
-      .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-      .addReceivers((b) => b.withName('slack'))
-      .addReceivers((b) => b.withName('opsgenie'))
-  );
-  mockApi(server).getAlertmanagerConfig('OTHER_AM', (amConfigBuilder) =>
-    amConfigBuilder
-      .withRoute((routeBuilder) =>
-        routeBuilder
-          .withReceiver('email')
-          .addRoute((rb) => rb.withReceiver('slack').addMatcher('tomato', MatcherOperator.equal, 'red'))
-          .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-      )
-      .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-      .addReceivers((b) => b.withName('slack'))
-      .addReceivers((b) => b.withName('opsgenie'))
-  );
+  setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, mockConfig);
+  setAlertmanagerConfig('OTHER_AM', mockConfig);
 }
 
 function mockHasEditPermission(enabled: boolean) {
@@ -134,334 +110,165 @@ const folder: Folder = {
 
 describe('NotificationPreview', () => {
   it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
+    mockHasEditPermission(false); // Grant read permissions
     mockOneAlertManager();
-    mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', avocate: 'green' },
+      }),
+    ]);
 
     render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
 
-    await userEvent.click(ui.previewButton.get());
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    // wait for loading to finish
+    await waitFor(async () => {
+      const matchingContactPoint = await ui.contactPointGroup.findAll();
+      expect(matchingContactPoint).toHaveLength(1);
     });
 
     // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
-    await waitFor(() => {
-      expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
-    });
+    expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
     expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
 
-    const matchingPoliciesElements = ui.route.queryAll;
-    await waitFor(() => {
-      expect(matchingPoliciesElements()).toHaveLength(1);
-    });
-    expect(matchingPoliciesElements()[0]).toHaveTextContent(/tomato = red/);
+    const matchingContactPoint = await ui.contactPointGroup.findAll();
+    expect(matchingContactPoint[0]).toHaveTextContent(/Delivered to slack/);
+    expect(matchingContactPoint[0]).toHaveTextContent(/1 instance/);
   });
+
   it('should render notification preview with alert manager sections, when having more than one alert manager configured to receive alerts', async () => {
+    mockHasEditPermission(false); // Grant read permissions
     // two alert managers configured  to receive alerts
     mockTwoAlertManagers();
-    mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', avocate: 'green' },
+      }),
+    ]);
 
     render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
 
-    await userEvent.click(ui.previewButton.get());
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    // wait for loading to finish
+    await waitFor(async () => {
+      const matchingContactPoint = await ui.contactPointGroup.findAll();
+      expect(matchingContactPoint).toHaveLength(2);
     });
 
     // we expect the alert manager label to be present as there is more than one alert manager configured to receive alerts
-    await waitFor(() => {
-      expect(ui.grafanaAlertManagerLabel.query()).toBeInTheDocument();
-    });
-    expect(ui.otherAlertManagerLabel.query()).toBeInTheDocument();
+    expect(await ui.grafanaAlertManagerLabel.find()).toBeInTheDocument();
+    expect(await ui.otherAlertManagerLabel.find()).toBeInTheDocument();
 
-    const matchingPoliciesElements = ui.route.queryAll();
-    expect(matchingPoliciesElements).toHaveLength(2);
-    expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
-    expect(matchingPoliciesElements[1]).toHaveTextContent(/tomato = red/);
+    const matchingContactPoint = await ui.contactPointGroup.findAll();
+
+    expect(matchingContactPoint).toHaveLength(2);
+    expect(matchingContactPoint[0]).toHaveTextContent(/Delivered to slack/);
+    expect(matchingContactPoint[0]).toHaveTextContent(/1 instance/);
+
+    expect(matchingContactPoint[1]).toHaveTextContent(/Delivered to slack/);
+    expect(matchingContactPoint[1]).toHaveTextContent(/1 instance/);
   });
-  it('should render details modal when clicking see details button', async () => {
-    // two alert managers configured  to receive alerts
+
+  it('should show routing preview when user has only managed routes read permission', async () => {
+    grantUserPermissions([AccessControlAction.ActionAlertingManagedRoutesRead]);
     mockOneAlertManager();
-    mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', avocate: 'green' },
+      }),
+    ]);
+
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+
+    await waitFor(async () => {
+      const matchingContactPoint = await ui.contactPointGroup.findAll();
+      expect(matchingContactPoint).toHaveLength(1);
+    });
+
+    expect(screen.queryByRole('alert', { name: /preview not available/i })).not.toBeInTheDocument();
+  });
+
+  it('should show permission warning when user has no alerting notification permissions', async () => {
+    grantUserPermissions([]);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', avocate: 'green' },
+      }),
+    ]);
+
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert', { name: /preview not available/i })).toBeInTheDocument();
+    });
+
+    expect(ui.contactPointGroup.query()).not.toBeInTheDocument();
+  });
+
+  // Regression test for bug #3 from PR #124697:
+  // __grafana_managed_route__ is routing infrastructure and must never be shown to users —
+  // neither in the instance label list nor in the "Non-matching labels" section of the route drawer.
+  it('should not display __grafana_managed_route__ label in the notification preview', async () => {
     mockHasEditPermission(true);
-
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
-
-    await userEvent.click(ui.previewButton.get());
-    await userEvent.click(await ui.seeDetails.find());
-    expect(ui.details.title.query()).toBeInTheDocument();
-    //we expect seeing the default policy
-    expect(screen.getByText(/default policy/i)).toBeInTheDocument();
-    const matchingPoliciesElements = within(ui.details.modal.get()).getAllByTestId('label-matchers');
-    expect(matchingPoliciesElements).toHaveLength(1);
-    expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
-    expect(within(ui.details.modal.get()).getByText(/slack/i)).toBeInTheDocument();
-    expect(ui.details.linkToContactPoint.get()).toBeInTheDocument();
-  });
-  it('should not render contact point link in details modal if user has no permissions for editing contact points', async () => {
-    // two alert managers configured  to receive alerts
     mockOneAlertManager();
-    mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
-    mockHasEditPermission(false);
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', [NAMED_ROOT_LABEL_NAME]: 'my-policy' },
+      }),
+    ]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
+
+    await waitFor(async () => {
+      const matchingContactPoint = await ui.contactPointGroup.findAll();
+      expect(matchingContactPoint).toHaveLength(1);
     });
 
-    await userEvent.click(ui.previewButton.get());
-    await userEvent.click(await ui.seeDetails.find());
-    expect(ui.details.title.query()).toBeInTheDocument();
-    //we expect seeing the default policy
-    expect(screen.getByText(/default policy/i)).toBeInTheDocument();
-    const matchingPoliciesElements = within(ui.details.modal.get()).getAllByTestId('label-matchers');
-    expect(matchingPoliciesElements).toHaveLength(1);
-    expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
-    expect(within(ui.details.modal.get()).getByText(/slack/i)).toBeInTheDocument();
-    expect(ui.details.linkToContactPoint.query()).not.toBeInTheDocument();
-  });
-});
+    // Expand instance list
+    await user.click(await ui.expandButton.find());
 
-describe('NotificationPreviewByAlertmanager', () => {
-  it('should render route matching preview for alertmanager', async () => {
-    const potentialInstances: Labels[] = [
-      { foo: 'bar', severity: 'critical' },
-      { job: 'prometheus', severity: 'warning' },
-    ];
+    // The internal routing label must not be visible anywhere on the page
+    expect(screen.queryByText(NAMED_ROOT_LABEL_NAME)).not.toBeInTheDocument();
+    expect(screen.queryByText('my-policy')).not.toBeInTheDocument();
 
-    mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-      amConfigBuilder
-        .withRoute((routeBuilder) =>
-          routeBuilder
-            .withReceiver('email')
-            .addRoute((rb) => rb.withReceiver('slack').addMatcher('severity', MatcherOperator.equal, 'critical'))
-            .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-        )
-        .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-        .addReceivers((b) => b.withName('slack'))
-        .addReceivers((b) => b.withName('opsgenie'))
-    );
-
-    const user = userEvent.setup();
-
-    render(
-      <NotificationPreviewByAlertManager
-        alertManagerSource={grafanaAlertManagerDataSource}
-        potentialInstances={potentialInstances}
-        onlyOneAM={true}
-      />
-    );
-
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
-
-    const routeElements = ui.route.getAll();
-
-    expect(routeElements).toHaveLength(2);
-    expect(routeElements[0]).toHaveTextContent(/slack/);
-    expect(routeElements[1]).toHaveTextContent(/email/);
-
-    await user.click(ui.routeButton.get(routeElements[0]));
-    await user.click(ui.routeButton.get(routeElements[1]));
-
-    const matchingInstances0 = ui.routeMatchingInstances.get(routeElements[0]);
-    const matchingInstances1 = ui.routeMatchingInstances.get(routeElements[1]);
-
-    expect(matchingInstances0).toHaveTextContent(/severity=critical/);
-    expect(matchingInstances0).toHaveTextContent(/foo=bar/);
-
-    expect(matchingInstances1).toHaveTextContent(/job=prometheus/);
-    expect(matchingInstances1).toHaveTextContent(/severity=warning/);
-  });
-  it('should render route matching preview for alertmanager without errors if receiver is inherited from parent route (no receiver) ', async () => {
-    const potentialInstances: Labels[] = [
-      { foo: 'bar', severity: 'critical' },
-      { job: 'prometheus', severity: 'warning' },
-    ];
-
-    mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-      amConfigBuilder
-        .withRoute((routeBuilder) =>
-          routeBuilder
-            .withReceiver('email')
-            .addRoute((rb) => {
-              rb.addRoute((rb) => rb.withoutReceiver().addMatcher('foo', MatcherOperator.equal, 'bar'));
-              return rb.withReceiver('slack').addMatcher('severity', MatcherOperator.equal, 'critical');
-            })
-            .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-        )
-        .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-        .addReceivers((b) => b.withName('slack'))
-        .addReceivers((b) => b.withName('opsgenie'))
-    );
-
-    const user = userEvent.setup();
-
-    render(
-      <NotificationPreviewByAlertManager
-        alertManagerSource={grafanaAlertManagerDataSource}
-        potentialInstances={potentialInstances}
-        onlyOneAM={true}
-      />
-    );
-
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
-
-    const routeElements = ui.route.getAll();
-
-    expect(routeElements).toHaveLength(2);
-    expect(routeElements[0]).toHaveTextContent(/slack/);
-    expect(routeElements[1]).toHaveTextContent(/email/);
-
-    await user.click(ui.routeButton.get(routeElements[0]));
-    await user.click(ui.routeButton.get(routeElements[1]));
-
-    const matchingInstances0 = ui.routeMatchingInstances.get(routeElements[0]);
-    const matchingInstances1 = ui.routeMatchingInstances.get(routeElements[1]);
-
-    expect(matchingInstances0).toHaveTextContent(/severity=critical/);
-    expect(matchingInstances0).toHaveTextContent(/foo=bar/);
-
-    expect(matchingInstances1).toHaveTextContent(/job=prometheus/);
-    expect(matchingInstances1).toHaveTextContent(/severity=warning/);
-  });
-  it('should render route matching preview for alertmanager without errors if receiver is inherited from parent route (empty string receiver)', async () => {
-    const potentialInstances: Labels[] = [
-      { foo: 'bar', severity: 'critical' },
-      { job: 'prometheus', severity: 'warning' },
-    ];
-
-    mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-      amConfigBuilder
-        .withRoute((routeBuilder) =>
-          routeBuilder
-            .withReceiver('email')
-            .addRoute((rb) => {
-              rb.addRoute((rb) => rb.withEmptyReceiver().addMatcher('foo', MatcherOperator.equal, 'bar'));
-              return rb.withReceiver('slack').addMatcher('severity', MatcherOperator.equal, 'critical');
-            })
-            .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
-        )
-        .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
-        .addReceivers((b) => b.withName('slack'))
-        .addReceivers((b) => b.withName('opsgenie'))
-    );
-
-    const user = userEvent.setup();
-
-    render(
-      <NotificationPreviewByAlertManager
-        alertManagerSource={grafanaAlertManagerDataSource}
-        potentialInstances={potentialInstances}
-        onlyOneAM={true}
-      />
-    );
-
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
-
-    const routeElements = ui.route.getAll();
-
-    expect(routeElements).toHaveLength(2);
-    expect(routeElements[0]).toHaveTextContent(/slack/);
-    expect(routeElements[1]).toHaveTextContent(/email/);
-
-    await user.click(ui.routeButton.get(routeElements[0]));
-    await user.click(ui.routeButton.get(routeElements[1]));
-
-    const matchingInstances0 = ui.routeMatchingInstances.get(routeElements[0]);
-    const matchingInstances1 = ui.routeMatchingInstances.get(routeElements[1]);
-
-    expect(matchingInstances0).toHaveTextContent(/severity=critical/);
-    expect(matchingInstances0).toHaveTextContent(/foo=bar/);
-
-    expect(matchingInstances1).toHaveTextContent(/job=prometheus/);
-    expect(matchingInstances1).toHaveTextContent(/severity=warning/);
+    // Open the route drawer and verify the label is absent from "Non-matching labels" too
+    await user.click(await ui.seeDetails.find());
+    const drawer = ui.details.drawer.getAll()[0];
+    expect(within(drawer).queryByText(NAMED_ROOT_LABEL_NAME)).not.toBeInTheDocument();
   });
 
-  describe('regex matching', () => {
-    it('does not match regex in middle of the word as alertmanager will anchor when queried via API', async () => {
-      const potentialInstances: Labels[] = [{ regexfield: 'foobarfoo' }];
+  it('should render details when clicking see details button', async () => {
+    mockHasEditPermission(true);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', avocate: 'green' },
+      }),
+    ]);
 
-      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-        amConfigBuilder
-          .addReceivers((b) => b.withName('email'))
-          .withRoute((routeBuilder) =>
-            routeBuilder
-              .withReceiver('email')
-              .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.regex, 'bar'))
-          )
-      );
-
-      render(
-        <NotificationPreviewByAlertManager
-          alertManagerSource={grafanaAlertManagerDataSource}
-          potentialInstances={potentialInstances}
-          onlyOneAM={true}
-        />
-      );
-
-      expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
-      expect(screen.queryByText(/regexfield/)).not.toBeInTheDocument();
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
+    // wait for loading to finish
+    await waitFor(async () => {
+      const matchingContactPoint = await ui.contactPointGroup.findAll();
+      expect(matchingContactPoint).toHaveLength(1);
     });
 
-    it('matches regex at the start of the word', async () => {
-      const potentialInstances: Labels[] = [{ regexfield: 'baaaaaaah' }];
+    // expand the matching contact point to show instances
+    await user.click(await ui.expandButton.find());
 
-      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-        amConfigBuilder
-          .addReceivers((b) => b.withName('email'))
-          .withRoute((routeBuilder) =>
-            routeBuilder
-              .withReceiver('email')
-              .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.regex, 'ba.*h'))
-          )
-      );
+    // click "view route"
+    await user.click(await ui.seeDetails.find());
 
-      render(
-        <NotificationPreviewByAlertManager
-          alertManagerSource={grafanaAlertManagerDataSource}
-          potentialInstances={potentialInstances}
-          onlyOneAM={true}
-        />
-      );
+    // grab drawer and assert within
+    const drawer = ui.details.drawer.getAll()[0];
+    expect(drawer).toBeInTheDocument();
 
-      expect(await screen.findByText(/regexfield/i)).toBeInTheDocument();
-    });
-
-    it('handles negated regex correctly', async () => {
-      const potentialInstances: Labels[] = [{ regexfield: 'thing' }];
-
-      mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
-        amConfigBuilder
-          .addReceivers((b) => b.withName('email'))
-          .withRoute((routeBuilder) =>
-            routeBuilder
-              .withReceiver('email')
-              .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.notRegex, 'thing'))
-          )
-      );
-
-      render(
-        <NotificationPreviewByAlertManager
-          alertManagerSource={grafanaAlertManagerDataSource}
-          potentialInstances={potentialInstances}
-          onlyOneAM={true}
-        />
-      );
-
-      expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
-      expect(screen.queryByText(/regexfield/i)).not.toBeInTheDocument();
-    });
+    // assert within the drawer
+    expect(within(drawer).getByRole('heading', { name: 'Default policy' })).toBeInTheDocument();
+    expect(within(drawer).getByText(/non-matching labels/i)).toBeInTheDocument();
+    expect(ui.details.linkToPolicyTree.get()).toBeInTheDocument();
   });
 });

@@ -30,10 +30,6 @@ func (s *SearchOptions) HashString() (string, error) {
 	return base64.StdEncoding.EncodeToString(h.Sum(nil)), nil
 }
 
-func GetUserPermissionCacheKey(user identity.Requester) string {
-	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
-}
-
 func GetSearchPermissionCacheKey(log log.Logger, user identity.Requester, searchOptions SearchOptions) (string, error) {
 	searchHash, err := searchOptions.HashString()
 	if err != nil {
@@ -47,8 +43,12 @@ func GetUserDirectPermissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-direct-%s", user.GetCacheKey())
 }
 
+func GetZanzanaUserPermissionCacheKey(user identity.Requester) string {
+	return fmt.Sprintf("rbac-zanzana-permissions-%s", user.GetCacheKey())
+}
+
 func GetBasicRolePermissionCacheKey(role string, orgID int64) string {
-	roleKey := strings.Replace(role, " ", "_", -1)
+	roleKey := strings.ReplaceAll(role, " ", "_")
 	roleKey = strings.ToLower(roleKey)
 	return fmt.Sprintf("rbac-permissions-basic-role-%d-%s", orgID, roleKey)
 }

@@ -1,10 +1,11 @@
+import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { dateTime } from '@grafana/data';
+import { type DataSourceApi, dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
@@ -15,7 +16,9 @@ import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/moc
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { MatcherOperator, SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { contextSrv } from '../../../core/services/context_srv';
 
 import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
@@ -65,11 +68,9 @@ const ui = {
   notExpiredTable: byTestId('not-expired-table'),
   expiredTable: byTestId('expired-table'),
   expiredCaret: byText(/expired silences \(/i),
-  silencesTags: byLabelText(/tags/i),
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
   addSilenceButton: byRole('link', { name: /add silence/i }),
-  queryBar: byPlaceholderText('Search'),
   existingSilenceNotFound: byRole('alert', { name: /existing silence .* not found/i }),
   noPermissionToEdit: byRole('alert', { name: /do not have permission/i }),
   editor: {
@@ -90,8 +91,8 @@ const ui = {
 };
 
 const setUserLogged = (isLogged: boolean) => {
-  config.bootData.user.isSignedIn = isLogged;
-  config.bootData.user.name = isLogged ? 'admin' : '';
+  contextSrv.user.isSignedIn = isLogged;
+  contextSrv.user.name = isLogged ? 'admin' : '';
 };
 
 const enterSilenceLabel = async (index: number, name: string, matcher: MatcherOperator, value: string) => {
@@ -110,7 +111,14 @@ const addAdditionalMatcher = async () => {
 const server = setupMswServer();
 
 beforeEach(() => {
-  setupDataSources(dataSources.am, dataSources[MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]);
+  const dsSrv = setupDataSources(dataSources.am, dataSources[MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]);
+  const origGet = dsSrv.get.bind(dsSrv);
+  jest.spyOn(dsSrv, 'get').mockImplementation((ref, scopedVars) => {
+    if (ref === null || ref === undefined) {
+      return Promise.resolve({} as DataSourceApi);
+    }
+    return origGet(ref, scopedVars);
+  });
   grantUserPermissions([
     AccessControlAction.AlertingInstanceRead,
     AccessControlAction.AlertingInstanceCreate,
@@ -119,8 +127,6 @@ beforeEach(() => {
     AccessControlAction.AlertingInstancesExternalWrite,
   ]);
 });
-
-afterEach(() => jest.resetAllMocks());
 
 describe('Silences', () => {
   it(
@@ -138,6 +144,8 @@ describe('Silences', () => {
       expect(within(allSilences[0]).getByLabelText('Tags')).toHaveTextContent('foo=bar');
       expect(within(allSilences[1]).getByLabelText('Tags')).toHaveTextContent('foo!=bar');
       expect(allSilences[2]).toHaveTextContent(MOCK_GRAFANA_ALERT_RULE_TITLE);
+      const alertRuleLink = within(allSilences[2]).getByRole('link', { name: MOCK_GRAFANA_ALERT_RULE_TITLE });
+      expect(alertRuleLink).toHaveAttribute('href', expect.stringContaining(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID));
 
       await user.click(ui.expiredCaret.get());
 
@@ -151,6 +159,28 @@ describe('Silences', () => {
       expect(activeSilences).toHaveLength(expectedActiveSilences);
       expect(activeSilences[0]).toHaveTextContent('foo=bar');
       expect(activeSilences[1]).toHaveTextContent('foo!=bar');
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'fetches silenced alerts with correct filter parameters',
+    async () => {
+      let capturedParams: URLSearchParams | undefined;
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+          capturedParams = new URL(request.url).searchParams;
+          return HttpResponse.json([]);
+        })
+      );
+
+      renderSilences();
+
+      await waitFor(() => expect(capturedParams).toBeDefined());
+
+      expect(capturedParams?.get('silenced')).toBe('true');
+      expect(capturedParams?.get('active')).toBe('false');
+      expect(capturedParams?.get('inhibited')).toBe('false');
     },
     TEST_TIMEOUT
   );
@@ -175,12 +205,22 @@ describe('Silences', () => {
   it(
     'filters silences by matchers',
     async () => {
-      const { user } = renderSilences();
+      // foo="bar" matches only silences with an exact foo=bar matcher (name, value, operator all match)
+      renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
 
-      const queryBar = await ui.queryBar.find();
-      await user.type(queryBar, 'foo=bar');
-      await screen.findByRole('button', { name: /clear filters/i });
+      expect(await ui.notExpiredTable.find()).toBeInTheDocument();
       expect(ui.silenceRow.getAll()).toHaveLength(1);
+    },
+    TEST_TIMEOUT
+  );
+
+  it(
+    'shows filter pills from URL',
+    async () => {
+      renderSilences('/alerting/silences?queryString=foo%3D%22bar%22');
+
+      expect(await ui.notExpiredTable.find()).toBeInTheDocument();
+      expect(screen.getByLabelText(/Edit filter with key foo/i)).toBeInTheDocument();
     },
     TEST_TIMEOUT
   );
@@ -202,6 +242,18 @@ describe('Silences', () => {
 
     expect(ui.addSilenceButton.query()).not.toBeInTheDocument();
   });
+
+  it(
+    'shows a warning when the targeted alert rule is unavailable',
+    async () => {
+      renderSilences();
+
+      const notExpiredTable = await ui.notExpiredTable.find();
+      expect(within(notExpiredTable).getByText(/alert rule unavailable/i)).toBeInTheDocument();
+      expect(within(notExpiredTable).getByLabelText('Alert rule unavailable')).toBeVisible();
+    },
+    TEST_TIMEOUT
+  );
 
   it('handles error case when broken alertmanager is used', async () => {
     renderSilences(`/alerting/silences?alertmanager=${encodeURIComponent(MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER)}`);

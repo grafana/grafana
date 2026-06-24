@@ -5,12 +5,13 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	httplogger "github.com/grafana/grafana-plugin-sdk-go/experimental/http_logger"
-	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 const HTTPLoggerMiddlewareName = "http-logger"
 
-func HTTPLoggerMiddleware(cfg setting.PluginSettings) sdkhttpclient.Middleware {
+func HTTPLoggerMiddleware(cfg config.PluginSettings) sdkhttpclient.Middleware {
 	return sdkhttpclient.NamedMiddlewareFunc(HTTPLoggerMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		datasourceType, exists := opts.Labels["datasource_type"]
 		if !exists {
@@ -29,7 +30,7 @@ func HTTPLoggerMiddleware(cfg setting.PluginSettings) sdkhttpclient.Middleware {
 	})
 }
 
-func httpLoggingEnabled(cfg setting.PluginSettings) bool {
+func httpLoggingEnabled(cfg config.PluginSettings) bool {
 	for _, settings := range cfg {
 		if enabled := settings["har_log_enabled"]; enabled == "true" {
 			return true
@@ -38,7 +39,7 @@ func httpLoggingEnabled(cfg setting.PluginSettings) bool {
 	return false
 }
 
-func getLoggerSettings(datasourceType string, cfg setting.PluginSettings) (enabled bool, path string) {
+func getLoggerSettings(datasourceType string, cfg config.PluginSettings) (enabled bool, path string) {
 	settings, ok := cfg[datasourceType]
 	if !ok {
 		return

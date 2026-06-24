@@ -1,15 +1,17 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 import {
+  type SQLExpression,
+  type CloudWatchMetricsQuery,
+  type Dimensions,
   QueryEditorExpressionType,
   QueryEditorPropertyType,
-  QueryEditorFunctionParameterExpression,
-  QueryEditorArrayExpression,
-  QueryEditorOperatorExpression,
-  QueryEditorGroupByExpression,
-} from '../../../../expressions';
+  type QueryEditorFunctionParameterExpression,
+  type QueryEditorArrayExpression,
+  type QueryEditorGroupByExpression,
+} from '../../../../dataquery.gen';
+import { type QueryEditorOperatorExpression } from '../../../../expressions';
 import { SCHEMA } from '../../../../language/cloudwatch-sql/language';
-import { SQLExpression, CloudWatchMetricsQuery, Dimensions } from '../../../../types';
 
 export function getMetricNameFromExpression(selectExpression: SQLExpression['select']): string | undefined {
   return selectExpression?.parameters?.[0].name;

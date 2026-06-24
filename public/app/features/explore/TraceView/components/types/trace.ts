@@ -12,24 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { type TraceKeyValuePair, type TraceLog } from '@grafana/data';
 
 /**
  * All timestamps are in microseconds
  */
 
-export type TraceLink = {
-  url: string;
-  text: string;
-};
-
 export type TraceProcess = {
   serviceName: string;
+  serviceNamespace?: string;
   tags: TraceKeyValuePair[];
 };
 
 export type TraceSpanReference = {
-  refType: 'CHILD_OF' | 'FOLLOWS_FROM';
+  refType: 'CHILD_OF' | 'FOLLOWS_FROM' | 'EXTERNAL';
   // eslint-disable-next-line no-use-before-define
   span?: TraceSpan | null | undefined;
   spanID: string;
@@ -62,6 +58,41 @@ export type TraceSpanData = {
   childSpanIds?: string[];
 };
 
+/**
+ * Aggregation metadata extracted from the `aggregation.*` tags that span
+ * pruning writes onto summary spans and preserved-outlier spans.
+ *
+ * The span pruning processor replaces a group of similar spans with a single
+ * "summary span" carrying these attributes, and reparents any preserved
+ * outliers as siblings of the summary span. See the spanpruningprocessor:
+ * https://github.com/grafana/opentelemetry-collector-extras/tree/main/processor/spanpruningprocessor
+ *
+ * Present only on summary spans (`aggregation.is_summary`) and preserved-outlier
+ * spans (`aggregation.is_preserved_outlier`); all other spans leave
+ * `TraceSpan.aggregation` undefined, even if they carry other `aggregation.*` tags.
+ *
+ * Durations are kept in raw nanoseconds (the processor's `duration_*_ns`
+ * units) rather than converted to the microseconds used by `startTime` /
+ * `duration`, so display formatting stays lossless and source-faithful.
+ */
+export type SpanAggregation = {
+  // True on summary spans (`aggregation.is_summary`).
+  isSummary: boolean;
+  // True on preserved outlier spans (`aggregation.is_preserved_outlier`).
+  isPreservedOutlier: boolean;
+  // Number of spans collapsed into this summary (`aggregation.span_count`).
+  spanCount?: number;
+  // Min/max/avg duration across the group, in nanoseconds. Always emitted on summary spans.
+  durationMinNs?: number;
+  durationMaxNs?: number;
+  durationAvgNs?: number;
+  // Median duration, in nanoseconds. Conditional: only set when outlier analysis is enabled.
+  durationMedianNs?: number;
+  // On a preserved outlier span, the spanID of the summary span it was preserved from
+  // (`aggregation.summary_span_id`).
+  summarySpanId?: string;
+};
+
 export type TraceSpan = TraceSpanData & {
   depth: number;
   hasChildren: boolean;
@@ -73,6 +104,8 @@ export type TraceSpan = TraceSpanData & {
   warnings: NonNullable<TraceSpanData['warnings']>;
   childSpanIds: NonNullable<TraceSpanData['childSpanIds']>;
   subsidiarilyReferencedBy: TraceSpanReference[];
+  // Aggregation metadata for pruned (summary / preserved-outlier) spans; undefined for normal spans.
+  aggregation?: SpanAggregation;
 };
 
 export type TraceData = {
@@ -99,4 +132,13 @@ export type CriticalPathSection = {
   spanId: string;
   section_start: number;
   section_end: number;
+};
+
+// Type for the plugin link context that includes trace data and datasource information
+export type TraceViewPluginExtensionContext = Trace & {
+  datasource: {
+    name: string;
+    uid: string;
+    type: string;
+  };
 };

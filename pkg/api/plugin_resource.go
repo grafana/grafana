@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const maxResourceBodySize = 128 * 1024 * 1024 // 128 MiB
+
 // CallResource passes a resource call from a plugin to the backend plugin.
 //
 // /api/plugins/:pluginId/resources/*
@@ -27,7 +29,7 @@ func (hs *HTTPServer) CallResource(c *contextmodel.ReqContext) {
 }
 
 func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID string) {
-	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.SignedInUser.GetOrgID())
+	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.GetOrgID())
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			c.JsonApiErr(404, "Plugin not found", nil)
@@ -62,12 +64,7 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 		return
 	}
 
-	var dsURL string
-	if pCtx.DataSourceInstanceSettings != nil {
-		dsURL = pCtx.DataSourceInstanceSettings.URL
-	}
-
-	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
+	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -102,7 +99,7 @@ func (hs *HTTPServer) pluginResourceRequest(c *contextmodel.ReqContext) (*http.R
 func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
 	proxyutil.PrepareProxyRequest(req)
 
-	body, err := io.ReadAll(req.Body)
+	body, err := io.ReadAll(http.MaxBytesReader(w, req.Body, maxResourceBodySize))
 	if err != nil {
 		return fmt.Errorf("failed to read request body: %w", err)
 	}
@@ -121,6 +118,12 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 }
 
 func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
+	var maxBytesErr *http.MaxBytesError
+	if errors.As(err, &maxBytesErr) {
+		resp := response.Error(http.StatusRequestEntityTooLarge, "Request body too large", err)
+		resp.WriteTo(reqCtx)
+		return
+	}
 	resp := response.ErrOrFallback(http.StatusInternalServerError, "Failed to call resource", err)
 	resp.WriteTo(reqCtx)
 }

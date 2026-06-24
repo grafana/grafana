@@ -1,17 +1,11 @@
 import { useCallback } from 'react';
 
-import {
-  DataTransformerID,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
-import { getTemplateSrv, config as cfg } from '@grafana/runtime';
+import { type TransformerUIProps } from '@grafana/data';
+import { type SortByField, type SortByTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
+import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SortByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<SortByTransformerOptions>) => {
@@ -34,17 +28,21 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
       {sorts.map((s, index) => {
         return (
           <InlineFieldRow key={`${s.field}/${index}`}>
-            <InlineField label="Field" labelWidth={10} grow={true}>
+            <InlineField
+              label={t('transformers.sort-by-transformer-editor.label-field', 'Field')}
+              labelWidth={10}
+              grow={true}
+            >
               <Select
-                options={cfg.featureToggles.transformationsVariableSupport ? [...fieldNames, ...variables] : fieldNames}
+                options={[...fieldNames, ...variables]}
                 value={s.field}
-                placeholder="Select field"
+                placeholder={t('transformers.sort-by-transformer-editor.placeholder-select-field', 'Select field')}
                 onChange={(v) => {
                   onSortChange(index, { ...s, field: v.value! });
                 }}
               />
             </InlineField>
-            <InlineField label="Reverse">
+            <InlineField label={t('transformers.sort-by-transformer-editor.label-reverse', 'Reverse')}>
               <InlineSwitch
                 value={!!s.desc}
                 onChange={() => {
@@ -57,14 +55,4 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
       })}
     </div>
   );
-};
-
-export const sortByTransformRegistryItem: TransformerRegistryItem<SortByTransformerOptions> = {
-  id: DataTransformerID.sortBy,
-  editor: SortByTransformerEditor,
-  transformation: standardTransformers.sortByTransformer,
-  name: standardTransformers.sortByTransformer.name,
-  description: standardTransformers.sortByTransformer.description,
-  categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.sortBy).helperDocs,
 };

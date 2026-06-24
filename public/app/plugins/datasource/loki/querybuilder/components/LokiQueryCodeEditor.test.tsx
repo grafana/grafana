@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
-import { LokiQuery } from '../../types';
+import { createLokiDatasource } from '../../mocks/datasource';
+import { type LokiQuery } from '../../types';
 
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
@@ -27,7 +27,8 @@ const createDefaultProps = () => {
   return props;
 };
 
-describe('LokiQueryCodeEditor', () => {
+// Tests with Monaco are occasionally flaking in CI see #incident-2024-11-13-enterprise-drone-pipeline-failing. Skipping for now.
+describe.skip('LokiQueryCodeEditor', () => {
   it('shows explain section when showExplain is true', async () => {
     const props = createDefaultProps();
     props.showExplain = true;

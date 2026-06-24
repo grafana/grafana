@@ -1,0 +1,105 @@
+import { useCallback } from 'react';
+
+import { t } from '@grafana/i18n';
+import { type ResourceRef, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
+
+import { withSavedByTrailer } from '../../utils/currentUser';
+import { type StepStatusInfo } from '../types';
+
+export interface UseCreateSyncJobParams {
+  repoName: string;
+  setStepStatusInfo?: (info: StepStatusInfo) => void;
+}
+
+export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJobParams) {
+  const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
+
+  const createSyncJob = useCallback(
+    async (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean; resources?: ResourceRef[] }) => {
+      const { skipStatusUpdates = false, resources } = options || {};
+
+      if (!repoName) {
+        if (!skipStatusUpdates) {
+          setStepStatusInfo?.({
+            status: 'error',
+            error: t('provisioning.sync-job.error-no-repository-name', 'No repository name provided'),
+          });
+        }
+        return null;
+      }
+
+      try {
+        if (!skipStatusUpdates) {
+          setStepStatusInfo?.({ status: 'running' });
+        }
+
+        const jobSpec = requiresMigration
+          ? {
+              action: 'migrate' as const,
+              // The Grafana-saved-by trailer rides through the top-level
+              // JobSpec.Message to the resulting git commit.
+              message: withSavedByTrailer(
+                t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
+              ),
+              migrate: {
+                // Always generate fresh folder UIDs on export so the migrated
+                // folders are created anew on the subsequent pull rather than
+                // taking over the existing folders (which would leave their
+                // alerts and library panels orphaned under a now-managed
+                // folder). Has no effect unless folder metadata is written.
+                generateNewFolderIDs: true,
+                // When resources are passed, only those (unmanaged) dashboards
+                // are migrated; otherwise the migrate object keeps the legacy
+                // "migrate everything unmanaged" behavior the wizard relies on.
+                ...(resources?.length ? { resources } : {}),
+              },
+            }
+          : {
+              action: 'pull' as const,
+              // A pull replicates the remote branch locally and produces no
+              // git commit, so there's no commit message to tag.
+              pull: {
+                incremental: false,
+              },
+            };
+
+        const response = await createJob({
+          name: repoName,
+          jobSpec,
+        }).unwrap();
+
+        if (!response?.metadata?.name) {
+          if (!skipStatusUpdates) {
+            setStepStatusInfo?.({
+              status: 'error',
+              error: t('provisioning.sync-job.error-no-job-id', 'Failed to start job'),
+            });
+          }
+          return null;
+        }
+
+        // Job status will be tracked by JobStatus component, keep status as 'running'
+        return response;
+      } catch (error) {
+        if (!skipStatusUpdates) {
+          const errorMessage = extractErrorMessage(error);
+          setStepStatusInfo?.({
+            status: 'error',
+            error: {
+              title: t('provisioning.sync-job.error-starting-job', 'Error starting job'),
+              message: errorMessage,
+            },
+          });
+        }
+        return null;
+      }
+    },
+    [createJob, repoName, setStepStatusInfo]
+  );
+
+  return {
+    createSyncJob,
+    isLoading,
+  };
+}

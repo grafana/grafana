@@ -1,10 +1,12 @@
-import { useMemo, ReactElement } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useMemo, type ReactElement } from 'react';
 
+import { generateUUID } from '@grafana/data';
 import { getMessageFromError } from 'app/core/utils/errors';
-import { AppNotification, AppNotificationSeverity, useDispatch } from 'app/types';
+import { dispatch as storeDispatch } from 'app/store/store';
+import { AppNotificationSeverity, type AppNotification } from 'app/types/appNotifications';
+import { useDispatch } from 'app/types/store';
 
-import { notifyApp } from '../actions';
+import { notifyApp } from '../reducers/appNotification';
 
 const defaultSuccessNotification = {
   title: '',
@@ -27,11 +29,18 @@ const defaultErrorNotification = {
   icon: 'exclamation-triangle',
 };
 
-export const createSuccessNotification = (title: string, text = '', traceId?: string): AppNotification => ({
+export const createSuccessNotification = (
+  title: string,
+  text = '',
+  traceId?: string,
+  component?: ReactElement
+): AppNotification => ({
   ...defaultSuccessNotification,
   title,
   text,
-  id: uuidv4(),
+  traceId,
+  component,
+  id: generateUUID(),
   timestamp: Date.now(),
   showing: true,
 });
@@ -46,7 +55,7 @@ export const createErrorNotification = (
     ...defaultErrorNotification,
     text: getMessageFromError(text),
     title,
-    id: uuidv4(),
+    id: generateUUID(),
     traceId,
     component,
     timestamp: Date.now(),
@@ -54,12 +63,18 @@ export const createErrorNotification = (
   };
 };
 
-export const createWarningNotification = (title: string, text = '', traceId?: string): AppNotification => ({
+export const createWarningNotification = (
+  title: string,
+  text = '',
+  traceId?: string,
+  component?: ReactElement
+): AppNotification => ({
   ...defaultWarningNotification,
   title,
   text,
   traceId,
-  id: uuidv4(),
+  component,
+  id: generateUUID(),
   timestamp: Date.now(),
   showing: true,
 });
@@ -69,7 +84,7 @@ export const createInfoNotification = (title: string, text = '', traceId?: strin
   icon: 'info-circle',
   title,
   text,
-  id: uuidv4(),
+  id: generateUUID(),
   timestamp: Date.now(),
   showing: true,
 });
@@ -86,19 +101,50 @@ export function useAppNotification() {
   const dispatch = useDispatch();
   return useMemo(
     () => ({
-      success: (title: string, text = '') => {
-        dispatch(notifyApp(createSuccessNotification(title, text)));
+      [AppNotificationSeverity.Success]: (title: string, text = '') => {
+        dispatch(notifyApp(createNotification(title, text, AppNotificationSeverity.Success)));
       },
-      warning: (title: string, text = '', traceId?: string) => {
-        dispatch(notifyApp(createWarningNotification(title, text, traceId)));
+      [AppNotificationSeverity.Warning]: (title: string, text = '', traceId?: string) => {
+        dispatch(notifyApp(createNotification(title, text, AppNotificationSeverity.Warning, traceId)));
       },
-      error: (title: string, text = '', traceId?: string) => {
-        dispatch(notifyApp(createErrorNotification(title, text, traceId)));
+      [AppNotificationSeverity.Error]: (title: string, text = '', traceId?: string) => {
+        dispatch(notifyApp(createNotification(title, text, AppNotificationSeverity.Error, traceId)));
       },
-      info: (title: string, text = '') => {
-        dispatch(notifyApp(createInfoNotification(title, text)));
+      [AppNotificationSeverity.Info]: (title: string, text = '') => {
+        dispatch(notifyApp(createNotification(title, text, AppNotificationSeverity.Info)));
       },
     }),
     [dispatch]
   );
+}
+
+function createNotification(
+  title: string,
+  text = '',
+  severity: AppNotificationSeverity = AppNotificationSeverity.Success,
+  traceId?: string
+) {
+  const map = {
+    [AppNotificationSeverity.Success]: (title: string, text = '') => {
+      return createSuccessNotification(title, text);
+    },
+    [AppNotificationSeverity.Warning]: (title: string, text = '', traceId?: string) => {
+      return createWarningNotification(title, text, traceId);
+    },
+    [AppNotificationSeverity.Error]: (title: string, text = '', traceId?: string) => {
+      return createErrorNotification(title, text, traceId);
+    },
+    [AppNotificationSeverity.Info]: (title: string, text = '') => {
+      return createInfoNotification(title, text);
+    },
+  };
+  return map[severity](title, text, traceId);
+}
+
+export function sendAppNotification(
+  title: string,
+  text = '',
+  severity: AppNotificationSeverity = AppNotificationSeverity.Success
+) {
+  storeDispatch(notifyApp(createNotification(title, text, severity)));
 }

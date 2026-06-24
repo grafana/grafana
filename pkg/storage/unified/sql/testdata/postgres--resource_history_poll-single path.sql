@@ -1,9 +1,11 @@
 SELECT
+    "guid",
     "resource_version",
     "namespace",
     "group",
     "resource",
     "name",
+    "folder",
     "value",
     "action",
     "previous_resource_version"

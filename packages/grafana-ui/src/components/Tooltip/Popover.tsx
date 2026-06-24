@@ -1,21 +1,13 @@
-﻿import {
-  FloatingArrow,
-  arrow,
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useFloating,
-  useTransitionStyles,
-} from '@floating-ui/react';
+﻿import { FloatingArrow, arrow, autoUpdate, offset, useFloating, useTransitionStyles } from '@floating-ui/react';
 import { useLayoutEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
-import { PopoverContent, TooltipPlacement } from './types';
+import { type PopoverContent, type TooltipPlacement } from './types';
 
 interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   show: boolean;
@@ -24,6 +16,8 @@ interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   referenceElement: HTMLElement;
   wrapperClassName?: string;
   renderArrow?: boolean;
+  hidePopper?: () => void;
+  style?: React.CSSProperties;
 }
 
 export function Popover({
@@ -34,24 +28,18 @@ export function Popover({
   wrapperClassName,
   referenceElement,
   renderArrow,
+  hidePopper,
+  style: styleOverrides,
   ...rest
 }: Props) {
   const theme = useTheme2();
   const arrowRef = useRef(null);
+  const floatingUIPlacement = getPlacement(placement);
 
   // the order of middleware is important!
   // `arrow` should almost always be at the end
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = [
-    offset(8),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
+  const middleware = [offset(8), ...getPositioningMiddleware(floatingUIPlacement)];
 
   if (renderArrow) {
     middleware.push(
@@ -63,7 +51,7 @@ export function Popover({
 
   const { context, refs, floatingStyles } = useFloating({
     open: show,
-    placement: getPlacement(placement),
+    placement: floatingUIPlacement,
     middleware,
     whileElementsMounted: autoUpdate,
     strategy: 'fixed',
@@ -87,6 +75,7 @@ export function Popover({
         style={{
           ...floatingStyles,
           ...placementStyles,
+          ...styleOverrides,
         }}
         className={wrapperClassName}
         {...rest}
@@ -95,7 +84,7 @@ export function Popover({
           {renderArrow && <FloatingArrow fill={theme.colors.border.weak} ref={arrowRef} context={context} />}
           {typeof content === 'string' && content}
           {React.isValidElement(content) && React.cloneElement(content)}
-          {typeof content === 'function' && content({})}
+          {typeof content === 'function' && content({ hidePopper })}
         </div>
       </div>
     </Portal>

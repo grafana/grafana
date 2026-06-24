@@ -1,8 +1,9 @@
 import { forwardRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
-import { RuleIdentifier } from 'app/types/unified-alerting';
+import { type RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
 
@@ -39,19 +40,23 @@ export function RedirectToCloneRule({
   return (
     <ConfirmModal
       isOpen={stage === 'confirm'}
-      title="Copy provisioned alert rule"
+      title={t('alerting.redirect-to-clone-rule.title-copy-provisioned-alert-rule', 'Copy provisioned alert rule')}
       body={
         <div>
           <p>
-            The new rule will <strong>not</strong> be marked as a provisioned rule.
+            <Trans i18nKey="alerting.redirect-to-clone-rule.body-not-provisioned">
+              The new rule will <strong>not</strong> be marked as a provisioned rule.
+            </Trans>
           </p>
           <p>
-            You will need to set a new evaluation group for the copied rule because the original one has been
-            provisioned and cannot be used for rules created in the UI.
+            <Trans i18nKey="alerting.redirect-to-clone-rule.body-evaluation-group">
+              You will need to set a new evaluation group for the copied rule because the original one has been
+              provisioned and cannot be used for rules created in the UI.
+            </Trans>
           </p>
         </div>
       }
-      confirmText="Copy"
+      confirmText={t('alerting.redirect-to-clone-rule.confirmText-copy', 'Copy')}
       onConfirm={() => setStage('redirect')}
       onDismiss={onDismiss}
     />
@@ -65,14 +70,14 @@ interface CloneRuleButtonProps {
   className?: string;
 }
 
-export const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
+const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
   ({ text, ruleIdentifier, isProvisioned, className }, ref) => {
     const [redirectToClone, setRedirectToClone] = useState(false);
 
     return (
       <>
         <Button
-          title="Copy"
+          title={t('alerting.clone-rule-button.title-copy', 'Copy')}
           className={className}
           size="sm"
           key="clone"

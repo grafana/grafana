@@ -1,9 +1,10 @@
 import { createTheme } from '../themes/createTheme';
-import { DataFrame, Field, FieldType } from '../types/dataFrame';
+import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 
-import { fieldColorModeRegistry, FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
+import { fieldColorModeRegistry, type FieldValueColorCalculator } from './fieldColor';
 import { cacheFieldDisplayNames } from './fieldState';
+import { getFieldSeriesColor } from './scale';
 
 function getTestField(mode: string, fixedColor?: string, name = 'name'): Field {
   return {
@@ -113,8 +114,8 @@ describe('fieldColorModeRegistry', () => {
     const calcFn1 = mode.getCalculator(frames[0].fields[1], createTheme());
     const calcFn2 = mode.getCalculator(frames[1].fields[1], createTheme());
 
-    expect(calcFn1(0, 0)).toEqual('#82B5D8');
-    expect(calcFn2(0, 0)).toEqual('#FCE2DE');
+    expect(calcFn1(0, 0)).toEqual('#5195CE');
+    expect(calcFn2(0, 0)).toEqual('#37872D');
   });
 
   it('When color.seriesBy is set to last use that instead of v', () => {
@@ -141,35 +142,5 @@ describe('fieldColorModeRegistry', () => {
     const color = '#123456';
     const calcFn = getCalculator({ mode: FieldColorModeId.Shades, seriesIndex: 1, fixedColor: color });
     expect(calcFn(70, 0, undefined)).not.toEqual(color);
-  });
-});
-
-describe('getFieldSeriesColor', () => {
-  const field = getTestField('continuous-GrYlRd');
-  field.values = [0, -10, 5, 10, 2, 5];
-
-  it('When color.seriesBy is last use that to calc series color', () => {
-    field.config.color!.seriesBy = 'last';
-    const color = getFieldSeriesColor(field, createTheme());
-    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
-
-    // the 4 can be anything, 0.75 comes from 5 being 75% in the range -10 to 10 (see data above)
-    expect(color.color).toEqual(calcFn(4, 0.75));
-  });
-
-  it('When color.seriesBy is max use that to calc series color', () => {
-    field.config.color!.seriesBy = 'max';
-    const color = getFieldSeriesColor(field, createTheme());
-    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
-
-    expect(color.color).toEqual(calcFn(10, 1));
-  });
-
-  it('When color.seriesBy is min use that to calc series color', () => {
-    field.config.color!.seriesBy = 'min';
-    const color = getFieldSeriesColor(field, createTheme());
-    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
-
-    expect(color.color).toEqual(calcFn(-10, 0));
   });
 });

@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: PagerDuty
 title: Configure PagerDuty for Alerting
-weight: 0
+weight: 150
 ---
 
 # Configure PagerDuty for Alerting
@@ -50,7 +50,7 @@ In step 5, choose **Create a service without an integration**.
 
 To create your PagerDuty integration in Grafana Alerting, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a contact point name.
 1. From the Integration list, select **PagerDuty**.

@@ -1,8 +1,8 @@
-import { useState, ComponentProps } from 'react';
+import { type ComponentProps, type JSX, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer } from '@grafana/ui';
-import { Permissions } from 'app/core/components/AccessControl';
-import { t, Trans } from 'app/core/internationalization';
+import { Permissions } from 'app/core/components/AccessControl/Permissions';
 
 type ButtonProps = { onClick: () => void };
 
@@ -30,7 +30,7 @@ export const ManagePermissionsDrawer = ({
   const defaultTitle = t('alerting.manage-permissions.title', 'Manage permissions');
   return (
     <Drawer onClose={onClose} title={title || defaultTitle} subtitle={resourceName}>
-      <Permissions {...permissionsProps} canSetPermissions></Permissions>
+      <Permissions {...permissionsProps} canSetPermissions />
     </Drawer>
   );
 };

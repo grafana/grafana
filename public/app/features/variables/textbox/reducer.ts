@@ -1,9 +1,9 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { TextBoxVariableModel } from '@grafana/data';
+import { type TextBoxVariableModel } from '@grafana/data';
 
-import { getInstanceState } from '../state/selectors';
-import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { getInstanceState } from '../state/getInstanceState';
+import { initialVariablesState, type VariablePayload, type VariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
@@ -15,7 +15,7 @@ export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   originalQuery: null,
 };
 
-export const textBoxVariableSlice = createSlice({
+const textBoxVariableSlice = createSlice({
   name: 'templating/textbox',
   initialState: initialVariablesState,
   reducers: {

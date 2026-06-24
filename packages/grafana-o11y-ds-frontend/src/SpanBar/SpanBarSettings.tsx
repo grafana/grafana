@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 
 export interface SpanBarOptions {

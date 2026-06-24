@@ -41,7 +41,7 @@ func (s *flightSim) GetState() simulationState {
 }
 
 func (s *flightSim) SetConfig(vals map[string]any) error {
-	return updateConfigObjectFromJSON(s.cfg, vals)
+	return updateConfigObjectFromJSON(&s.cfg, vals)
 }
 
 func (s *flightSim) NewFrame(size int) *data.Frame {

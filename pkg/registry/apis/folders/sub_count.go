@@ -4,17 +4,30 @@ import (
 	"context"
 	"net/http"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// countedKinds is the explicit "group/resource" list passed to GetStats.
+// Without it, the search server enumerates every kind in the namespace first
+// (very expensive on KV-backed storage). The set matches what the browse-
+// dashboards UI consumes in normalizeDescendantCounts.
+var countedKinds = []string{
+	"folder.grafana.app/folders",
+	"dashboard.grafana.app/dashboards",
+	"dashboard.grafana.app/librarypanels",
+	"rules.alerting.grafana.app/alertrules",
+}
+
 type subCountREST struct {
-	service folder.Service
+	getter   rest.Getter
+	searcher resourcepb.ResourceIndexClient
 }
 
 var (
@@ -23,7 +36,7 @@ var (
 )
 
 func (r *subCountREST) New() runtime.Object {
-	return &v0alpha1.DescendantCounts{}
+	return &folders.DescendantCounts{}
 }
 
 func (r *subCountREST) Destroy() {
@@ -38,19 +51,17 @@ func (r *subCountREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subCountREST) ProducesObject(verb string) interface{} {
-	return &v0alpha1.DescendantCounts{}
+	return &folders.DescendantCounts{}
 }
 
 func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, "" // true means you can use the trailing path as a variable
+	return nil, false, ""
 }
 
 func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
+	if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
 		return nil, err
 	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ns, err := request.NamespaceInfoFrom(ctx, true)
 		if err != nil {
@@ -58,18 +69,29 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		counts, err := r.service.GetDescendantCounts(ctx, &folder.GetDescendantCountsQuery{
-			UID:          &name,
-			OrgID:        ns.OrgID,
-			SignedInUser: user,
+		stats, err := r.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+			Namespace: ns.Value,
+			Kinds:     countedKinds,
+			Folder:    []string{name},
 		})
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-
-		responder.Object(http.StatusOK, &v0alpha1.DescendantCounts{
-			Counts: counts,
-		})
+		if stats.Error != nil {
+			responder.Error(resource.GetError(stats.Error))
+			return
+		}
+		rsp := &folders.DescendantCounts{
+			Counts: make([]folders.ResourceStats, len(stats.Stats)),
+		}
+		for i, v := range stats.Stats {
+			rsp.Counts[i] = folders.ResourceStats{
+				Group:    v.Group,
+				Resource: v.Resource,
+				Count:    v.Count,
+			}
+		}
+		responder.Object(200, rsp)
 	}), nil
 }

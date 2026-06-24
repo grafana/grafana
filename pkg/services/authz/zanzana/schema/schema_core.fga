@@ -1,0 +1,37 @@
+module core
+
+type user
+  relations
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
+
+type service-account
+  relations
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
+
+type render
+
+type anonymous
+
+type role
+  relations
+    define assignee: [user, service-account, anonymous, team#member, role#assignee]
+
+    define get: [user, service-account, team#member, role#assignee]
+    define update: [user, service-account, team#member, role#assignee]
+    define delete: [user, service-account, team#member, role#assignee]
+
+type team
+  relations
+    define admin: [user, service-account]
+    define member: [user, service-account] or admin
+
+    define get: [user, service-account, team#member, role#assignee] or member
+    define update: [user, service-account, team#member, role#assignee] or admin
+    define delete: [user, service-account, team#member, role#assignee] or admin
+
+    define get_permissions: [user, service-account, team#member, role#assignee] or admin
+    define set_permissions: [user, service-account, team#member, role#assignee] or admin

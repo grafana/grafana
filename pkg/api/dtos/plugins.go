@@ -2,7 +2,7 @@ package dtos
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -12,6 +12,7 @@ type PluginSetting struct {
 	Id               string               `json:"id"`
 	Enabled          bool                 `json:"enabled"`
 	Pinned           bool                 `json:"pinned"`
+	AutoEnabled      bool                 `json:"autoEnabled"`
 	Module           string               `json:"module"`
 	BaseUrl          string               `json:"baseUrl"`
 	Info             plugins.Info         `json:"info"`
@@ -31,6 +32,7 @@ type PluginSetting struct {
 	AngularDetected bool                    `json:"angularDetected"`
 	LoadingStrategy plugins.LoadingStrategy `json:"loadingStrategy"`
 	ModuleHash      string                  `json:"moduleHash,omitempty"`
+	Translations    map[string]string       `json:"translations,omitempty"`
 }
 
 type PluginListItem struct {
@@ -51,7 +53,7 @@ type PluginListItem struct {
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
-	IAM             *pfs.IAM                `json:"iam,omitempty"`
+	IAM             *auth.IAM               `json:"iam,omitempty"`
 }
 
 type PluginList []PluginListItem

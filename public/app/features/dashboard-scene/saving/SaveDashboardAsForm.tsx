@@ -1,16 +1,16 @@
-import debounce from 'debounce-promise';
-import { ChangeEvent, useState } from 'react';
-import { UseFormSetValue, useForm } from 'react-hook-form';
+import { type ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Dashboard } from '@grafana/schema';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
+import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
+import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
@@ -29,7 +29,7 @@ export interface Props {
 export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
-  const { register, handleSubmit, setValue, formState, getValues, watch } = useForm<SaveDashboardAsFormDTO>({
+  const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
       title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
@@ -42,18 +42,68 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     },
   });
 
-  const { errors, isValid, defaultValues } = formState;
+  const { errors, isValid } = formState;
   const formValues = watch();
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
-  const [hasFolderChanged, setHasFolderChanged] = useState(false);
+
+  const validationTimeoutRef = useRef<NodeJS.Timeout>(undefined);
+
+  // Validate title on form mount to catch invalid default values
+  useEffect(() => {
+    trigger('title');
+  }, [trigger]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleTitleChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setValue('title', e.target.value, { shouldDirty: true });
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
+      validationTimeoutRef.current = setTimeout(() => {
+        trigger('title');
+      }, 400);
+    },
+    [setValue, trigger]
+  );
+
   const onSave = async (overwrite: boolean) => {
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
+
+    const isTitleValid = await trigger('title');
+
+    // This prevents the race between the new input and old validation state
+    if (!isTitleValid) {
+      return;
+    }
+
     const data = getValues();
 
-    const dashboardToSave: Dashboard = getSaveAsDashboardSaveModel(changedSaveModel, data, changeInfo.isNew);
-    const result = await onSaveDashboard(dashboard, dashboardToSave, { overwrite, folderUid: data.folder.uid });
+    const result = await onSaveDashboard(dashboard, {
+      overwrite,
+      folderUid: data.folder.uid,
+      rawDashboardJSON: changedSaveModel,
+
+      // save as config
+      saveAsCopy: true,
+      isNew: changeInfo.isNew,
+      copyTags: data.copyTags,
+      title: data.title,
+      description: data.description,
+    });
 
     if (result.status === 'success') {
       dashboard.closeModal();
@@ -67,24 +117,29 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const cancelButton = (
     <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
-      Cancel
+      <Trans i18nKey="dashboard-scene.save-dashboard-as-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );
 
   const saveButton = (overwrite: boolean) => {
-    const showSaveButton = !isValid && hasFolderChanged ? true : isValid;
-    return <SaveButton isValid={showSaveButton} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />;
+    return <SaveButton isValid={isValid} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />;
   };
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
       formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
     if (isNameExistsError(error) && formValuesMatchContentSent) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+      return <NameAlreadyExistsError />;
     }
     return (
       <>
         {error && formValuesMatchContentSent && (
-          <Alert title="Failed to save dashboard" severity="error">
+          <Alert
+            title={t(
+              'dashboard-scene.save-dashboard-as-form.render-footer.title-failed-to-save-dashboard',
+              'Failed to save dashboard'
+            )}
+            severity="error"
+          >
             {error.message && <p>{error.message}</p>}
           </Alert>
         )}
@@ -98,6 +153,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   return (
     <form onSubmit={handleSubmit(() => onSave(false))}>
+<<<<<<< HEAD
       <Field
         label={<TitleFieldLabel dashboard={changedSaveModel} onChange={setValue} />}
         invalid={!!errors.title}
@@ -141,47 +197,96 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       {!changeInfo.isNew && (
         <Field label="Rjgbhjdfnm">
           <Switch {...register('copyTags')} />
+=======
+      <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={<TitleFieldLabel onChange={setValue} />}
+          invalid={!!errors.title}
+          error={errors.title?.message}
+        >
+          <Input
+            {...register('title', {
+              required: t('dashboard-scene.save-dashboard-as-form.required', 'Required'),
+              validate: validateDashboardName,
+              onChange: handleTitleChange,
+            })}
+            aria-label={t(
+              'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-title-field',
+              'Save dashboard title field'
+            )}
+            data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
+          />
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         </Field>
-      )}
-      <Box paddingTop={2}>{renderFooter(state.error)}</Box>
+        <Field
+          noMargin
+          label={<DescriptionLabel onChange={setValue} />}
+          invalid={!!errors.description}
+          error={errors.description?.message}
+        >
+          <TextArea
+            {...register('description', { required: false })}
+            aria-label={t(
+              'dashboard-scene.save-dashboard-as-form.aria-label-save-dashboard-description-field',
+              'Save dashboard description field'
+            )}
+            autoFocus
+          />
+        </Field>
+
+        <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
+          <FolderPicker
+            onChange={async (uid: string | undefined, title: string | undefined) => {
+              setValue('folder', { uid, title });
+              const meta = await getProvisionedMeta(uid);
+              dashboard.setState({
+                meta: {
+                  ...meta,
+                  folderUid: uid,
+                },
+              });
+              // Re-validate title when folder changes to check for duplicates in new folder
+              trigger('title');
+            }}
+            value={formValues.folder?.uid}
+          />
+        </Field>
+        {!changeInfo.isNew && (
+          <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
+            <Switch {...register('copyTags')} />
+          </Field>
+        )}
+        <Box paddingTop={2}>{renderFooter(state.error)}</Box>
+      </Stack>
     </form>
   );
 }
 
-export interface TitleLabelProps {
-  dashboard: Dashboard;
+interface TitleLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function TitleFieldLabel(props: TitleLabelProps) {
+function TitleFieldLabel(props: TitleLabelProps) {
   return (
     <Stack justifyContent="space-between">
-      <Label htmlFor="description">Title</Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
+      <Label htmlFor="description">
+        <Trans i18nKey="dashboard-scene.title-field-label.title">Title</Trans>
+      </Label>
     </Stack>
   );
 }
 
-export interface DescriptionLabelProps {
-  dashboard: Dashboard;
+interface DescriptionLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function DescriptionLabel(props: DescriptionLabelProps) {
+function DescriptionLabel(props: DescriptionLabelProps) {
   return (
     <Stack justifyContent="space-between">
-      <Label htmlFor="description">Description</Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
+      <Label htmlFor="description">
+        <Trans i18nKey="dashboard-scene.description-label.description">Description</Trans>
+      </Label>
     </Stack>
   );
 }
@@ -197,16 +302,4 @@ async function validateDashboardName(title: string, formValues: SaveDashboardAsF
   } catch (e) {
     return e instanceof Error ? e.message : 'Dashboard name is invalid';
   }
-}
-
-function getSaveAsDashboardSaveModel(source: Dashboard, form: SaveDashboardAsFormDTO, isNew?: boolean): Dashboard {
-  // TODO remove old alerts and thresholds when copying (See getSaveAsDashboardClone)
-  return {
-    ...source,
-    id: null,
-    uid: '',
-    title: form.title,
-    description: form.description,
-    tags: isNew || form.copyTags ? source.tags : [],
-  };
 }

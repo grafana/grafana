@@ -1,7 +1,4 @@
-# Owned by grafana-release-guild
-# Intended to be dropped into the base repo Ex: grafana/grafana
-name: Check for patch conflicts
-run-name: check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
+name: Dispatch check for patch conflicts
 on:
   pull_request:
     types:
@@ -10,18 +7,140 @@ on:
       - synchronize
     branches:
       - "main"
-      - "v*.*.*"
       - "release-*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # If a new commit is applied, just give up.
+  cancel-in-progress: true
+
+permissions: {}
 
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
-  trigger_downstream_patch_check:
-    uses: grafana/security-patch-actions/.github/workflows/test-patches.yml@main
-    if: github.repository == 'grafana/grafana'
-    with:
-      src_repo: "${{ github.repository }}"
-      src_ref: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"
-      patch_repo: "${{ github.repository }}-security-patches"
-      patch_ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
-    secrets: inherit
+  dispatch-job:
+    # Only runs in grafana/grafana; the workflow file is mirrored to other repos but the
+    # patch-check pipeline (security-patch-actions + grafana-security-patches) is specific
+    # to the OSS repo. Skipping here is acceptable to policy-bot, which allows `skipped`
+    # as a pass.
+    #
+    # Also: dispatching a workflow requires brokering an installation token, which fails on
+    # forks, so forks skip via the same check below and the dispatch-job-fork no-op records
+    # the required status as success.
+    if: ${{ github.repository == 'grafana/grafana' && ! github.event.pull_request.head.repo.fork }}
+    env:
+      HEAD_REF: ${{ github.head_ref }}
+      BASE_REF: ${{ github.base_ref }}
+      REPO: ${{ github.repository }}
+      SENDER: ${{ github.event.sender.login }}
+      SHA: ${{ github.sha }}
+      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+      contents: read
+      statuses: write
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-releases-oss
+      - name: "Dispatch job"
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          script: |
+            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
+
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'grafana',
+                repo: 'security-patch-actions',
+                workflow_id: 'test-patches-event.yml',
+                ref: 'main',
+                inputs: {
+                  src_repo: REPO,
+                  src_ref: HEAD_REF,
+                  src_merge_sha: SHA,
+                  src_pr_commit_sha: PR_COMMIT_SHA,
+                  patch_repo: REPO + '-security-patches',
+                  patch_ref: BASE_REF,
+                  triggering_github_handle: SENDER
+                }
+            })
+      - name: "Wait for success"
+        # Only run metadata reads (status/conclusion) — never fetch logs or artifacts,
+        # since the security-patch-actions workflow output must not be exposed.
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          script: |
+            const {HEAD_REF, REPO} = process.env;
+
+            const maxWaitMs = 10 * 60 * 1000;
+            const pollIntervalMs = 15 * 1000;
+            const startTime = Date.now();
+            // Include a 60s lookback buffer to cover the time spent in the dispatch step.
+            const createdAfter = new Date(startTime - 60 * 1000).toISOString();
+
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            let runId = null;
+
+            while (true) {
+              if (Date.now() - startTime >= maxWaitMs) {
+                core.setFailed('Timed out after 10 minutes waiting for patch check to complete');
+                return;
+              }
+
+              if (!runId) {
+                const { data } = await github.rest.actions.listWorkflowRuns({
+                  owner: 'grafana',
+                  repo: 'security-patch-actions',
+                  workflow_id: 'test-patches-event.yml',
+                  branch: 'main',
+                  created: `>${createdAfter}`,
+                  per_page: 5,
+                });
+
+                const matchingRun = data.workflow_runs.find(
+                  run => run.name && run.name.includes(REPO) && run.name.includes(HEAD_REF)
+                );
+                if (matchingRun) {
+                  runId = matchingRun.id;
+                } else {
+                  await sleep(pollIntervalMs);
+                  continue;
+                }
+              }
+
+              const { data: run } = await github.rest.actions.getWorkflowRun({
+                owner: 'grafana',
+                repo: 'security-patch-actions',
+                run_id: runId,
+              });
+
+              if (run.status === 'completed') {
+                if (run.conclusion === 'success') {
+                  return;
+                }
+                core.setFailed(`Patch check failed (conclusion: ${run.conclusion})`);
+                return;
+              }
+
+              await sleep(pollIntervalMs);
+            }
+
+  dispatch-job-fork:
+    # If the source is from a fork then use the built-in workflow token to create the same status and unconditionally
+    # mark it as a success. Also only meaningful in grafana/grafana (the patch-check
+    # pipeline is OSS-only); in mirrored copies this skips alongside dispatch-job.
+    if: ${{ github.repository == 'grafana/grafana' && github.event.pull_request.head.repo.fork }}
+    permissions:
+      statuses: write
+    runs-on: ubuntu-arm64-small
+    steps:
+      - name: All good
+        run: |
+          echo "It is not possible to check patches of a fork, unfortunately. We're working on it :-)"

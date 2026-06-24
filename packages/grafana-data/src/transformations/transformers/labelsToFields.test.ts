@@ -1,13 +1,13 @@
 import { Subscription } from 'rxjs';
 
 import { toDataFrame, toDataFrameDTO } from '../../dataframe/processDataFrame';
-import { DataFrame, FieldDTO, FieldType } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { type DataFrame, type FieldDTO, FieldType } from '../../types/dataFrame';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { LabelsToFieldsMode, LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
+import { LabelsToFieldsMode, type LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
 
 function labelsToFieldTransform(source: DataFrame[]): Promise<DataFrame[]> {
   const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {

@@ -1,15 +1,15 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 
-import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
-import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
+import { VizOrientation, ThresholdsMode, type Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../themes/ThemeContext';
 
-import { Props } from './BarGauge';
+import { BarGauge, type Props } from './BarGauge';
 import mdx from './BarGauge.mdx';
 
 const meta: Meta = {
-  title: 'Visualizations/BarGauge',
+  title: 'Plugins/BarGauge',
   component: BarGauge,
   parameters: {
     docs: {
@@ -58,6 +58,10 @@ const meta: Meta = {
 };
 
 interface StoryProps extends Partial<Props> {
+  height: number;
+  width: number;
+  orientation: VizOrientation;
+  displayMode: BarGaugeDisplayMode;
   numeric: number;
   title: string;
   minValue: number;
@@ -88,7 +92,7 @@ const AddBarGaugeStory = (storyProps: StoryProps) => {
   };
   field.display = getDisplayProcessor({ field, theme });
 
-  const props: Partial<Props> = {
+  const props = {
     theme,
     lcdCellWidth: storyProps.lcdCellWidth,
     itemSpacing: storyProps.itemSpacing,

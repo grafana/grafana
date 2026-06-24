@@ -17,6 +17,16 @@ type LibraryElementService struct {
 	idCounter int64
 }
 
+// DeleteLibraryElement implements libraryelements.Service.
+func (l *LibraryElementService) DeleteLibraryElement(c context.Context, signedInUser identity.Requester, uid string) (int64, error) {
+	panic("unimplemented")
+}
+
+// PatchLibraryElement implements libraryelements.Service.
+func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
+	panic("unimplemented")
+}
+
 var _ libraryelements.Service = (*LibraryElementService)(nil)
 
 func (l *LibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
@@ -68,6 +78,11 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 	return dto, nil
 }
 
+// PatchElement implements libraryelements.Service.
+func (l *LibraryElementService) PatchElement(c context.Context, signedInUser identity.Requester, cmd model.PatchLibraryElementCommand, uid string) (model.LibraryElementDTO, error) {
+	panic("unimplemented")
+}
+
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
 	l.mx.RLock()
 	defer l.mx.RUnlock()
@@ -78,18 +93,6 @@ func (l *LibraryElementService) GetElement(c context.Context, signedInUser ident
 	}
 
 	return libraryElement, nil
-}
-
-func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
-	return map[string]model.LibraryElementDTO{}, nil
-}
-
-func (l *LibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
-	return nil
-}
-
-func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error {
-	return nil
 }
 
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {

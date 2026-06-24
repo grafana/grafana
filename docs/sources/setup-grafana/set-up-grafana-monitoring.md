@@ -24,13 +24,13 @@ Grafana can emit Jaeger or OpenTelemetry Protocol (OTLP) traces for its HTTP API
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
-Refer to [Configuration's OpenTelemetry section]({{< relref "./configure-grafana#tracingopentelemetry" >}}) for a reference of tracing options available in Grafana.
+Refer to [Configuration's OpenTelemetry section](../configure-grafana/#tracingopentelemetry) for a reference of tracing options available in Grafana.
 
 ## View Grafana internal metrics
 
 Grafana collects some metrics about itself internally. Grafana supports pushing metrics to Graphite or exposing them to be scraped by Prometheus.
 
-For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "./configure-grafana#metrics" >}}) and [metrics.graphite]({{< relref "./configure-grafana#metricsgraphite" >}}) in [Configuration]({{< relref "./configure-grafana" >}}).
+For more information about configuration options related to Grafana metrics, refer to [metrics](../configure-grafana/#metrics) and [metrics.graphite](../configure-grafana/#metricsgraphite) in [Configuration](../configure-grafana/).
 
 ### Available metrics
 
@@ -42,6 +42,19 @@ When enabled, Grafana exposes a number of metrics, including:
 - Requests by routing group
 - Grafana active alerts
 - Grafana performance
+
+#### Native histogram format
+
+Grafana exposes HTTP request metrics using native histograms for a more accurate representation of metric distributions. By default, both native histograms and classic histogram buckets are exposed for compatibility.
+
+To reduce metric cardinality, you can disable classic histogram buckets and expose only native histograms by setting the following option in your configuration file:
+
+```
+[metrics]
+# Enable classic HTTP histogram buckets alongside native histograms
+# Set to false to only expose native histogram format (reduces cardinality)
+classic_http_histogram_enabled = false
+```
 
 ### Pull metrics from Grafana into Prometheus
 
@@ -73,17 +86,19 @@ These instructions assume you have already added Prometheus as a data source in 
    ```
    - job_name: 'grafana_metrics'
 
-      scrape_interval: 15s
-      scrape_timeout: 5s
+     scrape_interval: 15s
+     scrape_timeout: 5s
 
-      static_configs:
-        - targets: ['localhost:3000']
+     static_configs:
+       - targets: ['localhost:3000']
    ```
 
 1. Restart Prometheus. Your new job should appear on the Targets tab.
-1. In Grafana, hover your mouse over the **Configuration** (gear) icon on the left sidebar and then click **Data Sources**.
+1. In Grafana, click **Connections** in the left-side menu.
+1. Under your connections, click **Data Sources**.
 1. Select the **Prometheus** data source.
-1. On the Dashboards tab, **Import** the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
+1. Under the name of your data source, click **Dashboards**.
+1. On the Dashboards tab, click **Import** in the _Grafana metrics_ row to import the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
 
 ### View Grafana metrics in Graphite
 
@@ -145,12 +160,12 @@ These instructions assume you have already added Prometheus as a data source in 
    ```
    - job_name: 'grafana_github_datasource'
 
-      scrape_interval: 15s
-      scrape_timeout: 5s
-      metrics_path: /metrics/plugins/grafana-test-datasource
+     scrape_interval: 15s
+     scrape_timeout: 5s
+     metrics_path: /metrics/plugins/grafana-test-datasource
 
-      static_configs:
-        - targets: ['localhost:3000']
+     static_configs:
+       - targets: ['localhost:3000']
    ```
 
 1. Restart Prometheus. Your new job should appear on the Targets tab.

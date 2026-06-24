@@ -1,34 +1,64 @@
+import saveAs from 'file-saver';
 import { countBy, chain } from 'lodash';
+import { type MouseEvent } from 'react';
+import { lastValueFrom, map, type Observable } from 'rxjs';
 
 import {
   LogLevel,
-  LogRowModel,
-  LogLabelStatsModel,
-  LogsModel,
+  type LogRowModel,
+  type LogLabelStatsModel,
+  type LogsModel,
   LogsSortOrder,
-  DataFrame,
-  FieldConfig,
+  type DataFrame,
+  type FieldConfig,
   FieldCache,
   FieldType,
   MutableDataFrame,
-  QueryResultMeta,
+  type QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
+  getFieldDisplayName,
+  getDefaultTimeRange,
+  locationUtil,
+  urlUtil,
+  dateTime,
+  dateTimeFormat,
+  type DataTransformerConfig,
+  type CustomTransformOperator,
+  transformDataFrame,
+  getTimeField,
+  type Field,
+  type LogsMetaItem,
+  store,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { getConfig } from 'app/core/config';
 
+import { getLogsExtractFields } from '../explore/Logs/LogsTable';
+import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
+
+import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { getDataframeFields } from './components/logParser';
+import { type GetRowContextQueryFn } from './components/panel/LogLineMenu';
+import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } from './logsFrame';
 
 /**
  * Returns the log level of a log line.
- * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
+ * Parse the line for level words. If no level is found, it returns `LogLevel.unspecified`.
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
+ * @deprecated
  */
 export function getLogLevel(line: string): LogLevel {
-  if (!line) {
-    return LogLevel.unknown;
+  const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaLogLevelInference, false);
+  if (!enabled) {
+    return LogLevel.unspecified;
   }
-  let level = LogLevel.unknown;
+  if (!line) {
+    return LogLevel.unspecified;
+  }
+  let level = LogLevel.unspecified;
   let currentIndex: number | undefined = undefined;
 
   for (const [key, value] of Object.entries(LogLevel)) {
@@ -46,8 +76,9 @@ export function getLogLevel(line: string): LogLevel {
 }
 
 export function getLogLevelFromKey(key: string | number): LogLevel {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
-  if (level) {
+  if (level !== undefined) {
     return level;
   }
   if (typeof key === 'string') {
@@ -56,13 +87,13 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
     // Safety check to confirm that we're parsing a number and not a number with a string.
     // For example `parseInt('1abcd', 10)` outputs 1
     if (key.length === numericLevel.toString().length) {
-      return NumericLogLevel[key] || LogLevel.unknown;
+      return NumericLogLevel[key] || LogLevel.unspecified;
     }
   } else if (typeof key === 'number') {
-    return NumericLogLevel[key] || LogLevel.unknown;
+    return NumericLogLevel[key] || LogLevel.unspecified;
   }
 
-  return LogLevel.unknown;
+  return LogLevel.unspecified;
 }
 
 export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
@@ -142,38 +173,23 @@ export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
   sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 
 // Currently supports only error condition in Loki logs
-export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorMessage?: string } => {
-  if (logRow.labels.__error__) {
-    return {
-      hasError: true,
-      errorMessage: logRow.labels.__error__,
-    };
-  }
-  return {
-    hasError: false,
-  };
+export const checkLogsError = (logRow: LogRowModel): string | undefined => {
+  return logRow.labels.__error__;
 };
 
-export const checkLogsSampled = (logRow: LogRowModel): { isSampled: boolean; sampleMessage?: string } => {
-  if (logRow.labels.__adaptive_logs_sampled__) {
-    let msg =
-      logRow.labels.__adaptive_logs_sampled__ === 'true'
-        ? 'Logs like this one have been dropped by Adaptive Logs'
-        : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
-    return {
-      isSampled: true,
-      sampleMessage: msg,
-    };
+export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
+  if (!logRow.labels.__adaptive_logs_sampled__) {
+    return undefined;
   }
-  return {
-    isSampled: false,
-  };
+  return logRow.labels.__adaptive_logs_sampled__ === 'true'
+    ? 'Logs like this one have been dropped by Adaptive Logs'
+    : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
 };
 
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
 
-export function logRowsToReadableJson(logs: LogRowModel[]) {
+export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] = []) {
   return logs.map((log) => {
     const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
       const key = field.keys[0];
@@ -181,15 +197,48 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
       return acc;
     }, {});
 
+    let logFields = {
+      ...fields,
+      ...log.labels,
+    };
+
+    if (pickFields.length) {
+      logFields = Object.fromEntries(Object.entries(logFields).filter(([key]) => pickFields.includes(key)));
+    }
+
     return {
       line: log.entry,
       timestamp: log.timeEpochNs,
-      fields: {
-        ...fields,
-        ...log.labels,
-      },
+      date: dateTime(log.timeEpochMs).toISOString(),
+      fields: logFields,
     };
   });
+}
+
+/**
+ * Returns true when frames have rows but no time field — used to surface an actionable
+ * error instead of silently showing "No data".
+ */
+export function isMissingTimeField(series: DataFrame[] | undefined): boolean {
+  if (!series || series.length === 0) {
+    return false;
+  }
+  const hasRows = series.some((frame) => frame.length > 0);
+  if (!hasRows) {
+    return false;
+  }
+  return !series.some((frame) => frame.fields.some((field) => field.type === FieldType.time));
+}
+
+export function isMissingStringField(series: DataFrame[] | undefined): boolean {
+  if (!series || series.length === 0) {
+    return false;
+  }
+  const hasRows = series.some((frame) => frame.length > 0);
+  if (!hasRows) {
+    return false;
+  }
+  return !series.some((frame) => frame.fields.some((field) => field.type === FieldType.string));
 }
 
 export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
@@ -231,22 +280,28 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
 
   // collect and aggregate into aggregated object
   dataFrames.forEach((dataFrame) => {
-    const { level, valueField, timeField, length } = getLogLevelInfo(dataFrame);
+    const { level, valueField, timeField } = getLogLevelInfo(dataFrame, dataFrames);
+
+    if (!timeField || !valueField) {
+      return;
+    }
 
     configs[level] = {
       meta: dataFrame.meta,
-      valueFieldConfig: valueField.config,
-      timeFieldConfig: timeField.config,
+      valueFieldConfig: valueField?.config ?? {},
+      timeFieldConfig: timeField?.config ?? {},
     };
 
-    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+    for (let pointIndex = 0; pointIndex < dataFrame.length; pointIndex++) {
       const time: number = timeField.values[pointIndex];
       const value: number = valueField.values[pointIndex];
       aggregated[level] ??= {};
       aggregated[level][time] = (aggregated[level][time] || 0) + value;
 
       totals[time] = (totals[time] || 0) + value;
-      maximumValue = Math.max(totals[time], maximumValue);
+      if (totals[time] > maximumValue) {
+        maximumValue = totals[time];
+      }
     }
   });
 
@@ -311,21 +366,48 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
   }
 };
 
-export function getLogLevelInfo(dataFrame: DataFrame) {
+export async function handleOpenLogsContextClick(
+  event: MouseEvent<HTMLElement>,
+  row: LogRowModel,
+  getRowContextQuery: GetRowContextQueryFn | undefined,
+  onOpenContext: (row: LogRowModel) => void
+) {
+  // if ctrl or meta key is pressed, open query in new Explore tab
+  if (getRowContextQuery && (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)) {
+    const win = window.open('about:blank');
+    // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
+    const query = await getRowContextQuery(row, undefined, false);
+    if (query && win) {
+      const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
+        left: JSON.stringify({
+          datasource: query.datasource,
+          queries: [query],
+          range: getDefaultTimeRange(),
+        }),
+      });
+      win.location = url;
+
+      return;
+    }
+    win?.close();
+  }
+  onOpenContext(row);
+}
+
+export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
   const fieldCache = new FieldCache(dataFrame);
   const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
   const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
 
   if (!timeField) {
-    throw new Error('Missing time field');
+    console.error('Time field missing in data frame');
   }
   if (!valueField) {
-    throw new Error('Missing value field');
+    console.error('Value field missing in data frame');
   }
 
-  const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
-  const length = valueField.values.length;
-  return { level, valueField, timeField, length };
+  const level = valueField ? getFieldDisplayName(valueField, dataFrame, allDataFrames) : 'logs';
+  return { level, valueField, timeField };
 }
 
 export function targetIsElement(target: EventTarget | null): target is Element {
@@ -342,4 +424,193 @@ export function createLogRowsMap() {
     logRowsSet.add(id);
     return false;
   };
+}
+
+function getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame, index: number): null | string {
+  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
+  if (!typeField) {
+    return null;
+  }
+  return typeField[labelKey] ?? null;
+}
+
+/**
+ * @deprecated Implement DataSourceWithLogsLabelTypesSupport and use ds.getLabelDisplayTypeFromFrame
+ * to support label types.
+ *
+ * Look for a `labelTypes` field. If found, use it to resolve the type for the
+ * provided label.
+ *
+ * @param label
+ * @param row
+ * @param plural
+ */
+export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = false) {
+  const labelType = getLabelDisplayTypeFromFrame(label, row.dataFrame, row.rowIndex);
+  if (!labelType) {
+    return null;
+  }
+  return getDataSourceLabelType(labelType, row.datasourceType, plural);
+}
+
+/**
+ * @deprecated
+ * @param labelType
+ * @param datasourceType
+ * @param plural
+ */
+function getDataSourceLabelType(labelType: string, datasourceType: string | undefined, plural: boolean) {
+  switch (datasourceType) {
+    case 'loki':
+      switch (labelType) {
+        case 'I':
+          return t('logs.fields.type.loki.indexed-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Indexed labels',
+            defaultValue_other: 'Indexed labels',
+          });
+        case 'S':
+          return t('logs.fields.type.loki.structured-metadata', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Structured metadata',
+            defaultValue_other: 'Structured metadata',
+          });
+        case 'P':
+          return t('logs.fields.type.loki.parsedl-label', '', {
+            count: plural ? 2 : 1,
+            defaultValue_one: 'Parsed fields',
+            defaultValue_other: 'Parsed fields',
+          });
+        default:
+          return null;
+      }
+    default:
+      return null;
+  }
+}
+
+const POPOVER_STORAGE_KEY = 'logs.popover.disabled';
+export function disablePopoverMenu() {
+  store.set(POPOVER_STORAGE_KEY, 'true');
+}
+
+export function enablePopoverMenu() {
+  store.delete(POPOVER_STORAGE_KEY);
+}
+
+export function isPopoverMenuDisabled() {
+  return Boolean(store.get(POPOVER_STORAGE_KEY));
+}
+
+export enum DownloadFormat {
+  Text = 'text',
+  Json = 'json',
+  CSV = 'csv',
+}
+
+export const downloadLogs = async (
+  format: DownloadFormat,
+  logRows: LogRowModel[],
+  meta?: LogsMetaItem[],
+  fields: string[] = []
+) => {
+  switch (format) {
+    case DownloadFormat.Text:
+      const shouldInjectLogLineBodyField = fields.length > 0 && fields.includes(LOG_LINE_BODY_FIELD_NAME);
+      const rowsForDownload = shouldInjectLogLineBodyField
+        ? logRows.map((row) => ({
+            ...row,
+            labels: {
+              ...row.labels,
+              [LOG_LINE_BODY_FIELD_NAME]: row.entry,
+            },
+          }))
+        : logRows;
+      downloadLogsModelAsTxt({ meta, rows: rowsForDownload }, '', fields);
+      break;
+    case DownloadFormat.Json:
+      const jsonLogs = logRowsToReadableJson(logRows, fields);
+      const blob = new Blob([JSON.stringify(jsonLogs)], {
+        type: 'application/json;charset=utf-8',
+      });
+      const fileName = `Logs-${dateTimeFormat(new Date())}.json`;
+      saveAs(blob, fileName);
+      break;
+    case DownloadFormat.CSV: {
+      const dataFrameMap = new Map<string, DataFrame>();
+      logRows.forEach((row) => {
+        if (row.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
+          dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
+        }
+      });
+      for (const dataFrame of dataFrameMap.values()) {
+        const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
+        if (fields.length) {
+          const logsFrame = parseLogsFrame(dataFrame);
+          const bodyFieldName = logsFrame?.bodyField.name;
+          const csvFieldNames = fields.map((name) =>
+            name === LOG_LINE_BODY_FIELD_NAME && bodyFieldName ? bodyFieldName : name
+          );
+          transforms.push(addISODateTransformation, {
+            id: 'filterFieldsByName',
+            options: {
+              include: {
+                names: ['Date', ...csvFieldNames],
+              },
+            },
+          });
+        } else {
+          transforms.push(
+            {
+              id: 'organize',
+              options: {
+                excludeByName: {
+                  [DATAPLANE_LABELS_NAME]: true,
+                  [DATAPLANE_LABEL_TYPES_NAME]: true,
+                },
+              },
+            },
+            addISODateTransformation
+          );
+        }
+        const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
+        downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`, undefined, undefined, false, true);
+      }
+      break;
+    }
+  }
+};
+
+const addISODateTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) => {
+  return source.pipe(
+    map((data: DataFrame[]) => {
+      return data.map((frame: DataFrame) => {
+        const timeField = getTimeField(frame);
+        const field: Field = {
+          name: 'Date',
+          values: timeField.timeField ? timeField.timeField?.values.map((v) => dateTime(v).toISOString()) : [],
+          type: FieldType.other,
+          config: {},
+        };
+        return {
+          ...frame,
+          fields: [field, ...frame.fields],
+        };
+      });
+    })
+  );
+};
+
+/**
+ * Get the start and end timestamps from series.
+ */
+export function getLogsVisibleRange(logs: LogRowModel[]) {
+  let start = 0;
+  let end = 0;
+  if (logs.length > 1) {
+    const values = [logs[0].timeEpochMs, logs[logs.length - 1].timeEpochMs].sort();
+    start = values[0];
+    end = values[values.length - 1];
+  }
+  return { end, start };
 }

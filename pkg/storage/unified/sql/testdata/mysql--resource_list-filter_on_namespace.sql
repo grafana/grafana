@@ -1,7 +1,11 @@
 SELECT
+    `guid`,
     `resource_version`,
     `namespace`,
+    `group`,
+    `resource`,
     `name`,
+    `folder`,
     `value`
     FROM `resource`
     WHERE 1 = 1

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/influxdata/influxql"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -30,11 +31,13 @@ func readJsonFile(filePath string) io.ReadCloser {
 }
 
 func generateQuery(query, resFormat, alias string) *models.Query {
+	statement, _ := influxql.ParseStatement(query)
 	return &models.Query{
 		RawQuery:     query,
 		UseRawQuery:  true,
 		Alias:        alias,
 		ResultFormat: resFormat,
+		Statement:    statement,
 	}
 }
 
@@ -103,6 +106,13 @@ func TestParsingAsTimeSeriesWithoutTimeColumn(t *testing.T) {
 		query := generateQuery(`SHOW TAG VALUES CARDINALITY with key = "host"`, "time_series", "")
 
 		runQuery(t, f, "cardinality", "time_series", query)
+	})
+
+	t.Run("create frames for tag values and without time column even the query string has cardinality as string", func(t *testing.T) {
+		res := ResponseParse(readJsonFile("show_tag_values_response"), 200, generateQuery("SHOW TAG VALUES FROM custom_influxdb_cardinality WITH KEY = \"database\"", "time_series", ""))
+		require.NoError(t, res.Error)
+		require.Equal(t, "Value", res.Frames[0].Fields[0].Name)
+		require.Equal(t, "cpu-total", *res.Frames[0].Fields[0].At(0).(*string))
 	})
 }
 

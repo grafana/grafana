@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { type JSX, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 interface Props {
@@ -17,5 +17,5 @@ export function DeletedSubForm({ pathPrefix }: Props): JSX.Element {
     register(`${pathPrefix}.__deleted`);
   }, [register, pathPrefix]);
 
-  return <></>;
+  return <>{null}</>;
 }

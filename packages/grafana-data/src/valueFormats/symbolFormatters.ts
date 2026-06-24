@@ -1,6 +1,7 @@
-import { DecimalCount } from '../types/displayValue';
+import { type DecimalCount } from '../types/displayValue';
+import { type ValueFormatter } from '../types/valueFormats';
 
-import { scaledUnits, ValueFormatter } from './valueFormats';
+import { scaledUnits } from './baseFormatters';
 
 export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   const units = ['', ' тыс.', ' млн.', ' млрд.', ' трлн.'];
@@ -32,8 +33,53 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   };
 }
 
-const SI_PREFIXES = ['ф', 'п', 'н', 'мк', 'м', '', 'к', 'М', 'Г', 'Т', 'П', 'Э', 'З', 'И'];
-const SI_PREFIXES_SHORT = ['', 'к'];
+/**
+ * Formats currency values without scaling abbreviations(K: Thousands, M: Millions, B: Billions), displaying full numeric values.
+ * Uses cached Intl.NumberFormat objects for performance.
+ *
+ * @param symbol - Currency symbol (e.g., '$', '€', '£')
+ * @param asSuffix - If true, places symbol after number
+ *
+ * @example
+ * fullCurrency('$')(1234.56, 2) // { prefix: '$', text: '1,234.56' } - forces 2 decimals
+ * fullCurrency('€', true)(42.5) // { suffix: '€', text: '42.5' }
+ */
+export function fullCurrency(symbol: string, asSuffix?: boolean): ValueFormatter {
+  const locale = Intl.NumberFormat().resolvedOptions().locale;
+  const defaultFormatter = new Intl.NumberFormat(locale, { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+  const formattersCache = new Map<number, Intl.NumberFormat>();
+
+  return (value: number | null, decimals?: DecimalCount) => {
+    if (value === null) {
+      return { text: '' };
+    }
+
+    const numericValue: number = value;
+
+    let text: string;
+    if (decimals !== undefined && decimals !== null) {
+      let formatter = formattersCache.get(decimals);
+      if (!formatter) {
+        formatter = new Intl.NumberFormat(locale, {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        });
+        formattersCache.set(decimals, formatter);
+      }
+      text = formatter.format(numericValue);
+    } else {
+      text = defaultFormatter.format(numericValue);
+    }
+
+    return {
+      prefix: asSuffix ? '' : symbol,
+      suffix: asSuffix ? symbol : '',
+      text,
+    };
+  };
+}
+
+const SI_PREFIXES = ['f', 'p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
 const SI_BASE_INDEX = SI_PREFIXES.indexOf('');
 const SI_BASE_INDEX_SHORT = SI_PREFIXES_SHORT.indexOf('');
 

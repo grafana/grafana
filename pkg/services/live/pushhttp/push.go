@@ -48,7 +48,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 func (g *Gateway) Handle(ctx *contextmodel.ReqContext) {
 	streamID := web.Params(ctx.Req)[":streamId"]
 
-	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgID, liveDto.ScopeStream, streamID)
+	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.GetNamespace(), liveDto.ScopeStream, streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -59,6 +59,7 @@ func (g *Gateway) Handle(ctx *contextmodel.ReqContext) {
 	urlValues := ctx.Req.URL.Query()
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
 
+	ctx.Req.Body = http.MaxBytesReader(ctx.Resp, ctx.Req.Body, 500*1024) // 500k for each message
 	body, err := io.ReadAll(ctx.Req.Body)
 	if err != nil {
 		logger.Error("Error reading body", "error", err)
@@ -113,7 +114,7 @@ func (g *Gateway) HandlePipelinePush(ctx *contextmodel.ReqContext) {
 		"bodyLength", len(body),
 	)
 
-	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(ctx.Req.Context(), ctx.OrgID, channelID, body)
+	ruleFound, err := g.GrafanaLive.Pipeline.ProcessInput(ctx.Req.Context(), ctx.GetNamespace(), channelID, body)
 	if err != nil {
 		logger.Error("Pipeline input processing error", "error", err, "body", string(body))
 		if errors.Is(err, liveDto.ErrInvalidChannelID) {

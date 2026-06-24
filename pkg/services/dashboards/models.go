@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -26,13 +30,14 @@ const (
 
 // Dashboard model
 type Dashboard struct {
-	ID       int64  `xorm:"pk autoincr 'id'"`
-	UID      string `xorm:"uid"`
-	Slug     string
-	OrgID    int64 `xorm:"org_id"`
-	GnetID   int64 `xorm:"gnet_id"`
-	Version  int
-	PluginID string `xorm:"plugin_id"`
+	ID         int64  `xorm:"pk autoincr 'id'"`
+	UID        string `xorm:"uid"`
+	Slug       string
+	OrgID      int64 `xorm:"org_id"`
+	GnetID     int64 `xorm:"gnet_id"`
+	Version    int
+	PluginID   string `xorm:"plugin_id"`
+	APIVersion string `xorm:"api_version"`
 
 	Created time.Time
 	Updated time.Time
@@ -77,22 +82,17 @@ func NewDashboard(title string) *Dashboard {
 	return dash
 }
 
-// NewDashboardFolder creates a new dashboard folder
-func NewDashboardFolder(title string) *Dashboard {
-	folder := NewDashboard(title)
-	folder.IsFolder = true
-	folder.Data.Set("schemaVersion", 17)
-	folder.Data.Set("version", 0)
-	folder.IsFolder = true
-	return folder
-}
-
 // GetTags turns the tags in data json into go string array
 func (d *Dashboard) GetTags() []string {
 	return d.Data.Get("tags").MustStringArray()
 }
 
 func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
+	// if apiVersion is set in the json - use it as an indicator that it is in the k8s format
+	if apiVersion, err := data.Get("apiVersion").String(); err == nil && apiVersion != "" {
+		return parseK8sDashboard(data)
+	}
+
 	dash := &Dashboard{}
 	dash.Data = data
 	dash.Title = dash.Data.Get("title").MustString()
@@ -125,6 +125,66 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	return dash
 }
 
+// parses json in the k8s format
+// i.e:
+//
+//	{
+//	  "apiVersion": "dashboard.grafana.app/v1",
+//	  "kind": "Dashboard",
+//	  "metadata": {...},
+//	  "spec": {...}
+//	}
+func parseK8sDashboard(data *simplejson.Json) *Dashboard {
+	dash := &Dashboard{}
+
+	dataMap, ok := data.Interface().(map[string]interface{})
+	if !ok {
+		return dash
+	}
+
+	item := &unstructured.Unstructured{Object: dataMap}
+	obj, err := utils.MetaAccessor(item)
+	if err != nil {
+		return dash
+	}
+	dash.APIVersion = item.GetAPIVersion()
+	info, err := types.ParseNamespace(obj.GetNamespace())
+	if err == nil && info.OrgID > 0 {
+		dash.OrgID = info.OrgID
+	}
+	dash.UID = obj.GetName()
+
+	spec, ok := item.Object["spec"].(map[string]any)
+	if !ok {
+		return dash
+	}
+	dash.Data = simplejson.NewFromAny(spec)
+
+	dash.Title = obj.FindTitle("")
+	dash.UpdateSlug()
+
+	dash.FolderUID = obj.GetFolder()
+	dash.Data.Set("uid", dash.UID)
+
+	generation := obj.GetGeneration()
+	if generation > 0 {
+		dash.Data.Set("version", generation)
+		dash.Updated = time.Now()
+	} else {
+		dash.Data.Set("version", 0)
+		dash.Created = time.Now()
+		dash.Updated = time.Now()
+	}
+
+	dash.Data.Set("id", obj.GetDeprecatedInternalID()) // nolint:staticcheck
+
+	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
+		dash.GnetID = int64(gnetId)
+	}
+
+	return dash
+}
+
 // GetDashboardModel turns the command into the saveable model
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := NewDashboardFromJson(cmd.Dashboard)
@@ -138,6 +198,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	dash.APIVersion = cmd.APIVersion
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
@@ -202,6 +263,8 @@ type SaveDashboardCommand struct {
 	OrgID        int64            `json:"-" xorm:"org_id"`
 	RestoredFrom int              `json:"-"`
 	PluginID     string           `json:"-" xorm:"plugin_id"`
+	APIVersion   string           `json:"-" xorm:"api_version"`
+
 	// Deprecated: use FolderUID instead
 	FolderID  int64  `json:"folderId" xorm:"folder_id"`
 	FolderUID string `json:"folderUid" xorm:"folder_uid"`
@@ -221,6 +284,9 @@ type DashboardProvisioning struct {
 	ExternalID  string `xorm:"external_id"`
 	CheckSum    string
 	Updated     int64
+
+	// note: only used when writing metadata to unified storage resources - not saved in legacy table.
+	AllowUIUpdates bool `xorm:"-"`
 }
 
 type DeleteDashboardCommand struct {
@@ -228,10 +294,30 @@ type DeleteDashboardCommand struct {
 	UID                    string
 	OrgID                  int64
 	ForceDeleteFolderRules bool
+	RemovePermissions      bool
+}
+
+type ProvisioningConfig struct {
+	Name           string
+	OrgID          int64
+	Folder         string
+	AllowUIUpdates bool
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
-	ReaderNames []string
+	Config []ProvisioningConfig
+}
+
+type DashboardProvisioningSearchResults struct {
+	ID              int64  `xorm:"id"`
+	UID             string `xorm:"uid"`
+	Title           string `xorm:"title"`
+	FolderUID       string `xorm:"folder_uid"`
+	OrgID           int64  `xorm:"org_id"`
+	Provisioner     string `xorm:"name"`
+	ExternalID      string `xorm:"external_id"`
+	CheckSum        string `xorm:"check_sum"`
+	ProvisionUpdate int64  `xorm:"provisioning_updated"`
 }
 
 //
@@ -252,13 +338,16 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 //
 // Multiple constraints can be combined.
 type GetDashboardQuery struct {
-	ID    int64
-	UID   string
+	ID  int64
+	UID string
+	// Deprecated: this is no-longer a unique constraint and should not be used
 	Title *string
 	// Deprecated: use FolderUID instead
 	FolderID  *int64
 	FolderUID *string
 	OrgID     int64
+	// k8s version to try first when loading (e.g. v1beta1). empty uses the default. on error, falls back to default
+	K8sGetAPIVersion string
 }
 
 type DashboardTagCloudItem struct {
@@ -282,8 +371,11 @@ type GetDashboardsByPluginIDQuery struct {
 }
 
 type DashboardRef struct {
-	UID  string `xorm:"uid"`
-	Slug string
+	UID       string `xorm:"uid"`
+	Slug      string
+	FolderUID string `xorm:"folder_uid"`
+	// Deprecated: use UID instead
+	ID int64 `xorm:"id"`
 }
 
 type GetDashboardRefByIDQuery struct {
@@ -299,19 +391,49 @@ type SaveDashboardDTO struct {
 	Dashboard *Dashboard
 }
 
+func LooksLikeK8sResource(data map[string]any) bool {
+	if _, ok := data["apiVersion"]; ok {
+		return true
+	}
+	if _, ok := data["metadata"]; ok {
+		return true
+	}
+	if _, ok := data["spec"]; ok {
+		return true
+	}
+	return false
+}
+
+const LooksLikeV2SpecMessage = "dashboard appears to be in v2 format. Please use the /apis/dashboard.grafana.app/v2 API"
+
+func LooksLikeV2Spec(data map[string]any) bool {
+	if _, ok := data["elements"]; ok {
+		return true
+	}
+	if _, ok := data["layout"]; ok {
+		return true
+	}
+	return false
+}
+
 type DashboardSearchProjection struct {
-	ID       int64  `xorm:"id"`
-	UID      string `xorm:"uid"`
-	Title    string
-	Slug     string
-	Term     string
-	IsFolder bool
+	ID          int64  `xorm:"id"`
+	UID         string `xorm:"uid"`
+	OrgID       int64  `xorm:"org_id"`
+	Title       string
+	Slug        string
+	Term        string
+	Description string
+	IsFolder    bool
 	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	FolderUID   string `xorm:"folder_uid"`
 	FolderSlug  string
 	FolderTitle string
 	SortMeta    int64
+	Tags        []string
+	ManagedBy   utils.ManagerKind
+	ManagerId   string
 	Deleted     *time.Time
 }
 
@@ -319,19 +441,6 @@ const (
 	QuotaTargetSrv quota.TargetSrv = "dashboard"
 	QuotaTarget    quota.Target    = "dashboard"
 )
-
-type CountDashboardsInFolderQuery struct {
-	FolderUID string
-	OrgID     int64
-}
-
-// TODO: CountDashboardsInFolderRequest is the request passed from the service
-// to the store layer. The FolderID will be replaced with FolderUID when
-// dashboards are updated with parent folder UIDs.
-type CountDashboardsInFolderRequest struct {
-	FolderUIDs []string
-	OrgID      int64
-}
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
@@ -348,11 +457,6 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 		Updated:   dash.Updated,
 		UpdatedBy: dash.UpdatedBy,
 	}
-}
-
-type DeleteDashboardsInFolderRequest struct {
-	FolderUIDs []string
-	OrgID      int64
 }
 
 //
@@ -387,10 +491,12 @@ type DashboardACLInfoDTO struct {
 	Updated time.Time `json:"updated"`
 
 	UserID         int64                          `json:"userId" xorm:"user_id"`
+	UserUID        string                         `json:"userUid"`
 	UserLogin      string                         `json:"userLogin"`
 	UserEmail      string                         `json:"userEmail"`
 	UserAvatarURL  string                         `json:"userAvatarUrl" xorm:"user_avatar_url"`
 	TeamID         int64                          `json:"teamId" xorm:"team_id"`
+	TeamUID        string                         `json:"teamUid"`
 	TeamEmail      string                         `json:"teamEmail"`
 	TeamAvatarURL  string                         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
 	Team           string                         `json:"team"`
@@ -406,12 +512,13 @@ type DashboardACLInfoDTO struct {
 }
 
 type FindPersistedDashboardsQuery struct {
-	Title         string
-	OrgId         int64
-	SignedInUser  identity.Requester
-	DashboardIds  []int64
-	DashboardUIDs []string
-	Type          string
+	Title           string
+	TitleExactMatch bool
+	OrgId           int64
+	SignedInUser    identity.Requester
+	DashboardIds    []int64
+	DashboardUIDs   []string
+	Type            string
 	// Deprecated: use FolderUIDs instead
 	FolderIds  []int64
 	FolderUIDs []string
@@ -422,7 +529,10 @@ type FindPersistedDashboardsQuery struct {
 	Sort       model.SortOption
 	IsDeleted  bool
 
-	Filters []any
+	ManagedBy            utils.ManagerKind
+	ManagerIdentity      string
+	SourcePath           string
+	ManagerIdentityNotIn []string
 
 	// Skip access control checks. This field is used by OpenFGA search implementation.
 	// Should not be used anywhere else.

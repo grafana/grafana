@@ -1,6 +1,7 @@
+import { OrgRole } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { OrgRole, TeamPermissionLevel } from '../../../types';
-import { getMockTeam } from '../../teams/__mocks__/teamMocks';
+import { getMockTeam } from '../../teams/mocks/teamMocks';
 
 import {
   initialUserState,
@@ -13,7 +14,7 @@ import {
   userLoaded,
   userReducer,
   userSessionRevoked,
-  UserState,
+  type UserState,
 } from './reducers';
 
 describe('userReducer', () => {
@@ -62,6 +63,7 @@ describe('userReducer', () => {
           userLoaded({
             user: {
               id: 2021,
+              uid: 'aaaaaa',
               email: 'test@test.com',
               isDisabled: true,
               login: 'test',
@@ -74,6 +76,7 @@ describe('userReducer', () => {
           ...initialUserState,
           user: {
             id: 2021,
+            uid: 'aaaaaa',
             email: 'test@test.com',
             isDisabled: true,
             login: 'test',
@@ -90,13 +93,13 @@ describe('userReducer', () => {
         .givenReducer(userReducer, { ...initialUserState, teamsAreLoading: true })
         .whenActionIsDispatched(
           teamsLoaded({
-            teams: [getMockTeam(1, 'aaaaaa', { permission: TeamPermissionLevel.Admin })],
+            teams: [getMockTeam(1, 'aaaaaa')],
           })
         )
         .thenStateShouldEqual({
           ...initialUserState,
           teamsAreLoading: false,
-          teams: [getMockTeam(1, 'aaaaaa', { permission: TeamPermissionLevel.Admin })],
+          teams: [getMockTeam(1, 'aaaaaa')],
         });
     });
   });

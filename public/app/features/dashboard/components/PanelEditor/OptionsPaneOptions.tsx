@@ -2,26 +2,24 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { FilterInput, RadioButtonGroup, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
-import { AngularPanelOptions } from './AngularPanelOptions';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVisualizationOptions } from './getVisualizationOptions';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { getRecentOptions } from './state/getRecentOptions';
-import { OptionPaneRenderProps } from './types';
+import { type OptionPaneRenderProps } from './types';
 
 export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
-  const { plugin, dashboard, panel } = props;
+  const { plugin, panel } = props;
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
@@ -56,48 +54,39 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
 
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
-
-    // If searching for angular panel, then we need to add notice that results are limited
-    if (props.plugin.angularPanelCtrl) {
-      mainBoxElements.push(
-        <div className={styles.searchNotice} key="Search notice">
-          This is an old visualization type that does not support searching all options.
-        </div>
-      );
-    }
   } else {
     switch (listMode) {
       case OptionFilter.All:
         if (isPanelModelLibraryPanel(panel)) {
           // Library Panel options first
-          mainBoxElements.push(libraryPanelOptions.render());
+          mainBoxElements.push(libraryPanelOptions.renderElement());
         }
         // Panel frame options second
-        mainBoxElements.push(panelFrameOptions.render());
-        // If angular add those options next
-        if (props.plugin.angularPanelCtrl) {
-          mainBoxElements.push(
-            <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} key="AngularOptions" />
-          );
-        }
+        mainBoxElements.push(panelFrameOptions.renderElement());
+
         // Then add all panel and field defaults
         for (const item of vizOptions) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
 
         for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
+          mainBoxElements.push(item.renderElement());
         }
         break;
       case OptionFilter.Overrides:
         for (const override of justOverrides) {
-          mainBoxElements.push(override.render());
+          mainBoxElements.push(override.renderElement());
         }
         break;
       case OptionFilter.Recent:
         mainBoxElements.push(
-          <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={1}>
-            {getRecentOptions(allOptions).map((item) => item.render())}
+          <OptionsPaneCategory
+            id="Recent options"
+            title={t('dashboard.options-pane-options.Recent options-title-recent-options', 'Recent options')}
+            key="Recent options"
+            forceOpen={true}
+          >
+            {getRecentOptions(allOptions).map((item) => item.renderElement())}
           </OptionsPaneCategory>
         );
         break;
@@ -110,18 +99,13 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        {panel.isAngularPlugin() && !plugin.meta.angular?.hideDeprecation && (
-          <AngularDeprecationPluginNotice
-            className={styles.angularDeprecationWrapper}
-            showPluginDetailsLink={true}
-            pluginId={plugin.meta.id}
-            pluginType={plugin.meta.type}
-            angularSupportEnabled={config?.angularSupportEnabled}
-            interactionElementId="panel-options"
-          />
-        )}
         <div className={styles.formRow}>
-          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
+          <FilterInput
+            width={0}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={t('dashboard.options-pane-options.placeholder-search-options', 'Search options')}
+          />
         </div>
         {showSearchRadioButtons && (
           <div className={styles.formRow}>
@@ -129,11 +113,9 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
           </div>
         )}
       </div>
-      <div className={styles.scrollWrapper}>
-        <CustomScrollbar autoHeightMin="100%">
-          <div className={styles.mainBox}>{mainBoxElements}</div>
-        </CustomScrollbar>
-      </div>
+      <ScrollContainer>
+        <div className={styles.mainBox}>{mainBoxElements}</div>
+      </ScrollContainer>
     </div>
   );
 };
@@ -163,13 +145,18 @@ export function renderSearchHits(
     <div key="search results">
       <OptionsPaneCategory
         id="Found options"
-        title={`Matched ${optionHits.length}/${totalCount} options`}
+        title={t('dashboard.options-pane-options.title-matched', '', {
+          count: optionHits.length,
+          totalCount,
+          defaultValue_one: 'Matched {{count}}/{{totalCount}} options',
+          defaultValue_other: 'Matched {{count}}/{{totalCount}} options',
+        })}
         key="Normal options"
-        forceOpen={1}
+        forceOpen={true}
       >
-        {optionHits.map((hit) => hit.render(searchQuery))}
+        {optionHits.map((hit) => hit.renderElement(searchQuery))}
       </OptionsPaneCategory>
-      {overrideHits.map((override) => override.render(searchQuery))}
+      {overrideHits.map((override) => override.renderElement(searchQuery))}
     </div>
   );
 }
@@ -207,10 +194,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   searchHits: css({
     padding: theme.spacing(1, 1, 0, 1),
   }),
-  scrollWrapper: css({
-    flexGrow: 1,
-    minHeight: 0,
-  }),
   searchNotice: css({
     fontSize: theme.typography.size.sm,
     color: theme.colors.text.secondary,
@@ -222,8 +205,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.components.panel.borderColor}`,
     borderTop: 'none',
     flexGrow: 1,
-  }),
-  angularDeprecationWrapper: css({
-    padding: theme.spacing(1),
   }),
 });

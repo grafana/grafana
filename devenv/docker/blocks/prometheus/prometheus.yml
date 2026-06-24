@@ -19,12 +19,15 @@ alerting:
 
 scrape_configs:
   - job_name: 'prometheus'
+    basic_auth:
+      username: admin
+      password: admin
     static_configs:
       - targets: ['localhost:9090']
 
   - job_name: 'node_exporter'
     static_configs:
-      - targets: ['node_exporter:9100']
+      - targets: ['node_exporter:9101']
 
   - job_name: 'fake-data-gen'
     static_configs:
@@ -41,6 +44,10 @@ scrape_configs:
   - job_name: 'prometheus-high-card'
     static_configs:
       - targets: ['prometheus-high-card:9111']
+
+  - job_name: 'prometheus-utf8'
+    static_configs:
+      - targets: [ 'prometheus-utf8:9112' ]
 
   - job_name: 'mysql'
     static_configs:

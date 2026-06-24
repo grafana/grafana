@@ -140,7 +140,7 @@ func filterStoragesUnderContentRoot(storages []storageRuntime) []storageRuntime 
 }
 
 func (t *nestedTree) getStorages(orgId int64) []storageRuntime {
-	globalStorages := make([]storageRuntime, 0)
+	globalStorages := make([]storageRuntime, 0, len(t.rootsByOrgId[ac.GlobalOrgID]))
 	globalStorages = append(globalStorages, t.rootsByOrgId[ac.GlobalOrgID]...)
 
 	if orgId == ac.GlobalOrgID {
@@ -276,8 +276,8 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, m
 }
 
 func (t *nestedTree) createPathFilterForContentRoot(storages []storageRuntime) filestorage.PathFilter {
-	disallowedPrefixes := make([]string, 0)
-	disallowedPaths := make([]string, 0)
+	disallowedPrefixes := make([]string, 0, len(storages))
+	disallowedPaths := make([]string, 0, len(storages))
 
 	for _, s := range storages {
 		path := filestorage.Delimiter + s.Meta().Config.Prefix

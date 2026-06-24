@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { type JSX, useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useAlertmanagerAdminAbility } from '../../hooks/abilities/alertmanager/useAlertmanagerAdminAbility';
+import { AlertmanagerAdminAction } from '../../hooks/abilities/types';
 import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 
@@ -12,9 +13,7 @@ type ExportProps = [JSX.Element | null, (receiver: string | typeof ALL_CONTACT_P
 export const useExportContactPoint = (): ExportProps => {
   const [receiverName, setReceiverName] = useState<string | typeof ALL_CONTACT_POINTS | null>(null);
   const [isExportDrawerOpen, toggleShowExportDrawer] = useToggle(false);
-  const [decryptSecretsSupported, decryptSecretsAllowed] = useAlertmanagerAbility(AlertmanagerAction.DecryptSecrets);
-
-  const canReadSecrets = decryptSecretsSupported && decryptSecretsAllowed;
+  const { granted: canReadSecrets } = useAlertmanagerAdminAbility(AlertmanagerAdminAction.DecryptSecrets);
 
   const handleClose = useCallback(() => {
     setReceiverName(null);

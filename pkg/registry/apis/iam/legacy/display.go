@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -44,7 +44,7 @@ func (s *legacySQLStore) ListDisplay(ctx context.Context, ns claims.NamespaceInf
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -2,33 +2,38 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
-  AlertmanagerApiFeatures,
-  PromApiFeatures,
+  type AlertmanagerApiFeatures,
+  type PromApiFeatures,
   PromApplication,
-  PromBuildInfoResponse,
+  type PromBuildInfoResponse,
 } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
-import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
+  type SupportedExternalRulesSourceType,
+  getDataSourceByName,
+  getRulesDataSourceByUID,
+  isSupportedExternalRulesSourceType,
+} from '../utils/datasource';
 
 import { fetchRules } from './prometheus';
-import { fetchTestRulerRulesGroup } from './ruler';
+import { type RulerApiSubtype, fetchTestRulerRulesGroup } from './ruler';
 
-/**
- * Attempt to fetch buildinfo from our component
- */
-export async function discoverFeatures(dataSourceName: string): Promise<PromApiFeatures> {
-  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+export async function discoverFeaturesByUid(dataSourceUid: string): Promise<PromApiFeatures> {
+  if (dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
     return {
+      application: 'grafana',
       features: {
         rulerApiEnabled: true,
       },
-    };
+    } satisfies PromApiFeatures;
   }
 
-  const dsConfig = getDataSourceByName(dataSourceName);
+  const dsConfig = getRulesDataSourceByUID(dataSourceUid);
   if (!dsConfig) {
-    throw new Error(`Cannot find data source configuration for ${dataSourceName}`);
+    throw new Error(`Cannot find data source configuration for ${dataSourceUid}`);
   }
 
   const { url, name, type } = dsConfig;
@@ -36,8 +41,10 @@ export async function discoverFeatures(dataSourceName: string): Promise<PromApiF
     throw new Error(`The data source url cannot be empty.`);
   }
 
-  if (type !== 'prometheus' && type !== 'loki') {
-    throw new Error(`The build info request is not available for ${type}. Only 'prometheus' and 'loki' are supported`);
+  if (!isSupportedExternalRulesSourceType(type)) {
+    throw new Error(
+      `The build info request is not available for ${type}. Supported values are ${SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES.join()}.`
+    );
   }
 
   return discoverDataSourceFeatures({ name, url, type });
@@ -54,7 +61,7 @@ export async function discoverFeatures(dataSourceName: string): Promise<PromApiF
 export async function discoverDataSourceFeatures(dsSettings: {
   url: string;
   name: string;
-  type: 'prometheus' | 'loki';
+  type: SupportedExternalRulesSourceType;
 }): Promise<PromApiFeatures> {
   const { url, name, type } = dsSettings;
 
@@ -78,7 +85,8 @@ export async function discoverDataSourceFeatures(dsSettings: {
     const rulerSupported = await hasRulerSupport(name);
 
     return {
-      application: PromApplication.Cortex,
+      // if we were not trying to discover ruler support for a "loki" type data source then assume it's Cortex.
+      application: type === 'loki' ? 'Loki' : PromApplication.Cortex,
       features: {
         rulerApiEnabled: rulerSupported,
       },
@@ -97,10 +105,13 @@ export async function discoverDataSourceFeatures(dsSettings: {
   }
 
   // if we have both features and buildinfo reported we're talking to Mimir
+  const rulerConfigApiEnabled = features?.ruler_config_api === 'true';
+  const rulerSupported = rulerConfigApiEnabled ? await hasRulerSupport(name, 'mimir') : false;
+
   return {
     application: PromApplication.Mimir,
     features: {
-      rulerApiEnabled: features?.ruler_config_api === 'true',
+      rulerApiEnabled: rulerSupported,
     },
   };
 }
@@ -178,22 +189,37 @@ async function hasPromRulesSupport(dataSourceName: string) {
  * Attempt to check if the ruler API is enabled for Cortex, Prometheus does not support it and Mimir
  * reports this via the buildInfo "features"
  */
-async function hasRulerSupport(dataSourceName: string) {
+async function hasRulerSupport(dataSourceName: string, subtype?: RulerApiSubtype) {
   try {
-    await fetchTestRulerRulesGroup(dataSourceName);
+    await fetchTestRulerRulesGroup(dataSourceName, subtype);
     return true;
   } catch (e) {
-    if (errorIndicatesMissingRulerSupport(e)) {
+    if (errorIndicatesMissingRulerSupport(e, subtype)) {
       return false;
     }
     throw e;
   }
 }
-// there errors indicate that the ruler API might be disabled or not supported for Cortex
-function errorIndicatesMissingRulerSupport(error: unknown) {
-  return isFetchError(error)
-    ? error.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
-        error.data.message?.includes('page not found') || // ruler api disabled
-        error.data.message?.includes(RULER_NOT_SUPPORTED_MSG) // ruler api not supported
-    : error instanceof Error && error.message?.includes('404 from rules config endpoint'); // ruler api disabled
+
+function getRulerSupportErrorMessage(error: unknown): string {
+  if (isFetchError(error)) {
+    return error.data.message ?? '';
+  }
+
+  return error instanceof Error ? error.message : '';
+}
+
+// these errors indicate that the ruler API might be disabled or not supported
+function errorIndicatesMissingRulerSupport(error: unknown, subtype?: RulerApiSubtype) {
+  const message = getRulerSupportErrorMessage(error);
+  const mimirConfigApiProbeFailed = subtype === 'mimir' && isFetchError(error) && error.status === 400;
+
+  return (
+    mimirConfigApiProbeFailed ||
+    message.includes('GetRuleGroup unsupported in rule local store') ||
+    (message.includes('failed to load rule group') && message.includes('no such file or directory')) ||
+    message.includes('page not found') ||
+    message.includes(RULER_NOT_SUPPORTED_MSG) ||
+    message.includes('404 from rules config endpoint')
+  );
 }

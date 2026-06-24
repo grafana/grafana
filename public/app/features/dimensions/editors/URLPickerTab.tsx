@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import { Dispatch, SetStateAction } from 'react';
+import { type Dispatch, type SetStateAction } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, Input, Label, useStyles2 } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
@@ -31,7 +32,7 @@ export const URLPickerTab = (props: Props) => {
         <Input onChange={(e) => setNewValue(e.currentTarget.value)} value={newValue} />
       </Field>
       <div className={styles.iconContainer}>
-        <Field label="Preview">
+        <Field label={t('dimensions.urlpicker-tab.label-preview', 'Preview')}>
           <div className={styles.iconPreview}>
             {mediaType === MediaType.Icon && <SanitizedSVG src={imgSrc} className={styles.img} />}
             {mediaType === MediaType.Image && newValue && (

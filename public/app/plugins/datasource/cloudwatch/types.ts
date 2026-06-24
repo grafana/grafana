@@ -1,15 +1,14 @@
-import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
-import { DataFrame, DataSourceRef } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type AwsAuthDataSourceJsonData, type AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
+import { type DataSourceRef } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
-import * as raw from './dataquery.gen';
-
-export * from './dataquery.gen';
+import type * as raw from './dataquery.gen';
 
 export type CloudWatchQuery =
   | raw.CloudWatchMetricsQuery
   | raw.CloudWatchLogsQuery
   | raw.CloudWatchAnnotationQuery
+  | raw.CloudWatchLogsAnomaliesQuery
   | CloudWatchDefaultQuery;
 
 // We want to allow setting defaults for both Logs and Metrics queries
@@ -18,8 +17,6 @@ export type CloudWatchDefaultQuery = Omit<raw.CloudWatchLogsQuery, 'queryMode'> 
 export interface MultiFilters {
   [key: string]: string[];
 }
-
-export type Direction = 'ASC' | 'DESC';
 
 export type LogAction = 'GetQueryResults' | 'GetLogEvents' | 'StartQuery' | 'StopQuery';
 
@@ -88,42 +85,6 @@ export interface GetLogEventsRequest extends DataQuery {
   region: string;
 }
 
-export interface TSDBResponse<T = any> {
-  results: Record<string, TSDBQueryResult<T>>;
-  message?: string;
-}
-
-export interface TSDBQueryResult<T = any> {
-  refId: string;
-  series: TSDBTimeSeries[];
-  tables: Array<TSDBTable<T>>;
-  frames: DataFrame[];
-
-  error?: string;
-  meta?: any;
-}
-
-export interface TSDBTable<T = any> {
-  columns: Array<{ text: string }>;
-  rows: T[];
-}
-
-export interface DataQueryError<CloudWatchMetricsQuery> {
-  data?: {
-    message?: string;
-    error?: string;
-    results: Record<string, TSDBQueryResult<CloudWatchMetricsQuery>>;
-  };
-  message?: string;
-}
-
-export interface TSDBTimeSeries {
-  name: string;
-  points: TSDBTimePoint[];
-  tags?: Record<string, string>;
-}
-export type TSDBTimePoint = [number, number];
-
 export interface LogGroupField {
   /**
    * The name of a log field.
@@ -155,6 +116,26 @@ export interface StartQueryRequest extends DataQuery {
   limit?: number;
   refId: string;
   region: string;
+  /**
+   * Query language for the logs query (CWLI, SQL, PPL)
+   */
+  queryLanguage?: raw.LogsQueryLanguage;
+  /**
+   * Log group selection scope - determines how log groups are selected for the query
+   */
+  logsQueryScope?: raw.LogsQueryScope;
+  /**
+   * Log group name prefixes for namePrefix scope mode (max 5)
+   */
+  logGroupPrefixes?: string[];
+  /**
+   * Log group class filter for namePrefix and allLogGroups scope modes
+   */
+  logGroupClass?: raw.LogGroupClass;
+  /**
+   * Selected account IDs for cross-account queries (max 20)
+   */
+  selectedAccountIds?: string[];
 }
 
 export interface QueryParam extends DataQuery {
@@ -172,7 +153,7 @@ export interface MetricRequest {
   debug?: boolean;
 }
 
-export interface MetricQuery {
+interface MetricQuery {
   [key: string]: any;
   datasource?: DataSourceRef;
   refId?: string;

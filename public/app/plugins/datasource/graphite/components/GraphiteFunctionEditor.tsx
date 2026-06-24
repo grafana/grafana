@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { Fragment, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, InlineLabel, useStyles2 } from '@grafana/ui';
 
-import { FuncInstance } from '../gfunc';
+import { type FuncInstance } from '../gfunc';
 import { actions } from '../state/actions';
 import { useDispatch } from '../state/context';
 
 import { FunctionEditor } from './FunctionEditor';
-import { EditableParam, FunctionParamEditor } from './FunctionParamEditor';
+import { type EditableParam, FunctionParamEditor } from './FunctionParamEditor';
 import { mapFuncInstanceToParams } from './helpers';
 
 export type FunctionEditorProps = {
@@ -41,6 +41,8 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
       onFocus={() => setIsMouseOver(true)}
       onMouseOver={() => setIsMouseOver(true)}
       onMouseOut={() => setIsMouseOver(false)}
+      // We set this to ensure if any long text wraps the container expands with it
+      style={{ height: '100%' }}
     >
       <Stack gap={0} alignItems={'baseline'}>
         <FunctionEditor

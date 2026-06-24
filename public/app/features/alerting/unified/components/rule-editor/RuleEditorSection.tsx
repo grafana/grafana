@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
 
 export interface RuleEditorSectionProps {
@@ -25,8 +27,10 @@ export const RuleEditorSection = ({
   switchMode,
 }: React.PropsWithChildren<RuleEditorSectionProps>) => {
   const styles = useStyles2(getStyles);
+
+  const AlertRuleSelectors = selectors.components.AlertRules;
   return (
-    <div className={styles.parent}>
+    <div className={styles.parent} data-testid={AlertRuleSelectors.step(stepNo.toString())}>
       <FieldSet
         className={cx(fullWidth && styles.fullWidth)}
         label={
@@ -37,16 +41,12 @@ export const RuleEditorSection = ({
             {switchMode && (
               <Text variant="bodySmall">
                 <InlineSwitch
-                  data-testid={
-                    switchMode.isAdvancedMode
-                      ? 'query-and-expressions-advanced-options'
-                      : 'query-and-expressions-simple-options'
-                  }
+                  data-testid={AlertRuleSelectors.stepAdvancedModeSwitch(stepNo.toString())}
                   value={switchMode.isAdvancedMode}
                   onChange={(event) => {
                     switchMode.setAdvancedMode(event.currentTarget.checked);
                   }}
-                  label="Advanced options"
+                  label={t('alerting.rule-editor-section.label-advanced-options', 'Advanced options')}
                   showLabel
                   transparent
                   className={styles.reverse}
@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     padding: `${theme.spacing(2)} ${theme.spacing(3)}`,
   }),
   description: css({

@@ -1,6 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
 
-export const GENERATE_AI_INTERACTION_EVENT_NAME = 'dashboards_autogenerate_clicked';
+const GENERATE_AI_INTERACTION_EVENT_NAME = 'dashboards_autogenerate_clicked';
 
 // Source of the interaction
 export enum EventTrackingSrc {
@@ -9,6 +9,7 @@ export enum EventTrackingSrc {
   dashboardChanges = 'dashboard-changes',
   dashboardTitle = 'dashboard-title',
   dashboardDescription = 'dashboard-description',
+  sqlExpressions = 'sql-expressions',
   unknown = 'unknown',
 }
 

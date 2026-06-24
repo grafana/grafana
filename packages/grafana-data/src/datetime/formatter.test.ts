@@ -81,7 +81,7 @@ describe('dateTimeFormat', () => {
     });
   });
 
-  describe('DateTimeFormatISO', () => {
+  describe('with custom ISO format', () => {
     it('should format according to ISO standard', () => {
       const options = { timeZone: 'Europe/Stockholm', format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' };
       expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17T14:36:15.779+02:00');
@@ -95,39 +95,41 @@ describe('dateTimeFormat', () => {
       expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17T14:36:15.779+02:00');
     });
   });
+});
 
-  describe('dateTimeFormatTimeAgo', () => {
-    it('should return the correct format for years ago', () => {
-      const options = { timeZone: 'Europe/Stockholm' };
-      expect(dateTimeFormatTimeAgo(1587126975779, options)).toContain('years ago');
-    });
+describe('dateTimeFormatTimeAgo', () => {
+  it('should return the correct format for years ago', () => {
+    const options = { timeZone: 'Europe/Stockholm' };
+    expect(dateTimeFormatTimeAgo(1587126975779, options)).toContain('years ago');
   });
-  describe('dateTimeFormatWithAbbreviation', () => {
-    it('should return the correct format with zone abbreviation', () => {
-      const options = { timeZone: 'Europe/Stockholm' };
-      expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 14:36:15 CEST');
-    });
-    it('should return the correct format with zone abbreviation', () => {
-      const options = { timeZone: 'America/New_York' };
-      expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 08:36:15 EDT');
-    });
-    it('should return the correct format with zone abbreviation', () => {
-      const options = { timeZone: 'Europe/Bucharest' };
-      expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 15:36:15 EEST');
-    });
+});
+
+describe('dateTimeFormatWithAbbreviation', () => {
+  it('should return the correct format with zone abbreviation', () => {
+    const options = { timeZone: 'Europe/Stockholm' };
+    expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 14:36:15 CEST');
   });
-  describe('timeZoneAbbrevation', () => {
-    it('should return the correct abbreviation', () => {
-      const options = { timeZone: 'Europe/Stockholm' };
-      expect(timeZoneAbbrevation(1587126975779, options)).toBe('CEST');
-    });
-    it('should return the correct abbreviation', () => {
-      const options = { timeZone: 'America/New_York' };
-      expect(timeZoneAbbrevation(1587126975779, options)).toBe('EDT');
-    });
-    it('should return the correct abbreviation', () => {
-      const options = { timeZone: 'Europe/Bucharest' };
-      expect(timeZoneAbbrevation(1587126975779, options)).toBe('EEST');
-    });
+  it('should return the correct format with zone abbreviation', () => {
+    const options = { timeZone: 'America/New_York' };
+    expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 08:36:15 EDT');
+  });
+  it('should return the correct format with zone abbreviation', () => {
+    const options = { timeZone: 'Europe/Bucharest' };
+    expect(dateTimeFormatWithAbbrevation(1587126975779, options)).toBe('2020-04-17 15:36:15 EEST');
+  });
+});
+
+describe('timeZoneAbbrevation', () => {
+  it('should return the correct abbreviation', () => {
+    const options = { timeZone: 'Europe/Stockholm' };
+    expect(timeZoneAbbrevation(1587126975779, options)).toBe('CEST');
+  });
+  it('should return the correct abbreviation', () => {
+    const options = { timeZone: 'America/New_York' };
+    expect(timeZoneAbbrevation(1587126975779, options)).toBe('EDT');
+  });
+  it('should return the correct abbreviation', () => {
+    const options = { timeZone: 'Europe/Bucharest' };
+    expect(timeZoneAbbrevation(1587126975779, options)).toBe('EEST');
   });
 });

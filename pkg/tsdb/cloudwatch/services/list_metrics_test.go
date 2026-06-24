@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,20 +19,20 @@ const useLinkedAccountsId = "all"
 
 var metricResponse = []resources.MetricResponse{
 	{
-		Metric: &cloudwatch.Metric{
+		Metric: cloudwatchtypes.Metric{
 			MetricName: aws.String("CPUUtilization"),
 			Namespace:  aws.String("AWS/EC2"),
-			Dimensions: []*cloudwatch.Dimension{
+			Dimensions: []cloudwatchtypes.Dimension{
 				{Name: aws.String("InstanceId"), Value: aws.String("i-1234567890abcdef0")},
 				{Name: aws.String("InstanceType"), Value: aws.String("t2.micro")},
 			},
 		},
 	},
 	{
-		Metric: &cloudwatch.Metric{
+		Metric: cloudwatchtypes.Metric{
 			MetricName: aws.String("CPUUtilization"),
 			Namespace:  aws.String("AWS/EC2"),
-			Dimensions: []*cloudwatch.Dimension{
+			Dimensions: []cloudwatchtypes.Dimension{
 				{Name: aws.String("InstanceId"), Value: aws.String("i-5234567890abcdef0")},
 				{Name: aws.String("InstanceType"), Value: aws.String("t2.micro")},
 				{Name: aws.String("AutoScalingGroupName"), Value: aws.String("my-asg")},
@@ -39,10 +40,10 @@ var metricResponse = []resources.MetricResponse{
 		},
 	},
 	{
-		Metric: &cloudwatch.Metric{
+		Metric: cloudwatchtypes.Metric{
 			MetricName: aws.String("CPUUtilization"),
 			Namespace:  aws.String("AWS/EC2"),
-			Dimensions: []*cloudwatch.Dimension{
+			Dimensions: []cloudwatchtypes.Dimension{
 				{Name: aws.String("InstanceId"), Value: aws.String("i-64234567890abcdef0")},
 				{Name: aws.String("InstanceType"), Value: aws.String("t3.micro")},
 				{Name: aws.String("AutoScalingGroupName"), Value: aws.String("my-asg2")},
@@ -78,7 +79,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
 			input: resources.DimensionKeysRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer(useLinkedAccountsId)},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: new(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -86,14 +87,14 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
 				Namespace:             aws.String("AWS/EC2"),
-				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
+				Dimensions:            []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}},
 				IncludeLinkedAccounts: aws.Bool(true),
 			},
 		},
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
 			input: resources.DimensionKeysRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer("1234567890")},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: new("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -101,7 +102,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
 				Namespace:             aws.String("AWS/EC2"),
-				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
+				Dimensions:            []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}},
 				IncludeLinkedAccounts: aws.Bool(true),
 				OwningAccount:         aws.String("1234567890"),
 			},
@@ -114,7 +115,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 				MetricName:      "",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
-			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{Dimensions: []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}}},
+			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{Dimensions: []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}}},
 		},
 	}
 
@@ -155,7 +156,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		{
 			name: "Should set account correctly on list metric input if it cross account is defined on the request",
 			input: resources.DimensionValuesRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer(useLinkedAccountsId)},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: new(useLinkedAccountsId)},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -163,14 +164,14 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
 				Namespace:             aws.String("AWS/EC2"),
-				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
+				Dimensions:            []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}},
 				IncludeLinkedAccounts: aws.Bool(true),
 			},
 		},
 		{
 			name: "Should set account correctly on list metric input if single account is defined on the request",
 			input: resources.DimensionValuesRequest{
-				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: utils.Pointer("1234567890")},
+				ResourceRequest: &resources.ResourceRequest{Region: "us-east-1", AccountId: new("1234567890")},
 				Namespace:       "AWS/EC2",
 				MetricName:      "CPUUtilization",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
@@ -178,7 +179,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
 				MetricName:            aws.String("CPUUtilization"),
 				Namespace:             aws.String("AWS/EC2"),
-				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
+				Dimensions:            []cloudwatchtypes.DimensionFilter{{Name: aws.String("InstanceId")}},
 				IncludeLinkedAccounts: aws.Bool(true),
 				OwningAccount:         aws.String("1234567890"),
 			},

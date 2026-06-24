@@ -3,11 +3,17 @@ package plugins
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+)
+
+var (
+	ErrPluginProvisioningNotFound    = errors.New("plugin not found")
+	ErrPluginProvisioningAutoEnabled = errors.New("plugin is auto enabled and cannot be disabled")
 )
 
 // Provision scans a directory for provisioning config files
@@ -19,6 +25,7 @@ func Provision(ctx context.Context, configDirectory string, pluginStore pluginst
 		cfgProvider:    newConfigReader(logger, pluginStore),
 		pluginSettings: pluginSettings,
 		orgService:     orgService,
+		pluginStore:    pluginStore,
 	}
 	return ap.applyChanges(ctx, configDirectory)
 }
@@ -30,6 +37,7 @@ type PluginProvisioner struct {
 	cfgProvider    configReader
 	pluginSettings pluginsettings.Service
 	orgService     org.Service
+	pluginStore    pluginstore.Store
 }
 
 func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) error {
@@ -45,13 +53,21 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			app.OrgID = 1
 		}
 
+		p, found := ap.pluginStore.Plugin(ctx, app.PluginID)
+		if !found {
+			return fmt.Errorf("%w: %s", ErrPluginProvisioningNotFound, app.PluginID)
+		}
+		if p.AutoEnabled && !app.Enabled {
+			return fmt.Errorf("%w: %s", ErrPluginProvisioningAutoEnabled, app.PluginID)
+		}
+
 		ps, err := ap.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
 			OrgID:    app.OrgID,
 			PluginID: app.PluginID,
 		})
 		if err != nil {
 			if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-				return err
+				return fmt.Errorf("%w: %s", err, app.PluginID)
 			}
 		} else {
 			app.PluginVersion = ps.PluginVersion
@@ -67,7 +83,7 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			SecureJSONData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
 		}); err != nil {
-			return err
+			return fmt.Errorf("%w: %s", err, app.PluginID)
 		}
 	}
 

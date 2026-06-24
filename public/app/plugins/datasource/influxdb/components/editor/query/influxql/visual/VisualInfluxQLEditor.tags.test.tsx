@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import InfluxDatasource from '../../../../../datasource';
+import type InfluxDatasource from '../../../../../datasource';
 import * as mockedMeta from '../../../../../influxql_metadata_query';
-import { DEFAULT_POLICY, InfluxQuery } from '../../../../../types';
+import { DEFAULT_POLICY, type InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
@@ -38,13 +38,12 @@ jest.mock('../../../../../influxql_metadata_query', () => {
   };
 });
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    getTemplateSrv: jest.fn().mockReturnValueOnce({
-      getVariables: jest.fn().mockReturnValueOnce([]),
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: jest.fn().mockReturnValueOnce({
+    getVariables: jest.fn().mockReturnValueOnce([]),
+  }),
+}));
 
 beforeEach(() => {
   (mockedMeta.getTagKeys as jest.Mock).mockClear();

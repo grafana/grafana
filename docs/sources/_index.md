@@ -4,7 +4,9 @@ aliases:
   - /docs/grafana/v3.1/
   - guides/reference/admin/
 cascade:
+  LOKI_VERSION: latest
   TEMPO_VERSION: latest
+  ONCALL_VERSION: latest
   PYROSCOPE_VERSION: latest
 description: Find answers to your technical questions and learn how to use Grafana OSS and Enterprise products.
 keywords:
@@ -44,15 +46,15 @@ cards:
       description: Manage data sources and how to configure or query the built-in data sources.
       height: 24
     - title: Dashboards
-      href: ./dashboards/
-      description: Query, transform, visualize, and understand your data no matter where it’s stored.
+      href: ./visualizations/dashboards/
+      description: Query, transform, visualize, and understand your data no matter where it's stored.
       height: 24
     - title: Panels and Visualizations
-      href: ./panels-visualizations/
+      href: ./visualizations/panels-visualizations/
       description: Easily collect, correlate, and visualize data to make informed decisions in real-time.
       height: 24
     - title: Explore
-      href: ./explore/
+      href: ./visualizations/explore/
       description: Explore your data using a query instead of creating a dashboard.
       height: 24
     - title: Alerting
@@ -83,6 +85,10 @@ _Grafana Open Source Software (OSS)_ enables you to query, visualize, alert on, 
 
 _Grafana Enterprise_ is a commercial edition of Grafana that includes exclusive data source plugins and additional features not found in the open source version. You also get 24x7x365 support and training from the core Grafana team.
 To learn more about these features, refer to [Enterprise features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/#enterprise-features-in-grafana-cloud).
+
+## Guidance and help
+
+{{< guide name="whichgrafana" title="Which Grafana is right for you?" text="Answer a few questions and Grot will help you decide." >}}
 
 ## Learn
 

@@ -6,19 +6,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"math"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -80,6 +81,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeFlakyQuery,
+		Name:    "Flaky Query",
+		handler: s.handleFlakyQueryScenario,
+	})
+
+	s.registerScenario(&Scenario{
 		ID:      kinds.TestDataQueryTypeNoDataPoints,
 		Name:    "No Data Points",
 		handler: s.handleClientSideScenario,
@@ -107,6 +114,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:      kinds.TestDataQueryTypeLive,
 		Name:    "Grafana Live",
+		handler: s.handleClientSideScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeSteps,
+		Name:    "Steps",
 		handler: s.handleClientSideScenario,
 	})
 
@@ -150,6 +163,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      kinds.TestDataQueryTypeRandomWalkWithError,
 		Name:    "Random Walk (with error)",
 		handler: s.handleRandomWalkWithErrorScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeQueryMeta,
+		Name:    "Query Metadata",
+		handler: s.handleQueryMetaScenario,
 	})
 
 	s.registerScenario(&Scenario{
@@ -384,6 +403,31 @@ func (s *Service) handleCSVMetricValuesScenario(ctx context.Context, req *backen
 	return resp, nil
 }
 
+func (s *Service) handleQueryMetaScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	if len(req.Queries) == 0 {
+		return nil, errors.New("no queries")
+	}
+
+	refId := req.Queries[0].RefID
+
+	username := req.PluginContext.User.Name
+
+	keys := []string{"username"}
+	values := []string{username}
+
+	frame := data.NewFrame("",
+		data.NewField("keys", nil, keys),
+		data.NewField("values", nil, values),
+	)
+	r := backend.DataResponse{}
+	r.Frames = data.Frames{frame}
+
+	resp.Responses[refId] = r
+	return resp, nil
+}
+
 func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -421,6 +465,66 @@ func (s *Service) handleRandomWalkSlowScenario(ctx context.Context, req *backend
 	}
 
 	return resp, nil
+}
+
+func (s *Service) handleFlakyQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	shouldError := false
+	if len(req.Queries) > 0 {
+		if model, err := GetJSONModel(req.Queries[0].JSON); err == nil && model.ErrorProbability > 0 {
+			if rand.Float64()*100 < model.ErrorProbability {
+				shouldError = true
+			}
+		}
+	}
+
+	for _, q := range req.Queries {
+		model, err := GetJSONModel(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		baseDelay, _ := time.ParseDuration(model.QueryDelay)
+		time.Sleep(flakyQueryDelay(baseDelay, model.QueryDelayVariability))
+
+		if shouldError {
+			status := backend.Status(model.ErrorStatusCode)
+			if status == 0 {
+				status = backend.StatusBadRequest
+			}
+			src := backend.ErrorSourcePlugin
+			if model.ErrorSource == kinds.ErrorSourceDownstream {
+				src = backend.ErrorSourceDownstream
+			}
+			resp.Responses[q.RefID] = backend.ErrDataResponseWithSource(status, src, model.ErrorMessage)
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+// flakyQueryDelay applies a symmetric jitter to base, where variability is a
+// percentage (0-100). A variability of 100 yields a uniform delay in [0, 2*base].
+// The result is clamped to a non-negative duration.
+func flakyQueryDelay(base time.Duration, variability float64) time.Duration {
+	if base <= 0 {
+		return 0
+	}
+
+	v := variability / 100
+	factor := 1 + (rand.Float64()*2-1)*v
+	delay := time.Duration(float64(base) * factor)
+	if delay < 0 {
+		return 0
+	}
+
+	return delay
 }
 
 func (s *Service) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -598,10 +702,14 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 		}
 
 		lines := model.Lines
+		if lines > 10000 {
+			lines = 10000
+		}
 		includeLevelColumn := model.LevelColumn
 
 		logLevelGenerator := newRandomStringProvider([]string{
 			"emerg",
+			"emergency",
 			"alert",
 			"crit",
 			"critical",
@@ -627,17 +735,14 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 		})
 
 		frame := data.NewFrame(q.RefID,
+			data.NewField("labels", data.Labels{}, []json.RawMessage{}),
 			data.NewField("time", nil, []time.Time{}),
 			data.NewField("message", nil, []string{}),
-			data.NewField("container_id", nil, []string{}),
-			data.NewField("hostname", nil, []string{}),
+			data.NewField("nanos", nil, []string{}),
+			data.NewField("labelTypes", nil, []json.RawMessage{}),
 		).SetMeta(&data.FrameMeta{
 			PreferredVisualization: "logs",
 		})
-
-		if includeLevelColumn {
-			frame.Fields = append(frame.Fields, data.NewField("level", nil, []string{}))
-		}
 
 		for i := int64(0); i < lines && to > from; i++ {
 			logLevel := logLevelGenerator.Next()
@@ -648,26 +753,147 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 			}
 
 			message := fmt.Sprintf("t=%s %smsg=\"Request Completed\" logger=context userId=1 orgId=1 uname=admin method=GET path=/api/datasources/proxy/152/api/prom/label status=502 remote_addr=[::1] time_ms=1 size=0 referer=\"http://localhost:3000/explore?left=%%5B%%22now-6h%%22,%%22now%%22,%%22Prometheus%%202.x%%22,%%7B%%7D,%%7B%%22ui%%22:%%5Btrue,true,true,%%22none%%22%%5D%%7D%%5D\"", timeFormatted, lvlString)
+			nanos := strconv.FormatInt(q.TimeRange.To.UnixNano(), 10)
 			containerID := containerIDGenerator.Next()
 			hostname := hostnameGenerator.Next()
 
 			t := time.Unix(to/int64(1e+3), (to%int64(1e+3))*int64(1e+6))
 
 			if includeLevelColumn {
-				frame.AppendRow(t, message, containerID, hostname, logLevel)
+				frame.AppendRow(
+					json.RawMessage(fmt.Sprintf(`{"container_id":"%s","hostname":"%s","level":"%s"}`, containerID, hostname, logLevel)),
+					t,
+					message,
+					nanos,
+					json.RawMessage(`{"container_id":"Indexed label","hostname":"Parsed field","level":"Metadata"}`),
+				)
 			} else {
-				frame.AppendRow(t, message, containerID, hostname)
+				frame.AppendRow(
+					json.RawMessage(fmt.Sprintf(`{"container_id":"%s","hostname":"%s"}`, containerID, hostname)),
+					t,
+					message,
+					nanos,
+					json.RawMessage(`{"container_id":"Indexed label","hostname":"Parsed field"}`),
+				)
 			}
 
 			to -= q.Interval.Milliseconds()
 		}
 
 		respD := resp.Responses[q.RefID]
+		dataPlaneErr := adjustDataplaneLogsFrame(frame, &q)
+		if dataPlaneErr != nil {
+			return nil, dataPlaneErr
+		}
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
 
 	return resp, nil
+}
+
+// Adapted from /pkg/tsdb/loki/frame.go
+func adjustDataplaneLogsFrame(frame *data.Frame, query *backend.DataQuery) error {
+	// we check if the fields are of correct type and length
+	fields := frame.Fields
+	if len(fields) != 4 && len(fields) != 5 {
+		return fmt.Errorf("invalid field length in logs frame. expected 4 or 5, got %d", len(fields))
+	}
+
+	labelsField := fields[0]
+	timeField := fields[1]
+	lineField := fields[2]
+	stringTimeField := fields[3]
+	var labelTypesField *data.Field
+	if len(fields) == 5 {
+		labelTypesField = fields[4]
+		if labelTypesField.Type() != data.FieldTypeJSON {
+			return fmt.Errorf("invalid field types in logs frame. expected json, got %s", labelTypesField.Type())
+		}
+		labelTypesField.Name = "labelTypes"
+		labelTypesField.Config = &data.FieldConfig{
+			Custom: map[string]interface{}{
+				"hidden": true,
+			},
+		}
+	}
+
+	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeJSON) || (stringTimeField.Type() != data.FieldTypeString) {
+		return fmt.Errorf("invalid field types in logs frame. expected time, string, json and string, got %s, %s, %s and %s", timeField.Type(), lineField.Type(), labelsField.Type(), stringTimeField.Type())
+	}
+
+	if (timeField.Len() != lineField.Len()) || (timeField.Len() != labelsField.Len()) || (timeField.Len() != stringTimeField.Len()) {
+		return fmt.Errorf("indifferent field lengths in logs frame. expected all to be equal, got %d, %d, %d and %d", timeField.Len(), lineField.Len(), labelsField.Len(), stringTimeField.Len())
+	}
+
+	// this returns an error when the length of fields do not match
+	_, err := frame.RowLen()
+	if err != nil {
+		return err
+	}
+
+	timeField.Name = "timestamp"
+	labelsField.Name = "labels"
+	lineField.Name = "body"
+
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.Custom = nil
+	frame.Meta.Type = data.FrameTypeLogLines
+	idField, err := makeIdField(stringTimeField, lineField, labelsField, query.RefID)
+	if err != nil {
+		return err
+	}
+
+	if labelTypesField != nil {
+		frame.Fields = data.Fields{labelsField, timeField, lineField, idField, labelTypesField}
+	} else {
+		frame.Fields = data.Fields{labelsField, timeField, lineField, idField}
+	}
+	return nil
+}
+
+func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField *data.Field, refId string) (*data.Field, error) {
+	length := stringTimeField.Len()
+
+	ids := make([]string, length)
+
+	checksums := make(map[string]int)
+
+	for i := 0; i < length; i++ {
+		time := stringTimeField.At(i).(string)
+		line := lineField.At(i).(string)
+		labels := labelsField.At(i).(json.RawMessage)
+
+		sum, err := calculateCheckSum(time, line, labels)
+		if err != nil {
+			return nil, err
+		}
+
+		sumCount := checksums[sum]
+		idSuffix := ""
+		if sumCount > 0 {
+			// we had this checksum already, we need to do something to make it unique
+			idSuffix = fmt.Sprintf("_%d", sumCount)
+		}
+		checksums[sum] = sumCount + 1
+
+		ids[i] = sum + idSuffix
+	}
+	return data.NewField("id", nil, ids), nil
+}
+
+func calculateCheckSum(time string, line string, labels []byte) (string, error) {
+	input := []byte(line + "_")
+	input = append(input, labels...)
+	hash := fnv.New32()
+	_, err := hash.Write(input)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s_%x", time, hash.Sum32()), nil
 }
 
 func (s *Service) handleErrorWithSourceScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -694,7 +920,7 @@ func (s *Service) handleErrorWithSourceScenario(ctx context.Context, req *backen
 }
 
 func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *data.Frame {
-	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
+	rand := rand.New(rand.NewSource(query.TimeRange.From.UnixNano() + query.TimeRange.To.UnixNano() + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.StartValue
@@ -715,7 +941,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 		max = *model.Max
 	}
 
-	timeVec := make([]*time.Time, 0)
+	timeVec := make([]time.Time, 0)
 	floatVec := make([]*float64, 0)
 
 	walker := startValue
@@ -737,7 +963,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 			// skip value
 		} else {
 			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-			timeVec = append(timeVec, &t)
+			timeVec = append(timeVec, t)
 			floatVec = append(floatVec, &nextValue)
 		}
 
@@ -758,6 +984,7 @@ func RandomWalk(query backend.DataQuery, model kinds.TestDataQuery, index int) *
 			"customStat": 10,
 		},
 	})
+	frame.Meta.Type = data.FrameTypeTimeSeriesMulti
 
 	return frame
 }
@@ -794,7 +1021,11 @@ func randomWalkTable(query backend.DataQuery, model kinds.TestDataQuery) *data.F
 	var info strings.Builder
 	state := data.EnumItemIndex(0)
 
-	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
+	maxDataPoints := query.MaxDataPoints
+	if maxDataPoints > 10000 {
+		maxDataPoints = 10000
+	}
+	for i := int64(0); i < maxDataPoints && timeWalkerMs < to; i++ {
 		delta := rand.Float64() - 0.5
 		walker += delta
 
@@ -889,6 +1120,7 @@ func predictableCSVWave(query backend.DataQuery, model kinds.TestDataQuery) ([]*
 		if subQ.Name != "" {
 			frame.Name = subQ.Name
 		}
+		setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 		frames = append(frames, frame)
 	}
 	return frames, nil
@@ -902,7 +1134,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	wavePeriod := timeStep * length
 	maxPoints := 10000 // Don't return too many points
 
-	timeVec := make([]*time.Time, 0)
+	timeVec := make([]time.Time, 0)
 	floatVec := make([]*float64, 0)
 
 	for i := 0; i < maxPoints && timeCursor < to; i++ {
@@ -912,7 +1144,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 		}
 
 		t := time.Unix(timeCursor/int64(1e+3), (timeCursor%int64(1e+3))*int64(1e+6))
-		timeVec = append(timeVec, &t)
+		timeVec = append(timeVec, t)
 		floatVec = append(floatVec, val)
 
 		timeCursor += timeStep
@@ -966,6 +1198,7 @@ func predictablePulse(query backend.DataQuery, model kinds.TestDataQuery) (*data
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
 	frame.Fields[1].Labels = parseLabels(model, 0)
+	setFrameType(frame, data.FrameTypeTimeSeriesMulti, data.FrameTypeVersion{0, 0})
 
 	return frame, nil
 }

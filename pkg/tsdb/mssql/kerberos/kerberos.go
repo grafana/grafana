@@ -2,12 +2,14 @@ package kerberos
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
 type KerberosLookup struct {
@@ -22,16 +24,41 @@ type KerberosAuth struct {
 	CredentialCache           string
 	CredentialCacheLookupFile string
 	ConfigFilePath            string
-	UDPConnectionLimit        string
+	UDPConnectionLimit        int
 	EnableDNSLookupKDC        string
 }
 
 func GetKerberosSettings(settings backend.DataSourceInstanceSettings) (kerberosAuth KerberosAuth, err error) {
+	kerberosAuth = KerberosAuth{
+		KeytabFilePath:            "",
+		CredentialCache:           "",
+		CredentialCacheLookupFile: "",
+		ConfigFilePath:            "",
+		UDPConnectionLimit:        1,
+		EnableDNSLookupKDC:        "",
+	}
+
 	err = json.Unmarshal(settings.JSONData, &kerberosAuth)
+	var unmarshalErr *json.UnmarshalTypeError
+	if err != nil && errors.As(err, &unmarshalErr) {
+		stringMap := map[string]any{}
+		err = json.Unmarshal(settings.JSONData, &stringMap)
+		if err != nil {
+			return kerberosAuth, err
+		}
+
+		if stringMap["UDPConnectionLimit"] != "" {
+			udpConnLimit, err := strconv.Atoi(stringMap["UDPConnectionLimit"].(string))
+			if err != nil {
+				return kerberosAuth, err
+			}
+			kerberosAuth.UDPConnectionLimit = udpConnLimit
+		}
+	}
 	return kerberosAuth, err
 }
 
-func Krb5ParseAuthCredentials(host string, port string, db string, user string, pass string, kerberosAuth KerberosAuth) string {
+func Krb5ParseAuthCredentials(host string, port string, db string, user string, pass string, kerberosAuth KerberosAuth, logger log.Logger) string {
 	//params for driver conn str
 	//More details: https://github.com/microsoft/go-mssqldb#kerberos-active-directory-authentication-outside-windows
 
@@ -41,7 +68,7 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 	// if there is a lookup file specified, use it to find the correct credential cache file and overwrite var
 	// getCredentialCacheFromLookup implementation taken from mysql kerberos solution - https://github.com/grafana/mysql/commit/b5e73c8d536150c054d310123643683d3b18f0da
 	if krb5CCLookupFile != "" {
-		krb5CacheCredsFile = getCredentialCacheFromLookup(krb5CCLookupFile, host, port, db, user)
+		krb5CacheCredsFile = getCredentialCacheFromLookup(krb5CCLookupFile, host, port, db, user, logger)
 		if krb5CacheCredsFile == "" {
 			logger.Error("No valid credential cache file found in lookup.")
 			return ""
@@ -65,20 +92,18 @@ func Krb5ParseAuthCredentials(host string, port string, db string, user string, 
 		return ""
 	}
 
-	if kerberosAuth.UDPConnectionLimit != "" {
-		krb5DriverParams += "krb5-udppreferencelimit=" + kerberosAuth.UDPConnectionLimit + ";"
+	if kerberosAuth.UDPConnectionLimit != 1 {
+		krb5DriverParams += fmt.Sprintf("krb5-udppreferencelimit=%d;", kerberosAuth.UDPConnectionLimit)
 	}
 
 	if kerberosAuth.EnableDNSLookupKDC != "" {
 		krb5DriverParams += "krb5-dnslookupkdc=" + kerberosAuth.EnableDNSLookupKDC + ";"
 	}
 
-	logger.Info(fmt.Sprintf("final krb connstr: %s", krb5DriverParams))
-
 	return krb5DriverParams
 }
 
-func getCredentialCacheFromLookup(lookupFile string, host string, port string, dbName string, user string) string {
+func getCredentialCacheFromLookup(lookupFile string, host string, port string, dbName string, user string, logger log.Logger) string {
 	logger.Info(fmt.Sprintf("reading credential cache lookup: %s", lookupFile))
 	content, err := os.ReadFile(filepath.Clean(lookupFile))
 	if err != nil {

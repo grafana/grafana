@@ -1,5 +1,5 @@
+import { Trans, t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { InfoItem } from '../../shared/InfoItem';
 

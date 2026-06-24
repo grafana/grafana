@@ -1,21 +1,21 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
 
 import {
-  dataFrameFromJSON,
-  DataFrameJSON,
-  getDefaultTimeRange,
+  type DataFrameJSON,
   LoadingState,
-  PanelData,
+  type PanelData,
+  dataFrameFromJSON,
+  getDefaultTimeRange,
   withLoadingIndicator,
 } from '@grafana/data';
 import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
 
 import {
+  type PreviewRuleRequest,
+  type PreviewRuleResponse,
   isCloudPreviewRequest,
   isGrafanaPreviewRequest,
-  PreviewRuleRequest,
-  PreviewRuleResponse,
 } from '../types/preview';
 import { RuleFormType } from '../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';

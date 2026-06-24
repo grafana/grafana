@@ -1,0 +1,6 @@
+prometheus_utf8:
+  build: docker/blocks/prometheus_utf8
+  ports:
+    - "3012:3012"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"

@@ -1,6 +1,7 @@
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 
-import { AzureMonitorResource, GetMetricNamespacesQuery, GetMetricNamesQuery } from '../types';
+import { type AzureMonitorResource } from '../dataquery.gen';
+import { type GetMetricNamespacesQuery, type GetMetricNamesQuery } from '../types/types';
 
 export default class UrlBuilder {
   static buildResourceUri(templateSrv: TemplateSrv, resource: AzureMonitorResource, multipleResources?: boolean) {
@@ -112,5 +113,14 @@ export default class UrlBuilder {
     }
 
     return url;
+  }
+
+  static buildAzureMonitorGetLogsTableUrl(
+    baseUrl: string,
+    resourceUri: string,
+    tableName: string,
+    apiVersion = '2025-02-01'
+  ) {
+    return `${baseUrl}${resourceUri}/tables/${tableName}?api-version=${apiVersion}`;
   }
 }

@@ -1,25 +1,9 @@
 import { useMemo } from 'react';
 
-import {
-  DataTransformerID,
-  SelectableValue,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import {
-  LabelsToFieldsMode,
-  LabelsToFieldsOptions,
-} from '@grafana/data/src/transformations/transformers/labelsToFields';
+import { type SelectableValue, type TransformerUIProps } from '@grafana/data';
+import { LabelsToFieldsMode, type LabelsToFieldsOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
-
-import { getTransformationContent } from '../docs/getTransformationContent';
-
-const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
-  { value: LabelsToFieldsMode.Columns, label: 'Columns' },
-  { value: LabelsToFieldsMode.Rows, label: 'Rows' },
-];
 
 export const LabelsAsFieldsTransformerEditor = ({
   input,
@@ -27,6 +11,17 @@ export const LabelsAsFieldsTransformerEditor = ({
   onChange,
 }: TransformerUIProps<LabelsToFieldsOptions>) => {
   const labelWidth = 20;
+
+  const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
+    {
+      value: LabelsToFieldsMode.Columns,
+      label: t('transformers.labels-as-fields-transformer-editor.modes.label.columns', 'Columns'),
+    },
+    {
+      value: LabelsToFieldsMode.Rows,
+      label: t('transformers.labels-as-fields-transformer-editor.modes.label.rows', 'Rows'),
+    },
+  ];
 
   const { labelNames, selected } = useMemo(() => {
     let labelNames: Array<SelectableValue<string>> = [];
@@ -72,7 +67,10 @@ export const LabelsAsFieldsTransformerEditor = ({
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label={'Mode'} labelWidth={labelWidth}>
+        <InlineField
+          label={t('transformers.labels-as-fields-transformer-editor.label-mode', 'Mode')}
+          labelWidth={labelWidth}
+        >
           <RadioButtonGroup
             options={modes}
             value={options.mode ?? LabelsToFieldsMode.Columns}
@@ -81,8 +79,12 @@ export const LabelsAsFieldsTransformerEditor = ({
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Labels'} labelWidth={labelWidth}>
-          <Stack gap={1} wrap={'wrap'}>
+        <InlineField
+          label={t('transformers.labels-as-fields-transformer-editor.label-labels', 'Labels')}
+          labelWidth={labelWidth}
+          shrink={true}
+        >
+          <Stack gap={0.5} wrap={'wrap'}>
             {labelNames.map((o, i) => {
               const label = o.label!;
               return (
@@ -100,16 +102,22 @@ export const LabelsAsFieldsTransformerEditor = ({
       {options.mode !== LabelsToFieldsMode.Rows && (
         <InlineFieldRow>
           <InlineField
-            label={'Value field name'}
+            label={t('transformers.labels-as-fields-transformer-editor.label-value-field-name', 'Value field name')}
             labelWidth={labelWidth}
-            tooltip="Replace the value field name with a label"
+            tooltip={t(
+              'transformers.labels-as-fields-transformer-editor.tooltip-replace-value-field-label',
+              'Replace the value field name with a label'
+            )}
             htmlFor="labels-to-fields-as-name"
           >
             <Select
               inputId="labels-to-fields-as-name"
               isClearable={true}
               allowCustomValue={false}
-              placeholder="(Optional) Select label"
+              placeholder={t(
+                'transformers.labels-as-fields-transformer-editor.placeholder-optional-select-label',
+                '(Optional) Select label'
+              )}
               options={labelNames}
               value={options?.valueLabel}
               onChange={onValueLabelChange}
@@ -120,15 +128,4 @@ export const LabelsAsFieldsTransformerEditor = ({
       )}
     </div>
   );
-};
-
-export const labelsToFieldsTransformerRegistryItem: TransformerRegistryItem<LabelsToFieldsOptions> = {
-  id: DataTransformerID.labelsToFields,
-  editor: LabelsAsFieldsTransformerEditor,
-  transformation: standardTransformers.labelsToFieldsTransformer,
-  name: standardTransformers.labelsToFieldsTransformer.name,
-  description: `Groups series by time and return labels or tags as fields.
-                Useful for showing time series with labels in a table where each label key becomes a separate column.`,
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.labelsToFields).helperDocs,
 };

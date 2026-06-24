@@ -1,22 +1,26 @@
 import * as React from 'react';
-import uPlot, { AlignedData } from 'uplot';
+import uPlot, { type AlignedData } from 'uplot';
 
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldSeriesColor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   roundDecimals,
-} from '@grafana/data';
-import {
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
-} from '@grafana/data/src/transformations/transformers/histogram';
-import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
+} from '@grafana/data';
 import {
-  Themeable2,
+  type VizLegendOptions,
+  ScaleDistribution,
+  AxisPlacement,
+  ScaleDirection,
+  ScaleOrientation,
+} from '@grafana/schema';
+import {
+  type Themeable2,
   UPlotConfigBuilder,
   UPlotChart,
   VizLayout,
@@ -24,9 +28,9 @@ import {
   measureText,
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/internal';
 
-import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
+import { defaultFieldConfig, type FieldConfig, type Options } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -56,7 +60,7 @@ export function getBucketSize(frame: DataFrame) {
     : roundDecimals(frame.fields[1].values[0] - frame.fields[0].values[0], 9);
 }
 
-export function getBucketSize1(frame: DataFrame) {
+function getBucketSize1(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   return frame.fields[0].type === FieldType.string
     ? 1
@@ -114,7 +118,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     direction: ScaleDirection.Right,
     range: useLogScale
       ? (u, wantedMin, wantedMax) => {
-          return uPlot.rangeLog(wantedMin, wantedMax * bucketFactor, 2, true);
+          return uPlot.rangeLog(wantedMin, (wantedMax ?? 1) * bucketFactor, 2, true);
         }
       : (u, wantedMin, wantedMax) => {
           // these settings will prevent zooming, probably okay?
@@ -205,6 +209,12 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       x: true,
       y: false,
       setScale: true,
+    },
+    dataIdx: (u, _, closestIdx, xValue) =>
+      isOrdinalX ? Math.floor(xValue) : xValue < u.data[0][closestIdx] ? closestIdx - 1 : closestIdx,
+    focus: {
+      prox: 1e6,
+      bias: 1,
     },
   });
 

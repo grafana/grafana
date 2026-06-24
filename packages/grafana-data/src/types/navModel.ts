@@ -1,7 +1,7 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { LinkTarget } from './dataLink';
-import { IconName } from './icon';
+import { type IconName } from './icon';
+import { type LinkTarget } from './linkTarget';
 
 export interface NavLinkDTO {
   id?: string;
@@ -14,6 +14,7 @@ export interface NavLinkDTO {
   sortWeight?: number;
   hideFromTabs?: boolean;
   roundIcon?: boolean;
+  isNew?: boolean;
   /**
    * This is true for some sections that have no children (but is still a section)
    **/
@@ -59,6 +60,11 @@ export type NavIndex = { [s: string]: NavModelItem };
 
 export enum PageLayoutType {
   Standard,
+  // TODO deprecate and remove this in the future once visual refresh is delivered
+  // there is only 1 page style - custom can be used for anything else
   Canvas,
   Custom,
+  // TODO deprecate and remove this in the future once visual refresh is delivered
+  // there is only 1 page style - custom can be used for anything else
+  Home,
 }

@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v4"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -31,7 +31,8 @@ import (
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Service,
+func ProvideEmbeddedSigningKeysService(dbStore db.DB,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	remoteCache remotecache.CacheStorage, routerRegister routing.RouteRegister,
 ) (*Service, error) {
 	s := &Service{
@@ -54,7 +55,7 @@ func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Ser
 type Service struct {
 	log            log.Logger
 	store          signingkeystore.SigningStore
-	secretsService secrets.Service
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	remoteCache    remotecache.CacheStorage
 	localCache     *localcache.CacheService
 }
@@ -181,7 +182,7 @@ func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.Sign
 	expiry := now.Add(30 * 24 * time.Hour)
 	key, err := s.store.Add(ctx, &signingkeys.SigningKey{
 		KeyID:      keyID,
-		PrivateKey: encoded,
+		PrivateKey: string(encoded),
 		ExpiresAt:  &expiry,
 		Alg:        alg,
 		AddedAt:    now,
@@ -226,19 +227,22 @@ func (s *Service) encodePrivateKey(ctx context.Context, privateKey crypto.Signer
 		return nil, err
 	}
 
-	encoded := make([]byte, base64.StdEncoding.EncodedLen(len(encrypted)))
-	base64.StdEncoding.Encode(encoded, encrypted)
+	encoded := make([]byte, base64.RawStdEncoding.EncodedLen(len(encrypted)))
+	base64.RawStdEncoding.Encode(encoded, encrypted)
 	return encoded, nil
 }
 
-func (s *Service) decodePrivateKey(ctx context.Context, privateKey []byte) (crypto.Signer, error) {
+func (s *Service) decodePrivateKey(ctx context.Context, privateKey string) (crypto.Signer, error) {
 	// Bail out if empty string since it'll cause a segfault in Decrypt
 	if len(privateKey) == 0 {
 		return nil, errors.New("private key is empty")
 	}
 
-	payload := make([]byte, base64.StdEncoding.DecodedLen(len(privateKey)))
-	_, err := base64.StdEncoding.Decode(payload, privateKey)
+	// Backwards compatibility with old base64 encoding
+	// Can be removed in the future
+	privateKey = strings.TrimRight(privateKey, "=")
+
+	payload, err := base64.RawStdEncoding.DecodeString(privateKey)
 	if err != nil {
 		return nil, err
 	}

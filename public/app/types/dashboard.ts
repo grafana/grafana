@@ -1,33 +1,18 @@
-import { DataQuery } from '@grafana/data';
-import { Dashboard, DataSourceRef } from '@grafana/schema';
-import { ObjectMeta } from 'app/features/apiserver/types';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type Dashboard, type DataSourceRef } from '@grafana/schema';
+import { type ObjectMeta } from 'app/features/apiserver/types';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type ProvisioningPreview } from 'app/features/provisioning/types';
+
+export interface HomeDashboardRedirectDTO {
+  redirectUri: string;
+}
 
 export interface DashboardDTO {
-  redirectUri?: string;
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
 }
 
-export interface ImportDashboardResponseDTO {
-  uid: string;
-  pluginId: string;
-  title: string;
-  imported: boolean;
-  importedRevision?: number;
-  importedUri: string;
-  importedUrl: string;
-  slug: string;
-  dashboardId: number;
-  folderId: number;
-  folderUid: string;
-  description: string;
-  path: string;
-  removed: boolean;
-}
-
 export interface SaveDashboardResponseDTO {
-  id: number;
   slug: string;
   status: string;
   uid: string;
@@ -49,13 +34,14 @@ export interface DashboardMeta {
   canMakeEditable?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
-  isStarred?: boolean;
   showSettings?: boolean;
   expires?: string;
   isFolder?: boolean;
   isSnapshot?: boolean;
+  snapshotKey?: string;
   folderTitle?: string;
   folderUrl?: string;
+  folderId?: number;
   created?: string;
   createdBy?: string;
   updated?: string;
@@ -65,21 +51,36 @@ export interface DashboardMeta {
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardEnabled?: boolean;
-  dashboardNotFound?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
+  version?: number;
+
+  // Dashboard template edit flow. Set when a dashboard scene was hydrated from an DashboardTemplate
+  // via DashboardRoutes.Template with editTemplate=true.
+  isDashboardTemplate?: boolean;
+  dashboardTemplateUid?: string;
 
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged
   // until we use the resource as the main container
   k8s?: Partial<ObjectMeta>;
 
+  // If the dashboard was loaded from a remote repository
+  provisioning?: ProvisioningPreview;
+
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
+
+  // Conversion status from the API response, indicating if the dashboard was converted from another version
+  conversionStatus?: {
+    storedVersion?: string;
+    failed: boolean;
+    error?: string;
+  };
 }
 
-export interface AnnotationActions {
+interface AnnotationActions {
   canAdd: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -87,7 +88,6 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
 }
 
 // FIXME: This should not override Dashboard types
@@ -100,12 +100,14 @@ export interface DashboardDataDTO extends Dashboard {
 export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
+  Template = 'template-dashboard',
   Normal = 'normal-dashboard',
-  Path = 'path-dashboard',
+  Provisioning = 'provisioning-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
+  AssistantPreview = 'assistant-preview',
 }
 
 export enum DashboardInitPhase {
@@ -122,16 +124,10 @@ export interface DashboardInitError {
 }
 
 export enum KioskMode {
-  TV = 'tv',
   Full = 'full',
 }
 
-export type GetMutableDashboardModelFn = () => DashboardModel | null;
-
-export interface QueriesToUpdateOnDashboardLoad {
-  panelId: number;
-  queries: DataQuery[];
-}
+type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
@@ -141,3 +137,9 @@ export interface DashboardState {
 }
 
 export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+
+export function isRedirectResponse<T extends object>(
+  dto: T | HomeDashboardRedirectDTO
+): dto is HomeDashboardRedirectDTO {
+  return 'redirectUri' in dto;
+}

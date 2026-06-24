@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -35,15 +36,31 @@ var (
 	}
 )
 
+// TeamPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for team resource permissions (fixed:teams.permissions:reader and
+// :writer). These mirror the roles declared by ProvideTeamPermissions through
+// resourcepermissions.New; the identity fields below must match the Options
+// passed there.
+func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       teamPermissionsResource,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      teamPermissionsRoleGroup,
+	})
+}
+
 func ProvideTeamPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	directRestConfigProvider apiserver.DirectRestConfigProvider,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "teams",
-		ResourceAttribute: "id",
-		OnlyManaged:       true,
+		Resource:           teamPermissionsResource,
+		ResourceAttribute:  "id",
+		OnlyManaged:        true,
+		ResourceTranslator: team.UIDToIDHandler(teamService),
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideTeamerPermissions.ResourceValidator")
 			defer span.End()
@@ -72,9 +89,9 @@ func ProvideTeamPermissions(
 			"Member": TeamMemberActions,
 			"Admin":  TeamAdminActions,
 		},
-		ReaderRoleName: "Team permission reader",
-		WriterRoleName: "Team permission writer",
-		RoleGroup:      "Teams",
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      teamPermissionsRoleGroup,
 		OnSetUser: func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
@@ -95,6 +112,7 @@ func ProvideTeamPermissions(
 				return fmt.Errorf("invalid team permission type %s", permission)
 			}
 		},
+		RestConfigProvider: directRestConfigProvider,
 	}
 
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)

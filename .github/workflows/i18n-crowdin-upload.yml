@@ -5,29 +5,35 @@ on:
   push:
     paths:
       - 'public/locales/en-US/grafana.json'
+      - 'public/app/plugins/datasource/azuremonitor/locales/en-US/grafana-azure-monitor-datasource.json'
+      - 'public/app/plugins/datasource/mssql/locales/en-US/mssql.json'
+      - 'packages/grafana-sql/src/locales/en-US/grafana-sql.json'
     branches:
       - main
 
 jobs:
   upload-sources-to-crowdin:
-    runs-on: ubuntu-latest
-
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Upload sources
-        uses: crowdin/github-action@v2
+      - name: Checkout code
+        uses: actions/checkout@v5
         with:
-          upload_sources: true
-          upload_sources_args: '--dest=public/locales/en-US/grafana.json'
-          upload_translations: false
-          download_translations: false
-          create_pull_request: false
-          base_url: 'https://grafana.api.crowdin.com'
-          config: 'crowdin.yml'
-          source: 'public/locales/en-US/grafana.json'
-          translation: 'public/locales/%locale%/%original_file_name%'
-        env:
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          persist-credentials: false
+      - name: 'Get vault secrets'
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+            # Vault secret paths:
+            # - ci/repo/grafana/grafana/grafana-frontend-crowdin-token
+            repo_secrets: |
+                CROWDIN_TOKEN=grafana-frontend-crowdin-token:access_token
+      - name: Upload to Crowdin
+        uses: grafana/grafana-github-actions/crowdin-upload@main
+        with:
+          crowdin_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).CROWDIN_TOKEN }}
+          crowdin_project_id: 5
+

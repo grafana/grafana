@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -30,7 +30,7 @@ func (p *UsersLowerCaseLoginAndEmail) SQL(dialect migrator.Dialect) string {
 func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// Get all users
 	users := make([]*user.User, 0)
-	err := sess.Table("user").Find(&users)
+	err := sess.Table("user").Asc("created").Find(&users)
 	if err != nil {
 		return err
 	}

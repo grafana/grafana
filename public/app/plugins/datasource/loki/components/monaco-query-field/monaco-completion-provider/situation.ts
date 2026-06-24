@@ -114,7 +114,7 @@ function parseStringLiteral(text: string): string {
   throw new Error(`Invalid string literal: ${text}`);
 }
 
-export type LabelOperator = '=' | '!=' | '=~' | '!~';
+type LabelOperator = '=' | '!=' | '=~' | '!~';
 
 export type Label = {
   name: string;
@@ -185,7 +185,13 @@ const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    paths: [[Selector], [Selector, Matchers], [Matchers], [ERROR_NODE_ID, Matchers, Selector]],
+    paths: [
+      [Selector],
+      [Selector, Matchers],
+      [Matchers],
+      [ERROR_NODE_ID, Matchers],
+      [ERROR_NODE_ID, Matchers, Selector],
+    ],
     fun: resolveSelector,
   },
   {
@@ -624,13 +630,7 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
     }
   }
 
-  const selectorNode =
-    node.type.id === ERROR_NODE_ID
-      ? walk(node, [
-          ['parent', Matchers],
-          ['parent', Selector],
-        ])
-      : node;
+  const selectorNode = node.type.id === ERROR_NODE_ID ? walk(node, [['parent', Matchers]]) : node;
   if (!selectorNode) {
     return null;
   }

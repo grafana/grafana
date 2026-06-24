@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockQuery from '../../__mocks__/query';
-import FakeSchemaData from '../../azure_log_analytics/__mocks__/schema';
+import FakeSchemaData from '../../azure_log_analytics/mocks/schema';
+import { LogsEditorMode } from '../../dataquery.gen';
+import createMockDatasource from '../../mocks/datasource';
+import createMockQuery from '../../mocks/query';
 
 import { TimeManagement } from './TimeManagement';
 
@@ -58,6 +59,25 @@ describe('LogsQueryEditor.TimeManagement', () => {
         }),
       })
     );
+  });
+
+  it('should render correctly even if no tables are in the schema', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { timeColumn: undefined } });
+    const onChange = jest.fn();
+
+    render(
+      <TimeManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+        schema={FakeSchemaData.getLogAnalyticsFakeEngineSchema([])}
+      />
+    );
+
+    expect(screen.getByText('Time-range')).toBeInTheDocument();
   });
 
   it('should render the default value if no time columns exist', async () => {
@@ -187,5 +207,24 @@ describe('LogsQueryEditor.TimeManagement', () => {
 
     expect(screen.getByLabelText('Query')).toBeDisabled();
     expect(screen.getByLabelText('Dashboard')).toBeChecked();
+  });
+
+  it('should hide time-range toggle for builder queries', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery({ azureLogAnalytics: { mode: LogsEditorMode.Builder } });
+    const onChange = jest.fn();
+
+    render(
+      <TimeManagement
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+        schema={FakeSchemaData.getLogAnalyticsFakeEngineSchema()}
+      />
+    );
+
+    expect(screen.queryByText('Time-range')).not.toBeInTheDocument();
   });
 });

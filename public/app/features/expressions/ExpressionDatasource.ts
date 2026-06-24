@@ -1,18 +1,31 @@
-import { from, mergeMap, Observable } from 'rxjs';
+import { from, lastValueFrom, map, mergeMap, type Observable } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
+  type TimeRange,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { type SQLQuery } from '@grafana/plugin-ui';
+import {
+  type BackendDataSourceResponse,
+  DataSourceWithBackend,
+  type FetchResponse,
+  getBackendSrv,
+  getDataSourceSrv,
+  getTemplateSrv,
+  toDataQueryResponse,
+} from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { type DataQuery } from '@grafana/schema';
+import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from './types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
@@ -37,7 +50,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
     let targets = request.targets.map(async (query: ExpressionQuery): Promise<ExpressionQuery> => {
-      const ds = await getDataSourceSrv().get(query.datasource);
+      const ds = await getDataSourceSrv().get(query.datasource, request.scopedVars);
 
       if (!ds.interpolateVariablesInQueries) {
         return query;
@@ -58,10 +71,41 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
       ...query,
     };
   }
+
+  runMetaSQLExprQuery(request: Partial<SQLQuery>, range: TimeRange, queries: DataQuery[]): Promise<DataFrame> {
+    const refId = request.refId || 'meta';
+    const metaSqlExpressionQuery: ExpressionQuery = {
+      window: '',
+      hide: false,
+      expression: request.rawSql,
+      datasource: ExpressionDatasourceRef,
+      refId,
+      type: ExpressionQueryType.sql,
+    };
+    return lastValueFrom(
+      getBackendSrv()
+        .fetch<BackendDataSourceResponse>({
+          url: '/api/ds/query',
+          method: 'POST',
+          headers: this.getRequestHeaders(),
+          data: {
+            from: range.from.valueOf().toString(),
+            to: range.to.valueOf().toString(),
+            queries: [...queries, metaSqlExpressionQuery],
+          },
+          requestId: refId,
+        })
+        .pipe(
+          map((res: FetchResponse<BackendDataSourceResponse>) => {
+            const rsp = toDataQueryResponse(res, queries);
+            return rsp.data[0] ?? { fields: [] };
+          })
+        )
+    );
+  }
 }
 
 export const instanceSettings: DataSourceInstanceSettings = {
-  id: -100,
   uid: ExpressionDatasourceUID,
   name: ExpressionDatasourceRef.name,
   type: ExpressionDatasourceRef.type,
@@ -77,8 +121,8 @@ export const instanceSettings: DataSourceInstanceSettings = {
         name: 'Grafana Labs',
       },
       logos: {
-        small: 'public/img/icn-datasource.svg',
-        large: 'public/img/icn-datasource.svg',
+        small: icnDatasourceSvg,
+        large: icnDatasourceSvg,
       },
       description: 'Adds expression support to Grafana',
       screenshots: [],
@@ -96,8 +140,8 @@ dataSource.meta = {
   id: ExpressionDatasourceRef.type,
   info: {
     logos: {
-      small: 'public/img/icn-datasource.svg',
-      large: 'public/img/icn-datasource.svg',
+      small: icnDatasourceSvg,
+      large: icnDatasourceSvg,
     },
   },
 } as DataSourcePluginMeta;

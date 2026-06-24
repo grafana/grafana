@@ -1,12 +1,13 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, getDefaultNormalizer } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
-import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
+import { CoreApp, createTheme, LogLevel, type LogRowModel } from '@grafana/data';
+import { IconButton } from '@grafana/ui';
 
-import { LogRowMessage } from './LogRowMessage';
-import { createLogRow } from './__mocks__/logRow';
+import { LogRowMessage, MAX_CHARACTERS } from './LogRowMessage';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
 
 const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();
@@ -195,6 +196,91 @@ line3`;
       expect(screen.getByText(/line2/)).toBeInTheDocument();
       expect(screen.getByText(/line3/)).toBeInTheDocument();
       expect(screen.queryByText(singleLineEntry)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('With custom buttons', () => {
+    it('supports custom buttons before and after the default options', async () => {
+      const onBefore = jest.fn();
+      const logRowMenuIconsBefore = [
+        <IconButton name="eye-slash" onClick={onBefore} tooltip="Addon before" aria-label="Addon before" key={1} />,
+      ];
+      const onAfter = jest.fn();
+      const logRowMenuIconsAfter = [
+        <IconButton name="rss" onClick={onAfter} tooltip="Addon after" aria-label="Addon after" key={1} />,
+      ];
+
+      const { row } = setup({ logRowMenuIconsBefore, logRowMenuIconsAfter });
+
+      await userEvent.click(screen.getByLabelText('Addon before'));
+      await userEvent.click(screen.getByLabelText('Addon after'));
+
+      expect(onBefore).toHaveBeenCalledWith(expect.anything(), row);
+      expect(onAfter).toHaveBeenCalledWith(expect.anything(), row);
+    });
+  });
+
+  describe('Extremely long log lines', () => {
+    let entry = '';
+    beforeEach(() => {
+      entry = new Array(MAX_CHARACTERS).fill('a').join('') + 'b';
+    });
+    it('Displays an ellipsis for log lines above the character limit', async () => {
+      setup({
+        row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000 }),
+      });
+      expect(screen.getByText(/1 more/)).toBeInTheDocument();
+      await userEvent.click(screen.getByText(/1 more/));
+      expect(screen.queryByText(/1 more/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Incorrectly escaped content in JSON logs', () => {
+    let entry = '';
+    beforeEach(() => {
+      entry = `{"stacktrace":"stack line 1\\n\\tat stack line 2\\n\\tat stack line 3\\n\\tat stack line 4\\n\\t..."}`;
+    });
+    it('Displays unprettified JSON logs with incorrectly escaped content', async () => {
+      setup({
+        row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000, hasUnescapedContent: true }),
+        prettifyLogMessage: false,
+        forceEscape: false,
+      });
+      expect(screen.getByText(entry)).toBeInTheDocument();
+    });
+
+    it('Displays prettified JSON logs with unescaped content', async () => {
+      setup({
+        row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000, hasUnescapedContent: true }),
+        prettifyLogMessage: true,
+        forceEscape: false,
+      });
+      expect(screen.queryByText(entry)).not.toBeInTheDocument();
+    });
+
+    it('Displays prettified JSON logs with escaped content', async () => {
+      setup({
+        row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000, hasUnescapedContent: true }),
+        prettifyLogMessage: true,
+        forceEscape: true,
+      });
+      expect(screen.queryByText(entry)).not.toBeInTheDocument();
+      expect(screen.getByText(/"stacktrace": "stack line 1/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/\tat stack line 2/, {
+          normalizer: getDefaultNormalizer({ collapseWhitespace: false, trim: true }),
+        })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/\tat stack line 3/, {
+          normalizer: getDefaultNormalizer({ collapseWhitespace: false, trim: true }),
+        })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/\tat stack line 4/, {
+          normalizer: getDefaultNormalizer({ collapseWhitespace: false, trim: true }),
+        })
+      ).toBeInTheDocument();
     });
   });
 });

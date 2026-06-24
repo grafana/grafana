@@ -1,7 +1,7 @@
 // Code was originally generated from cue
 // It must now be updated manually
 
-import * as common from '@grafana/schema';
+import type * as common from '@grafana/schema';
 
 export enum TestDataQueryType {
   Annotations = 'annotations',
@@ -21,13 +21,16 @@ export enum TestDataQueryType {
   NodeGraph = 'node_graph',
   PredictableCSVWave = 'predictable_csv_wave',
   PredictablePulse = 'predictable_pulse',
+  QueryMeta = 'query_meta',
   RandomWalk = 'random_walk',
   RandomWalkTable = 'random_walk_table',
   RandomWalkWithError = 'random_walk_with_error',
   RawFrame = 'raw_frame',
   ServerError500 = 'server_error_500',
   Simulation = 'simulation',
+  Steps = 'steps',
   SlowQuery = 'slow_query',
+  FlakyQuery = 'flaky_query',
   StreamingClient = 'streaming_client',
   TableStatic = 'table_static',
   Trace = 'trace',
@@ -41,7 +44,7 @@ export interface StreamingQuery {
   noise: number;
   speed: number;
   spread: number;
-  type: 'signal' | 'logs' | 'fetch' | 'traces';
+  type: 'signal' | 'logs' | 'fetch' | 'traces' | 'watch';
   url?: string;
 }
 
@@ -76,11 +79,6 @@ export interface USAQuery {
   period?: string;
   states?: string[];
 }
-
-export const defaultUSAQuery: Partial<USAQuery> = {
-  fields: [],
-  states: [],
-};
 
 export interface CSVWave {
   labels?: string;
@@ -127,10 +125,9 @@ export interface TestDataDataQuery extends common.DataQuery {
   stringInput?: string;
   usa?: USAQuery;
   errorSource?: 'plugin' | 'downstream';
+  errorProbability?: number;
+  errorMessage?: string;
+  errorStatusCode?: number;
+  queryDelay?: string;
+  queryDelayVariability?: number;
 }
-
-export const defaultTestDataDataQuery: Partial<TestDataDataQuery> = {
-  csvWave: [],
-  points: [],
-  scenarioId: TestDataQueryType.RandomWalk,
-};

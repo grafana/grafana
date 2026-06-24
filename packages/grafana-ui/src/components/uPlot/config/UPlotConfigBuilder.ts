@@ -1,16 +1,32 @@
 import { merge } from 'lodash';
-import uPlot, { Cursor, Band, Hooks, Select, AlignedData, Padding, Series } from 'uplot';
+import uPlot, {
+  type Cursor,
+  type Band,
+  type Hooks,
+  type Select,
+  type AlignedData,
+  type Padding,
+  type Series,
+} from 'uplot';
 
-import { DataFrame, DefaultTimeZone, Field, getTimeZoneInfo, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
-import { AxisPlacement, VizOrientation } from '@grafana/schema';
+import {
+  type DataFrame,
+  DefaultTimeZone,
+  type Field,
+  getTimeZoneInfo,
+  type GrafanaTheme2,
+  type TimeRange,
+  type TimeZone,
+} from '@grafana/data';
+import { AxisPlacement, type VizOrientation } from '@grafana/schema';
 
-import { FacetedData, PlotConfig } from '../types';
-import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, StackingGroup } from '../utils';
+import { type FacetedData, type PlotConfig } from '../types';
+import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, type StackingGroup } from '../utils';
 
-import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
-import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
-import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
+import { type AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
+import { type ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
+import { type SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
+import { getThresholdsDrawHook, type UPlotThresholdOptions } from './UPlotThresholds';
 
 const cursorDefaults: Cursor = {
   // prevent client-side zoom from triggering at the end of a selection
@@ -28,6 +44,8 @@ const cursorDefaults: Cursor = {
 
 type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
+
+type PlotState = { isPanning: false } | { isPanning: true; min: number; max: number; isTimeRangePending?: boolean };
 
 export class UPlotConfigBuilder {
   readonly uid = Math.random().toString(36).slice(2);
@@ -47,6 +65,7 @@ export class UPlotConfigBuilder {
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
   private padding?: Padding = undefined;
+  private state: PlotState = { isPanning: false };
 
   private cachedConfig?: PlotConfig;
 
@@ -58,6 +77,14 @@ export class UPlotConfigBuilder {
 
   // Exposed to let the container know the primary scale keys
   scaleKeys: [string, string] = ['', ''];
+
+  setState(state: PlotState) {
+    this.state = merge({}, this.state, state);
+  }
+
+  getState() {
+    return this.state;
+  }
 
   addHook<T extends keyof Hooks.Defs>(type: T, hook: Hooks.Defs[T]) {
     pluginLog('UPlotConfigBuilder', false, 'addHook', type);
@@ -274,7 +301,6 @@ export type Renderers = Array<{
   init: (config: UPlotConfigBuilder, fieldIndices: Record<string, number>) => void;
 }>;
 
-/** @alpha */
 type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
@@ -286,7 +312,7 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   hoverProximity?: number;
   orientation?: VizOrientation;
+  xAxisConfig?: Pick<AxisProps, 'size' | 'gap' | 'ticks'>;
 } & T;
 
-/** @alpha */
 export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;

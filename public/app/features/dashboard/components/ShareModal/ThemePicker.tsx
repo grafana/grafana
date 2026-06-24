@@ -1,13 +1,14 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { RadioButtonGroup, Field } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   selectedTheme: string;
   onChange: (value: string) => void;
+  description?: string;
 }
 
-export const ThemePicker = ({ selectedTheme = 'current', onChange }: Props) => {
+export const ThemePicker = ({ selectedTheme = 'current', onChange, description }: Props) => {
   const themeOptions: Array<SelectableValue<string>> = [
     {
       label: t('share-modal.theme-picker.current', `Current`),
@@ -24,8 +25,13 @@ export const ThemePicker = ({ selectedTheme = 'current', onChange }: Props) => {
   ];
 
   return (
-    <Field label={t('share-modal.theme-picker.field-name', `Theme`)}>
-      <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={onChange} />
+    <Field label={t('share-modal.theme-picker.field-name', `Theme`)} description={description} noMargin>
+      <RadioButtonGroup
+        options={themeOptions}
+        value={selectedTheme}
+        onChange={onChange}
+        aria-label={t('share-modal.theme-picker.field-name', `Theme`)}
+      />
     </Field>
   );
 };

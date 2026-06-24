@@ -1,8 +1,8 @@
-import { forwardRef, PropsWithChildren } from 'react';
+import { forwardRef, type PropsWithChildren } from 'react';
 
-import { IconName } from '@grafana/data';
+import { type IconName } from '@grafana/data';
 import { Icon, Tooltip, Box, Stack } from '@grafana/ui';
-import { Unit } from 'app/types';
+import { type Unit } from 'app/types/user';
 
 type OrgUnitProps = { units?: Unit[]; icon: IconName };
 
@@ -14,7 +14,13 @@ export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
   return units.length > 1 ? (
     <Tooltip
       placement={'top'}
-      content={<Stack direction={'column'}>{units?.map((unit) => <span key={unit.name}>{unit.name}</span>)}</Stack>}
+      content={
+        <Stack direction={'column'}>
+          {units?.map((unit) => (
+            <span key={unit.name}>{unit.name}</span>
+          ))}
+        </Stack>
+      }
     >
       <Content icon={icon}>{units.length}</Content>
     </Tooltip>
@@ -27,7 +33,7 @@ interface ContentProps extends PropsWithChildren {
   icon: IconName;
 }
 
-export const Content = forwardRef<HTMLElement, ContentProps>(({ children, icon }, ref) => {
+const Content = forwardRef<HTMLElement, ContentProps>(({ children, icon }, ref) => {
   return (
     <Box ref={ref} display={'flex'} alignItems={'center'} marginRight={1}>
       <Icon name={icon} /> <Box marginLeft={1}>{children}</Box>

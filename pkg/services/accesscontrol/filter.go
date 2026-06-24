@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 var sqlIDAcceptList = map[string]struct{}{
@@ -18,6 +19,7 @@ var sqlIDAcceptList = map[string]struct{}{
 	"\"user\".\"id\"":  {}, // For Postgres
 	"`user`.`id`":      {}, // For MySQL and SQLite
 	"dashboard.uid":    {},
+	"report.id":        {},
 }
 
 var (
@@ -127,7 +129,7 @@ func SetAcceptListForTest(list map[string]struct{}) func() {
 	}
 }
 
-func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []any) {
+func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string, dialect migrator.Dialect) (string, []any) {
 	var params []any
 	builder := strings.Builder{}
 
@@ -145,7 +147,7 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 
 	if len(teamIDs) > 0 {
 		if builder.Len() > 0 {
-			builder.WriteString("UNION")
+			builder.WriteString(dialect.UnionDistinct())
 		}
 		builder.WriteString(`
 			SELECT tr.role_id FROM team_role as tr
@@ -160,7 +162,7 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 
 	if len(roles) != 0 {
 		if builder.Len() > 0 {
-			builder.WriteString("UNION")
+			builder.WriteString(dialect.UnionDistinct())
 		}
 
 		builder.WriteString(`
@@ -191,4 +193,24 @@ func RolePrefixesFilter(rolePrefixes []string) (string, []any) {
 	}
 
 	return query, params
+}
+
+// ManagedPermissionsActionSetsFilter returns a SQL clause that excludes individual
+// dashboard/folder action permissions from managed roles. These permissions are
+// redundant when action sets are enabled, because ExpandActionSets expands the
+// action set permissions (e.g. dashboards:view) into the underlying individual
+// actions (e.g. dashboards:read) in memory.
+//
+// This can dramatically reduce the number of permission rows loaded from the
+// database for large installations where many managed permissions accumulated
+// before action sets were enabled by default.
+func ManagedPermissionsActionSetsFilter() string {
+	return ` AND NOT (
+		role.name LIKE 'managed:%'
+		AND permission.kind IN ('dashboards', 'folders')
+		AND permission.action NOT IN (
+			'dashboards:view', 'dashboards:edit', 'dashboards:admin',
+			'folders:view', 'folders:edit', 'folders:admin'
+		)
+	)`
 }

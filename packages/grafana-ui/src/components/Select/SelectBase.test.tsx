@@ -3,8 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { select } from 'react-select-event';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { Drawer } from '../Drawer/Drawer';
+import { Modal } from '../Modal/Modal';
 
 import { SelectBase } from './SelectBase';
 
@@ -26,7 +29,17 @@ describe('SelectBase', () => {
   ];
 
   it('renders without error', () => {
+    expect(() => render(<SelectBase onChange={onChangeHandler} />)).not.toThrow();
+  });
+
+  it('exposes the Select container data-testid by default', () => {
     render(<SelectBase onChange={onChangeHandler} />);
+    expect(screen.getByTestId(selectors.components.Select.container)).toBeInTheDocument();
+  });
+
+  it('lets the consumer override the data-testid', () => {
+    render(<SelectBase onChange={onChangeHandler} data-testid="custom-id" />);
+    expect(screen.getByTestId('custom-id')).toBeInTheDocument();
   });
 
   it('renders empty options information', async () => {
@@ -60,7 +73,7 @@ describe('SelectBase', () => {
     };
 
     render(<Test />);
-    expect(screen.queryByText('Test label')).toBeInTheDocument();
+    expect(screen.getByText('Test label')).toBeInTheDocument();
     await userEvent.click(screen.getByText('clear value'));
     expect(screen.queryByText('Test label')).not.toBeInTheDocument();
   });
@@ -76,13 +89,15 @@ describe('SelectBase', () => {
     describe('is not provided', () => {
       it.each`
         key
-        ${'ArrowDown'}
-        ${'ArrowUp'}
+        ${'{ArrowDown}'}
+        ${'{ArrowUp}'}
         ${' '}
-      `('opens on arrow down/up or space', ({ key }) => {
+      `('opens on arrow down/up or space', async ({ key }) => {
+        const user = userEvent.setup();
+
         render(<SelectBase onChange={onChangeHandler} />);
-        fireEvent.focus(screen.getByRole('combobox'));
-        fireEvent.keyDown(screen.getByRole('combobox'), { key });
+
+        await user.type(screen.getByRole('combobox'), key);
         expect(screen.queryByText(/no options found/i)).toBeVisible();
       });
     });
@@ -267,9 +282,6 @@ describe('SelectBase', () => {
     });
 
     describe('toggle all', () => {
-      beforeEach(() => {
-        jest.resetAllMocks();
-      });
       it('renders menu with select all toggle', async () => {
         render(
           <SelectBase
@@ -296,7 +308,7 @@ describe('SelectBase', () => {
         );
         await userEvent.click(screen.getByText(/Option 1/i));
         const toggleAllOptions = screen.getByTestId(selectors.components.Select.toggleAllOptions);
-        expect(toggleAllOptions.textContent).toBe('Selected (1)');
+        expect(toggleAllOptions).toHaveTextContent('Selected (1)');
       });
 
       it('correctly removes all selected options when in indeterminate state', async () => {
@@ -311,7 +323,7 @@ describe('SelectBase', () => {
         );
         await userEvent.click(screen.getByText(/Option 1/i));
         let toggleAllOptions = screen.getByTestId(selectors.components.Select.toggleAllOptions);
-        expect(toggleAllOptions.textContent).toBe('Selected (1)');
+        expect(toggleAllOptions).toHaveTextContent('Selected (1)');
 
         // Toggle all unselected when in indeterminate state
         await userEvent.click(toggleAllOptions);
@@ -330,7 +342,7 @@ describe('SelectBase', () => {
         );
         await userEvent.click(screen.getByText(/Option 1/i));
         let toggleAllOptions = screen.getByTestId(selectors.components.Select.toggleAllOptions);
-        expect(toggleAllOptions.textContent).toBe('Selected (2)');
+        expect(toggleAllOptions).toHaveTextContent('Selected (2)');
 
         // Toggle all unselected when in indeterminate state
         await userEvent.click(toggleAllOptions);
@@ -349,12 +361,54 @@ describe('SelectBase', () => {
         );
         await userEvent.click(screen.getByText(/Choose/i));
         let toggleAllOptions = screen.getByTestId(selectors.components.Select.toggleAllOptions);
-        expect(toggleAllOptions.textContent).toBe('Selected (0)');
+        expect(toggleAllOptions).toHaveTextContent('Selected (0)');
 
         // Toggle all unselected when in indeterminate state
         await userEvent.click(toggleAllOptions);
         expect(onChangeHandler).toHaveBeenCalledWith(options, expect.anything());
       });
+    });
+  });
+
+  describe('Escape key behavior in overlays', () => {
+    it('should not close a Modal when pressing Escape while the menu is open', async () => {
+      const onDismiss = jest.fn();
+      render(
+        <Modal title="Test Modal" isOpen onDismiss={onDismiss}>
+          <SelectBase onChange={onChangeHandler} options={options} />
+        </Modal>
+      );
+
+      // Modal auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await userEvent.keyboard('{Escape}');
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('should not close a Drawer when pressing Escape while the menu is open', async () => {
+      const onClose = jest.fn();
+      render(
+        <div className="main-view">
+          <Drawer title="Test Drawer" onClose={onClose}>
+            <SelectBase onChange={onChangeHandler} options={options} />
+          </Drawer>
+        </div>
+      );
+
+      // Drawer auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await userEvent.keyboard('{Escape}');
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

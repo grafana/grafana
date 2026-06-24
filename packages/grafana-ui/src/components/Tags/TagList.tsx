@@ -1,13 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { forwardRef, memo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes';
-import { IconName } from '../../types/icon';
-import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { type IconName } from '../../types/icon';
+import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 
-import { OnTagClick, Tag } from './Tag';
+import { type OnTagClick, Tag } from './Tag';
 
 export interface Props {
   /** Maximum number of the tags to display */
@@ -34,7 +35,7 @@ const TagListComponent = memo(
       const numTags = tags.length;
       const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;
       return (
-        <ul className={cx(styles.wrapper, className)} aria-label="Tags" ref={ref}>
+        <ul className={cx(styles.wrapper, className)} aria-label={t('grafana-ui.tags.list-label', 'Tags')} ref={ref}>
           {tagsToDisplay.map((tag, i) => (
             <li className={styles.li} key={tag}>
               <Tag
@@ -48,10 +49,12 @@ const TagListComponent = memo(
             </li>
           ))}
           {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
-            <span className={styles.moreTagsLabel}>
-              {'+ '}
-              {numTags - displayMax}
-            </span>
+            <li className={styles.li}>
+              <span className={styles.moreTagsLabel}>
+                {'+ '}
+                {numTags - displayMax}
+              </span>
+            </li>
           )}
         </ul>
       );
@@ -70,6 +73,11 @@ const TagListSkeleton: SkeletonComponent = ({ rootProps }) => {
   );
 };
 
+/**
+ * List of tags with predefined margins and positioning.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-taglist--docs
+ */
 export const TagList = attachSkeleton(TagListComponent, TagListSkeleton);
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({

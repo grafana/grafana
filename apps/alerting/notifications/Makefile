@@ -1,4 +1,6 @@
-.PHONY: generate
-generate:
-	## --crdencoding none is needed to avoid infinite loop while generating recursive models'
-	grafana-app-sdk generate -c . -g ./apis --crdencoding none
+include ../../sdk.mk
+
+.PHONY: generate # Run Grafana App SDK code generation
+generate: install-app-sdk update-app-sdk
+	@$(APP_SDK_BIN) generate --source=./kinds/
+	

@@ -1,21 +1,20 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
-import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
+import {
+  type FieldNamePickerConfigSettings,
+  type StandardEditorProps,
+  type StandardEditorsRegistryItem,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
-import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../types';
+import { getPublicOrAbsoluteUrl } from '../resource';
+import { MediaType, type ResourceDimensionOptions, ResourceFolderName, ResourcePickerSize } from '../types';
 
 import { ResourcePicker } from './ResourcePicker';
-
-const resourceOptions = [
-  { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
-  { label: 'Field', value: ResourceDimensionMode.Field, description: 'Use a string field result' },
-  //  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
-];
 
 const dummyFieldSettings = {
   settings: {},
@@ -24,8 +23,21 @@ const dummyFieldSettings = {
 export const ResourceDimensionEditor = (
   props: StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>
 ) => {
-  const { value, context, onChange, item } = props;
+  const { value, context, onChange, item, id } = props;
   const labelWidth = 9;
+  const resourceOptions = [
+    {
+      label: t('dimensions.resource-dimension-editor.label-fixed', 'Fixed'),
+      value: ResourceDimensionMode.Fixed,
+      description: t('dimensions.resource-dimension-editor.description-fixed', 'Fixed value'),
+    },
+    {
+      label: t('dimensions.resource-dimension-editor.label-field', 'Field'),
+      value: ResourceDimensionMode.Field,
+      description: t('dimensions.resource-dimension-editor.description-field', 'Use a string field result'),
+    },
+    //  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
+  ];
 
   const onModeChange = useCallback(
     (mode: ResourceDimensionMode) => {
@@ -80,14 +92,22 @@ export const ResourceDimensionEditor = (
     <>
       {showSourceRadio && (
         <InlineFieldRow>
-          <InlineField label="Source" labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.resource-dimension-editor.label-source', 'Source')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <RadioButtonGroup value={mode} options={resourceOptions} onChange={onModeChange} fullWidth />
           </InlineField>
         </InlineFieldRow>
       )}
       {mode !== ResourceDimensionMode.Fixed && (
         <InlineFieldRow>
-          <InlineField label="Field" labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.resource-dimension-editor.label-field', 'Field')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <FieldNamePicker
               context={context}
               value={value.field ?? ''}
@@ -99,6 +119,7 @@ export const ResourceDimensionEditor = (
       )}
       {mode === ResourceDimensionMode.Fixed && (
         <ResourcePicker
+          id={id}
           onChange={onFixedChange}
           onClear={onClear}
           value={value?.fixed}
@@ -113,7 +134,12 @@ export const ResourceDimensionEditor = (
       )}
       {mode === ResourceDimensionMode.Mapping && (
         <InlineFieldRow>
-          <InlineField label="Mappings" labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.resource-dimension-editor.label-mappings', 'Mappings')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings*/}
             <div>TODO mappings editor!</div>
           </InlineField>
         </InlineFieldRow>
@@ -122,7 +148,7 @@ export const ResourceDimensionEditor = (
   );
 };
 
-export function niceName(value?: string): string | undefined {
+function niceName(value?: string): string | undefined {
   if (!value) {
     return undefined;
   }

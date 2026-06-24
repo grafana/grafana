@@ -1,4 +1,4 @@
-include ../../../../../.bingo/Variables.mk
+include ../../../../../.citools/Variables.mk
 
 .DEFAULT_GOAL := openapi
 
@@ -7,6 +7,8 @@ GO_PKG_FILES = $(shell find $(API_DIR) -name *.go -print)
 
 PATH_DOWN = pkg/services/ngalert/api/tooling
 PATH_UP = ../../../../..
+
+SWAGGER = GODEBUG=gotypesalias=0 $(swagger)
 
 .DEFAULT_GOAL := all
 
@@ -25,8 +27,14 @@ ifneq ($(OS),Windows_NT)
 	endif
 endif
 
-spec.json spec-stable.json: $(GO_PKG_FILES) $(SWAGGER)
+spec.json spec-stable.json: $(GO_PKG_FILES)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w $(API_DIR) -o spec.json && SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m --include-tag=stable -o spec-stable.json
+
+# Prometheus URL type collides with the net/url.URL type, so we need to fix the spec if the descriptions are not correct
+# to make the spec generation consistent.
+fix-spec:
+	sed $(SED_INPLACE) -e 's/A URL represents a parsed URL (technically, a URI reference)./URL is a custom URL type that allows validation at configuration load time./' spec.json spec-stable.json
+	sed $(SED_INPLACE) -e '/The general form represented is:\\n\\n\[scheme:\]\[\/\/\[userinfo@\]host\]\[\/\]path\[?query\]\[#fragment\]/d' spec.json spec-stable.json
 
 post.json: spec.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
@@ -34,10 +42,10 @@ post.json: spec.json
 api.json: spec-stable.json
 	go run cmd/clean-swagger/main.go -if $(<) -of $@
 
-validate-stable: spec-stable.json $(SWAGGER)
+validate-stable: spec-stable.json
 	$(SWAGGER) validate $(<)
 
-validate: spec.json $(SWAGGER)
+validate: spec.json
 	$(SWAGGER) validate $(<)
 
 swagger-codegen-api:
@@ -75,4 +83,4 @@ serve-stable: api.json
 
 gen: swagger-codegen-api fix copy-files clean-go
 
-all: clean spec.json spec-stable.json post.json api.json gen
+all: clean spec.json spec-stable.json fix-spec post.json api.json gen

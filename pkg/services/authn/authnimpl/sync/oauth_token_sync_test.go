@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -20,7 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 )
 
@@ -73,6 +78,14 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectRevokeTokenCalled:     false,
 			expectToken:                 &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute)},
 		},
+		{
+			desc:                        "should not invalidate session if token refresh fails with no refresh token",
+			identity:                    &authn.Identity{ID: "1", Type: claims.TypeUser, SessionToken: &auth.UserToken{}, AuthenticatedBy: login.AzureADAuthModule},
+			expectedTryRefreshErr:       oauthtoken.ErrNoRefreshTokenFound,
+			expectTryRefreshTokenCalled: true,
+			expectRevokeTokenCalled:     true,
+			expectedErr:                 oauthtoken.ErrNoRefreshTokenFound,
+		},
 
 		// TODO: address coverage of oauthtoken sync
 	}
@@ -85,7 +98,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester) (*oauth2.Token, error) {
+				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester, _ *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error) {
 					tryRefreshCalled = true
 					return nil, tt.expectedTryRefreshErr
 				},
@@ -116,9 +129,13 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				singleflightGroup: new(singleflight.Group),
 				tracer:            tracing.InitializeTracerForTest(),
 				cache:             localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+				features:          featuremgmt.WithFeatures(),
 			}
 
-			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
+			ctx := context.Background()
+			reqCtx := context.WithValue(ctx, ctxkey.Key{}, &contextmodel.ReqContext{UserToken: nil})
+
+			err := sync.SyncOauthTokenHook(reqCtx, tt.identity, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.Equal(t, tt.expectTryRefreshTokenCalled, tryRefreshCalled)
 			assert.Equal(t, tt.expectRevokeTokenCalled, revokeTokenCalled)

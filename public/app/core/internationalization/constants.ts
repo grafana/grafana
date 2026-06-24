@@ -1,6 +1,7 @@
-import { ResourceKey } from 'i18next';
+import { type ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
 
+<<<<<<< HEAD
 export const ENGLISH_US = 'en-US';
 export const FRENCH_FRANCE = 'fr-FR';
 export const RUSSIAN_RUSSIA = 'ru-RU';
@@ -11,20 +12,21 @@ export const CHINESE_SIMPLIFIED = 'zh-Hans';
 export const PSEUDO_LOCALE = 'pseudo-LOCALE';
 
 export const DEFAULT_LANGUAGE = RUSSIAN_RUSSIA;
+=======
+import { DEFAULT_LANGUAGE, PSEUDO_LOCALE, LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/i18n';
 
-export type LocaleFileLoader = () => Promise<ResourceKey>;
+type LocaleFileLoader = () => Promise<ResourceKey>;
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 
-export interface LanguageDefinition<Namespace extends string = string> {
-  /** IETF language tag for the language e.g. en-US */
-  code: string;
+export const GRAFANA_NAMESPACE = 'grafana' as const;
 
-  /** Language name to show in the UI. Should be formatted local to that language e.g. Français for French */
-  name: string;
-
+type BaseLanguageDefinition = (typeof SUPPORTED_LANGUAGES)[number];
+export interface LanguageDefinition<Namespace extends string = string> extends BaseLanguageDefinition {
   /** Function to load translations */
   loader: Record<Namespace, LocaleFileLoader>;
 }
 
+<<<<<<< HEAD
 export const LANGUAGES: LanguageDefinition[] = [
   {
     code: ENGLISH_US,
@@ -92,6 +94,16 @@ if (process.env.NODE_ENV === 'development') {
     },
   });
 }
+=======
+export const LANGUAGES: LanguageDefinition[] = SUPPORTED_LANGUAGES.map((def) => {
+  // Load the Default language (en-US) as the pseudo-locale, as it will be post-processed by i18next-pseudo library
+  const locale = def.code === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : def.code;
+  return {
+    ...def,
+    loader: { [GRAFANA_NAMESPACE]: () => import(`../../../locales/${locale}/grafana.json`) },
+  };
+});
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 
 // Optionally load enterprise locale extensions, if they are present.
 // It is important that this happens before NAMESPACES is defined so it has the correct value

@@ -1,0 +1,11 @@
+apiVersion: 1
+
+apps:
+  - type: test-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false
+    jsonData:
+      apiKey: "test-api-key"
+    secureJsonData:
+      secretKey: "test-secret-key"

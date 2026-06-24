@@ -5,10 +5,9 @@
 package externalversions
 
 import (
-	"fmt"
+	fmt "fmt"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
-	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -39,18 +38,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=notifications.alerting.grafana.app, Version=v0alpha1
-	case v0alpha1.SchemeGroupVersion.WithResource("receivers"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().Receivers().Informer()}, nil
-	case v0alpha1.SchemeGroupVersion.WithResource("routingtrees"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().RoutingTrees().Informer()}, nil
-	case v0alpha1.SchemeGroupVersion.WithResource("templategroups"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().TemplateGroups().Informer()}, nil
-	case v0alpha1.SchemeGroupVersion.WithResource("timeintervals"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Notifications().V0alpha1().TimeIntervals().Informer()}, nil
-
-		// Group=service.grafana.app, Version=v0alpha1
-	case servicev0alpha1.SchemeGroupVersion.WithResource("externalnames"):
+	// Group=service.grafana.app, Version=v0alpha1
+	case v0alpha1.SchemeGroupVersion.WithResource("externalnames"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Service().V0alpha1().ExternalNames().Informer()}, nil
 
 	}

@@ -1,25 +1,18 @@
 import { useCallback } from 'react';
 
 import {
-  PluginState,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerUIProps,
   ReducerID,
   isReducerID,
-  SelectableValue,
-  Field,
-  FieldType,
+  type SelectableValue,
+  type Field,
+  type FieldType,
   isTimeSeriesField,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-
-import {
-  timeSeriesTableTransformer,
-  TimeSeriesTableTransformerOptions,
-  getRefData,
-} from './timeSeriesTableTransformer';
+import { type TimeSeriesTableTransformerOptions, getRefData } from './timeSeriesTableTransformer';
 
 export function TimeSeriesTableTransformEditor({
   input,
@@ -89,8 +82,11 @@ export function TimeSeriesTableTransformEditor({
           <InlineLabel>{`Trend #${refId}`}</InlineLabel>
         </InlineField>
         <InlineField
-          label="Time field"
-          tooltip="The time field that will be used for the time series. If not selected the first found will be used."
+          label={t('transformers.time-series-table-transform-editor.label-time-field', 'Time field')}
+          tooltip={t(
+            'transformers.time-series-table-transform-editor.tooltip-time-field',
+            'The time field that will be used for the time series. If not selected the first found will be used.'
+          )}
         >
           <Select
             onChange={onSelectTimefield.bind(null, refId)}
@@ -99,7 +95,13 @@ export function TimeSeriesTableTransformEditor({
             isClearable={true}
           />
         </InlineField>
-        <InlineField label="Stat" tooltip="The statistic that should be calculated for this time series.">
+        <InlineField
+          label={t('transformers.time-series-table-transform-editor.label-stat', 'Stat')}
+          tooltip={t(
+            'transformers.time-series-table-transform-editor.tooltip-statistic-should-calculated-series',
+            'The statistic that should be calculated for this time series.'
+          )}
+        >
           <StatsPicker
             stats={[options[refId]?.stat ?? ReducerID.lastNotNull]}
             onChange={onSelectStat.bind(null, refId)}
@@ -112,13 +114,3 @@ export function TimeSeriesTableTransformEditor({
 
   return <>{configRows}</>;
 }
-
-export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
-  id: timeSeriesTableTransformer.id,
-  editor: TimeSeriesTableTransformEditor,
-  transformation: timeSeriesTableTransformer,
-  name: timeSeriesTableTransformer.name,
-  description: timeSeriesTableTransformer.description,
-  state: PluginState.beta,
-  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
-};

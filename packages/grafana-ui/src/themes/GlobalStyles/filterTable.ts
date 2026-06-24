@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export function getFilterTableStyles(theme: GrafanaTheme2) {
   return css({
@@ -66,7 +66,7 @@ export function getFilterTableStyles(theme: GrafanaTheme2) {
       '.filter-table__avatar': {
         width: '25px',
         height: '25px',
-        borderRadius: '50%',
+        borderRadius: theme.shape.radius.circle,
       },
 
       '&--hover': {

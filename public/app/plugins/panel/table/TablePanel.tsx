@@ -1,32 +1,63 @@
 import { css } from '@emotion/css';
+import { useCallback, useMemo } from 'react';
 
 import {
-  ActionModel,
+  type ActionModel,
   DashboardCursorSync,
-  DataFrame,
+  type DataFrame,
   FieldMatcherID,
   getFrameDisplayName,
-  InterpolateFunction,
-  PanelProps,
-  SelectableValue,
-  Field,
+  type InterpolateFunction,
+  type PanelProps,
+  type SelectableValue,
+  type Field,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
-import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-
-import { getActions } from '../../../features/actions/utils';
+import { useFlagTableProtoRowParser } from '@grafana/runtime/internal';
+import { type MatcherScope } from '@grafana/schema';
+import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
+import { type TableSortByFieldState } from '@grafana/ui/internal';
+import { TableNG } from '@grafana/ui/unstable';
+import { getConfig } from 'app/core/config';
+import { getActions } from 'app/features/actions/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<Options> {
+  initialRowIndex?: number;
+  sortByBehavior?: 'initial' | 'managed';
+}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange } = props;
+  const {
+    data,
+    height,
+    width,
+    options,
+    fieldConfig,
+    id,
+    timeRange,
+    replaceVariables,
+    transparent,
+    initialRowIndex,
+    sortByBehavior = 'initial',
+  } = props;
 
+  useMemo(() => {
+    cacheFieldDisplayNames(data.series);
+  }, [data.series]);
+
+  const tableProtoParserEnabled = useFlagTableProtoRowParser();
   const theme = useTheme2();
   const panelContext = usePanelContext();
+  const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
+  const _getActions = useCallback(
+    (frame: DataFrame, field: Field, rowIndex: number) =>
+      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables) : [],
+    [replaceVariables, userCanExecuteActions]
+  );
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
     : data.series;
@@ -50,25 +81,38 @@ export function TablePanel(props: Props) {
 
   const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
 
+  const disableSanitizeHtml = getConfig().disableSanitizeHtml;
+
   const tableElement = (
-    <Table
+    <TableNG
+      initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
       data={main}
       noHeader={!options.showHeader}
+      noValue={fieldConfig.defaults.noValue}
       showTypeIcons={options.showTypeIcons}
       resizable={true}
-      initialSortBy={options.sortBy}
+      sortByBehavior={sortByBehavior}
+      sortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
+      onColumnResize={(displayName, resizedWidth, fieldScope) =>
+        onColumnResize(displayName, resizedWidth, fieldScope, props)
+      }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
-      footerOptions={options.footer}
-      enablePagination={options.footer?.enablePagination}
+      frozenColumns={options.frozenColumns?.left}
+      enablePagination={options.enablePagination}
       cellHeight={options.cellHeight}
+      maxRowHeight={options.maxRowHeight}
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}
-      getActions={getCellActions}
+      getActions={_getActions}
+      structureRev={data.structureRev}
+      transparent={transparent}
+      disableSanitizeHtml={disableSanitizeHtml}
+      disableKeyboardEvents={options.disableKeyboardEvents}
+      protoParserEnabled={tableProtoParserEnabled}
     />
   );
 
@@ -87,7 +131,7 @@ export function TablePanel(props: Props) {
     <div className={tableStyles.wrapper}>
       {tableElement}
       <div className={tableStyles.selectWrapper}>
-        <Select options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
+        <Combobox options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
       </div>
     </div>
   );
@@ -97,15 +141,25 @@ function getCurrentFrameIndex(frames: DataFrame[], options: Options) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
 
-function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
+export function onColumnResize(
+  fieldDisplayName: string,
+  width: number,
+  fieldScope: MatcherScope = 'series',
+  props: Pick<Props, 'fieldConfig' | 'onFieldConfigChange'>
+) {
   const { fieldConfig } = props;
   const { overrides } = fieldConfig;
 
   const matcherId = FieldMatcherID.byName;
   const propId = 'custom.width';
 
-  // look for existing override
-  const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
+  // look for existing override. an unscoped override is treated as implicitly 'series'.
+  const override = overrides.find(
+    (o) =>
+      o.matcher.id === matcherId &&
+      o.matcher.options === fieldDisplayName &&
+      (o.matcher.scope ?? 'series') === fieldScope
+  );
 
   if (override) {
     // look for existing property
@@ -117,7 +171,7 @@ function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
     }
   } else {
     overrides.push({
-      matcher: { id: matcherId, options: fieldDisplayName },
+      matcher: { id: matcherId, options: fieldDisplayName, scope: fieldScope },
       properties: [{ id: propId, value: width }],
     });
   }
@@ -145,32 +199,45 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
 // placeholder function; assuming the values are already interpolated
 const replaceVars: InterpolateFunction = (value: string) => value;
 
-const getCellActions = (dataFrame: DataFrame, field: Field) => {
-  if (!config.featureToggles?.vizActions) {
-    return [];
+const getCellActions = (
+  dataFrame: DataFrame,
+  field: Field,
+  rowIndex: number,
+  replaceVariables: InterpolateFunction | undefined
+): Array<ActionModel<Field>> => {
+  const numActions = field.config.actions?.length ?? 0;
+
+  if (numActions > 0) {
+    const actions = getActions(
+      dataFrame,
+      field,
+      field.state!.scopedVars!,
+      replaceVariables ?? replaceVars,
+      field.config.actions ?? [],
+      { valueRowIndex: rowIndex },
+      'table'
+    );
+
+    if (actions.length === 1) {
+      return actions;
+    } else {
+      const actionsOut: Array<ActionModel<Field>> = [];
+      const actionLookup = new Set<string>();
+
+      actions.forEach((action) => {
+        const key = action.title;
+
+        if (!actionLookup.has(key)) {
+          actionsOut.push(action);
+          actionLookup.add(key);
+        }
+      });
+
+      return actionsOut;
+    }
   }
 
-  const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
-
-  const actionsModel = getActions(
-    dataFrame,
-    field,
-    field.state!.scopedVars!,
-    replaceVars,
-    field.config.actions ?? [],
-    {}
-  );
-
-  actionsModel.forEach((action) => {
-    const key = `${action.title}`;
-    if (!actionLookup.has(key)) {
-      actions.push(action);
-      actionLookup.add(key);
-    }
-  });
-
-  return actions;
+  return [];
 };
 
 const tableStyles = {

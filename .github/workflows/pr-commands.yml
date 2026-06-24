@@ -1,51 +1,26 @@
 name: PR automation
 on:
-  pull_request_target:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] action uses GITHUB_TOKEN only, does not check out fork code
     types:
       - labeled
       - opened
       - synchronize
+
 concurrency:
   group: pr-commands-${{ github.event.number }}
-jobs:
-  config:
-    runs-on: "ubuntu-latest"
-    outputs:
-      has-secrets: ${{ steps.check.outputs.has-secrets }}
-    steps:
-      - name: "Check for secrets"
-        id: check
-        shell: bash
-        run: |
-          if [ -n "${{ (secrets.GRAFANA_PR_AUTOMATION_APP_ID != '' &&
-                        secrets.GRAFANA_PR_AUTOMATION_APP_PEM != '' &&
-                        secrets.GRAFANA_MISC_STATS_API_KEY != ''
-                        ) || '' }}" ]; then
-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
-          fi
 
+permissions: {}
+
+jobs:
   main:
-    needs: config
-    if: needs.config.outputs.has-secrets
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    runs-on: ubuntu-arm64-small
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v4
+      - name: Run PR Commands
+        uses: grafana/grafana-github-actions/commands@main
         with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
-      - name: Run Commands
-        uses: ./actions/commands
-        with:
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{secrets.GITHUB_TOKEN}}
           configPath: pr-commands

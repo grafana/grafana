@@ -1,17 +1,20 @@
 import { isString } from 'lodash';
 
-import { QueryResultMeta } from '../types/data';
-import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
+import { type QueryResultMeta } from '../types/data';
+import { type Field, type DataFrame, type DataFrameDTO, type FieldDTO, FieldType } from '../types/dataFrame';
 import { makeFieldParser } from '../utils/fieldParser';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
-import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
+import { guessFieldTypeFromValue, guessFieldTypeForField } from './guessFieldType';
+import { toDataFrameDTO } from './processDataFrame';
 
 /** @deprecated */
 export type MutableField<T = any> = Field<T>;
 
 /** @deprecated */
 type MutableVectorCreator = (buffer?: unknown[]) => unknown[];
+
+type Parser = (v: string) => unknown;
 
 export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
@@ -149,14 +152,14 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
-  private parsers: Map<Field, (v: string) => any> | undefined = undefined;
+  private parsers: Map<Field, Parser> | undefined = undefined;
 
   /**
    * @deprecated unclear if this is actually used
    */
-  setParser(field: Field, parser: (v: string) => any) {
+  setParser(field: Field, parser: Parser) {
     if (!this.parsers) {
-      this.parsers = new Map<Field, (v: string) => any>();
+      this.parsers = new Map<Field, Parser>();
     }
     this.parsers.set(field, parser);
     return parser;
@@ -222,7 +225,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
    */
   add(value: T): void {
     // Will add one value for every field
-    const obj = value as any;
+    const obj: any = value;
     for (const field of this.fields) {
       let val = obj[field.name];
 
@@ -243,7 +246,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       throw new Error('Unable to set value beyond current length');
     }
 
-    const obj = (value as Record<string, unknown>) || {};
+    const obj: Record<string, unknown> = value || {};
     for (const field of this.fields) {
       field.values[index] = obj[field.name];
     }

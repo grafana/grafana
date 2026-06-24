@@ -6,21 +6,25 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,7 +42,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			desc: "zero valued single instance is single Normal state result",
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
-					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(0.0)})),
+					data.NewFrame("", data.NewField("", nil, []*float64{new(0.0)})),
 				},
 			},
 			expectResultLength: 1,
@@ -52,7 +56,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			desc: "non-zero valued single instance is single Alerting state result",
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
-					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(1.0)})),
+					data.NewFrame("", data.NewField("", nil, []*float64{new(1.0)})),
 				},
 			},
 			expectResultLength: 1,
@@ -147,7 +151,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(23.0)}),
+						data.NewField("", nil, []*float64{new(23.0)}),
 						data.NewField("", nil, []*float64{}),
 					),
 				},
@@ -183,7 +187,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(2.0), util.Pointer(3.0)}),
+						data.NewField("", nil, []*float64{new(2.0), new(3.0)}),
 					),
 				},
 			},
@@ -234,10 +238,10 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(1.0)}),
+						data.NewField("", nil, []*float64{new(1.0)}),
 					),
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(2.0)}),
+						data.NewField("", nil, []*float64{new(2.0)}),
 					),
 				},
 			},
@@ -277,7 +281,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 						data.NewField("", nil, []float64{3}),
 					),
 					data.NewFrame("",
-						data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(2.0)}),
+						data.NewField("", data.Labels{"a": "b"}, []*float64{new(2.0)}),
 					),
 				},
 			},
@@ -297,7 +301,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			res := evaluateExecutionResult(tc.execResults, time.Time{})
+			res := evaluateExecutionResult(tc.execResults, time.Time{}, time.Time{})
 
 			require.Equal(t, tc.expectResultLength, len(res))
 
@@ -319,7 +323,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 				"A": "1",
 			},
 		}
-		v := evaluateExecutionResult(results, time.Time{})
+		v := evaluateExecutionResult(results, time.Time{}, time.Time{})
 		require.Len(t, v, 1)
 		require.Equal(t, data.Labels{"datasource_uid": "1", "ref_id": "A"}, v[0].Instance)
 		require.Equal(t, NoData, v[0].State)
@@ -333,7 +337,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 				"C": "2",
 			},
 		}
-		v := evaluateExecutionResult(results, time.Time{})
+		v := evaluateExecutionResult(results, time.Time{}, time.Time{})
 		require.Len(t, v, 2)
 
 		datasourceUIDs := make([]string, 0, len(v))
@@ -591,7 +595,15 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			expressions := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
+			expressions := expr.ProvideService(
+				&setting.Cfg{ExpressionsEnabled: true},
+				nil,
+				nil,
+				featuremgmt.WithFeatures(),
+				nil,
+				tracing.InitializeTracerForTest(),
+				dsquerierclient.NewNullQSDatasourceClientBuilder(),
+			)
 			validator := NewConditionValidator(cacheService, expressions, store)
 			evalCtx := NewContext(context.Background(), u)
 
@@ -710,7 +722,19 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				cache:        cacheService,
 				pluginsStore: store,
 			})
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()))
+			evaluator := NewEvaluatorFactory(
+				setting.UnifiedAlertingSettings{},
+				cacheService,
+				expr.ProvideService(
+					&setting.Cfg{ExpressionsEnabled: true},
+					nil,
+					nil,
+					featuremgmt.WithFeatures(),
+					nil,
+					tracing.InitializeTracerForTest(),
+					dsquerierclient.NewNullQSDatasourceClientBuilder(),
+				),
+			)
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)
@@ -726,10 +750,71 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 			if testCase.reader == nil {
 				require.Empty(t, cmds[0].LoadedDimensions)
 			} else {
-				require.EqualValues(t, testCase.reader.Read(), cmds[0].LoadedDimensions)
+				require.EqualValues(t, testCase.reader.Read(context.Background()), cmds[0].LoadedDimensions)
 			}
 		})
 	}
+}
+
+func TestQueryDataResponseToExecutionResults(t *testing.T) {
+	t.Run("should set datasource type for captured values", func(t *testing.T) {
+		c := models.Condition{
+			Condition: "B",
+			Data: []models.AlertQuery{
+				{
+					RefID:         "A",
+					DatasourceUID: "test-ds",
+				},
+				{
+					RefID:         "B",
+					DatasourceUID: expr.DatasourceUID,
+				},
+			},
+		}
+
+		execResp := &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{
+						{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(10.0)},
+								),
+							},
+						},
+					},
+				},
+				"B": {
+					Frames: []*data.Frame{
+						{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(1.0)},
+								),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		results := queryDataResponseToExecutionResults(c, execResp)
+		evaluatedResults := evaluateExecutionResult(results, time.Now(), time.Now())
+
+		require.Len(t, evaluatedResults, 1)
+		result := evaluatedResults[0]
+
+		// Validate that IsDatasourceNode were correctly set
+		require.True(t, result.Values["A"].IsDatasourceNode)
+		require.False(t, result.Values["B"].IsDatasourceNode)
+	})
 }
 
 func TestEvaluate(t *testing.T) {
@@ -739,243 +824,425 @@ func TestEvaluate(t *testing.T) {
 		resp     backend.QueryDataResponse
 		expected Results
 		error    string
-	}{{
-		name: "is no data with no frames",
-		cond: models.Condition{
-			Data: []models.AlertQuery{{
-				RefID:         "A",
-				DatasourceUID: "test",
-			}, {
-				RefID:         "B",
-				DatasourceUID: expr.DatasourceUID,
-			}, {
-				RefID:         "C",
-				DatasourceUID: expr.OldDatasourceUID,
-			}, {
-				RefID:         "D",
-				DatasourceUID: expr.MLDatasourceUID,
+	}{
+		{
+			name: "is no data with no frames",
+			cond: models.Condition{
+				Data: []models.AlertQuery{{
+					RefID:         "A",
+					DatasourceUID: "test",
+				}, {
+					RefID:         "B",
+					DatasourceUID: expr.DatasourceUID,
+				}, {
+					RefID:         "C",
+					DatasourceUID: expr.OldDatasourceUID,
+				}, {
+					RefID:         "D",
+					DatasourceUID: expr.MLDatasourceUID,
+				}},
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {Frames: nil},
+					"B": {Frames: []*data.Frame{{Fields: nil}}},
+					"C": {Frames: nil},
+					"D": {Frames: []*data.Frame{{Fields: nil}}},
+				},
+			},
+			expected: Results{{
+				State: NoData,
+				Instance: data.Labels{
+					"datasource_uid": "test",
+					"ref_id":         "A",
+				},
 			}},
 		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {Frames: nil},
-				"B": {Frames: []*data.Frame{{Fields: nil}}},
-				"C": {Frames: nil},
-				"D": {Frames: []*data.Frame{{Fields: nil}}},
+		{
+			name: "is no data for one frame with no fields",
+			cond: models.Condition{
+				Data: []models.AlertQuery{{
+					RefID:         "A",
+					DatasourceUID: "test",
+				}},
 			},
-		},
-		expected: Results{{
-			State: NoData,
-			Instance: data.Labels{
-				"datasource_uid": "test",
-				"ref_id":         "A",
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {Frames: []*data.Frame{{Fields: nil}}},
+				},
 			},
-		}},
-	}, {
-		name: "is no data for one frame with no fields",
-		cond: models.Condition{
-			Data: []models.AlertQuery{{
-				RefID:         "A",
-				DatasourceUID: "test",
+			expected: Results{{
+				State: NoData,
+				Instance: data.Labels{
+					"datasource_uid": "test",
+					"ref_id":         "A",
+				},
 			}},
 		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {Frames: []*data.Frame{{Fields: nil}}},
+		{
+			name: "results contains captured values for exact label matches",
+			cond: models.Condition{
+				Condition: "B",
 			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(10.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(1.0)},
+								),
+							},
+						}},
+					},
+				},
+			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+				},
+				Values: map[string]NumberValueCapture{
+					"A": {
+						Var:    "A",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  new(10.0),
+					},
+					"B": {
+						Var:    "B",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  new(1.0),
+					},
+				},
+				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=1 ]",
+			}},
 		},
-		expected: Results{{
-			State: NoData,
-			Instance: data.Labels{
-				"datasource_uid": "test",
-				"ref_id":         "A",
+		{
+			name: "results contains captured values for subset of labels",
+			cond: models.Condition{
+				Condition: "B",
 			},
-		}},
-	}, {
-		name: "results contains captured values for exact label matches",
-		cond: models.Condition{
-			Condition: "B",
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(10.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar", "bar": "baz"},
+									[]*float64{new(1.0)},
+								),
+							},
+						}},
+					},
+				},
+			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+					"bar": "baz",
+				},
+				Values: map[string]NumberValueCapture{
+					"A": {
+						Var:    "A",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  new(10.0),
+					},
+					"B": {
+						Var:    "B",
+						Labels: data.Labels{"foo": "bar", "bar": "baz"},
+						Value:  new(1.0),
+					},
+				},
+				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
+			}},
 		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {
-					Frames: []*data.Frame{{
-						RefID: "A",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
-							),
-						},
-					}},
-				},
-				"B": {
-					Frames: []*data.Frame{{
-						RefID: "B",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(1.0)},
-							),
-						},
-					}},
+		{
+			name: "results contains error if condition frame has error",
+			cond: models.Condition{
+				Condition: "B",
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(10.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar", "bar": "baz"},
+									[]*float64{new(1.0)},
+								),
+							},
+						}},
+						Error: errors.New("some frame error"),
+					},
 				},
 			},
+			expected: Results{{
+				State:            Error,
+				Error:            errors.New("some frame error"),
+				EvaluationString: "",
+			}},
 		},
-		expected: Results{{
-			State: Alerting,
-			Instance: data.Labels{
-				"foo": "bar",
+		{
+			name: "results contain underlying error if condition frame has error that depends on another node",
+			cond: models.Condition{
+				Condition: "B",
 			},
-			Values: map[string]NumberValueCapture{
-				"A": {
-					Var:    "A",
-					Labels: data.Labels{"foo": "bar"},
-					Value:  util.Pointer(10.0),
-				},
-				"B": {
-					Var:    "B",
-					Labels: data.Labels{"foo": "bar"},
-					Value:  util.Pointer(1.0),
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(10.0)},
+								),
+							},
+						}},
+						Error: errors.New("another error depends on me"),
+					},
+					"B": {
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar", "bar": "baz"},
+									[]*float64{new(1.0)},
+								),
+							},
+						}},
+						Error: expr.MakeDependencyError("B", "A"),
+					},
 				},
 			},
-			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=1 ]",
-		}},
-	}, {
-		name: "results contains captured values for subset of labels",
-		cond: models.Condition{
-			Condition: "B",
+			expected: Results{{
+				State:            Error,
+				Error:            errors.New("another error depends on me"),
+				EvaluationString: "",
+			}},
 		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {
-					Frames: []*data.Frame{{
-						RefID: "A",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
-							),
-						},
-					}},
-				},
-				"B": {
-					Frames: []*data.Frame{{
-						RefID: "B",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar", "bar": "baz"},
-								[]*float64{util.Pointer(1.0)},
-							),
-						},
-					}},
+		{
+			name: "result values for all refIDs when a math no-op expression is used and two results share the same frame pointer",
+			cond: models.Condition{
+				Condition: "C",
+			},
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(10.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						// in a math no-op expression the frame for B is the same as A
+						// e.g. A = some_query, B = `${A}`
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(10.0)},
+								),
+							},
+						}},
+					},
+					"C": {
+						Frames: []*data.Frame{{
+							RefID: "C",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(1.0)},
+								),
+							},
+						}},
+					},
 				},
 			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+				},
+				Values: map[string]NumberValueCapture{
+					"A": {
+						Var:    "A",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  new(10.0),
+					},
+					"B": {
+						Var:    "B",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  new(10.0),
+					},
+					"C": {
+						Var:    "C",
+						Labels: data.Labels{"foo": "bar"},
+						Value:  new(1.0),
+					},
+				},
+				EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=10 ], [ var='C' labels={foo=bar} value=1 ]",
+			}},
 		},
-		expected: Results{{
-			State: Alerting,
-			Instance: data.Labels{
-				"foo": "bar",
-				"bar": "baz",
+		{
+			name: "range query with reducer includes only reducer and condition values in EvaluationString",
+			cond: models.Condition{
+				Condition: "C",
 			},
-			Values: map[string]NumberValueCapture{
-				"A": {
-					Var:    "A",
-					Labels: data.Labels{"foo": "bar"},
-					Value:  util.Pointer(10.0),
-				},
-				"B": {
-					Var:    "B",
-					Labels: data.Labels{"foo": "bar", "bar": "baz"},
-					Value:  util.Pointer(1.0),
-				},
-			},
-			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
-		}},
-	}, {
-		name: "results contains error if condition frame has error",
-		cond: models.Condition{
-			Condition: "B",
-		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {
-					Frames: []*data.Frame{{
-						RefID: "A",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
-							),
-						},
-					}},
-				},
-				"B": {
-					Frames: []*data.Frame{{
-						RefID: "B",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar", "bar": "baz"},
-								[]*float64{util.Pointer(1.0)},
-							),
-						},
-					}},
-					Error: errors.New("some frame error"),
-				},
-			},
-		},
-		expected: Results{{
-			State:            Error,
-			Error:            errors.New("some frame error"),
-			EvaluationString: "",
-		}},
-	}, {
-		name: "results contain underlying error if condition frame has error that depends on another node",
-		cond: models.Condition{
-			Condition: "B",
-		},
-		resp: backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {
-					Frames: []*data.Frame{{
-						RefID: "A",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
-							),
-						},
-					}},
-					Error: errors.New("another error depends on me"),
-				},
-				"B": {
-					Frames: []*data.Frame{{
-						RefID: "B",
-						Fields: []*data.Field{
-							data.NewField(
-								"Value",
-								data.Labels{"foo": "bar", "bar": "baz"},
-								[]*float64{util.Pointer(1.0)},
-							),
-						},
-					}},
-					Error: expr.MakeDependencyError("B", "A"),
+			resp: backend.QueryDataResponse{
+				Responses: backend.Responses{
+					"A": {
+						// This simulates a range query data response with time series data
+						Frames: []*data.Frame{{
+							RefID: "A",
+							Fields: []*data.Field{
+								data.NewField(
+									"Time",
+									nil,
+									[]time.Time{time.Now(), time.Now().Add(10 * time.Second)},
+								),
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(10.0), new(20.0)},
+								),
+							},
+						}},
+					},
+					"B": {
+						// Reduce node
+						Frames: []*data.Frame{{
+							RefID: "B",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(15.0)},
+								),
+							},
+							Meta: &data.FrameMeta{
+								Custom: []NumberValueCapture{
+									{
+										Var:              "B",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            new(15.0),
+									},
+								},
+							},
+						}},
+					},
+					"C": {
+						// Threshold
+						Frames: []*data.Frame{{
+							RefID: "C",
+							Fields: []*data.Field{
+								data.NewField(
+									"Value",
+									data.Labels{"foo": "bar"},
+									[]*float64{new(1.0)},
+								),
+							},
+							Meta: &data.FrameMeta{
+								Custom: []NumberValueCapture{
+									{
+										Var:              "B",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            new(15.0),
+									},
+									{
+										Var:              "C",
+										IsDatasourceNode: false,
+										Labels:           data.Labels{"foo": "bar"},
+										Value:            new(1.0),
+									},
+								},
+							},
+						}},
+					},
 				},
 			},
+			expected: Results{{
+				State: Alerting,
+				Instance: data.Labels{
+					"foo": "bar",
+				},
+				Values: map[string]NumberValueCapture{
+					"B": {
+						Var:              "B",
+						IsDatasourceNode: false,
+						Labels:           data.Labels{"foo": "bar"},
+						Value:            new(15.0),
+					},
+					"C": {
+						Var:              "C",
+						IsDatasourceNode: false,
+						Labels:           data.Labels{"foo": "bar"},
+						Value:            new(1.0),
+					},
+				},
+				// Note the absence of "A" in the EvaluationString.
+				// For range queries, the raw datasource values are not included
+				EvaluationString: "[ var='B' labels={foo=bar} value=15 ], [ var='C' labels={foo=bar} value=1 ]",
+			}},
 		},
-		expected: Results{{
-			State:            Error,
-			Error:            errors.New("another error depends on me"),
-			EvaluationString: "",
-		}},
-	}}
+	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -988,15 +1255,21 @@ func TestEvaluate(t *testing.T) {
 				},
 				condition: tc.cond,
 			}
-			results, err := ev.Evaluate(context.Background(), time.Now())
+			// Use a time far in the past so we can easily check if eval duration times are influenced by scheduledAt.
+			scheduledAt := time.Now().Add(-24 * time.Hour)
+			results, err := ev.Evaluate(context.Background(), scheduledAt)
 			if tc.error != "" {
 				require.EqualError(t, err, tc.error)
 			} else {
 				require.NoError(t, err)
 				require.Len(t, results, len(tc.expected))
 				for i := range results {
-					tc.expected[i].EvaluatedAt = results[i].EvaluatedAt
+					tc.expected[i].EvaluatedAt = scheduledAt
+
+					// Check if duration is a reasonably short amount of time to discount influence from scheduledAt.
+					assert.Lessf(t, results[i].EvaluationDuration, 1*time.Hour, "EvaluationDuration is too long, value may be influenced by scheduledAt")
 					tc.expected[i].EvaluationDuration = results[i].EvaluationDuration
+
 					assert.Equal(t, tc.expected[i], results[i])
 				}
 			}
@@ -1042,7 +1315,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 							data.NewField(
 								"Value",
 								data.Labels{"foo": "bar"},
-								[]*float64{util.Pointer(10.0)},
+								[]*float64{new(10.0)},
 							),
 						},
 					}},
@@ -1055,7 +1328,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "bar"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						},
@@ -1065,7 +1338,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 								data.NewField(
 									"Value",
 									data.Labels{"foo": "baz"},
-									[]*float64{util.Pointer(10.0)},
+									[]*float64{new(10.0)},
 								),
 							},
 						},
@@ -1216,6 +1489,53 @@ func TestResults_HasNonRetryableErrors(t *testing.T) {
 	}
 }
 
+func TestIsNonRetryableError(t *testing.T) {
+	tc := []struct {
+		name     string
+		err      error
+		expected bool
+	}{
+		{name: "nil error", err: nil, expected: false},
+		{name: "generic error is retryable", err: errors.New("some weird error"), expected: false},
+		{
+			name:     "invalid eval result format is non-retryable",
+			err:      &invalidEvalResultFormatError{refID: "A", reason: "unable to get frame row length", err: errors.New("weird error")},
+			expected: true,
+		},
+		{
+			name:     "series must be wide is non-retryable",
+			err:      fmt.Errorf("%w but got type long", expr.ErrSeriesMustBeWide),
+			expected: true,
+		},
+		{
+			name:     "query-limit rejection is non-retryable (through pipeline wrap)",
+			err:      fmt.Errorf("server side expressions pipeline returned an error: %w", expr.MakeQueryError("A", "uid", errors.New("the query exceeded the maximum number of chunks (err-mimir-max-chunks-per-query)"))),
+			expected: true,
+		},
+		{
+			name:     "other query error stays retryable",
+			err:      expr.MakeQueryError("A", "uid", errors.New("connection refused")),
+			expected: false,
+		},
+		{
+			name:     "non-retryable write rejection is non-retryable (through remote-write wrap)",
+			err:      fmt.Errorf("remote write failed: %w", fmt.Errorf("%w: payload too large", writer.ErrNonRetryableWrite)),
+			expected: true,
+		},
+		{
+			name:     "plain rejected write stays retryable",
+			err:      fmt.Errorf("remote write failed: %w", fmt.Errorf("%w: invalid series", writer.ErrRejectedWrite)),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, IsNonRetryableError(tt.err))
+		})
+	}
+}
+
 func TestResults_Error(t *testing.T) {
 	tc := []struct {
 		name     string
@@ -1275,7 +1595,7 @@ func TestCreate(t *testing.T) {
 
 		factory := evaluatorImpl{
 			expressionService: fakeExpressionService{
-				buildHook: func(req *expr.Request) (expr.DataPipeline, error) {
+				buildHook: func(ctx context.Context, req *expr.Request) (expr.DataPipeline, error) {
 					if request != nil {
 						assert.Fail(t, "BuildPipeline was called twice but should be only once")
 					}
@@ -1298,15 +1618,15 @@ func TestCreate(t *testing.T) {
 
 type fakeExpressionService struct {
 	hook      func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
-	buildHook func(req *expr.Request) (expr.DataPipeline, error)
+	buildHook func(ctx context.Context, req *expr.Request) (expr.DataPipeline, error)
 }
 
 func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 	return f.hook(ctx, now, pipeline)
 }
 
-func (f fakeExpressionService) BuildPipeline(req *expr.Request) (expr.DataPipeline, error) {
-	return f.buildHook(req)
+func (f fakeExpressionService) BuildPipeline(ctx context.Context, req *expr.Request) (expr.DataPipeline, error) {
+	return f.buildHook(ctx, req)
 }
 
 type fakeNode struct {
@@ -1331,4 +1651,70 @@ func (f fakeNode) String() string {
 
 func (f fakeNode) NeedsVars() []string {
 	return nil
+}
+
+func (f fakeNode) IsInputTo() map[string]struct{} {
+	return nil
+}
+
+func (f fakeNode) SetInputTo(a string) {
+}
+
+func (f fakeNode) DisabledErr() error {
+	return nil
+}
+
+func TestSanitizeHeaderValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "plain value passes through unchanged",
+			input:    "hello-world",
+			expected: "hello-world",
+		},
+		{
+			name:     "CR is stripped",
+			input:    "foo\rbar",
+			expected: "foobar",
+		},
+		{
+			name:     "LF is stripped",
+			input:    "foo\nbar",
+			expected: "foobar",
+		},
+		{
+			name:     "CRLF sequence is stripped",
+			input:    "foo\r\nbar",
+			expected: "foobar",
+		},
+		{
+			name:     "other ASCII control characters are stripped",
+			input:    "foo\x00\x01\x1f\x7fbar",
+			expected: "foobar",
+		},
+		{
+			name:     "value exactly 128 bytes is not truncated",
+			input:    strings.Repeat("a", 128),
+			expected: strings.Repeat("a", 128),
+		},
+		{
+			name:     "value longer than 128 bytes is truncated",
+			input:    strings.Repeat("a", 200),
+			expected: strings.Repeat("a", 128),
+		},
+		{
+			name:     "control chars removed before truncation check",
+			input:    strings.Repeat("a", 100) + "\r\n" + strings.Repeat("b", 100),
+			expected: strings.Repeat("a", 100) + strings.Repeat("b", 28),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, sanitizeHeaderValue(tt.input))
+		})
+	}
 }

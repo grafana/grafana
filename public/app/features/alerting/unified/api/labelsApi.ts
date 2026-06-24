@@ -17,13 +17,13 @@ export const labelsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getLabels: build.query<LabelItem[], void>({
       query: () => ({
-        url: `/api/plugins/${SupportedPlugin.Labels}/resources/v1/labels/keys`,
+        url: `/api/plugins/${SupportedPlugin.Labels}/resources/v2alpha1/labels/keys`,
       }),
       providesTags: ['GrafanaLabels'],
     }),
     getLabelValues: build.query<LabelKeyAndValues, { key: string }>({
       query: ({ key }) => ({
-        url: `/api/plugins/${SupportedPlugin.Labels}/resources/v1/labels/name/${key}`,
+        url: `/api/plugins/${SupportedPlugin.Labels}/resources/v2alpha1/labels/name/${key}`,
       }),
       providesTags: ['GrafanaLabels'],
     }),

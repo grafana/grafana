@@ -8,12 +8,13 @@ import (
 )
 
 type FakeProvisioningStore struct {
-	Calls                []Call
-	Records              map[int64]map[string]models.Provenance
-	GetProvenanceFunc    func(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
-	GetProvenancesFunc   func(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error)
-	SetProvenanceFunc    func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
-	DeleteProvenanceFunc func(ctx context.Context, o models.Provisionable, org int64) error
+	Calls                    []Call
+	Records                  map[int64]map[string]models.Provenance
+	GetProvenanceFunc        func(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
+	GetProvenancesFunc       func(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error)
+	GetProvenancesByUIDsFunc func(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]models.Provenance, error)
+	SetProvenanceFunc        func(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
+	DeleteProvenanceFunc     func(ctx context.Context, o models.Provisionable, org int64) error
 }
 
 func NewFakeProvisioningStore() *FakeProvisioningStore {
@@ -45,6 +46,23 @@ func (f *FakeProvisioningStore) GetProvenances(ctx context.Context, orgID int64,
 		for k, v := range val {
 			if strings.HasSuffix(k, resourceType) {
 				results[strings.TrimSuffix(k, resourceType)] = v
+			}
+		}
+	}
+	return results, nil
+}
+
+func (f *FakeProvisioningStore) GetProvenancesByUIDs(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]models.Provenance, error) {
+	f.Calls = append(f.Calls, Call{MethodName: "GetProvenancesByUIDs", Arguments: []any{ctx, orgID, resourceType, uids}})
+	if f.GetProvenancesByUIDsFunc != nil {
+		return f.GetProvenancesByUIDsFunc(ctx, orgID, resourceType, uids)
+	}
+	results := make(map[string]models.Provenance)
+	if val, ok := f.Records[orgID]; ok {
+		for _, uid := range uids {
+			key := uid + resourceType
+			if prov, ok := val[key]; ok {
+				results[uid] = prov
 			}
 		}
 	}

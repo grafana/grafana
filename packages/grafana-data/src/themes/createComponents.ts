@@ -1,5 +1,12 @@
-import { ThemeColors } from './createColors';
-import { ThemeShadows } from './createShadows';
+import { type ThemeColors } from './createColors';
+import { type ThemeShadows } from './createShadows';
+import type { Radii } from './createShape';
+import type { ThemeSpacingTokens } from './createSpacing';
+
+interface MenuComponentTokens {
+  borderRadius: keyof Radii;
+  padding: ThemeSpacingTokens;
+}
 
 /** @beta */
 export interface ThemeComponents {
@@ -36,15 +43,15 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  drawer: {
+    padding: number;
+  };
   textHighlight: {
     background: string;
     text: string;
   };
   sidemenu: {
     width: number;
-  };
-  menuTabs: {
-    height: number;
   };
   horizontalDrawer: {
     defaultHeight: number;
@@ -53,12 +60,13 @@ export interface ThemeComponents {
     rowHoverBackground: string;
     rowSelected: string;
   };
+  menu: MenuComponentTokens;
 }
 
 export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
   const panel = {
     padding: 1,
-    headerHeight: 4,
+    headerHeight: 5,
     background: colors.background.primary,
     borderColor: colors.border.weak,
     boxShadow: 'none',
@@ -71,6 +79,11 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
   };
 
+  const menu: MenuComponentTokens = {
+    borderRadius: 'lg',
+    padding: 0.5,
+  };
+
   return {
     height: {
       sm: 3,
@@ -80,24 +93,28 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
     input,
     panel,
     dropdown: {
-      background: input.background,
+      background: colors.background.elevated,
     },
     tooltip: {
-      background: colors.background.secondary,
+      background: colors.background.elevated,
       text: colors.text.primary,
     },
     dashboard: {
       background: colors.background.canvas,
       padding: 1,
     },
+    drawer: {
+      padding: 2,
+    },
     overlay: {
-      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.5)' : 'rgba(208, 209, 211, 0.5)',
     },
     sidemenu: {
       width: 57,
     },
+    // @ts-expect-error (added here to not crash plugins that might use it)
     menuTabs: {
-      height: 42,
+      height: 5,
     },
     textHighlight: {
       text: colors.warning.contrastText,
@@ -110,5 +127,6 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       rowHoverBackground: colors.action.hover,
       rowSelected: colors.action.selected,
     },
+    menu,
   };
 }

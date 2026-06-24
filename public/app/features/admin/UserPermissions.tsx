@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmButton, RadioButtonGroup, Icon, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ExternalUserTooltip } from 'app/features/admin/UserOrgs';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 interface Props {
   isGrafanaAdmin: boolean;
@@ -39,11 +40,15 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
 
   return (
     <div>
-      <h3 className="page-heading">Permissions</h3>
+      <h3 className="page-heading">
+        <Trans i18nKey="admin.user-permissions.title">Permissions</Trans>
+      </h3>
       <table className="filter-table form-inline">
         <tbody>
           <tr>
-            <td className="width-16">Grafana Admin</td>
+            <td className="width-16">
+              <Trans i18nKey="admin.user-permissions.grafana-admin-key">Grafana Admin</Trans>
+            </td>
             {isEditing ? (
               <td colSpan={2}>
                 <RadioButtonGroup
@@ -57,10 +62,10 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
               <td colSpan={2}>
                 {isGrafanaAdmin ? (
                   <>
-                    <Icon name="shield" /> Yes
+                    <Icon name="shield" /> <Trans i18nKey="admin.user-permissions.grafana-admin-yes">Yes</Trans>
                   </>
                 ) : (
-                  <>No</>
+                  <Trans i18nKey="admin.user-permissions.grafana-admin-no">No</Trans>
                 )}
               </td>
             )}
@@ -70,9 +75,9 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
                   onClick={onChangeClick}
                   onConfirm={handleGrafanaAdminChange}
                   onCancel={onCancelClick}
-                  confirmText="Change"
+                  confirmText={t('admin.user-permissions.confirmText-change', 'Change')}
                 >
-                  Change
+                  {t('admin.user-permissions.change-button', 'Change')}
                 </ConfirmButton>
               )}
               {isExternalUser && (

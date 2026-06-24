@@ -33,11 +33,11 @@ var updateGoldenFiles = false
 // preconfigured MySQL server suitable for running these tests.
 func TestIntegrationMySQLSnapshots(t *testing.T) {
 	// the logic in this function is copied from mysql_tests.go
-	shouldRunTest := func() bool {
-		if testing.Short() {
-			return false
-		}
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 
+	shouldRunTest := func() bool {
 		testDbName, present := os.LookupEnv("GRAFANA_TEST_DB")
 
 		if present && testDbName == "mysql" {
@@ -144,7 +144,7 @@ func TestIntegrationMySQLSnapshots(t *testing.T) {
 			if port == "" {
 				port = "3306"
 			}
-			cnnStr := fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true&loc=UTC", host, port)
+			cnnStr := fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode=ANSI_QUOTES&parseTime=true&loc=UTC", host, port)
 
 			dsInfo := sqleng.DataSourceInfo{
 				JsonData: sqleng.JsonData{

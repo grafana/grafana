@@ -21,7 +21,7 @@ func TestVerifier_Start(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
 	ns := notifications.MockNotificationService()
-	is := &idtest.MockService{}
+	is := &idtest.FakeService{}
 
 	type calls struct {
 		expireCalled bool
@@ -34,7 +34,7 @@ func TestVerifier_Start(t *testing.T) {
 		us.ExpectedUser = &user.User{ID: 1}
 		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
-			Email:  "some@email.com",
+			Email:  "some@example.com",
 			Action: user.EmailUpdateAction,
 		})
 
@@ -66,7 +66,7 @@ func TestVerifier_Start(t *testing.T) {
 		}
 		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
-			Email:  "some@email.com",
+			Email:  "some@example.com",
 			Action: user.EmailUpdateAction,
 		})
 
@@ -101,7 +101,7 @@ func TestVerifier_Start(t *testing.T) {
 		}
 		err := verifier.Start(context.Background(), user.StartVerifyEmailCommand{
 			User:   user.User{ID: 2},
-			Email:  "some@email.com",
+			Email:  "some@example.com",
 			Action: user.EmailUpdateAction,
 		})
 
@@ -116,7 +116,7 @@ func TestVerifier_Complete(t *testing.T) {
 	ts := &tempusertest.FakeTempUserService{}
 	us := &usertest.FakeUserService{}
 	ns := notifications.MockNotificationService()
-	is := &idtest.MockService{}
+	is := &idtest.FakeService{}
 
 	type calls struct {
 		updateCalled       bool
@@ -189,7 +189,7 @@ func TestVerifier_Complete(t *testing.T) {
 				Status:      tempuser.TmpUserEmailUpdateStarted,
 				Name:        string(user.EmailUpdateAction),
 				InvitedByID: 1,
-				Email:       "updated@email.com",
+				Email:       "updated@example.com",
 				EmailSent:   true,
 				EmailSentOn: time.Now(),
 			}, nil
@@ -205,14 +205,14 @@ func TestVerifier_Complete(t *testing.T) {
 			return nil
 		}
 
-		us.ExpectedUser = &user.User{Email: "initial@email.com"}
+		us.ExpectedUser = &user.User{Email: "initial@example.com"}
 		us.ExpectedError = nil
 		us.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
 			c.updateCalled = true
 			assert.True(t, *cmd.EmailVerified)
 			assert.Equal(t, int64(1), cmd.UserID)
 			assert.Equal(t, "", cmd.Login)
-			assert.Equal(t, "updated@email.com", cmd.Email)
+			assert.Equal(t, "updated@example.com", cmd.Email)
 			return nil
 		}
 
@@ -230,7 +230,7 @@ func TestVerifier_Complete(t *testing.T) {
 				Status:      tempuser.TmpUserEmailUpdateStarted,
 				Name:        string(user.EmailUpdateAction),
 				InvitedByID: 1,
-				Email:       "updated@email.com",
+				Email:       "updated@example.com",
 				EmailSent:   true,
 				EmailSentOn: time.Now(),
 			}, nil
@@ -246,14 +246,14 @@ func TestVerifier_Complete(t *testing.T) {
 			return nil
 		}
 
-		us.ExpectedUser = &user.User{Email: "initial@email.com", Login: "other@email.com"}
+		us.ExpectedUser = &user.User{Email: "initial@example.com", Login: "other@example.com"}
 		us.ExpectedError = nil
 		us.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
 			c.updateCalled = true
 			assert.True(t, *cmd.EmailVerified)
 			assert.Equal(t, int64(1), cmd.UserID)
-			assert.Equal(t, "updated@email.com", cmd.Email)
-			assert.Equal(t, "updated@email.com", cmd.Login)
+			assert.Equal(t, "updated@example.com", cmd.Email)
+			assert.Equal(t, "updated@example.com", cmd.Login)
 			return nil
 		}
 

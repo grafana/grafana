@@ -5,7 +5,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
   "axes": [
     {
       "filter": undefined,
-      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
+      "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -33,7 +33,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
     },
     {
       "filter": undefined,
-      "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
+      "font": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
       "gap": 5,
       "grid": {
         "show": true,
@@ -75,6 +75,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
     },
     "points": {
       "fill": [Function],
+      "one": true,
       "size": [Function],
       "stroke": [Function],
       "width": [Function],

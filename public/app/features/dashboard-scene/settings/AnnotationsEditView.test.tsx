@@ -2,26 +2,25 @@ import { map, of } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
-  AnnotationQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
+  type AnnotationQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
   getDataSourceUID,
   LoadingState,
-  PanelData,
+  type PanelData,
 } from '@grafana/data';
-import { SceneTimeRange, dataLayers } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { SceneTimeRange, type dataLayers } from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardDataLayerSet, NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AnnotationsEditView, MoveDirection } from './AnnotationsEditView';
-import { newAnnotationName } from './annotations/AnnotationSettingsEdit';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -121,7 +120,7 @@ describe('AnnotationsEditView', () => {
       annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
-      expect(dataLayers?.state.annotationLayers[1].state.name).toBe(newAnnotationName);
+      expect(dataLayers?.state.annotationLayers[1].state.name).toBe(NEW_ANNOTATION_NAME);
       expect(dataLayers?.state.annotationLayers[1].isActive).toBe(true);
     });
 
@@ -136,7 +135,7 @@ describe('AnnotationsEditView', () => {
       annotationsView.onMove(1, MoveDirection.UP);
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
-      expect(dataLayers?.state.annotationLayers[0].state.name).toBe(newAnnotationName);
+      expect(dataLayers?.state.annotationLayers[0].state.name).toBe(NEW_ANNOTATION_NAME);
     });
 
     it('should move an annotation down one position', () => {
@@ -150,7 +149,7 @@ describe('AnnotationsEditView', () => {
       annotationsView.onMove(0, MoveDirection.DOWN);
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
-      expect(dataLayers?.state.annotationLayers[0].state.name).toBe(newAnnotationName);
+      expect(dataLayers?.state.annotationLayers[0].state.name).toBe(NEW_ANNOTATION_NAME);
     });
 
     it('should delete annotation at index', () => {

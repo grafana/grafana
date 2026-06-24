@@ -6,9 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
@@ -34,6 +40,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -41,12 +49,14 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(testOrgID)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -62,7 +72,9 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	require.NoError(t, err)
 }
 
-func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
 	settings := hs.Cfg
 
@@ -163,10 +175,15 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 			orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 				OrgUsers: []*org.OrgUserDTO{
 					{Login: testUserLogin, Email: "testUser@grafana.com"},
-					{Login: "user1", Email: "user1@grafana.com"},
 					{Login: "user2", Email: "user2@grafana.com"},
 				},
 			}
+
+			orgService.SearchOrgUsersFn = func(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+				require.True(t, query.ExcludeHiddenUsers)
+				return orgService.ExpectedSearchOrgUsersResult, nil
+			}
+			defer func() { orgService.SearchOrgUsersFn = nil }()
 
 			sc.handlerFunc = hs.GetOrgUsersForCurrentOrg
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -183,6 +200,18 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
 			"api/org/users/lookup", org.RoleAdmin, func(sc *scenarioContext) {
+				orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
+					OrgUsers: []*org.OrgUserDTO{
+						{Login: testUserLogin, Email: "testUser@grafana.com"},
+						{Login: "user2", Email: "user2@grafana.com"},
+					},
+				}
+				orgService.SearchOrgUsersFn = func(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+					require.True(t, query.ExcludeHiddenUsers)
+					return orgService.ExpectedSearchOrgUsersResult, nil
+				}
+				defer func() { orgService.SearchOrgUsersFn = nil }()
+
 				sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -258,9 +287,17 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
-				if tt.AuthModule == login.LDAPAuthModule {
+				switch tt.AuthModule {
+				case login.LDAPAuthModule:
 					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
 					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
+				case login.GrafanaComAuthModule:
+					hs.authnService = &authntest.FakeService{
+						EnabledClients: []string{authn.ClientWithPrefix("grafana_com")},
+						ExpectedClientConfig: &authntest.FakeSSOClientConfig{
+							ExpectedIsSkipOrgRoleSyncEnabled: tt.SkipOrgRoleSync,
+						},
+					}
 				}
 				// AuthModule empty means basic auth
 
@@ -726,4 +763,70 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 		})
 	}
+}
+
+func TestSearchOrgUsersUsingK8s(t *testing.T) {
+	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
+	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC)
+
+	hits := []*user.UserSearchHitDTO{
+		{
+			ID:            42,
+			UID:           "uid-one",
+			Name:          "John Doe",
+			Login:         "jdoe",
+			Email:         "jdoe@example.com",
+			Role:          "Admin",
+			AccessControl: map[string]bool{"org.users:write": true},
+			LastSeenAt:    lastSeen,
+			LastSeenAtAge: "5 days",
+			Created:       created,
+			IsDisabled:    true,
+			IsProvisioned: true,
+		},
+		{ID: 99, UID: "uid-two", Login: "other", Role: "Viewer"},
+	}
+
+	newHS := func() *HTTPServer {
+		return &HTTPServer{
+			Cfg: setting.NewCfg(),
+			userService: &usertest.FakeUserService{
+				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 2, Users: hits, Page: 1, PerPage: 50},
+			},
+		}
+	}
+	reqCtx := func() *contextmodel.ReqContext {
+		return &contextmodel.ReqContext{Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)}}
+	}
+
+	t.Run("maps user search hits to org users", func(t *testing.T) {
+		res, err := newHS().searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1})
+		require.NoError(t, err)
+		require.Len(t, res.OrgUsers, 2)
+		assert.Equal(t, int64(2), res.TotalCount)
+
+		got := res.OrgUsers[0]
+		assert.Equal(t, int64(1), got.OrgID)
+		assert.Equal(t, int64(42), got.UserID)
+		assert.Equal(t, "uid-one", got.UID)
+		assert.Equal(t, "jdoe", got.Login)
+		assert.Equal(t, "jdoe@example.com", got.Email)
+		assert.Equal(t, "John Doe", got.Name)
+		assert.Equal(t, "Admin", got.Role)
+		assert.Equal(t, lastSeen, got.LastSeenAt)
+		assert.Equal(t, "5 days", got.LastSeenAtAge)
+		assert.Equal(t, created, got.Created)
+		assert.True(t, got.IsDisabled)
+		assert.True(t, got.IsProvisioned)
+		assert.Equal(t, map[string]bool{"org.users:write": true}, got.AccessControl)
+		assert.NotEmpty(t, got.AvatarURL)
+	})
+
+	t.Run("filters by UserID and adjusts total", func(t *testing.T) {
+		res, err := newHS().searchOrgUsersUsingK8s(reqCtx(), &org.SearchOrgUsersQuery{OrgID: 1, UserID: 42})
+		require.NoError(t, err)
+		require.Len(t, res.OrgUsers, 1)
+		assert.Equal(t, int64(42), res.OrgUsers[0].UserID)
+		assert.Equal(t, int64(1), res.TotalCount)
+	})
 }

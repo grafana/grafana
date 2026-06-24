@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 import Calendar from 'react-calendar';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../../Icon/Icon';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
@@ -19,7 +19,12 @@ export interface DatePickerProps {
   maxDate?: Date;
 }
 
-/** @public */
+/**
+ * A component with a calendar view for selecting a date.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-datepicker--docs
+ * @public
+ * */
 export const DatePicker = memo<DatePickerProps>((props) => {
   const styles = useStyles2(getStyles);
   const { isOpen, onClose } = props;
@@ -63,7 +68,7 @@ const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
 
 Body.displayName = 'Body';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       zIndex: theme.zIndex.modal,

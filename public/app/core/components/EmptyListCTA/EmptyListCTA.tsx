@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import { MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Button, CallToActionCard, Icon, IconName, LinkButton } from '@grafana/ui';
+import { Trans } from '@grafana/i18n';
+import { Alert, Button, CallToActionCard, Icon, type IconName, LinkButton } from '@grafana/ui';
 
-export interface Props {
+interface Props {
   title: string;
   buttonIcon: IconName;
   buttonLink?: string;
@@ -48,7 +49,7 @@ const EmptyListCTA = ({
         {proTip ? (
           <span key="proTipFooter">
             <Icon name="rocket" />
-            <> ProTip: {proTip} </>
+            <Trans i18nKey="empty-list-cta.pro-tip">ProTip: {{ proTip }}</Trans>
             {proTipLink && (
               <a href={proTipLink} target={proTipTarget} className="text-link">
                 {proTipLinkTitle}

@@ -1,27 +1,26 @@
 import { isArray, isEqual } from 'lodash';
 
 import {
-  LegacyMetricFindQueryOptions,
-  ScopedVars,
-  UrlQueryMap,
-  UrlQueryValue,
-  VariableType,
+  type LegacyMetricFindQueryOptions,
+  type ScopedVars,
+  type UrlQueryMap,
+  type UrlQueryValue,
   VariableRefresh,
-  VariableWithOptions,
-  QueryVariableModel,
+  type VariableWithOptions,
+  type QueryVariableModel,
+  type BaseVariableModel,
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { type StoreState } from 'app/types/store';
 
 import { getState } from '../../store/store';
-import { StoreState } from '../../types';
-import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { type TimeSrv } from '../dashboard/services/TimeSrv';
 
-import { variableAdapters } from './adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
-import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
-import { TransactionStatus, VariableModel } from './types';
+import { type KeyedVariableIdentifier, type VariableIdentifier, type VariablePayload } from './state/types';
+import { TransactionStatus } from './types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -155,7 +154,7 @@ export function getLegacyQueryOptions(
   return queryOptions;
 }
 
-export function getVariableRefresh(variable: VariableModel): VariableRefresh {
+export function getVariableRefresh(variable: BaseVariableModel): VariableRefresh {
   if (variable?.type === 'custom') {
     return VariableRefresh.onDashboardLoad;
   }
@@ -171,17 +170,6 @@ export function getVariableRefresh(variable: VariableModel): VariableRefresh {
   return variable.refresh;
 }
 
-export function getVariableTypes(): Array<{ label: string; value: VariableType }> {
-  return variableAdapters
-    .list()
-    .filter((v) => v.id !== 'system')
-    .map(({ id, name, description }) => ({
-      label: name,
-      value: id,
-      description,
-    }));
-}
-
 function getUrlValueForComparison(value: unknown) {
   if (isArray(value)) {
     if (value.length === 0) {
@@ -194,7 +182,7 @@ function getUrlValueForComparison(value: unknown) {
   return value;
 }
 
-export interface UrlQueryType {
+interface UrlQueryType {
   value: UrlQueryValue;
   removed?: boolean;
 }
@@ -239,39 +227,11 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   return count ? changes : undefined;
 }
 
-export function ensureStringValues(value: unknown | unknown[]): string | string[] {
-  if (Array.isArray(value)) {
-    return value.map(String);
-  }
-
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  if (typeof value === 'number') {
-    return value.toString(10);
-  }
-
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (typeof value === 'boolean') {
-    return value.toString();
-  }
-
-  return '';
-}
-
 export function hasOngoingTransaction(key: string, state: StoreState = getState()): boolean {
   return getVariablesState(key, state).transaction.status !== TransactionStatus.NotStarted;
 }
 
-export function toStateKey(key: string | null | undefined): string {
-  return String(key);
-}
-
-export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariableIdentifier => {
+export const toKeyedVariableIdentifier = (variable: BaseVariableModel): KeyedVariableIdentifier => {
   if (!variable.rootStateKey) {
     throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
@@ -279,13 +239,10 @@ export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariabl
   return { type: variable.type, id: variable.id, rootStateKey: variable.rootStateKey };
 };
 
-export function toVariablePayload<T extends any = undefined>(
-  identifier: VariableIdentifier,
-  data?: T
-): VariablePayload<T>;
-export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
-export function toVariablePayload<T extends any = undefined>(
-  obj: VariableIdentifier | VariableModel,
+export function toVariablePayload<T = undefined>(identifier: VariableIdentifier, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(model: BaseVariableModel, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(
+  obj: VariableIdentifier | BaseVariableModel,
   data?: T
 ): VariablePayload<T> {
   return { type: obj.type, id: obj.id, data: data as T };

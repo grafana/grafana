@@ -1,10 +1,13 @@
-import { screen, render, fireEvent } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { PanelChrome, PanelChromeProps } from './PanelChrome';
+import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
+
+import { PanelChrome, type PanelChromeProps } from './PanelChrome';
 
 const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
@@ -16,7 +19,10 @@ const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   };
 
   Object.assign(props, propOverrides);
-  return render(<PanelChrome {...props} />);
+  return {
+    ...render(<PanelChrome {...props} />),
+    user: userEvent.setup(),
+  };
 };
 
 const setupWithToggleCollapsed = (propOverrides?: Partial<PanelChromeProps>) => {
@@ -37,7 +43,10 @@ const setupWithToggleCollapsed = (propOverrides?: Partial<PanelChromeProps>) => 
     return <PanelChrome {...props} collapsed={collapsed} onToggleCollapse={toggleCollapsed} />;
   };
 
-  return render(<ControlledCollapseComponent />);
+  return {
+    ...render(<ControlledCollapseComponent />),
+    user: userEvent.setup(),
+  };
 };
 
 it('renders an empty panel with required props only', () => {
@@ -63,7 +72,7 @@ it('renders an empty panel with padding', () => {
 it('renders panel header if prop title', () => {
   setup({ title: 'Test Panel Header' });
 
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
 });
 
 // Check for backwards compatibility
@@ -79,13 +88,13 @@ it('renders panel with a header if prop leftItems', () => {
     leftItems: [<div key="left-item-test"> This should be a self-contained node </div>],
   });
 
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
 });
 
 it('renders panel with a hovering header if prop hoverHeader is true', () => {
   setup({ title: 'Test Panel Header', hoverHeader: true });
 
-  expect(screen.queryByTestId('header-container')).not.toBeInTheDocument();
+  expect(screen.queryByTestId(selectors.components.Panels.Panel.headerContainer)).not.toBeInTheDocument();
 });
 
 it('renders panel with a header if prop titleItems', () => {
@@ -93,7 +102,7 @@ it('renders panel with a header if prop titleItems', () => {
     titleItems: [<div key="title-item-test"> This should be a self-contained node </div>],
   });
 
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
 });
 
 it('renders panel with a header with icons in place if prop titleItems', () => {
@@ -109,6 +118,13 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
 
   expect(screen.getByTestId('panel-menu-button')).toBeInTheDocument();
   expect(screen.getByTestId('panel-menu-button')).not.toBeVisible();
+});
+
+it('renders panel with an always visible menu icon if prop showMenuAlways is true', () => {
+  setup({ menu: <div> Menu </div>, showMenuAlways: true });
+
+  expect(screen.getByTestId('panel-menu-button')).toBeInTheDocument();
+  expect(screen.getByTestId('panel-menu-button')).toBeVisible();
 });
 
 it('renders error status in the panel header if any given', () => {
@@ -147,17 +163,17 @@ it('renders streaming indicator in the panel header if loadingState is streaming
   expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
 });
 
-it('collapses the controlled panel when user clicks on the chevron or the title', () => {
-  setupWithToggleCollapsed({ title: 'Default title' });
+it('collapses the controlled panel when user clicks on the chevron or the title', async () => {
+  const { user } = setupWithToggleCollapsed({ title: 'Default title' });
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 
   const button = screen.getByRole('button', { name: 'Default title' });
   const content = screen.getByTestId(selectors.components.Panels.Panel.content);
   // collapse button should have same aria-controls as the panel's content
-  expect(button.getAttribute('aria-controls')).toBe(content.id);
+  expect(button).toHaveAttribute('aria-controls', content.id);
 
-  fireEvent.click(button);
+  await user.click(button);
 
   expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();
   // aria-controls should be removed when panel is collapsed
@@ -165,8 +181,8 @@ it('collapses the controlled panel when user clicks on the chevron or the title'
   expect(screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
 });
 
-it('collapses the uncontrolled panel when user clicks on the chevron or the title', () => {
-  setup({ title: 'Default title', collapsible: true });
+it('collapses the uncontrolled panel when user clicks on the chevron or the title', async () => {
+  const { user } = setup({ title: 'Default title', collapsible: true });
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 
@@ -174,11 +190,105 @@ it('collapses the uncontrolled panel when user clicks on the chevron or the titl
   const content = screen.getByTestId(selectors.components.Panels.Panel.content);
 
   // collapse button should have same aria-controls as the panel's content
-  expect(button.getAttribute('aria-controls')).toBe(content.id);
+  expect(button).toHaveAttribute('aria-controls', content.id);
 
-  fireEvent.click(button);
+  await user.click(button);
   expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();
   // aria-controls should be removed when panel is collapsed
   expect(button).not.toHaveAttribute('aria-controlls');
   expect(screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
+});
+
+it('renders panel with a header if prop subHeaderContent', () => {
+  setup({
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
+});
+
+it('renders panel with sub-header content in place if prop subHeaderContent', () => {
+  setup({
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.getByText('This should be a sub-header node')).toBeInTheDocument();
+});
+
+it('does not render sub-header content when panel is collapsed', () => {
+  setup({
+    title: 'Test Panel',
+    collapsible: true,
+    collapsed: true,
+    subHeaderContent: <div key="sub-header-test">This should be a sub-header node</div>,
+  });
+
+  expect(screen.queryByText('This should be a sub-header node')).not.toBeInTheDocument();
+});
+
+it('does not select the panel when clicking interactive content', async () => {
+  const onSelect = jest.fn();
+  const user = userEvent.setup();
+
+  render(
+    <ElementSelectionContext.Provider
+      value={{
+        enabled: true,
+        selected: [],
+        onSelect,
+        onClear: jest.fn(),
+      }}
+    >
+      <PanelChrome width={100} height={100} selectionId="panel-1">
+        {() => (
+          <div>
+            <button type="button">Button text</button>
+            <input role="combobox" />
+            {/* eslint-disable-next-line @grafana/no-plain-links */}
+            <a href="#">Anchor text</a>
+            <canvas />
+            <svg />
+            <div className="u-over" />
+            <div className="u-axis" />
+            <div role="button" />
+            <div role="columnheader">Column header</div>
+            <div>Non-interactive</div>
+          </div>
+        )}
+      </PanelChrome>
+      <div id="grafana-portal-container">
+        <div />
+      </div>
+    </ElementSelectionContext.Provider>
+  );
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('combobox') });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('button', { name: 'Button text' }) });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('link', { name: 'Anchor text' }) });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('canvas')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('svg')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('.u-over')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('div[role="button"]')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: document.querySelector('.u-axis')! });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByRole('columnheader', { name: 'Column header' }) });
+  expect(onSelect).not.toHaveBeenCalled();
+
+  await user.pointer({ keys: '[MouseLeft>]', target: screen.getByText('Non-interactive') });
+  expect(onSelect).toHaveBeenCalledTimes(1);
 });

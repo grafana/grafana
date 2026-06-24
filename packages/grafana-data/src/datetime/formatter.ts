@@ -1,11 +1,11 @@
-/* eslint-disable id-blacklist, no-restricted-imports, @typescript-eslint/ban-types */
-import moment, { Moment } from 'moment-timezone';
+/* eslint-disable id-blacklist, no-restricted-imports */
+import moment, { type Moment } from 'moment-timezone';
 
-import { TimeZone } from '../types/time';
+import { type TimeZone } from '../types/time';
 
-import { DateTimeOptions, getTimeZone } from './common';
+import { type DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
-import { DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
+import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
 
 /**
  * The type describing the options that can be passed to the {@link dateTimeFormat}
@@ -22,6 +22,11 @@ export interface DateTimeOptionsWithFormat extends DateTimeOptions {
 }
 
 type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc: DateTimeInput, options?: T) => string;
+
+// NOTE:
+// These date formatting functions now just wrap the @grafana/i18n formatting functions
+// (which themselves wrap the browserIntl APIs). In the future we may deprecate these
+// in favor of using @grafana/i18n directly.
 
 /**
  * Helper function to format date and time according to the specified options. If no options

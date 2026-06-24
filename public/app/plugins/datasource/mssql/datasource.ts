@@ -1,13 +1,22 @@
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { LanguageDefinition } from '@grafana/experimental';
-import { TemplateSrv } from '@grafana/runtime';
-import { DB, SQLQuery, SqlDatasource, SQLSelectableValue, formatSQL } from '@grafana/sql';
+import { type DataSourceInstanceSettings, type ScopedVars, generateUUID } from '@grafana/data';
+import { type LanguageDefinition } from '@grafana/plugin-ui';
+import { type TemplateSrv } from '@grafana/runtime';
+import {
+  COMMON_FNS,
+  type DB,
+  type FuncParameter,
+  MACRO_FUNCTIONS,
+  type SQLQuery,
+  type SQLSelectableValue,
+  SqlDatasource,
+  formatSQL,
+} from '@grafana/sql';
 
-import { getSchema, showDatabases, getSchemaAndName } from './MSSqlMetaQuery';
+import { getSchema, getSchemaAndName, showDatabases } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
-import { MssqlOptions } from './types';
+import { type MssqlOptions } from './types';
 
 export class MssqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
@@ -36,7 +45,7 @@ export class MssqlDatasource extends SqlDatasource {
     }
     const [_, table] = query.table.split('.');
     const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.dataset, table), {
-      refId: 'columns',
+      refId: `columns-${generateUUID()}`,
     });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
@@ -63,6 +72,16 @@ export class MssqlDatasource extends SqlDatasource {
     return this.sqlLanguageDefinition;
   }
 
+  getFunctions = (): ReturnType<DB['functions']> => {
+    const columnParam: FuncParameter = {
+      name: 'Column',
+      required: true,
+      options: (query) => this.fetchFields(query),
+    };
+
+    return [...MACRO_FUNCTIONS(columnParam), ...COMMON_FNS.map((fn) => ({ ...fn, parameters: [columnParam] }))];
+  };
+
   getDB(): DB {
     if (this.db !== undefined) {
       return this.db;
@@ -80,9 +99,9 @@ export class MssqlDatasource extends SqlDatasource {
       },
       validateQuery: (query) =>
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
-      dsID: () => this.id,
       dispose: (_dsID?: string) => {},
       toRawSql,
+      functions: () => this.getFunctions(),
       lookup: async (path?: string) => {
         if (!path) {
           const datasets = await this.fetchDatasets();

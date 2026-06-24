@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 const (
@@ -63,6 +63,7 @@ type ExtensionsV2 struct {
 	AddedComponents   []AddedComponent   `json:"addedComponents"`
 	ExposedComponents []ExposedComponent `json:"exposedComponents"`
 	ExtensionPoints   []ExtensionPoint   `json:"extensionPoints"`
+	AddedFunctions    []AddedFunction    `json:"addedFunctions"`
 }
 
 type Extensions ExtensionsV2
@@ -76,6 +77,7 @@ func (e *Extensions) UnmarshalJSON(data []byte) error {
 		e.AddedLinks = extensionsV2.AddedLinks
 		e.ExposedComponents = extensionsV2.ExposedComponents
 		e.ExtensionPoints = extensionsV2.ExtensionPoints
+		e.AddedFunctions = extensionsV2.AddedFunctions
 
 		return nil
 	}
@@ -123,6 +125,12 @@ type AddedComponent struct {
 	Description string   `json:"description"`
 }
 
+type AddedFunction struct {
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+}
+
 type ExposedComponent struct {
 	Id          string `json:"id"`
 	Title       string `json:"title"`
@@ -140,17 +148,17 @@ type ExtensionsDependencies struct {
 }
 
 type Includes struct {
-	Name       string       `json:"name"`
-	Path       string       `json:"path"`
-	Type       string       `json:"type"`
-	Component  string       `json:"component"`
-	Role       org.RoleType `json:"role"`
-	Action     string       `json:"action,omitempty"`
-	AddToNav   bool         `json:"addToNav"`
-	DefaultNav bool         `json:"defaultNav"`
-	Slug       string       `json:"slug"`
-	Icon       string       `json:"icon"`
-	UID        string       `json:"uid"`
+	Name       string            `json:"name"`
+	Path       string            `json:"path"`
+	Type       string            `json:"type"`
+	Component  string            `json:"component"`
+	Role       identity.RoleType `json:"role"`
+	Action     string            `json:"action,omitempty"`
+	AddToNav   bool              `json:"addToNav"`
+	DefaultNav bool              `json:"defaultNav"`
+	Slug       string            `json:"slug"`
+	Icon       string            `json:"icon"`
+	UID        string            `json:"uid"`
 
 	ID string `json:"-"`
 }
@@ -167,10 +175,9 @@ func (e Includes) RequiresRBACAction() bool {
 }
 
 type Dependency struct {
-	ID      string `json:"id"`
-	Type    string `json:"type"`
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	ID   string `json:"id"`
+	Type string `json:"type"`
+	Name string `json:"name"`
 }
 
 type BuildInfo struct {
@@ -231,6 +238,7 @@ type ReleaseState string
 
 const (
 	ReleaseStateAlpha ReleaseState = "alpha"
+	ReleaseStateBeta  ReleaseState = "beta"
 )
 
 type SignatureType string
@@ -260,13 +268,15 @@ type Signature struct {
 
 type PluginMetaDTO struct {
 	JSONData
-	Signature                 SignatureStatus `json:"signature"`
-	Module                    string          `json:"module"`
-	ModuleHash                string          `json:"moduleHash,omitempty"`
-	BaseURL                   string          `json:"baseUrl"`
-	Angular                   AngularMeta     `json:"angular"`
-	MultiValueFilterOperators bool            `json:"multiValueFilterOperators"`
-	LoadingStrategy           LoadingStrategy `json:"loadingStrategy"`
+	Signature                 SignatureStatus   `json:"signature"`
+	Module                    string            `json:"module"`
+	ModuleHash                string            `json:"moduleHash,omitempty"`
+	BaseURL                   string            `json:"baseUrl"`
+	Angular                   AngularMeta       `json:"angular"`
+	MultiValueFilterOperators bool              `json:"multiValueFilterOperators"`
+	LoadingStrategy           LoadingStrategy   `json:"loadingStrategy"`
+	Extensions                Extensions        `json:"extensions"`
+	Translations              map[string]string `json:"translations,omitempty"`
 }
 
 type DataSourceDTO struct {
@@ -302,38 +312,42 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID              string          `json:"id"`
-	Name            string          `json:"name"`
-	AliasIDs        []string        `json:"aliasIds,omitempty"`
-	Info            Info            `json:"info"`
-	HideFromList    bool            `json:"hideFromList"`
-	Sort            int             `json:"sort"`
-	SkipDataQuery   bool            `json:"skipDataQuery"`
-	ReleaseState    string          `json:"state"`
-	BaseURL         string          `json:"baseUrl"`
-	Signature       string          `json:"signature"`
-	Module          string          `json:"module"`
-	Angular         AngularMeta     `json:"angular"`
-	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
-	ModuleHash      string          `json:"moduleHash,omitempty"`
+	ID              string            `json:"id"`
+	Name            string            `json:"name"`
+	AliasIDs        []string          `json:"aliasIds,omitempty"`
+	Info            Info              `json:"info"`
+	HideFromList    bool              `json:"hideFromList"`
+	Sort            int               `json:"sort"`
+	SkipDataQuery   bool              `json:"skipDataQuery"`
+	Suggestions     bool              `json:"suggestions,omitempty"`
+	ReleaseState    string            `json:"state"`
+	BaseURL         string            `json:"baseUrl"`
+	Signature       string            `json:"signature"`
+	Module          string            `json:"module"`
+	Angular         AngularMeta       `json:"angular"`
+	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
+	ModuleHash      string            `json:"moduleHash,omitempty"`
+	Translations    map[string]string `json:"translations,omitempty"`
 }
 
 type AppDTO struct {
-	ID              string          `json:"id"`
-	Path            string          `json:"path"`
-	Version         string          `json:"version"`
-	Preload         bool            `json:"preload"`
-	Angular         AngularMeta     `json:"angular"`
-	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
-	Extensions      Extensions      `json:"extensions"`
-	Dependencies    Dependencies    `json:"dependencies"`
-	ModuleHash      string          `json:"moduleHash,omitempty"`
+	ID              string            `json:"id"`
+	Path            string            `json:"path"`
+	Version         string            `json:"version"`
+	Preload         bool              `json:"preload"`
+	Angular         AngularMeta       `json:"angular"`
+	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
+	Extensions      Extensions        `json:"extensions"`
+	Dependencies    Dependencies      `json:"dependencies"`
+	ModuleHash      string            `json:"moduleHash,omitempty"`
+	Translations    map[string]string `json:"translations,omitempty"`
+	BuildMode       string            `json:"buildMode,omitempty"`
 }
 
 const (
-	errorCodeSignatureMissing   ErrorCode = "signatureMissing"
-	errorCodeSignatureModified  ErrorCode = "signatureModified"
-	errorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
+	ErrorCodeSignatureMissing   ErrorCode = "signatureMissing"
+	ErrorCodeSignatureModified  ErrorCode = "signatureModified"
+	ErrorCodeSignatureInvalid   ErrorCode = "signatureInvalid"
 	ErrorCodeFailedBackendStart ErrorCode = "failedBackendStart"
 	ErrorAngular                ErrorCode = "angular"
 )
@@ -382,11 +396,11 @@ func (e Error) AsErrorCode() ErrorCode {
 
 	switch e.SignatureStatus {
 	case SignatureStatusInvalid:
-		return errorCodeSignatureInvalid
+		return ErrorCodeSignatureInvalid
 	case SignatureStatusModified:
-		return errorCodeSignatureModified
+		return ErrorCodeSignatureModified
 	case SignatureStatusUnsigned:
-		return errorCodeSignatureMissing
+		return ErrorCodeSignatureMissing
 	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
@@ -401,11 +415,11 @@ func (e *Error) WithMessage(m string) *Error {
 
 func (e Error) PublicMessage() string {
 	switch e.ErrorCode {
-	case errorCodeSignatureInvalid:
+	case ErrorCodeSignatureInvalid:
 		return "Invalid plugin signature"
-	case errorCodeSignatureModified:
+	case ErrorCodeSignatureModified:
 		return "Plugin signature does not match"
-	case errorCodeSignatureMissing:
+	case ErrorCodeSignatureMissing:
 		return "Plugin signature is missing"
 	case ErrorCodeFailedBackendStart:
 		return "Plugin failed to start"
@@ -445,3 +459,20 @@ type QueryCachingConfig struct {
 	Enabled bool  `json:"enabled"`
 	TTLMS   int64 `json:"TTLMs"`
 }
+
+// CloudProvisioningMethod is the method used to provision the plugin in Grafana Cloud.
+type CloudProvisioningMethod string
+
+const (
+	// CloudProvisioningMethodUnknown is used when the plugin provisioning method is unknown.
+	CloudProvisioningMethodUnknown CloudProvisioningMethod = "unknown"
+
+	// CloudProvisioningMethodNone is used when the plugin is not provisioned in Grafana Cloud.
+	CloudProvisioningMethodNone CloudProvisioningMethod = "none"
+
+	// CloudProvisioningMethodURL is used when the plugin is provisioned from a URL.
+	CloudProvisioningMethodURL CloudProvisioningMethod = "url"
+
+	// CloudProvisioningMethodCatalog is used when the plugin is provisioned from the catalog.
+	CloudProvisioningMethodCatalog CloudProvisioningMethod = "catalog"
+)

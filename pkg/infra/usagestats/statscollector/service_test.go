@@ -23,7 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/stats/statstest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -139,15 +141,16 @@ func TestCollectingUsageStats(t *testing.T) {
 	s := createService(t, &setting.Cfg{
 		ReportingEnabled:     true,
 		BuildVersion:         "5.0.0",
-		AnonymousEnabled:     true,
+		Anonymous:            setting.AnonymousSettings{Enabled: true},
 		BasicAuthEnabled:     true,
 		LDAPAuthEnabled:      true,
 		AuthProxy:            setting.AuthProxySettings{Enabled: true},
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
-		RemoteCacheOptions: &setting.RemoteCacheOptions{
+		RemoteCacheOptions: &setting.RemoteCacheSettings{
 			Name: "database",
 		},
+		EnableFrontendSandboxForPlugins: []string{"grafana-worldmap-panel"},
 	}, sqlStore, statsService,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
@@ -163,7 +166,6 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 15, metrics["stats.total_auth_token.count"])
 	assert.EqualValues(t, 2, metrics["stats.api_keys.count"])
 	assert.EqualValues(t, 5, metrics["stats.avg_auth_token_per_user.count"])
-	assert.EqualValues(t, 16, metrics["stats.dashboard_versions.count"])
 	assert.EqualValues(t, 17, metrics["stats.annotations.count"])
 	assert.EqualValues(t, 18, metrics["stats.alert_rules.count"])
 	assert.EqualValues(t, 19, metrics["stats.library_panels.count"])
@@ -178,6 +180,8 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 3, metrics["stats.correlations.count"])
 
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
+
+	assert.EqualValues(t, 1, metrics["stats.plugins.sandboxed_plugins.count"])
 }
 
 func TestDatasourceStats(t *testing.T) {
@@ -322,7 +326,6 @@ func mockSystemStats(statsService *statstest.FakeService) {
 		Snapshots:                 13,
 		Teams:                     14,
 		AuthTokens:                15,
-		DashboardVersions:         16,
 		Annotations:               17,
 		AlertRules:                18,
 		LibraryPanels:             19,
@@ -347,6 +350,13 @@ type mockSocial struct {
 
 func (m *mockSocial) GetOAuthProviders() map[string]bool {
 	return m.OAuthProviders
+}
+
+type mockAdvisor struct {
+}
+
+func (m *mockAdvisor) ReportSummary(ctx context.Context) (*advisor.ReportInfo, error) {
+	return &advisor.ReportInfo{}, nil
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
@@ -382,6 +392,8 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		featuremgmt.WithManager("feature1", "feature2"),
 		o.datasources,
 		httpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{}}),
+		sandbox.ProvideService(cfg),
+		&mockAdvisor{},
 	)
 }
 

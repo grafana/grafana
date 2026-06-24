@@ -1,216 +1,178 @@
-import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
-import { useAsyncFn, useInterval, useMeasure } from 'react-use';
+import { useMemo } from 'react';
+import { useToggle } from 'react-use';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Button, LinkButton, LoadingBar, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
-import { logInfo, LogMessages, trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
-import { NoRulesSplash } from '../components/rules/NoRulesCTA';
-import { INSTANCES_DISPLAY_LIMIT } from '../components/rules/RuleDetails';
-import { RuleListErrors } from '../components/rules/RuleListErrors';
-import { RuleStats } from '../components/rules/RuleStats';
+import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
+import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
+import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
-import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
-import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
-import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRulesAction } from '../state/actions';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { getAllRulesSourceNames, getApplicationFromRulesSource, getRulesSourceUniqueKey } from '../utils/datasource';
-import { makeFolderAlertsLink } from '../utils/misc';
+import { useRulesFilter } from '../hooks/useFilteredRules';
+import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
+import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
+import { getRulesDataSources } from '../utils/datasource';
+import { isAdmin } from '../utils/misc';
 
-import { EvaluationGroupWithRules } from './components/EvaluationGroupWithRules';
-import Namespace from './components/Namespace';
+import { AlertsActivityBanner } from './AlertsActivityBanner';
+import { FilterView } from './FilterView';
+import { GroupedView } from './GroupedView';
+import { RuleListPageTitle } from './RuleListPageTitle';
+import RulesFilter from './filter/RulesFilter.v2';
+import { RulesFilterSidebar } from './filter/RulesFilterSidebar';
+import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 
-// make sure we ask for 1 more so we show the "show x more" button
-const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
+function RuleList() {
+  const { filterState } = useRulesFilter();
+  const { viewMode, handleViewChange } = useListViewMode();
 
-const RuleList = withErrorBoundary(
-  () => {
-    const dispatch = useDispatch();
-    const styles = useStyles2(getStyles);
-    const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
-    const [expandAll, setExpandAll] = useState(false);
+  return (
+    <Stack direction="column">
+      <AlertsActivityBanner />
+      <Stack direction="column" gap={2}>
+        <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
+        <Stack direction="row" grow={1} minHeight={0}>
+          <RulesFilterSidebar />
+          <Box flex={1} minWidth={0} paddingLeft={2}>
+            {viewMode === 'list' ? (
+              <FilterView filterState={filterState} />
+            ) : (
+              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+            )}
+          </Box>
+        </Stack>
+      </Stack>
+    </Stack>
+  );
+}
 
-    const onFilterCleared = useCallback(() => setExpandAll(false), []);
-
-    const { filterState, hasActiveFilters } = useRulesFilter();
-
-    const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
-    const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
-    const loading = rulesDataSourceNames.some(
-      (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
-    );
-
-    const promRequests = Object.entries(promRuleRequests);
-    const rulerRequests = Object.entries(rulerRuleRequests);
-
-    const allPromLoaded = promRequests.every(
-      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-    );
-    const allRulerLoaded = rulerRequests.every(
-      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-    );
-
-    const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
-
-    const allRulerEmpty = rulerRequests.every(([_, state]) => {
-      const rulerRules = Object.entries(state?.result ?? {});
-      const noRules = rulerRules.every(([_, result]) => result?.length === 0);
-      return noRules && state.dispatched;
-    });
-
-    const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
-    // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
-    const [_, fetchRules] = useAsyncFn(async () => {
-      if (!loading) {
-        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-      }
-    }, [loading, limitAlerts, dispatch]);
-
-    useEffect(() => {
-      trackRuleListNavigation().catch(() => {});
-    }, []);
-
-    // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
-    useEffect(() => {
-      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-    }, [dispatch, limitAlerts]);
-    useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
-
-    // Show splash only when we loaded all of the data sources and none of them has alerts
-    const hasNoAlertRulesCreatedYet =
-      allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
-    const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
-
-    const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-    const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
-
-    const sortedNamespaces = filteredNamespaces.sort((a: CombinedRuleNamespace, b: CombinedRuleNamespace) =>
-      a.name.localeCompare(b.name)
-    );
-
-    return (
-      // We don't want to show the Loading... indicator for the whole page.
-      // We show separate indicators for Grafana-managed and Cloud rules
-      <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
-        <RuleListErrors />
-        <RulesFilter onClear={onFilterCleared} />
-        {hasAlertRulesCreated && (
-          <>
-            <div className={styles.break} />
-            <div className={styles.buttonsContainer}>
-              <div className={styles.statsContainer}>
-                {hasActiveFilters && (
-                  <Button
-                    className={styles.expandAllButton}
-                    icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-                    variant="secondary"
-                    onClick={() => setExpandAll(!expandAll)}
-                  >
-                    {expandAll ? 'Collapse all' : 'Expand all'}
-                  </Button>
-                )}
-                <RuleStats namespaces={filteredNamespaces} />
-              </div>
-            </div>
-          </>
-        )}
-        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && (
-          <>
-            <LoadingIndicator visible={loading} />
-            <ul className={styles.rulesTree} role="tree" aria-label="List of alert rules">
-              {sortedNamespaces.map((namespace) => {
-                const { rulesSource, uid } = namespace;
-
-                const application = getApplicationFromRulesSource(rulesSource);
-                const href = application === 'grafana' && uid ? makeFolderAlertsLink(uid, namespace.name) : undefined;
-
-                return (
-                  <Namespace
-                    key={getRulesSourceUniqueKey(rulesSource) + namespace.name}
-                    href={href}
-                    name={namespace.name}
-                    application={application}
-                  >
-                    {namespace.groups
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((group) => (
-                        <EvaluationGroupWithRules key={group.name} group={group} rulesSource={rulesSource} />
-                      ))}
-                  </Namespace>
-                );
-              })}
-            </ul>
-          </>
-        )}
-      </AlertingPageWrapper>
-    );
-  },
-  { style: 'page' }
-);
-
-const LoadingIndicator = ({ visible = false }) => {
-  const [measureRef, { width }] = useMeasure<HTMLDivElement>();
-  return <div ref={measureRef}>{visible && <LoadingBar width={width} />}</div>;
-};
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  rulesTree: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-  }),
-  break: css({
-    width: '100%',
-    height: 0,
-    marginBottom: theme.spacing(2),
-    borderBottom: `solid 1px ${theme.colors.border.medium}`,
-  }),
-  buttonsContainer: css({
-    marginBottom: theme.spacing(2),
-    display: 'flex',
-    justifyContent: 'space-between',
-  }),
-  statsContainer: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  }),
-  expandAllButton: css({
-    marginRight: theme.spacing(1),
-  }),
-});
-
-export default RuleList;
-
-export function CreateAlertButton() {
-  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+export function RuleListActions() {
+  const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
-  const location = useLocation();
+  // Check if there are any data sources with manageAlerts enabled
+  const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
+  const isDisableDMAinUIEnabled = config.featureToggles.alertingDisableDMAinUI ?? false;
 
-  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+  const canCreateGrafanaRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
+  const canCreateCloudRules =
+    createCloudRuleSupported && createCloudRuleAllowed && hasAlertEnabledDataSources && !isDisableDMAinUIEnabled;
+  const canExportRules = exportRulesSupported && exportRulesAllowed;
 
-  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+  const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
+  // Align import UI permission with convert endpoint requirements: rule create + provisioning set status
+  const canImportRulesToGMA =
+    config.featureToggles.alertingMigrationUI &&
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
+    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  if (canCreateGrafanaRules || canCreateCloudRules) {
-    return (
-      <LinkButton
-        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
-        icon="plus"
-        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-      >
-        New alert rule
-      </LinkButton>
-    );
-  }
-  return null;
+  const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
+
+  const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
+
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
+
+  const moreActionsMenu = useMemo(
+    () => (
+      <Menu>
+        <Menu.Group>
+          <Menu.Item
+            label={t('alerting.rule-list.new-rule-for-export', 'New alert rule for export')}
+            icon="file-export"
+            url="/alerting/export-new-rule"
+          />
+          {canExportRules && (
+            <Menu.Item
+              label={t('alerting.rule-list.export-all-grafana-rules', 'Export all Grafana rules')}
+              icon="download-alt"
+              onClick={toggleShowExportDrawer}
+            />
+          )}
+          {canImportRulesToGMA && (
+            <Menu.Item
+              label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
+              icon="upload"
+              url="/alerting/import-datasource-managed-rules"
+              disabled={importDisabled}
+              description={importDisabled ? importDisabledReason : undefined}
+            />
+          )}
+          {canAccessMigrationWizardUI && (
+            <Menu.Item
+              label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to Grafana Alerting')}
+              icon="exchange-alt"
+              url="/alerting/import-to-gma"
+              disabled={importDisabled}
+              description={importDisabled ? importDisabledReason : undefined}
+            />
+          )}
+        </Menu.Group>
+        <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>
+          {canCreateGrafanaRules && (
+            <Menu.Item
+              label={t('alerting.rule-list.new-grafana-recording-rule', 'New Grafana recording rule')}
+              icon="grafana"
+              url="/alerting/new/grafana-recording"
+            />
+          )}
+          {canCreateCloudRules && (
+            <Menu.Item
+              label={t('alerting.rule-list.new-datasource-recording-rule', 'New Data source recording rule')}
+              icon="gf-prometheus"
+              url="/alerting/new/recording"
+            />
+          )}
+        </Menu.Group>
+      </Menu>
+    ),
+    [
+      canCreateGrafanaRules,
+      canCreateCloudRules,
+      canImportRulesToGMA,
+      canAccessMigrationWizardUI,
+      canExportRules,
+      toggleShowExportDrawer,
+      importDisabled,
+      importDisabledReason,
+    ]
+  );
+
+  return (
+    <Stack direction="row" gap={1}>
+      {canCreateRules && (
+        <LinkButton variant="primary" icon="plus" href="/alerting/new/alerting">
+          <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
+        </LinkButton>
+      )}
+      {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
+      <Dropdown overlay={moreActionsMenu}>
+        <Button variant="secondary">
+          <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />
+        </Button>
+      </Dropdown>
+      {canExportRules && showExportDrawer && <GrafanaRulesExporter onClose={toggleShowExportDrawer} />}
+    </Stack>
+  );
+}
+
+export default function RuleListPage() {
+  const { isApplying } = useApplyDefaultSearch();
+  const { navId, pageNav } = useAlertRulesNav();
+
+  return (
+    <AlertingPageWrapper
+      navId={navId}
+      pageNav={pageNav}
+      renderTitle={(title) => <RuleListPageTitle title={title} />}
+      isLoading={isApplying}
+      actions={<RuleListActions />}
+    >
+      {!isApplying && <RuleList />}
+    </AlertingPageWrapper>
+  );
 }

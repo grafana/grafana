@@ -37,7 +37,7 @@ func (e *ConditionValidator) Validate(ctx EvaluationContext, condition models.Co
 		case expr.TypeDatasourceNode:
 			p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
 			if !found { // technically this should fail earlier during datasource resolution phase.
-				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
+				return fmt.Errorf("plugin %s could not be found for datasource query refID %s: %w", query.DataSource.Type, query.RefID, plugins.ErrPluginNotRegistered)
 			}
 			if !p.Backend {
 				return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
@@ -45,12 +45,12 @@ func (e *ConditionValidator) Validate(ctx EvaluationContext, condition models.Co
 		case expr.TypeMLNode:
 			_, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
 			if !found {
-				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
+				return fmt.Errorf("plugin %s could not be found for datasource query refID %s: %w", query.DataSource.Type, query.RefID, plugins.ErrPluginNotRegistered)
 			}
 		case expr.TypeCMDNode:
 		}
 	}
-	pipeline, err := e.expressionService.BuildPipeline(req)
+	pipeline, err := e.expressionService.BuildPipeline(ctx.Ctx, req)
 	if err != nil {
 		return err
 	}

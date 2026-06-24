@@ -15,7 +15,9 @@ const { ESLintUtils } = require('@typescript-eslint/utils');
 
 const GRAFANA_E2E_PACKAGE_NAME = '@grafana/e2e-selectors';
 
-const createRule = ESLintUtils.RuleCreator((name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`);
+const createRule = ESLintUtils.RuleCreator(
+  (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
+);
 
 // A relative simple lint rule that will look of the `selectors` export from @grafana/e2e-selectors
 // is used in an aria-label
@@ -39,7 +41,7 @@ const rule = createRule({
         const identifiers = findIdentifiers(node.value.expression);
 
         for (const identifier of identifiers) {
-          const scope = context.getScope();
+          const scope = context.sourceCode.getScope(node);
 
           // Find the actual "scoped variable" to inspect it's import
           // This is relatively fragile, and will fail to find the import if the variable is reassigned
@@ -48,7 +50,7 @@ const rule = createRule({
             (v) =>
               v.type === 'ImportBinding' &&
               v.parent.type === 'ImportDeclaration' &&
-              v.parent.source.value === GRAFANA_E2E_PACKAGE_NAME
+              v.parent.source.value.startsWith(GRAFANA_E2E_PACKAGE_NAME)
           );
 
           if (importDef) {

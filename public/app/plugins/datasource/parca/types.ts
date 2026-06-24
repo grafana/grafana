@@ -1,6 +1,6 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { type DataSourceJsonData } from '@grafana/data';
 
-import { ParcaDataQuery as ParcaBase, ParcaQueryType } from './dataquery.gen';
+import { type ParcaDataQuery as ParcaBase, type ParcaQueryType } from './dataquery.gen';
 
 export interface Query extends ParcaBase {
   queryType: ParcaQueryType;

@@ -1,9 +1,9 @@
-import { Props } from 'react-virtualized-auto-sizer';
+import { type Props } from 'react-virtualized-auto-sizer';
 
-import { DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { type DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { LokiQuery } from '../../../plugins/datasource/loki/types';
+import { type LokiQuery } from '../../../plugins/datasource/loki/types';
 
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
@@ -15,8 +15,9 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: () => testEventBus,
 }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasPermission: () => true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },

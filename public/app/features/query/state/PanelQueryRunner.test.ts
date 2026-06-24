@@ -5,8 +5,9 @@ import { Subject } from 'rxjs';
 // Importing this way to be able to spy on grafana/data
 
 import * as grafanaData from '@grafana/data';
-import { DataSourceApi, TypedVariableModel } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+import { type DataSourceApi, DataTransformerID, dateTime, type TypedVariableModel } from '@grafana/data';
+import { convertFrameTypeTransformer, FrameType, mockTransformationsRegistry } from '@grafana/data/internal';
+import { type DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
 import { Echo } from '../../../core/services/echo/Echo';
@@ -14,11 +15,11 @@ import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/
 
 import {
   createDashboardQueryRunner,
-  DashboardQueryRunnerFactoryArgs,
+  type DashboardQueryRunnerFactoryArgs,
   setDashboardQueryRunnerFactory,
 } from './DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from './DashboardQueryRunner/utils';
-import { PanelQueryRunner, QueryRunnerOptions } from './PanelQueryRunner';
+import { PanelQueryRunner, type QueryRunnerOptions } from './PanelQueryRunner';
 
 jest.mock('@grafana/data', () => ({
   __esModule: true,
@@ -155,11 +156,12 @@ function describeQueryRunnerScenario(
         minInterval: ctx.minInterval,
         maxDataPoints: ctx.maxDataPoints ?? Infinity,
         timeRange: {
-          from: grafanaData.dateTime().subtract(1, 'days'),
-          to: grafanaData.dateTime(),
+          from: dateTime('2023-01-01T12:00:00Z'),
+          to: dateTime('2023-01-02T12:00:00Z'),
           raw: { from: '1d', to: 'now' },
         },
         panelId: 1,
+        panelName: 'PanelName',
         queries: [{ refId: 'A' }],
       } as QueryRunnerOptions;
 
@@ -180,6 +182,10 @@ function describeQueryRunnerScenario(
 }
 
 describe('PanelQueryRunner', () => {
+  beforeAll(() => {
+    mockTransformationsRegistry([convertFrameTypeTransformer]);
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -197,6 +203,11 @@ describe('PanelQueryRunner', () => {
       expect(ctx.queryCalledWith?.scopedVars.server!.text).toBe('Server1');
       expect(ctx.queryCalledWith?.scopedVars.__interval!.text).toBe('5m');
       expect(ctx.queryCalledWith?.scopedVars.__interval_ms!.text).toBe('300000');
+    });
+
+    it('should pass the panel id and name', async () => {
+      expect(ctx.queryCalledWith?.panelId).toBe(1);
+      expect(ctx.queryCalledWith?.panelName).toBe('PanelName');
     });
   });
 
@@ -314,6 +325,48 @@ describe('PanelQueryRunner', () => {
   );
 
   describeQueryRunnerScenario(
+    'transformations',
+    (ctx) => {
+      it('should re-categorize any anno frames returned by series transformations', async () => {
+        ctx.runner.getData({ withTransforms: true, withFieldConfig: false }).subscribe({
+          next: (data: grafanaData.PanelData) => {
+            try {
+              expect(data.series).toEqual([]);
+              expect(data.annotations).toEqual([
+                {
+                  name: 'exemplar',
+                  meta: { custom: { resultType: 'exemplar' }, dataTopic: 'annotations' },
+                  length: 2,
+                  fields: [
+                    { config: {}, name: 'Time', state: null, type: 'time', values: [1000, 2000] },
+                    { config: {}, name: 'Value', state: null, type: 'number', values: [1, 2] },
+                  ],
+                },
+              ]);
+              return data;
+            } catch (e) {
+              return Promise.reject(e instanceof Error ? e.message : e);
+            }
+          },
+        });
+      });
+    },
+    {
+      getFieldOverrideOptions: () => undefined,
+      getTransformations: () => [
+        {
+          id: DataTransformerID.convertFrameType,
+          topic: grafanaData.DataTopic.Series,
+          options: {
+            targetType: FrameType.Exemplar,
+          },
+        },
+      ],
+      getDataSupport: () => ({ annotations: true, alertStates: false }),
+    }
+  );
+
+  describeQueryRunnerScenario(
     'getData',
     (ctx) => {
       it('should not apply transformations when transform option is false', async () => {
@@ -329,6 +382,7 @@ describe('PanelQueryRunner', () => {
       });
 
       it('should not apply field config when applyFieldConfig option is false', async () => {
+        applyFieldOverridesMock.mockClear();
         ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
           next: (data: grafanaData.PanelData) => {
             return data;
@@ -372,6 +426,7 @@ describe('PanelQueryRunner', () => {
       });
 
       it('should not apply field config when applyFieldConfig option is false', async () => {
+        applyFieldOverridesMock.mockClear();
         ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
           next: (data: grafanaData.PanelData) => {
             return data;

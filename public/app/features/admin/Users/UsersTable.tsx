@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
-  CellProps,
-  Column,
-  FetchDataFunc,
+  type CellProps,
+  type Column,
+  type FetchDataFunc,
   Icon,
   InteractiveTable,
   LinkButton,
@@ -16,13 +17,13 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { UserDTO } from 'app/types';
+import { type UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 
-interface UsersTableProps {
+export interface UsersTableProps {
   users: UserDTO[];
   showPaging?: boolean;
   totalPages: number;
@@ -54,7 +55,12 @@ export const UsersTable = ({
         header: 'Логин',
         cell: ({ row: { original } }: Cell<'login'>) => {
           return (
-            <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.id}`} title="Edit user">
+            <TextLink
+              color="primary"
+              inline={false}
+              href={`/admin/users/edit/${original.uid}`}
+              title={t('admin.users-table.columns.title-edit-user', 'Edit user')}
+            >
               {original.login}
             </TextLink>
           );
@@ -83,7 +89,10 @@ export const UsersTable = ({
                   <Stack alignItems={'center'}>
                     <OrgUnits units={value} icon={'building'} />
                     {row.original.isAdmin && (
-                      <Tooltip placement="top" content="Grafana Admin">
+                      <Tooltip
+                        placement="top"
+                        content={t('admin.users-table.columns.content-grafana-admin', 'Grafana Admin')}
+                      >
                         <Icon name="shield" />
                       </Tooltip>
                     )}
@@ -101,9 +110,15 @@ export const UsersTable = ({
               cell: ({ cell: { value } }: Cell<'licensedRole'>) => {
                 return value === 'None' ? (
                   <Text color={'disabled'}>
-                    Not assigned{' '}
-                    <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
-                      <Icon name="question-circle" />
+                    <Trans i18nKey="admin.users-table.no-licensed-roles">Not assigned</Trans>
+                    <Tooltip
+                      placement="top"
+                      content={t(
+                        'admin.users-table.tooltip-assigned-role',
+                        'A licensed role will be assigned when this user signs in'
+                      )}
+                    >
+                      <Icon name="question-circle" style={{ margin: '0 0 4 4' }} />
                     </Tooltip>
                   </Text>
                 ) : (
@@ -120,8 +135,29 @@ export const UsersTable = ({
           content: 'Time since user was seen using Grafana',
           iconName: 'question-circle',
         },
-        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
-          return <>{value && <>{value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>}</>;
+        cell: ({
+          cell: { value },
+          row: {
+            original: { lastSeenAt, created },
+          },
+        }: Cell<'lastSeenAtAge'>) => {
+          // The user has never logged in if lastSeenAt is before its creation date.
+          const neverLoggedIn = lastSeenAt && created && new Date(lastSeenAt) < new Date(created);
+          return (
+            <>
+              {value && (
+                <>
+                  {neverLoggedIn ? (
+                    <Text color={'disabled'}>
+                      <Trans i18nKey="admin.users-table.last-seen-never">Never</Trans>
+                    </Text>
+                  ) : (
+                    value
+                  )}
+                </>
+              )}
+            </>
+          );
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },
@@ -130,6 +166,13 @@ export const UsersTable = ({
         header: 'Источник',
         cell: ({ cell: { value } }: Cell<'authLabels'>) => (
           <>{Array.isArray(value) && value.length > 0 && <TagBadge label={value[0]} removeIcon={false} count={0} />}</>
+        ),
+      },
+      {
+        id: 'isProvisioned',
+        header: 'Provisioned',
+        cell: ({ cell: { value } }: Cell<'isProvisioned'>) => (
+          <>{value && <Tag colorIndex={14} name={'Provisioned'} />}</>
         ),
       },
       {
@@ -146,9 +189,15 @@ export const UsersTable = ({
               variant="secondary"
               size="sm"
               icon="pen"
+<<<<<<< HEAD
               href={`admin/users/edit/${original.id}`}
               aria-label={`Edit user ${original.name}`}
               tooltip={'изменить пользователя'}
+=======
+              href={`admin/users/edit/${original.uid}`}
+              aria-label={t('admin.users-table.edit-aria-label', 'Edit user: {{name}}', { name: original.name })}
+              tooltip={t('admin.users-table.edit-tooltip', 'Edit user')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             />
           );
         },
@@ -158,7 +207,7 @@ export const UsersTable = ({
   );
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => user.uid} fetchData={fetchData} />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />

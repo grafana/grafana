@@ -35,9 +35,11 @@ type flatResourcePermission struct {
 	Action           string
 	Scope            string
 	UserId           int64
+	UserUid          string
 	UserLogin        string
 	UserEmail        string
 	TeamId           int64
+	TeamUid          string
 	TeamEmail        string
 	Team             string
 	BuiltInRole      string
@@ -84,6 +86,31 @@ func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd 
 	})
 
 	return err
+}
+
+func (s *store) GetPermissionIDByRoleName(ctx context.Context, orgID int64, roleName string) (int64, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionIDByRoleName")
+	defer span.End()
+
+	var permissionID int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.SQL(`
+			SELECT p.id 
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			WHERE r.name = ? AND r.org_id = ?
+			LIMIT 1
+		`, roleName, orgID).Get(&permissionID)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return fmt.Errorf("permission not found for role")
+		}
+		return nil
+	})
+
+	return permissionID, err
 }
 
 func (s *store) SetUserResourcePermission(
@@ -331,10 +358,12 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	userSelect := rawSelect + `
 		ur.user_id AS user_id,
 		u.login AS user_login,
+		u.uid AS user_uid,
 		u.is_service_account AS is_service_account,
 		u.email AS user_email,
 		0 AS team_id,
 		'' AS team,
+		'' AS team_uid,
 		'' AS team_email,
 		'' AS built_in_role
 	`
@@ -342,10 +371,12 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	teamSelect := rawSelect + `
 		0 AS user_id,
 		'' AS user_login,
+		'' AS user_uid,
 		` + s.sql.GetDialect().BooleanStr(false) + ` AS is_service_account,
 		'' AS user_email,
 		tr.team_id AS team_id,
 		t.name AS team,
+		t.uid AS team_uid,
 		t.email AS team_email,
 		'' AS built_in_role
 	`
@@ -353,10 +384,12 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	builtinSelect := rawSelect + `
 		0 AS user_id,
 		'' AS user_login,
+		'' AS user_uid,
 		` + s.sql.GetDialect().BooleanStr(false) + ` AS is_service_account,
 		'' AS user_email,
 		0 as team_id,
 		'' AS team,
+		'' AS team_uid,
 		'' AS team_email,
 		br.role AS built_in_role
 	`
@@ -400,7 +433,10 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	where += `) AND p.action IN (?` + strings.Repeat(",?", len(query.Actions)-1) + `)`
 
 	if query.OnlyManaged {
-		where += `AND r.name LIKE 'managed:%'`
+		where += ` AND r.name LIKE 'managed:%'`
+	} else if query.ExcludeManaged {
+		//Exclude managed roles to only fetch provisioned permissions (custom:*, fixed:*, etc.)
+		where += ` AND r.name NOT LIKE 'managed:%'`
 	}
 
 	for _, a := range query.Actions {
@@ -429,19 +465,32 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		args = append(args, saFilter.Args...)
 	}
 
-	teamFilter, err := accesscontrol.Filter(query.User, "t.id", "teams:id:", accesscontrol.ActionTeamsRead)
-	if err != nil {
-		return nil, err
+	var teamFilter *accesscontrol.SQLFilter
+	if !query.ExcludeManaged {
+		filter, err := accesscontrol.Filter(
+			query.User,
+			"t.id",
+			"teams:id:",
+			accesscontrol.ActionTeamsRead,
+		)
+		if err != nil {
+			return nil, err
+		}
+		teamFilter = &filter
 	}
 
-	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
+	team := teamSelect + teamFrom + where
 	args = append(args, args[:initialLength]...)
-	args = append(args, teamFilter.Args...)
+
+	if teamFilter != nil {
+		team += " AND " + teamFilter.Where
+		args = append(args, teamFilter.Args...)
+	}
 
 	builtin := builtinSelect + builtinFrom + where
 	args = append(args, args[:initialLength]...)
 
-	sql := userQuery + " UNION " + team + " UNION " + builtin
+	sql := userQuery + " " + s.sql.GetDialect().UnionDistinct() + " " + team + " " + s.sql.GetDialect().UnionDistinct() + " " + builtin
 	queryResults := make([]flatResourcePermission, 0)
 	if err := sess.SQL(sql, args...).Find(&queryResults); err != nil {
 		return nil, err
@@ -488,6 +537,7 @@ func flatPermissionsToResourcePermissions(scope string, permissions []flatResour
 		} else if p.IsInherited(scope) {
 			inherited = append(inherited, p)
 		} else {
+			// Permissions which are neither managed nor inherited must have been provisioned
 			provisioned = append(provisioned, p)
 		}
 	}
@@ -522,10 +572,12 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 		RoleName:         first.RoleName,
 		Actions:          actions,
 		Scope:            first.Scope,
-		UserId:           first.UserId,
+		UserID:           first.UserId,
+		UserUID:          first.UserUid,
 		UserLogin:        first.UserLogin,
 		UserEmail:        first.UserEmail,
-		TeamId:           first.TeamId,
+		TeamID:           first.TeamId,
+		TeamUID:          first.TeamUid,
 		TeamEmail:        first.TeamEmail,
 		Team:             first.Team,
 		BuiltInRole:      first.BuiltInRole,
@@ -685,51 +737,25 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 	resource := cmd.Resource
 	resourceID := cmd.ResourceID
 	resourceAttribute := cmd.ResourceAttribute
-	permission := cmd.Permission
-	/*
-		Add ACTION SET of managed permissions to in-memory store
-	*/
-	if s.shouldStoreActionSet(resource, permission) {
-		actionSetName := GetActionSetName(resource, permission)
-		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
+
+	if len(missingActions) == 0 {
+		return nil
+	}
+
+	for action := range missingActions {
+		p := managedPermission(action, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
 		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		p.DatasourceType = cmd.DatasourceType
 		permissions = append(permissions, p)
-	}
-
-	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any actions
-	// we still want to add the action set (when permission != "")
-	if len(missingActions) == 0 && !s.shouldStoreActionSet(resource, permission) {
-		return nil
-	}
-
-	// if we have actionset feature enabled and are only working with action sets
-	// skip adding the missing actions to the permissions table
-	if !(s.shouldStoreActionSet(resource, permission) && s.cfg.RBAC.OnlyStoreAccessActionSets) {
-		for action := range missingActions {
-			p := managedPermission(action, resource, resourceID, resourceAttribute)
-			p.RoleID = roleID
-			p.Created = time.Now()
-			p.Updated = time.Now()
-			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
-			permissions = append(permissions, p)
-		}
 	}
 
 	if _, err := sess.InsertMulti(&permissions); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *store) shouldStoreActionSet(resource, permission string) bool {
-	if permission == "" {
-		return false
-	}
-	actionSetName := GetActionSetName(resource, permission)
-	return isFolderOrDashboardAction(actionSetName)
 }
 
 func deletePermissions(sess *db.Session, ids []int64) error {
@@ -761,18 +787,16 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 
 // InMemoryActionSets is an in-memory implementation of the ActionSetStore.
 type InMemoryActionSets struct {
-	features           featuremgmt.FeatureToggles
 	log                log.Logger
 	actionSetToActions map[string][]string
 	actionToActionSets map[string][]string
 }
 
-func NewInMemoryActionSetStore(features featuremgmt.FeatureToggles) *InMemoryActionSets {
+func NewInMemoryActionSetStore() *InMemoryActionSets {
 	return &InMemoryActionSets{
 		actionSetToActions: make(map[string][]string),
 		actionToActionSets: make(map[string][]string),
 		log:                log.New("resourcepermissions.actionsets"),
-		features:           features,
 	}
 }
 
@@ -805,22 +829,37 @@ func (s *InMemoryActionSets) ResolveActionSet(actionSet string) []string {
 }
 
 func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
-	var expandedPermissions []accesscontrol.Permission
+	// Count output size to avoid repeated reallocations when expanding action sets.
+	var n int
 	for _, permission := range permissions {
 		resolvedActions := s.ResolveActionSet(permission.Action)
 		if len(resolvedActions) == 0 {
-			expandedPermissions = append(expandedPermissions, permission)
+			n++
+			continue
+		}
+		for _, action := range resolvedActions {
+			if actionMatcher(action) {
+				n++
+			}
+		}
+	}
+
+	// here we know the size of the output, so we can allocate the array once
+	out := make([]accesscontrol.Permission, 0, n)
+	for _, permission := range permissions {
+		resolvedActions := s.ResolveActionSet(permission.Action)
+		if len(resolvedActions) == 0 {
+			out = append(out, permission)
 			continue
 		}
 		for _, action := range resolvedActions {
 			if !actionMatcher(action) {
 				continue
 			}
-			permission.Action = action
-			expandedPermissions = append(expandedPermissions, permission)
+			out = append(out, accesscontrol.Permission{Action: action, Scope: permission.Scope})
 		}
 	}
-	return expandedPermissions
+	return out
 }
 
 func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {

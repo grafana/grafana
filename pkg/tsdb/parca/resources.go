@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"go.opentelemetry.io/otel/codes"
@@ -65,7 +65,7 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
@@ -98,7 +98,7 @@ func (d *ParcaDatasource) callLabelNames(ctx context.Context, req *backend.CallR
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
@@ -142,7 +142,7 @@ func (d *ParcaDatasource) callLabelValues(ctx context.Context, req *backend.Call
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Status: 200})
 	if err != nil {
 		ctxLogger.Error("Failed to send data to Parca", "error", err, "function", logEntrypoint())
 		span.RecordError(err)

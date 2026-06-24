@@ -1,11 +1,14 @@
 package metricutil
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // SanitizeLabelName removes all invalid chars from the label name.
@@ -83,4 +86,36 @@ func copyLabelSet(ls prometheus.Labels) prometheus.Labels {
 		newLs[l] = v
 	}
 	return newLs
+}
+
+// wraps prometheus.NewHistogram, adding a central native histogram config
+func NewHistogramVec(opts prometheus.HistogramOpts, labels []string) *prometheus.HistogramVec {
+	if opts.NativeHistogramBucketFactor == 0 {
+		// Enable native histograms, with the factor suggested in the docs
+		opts.NativeHistogramBucketFactor = 1.1
+	}
+	if opts.NativeHistogramMaxBucketNumber == 0 {
+		// OTel default
+		opts.NativeHistogramMaxBucketNumber = 160
+	}
+	if opts.NativeHistogramMinResetDuration == 0 {
+		// Reset buckets every hour by default - override this if you want to
+		// keep buckets around for longer
+		opts.NativeHistogramMinResetDuration = 1 * time.Hour
+	}
+
+	return prometheus.NewHistogramVec(opts, labels)
+}
+
+func ObserveWithExemplar(ctx context.Context, histogram prometheus.Observer, value float64) {
+	traceID := trace.SpanContextFromContext(ctx).TraceID()
+	if traceID.IsValid() {
+		histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+			value,
+			prometheus.Labels{"traceID": traceID.String()},
+		)
+		return
+	}
+
+	histogram.Observe(value)
 }

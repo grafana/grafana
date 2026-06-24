@@ -1,12 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
-import { Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
+import { type Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
 
 const mockDS = mockDataSource({
   name: 'CloudManager',
@@ -18,20 +19,23 @@ const mockVariable = mockDataSource({
   type: 'datasource',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve(mockDS),
-      getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-      getInstanceSettings: () => mockDS,
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve(mockDS),
+    getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
+    getInstanceSettings: () => mockDS,
+  }),
+}));
 
 describe('QueryEditorRowHeader', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   it('Can edit title', async () => {
     const scenario = renderScenario({});
-    await userEvent.click(screen.getByTestId('query-name-div'));
+    await userEvent.click(screen.getByTestId(selectors.components.QueryEditorRow.title('A')));
 
     const input = screen.getByTestId('query-name-input');
     await userEvent.clear(input);
@@ -46,7 +50,7 @@ describe('QueryEditorRowHeader', () => {
   it('Show error when other query with same name exists', async () => {
     renderScenario({});
 
-    await userEvent.click(screen.getByTestId('query-name-div'));
+    await userEvent.click(screen.getByTestId(selectors.components.QueryEditorRow.title('A')));
     const input = screen.getByTestId('query-name-input');
     await userEvent.clear(input);
     await userEvent.type(input, 'B');
@@ -58,7 +62,7 @@ describe('QueryEditorRowHeader', () => {
   it('Show error when empty name is specified', async () => {
     renderScenario({});
 
-    await userEvent.click(screen.getByTestId('query-name-div'));
+    await userEvent.click(screen.getByTestId(selectors.components.QueryEditorRow.title('A')));
     const input = screen.getByTestId('query-name-input');
     await userEvent.clear(input);
     const alert = await screen.findByRole('alert');
@@ -103,7 +107,6 @@ function renderScenario(overrides: Partial<Props>) {
     dataSource: {} as DataSourceInstanceSettings,
     hidden: false,
     onChange: jest.fn(),
-    onClick: jest.fn(),
     collapsedText: '',
   };
 

@@ -9,8 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -52,6 +55,8 @@ var (
 	errOAuthTokenExchange = errutil.Internal("auth.oauth.token.exchange", errutil.WithPublicMessage("Failed to get token from provider"))
 	errOAuthUserInfo      = errutil.Internal("auth.oauth.userinfo.error")
 
+	errOAuthMissingRefreshToken = errutil.Unauthorized("auth.oauth.token.refresh-token.missing", errutil.WithPublicMessage("Provider did not return a refresh token"))
+
 	errOAuthMissingRequiredEmail = errutil.Unauthorized("auth.oauth.email.missing", errutil.WithPublicMessage("Provider didn't return an email address"))
 	errOAuthEmailNotAllowed      = errutil.Unauthorized("auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
 )
@@ -68,12 +73,14 @@ var (
 
 func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
-	socialService social.Service, settingsProviderService setting.Provider, features featuremgmt.FeatureToggles,
+	socialService social.Service, settingsProviderService setting.Provider,
+	features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) *OAuth {
 	providerName := strings.TrimPrefix(name, "auth.client.")
 	return &OAuth{
 		name, fmt.Sprintf("oauth_%s", providerName), providerName,
-		log.New(name), cfg, settingsProviderService, oauthService, socialService, features,
+		log.New(name), cfg, tracer, settingsProviderService, oauthService,
+		socialService, features,
 	}
 }
 
@@ -83,6 +90,7 @@ type OAuth struct {
 	providerName string
 	log          log.Logger
 	cfg          *setting.Cfg
+	tracer       trace.Tracer
 
 	settingsProviderSvc setting.Provider
 	oauthService        oauthtoken.OAuthTokenService
@@ -95,6 +103,9 @@ func (c *OAuth) Name() string {
 }
 
 func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.Authenticate")
+	defer span.End()
+
 	r.SetMeta(authn.MetaKeyAuthModule, c.moduleName)
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
@@ -136,12 +147,35 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	clientCtx := context.WithValue(ctx, oauth2.HTTPClient, httpClient)
+
 	// exchange auth code to a valid token
+	if oauthCfg.ClientAuthentication == social.WorkloadIdentity {
+		federatedToken, err := os.ReadFile(oauthCfg.WorkloadIdentityTokenFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read workload identity token file: %w", err)
+		}
+
+		opts = append(opts,
+			oauth2.SetAuthURLParam("client_id", oauthCfg.ClientId),
+			oauth2.SetAuthURLParam("client_assertion", strings.TrimSpace(string(federatedToken))),
+			oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+		)
+	}
+
 	token, err := connector.Exchange(clientCtx, r.HTTPRequest.URL.Query().Get("code"), opts...)
 	if err != nil {
 		return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
 	}
 	token.TokenType = "Bearer"
+
+	if oauthCfg.UseRefreshToken && token.RefreshToken == "" {
+		c.log.FromContext(ctx).Warn("No refresh token available with use_refresh_token enabled", "authmodule", c.moduleName)
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if c.features.IsEnabledGlobally(featuremgmt.FlagRefreshTokenRequired) {
+			return nil, errOAuthMissingRefreshToken.Errorf("provider did not return a refresh token")
+		}
+	}
 
 	userInfo, err := connector.UserInfo(ctx, connector.Client(clientCtx, token), token)
 	if err != nil {
@@ -153,6 +187,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	if userInfo.Id == "" {
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		if c.features.IsEnabledGlobally(featuremgmt.FlagOauthRequireSubClaim) {
 			return nil, errOAuthUserInfo.Errorf("missing required sub claims")
 		} else {
@@ -181,7 +216,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		IsGrafanaAdmin:  userInfo.IsGrafanaAdmin,
 		AuthenticatedBy: c.moduleName,
 		AuthID:          userInfo.Id,
-		Groups:          userInfo.Groups,
+		ExternalGroups:  userInfo.Groups,
 		OAuthToken:      token,
 		OrgRoles:        userInfo.OrgRoles,
 		ClientParams: authn.ClientParams{
@@ -216,6 +251,9 @@ func (c *OAuth) GetConfig() authn.SSOClientConfig {
 }
 
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.RedirectURL") //nolint:ineffassign,staticcheck
+	defer span.End()
+
 	var opts []oauth2.AuthCodeOption
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
@@ -257,8 +295,11 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
-	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
+func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, bool) {
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.Logout")
+	defer span.End()
+
+	token := c.oauthService.GetCurrentOAuthToken(ctx, user, sessionToken)
 
 	userID, err := identity.UserIdentifier(user.GetID())
 	if err != nil {
@@ -266,23 +307,23 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Red
 		return nil, false
 	}
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, &login.UserAuth{
-		UserId:     userID,
-		AuthId:     user.GetAuthID(),
-		AuthModule: user.GetAuthenticatedBy(),
-	}); err != nil {
-		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "id", user.GetID(), "error", err)
+	ctxLogger := c.log.FromContext(ctx).New("userID", userID)
+
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, &oauthtoken.TokenRefreshMetadata{
+		ExternalSessionID: sessionToken.ExternalSessionId,
+		AuthModule:        user.GetAuthenticatedBy()}); err != nil {
+		ctxLogger.Error("Failed to invalidate tokens", "error", err)
 	}
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
 	if !oauthCfg.Enabled {
-		c.log.FromContext(ctx).Debug("OAuth client is disabled")
+		ctxLogger.Debug("OAuth client is disabled")
 		return nil, false
 	}
 
 	redirectURL := getOAuthSignoutRedirectURL(c.cfg, oauthCfg)
 	if redirectURL == "" {
-		c.log.FromContext(ctx).Debug("No signout redirect url configured")
+		ctxLogger.Debug("No signout redirect url configured")
 		return nil, false
 	}
 

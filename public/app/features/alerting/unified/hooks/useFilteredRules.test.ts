@@ -1,4 +1,4 @@
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
 import {
@@ -9,13 +9,14 @@ import {
   mockCombinedRuleGroup,
   mockCombinedRuleNamespace,
   mockDataSource,
-  MockDataSourceSrv,
   mockPromAlert,
   mockPromAlertingRule,
   mockRulerGrafanaRule,
 } from '../mocks';
 import { RuleHealth } from '../search/rulesSearchParser';
+import { matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
+import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { getFilter } from '../utils/search';
 
 import { filterRules } from './useFilteredRules';
@@ -25,7 +26,7 @@ const dataSources = {
   loki: mockDataSource({ uid: 'loki-1', name: 'loki' }),
 };
 beforeAll(() => {
-  setDataSourceSrv(new MockDataSourceSrv(dataSources));
+  setupDataSources(...Object.values(dataSources));
 });
 
 describe('filterRules', function () {
@@ -293,5 +294,63 @@ describe('filterRules', function () {
     });
 
     expect(() => filterRules([ns], getFilter({ freeFormWords: ['.+'] }))).not.toThrow();
+  });
+
+  it.each(['[square-bracket]', '[5m]', '(bracket-test)', 'aste-risk*', 'with+ plus'])(
+    'should apply filters when expression contains special characters = "%s"',
+    (expression) => {
+      const rules = [mockCombinedRule({ name: expression })];
+
+      const ns = mockCombinedRuleNamespace({
+        name: 'namespace',
+        groups: [mockCombinedRuleGroup('group', rules)],
+      });
+
+      const filtered = filterRules([ns], getFilter({ freeFormWords: [expression] }));
+
+      expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
+      expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(expression);
+    }
+  );
+
+  it('should return filtered results for long search terms', () => {
+    const longRuleName = 'This:is:a:very:long:rule:name:that:definitely:exceeds:max:needle:length';
+    const rules = [mockCombinedRule({ name: longRuleName }), mockCombinedRule({ name: 'Short rule name' })];
+
+    const ns = mockCombinedRuleNamespace({
+      groups: [mockCombinedRuleGroup('group', rules)],
+    });
+
+    const longSearchTerm = 'very:long:rule:name:that:definitely:exceeds:max:needle:length';
+    const filtered = filterRules([ns], getFilter({ ruleName: longSearchTerm }));
+
+    expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
+    expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(longRuleName);
+  });
+});
+
+// Legacy URLs may put free-text or search-syntax tokens in queryString instead of PromQL matchers.
+describe('legacy queryString URL param parsing', () => {
+  const parseLegacyQueryString = (queryString: string) =>
+    parsePromQLStyleMatcherLooseSafe(queryString).map(matcherToMatcherField);
+
+  it.each([
+    'state:firing',
+    'state:nodata',
+    'High CPU Usage',
+    'Payment Gateway Errors',
+    'auth.service.SessionTimeout',
+    'prod/api-gateway',
+    'eu-west/em-processor',
+    'k8s-cluster-alerts',
+    'PaymentService-Prod',
+  ])('should return empty label filter for non-matcher legacy queryString "%s"', (queryString) => {
+    expect(parseLegacyQueryString(queryString)).toEqual([]);
+  });
+
+  it('should parse valid legacy matcher syntax into label filters', () => {
+    expect(parseLegacyQueryString('severity="critical"')).toEqual([
+      { name: 'severity', operator: '=', value: 'critical' },
+    ]);
   });
 });

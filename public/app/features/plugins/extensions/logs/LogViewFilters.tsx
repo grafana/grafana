@@ -1,8 +1,9 @@
 import { isEmpty } from 'lodash';
-import { ReactElement, useMemo } from 'react';
+import { type ReactElement, useId, useMemo } from 'react';
 
-import { DataFrame, MatcherConfig, SelectableValue } from '@grafana/data';
-import { SceneDataProvider } from '@grafana/scenes';
+import { type DataFrame, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { type SceneDataProvider } from '@grafana/scenes';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
 
 export type LogFilter = {
@@ -21,6 +22,9 @@ type LogViewFiltersProps = {
 
 export function LogViewFilters({ provider, filteredProvider, filter, onChange }: LogViewFiltersProps): ReactElement {
   const { pluginIds, extensionPointIds, severity } = useLogFilters(provider, filteredProvider, filter);
+  const pluginId = useId();
+  const extensionPointId = useId();
+  const severityId = useId();
 
   const onChangePluginIds = (values: Array<SelectableValue<string>>) => {
     const update = {
@@ -63,23 +67,18 @@ export function LogViewFilters({ provider, filteredProvider, filter, onChange }:
 
   return (
     <InlineFieldRow>
-      <InlineField label="Plugin Id">
-        <MultiSelect options={pluginIds} onChange={onChangePluginIds} />
+      <InlineField label={t('plugins.log-view-filters.label-plugin-id', 'Plugin Id')}>
+        <MultiSelect inputId={pluginId} options={pluginIds} onChange={onChangePluginIds} />
       </InlineField>
-      <InlineField label="Extension">
-        <MultiSelect options={extensionPointIds} onChange={onChangeExtensionPointIds} />
+      <InlineField label={t('plugins.log-view-filters.label-extension', 'Extension')}>
+        <MultiSelect inputId={extensionPointId} options={extensionPointIds} onChange={onChangeExtensionPointIds} />
       </InlineField>
-      <InlineField label="Severity">
-        <MultiSelect options={severity} onChange={onChangeSeverity} />
+      <InlineField label={t('plugins.log-view-filters.label-severity', 'Severity')}>
+        <MultiSelect inputId={severityId} options={severity} onChange={onChangeSeverity} />
       </InlineField>
     </InlineFieldRow>
   );
 }
-
-export type FilterConfig = {
-  fieldName: string;
-  config: MatcherConfig;
-};
 
 type LogFilterOptions = {
   pluginIds: Array<SelectableValue<string>>;

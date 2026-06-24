@@ -1,17 +1,18 @@
+import { produce } from 'immer';
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type RuleGroup, type RuleIdentifier, type RuleNamespace } from 'app/types/unified-alerting';
 import {
   PromAlertingRuleState,
-  PromRuleGroupDTO,
-  PromRulesResponse,
+  type PromRuleGroupDTO,
   PromRuleType,
+  type PromRulesResponse,
 } from 'app/types/unified-alerting-dto';
 
-import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from '../utils/datasource';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
 export interface FetchPromRulesFilter {
@@ -19,13 +20,13 @@ export interface FetchPromRulesFilter {
   panelId?: number;
 }
 
-export interface PrometheusDataSourceConfig {
+interface PrometheusDataSourceConfig {
   dataSourceName: string;
   limitAlerts?: number;
   identifier?: RuleIdentifier;
 }
 
-export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
+function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
   const { dataSourceName, limitAlerts, identifier } = dataSourceConfig;
 
   return {
@@ -89,10 +90,9 @@ export function paramsWithMatcherAndState(
   return paramsResult;
 }
 
-export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName: string) => {
-  const nsMap: { [key: string]: RuleNamespace } = {};
-  groups.forEach((group) => {
-    group.rules.forEach((rule) => {
+export function normalizeRuleGroup(group: PromRuleGroupDTO): PromRuleGroupDTO {
+  return produce(group, (draft) => {
+    draft.rules.forEach((rule) => {
       rule.query = rule.query || '';
       if (rule.type === PromRuleType.Alerting) {
         // There's a possibility that a custom/unexpected datasource might response with
@@ -100,11 +100,19 @@ export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName:
         // In this case, we fall back to `Inactive` state so that elsewhere in the UI we don't fail/have to handle the edge case
         // and log a message so we can identify how frequently this might be happening
         if (!rule.state) {
-          logInfo('prom rule with type=alerting is missing a state', { dataSourceName, ruleName: rule.name });
+          logInfo('prom rule with type=alerting is missing a state', { ruleName: rule.name });
           rule.state = PromAlertingRuleState.Inactive;
         }
       }
     });
+  });
+}
+
+export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName: string) => {
+  const normalizedGroups = groups.map(normalizeRuleGroup);
+
+  const nsMap: { [key: string]: RuleNamespace } = {};
+  normalizedGroups.forEach((group) => {
     if (!nsMap[group.file]) {
       nsMap[group.file] = {
         dataSourceName,
@@ -118,6 +126,7 @@ export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName:
 
   return Object.values(nsMap);
 };
+
 export const ungroupRulesByFileName = (namespaces: RuleNamespace[] = []): PromRuleGroupDTO[] => {
   return namespaces?.flatMap((namespace) =>
     namespace.groups.flatMap((group) => ruleGroupToPromRuleGroupDTO(group, namespace.name))

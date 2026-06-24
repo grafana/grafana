@@ -1,20 +1,25 @@
-import { NavModel, NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
-import { AccessControlAction, FolderDTO, FolderParent } from 'app/types';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { AccessControlAction } from 'app/types/accessControl';
+import { type FolderDTO, type FolderParent } from 'app/types/folders';
 
 export const FOLDER_ID = 'manage-folder';
 
 export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
-export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
-export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
 
-export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: FolderParent[]): NavModelItem {
+export function buildNavModel(
+  folder: FolderDTO | FolderParent,
+  parentsArg?: FolderParent[],
+  counts?: { panels: number; rules: number }
+): NavModelItem {
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
+  const isProvisioned = 'managedBy' in folder && isItemManagedByRepository(folder);
 
   const model: NavModelItem = {
     icon: 'folder',
@@ -39,49 +44,31 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
     model.parentItem = buildNavModel(parent, remainingParents);
   }
 
-  model.children!.push({
-    active: false,
-    icon: 'library-panel',
-    id: getLibraryPanelsTabID(folder.uid),
-    text: t('browse-dashboards.manage-folder-nav.panels', 'Panels'),
-    url: `${folder.url}/library-panels`,
-  });
+  if (!isProvisioned) {
+    model.children!.push({
+      active: false,
+      icon: 'library-panel',
+      id: getLibraryPanelsTabID(folder.uid),
+      text: t('browse-dashboards.manage-folder-nav.panels', 'Panels'),
+      url: `${folder.url}/library-panels`,
+      tabCounter: counts ? counts.panels : undefined,
+    });
+  }
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
+  if (
+    !isProvisioned &&
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+    config.unifiedAlertingEnabled
+  ) {
     model.children!.push({
       active: false,
       icon: 'bell',
       id: getAlertingTabID(folder.uid),
       text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
+      tabCounter: counts ? counts.rules : undefined,
     });
   }
 
   return model;
-}
-
-export function getLoadingNav(tabIndex: number): NavModel {
-  const main = buildNavModel({
-    created: '',
-    createdBy: '',
-    hasAcl: false,
-    updated: '',
-    updatedBy: '',
-    id: 1,
-    uid: 'loading',
-    title: 'Loading',
-    url: 'url',
-    canSave: true,
-    canEdit: true,
-    canAdmin: true,
-    canDelete: true,
-    version: 0,
-  });
-
-  main.children![tabIndex].active = true;
-
-  return {
-    main: main,
-    node: main.children![tabIndex],
-  };
 }

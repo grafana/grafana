@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { RefCallback, useCallback, useEffect, useRef } from 'react';
+import { type RefCallback, useCallback, useEffect, useRef, type JSX } from 'react';
 import * as React from 'react';
-import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
+import Scrollbars, { type positionValues } from 'react-custom-scrollbars-2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 import { ScrollIndicators } from './ScrollIndicators';
 
@@ -32,6 +32,7 @@ interface Props {
 
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
+ * @deprecated Use `ScrollContainer` from `@grafana/ui` instead. It uses native scrollbars and has a simpler API.
  */
 export const CustomScrollbar = ({
   autoHide = false,
@@ -153,8 +154,6 @@ export const CustomScrollbar = ({
   );
 };
 
-export default CustomScrollbar;
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     customScrollbar: css({
@@ -195,7 +194,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         '.thumb-vertical, .thumb-horizontal': {
           opacity: 1,
-          transition: 'opacity 0.3s ease-in-out',
+          [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+            transition: 'opacity 0.3s ease-in-out',
+          },
         },
       },
     }),

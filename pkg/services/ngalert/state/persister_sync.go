@@ -15,8 +15,6 @@ import (
 type SyncStatePersister struct {
 	log   log.Logger
 	store InstanceStore
-	// doNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods.
-	doNotSaveNormalState bool
 	// maxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	maxStateSaveConcurrency int
 }
@@ -25,7 +23,6 @@ func NewSyncStatePersisiter(log log.Logger, cfg ManagerCfg) StatePersister {
 	return &SyncStatePersister{
 		log:                     log,
 		store:                   cfg.InstanceStore,
-		doNotSaveNormalState:    cfg.DoNotSaveNormalState,
 		maxStateSaveConcurrency: cfg.MaxStateSaveConcurrency,
 	}
 }
@@ -84,27 +81,38 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			return nil
 		}
 
-		// Do not save normal state to database and remove transition to Normal state but keep mapped states
-		if a.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
-			return nil
-		}
-
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
 			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			return nil
 		}
+		var lastError string
+		if s.Error != nil {
+			lastError = s.Error.Error()
+		}
+		var lastResult ngModels.LastResult
+		if s.LatestResult != nil {
+			lastResult = ngModels.LastResult{
+				Values:    s.LatestResult.Values,
+				Condition: s.LatestResult.Condition,
+			}
+		}
 		instance := ngModels.AlertInstance{
-			AlertInstanceKey:  key,
-			Labels:            ngModels.InstanceLabels(s.Labels),
-			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
-			CurrentReason:     s.StateReason,
-			LastEvalTime:      s.LastEvaluationTime,
-			CurrentStateSince: s.StartsAt,
-			CurrentStateEnd:   s.EndsAt,
-			ResolvedAt:        s.ResolvedAt,
-			LastSentAt:        s.LastSentAt,
-			ResultFingerprint: s.ResultFingerprint.String(),
+			AlertInstanceKey:   key,
+			Labels:             ngModels.InstanceLabels(s.Labels),
+			Annotations:        s.Annotations,
+			CurrentState:       ngModels.InstanceStateType(s.State.State.String()),
+			CurrentReason:      s.StateReason,
+			LastEvalTime:       s.LastEvaluationTime,
+			CurrentStateSince:  s.StartsAt,
+			CurrentStateEnd:    s.EndsAt,
+			FiredAt:            s.FiredAt,
+			ResolvedAt:         s.ResolvedAt,
+			LastSentAt:         s.LastSentAt,
+			ResultFingerprint:  s.ResultFingerprint.String(),
+			EvaluationDuration: s.EvaluationDuration,
+			LastError:          lastError,
+			LastResult:         lastResult,
 		}
 
 		err = a.store.SaveAlertInstance(ctx, instance)

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { useEffectOnce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { AppNotification, timeoutMap } from 'app/types';
+import { type AppNotification, timeoutMap } from 'app/types/appNotifications';
 
 interface Props {
   appNotification: AppNotification;
@@ -20,6 +21,7 @@ export default function AppNotificationItem({ appNotification, onClearNotificati
   });
 
   const hasBody = appNotification.component || appNotification.text || appNotification.traceId;
+  const traceId = appNotification.traceId;
 
   return (
     <Alert
@@ -31,7 +33,11 @@ export default function AppNotificationItem({ appNotification, onClearNotificati
       {hasBody && (
         <div className={styles.wrapper}>
           <span>{appNotification.component || appNotification.text}</span>
-          {appNotification.traceId && <span className={styles.trace}>Trace ID: {appNotification.traceId}</span>}
+          {traceId && (
+            <span className={styles.trace}>
+              <Trans i18nKey="app-notification.item.trace-id">Trace ID: {{ traceId }}</Trans>
+            </span>
+          )}
         </div>
       )}
     </Alert>

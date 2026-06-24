@@ -25,6 +25,4 @@
       - 8087:8080
     depends_on:
       - oauthkeycloakdb
-    links:
-      - "oauthkeycloakdb:oauthkeycloakdb"
     restart: unless-stopped

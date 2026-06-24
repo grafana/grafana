@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -25,6 +26,7 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
+	UID              string
 }
 
 type TestApiKey struct {
@@ -42,12 +44,14 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 		role = testUser.Role
 	}
 
-	quotaService := quotaimpl.ProvideService(db, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -107,17 +111,28 @@ func SetupApiKey(t *testing.T, store db.DB, cfg *setting.Cfg, testKey TestApiKey
 	return key
 }
 
+func SetupApiKeys(t *testing.T, store db.DB, cfg *setting.Cfg, testKeys []TestApiKey) []*apikey.APIKey {
+	result := make([]*apikey.APIKey, len(testKeys))
+	for i, testKey := range testKeys {
+		result[i] = SetupApiKey(t, store, cfg, testKey)
+	}
+
+	return result
+}
+
 // SetupUsersServiceAccounts creates in "test org" all users or service accounts passed in parameter
 // To achieve this, it sets the AutoAssignOrg and AutoAssignOrgId settings.
-func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, testUsers []TestUser) (orgID int64) {
+func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, testUsers []TestUser) (users []user.User, orgID int64) {
 	role := string(org.RoleNone)
 
-	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+	cfgProvider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
@@ -129,8 +144,9 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(org.ID)
 
+	users = make([]user.User, len(testUsers))
 	for i := range testUsers {
-		_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+		newUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Login:            testUsers[i].Login,
 			IsServiceAccount: testUsers[i].IsServiceAccount,
 			DefaultOrgRole:   role,
@@ -138,6 +154,8 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 			OrgID:            org.ID,
 		})
 		require.NoError(t, err)
+
+		users[i] = *newUser
 	}
-	return org.ID
+	return users, org.ID
 }

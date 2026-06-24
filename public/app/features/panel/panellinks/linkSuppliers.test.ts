@@ -1,9 +1,16 @@
-import { applyFieldOverrides, createTheme, DataFrameView, dateTime, FieldDisplay, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createTheme,
+  DataFrameView,
+  dateTime,
+  type FieldDisplay,
+  toDataFrame,
+} from '@grafana/data';
 
 import { TemplateSrv } from '../../templating/template_srv';
 
 import { getFieldLinksSupplier } from './linkSuppliers';
-import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
+import { getLinkSrv, type LinkService, LinkSrv, setLinkSrv } from './link_srv';
 
 // We do not need more here and TimeSrv is hard to setup fully.
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({

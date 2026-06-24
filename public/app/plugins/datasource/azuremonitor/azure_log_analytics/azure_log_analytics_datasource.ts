@@ -1,28 +1,31 @@
 import { map } from 'lodash';
 
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { type AzureCredentials } from '@grafana/azure-sdk';
+import { type ScopedVars } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import ResponseParser from '../azure_monitor/response_parser';
-import { getAuthType } from '../credentials';
+import { getCredentials } from '../credentials';
+import { AzureQueryType } from '../dataquery.gen';
+import { type AzureMonitorQuery } from '../types/query';
 import {
-  AzureAPIResponse,
-  AzureDataSourceJsonData,
-  AzureLogsVariable,
-  AzureMonitorQuery,
-  AzureQueryType,
-  DatasourceValidationResult,
-  Subscription,
-  Workspace,
-} from '../types';
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorDataSourceInstanceSettings,
+  type AzureAPIResponse,
+  type AzureLogsVariable,
+  type Workspace,
+  type DatasourceValidationResult,
+  type Subscription,
+} from '../types/types';
 import { interpolateVariable, routeNames } from '../utils/common';
 
 import { transformMetadataToKustoSchema } from './utils';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
-  AzureDataSourceJsonData
+  AzureMonitorDataSourceJsonData
 > {
+  readonly credentials: AzureCredentials;
   resourcePath: string;
   declare applicationId: string;
 
@@ -32,10 +35,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   firstWorkspace?: string;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private instanceSettings: AzureMonitorDataSourceInstanceSettings,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.credentials = getCredentials(instanceSettings);
 
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
@@ -121,6 +125,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         queryType: target.queryType || AzureQueryType.LogAnalytics,
 
         azureLogAnalytics: {
+          builderQuery: item.builderQuery,
           resultFormat: item.resultFormat,
           query,
           resources,
@@ -222,17 +227,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   private validateDatasource(): DatasourceValidationResult | undefined {
-    const authType = getAuthType(this.instanceSettings);
-
-    if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+    if (this.credentials.authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.credentials.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+      if (!this.isValidConfigField(this.credentials.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',

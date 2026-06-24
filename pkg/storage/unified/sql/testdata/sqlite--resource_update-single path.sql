@@ -2,10 +2,13 @@ UPDATE "resource"
     SET
         "guid"   = '',
         "value"  = '[]',
-        "action" = 'UNKNOWN'  
+        "folder"  = 'fldr',
+        "action" = 'UNKNOWN',
+        "resource_version" = 0
     WHERE 1 = 1
         AND "group"     = 'gg'
         AND "resource"  = 'rr'
         AND "namespace" = 'nn'
         AND "name"      = 'name'
+        AND "resource_version" = 1759304090100678
 ;

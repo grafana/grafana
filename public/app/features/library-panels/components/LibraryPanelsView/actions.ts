@@ -1,18 +1,14 @@
-import { AnyAction } from '@reduxjs/toolkit';
-import { Dispatch } from 'react';
+import { type Action } from '@reduxjs/toolkit';
+import { type Dispatch } from 'react';
 import { from, merge, of, Subscription, timer } from 'rxjs';
 import { catchError, finalize, mapTo, mergeMap, share, takeUntil } from 'rxjs/operators';
-
-import { PanelPluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { LibraryPanel } from '@grafana/schema';
-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 import { deleteLibraryPanel as apiDeleteLibraryPanel, getLibraryPanels } from '../../state/api';
 
 import { initialLibraryPanelsViewState, initSearch, searchCompleted } from './reducer';
 
-type DispatchResult = (dispatch: Dispatch<AnyAction>) => void;
+type SearchDispatchResult = (dispatch: Dispatch<Action>, abortController?: AbortController) => void;
+
 interface SearchArgs {
   perPage: number;
   page: number;
@@ -21,30 +17,12 @@ interface SearchArgs {
   panelFilter?: string[];
   folderFilterUIDs?: string[];
   currentPanelId?: string;
-  isWidget?: boolean;
 }
 
-export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
+export function searchForLibraryPanels(args: SearchArgs): SearchDispatchResult {
   // Functions to support filtering out library panels per plugin type that have skipDataQuery set to true
 
-  const findPluginMeta = (pluginMeta: PanelPluginMeta, libraryPanel: LibraryPanel) =>
-    pluginMeta.id === libraryPanel.type;
-
-  const filterLibraryPanels = (libraryPanels: LibraryPanel[], isWidget: boolean) => {
-    const pluginMetaList = getAllPanelPluginMeta();
-
-    return libraryPanels.filter((libraryPanel) => {
-      const matchingPluginMeta = pluginMetaList.find((pluginMeta) => findPluginMeta(pluginMeta, libraryPanel));
-      // widget mode filter
-      if (isWidget) {
-        return !!matchingPluginMeta?.skipDataQuery;
-      }
-      // non-widget mode filter
-      return !matchingPluginMeta?.skipDataQuery;
-    });
-  };
-
-  return function (dispatch) {
+  return function (dispatch, abortController) {
     const subscription = new Subscription();
     const dataObservable = from(
       getLibraryPanels({
@@ -55,24 +33,30 @@ export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
         sortDirection: args.sortDirection,
         typeFilter: args.panelFilter,
         folderFilterUIDs: args.folderFilterUIDs,
+        signal: abortController?.signal,
       })
     ).pipe(
       //filter out library panels per plugin type that have skipDataQuery set to true
       mergeMap((libraryPanelsResult) => {
         const { elements: libraryPanels } = libraryPanelsResult;
-
-        if (config.featureToggles.vizAndWidgetSplit && args.isWidget !== undefined) {
-          const filteredLibraryPanels = filterLibraryPanels(libraryPanels, args.isWidget);
-          return of({ ...libraryPanelsResult, elements: filteredLibraryPanels });
-        }
-
         return of({ ...libraryPanelsResult, elements: libraryPanels });
       }),
       mergeMap(({ perPage, elements: libraryPanels, page, totalCount }) =>
         of(searchCompleted({ libraryPanels, page, perPage, totalCount }))
       ),
       catchError((err) => {
-        console.error(err);
+        // Check if this is an aborted request - if so, silently ignore it
+        const isAbortError =
+          err.name === 'AbortError' || err.cancelled === true || err.statusText === 'Request was aborted';
+
+        if (isAbortError) {
+          return of(); // Silently ignore aborted requests
+        }
+
+        // For real errors, log and show error to user
+        console.error('Error fetching library panels:', err);
+
+        // Update state to show empty results
         return of(searchCompleted({ ...initialLibraryPanelsViewState, page: args.page, perPage: args.perPage }));
       }),
       finalize(() => subscription.unsubscribe()), // make sure we unsubscribe
@@ -88,8 +72,8 @@ export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
   };
 }
 
-export function deleteLibraryPanel(uid: string, args: SearchArgs): DispatchResult {
-  return async function (dispatch) {
+export function deleteLibraryPanel(uid: string, args: SearchArgs) {
+  return async function (dispatch: Dispatch<Action>) {
     try {
       await apiDeleteLibraryPanel(uid);
       searchForLibraryPanels(args)(dispatch);
@@ -99,10 +83,10 @@ export function deleteLibraryPanel(uid: string, args: SearchArgs): DispatchResul
   };
 }
 
-export function asyncDispatcher(dispatch: Dispatch<AnyAction>) {
-  return function (action: AnyAction | DispatchResult) {
+export function asyncDispatcher(dispatch: Dispatch<Action>) {
+  return function (action: Action | SearchDispatchResult | Function, abortController?: AbortController) {
     if (action instanceof Function) {
-      return action(dispatch);
+      return action(dispatch, abortController);
     }
     return dispatch(action);
   };

@@ -1,5 +1,7 @@
-import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import type { JSX } from 'react';
+
+import { type DataSourceJsonData, type DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { ConfigSection } from '@grafana/plugin-ui';
 import { Field, Switch } from '@grafana/ui';
 
 export interface Props<T extends DataSourceJsonData>

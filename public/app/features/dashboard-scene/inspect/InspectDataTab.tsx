@@ -1,17 +1,17 @@
 import { LoadingState } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
-  SceneDataProvider,
+  type SceneComponentProps,
+  type SceneDataProvider,
   SceneDataTransformer,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
 } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
 import { InspectTab } from 'app/features/inspector/types';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
 
@@ -51,7 +51,9 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
     const timeRange = sceneGraph.getTimeRange(panel);
 
     if (!data) {
-      <div>No data found</div>;
+      <div>
+        <Trans i18nKey="dashboard-scene.inspect-data-tab.no-data-found">No data found</Trans>
+      </div>;
     }
 
     return (
@@ -62,7 +64,7 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
         hasTransformations={hasTransformations(dataProvider)}
         timeZone={timeRange.getTimeZone()}
         panelPluginId={panel.state.pluginId}
-        dataName={panel.state.title}
+        dataName={sceneGraph.interpolate(panel, panel.state.title)}
         fieldConfig={panel.state.fieldConfig}
         onOptionsChange={model.onOptionsChange}
       />

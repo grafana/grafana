@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var (
+	responseHeaderTimeout = 1 * time.Second
+)
+
 func TestReverseProxy(t *testing.T) {
 	t.Run("When proxying a request should enforce request and response constraints", func(t *testing.T) {
 		var actualReq *http.Request
@@ -40,9 +44,15 @@ func TestReverseProxy(t *testing.T) {
 		req = req.WithContext(contexthandler.WithAuthHTTPHeaders(req.Context(), setting.NewCfg()))
 		req.Header.Set("Authorization", "val")
 
-		rp := NewReverseProxy(log.New("test"), func(req *http.Request) {
-			req.Header.Set("X-KEY", "value")
-		})
+		rp := NewReverseProxy(log.New("test"),
+			func(req *http.Request) {
+				req.Header.Set("X-KEY", "value")
+			},
+			// Set response header timeout to avoid random `net/http: timeout awaiting response headers` errors in CI
+			WithTransport(&http.Transport{
+				ResponseHeaderTimeout: responseHeaderTimeout,
+			}),
+		)
 		require.NotNil(t, rp)
 		require.NotNil(t, rp.ModifyResponse)
 		rp.ServeHTTP(rec, req)
@@ -84,6 +94,10 @@ func TestReverseProxy(t *testing.T) {
 			WithModifyResponse(func(r *http.Response) error {
 				r.Header.Set("X-KEY2", "value2")
 				return nil
+			}),
+			// Set response header timeout to avoid random `net/http: timeout awaiting response headers` errors in CI
+			WithTransport(&http.Transport{
+				ResponseHeaderTimeout: responseHeaderTimeout,
 			}),
 		)
 		require.NotNil(t, rp)
@@ -198,6 +212,10 @@ func TestReverseProxy(t *testing.T) {
 				rp := NewReverseProxy(
 					log.New("test"),
 					func(req *http.Request) {},
+					// Set response header timeout to avoid random `net/http: timeout awaiting response headers errors in CI
+					WithTransport(&http.Transport{
+						ResponseHeaderTimeout: responseHeaderTimeout,
+					}),
 				)
 				require.NotNil(t, rp)
 				rp.ServeHTTP(rec, req)

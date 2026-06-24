@@ -27,6 +27,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org
 			db:      db,
 			dialect: db.GetDialect(),
 			log:     log,
+			cfg:     cfg,
 		},
 		cfg: cfg,
 		log: log,
@@ -138,11 +139,6 @@ func (s *Service) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAddressCo
 	return s.store.UpdateAddress(ctx, cmd)
 }
 
-// TODO: refactor service to call store CRUD method
-func (s *Service) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
-	return s.store.Delete(ctx, cmd)
-}
-
 func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
 	var orga = &org.Org{}
 	var err error
@@ -211,6 +207,10 @@ func (s *Service) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQuery) 
 // TODO: refactor service to call store CRUD method
 func (s *Service) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	return s.store.SearchOrgUsers(ctx, query)
+}
+
+func (s *Service) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	return s.store.SearchOrgUsersByEmails(ctx, query)
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {

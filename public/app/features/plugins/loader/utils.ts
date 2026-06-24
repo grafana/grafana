@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { sandboxPluginDependencies } from '../sandbox/plugin_dependencies';
+import { sandboxPluginDependencies } from '../sandbox/pluginDependencies';
 
 import { SHARED_DEPENDENCY_PREFIX } from './constants';
 import { SystemJS } from './systemjs';

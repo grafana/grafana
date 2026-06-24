@@ -1,27 +1,18 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type JSX } from 'react';
 
-import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type GrafanaTheme2, type PanelPluginMeta, type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
-import { getAllPanelPluginMeta, getVizPluginMeta, getWidgetPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;
   maxMenuHeight?: number;
-  isWidget?: boolean;
 }
 
-export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight, isWidget = false }: Props): JSX.Element => {
-  const getPluginMetaData = (): PanelPluginMeta[] => {
-    if (config.featureToggles.vizAndWidgetSplit) {
-      return isWidget ? getWidgetPluginMeta() : getVizPluginMeta();
-    } else {
-      return getAllPanelPluginMeta();
-    }
-  };
-
-  const plugins = useMemo<PanelPluginMeta[]>(getPluginMetaData, [isWidget]);
+export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
+  const { value: plugins = [] } = useListedPanelPluginMetas();
   const options = useMemo(
     () =>
       plugins
@@ -44,8 +35,8 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight, isWidg
     defaultOptions: true,
     getOptionLabel: (i: SelectableValue<PanelPluginMeta>) => i.label,
     getOptionValue: (i: SelectableValue<PanelPluginMeta>) => i.value,
-    noOptionsMessage: 'No Panel types found',
-    placeholder: 'Filter by type',
+    noOptionsMessage: t('panel-type-filter.select-no-options', 'No panel types found'),
+    placeholder: t('panel-type-filter.select-placeholder', 'Filter by type'),
     maxMenuHeight,
     options,
     value,
@@ -55,18 +46,15 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight, isWidg
   return (
     <div className={styles.container}>
       {value.length > 0 && (
-        <Button
-          size="xs"
-          icon="trash-alt"
-          fill="text"
-          className={styles.clear}
-          onClick={() => onChange([])}
-          aria-label="Clear types"
-        >
-          Clear types
+        <Button size="xs" icon="trash-alt" fill="text" className={styles.clear} onClick={() => onChange([])}>
+          <Trans i18nKey="panel-type-filter.clear-button">Clear types</Trans>
         </Button>
       )}
-      <MultiSelect<PanelPluginMeta> {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
+      <MultiSelect<PanelPluginMeta>
+        {...selectOptions}
+        prefix={<Icon name="filter" />}
+        aria-label={t('panel-type-filter.select-aria-label', 'Panel type filter')}
+      />
     </div>
   );
 };

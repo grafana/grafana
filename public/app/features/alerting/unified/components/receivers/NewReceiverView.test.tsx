@@ -1,15 +1,14 @@
-import 'core-js/stable/structured-clone';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
-import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
+import { byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
-import { makeAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { testWithFeatureToggles } from '../../test/test-utils';
+import { makeAllK8sEndpointsFail } from '../../mocks/server/configure';
 
 import NewReceiverView from './NewReceiverView';
 
@@ -21,10 +20,13 @@ const Index = () => {
 
 const renderForm = () =>
   render(
-    <Routes>
-      <Route path="/alerting/notifications" element={<Index />} />
-      <Route path="/alerting/notifications/new" element={<NewReceiverView />} />
-    </Routes>,
+    <>
+      <AppNotificationList />
+      <Routes>
+        <Route path="/alerting/notifications" element={<Index />} />
+        <Route path="/alerting/notifications/new" element={<NewReceiverView />} />
+      </Routes>
+    </>,
     {
       historyOptions: { initialEntries: ['/alerting/notifications/new'] },
     }
@@ -34,9 +36,7 @@ beforeEach(() => {
   grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsWrite]);
 });
 
-describe('alerting API server enabled', () => {
-  testWithFeatureToggles(['alertingApiServer']);
-
+describe('new receiver', () => {
   it('can create a receiver', async () => {
     const { user } = renderForm();
 
@@ -53,9 +53,7 @@ describe('alerting API server enabled', () => {
 
     expect(await screen.findByText(/redirected/i)).toBeInTheDocument();
   });
-});
 
-describe('alerting API server disabled', () => {
   it('should be able to test and save a receiver', async () => {
     const capture = captureRequests();
 
@@ -85,29 +83,27 @@ describe('alerting API server disabled', () => {
     // click test
     await user.click(ui.testContactPoint.get());
 
+    // close the modal
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
     // we shouldn't be testing implementation details but when the request is successful
     // it can't seem to assert on the success toast
     await user.click(ui.saveContactButton.get());
 
     const requests = await capture;
-    const testRequest = requests.find((r) => r.url.endsWith('/config/api/v1/receivers/test'));
-    const saveRequest = requests.find(
-      (r) => r.url.endsWith('/api/alertmanager/grafana/config/api/v1/alerts') && r.method === 'POST'
+    const testRequest = requests.find(
+      (r) => r.url.includes('/apis/notifications.alerting.grafana.app/') && r.url.endsWith('/test')
     );
+    const saveRequest = requests.find((r) => r.url.endsWith('/receivers') && r.method === 'POST');
 
-    const testBody = await testRequest?.json();
-    const fullSaveBody = await saveRequest?.json();
+    expect(testRequest).toBeDefined();
+    expect(testRequest?.url).toContain('/receivers/-/test');
 
-    // Only snapshot and check the receivers, as we don't want other tests to break this
-    // just because we added something new to the mock config
-    const saveBody = fullSaveBody.alertmanager_config.receivers;
-
-    expect([testBody]).toMatchSnapshot();
+    const saveBody = await saveRequest?.clone().json();
     expect([saveBody]).toMatchSnapshot();
   });
 
   it('does not redirect when creating contact point and API errors', async () => {
-    makeAlertmanagerConfigUpdateFail();
     const { user } = renderForm();
 
     await user.type(await ui.inputs.name.find(), 'receiver that should fail');
@@ -115,9 +111,31 @@ describe('alerting API server disabled', () => {
     await user.clear(email);
     await user.type(email, 'tester@grafana.com');
 
+    makeAllK8sEndpointsFail('someerror');
+
     await user.click(ui.saveContactButton.get());
 
     expect(screen.queryByText(/redirected/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the backend error message when contact point creation fails', async () => {
+    const { user } = renderForm();
+
+    await user.type(await ui.inputs.name.find(), 'receiver that should fail');
+    const email = ui.inputs.email.addresses.get();
+    await user.clear(email);
+    await user.type(email, 'test@test.com');
+
+    makeAllK8sEndpointsFail(
+      'alerting.notifications.receivers.invalid',
+      'Invalid receiver: \'invalid email integration[0]: failed to check if email address "test@test.com" exists: user not found\'',
+      400
+    );
+
+    await user.click(ui.saveContactButton.get());
+
+    expect(await screen.findByText(/failed to save the contact point/i)).toBeInTheDocument();
+    expect(await screen.findByText(/user not found/i)).toBeInTheDocument();
   });
 });
 
@@ -133,7 +151,7 @@ const ui = {
   inputs: {
     name: byPlaceholderText('Name'),
     email: {
-      addresses: byLabelText(/Addresses/),
+      addresses: byRole('textbox', { name: /^Addresses/ }),
     },
   },
 };

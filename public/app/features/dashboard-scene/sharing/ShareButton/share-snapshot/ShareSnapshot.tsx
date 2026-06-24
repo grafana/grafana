@@ -2,14 +2,17 @@ import { useState } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps } from '@grafana/scenes';
+import { Trans, t } from '@grafana/i18n';
+import { config, reportInteraction } from '@grafana/runtime';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, Spinner, Stack, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { SnapshotSharingOptions } from '../../../../dashboard/services/SnapshotSrv';
+import { type SnapshotSharingOptions } from '../../../../dashboard/services/SnapshotSrv';
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { ShareSnapshotTab } from '../../ShareSnapshotTab';
-import { ShareView } from '../../types';
+import { type ShareView } from '../../types';
 
 import { UpsertSnapshot } from './UpsertSnapshot';
 
@@ -54,7 +57,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   };
 
   const onDeleteSnapshotClick = async () => {
-    await deleteSnapshot(snapshotResult.value?.deleteUrl!);
+    await deleteSnapshot(snapshotResult.value?.key!);
     reset();
   };
 
@@ -107,7 +110,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
                 />
               )
             )}
-            <TextLink icon="external-link-alt" href="/dashboard/snapshots" external>
+            <TextLink icon="external-link-alt" href={`${config.appSubUrl || ''}/dashboard/snapshots`} external>
               {t('snapshot.share.view-all-button', 'View all snapshots')}
             </TextLink>
           </Stack>
@@ -157,22 +160,37 @@ const UpsertSnapshotActions = ({
   url: string;
   onDeleteClick: () => void;
   onNewSnapshotClick: () => void;
-}) => (
-  <Stack justifyContent="flex-start" gap={1} direction={{ xs: 'column', sm: 'row' }}>
-    <ClipboardButton
-      icon="link"
-      variant="primary"
-      fill="outline"
-      getText={() => url}
-      data-testid={selectors.copyUrlButton}
-    >
-      <Trans i18nKey="snapshot.share.copy-link-button">Copy link</Trans>
-    </ClipboardButton>
-    <Button icon="trash-alt" variant="destructive" fill="outline" onClick={onDeleteClick}>
-      <Trans i18nKey="snapshot.share.delete-button">Delete snapshot</Trans>
-    </Button>
-    <Button variant="secondary" fill="solid" onClick={onNewSnapshotClick}>
-      <Trans i18nKey="snapshot.share.new-snapshot-button">New snapshot</Trans>
-    </Button>
-  </Stack>
-);
+}) => {
+  const hasDeletePermission = contextSrv.hasPermission(AccessControlAction.SnapshotsDelete);
+  const deleteTooltip = hasDeletePermission
+    ? ''
+    : t('snapshot.share.delete-permission-tooltip', "You don't have permission to delete snapshots");
+
+  return (
+    <Stack justifyContent="flex-start" gap={1} direction={{ xs: 'column', sm: 'row' }}>
+      <ClipboardButton
+        icon="link"
+        variant="primary"
+        fill="outline"
+        getText={() => url}
+        onClipboardCopy={() => reportInteraction('sharing_publish_snapshot')}
+        data-testid={selectors.copyUrlButton}
+      >
+        <Trans i18nKey="snapshot.share.copy-link-button">Copy link</Trans>
+      </ClipboardButton>
+      <Button
+        icon="trash-alt"
+        variant="destructive"
+        fill="outline"
+        onClick={onDeleteClick}
+        disabled={!hasDeletePermission}
+        tooltip={deleteTooltip}
+      >
+        <Trans i18nKey="snapshot.share.delete-button">Delete snapshot</Trans>
+      </Button>
+      <Button variant="secondary" fill="solid" onClick={onNewSnapshotClick}>
+        <Trans i18nKey="snapshot.share.new-snapshot-button">New snapshot</Trans>
+      </Button>
+    </Stack>
+  );
+};

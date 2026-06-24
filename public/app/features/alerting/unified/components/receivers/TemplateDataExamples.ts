@@ -5,7 +5,7 @@ export interface TemplateExampleItem {
 
 export const GlobalTemplateDataExamples: TemplateExampleItem[] = [
   {
-    description: 'Default template for notification titles',
+    description: 'Default templates for notification titles',
     example: `{{- /* This is a copy of the "default.title" template. */ -}}
 {{- /* Edit the template name and template content as needed. */ -}}
 {{ define "default.title.copy" }}
@@ -13,7 +13,7 @@ export const GlobalTemplateDataExamples: TemplateExampleItem[] = [
 {{ end }}`,
   },
   {
-    description: 'Default template for notification messages',
+    description: 'Default templates for notification messages',
     example: `{{- /* This is a copy of the "default.message" template. */ -}}
 {{- /* Edit the template name and template content as needed. */ -}}
 {{ define "default.message.copy" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
@@ -144,5 +144,44 @@ Alert annotations: {{ len .Annotations.SortedPairs }}
 - Silence: {{ .SilenceURL }}
 - RunbookURL: {{ .Annotations.runbook_url}}
 {{ end -}}`,
+  },
+  {
+    description: 'Create JSON payload for webhook contact point',
+    example: `{{- /* Example displaying a custom JSON payload for a webhook contact point.*/ -}}
+{{- /* Edit the template name and template content as needed. */ -}}
+{{- /* Variables defined in the webhook contact point can be accessed in .Vars but will not be previewable. */ -}}
+{{ define "webhook.custom.payload" -}}
+  {{ coll.Dict
+  "receiver" .Receiver
+  "status" .Status
+  "alerts" (tmpl.Exec "webhook.custom.simple_alerts" .Alerts | data.JSON)
+  "groupLabels" .GroupLabels
+  "commonLabels" .CommonLabels
+  "commonAnnotations" .CommonAnnotations
+  "externalURL" .ExternalURL
+  "version" "1"
+  "orgId"  (index .Alerts 0).OrgID
+  "truncatedAlerts"  .TruncatedAlerts
+  "groupKey" .GroupKey
+  "state"  (tmpl.Inline "{{ if eq .Status \\"resolved\\" }}ok{{ else }}alerting{{ end }}" . )
+  "allVariables"  .Vars
+  "title" (tmpl.Exec "default.title" . )
+  "message" (tmpl.Exec "default.message" . )
+  | data.ToJSONPretty " "}}
+{{- end }}
+
+{{- /* Example showcasing embedding json templates in other json templates. */ -}}
+{{ define "webhook.custom.simple_alerts" -}}
+  {{- $alerts := coll.Slice -}}
+  {{- range . -}}
+    {{ $alerts = coll.Append (coll.Dict
+    "status" .Status
+    "labels" .Labels
+    "startsAt" .StartsAt
+    "endsAt" .EndsAt
+    ) $alerts}}
+  {{- end -}}
+  {{- $alerts | data.ToJSON -}}
+{{- end }}`,
   },
 ];

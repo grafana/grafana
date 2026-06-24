@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setDataSourceSrv } from '@grafana/runtime';
 
@@ -13,12 +13,12 @@ const validateMock = jest.fn();
 describe('DerivedField', () => {
   beforeEach(() => {
     setDataSourceSrv({
+      registerRuntimeDataSource: jest.fn(),
       get: jest.fn(),
       reload: jest.fn(),
       getInstanceSettings: jest.fn(),
       getList: mockList.mockImplementation(() => [
         {
-          id: 1,
           uid: 'metrics',
           name: 'metrics_ds',
           meta: {
@@ -31,7 +31,6 @@ describe('DerivedField', () => {
           } as DataSourcePluginMeta,
         } as DataSourceInstanceSettings,
         {
-          id: 2,
           uid: 'tracing',
           name: 'tracing_ds',
           meta: {

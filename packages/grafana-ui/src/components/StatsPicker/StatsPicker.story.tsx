@@ -1,62 +1,39 @@
-import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
-import { PureComponent } from 'react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { memo, useState } from 'react';
+import { action } from 'storybook/actions';
 
-import { StatsPicker } from '@grafana/ui';
+import { Field } from '../Forms/Field';
 
-interface State {
-  stats: string[];
-}
+import { type StatsPickerProps, StatsPicker } from './StatsPicker';
 
-class WrapperWithState extends PureComponent<any, State> {
-  constructor(props: any) {
-    super(props);
-    this.state = {
-      stats: this.toStatsArray(props.initialReducers),
-    };
-  }
+const WrapperWithState = memo<StatsPickerProps>(({ placeholder, allowMultiple, width }) => {
+  const [stats, setStats] = useState<string[]>([]);
 
-  toStatsArray = (txt: string): string[] => {
-    if (!txt) {
-      return [];
-    }
-    return txt.split(',').map((v) => v.trim());
-  };
-
-  componentDidUpdate(prevProps: any) {
-    const { initialReducers } = this.props;
-    if (initialReducers !== prevProps.initialReducers) {
-      console.log('Changing initial reducers');
-      this.setState({ stats: this.toStatsArray(initialReducers) });
-    }
-  }
-
-  render() {
-    const { placeholder, allowMultiple, menuPlacement, width } = this.props;
-    const { stats } = this.state;
-
-    return (
+  return (
+    <Field label="Pick stats">
       <StatsPicker
+        id="stats-picker"
         placeholder={placeholder}
         allowMultiple={allowMultiple}
         stats={stats}
-        onChange={(stats: string[]) => {
-          action('Picked:')(stats);
-          this.setState({ stats });
+        onChange={(newStats: string[]) => {
+          action('Picked:')(newStats);
+          setStats(newStats);
         }}
-        menuPlacement={menuPlacement}
         width={width}
       />
-    );
-  }
-}
+    </Field>
+  );
+});
+
+WrapperWithState.displayName = 'WrapperWithState';
 
 const meta: Meta<typeof StatsPicker> = {
-  title: 'Pickers and Editors/StatsPicker',
+  title: 'Pickers/StatsPicker',
   component: StatsPicker,
   parameters: {
     controls: {
-      exclude: ['onChange', 'stats', 'defaultStat', 'className'],
+      exclude: ['onChange', 'stats', 'defaultStat'],
     },
   },
 };
@@ -71,7 +48,6 @@ export const Picker: StoryFn<typeof StatsPicker> = (args) => {
 Picker.args = {
   placeholder: 'placeholder',
   allowMultiple: false,
-  menuPlacement: 'auto',
   width: 10,
 };
 

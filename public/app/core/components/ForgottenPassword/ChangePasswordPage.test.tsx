@@ -1,15 +1,18 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 
-import { ChangePasswordPage, Props } from './ChangePasswordPage';
+import { ChangePasswordPage, type Props } from './ChangePasswordPage';
 
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: postMock,
   }),
+  locationService: {
+    getSearch: () => new URLSearchParams(),
+  },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     loginError: false,

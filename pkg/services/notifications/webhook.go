@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
-
-	alertingReceivers "github.com/grafana/alerting/receivers"
+	"time"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -71,7 +71,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		request.Header.Set(k, v)
 	}
 
-	resp, err := alertingReceivers.NewTLSClient(webhook.TLSConfig).Do(request)
+	resp, err := NewTLSClient(webhook.TLSConfig).Do(request)
 	if err != nil {
 		return redactURL(err)
 	}
@@ -110,4 +110,27 @@ func redactURL(err error) error {
 	}
 	e.URL = "<redacted>"
 	return e
+}
+
+// NewTLSClient creates a new HTTP client with the provided TLS configuration or with default settings.
+func NewTLSClient(tlsConfig *tls.Config) *http.Client {
+	nc := func(tlsConfig *tls.Config) *http.Client {
+		return &http.Client{
+			Timeout: time.Second * 30,
+			Transport: &http.Transport{
+				TLSClientConfig: tlsConfig,
+				Proxy:           http.ProxyFromEnvironment,
+				Dial: (&net.Dialer{
+					Timeout: 30 * time.Second,
+				}).Dial,
+				TLSHandshakeTimeout: 5 * time.Second,
+			},
+		}
+	}
+
+	if tlsConfig == nil {
+		return nc(&tls.Config{Renegotiation: tls.RenegotiateFreelyAsClient})
+	}
+
+	return nc(tlsConfig)
 }

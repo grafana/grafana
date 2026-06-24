@@ -1,6 +1,6 @@
-import { DataSourceRef, LoadingState } from '@grafana/data/src';
-import { setDataSourceSrv } from '@grafana/runtime/src';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { type BaseVariableModel, type DataSourceRef, LoadingState } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
@@ -11,14 +11,14 @@ import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createDataSourceOptions } from '../datasource/reducer';
 import { cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
-import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
+import { setVariableQueryRunner, type VariableQueryRunner } from '../query/VariableQueryRunner';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { adHocBuilder, constantBuilder, datasourceBuilder, queryBuilder } from '../shared/testing/builders';
-import { TransactionStatus, VariableModel } from '../types';
+import { TransactionStatus } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { initVariablesTransaction } from './actions';
-import { getPreloadedState, getRootReducer, RootReducerType } from './helpers';
+import { getPreloadedState, getRootReducer, type RootReducerType } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import {
   addVariable,
@@ -43,12 +43,13 @@ variableAdapters.setInit(() => [
   createDataSourceVariableAdapter(),
 ]);
 
-function getTestContext(variables?: VariableModel[]) {
+function getTestContext(variables?: BaseVariableModel[]) {
   const key = 'key';
   const constant = constantBuilder().withId('constant').withName('constant').build();
   const templating = { list: variables ?? [constant] };
   const getInstanceSettingsMock = jest.fn().mockReturnValue(undefined);
   setDataSourceSrv({
+    registerRuntimeDataSource: jest.fn(),
     get: jest.fn().mockResolvedValue({}),
     getList: jest.fn().mockReturnValue([]),
     getInstanceSettings: getInstanceSettingsMock,

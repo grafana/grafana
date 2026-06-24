@@ -2,14 +2,33 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 )
+
+var httpClient = http.Client{
+	Transport: &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: func(dialer *net.Dialer) func(context.Context, string, string) (net.Conn, error) {
+			return dialer.DialContext
+		}(&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}),
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	},
+}
 
 type publisher struct {
 	apiKey         string
@@ -264,7 +283,7 @@ func (p *publisher) postRequest(url string, obj any, desc string) error {
 	req.Header.Add("Authorization", "Bearer "+p.apiKey)
 	req.Header.Add("Content-Type", "application/json")
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}

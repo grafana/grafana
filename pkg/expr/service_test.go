@@ -11,13 +11,17 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -29,32 +33,11 @@ import (
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}))
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{new(2.0)}),
+	)
 
-	me := &mockEndpoint{
-		Responses: map[string]backend.DataResponse{
-			"A": {Frames: data.Frames{dsDF}},
-		},
-	}
-
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
-		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: "test"}},
-		},
-	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
-
-	features := featuremgmt.WithFeatures()
-	s := Service{
-		cfg:          setting.NewCfg(),
-		dataService:  me,
-		pCtxProvider: pCtxProvider,
-		features:     features,
-		tracer:       tracing.InitializeTracerForTest(),
-		metrics:      newMetrics(nil),
-		converter: &ResultConverter{
-			Features: features,
-			Tracer:   tracing.InitializeTracerForTest(),
-		},
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{dsDF}},
 	}
 
 	queries := []Query{
@@ -78,9 +61,9 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	req := &Request{Queries: queries, User: &user.SignedInUser{}}
+	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -88,7 +71,7 @@ func TestService(t *testing.T) {
 
 	bDF := data.NewFrame("",
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("B", data.Labels{"test": "label"}, []*float64{fp(4)}))
+		data.NewField("B", data.Labels{"test": "label"}, []*float64{new(4.0)}))
 	bDF.RefID = "B"
 	bDF.SetMeta(&data.FrameMeta{
 		Type:        data.FrameTypeTimeSeriesMulti,
@@ -121,26 +104,9 @@ func TestService(t *testing.T) {
 }
 
 func TestDSQueryError(t *testing.T) {
-	me := &mockEndpoint{
-		Responses: map[string]backend.DataResponse{
-			"A": {Error: fmt.Errorf("womp womp")},
-			"B": {Frames: data.Frames{}},
-		},
-	}
-
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
-		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: "test"}},
-		},
-	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
-
-	s := Service{
-		cfg:          setting.NewCfg(),
-		dataService:  me,
-		pCtxProvider: pCtxProvider,
-		features:     featuremgmt.WithFeatures(),
-		tracer:       tracing.InitializeTracerForTest(),
-		metrics:      newMetrics(nil),
+	resp := map[string]backend.DataResponse{
+		"A": {Error: fmt.Errorf("womp womp")},
+		"B": {Frames: data.Frames{}},
 	}
 
 	queries := []Query{
@@ -169,23 +135,104 @@ func TestDSQueryError(t *testing.T) {
 		},
 	}
 
-	req := &Request{Queries: queries, User: &user.SignedInUser{}}
+	s, req := newMockQueryService(resp, queries)
 
-	pl, err := s.BuildPipeline(req)
+	pl, err := s.BuildPipeline(t.Context(), req)
 	require.NoError(t, err)
 
-	resp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
 	require.NoError(t, err)
 
 	var utilErr errutil.Error
-	require.ErrorContains(t, resp.Responses["A"].Error, "womp womp")
-	require.ErrorAs(t, resp.Responses["B"].Error, &utilErr)
+	require.ErrorContains(t, res.Responses["A"].Error, "womp womp")
+	require.ErrorAs(t, res.Responses["B"].Error, &utilErr)
 	require.ErrorIs(t, utilErr, DependencyError)
-	require.Equal(t, fp(42), resp.Responses["C"].Frames[0].Fields[0].At(0))
+	require.Equal(t, new(42.0), res.Responses["C"].Frames[0].Fields[0].At(0))
 }
 
-func fp(f float64) *float64 {
-	return &f
+func TestParseError(t *testing.T) {
+	resp := map[string]backend.DataResponse{}
+
+	queries := []Query{
+		{
+			RefID:      "A",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "asdf" }`),
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+
+	_, err := s.BuildPipeline(t.Context(), req)
+	require.ErrorContains(t, err, "parse")
+	require.ErrorContains(t, err, "math")
+	require.ErrorContains(t, err, "asdf")
+}
+
+func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
+	tests := []struct {
+		name            string
+		configCellLimit int64
+		expectedLimit   int64
+	}{
+		{
+			name:            "should pass default cell limit (0) to SQL command",
+			configCellLimit: 0,
+			expectedLimit:   0,
+		},
+		{
+			name:            "should pass custom cell limit to SQL command",
+			configCellLimit: 5000,
+			expectedLimit:   5000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a request with an SQL expression
+			sqlQuery := Query{
+				RefID:      "A",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT 1 AS n" }`),
+				TimeRange: AbsoluteTimeRange{
+					From: time.Time{},
+					To:   time.Time{},
+				},
+			}
+
+			queries := []Query{sqlQuery}
+
+			// Create service with specified cell limit
+			cfg := setting.NewCfg()
+			cfg.ExpressionsEnabled = true
+			cfg.SQLExpressionCellLimit = tt.configCellLimit
+
+			features := featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+			// Create service with our configured limit
+			s := &Service{
+				cfg:      cfg,
+				features: features,
+				converter: &ResultConverter{
+					Features: features,
+				},
+				tracer: &testTracer{},
+			}
+
+			req := &Request{Queries: queries, User: &user.SignedInUser{}}
+
+			// Build the pipeline
+			pipeline, err := s.BuildPipeline(t.Context(), req)
+			require.NoError(t, err)
+
+			node := pipeline[0]
+			cmdNode := node.(*CMDNode)
+			sqlCmd := cmdNode.Command.(*SQLCommand)
+
+			// Verify the SQL command has the correct inputLimit
+			require.Equal(t, tt.expectedLimit, sqlCmd.inputLimit, "SQL command has incorrect cell limit")
+		})
+	}
 }
 
 type mockEndpoint struct {
@@ -203,4 +250,227 @@ func (me *mockEndpoint) QueryData(ctx context.Context, req *backend.QueryDataReq
 func dataSourceModel() *datasources.DataSource {
 	d, _ := DataSourceModelFromNodeType(TypeCMDNode)
 	return d
+}
+
+func newMockQueryService(responses map[string]backend.DataResponse, queries []Query) (*Service, *Request) {
+	me := &mockEndpoint{
+		Responses: responses,
+	}
+	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{JSONData: plugins.JSONData{ID: "test"}},
+		},
+	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
+
+	features := featuremgmt.WithFeatures()
+	return &Service{
+		cfg:          setting.NewCfg(),
+		dataService:  me,
+		pCtxProvider: pCtxProvider,
+		features:     featuremgmt.WithFeatures(),
+		tracer:       tracing.InitializeTracerForTest(),
+		metrics:      metrics.NewSSEMetrics(nil),
+		converter: &ResultConverter{
+			Features: features,
+			Tracer:   tracing.InitializeTracerForTest(),
+		},
+		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
+	}, &Request{Queries: queries, User: &user.SignedInUser{}}
+}
+
+func newMockQueryServiceWithMetricsRegistry(
+	responses map[string]backend.DataResponse,
+	queries []Query,
+	reg *prometheus.Registry,
+) (*Service, *Request) {
+	s, req := newMockQueryService(responses, queries)
+	// Replace the default metrics with a set bound to our private registry.
+	s.metrics = metrics.NewSSEMetrics(reg)
+	return s, req
+}
+
+func TestTransformDataDegradedPipeline(t *testing.T) {
+	dsDF := data.NewFrame("test",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{new(2.0)}),
+	)
+
+	t.Run("returns partial results for broken expressions", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
+		me := &mockEndpoint{
+			Responses: map[string]backend.DataResponse{
+				"A": {Frames: data.Frames{dsDF}},
+			},
+		}
+
+		cfg := setting.NewCfg()
+		cfg.ExpressionsEnabled = true
+		pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{JSONData: plugins.JSONData{ID: "test"}},
+			},
+		}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
+
+		s := Service{
+			cfg:                       cfg,
+			dataService:               me,
+			features:                  featuremgmt.WithFeatures(),
+			tracer:                    tracing.NewNoopTracerService(),
+			metrics:                   metrics.NewSSEMetrics(prometheus.NewRegistry()),
+			pCtxProvider:              pCtxProvider,
+			qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
+			converter: &ResultConverter{
+				Features: featuremgmt.WithFeatures(),
+				Tracer:   tracing.NewNoopTracerService(),
+			},
+		}
+
+		queries := []Query{
+			{
+				RefID: "A",
+				DataSource: &datasources.DataSource{
+					OrgID: 1,
+					UID:   "test",
+					Type:  "test",
+				},
+				JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange: AbsoluteTimeRange{},
+			},
+			{
+				RefID:      "B",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$NONEXISTENT * 2" }`),
+			},
+		}
+
+		req := &Request{Queries: queries, User: &user.SignedInUser{}}
+		resp, err := s.TransformData(t.Context(), time.Now(), req)
+
+		require.NoError(t, err, "TransformData should not return error for degraded pipelines")
+		require.NotNil(t, resp)
+
+		// A should have data
+		require.Contains(t, resp.Responses, "A")
+		require.NoError(t, resp.Responses["A"].Error)
+		require.NotEmpty(t, resp.Responses["A"].Frames)
+
+		// B should have an error
+		require.Contains(t, resp.Responses, "B")
+		require.Error(t, resp.Responses["B"].Error)
+		require.Contains(t, resp.Responses["B"].Error.Error(), "NONEXISTENT")
+	})
+
+	t.Run("still fails entirely when toggle OFF", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.ExpressionsEnabled = true
+
+		s := Service{
+			cfg:      cfg,
+			features: featuremgmt.WithFeatures(),
+			tracer:   tracing.NewNoopTracerService(),
+			metrics:  metrics.NewSSEMetrics(prometheus.NewRegistry()),
+			converter: &ResultConverter{
+				Features: featuremgmt.WithFeatures(),
+				Tracer:   tracing.NewNoopTracerService(),
+			},
+		}
+
+		queries := []Query{
+			{
+				RefID: "A",
+				DataSource: &datasources.DataSource{
+					OrgID: 1,
+					UID:   "test",
+					Type:  "test",
+				},
+				JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+				TimeRange: AbsoluteTimeRange{},
+			},
+			{
+				RefID:      "B",
+				DataSource: dataSourceModel(),
+				JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$NONEXISTENT * 2" }`),
+			},
+		}
+
+		req := &Request{Queries: queries, User: &user.SignedInUser{}}
+		resp, err := s.TransformData(t.Context(), time.Now(), req)
+
+		require.Error(t, err, "TransformData should fail when toggle is off")
+		require.Nil(t, resp)
+	})
+}
+
+func TestTransformDataDegradedHiddenBrokenNode(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
+	dsDF := data.NewFrame("test",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{new(2.0)}),
+	)
+
+	me := &mockEndpoint{
+		Responses: map[string]backend.DataResponse{
+			"A": {Frames: data.Frames{dsDF}},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.ExpressionsEnabled = true
+	pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{JSONData: plugins.JSONData{ID: "test"}},
+		},
+	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
+
+	s := Service{
+		cfg:                       cfg,
+		dataService:               me,
+		features:                  featuremgmt.WithFeatures(),
+		tracer:                    tracing.NewNoopTracerService(),
+		metrics:                   metrics.NewSSEMetrics(prometheus.NewRegistry()),
+		pCtxProvider:              pCtxProvider,
+		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
+		converter: &ResultConverter{
+			Features: featuremgmt.WithFeatures(),
+			Tracer:   tracing.NewNoopTracerService(),
+		},
+	}
+
+	queries := []Query{
+		{
+			RefID: "A",
+			DataSource: &datasources.DataSource{
+				OrgID: 1,
+				UID:   "test",
+				Type:  "test",
+			},
+			JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{},
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$NONEXISTENT * 2", "hide": true }`),
+		},
+	}
+
+	req := &Request{Queries: queries, User: &user.SignedInUser{}}
+	resp, err := s.TransformData(t.Context(), time.Now(), req)
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	// A should have data
+	require.Contains(t, resp.Responses, "A")
+
+	// B should be excluded (hidden), even though it's broken
+	require.NotContains(t, resp.Responses, "B")
+}
+
+// Return the value of a prometheus counter with the given labels to test if it has been incremented, if the labels don't exist 0 will still be returned.
+func counterVal(t *testing.T, cv *prometheus.CounterVec, labels ...string) float64 {
+	t.Helper()
+	ch, err := cv.GetMetricWithLabelValues(labels...)
+	require.NoError(t, err)
+	return testutil.ToFloat64(ch)
 }

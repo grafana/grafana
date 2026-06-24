@@ -5,35 +5,54 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
+
+type crypto interface {
+	EncryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error
+	DecryptExtraConfigs(ctx context.Context, config *v1.AMConfigV1) error
+}
 
 type amConfigStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
-func DeserializeAlertmanagerConfig(config []byte) (*definitions.PostableUserConfig, error) {
-	result := definitions.PostableUserConfig{}
+func DeserializeAlertmanagerConfig(config []byte) (*v1.AMConfigDB, error) {
+	result := v1.AMConfigDB{}
 	if err := json.Unmarshal(config, &result); err != nil {
 		return nil, makeErrBadAlertmanagerConfiguration(err)
 	}
 	return &result, nil
 }
 
-func SerializeAlertmanagerConfig(config definitions.PostableUserConfig) ([]byte, error) {
-	return json.Marshal(config)
+func SerializeAlertmanagerConfig(config v1.AMConfigV1) ([]byte, error) {
+	dbModel, err := v1.ToDBModel(&config)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(dbModel)
 }
 
 type ConfigRevision struct {
-	Config           *definitions.PostableUserConfig
+	Config           *v1.AMConfigV1
 	ConcurrencyToken string
 	Version          string
 }
+type alertmanagerConfigStoreImpl struct {
+	store    amConfigStore
+	crypto   crypto
+	features featuremgmt.FeatureToggles
+}
 
-func getLastConfiguration(ctx context.Context, orgID int64, store amConfigStore) (*ConfigRevision, error) {
-	alertManagerConfig, err := store.GetLatestAlertmanagerConfiguration(ctx, orgID)
+func NewAlertmanagerConfigStore(store amConfigStore, crypto crypto, features featuremgmt.FeatureToggles) *alertmanagerConfigStoreImpl {
+	return &alertmanagerConfigStoreImpl{store: store, crypto: crypto, features: features}
+}
+
+func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {
+	alertManagerConfig, err := a.store.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -43,9 +62,15 @@ func getLastConfiguration(ctx context.Context, orgID int64, store amConfigStore)
 	}
 
 	concurrencyToken := alertManagerConfig.ConfigurationHash
-	cfg, err := DeserializeAlertmanagerConfig([]byte(alertManagerConfig.AlertmanagerConfiguration))
+	dbCfg, err := DeserializeAlertmanagerConfig([]byte(alertManagerConfig.AlertmanagerConfiguration))
 	if err != nil {
 		return nil, err
+	}
+	cfg := v1.ToModel(dbCfg)
+
+	err = a.crypto.DecryptExtraConfigs(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt extra configurations: %w", err)
 	}
 
 	return &ConfigRevision{
@@ -55,38 +80,21 @@ func getLastConfiguration(ctx context.Context, orgID int64, store amConfigStore)
 	}, nil
 }
 
-type alertmanagerConfigStoreImpl struct {
-	store amConfigStore
-}
-
-func NewAlertmanagerConfigStore(store amConfigStore) *alertmanagerConfigStoreImpl {
-	return &alertmanagerConfigStoreImpl{store: store}
-}
-
-func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {
-	return getLastConfiguration(ctx, orgID, a.store)
-}
-
 func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigRevision, orgID int64) error {
+	err := a.crypto.EncryptExtraConfigs(ctx, revision.Config)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt extra configurations: %w", err)
+	}
+
 	serialized, err := SerializeAlertmanagerConfig(*revision.Config)
 	if err != nil {
 		return err
 	}
-	cmd := models.SaveAlertmanagerConfigurationCmd{
+	return a.store.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
 		ConfigurationVersion:      revision.Version,
 		FetchedConfigurationHash:  revision.ConcurrencyToken,
 		Default:                   false,
 		OrgID:                     orgID,
-	}
-	return a.PersistConfig(ctx, &cmd)
-}
-
-// PersistConfig validates to config before eventually persisting it if no error occurs
-func (a alertmanagerConfigStoreImpl) PersistConfig(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	cfg := &definitions.PostableUserConfig{}
-	if err := json.Unmarshal([]byte(cmd.AlertmanagerConfiguration), cfg); err != nil {
-		return fmt.Errorf("change would result in an invalid configuration state: %w", err)
-	}
-	return a.store.UpdateAlertmanagerConfiguration(ctx, cmd)
+	})
 }

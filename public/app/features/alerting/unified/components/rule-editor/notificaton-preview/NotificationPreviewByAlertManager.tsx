@@ -1,115 +1,97 @@
-import { css } from '@emotion/css';
+import { groupBy } from 'lodash';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Alert, Box, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
-import { Labels } from '../../../../../../types/unified-alerting-dto';
-import { AlertManagerDataSource } from '../../../utils/datasource';
+import { type Labels } from '../../../../../../types/unified-alerting-dto';
+import { type AlertManagerDataSource } from '../../../utils/datasource';
 
-import { NotificationRoute } from './NotificationRoute';
+import { ExternalContactPointGroup } from './ContactPointGroup';
+import { InstanceMatch } from './NotificationRoute';
 import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
+
+const UNKNOWN_RECEIVER = 'unknown';
 
 function NotificationPreviewByAlertManager({
   alertManagerSource,
-  potentialInstances,
-  onlyOneAM,
+  instances,
+  policyName,
 }: {
   alertManagerSource: AlertManagerDataSource;
-  potentialInstances: Labels[];
-  onlyOneAM: boolean;
+  instances: Labels[];
+  policyName?: string;
 }) {
-  const styles = useStyles2(getStyles);
-
-  const { routesByIdMap, receiversByName, matchingMap, loading, error } = useAlertmanagerNotificationRoutingPreview(
+  const { treeMatchingResults, isLoading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
-    potentialInstances
+    instances,
+    policyName
   );
 
   if (error) {
+    const title = t('alerting.notification-preview.error', 'Could not load routing preview for {{alertmanager}}', {
+      alertmanager: alertManagerSource.name,
+    });
     return (
-      <Alert title="Cannot load Alertmanager configuration" severity="error">
-        {error.message}
+      <Alert title={title} severity="error">
+        {stringifyErrorLike(error)}
       </Alert>
     );
   }
 
-  if (loading) {
-    return <LoadingPlaceholder text="Loading routing preview..." />;
+  if (isLoading) {
+    return (
+      <LoadingPlaceholder
+        text={t(
+          'alerting.notification-preview-by-alert-manager.text-loading-routing-preview',
+          'Loading routing preview...'
+        )}
+      />
+    );
   }
 
-  const matchingPoliciesFound = matchingMap.size > 0;
+  const matchingPoliciesFound = treeMatchingResults.some((result) => result.matchedRoutes.length > 0);
+
+  // Group results by receiver name
+  // We need to flatten the structure first to group by receiver
+  const flattenedResults = treeMatchingResults.flatMap(({ labels, matchedRoutes }) => {
+    return Array.from(matchedRoutes).map(({ route, routeTree, matchDetails }) => ({
+      labels,
+      receiver: route.receiver || UNKNOWN_RECEIVER,
+      routeTree,
+      matchDetails,
+    }));
+  });
+
+  const contactPointGroups = groupBy(flattenedResults, 'receiver');
 
   return matchingPoliciesFound ? (
-    <div className={styles.alertManagerRow}>
-      {!onlyOneAM && (
-        <Stack direction="row" alignItems="center">
-          <div className={styles.firstAlertManagerLine}></div>
-          <div className={styles.alertManagerName}>
-            {' '}
-            Alertmanager:
-            <img src={alertManagerSource.imgUrl} alt="" className={styles.img} />
-            {alertManagerSource.name}
-          </div>
-          <div className={styles.secondAlertManagerLine}></div>
-        </Stack>
-      )}
-      <Stack gap={1} direction="column">
-        {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
-          const route = routesByIdMap.get(routeId);
-          const receiver = route?.receiver && receiversByName.get(route.receiver);
-
-          if (!route) {
-            return null;
-          }
-          if (!receiver) {
-            throw new Error('Receiver not found');
-          }
-          return (
-            <NotificationRoute
-              instanceMatches={instanceMatches}
-              route={route}
-              receiver={receiver}
-              key={routeId}
-              routesByIdMap={routesByIdMap}
-              alertManagerSourceName={alertManagerSource.name}
-            />
-          );
-        })}
+    <Box display="flex" direction="column" gap={1} width="100%">
+      <Stack direction="column" gap={0}>
+        {Object.entries(contactPointGroups).map(([receiver, resultsForReceiver]) => (
+          <ExternalContactPointGroup
+            key={receiver}
+            name={receiver}
+            matchedInstancesCount={resultsForReceiver.length}
+            alertmanagerSourceName={alertManagerSource.name}
+          >
+            <Stack direction="column" gap={0}>
+              {resultsForReceiver.map(({ routeTree, matchDetails }) => (
+                <InstanceMatch
+                  key={matchDetails.labels.join(',')}
+                  matchedInstance={matchDetails}
+                  policyTreeMetadata={routeTree.metadata}
+                />
+              ))}
+            </Stack>
+          </ExternalContactPointGroup>
+        ))}
       </Stack>
-    </div>
+    </Box>
   ) : null;
 }
 
 // export default because we want to load the component dynamically using React.lazy
 // Due to loading of the web worker we don't want to load this component when not necessary
 export default withErrorBoundary(NotificationPreviewByAlertManager);
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  alertManagerRow: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    width: '100%',
-  }),
-  firstAlertManagerLine: css({
-    height: '1px',
-    width: theme.spacing(4),
-    backgroundColor: theme.colors.secondary.main,
-  }),
-  alertManagerName: css({
-    width: 'fit-content',
-  }),
-  secondAlertManagerLine: css({
-    height: '1px',
-    width: '100%',
-    flex: 1,
-    backgroundColor: theme.colors.secondary.main,
-  }),
-  img: css({
-    marginLeft: theme.spacing(2),
-    width: theme.spacing(3),
-    height: theme.spacing(3),
-    marginRight: theme.spacing(1),
-  }),
-});

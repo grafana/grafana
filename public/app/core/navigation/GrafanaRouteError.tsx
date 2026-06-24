@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { ErrorInfo, useEffect } from 'react';
+import { type ErrorInfo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
+import { type GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ErrorWithStack, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../components/Page/Page';
@@ -31,18 +32,28 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
       <div className={styles.container}>
         {isChunkLoadingError && (
           <div>
-            <h2>Unable to find application file</h2>
+            <h2>
+              <Trans i18nKey="route-error.title">Unable to find application file</Trans>
+            </h2>
             <br />
-            <h2 className="page-heading">Grafana has likely been updated. Please try reloading the page.</h2>
+            <h2 className="page-heading">
+              <Trans i18nKey="route-error.description">
+                Grafana has likely been updated. Please try reloading the page.
+              </Trans>
+            </h2>
             <br />
             <Button size="md" variant="secondary" icon="repeat" onClick={() => window.location.reload()}>
-              Reload
+              <Trans i18nKey="route-error.reload-button">Reload</Trans>
             </Button>
-            <ErrorWithStack title={'Error details'} error={error} errorInfo={errorInfo} />
+            <ErrorWithStack title={t('route-error.error-title', 'Error details')} error={error} errorInfo={errorInfo} />
           </div>
         )}
         {!isChunkLoadingError && (
-          <ErrorWithStack title={'An unexpected error happened'} error={error} errorInfo={errorInfo} />
+          <ErrorWithStack
+            title={t('route-error.error-unexpected-title', 'An unexpected error happened')}
+            error={error}
+            errorInfo={errorInfo}
+          />
         )}
       </div>
     </Page>

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -131,7 +131,8 @@ func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasourc
 }
 
 func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDataSourceFromConfig) error {
-	if err := utils.CheckOrgExists(ctx, cr.orgService, ds.OrgID); err != nil {
+	checker := utils.NewOrgExistsChecker(cr.orgService)
+	if err := checker(ctx, ds.OrgID); err != nil {
 		return err
 	}
 

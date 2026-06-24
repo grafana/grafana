@@ -38,6 +38,7 @@ func ProvideServiceAccountsProxy(
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
+		//nolint:staticcheck // not yet migrated to OpenFeature
 		isProxyEnabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
@@ -121,10 +122,6 @@ func (s *ServiceAccountsProxy) EnableServiceAccount(ctx context.Context, orgID i
 
 func (s *ServiceAccountsProxy) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return s.proxiedService.ListTokens(ctx, query)
-}
-
-func (s *ServiceAccountsProxy) MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error {
-	return s.proxiedService.MigrateApiKey(ctx, orgID, keyId)
 }
 
 func (s *ServiceAccountsProxy) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {

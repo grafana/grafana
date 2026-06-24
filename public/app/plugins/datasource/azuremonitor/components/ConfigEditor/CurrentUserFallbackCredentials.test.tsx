@@ -4,13 +4,12 @@ import { config } from '@grafana/runtime';
 
 import { selectors } from '../../e2e/selectors';
 
-import CurrentUserFallbackCredentials, { Props } from './CurrentUserFallbackCredentials';
+import { CurrentUserFallbackCredentials, type Props } from './CurrentUserFallbackCredentials';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
     managedIdentityEnabled: true,
     workloadIdentityEnabled: true,
-    userIdentityEnabled: true,
     credentials: { authType: 'currentuser' },
     azureCloudOptions: [
       { value: 'AzureCloud', label: 'Azure' },

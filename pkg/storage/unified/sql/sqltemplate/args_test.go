@@ -71,7 +71,7 @@ func TestArg_ArgList(t *testing.T) {
 	}
 
 	var a args
-	a.d = argFmtSQL92
+	a.d = MySQL
 	for i, tc := range testCases {
 		a.Reset()
 

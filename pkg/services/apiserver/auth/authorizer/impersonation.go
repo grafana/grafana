@@ -8,6 +8,10 @@ import (
 
 var _ authorizer.Authorizer = (*impersonationAuthorizer)(nil)
 
+func NewImpersonationAuthorizer() *impersonationAuthorizer {
+	return &impersonationAuthorizer{}
+}
+
 // ImpersonationAuthorizer denies all impersonation requests.
 type impersonationAuthorizer struct{}
 

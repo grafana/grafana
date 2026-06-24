@@ -12,7 +12,7 @@ weight: 100
 
 # Configure Grafana Enterprise
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../../configure-grafana" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration](../) for more information about available configuration options.
 
 ## [enterprise]
 
@@ -35,9 +35,13 @@ side to be valid for a different number of users or a new duration,
 your Grafana instance will be updated with the new terms
 automatically. Defaults to `true`.
 
+{{< admonition type="note" >}}
+The license only automatically updates once per day. To immediately update the terms for a license, use the Grafana UI to renew your license token.
+{{< /admonition >}}
+
 ### license_validation_type
 
-When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../../administration/enterprise-licensing/activate-aws-marketplace-license" >}}).
+When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace](../../../administration/enterprise-licensing/activate-aws-marketplace-license/).
 
 ## [white_labeling]
 
@@ -80,7 +84,7 @@ List the link IDs to use here. Grafana will look for matching link configuration
 
 ## [usage_insights.export]
 
-By [exporting usage logs]({{< relref "../../configure-security/export-logs" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
+By [exporting usage logs](../../configure-security/export-logs/), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
 
 ### enabled
 
@@ -108,6 +112,22 @@ Decide whether or not to enable the TLS (Transport Layer Security) protocol when
 
 Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
+### batch_wait_duration
+
+How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m. Defaults to 5s.
+
+Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
+
+If the wait duration is very long and the `batch_size_bytes` is very high, events may take a long time to be sent.
+
+### batch_size_bytes
+
+How many events (in bytes) to accumulate in a single batch before sending it to Loki. Defaults to 100 KiB.
+
+Whatever happens first between `batch_wait_duration` and `batch_size_bytes` will trigger the batch to be sent to Loki.
+
+If you wish to always wait for the `batch_wait_duration`, set this to a very high number.
+
 ## [analytics.summaries]
 
 ### buffer_write_interval
@@ -134,21 +154,25 @@ Age for recent active users.
 
 ## [reporting]
 
+### enabled
+
+Enable or disable the reporting feature. When disabled, no reports are generated, and the UI is hidden. By default, reporting is enabled (`true`).
+
 ### rendering_timeout
 
-Timeout for each panel rendering request.
+Timeout for the following reporting rendering requests: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. Default is 10 seconds (`10s`).
 
 ### concurrent_render_limit
 
-Maximum number of concurrent calls to the rendering service.
+Maximum number of concurrent calls to the rendering service. Default is `4`.
 
 ### image_scale_factor
 
-Scale factor for rendering images. Value `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory.
+Scale factor for rendering images. Value `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory. Default is `2`.
 
 ### max_attachment_size_mb
 
-Set the maximum file size in megabytes for the CSV attachments.
+Set the maximum file size in megabytes for the report email attachments. Default is `10`.
 
 ### fonts_path
 
@@ -156,7 +180,7 @@ Path to the directory containing font files.
 
 ### font_regular
 
-Name of the TrueType font file with regular style.
+Name of the TrueType font file with regular style. Default is `DejaVuSansCondensed.ttf`.
 
 ### font_bold
 
@@ -164,15 +188,23 @@ Name of the TrueType font file with bold style.
 
 ### font_italic
 
-Name of the TrueType font file with italic style.
+Name of the TrueType font file with italic style. Default is `DejaVuSansCondensed-Oblique.ttf`.
 
-### max_retries_per_panel
+### font_min_text_size
 
-Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+The minimum pixel size that Grafana uses when rendering fonts. Default is `4`.
+
+### max_request_retries
+
+Maximum number of times the following reporting rendering requests are retried before returning an error: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. Default is `0`, which means it is disabled.
+
+### allowed_domains
+
+Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: `allowed_domains = grafana.com`, example.org. Default is `*`.
 
 ## [auditing]
 
-[Auditing]({{< relref "../../configure-security/audit-grafana" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+[Auditing](../../configure-security/audit-grafana/) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
 ### enabled
 
@@ -185,6 +217,14 @@ List of enabled loggers.
 ### log_dashboard_content
 
 Keep dashboard content in the logs (request or response fields). This can significantly increase the size of your logs.
+
+### log_datasource_query_request_body
+
+Whether to record data source queries' request body. This can significantly increase the size of your logs. Disabled by default.
+
+### log_datasource_query_response_body
+
+Whether to record data source queries' response body. This can significantly increase the size of your logs. Disabled by default.
 
 ### verbose
 
@@ -225,6 +265,30 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 ### tenant_id
 
 Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
+
+### retries
+
+The amount of times the HTTP or gRPC client will retry a failed request to Loki. The default is `10`.
+
+### timeout
+
+The timeout duration of an HTTP request or gRPC call to Loki. The default is `3s`.
+
+### batch_wait_duration
+
+Only available for the HTTP client. Disabled by default.
+How long to wait before sending a request to Loki with the batch of events. Uses duration format: e.g. 5s, 1m
+Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
+If the wait duration is very long and the `batch_size_bytes` is very high, events might take a long time to be sent.
+To enable batching, you must also set the `batch_size_bytes` configuration option.
+
+### batch_size_bytes
+
+Only available for the HTTP client. Disabled by default.
+How many events, in bytes, to accumulate in a single batch before sending it to Loki.
+Whichever threshold is hit first between `batch_wait_duration` and `batch_size_bytes` triggers the batch to be sent to Loki.
+If you want to always wait for the `batch_wait_duration`, set `batch_size_bytes` to a very high number.
+To enable batching, you must also set the `batch_wait_duration` configuration option.
 
 ## [auth.saml]
 
@@ -278,11 +342,11 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 
 ### assertion_attribute_login
 
-Friendly name or name of the attribute within the SAML assertion to use as the user login handle.
+Friendly name or name of the attribute within the SAML assertion to use as the user login handle. Defaults to `login`.
 
 ### assertion_attribute_email
 
-Friendly name or name of the attribute within the SAML assertion to use as the user email.
+Friendly name or name of the attribute within the SAML assertion to use as the user email. Defaults to `email`.
 
 ### assertion_attribute_groups
 
@@ -295,6 +359,10 @@ Friendly name or name of the attribute within the SAML assertion to use as the u
 ### assertion_attribute_org
 
 Friendly name or name of the attribute within the SAML assertion to use as the user organization.
+
+### assertion_attribute_external_uid
+
+Friendly name or name of the attribute within the SAML assertion to use as the user external UID. Defaults to `userUID`.
 
 ### allowed_organizations
 
@@ -396,9 +464,9 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-{{% admonition type="note" %}}
-This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "../../../administration/data-source-management#enable-and-configure-query-caching" >}}).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs](../../../administration/data-source-management/#enable-and-configure-query-caching).
+{{< /admonition >}}
 
 ### ttl
 
@@ -410,9 +478,9 @@ The max duration that a query result is stored in the caching system before it i
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling this constraint is not recommended in production environments.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### max_value_mb
 
@@ -432,9 +500,9 @@ This setting defines the duration to wait for the caching backend to return a ca
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling this timeout is not recommended in production environments.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### write_timeout
 
@@ -442,9 +510,9 @@ This setting defines the number of seconds to wait for the caching backend to st
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling this timeout is not recommended in production environments.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## [caching.encryption]
 
@@ -476,9 +544,9 @@ To disable the maximum, set this value to `0`.
 
 The default is `25`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Disabling the maximum is not recommended in production environments.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## [caching.redis]
 
@@ -493,13 +561,13 @@ The default is `"redis://localhost:6379"`.
 A comma-separated list of Redis cluster members, either in `host:port` format or using the full Redis URLs (`redis://username:password@localhost:6379`). For example, `localhost:7000, localhost: 7001, localhost:7002`.
 If you use the full Redis URLs, then you can specify the scheme, username, and password only once. For example, `redis://username:password@localhost:0000,localhost:1111,localhost:2222`. You cannot specify a different username and password for each URL.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you have specify `cluster`, the value for `url` is ignored.
-{{% /admonition %}}
+{{< /admonition >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You can enable TLS for cluster mode using the `rediss` scheme in Grafana Enterprise v8.5 and later versions.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### prefix
 
@@ -514,10 +582,6 @@ The default is `"grafana"`.
 A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`.
 
 The default is `"localhost:11211"`.
-
-{{% admonition type="note" %}}
-The following memcached configuration requires the `tlsMemcached` feature toggle.
-{{% /admonition %}}
 
 ### tls_enabled
 

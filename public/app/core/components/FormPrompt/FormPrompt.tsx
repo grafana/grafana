@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import history from 'history';
+import type history from 'history';
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
 
 import { Prompt } from './Prompt';
@@ -98,18 +99,19 @@ const UnsavedChangesModal = ({ onDiscard, onBackToForm, isOpen }: UnsavedChanges
   return (
     <Modal
       isOpen={isOpen}
-      title="Leave page?"
+      title={t('form-prompt.title', 'Leave page?')}
       onDismiss={onBackToForm}
-      icon="exclamation-triangle"
       className={css({ width: '500px' })}
     >
-      <h5>Changes that you made may not be saved.</h5>
+      <h5>
+        <Trans i18nKey="form-prompt.description">Changes that you made may not be saved.</Trans>
+      </h5>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onBackToForm} fill="outline">
-          Continue editing
+          <Trans i18nKey="form-prompt.continue-button">Continue editing</Trans>
         </Button>
         <Button variant="destructive" onClick={onDiscard}>
-          Discard unsaved changes
+          <Trans i18nKey="form-prompt.discard-button">Discard unsaved changes</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

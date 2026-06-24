@@ -1,0 +1,393 @@
+package legacy_storage
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+)
+
+func TestConfigRevisionImported(t *testing.T) {
+	t.Run("should return error if extra config is invalid", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig("invalid")))
+		_, err := rev.Imported()
+		require.Error(t, err)
+	})
+
+	t.Run("should return imported config if extra config is valid", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(extraConfigurationYaml)))
+
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		require.NotNil(t, imported)
+	})
+}
+
+func TestConfigRevisionImported_GetReceivers(t *testing.T) {
+	rev := getConfigRevisionForTest(withExtraConfig(extraConfig(extraConfigurationYaml)))
+	imported, err := rev.Imported()
+	require.NoError(t, err)
+
+	t.Run("should return all receivers available in imported config", func(t *testing.T) {
+		receivers, err := imported.GetReceivers(nil)
+		require.NoError(t, err)
+		require.Len(t, receivers, 2)
+		assert.Equal(t, "imported-receiver-1", receivers[0].Name)
+		assert.Equal(t, NameToUid("imported-receiver-1"), receivers[0].UID)
+		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[0].Provenance)
+		assert.Equal(t, models.ResourceOriginImported, receivers[0].Origin)
+		assert.Len(t, receivers[0].Integrations, 1)
+
+		assert.Equal(t, "imported-receiver-2", receivers[1].Name)
+		assert.Equal(t, NameToUid("imported-receiver-2"), receivers[1].UID)
+		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[1].Provenance)
+		assert.Equal(t, models.ResourceOriginImported, receivers[1].Origin)
+		assert.Len(t, receivers[1].Integrations, 1)
+	})
+	t.Run("should filter receivers in imported config", func(t *testing.T) {
+		receivers, err := imported.GetReceivers([]string{models.NameToUid("imported-receiver-2")})
+		require.NoError(t, err)
+		require.Len(t, receivers, 1)
+		assert.Equal(t, "imported-receiver-2", receivers[0].Name)
+		assert.Equal(t, NameToUid("imported-receiver-2"), receivers[0].UID)
+
+		receivers, err = imported.GetReceivers([]string{models.NameToUid("not-found")})
+		require.NoError(t, err)
+		assert.Empty(t, receivers)
+	})
+
+	t.Run("should be correctly named in case of renames", func(t *testing.T) {
+		const dupeConfig = `
+route:
+  receiver: receiver1
+receivers:
+  - name: receiver1
+  - name: dupe-receiver
+`
+		extra := extraConfig(dupeConfig)
+		expectedDedupSuffix := extra.Identifier
+		rev := getConfigRevisionForTest(withExtraConfig(extra))
+		imported, err = rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetReceivers(nil)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		assert.Equal(t, "receiver1"+expectedDedupSuffix, result[0].Name)
+		assert.Equal(t, models.NameToUid("receiver1"+expectedDedupSuffix), result[0].UID)
+		assert.Equal(t, "dupe-receiver"+expectedDedupSuffix, result[1].Name)
+		assert.Equal(t, models.NameToUid("dupe-receiver"+expectedDedupSuffix), result[1].UID)
+
+		t.Run("should search by renamed uid", func(t *testing.T) {
+			result, err = imported.GetReceivers([]string{NameToUid("receiver1")})
+			require.NoError(t, err)
+			require.Empty(t, result)
+
+			result, err = imported.GetReceivers([]string{NameToUid("receiver1" + expectedDedupSuffix)})
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+		})
+	})
+
+	t.Run("should return empty list if no imported configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err = rev.Imported()
+		require.NoError(t, err)
+		assert.Nil(t, imported.importedConfig)
+
+		result, err := imported.GetReceivers(nil)
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+}
+
+func TestConfigRevisionImported_ReceiverUseByName(t *testing.T) {
+	t.Run("should be empty if no configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		require.Empty(t, imported.ReceiverUseByName())
+	})
+	t.Run("should count usages of the receivers", func(t *testing.T) {
+		const cfg = `
+route:
+  receiver: r1
+  routes:
+  - receiver: r2
+    routes:
+    - receiver: r1
+  - routes:
+    - receiver: r2
+receivers:
+- name: r1
+- name: r2
+`
+		extra := extraConfig(cfg)
+		rev := getConfigRevisionForTest(withExtraConfig(extra))
+
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		actual := imported.ReceiverUseByName()
+		require.EqualValues(t, map[string]int{
+			"":   1,
+			"r1": 2,
+			"r2": 2,
+		}, actual)
+	})
+
+	t.Run("should correctly handle deduplicated names", func(t *testing.T) {
+		const dupeConfig = `
+route:
+  receiver: receiver1
+  routes:
+    - receiver: dupe-receiver
+    - receiver: r1
+receivers:
+  - name: receiver1
+  - name: dupe-receiver
+  - name: r1
+`
+		extra := extraConfig(dupeConfig)
+		expectedDedupSuffix := extra.Identifier
+		rev := getConfigRevisionForTest(withExtraConfig(extra))
+
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		actual := imported.ReceiverUseByName()
+		require.EqualValues(t, map[string]int{
+			"receiver1" + expectedDedupSuffix:     1,
+			"dupe-receiver" + expectedDedupSuffix: 1,
+			"r1":                                  1,
+		}, actual)
+	})
+}
+
+func TestConfigRevisionImported_GetManagedRoute(t *testing.T) {
+	t.Run("should be empty if no configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		route, err := imported.GetManagedRoute()
+		require.NoError(t, err)
+		require.Nil(t, route)
+	})
+	t.Run("should return the imported route", func(t *testing.T) {
+		const cfg = `
+route:
+  receiver: r1
+  routes:
+  - receiver: r2
+    routes:
+    - receiver: r1
+  - routes:
+    - receiver: r2
+receivers:
+- name: r1
+- name: r2
+`
+		extra := extraConfig(cfg)
+		rev := getConfigRevisionForTest(withExtraConfig(extra))
+
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		route, err := imported.GetManagedRoute()
+		require.NoError(t, err)
+		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
+		route.Version = ""
+		require.Equal(t, &ManagedRoute{
+			Name:     extra.Identifier,
+			Version:  "",
+			Receiver: "r1",
+			Routes: []*v1.Route{
+				{Receiver: "r2", Routes: []*v1.Route{{Receiver: "r1", Routes: make([]*v1.Route, 0)}}},
+				{Receiver: "", Routes: []*v1.Route{{Receiver: "r2", Routes: make([]*v1.Route, 0)}}},
+			},
+			Provenance: models.ProvenanceConvertedPrometheus,
+			Origin:     models.ResourceOriginImported,
+		}, route)
+	})
+
+	t.Run("should correctly handle deduplicated names", func(t *testing.T) {
+		const dupeConfig = `
+route:
+  receiver: receiver1
+  routes:
+    - receiver: dupe-receiver
+      mute_time_intervals:
+        - mute-interval-1
+    - receiver: r1
+      active_time_intervals:
+        - time-interval-1
+receivers:
+  - name: receiver1
+  - name: dupe-receiver
+  - name: r1
+time_intervals:
+  - name: time-interval-1
+mute_time_intervals:
+  - name: mute-interval-1
+`
+		extra := extraConfig(dupeConfig)
+		expectedDedupSuffix := extra.Identifier
+		rev := getConfigRevisionForTest(withExtraConfig(extra))
+
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		route, err := imported.GetManagedRoute()
+		require.NoError(t, err)
+		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
+		route.Version = ""
+		require.Equal(t, &ManagedRoute{
+			Name:     extra.Identifier,
+			Version:  "",
+			Receiver: "receiver1" + expectedDedupSuffix,
+			Routes: []*v1.Route{
+				{Receiver: "dupe-receiver" + expectedDedupSuffix, MuteTimeIntervals: []string{"mute-interval-1" + expectedDedupSuffix}, Routes: make([]*v1.Route, 0)},
+				{Receiver: "r1", ActiveTimeIntervals: []string{"time-interval-1" + expectedDedupSuffix}, Routes: make([]*v1.Route, 0)},
+			},
+			Provenance: models.ProvenanceConvertedPrometheus,
+			Origin:     models.ResourceOriginImported,
+		}, route)
+	})
+}
+
+func TestConfigRevisionImported_GetInhibitRules(t *testing.T) {
+	const configWithoutRules = `
+route:
+  receiver: imported-receiver-1
+receivers:
+  - name: imported-receiver-1
+`
+
+	t.Run("should return empty list if no imported configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+		assert.Nil(t, imported.importedConfig)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	t.Run("should return empty list if no inhibition rules in imported config", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(configWithoutRules)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	t.Run("should return imported inhibition rules with managed route matchers added", func(t *testing.T) {
+		rev := getConfigRevisionForTest(
+			withExtraConfig(extraConfig(extraConfigurationYaml)),
+		)
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+
+		// UIDs are hash-based; collect them to verify properties without hardcoding the hash.
+		for uid, rule := range result {
+			require.Equal(t, uid, rule.UID)
+			require.Equal(t, models.ProvenanceConvertedPrometheus, rule.Provenance)
+
+			// Identifier scope matcher must be present in both source and target.
+			var hasSourceScope, hasTargetScope bool
+			for _, m := range rule.SourceMatchers {
+				if m.Label == "__grafana_managed_route__" && m.Value == "test" {
+					hasSourceScope = true
+				}
+			}
+			for _, m := range rule.TargetMatchers {
+				if m.Label == "__grafana_managed_route__" && m.Value == "test" {
+					hasTargetScope = true
+				}
+			}
+			assert.True(t, hasSourceScope, "uid=%s: source matchers should contain identifier scope", uid)
+			assert.True(t, hasTargetScope, "uid=%s: target matchers should contain identifier scope", uid)
+
+			// The identifier scope matcher is appended last.
+			assert.Equal(t, "__grafana_managed_route__", rule.SourceMatchers[len(rule.SourceMatchers)-1].Label)
+			assert.Equal(t, "__grafana_managed_route__", rule.TargetMatchers[len(rule.TargetMatchers)-1].Label)
+		}
+	})
+
+	t.Run("should return stable UIDs across multiple calls", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(extraConfigurationYaml)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result1, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		result2, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		assert.Equal(t, result1, result2)
+	})
+
+	t.Run("should only return rules from imported config, not pre-existing ones", func(t *testing.T) {
+		existingUID := v1.ResourceUID("existing-rule")
+		rev := getConfigRevisionForTest(
+			withExtraConfig(extraConfig(extraConfigurationYaml)),
+			func(rev *ConfigRevision) {
+				rev.Config.InhibitionRules = map[v1.ResourceUID]v1.InhibitionRule{
+					existingUID: v1.NewInhibitionRule(string(existingUID), nil, nil, nil, models.ProvenanceNone),
+				}
+			},
+		)
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		assert.NotContains(t, result, existingUID)
+		assert.Len(t, result, 2)
+	})
+}
+
+func extraConfig(yamlString string) v1.ExtraConfiguration {
+	return v1.ExtraConfiguration{
+		Identifier:         "test",
+		AlertmanagerConfig: yamlString,
+	}
+}
+
+func withExtraConfig(extra v1.ExtraConfiguration) opt {
+	return func(rev *ConfigRevision) {
+		rev.Config.ExtraConfigs = []v1.ExtraConfiguration{
+			extra,
+		}
+	}
+}
+
+const extraConfigurationYaml = `
+route:
+  receiver: imported-receiver-1
+receivers:
+  - name: imported-receiver-1
+    webhook_configs:
+      - url: "http://localhost/"
+  - name: imported-receiver-2
+    webhook_configs:
+      - url: "http://localhost/"
+inhibit_rules:
+  - source_matchers:
+      - alertname = SourceAlert
+    target_matchers:
+      - alertname = TargetAlert
+    equal:
+      - cluster
+  - source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity = warning
+    equal:
+      - instance
+`

@@ -1,10 +1,10 @@
 import { map } from 'rxjs/operators';
 
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { guessFieldTypeForField } from '../../dataframe/guessFieldType';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { KeyValue } from '../../types/data';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerInfo, FieldMatcher, MatcherConfig } from '../../types/transformations';
+import { type KeyValue } from '../../types/data';
+import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
+import { type DataTransformerInfo, type FieldMatcher, type MatcherConfig } from '../../types/transformations';
 import { fieldReducers, reduceField, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';
@@ -56,7 +56,9 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
         // Add a row for each series
         const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
-        return res ? [res] : [];
+        return res
+          ? [{ ...res, refId: `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}` }]
+          : [];
       })
     ),
 };
@@ -88,7 +90,7 @@ function reduceSeriesToRows(
       config: {},
     });
 
-    const labels: KeyValue<any[]> = {};
+    const labels: KeyValue<unknown[]> = {};
     if (labelsToFields) {
       for (const key of distinctLabels) {
         labels[key] = new Array(size);
@@ -101,7 +103,7 @@ function reduceSeriesToRows(
       }
     }
 
-    const calcs: KeyValue<any[]> = {};
+    const calcs: KeyValue<unknown[]> = {};
     for (const info of calculators) {
       calcs[info.id] = new Array(size);
       fields.push({
@@ -228,10 +230,11 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
           const value = results[reducer];
           const copy = {
             ...field,
+            labels: { ...field.labels },
             type: getFieldType(reducer, field),
             values: [value],
+            state: undefined,
           };
-          copy.state = undefined;
           if (reducers.length > 1) {
             if (!copy.labels) {
               copy.labels = {};

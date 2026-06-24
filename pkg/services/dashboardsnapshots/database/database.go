@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/authlib/claims"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -67,10 +67,15 @@ func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cm
 			Created:            time.Now(),
 			Updated:            time.Now(),
 		}
-		_, err := sess.Insert(snapshot)
-		result = snapshot
+		if _, err := sess.Insert(snapshot); err != nil {
+			if d.store.GetDialect().IsUniqueConstraintViolation(err) {
+				return dashboardsnapshots.ErrDashboardSnapshotAlreadyExists.Errorf("snapshot with the same key already exists")
+			}
+			return err
+		}
 
-		return err
+		result = snapshot
+		return nil
 	})
 	if err != nil {
 		return nil, err

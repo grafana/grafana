@@ -2,11 +2,13 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Organization } from 'app/types';
+import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
+import { type Organization } from 'app/types/organization';
 
 interface Props {
   orgs: Organization[];
@@ -16,8 +18,12 @@ interface Props {
 const getTableHeader = () => (
   <thead>
     <tr>
-      <th>ID</th>
-      <th>Name</th>
+      <th>
+        <Trans i18nKey="admin.orgs.id-header">ID</Trans>
+      </th>
+      <th>
+        <Trans i18nKey="admin.orgs.name-header">Name</Trans>
+      </th>
       <th style={{ width: '1%' }}></th>
     </tr>
   </thead>
@@ -27,6 +33,8 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
   const canDeleteOrgs = contextSrv.hasPermission(AccessControlAction.OrgsDelete);
 
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
+
+  const deleteOrgName = deleteOrg?.name;
   return (
     <table className="filter-table form-inline filter-table--hover">
       {getTableHeader()}
@@ -45,7 +53,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
                 size="sm"
                 icon="times"
                 onClick={() => setDeleteOrg(org)}
-                aria-label="Delete org"
+                aria-label={t('admin.admin-orgs-table.aria-label-delete-org', 'Delete org')}
                 disabled={!canDeleteOrgs}
               />
             </td>
@@ -55,15 +63,16 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
       {deleteOrg && (
         <ConfirmModal
           isOpen
-          icon="trash-alt"
-          title="Delete"
+          title={t('admin.admin-orgs-table.title-delete', 'Delete')}
           body={
             <div>
-              Are you sure you want to delete &apos;{deleteOrg.name}&apos;?
-              <br /> <small>All dashboards for this organization will be removed!</small>
+              <Trans i18nKey="admin.orgs.delete-body">
+                Are you sure you want to delete &apos;{{ deleteOrgName }}&apos;?
+                <br /> <small>All dashboards for this organization will be removed!</small>
+              </Trans>
             </div>
           }
-          confirmText="Delete"
+          confirmText={t('admin.admin-orgs-table.confirmText-delete', 'Delete')}
           onDismiss={() => setDeleteOrg(undefined)}
           onConfirm={() => {
             onDelete(deleteOrg.id);

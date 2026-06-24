@@ -1,31 +1,36 @@
 import { css, cx } from '@emotion/css';
-import { HTMLAttributes } from 'react';
+import { type HTMLAttributes } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName } from '../../types';
-import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
+import { type IconName } from '../../types/icon';
+import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { type PopoverContent } from '../Tooltip/types';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
+export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey' | 'brand';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
-  text: React.ReactNode;
+  text?: React.ReactNode;
   color: BadgeColor;
   icon?: IconName;
-  tooltip?: string;
+  tooltip?: PopoverContent;
 }
 
 const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
   const styles = useStyles2(getStyles, color);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
-      {icon && <Icon name={icon} size="sm" />}
+      {icon && (
+        <span className={styles.iconWrap}>
+          <Icon name={icon} size="sm" />
+        </span>
+      )}
       {text}
     </div>
   );
@@ -46,6 +51,11 @@ const BadgeSkeleton: SkeletonComponent = ({ rootProps }) => {
   return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
+/**
+ * The badge component adds meta information to other content, for example about release status or new elements. You can add any `Icon` component or use the badge without an icon.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-badge--docs
+ */
 export const Badge = attachSkeleton(BadgeComponent, BadgeSkeleton);
 
 const getSkeletonStyles = () => ({
@@ -67,22 +77,38 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
   } else {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
     borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
-    textColor = tinycolor(sourceColor).darken(20).toString();
+    textColor = tinycolor(sourceColor).darken(25).toString();
+  }
+
+  if (color === 'brand') {
+    bgColor = theme.colors.gradients.brandHorizontal;
+    borderColor = 'transparent';
+    textColor = theme.colors.primary.contrastText;
   }
 
   return {
     wrapper: css({
       display: 'inline-flex',
       padding: '1px 4px',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       background: bgColor,
       border: `1px solid ${borderColor}`,
       color: textColor,
       fontWeight: theme.typography.fontWeightRegular,
-      gap: '2px',
+      gap: theme.spacing(0.5),
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
+      alignItems: 'flex-start',
+
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.accent.main}`,
+        outlineOffset: '-2px',
+      },
+    }),
+    iconWrap: css({
+      display: 'inline-flex',
       alignItems: 'center',
+      height: '1lh',
     }),
   };
 };

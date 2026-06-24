@@ -11,46 +11,52 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
+	dashclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/services/star/startest"
+	starapi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -102,82 +108,34 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		features    featuremgmt.FeatureToggles
 	}{
 		{
-			desc:        "impl=default nested_folders=on get root folders",
+			desc:        "impl=default get root folders",
 			url:         "/api/folders",
 			expectedLen: LEVEL0_FOLDER_NUM + 1, // for shared with me folder
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=default nested_folders=on get subfolders",
+			desc:        "impl=default get subfolders",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=default nested_folders=on list all inherited dashboards",
+			desc:        "impl=defaultlist all inherited dashboards",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on list all inherited dashboards",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(all),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "impl=default nested_folders=on search for pattern",
+			desc:        "impl=default search for pattern",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for pattern",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
-			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "impl=default nested_folders=on search for specific dashboard",
+			desc:        "impl=default search for specific dashboard",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=on search for specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "impl=default nested_folders=off get root folders",
-			url:         "/api/folders?limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
 			features:    featuremgmt.WithFeatures(),
-		},
-		{
-			desc:        "impl=default nested_folders=off list all dashboards",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off list all dashboards",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "impl=default nested_folders=off search specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(),
-		},
-		{
-			desc:        "impl=permissionsFilterRemoveSubquery nested_folders=off search specific dashboard",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 	}
 	for _, bm := range benchmarks {
@@ -187,7 +145,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			req = webtest.RequestWithSignedInUser(req, sc.signedInUser)
 			b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				rec := httptest.NewRecorder()
 				m.ServeHTTP(rec, req)
 				require.Equal(b, 200, rec.Code)
@@ -209,7 +167,7 @@ func setupDB(b testing.TB) benchScenario {
 
 	quotaService := quotatest.New(false, nil)
 
-	teamSvc, err := teamimpl.ProvideService(db, cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := teamimpl.ProvideService(db, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(b, err)
@@ -217,14 +175,14 @@ func setupDB(b testing.TB) benchScenario {
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, teamSvc, cache, tracing.InitializeTracerForTest(),
-		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(),
+		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(), nil,
 	)
 	require.NoError(b, err)
 
 	var orgID int64 = 1
 
 	userIDs := make([]int64, 0, TEAM_MEMBER_NUM)
-	for i := 0; i < TEAM_MEMBER_NUM; i++ {
+	for i := range TEAM_MEMBER_NUM {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			OrgID: orgID,
 			Login: fmt.Sprintf("user%d", i),
@@ -235,7 +193,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 
 	signedInUser := user.SignedInUser{UserID: userIDs[0], OrgID: orgID, Permissions: map[int64]map[string][]string{
-		orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+		orgID: {folder.ActionFoldersCreate: {}, folder.ActionFoldersWrite: {folder.ScopeFoldersAll}},
 	}}
 
 	now := time.Now()
@@ -245,15 +203,17 @@ func setupDB(b testing.TB) benchScenario {
 	teamRoles := make([]accesscontrol.TeamRole, 0, TEAM_NUM)
 	for i := 1; i < TEAM_NUM+1; i++ {
 		teamID := int64(i)
+		teamUID := fmt.Sprintf("team%d", i)
 		teams = append(teams, team.Team{
-			UID:     fmt.Sprintf("team%d", i),
+			UID:     teamUID,
 			ID:      teamID,
 			Name:    fmt.Sprintf("team%d", i),
 			OrgID:   orgID,
 			Created: now,
 			Updated: now,
 		})
-		signedInUser.Teams = append(signedInUser.Teams, teamID)
+		signedInUser.TeamIDs = append(signedInUser.TeamIDs, teamID) // nolint:staticcheck
+		signedInUser.TeamUIDs = append(signedInUser.TeamUIDs, teamUID)
 
 		for _, userID := range userIDs {
 			teamMembers = append(teamMembers, team.TeamMember{
@@ -304,7 +264,7 @@ func setupDB(b testing.TB) benchScenario {
 	dashs := make([]*dashboards.Dashboard, 0, foldersCap+dashsCap)
 	dashTags := make([]*dashboardTag, 0, dashsCap)
 	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
-	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
+	for i := range LEVEL0_FOLDER_NUM {
 		f0, d := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
@@ -312,21 +272,21 @@ func setupDB(b testing.TB) benchScenario {
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
 			RoleID:  roleID,
-			Action:  dashboards.ActionFoldersRead,
-			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+			Action:  folder.ActionFoldersRead,
+			Scope:   folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
 			Updated: now,
 			Created: now,
 		},
 			accesscontrol.Permission{
 				RoleID:  roleID,
 				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Scope:   folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
 				Updated: now,
 				Created: now,
 			},
 		)
-		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
-		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][folder.ActionFoldersRead] = append(signedInUser.Permissions[orgID][folder.ActionFoldersRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
+		signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead] = append(signedInUser.Permissions[orgID][dashboards.ActionDashboardsRead], folder.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
 
 		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
@@ -451,39 +411,57 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	quotaSrv := quotatest.New(false, nil)
 
-	dashStore, err := database.ProvideDashboardStore(sc.db, sc.cfg, features, tagimpl.ProvideService(sc.db), quotaSrv)
-	require.NoError(b, err)
-
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
-
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
-	actionSets := resourcepermissions.NewActionSetService(features)
+	actionSets := resourcepermissions.NewActionSetService()
+	emptySearchResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
+	emptyStatsResponse := &resourcepb.ResourceStatsResponse{}
+	folderSearchMock := resource.NewMockResourceClient(b)
+	folderSearchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(emptySearchResponse, nil).Maybe()
+	folderSearchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).Return(emptyStatsResponse, nil).Maybe()
+	folderServiceWithFlagOn := folderimpl.ProvideService(
+		ac, sc.userSvc, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), folderSearchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(), nil,
+		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
 	)
-	fStore := folderimpl.ProvideStore(sc.db)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, fStore, acSvc, sc.teamSvc, sc.userSvc, actionSets)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
-
-	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		folderStore, sc.db, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-
-	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, fStore, acSvc, sc.teamSvc, sc.userSvc, actionSets)
-	require.NoError(b, err)
-
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
-		sc.cfg, dashStore, folderStore,
-		features, folderPermissions, dashboardPermissions, ac,
-		folderServiceWithFlagOn, fStore, nil,
+		sc.cfg,
+		sc.db,
+		features,
+		folderPermissions,
+		ac,
+		actest.FakeService{},
+		folderServiceWithFlagOn,
+		nil,
+		quotaSrv,
+		nil,
+		nil,
+		dualwrite.ProvideTestService(),
+		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore(),
+		dashclient.NewK8sClientWithFallback(
+			sc.cfg,
+			client.MockTestRestConfig{},
+			sc.userSvc,
+			folderSearchMock,
+			sort.ProvideService(),
+			dualwrite.ProvideTestService(),
+			nil,
+			features,
+		),
 	)
 	require.NoError(b, err)
 
-	starSvc := startest.NewStarServiceFake()
-	starSvc.ExpectedUserStars = &star.GetUserStarsResult{UserStars: make(map[int64]bool)}
+	_, err = ossaccesscontrol.ProvideDashboardPermissions(
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
+	require.NoError(b, err)
+
+	starClient := starapi.NewMockK8sClients(b)
+	starClient.On("GetStars", mock.Anything).Return([]string{}, nil).Maybe()
 
 	hs := &HTTPServer{
 		CacheService:     localcache.New(5*time.Minute, 10*time.Minute),
@@ -491,13 +469,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		SQLStore:         sc.db,
 		Features:         features,
 		QuotaService:     quotaSrv,
-		SearchService:    search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
+		SearchService:    search.ProvideService(sc.cfg, sc.db, starClient, dashboardSvc, folderServiceWithFlagOn, features, sort.ProvideService()),
 		folderService:    folderServiceWithFlagOn,
 		DashboardService: dashboardSvc,
 	}
 
-	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
+	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	m.Get("/api/folders", hs.GetFolders)
 	m.Get("/api/search", hs.Search)

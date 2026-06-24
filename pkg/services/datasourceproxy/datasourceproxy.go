@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/api/datasource"
+	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -24,35 +24,38 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.PluginRequestValidator,
+func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValidator validations.DataSourceRequestValidator,
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
+	tracer tracing.Tracer,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	features featuremgmt.FeatureToggles,
+) *DataSourceProxyService {
 	return &DataSourceProxyService{
-		DataSourceCache:        dataSourceCache,
-		PluginRequestValidator: plugReqValidator,
-		pluginStore:            pluginStore,
-		Cfg:                    cfg,
-		HTTPClientProvider:     httpClientProvider,
-		OAuthTokenService:      oauthTokenService,
-		DataSourcesService:     dsService,
-		tracer:                 tracer,
-		secretsService:         secretsService,
-		features:               features,
+		DataSourceCache:            dataSourceCache,
+		DataSourceRequestValidator: datasourceReqValidator,
+		pluginStore:                pluginStore,
+		proxyCfg:                   pluginproxy.NewDataSourceProxySettings(cfg),
+		HTTPClientProvider:         httpClientProvider,
+		OAuthTokenService:          oauthTokenService,
+		DataSourcesService:         dsService,
+		tracer:                     tracer,
+		secretsService:             secretsService,
+		features:                   features,
 	}
 }
 
 type DataSourceProxyService struct {
-	DataSourceCache        datasources.CacheService
-	PluginRequestValidator validations.PluginRequestValidator
-	pluginStore            pluginstore.Store
-	Cfg                    *setting.Cfg
-	HTTPClientProvider     httpclient.Provider
-	OAuthTokenService      *oauthtoken.Service
-	DataSourcesService     datasources.DataSourceService
-	tracer                 tracing.Tracer
-	secretsService         secrets.Service
-	features               featuremgmt.FeatureToggles
+	DataSourceCache            datasources.CacheService
+	DataSourceRequestValidator validations.DataSourceRequestValidator
+	pluginStore                pluginstore.Store
+	proxyCfg                   *pluginproxy.DataSourceProxySettings
+	HTTPClientProvider         httpclient.Provider
+	OAuthTokenService          *oauthtoken.Service
+	DataSourcesService         datasources.DataSourceService
+	tracer                     tracing.Tracer
+	secretsService             secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	features                   featuremgmt.FeatureToggles
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
@@ -108,7 +111,7 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 }
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
-	err := p.PluginRequestValidator.Validate(ds.URL, c.Req)
+	err := p.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -121,11 +124,24 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 		return
 	}
 
-	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.features)
+	loader, err := pluginproxy.NewDataSourceLoader(ds, p.DataSourcesService)
 	if err != nil {
-		var urlValidationError datasource.URLValidationError
+		c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source loader", err)
+		return
+	}
+
+	hc := pluginproxy.HTTPContext{
+		Req:  c.Req,
+		Resp: c.Resp,
+
+		UserToken: c.UserToken,
+	}
+
+	proxyPath := getProxyPath(c)
+	proxy, err := pluginproxy.NewDataSourceProxy(loader, plugin.Routes, hc, proxyPath, p.proxyCfg,
+		p.HTTPClientProvider, p.OAuthTokenService, p.tracer, p.features)
+	if err != nil {
+		var urlValidationError validation.URLValidationError
 		if errors.As(err, &urlValidationError) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)
 		} else {

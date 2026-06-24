@@ -1,0 +1,9 @@
+{
+  "name": "@grafana/api-clients",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "tags": ["scope:package", "type:runtime"],
+  "targets": {
+    "build": {}
+  }
+}

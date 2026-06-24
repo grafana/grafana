@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 
@@ -21,17 +22,19 @@ import (
 )
 
 func BenchmarkProcessEvalResults(b *testing.B) {
+	b.ReportAllocs()
 	as := annotations.FakeAnnotationsRepo{}
 	as.On("SaveMany", mock.Anything, mock.Anything).Return(nil)
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(&as, nil, metrics)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &fakes.FakeRuleService{}
-	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, metrics, ac)
+	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, metrics, ac, 500)
 	cfg := state.ManagerCfg{
 		Historian: hist,
 		Tracer:    tracing.InitializeTracerForTest(),
 		Log:       log.New("ngalert.state.manager"),
+		Clock:     clock.New(),
 	}
 	sut := state.NewManager(cfg, state.NewNoopPersister())
 	now := time.Now().UTC()
@@ -40,7 +43,9 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	labels := map[string]string{}
 
 	var ans []state.StateTransition
-	for i := 0; i < b.N; i++ {
+	b.ResetTimer()
+
+	for range b.N {
 		ans = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels, nil)
 	}
 

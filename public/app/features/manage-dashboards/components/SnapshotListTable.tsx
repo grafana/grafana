@@ -1,33 +1,50 @@
-import { useState, useCallback } from 'react';
-import useAsync from 'react-use/lib/useAsync';
+import { useCallback, useEffect, useState } from 'react';
+import { useAsyncFn } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { ConfirmModal, EmptyState, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
-import { getDashboardSnapshotSrv, Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
+import { Alert, Box, Button, ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
+import {
+  getDashboardSnapshotSrv,
+  type Snapshot,
+  type SnapshotListOptions,
+  type SnapshotListPage,
+} from 'app/features/dashboard/services/SnapshotSrv';
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
 
-export async function getSnapshots() {
-  return getDashboardSnapshotSrv()
-    .getSnapshots()
-    .then((result: Snapshot[]) => {
-      return result.map((snapshot) => ({
-        ...snapshot,
-        url: `${config.appUrl}dashboard/snapshot/${snapshot.key}`,
-      }));
-    });
+export async function getSnapshots(opts?: SnapshotListOptions): Promise<SnapshotListPage> {
+  const page = await getDashboardSnapshotSrv().getSnapshots(opts);
+  return {
+    items: page.items.map((snapshot) => ({
+      ...snapshot,
+      url: `${config.appUrl}dashboard/snapshot/${snapshot.key}`,
+    })),
+    continueToken: page.continueToken,
+  };
 }
+
 export const SnapshotListTable = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [isFetching, setIsFetching] = useState(false);
+  const [continueToken, setContinueToken] = useState<string | undefined>();
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
-  useAsync(async () => {
-    setIsFetching(true);
-    const response = await getSnapshots();
-    setIsFetching(false);
-    setSnapshots(response);
-  }, [setSnapshots]);
+
+  const [{ loading, error }, loadSnapshots] = useAsyncFn(
+    async (token?: string) => {
+      const page = await getSnapshots(token ? { continue: token } : undefined);
+      setSnapshots((prev) => (token ? [...prev, ...page.items] : page.items));
+      setContinueToken(page.continueToken);
+    },
+    [],
+    { loading: true }
+  );
+
+  useEffect(() => {
+    loadSnapshots();
+  }, [loadSnapshots]);
+
+  const isInitialLoading = loading && snapshots.length === 0;
+  const isLoadingMore = loading && snapshots.length > 0;
 
   const doRemoveSnapshot = useCallback(
     async (snapshot: Snapshot) => {
@@ -42,7 +59,23 @@ export const SnapshotListTable = () => {
     [snapshots]
   );
 
-  if (!isFetching && snapshots.length === 0) {
+  if (error && snapshots.length === 0 && !continueToken) {
+    return (
+      <Alert
+        severity="error"
+        title={t('snapshot.load-error.title', 'Failed to load snapshots')}
+        action={
+          <Button variant="secondary" onClick={() => loadSnapshots()}>
+            <Trans i18nKey="snapshot.load-error.retry">Retry</Trans>
+          </Button>
+        }
+      >
+        {error.message}
+      </Alert>
+    );
+  }
+
+  if (!isInitialLoading && snapshots.length === 0 && !continueToken) {
     return (
       <EmptyState
         variant="call-to-action"
@@ -52,7 +85,7 @@ export const SnapshotListTable = () => {
           You can create a snapshot of any dashboard through the <b>Share</b> modal.{' '}
           <TextLink
             external
-            href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot"
+            href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#share-a-snapshot"
           >
             Learn more
           </TextLink>
@@ -62,7 +95,7 @@ export const SnapshotListTable = () => {
   }
 
   return (
-    <div>
+    <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
       <table className="filter-table">
         <thead>
           <tr>
@@ -82,7 +115,7 @@ export const SnapshotListTable = () => {
           </tr>
         </thead>
         <tbody>
-          {isFetching ? (
+          {isInitialLoading ? (
             <>
               <SnapshotListTableRow.Skeleton />
               <SnapshotListTableRow.Skeleton />
@@ -100,18 +133,44 @@ export const SnapshotListTable = () => {
         </tbody>
       </table>
 
+      {!isInitialLoading && continueToken && (
+        <Box paddingTop={2}>
+          <LoadMoreButton onClick={() => loadSnapshots(continueToken)} loading={isLoadingMore} />
+        </Box>
+      )}
+
       <ConfirmModal
         isOpen={!!removeSnapshot}
-        icon="trash-alt"
-        title="Delete"
-        body={`Are you sure you want to delete '${removeSnapshot?.name}'?`}
-        confirmText="Delete"
+        title={t('manage-dashboards.snapshot-list-table.title-delete', 'Delete')}
+        body={t(
+          'manage-dashboards.snapshot-list-table.body-delete',
+          "Are you sure you want to delete '{{snapshotToRemove}}'?",
+          { snapshotToRemove: removeSnapshot?.name }
+        )}
+        confirmText={t('manage-dashboards.snapshot-list-table.confirmText-delete', 'Delete')}
         onDismiss={() => setRemoveSnapshot(undefined)}
         onConfirm={() => {
           doRemoveSnapshot(removeSnapshot!);
           setRemoveSnapshot(undefined);
         }}
       />
-    </div>
+    </ScrollContainer>
   );
 };
+
+interface LoadMoreButtonProps {
+  onClick: () => void;
+  loading: boolean;
+}
+
+function LoadMoreButton({ onClick, loading }: LoadMoreButtonProps) {
+  return (
+    <Button type="button" variant="secondary" onClick={onClick} disabled={loading}>
+      {loading ? (
+        <Trans i18nKey="snapshot.load-more.loading">Loading more snapshots…</Trans>
+      ) : (
+        <Trans i18nKey="snapshot.load-more.label">Show more snapshots</Trans>
+      )}
+    </Button>
+  );
+}

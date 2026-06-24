@@ -1,10 +1,9 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
 import {
-  CancelActivationHandler,
+  type CancelActivationHandler,
   CustomVariable,
   SceneDataTransformer,
   sceneGraph,
@@ -14,18 +13,25 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
+import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
+import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
+import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
 import { buildPanelEditScene } from './PanelEditor';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
@@ -61,13 +67,16 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const dataSources = {
-  ds1: mockDataSource({
-    uid: 'ds1',
-    type: DataSourceType.Prometheus,
-  }),
+  ds1: mockDataSource(
+    {
+      uid: 'ds1',
+      type: DataSourceType.Prometheus,
+    },
+    { module: 'core:plugin/prometheus' }
+  ),
 };
 
-setDataSourceSrv(new MockDataSourceSrv(dataSources));
+setupDataSources(...Object.values(dataSources));
 
 let deactivate: CancelActivationHandler | undefined;
 
@@ -106,6 +115,37 @@ describe('PanelEditor', () => {
 
       const discardedPanel = findVizPanelByKey(dashboard, panel.state.key!)!;
       expect(discardedPanel.state.options).toEqual({ showHeader: true });
+    });
+  });
+
+  describe('Entering panel edit', () => {
+    it('should clear edit pane selection', () => {
+      pluginPromise = Promise.resolve(getPanelPlugin({ id: 'text', skipDataQuery: true }));
+
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+        title: 'original title',
+      });
+      const gridItem = new DashboardGridItem({ body: panel });
+      const panelEditor = buildPanelEditScene(panel);
+      const dashboard = new DashboardScene({
+        editPanel: panelEditor,
+        isEditing: true,
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [gridItem],
+          }),
+        }),
+      });
+
+      dashboard.state.editPane.selectObject(panel, { force: true });
+      expect(dashboard.state.editPane.getSelectedObject()).toBe(panel);
+
+      deactivate = activateFullSceneTree(dashboard);
+
+      expect(dashboard.state.editPane.getSelectedObject()).toBeUndefined();
     });
   });
 
@@ -200,7 +240,6 @@ describe('PanelEditor', () => {
 
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
-        title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
         _loadedPanel: libraryPanelModel,
@@ -239,7 +278,7 @@ describe('PanelEditor', () => {
       // Wait for mock api to return and update the library panel
       expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
       expect(libPanelBehavior.state.name).toBe('changed name');
-      expect(libPanelBehavior.state.title).toBe('changed title');
+      expect(panel.state.title).toBe('changed title');
       expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
 
@@ -258,7 +297,6 @@ describe('PanelEditor', () => {
 
       const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
-        title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
         _loadedPanel: libraryPanelModel,
@@ -267,6 +305,8 @@ describe('PanelEditor', () => {
       // Just adding an extra stateless behavior to verify unlinking does not remvoe it
       const otherBehavior = jest.fn();
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [libPanelBehavior, otherBehavior] });
+      new DashboardGridItem({ body: panel });
+
       const editScene = buildPanelEditScene(panel);
       editScene.onConfirmUnlinkLibraryPanel();
 
@@ -290,10 +330,103 @@ describe('PanelEditor', () => {
       expect(panel.state.$data).toBeDefined();
     });
   });
+
+  describe('Query editor version toggle', () => {
+    describe('when queryEditorNext feature toggle is enabled', () => {
+      beforeEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+        setTestFlags({ queryEditorNext: true });
+      });
+
+      afterEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+        setTestFlags({});
+      });
+
+      it('should use the v2 query editor experience by default', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
+      });
+
+      it('should switch to v1 query editor experience when toggled off', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        panelEditor.onToggleQueryEditorVersion();
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
+
+      it('should switch back to v2 query editor experience when toggled on again', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        panelEditor.onToggleQueryEditorVersion(); // v2 -> v1
+        panelEditor.onToggleQueryEditorVersion(); // v1 -> v2
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
+      });
+
+      it('should use v2 when stored preference is true', async () => {
+        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, true);
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
+      });
+
+      it('should use v1 when stored preference is false (user downgraded)', async () => {
+        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, false);
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
+
+      it('should persist the preference to local storage when toggled', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        panelEditor.onToggleQueryEditorVersion(); // v2 -> v1
+        expect(getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)).toBe(false);
+
+        panelEditor.onToggleQueryEditorVersion(); // v1 -> v2
+        expect(getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)).toBe(true);
+      });
+    });
+
+    describe('when queryEditorNext feature toggle is disabled', () => {
+      beforeEach(() => {
+        setTestFlags({});
+      });
+
+      afterEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      });
+
+      it('should use the v1 query editor experience', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
+
+      it('should ignore a stored v2 preference and use the v1 query editor experience', async () => {
+        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, true);
+
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
+    });
+  });
+  describe('isVizPickerOpen', () => {
+    it('should auto-open viz picker for new unconfigured panels', async () => {
+      const { panelEditor } = await setup({ isNewPanel: true, pluginId: UNCONFIGURED_PANEL_PLUGIN_ID });
+      const optionsPane = panelEditor.state.optionsPane;
+      expect(optionsPane?.state.isVizPickerOpen).toBe(true);
+    });
+  });
 });
 
 interface SetupOptions {
   isNewPanel?: boolean;
+  pluginId?: string;
   pluginSkipDataQuery?: boolean;
   repeatByVariable?: string;
   skipWait?: boolean;
@@ -301,7 +434,8 @@ interface SetupOptions {
 }
 
 async function setup(options: SetupOptions = {}) {
-  const pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: options.pluginSkipDataQuery });
+  const panelPluginId = options.pluginId ?? 'text';
+  const pluginToLoad = getPanelPlugin({ id: panelPluginId, skipDataQuery: options.pluginSkipDataQuery });
   let pluginResolve = (plugin: PanelPlugin) => {};
 
   pluginPromise = new Promise<PanelPlugin>((resolve) => {
@@ -310,7 +444,7 @@ async function setup(options: SetupOptions = {}) {
 
   const panel = new VizPanel({
     key: 'panel-1',
-    pluginId: 'text',
+    pluginId: panelPluginId,
     title: 'original title',
     $data: new SceneDataTransformer({
       transformations: [],

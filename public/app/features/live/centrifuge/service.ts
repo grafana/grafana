@@ -1,32 +1,35 @@
 import {
   Centrifuge,
-  ConnectedContext,
-  ConnectingContext,
-  DisconnectedContext,
-  ServerPublicationContext,
+  type ConnectedContext,
+  type ConnectingContext,
+  type DisconnectedContext,
+  type ErrorContext,
+  type ServerPublicationContext,
   State,
 } from 'centrifuge';
-import { BehaviorSubject, Observable, share, startWith } from 'rxjs';
+import { BehaviorSubject, type Observable, share, startWith } from 'rxjs';
 
 import {
-  DataQueryError,
-  DataQueryResponse,
-  LiveChannelAddress,
+  type DataQueryError,
+  type DataQueryResponse,
+  type LiveChannelAddress,
   LiveChannelConnectionState,
-  LiveChannelId,
+  type LiveChannelId,
   toLiveChannelId,
 } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime/src/services/backendSrv';
 import {
-  GrafanaLiveSrv,
-  LiveDataStreamOptions,
-  LiveQueryDataOptions,
+  type FetchResponse,
+  type GrafanaLiveSrv,
+  type LiveDataStreamOptions,
+  type LivePublishOptions,
+  type LiveQueryDataOptions,
   StreamingFrameAction,
-  StreamingFrameOptions,
-} from '@grafana/runtime/src/services/live';
-import { BackendDataSourceResponse } from '@grafana/runtime/src/utils/queryResponse';
+  type StreamingFrameOptions,
+  type BackendDataSourceResponse,
+  getBackendSrv,
+} from '@grafana/runtime';
 
-import { StreamingResponseData } from '../data/utils';
+import { type StreamingResponseData } from '../data/utils';
 
 import { LiveDataStream } from './LiveDataStream';
 import { CentrifugeLiveChannel } from './channel';
@@ -34,7 +37,7 @@ import { CentrifugeLiveChannel } from './channel';
 export type CentrifugeSrvDeps = {
   grafanaAuthToken: string | null;
   appUrl: string;
-  orgId: number;
+  namespace: string; // k8s namespace
   orgRole: string;
   liveEnabled: boolean;
   dataStreamSubscriberReadiness: Observable<boolean>;
@@ -42,7 +45,7 @@ export type CentrifugeSrvDeps = {
 
 export type StreamingDataQueryResponse = Omit<DataQueryResponse, 'data'> & { data: [StreamingResponseData] };
 
-export type CentrifugeSrv = Omit<GrafanaLiveSrv, 'publish' | 'getDataStream' | 'getQueryData'> & {
+export type CentrifugeSrv = Omit<GrafanaLiveSrv, 'getDataStream' | 'getQueryData'> & {
   getDataStream: (options: LiveDataStreamOptions) => Observable<StreamingDataQueryResponse>;
   getQueryData: (
     options: LiveQueryDataOptions
@@ -70,6 +73,8 @@ export class CentrifugeService implements CentrifugeSrv {
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
   private readonly dataStreamSubscriberReadiness: Observable<boolean>;
+  private lastAuthCheck = 0;
+  private static CONNECTION_TIMEOUT_MS = 10_000;
 
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
@@ -105,6 +110,7 @@ export class CentrifugeService implements CentrifugeSrv {
     this.centrifuge.on('connecting', this.onDisconnect);
     this.centrifuge.on('disconnected', this.onDisconnect);
     this.centrifuge.on('publication', this.onServerSideMessage);
+    this.centrifuge.on('error', this.onError);
   }
 
   //----------------------------------------------------------
@@ -123,12 +129,37 @@ export class CentrifugeService implements CentrifugeSrv {
     console.log('Publication from server-side channel', context);
   };
 
+  private onError = (context: ErrorContext) => {
+    /**
+     * This is a workaround to handle the case where the authentication token
+     * has expired, but we still try to reconnect inside a page with Grafana Live enabled.
+     * See: https://github.com/grafana/grafana/issues/72792
+     */
+    if (context.type === 'transport' && context.error?.code === 2) {
+      const now = Date.now();
+      // Check every 5 seconds to avoid hammering the
+      // API if there is a case like this
+      if (now - this.lastAuthCheck > 5000) {
+        this.lastAuthCheck = now;
+        getBackendSrv()
+          .get('/api/login/ping')
+          .catch(() => {
+            // Just swallow this error - it's non-critical
+          });
+      }
+    }
+  };
+
   /**
    * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
    * channel will be returned with an error state indicated in its status
    */
   private getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
-    const id = `${this.deps.orgId}/${addr.scope}/${addr.namespace}/${addr.path}`;
+    // Use toLiveChannelId so addresses from plugins still using the legacy
+    // `namespace` field (pre-rename) resolve to the same channel id as ones
+    // using `stream`. Without this, subscriptions get an id with `undefined`
+    // in place of the stream segment and silently never receive data.
+    const id = `${this.deps.namespace}/${toLiveChannelId(addr)}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;
@@ -138,6 +169,13 @@ export class CentrifugeService implements CentrifugeSrv {
     if (channel.currentStatus.state === LiveChannelConnectionState.Invalid) {
       return channel;
     }
+    // If Live is disabled, fail the channel immediately rather than waiting
+    // for the connection timeout.
+    if (!this.deps.liveEnabled) {
+      channel.shutdownWithError('Grafana Live is disabled');
+      return channel;
+    }
+
     channel.shutdownCallback = () => {
       this.open.delete(id);
 
@@ -161,7 +199,14 @@ export class CentrifugeService implements CentrifugeSrv {
 
   private async initChannel(channel: CentrifugeLiveChannel): Promise<void> {
     if (this.centrifuge.state !== State.Connected) {
-      await this.connectionBlocker;
+      // Wait for centrifuge to connect, but bail out after the timeout
+      // so the channel can fall back to polling instead of hanging forever.
+      await Promise.race([
+        this.connectionBlocker,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject('Grafana Live connection timeout'), CentrifugeService.CONNECTION_TIMEOUT_MS)
+        ),
+      ]);
     }
     const subscription = this.centrifuge.newSubscription(channel.id, {
       data: channel.addr.data,
@@ -243,6 +288,13 @@ export class CentrifugeService implements CentrifugeSrv {
    */
   getPresence: CentrifugeSrv['getPresence'] = (address) => {
     return this.getChannel(address).getPresence();
+  };
+
+  /**
+   * Publish into a channel.
+   */
+  publish = async (address: LiveChannelAddress, data: unknown, options?: LivePublishOptions) => {
+    return this.getChannel(address).publish(data);
   };
 }
 

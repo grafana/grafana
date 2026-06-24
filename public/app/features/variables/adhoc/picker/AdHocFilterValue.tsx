@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
+import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
 import { SegmentAsync, useStyles2 } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 

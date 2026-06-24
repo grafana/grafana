@@ -1,12 +1,16 @@
 import { css } from '@emotion/css';
-import { useMemo, createRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { Field, LinkModel, PanelProps } from '@grafana/data';
+import { type TraceSearchProps, type Field, type LinkModel, type PanelProps } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceRef } from '@grafana/schema';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
-import { SpanLinkFunc } from 'app/features/explore/TraceView/components';
+import { type SpanLinkFunc } from 'app/features/explore/TraceView/components/types/links';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
+
+import { replaceSearchVariables } from '../../../features/explore/TraceView/useSearch';
 
 const styles = {
   wrapper: css({
@@ -16,22 +20,34 @@ const styles = {
 };
 
 export interface TracesPanelOptions {
+  /** Fallback datasource identity for when data is provided via SceneDataNode and PanelData.request is unavailable. Required for extension points like grafana/traceview/header/actions. */
+  datasource?: DataSourceRef;
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
+  spanFilters?: TraceSearchProps;
+  hideHeaderDetails?: boolean;
 }
 
-export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) => {
-  const topOfViewRef = createRef<HTMLDivElement>();
+export const TracesPanel = ({ data, options, replaceVariables }: PanelProps<TracesPanelOptions>) => {
+  const topOfViewRef = useRef<HTMLDivElement>(null);
   const traceProp = useMemo(() => transformDataFrames(data.series[0]), [data.series]);
   const dataSource = useAsync(async () => {
-    return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
+    const uid = data.request?.targets[0].datasource?.uid ?? options.datasource?.uid;
+
+    if (!uid) {
+      return undefined;
+    }
+
+    return await getDataSourceSrv().get(uid);
   });
 
   if (!data || !data.series.length || !traceProp) {
     return (
       <div className="panel-empty">
-        <p>No data found in response</p>
+        <p>
+          <Trans i18nKey="traces.traces-panel.no-data-found-in-response">No data found in response</Trans>
+        </p>
       </div>
     );
   }
@@ -48,6 +64,9 @@ export const TracesPanel = ({ data, options }: PanelProps<TracesPanelOptions>) =
         createSpanLink={options.createSpanLink}
         focusedSpanId={options.focusedSpanId}
         createFocusSpanLink={options.createFocusSpanLink}
+        spanFilters={replaceSearchVariables(replaceVariables, options.spanFilters)}
+        timeRange={data.timeRange}
+        hideHeaderDetails={options.hideHeaderDetails}
       />
     </div>
   );

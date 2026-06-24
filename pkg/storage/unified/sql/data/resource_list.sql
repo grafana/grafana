@@ -1,7 +1,11 @@
 SELECT
+    {{ .Ident "guid" }},
     {{ .Ident "resource_version" }},
     {{ .Ident "namespace" }},
+    {{ .Ident "group" }},
+    {{ .Ident "resource" }},
     {{ .Ident "name" }},
+    {{ .Ident "folder" }},
     {{ .Ident "value" }}
     FROM {{ .Ident "resource" }}
     WHERE 1 = 1

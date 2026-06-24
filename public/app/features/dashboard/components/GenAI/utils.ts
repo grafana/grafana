@@ -1,10 +1,11 @@
 import { pick } from 'lodash';
 
-import { llms } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { llm } from '@grafana/llm';
+import { isAppPluginInstalled } from '@grafana/runtime';
+import { type Panel } from '@grafana/schema';
 
-import { DashboardModel, PanelModel } from '../../state';
+import { type DashboardModel } from '../../state/DashboardModel';
+import { type PanelModel } from '../../state/PanelModel';
 import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardStringDiff } from './jsonDiffText';
@@ -17,7 +18,7 @@ export enum Role {
   'user' = 'user',
 }
 
-export type Message = llms.openai.Message;
+export type Message = llm.Message;
 
 export enum QuickFeedbackType {
   Shorter = 'Even shorter',
@@ -26,11 +27,12 @@ export enum QuickFeedbackType {
 }
 
 /**
- * The OpenAI model to be used.
+ * The LLM model to be used.
+ *
+ * The LLM app abstracts the actual model name since it depends on the provider.
+ * We want to default to whatever the 'large' model is.
  */
-export const DEFAULT_OAI_MODEL = 'gpt-4';
-
-export type OAI_MODEL = 'gpt-4' | 'gpt-4-32k' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-16k';
+export const DEFAULT_LLM_MODEL: llm.Model = llm.Model.LARGE;
 
 /**
  * Sanitize the reply from OpenAI by removing the leading and trailing quotes.
@@ -68,7 +70,8 @@ let llmHealthCheck: Promise<boolean> | undefined;
  * @returns true if the LLM plugin is enabled.
  */
 export async function isLLMPluginEnabled(): Promise<boolean> {
-  if (!config.apps['grafana-llm-app']) {
+  const isLLMAppInstalled = await isAppPluginInstalled('grafana-llm-app');
+  if (!isLLMAppInstalled) {
     return false;
   }
 
@@ -79,7 +82,7 @@ export async function isLLMPluginEnabled(): Promise<boolean> {
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
   llmHealthCheck = new Promise((resolve) => {
-    llms.openai.health().then((response) => {
+    llm.health().then((response) => {
       if (!response.ok) {
         // Health check fail clear cached promise so we can try again later
         llmHealthCheck = undefined;
@@ -162,9 +165,7 @@ export const DASHBOARD_NEED_PANEL_TITLES_AND_DESCRIPTIONS_MESSAGE =
 export function getPanelStrings(dashboard: DashboardModel): string[] {
   const panelStrings = dashboard.panels
     .filter(
-      (panel) =>
-        (panel.title.length > 0 && panel.title !== NEW_PANEL_TITLE) ||
-        (panel.description && panel.description.length > 0)
+      (panel) => (panel.title && panel.title !== NEW_PANEL_TITLE) || (panel.description && panel.description.length > 0)
     )
     .map(getPanelString);
 

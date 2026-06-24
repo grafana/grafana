@@ -4,12 +4,15 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"sync"
 
-	"github.com/apache/arrow/go/v15/arrow/flight"
-	"github.com/apache/arrow/go/v15/arrow/flight/flightsql"
-	"github.com/apache/arrow/go/v15/arrow/ipc"
-	"github.com/apache/arrow/go/v15/arrow/memory"
+	"github.com/apache/arrow-go/v18/arrow/flight"
+	"github.com/apache/arrow-go/v18/arrow/flight/flightsql"
+	"github.com/apache/arrow-go/v18/arrow/ipc"
+	"github.com/apache/arrow-go/v18/arrow/memory"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -26,10 +29,16 @@ func (c *client) FlightClient() flight.Client {
 	return c.Client.Client
 }
 
-func newFlightSQLClient(addr string, metadata metadata.MD, secure bool) (*client, error) {
-	dialOptions, err := grpcDialOptions(secure)
+func newFlightSQLClient(addr string, metadata metadata.MD, secure bool, tlsConfig *httpclient.TLSOptions, proxyClient proxy.Client) (*client, error) {
+	dialOptions, err := grpcDialOptions(secure, tlsConfig, proxyClient)
 	if err != nil {
 		return nil, fmt.Errorf("grpc dial options: %s", err)
+	}
+
+	// If the secure socks proxy is enabled, we add the passthrough scheme. Otherwise, we use the raw address.
+	// This ensures the address is passed directly to the transport rather than trying to resolve via DNS.
+	if proxyClient.SecureSocksProxyEnabled() {
+		addr = fmt.Sprintf("passthrough:///%s", addr)
 	}
 	fsqlClient, err := flightsql.NewClient(addr, nil, nil, dialOptions...)
 	if err != nil {
@@ -38,21 +47,45 @@ func newFlightSQLClient(addr string, metadata metadata.MD, secure bool) (*client
 	return &client{Client: fsqlClient, md: metadata}, nil
 }
 
-func grpcDialOptions(secure bool) ([]grpc.DialOption, error) {
-	transport := grpc.WithTransportCredentials(insecure.NewCredentials())
+func grpcDialOptions(secure bool, tlsConfig *httpclient.TLSOptions, proxyClient proxy.Client) ([]grpc.DialOption, error) {
+	dialOptions := []grpc.DialOption{}
+	secureDialOpt := grpc.WithTransportCredentials(insecure.NewCredentials())
+
 	if secure {
 		pool, err := x509.SystemCertPool()
 		if err != nil {
 			return nil, fmt.Errorf("x509: %s", err)
 		}
-		transport = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, ""))
+		if tlsConfig != nil && len(tlsConfig.CACertificate) > 0 {
+			pool.AppendCertsFromPEM([]byte(tlsConfig.CACertificate))
+		}
+		secureDialOpt = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, ""))
+	}
+	dialOptions = append(dialOptions, secureDialOpt)
+
+	if proxyClient.SecureSocksProxyEnabled() {
+		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create influx proxy dialer: %s", err)
+		}
+
+		dialOptions = append(dialOptions, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
+			logger := glog.FromContext(ctx)
+			logger.Debug("Dialing secure socks proxy", "host", host)
+			conn, err := dialer.Dial("tcp", host)
+			if err != nil {
+				return nil, fmt.Errorf("not possible to dial secure socks proxy: %w", err)
+			}
+			select {
+			case <-ctx.Done():
+				return conn, fmt.Errorf("context canceled: %w", err)
+			default:
+				return conn, nil
+			}
+		}))
 	}
 
-	opts := []grpc.DialOption{
-		transport,
-	}
-
-	return opts, nil
+	return dialOptions, nil
 }
 
 // DoGetWithHeaderExtraction performs a normal DoGet, but wraps the stream in a
@@ -64,7 +97,7 @@ func (c *client) DoGetWithHeaderExtraction(ctx context.Context, in *flight.Ticke
 	if err != nil {
 		return nil, err
 	}
-	return newFlightReader(stream, c.Client.Alloc)
+	return newFlightReader(stream, c.Alloc)
 }
 
 // flightReader wraps a [flight.Reader] to expose the headers captured when the

@@ -1,42 +1,44 @@
 import { map } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
   FieldType,
   incrRoundUp,
   incrRoundDn,
-  SynchronousDataTransformerInfo,
+  type SynchronousDataTransformerInfo,
   DataFrameType,
   getFieldDisplayName,
-  Field,
+  type Field,
   getValueFormat,
   formattedValueToString,
-  durationToMilliseconds,
-  parseDuration,
   TransformationApplicabilityLevels,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
-import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { config } from '@grafana/runtime';
+import { isLikelyAscendingVector } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import {
   ScaleDistribution,
+  type ScaleDistributionConfig,
   HeatmapCellLayout,
   HeatmapCalculationMode,
-  HeatmapCalculationOptions,
+  type HeatmapCalculationOptions,
 } from '@grafana/schema';
 
-import { niceLinearIncrs, niceTimeIncrs } from './utils';
+import { convertDurationToMilliseconds, niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
   /** the raw values will still exist in results after transformation */
   keepOriginalData?: boolean;
 }
 
-export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransformerOptions> = {
+export const getHeatmapTransformer: () => SynchronousDataTransformerInfo<HeatmapTransformerOptions> = () => ({
   id: DataTransformerID.heatmap,
-  name: 'Create heatmap',
-  description: 'Generate heatmap data from source data.',
+  name: t('transformers.get-heatmap-transformer.name.create-heatmap', 'Create heatmap'),
+  description: t(
+    'transformers.get-heatmap-transformer.description.generate-heatmap-data-from-source',
+    'Generate heatmap data from source data.'
+  ),
   defaultOptions: {},
   isApplicable: (data) => {
     const { xField, yField, xs, ys } = findHeatmapFields(data);
@@ -54,29 +56,7 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   isApplicableDescription:
     'The Heatmap transformation requires fields with Heatmap compatible data. No fields with Heatmap data could be found.',
   operator: (options, ctx) => (source) =>
-    source.pipe(
-      map((data) => {
-        if (config.featureToggles.transformationsVariableSupport) {
-          const optionsCopy = {
-            ...options,
-            xBuckets: { ...options.xBuckets } ?? undefined,
-            yBuckets: { ...options.yBuckets } ?? undefined,
-          };
-
-          if (optionsCopy.xBuckets?.value) {
-            optionsCopy.xBuckets.value = ctx.interpolate(optionsCopy.xBuckets.value);
-          }
-
-          if (optionsCopy.yBuckets?.value) {
-            optionsCopy.yBuckets.value = ctx.interpolate(optionsCopy.yBuckets.value);
-          }
-
-          return heatmapTransformer.transformer(optionsCopy, ctx)(data);
-        } else {
-          return heatmapTransformer.transformer(options, ctx)(data);
-        }
-      })
-    ),
+    source.pipe(map((data) => getHeatmapTransformer().transformer(options, ctx)(data))),
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
@@ -87,10 +67,33 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
       return [v];
     };
   },
-};
+});
 
 function parseNumeric(v?: string | null) {
   return v === '+Inf' ? Infinity : v === '-Inf' ? -Infinity : +(v ?? 0);
+}
+
+/**
+ * Calculate the expansion factor from adjacent bucket values.
+ * This is used to estimate the size/bound of the next bucket based on the spacing of existing buckets.
+ *
+ * @param bucketValues - Array of bucket boundary values
+ * @param defaultFactor - Factor to use if ratio cannot be determined (default: 1.5 for 50% expansion)
+ * @returns The calculated or default expansion factor
+ */
+export function calculateBucketFactor(bucketValues: number[], defaultFactor = 1.5): number {
+  if (bucketValues.length >= 2) {
+    const last = bucketValues.at(-1)!;
+    const prev = bucketValues.at(-2)!;
+    const ratio = last / prev;
+
+    // Only use ratio if it represents expansion (>1) and is valid
+    if (ratio > 1 && Number.isFinite(ratio)) {
+      return ratio;
+    }
+  }
+
+  return defaultFactor;
 }
 
 export function sortAscStrInf(aName?: string | null, bName?: string | null) {
@@ -99,7 +102,7 @@ export function sortAscStrInf(aName?: string | null, bName?: string | null) {
 
 export interface HeatmapRowsCustomMeta {
   /** This provides the lookup values */
-  yOrdinalDisplay: string[];
+  yOrdinalDisplay?: string[];
   yOrdinalLabel?: string[];
   yMatchWithLabel?: string;
   yMinDisplay?: string;
@@ -136,6 +139,7 @@ export interface RowsHeatmapOptions {
   unit?: string;
   decimals?: number;
   layout?: HeatmapCellLayout;
+  yBucketScale?: ScaleDistributionConfig;
 }
 
 /** Given existing buckets, create a values style frame */
@@ -146,10 +150,23 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
   const xValues = xField.values;
   const yFields = opts.frame.fields.filter((f, idx) => f.type === FieldType.number && idx > 0);
 
+  if (yFields.length === 0) {
+    throw new Error(t('heatmap.error.no-y-fields', 'No numeric fields found for heatmap'));
+  }
+
+  // Determine if we should use numeric scaling based on yBucketScale option
+  // Default to 'auto' behavior (ordinal) if not specified
+  const scaleType = opts.yBucketScale?.type;
+  const useNumericScale =
+    scaleType === ScaleDistribution.Linear ||
+    scaleType === ScaleDistribution.Log ||
+    scaleType === ScaleDistribution.Symlog;
+
   // similar to initBins() below
   const len = xValues.length * yFields.length;
   const xs = new Array(len);
   const ys = new Array(len);
+  const ys2 = useNumericScale ? new Array(len) : undefined;
   const counts2 = new Array(len);
 
   const counts = yFields.map((field) => field.values.slice());
@@ -161,21 +178,8 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     }
   });
 
-  const bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
-
-  // fill flat/repeating array
-  for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
-    ys[i] = bucketBounds[yi];
-
-    if (yi === 0 && i >= bucketBounds.length) {
-      xi++;
-    }
-
-    xs[i] = xValues[xi];
-  }
-
   // this name determines whether cells are drawn above, below, or centered on the values
-  let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : 'y';
+  let ordinalFieldName = yFields[0].labels?.le != null ? 'yMax' : yFields[0].labels?.ge != null ? 'yMin' : 'y';
   switch (opts.layout) {
     case HeatmapCellLayout.le:
       ordinalFieldName = 'yMax';
@@ -192,6 +196,47 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     yOrdinalDisplay: yFields.map((f) => getFieldDisplayName(f, opts.frame)),
     yMatchWithLabel: Object.keys(yFields[0].labels ?? {})[0],
   };
+
+  let bucketBounds: number[];
+  let bucketBoundsMax: number[] | undefined;
+
+  if (useNumericScale) {
+    // Numeric mode: use numeric bucket values
+    bucketBounds = yFields.map((field) => {
+      const labelKey = custom.yMatchWithLabel;
+      const labelValue = labelKey ? field.labels?.[labelKey] : undefined;
+      const valueStr = labelValue ?? field.name;
+      return Number(valueStr);
+    });
+
+    // Generate upper bounds: shift values + calculate last bucket
+    bucketBoundsMax = bucketBounds.slice();
+    bucketBoundsMax.shift();
+    const lastBound = bucketBounds[bucketBounds.length - 1];
+    const factor = calculateBucketFactor(bucketBounds);
+    // When the last bucket starts at 0, multiplicative expansion gives 0; use the factor directly instead.
+    bucketBoundsMax.push(lastBound === 0 ? factor : lastBound * factor);
+
+    custom.yMatchWithLabel = undefined;
+  } else {
+    // Auto mode: use ordinal indices like the original main branch behavior
+    bucketBounds = Array.from({ length: yFields.length }, (v, i) => i);
+  }
+
+  // fill flat/repeating array
+  for (let i = 0, yi = 0, xi = 0; i < len; yi = ++i % bucketBounds.length) {
+    ys[i] = bucketBounds[yi];
+    if (useNumericScale && ys2 && bucketBoundsMax) {
+      ys2[i] = bucketBoundsMax[yi];
+    }
+
+    if (yi === 0 && i >= bucketBounds.length) {
+      xi++;
+    }
+
+    xs[i] = xValues[xi];
+  }
+
   if (custom.yMatchWithLabel) {
     custom.yOrdinalLabel = yFields.map((f) => f.labels?.[custom.yMatchWithLabel!] ?? '');
     if (custom.yMatchWithLabel === 'le') {
@@ -206,7 +251,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     if (custom.yMinDisplay) {
       custom.yMinDisplay = formattedValueToString(fmt(0, opts.decimals));
     }
-    custom.yOrdinalDisplay = custom.yOrdinalDisplay.map((name) => {
+    custom.yOrdinalDisplay = custom.yOrdinalDisplay?.map((name) => {
       let num = +name;
 
       if (!Number.isNaN(num)) {
@@ -217,6 +262,11 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     });
   }
 
+  // Clear yOrdinalDisplay when using numeric scales (linear, log, symlog)
+  if (useNumericScale) {
+    custom.yOrdinalDisplay = undefined;
+  }
+
   const valueCfg = {
     ...yFields[0].config,
   };
@@ -225,6 +275,43 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     delete valueCfg.displayNameFromDS;
   }
 
+  // Build fields array - only include yMax in linear scale mode
+  const fields: Field[] = [
+    {
+      name: xField.type === FieldType.time ? 'xMax' : 'x',
+      type: xField.type,
+      values: xs,
+      config: xField.config,
+    },
+    {
+      name: useNumericScale ? 'yMin' : ordinalFieldName,
+      type: FieldType.number,
+      values: ys,
+      config: {
+        unit: useNumericScale ? yFields[0]?.config?.unit : 'short', // preserve original unit for numeric, use 'short' for ordinal
+      },
+    },
+  ];
+
+  // yMax provides explicit upper bounds for proper rendering, critical for ge layout
+  if (useNumericScale && ys2) {
+    fields.push({
+      name: 'yMax',
+      type: FieldType.number,
+      values: ys2,
+      config: {},
+    });
+  }
+
+  // Add value/count field
+  fields.push({
+    name: opts.value?.length ? opts.value : useNumericScale ? 'count' : 'Value',
+    type: FieldType.number,
+    values: counts2,
+    config: valueCfg,
+    display: yFields[0].display,
+  });
+
   return {
     length: xs.length,
     refId: opts.frame.refId,
@@ -232,29 +319,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
       type: DataFrameType.HeatmapCells,
       custom,
     },
-    fields: [
-      {
-        name: xField.type === FieldType.time ? 'xMax' : 'x',
-        type: xField.type,
-        values: xs,
-        config: xField.config,
-      },
-      {
-        name: ordinalFieldName,
-        type: FieldType.number,
-        values: ys,
-        config: {
-          unit: 'short', // ordinal lookup
-        },
-      },
-      {
-        name: opts.value?.length ? opts.value : 'Value',
-        type: FieldType.number,
-        values: counts2,
-        config: valueCfg,
-        display: yFields[0].display,
-      },
-    ],
+    fields,
   };
 }
 
@@ -329,7 +394,7 @@ export function calculateHeatmapFromData(
     xMode: xBucketsCfg.mode,
     xSize:
       xBucketsCfg.mode === HeatmapCalculationMode.Size
-        ? durationToMilliseconds(parseDuration(xBucketsCfg.value ?? ''))
+        ? convertDurationToMilliseconds(xBucketsCfg.value ?? '')
         : xBucketsCfg.value
           ? +xBucketsCfg.value
           : undefined,

@@ -1,31 +1,22 @@
-import { JsonTree } from '@react-awesome-query-builder/ui';
+import type { JsonTree } from '@react-awesome-query-builder/ui';
 
 import {
-  DataFrame,
-  DataQuery,
-  DataSourceJsonData,
-  MetricFindValue,
-  SelectableValue,
-  TimeRange,
+  type DataFrame,
+  type DataQuery,
+  type DataSourceJsonData,
+  type MetricFindValue,
+  type SelectableValue,
+  type TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageDefinition } from '@grafana/experimental';
+import { type EditorMode, type LanguageDefinition } from '@grafana/plugin-ui';
 
-import { QueryWithDefaults } from './defaults';
+import { type QueryWithDefaults } from './defaults';
 import {
-  QueryEditorFunctionExpression,
-  QueryEditorGroupByExpression,
-  QueryEditorPropertyExpression,
+  type QueryEditorFunctionExpression,
+  type QueryEditorGroupByExpression,
+  type QueryEditorPropertyExpression,
 } from './expressions';
-
-export interface SqlQueryForInterpolation {
-  dataset?: string;
-  alias?: string;
-  format?: QueryFormat;
-  rawSql?: string;
-  refId: string;
-  hide?: boolean;
-}
 
 export interface SQLConnectionLimits {
   maxOpenConns: number;
@@ -50,6 +41,8 @@ export enum QueryFormat {
   Table = 'table',
 }
 
+export type SQLQueryMeta = { valueField?: string; textField?: string };
+
 export interface SQLQuery extends DataQuery {
   alias?: string;
   format?: QueryFormat;
@@ -59,14 +52,17 @@ export interface SQLQuery extends DataQuery {
   sql?: SQLExpression;
   editorMode?: EditorMode;
   rawQuery?: boolean;
+  meta?: SQLQueryMeta;
 }
 
-export interface NameValue {
+export type SQLVariableQuery = { query: string } & SQLQuery;
+
+interface NameValue {
   name: string;
   value: string;
 }
 
-export type SQLFilters = NameValue[];
+type SQLFilters = NameValue[];
 
 export interface SQLExpression {
   columns?: QueryEditorFunctionExpression[];
@@ -78,19 +74,6 @@ export interface SQLExpression {
   orderByDirection?: 'ASC' | 'DESC';
   limit?: number;
   offset?: number;
-}
-
-export interface TableSchema {
-  name?: string;
-  schema?: TableFieldSchema[];
-}
-
-export interface TableFieldSchema {
-  name: string;
-  description?: string;
-  type: string;
-  repeated: boolean;
-  schema: TableFieldSchema[];
 }
 
 export interface QueryRowFilter {
@@ -129,12 +112,22 @@ export interface DB {
   tables: (dataset?: string) => Promise<string[]>;
   fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
-  dsID: () => number;
   dispose?: (dsID?: string) => void;
   lookup?: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getEditorLanguageDefinition: () => LanguageDefinition;
   toRawSql: (query: SQLQuery) => string;
-  functions?: () => string[];
+  functions: () => Func[];
+}
+
+export interface FuncParameter {
+  name: string;
+  required?: boolean;
+  options?: (query: SQLQuery) => Promise<SelectableValue[]>;
+}
+export interface Func {
+  name: string;
+  parameters?: FuncParameter[];
+  description?: string;
 }
 
 export interface QueryEditorProps {
@@ -161,12 +154,6 @@ export interface SqlQueryModel {
 
 export interface ResponseParser {
   transformMetricFindResponse: (frame: DataFrame) => MetricFindValue[];
-}
-
-export interface MetaDefinition {
-  name: string;
-  completion?: string;
-  kind: CompletionItemKind;
 }
 
 export type SQLDialect = 'postgres' | 'influx' | 'other';

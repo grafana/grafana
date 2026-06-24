@@ -2,8 +2,8 @@ import classNames from 'classnames';
 import { PureComponent, ChangeEvent } from 'react';
 import * as React from 'react';
 
-import { ValidationEvents, ValidationRule } from '../../../../types';
-import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
+import { ValidationEvents, ValidationRule } from '../../../../types/input';
+import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils/validate';
 
 /** @deprecated Please use the `Input` component, which does not require this enum. */
 export enum LegacyInputStatus {
@@ -14,7 +14,7 @@ export enum LegacyInputStatus {
 export interface Props extends React.HTMLProps<HTMLInputElement> {
   validationEvents?: ValidationEvents;
   hideErrorMessage?: boolean;
-  inputRef?: React.LegacyRef<HTMLInputElement>;
+  inputRef?: React.Ref<HTMLInputElement>;
 
   // Override event props and append status as argument
   onBlur?: (event: React.FocusEvent<HTMLInputElement>, status?: LegacyInputStatus) => void;

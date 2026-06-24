@@ -1,24 +1,24 @@
 import { isNumber } from 'lodash';
-import { PureComponent } from 'react';
+import { PureComponent, type JSX } from 'react';
 
 import {
-  DisplayProcessor,
-  DisplayValue,
-  DisplayValueAlignmentFactors,
-  FieldConfig,
-  FieldDisplay,
+  type DisplayProcessor,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+  type FieldConfig,
+  type FieldDisplay,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
-  PanelProps,
+  type PanelProps,
   VizOrientation,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { BarGaugeSizing } from '@grafana/schema';
-import { BarGauge, DataLinksContextMenu, VizLayout, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
-import { config } from 'app/core/config';
+import { BarGauge, DataLinksContextMenu, VizLayout, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
+import { type DataLinksContextMenuApi } from '@grafana/ui/internal';
 
 import { BarGaugeLegend } from './BarGaugeLegend';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
 
 export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   renderComponent = (
@@ -29,6 +29,9 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     const { value, alignmentFactors, orientation, width, height, count } = valueProps;
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
+    const spacing = this.getItemSpacing();
+    // check if the total height is bigger than the visualization height, if so, there will be scrollbars for overflow
+    const isOverflow = (height + spacing) * count - spacing > this.props.height;
 
     let processor: DisplayProcessor | undefined = undefined;
     if (view && isNumber(colIndex)) {
@@ -45,7 +48,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         text={options.text}
         display={processor}
         theme={config.theme2}
-        itemSpacing={this.getItemSpacing()}
+        itemSpacing={spacing}
         displayMode={options.displayMode}
         onClick={openMenu}
         className={targetClassName}
@@ -53,6 +56,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         showUnfilled={options.showUnfilled}
         valueDisplayMode={options.valueMode}
         namePlacement={options.namePlacement}
+        isOverflow={isOverflow}
       />
     );
   };
@@ -166,7 +170,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
 }
 export type BarGaugePanelProps = PanelProps<Options>;
 
-export function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
+function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
   if (count === 1 && !field.displayName) {
     return {
       ...display,

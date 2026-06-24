@@ -21,7 +21,7 @@ func ProvideLicensing(cfg *setting.Cfg, l licensing.Licensing) *Service {
 	}
 }
 
-func (l Service) Environment() []string {
+func (l *Service) Environment() []string {
 	var env []string
 	if envProvider, ok := l.license.(licensing.LicenseEnvironment); ok {
 		for k, v := range envProvider.Environment() {
@@ -31,14 +31,18 @@ func (l Service) Environment() []string {
 	return env
 }
 
-func (l Service) Edition() string {
+func (l *Service) Edition() string {
 	return l.license.Edition()
 }
 
-func (l Service) Path() string {
+func (l *Service) Path() string {
 	return l.licensePath
 }
 
-func (l Service) AppURL() string {
+func (l *Service) AppURL() string {
 	return l.appURL
+}
+
+func (l *Service) ContentDeliveryPrefix() string {
+	return l.license.ContentDeliveryPrefix()
 }

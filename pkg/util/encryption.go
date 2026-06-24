@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/pbkdf2"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
-
-	"golang.org/x/crypto/pbkdf2"
 )
 
 const (
@@ -102,6 +101,7 @@ func decryptCFB(block cipher.Block, payload []byte) ([]byte, error) {
 	payload = payload[saltLength+aes.BlockSize:]
 	payloadDst := make([]byte, len(payload))
 
+	//nolint:staticcheck
 	stream := cipher.NewCFBDecrypter(block, iv)
 
 	// XORKeyStream can work in-place if the two arguments are the same.
@@ -136,6 +136,7 @@ func Encrypt(payload []byte, secret string) ([]byte, error) {
 		return nil, err
 	}
 
+	//nolint:staticcheck
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[saltLength+aes.BlockSize:], payload)
 
@@ -144,5 +145,5 @@ func Encrypt(payload []byte, secret string) ([]byte, error) {
 
 // Key needs to be 32bytes
 func encryptionKeyToBytes(secret, salt string) ([]byte, error) {
-	return pbkdf2.Key([]byte(secret), []byte(salt), 10000, 32, sha256.New), nil
+	return pbkdf2.Key(sha256.New, secret, []byte(salt), 10000, 32)
 }

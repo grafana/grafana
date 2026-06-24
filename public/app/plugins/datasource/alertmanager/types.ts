@@ -1,6 +1,14 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
-import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
-import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { type ObjectMeta } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type DataSourceJsonData, type WithAccessControlMetadata } from '@grafana/data';
+
+export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
+
+interface ExtraConfiguration {
+  identifier: string;
+  source?: string;
+  createdAt?: string;
+}
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
@@ -9,9 +17,10 @@ export type AlertManagerCortexConfig = {
   template_file_provenances?: Record<string, string>;
   last_applied?: string;
   id?: number;
+  extra_config?: ExtraConfiguration[];
 };
 
-export type TLSConfig = {
+type TLSConfig = {
   ca_file?: string;
   cert_file?: string;
   key_file?: string;
@@ -19,26 +28,26 @@ export type TLSConfig = {
   insecure_skip_verify?: boolean;
 };
 
-export type HTTPConfigCommon = {
+type HTTPConfigCommon = {
   proxy_url?: string | null;
   tls_config?: TLSConfig;
 };
 
-export type HTTPConfigBasicAuth = {
+type HTTPConfigBasicAuth = {
   basic_auth?: {
     username: string;
   } & ({ password?: string } | { password_file?: string });
 };
 
-export type HTTPConfigBearerToken = {
+type HTTPConfigBearerToken = {
   bearer_token?: string;
 };
 
-export type HTTPConfigBearerTokenFile = {
+type HTTPConfigBearerTokenFile = {
   bearer_token_file?: string;
 };
 
-export type HTTPConfig = HTTPConfigCommon & (HTTPConfigBasicAuth | HTTPConfigBearerToken | HTTPConfigBearerTokenFile);
+type HTTPConfig = HTTPConfigCommon & (HTTPConfigBasicAuth | HTTPConfigBearerToken | HTTPConfigBearerTokenFile);
 
 export type EmailConfig = {
   to: string;
@@ -58,7 +67,7 @@ export type EmailConfig = {
   headers?: Record<string, string>;
 };
 
-export type WebhookConfig = {
+type WebhookConfig = {
   url: string;
 
   send_resolved?: boolean;
@@ -67,15 +76,24 @@ export type WebhookConfig = {
 };
 
 type GrafanaManagedReceiverConfigSettings<T = any> = Record<string, T>;
+export type GrafanaManagedReceiverSecureFields = Record<string, boolean>;
+
 export type GrafanaManagedReceiverConfig = {
   uid?: string;
   disableResolveMessage?: boolean;
-  secureFields?: Record<string, boolean>;
-  secureSettings?: GrafanaManagedReceiverConfigSettings;
+  /**
+   * Secure fields keys values should be true if they are already configured in the database
+   * To reset the secure field, omit the key from the object when updating the receiver
+   */
+  secureFields?: GrafanaManagedReceiverSecureFields;
   /** If retrieved from k8s API, SecureSettings property name is different */
   // SecureSettings?: GrafanaManagedReceiverConfigSettings<boolean>;
   settings: GrafanaManagedReceiverConfigSettings;
   type: string;
+  /**
+   * Version of the integration (e.g. "v0" for Mimir legacy, "v1" for Grafana)
+   */
+  version?: string;
   /**
    * Name of the _receiver_, which in most cases will be the
    * same as the contact point's name. This should not be used, and is optional because the
@@ -94,8 +112,8 @@ export interface GrafanaManagedContactPoint {
   name: string;
   /** If parsed from k8s API, we'll have an ID property */
   id?: string;
-  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
-  provisioned?: boolean;
+  metadata?: ObjectMeta;
+  provenance?: string;
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
 }
 
@@ -114,6 +132,7 @@ export type Receiver = GrafanaManagedContactPoint | AlertmanagerReceiver;
 export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 
 export type Route = {
+  name?: string;
   receiver?: string | null;
   group_by?: string[];
   continue?: boolean;
@@ -133,6 +152,13 @@ export type Route = {
   active_time_intervals?: string[];
   /** only the root policy might have a provenance field defined */
   provenance?: string;
+  /** this is used to add additional metadata to the routes without interfering with original route definition (symbols aren't iterable)  */
+  [ROUTES_META_SYMBOL]?: {
+    provenance?: string;
+    resourceVersion?: string;
+    name?: string;
+    metadata?: ObjectMeta;
+  };
 };
 
 export interface RouteWithID extends Route {
@@ -140,7 +166,7 @@ export interface RouteWithID extends Route {
   routes?: RouteWithID[];
 }
 
-export type InhibitRule = {
+type InhibitRule = {
   target_match?: Record<string, string>;
   target_match_re?: Record<string, string>;
   source_match?: Record<string, string>;
@@ -207,6 +233,25 @@ export enum MatcherOperator {
   notRegex = '!~',
 }
 
+/**
+ * Rule metadata on Grafana silence GET responses when `ruleMetadata=true`.
+ * The whole object is omitted when the silence has no `__alert_rule_uid__` matcher.
+ * When present, `rule_uid` is always set from that matcher; `rule_title` and `folder_uid`
+ * are only set when the rule exists and the caller can read its folder.
+ */
+interface SilenceRuleMetadata {
+  rule_uid?: string;
+  rule_title?: string;
+  folder_uid?: string;
+}
+
+export type TestTemplateAlert = Pick<
+  AlertmanagerAlert,
+  'annotations' | 'labels' | 'startsAt' | 'endsAt' | 'generatorURL' | 'fingerprint'
+> & {
+  status: 'firing' | 'resolved';
+};
+
 export interface Silence extends WithAccessControlMetadata {
   id: string;
   matchers?: Matcher[];
@@ -218,11 +263,7 @@ export interface Silence extends WithAccessControlMetadata {
   status: {
     state: SilenceState;
   };
-  metadata?: {
-    rule_uid?: string;
-    rule_title?: string;
-    folder_uid?: string;
-  };
+  metadata?: SilenceRuleMetadata;
 }
 
 export type SilenceCreatePayload = {
@@ -273,41 +314,12 @@ export interface AlertmanagerStatus {
   };
 }
 
-export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
-export type TestTemplateAlert = Pick<
-  AlertmanagerAlert,
-  'annotations' | 'labels' | 'startsAt' | 'endsAt' | 'generatorURL' | 'fingerprint'
-> & {
-  status: 'firing' | 'resolved';
-};
-
-export interface TestReceiversPayload {
-  receivers?: Receiver[];
-  alert?: TestReceiversAlert;
-}
-
-interface TestReceiversResultGrafanaReceiverConfig {
-  name: string;
-  uid?: string;
-  error?: string;
-  status: 'ok' | 'failed';
-}
-
-interface TestReceiversResultReceiver {
-  name: string;
-  grafana_managed_receiver_configs: TestReceiversResultGrafanaReceiverConfig[];
-}
-export interface TestReceiversResult {
-  notified_at: string;
-  receivers: TestReceiversResultReceiver[];
-}
-
 export interface ExternalAlertmanagersConnectionStatus {
   activeAlertManagers: AlertmanagerUrl[];
   droppedAlertManagers: AlertmanagerUrl[];
 }
 
-export interface AlertmanagerUrl {
+interface AlertmanagerUrl {
   url: string;
 }
 
@@ -323,7 +335,12 @@ export enum AlertmanagerChoice {
 
 export interface GrafanaAlertingConfiguration {
   alertmanagersChoice: AlertmanagerChoice;
+  // Snake_case mirrors the wire format from /api/v1/ngalert/admin_config.
+  external_alertmanager_uid?: string;
 }
+
+// POST /api/v1/ngalert/admin_config accepts partial updates.
+export type PostableGrafanaAlertingConfiguration = Partial<GrafanaAlertingConfiguration>;
 
 export enum AlertManagerImplementation {
   cortex = 'cortex',

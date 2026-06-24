@@ -1,5 +1,5 @@
-import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
+import { type SelectableValue } from '@grafana/data';
+import { EditorField } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import { LOOKBACK_PERIODS } from '../constants';

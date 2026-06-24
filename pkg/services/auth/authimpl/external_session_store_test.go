@@ -8,13 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetExternalSession(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationGetExternalSession(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("returns existing external session", func(t *testing.T) {
 		store := setupTest(t)
 
@@ -39,17 +39,13 @@ func TestGetExternalSession(t *testing.T) {
 	})
 }
 
-func TestFindExternalSessions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationListExternalSessions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("returns external sessions by ID", func(t *testing.T) {
 		store := setupTest(t)
 
-		extSession := &auth.ExternalSession{
-			AccessToken: "access-token",
-		}
+		extSession := &auth.ExternalSession{}
 
 		err := store.Create(context.Background(), extSession)
 		require.NoError(t, err)
@@ -107,10 +103,8 @@ func TestFindExternalSessions(t *testing.T) {
 	})
 }
 
-func TestDeleteExternalSessionsByUserID(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationDeleteExternalSessionsByUserID(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes all external sessions for a given user ID", func(t *testing.T) {
 		store := setupTest(t)
@@ -148,10 +142,8 @@ func TestDeleteExternalSessionsByUserID(t *testing.T) {
 	})
 }
 
-func TestDeleteExternalSession(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationDeleteExternalSession(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes an existing external session", func(t *testing.T) {
 		store := setupTest(t)
@@ -178,10 +170,8 @@ func TestDeleteExternalSession(t *testing.T) {
 	})
 }
 
-func TestBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestIntegrationBatchDeleteExternalSessionsByUserIDs(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("deletes all external sessions for given user IDs", func(t *testing.T) {
 		store := setupTest(t)

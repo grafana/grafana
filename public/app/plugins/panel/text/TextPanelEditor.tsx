@@ -1,16 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
 import {
   CodeEditor,
   useStyles2,
-  CodeEditorSuggestionItem,
+  type CodeEditorSuggestionItem,
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
 
-import { Options, TextMode } from './panelcfg.gen';
+import { type Options, TextMode } from './panelcfg.gen';
 
 export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, {}, Options>) => {
   const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);
@@ -25,26 +24,17 @@ export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProp
 
   return (
     <div className={cx(styles.editorBox)}>
-      <AutoSizer disableHeight>
-        {({ width }) => {
-          if (width === 0) {
-            return null;
-          }
-          return (
-            <CodeEditor
-              value={value}
-              onBlur={onChange}
-              onSave={onChange}
-              language={language}
-              width={width}
-              showMiniMap={false}
-              showLineNumbers={false}
-              height="500px"
-              getSuggestions={getSuggestions}
-            />
-          );
-        }}
-      </AutoSizer>
+      <CodeEditor
+        value={value}
+        onBlur={onChange}
+        onSave={onChange}
+        language={language}
+        width="100%"
+        showMiniMap={false}
+        showLineNumbers={false}
+        height="500px"
+        getSuggestions={getSuggestions}
+      />
     </div>
   );
 };
@@ -52,8 +42,6 @@ export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProp
 const getStyles = (theme: GrafanaTheme2) => ({
   editorBox: css({
     label: 'editorBox',
-    border: `1px solid ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
     margin: theme.spacing(0.5, 0),
     width: '100%',
   }),

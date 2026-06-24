@@ -6,11 +6,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func RegisterRoles(service accesscontrol.Service) error {
+// FixedRoleRegistrations returns the service account role registrations.
+func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	saReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:serviceaccounts:reader",
-			DisplayName: "Service accounts reader",
+			DisplayName: "Reader",
 			Description: "Read service accounts and service account tokens.",
 			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
@@ -26,7 +27,7 @@ func RegisterRoles(service accesscontrol.Service) error {
 	saCreator := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:serviceaccounts:creator",
-			DisplayName: "Service accounts creator",
+			DisplayName: "Creator",
 			Description: "Create service accounts.",
 			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
@@ -41,7 +42,7 @@ func RegisterRoles(service accesscontrol.Service) error {
 	saWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:serviceaccounts:writer",
-			DisplayName: "Service accounts writer",
+			DisplayName: "Writer",
 			Description: "Create, delete and read service accounts, manage service account permissions.",
 			Group:       "Service accounts",
 			Permissions: accesscontrol.ConcatPermissions(saReader.Role.Permissions, []accesscontrol.Permission{
@@ -69,9 +70,9 @@ func RegisterRoles(service accesscontrol.Service) error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	if err := service.DeclareFixedRoles(saReader, saCreator, saWriter); err != nil {
-		return err
-	}
+	return []accesscontrol.RoleRegistration{saReader, saCreator, saWriter}
+}
 
-	return nil
+func RegisterRoles(service accesscontrol.Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }

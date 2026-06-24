@@ -1,0 +1,191 @@
+import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
+
+import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
+import { Dropdown, IconButton, Menu } from '@grafana/ui';
+
+import { copyText, handleOpenLogsContextClick } from '../../utils';
+
+import { useLogDetailsContext } from './LogDetailsContext';
+import { type LogLineStyles } from './LogLine';
+import { useLogIsPinned, useLogListContext } from './LogListContext';
+import { getLogAsJSON } from './export';
+import { type LogListModel } from './processing';
+
+export type GetRowContextQueryFn = (
+  row: LogRowModel,
+  options?: LogRowContextOptions,
+  cacheFilters?: boolean
+) => Promise<DataQuery | null>;
+
+type MenuItem = {
+  label: string;
+  onClick(log: LogListModel): void;
+};
+
+type MenuItemDivider = {
+  divider: true;
+};
+
+export type LogLineMenuCustomItem = MenuItem | MenuItemDivider;
+
+interface Props {
+  active?: boolean;
+  log: LogListModel;
+  styles: LogLineStyles;
+}
+
+export const LogLineMenu = ({ active, log, styles }: Props) => {
+  const {
+    getRowContextQuery,
+    onOpenContext,
+    onPermalinkClick,
+    onPinLine,
+    onUnpinLine,
+    logLineMenuCustomItems = [],
+    logSupportsContext,
+    isAssistantAvailable,
+    openAssistantByLog,
+  } = useLogListContext();
+  const { enableLogDetails, detailsDisplayed, toggleDetails } = useLogDetailsContext();
+  const pinned = useLogIsPinned(log);
+  const menuRef = useRef(null);
+
+  const copyLogLine = useCallback(() => {
+    copyText(log.entry, menuRef);
+    reportInteraction('logs_log_line_menu_header_copy_clicked');
+  }, [log.entry]);
+
+  const copyLogLineAsJson = useCallback(async () => {
+    copyText(await getLogAsJSON(log), menuRef);
+    reportInteraction('logs_log_line_menu_header_copy_json_clicked');
+  }, [log]);
+
+  const copyLinkToLogLine = useCallback(() => {
+    onPermalinkClick?.(log);
+  }, [log, onPermalinkClick]);
+
+  const shouldlogSupportsContext = useMemo(
+    () => (logSupportsContext ? logSupportsContext(log) : false),
+    [log, logSupportsContext]
+  );
+
+  const showContext = useCallback(
+    async (event: MouseEvent<HTMLElement>) => {
+      handleOpenLogsContextClick(event, log, getRowContextQuery, (log: LogRowModel) => onOpenContext?.(log, () => {}));
+    },
+    [onOpenContext, getRowContextQuery, log]
+  );
+
+  const toggleLogDetails = useCallback(() => {
+    toggleDetails(log);
+  }, [log, toggleDetails]);
+
+  const togglePinning = useCallback(() => {
+    if (pinned) {
+      onUnpinLine?.(log);
+    } else {
+      onPinLine?.(log);
+    }
+  }, [log, onPinLine, onUnpinLine, pinned]);
+
+  const showFirstDivider = enableLogDetails || shouldlogSupportsContext || onPinLine || onUnpinLine;
+
+  const menu = useCallback(
+    () => (
+      <Menu ref={menuRef}>
+        {enableLogDetails && (
+          <Menu.Item
+            onClick={toggleLogDetails}
+            label={
+              detailsDisplayed(log)
+                ? t('logs.log-line-menu.show-details', 'Hide log details')
+                : t('logs.log-line-menu.hide-details', 'Show log details')
+            }
+          />
+        )}
+        {shouldlogSupportsContext && (
+          <Menu.Item onClick={showContext} label={t('logs.log-line-menu.show-context', 'Show context')} />
+        )}
+        {!pinned && onPinLine && (
+          <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.pin-to-outline', 'Pin log')} />
+        )}
+        {pinned && onUnpinLine && (
+          <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.unpin-from-outline', 'Unpin log')} />
+        )}
+        {showFirstDivider && <Menu.Divider />}
+        <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log-message', 'Copy log line message')} />
+        <Menu.Item
+          onClick={copyLogLineAsJson}
+          label={t('logs.log-line-menu.copy-log-contents', 'Copy log line contents as JSON')}
+        />
+        {onPermalinkClick && log.rowId !== undefined && log.uid && (
+          <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
+        )}
+        {logLineMenuCustomItems.map((item, i) => {
+          if (isDivider(item)) {
+            return <Menu.Divider key={i} />;
+          }
+          if (isItem(item)) {
+            return <Menu.Item onClick={() => item.onClick(log)} label={item.label} key={i} />;
+          }
+          return null;
+        })}
+        {isAssistantAvailable && (
+          <>
+            <Menu.Divider />
+            <Menu.Item
+              onClick={() => openAssistantByLog?.(log)}
+              icon="ai-sparkle"
+              label={t('logs.log-line-menu.open-assistant', 'Explain log line in Assistant')}
+            />
+          </>
+        )}
+      </Menu>
+    ),
+    [
+      copyLinkToLogLine,
+      copyLogLine,
+      copyLogLineAsJson,
+      detailsDisplayed,
+      enableLogDetails,
+      isAssistantAvailable,
+      log,
+      logLineMenuCustomItems,
+      onPermalinkClick,
+      onPinLine,
+      onUnpinLine,
+      openAssistantByLog,
+      pinned,
+      shouldlogSupportsContext,
+      showContext,
+      showFirstDivider,
+      toggleLogDetails,
+      togglePinning,
+    ]
+  );
+
+  return (
+    <div className={`${styles.menuWrapper} log-line-menu`}>
+      <Dropdown overlay={menu} placement="bottom-start">
+        <IconButton
+          className={styles.menuIcon}
+          name={active ? 'angle-right' : 'ellipsis-v'}
+          aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
+          role="button"
+          variant={active ? 'primary' : undefined}
+        />
+      </Dropdown>
+    </div>
+  );
+};
+
+function isDivider(item: LogLineMenuCustomItem) {
+  return 'divider' in item && item.divider;
+}
+
+function isItem(item: LogLineMenuCustomItem) {
+  return 'onClick' in item && 'label' in item;
+}

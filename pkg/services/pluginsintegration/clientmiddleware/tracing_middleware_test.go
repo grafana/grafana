@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
@@ -15,6 +13,9 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -178,7 +179,7 @@ func TestTracingMiddleware(t *testing.T) {
 func TestTracingMiddlewareAttributes(t *testing.T) {
 	defaultPluginContextRequestMut := func(ctx *context.Context, req *backend.QueryDataRequest) {
 		req.PluginContext.PluginID = "my_plugin_id"
-		req.PluginContext.OrgID = 1337
+		req.PluginContext.OrgID = 1337 // nolint:staticcheck
 	}
 
 	for _, tc := range []struct {
@@ -360,6 +361,10 @@ type alwaysErrorFuncMiddleware struct {
 
 func (m *alwaysErrorFuncMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return nil, m.f()
+}
+
+func (m *alwaysErrorFuncMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	return m.f()
 }
 
 func (m *alwaysErrorFuncMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

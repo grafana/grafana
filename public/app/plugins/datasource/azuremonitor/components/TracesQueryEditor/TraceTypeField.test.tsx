@@ -1,9 +1,9 @@
 import { render, screen, act } from '@testing-library/react';
 import { openMenu } from 'react-select-event';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockQuery from '../../__mocks__/query';
 import { selectors } from '../../e2e/selectors';
+import createMockDatasource from '../../mocks/datasource';
+import createMockQuery from '../../mocks/query';
 
 import TraceTypeField from './TraceTypeField';
 import { Tables } from './consts';

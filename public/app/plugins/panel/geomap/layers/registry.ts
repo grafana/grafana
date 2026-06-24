@@ -1,15 +1,16 @@
-import { Map as OpenLayersMap } from 'ol';
+import type OpenLayersMap from 'ol/Map';
 
 import {
-  MapLayerRegistryItem,
+  type MapLayerRegistryItem,
   Registry,
-  MapLayerOptions,
-  GrafanaTheme2,
-  EventBus,
-  SelectableValue,
+  type MapLayerOptions,
+  type GrafanaTheme2,
+  type EventBus,
+  type SelectableValue,
   PluginState,
 } from '@grafana/data';
-import { config, hasAlphaPanels } from 'app/core/config';
+import { config } from '@grafana/runtime';
+import { hasAlphaPanels } from 'app/core/config';
 
 import { basemapLayers } from './basemaps';
 import { carto } from './basemaps/carto';
@@ -22,7 +23,7 @@ export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
 };
 
 // Default base layer depending on the server setting
-export const defaultBaseLayer: MapLayerRegistryItem = {
+const defaultBaseLayer: MapLayerRegistryItem = {
   id: DEFAULT_BASEMAP_CONFIG.type,
   name: 'Default base layer',
   isBaseMap: true,

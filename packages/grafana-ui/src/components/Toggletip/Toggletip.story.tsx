@@ -1,7 +1,12 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { useState } from 'react';
 
-import { Button } from '../Button';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Button } from '../Button/Button';
+import { Drawer } from '../Drawer/Drawer';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
+import { Modal } from '../Modal/Modal';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import mdx from '../Toggletip/Toggletip.mdx';
 
 import { Toggletip } from './Toggletip';
@@ -96,7 +101,7 @@ export const LongContent: StoryFn<typeof Toggletip> = ({
     <Toggletip
       title={<h2>Toggletip with scrollable content and no interactive controls</h2>}
       content={
-        <CustomScrollbar autoHeightMax="500px">
+        <ScrollContainer maxHeight="500px">
           {/* one of the few documented cases we can turn this rule off */}
           {/* https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-noninteractive-tabindex.md#case-shouldnt-i-add-a-tabindex-so-that-users-can-navigate-to-this-item */}
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
@@ -110,7 +115,7 @@ export const LongContent: StoryFn<typeof Toggletip> = ({
               <p key={i}>This is some content repeated over and over again to ensure it is scrollable.</p>
             ))}
           </div>
-        </CustomScrollbar>
+        </ScrollContainer>
       }
       footer={footer}
       theme={theme}
@@ -130,6 +135,88 @@ LongContent.parameters = {
   controls: {
     hideNoControlsWarning: true,
     exclude: ['title', 'content', 'children'],
+  },
+};
+
+export const InsideDrawer: StoryFn<typeof Toggletip> = () => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  return (
+    <>
+      <Button onClick={() => setIsDrawerOpen(true)}>Open Drawer</Button>
+      {isDrawerOpen && (
+        <Drawer title="Drawer with Toggletip" onClose={() => setIsDrawerOpen(false)}>
+          <div>
+            <p style={{ marginBottom: '16px' }}>This demonstrates using Toggletip inside a Drawer.</p>
+            <Toggletip
+              title="Interactive Form"
+              content={
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <Field label="Name">
+                    <Input placeholder="Enter your name" />
+                  </Field>
+                  <Button variant="primary" size="sm">
+                    Submit
+                  </Button>
+                </div>
+              }
+              footer="Focus should work correctly within this Toggletip"
+              placement="bottom-start"
+            >
+              <Button>Click to show Toggletip</Button>
+            </Toggletip>
+          </div>
+        </Drawer>
+      )}
+    </>
+  );
+};
+
+InsideDrawer.parameters = {
+  controls: {
+    hideNoControlsWarning: true,
+    exclude: ['title', 'content', 'footer', 'children', 'placement', 'theme', 'closeButton', 'portalRoot'],
+  },
+};
+
+export const InsideModal: StoryFn<typeof Toggletip> = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  return (
+    <>
+      <Button onClick={() => setIsModalOpen(true)}>Open Modal</Button>
+      <Modal title="Modal with Toggletip" isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)}>
+        <div>
+          <p style={{ marginBottom: '16px' }}>This demonstrates using Toggletip inside a Modal.</p>
+          <Modal.ButtonRow>
+            <Toggletip
+              title="Interactive Form"
+              content={
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <Field label="Name">
+                    <Input placeholder="Enter your name" />
+                  </Field>
+                  <Button variant="primary" size="sm">
+                    Submit
+                  </Button>
+                </div>
+              }
+              footer="Focus should work correctly within this Toggletip"
+              placement="bottom-start"
+            >
+              <Button>Click to show Toggletip</Button>
+            </Toggletip>
+          </Modal.ButtonRow>
+        </div>
+      </Modal>
+    </>
+  );
+};
+
+InsideDrawer.parameters = {
+  controls: {
+    hideNoControlsWarning: true,
+    exclude: ['title', 'content', 'footer', 'children', 'placement', 'theme', 'closeButton', 'portalRoot'],
   },
 };
 

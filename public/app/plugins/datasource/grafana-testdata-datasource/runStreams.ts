@@ -1,26 +1,27 @@
 import { defaults } from 'lodash';
-import { Observable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
+import { Observable, throwError } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   FieldType,
   CircularDataFrame,
   CSVReader,
-  Field,
+  type Field,
   LoadingState,
-  DataFrameSchema,
-  DataFrameData,
+  type DataFrameSchema,
+  type DataFrameData,
   StreamingDataFrame,
   createDataFrame,
   addRow,
   getDisplayProcessor,
   createTheme,
+  generateUUID,
 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 
 import { getRandomLine } from './LogIpsum';
-import { TestDataDataQuery, StreamingQuery } from './dataquery';
+import { type TestDataDataQuery, type StreamingQuery } from './dataquery';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -44,11 +45,13 @@ export function runStream(
       return runFetchStream(target, query, req);
     case 'traces':
       return runTracesStream(target, query, req);
+    case 'watch':
+      return runWatchStream(target, query, req);
   }
   throw new Error(`Unknown Stream Type: ${query.type}`);
 }
 
-export function runSignalStream(
+function runSignalStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -101,12 +104,10 @@ export function runSignalStream(
     };
 
     // Fill the buffer on init
-    if (true) {
-      let time = Date.now() - maxDataPoints * speed;
-      for (let i = 0; i < maxDataPoints; i++) {
-        addNextRow(time);
-        time += speed;
-      }
+    let time = Date.now() - maxDataPoints * speed;
+    for (let i = 0; i < maxDataPoints; i++) {
+      addNextRow(time);
+      time += speed;
     }
 
     const pushNextEvent = () => {
@@ -130,7 +131,7 @@ export function runSignalStream(
   });
 }
 
-export function runLogsStream(
+function runLogsStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -176,7 +177,90 @@ export function runLogsStream(
   });
 }
 
-export function runFetchStream(
+interface StreamMessage {
+  message: number; // incrementing number
+  time: number;
+  value: number;
+}
+
+function runWatchStream(
+  target: TestDataDataQuery,
+  query: StreamingQuery,
+  req: DataQueryRequest<TestDataDataQuery>
+): Observable<DataQueryResponse> {
+  const uid = req.targets[0].datasource?.uid;
+  if (!uid) {
+    return throwError(() => new Error('expected datasource uid'));
+  }
+
+  return new Observable<DataQueryResponse>((subscriber) => {
+    const streamId = `watch-${req.panelId || 'explore'}-${target.refId}`;
+    const data = new CircularDataFrame({
+      append: 'tail',
+      capacity: req.maxDataPoints || 1000,
+    });
+    data.refId = target.refId;
+    data.name = target.alias || 'Logs ' + target.refId;
+    data.addField({ name: 'time', type: FieldType.time });
+    data.addField({ name: 'message', type: FieldType.number });
+    data.addField({ name: 'value', type: FieldType.number });
+    const decoder = new TextDecoder();
+
+    const sub = getBackendSrv()
+      .chunked({
+        url: `api/datasources/uid/${uid}/resources/stream`,
+        params: {
+          count: req.maxDataPoints || 1000, // connection will close when done
+          format: 'json',
+          speed: `${query.speed ?? 250}ms`,
+          flush: 85, // 85% (eg, sometimes send a few at a time)
+        },
+      })
+      .subscribe({
+        next: (chunk) => {
+          if (!chunk.data || !chunk.ok) {
+            console.info('chunk missing data', chunk);
+            return;
+          }
+          decoder
+            .decode(chunk.data, { stream: true })
+            .split('\n')
+            .forEach((line) => {
+              if (line?.length) {
+                try {
+                  const msg: StreamMessage = JSON.parse(line);
+
+                  data.fields[0].values.push(msg.time);
+                  data.fields[1].values.push(msg.message);
+                  data.fields[2].values.push(msg.value);
+
+                  subscriber.next({
+                    data: [data],
+                    key: streamId,
+                    state: LoadingState.Streaming,
+                  });
+                } catch (err) {
+                  console.warn('error parsing line', line, err);
+                }
+              }
+            });
+        },
+        error: (err) => {
+          console.warn('error in stream', streamId, err);
+        },
+        complete: () => {
+          console.info('complete stream', streamId);
+        },
+      });
+
+    return () => {
+      console.log('unsubscribing to stream', streamId);
+      sub.unsubscribe();
+    };
+  });
+}
+
+function runFetchStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -256,7 +340,7 @@ export function runFetchStream(
   });
 }
 
-export function runTracesStream(
+function runTracesStream(
   target: TestDataDataQuery,
   query: StreamingQuery,
   req: DataQueryRequest<TestDataDataQuery>
@@ -268,8 +352,8 @@ export function runTracesStream(
 
     const pushNextEvent = () => {
       const subframe = createTraceSubFrame();
-      addRow(subframe, [uuidv4(), Date.now(), 'Grafana', 1500]);
-      addRow(data, [uuidv4(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
+      addRow(subframe, [generateUUID(), Date.now(), 'Grafana', 1500]);
+      addRow(data, [generateUUID(), Date.now(), 'Grafana', 'HTTP GET /explore', 1500, [subframe]]);
 
       subscriber.next({
         data: [data],

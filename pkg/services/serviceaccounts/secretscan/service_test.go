@@ -2,13 +2,20 @@ package secretscan
 
 import (
 	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService_CheckTokens(t *testing.T) {
@@ -169,4 +176,112 @@ func TestService_CheckTokens(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestService(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	// Fake Secret Scanner + Webhook.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.RequestURI, "/tokens") {
+			_, err := io.Copy(io.Discard, r.Body)
+			require.NoError(t, err)
+
+			defer func() {
+				_ = r.Body.Close()
+			}()
+
+			_, _ = w.Write([]byte(`[
+				{"type": "token_type", "hash": "test-hash-1", "url": "http://example.com", "reported_at": "2006-01-20T01:02:03Z" }
+			]`))
+		}
+
+		if strings.Contains(r.RequestURI, "/oncall") {
+			var webhookReq struct {
+				State   string `json:"state"`
+				Message string `json:"message"`
+			}
+
+			err := json.NewDecoder(r.Body).Decode(&webhookReq)
+			require.NoError(t, err)
+
+			defer func() {
+				_ = r.Body.Close()
+			}()
+
+			require.Equal(t, "alerting", webhookReq.State)
+			require.Contains(t, webhookReq.Message, "test-1")
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	unixZero := time.Unix(0, 0).Unix()
+	revoked := true
+
+	tokenRetriever := &MockTokenRetriever{keys: []apikey.APIKey{
+		// Valid
+		{
+			ID:               1,
+			OrgID:            1,
+			Name:             "test-1",
+			Key:              "test-hash-1",
+			Role:             "Viewer",
+			Expires:          nil,
+			ServiceAccountId: new(int64),
+			IsRevoked:        new(bool),
+		},
+		// Expired
+		{
+			ID:               2,
+			OrgID:            1,
+			Name:             "test-2",
+			Key:              "test-hash-2",
+			Role:             "Viewer",
+			Expires:          &unixZero,
+			ServiceAccountId: new(int64),
+			IsRevoked:        new(bool),
+		},
+		// Revoked
+		{
+			ID:               3,
+			OrgID:            1,
+			Name:             "test-3",
+			Key:              "test-hash-3",
+			Role:             "Viewer",
+			Expires:          nil,
+			ServiceAccountId: new(int64),
+			IsRevoked:        &revoked,
+		},
+		// Revoked + Expired
+		{
+			ID:               4,
+			OrgID:            1,
+			Name:             "test-4",
+			Key:              "test-hash-4",
+			Role:             "Viewer",
+			Expires:          &unixZero,
+			ServiceAccountId: new(int64),
+			IsRevoked:        &revoked,
+		},
+	}}
+
+	cfg := setting.NewCfg()
+	section := cfg.Raw.Section("secretscan")
+
+	baseURL := section.Key("base_url")
+	baseURL.SetValue(server.URL)
+
+	oncallURL := section.Key("oncall_url")
+	oncallURL.SetValue(server.URL + "/oncall")
+
+	revoke := section.Key("revoke")
+	revoke.SetValue("true")
+
+	service, err := NewService(tokenRetriever, cfg)
+	require.NoError(t, err)
+	require.NotNil(t, service)
+
+	err = service.CheckTokens(ctx)
+	require.NoError(t, err)
 }

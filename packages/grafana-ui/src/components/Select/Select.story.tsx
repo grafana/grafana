@@ -1,17 +1,20 @@
 import { auto } from '@popperjs/core';
-import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import Chance from 'chance';
 import { useState } from 'react';
+import { action } from 'storybook/actions';
 
-import { SelectableValue, toIconName } from '@grafana/data';
-import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
+import { type SelectableValue, toIconName } from '@grafana/data';
 
-import { getAvailableIcons } from '../../types';
+import { getAvailableIcons } from '../../types/icon';
+import { Alert } from '../Alert/Alert';
+import { Field } from '../Forms/Field';
+import { Icon } from '../Icon/Icon';
 
+import { AsyncMultiSelect, AsyncSelect, MultiSelect, Select } from './Select';
 import mdx from './Select.mdx';
 import { generateOptions, generateThousandsOfOptions } from './mockOptions';
-import { SelectCommonProps } from './types';
+import { type SelectCommonProps } from './types';
 
 const chance = new Chance();
 
@@ -35,12 +38,8 @@ const manyGroupedOptions = [
 ];
 
 const meta: Meta = {
-  title: 'Forms/Select',
+  title: 'Inputs/Deprecated/Select',
   component: Select,
-  // SB7 has broken subcomponent types due to dropping support for the feature
-  // https://github.com/storybookjs/storybook/issues/20782
-  // @ts-ignore
-  subcomponents: { AsyncSelect, MultiSelect, AsyncMultiSelect },
   parameters: {
     docs: {
       page: mdx,
@@ -91,6 +90,7 @@ const meta: Meta = {
       },
     },
   },
+  decorators: [DeprecatedDecorator],
 };
 
 const loadAsyncOptions = () => {
@@ -114,7 +114,7 @@ export const Basic: StoryFn<StoryProps> = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
-    <>
+    <Field noMargin label="Select an option">
       <Select
         options={generateOptions()}
         value={value}
@@ -124,7 +124,7 @@ export const Basic: StoryFn<StoryProps> = (args) => {
         }}
         {...args}
       />
-    </>
+    </Field>
   );
 };
 
@@ -132,7 +132,7 @@ export const BasicVirtualizedList: StoryFn<StoryProps> = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
-    <>
+    <Field noMargin label="Select an option">
       <Select
         options={generateThousandsOfOptions()}
         virtualized
@@ -143,7 +143,7 @@ export const BasicVirtualizedList: StoryFn<StoryProps> = (args) => {
         }}
         {...args}
       />
-    </>
+    </Field>
   );
 };
 
@@ -153,7 +153,7 @@ export const BasicVirtualizedList: StoryFn<StoryProps> = (args) => {
 export const BasicSelectPlainValue: StoryFn<StoryProps> = (args) => {
   const [value, setValue] = useState<string>();
   return (
-    <>
+    <Field noMargin label="Select an option">
       <Select
         options={generateOptions()}
         value={value}
@@ -164,7 +164,7 @@ export const BasicSelectPlainValue: StoryFn<StoryProps> = (args) => {
         prefix={getPrefix(args.icon)}
         {...args}
       />
-    </>
+    </Field>
   );
 };
 
@@ -187,7 +187,7 @@ export const SelectWithOptionDescriptions: StoryFn = (args) => {
   ];
 
   return (
-    <>
+    <Field noMargin label="Select an option">
       <Select
         options={options}
         value={value}
@@ -198,7 +198,7 @@ export const SelectWithOptionDescriptions: StoryFn = (args) => {
         prefix={getPrefix(args.icon)}
         {...args}
       />
-    </>
+    </Field>
   );
 };
 
@@ -209,7 +209,7 @@ export const MultiPlainValue: StoryFn = (args) => {
   const [value, setValue] = useState<string[]>();
 
   return (
-    <>
+    <Field noMargin label="Select an option">
       <MultiSelect
         options={generateOptions()}
         value={value}
@@ -219,7 +219,7 @@ export const MultiPlainValue: StoryFn = (args) => {
         prefix={getPrefix(args.icon)}
         {...args}
       />
-    </>
+    </Field>
   );
 };
 
@@ -227,7 +227,7 @@ export const MultiSelectWithOptionGroups: StoryFn = (args) => {
   const [value, setValue] = useState<string[]>();
 
   return (
-    <>
+    <Field noMargin label="Select an option">
       <MultiSelect
         options={[
           { label: 'Foo', value: '1' },
@@ -261,7 +261,7 @@ export const MultiSelectWithOptionGroups: StoryFn = (args) => {
         prefix={getPrefix(args.icon)}
         {...args}
       />
-    </>
+    </Field>
   );
 };
 
@@ -269,7 +269,7 @@ export const MultiSelectWithOptionGroupsVirtualized: StoryFn = (args) => {
   const [value, setValue] = useState<string[]>();
 
   return (
-    <>
+    <Field noMargin label="Select an option">
       <MultiSelect
         options={manyGroupedOptions}
         virtualized
@@ -281,7 +281,7 @@ export const MultiSelectWithOptionGroupsVirtualized: StoryFn = (args) => {
         prefix={getPrefix(args.icon)}
         {...args}
       />
-    </>
+    </Field>
   );
 };
 
@@ -290,16 +290,18 @@ export const MultiSelectBasic: StoryFn = (args) => {
 
   return (
     <div style={{ maxWidth: '450px' }}>
-      <MultiSelect
-        options={generateOptions()}
-        value={value}
-        onChange={(v) => {
-          setValue(v);
-          action('onChange')(v);
-        }}
-        prefix={getPrefix(args.icon)}
-        {...args}
-      />
+      <Field noMargin label="Select an option">
+        <MultiSelect
+          options={generateOptions()}
+          value={value}
+          onChange={(v) => {
+            setValue(v);
+            action('onChange')(v);
+          }}
+          prefix={getPrefix(args.icon)}
+          {...args}
+        />
+      </Field>
     </div>
   );
 };
@@ -316,17 +318,19 @@ export const MultiSelectBasicWithSelectAll: StoryFn = (args) => {
 
   return (
     <div style={{ maxWidth: '450px' }}>
-      <MultiSelect
-        options={generateOptions()}
-        value={value}
-        toggleAllOptions={{ enabled: true }}
-        onChange={(v) => {
-          setValue(v);
-          action('onChange')(v);
-        }}
-        prefix={getPrefix(args.icon)}
-        {...args}
-      />
+      <Field noMargin label="Select an option">
+        <MultiSelect
+          options={generateOptions()}
+          value={value}
+          toggleAllOptions={{ enabled: true }}
+          onChange={(v) => {
+            setValue(v);
+            action('onChange')(v);
+          }}
+          prefix={getPrefix(args.icon)}
+          {...args}
+        />
+      </Field>
     </div>
   );
 };
@@ -342,17 +346,19 @@ export const MultiSelectAsync: StoryFn = (args) => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>();
 
   return (
-    <AsyncMultiSelect
-      loadOptions={loadAsyncOptions}
-      defaultOptions
-      value={value}
-      onChange={(v) => {
-        setValue(v);
-        action('onChange')(v);
-      }}
-      prefix={getPrefix(args.icon)}
-      {...args}
-    />
+    <Field noMargin label="Select an option">
+      <AsyncMultiSelect
+        loadOptions={loadAsyncOptions}
+        defaultOptions
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        prefix={getPrefix(args.icon)}
+        {...args}
+      />
+    </Field>
   );
 };
 MultiSelectAsync.args = {
@@ -363,17 +369,19 @@ export const BasicSelectAsync: StoryFn = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
-    <AsyncSelect
-      loadOptions={loadAsyncOptions}
-      defaultOptions
-      value={value}
-      onChange={(v) => {
-        setValue(v);
-        action('onChange')(v);
-      }}
-      prefix={getPrefix(args.icon)}
-      {...args}
-    />
+    <Field noMargin label="Select an option">
+      <AsyncSelect
+        loadOptions={loadAsyncOptions}
+        defaultOptions
+        value={value}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        prefix={getPrefix(args.icon)}
+        {...args}
+      />
+    </Field>
   );
 };
 
@@ -381,8 +389,8 @@ export const AutoMenuPlacement: StoryFn = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
-    <>
-      <div style={{ width: '100%', height: '95vh', display: 'flex', alignItems: 'flex-end' }}>
+    <div style={{ width: '100%', height: 'calc(95vh - 118px)', display: 'flex', alignItems: 'flex-end' }}>
+      <Field noMargin label="Select an option">
         <Select
           options={generateOptions()}
           value={value}
@@ -393,8 +401,8 @@ export const AutoMenuPlacement: StoryFn = (args) => {
           prefix={getPrefix(args.icon)}
           {...args}
         />
-      </div>
-    </>
+      </Field>
+    </div>
   );
 };
 AutoMenuPlacement.args = {
@@ -405,8 +413,8 @@ export const WidthAuto: StoryFn = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
-    <>
-      <div style={{ width: '100%' }}>
+    <div style={{ width: '100%' }}>
+      <Field noMargin label="Select an option">
         <Select
           options={generateOptions()}
           value={value}
@@ -418,8 +426,8 @@ export const WidthAuto: StoryFn = (args) => {
           {...args}
           width="auto"
         />
-      </div>
-    </>
+      </Field>
+    </div>
   );
 };
 
@@ -428,7 +436,7 @@ export const CustomValueCreation: StoryFn = (args) => {
   const [customOptions, setCustomOptions] = useState<Array<SelectableValue<string>>>([]);
   const options = generateOptions();
   return (
-    <>
+    <Field noMargin label="Select an option">
       <Select
         options={[...options, ...customOptions]}
         value={value}
@@ -446,7 +454,7 @@ export const CustomValueCreation: StoryFn = (args) => {
         prefix={getPrefix(args.icon)}
         {...args}
       />
-    </>
+    </Field>
   );
 };
 CustomValueCreation.args = {
@@ -454,3 +462,18 @@ CustomValueCreation.args = {
 };
 
 export default meta;
+
+function DeprecatedDecorator(Story: React.ElementType) {
+  return (
+    <div>
+      <Alert title="Deprecated!" severity="warning">
+        The Select component is deprecated.
+        <br />
+        Use Combobox instead - it supports most use cases, is performant by default, and can handle hundreds of
+        thousands of options, and has a simpler API.
+      </Alert>
+
+      <Story />
+    </div>
+  );
+}

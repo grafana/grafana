@@ -1,21 +1,19 @@
 import { xor } from 'lodash';
 
 import {
-  DataFrame,
-  isTimeSeriesFrames,
+  type DataFrame,
   LoadingState,
-  PanelData,
-  ThresholdsConfig,
+  type PanelData,
+  type ThresholdsConfig,
   ThresholdsMode,
+  isTimeSeriesFrames,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
-import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
-
-import { RuleFormType } from '../../types/rule-form';
+import { type ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { createDagFromQueries, getOriginOfRefId } from './dag';
 
@@ -168,7 +166,7 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
       const threshold = condition.evaluator.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
-      const refId = condition.query?.params[0] ?? query.model.expression;
+      const refId = condition.query?.params?.[0] ?? query.model.expression;
 
       // if an expression hasn't been linked to a data query yet, it won't have a refId
       if (!refId) {
@@ -205,8 +203,14 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
           }
 
           if (originRefID && hasValidOrigin && !isRangeThreshold && !hasRangeThreshold) {
+            if (threshold?.[0] === undefined) {
+              return;
+            }
             appendSingleThreshold(originRefID, threshold[0]);
           } else if (originRefID && hasValidOrigin && isRangeThreshold) {
+            if (!threshold) {
+              return;
+            }
             appendRangeThreshold(originRefID, threshold, condition.evaluator.type);
             thresholds[originRefID].mode = GraphThresholdsStyleMode.LineAndArea;
           }
@@ -281,6 +285,53 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
       );
     }
 
+    if (type === EvalFunction.IsWithinRangeIncluded) {
+      thresholds[refId].config.steps.push(
+        ...[
+          {
+            value: -Infinity,
+            color: 'transparent',
+          },
+          {
+            value: values[0],
+            color: config.theme2.colors.error.main,
+          },
+          {
+            value: values[1],
+            color: config.theme2.colors.error.main,
+          },
+          {
+            value: values[1],
+            color: 'transparent',
+          },
+        ]
+      );
+    }
+
+    if (type === EvalFunction.IsOutsideRangeIncluded) {
+      thresholds[refId].config.steps.push(
+        ...[
+          {
+            value: -Infinity,
+            color: config.theme2.colors.error.main,
+          },
+          // we have to duplicate this value, or the graph will not display the handle in the right color
+          {
+            value: values[0],
+            color: config.theme2.colors.error.main,
+          },
+          {
+            value: values[0],
+            color: 'transparent',
+          },
+          {
+            value: values[1],
+            color: config.theme2.colors.error.main,
+          },
+        ]
+      );
+    }
+
     // now also sort the threshold values, if we don't then they will look weird in the time series panel
     // TODO this doesn't work for negative values for now, those need to be sorted inverse
     thresholds[refId].config.steps.sort((a, b) => a.value - b.value);
@@ -294,7 +345,10 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
 
 function isRangeCondition(condition: ClassicCondition) {
   return (
-    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange
+    condition.evaluator.type === EvalFunction.IsWithinRange ||
+    condition.evaluator.type === EvalFunction.IsOutsideRange ||
+    condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    condition.evaluator.type === EvalFunction.IsWithinRangeIncluded
   );
 }
 
@@ -310,18 +364,6 @@ export function getStatusMessage(data: PanelData): string | undefined {
   }
 
   return data.error?.message ?? genericErrorMessage;
-}
-
-export function translateRouteParamToRuleType(param = ''): RuleFormType {
-  if (param === 'recording') {
-    return RuleFormType.cloudRecording;
-  }
-
-  if (param === 'grafana-recording') {
-    return RuleFormType.grafanaRecording;
-  }
-
-  return RuleFormType.grafana;
 }
 
 /**

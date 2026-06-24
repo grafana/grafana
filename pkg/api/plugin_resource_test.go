@@ -20,14 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/caching"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugin"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -38,10 +38,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func TestCallResource(t *testing.T) {
+func TestIntegrationCallResource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	staticRootPath, err := filepath.Abs("../../public/")
 	require.NoError(t, err)
 
@@ -49,8 +52,8 @@ func TestCallResource(t *testing.T) {
 	cfg.StaticRootPath = staticRootPath
 	cfg.Azure = &azsettings.AzureSettings{}
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
-		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.Service{}, nil, nil, nil,
+		nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil, nil)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -163,15 +166,15 @@ func TestCallResource(t *testing.T) {
 		}
 	})
 
-	pluginRegistry := fakes.NewFakePluginRegistry()
+	pluginRegistry := pluginfakes.NewFakePluginRegistry()
 	require.NoError(t, pluginRegistry.Add(context.Background(), &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID:      "grafana-testdata-datasource",
 			Backend: true,
 		},
 	}))
-	middlewares := pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), &caching.OSSCachingService{}, featuremgmt.WithFeatures(), prometheus.DefaultRegisterer, pluginRegistry)
-	pc, err := backend.HandlerFromMiddlewares(&fakes.FakePluginClient{
+	middlewares := pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), caching.ProvideCachingServiceClient(&caching.OSSCachingService{}, nil), featuremgmt.WithFeatures(), prometheus.DefaultRegisterer, pluginRegistry)
+	pc, err := backend.HandlerFromMiddlewares(&pluginfakes.FakePluginClient{
 		CallResourceHandlerFunc: backend.CallResourceHandlerFunc(func(ctx context.Context,
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
@@ -210,4 +213,37 @@ func TestCallResource(t *testing.T) {
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 500, resp.StatusCode)
 	})
+
+	t.Run("Test oversized request body returns 413", func(t *testing.T) {
+		// Send a body that exceeds the limit by 1 byte.
+		oversizedBody := io.LimitReader(zeroReader{}, maxResourceBodySize+1)
+		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test", oversizedBody)
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
+				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+			}),
+		}})
+		resp, err := srv.SendJSON(req)
+		require.NoError(t, err)
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var responseBody struct {
+			Message string `json:"message"`
+		}
+		err = json.Unmarshal(bodyBytes, &responseBody)
+		require.NoError(t, err)
+		require.Equal(t, "Request body too large", responseBody.Message)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, 413, resp.StatusCode)
+	})
+}
+
+// zeroReader is an io.Reader that returns an endless stream of zero bytes.
+type zeroReader struct{}
+
+func (zeroReader) Read(p []byte) (int, error) {
+	clear(p)
+	return len(p), nil
 }

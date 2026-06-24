@@ -3,20 +3,20 @@ import { distinct, Observable, merge } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
   hasSupplementaryQuerySupport,
   isTruthy,
   LoadingState,
-  LogsVolumeCustomMetaData,
+  type LogsVolumeCustomMetaData,
   LogsVolumeType,
+  store,
   SupplementaryQueryType,
 } from '@grafana/data';
-import store from 'app/core/store';
-import { ExplorePanelData, SupplementaryQueries } from 'app/types';
+import { type ExplorePanelData, type SupplementaryQueries } from 'app/types/explore';
 
 import { makeDataFramesForLogs, queryLogsSample, queryLogsVolume } from '../../logs/logsModel';
 
@@ -129,7 +129,7 @@ export const getSupplementaryQueryProvider = (
     dsRequest.requestId = `${dsRequest.requestId || ''}_${i}`;
     dsRequest.targets = targets;
 
-    if (hasSupplementaryQuerySupport(datasource, type)) {
+    if (hasSupplementaryQuerySupport(datasource, type, dsRequest)) {
       if (datasource.getDataProvider) {
         return datasource.getDataProvider(type, dsRequest);
       } else if (datasource.getSupplementaryRequest) {

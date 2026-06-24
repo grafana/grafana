@@ -1,13 +1,12 @@
-import { getFieldMatcher } from '../transformations/matchers';
+import { type Labels } from '../types/data';
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
-  Field,
+  type Field,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '../types/dataFrame';
-import { FieldConfigSource } from '../types/fieldOverrides';
-import { formatLabels } from '../utils/labels';
+import { findUniqueLabels, formatLabels } from '../utils/labels';
 
 /**
  * Get an appropriate display title
@@ -55,58 +54,19 @@ export function cacheFieldDisplayNames(frames: DataFrame[]) {
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       getFieldDisplayName(field, frame, frames);
+      if (field.type === FieldType.nestedFrames) {
+        field.values.forEach(cacheFieldDisplayNames);
+      }
     });
   });
 }
 
-/**
- *
- * moves each field's config.custom.hideFrom to field.state.hideFrom
- * and mutates orgiginal field.config.custom.hideFrom to one with explicit overrides only, (without the ad-hoc stateful __system override from legend toggle)
- */
-export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldConfigSource) {
-  frames.forEach((frame) => {
-    frame.fields.forEach((field) => {
-      const hideFrom = {
-        legend: false,
-        tooltip: false,
-        viz: false,
-        ...fieldConfig.defaults.custom?.hideFrom,
-      };
-
-      // with ad hoc __system override applied
-      const hideFromState = field.config.custom?.hideFrom;
-
-      fieldConfig.overrides.forEach((o) => {
-        if ('__systemRef' in o) {
-          return;
-        }
-
-        const m = getFieldMatcher(o.matcher);
-
-        if (m(field, frame, frames)) {
-          for (const p of o.properties) {
-            if (p.id === 'custom.hideFrom') {
-              Object.assign(hideFrom, p.value);
-            }
-          }
-        }
-      });
-
-      field.state = {
-        ...field.state,
-        hideFrom: {
-          ...hideFromState,
-        },
-      };
-
-      // original with perm overrides
-      field.config.custom.hideFrom = hideFrom;
-    });
-  });
-}
-
-export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
+export function getFieldDisplayName(
+  field: Field,
+  frame?: DataFrame,
+  allFrames?: DataFrame[],
+  commonLabels?: Labels
+): string {
   const existingTitle = field.state?.displayName;
   const multipleFrames = Boolean(allFrames && allFrames.length > 1);
 
@@ -114,7 +74,7 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
     return existingTitle;
   }
 
-  const displayName = calculateFieldDisplayName(field, frame, allFrames);
+  const displayName = calculateFieldDisplayName(field, frame, allFrames, commonLabels);
   field.state = field.state || {};
   field.state.displayName = displayName;
   field.state.multipleFrames = multipleFrames;
@@ -125,7 +85,12 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
 /**
  * Get an appropriate display name. If the 'displayName' field config is set, use that.
  */
-export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
+function calculateFieldDisplayName(
+  field: Field,
+  frame?: DataFrame,
+  allFrames?: DataFrame[],
+  commonLabels?: Labels
+): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
   const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
@@ -174,7 +139,7 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
     let singleLabelName = getSingleLabelName(allFrames ?? [frame]);
 
     if (!singleLabelName) {
-      let allLabels = formatLabels(field.labels);
+      let allLabels = formatLabels(commonLabels ? findUniqueLabels(field.labels, commonLabels) : field.labels);
       if (allLabels) {
         parts.push(allLabels);
         labelsAdded = true;

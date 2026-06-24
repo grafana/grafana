@@ -1,9 +1,14 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { GrafanaTheme2, LinkTarget } from '@grafana/data';
+import { type GrafanaTheme2, type LinkTarget } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+<<<<<<< HEAD
 import { Icon, IconName, useStyles2 } from '@grafana/ui';
+=======
+import { Icon, type IconName, useStyles2 } from '@grafana/ui';
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 
 export interface FooterLink {
   target: LinkTarget;
@@ -17,7 +22,7 @@ export let getFooterLinks = (): FooterLink[] => {
   return [];
 };
 
-export function getVersionMeta(version: string) {
+function getVersionMeta(version: string) {
   const isBeta = version.includes('-beta');
 
   return {
@@ -26,7 +31,7 @@ export function getVersionMeta(version: string) {
   };
 }
 
-export function getVersionLinks(hideEdition?: boolean): FooterLink[] {
+function getVersionLinks(hideEdition?: boolean): FooterLink[] {
   const { buildInfo, licenseInfo } = config;
   const links: FooterLink[] = [];
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';

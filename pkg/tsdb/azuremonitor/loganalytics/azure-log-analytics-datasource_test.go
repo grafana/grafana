@@ -1,7 +1,10 @@
 package loganalytics
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,21 +12,20 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
-
-func makeQueryPointer(q AzureLogAnalyticsQuery) *AzureLogAnalyticsQuery {
-	return &q
-}
 
 func TestBuildLogAnalyticsQuery(t *testing.T) {
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
@@ -111,9 +113,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -129,7 +131,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				Query:            "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
 				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
 				TimeRange:        timeRange,
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: false,
 				DashboardTime:    false,
 			}),
@@ -148,9 +150,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 						}
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/workspaces/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
@@ -164,7 +166,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				Query:            "Perf",
 				Resources:        []string{},
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: false,
 				DashboardTime:    false,
 			}),
@@ -183,9 +185,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 						}
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -199,7 +201,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				Query:            "Perf",
 				Resources:        []string{},
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: false,
 				DashboardTime:    false,
 			}),
@@ -219,9 +221,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 						}
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -236,7 +238,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				Query:            "Perf",
 				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: false,
 				DashboardTime:    false,
 			}),
@@ -257,9 +259,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -275,7 +277,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				Query:            "Perf",
 				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace", "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace2"},
 				TimeRange:        timeRange,
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: false,
 				DashboardTime:    false,
 			}),
@@ -297,9 +299,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
@@ -316,7 +318,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				Query:            "Perf",
 				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
 				TimeRange:        timeRange,
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: false,
 				DashboardTime:    true,
 				TimeColumn:       "TimeGenerated",
@@ -341,9 +343,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/TestDataWorkspace/search",
@@ -361,7 +363,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				Query:            "Perf",
 				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/TestDataWorkspace"},
 				TimeRange:        timeRange,
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: false,
 				DashboardTime:    true,
 				BasicLogs:        true,
@@ -387,7 +389,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
 			azureLogAnalyticsQuery: nil,
 			Err:                    require.Error,
@@ -410,7 +412,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
 			azureLogAnalyticsQuery: nil,
 			Err:                    require.Error,
@@ -433,7 +435,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
 			azureLogAnalyticsQuery: nil,
 			Err:                    require.Error,
@@ -456,7 +458,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
 			azureLogAnalyticsQuery: nil,
 			Err:                    require.Error,
@@ -477,9 +479,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/apps/AppInsightsTestDataWorkspace/query",
@@ -495,7 +497,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				Query:            "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
 				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Insights/components/AppInsightsTestDataWorkspace"},
 				TimeRange:        timeRange,
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: true,
 				DashboardTime:    false,
 			}),
@@ -516,9 +518,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 					}`, dataquery.ResultFormatTimeSeries)),
 				RefID:     "A",
 				TimeRange: timeRange,
-				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+				QueryType: string(dataquery.AzureQueryTypeLogAnalytics),
 			},
-			azureLogAnalyticsQuery: makeQueryPointer(AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: new(AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTimeSeries,
 				URL:          "v1/apps/AppInsightsTestDataWorkspace/query",
@@ -534,7 +536,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 				Query:            "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
 				Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/microsoft.insights/components/AppInsightsTestDataWorkspace"},
 				TimeRange:        timeRange,
-				QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+				QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 				AppInsightsQuery: true,
 				DashboardTime:    false,
 			}),
@@ -595,7 +597,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"},
 			Query:            "Perf",
-			QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+			QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 			AppInsightsQuery: false,
 			DashboardTime:    false,
 		})
@@ -615,7 +617,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"},
 			Query:     "Perf",
-			QueryType: dataquery.AzureQueryTypeAzureLogAnalytics,
+			QueryType: dataquery.AzureQueryTypeLogAnalytics,
 			TimeRange: backend.TimeRange{
 				From: from,
 				To:   to,
@@ -662,7 +664,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/ws1", "microsoft.operationalInsights/workspaces/ws2"}, // Note different casings and partial paths
 			Query:            "Perf",
-			QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+			QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 			AppInsightsQuery: false,
 			DashboardTime:    false,
 		})
@@ -680,7 +682,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r2"},
 			Query:            "Perf",
-			QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+			QueryType:        dataquery.AzureQueryTypeLogAnalytics,
 			AppInsightsQuery: false,
 			DashboardTime:    false,
 		})
@@ -691,6 +693,37 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		if !cmp.Equal(string(body), expectedBody) {
 			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
 		}
+	})
+
+	t.Run("correctly passes multiple application insights resources in a logs query", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
+			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r2"},
+			Query:            "Perf",
+			QueryType:        dataquery.AzureQueryTypeLogAnalytics,
+			AppInsightsQuery: true,
+			DashboardTime:    false,
+		})
+		require.NoError(t, err)
+		expectedBody := `{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.insights/components/r2"],"query":"Perf"}`
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
+
+	t.Run("returns error for AppInsights traces query with empty resources", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		_, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
+			Resources:        []string{}, // Empty resources
+			Query:            "traces",
+			QueryType:        dataquery.AzureQueryTypeAzureTraces,
+			AppInsightsQuery: true,
+			DashboardTime:    false,
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "no resources specified for Azure traces Application Insights query")
 	})
 }
 
@@ -708,13 +741,26 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	query := &AzureLogAnalyticsQuery{
 		TimeRange: backend.TimeRange{},
 	}
-	_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL)
-	if err == nil {
-		t.Fatal("expecting an error")
-	}
-	if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
-		t.Error("expecting the error to inform of bad credentials")
-	}
+	t.Run("errors with azureLogAnalyticsSameAs set to false (boolean)", func(t *testing.T) {
+		_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL)
+		if err == nil {
+			t.Fatal("expecting an error")
+		}
+		if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
+			t.Error("expecting the error to inform of bad credentials")
+		}
+	})
+
+	t.Run("errors with azureLogAnalyticsSameAs set to false (boolean)", func(t *testing.T) {
+		dsInfo.JSONData["azureLogAnalyticsSameAs"] = "false"
+		_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL)
+		if err == nil {
+			t.Fatal("expecting an error")
+		}
+		if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
+			t.Error("expecting the error to inform of bad credentials")
+		}
+	})
 }
 
 func Test_exemplarsFeatureToggle(t *testing.T) {
@@ -757,7 +803,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 	t.Run("does not error if feature toggle enabled", func(t *testing.T) {
 		ctx := context.Background()
-		ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
+		ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "azureMonitorPrometheusExemplars"}))
 		query := backend.DataQuery{
 			JSON: []byte(`{
 					"queryType": "traceql",
@@ -767,7 +813,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 					"query":     "traceid"
 				}`),
 			RefID:     "A",
-			QueryType: string(dataquery.AzureQueryTypeTraceql),
+			QueryType: string(dataquery.AzureQueryTypeTraceExemplar),
 		}
 
 		_, err := ds.buildQuery(ctx, query, dsInfo, false)
@@ -777,7 +823,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 
 	t.Run("errors if feature toggle disabled", func(t *testing.T) {
 		ctx := context.Background()
-		ctx = backend.WithGrafanaConfig(ctx, backend.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
+		ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": ""}))
 		query := backend.DataQuery{
 			JSON: []byte(`{
 					"queryType": "traceql",
@@ -787,11 +833,134 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 					"query":     "traceid"
 				}`),
 			RefID:     "A",
-			QueryType: string(dataquery.AzureQueryTypeTraceql),
+			QueryType: string(dataquery.AzureQueryTypeTraceExemplar),
 		}
 
 		_, err := ds.buildQuery(ctx, query, dsInfo, false)
 
 		require.Error(t, err, "query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled")
 	})
+}
+
+func TestAddTraceDataLinksToFields_EmptyResources(t *testing.T) {
+	dsInfo := types.DatasourceInfo{
+		Services: map[string]types.DatasourceService{
+			"Azure Monitor": {},
+		},
+		JSONData: map[string]any{
+			"azureLogAnalyticsSameAs": false,
+		},
+	}
+
+	tests := []struct {
+		name                string
+		queryJSON           string
+		expectedErrorString string
+	}{
+		{
+			name: "empty resources array should return error",
+			queryJSON: `{
+				"queryType": "Azure Traces",
+				"azureTraces": {
+					"resources": [],
+					"resultFormat": "table",
+					"traceTypes": ["trace"]
+				}
+			}`,
+			expectedErrorString: "no resources specified for Azure traces data link",
+		},
+		{
+			name: "missing resources field should return error",
+			queryJSON: `{
+				"queryType": "Azure Traces",
+				"azureTraces": {
+					"resultFormat": "table",
+					"traceTypes": ["trace"]
+				}
+			}`,
+			expectedErrorString: "no resources specified for Azure traces data link",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			query := &AzureLogAnalyticsQuery{
+				JSON:         []byte(tt.queryJSON),
+				QueryType:    dataquery.AzureQueryTypeAzureTraces,
+				ResultFormat: dataquery.ResultFormatTable,
+			}
+
+			// Create a mock data frame
+			frame := data.NewFrame("test")
+
+			err := addTraceDataLinksToFields(query, "https://portal.azure.com", frame, dsInfo)
+
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedErrorString)
+		})
+	}
+}
+
+func decodeEncodedQuery(t *testing.T, encoded string) string {
+	t.Helper()
+	gzipped, err := base64.StdEncoding.DecodeString(encoded)
+	require.NoError(t, err)
+	r, err := gzip.NewReader(bytes.NewReader(gzipped))
+	require.NoError(t, err)
+	defer func() { require.NoError(t, r.Close()) }()
+	decoded, err := io.ReadAll(r)
+	require.NoError(t, err)
+	return string(decoded)
+}
+
+func TestEncodeQuery(t *testing.T) {
+	cases := []struct {
+		name  string
+		query string
+	}{
+		{name: "empty", query: ""},
+		{name: "simple", query: "Heartbeat | take 10"},
+		{name: "multiline", query: "Heartbeat\n| where TimeGenerated > ago(1d)\n| summarize count() by Computer"},
+		{name: "large", query: strings.Repeat("Heartbeat | where TimeGenerated > ago(1d) | summarize count() by Computer ", 50)},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded, err := encodeQuery(tc.query)
+			require.NoError(t, err)
+			require.Equal(t, tc.query, decodeEncodedQuery(t, encoded))
+		})
+	}
+}
+
+func TestEncodeQueryConcurrent(t *testing.T) {
+	// Exercises the gzip.Writer sync.Pool under contention: each goroutine
+	// must produce output that decodes back to its own input.
+	const goroutines = 64
+	const iterations = 32
+
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		go func(g int) {
+			defer wg.Done()
+			for i := 0; i < iterations; i++ {
+				query := fmt.Sprintf("Heartbeat | where Computer == 'c-%d-%d' | take 10", g, i)
+				encoded, err := encodeQuery(query)
+				require.NoError(t, err)
+				require.Equal(t, query, decodeEncodedQuery(t, encoded))
+			}
+		}(g)
+	}
+	wg.Wait()
+}
+
+func BenchmarkEncodeQuery(b *testing.B) {
+	query := strings.Repeat("Heartbeat | where TimeGenerated > ago(1d) | summarize count() by Computer ", 20)
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		if _, err := encodeQuery(query); err != nil {
+			b.Fatal(err)
+		}
+	}
 }

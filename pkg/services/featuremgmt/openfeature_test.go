@@ -1,0 +1,166 @@
+package featuremgmt
+
+import (
+	"context"
+	"errors"
+	"net/url"
+	"testing"
+
+	ofrep "github.com/open-feature/go-sdk-contrib/providers/ofrep"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	authlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/features"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+func TestCreateProvider(t *testing.T) {
+	u, err := url.Parse("http://localhost:10333")
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name                  string
+		cfg                   setting.OpenFeatureSettings
+		expectedProvider      setting.OpenFeatureProviderType
+		expectExchangeRequest *authlib.TokenExchangeRequest
+		failSigning           bool
+	}{
+		{
+			name:             "static provider",
+			expectedProvider: setting.StaticProviderType,
+		},
+		{
+			name: "features-service provider",
+			cfg: setting.OpenFeatureSettings{
+				ProviderType: setting.FeaturesServiceProviderType,
+				URL:          u,
+				TargetingKey: "grafana",
+			},
+			expectExchangeRequest: &authlib.TokenExchangeRequest{
+				Namespace: "*",
+				Audiences: []string{"features.grafana.app"},
+			},
+			expectedProvider: setting.FeaturesServiceProviderType,
+		},
+		{
+			name: "features-service provider with failing token exchange",
+			cfg: setting.OpenFeatureSettings{
+				ProviderType: setting.FeaturesServiceProviderType,
+				URL:          u,
+				TargetingKey: "grafana",
+			},
+			expectExchangeRequest: &authlib.TokenExchangeRequest{
+				Namespace: "*",
+				Audiences: []string{"features.grafana.app"},
+			},
+			expectedProvider: setting.FeaturesServiceProviderType,
+			failSigning:      true,
+		},
+		{
+			name: "ofrep provider",
+			cfg: setting.OpenFeatureSettings{
+				ProviderType: setting.OFREPProviderType,
+				URL:          u,
+				TargetingKey: "grafana",
+			},
+			expectedProvider: setting.OFREPProviderType,
+		},
+		{
+			name: "invalid provider",
+			cfg: setting.OpenFeatureSettings{
+				ProviderType: "some_provider",
+			},
+			expectedProvider: setting.StaticProviderType,
+		},
+	}
+
+	require.NoError(t, err)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.OpenFeature = tc.cfg
+
+			var tokenExchangeClient *fakeTokenExchangeClient
+
+			if tc.expectExchangeRequest != nil {
+				tokenExchangeClient = &fakeTokenExchangeClient{
+					Mock: &mock.Mock{
+						ExpectedCalls: []*mock.Call{
+							{
+								Method:    "Exchange",
+								Arguments: mock.Arguments{mock.Anything, *tc.expectExchangeRequest},
+							},
+						},
+					},
+				}
+
+				if tc.failSigning {
+					tokenExchangeClient.expectedErr = errors.New("failed signing access token")
+				}
+			}
+
+			authConfig := features.TokenExchangeConfig{
+				TokenExchanger: tokenExchangeClient,
+				Namespace:      "*", // Use wildcard namespace for tests
+				Audiences:      []string{features.FeaturesProviderAudience},
+			}
+
+			httpClient, err := features.CreateAuthenticatedHTTPClient(
+				authConfig,
+				features.HTTPClientOptions{InsecureSkipVerify: true},
+			)
+			require.NoError(t, err, "failed to create features-service http client")
+
+			// Create provider based on type
+			var provider openfeature.FeatureProvider
+			switch tc.cfg.ProviderType {
+			case setting.FeaturesServiceProviderType, setting.OFREPProviderType:
+				provider, err = features.NewOFREPProvider(tc.cfg.URL.String(), httpClient)
+			default:
+				provider, err = newStaticProviderFromCfg(cfg)
+			}
+			require.NoError(t, err)
+
+			err = openfeature.SetProviderAndWait(provider)
+			require.NoError(t, err, "failed to set provider")
+
+			switch tc.expectedProvider {
+			case setting.FeaturesServiceProviderType:
+				_, ok := provider.(*ofrep.Provider)
+				assert.True(t, ok, "expected provider to be of type ofrep.Provider")
+
+				testOFREPProvider(t, tc.failSigning)
+			case setting.OFREPProviderType:
+				_, ok := provider.(*ofrep.Provider)
+				assert.True(t, ok, "expected provider to be of type ofrep.Provider")
+			default:
+				_, ok := provider.(memprovider.InMemoryProvider)
+				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
+			}
+		})
+	}
+}
+
+func testOFREPProvider(t *testing.T, failSigning bool) {
+	// this tests with a fake identity with * namespace access, but in any case, it proves what the requester
+	// is scoped to is what is used to sign the token with
+	ctx, _ := identity.WithServiceIdentity(context.Background(), 1)
+
+	// Test that the flag evaluation can be attempted (though it will fail due to non-existent service)
+	// The important thing is that the authentication middleware is properly integrated
+	_, err := openfeature.NewDefaultClient().BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
+
+	// Error related to the token exchange should be returned if signing fails
+	// otherwise, it should return a connection refused error since the features-service URL is not set
+	if failSigning {
+		assert.ErrorContains(t, err, "failed to exchange token: error signing token", "should return an error when signing fails")
+	} else {
+		assert.ErrorContains(t, err, "connect: connection refused", "should return an error when features-service url is not set")
+	}
+}

@@ -1,30 +1,21 @@
-import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
-  DataFrame,
-  EventBus,
-  AbsoluteTimeRange,
-  TimeZone,
-  SplitOpen,
-  LoadingState,
-  ThresholdsConfig,
-  GrafanaTheme2,
-  TimeRange,
+  type DataFrame,
+  type EventBus,
+  type AbsoluteTimeRange,
+  type TimeZone,
+  type SplitOpen,
+  type LoadingState,
+  type ThresholdsConfig,
+  type TimeRange,
 } from '@grafana/data';
-import {
-  GraphThresholdsStyleConfig,
-  PanelChrome,
-  PanelChromeProps,
-  Icon,
-  Button,
-  useStyles2,
-  Tooltip,
-} from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
-import { ExploreGraphStyle } from 'app/types';
+import { Trans, t } from '@grafana/i18n';
+import { type GraphThresholdsStyleConfig, PanelChrome, type PanelChromeProps } from '@grafana/ui';
+import { type ExploreGraphStyle } from 'app/types/explore';
 
+import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';
 import { storeGraphStyle } from '../state/utils';
 
 import { ExploreGraph } from './ExploreGraph';
@@ -46,6 +37,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   loadingState: LoadingState;
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  queriesChangedIndexAtRun?: number;
 }
 
 export const GraphContainer = ({
@@ -62,10 +54,10 @@ export const GraphContainer = ({
   thresholdsStyle,
   loadingState,
   statusMessage,
+  queriesChangedIndexAtRun,
 }: Props) => {
   const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
-  const styles = useStyles2(getStyles);
 
   const onGraphStyleChange = useCallback((graphStyle: ExploreGraphStyle) => {
     storeGraphStyle(graphStyle);
@@ -81,24 +73,20 @@ export const GraphContainer = ({
       title={t('graph.container.title', 'Graph')}
       titleItems={[
         !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
-          <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
-            <span className={styles.warningMessage}>
-              <Icon name="exclamation-triangle" aria-hidden="true" />
+          <LimitedDataDisclaimer
+            key="disclaimer"
+            toggleShowAllSeries={toggleShowAllSeries}
+            info={
               <Trans i18nKey={'graph.container.show-only-series'}>
                 Showing only {{ MAX_NUMBER_OF_TIME_SERIES }} series
               </Trans>
-            </span>
-            <Tooltip
-              content={t(
-                'graph.container.content',
-                'Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.'
-              )}
-            >
-              <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
-                <Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>
-              </Button>
-            </Tooltip>
-          </div>
+            }
+            buttonLabel={<Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>}
+            tooltip={t(
+              'graph.container.content',
+              'Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.'
+            )}
+          />
         ),
       ].filter(Boolean)}
       width={width}
@@ -122,24 +110,9 @@ export const GraphContainer = ({
           thresholdsConfig={thresholdsConfig}
           thresholdsStyle={thresholdsStyle}
           eventBus={eventBus}
+          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
         />
       )}
     </PanelChrome>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  timeSeriesDisclaimer: css({
-    label: 'time-series-disclaimer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  warningMessage: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-    color: theme.colors.warning.main,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-});

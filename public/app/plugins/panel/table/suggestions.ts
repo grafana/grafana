@@ -1,37 +1,35 @@
-import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { TableFieldOptions } from '@grafana/schema';
-import { SuggestionName } from 'app/types/suggestions';
+import {
+  type PanelDataSummary,
+  VisualizationSuggestionScore,
+  type VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 
-import { Options } from './panelcfg.gen';
+import { type Options, type FieldConfig } from './panelcfg.gen';
 
-export class TableSuggestionsSupplier {
-  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const list = builder.getListAppender<Options, TableFieldOptions>({
-      name: SuggestionName.Table,
-      pluginId: 'table',
-      options: {},
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-        overrides: [],
-      },
-      cardOptions: {
-        previewModifier: (s) => {
-          s.fieldConfig!.defaults.custom!.minWidth = 50;
-        },
-      },
-    });
-
-    // If there are not data suggest table anyway but use icon instead of real preview
-    if (builder.dataSummary.fieldCount === 0) {
-      list.append({
-        cardOptions: {
-          imgSrc: 'public/app/plugins/panel/table/img/icn-table-panel.svg',
-        },
-      });
-    } else {
-      list.append({});
-    }
+function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSuggestionScore {
+  if (dataSummary.hasPreferredVisualisationType('table')) {
+    return VisualizationSuggestionScore.Best;
   }
+
+  // table is best suited to showing many fields with many rows.
+  if (dataSummary.fieldCountMax > 5 && dataSummary.rowCountMax > 50) {
+    return VisualizationSuggestionScore.Good;
+  }
+
+  return VisualizationSuggestionScore.OK;
 }
+
+export const tableSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, FieldConfig> = (dataSummary) => [
+  {
+    score: getTableSuggestionScore(dataSummary),
+    cardOptions: {
+      previewModifier: (s) => {
+        s.options!.showHeader = false;
+        s.options!.disableKeyboardEvents = true;
+        if (s.fieldConfig && s.fieldConfig.defaults.custom) {
+          s.fieldConfig.defaults.custom.minWidth = 50;
+        }
+      },
+    },
+  },
+];

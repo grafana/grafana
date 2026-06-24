@@ -1,14 +1,15 @@
 import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
-import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import {
-  DashboardChangeInfo,
+  type DashboardChangeInfo,
   NameAlreadyExistsError,
   SaveButton,
   isNameExistsError,
@@ -24,15 +25,20 @@ export interface Props {
 }
 
 export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
-  const { changedSaveModel, hasChanges } = changeInfo;
+  const { hasChanges, hasMigratedToV2, changedSaveModel } = changeInfo;
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
     folderUid: dashboard.state.meta.folderUid,
+    // we need to set the uid here in order to save the dashboard
+    // in schema v2 we don't have the uid in the spec
+    k8s: {
+      ...dashboard.serializer.getK8SMetadata(),
+    },
   });
 
   const onSave = async (overwrite: boolean) => {
-    const result = await onSaveDashboard(dashboard, changedSaveModel, { ...options, overwrite });
+    const result = await onSaveDashboard(dashboard, { ...options, rawDashboardJSON: changedSaveModel, overwrite });
     if (result.status === 'success') {
       dashboard.closeModal();
       drawer.state.onSaveSuccess?.();
@@ -41,7 +47,11 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
 
   const cancelButton = (
     <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
+<<<<<<< HEAD
       Отмена
+=======
+      <Trans i18nKey="dashboard-scene.save-dashboard-form.cancel-button.cancel">Cancel</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
     </Button>
   );
 
@@ -49,11 +59,45 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
 
+  const isMessageTooLongError = (message?: string) => {
+    return message && message.length > 500;
+  };
+
   function renderFooter(error?: Error) {
+    if (isMessageTooLongError(options.message)) {
+      const messageLength = options.message?.length ?? 0;
+
+      return (
+        <Alert title={t('save-dashboards.message-length.title', 'Message too long')} severity="error">
+          <p>
+            <Trans i18nKey="save-dashboards.message-length.info">
+              The message is {{ messageLength }} characters, which exceeds the maximum length of 500 characters. Please
+              shorten it before saving.
+            </Trans>
+          </p>
+        </Alert>
+      );
+    }
+
     if (isVersionMismatchError(error)) {
       return (
+<<<<<<< HEAD
         <Alert title="Кто-то другой обновил этот дашборд" severity="error">
           <p>Вы все еще хотите сохранить этот дашборд?</p>
+=======
+        <Alert
+          title={t(
+            'dashboard-scene.save-dashboard-form.render-footer.title-someone-else-has-updated-this-dashboard',
+            'Someone else has updated this dashboard'
+          )}
+          severity="error"
+        >
+          <p>
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.would-still-dashboard">
+              Would you still like to save this dashboard?
+            </Trans>
+          </p>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
           <Box paddingTop={2}>
             <Stack alignItems="center">
               {cancelButton}
@@ -65,14 +109,24 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     }
 
     if (isNameExistsError(error)) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+      return <NameAlreadyExistsError />;
     }
 
     if (isPluginDashboardError(error)) {
       return (
+<<<<<<< HEAD
         <Alert title="Панель управления плагинами" severity="error">
+=======
+        <Alert
+          title={t('dashboard-scene.save-dashboard-form.render-footer.title-plugin-dashboard', 'Plugin dashboard')}
+          severity="error"
+        >
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
           <p>
-            Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom version.
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.body-plugin-dashboard">
+              Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
+              version.
+            </Trans>
           </p>
           <Box paddingTop={2}>
             <Stack alignItems="center">
@@ -87,14 +141,34 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     return (
       <>
         {error && (
+<<<<<<< HEAD
           <Alert title="Не удалось сохранить панель мониторинга" severity="error">
+=======
+          <Alert
+            title={t(
+              'dashboard-scene.save-dashboard-form.render-footer.title-failed-to-save-dashboard',
+              'Failed to save dashboard'
+            )}
+            severity="error"
+          >
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             <p>{error.message}</p>
           </Alert>
         )}
         <Stack alignItems="center">
           {cancelButton}
           {saveButton(false)}
+<<<<<<< HEAD
           {!hasChanges && <div>Нет изменений для сохранения</div>}
+=======
+          {!hasChanges && (
+            <div>
+              <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.no-changes-to-save">
+                No changes to save
+              </Trans>
+            </div>
+          )}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         </Stack>
       </>
     );
@@ -103,9 +177,31 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   return (
     <Stack gap={2} direction="column">
       <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
+<<<<<<< HEAD
       <Field label="Сообщение">
+=======
+      {hasMigratedToV2 && (
+        <Alert
+          title={t(
+            'dashboard-scene.save-dashboard-form.title-dashboard-drastically-changed',
+            'Dashboard irreversibly changed'
+          )}
+          severity="warning"
+        >
+          <p>
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.body-dashboard-drastically-changed">
+              The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be
+              reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a
+              copy instead. If you’re seeing this message in a production environment, contact Support to have the
+              feature disabled.
+            </Trans>
+          </p>
+        </Alert>
+      )}
+      <Field label={t('dashboard-scene.save-dashboard-form.label-message', 'Message')}>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         <TextArea
-          aria-label="message"
+          aria-label={t('dashboard-scene.save-dashboard-form.aria-label-message', 'message')}
           value={options.message ?? ''}
           onChange={(e) => {
             setOptions({
@@ -113,7 +209,14 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
               message: e.currentTarget.value,
             });
           }}
+<<<<<<< HEAD
           placeholder="Добавьте примечание с описанием ваших изменений."
+=======
+          placeholder={t(
+            'dashboard-scene.save-dashboard-form.placeholder-describe-changes-optional',
+            'Add a note to describe your changes (optional).'
+          )}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
           autoFocus
           rows={5}
         />
@@ -129,7 +232,12 @@ export interface SaveDashboardFormCommonOptionsProps {
 }
 
 export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashboardFormCommonOptionsProps) {
-  const { saveVariables = false, saveTimeRange = false, saveRefresh = false } = drawer.useState();
+  const {
+    saveVariables = false,
+    saveTimeRange = false,
+    saveRefresh = false,
+    showVariablesWarning = false,
+  } = drawer.useState();
   const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange } = changeInfo;
 
   return (
@@ -139,22 +247,45 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
           id="save-timerange"
           checked={saveTimeRange}
           onChange={drawer.onToggleSaveTimeRange}
+<<<<<<< HEAD
           label="Обновить диапазон времени по умолчанию"
           description={'Сделает текущий временной диапазон новым значением по умолчанию'}
+=======
+          label={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-timerange-label-update-default-time-range',
+            'Update default time range'
+          )}
+          description={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-timerange-description-current-range-default',
+            'Will make current time range the new default'
+          )}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
           data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
         />
       )}
       {hasRefreshChange && (
         <Checkbox
           id="save-refresh"
+<<<<<<< HEAD
           label="Обновить значение обновления по умолчанию"
           description="Сделает текущее обновление новым значением по умолчанию"
+=======
+          label={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-refresh-label-update-default-refresh-value',
+            'Update default refresh value'
+          )}
+          description={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-refresh-description-current-refresh-default',
+            'Will make the current refresh the new default'
+          )}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
           checked={saveRefresh}
           onChange={drawer.onToggleSaveRefresh}
           data-testid={selectors.pages.SaveDashboardModal.saveRefresh}
         />
       )}
       {hasVariableValueChanges && (
+<<<<<<< HEAD
         <Checkbox
           id="save-variables"
           label="Обновить значения переменных по умолчанию"
@@ -163,6 +294,40 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
           onChange={drawer.onToggleSaveVariables}
           data-testid={selectors.pages.SaveDashboardModal.saveVariables}
         />
+=======
+        <>
+          <Checkbox
+            id="save-variables"
+            label={t(
+              'dashboard-scene.save-dashboard-form-common-options.save-variables-label-update-default-variable-values',
+              'Update default variable values'
+            )}
+            description={t(
+              'dashboard-scene.save-dashboard-form-common-options.save-variables-description-current-values-default',
+              'Will make the current values the new default'
+            )}
+            checked={saveVariables}
+            onChange={drawer.onToggleSaveVariables}
+            data-testid={selectors.pages.SaveDashboardModal.saveVariables}
+          />
+          {saveVariables && showVariablesWarning && (
+            <Alert
+              data-testid={selectors.pages.SaveDashboardModal.variablesWarningAlert}
+              title={t(
+                'dashboard-scene.save-dashboard-form-common-options.show-variables-warning-alert-title',
+                'Variable queries failed'
+              )}
+              severity="warning"
+            >
+              <Trans i18nKey="dashboard-scene.save-dashboard-form-common-options.show-variables-warning-alert-body">
+                Some variables failed to load. If you keep “Update default variable values” checked, the current
+                (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid
+                storing those (failed) values.
+              </Trans>
+            </Alert>
+          )}
+        </>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       )}
     </Stack>
   );

@@ -5,23 +5,46 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
+	"time"
 
-	"github.com/grafana/authlib/claims"
+	"github.com/open-feature/go-sdk/openfeature"
+
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+type URLPrefs struct {
+	Language string
+	Theme    string
+}
+
+// URL prefs take precedence over any saved user preferences
+func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
+	language := c.Query("lang")
+	theme := c.Query("theme")
+
+	return URLPrefs{
+		Language: language,
+		Theme:    theme,
+	}
+}
 
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
 	c, span := hs.injectSpan(c, "api.setIndexViewData")
@@ -32,34 +55,40 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, _ := identity.UserIdentifier(c.GetID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{
+		UserID: userID,
+		OrgID:  c.GetOrgID(),
+		Teams:  c.TeamIDs, // nolint:staticcheck
+	}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagIndividualCookiePreferences) {
-		if !prefs.Cookies("analytics") {
-			settings.GoogleAnalytics4Id = ""
-			settings.GoogleAnalyticsId = ""
-		}
-	}
-
 	// Locale is used for some number and date/time formatting, whereas language is used just for
 	// translating words in the interface
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
-	locale := "ru-RU"
-	language := "ru-RU" // frontend will set the default language
-
-	if prefs.JSONData.Language != "" {
-		language = prefs.JSONData.Language
-	}
+	acceptLangHeaderFirstValue := ""
 
 	if len(acceptLangHeader) > 0 {
 		parts := strings.Split(acceptLangHeader, ",")
-		locale = parts[0]
+		acceptLangHeaderFirstValue = parts[0]
+	}
+
+	locale := "en-US" // default to en formatting, but use the accept-lang header or user's preference
+	if acceptLangHeaderFirstValue != "" {
+		locale = acceptLangHeaderFirstValue
+	}
+
+	language := "" // frontend will set the default language
+	urlPrefs := getURLPrefs(c)
+
+	if urlPrefs.Language != "" {
+		language = urlPrefs.Language
+	} else if prefs.JSONData.Language != "" {
+		language = prefs.JSONData.Language
 	}
 
 	appURL := hs.Cfg.AppURL
@@ -71,6 +100,11 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		appSubURL = ""
 		settings.AppSubUrl = ""
 	}
+	ofClient := openfeature.NewDefaultClient()
+	ctx := c.Req.Context()
+	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
+	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
+	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
@@ -82,14 +116,14 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
-	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
+	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
 	assets, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
 	}
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
+	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(folder.ActionFoldersCreate)))
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
@@ -97,13 +131,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			UID:                        c.UserUID, // << not set yet
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
-			Email:                      c.SignedInUser.GetEmail(),
+			Email:                      c.GetEmail(),
 			Name:                       c.Name,
-			OrgId:                      c.SignedInUser.GetOrgID(),
+			OrgId:                      c.GetOrgID(),
 			OrgName:                    c.OrgName,
-			OrgRole:                    c.SignedInUser.GetOrgRole(),
+			OrgRole:                    c.GetOrgRole(),
 			OrgCount:                   hs.getUserOrgCount(c, userID),
-			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.SignedInUser.GetEmail()),
+			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.GetEmail()),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
 			LightTheme:                 theme.Type == "light",
@@ -131,19 +165,23 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                             setting.ApplicationName,
 		AppNameBodyClass:                    "app-grafana",
-		FavIcon:                             "public/img/fav32.png",
-		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
+		FavIcon:                             template.URL(assets.ContentDeliveryURL + "public/build/img/fav32.png"),            // #nosec G203
+		AppleTouchIcon:                      template.URL(assets.ContentDeliveryURL + "public/build/img/apple-touch-icon.png"), // #nosec G203
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         "public/img/grafana_icon.svg",
+		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
+		RenderBindingSupported:              renderBindingSupported,
+		AssetSriChecksEnabled:               grafanaAssetSriChecks,
+		NewPreferencesPage:                  newPreferencesPage,
 	}
 
 	if hs.Cfg.CSPEnabled {
 		data.CSPEnabled = true
-		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
+		hosts := middleware.CSPHostLists{FormActionAdditionalHosts: hs.Cfg.FormActionAdditionalHosts}
+		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, hosts, c.RequestNonce)
 	}
 	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 	if err != nil {
@@ -162,8 +200,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	data.NavTree.ApplyCostManagementIA()
-	data.NavTree.ApplyHelpVersion(data.Settings.BuildInfo.VersionString) // RunIndexDataHooks can modify the version string
+	data.NavTree.RemoveEmptyAdminSections()
+	data.NavTree.RemoveEmptyConnectionsSection()
 	data.NavTree.Sort()
 
 	return &data, nil
@@ -171,7 +209,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
 	// Anonymous users do not have an email or auth info
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
 	}
 
@@ -179,10 +217,10 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 		return dtos.AnalyticsSettings{}
 	}
 
-	identifier := c.SignedInUser.GetEmail() + "@" + hs.Cfg.AppURL
+	identifier := c.GetEmail() + "@" + hs.Cfg.AppURL
 
-	if authenticatedBy := c.SignedInUser.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
-		identifier = c.SignedInUser.GetAuthID()
+	if authenticatedBy := c.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
+		identifier = c.GetAuthID()
 	}
 
 	return dtos.AnalyticsSettings{
@@ -220,6 +258,11 @@ func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 	c, span := hs.injectSpan(c, "api.Index")
 	defer span.End()
 
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.htmlHandlerRequestsDuration.WithLabelValues("index"), time.Since(start).Seconds())
+	}()
+
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
@@ -233,6 +276,11 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusNotFound, "Not found", nil)
 		return
 	}
+
+	start := time.Now()
+	defer func() {
+		metricutil.ObserveWithExemplar(c.Req.Context(), hs.htmlHandlerRequestsDuration.WithLabelValues("not_found"), time.Since(start).Seconds())
+	}()
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
@@ -249,10 +297,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	}
 
 	if pref.IsValidThemeID(themePrefId) {
-		theme := pref.GetThemeByID(themePrefId)
-		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagExtraThemes) {
-			return theme
-		}
+		return pref.GetThemeByID(themePrefId)
 	}
 
 	return pref.GetThemeByID(hs.Cfg.DefaultTheme)

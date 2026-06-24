@@ -1,6 +1,6 @@
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
-import { GrafanaAlertState, isGrafanaAlertState, Labels } from '../../../../../types/unified-alerting-dto';
+import { type GrafanaAlertState, type Labels, isGrafanaAlertState } from '../../../../../types/unified-alerting-dto';
 
 interface AlertPreviewInstance {
   state: GrafanaAlertState;

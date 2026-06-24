@@ -80,6 +80,17 @@ func addFolderMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("Remove index IDX_folder_parent_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
 		Cols: []string{"parent_uid", "org_id"},
 	}))
+
+	// Remove the unique name constraint
+	mg.AddMigration("Remove unique index UQE_folder_org_id_parent_uid_title", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"org_id", "parent_uid", "title"},
+	}))
+
+	mg.AddMigration("Add index IDX_folder_org_id_parent_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Name: "IDX_folder_org_id_parent_uid",
+		Cols: []string{"org_id", "parent_uid"},
+	}))
 }
 
 func folderv1() migrator.Table {

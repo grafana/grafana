@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { type RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
-import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../irmHooks';
+import { type SectionDto, type SectionDtoStep, type SectionsDto, type StepButtonDto } from '../irmHooks';
 
 import { ProgressBar, StepsStatus } from './ProgressBar';
 
@@ -17,13 +18,17 @@ export interface EssentialsProps {
 
 export function Essentials({ onClose, essentialsConfig, stepsDone, totalStepsToDo }: EssentialsProps) {
   return (
-    <Drawer title="Essentials" subtitle="Complete the following configuration tasks" onClose={onClose}>
+    <Drawer
+      title={t('gops.essentials.title-essentials', 'Essentials')}
+      subtitle="Complete the following configuration tasks"
+      onClose={onClose}
+    >
       <EssentialContent essentialContent={essentialsConfig} stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
     </Drawer>
   );
 }
 
-export function EssentialContent({
+function EssentialContent({
   essentialContent,
   stepsDone,
   totalStepsToDo,
@@ -102,13 +107,13 @@ function OpenLinkButton(props: LinkButtonProps) {
   const { urlLink, label, urlLinkOnDone, labelOnDone, done } = props;
   const urlToGoWhenNotDone = urlLink?.url
     ? createRelativeUrl(urlLink.url, {
-        returnTo: location.pathname + location.search,
+        returnTo: window.location.pathname + window.location.search,
         ...urlLink.queryParams,
       })
     : '';
   const urlToGoWhenDone = urlLinkOnDone?.url
     ? createRelativeUrl(urlLinkOnDone.url, {
-        returnTo: location.pathname + location.search,
+        returnTo: window.location.pathname + window.location.search,
         ...urlLinkOnDone.queryParams,
       })
     : '';
@@ -179,7 +184,7 @@ function StepButton({
 function ProgressStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   return (
     <Stack direction={'row'} gap={1} alignItems="center">
-      Your progress
+      <Trans i18nKey="gops.progress-status.your-progress">Your progress</Trans>
       <ProgressBar stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
       <StepsStatus stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
     </Stack>

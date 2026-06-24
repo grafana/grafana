@@ -12,15 +12,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/authlib/claims"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
@@ -42,6 +45,18 @@ import (
 )
 
 const loginCookieName = "grafana_session"
+
+// setupHTMLHandlerMetrics creates and registers the prometheus metrics needed for HTTPServer tests
+// that call methods using htmlHandlerRequestsDuration (LoginView, Index, NotFoundHandler)
+func setupHTMLHandlerMetrics() (prometheus.Registerer, *prometheus.HistogramVec) {
+	promRegister := prometheus.NewRegistry()
+	htmlHandlerRequestsDuration := metricutil.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "html_handler_requests_duration_seconds",
+	}, []string{"handler"})
+	promRegister.MustRegister(htmlHandlerRequestsDuration)
+	return promRegister, htmlHandlerRequestsDuration
+}
 
 func fakeSetIndexViewData(t *testing.T) {
 	origSetIndexViewData := setIndexViewData
@@ -108,13 +123,16 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	promRegister, htmlHandlerRequestsDuration := setupHTMLHandlerMetrics()
 	hs := &HTTPServer{
-		Cfg:              cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
-		License:          &licensing.OSSLicensingService{},
-		SocialService:    &mockSocialService{},
-		SecretsService:   secretsService,
-		Features:         featuremgmt.WithFeatures(),
+		Cfg:                         cfg,
+		SettingsProvider:            &setting.OSSImpl{Cfg: cfg},
+		License:                     &licensing.OSSLicensingService{},
+		SocialService:               &mockSocialService{},
+		SecretsService:              secretsService,
+		Features:                    featuremgmt.WithFeatures(),
+		promRegister:                promRegister,
+		htmlHandlerRequestsDuration: htmlHandlerRequestsDuration,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -155,13 +173,16 @@ func TestLoginViewRedirect(t *testing.T) {
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
+	promRegister, htmlHandlerRequestsDuration := setupHTMLHandlerMetrics()
 	hs := &HTTPServer{
-		Cfg:              cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
-		License:          &licensing.OSSLicensingService{},
-		SocialService:    &mockSocialService{},
-		Features:         featuremgmt.WithFeatures(),
-		log:              log.NewNopLogger(),
+		Cfg:                         cfg,
+		SettingsProvider:            &setting.OSSImpl{Cfg: cfg},
+		License:                     &licensing.OSSLicensingService{},
+		SocialService:               &mockSocialService{},
+		Features:                    featuremgmt.WithFeatures(),
+		log:                         log.NewNopLogger(),
+		promRegister:                promRegister,
+		htmlHandlerRequestsDuration: htmlHandlerRequestsDuration,
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -491,13 +512,16 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		},
 		oAuthInfos: oAuthInfos,
 	}
+	promRegister, htmlHandlerRequestsDuration := setupHTMLHandlerMetrics()
 	hs := &HTTPServer{
-		authnService:     &authntest.FakeService{},
-		Cfg:              cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
-		License:          &licensing.OSSLicensingService{},
-		SocialService:    mock,
-		Features:         featuremgmt.WithFeatures(),
+		authnService:                &authntest.FakeService{},
+		Cfg:                         cfg,
+		SettingsProvider:            &setting.OSSImpl{Cfg: cfg},
+		License:                     &licensing.OSSLicensingService{},
+		SocialService:               mock,
+		Features:                    featuremgmt.WithFeatures(),
+		promRegister:                promRegister,
+		htmlHandlerRequestsDuration: htmlHandlerRequestsDuration,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -520,11 +544,14 @@ func TestLoginInternal(t *testing.T) {
 
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
+	promRegister, htmlHandlerRequestsDuration := setupHTMLHandlerMetrics()
 	hs := &HTTPServer{
-		Cfg:      setting.NewCfg(),
-		License:  &licensing.OSSLicensingService{},
-		log:      log.New("test"),
-		Features: featuremgmt.WithFeatures(),
+		Cfg:                         setting.NewCfg(),
+		License:                     &licensing.OSSLicensingService{},
+		log:                         log.New("test"),
+		Features:                    featuremgmt.WithFeatures(),
+		promRegister:                promRegister,
+		htmlHandlerRequestsDuration: htmlHandlerRequestsDuration,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -582,14 +609,17 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	sc := setupScenarioContext(t, "/login")
 	sc.cfg.LoginCookieName = loginCookieName
 	sc.cfg.OAuthAutoLogin = true
+	promRegister, htmlHandlerRequestsDuration := setupHTMLHandlerMetrics()
 	hs := &HTTPServer{
-		Cfg:              sc.cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
-		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
-		log:              log.New("hello"),
-		SocialService:    mock,
-		Features:         featuremgmt.WithFeatures(),
+		Cfg:                         sc.cfg,
+		SettingsProvider:            &setting.OSSImpl{Cfg: sc.cfg},
+		License:                     &licensing.OSSLicensingService{},
+		AuthTokenService:            authtest.NewFakeUserAuthTokenService(),
+		log:                         log.New("hello"),
+		SocialService:               mock,
+		Features:                    featuremgmt.WithFeatures(),
+		promRegister:                promRegister,
+		htmlHandlerRequestsDuration: htmlHandlerRequestsDuration,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -622,14 +652,17 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 
 	sc := setupScenarioContext(t, "/login")
 	sc.cfg.LoginCookieName = loginCookieName
+	promRegister, htmlHandlerRequestsDuration := setupHTMLHandlerMetrics()
 	hs := &HTTPServer{
-		Cfg:              sc.cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
-		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
-		log:              log.New("hello"),
-		SocialService:    &mockSocialService{},
-		Features:         featuremgmt.WithFeatures(),
+		Cfg:                         sc.cfg,
+		SettingsProvider:            &setting.OSSImpl{Cfg: sc.cfg},
+		License:                     &licensing.OSSLicensingService{},
+		AuthTokenService:            authtest.NewFakeUserAuthTokenService(),
+		log:                         log.New("hello"),
+		SocialService:               &mockSocialService{},
+		Features:                    featuremgmt.WithFeatures(),
+		promRegister:                promRegister,
+		htmlHandlerRequestsDuration: htmlHandlerRequestsDuration,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -686,6 +719,172 @@ func TestLogoutSaml(t *testing.T) {
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 	require.Equal(t, 302, sc.resp.Code)
+}
+
+func TestIsExternallySynced(t *testing.T) {
+	testcases := []struct {
+		name                string
+		cfg                 *setting.Cfg
+		provider            string
+		enabledAuthnClients []string
+		authnClientConfig   authn.SSOClientConfig
+		expected            bool
+	}{
+		// Same for all of the OAuth providers
+		{
+			name:                "AzureAD external user should return that it is externally synced",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.AzureADAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix("azuread")},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			expected: true,
+		},
+		{
+			name:                "AzureAD external user should return that it is not externally synced when org role sync is set",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.AzureADAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix(strings.TrimPrefix(loginservice.AzureADAuthModule, "oauth_"))},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: true,
+			},
+			expected: false,
+		},
+		{
+			name:                "AzureAD external user should return that it is not externally synced when the provider is not enabled",
+			cfg:                 &setting.Cfg{},
+			enabledAuthnClients: []string{},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			provider: loginservice.AzureADAuthModule,
+			expected: false,
+		},
+		// saml
+		{
+			name:                "SAML synced user should return that it is not externally synced when the provider is disabled",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			expected: false,
+		},
+		{
+			name:                "SAML synced user should return that it is externally synced",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: false,
+			},
+			expected: true,
+		},
+		{
+			name:                "SAML synced user should return that it is not externally synced when org role sync is set",
+			cfg:                 &setting.Cfg{},
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			authnClientConfig: &authntest.FakeSSOClientConfig{
+				ExpectedIsSkipOrgRoleSyncEnabled: true,
+			},
+			expected: false,
+		},
+		// ldap
+		{
+			name:     "LDAP synced user should return that it is externally synced",
+			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: false},
+			provider: loginservice.LDAPAuthModule,
+			expected: true,
+		},
+		{
+			name:     "LDAP synced user should return that it is not externally synced when org role sync is set",
+			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: true},
+			provider: loginservice.LDAPAuthModule,
+			expected: false,
+		},
+		// jwt
+		{
+			name:     "JWT synced user should return that it is externally synced",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: false}},
+			provider: loginservice.JWTModule,
+			expected: true,
+		},
+		{
+			name:     "JWT synced user should return that it is not externally synced when org role sync is set",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: true}},
+			provider: loginservice.JWTModule,
+			expected: false,
+		},
+		// IsProvider test
+		{
+			name:     "If no provider enabled should return false",
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: false, SkipOrgRoleSync: true}},
+			provider: loginservice.JWTModule,
+			expected: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		hs := &HTTPServer{
+			authnService: &authntest.FakeService{
+				ExpectedClientConfig: tc.authnClientConfig,
+				EnabledClients:       tc.enabledAuthnClients,
+			},
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider))
+		})
+	}
+}
+
+func TestIsProviderEnabled(t *testing.T) {
+	testcases := []struct {
+		name                string
+		provider            string
+		enabledAuthnClients []string
+		expected            bool
+	}{
+		{
+			name:                "Github should return true if enabled",
+			provider:            loginservice.GithubAuthModule,
+			enabledAuthnClients: []string{authn.ClientWithPrefix(strings.TrimPrefix(loginservice.GithubAuthModule, "oauth_"))},
+			expected:            true,
+		},
+		{
+			name:                "Github should return false if not enabled",
+			provider:            loginservice.GithubAuthModule,
+			enabledAuthnClients: []string{},
+			expected:            false,
+		},
+		// saml
+		{
+			name:                "SAML should return true if enabled",
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{authn.ClientSAML},
+			expected:            true,
+		},
+		{
+			name:                "SAML should return false if not enabled",
+			provider:            loginservice.SAMLAuthModule,
+			enabledAuthnClients: []string{},
+			expected:            false,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			hs := &HTTPServer{
+				authnService: &authntest.FakeService{
+					EnabledClients: tc.enabledAuthnClients,
+				},
+			}
+			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider))
+		})
+	}
 }
 
 type mockSocialService struct {

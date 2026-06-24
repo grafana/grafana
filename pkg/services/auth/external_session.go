@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"time"
+
+	"golang.org/x/oauth2"
 )
 
 type ExternalSession struct {
@@ -43,8 +45,13 @@ func (e *ExternalSession) Clone() *ExternalSession {
 	}
 }
 
+type UpdateExternalSessionCommand struct {
+	Token *oauth2.Token
+}
+
 type ListExternalSessionQuery struct {
 	ID        int64
+	UserID    int64
 	NameID    string
 	SessionID string
 }
@@ -57,6 +64,8 @@ type ExternalSessionStore interface {
 	List(ctx context.Context, query *ListExternalSessionQuery) ([]*ExternalSession, error)
 	// Create creates a new external session for a user
 	Create(ctx context.Context, extSesion *ExternalSession) error
+	// Update updates an external session
+	Update(ctx context.Context, ID int64, cmd *UpdateExternalSessionCommand) error
 	// Delete deletes an external session
 	Delete(ctx context.Context, ID int64) error
 	// DeleteExternalSessionsByUserID deletes an external session

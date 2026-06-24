@@ -1,18 +1,19 @@
 import { css } from '@emotion/css';
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState, type JSX } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { usePanelPluginMeta } from '@grafana/runtime/internal';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
 
-import { LibraryElementDTO } from '../../types';
+import { type LibraryElementDTO } from '../../types';
 import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 
-export interface LibraryPanelCardProps {
+interface LibraryPanelCardProps {
   libraryPanel: LibraryElementDTO;
   onClick: (panel: LibraryElementDTO) => void;
   onDelete?: (panel: LibraryElementDTO) => void;
@@ -29,7 +30,8 @@ const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecond
     setShowDeletionModal(false);
   };
 
-  const panelPlugin = config.panels[libraryPanel.model.type] ?? getPanelPluginNotFound(libraryPanel.model.type).meta;
+  const { value: panelPluginMeta } = usePanelPluginMeta(libraryPanel.model.type);
+  const panelPlugin = panelPluginMeta ?? getPanelPluginNotFound(libraryPanel.model.type).meta;
 
   return (
     <>
@@ -38,7 +40,7 @@ const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecond
         title={libraryPanel.name}
         description={libraryPanel.description}
         plugin={panelPlugin}
-        onClick={() => onClick?.(libraryPanel)}
+        onSelect={() => onClick?.(libraryPanel)}
         onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
       >
         <FolderLink libraryPanel={libraryPanel} />
@@ -85,7 +87,9 @@ function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
     return (
       <span className={styles.metaContainer}>
         <Icon name={'folder'} size="sm" />
-        <span>Dashboards</span>
+        <span>
+          <Trans i18nKey="library-panels.folder-link.dashboards">Dashboards</Trans>
+        </span>
       </span>
     );
   }

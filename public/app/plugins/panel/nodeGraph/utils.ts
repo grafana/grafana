@@ -1,16 +1,17 @@
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldCache,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   FieldType,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 
 import { nodeR } from './Node';
-import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
+import { type Options as NodeGraphOptions } from './panelcfg.gen';
+import { type EdgeDatum, type GraphFrame, type NodeDatum, type NodeDatumFromEdge } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
@@ -58,6 +59,7 @@ export type NodeFields = {
   icon?: Field;
   nodeRadius?: Field;
   highlighted?: Field;
+  isInstrumented?: Field;
 };
 
 export function getNodeFields(nodes: DataFrame): NodeFields {
@@ -70,7 +72,9 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
     title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title.toLowerCase()),
     subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
+    mainStat:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()) ||
+      fieldsCache.getFirstFieldOfType(FieldType.number),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
     details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
@@ -80,6 +84,7 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
     fixedX: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedX.toLowerCase()),
     fixedY: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedY.toLowerCase()),
+    isInstrumented: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.isInstrumented.toLowerCase()),
   };
 }
 
@@ -109,7 +114,9 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
     source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase()),
     target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target.toLowerCase()),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
+    mainStat:
+      fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()) ||
+      fieldsCache.getFirstFieldOfType(FieldType.number),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
     // @deprecated -- for edges use color instead
@@ -364,6 +371,7 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     highlighted: nodeFields.highlighted?.values[index] || false,
     x: nodeFields.fixedX?.values[index] ?? undefined,
     y: nodeFields.fixedY?.values[index] ?? undefined,
+    isInstrumented: nodeFields.isInstrumented?.values[index] ?? true,
   };
 }
 
@@ -384,16 +392,19 @@ export function statToString(config: FieldConfig, value: number | string): strin
  * Utilities mainly for testing
  */
 
-export function makeNodesDataFrame(count: number) {
+export function makeNodesDataFrame(
+  count: number,
+  partialNodes: Array<Partial<Record<NodeGraphDataFrameFieldNames, unknown>>> = []
+) {
   const frame = nodesFrame();
   for (let i = 0; i < count; i++) {
-    frame.add(makeNode(i));
+    frame.add(makeNode(i, partialNodes[i]));
   }
 
   return frame;
 }
 
-function makeNode(index: number) {
+function makeNode(index: number, partialNode: Partial<Record<NodeGraphDataFrameFieldNames, unknown>> = {}) {
   return {
     id: index.toString(),
     title: `service:${index}`,
@@ -405,6 +416,8 @@ function makeNode(index: number) {
     color: 0.5,
     icon: 'database',
     noderadius: 40,
+    isinstrumented: true,
+    ...partialNode,
   };
 }
 
@@ -452,6 +465,10 @@ function nodesFrame() {
     [NodeGraphDataFrameFieldNames.nodeRadius]: {
       values: [],
       type: FieldType.number,
+    },
+    [NodeGraphDataFrameFieldNames.isInstrumented]: {
+      values: [],
+      type: FieldType.boolean,
     },
   };
 
@@ -590,7 +607,7 @@ export function getNodeGraphDataFrames(frames: DataFrame[], options?: NodeGraphO
   return nodeGraphFrames;
 }
 
-export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOptions): DataFrame[] => {
+const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOptions): DataFrame[] => {
   return frames.map((frame) => {
     const fieldsCache = new FieldCache(frame);
 

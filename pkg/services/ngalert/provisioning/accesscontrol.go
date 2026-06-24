@@ -14,6 +14,7 @@ type RuleAccessControlService interface {
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
 }
 
 func newRuleAccessControlService(ac RuleAccessControlService) *provisioningRuleAccessControl {
@@ -38,7 +39,7 @@ func (p *provisioningRuleAccessControl) AuthorizeRuleRead(ctx context.Context, u
 		return err
 	}
 	if !can {
-		return p.RuleAccessControlService.AuthorizeAccessInFolder(ctx, user, rule)
+		return p.AuthorizeAccessInFolder(ctx, user, rule)
 	}
 	return nil
 }
@@ -53,7 +54,7 @@ func (p *provisioningRuleAccessControl) AuthorizeRuleGroupRead(ctx context.Conte
 		return err
 	}
 	if !can {
-		return p.RuleAccessControlService.AuthorizeAccessToRuleGroup(ctx, user, rules)
+		return p.AuthorizeAccessToRuleGroup(ctx, user, rules)
 	}
 	return nil
 }
@@ -68,7 +69,7 @@ func (p *provisioningRuleAccessControl) AuthorizeRuleGroupWrite(ctx context.Cont
 		return err
 	}
 	if !can {
-		return p.RuleAccessControlService.AuthorizeRuleChanges(ctx, user, change)
+		return p.AuthorizeRuleChanges(ctx, user, change)
 	}
 	return nil
 }

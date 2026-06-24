@@ -17,8 +17,8 @@ import (
 func (hs *HTTPServer) GetRedirectURL(c *contextmodel.ReqContext) string {
 	redirectURL := hs.Cfg.AppSubURL + "/"
 	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			redirectURL = redirectTo
+		if sanitized, err := hs.ValidateRedirectTo(redirectTo); err == nil {
+			redirectURL = sanitized
 		} else {
 			hs.log.FromContext(c.Req.Context()).Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
 		}
@@ -49,7 +49,7 @@ func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, e
 		return true, err
 	}
 
-	return login.IsProviderEnabled(hs.Cfg, info.AuthModule, hs.SocialService.GetOAuthInfoProvider(info.AuthModule)), nil
+	return hs.isProviderEnabled(hs.Cfg, info.AuthModule), nil
 }
 
 func ValidateAndNormalizeEmail(email string) (string, error) {

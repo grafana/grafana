@@ -1,25 +1,26 @@
-import { DeepMap, FieldError, FieldErrors } from 'react-hook-form';
+import { type DeepMap, type FieldError, type FieldErrors } from 'react-hook-form';
 
 import { SupportedTransformationType } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { type CorrelationExternal, type CorrelationQuery } from '@grafana/runtime';
 
-import { CorrelationConfigExternal, CorrelationConfigQuery, OmitUnion } from '../types';
+import { type OmitUnion } from '../types';
 
-export interface FormExternalDTO {
+interface FormExternalDTO {
   sourceUID: string;
   label: string;
-  description: string;
+  description?: string;
   type: 'external';
-  config: CorrelationConfigExternal;
+  config: CorrelationExternal['config'];
 }
 
 export interface FormQueryDTO {
   sourceUID: string;
   targetUID: string;
   label: string;
-  description: string;
+  description?: string;
   type: 'query';
-  config: CorrelationConfigQuery;
+  config: CorrelationQuery['config'];
 }
 
 export type FormDTO = FormExternalDTO | FormQueryDTO;
@@ -31,12 +32,6 @@ export function assertIsQueryTypeError(
 }
 
 export type EditFormDTO = OmitUnion<FormDTO, 'targetUID' | 'sourceUID'>;
-
-export type TransformationDTO = {
-  type: SupportedTransformationType;
-  expression?: string;
-  mapValue?: string;
-};
 
 export interface TransformationFieldDetails {
   show: boolean;

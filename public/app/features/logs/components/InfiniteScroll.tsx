@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, type MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange } from '@grafana/data';
-import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
-import { config, reportInteraction } from '@grafana/runtime';
-import { LogsSortOrder, TimeZone } from '@grafana/schema';
+import { type AbsoluteTimeRange, CoreApp, type LogRowModel, type TimeRange, rangeUtil } from '@grafana/data';
+// import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/internal';
+import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { LogsSortOrder, type TimeZone } from '@grafana/schema';
 import { Button, Icon } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { LoadingIndicator } from './LoadingIndicator';
 
@@ -17,7 +17,7 @@ export type Props = {
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
   range: TimeRange;
   rows: LogRowModel[];
-  scrollElement?: HTMLDivElement;
+  scrollElement: HTMLDivElement | null;
   sortOrder: LogsSortOrder;
   timeZone: TimeZone;
   topScrollEnabled?: boolean;
@@ -41,6 +41,8 @@ export const InfiniteScroll = ({
   const [lowerLoading, setLowerLoading] = useState(false);
   const rowsRef = useRef<LogRowModel[]>(rows);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
+  const lastEvent = useRef<Event | WheelEvent | null>(null);
+  const countRef = useRef(0);
 
   // Reset messages when range/order/rows change
   useEffect(() => {
@@ -79,21 +81,27 @@ export const InfiniteScroll = ({
     if (!scrollElement || !loadMoreLogs) {
       return;
     }
+    if (scrollElement.scrollHeight <= scrollElement.clientHeight) {
+      return;
+    }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
+      if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
       }
-      event.stopImmediatePropagation();
-      const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
+      const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);
+      lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
       if (scrollDirection === ScrollDirection.NoScroll) {
         return;
-      } else if (scrollDirection === ScrollDirection.Top && topScrollEnabled) {
+      }
+      event.stopImmediatePropagation();
+      if (scrollDirection === ScrollDirection.Top && topScrollEnabled) {
         scrollTop();
       } else if (scrollDirection === ScrollDirection.Bottom) {
         scrollBottom();
       }
+      lastEvent.current = null;
     }
 
     function scrollTop() {
@@ -136,8 +144,8 @@ export const InfiniteScroll = ({
   }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone, topScrollEnabled]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
-  const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
-  const hideBottomMessage = sortOrder === LogsSortOrder.Ascending && isRelativeTime(range.raw.to);
+  const hideTopMessage = sortOrder === LogsSortOrder.Descending && rangeUtil.isRelativeTime(range.raw.to);
+  const hideBottomMessage = sortOrder === LogsSortOrder.Ascending && rangeUtil.isRelativeTime(range.raw.to);
 
   const loadOlderLogs = useCallback(() => {
     //If we are not on the last page, use next page's range
@@ -162,7 +170,7 @@ export const InfiniteScroll = ({
     <>
       {upperLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'newer' : 'older'} />}
       {!hideTopMessage && upperOutOfRange && outOfRangeMessage}
-      {sortOrder === LogsSortOrder.Ascending && app === CoreApp.Explore && (
+      {sortOrder === LogsSortOrder.Ascending && app === CoreApp.Explore && loadMoreLogs && (
         <Button className={styles.navButton} variant="secondary" onClick={loadOlderLogs} disabled={loading}>
           <div className={styles.navButtonContent}>
             <Icon name="angle-up" size="lg" />
@@ -206,34 +214,77 @@ const styles = {
 
 const outOfRangeMessage = (
   <div className={styles.messageContainer} data-testid="end-of-range">
-    End of the selected time range.
+    <Trans i18nKey="logs.out-of-range-message.end-of-the-selected-time-range">End of the selected time range.</Trans>
   </div>
 );
 
-enum ScrollDirection {
+export enum ScrollDirection {
   Top = -1,
   Bottom = 1,
   NoScroll = 0,
 }
-function shouldLoadMore(event: Event | WheelEvent, element: HTMLDivElement, lastScroll: number): ScrollDirection {
-  // Disable behavior if there is no scroll
-  if (element.scrollHeight <= element.clientHeight) {
-    return ScrollDirection.NoScroll;
-  }
+export function shouldLoadMore(
+  event: Event | WheelEvent,
+  lastEvent: Event | WheelEvent | null,
+  countRef: MutableRefObject<number>,
+  element: HTMLDivElement,
+  lastScroll: number
+): ScrollDirection {
   const delta = event instanceof WheelEvent ? event.deltaY : element.scrollTop - lastScroll;
   if (delta === 0) {
     return ScrollDirection.NoScroll;
   }
+
   const scrollDirection = delta < 0 ? ScrollDirection.Top : ScrollDirection.Bottom;
   const diff =
     scrollDirection === ScrollDirection.Top
       ? element.scrollTop
       : element.scrollHeight - element.scrollTop - element.clientHeight;
 
-  return diff <= 1 ? scrollDirection : ScrollDirection.NoScroll;
+  if (diff > 1) {
+    return ScrollDirection.NoScroll;
+  }
+
+  if (!lastEvent || shouldIgnoreChainOfEvents(event, lastEvent, countRef)) {
+    return ScrollDirection.NoScroll;
+  }
+
+  return scrollDirection;
 }
 
-function getVisibleRange(rows: LogRowModel[]) {
+function shouldIgnoreChainOfEvents(
+  event: Event | WheelEvent,
+  lastEvent: Event | WheelEvent,
+  countRef: MutableRefObject<number>
+) {
+  const deltaTime = event.timeStamp - lastEvent.timeStamp;
+  // Not a chain of events
+  if (deltaTime > 500) {
+    countRef.current = 0;
+    return false;
+  }
+  countRef.current++;
+  // Likely trackpad
+  if (deltaTime < 100) {
+    // User likely to want more results
+    if (countRef.current >= 180) {
+      countRef.current = 0;
+      return false;
+    }
+    return true;
+  }
+  // Likely mouse wheel
+  if (deltaTime < 400) {
+    // User likely to want more results
+    if (countRef.current >= 25) {
+      countRef.current = 0;
+      return false;
+    }
+  }
+  return true;
+}
+
+export function getVisibleRange(rows: LogRowModel[]) {
   const firstTimeStamp = rows[0].timeEpochMs;
   const lastTimeStamp = rows[rows.length - 1].timeEpochMs;
 
@@ -258,7 +309,7 @@ function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, 
 export const SCROLLING_THRESHOLD = 1e3;
 
 // To get more logs, the difference between the visible range and the current range should be 1 second or more.
-function canScrollTop(
+export function canScrollTop(
   visibleRange: AbsoluteTimeRange,
   currentRange: TimeRange,
   timeZone: TimeZone,
@@ -275,7 +326,7 @@ function canScrollTop(
   return canScroll ? getPrevRange(visibleRange, currentRange) : undefined;
 }
 
-function canScrollBottom(
+export function canScrollBottom(
   visibleRange: AbsoluteTimeRange,
   currentRange: TimeRange,
   timeZone: TimeZone,
@@ -293,5 +344,7 @@ function canScrollBottom(
 
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
 function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
-  return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
+  return rangeUtil.isRelativeTimeRange(timeRange.raw)
+    ? rangeUtil.convertRawToRange(timeRange.raw, timeZone)
+    : timeRange;
 }

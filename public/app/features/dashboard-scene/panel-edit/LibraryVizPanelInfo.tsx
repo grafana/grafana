@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 
 interface Props {
   libraryPanel: LibraryPanelBehavior;
@@ -22,15 +23,39 @@ export const LibraryVizPanelInfo = ({ libraryPanel }: Props) => {
   return (
     <div className={styles.info}>
       <div className={styles.libraryPanelInfo}>
-        {`Used on ${meta.connectedDashboards} `}
-        {meta.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}
+        <Trans
+          i18nKey="dashboard-scene.library-viz-panel-info.usage-count"
+          count={meta.connectedDashboards}
+          tOptions={{
+            defaultValue_one: 'Used on {{count}} dashboards',
+            defaultValue_other: 'Used on {{count}} dashboards',
+          }}
+        >
+          Used on {'{{count}}'} dashboards
+        </Trans>
       </div>
       <div className={styles.libraryPanelInfo}>
-        {dateTimeFormat(meta.updated, { format: 'L', timeZone: tz })} by
-        {meta.updatedBy.avatarUrl && (
-          <img className={styles.userAvatar} src={meta.updatedBy.avatarUrl} alt={`Avatar for ${meta.updatedBy.name}`} />
-        )}
-        {meta.updatedBy.name}
+        <Trans
+          i18nKey="dashboard-scene.library-viz-panel-info.last-edited"
+          values={{ timeAgo: dateTimeFormat(meta.updated, { format: 'L', timeZone: tz }) }}
+          components={{
+            person: (
+              <>
+                {meta.updatedBy.avatarUrl && (
+                  <img
+                    className={styles.userAvatar}
+                    src={meta.updatedBy.avatarUrl}
+                    alt={`Avatar for ${meta.updatedBy.name}`}
+                  />
+                )}
+                {meta.updatedBy.name}
+              </>
+            ),
+          }}
+        >
+          {'{{timeAgo}}'} by
+          {'<person />'}
+        </Trans>
       </div>
     </div>
   );

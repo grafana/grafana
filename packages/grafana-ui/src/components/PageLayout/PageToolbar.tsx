@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { memo, Children, ReactNode } from 'react';
+import { memo, Children, type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types';
+import { type IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Link } from '../Link/Link';
@@ -31,9 +32,14 @@ export interface Props {
    * By default left items are hidden on small screens.
    */
   forceShowLeftItems?: boolean;
+  'data-testid'?: string;
 }
 
-/** @alpha */
+/**
+ * @deprecated Use Page instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-deprecated-pagetoolbar--docs
+ */
 export const PageToolbar = memo(
   ({
     title,
@@ -51,6 +57,7 @@ export const PageToolbar = memo(
     'aria-label': ariaLabel,
     buttonOverflowAlignment = 'right',
     forceShowLeftItems = false,
+    'data-testid': testId,
   }: Props) => {
     const styles = useStyles2(getStyles);
 
@@ -82,8 +89,17 @@ export const PageToolbar = memo(
       </>
     );
 
+    const goBackLabel = t('grafana-ui.page-toolbar.go-back', 'Go back (Esc)');
+    const searchParentFolderLabel = t(
+      'grafana-ui.page-toolbar.search-parent-folder',
+      'Search dashboard in the {{parent}} folder',
+      { parent }
+    );
+    const searchDashboardNameLabel = t('grafana-ui.page-toolbar.search-dashboard-name', 'Search dashboard by name');
+    const searchLinksLabel = t('grafana-ui.page-toolbar.search-links', 'Search links');
+
     return (
-      <nav className={mainStyle} aria-label={ariaLabel}>
+      <nav className={mainStyle} aria-label={ariaLabel} data-testid={testId}>
         <div className={styles.leftWrapper}>
           {pageIcon && !onGoBack && (
             <div className={styles.pageIcon}>
@@ -94,7 +110,7 @@ export const PageToolbar = memo(
             <div className={styles.pageIcon}>
               <IconButton
                 name="arrow-left"
-                tooltip="Go back (Esc)"
+                tooltip={goBackLabel}
                 tooltipPlacement="bottom"
                 size="xxl"
                 data-testid={selectors.components.BackButton.backArrow}
@@ -102,11 +118,11 @@ export const PageToolbar = memo(
               />
             </div>
           )}
-          <nav aria-label="Search links" className={styles.navElement}>
+          <nav aria-label={searchLinksLabel} className={styles.navElement}>
             {parent && parentHref && (
               <>
                 <Link
-                  aria-label={`Search dashboard in the ${parent} folder`}
+                  aria-label={searchParentFolderLabel}
                   className={cx(styles.titleText, styles.parentLink, styles.titleLink, styles.truncateText)}
                   href={parentHref}
                 >
@@ -126,7 +142,7 @@ export const PageToolbar = memo(
                   <h1 className={styles.h1Styles}>
                     {titleHref ? (
                       <Link
-                        aria-label="Search dashboard by name"
+                        aria-label={searchDashboardNameLabel}
                         className={cx(styles.titleText, styles.titleLink)}
                         href={titleHref}
                       >
@@ -171,11 +187,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     toolbar: css({
       alignItems: 'center',
+      // TODO change to page background when visual refresh is enabled
       background: theme.colors.background.canvas,
       display: 'flex',
       gap: theme.spacing(2),
       justifyContent: 'space-between',
-      padding: theme.spacing(1.5, 2),
+      padding: theme.spacing(2, 2),
 
       [theme.breakpoints.down('md')]: {
         paddingLeft: '53px',

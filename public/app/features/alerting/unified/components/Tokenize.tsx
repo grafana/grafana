@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 
 import { PopupCard } from './HoverCard';
-import { keywords as KEYWORDS, builtinFunctions as FUNCTIONS } from './receivers/editor/language';
+import { builtinFunctions as FUNCTIONS, keywords as KEYWORDS } from './receivers/editor/language';
 
 const VARIABLES = ['$', '.', '"'];
 
@@ -150,4 +150,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export { Tokenize, Token };
+export { Tokenize };

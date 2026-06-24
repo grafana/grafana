@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -46,13 +47,13 @@ func TestAllowedCookies(t *testing.T) {
 			jsonData, err := simplejson.NewJson(jsonDataBytes)
 			require.NoError(t, err)
 
-			ds := DataSource{
-				ID:       1235,
-				JsonData: jsonData,
-				UID:      "test",
+			ds := datasourcesV0.DataSource{
+				Spec: datasourcesV0.UnstructuredSpec{
+					Object: map[string]any{"jsonData": jsonData.MustMap()},
+				},
 			}
 
-			actual := ds.AllowedCookies()
+			actual := ds.Spec.KeepCookies()
 			assert.Equal(t, test.want, actual)
 			assert.EqualValues(t, test.want, actual)
 		})
@@ -71,7 +72,7 @@ func TestTeamHTTPHeaders(t *testing.T) {
 			want: &TeamHTTPHeaders{
 				Headers: TeamHeaders{
 					"101": {
-						{Header: "X-CUSTOM-HEADER", Value: "foo"},
+						{Header: "X-CUSTOM-HEADER", LBACRule: "foo"},
 					},
 				},
 			},
@@ -95,10 +96,65 @@ func TestTeamHTTPHeaders(t *testing.T) {
 				UID:      "test",
 			}
 
-			actual, err := ds.TeamHTTPHeaders()
+			actual, err := GetTeamHTTPHeaders(ds.JsonData)
 			assert.NoError(t, err)
 			assert.Equal(t, test.want, actual)
 			assert.EqualValues(t, test.want, actual)
+		})
+	}
+}
+
+func TestIsSecureSocksDSProxyEnabled(t *testing.T) {
+	testCases := []struct {
+		desc string
+		ds   *DataSource
+		want bool
+	}{
+		{
+			desc: "Empty json",
+			ds: &DataSource{
+				JsonData: simplejson.New(),
+			},
+			want: false,
+		},
+		{
+			desc: "Json with enableSecureSocksProxy",
+			ds: &DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"enableSecureSocksProxy": true,
+				}),
+			},
+			want: true,
+		},
+		{
+			desc: "Json with string enableSecureSocksProxy",
+			ds: &DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"enableSecureSocksProxy": "true",
+				}),
+			},
+			want: false,
+		},
+		{
+			desc: "Json with enableSecureSocksProxy false",
+			ds: &DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"enableSecureSocksProxy": false,
+				}),
+			},
+			want: false,
+		},
+		{
+			desc: "Json with no json data",
+			ds:   &DataSource{},
+			want: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			actual := tc.ds.IsSecureSocksDSProxyEnabled()
+			assert.Equal(t, tc.want, actual)
 		})
 	}
 }

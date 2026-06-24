@@ -10,6 +10,7 @@ const props = {
   user: {
     login: 'admin',
     email: 'email@example.com',
+    uid: 'uid',
     avatarUrl: 'avatarURL',
     lastSeenAt: 'lastSeenAt',
     lastSeenAtAge: 'lastSeenAtAge',
@@ -21,6 +22,7 @@ const props = {
         uid: 'uid',
         name: 'admin',
         displayName: 'Admin',
+        filteredDisplayName: 'group:Admin',
         description: 'description',
         group: 'group',
         global: true,

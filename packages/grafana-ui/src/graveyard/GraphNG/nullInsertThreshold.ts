@@ -56,7 +56,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
   if (uniqueThresholds.size === 1) {
     const threshold = uniqueThresholds.values().next().value;
 
-    if (threshold <= 0) {
+    if (!threshold || threshold <= 0) {
       return frame;
     }
 

@@ -3,13 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataFrame, MutableDataFrame } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataFrame, MutableDataFrame } from '@grafana/data';
+import { mockTimeRange } from '@grafana/plugin-ui/test';
+import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
 import { TraceView } from './TraceView';
-import { TraceData, TraceSpanData } from './components/types/trace';
+import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
 function getTraceView(frames: DataFrame[]) {
@@ -19,12 +20,12 @@ function getTraceView(frames: DataFrame[]) {
   return (
     <Provider store={store}>
       <TraceView
-        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
         datasource={undefined}
         topOfViewRef={topOfViewRef}
+        timeRange={mockTimeRange()}
       />
     </Provider>
   );
@@ -47,6 +48,16 @@ function renderTraceViewNew() {
 
 describe('TraceView', () => {
   beforeAll(() => {
+    setPluginLinksHook(() => ({
+      isLoading: false,
+      links: [],
+    }));
+
+    setPluginComponentsHook(() => ({
+      isLoading: false,
+      components: [],
+    }));
+
     setDataSourceSrv({
       getInstanceSettings() {
         return undefined;
@@ -80,14 +91,14 @@ describe('TraceView', () => {
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
+    expect(screen.queryByText(/Span attributes/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByText(/Span Attributes/)).toBeTruthy();
+    expect(screen.queryByText(/Span attributes/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    screen.debug(screen.queryAllByText(/Span Attributes/));
-    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Span attributes/));
+    expect(screen.queryByText(/Span attributes/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {

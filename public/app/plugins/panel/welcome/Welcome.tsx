@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { TextLink, useStyles2 } from '@grafana/ui';
 
 const helpOptions = [
   { value: 0, label: 'Документация', href: 'https://grafana.com/docs/grafana/latest' },
@@ -13,21 +14,30 @@ export const WelcomeBanner = () => {
 
   return (
     <div className={styles.container}>
+<<<<<<< HEAD
       <h1 className={styles.title}>Добро пожаловать в Grafana</h1>
       <div className={styles.help}>
         <h3 className={styles.helpText}>Нужна помощь?</h3>
+=======
+      <h1 className={styles.title}>
+        <Trans i18nKey="welcome.welcome-banner.welcome-to-grafana">Welcome to Grafana</Trans>
+      </h1>
+      <div className={styles.help}>
+        <h2 className={styles.helpText}>
+          <Trans i18nKey="welcome.welcome-banner.need-help">Need help?</Trans>
+        </h2>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         <div className={styles.helpLinks}>
-          {helpOptions.map((option, index) => {
-            return (
-              <a
-                key={`${option.label}-${index}`}
-                className={styles.helpLink}
-                href={`${option.href}?utm_source=grafana_gettingstarted`}
-              >
-                {option.label}
-              </a>
-            );
-          })}
+          {helpOptions.map((option, index) => (
+            <TextLink
+              key={`${option.label}-${index}`}
+              href={`${option.href}?utm_source=grafana_gettingstarted`}
+              external
+              inline={false}
+            >
+              {option.label}
+            </TextLink>
+          ))}
         </div>
       </div>
     </div>
@@ -74,6 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'baseline',
     }),
     helpText: css({
+      ...theme.typography.h3,
       marginRight: theme.spacing(2),
       marginBottom: 0,
 
@@ -88,14 +99,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     helpLinks: css({
       display: 'flex',
       flexWrap: 'wrap',
-    }),
-    helpLink: css({
-      marginRight: theme.spacing(2),
-      textDecoration: 'underline',
+      gap: theme.spacing(2),
       textWrap: 'nowrap',
 
       [theme.breakpoints.down('sm')]: {
-        marginRight: theme.spacing(1),
+        gap: theme.spacing(1),
       },
     }),
   };

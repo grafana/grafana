@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, Legend, Container, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -35,10 +36,14 @@ export const VerifyEmail = () => {
   if (emailSent) {
     return (
       <div>
-        <p>An email with a verification link has been sent to the email address. You should receive it shortly.</p>
+        <p>
+          <Trans i18nKey="sign-up.verify.info">
+            An email with a verification link has been sent to the email address. You should receive it shortly.
+          </Trans>
+        </p>
         <Container margin="md" />
         <LinkButton variant="primary" href={getConfig().appSubUrl + '/signup'}>
-          Complete Signup
+          <Trans i18nKey="sign-up.verify.complete-button">Complete signup</Trans>
         </LinkButton>
       </div>
     );
@@ -46,10 +51,15 @@ export const VerifyEmail = () => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <Legend>Verify Email</Legend>
+      <Legend>
+        <Trans i18nKey="sign-up.verify.header">Verify email</Trans>
+      </Legend>
       <Field
-        label="Email"
-        description="Enter your email address to get a verification link sent to you"
+        label={t('sign-up.verify.email-label', 'Email')}
+        description={t(
+          'sign-up.verify.email-description',
+          'Enter your email address to get a verification link sent to you'
+        )}
         invalid={!!errors.email}
         error={errors.email?.message}
       >
@@ -62,13 +72,14 @@ export const VerifyEmail = () => {
               message: 'Email is invalid',
             },
           })}
-          placeholder="Email"
         />
       </Field>
       <Stack>
-        <Button type="submit">Send verification email</Button>
+        <Button type="submit">
+          <Trans i18nKey="sign-up.verify.send-button">Send verification email</Trans>
+        </Button>
         <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
-          Back to login
+          <Trans i18nKey="sign-up.verify.back-button">Back to login</Trans>
         </LinkButton>
       </Stack>
     </form>

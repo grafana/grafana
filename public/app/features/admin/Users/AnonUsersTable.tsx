@@ -1,18 +1,19 @@
 import { useMemo } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import {
   Avatar,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   InteractiveTable,
   Stack,
   Badge,
   Tooltip,
   Pagination,
-  FetchDataFunc,
+  type FetchDataFunc,
 } from '@grafana/ui';
 import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
-import { UserAnonymousDeviceDTO } from 'app/types';
+import { type UserAnonymousDeviceDTO } from 'app/types/user';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
   UserAnonymousDeviceDTO,
@@ -117,7 +118,9 @@ export const AnonUsersDevicesTable = ({
       )}
       {devices.length === 0 && (
         <EmptyArea>
-          <span>No anonymous users found.</span>
+          <span>
+            <Trans i18nKey="admin.anon-users.not-found">No anonymous users found.</Trans>
+          </span>
         </EmptyArea>
       )}
     </Stack>

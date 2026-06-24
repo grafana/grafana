@@ -1,5 +1,5 @@
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
-import { getGrafanaSearcher } from 'app/features/search/service';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 
 export function BrowseFilters() {
@@ -20,6 +20,8 @@ export function BrowseFilters() {
       onDatasourceChange={stateManager.onDatasourceChange}
       onPanelTypeChange={stateManager.onPanelTypeChange}
       onSetIncludePanels={stateManager.onSetIncludePanels}
+      onCreatedByChange={stateManager.onCreatedByChange}
+      onOwnerReferenceChange={stateManager.onOwnerReferenceChange}
     />
   );
 }

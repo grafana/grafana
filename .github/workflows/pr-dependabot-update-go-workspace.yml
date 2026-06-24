@@ -1,0 +1,61 @@
+name: "Update Go Workspace for Dependabot PRs"
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/pr-dependabot-update-go-workspace.yml
+      - go.mod
+      - go.sum
+      - go.work
+      - go.work.sum
+      - '**/go.mod'
+      - '**/go.sum'
+      - '**.go'
+permissions: {}
+jobs:
+  update:
+    runs-on: ubuntu-arm64
+    permissions:
+      # Pushes use the app token explicitly in the git push URL; GITHUB_TOKEN needs only OIDC for Vault.
+      contents: read
+      id-token: write
+    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
+    continue-on-error: true
+    steps:
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-go-workspace-bot
+
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        ref: ${{ github.event.pull_request.head.ref }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        persist-credentials: false
+
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
+
+    - name: Configure Git
+      run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+    - name: Update workspace
+      run: make update-workspace
+
+    - name: Commit and push workspace changes
+      env:
+        BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+      run: |
+        if ! git diff --exit-code --quiet; then
+          echo "Committing and pushing workspace changes"
+          git commit -a -m "update workspace"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana.git" "HEAD:${BRANCH_NAME}"
+        fi

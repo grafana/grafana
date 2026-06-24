@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
-	"k8s.io/utils/strings/slices"
 )
 
 type TraceQueries struct {
@@ -32,7 +31,15 @@ func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []str
 	filteredTypes := make([]string, 0)
 	// If the result format is set to trace then we filter out all events that are of the type traces as they don't make sense when visualised as a span
 	if resultFormat != nil && *resultFormat == dataquery.ResultFormatTrace {
-		filteredTypes = slices.Filter(filteredTypes, types, func(s string) bool { return s != "traces" })
+		// k8s slices.Filter has been deprecated in favor of stdlib slices.DeleteFunc,
+		// but slices.DeleteFunc mutates the underlying slice, which we don't want to do.
+		// Instead, just iterate over the original slice and apply our filter function to get the new one.
+		// (this is exactly what k8s's slices.Filter did/does)
+		for _, s := range types {
+			if s != "traces" {
+				filteredTypes = append(filteredTypes, s)
+			}
+		}
 	} else {
 		filteredTypes = types
 	}
@@ -125,7 +132,7 @@ func buildTracesLogsQuery(operationId string, resources []string) string {
 	sort.Strings(types)
 	selectors := "union " + strings.Join(types, ",\n") + "\n"
 	if len(resources) > 0 {
-		intermediate := make([]string, 0)
+		intermediate := make([]string, 0, len(resources)*len(types))
 		for _, resource := range resources {
 			for _, table := range types {
 				intermediate = append(intermediate, fmt.Sprintf("app('%s').%s", resource, table))
@@ -198,13 +205,17 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 	resultFormat := ParseResultFormat(azureTracesTarget.ResultFormat, dataquery.AzureQueryTypeAzureTraces)
 
 	resources := azureTracesTarget.Resources
-	if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+	if query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
 		subscription, err := utils.GetFirstSubscriptionOrDefault(ctx, dsInfo, logger)
 		if err != nil {
 			errorMessage := fmt.Errorf("failed to retrieve subscription for trace exemplars query: %w", err)
 			return nil, utils.ApplySourceFromError(errorMessage, err)
 		}
 		resources = []string{fmt.Sprintf("/subscriptions/%s", subscription)}
+	}
+
+	if len(resources) == 0 {
+		return nil, fmt.Errorf("no resources specified for Azure traces query")
 	}
 
 	resourceOrWorkspace := resources[0]
@@ -234,8 +245,11 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 	}
 	sort.Strings(queryResources)
 
-	if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+	if query.QueryType == string(dataquery.AzureQueryTypeTraceExemplar) {
 		resources = queryResources
+		if len(resources) == 0 {
+			return nil, fmt.Errorf("no correlation resources found for trace exemplar query with operation ID: %s", operationId)
+		}
 		resourceOrWorkspace = resources[0]
 	}
 

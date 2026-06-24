@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
@@ -207,7 +207,7 @@ describe('ConfirmModal', () => {
 
     expect(confirmButton).toBeEnabled();
 
-    fireEvent.click(confirmButton);
+    await user.click(confirmButton);
 
     // Ensure React processes the state update and calls useEffect in ConfirmModal
     await act(() => {

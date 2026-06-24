@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type JSX } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
+import { type QueryEditorProps } from '@grafana/data';
 
-import { CloudWatchDatasource } from '../../datasource';
+import { type CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
-import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
+import useMigratedQuery from '../../migrations/useMigratedQuery';
+import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
 import LogsQueryEditor from './LogsQueryEditor/LogsQueryEditor';
 import { MetricsQueryEditor } from './MetricsQueryEditor/MetricsQueryEditor';
@@ -14,6 +15,7 @@ export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, Clou
 
 export const QueryEditor = (props: Props) => {
   const { query, onChange, data } = props;
+  const migratedQuery = useMigratedQuery(query, props.onChange);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [extraHeaderElementLeft, setExtraHeaderElementLeft] = useState<JSX.Element>();
   const [extraHeaderElementRight, setExtraHeaderElementRight] = useState<JSX.Element>();
@@ -39,17 +41,24 @@ export const QueryEditor = (props: Props) => {
         dataIsStale={dataIsStale}
       />
 
-      {isCloudWatchMetricsQuery(query) && (
+      {isCloudWatchMetricsQuery(migratedQuery) && (
         <MetricsQueryEditor
           {...props}
-          query={query}
+          query={migratedQuery}
           onRunQuery={() => {}}
           onChange={onChangeInternal}
           extraHeaderElementLeft={setExtraHeaderElementLeft}
           extraHeaderElementRight={setExtraHeaderElementRight}
         />
       )}
-      {isCloudWatchLogsQuery(query) && <LogsQueryEditor {...props} query={query} onChange={onChangeInternal} />}
+      {isCloudWatchLogsQuery(migratedQuery) && (
+        <LogsQueryEditor
+          {...props}
+          query={migratedQuery}
+          onChange={onChangeInternal}
+          extraHeaderElementLeft={setExtraHeaderElementLeft}
+        />
+      )}
     </>
   );
 };

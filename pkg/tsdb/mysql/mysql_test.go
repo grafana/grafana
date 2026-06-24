@@ -1,18 +1,22 @@
 package mysql
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/mysql/sqleng"
 )
 
@@ -30,9 +34,9 @@ func TestIntegrationMySQL(t *testing.T) {
 	}
 	// change to true to run the MySQL tests
 	runMySQLTests := false
-	// runMySqlTests := true
+	// runMySQLTests := true
 
-	if !(isTestDbMySQL() || runMySQLTests) {
+	if !isTestDbMySQL() && !runMySQLTests {
 		t.Skip()
 	}
 
@@ -45,32 +49,58 @@ func TestIntegrationMySQL(t *testing.T) {
 		return sql
 	}
 
-	dsInfo := sqleng.DataSourceInfo{
-		JsonData: sqleng.JsonData{
-			MaxOpenConns:    0,
-			MaxIdleConns:    2,
-			ConnMaxLifetime: 14400,
+	logger := backend.NewLoggerWith("logger", "mysql.test")
+
+	jsonData := sqleng.JsonData{
+		MaxOpenConns:    0,
+		MaxIdleConns:    2,
+		ConnMaxLifetime: 14400,
+	}
+
+	rawJsonData, err := json.Marshal(&jsonData)
+	require.NoError(t, err)
+
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			ID:       0,
+			UID:      "mysql-test",
+			URL:      fmt.Sprintf("%s:%s", cmp.Or(os.Getenv("MYSQL_HOST"), "localhost"), cmp.Or(os.Getenv("MYSQL_PORT"), "3306")),
+			Type:     "mysql",
+			Name:     "mysql-test",
+			User:     "grafana",
+			Database: "grafana_ds_tests",
+			JSONData: rawJsonData,
+			DecryptedSecureJSONData: map[string]string{
+				"password": "password",
+			},
 		},
 	}
 
-	config := sqleng.DataPluginConfiguration{
-		DSInfo:            dsInfo,
-		TimeColumnNames:   []string{"time", "time_sec"},
-		MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
-		RowLimit:          1000000,
+	cfg := config.NewGrafanaCfg(map[string]string{
+		backend.SQLMaxOpenConnsDefault:           "0",
+		backend.SQLMaxIdleConnsDefault:           "2",
+		backend.SQLMaxConnLifetimeSecondsDefault: "14400",
+		backend.SQLRowLimit:                      "1000000",
+		backend.UserFacingDefaultError:           "",
+	})
+
+	ctx := config.WithGrafanaConfig(context.Background(), cfg)
+
+	exe := &Service{
+		im:     datasource.NewInstanceManager(NewInstanceSettings(logger)),
+		logger: logger,
 	}
 
-	rowTransformer := mysqlQueryResultTransformer{}
-
-	logger := backend.NewLoggerWith("logger", "mysql.test")
-
-	db := InitMySQLTestDB(t, config.DSInfo.JsonData)
-
-	exe, err := sqleng.NewQueryDataHandler("", db, config, &rowTransformer, newMysqlMacroEngine(logger, ""), logger)
-
-	require.NoError(t, err)
+	db := InitMySQLTestDB(t, jsonData)
 
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
+
+	queryWithPluginCtx := func(q backend.QueryDataRequest) *backend.QueryDataRequest {
+		return &backend.QueryDataRequest{
+			PluginContext: pluginCtx,
+			Queries:       q.Queries,
+		}
+	}
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
 		_, err = db.Exec("DROP TABLE IF EXISTS mysql_types")
@@ -125,7 +155,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("Query with Table format should map MySQL column types to Go types", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -135,9 +165,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -148,7 +178,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			frameOne := frames[0]
 			require.Len(t, frames[0].Fields, 31)
 			require.Equal(t, int64(1), *(frameOne.Fields[0].At(0).(*int64)))
-			require.Equal(t, "abc", *frameOne.Fields[1].At(0).(*string))
+			require.Equal(t, "abc", frameOne.Fields[1].At(0).(string))
 			require.Equal(t, "def", *frameOne.Fields[2].At(0).(*string))
 			require.Equal(t, int32(1), frameOne.Fields[3].At(0).(int32))
 			require.Equal(t, int64(10), *(frameOne.Fields[4].At(0).(*int64)))
@@ -159,7 +189,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			require.Equal(t, float64(3.33), *(frameOne.Fields[9].At(0).(*float64)))
 			require.WithinDuration(t, time.Now().UTC(), *frameOne.Fields[10].At(0).(*time.Time), 10*time.Second)
 			require.WithinDuration(t, time.Now(), *frameOne.Fields[11].At(0).(*time.Time), 10*time.Second)
-			require.Equal(t, "11:11:11", *frameOne.Fields[12].At(0).(*string))
+			require.Equal(t, "11:11:11", frameOne.Fields[12].At(0).(string))
 			require.Equal(t, int64(2018), *frameOne.Fields[13].At(0).(*int64))
 			require.Equal(t, string([]byte{1}), *frameOne.Fields[14].At(0).(*string))
 			require.Equal(t, "tinytext", *frameOne.Fields[15].At(0).(*string))
@@ -193,9 +223,9 @@ func TestIntegrationMySQL(t *testing.T) {
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS metric (time DATETIME NULL, value BIGINT(20) NULL)")
 		require.NoError(t, err)
 
-		series := []*metric{}
 		firstRange := genTimeRangeByInterval(fromStart, 10*time.Minute, 10*time.Second)
 		secondRange := genTimeRangeByInterval(fromStart.Add(20*time.Minute), 10*time.Minute, 10*time.Second)
+		series := make([]*metric, 0, len(firstRange)+len(secondRange))
 
 		for _, t := range firstRange {
 			series = append(series, &metric{
@@ -217,7 +247,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		}
 
 		t.Run("When doing a metric query using timeGroup", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -227,9 +257,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -261,7 +291,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using timeGroup with NULL fill enabled", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -275,9 +305,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						},
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -322,7 +352,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			})
 
 			t.Run("Should replace $__interval", func(t *testing.T) {
-				query := &backend.QueryDataRequest{
+				query := queryWithPluginCtx(backend.QueryDataRequest{
 					Queries: []backend.DataQuery{
 						{
 							JSON: []byte(`{
@@ -337,9 +367,9 @@ func TestIntegrationMySQL(t *testing.T) {
 							},
 						},
 					},
-				}
+				})
 
-				resp, err := exe.QueryData(context.Background(), query)
+				resp, err := exe.QueryData(ctx, query)
 				require.NoError(t, err)
 				queryResult := resp.Responses["A"]
 				require.NoError(t, queryResult.Error)
@@ -350,7 +380,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using timeGroup with value fill enabled", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -364,9 +394,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						},
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -379,7 +409,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using timeGroup with previous fill enabled", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -393,9 +423,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						},
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -459,7 +489,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 		var tInitial time.Time
 
-		series := []*metric_values{}
+		series := []*metric_values{} //nolint:prealloc
 		for i, t := range genTimeRangeByInterval(fromStart.Add(-30*time.Minute), 90*time.Minute, 5*time.Minute) {
 			if i == 0 {
 				tInitial = t
@@ -518,7 +548,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		}
 
 		t.Run("When doing a metric query using time as time column should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -528,9 +558,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -543,7 +573,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using tinyint as value column should return metric with value in *float64", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -553,9 +583,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -567,7 +597,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using smallint as value column should return metric with value in *float64", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -577,9 +607,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -591,7 +621,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using time (nullable) as time column should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -601,9 +631,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -614,7 +644,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -624,9 +654,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -637,7 +667,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable) should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -647,9 +677,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -660,7 +690,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using epoch (float64) as time column and value column (float64) should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -670,9 +700,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -683,7 +713,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable) should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -693,9 +723,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -706,7 +736,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -716,9 +746,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -729,7 +759,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable) should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -739,9 +769,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -752,7 +782,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using epoch (float32) as time column and value column (float32) should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -762,9 +792,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -776,7 +806,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable) should return metric with time in time.Time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -786,9 +816,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -800,7 +830,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query grouping by time and select metric column should return correct series", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -810,9 +840,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -825,7 +855,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query with metric column and multiple value columns", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -835,9 +865,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -857,7 +887,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing a metric query grouping by time should return correct series", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -867,9 +897,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -884,7 +914,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	t.Run("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func(t *testing.T) {
 		sqleng.Interpolate = origInterpolate
-		query := &backend.QueryDataRequest{
+		query := queryWithPluginCtx(backend.QueryDataRequest{
 			Queries: []backend.DataQuery{
 				{
 					JSON: []byte(`{
@@ -895,9 +925,9 @@ func TestIntegrationMySQL(t *testing.T) {
 					TimeRange: backend.TimeRange{From: fromStart.Add(-5 * time.Minute), To: fromStart},
 				},
 			},
-		}
+		})
 
-		resp, err := exe.QueryData(context.Background(), query)
+		resp, err := exe.QueryData(ctx, query)
 		require.NoError(t, err)
 		queryResult := resp.Responses["A"]
 		require.NoError(t, queryResult.Error)
@@ -919,7 +949,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS event (time_sec BIGINT(20) NULL, description VARCHAR(255) NULL, tags VARCHAR(255) NULL)")
 		require.NoError(t, err)
 
-		events := []*event{}
+		events := []*event{} //nolint:prealloc
 		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
@@ -939,7 +969,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		}
 
 		t.Run("When doing an annotation query of deploy events should return expected result", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -953,9 +983,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						},
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["Deploys"]
 
@@ -966,7 +996,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query of ticket events should return expected result", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -980,9 +1010,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						},
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["Tickets"]
 			frames := queryResult.Frames
@@ -995,16 +1025,16 @@ func TestIntegrationMySQL(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 0, time.UTC)
 			dtFormat := "2006-01-02 15:04:05.999999999"
 			queryJson := fmt.Sprintf("{\"rawSql\": \"SELECT CAST('%s' as datetime) as time_sec, 'message' as text, 'tag1,tag2' as tags\", \"format\": \"table\"}", dt.Format(dtFormat))
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON:  []byte(queryJson),
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1019,16 +1049,16 @@ func TestIntegrationMySQL(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in epoch second format should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 			queryJson := fmt.Sprintf("{\"rawSql\": \"SELECT %d as time_sec, 'message' as text, 'tag1,tag2' as tags\", \"format\": \"table\"}", dt.Unix())
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON:  []byte(queryJson),
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1043,16 +1073,16 @@ func TestIntegrationMySQL(t *testing.T) {
 		t.Run("When doing an annotation query with a time column in epoch second format (signed integer) should return ms", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 0, time.Local)
 			queryJson := fmt.Sprintf("{\"rawSql\": \"SELECT CAST('%d' as signed integer) as time_sec, 'message' as text, 'tag1,tag2' as tags\", \"format\": \"table\"}", dt.Unix())
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON:  []byte(queryJson),
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1068,16 +1098,16 @@ func TestIntegrationMySQL(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 			queryJson := fmt.Sprintf("{\"rawSql\": \"SELECT %d as time_sec, 'message' as text, 'tag1,tag2' as tags\", \"format\": \"table\"}", dt.Unix()*1000)
 
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON:  []byte(queryJson),
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1090,7 +1120,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query with a time column holding a unsigned integer null value should return nil", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -1100,9 +1130,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1116,7 +1146,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query with a time column holding a DATETIME null value should return nil", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -1126,9 +1156,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1142,7 +1172,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		})
 
 		t.Run("When doing an annotation query with a time and timeend column should return two fields of type time", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -1152,9 +1182,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						RefID: "A",
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 			require.NoError(t, queryResult.Error)
@@ -1182,7 +1212,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
-				query := &backend.QueryDataRequest{
+				query := queryWithPluginCtx(backend.QueryDataRequest{
 					Queries: []backend.DataQuery{
 						{
 							JSON: []byte(`{
@@ -1196,7 +1226,7 @@ func TestIntegrationMySQL(t *testing.T) {
 							},
 						},
 					},
-				}
+				})
 
 				resp, err := handler.QueryData(context.Background(), query)
 				require.NoError(t, err)
@@ -1212,7 +1242,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			})
 
 			t.Run("When doing a time series that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
-				query := &backend.QueryDataRequest{
+				query := queryWithPluginCtx(backend.QueryDataRequest{
 					Queries: []backend.DataQuery{
 						{
 							JSON: []byte(`{
@@ -1226,7 +1256,7 @@ func TestIntegrationMySQL(t *testing.T) {
 							},
 						},
 					},
-				}
+				})
 
 				resp, err := handler.QueryData(context.Background(), query)
 				require.NoError(t, err)
@@ -1251,7 +1281,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
-			query := &backend.QueryDataRequest{
+			query := queryWithPluginCtx(backend.QueryDataRequest{
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
@@ -1265,9 +1295,9 @@ func TestIntegrationMySQL(t *testing.T) {
 						},
 					},
 				},
-			}
+			})
 
-			resp, err := exe.QueryData(context.Background(), query)
+			resp, err := exe.QueryData(ctx, query)
 			require.NoError(t, err)
 			queryResult := resp.Responses["A"]
 
@@ -1324,5 +1354,5 @@ func mySQLTestDBConnStr() string {
 	if port == "" {
 		port = "3306"
 	}
-	return fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true&loc=UTC", host, port)
+	return fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode=ANSI_QUOTES&parseTime=true&loc=UTC", host, port)
 }

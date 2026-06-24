@@ -1,22 +1,18 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
+import { type LdapState, type LdapConnectionInfo, type LdapError, type SyncInfo, type LdapUser } from 'app/types/ldap';
 import {
-  LdapConnectionInfo,
-  LdapError,
-  LdapState,
-  LdapUser,
-  SyncInfo,
-  UserAdminError,
-  UserAdminState,
-  UserDTO,
-  UserOrg,
-  UserSession,
-  UserListAdminState,
-  UserFilter,
-  UserListAnonymousDevicesState,
-  UserAnonymousDeviceDTO,
-  AnonUserFilter,
-} from 'app/types';
+  type UserAdminState,
+  type UserDTO,
+  type UserOrg,
+  type UserSession,
+  type UserAdminError,
+  type UserListAdminState,
+  type UserFilter,
+  type UserListAnonymousDevicesState,
+  type UserAnonymousDeviceDTO,
+  type AnonUserFilter,
+} from 'app/types/user';
 
 const initialLdapState: LdapState = {
   connectionInfo: [],
@@ -86,7 +82,7 @@ const initialUserAdminState: UserAdminState = {
   error: undefined,
 };
 
-export const userAdminSlice = createSlice({
+const userAdminSlice = createSlice({
   name: 'userAdmin',
   initialState: initialUserAdminState,
   reducers: {
@@ -144,7 +140,7 @@ interface UsersFetched {
   totalCount: number;
 }
 
-export const userListAdminSlice = createSlice({
+const userListAdminSlice = createSlice({
   name: 'userListAdmin',
   initialState: initialUserListAdminState,
   reducers: {
@@ -223,7 +219,7 @@ interface UsersAnonymousDevicesFetched {
   totalCount: number;
 }
 
-export const userListAnonymousDevicesSlice = createSlice({
+const userListAnonymousDevicesSlice = createSlice({
   name: 'userListAnonymousDevices',
   initialState: initialUserListAnonymousDevicesState,
   reducers: {
@@ -274,7 +270,7 @@ export const userListAnonymousDevicesSlice = createSlice({
 
 export const { usersAnonymousDevicesFetched, anonUserSortChanged, anonPageChanged, anonQueryChanged } =
   userListAnonymousDevicesSlice.actions;
-export const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
+const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
 
 export default {
   ldap: ldapReducer,

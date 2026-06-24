@@ -1,6 +1,8 @@
 import { css, cx } from '@emotion/css';
+import type { JSX } from 'react';
 
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { t } from '@grafana/i18n';
+import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';
 import { DetailsField } from '../DetailsField';
@@ -21,7 +23,11 @@ export function RuleDetailsExpression(props: Props): JSX.Element | null {
   }
 
   return (
-    <DetailsField label="Expression" horizontal={true} className={cx({ [styles.exprRow]: !!annotations.length })}>
+    <DetailsField
+      label={t('alerting.rule-details-expression.label-expression', 'Expression')}
+      horizontal={true}
+      className={cx({ [styles.exprRow]: !!annotations.length })}
+    >
       <Expression expression={rule.query} rulesSource={rulesSource} />
     </DetailsField>
   );

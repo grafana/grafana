@@ -11,11 +11,6 @@ on:
         required: false
         default: false
         description: When enabled, this workflow will print a preview instead of creating an actual post.
-    secrets:
-      GRAFANA_MISC_STATS_API_KEY:
-        required: true
-      GRAFANABOT_FORUM_KEY:
-        required: true
   workflow_dispatch:
     inputs:
       version:
@@ -28,19 +23,28 @@ on:
         default: false
         description: When enabled, this workflow will print a preview instead of creating an actual post.
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/repo/grafana/grafana/community_release path in Vault
+          repo_secrets: |
+            GRAFANABOT_FORUM_KEY=community_release:GRAFANABOT_FORUM_KEY
+
       - name: Run community-release (manually invoked)
         uses: grafana/grafana-github-actions-go/community-release@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-          community_api_key: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+          community_api_key: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANABOT_FORUM_KEY }}
           community_api_username: grafanabot
           dry_run: ${{ inputs.dry_run }}

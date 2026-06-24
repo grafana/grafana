@@ -1,11 +1,11 @@
 import { forEach, sortBy } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
-import { FuncDefs, FuncInstance, ParamDef } from '../gfunc';
-import { GraphiteQuery, GraphiteQueryType, GraphiteSegment } from '../types';
+import { type FuncDefs, type FuncInstance, type ParamDef } from '../gfunc';
+import { type GraphiteQuery, GraphiteQueryType, type GraphiteSegment } from '../types';
 
-import { EditableParam } from './FunctionParamEditor';
+import { type EditableParam } from './FunctionParamEditor';
 
 export function mapStringsToSelectables<T extends string>(values: T[]): Array<SelectableValue<T>> {
   return values.map((value) => ({
@@ -22,7 +22,7 @@ export function mapSegmentsToSelectables(segments: GraphiteSegment[]): Array<Sel
 }
 
 export function mapFuncDefsToSelectables(funcDefs: FuncDefs): Array<SelectableValue<string>> {
-  const categories: any = {};
+  const categories: Record<string, SelectableValue<string>> = {};
 
   forEach(funcDefs, (funcDef) => {
     if (!funcDef.category) {

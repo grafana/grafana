@@ -11,6 +11,7 @@ import (
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
@@ -44,8 +45,8 @@ func NewReverseProxy(logger glog.Logger, director func(*http.Request), opts ...R
 		opt(p)
 	}
 
-	origDirector := p.Director
-	p.Director = wrapDirector(origDirector)
+	origDirector := p.Director              // nolint:staticcheck
+	p.Director = wrapDirector(origDirector) // nolint:staticcheck
 
 	if p.ModifyResponse == nil {
 		// nolint:bodyclose
@@ -102,7 +103,7 @@ func modifyResponse(logger glog.Logger) func(resp *http.Response) error {
 			resp.Header.Del(header)
 		}
 
-		SetProxyResponseHeaders(resp.Header)
+		client.SetCSPHeader(resp.Header)
 		SetViaHeader(resp.Header, resp.ProtoMajor, resp.ProtoMinor)
 
 		requestmeta.WithStatusSource(resp.Request.Context(), resp.StatusCode)

@@ -1,5 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`hashRulerRule should hash alerting rule 1`] = `"7317348"`;
-
-exports[`hashRulerRule should hash recording rules 1`] = `"-447747460"`;

@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 )
 
 type mockRequestCallback func(req *http.Request)
@@ -57,16 +57,16 @@ func (mockedRT *mockedCompressedRoundTripper) RoundTrip(req *http.Request) (*htt
 	}, nil
 }
 
-func makeMockedAPI(statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback, structuredMetadata bool) *LokiAPI {
-	return makeMockedAPIWithUrl("http://localhost:9999", statusCode, contentType, responseBytes, requestCallback, structuredMetadata)
+func makeMockedAPI(statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback) *LokiAPI {
+	return makeMockedAPIWithUrl("http://localhost:9999", statusCode, contentType, responseBytes, requestCallback)
 }
 
-func makeMockedAPIWithUrl(url string, statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback, structuredMetadata bool) *LokiAPI {
+func makeMockedAPIWithUrl(url string, statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback) *LokiAPI {
 	client := http.Client{
 		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, backend.NewLoggerWith("logger", "test"), tracing.InitializeTracerForTest(), structuredMetadata)
+	return newLokiAPI(&client, url, backend.NewLoggerWith("logger", "test"), tracing.DefaultTracer())
 }
 
 func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback) *LokiAPI {
@@ -74,5 +74,5 @@ func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType stri
 		Transport: &mockedCompressedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, backend.NewLoggerWith("logger", "test"), tracing.InitializeTracerForTest(), false)
+	return newLokiAPI(&client, url, backend.NewLoggerWith("logger", "test"), tracing.DefaultTracer())
 }

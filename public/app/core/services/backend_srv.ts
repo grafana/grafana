@@ -1,5 +1,16 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
-import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
+import {
+  from,
+  lastValueFrom,
+  type MonoTypeOperatorFunction,
+  Observable,
+  type Observer,
+  type OperatorFunction,
+  Subject,
+  type Subscriber,
+  Subscription,
+  throwError,
+} from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
   catchError,
@@ -13,19 +24,24 @@ import {
   tap,
   throwIfEmpty,
 } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
-import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { AppEvents, DataQueryErrorType, deprecationWarning, generateUUID } from '@grafana/data';
+import {
+  type BackendSrv as BackendService,
+  type BackendSrvRequest,
+  config,
+  type FetchError,
+  type FetchResponse,
+} from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { DashboardSearchItem } from 'app/features/search/types';
+import { type DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
-import { DashboardDTO, FolderDTO } from 'app/types';
+import { type DashboardDTO } from 'app/types/dashboard';
+import { type FolderDTO } from 'app/types/folders';
 
 import { ShowModalReactEvent } from '../../types/events';
 import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
@@ -34,7 +50,7 @@ import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
 import { ResponseQueue } from './ResponseQueue';
-import { ContextSrv, contextSrv } from './context_srv';
+import { type ContextSrv, contextSrv } from './context_srv';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -109,7 +125,7 @@ export class BackendSrv implements BackendService {
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
-    const id = uuidv4();
+    const id = generateUUID();
     const fetchQueue = this.fetchQueue;
 
     return new Observable((observer) => {
@@ -142,6 +158,98 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  chunkRequestId = 1;
+
+  chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
+    const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
+    const controller = new AbortController();
+
+    const init = parseInitFromOptions({
+      ...options,
+      requestId,
+      abortSignal: controller.signal,
+    });
+
+    return new Observable((observer) => {
+      // Calling fromFetch explicitly avoids the request queue
+      const sub = parseUrlFromOptions(options)
+        .pipe(mergeMap((url) => this.dependencies.fromFetch(url, init)))
+        .subscribe(this.getChunkedResponseObserver({ controller, observer, options, requestId }));
+
+      return function unsubscribe() {
+        controller.abort('unsubscribe');
+        sub.unsubscribe();
+      };
+    });
+  }
+
+  private getChunkedResponseObserver({
+    controller,
+    observer,
+    options,
+    requestId,
+  }: {
+    controller: AbortController;
+    observer: Subscriber<FetchResponse<Uint8Array<ArrayBufferLike> | undefined>>;
+    options: BackendSrvRequest;
+    requestId: string;
+  }): Partial<Observer<Response>> {
+    let done = false;
+    return {
+      next: (response) => {
+        const rsp = {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          headers: response.headers,
+          url: response.url,
+          type: response.type,
+          redirected: response.redirected,
+          config: options,
+          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+          data: undefined,
+        };
+
+        if (!response.body) {
+          observer.next(rsp);
+          observer.complete();
+          return;
+        }
+
+        const reader = response.body.getReader();
+
+        // Setup onabort callback so that we can cancel the reader properly
+        controller.signal.onabort = () => {
+          reader.cancel(controller.signal.reason);
+        };
+
+        async function process() {
+          while (reader && !done) {
+            const chunk = await reader.read();
+            observer.next({
+              ...rsp,
+              data: chunk.value,
+            });
+            if (chunk.done) {
+              done = true;
+            }
+          }
+        }
+        process()
+          .then(() => {
+            observer.complete();
+          }) // runs in background
+          .catch((e) => {
+            console.log(requestId, 'catch', e);
+            observer.error(e);
+          }); // from abort
+      },
+      error: (e) => {
+        observer.error(e);
+      },
+    };
+  }
+
   private internalFetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     if (options.requestId) {
       this.inFlightRequests.next(options.requestId);
@@ -162,7 +270,8 @@ export class BackendSrv implements BackendService {
       options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
 
-    return this.getFromFetchStream<T>(options).pipe(
+    return parseUrlFromOptions(options).pipe(
+      this.getFromFetchStream<T>(options),
       this.handleStreamResponse<T>(options),
       this.handleStreamError(options),
       this.handleStreamCancellation(options)
@@ -216,32 +325,36 @@ export class BackendSrv implements BackendService {
     return options;
   }
 
-  private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    const url = parseUrlFromOptions(options);
-    const init = parseInitFromOptions(options);
+  private getFromFetchStream<T>(options: BackendSrvRequest): OperatorFunction<string, FetchResponse<T>> {
+    return (inputStream) =>
+      inputStream.pipe(
+        mergeMap((url) => {
+          const init = parseInitFromOptions(options);
 
-    return this.dependencies.fromFetch(url, init).pipe(
-      mergeMap(async (response) => {
-        const { status, statusText, ok, headers, url, type, redirected } = response;
+          return this.dependencies.fromFetch(url, init).pipe(
+            mergeMap(async (response) => {
+              const { status, statusText, ok, headers, url, type, redirected } = response;
 
-        const responseType = options.responseType ?? (isContentTypeJson(headers) ? 'json' : undefined);
+              const responseType = options.responseType ?? (isContentTypeJson(headers) ? 'json' : undefined);
 
-        const data = await parseResponseBody<T>(response, responseType);
-        const fetchResponse: FetchResponse<T> = {
-          status,
-          statusText,
-          ok,
-          data,
-          headers,
-          url,
-          type,
-          redirected,
-          config: options,
-          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
-        };
-        return fetchResponse;
-      })
-    );
+              const data = await parseResponseBody<T>(response, responseType);
+              const fetchResponse: FetchResponse<T> = {
+                status,
+                statusText,
+                ok,
+                data,
+                headers,
+                url,
+                type,
+                redirected,
+                config: options,
+                traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+              };
+              return fetchResponse;
+            })
+          );
+        })
+      );
   }
 
   showApplicationErrorAlert(err: FetchError) {}
@@ -269,6 +382,16 @@ export class BackendSrv implements BackendService {
   }
 
   showErrorAlert(config: BackendSrvRequest, err: FetchError) {
+    // do not show non-user error alerts for api keys or render tokens, they are used for kiosk mode and reporting and can't react to error pop-ups
+    if (
+      (err.status < 400 || err.status >= 500) &&
+      this.dependencies.contextSrv.isSignedIn &&
+      (this.dependencies.contextSrv.user.authenticatedBy === 'apikey' ||
+        this.dependencies.contextSrv.user.authenticatedBy === 'render')
+    ) {
+      return;
+    }
+
     if (config.showErrorAlert === false) {
       return;
     }
@@ -313,8 +436,9 @@ export class BackendSrv implements BackendService {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
+      const message = isHtmlResponse(err.data) ? `${err.status} ${err.statusText ?? 'Error'}` : err.data;
       err.data = {
-        message: err.data,
+        message,
         error: err.statusText,
         response: err.data,
       };
@@ -514,24 +638,19 @@ export class BackendSrv implements BackendService {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
-    return getDashboardAPI().getDashboardDTO(uid);
-  }
-
-  validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
-    // support for this function will be implemented in the k8s flavored api-server
-    // hidden by experimental feature flag:
-    //  config.featureToggles.showDashboardValidationWarnings
-    return Promise.resolve({
-      isValid: false,
-      message: 'dashboard validation is not supported',
-    });
+    return getDashboardAPI('v1').then((api) => api.getDashboardDTO(uid));
   }
 
   getPublicDashboardByUid(uid: string) {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
+  /**
+   * @deprecated Use getFolderByUidFacade from app/api/clients/folder/v1beta1/hooks instead
+   * or manually handle calling legacy vs app platform API based on feature toggles
+   */
   getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
+    deprecationWarning('backend_srv', 'getFolderByUid(uid)', 'getFolderByUidFacade(uid)');
     const queryParams = new URLSearchParams();
     if (options.withAccessControl) {
       queryParams.set('accesscontrol', 'true');
@@ -543,11 +662,11 @@ export class BackendSrv implements BackendService {
   }
 }
 
+function isHtmlResponse(value: string): boolean {
+  const trimmed = value.trimStart().toLowerCase();
+  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html');
+}
+
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
-
-interface ValidateDashboardResponse {
-  isValid: boolean;
-  message?: string;
-}

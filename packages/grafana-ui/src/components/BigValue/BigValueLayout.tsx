@@ -1,15 +1,21 @@
-import { CSSProperties } from 'react';
+import { type CSSProperties, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { formattedValueToString, DisplayValue, FieldConfig, FieldType, ThemeVisualizationColors } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig, PercentChangeColorMode } from '@grafana/schema';
+import {
+  formattedValueToString,
+  type DisplayValue,
+  type FieldConfig,
+  FieldType,
+  type ThemeVisualizationColors,
+} from '@grafana/data';
+import { GraphDrawStyle, type GraphFieldConfig, PercentChangeColorMode } from '@grafana/schema';
 
-import { getTextColorForAlphaBackground } from '../../utils';
+import { getTextColorForAlphaBackground } from '../../utils/colors';
 import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { BigValueColorMode, type Props, BigValueJustifyMode, BigValueTextMode } from './BigValueTypes';
 import { percentChangeString } from './PercentChange';
 
 const LINE_HEIGHT = 1.2;
@@ -19,6 +25,7 @@ const VALUE_FONT_WEIGHT = 500;
 export abstract class BigValueLayout {
   titleFontSize: number;
   valueFontSize: number;
+  percentFontSize: number;
   chartHeight: number;
   chartWidth: number;
   valueColor: string;
@@ -41,6 +48,7 @@ export abstract class BigValueLayout {
     this.titleToAlignTo = this.textValues.titleToAlignTo;
     this.titleFontSize = 0;
     this.valueFontSize = 0;
+    this.percentFontSize = 0;
     this.chartHeight = 0;
     this.chartWidth = 0;
     this.maxTextWidth = width - this.panelPadding * 2;
@@ -55,6 +63,9 @@ export abstract class BigValueLayout {
       if (text.valueSize) {
         this.valueFontSize = text.valueSize;
         this.valueToAlignTo = '';
+      }
+      if (text.percentSize) {
+        this.percentFontSize = text.percentSize;
       }
     }
   }
@@ -111,8 +122,8 @@ export abstract class BigValueLayout {
   ): PercentChangeStyles {
     const VALUE_TO_PERCENT_CHANGE_RATIO = 2.5;
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
-    const percentFontSize = Math.max(this.valueFontSize / VALUE_TO_PERCENT_CHANGE_RATIO, 12);
-    let iconSize = Math.max(this.valueFontSize / 3, 10);
+    const percentFontSize = this.percentFontSize || Math.max(this.valueFontSize / VALUE_TO_PERCENT_CHANGE_RATIO, 12);
+    let iconSize = this.percentFontSize ? this.percentFontSize - 3 : Math.max(this.valueFontSize / 3, 10);
     const themeVisualizationColors = this.props.theme.visualization;
     const color = getPercentChangeColor(percentChange, percentChangeColorMode, valueStyles, themeVisualizationColors);
 
@@ -166,7 +177,7 @@ export abstract class BigValueLayout {
 
     return {
       containerStyles,
-      iconSize: iconSize,
+      iconSize,
     };
   }
 
@@ -193,7 +204,6 @@ export abstract class BigValueLayout {
       width: `${width}px`,
       height: `${height}px`,
       padding: `${textMode === BigValueTextMode.None ? 2 : this.panelPadding}px`,
-      borderRadius: theme.shape.radius.default,
       position: 'relative',
       display: 'flex',
     };
@@ -283,18 +293,23 @@ export abstract class BigValueLayout {
   }
 }
 
-export class WideNoChartLayout extends BigValueLayout {
+class WideNoChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
     const valueWidthPercent = this.titleToAlignTo?.length ? 0.3 : 1.0;
 
     if (this.valueToAlignTo.length) {
+      let valueHeight = this.maxTextHeight;
+      if (props.value.percentChange != null) {
+        // percent change uses 40% of value height, so we want to scale the value font size accordingly
+        valueHeight = valueHeight * 0.75;
+      }
       // initial value size
       this.valueFontSize = calculateFontSize(
         this.valueToAlignTo,
         this.maxTextWidth * valueWidthPercent,
-        this.maxTextHeight,
+        valueHeight,
         LINE_HEIGHT,
         undefined,
         VALUE_FONT_WEIGHT
@@ -475,10 +490,15 @@ export class StackedWithNoChartLayout extends BigValueLayout {
     }
 
     if (this.valueToAlignTo.length) {
+      let valueHeight = this.maxTextHeight - titleHeight;
+      if (props.value.percentChange != null) {
+        // percent change uses 40% of value height, so we want to scale the value font size accordingly
+        valueHeight = valueHeight * 0.75;
+      }
       this.valueFontSize = calculateFontSize(
         this.valueToAlignTo,
         this.maxTextWidth,
-        this.maxTextHeight - titleHeight,
+        valueHeight,
         LINE_HEIGHT,
         undefined,
         VALUE_FONT_WEIGHT
@@ -529,7 +549,7 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 }
 
-export function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: string) {
+function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: string) {
   if (justifyMode === BigValueJustifyMode.Center) {
     return true;
   }

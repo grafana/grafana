@@ -1,11 +1,13 @@
 import {
-  ColumnDefinition,
+  type ColumnDefinition,
   getStandardSQLCompletionProvider,
-  LanguageCompletionProvider,
-  TableDefinition,
-  TableIdentifier,
-} from '@grafana/experimental';
-import { DB, SQLQuery } from '@grafana/sql';
+  type LanguageCompletionProvider,
+  type LinkedToken,
+  type TableDefinition,
+  type TableIdentifier,
+  TokenType,
+} from '@grafana/plugin-ui';
+import { type DB, type SQLQuery } from '@grafana/sql';
 
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
@@ -19,6 +21,23 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     tables: {
       resolve: async () => {
         return await getTables.current();
+      },
+      // Default parser doesn't handle schema.table syntax
+      parseName: (token: LinkedToken | undefined | null) => {
+        if (!token) {
+          return { table: '' };
+        }
+
+        let processedToken = token;
+        let tablePath = processedToken.value;
+
+        // Parse schema.table syntax
+        while (processedToken.next && processedToken.next.type !== TokenType.Whitespace) {
+          tablePath += processedToken.next.value;
+          processedToken = processedToken.next;
+        }
+
+        return { table: tablePath };
       },
     },
     columns: {

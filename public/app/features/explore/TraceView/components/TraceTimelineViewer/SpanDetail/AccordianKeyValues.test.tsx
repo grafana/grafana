@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import AccordianKeyValues, { KeyValuesSummary, AccordianKeyValuesProps } from './AccordianKeyValues';
+import AccordianKeyValues, { KeyValuesSummary, type AccordianKeyValuesProps } from './AccordianKeyValues';
 
 const tags = [
   { key: 'span.kind', value: 'client' },
@@ -96,9 +96,7 @@ describe('AccordianKeyValues test', () => {
   it('renders the summary instead of the table when it is not expanded', () => {
     setupAccordian({ isOpen: false } as AccordianKeyValuesProps);
 
-    expect(
-      screen.getByRole('switch', { name: 'test accordian: span.kind = client omg = mos-def' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'test accordian span.kind client omg mos-def' })).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.queryAllByRole('cell')).toHaveLength(0);
   });

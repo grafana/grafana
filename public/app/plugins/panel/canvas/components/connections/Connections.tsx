@@ -2,12 +2,12 @@ import * as React from 'react';
 import { BehaviorSubject } from 'rxjs';
 
 import { config } from '@grafana/runtime';
-import { CanvasConnection, ConnectionCoordinates, ConnectionPath } from 'app/features/canvas/element';
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { type CanvasConnection, type ConnectionCoordinates, ConnectionPath } from 'app/features/canvas/element';
+import { type ElementState } from 'app/features/canvas/runtime/element';
+import { type Scene } from 'app/features/canvas/runtime/scene';
 import { findElementByTarget } from 'app/features/canvas/runtime/sceneElementManagement';
 
-import { ConnectionState } from '../../types';
+import { type ConnectionState } from '../../types';
 import {
   calculateAngle,
   calculateCoordinates,
@@ -26,6 +26,10 @@ import {
   HALF_SIZE,
 } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
+import {
+  updateConnectionsAfterIndividualMove as sharedUpdateIndividual,
+  updateConnectionsAfterGroupMove as sharedUpdateGroup,
+} from './connectionMovementUtils';
 
 export const CONNECTION_VERTEX_ID = 'vertex';
 export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
@@ -43,6 +47,8 @@ export class Connections {
   connectionVertex?: SVGCircleElement;
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
+  // for back compatibility with Connections2
+  connectionsSVG?: SVGElement;
   isDrawingConnection?: boolean;
   selectedVertexIndex?: number;
   didConnectionLeaveHighlight?: boolean;
@@ -208,8 +214,8 @@ export class Connections {
       return;
     }
 
-    const x = event.pageX - parentBoundingRect.x ?? 0;
-    const y = event.pageY - parentBoundingRect.y ?? 0;
+    const x = event.pageX - (parentBoundingRect.x ?? 0);
+    const y = event.pageY - (parentBoundingRect.y ?? 0);
 
     this.connectionLine.setAttribute('x2', `${x / transformScale}`);
     this.connectionLine.setAttribute('y2', `${y / transformScale}`);
@@ -328,8 +334,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);
@@ -483,8 +489,8 @@ export class Connections {
       return;
     }
 
-    const x = (event.pageX - parentBoundingRect.x) / transformScale ?? 0;
-    const y = (event.pageY - parentBoundingRect.y) / transformScale ?? 0;
+    const x = (event.pageX - parentBoundingRect.x) / transformScale;
+    const y = (event.pageY - parentBoundingRect.y) / transformScale;
 
     this.connectionVertex?.setAttribute('cx', `${x}`);
     this.connectionVertex?.setAttribute('cy', `${y}`);
@@ -677,7 +683,46 @@ export class Connections {
     return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
   };
 
-  render() {
+  // Update connection coordinates when an individual element is moved
+  updateConnectionsAfterIndividualMove = (movedElement: ElementState) => {
+    // Adapter for calculateCoordinates to match the shared utility signature
+    const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
+      const sourceRect = source.div?.getBoundingClientRect();
+      const parent = source.div?.parentElement;
+      const transformScale = this.scene.scale;
+      const parentRect = getParentBoundingClientRect(this.scene);
+
+      if (sourceRect && target.div && parent && parentRect) {
+        return calculateCoordinates(sourceRect, parentRect, connectionState.info, target, transformScale);
+      }
+      return { x1: 0, y1: 0, x2: 0, y2: 0 };
+    };
+
+    sharedUpdateIndividual(movedElement, this.state, calculateCoords);
+  };
+
+  // Update connection coordinates based on what's selected in a group move
+  updateConnectionsAfterGroupMove = (
+    movedElements: ElementState[],
+    selectedTargets: Array<HTMLElement | SVGElement>
+  ) => {
+    // Adapter for calculateCoordinates to match the shared utility signature
+    const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
+      const sourceRect = source.div?.getBoundingClientRect();
+      const parent = source.div?.parentElement;
+      const transformScale = this.scene.scale;
+      const parentRect = getParentBoundingClientRect(this.scene);
+
+      if (sourceRect && target.div && parent && parentRect) {
+        return calculateCoordinates(sourceRect, parentRect, connectionState.info, target, transformScale);
+      }
+      return { x1: 0, y1: 0, x2: 0, y2: 0 };
+    };
+
+    sharedUpdateGroup(movedElements, selectedTargets, this.state, calculateCoords);
+  };
+
+  renderElement() {
     return (
       <>
         <ConnectionAnchors

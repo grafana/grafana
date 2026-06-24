@@ -8,14 +8,16 @@ import (
 
 type FakeService struct {
 	login.AuthInfoService
-	LatestUserID         int64
-	ExpectedUserAuth     *login.UserAuth
-	ExpectedExternalUser *login.ExternalUserInfo
-	ExpectedError        error
-	ExpectedLabels       map[int64]string
+	LatestUserID              int64
+	ExpectedUserAuth          *login.UserAuth
+	ExpectedExternalUser      *login.ExternalUserInfo
+	ExpectedError             error
+	ExpectedRecentlyUsedLabel map[int64]string
+	ExpectedAuthModuleLabels  []string
 
-	SetAuthInfoFn    func(ctx context.Context, cmd *login.SetAuthInfoCommand) error
-	UpdateAuthInfoFn func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error
+	SetAuthInfoFn        func(ctx context.Context, cmd *login.SetAuthInfoCommand) error
+	UpdateAuthInfoFn     func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error
+	DeleteUserAuthInfoFn func(ctx context.Context, userID int64) error
 }
 
 func (a *FakeService) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
@@ -23,8 +25,12 @@ func (a *FakeService) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQ
 	return a.ExpectedUserAuth, a.ExpectedError
 }
 
-func (a *FakeService) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
-	return a.ExpectedLabels, a.ExpectedError
+func (a *FakeService) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+	return a.ExpectedRecentlyUsedLabel, a.ExpectedError
+}
+
+func (a *FakeService) GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]string, error) {
+	return a.ExpectedAuthModuleLabels, a.ExpectedError
 }
 
 func (a *FakeService) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
@@ -44,5 +50,9 @@ func (a *FakeService) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthI
 }
 
 func (a *FakeService) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+	if a.DeleteUserAuthInfoFn != nil {
+		return a.DeleteUserAuthInfoFn(ctx, userID)
+	}
+
 	return a.ExpectedError
 }

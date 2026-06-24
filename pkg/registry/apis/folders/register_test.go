@@ -2,115 +2,726 @@ package folders
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/admission"
+
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
+func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	type input struct {
-		user identity.Requester
-		verb string
+		obj         *folders.Folder
+		annotations map[string]string
+		name        string
 	}
-	type expect struct {
-		eval  string
-		allow bool
-		err   error
-	}
-	var orgID int64 = 1
 
 	tests := []struct {
-		name   string
-		input  input
-		expect expect
+		name    string
+		input   input
+		setupFn func(*grafanarest.MockStorage)
+		err     error
 	}{
 		{
-			name: "user with create permissions should be able to create a folder",
+			name: "should return error when name is invalid",
 			input: input{
-				user: &user.SignedInUser{
-					UserID: 1,
-					OrgID:  orgID,
-					Name:   "123",
-					Permissions: map[int64]map[string][]string{
-						orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
+						Title: "foo",
 					},
 				},
-				verb: string(utils.VerbCreate),
+				name: "general",
 			},
-			expect: expect{
-				eval:  "folders:create",
-				allow: true,
-			},
+			err: folder.ErrInvalidUID,
 		},
 		{
-			name: "not possible to create a folder without a user",
+			name: "should return no error if every validation passes",
 			input: input{
-				user: nil,
-				verb: string(utils.VerbCreate),
-			},
-			expect: expect{
-				eval: "folders:create",
-				err:  errNoUser,
-			},
-		},
-		{
-			name: "user without permissions should not be able to create a folder",
-			input: input{
-				user: &user.SignedInUser{},
-				verb: string(utils.VerbCreate),
-			},
-			expect: expect{
-				eval: "folders:create",
-			},
-		},
-		{
-			name: "user in another orgId should not be able to create a folder ",
-			input: input{
-				user: &user.SignedInUser{
-					UserID: 1,
-					OrgID:  2,
-					Name:   "123",
-					Permissions: map[int64]map[string][]string{
-						orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
+						Title: "foo",
 					},
 				},
-				verb: string(utils.VerbCreate),
-			},
-			expect: expect{
-				eval: "folders:create",
+				name: "valid-name",
 			},
 		},
-	}
-
-	b := &FolderAPIBuilder{
-		gv:            resourceInfo.GroupVersion(),
-		features:      nil,
-		namespacer:    func(_ int64) string { return "123" },
-		folderSvc:     foldertest.NewFakeService(),
-		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders"), zanzana.NewNoopClient()),
+		{
+			name: "should return error when title is empty",
+			input: input{
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
+						Title: "",
+					},
+				},
+				name: "foo",
+			},
+			err: folder.ErrTitleEmpty,
+		},
+		{
+			name: "should return error if folder is a parent of itself",
+			input: input{
+				annotations: map[string]string{utils.AnnoKeyFolder: "myself"},
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
+						Title: "title",
+					},
+				},
+				name: "myself",
+			},
+			err: folder.ErrFolderCannotBeParentOfItself,
+		},
+		{
+			name: "should not allow creating a folder that will become too deep",
+			input: input{
+				annotations: map[string]string{utils.AnnoKeyFolder: "p1"},
+				obj: &folders.Folder{
+					Spec: folders.FolderSpec{
+						Title: "title",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "p0",
+						Annotations: map[string]string{"grafana.app/folder": "p1"},
+					},
+				},
+				name: "p0",
+			},
+			setupFn: func(m *grafanarest.MockStorage) {
+				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p1",
+							Annotations: map[string]string{"grafana.app/folder": "p2"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p2",
+							Annotations: map[string]string{"grafana.app/folder": "p3"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p3", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p3",
+							Annotations: map[string]string{"grafana.app/folder": "p4"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p4", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p4",
+							Annotations: map[string]string{"grafana.app/folder": "p5"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p5", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "p5",
+						},
+					}, nil)
+			},
+			err: fmt.Errorf("folder max depth exceeded, max depth is 4"),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			out, err := authorizerFunc(identity.WithRequester(ctx, tt.input.user), authorizer.AttributesRecord{User: tt.input.user, Verb: tt.input.verb, Resource: "folders", ResourceRequest: true, Name: "123"})
-			if tt.expect.err != nil {
+			us := grafanarest.NewMockStorage(t)
+
+			b := &FolderAPIBuilder{
+				storage:              us,
+				parents:              newParentsGetter(us, 2),
+				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
+			}
+
+			tt.input.obj.Name = tt.input.name
+			tt.input.obj.Annotations = tt.input.annotations
+
+			if tt.setupFn != nil {
+				tt.setupFn(us)
+			}
+
+			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				tt.input.obj,
+				nil,
+				folders.SchemeGroupVersion.WithKind("folder"),
+				"stacks-123",
+				tt.input.name,
+				folders.SchemeGroupVersion.WithResource("folders"),
+				"",
+				"CREATE",
+				nil,
+				true,
+				&user.SignedInUser{},
+			), nil)
+
+			if tt.err == nil {
+				require.NoError(t, err)
+			} else {
+				require.Contains(t, err.Error(), tt.err.Error())
+				return
+			}
+		})
+	}
+}
+
+func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
+	zeroGrace := int64(0)
+
+	tests := []struct {
+		name                 string
+		statsResponse        []*resourcepb.ResourceStatsResponse_Stats
+		deleteOptions        *metav1.DeleteOptions
+		cascadeDeleteEnabled bool
+		wantErr              bool
+	}{
+		{
+			name: "should allow deletion when folder is empty",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 0, Resource: "dashboards"},
+			},
+		},
+		{
+			name: "should return folder not empty when folder contains dashboards",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 2, Resource: "dashboards", Group: "dashboard.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return folder not empty when folder contains alertrules",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 3, Resource: "alertrules", Group: "alerting.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return folder not empty when folder contains library_elements",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 1, Resource: "library_elements", Group: "library.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return folder not empty when folder contains folders",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 2, Resource: "folders", Group: "folder.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return folder not empty when folder has mixed resources with validated types",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 10, Resource: "folders", Group: "folder.grafana.app"},
+				{Count: 2, Resource: "dashboards", Group: "dashboard.grafana.app"},
+				{Count: 5, Resource: "playlists", Group: "playlist.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return folder not empty when folder has multiple validated resource types",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 1, Resource: "dashboards", Group: "dashboard.grafana.app"},
+				{Count: 2, Resource: "alertrules", Group: "alerting.grafana.app"},
+				{Count: 1, Resource: "library_elements", Group: "library.grafana.app"},
+				{Count: 1, Resource: "folders", Group: "folder.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should allow deletion when all validated resource types are empty",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 0, Resource: "dashboards", Group: "dashboard.grafana.app"},
+				{Count: 0, Resource: "alertrules", Group: "alerting.grafana.app"},
+				{Count: 0, Resource: "library_elements", Group: "library.grafana.app"},
+				{Count: 0, Resource: "folders", Group: "folder.grafana.app"},
+				{Count: 10, Resource: "playlists", Group: "playlist.grafana.app"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should allow deletion when folder only contains non-validated resource types",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 5, Resource: "playlists", Group: "playlist.grafana.app"},
+				{Count: 3, Resource: "other", Group: "other.grafana.app"},
+			},
+			wantErr: false,
+		},
+		{
+			name:          "should allow deletion when stats array is empty",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{},
+			wantErr:       false,
+		},
+		{
+			name: "should reject force delete when cascade gate disabled",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Resource: "folders", Count: 1, Group: "folder.grafana.app"},
+			},
+			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			cascadeDeleteEnabled: false,
+			wantErr:              true,
+		},
+		{
+			name: "should allow force delete when cascade gate enabled",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Resource: "folders", Count: 1, Group: "folder.grafana.app"},
+			},
+			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			cascadeDeleteEnabled: true,
+		},
+	}
+
+	obj := &folders.Folder{
+		Spec: folders.FolderSpec{
+			Title: "foo",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "stacks-123",
+			Name:      "valid-name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			us := grafanarest.NewMockStorage(t)
+			sm := resource.NewMockResourceClient(t)
+			if !tt.cascadeDeleteEnabled || !forceDeleteFromDeleteOptions(tt.deleteOptions) {
+				sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
+					&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
+					nil,
+				).Once()
+			}
+
+			setKubernetesFolderCascadeDeleteToggle(t, tt.cascadeDeleteEnabled)
+
+			b := &FolderAPIBuilder{
+				storage:  us,
+				searcher: sm,
+			}
+
+			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				nil,
+				obj,
+				folders.SchemeGroupVersion.WithKind("folder"),
+				obj.Namespace,
+				obj.Name,
+				folders.SchemeGroupVersion.WithResource("folders"),
+				"",
+				admission.Delete,
+				tt.deleteOptions,
+				true,
+				&user.SignedInUser{},
+			),
+				nil)
+
+			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
-			allow, _ := b.accessControl.Evaluate(ctx, out.user, out.evaluator)
 			require.NoError(t, err)
-			require.Equal(t, tt.expect.eval, out.evaluator.String())
-			require.Equal(t, tt.expect.allow, allow)
+		})
+	}
+}
+
+func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
+	tests := []struct {
+		name       string
+		updatedObj *folders.Folder
+		expected   *folders.Folder
+		setupFn    func(*grafanarest.MockStorage)
+		wantErr    bool
+	}{
+		{
+			name: "should allow updating a folder spec",
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "different title",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "stacks-123",
+					Name:        "valid-name",
+					Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
+				},
+			},
+			expected: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "different title",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "stacks-123",
+					Name:        "valid-name",
+					Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
+				},
+			},
+		},
+		{
+			name: "updated title should not be empty",
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "stacks-123",
+					Name:        "valid-name",
+					Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should allow moving to a valid parent",
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "foo",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "stacks-123",
+					Name:        "valid-name",
+					Annotations: map[string]string{"grafana.app/folder": "new-parent"},
+				},
+			},
+			setupFn: func(m *grafanarest.MockStorage) {
+				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
+					&folders.Folder{},
+					nil).Once()
+				// also retrieves old parent for depth difference calculation
+				m.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
+					&folders.Folder{},
+					nil).Once()
+			},
+		},
+		{
+			name: "should not allow moving to a k6 folder",
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "foo",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "stacks-123",
+					Name:        "valid-name",
+					Annotations: map[string]string{"grafana.app/folder": accesscontrol.K6FolderUID},
+				},
+			},
+			setupFn: func(m *grafanarest.MockStorage) {
+				// nothing
+			},
+			wantErr: true,
+		},
+		{
+			name: "should not allow moving to a folder that will become too deep",
+			updatedObj: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "foo",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   "stacks-123",
+					Name:        "valid-name",
+					Annotations: map[string]string{"grafana.app/folder": "p5"},
+				},
+			},
+			setupFn: func(m *grafanarest.MockStorage) {
+				m.On("Get", mock.Anything, "p5", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p5",
+							Annotations: map[string]string{"grafana.app/folder": "p4"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p4", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p4",
+							Annotations: map[string]string{"grafana.app/folder": "p3"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p3", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p3",
+							Annotations: map[string]string{"grafana.app/folder": "p2"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "p2",
+							Annotations: map[string]string{"grafana.app/folder": "p1"},
+						},
+					}, nil)
+				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
+					&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "p1",
+							// p1 is at root: the canonical annotation is "general",
+							// and newParentsGetter must stop here without fetching
+							// "general" as a real folder (it is not a resource).
+							Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+						},
+					}, nil)
+			},
+			wantErr: true,
+		},
+	}
+
+	obj := &folders.Folder{
+		Spec: folders.FolderSpec{
+			Title: "foo",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:   "stacks-123",
+			Name:        "valid-name",
+			Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			us := grafanarest.NewMockStorage(t)
+			sm := resource.NewMockResourceClient(t)
+			if tt.setupFn != nil {
+				tt.setupFn(us)
+			}
+
+			b := &FolderAPIBuilder{
+				storage:  us,
+				searcher: sm,
+				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+			}
+
+			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+				tt.updatedObj,
+				obj,
+				folders.SchemeGroupVersion.WithKind("folder"),
+				tt.updatedObj.Namespace,
+				tt.updatedObj.Name,
+				folders.SchemeGroupVersion.WithResource("folders"),
+				"",
+				"UPDATE",
+				nil,
+				true,
+				&user.SignedInUser{},
+			),
+				nil)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    *folders.Folder
+		expected *folders.Folder
+		wantErr  bool
+	}{
+		{
+			name: "should trim a title",
+			input: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "  foo  ",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			expected: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "foo",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+		},
+		{
+			name: "should return error if title doesnt exist",
+			input: &folders.Folder{
+				Spec: folders.FolderSpec{},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if spec doesnt exist",
+			input: &folders.Folder{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			us := grafanarest.NewMockStorage(t)
+			sm := resource.NewMockResourceClient(t)
+			b := &FolderAPIBuilder{
+				storage:  us,
+				searcher: sm,
+				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+			}
+			admAttr := admission.NewAttributesRecord(
+				tt.input,
+				nil,
+				folders.SchemeGroupVersion.WithKind("folder"),
+				"stacks-123",
+				tt.input.Name,
+				folders.SchemeGroupVersion.WithResource("folders"),
+				"",
+				"CREATE",
+				nil,
+				true,
+				&user.SignedInUser{},
+			)
+
+			err := b.Validate(context.Background(), admAttr, nil)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			err = b.Mutate(context.Background(), admAttr, nil)
+			require.NoError(t, err)
+			require.Equal(t, tt.input, tt.expected)
+		})
+	}
+}
+
+func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
+	existingObj := &folders.Folder{
+		Spec: folders.FolderSpec{
+			Title: "some title",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Folder",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "valid-name",
+		},
+	}
+	tests := []struct {
+		name     string
+		input    *folders.Folder
+		expected *folders.Folder
+		wantErr  bool
+	}{
+		{
+			name: "should trim a title",
+			input: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "  foo  ",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			expected: &folders.Folder{
+				Spec: folders.FolderSpec{
+					Title: "foo",
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+		},
+		{
+			name: "should return error if title doesnt exist",
+			input: &folders.Folder{
+				Spec: folders.FolderSpec{},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error if spec doesnt exist",
+			input: &folders.Folder{
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Folder",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "valid-name",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	us := grafanarest.NewMockStorage(t)
+	sm := resource.NewMockResourceClient(t)
+	b := &FolderAPIBuilder{
+		storage:  us,
+		searcher: sm,
+		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			admAttr := admission.NewAttributesRecord(
+				tt.input,
+				existingObj,
+				folders.SchemeGroupVersion.WithKind("folder"),
+				"stacks-123",
+				tt.input.Name,
+				folders.SchemeGroupVersion.WithResource("folders"),
+				"",
+				"UPDATE",
+				nil,
+				true,
+				&user.SignedInUser{},
+			)
+
+			err := b.Validate(context.Background(), admAttr, nil)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			err = b.Mutate(context.Background(), admAttr, nil)
+			require.NoError(t, err)
+			require.Equal(t, tt.input, tt.expected)
 		})
 	}
 }

@@ -6,11 +6,11 @@ import { Button } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
+import { type RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { FormAmRoute } from '../../types/amroutes';
+import { type FormAmRoute } from '../../types/amroutes';
 
 import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 

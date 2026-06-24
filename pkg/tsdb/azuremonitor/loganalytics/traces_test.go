@@ -26,6 +26,10 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 	ctx := context.Background()
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		if strings.Contains(r.URL.Path, "missing-op-id") {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
 		var correlationRes AzureCorrelationAPIResponse
 		if strings.Contains(r.URL.Path, "test-op-id") {
@@ -95,7 +99,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 	tests := []struct {
 		name                   string
 		queryModel             backend.DataQuery
-		azureLogAnalyticsQuery AzureLogAnalyticsQuery
+		azureLogAnalyticsQuery *AzureLogAnalyticsQuery
 		Err                    require.ErrorAssertionFunc
 	}{
 		{
@@ -114,7 +118,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -190,7 +194,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -264,7 +268,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -337,7 +341,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -413,7 +417,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -493,7 +497,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -573,7 +577,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTable,
 				URL:          "v1/apps/r1/query",
@@ -651,7 +655,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -724,7 +728,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -800,7 +804,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -842,7 +846,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -920,7 +924,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -997,7 +1001,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -1076,7 +1080,7 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 				TimeRange: timeRange,
 				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			},
-			azureLogAnalyticsQuery: AzureLogAnalyticsQuery{
+			azureLogAnalyticsQuery: &AzureLogAnalyticsQuery{
 				RefID:        "A",
 				ResultFormat: dataquery.ResultFormatTrace,
 				URL:          "v1/apps/r1/query",
@@ -1147,15 +1151,151 @@ func TestBuildAppInsightsQuery(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "trace query with missing operation ID",
+			queryModel: backend.DataQuery{
+				JSON: []byte(fmt.Sprintf(`{
+							"queryType": "Azure Traces",
+							"azureTraces": {
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
+								"resultFormat": "%s",
+								"traceTypes":	["trace"],
+								"operationId":	"missing-op-id"
+							}
+						}`, dataquery.ResultFormatTable)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+			},
+			azureLogAnalyticsQuery: nil,
+			Err: func(tt require.TestingT, err error, i ...interface{}) {
+				require.ErrorContains(tt, err, "requested trace not found by Application Insights indexing. Select the relevant Application Insights resource to search for the Operation ID directly")
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			query, err := buildAppInsightsQuery(ctx, tt.queryModel, dsInfo, appInsightsRegExp, log.NewNullLogger())
 			tt.Err(t, err)
-			if diff := cmp.Diff(&tt.azureLogAnalyticsQuery, query); diff != "" {
+			if diff := cmp.Diff(tt.azureLogAnalyticsQuery, query); diff != "" {
 				t.Errorf("Result mismatch (-want +got): \n%s", diff)
 			}
+		})
+	}
+}
+
+func TestBuildAppInsightsQuery_EmptyResources(t *testing.T) {
+	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+	timeRange := backend.TimeRange{From: fromStart, To: fromStart.Add(34 * time.Minute)}
+	ctx := context.Background()
+
+	// Create a mock HTTP server that returns empty correlation resources
+	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		// Return empty correlation response
+		correlationRes := AzureCorrelationAPIResponse{
+			ID:   "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
+			Name: "guid-1",
+			Type: "microsoft.insights/transactions",
+			Properties: AzureCorrelationAPIResponseProperties{
+				Resources: []string{}, // Empty resources array
+				NextLink:  nil,
+			},
+		}
+		err := json.NewEncoder(w).Encode(correlationRes)
+		if err != nil {
+			t.Errorf("failed to encode correlation API response")
+		}
+	}))
+	defer svr.Close()
+
+	provider := httpclient.NewProvider(httpclient.ProviderOptions{Timeout: &httpclient.DefaultTimeoutOptions})
+	client, err := provider.New()
+	require.NoError(t, err)
+
+	dsInfo := types.DatasourceInfo{
+		Services: map[string]types.DatasourceService{
+			"Azure Monitor": {URL: svr.URL, HTTPClient: client},
+		},
+		JSONData: map[string]any{
+			"azureLogAnalyticsSameAs": false,
+		},
+		Settings: types.AzureMonitorSettings{
+			SubscriptionId: "test-sub-id",
+		},
+	}
+	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
+	require.NoError(t, err)
+
+	logger := log.NewNullLogger()
+
+	tests := []struct {
+		name                string
+		queryModel          backend.DataQuery
+		expectedErrorString string
+	}{
+		{
+			name: "empty resources array should return error",
+			queryModel: backend.DataQuery{
+				JSON: []byte(fmt.Sprintf(`{
+					"queryType": "Azure Traces",
+					"azureTraces": {
+						"resources": [],
+						"resultFormat": "%s",
+						"traceTypes": ["trace"]
+					}
+				}`, dataquery.ResultFormatTable)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+			},
+			expectedErrorString: "no resources specified for Azure traces query",
+		},
+		{
+			name: "missing resources field should return error",
+			queryModel: backend.DataQuery{
+				JSON: []byte(fmt.Sprintf(`{
+					"queryType": "Azure Traces",
+					"azureTraces": {
+						"resultFormat": "%s",
+						"traceTypes": ["trace"]
+					}
+				}`, dataquery.ResultFormatTable)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+			},
+			expectedErrorString: "no resources specified for Azure traces query",
+		},
+		{
+			name: "trace exemplar with empty correlation resources should return error",
+			queryModel: backend.DataQuery{
+				JSON: []byte(fmt.Sprintf(`{
+					"queryType": "Azure Traces",
+					"azureTraces": {
+						"resources": ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
+						"resultFormat": "%s",
+						"traceTypes": ["trace"],
+						"operationId": "missing-op-id"
+					}
+				}`, dataquery.ResultFormatTable)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeTraceExemplar),
+			},
+			expectedErrorString: "no correlation resources found for trace exemplar query with operation ID: missing-op-id",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			query, err := buildAppInsightsQuery(ctx, tt.queryModel, dsInfo, appInsightsRegExp, logger)
+
+			require.Error(t, err)
+			require.Nil(t, query)
+			require.Contains(t, err.Error(), tt.expectedErrorString)
 		})
 	}
 }

@@ -373,7 +373,7 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 		return &ListResponse{
 			Files:    []*File{{Contents: contents, FileMetadata: file.FileMetadata}},
 			HasMore:  false,
-			LastPath: file.FileMetadata.FullPath,
+			LastPath: file.FullPath,
 		}, nil
 	}
 

@@ -12,14 +12,18 @@ type OrgListResponse []struct {
 }
 
 type FakeOrgService struct {
-	ExpectedOrgUserID            int64
-	ExpectedError                error
-	ExpectedUserOrgDTO           []*org.UserOrgDTO
-	ExpectedOrgs                 []*org.OrgDTO
-	ExpectedOrg                  *org.Org
-	ExpectedOrgUsers             []*org.OrgUserDTO
-	ExpectedSearchOrgUsersResult *org.SearchOrgUsersQueryResult
-	ExpectedOrgListResponse      OrgListResponse
+	ExpectedOrgUserID                    int64
+	ExpectedError                        error
+	ExpectedUserOrgDTO                   []*org.UserOrgDTO
+	ExpectedOrgs                         []*org.OrgDTO
+	ExpectedOrg                          *org.Org
+	ExpectedOrgUsers                     []*org.OrgUserDTO
+	ExpectedSearchOrgUsersResult         *org.SearchOrgUsersQueryResult
+	ExpectedSearchOrgUsersByEmailsResult []*org.OrgUserDTO
+	ExpectedOrgListResponse              OrgListResponse
+	SearchOrgUsersFn                     func(context.Context, *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error)
+	SearchOrgUsersByEmailsFn             func(context.Context, *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error)
+	InsertOrgUserFn                      func(context.Context, *org.OrgUser) (int64, error)
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -35,6 +39,9 @@ func (f *FakeOrgService) Insert(ctx context.Context, cmd *org.OrgUser) (int64, e
 }
 
 func (f *FakeOrgService) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64, error) {
+	if f.InsertOrgUserFn != nil {
+		return f.InsertOrgUserFn(ctx, cmd)
+	}
 	return f.ExpectedOrgUserID, f.ExpectedError
 }
 
@@ -75,10 +82,6 @@ func (f *FakeOrgService) UpdateAddress(ctx context.Context, cmd *org.UpdateOrgAd
 	return f.ExpectedError
 }
 
-func (f *FakeOrgService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
-	return f.ExpectedError
-}
-
 func (f *FakeOrgService) GetOrCreate(ctx context.Context, orgName string) (int64, error) {
 	return f.ExpectedOrg.ID, f.ExpectedError
 }
@@ -102,8 +105,30 @@ func (f *FakeOrgService) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUs
 }
 
 func (f *FakeOrgService) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	if f.SearchOrgUsersFn != nil {
+		return f.SearchOrgUsersFn(ctx, query)
+	}
 	return f.ExpectedSearchOrgUsersResult, f.ExpectedError
 }
 
+func (f *FakeOrgService) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	if f.SearchOrgUsersByEmailsFn != nil {
+		return f.SearchOrgUsersByEmailsFn(ctx, query)
+	}
+	return f.ExpectedSearchOrgUsersByEmailsResult, f.ExpectedError
+}
+
 func (f *FakeOrgService) RegisterDelete(query string) {
+}
+
+type FakeOrgDeletionService struct {
+	ExpectedError error
+}
+
+func NewOrgDeletionServiceFake() *FakeOrgDeletionService {
+	return &FakeOrgDeletionService{}
+}
+
+func (f *FakeOrgDeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
+	return f.ExpectedError
 }

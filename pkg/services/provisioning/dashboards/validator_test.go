@@ -8,9 +8,21 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanasort "github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -18,7 +30,9 @@ const (
 	twoDashboardsWithUID   = "testdata/test-dashboards/two-dashboards-with-uid"
 )
 
-func TestDuplicatesValidator(t *testing.T) {
+func TestIntegrationDuplicatesValidator(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 
@@ -31,16 +45,29 @@ func TestDuplicatesValidator(t *testing.T) {
 	}
 	logger := log.New("test.logger")
 
+	_, cfgT := db.InitTestDBWithCfg(t)
+	searchMock := resource.NewMockResourceClient(t)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceSearchResponse{TotalHits: 0}, nil).Maybe()
+	searchMock.On("GetStats", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceStatsResponse{}, nil).Maybe()
+	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{},
+		nil, featuremgmt.WithFeatures(),
+		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), searchMock, grafanasort.ProvideService(), apiserver.WithoutRestConfig)
+
 	t.Run("Duplicates validator should collect info about duplicate UIDs and titles within folders", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
 
+		ctx := context.Background()
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
+
 		fakeStore := &fakeDashboardStore{}
-		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, nil)
+		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(6)
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(6)
 		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(4)
 		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
-		_, folderUID, err := r.getOrCreateFolder(context.Background(), cfg, fakeService, folderName)
+		_, folderUID, err := r.getOrCreateFolder(ctx, cfg, folderName)
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderUID: folderUID, title: "Grafana"}
@@ -54,12 +81,10 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]any{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore, nil)
-		reader1.dashboardProvisioningService = fakeService
+		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, fakeStore, nil)
-		reader2.dashboardProvisioningService = fakeService
+		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
 		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2})
@@ -90,10 +115,13 @@ func TestDuplicatesValidator(t *testing.T) {
 	t.Run("Duplicates validator should not collect info about duplicate UIDs and titles within folders for different orgs", func(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
 
+		ctx := context.Background()
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
+
 		fakeStore := &fakeDashboardStore{}
-		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, nil)
+		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
-		_, folderUID, err := r.getOrCreateFolder(context.Background(), cfg, fakeService, folderName)
+		_, folderUID, err := r.getOrCreateFolder(ctx, cfg, folderName)
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderUID: folderUID, title: "Grafana"}
@@ -107,12 +135,10 @@ func TestDuplicatesValidator(t *testing.T) {
 			Options: map[string]any{"path": dashboardContainingUID},
 		}
 
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore, nil)
-		reader1.dashboardProvisioningService = fakeService
+		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, fakeStore, nil)
-		reader2.dashboardProvisioningService = fakeService
+		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
 		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2})
@@ -151,7 +177,7 @@ func TestDuplicatesValidator(t *testing.T) {
 	})
 
 	t.Run("Duplicates validator should restrict write access only for readers with duplicates", func(t *testing.T) {
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(5)
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(5)
 		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(3)
 		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
 		fakeStore := &fakeDashboardStore{}
@@ -168,16 +194,13 @@ func TestDuplicatesValidator(t *testing.T) {
 			Name: "third", Type: "file", OrgID: 2, Folder: "duplicates-validator-folder",
 			Options: map[string]any{"path": twoDashboardsWithUID},
 		}
-		reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore, nil)
-		reader1.dashboardProvisioningService = fakeService
+		reader1, err := NewDashboardFileReader(cfg1, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
-		reader2, err := NewDashboardFileReader(cfg2, logger, nil, fakeStore, nil)
-		reader2.dashboardProvisioningService = fakeService
+		reader2, err := NewDashboardFileReader(cfg2, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
-		reader3, err := NewDashboardFileReader(cfg3, logger, nil, fakeStore, nil)
-		reader3.dashboardProvisioningService = fakeService
+		reader3, err := NewDashboardFileReader(cfg3, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
 
 		duplicateValidator := newDuplicateValidator(logger, []*FileReader{reader1, reader2, reader3})
@@ -193,9 +216,12 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		duplicates := duplicateValidator.getDuplicates()
 
-		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, nil)
+		ctx := context.Background()
+		ctx, _ = identity.WithServiceIdentity(ctx, 1)
+
+		r, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
-		_, folderUID, err := r.getOrCreateFolder(context.Background(), cfg, fakeService, cfg1.Folder)
+		_, folderUID, err := r.getOrCreateFolder(ctx, cfg, cfg1.Folder)
 		require.NoError(t, err)
 
 		identity := dashboardIdentity{folderUID: folderUID, title: "Grafana"}
@@ -210,9 +236,9 @@ func TestDuplicatesValidator(t *testing.T) {
 		sort.Strings(titleUsageReaders)
 		require.Equal(t, []string{"first"}, titleUsageReaders)
 
-		r, err = NewDashboardFileReader(cfg3, logger, nil, fakeStore, nil)
+		r, err = NewDashboardFileReader(cfg3, logger, fakeService, fakeStore, folderSvc, cfgT)
 		require.NoError(t, err)
-		_, folderUID, err = r.getOrCreateFolder(context.Background(), cfg3, fakeService, cfg3.Folder)
+		_, folderUID, err = r.getOrCreateFolder(ctx, cfg3, cfg3.Folder)
 		require.NoError(t, err)
 
 		identity = dashboardIdentity{folderUID: folderUID, title: "Grafana"}

@@ -1,53 +1,38 @@
-import { ActionModel, Field, InterpolateFunction, LinkModel } from '@grafana/data';
-import { DataFrame } from '@grafana/data/';
-import { config } from '@grafana/runtime';
+import { type DataFrame, type ActionModel, type Field, type InterpolateFunction } from '@grafana/data';
 import { getActions } from 'app/features/actions/utils';
 
-export const getDataLinks = (field: Field, rowIdx: number) => {
-  const links: Array<LinkModel<Field>> = [];
+export const getFieldActions = (
+  dataFrame: DataFrame,
+  field: Field,
+  replaceVars: InterpolateFunction,
+  rowIndex: number,
+  visualizationType?: string
+) => {
+  const actions: Array<ActionModel<Field>> = [];
 
-  if ((field.config.links?.length ?? 0) > 0 && field.getLinks != null) {
-    const v = field.values[rowIdx];
-    const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+  if (field.state?.scopedVars) {
+    const actionLookup = new Set<string>();
 
-    const linkLookup = new Set<string>();
+    const actionsModel = getActions(
+      dataFrame,
+      field,
+      field.state.scopedVars,
+      replaceVars,
+      field.config.actions ?? [],
+      {
+        valueRowIndex: rowIndex,
+      },
+      visualizationType
+    );
 
-    field.getLinks({ calculatedValue: disp, valueRowIndex: rowIdx }).forEach((link) => {
-      const key = `${link.title}/${link.href}`;
-      if (!linkLookup.has(key)) {
-        links.push(link);
-        linkLookup.add(key);
+    actionsModel.forEach((action) => {
+      const key = `${action.title}`;
+      if (!actionLookup.has(key)) {
+        actions.push(action);
+        actionLookup.add(key);
       }
     });
   }
-
-  return links;
-};
-
-export const getFieldActions = (dataFrame: DataFrame, field: Field, replaceVars: InterpolateFunction) => {
-  if (!config.featureToggles?.vizActions) {
-    return [];
-  }
-
-  const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
-
-  const actionsModel = getActions(
-    dataFrame,
-    field,
-    field.state!.scopedVars!,
-    replaceVars,
-    field.config.actions ?? [],
-    {}
-  );
-
-  actionsModel.forEach((action) => {
-    const key = `${action.title}`;
-    if (!actionLookup.has(key)) {
-      actions.push(action);
-      actionLookup.add(key);
-    }
-  });
 
   return actions;
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 
 import { Button, ConfirmModal } from '@grafana/ui';
 

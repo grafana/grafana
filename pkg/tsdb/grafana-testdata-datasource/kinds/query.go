@@ -1,10 +1,5 @@
 package kinds
 
-import (
-	"embed"
-	"encoding/json"
-)
-
 // NodesQueryType defines model for NodesQuery.Type.
 // +enum
 type NodesQueryType string
@@ -61,6 +56,7 @@ const (
 	TestDataQueryTypeCsvMetricValues              TestDataQueryType = "csv_metric_values"
 	TestDataQueryTypeDatapointsOutsideRange       TestDataQueryType = "datapoints_outside_range"
 	TestDataQueryTypeErrorWithSource              TestDataQueryType = "error_with_source"
+	TestDataQueryTypeFlakyQuery                   TestDataQueryType = "flaky_query"
 	TestDataQueryTypeExponentialHeatmapBucketData TestDataQueryType = "exponential_heatmap_bucket_data"
 	TestDataQueryTypeFlameGraph                   TestDataQueryType = "flame_graph"
 	TestDataQueryTypeGrafanaApi                   TestDataQueryType = "grafana_api"
@@ -72,11 +68,13 @@ const (
 	TestDataQueryTypeNodeGraph                    TestDataQueryType = "node_graph"
 	TestDataQueryTypePredictableCsvWave           TestDataQueryType = "predictable_csv_wave"
 	TestDataQueryTypePredictablePulse             TestDataQueryType = "predictable_pulse"
+	TestDataQueryTypeQueryMeta                    TestDataQueryType = "query_meta"
 	TestDataQueryTypeRandomWalk                   TestDataQueryType = "random_walk"
 	TestDataQueryTypeRandomWalkTable              TestDataQueryType = "random_walk_table"
 	TestDataQueryTypeRandomWalkWithError          TestDataQueryType = "random_walk_with_error"
 	TestDataQueryTypeRawFrame                     TestDataQueryType = "raw_frame"
 	TestDataQueryTypeServerError500               TestDataQueryType = "server_error_500"
+	TestDataQueryTypeSteps                        TestDataQueryType = "steps"
 	TestDataQueryTypeSimulation                   TestDataQueryType = "simulation"
 	TestDataQueryTypeSlowQuery                    TestDataQueryType = "slow_query"
 	TestDataQueryTypeStreamingClient              TestDataQueryType = "streaming_client"
@@ -119,6 +117,15 @@ type TestDataQuery struct {
 	SeriesCount     int         `json:"seriesCount,omitempty"`
 	SpanCount       int         `json:"spanCount,omitempty"`
 	ErrorSource     ErrorSource `json:"errorSource,omitempty"`
+
+	// Flaky query scenario: probability (0-100) that the request returns an error
+	ErrorProbability float64 `json:"errorProbability,omitempty"`
+	ErrorMessage     string  `json:"errorMessage,omitempty"`
+	ErrorStatusCode  int     `json:"errorStatusCode,omitempty"`
+
+	// Flaky query scenario: base delay (Go duration string) and jitter percentage (0-100)
+	QueryDelay            string  `json:"queryDelay,omitempty"`
+	QueryDelayVariability float64 `json:"queryDelayVariability,omitempty"`
 
 	Nodes     *NodesQuery      `json:"nodes,omitempty"`
 	PulseWave *PulseWaveQuery  `json:"pulseWave,omitempty"`
@@ -179,12 +186,4 @@ type USAQuery struct {
 	Mode   string   `json:"mode,omitempty"`
 	Period string   `json:"period,omitempty"`
 	States []string `json:"states,omitempty"`
-}
-
-//go:embed query.types.json
-var f embed.FS
-
-// QueryTypeDefinitionListJSON returns the query type definitions
-func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
-	return f.ReadFile("query.types.json")
 }

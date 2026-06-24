@@ -1,51 +1,54 @@
 import { css } from '@emotion/css';
-import { useEffect, useId, useState } from 'react';
-import * as React from 'react';
+import { memo, type ReactNode, useEffect, useState } from 'react';
 
-import { GrafanaTheme2, store } from '@grafana/data';
+import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import {
-  Badge,
-  Button,
-  ButtonGroup,
-  Dropdown,
-  Icon,
-  Menu,
-  Stack,
-  ToolbarButton,
-  ToolbarButtonRow,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ScopesSelector } from 'app/features/scopes';
+import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
+import { useSelector } from 'app/types/store';
 
-import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
-import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { selectFolderRepository } from '../../provisioning/utils/selectors';
+import { type PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
-import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { type DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../utils/utils';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
+import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
+import { Actions } from './new-toolbar/Actions';
+import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
+import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
   dashboard: DashboardScene;
 }
 
-export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const id = useId();
+export const NavToolbarActions = memo<Props>(({ dashboard }) => {
+  const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
 
-  const actions = <ToolbarActions dashboard={dashboard} key={id} />;
-  return <AppChromeUpdate actions={actions} />;
+  return hasNewToolbar ? (
+    <AppChromeUpdate
+      breadcrumbActions={<BreadcrumbActions dashboard={dashboard} />}
+      actions={<Actions dashboard={dashboard} />}
+    />
+  ) : (
+    <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} />} />
+  );
 });
 
 NavToolbarActions.displayName = 'NavToolbarActions';
@@ -54,7 +57,18 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+  const {
+    isEditing,
+    viewPanel,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    editable,
+    title,
+    meta: { isEmbedded, isSnapshot, canEdit, canMakeEditable, canStar, canSave, folderUid },
+  } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
@@ -62,66 +76,78 @@ export function ToolbarActions({ dashboard }: Props) {
   const toolbarActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
-  const isViewingPanel = Boolean(viewPanelScene);
+  const isViewingPanel = Boolean(viewPanel);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
+
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
+  const isNew = !Boolean(uid || dashboard.isManaged());
+
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const showScopesSelector = config.featureToggles.singleTopNav && config.featureToggles.scopeFilters;
+  const folderRepo = useSelector((state) => selectFolderRepository()(state, folderUid));
+  const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
+  // Get the repository for the dashboard's folder
+  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
+    folderName: folderUid,
+  });
 
   if (!isEditingPanel) {
-    // This adds the precence indicators in enterprise
+    // This adds the presence indicators in enterprise
     addDynamicActions(toolbarActions, dynamicDashNavActions.left, 'left-actions');
   }
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+    condition: uid && Boolean(canStar) && isShowingDashboard && !isEditing,
     render: () => {
-      let desc = meta.isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
+      if (!uid) {
+        return null;
+      }
       return (
-        <ToolbarButton
-          tooltip={desc}
-          icon={
-            <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
-          }
+        <StarToolbarButton
           key="star-dashboard-button"
-          data-testid={selectors.components.NavToolbar.markAsFavorite}
-          onClick={() => {
-            DashboardInteractions.toolbarFavoritesClick();
-            dashboard.onStarDashboard();
-          }}
+          group="dashboard.grafana.app"
+          kind="Dashboard"
+          title={title}
+          id={uid}
         />
       );
     },
   });
 
-  if (meta.publicDashboardEnabled) {
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && Boolean(canStar) && isShowingDashboard && !isEditing,
+    render: () => {
+      return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
+    },
+  });
+
+  if (isReadOnlyRepo) {
     toolbarActions.push({
       group: 'icon-actions',
-      condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+      condition: true,
       render: () => {
-        return (
-          <Badge
-            color="blue"
-            text="Public"
-            key="public-dashboard-button-badge"
-            className={styles.publicBadge}
-            data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
-          />
-        );
+        return <ReadOnlyBadge repoType={repoType} />;
       },
     });
   }
 
-  const isDevEnv = config.buildInfo.env === 'development';
+  if (dashboard.isManaged() && canEdit) {
+    toolbarActions.push({
+      group: 'icon-actions',
+      condition: true,
+      render: () => {
+        return <ManagedDashboardNavBarBadge dashboard={dashboard} key="managed-dashboard-badge" />;
+      },
+    });
+  }
 
   toolbarActions.push({
     group: 'icon-actions',
+<<<<<<< HEAD
     condition: isDevEnv && uid && isShowingDashboard && !isEditing,
     render: () => (
       <ToolbarButton
@@ -144,6 +170,10 @@ export function ToolbarActions({ dashboard }: Props) {
         originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''}
       />
     ),
+=======
+    condition: isSnapshot && !isEditing && !isEmbedded,
+    render: () => <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl()} />,
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
   });
 
   if (!isEditingPanel && !isEditing) {
@@ -181,6 +211,7 @@ export function ToolbarActions({ dashboard }: Props) {
                 dashboard.onShowAddLibraryPanelDrawer();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
               }}
+              disabled={dashboard.isManagedRepository()}
             />
             <Menu.Item
               key="add-row"
@@ -278,7 +309,11 @@ export function ToolbarActions({ dashboard }: Props) {
         icon="arrow-left"
         data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
+<<<<<<< HEAD
         Вернуться к дашборду
+=======
+        <Trans i18nKey="dashboard.toolbar.back-to-dashboard">Back to dashboard</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
@@ -299,11 +334,16 @@ export function ToolbarActions({ dashboard }: Props) {
         icon="arrow-left"
         data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
+<<<<<<< HEAD
         Вернуться к дашборду
+=======
+        <Trans i18nKey="dashboard.toolbar.back-to-dashboard">Back to dashboard</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
 
+<<<<<<< HEAD
   const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
   toolbarActions.push({
     group: 'main-buttons',
@@ -325,6 +365,9 @@ export function ToolbarActions({ dashboard }: Props) {
       </Button>
     ),
   });
+=======
+  const showShareButton = uid && !isEditing && !isSnapshot && !isPlaying && !isEmbedded;
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -332,16 +375,30 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
         }}
+<<<<<<< HEAD
         tooltip="Войти в режим редактирования"
+=======
+        tooltip={
+          isReadOnlyRepo
+            ? getReadOnlyTooltipText({ isLocal: repoType === 'local' })
+            : t('dashboard.toolbar.edit.tooltip', 'Enter edit mode')
+        }
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         key="edit"
         className={styles.buttonWithExtraMargin}
-        variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
+        variant={'secondary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
+        disabled={isReadOnlyRepo}
       >
+<<<<<<< HEAD
         Редактировать
+=======
+        <Trans i18nKey="dashboard.toolbar.edit.label">Edit</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
@@ -352,30 +409,39 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          trackDashboardSceneEditButtonClicked(dashboard.state.uid);
           dashboard.onEnterEditMode();
-          dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
+          dashboard.setState({ meta: { ...meta, canEdit: true, canSave: true } });
         }}
+<<<<<<< HEAD
         tooltip="Этот дашборд был помечен как доступный только для чтения"
+=======
+        tooltip={t('dashboard.toolbar.enter-edit-mode.tooltip', 'This dashboard was marked as read only')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         key="edit"
         className={styles.buttonWithExtraMargin}
         variant="secondary"
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
+<<<<<<< HEAD
         Сделать редактируемым
+=======
+        <Trans i18nKey="dashboard.toolbar.enter-edit-mode.label">Make editable</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
 
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    condition: showShareButton,
     render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({
     group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    condition: showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
@@ -387,32 +453,52 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={() => {
           dashboard.onOpenSettings();
         }}
+<<<<<<< HEAD
         tooltip="Настройки дашборда"
+=======
+        tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         fill="text"
         size="sm"
         key="settings"
         variant="secondary"
         data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
       >
+<<<<<<< HEAD
         Настройки
+=======
+        <Trans i18nKey="dashboard.toolbar.dashboard-settings.label">Settings</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !meta.isNew && isShowingDashboard,
+    condition: isEditing && !isNew && isShowingDashboard,
     render: () => (
       <Button
+<<<<<<< HEAD
         onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
         tooltip="Выйти из режима редактирования и сбросить несохраненные изменения"
+=======
+        onClick={() => {
+          DashboardInteractions.exitEditButtonClicked();
+          dashboard.exitEditMode({ skipConfirm: false });
+        }}
+        tooltip={t('dashboard.toolbar.exit-edit-mode.tooltip', 'Exits edit mode and discards unsaved changes')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         size="sm"
         key="discard"
         fill="text"
         variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
       >
+<<<<<<< HEAD
         Выйти из режима редактирования
+=======
+        <Trans i18nKey="dashboard.toolbar.exit-edit-mode.label">Exit edit</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
@@ -423,7 +509,15 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
+<<<<<<< HEAD
         tooltip={editPanel?.state.isNewPanel ? 'Удалить панель' : 'Отменить изменения панели'}
+=======
+        tooltip={
+          editPanel?.state.isNewPanel
+            ? t('dashboard.toolbar.discard-panel-new', 'Discard panel')
+            : t('dashboard.toolbar.discard-panel', 'Discard panel changes')
+        }
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         size="sm"
         disabled={!isEditedPanelDirty}
         key="discard"
@@ -431,7 +525,15 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="destructive"
         data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
+<<<<<<< HEAD
         {editPanel?.state.isNewPanel ? 'Удалить панель' : 'Отменить изменения панели'}
+=======
+        {editPanel?.state.isNewPanel ? (
+          <Trans i18nKey="dashboard.toolbar.discard-panel-new">Discard panel</Trans>
+        ) : (
+          <Trans i18nKey="dashboard.toolbar.discard-panel">Discard panel changes</Trans>
+        )}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
@@ -442,14 +544,22 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
+<<<<<<< HEAD
         tooltip="Отменить изменения в панели библиотеки"
+=======
+        tooltip={t('dashboard.toolbar.discard-library-panel-changes', 'Discard library panel changes')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         size="sm"
         key="discardLibraryPanel"
         fill="outline"
         variant="destructive"
         data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
+<<<<<<< HEAD
         Отменить изменения в панели библиотеки
+=======
+        <Trans i18nKey="dashboard.toolbar.discard-library-panel-changes">Discard library panel changes</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
@@ -460,14 +570,22 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onUnlinkLibraryPanel}
+<<<<<<< HEAD
         tooltip="Отсоединить панель библиотеки ссылок"
+=======
+        tooltip={t('dashboard.toolbar.unlink-library-panel', 'Unlink library panel')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         size="sm"
         key="unlinkLibraryPanel"
         fill="outline"
         variant="secondary"
         data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
       >
+<<<<<<< HEAD
         Отсоединить панель библиотеки ссылок
+=======
+        <Trans i18nKey="dashboard.toolbar.unlink-library-panel">Unlink library panel</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
@@ -478,55 +596,79 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onSaveLibraryPanel}
+<<<<<<< HEAD
         tooltip="Панель сохранения библиотеки"
+=======
+        tooltip={t('dashboard.toolbar.save-library-panel', 'Save library panel')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
         size="sm"
         key="saveLibraryPanel"
         fill="outline"
         variant="primary"
         data-testid={selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton}
       >
+<<<<<<< HEAD
         Панель сохранения библиотеки
+=======
+        <Trans i18nKey="dashboard.toolbar.save-library-panel">Save library panel</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       </Button>
     ),
   });
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
+    condition: isEditing && !isEditingLibraryPanel && (canSave || canSaveAs),
     render: () => {
       // if we  only can save
-      if (meta.isNew) {
+      if (isNew) {
         return (
           <Button
             onClick={() => {
               dashboard.openSaveDrawer({});
             }}
             className={styles.buttonWithExtraMargin}
+<<<<<<< HEAD
             tooltip="Сохрранить изменения"
+=======
+            tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             key="save"
             size="sm"
-            variant={'primary'}
+            variant="primary"
             data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
           >
+<<<<<<< HEAD
             Сохранить дашборд
+=======
+            <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
           </Button>
         );
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable) {
+      if (canSaveAs && !canSave && !canMakeEditable && !isManaged) {
         return (
           <Button
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
             className={styles.buttonWithExtraMargin}
+<<<<<<< HEAD
             tooltip="Сохранить как копию"
+=======
+            tooltip={t('dashboard.toolbar.save-dashboard-copy.tooltip', 'Save as copy')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             key="save"
             size="sm"
             variant={isDirty ? 'primary' : 'secondary'}
           >
+<<<<<<< HEAD
             Сохранить как копию
+=======
+            <Trans i18nKey="dashboard.toolbar.save-dashboard-copy.label">Save as copy</Trans>
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
           </Button>
         );
       }
@@ -535,14 +677,22 @@ export function ToolbarActions({ dashboard }: Props) {
       const menu = (
         <Menu>
           <Menu.Item
+<<<<<<< HEAD
             label="Сохранить"
+=======
+            label={t('dashboard.toolbar.save-dashboard-short', 'Save')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             icon="save"
             onClick={() => {
               dashboard.openSaveDrawer({});
             }}
           />
           <Menu.Item
+<<<<<<< HEAD
             label="Сохранить как копию"
+=======
+            label={t('dashboard.toolbar.save-dashboard-copy.label', 'Save as copy')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             icon="copy"
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
@@ -557,16 +707,28 @@ export function ToolbarActions({ dashboard }: Props) {
             onClick={() => {
               dashboard.openSaveDrawer({});
             }}
+<<<<<<< HEAD
             tooltip="Сохранить изменения"
+=======
+            tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             size="sm"
             data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
             variant={isDirty ? 'primary' : 'secondary'}
           >
+<<<<<<< HEAD
             Сохранить изменения
           </Button>
           <Dropdown overlay={menu}>
             <Button
               aria-label="Дополнительные параметры сохранения"
+=======
+            <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
+          </Button>
+          <Dropdown overlay={menu}>
+            <Button
+              aria-label={t('dashboard.toolbar.more-save-options', 'More save options')}
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
               icon="angle-down"
               variant={isDirty ? 'primary' : 'secondary'}
               size="sm"
@@ -577,7 +739,11 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  const actionElements: React.ReactNode[] = [];
+  return <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>;
+}
+
+function renderActionElements(toolbarActions: ToolbarAction[]) {
+  const actionElements: ReactNode[] = [];
   let lastGroup = '';
 
   for (const action of toolbarActions) {
@@ -593,12 +759,7 @@ export function ToolbarActions({ dashboard }: Props) {
     lastGroup = action.group;
   }
 
-  return (
-    <Stack flex={1} minWidth={0} justifyContent={showScopesSelector ? 'space-between' : 'flex-end'}>
-      {showScopesSelector && <ScopesSelector />}
-      <ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>
-    </Stack>
-  );
+  return actionElements;
 }
 
 function addDynamicActions(
@@ -644,11 +805,17 @@ function usePanelEditDirty(panelEditor?: PanelEditor) {
 interface ToolbarAction {
   group: string;
   condition?: boolean | string;
-  render: () => React.ReactNode;
+  render: () => ReactNode;
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    hiddenElementsContainer: css({
+      display: 'flex',
+      padding: 0,
+      gap: theme.spacing(1),
+      whiteSpace: 'nowrap',
+    }),
     buttonWithExtraMargin: css({
       margin: theme.spacing(0, 0.5),
     }),

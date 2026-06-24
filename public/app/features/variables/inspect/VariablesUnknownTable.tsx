@@ -1,21 +1,22 @@
 import { css } from '@emotion/css';
-import { ReactElement, useEffect, useState } from 'react';
+import { type ReactElement, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type BaseVariableModel, type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { CollapsableSection, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2, VerticalGroup } from '@grafana/ui';
+import { CollapsableSection, Icon, Spinner, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { DashboardModel } from '../../dashboard/state';
-import { VariableModel } from '../types';
+import { type DashboardModel } from '../../dashboard/state/DashboardModel';
 
 import { VariablesUnknownButton } from './VariablesUnknownButton';
-import { getUnknownsNetwork, UsagesToNetwork } from './utils';
+import { type UsagesToNetwork } from './types';
+import { getUnknownsNetwork } from './utils';
 
 export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;
 
 export interface VariablesUnknownTableProps {
-  variables: VariableModel[];
+  variables: BaseVariableModel[];
   dashboard: DashboardModel | null;
 }
 
@@ -55,12 +56,14 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
     <div className={style.container}>
       <CollapsableSection label={<CollapseLabel />} isOpen={open} onToggle={onToggle}>
         {loading && (
-          <VerticalGroup justify="center">
-            <HorizontalGroup justify="center">
-              <span>Loading...</span>
+          <Stack direction="column" justifyContent="center">
+            <Stack justifyContent="center">
+              <span>
+                <Trans i18nKey="variables.variables-unknown-table.loading">Loading...</Trans>
+              </span>
               <Spinner />
-            </HorizontalGroup>
-          </VerticalGroup>
+            </Stack>
+          </Stack>
         )}
         {!loading && usages && (
           <>
@@ -75,18 +78,30 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
 
 function CollapseLabel(): ReactElement {
   const style = useStyles2(getStyles);
+
   return (
-    <h5>
-      Renamed or missing variables
-      <Tooltip content="Click to expand a list with all variable references that have been renamed or are missing from the dashboard.">
+    <Text variant="h5">
+      <Trans i18nKey="variables.variables-unknown-table.collapse-label">Renamed or missing variables</Trans>
+      <Tooltip
+        content={t(
+          'variables.variables-unknown-table.collapse-tooltip',
+          'Click to expand a list with all variable references that have been renamed or are missing from the dashboard.'
+        )}
+      >
         <Icon name="info-circle" className={style.infoIcon} />
       </Tooltip>
-    </h5>
+    </Text>
   );
 }
 
 function NoUnknowns(): ReactElement {
-  return <span>No renamed or missing variables found.</span>;
+  return (
+    <span>
+      <Trans i18nKey="variables.no-unknowns.no-renamed-or-missing-variables-found">
+        No renamed or missing variables found.
+      </Trans>
+    </span>
+  );
 }
 
 function UnknownTable({ usages }: { usages: UsagesToNetwork[] }): ReactElement {
@@ -95,7 +110,9 @@ function UnknownTable({ usages }: { usages: UsagesToNetwork[] }): ReactElement {
     <table className="filter-table filter-table--hover">
       <thead>
         <tr>
-          <th>Variable</th>
+          <th>
+            <Trans i18nKey="variables.unknown-table.variable">Variable</Trans>
+          </th>
           <th colSpan={5} />
         </tr>
       </thead>

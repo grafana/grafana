@@ -15,11 +15,14 @@ var _ auth.ExternalSessionStore = (*store)(nil)
 
 type store struct {
 	sqlStore       db.DB
-	secretsService secrets.Service
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer         tracing.Tracer
 }
 
-func provideExternalSessionStore(sqlStore db.DB, secretService secrets.Service, tracer tracing.Tracer) auth.ExternalSessionStore {
+func provideExternalSessionStore(sqlStore db.DB,
+	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	tracer tracing.Tracer,
+) auth.ExternalSessionStore {
 	return &store{
 		sqlStore:       sqlStore,
 		secretsService: secretService,
@@ -27,11 +30,11 @@ func provideExternalSessionStore(sqlStore db.DB, secretService secrets.Service, 
 	}
 }
 
-func (s *store) Get(ctx context.Context, extSessionID int64) (*auth.ExternalSession, error) {
+func (s *store) Get(ctx context.Context, ID int64) (*auth.ExternalSession, error) {
 	ctx, span := s.tracer.Start(ctx, "externalsession.Get")
 	defer span.End()
 
-	externalSession := &auth.ExternalSession{ID: extSessionID}
+	externalSession := &auth.ExternalSession{ID: ID}
 
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		found, err := sess.Get(externalSession)
@@ -56,6 +59,8 @@ func (s *store) Get(ctx context.Context, extSessionID int64) (*auth.ExternalSess
 	return externalSession, nil
 }
 
+// List returns a list of external sessions that match the given query.
+// If the result set contains more than one entry, the entries are sorted by ID in descending order.
 func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
 	ctx, span := s.tracer.Start(ctx, "externalsession.List")
 	defer span.End()
@@ -63,6 +68,10 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 	externalSession := &auth.ExternalSession{}
 	if query.ID != 0 {
 		externalSession.ID = query.ID
+	}
+
+	if query.UserID != 0 {
+		externalSession.UserID = query.UserID
 	}
 
 	hash := sha256.New()
@@ -80,7 +89,7 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 
 	queryResult := make([]*auth.ExternalSession, 0)
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Find(&queryResult, externalSession)
+		return sess.Desc("id").Find(&queryResult, externalSession)
 	})
 	if err != nil {
 		return nil, err
@@ -147,6 +156,45 @@ func (s *store) Create(ctx context.Context, extSession *auth.ExternalSession) er
 		return err
 	}
 	extSession.ID = clone.ID
+	return nil
+}
+
+func (s *store) Update(ctx context.Context, ID int64, cmd *auth.UpdateExternalSessionCommand) error {
+	ctx, span := s.tracer.Start(ctx, "externalsession.Update")
+	defer span.End()
+
+	var err error
+	externalSession := &auth.ExternalSession{}
+
+	externalSession.AccessToken, err = s.encryptAndEncode(cmd.Token.AccessToken)
+	if err != nil {
+		return err
+	}
+
+	externalSession.RefreshToken, err = s.encryptAndEncode(cmd.Token.RefreshToken)
+	if err != nil {
+		return err
+	}
+
+	var secretIdToken string
+	if idToken, ok := cmd.Token.Extra("id_token").(string); ok && idToken != "" {
+		secretIdToken, err = s.encryptAndEncode(idToken)
+		if err != nil {
+			return err
+		}
+		externalSession.IDToken = secretIdToken
+	}
+
+	externalSession.ExpiresAt = cmd.Token.Expiry
+
+	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.ID(ID).Cols("access_token", "refresh_token", "id_token", "expires_at").Update(externalSession)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

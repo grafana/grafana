@@ -1,43 +1,43 @@
 import { PanelPlugin } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { AutoEditor } from './AutoEditor';
-import { ManualEditor } from './ManualEditor';
-import { XYChartPanel } from './XYChartPanel';
+import { SeriesEditor } from './SeriesEditor';
+import { XYChartPanel2 } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
-import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
+import { xyChartMigrationHandler } from './migrations';
+import { type FieldConfig, defaultFieldConfig, type Options } from './panelcfg.gen';
+import { xychartSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
+export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
+  // .setPanelChangeHandler(xyChartChangeHandler)
+  .setMigrationHandler(xyChartMigrationHandler)
   .useFieldConfig(getScatterFieldConfig(defaultFieldConfig))
   .setPanelOptions((builder) => {
+    const category = [t('xychart.category-xychart', 'XY Chart')];
     builder
       .addRadio({
-        path: 'seriesMapping',
-        name: 'Series mapping',
+        path: 'mapping',
+        name: t('xychart.name-series-mapping', 'Series mapping'),
+        category,
         defaultValue: 'auto',
         settings: {
           options: [
-            { value: 'auto', label: 'Table', description: 'Plot values within a single table result' },
-            { value: 'manual', label: 'Manual', description: 'Construct values from any result' },
+            { value: 'auto', label: t('xychart.series-mapping-options.label-auto', 'Auto') },
+            { value: 'manual', label: t('xychart.series-mapping-options.label-manual', 'Manual') },
           ],
         },
-      })
-      .addCustomEditor({
-        id: 'xyPlotConfig',
-        path: 'dims',
-        name: '',
-        editor: AutoEditor,
-        showIf: (cfg) => cfg.seriesMapping === 'auto',
       })
       .addCustomEditor({
         id: 'series',
         path: 'series',
         name: '',
-        defaultValue: [],
-        editor: ManualEditor,
-        showIf: (cfg) => cfg.seriesMapping === 'manual',
+        category,
+        editor: SeriesEditor,
+        defaultValue: [{}],
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, true);
-    commonOptionsBuilder.addLegendOptions(builder);
-  });
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
+  })
+  .setSuggestionsSupplier(xychartSuggestionsSupplier);

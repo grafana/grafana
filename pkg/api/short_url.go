@@ -1,65 +1,264 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+
+	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
+func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
+	reqSignedIn := middleware.ReqSignedIn
+
+	handler := newShortURLK8sHandler(hs)
+	apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
+	apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
+	apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
+}
+
 // createShortURL handles requests to create short URLs.
 func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Response {
-	cmd := dtos.CreateShortURLCmd{}
+	cmd := &dtos.CreateShortURLCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("bad request data: %w", err))
 	}
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
-	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
+	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return response.Err(err)
 	}
 
-	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(hs.Cfg.AppURL, "/"), shortURL.Uid, c.SignedInUser.GetOrgID())
-	c.Logger.Debug("Created short URL", "url", url)
+	shortURLDTO := hs.ShortURLService.ConvertShortURLToDTO(shortURL, hs.Cfg.AppURL)
+	c.Logger.Debug("Created short URL", "url", shortURLDTO.URL)
 
-	dto := dtos.ShortURL{
-		UID: shortURL.Uid,
-		URL: url,
-	}
-
-	return response.JSON(http.StatusOK, dto)
+	return response.JSON(http.StatusOK, shortURLDTO)
 }
 
-func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
+// getShortURL handles requests to get short URLs.
+func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response {
 	shortURLUID := web.Params(c.Req)[":uid"]
 
 	if !util.IsValidShortUID(shortURLUID) {
-		return
+		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("invalid uid"))
 	}
 
 	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
 	if err != nil {
 		if shorturls.ErrShortURLNotFound.Is(err) {
-			hs.log.Debug("Not redirecting short URL since not found")
-			return
+			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
 		}
+		return response.Err(shorturls.ErrShortURLInternal.Errorf("failed to get short URL: %w", err))
+	}
 
-		hs.log.Error("Short URL redirection error", "err", err)
+	return response.JSON(http.StatusOK, shortURL)
+}
+
+type shortURLK8sHandler struct {
+	namespacer           request.NamespaceMapper
+	gvr                  schema.GroupVersionResource
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	cfg                  *setting.Cfg
+}
+
+func newShortURLK8sHandler(hs *HTTPServer) *shortURLK8sHandler {
+	return &shortURLK8sHandler{
+		gvr:                  v1beta1.ShortURLKind().GroupVersionResource(),
+		namespacer:           request.GetNamespaceMapper(hs.Cfg),
+		clientConfigProvider: hs.clientConfigProvider,
+		cfg:                  hs.Cfg,
+	}
+}
+
+func (sk8s *shortURLK8sHandler) getKubernetesShortURLsHandler(c *contextmodel.ReqContext) {
+	client, ok := sk8s.getClient(c)
+	if !ok {
 		return
 	}
 
-	// Failure to update LastSeenAt should still allow to redirect
-	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
-		hs.log.Error("Failed to update short URL last seen at", "error", err)
+	shortURLUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(shortURLUID) {
+		c.JsonApiErr(http.StatusBadRequest, "Invalid short URL UID format", fmt.Errorf("invalid short URL UID: %s", shortURLUID))
+		return
 	}
 
-	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
-	c.Redirect(setting.ToAbsUrl(shortURL.Path), 302)
+	c.Logger.Debug("Fetching short URL", "uid", shortURLUID)
+	out, err := client.Get(c.Req.Context(), shortURLUID, v1.GetOptions{})
+	if err != nil {
+		sk8s.writeError(c, err)
+		return
+	}
+
+	legacyShortURL, err := shorturl.UnstructuredToLegacyShortURL(*out)
+	if err != nil {
+		sk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, legacyShortURL)
+}
+
+func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmodel.ReqContext) {
+	uid := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(uid) {
+		c.Logger.Warn("Invalid short URL UID format", "uid", uid)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusPermanentRedirect)
+		return
+	}
+
+	client, err := kubernetes.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		c.Logger.Error("Short URL redirection error: failed to create kubernetes client", "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+
+	result := client.RESTClient().Get().
+		Prefix("apis", v1beta1.APIGroup, v1beta1.APIVersion).
+		Namespace(sk8s.namespacer(c.OrgID)).
+		Resource(v1beta1.ShortURLKind().Plural()).
+		Name(uid).
+		SubResource("goto").
+		Param("redirect", "false"). // returns the URL and then we will do the redirect
+		Do(c.Req.Context())
+
+	if err = result.Error(); err != nil {
+		// Only emit a 308 when the 404 is from our API group. errors.IsNotFound
+		// matches any 404 from the apiserver, including infrastructure problems
+		// (CRD not registered, wrong API path) — those surface with
+		// Details.Group="meta.k8s.io" and must not be cached as a permanent
+		// redirect, or a client would keep bypassing a working link after the
+		// backend issue is fixed.
+		var statusErr *k8serrors.StatusError
+		if errors.As(err, &statusErr) && k8serrors.IsNotFound(err) &&
+			statusErr.ErrStatus.Details != nil &&
+			statusErr.ErrStatus.Details.Group == v1beta1.APIGroup {
+			c.Logger.Debug("Not redirecting short URL since not found", "uid", uid)
+			c.Redirect(sk8s.cfg.AppURL, http.StatusPermanentRedirect)
+			return
+		}
+		c.Logger.Error("Short URL redirection error: goto subresource call failed", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+
+	body, err := result.Raw()
+	if err != nil {
+		c.Logger.Error("Short URL redirection error: failed to read response body", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+
+	value := &v1beta1.GetGotoResponse{}
+	if err = json.Unmarshal(body, value); err != nil {
+		c.Logger.Error("Short URL redirection error: failed to unmarshal response", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+	if value.Url == "" {
+		c.Logger.Error("Short URL redirection error: empty url in response", "uid", uid)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// Safety net: validate the redirect URL is not an open redirect.
+	// The URL from the goto subresource is already an absolute URL (appURL + path),
+	// so we parse it and validate the path component.
+	parsedURL, parseErr := url.Parse(value.Url)
+	if parseErr != nil {
+		c.Logger.Error("Short URL redirection error: invalid redirect URL", "uid", uid, "url", value.Url, "err", parseErr)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+	// Ensure the redirect URL is relative to this server by checking it has no scheme
+	// or its host matches what we expect. Since the goto handler constructs the URL
+	// as appURL + "/" + path, we just need to verify it's not pointing externally.
+	appParsed, appParseErr := url.Parse(sk8s.cfg.AppURL)
+	if appParseErr != nil || appParsed.Host == "" {
+		c.Logger.Error("Short URL redirection error: invalid app URL configuration", "err", appParseErr)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+	if parsedURL.Host != "" && !strings.EqualFold(parsedURL.Host, appParsed.Host) {
+		c.Logger.Error("Short URL redirect points to external host, refusing", "url", value.Url)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
+		return
+	}
+
+	c.Resp.Header().Add("Location", value.Url)
+	c.Resp.WriteHeader(http.StatusFound)
+}
+
+func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel.ReqContext) {
+	client, ok := sk8s.getClient(c)
+	if !ok {
+		return
+	}
+
+	cmd := dtos.CreateShortURLCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.Logger.Error("Failed to bind request data", "error", err)
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+
+	c.Logger.Debug("Creating short URL", "path", cmd.Path)
+	obj := shorturl.LegacyCreateCommandToUnstructured(cmd)
+	obj.SetGenerateName("s") // becomes a prefix
+
+	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
+	if err != nil {
+		c.Logger.Error("Failed to create short URL in Kubernetes", "path", cmd.Path, "error", err)
+		sk8s.writeError(c, err)
+		return
+	}
+
+	c.Logger.Info("Successfully created short URL", "path", cmd.Path, "uid", out.GetName())
+	c.JSON(http.StatusOK, shorturl.UnstructuredToLegacyShortURLDTO(*out, sk8s.cfg.AppURL))
+}
+
+//-----------------------------------------------------------------------------------------
+// Utility functions
+//-----------------------------------------------------------------------------------------
+
+func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	// NOTE! if you are copying this, consider using the hs.clientGenerator to get a typed client!
+	dyn, err := dynamic.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		c.JsonApiErr(500, "client", err)
+		return nil, false
+	}
+	return dyn.Resource(sk8s.gvr).Namespace(sk8s.namespacer(c.OrgID)), true
+}
+
+func (sk8s *shortURLK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
+	//nolint:errorlint
+	statusError, ok := err.(*k8serrors.StatusError)
+	if ok {
+		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
+		return
+	}
+	errhttp.Write(c.Req.Context(), err, c.Resp)
 }

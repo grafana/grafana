@@ -26,12 +26,13 @@ func (lw *logWrapper) Println(v ...any) {
 	lw.logger.Info("graphite metric bridge", v...)
 }
 
-func ProvideService(cfg *setting.Cfg, reg prometheus.Registerer) (*InternalMetricsService, error) {
+func ProvideService(cfg *setting.Cfg, reg prometheus.Registerer, gatherer prometheus.Gatherer) (*InternalMetricsService, error) {
 	initMetricVars(reg)
 	initFrontendMetrics(reg)
 
 	s := &InternalMetricsService{
-		Cfg: cfg,
+		Cfg:      cfg,
+		gatherer: gatherer,
 	}
 	return s, s.readSettings()
 }
@@ -41,6 +42,7 @@ type InternalMetricsService struct {
 
 	intervalSeconds int64
 	graphiteCfg     *graphitebridge.Config
+	gatherer        prometheus.Gatherer
 }
 
 func (im *InternalMetricsService) Run(ctx context.Context) error {
@@ -66,7 +68,7 @@ func ProvideRegisterer() prometheus.Registerer {
 
 func ProvideGatherer() prometheus.Gatherer {
 	k8sGatherer := newAddPrefixWrapper(legacyregistry.DefaultGatherer)
-	return newMultiRegistry(k8sGatherer, prometheus.DefaultGatherer)
+	return NewMultiRegistry(k8sGatherer, prometheus.DefaultGatherer)
 }
 
 func ProvideRegistererForTest() prometheus.Registerer {
@@ -122,11 +124,16 @@ func (g *addPrefixWrapper) Gather() ([]*dto.MetricFamily, error) {
 var _ prometheus.Gatherer = (*multiRegistry)(nil)
 
 type multiRegistry struct {
+	denyList  map[string]struct{}
 	gatherers []prometheus.Gatherer
 }
 
-func newMultiRegistry(gatherers ...prometheus.Gatherer) *multiRegistry {
+func NewMultiRegistry(gatherers ...prometheus.Gatherer) *multiRegistry {
+	denyList := map[string]struct{}{
+		"grafana_apiserver_request_slo_duration_seconds_bucket": {},
+	}
 	return &multiRegistry{
+		denyList:  denyList,
 		gatherers: gatherers,
 	}
 }
@@ -141,13 +148,16 @@ func (r *multiRegistry) Gather() (mfs []*dto.MetricFamily, err error) {
 
 		for i := 0; i < len(mf); i++ {
 			m := mf[i]
-			_, exists := names[*m.Name]
+			// skip metrics in the deny list
+			if _, denied := r.denyList[*m.Name]; denied {
+				continue
+			}
 			// prevent duplicate metric names
-			if exists {
-				// we can skip go_ metrics without returning an error
+			if _, exists := names[*m.Name]; exists {
+				// we can skip go_ and process_ metrics without returning an error
 				// because they are known to be duplicates in both
 				// the k8s and prometheus gatherers.
-				if strings.HasPrefix(*m.Name, "go_") {
+				if strings.HasPrefix(*m.Name, "go_") || strings.HasPrefix(*m.Name, "process_") {
 					continue
 				}
 				errs = append(errs, fmt.Errorf("duplicate metric name: %s", *m.Name))

@@ -14,7 +14,7 @@ To ensure consistency across the Go codebase, we require all code to
 pass a number of linter checks.
 
 We use [GolangCI-Lint](https://github.com/golangci/golangci-lint) with a
-custom configuration [.golangci.toml](/.golangci.toml) to run these
+custom configuration [.golangci.yml](/.golangci.yml) to run these
 checks.
 
 To run all linters, use the `lint-go` Makefile target:
@@ -60,13 +60,12 @@ You only need to define `TestMain` in one `_test.go` file within each package.
 
 We run unit and integration tests separately, to help keep our CI pipeline running smoothly and provide a better developer experience.
 
-To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for `testing.Short()`:
+To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for running in Short mode by using `testutil.SkipIntegrationTestInShortMode(t)` function:
 
 ```go
 func TestIntegrationFoo(t *testing.T) {
-    if testing.Short() {
-        t.Skip("skipping integration test")
-    }
+    testutil.SkipIntegrationTestInShortMode(t)
+
     // function body
 }
 ```

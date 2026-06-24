@@ -1,0 +1,53 @@
+# Owned by grafana-delivery-squad
+# Intended to be dropped into the base repo, Ex: grafana/grafana
+name: Dispatch sync to mirror
+run-name: dispatch-sync-to-mirror-${{ github.ref_name }}
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+      - "release-*"
+
+permissions: {}
+
+# This is run after the pull request has been merged, so we'll run against the target branch
+jobs:
+  dispatch-job:
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+      contents: read
+      actions: write
+    env:
+      REF_NAME: ${{ github.ref_name }}
+      REPO: ${{ github.repository }}
+      SHA: ${{ github.sha }}
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-releases-oss
+          permission_set: ${{ github.ref_name == 'main' && 'main' || 'release' }} # different branches require different permission sets
+
+      - uses: actions/github-script@v8
+        if: github.repository == 'grafana/grafana'
+        with:
+          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          script: |
+            const {REF_NAME, REPO, SHA} = process.env;
+
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'grafana',
+                repo: 'security-patch-actions',
+                workflow_id: 'mirror-branch-and-apply-patches.yml',
+                ref: 'main',
+                inputs: {
+                  src_ref: REF_NAME,
+                  src_repo: REPO,
+                  src_sha: SHA,
+                  dest_repo: REPO + "-security-mirror",
+                  patch_repo: REPO + "-security-patches"
+                }
+            })

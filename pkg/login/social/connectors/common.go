@@ -2,6 +2,7 @@ package connectors
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -118,9 +120,19 @@ func createOAuthConfig(info *social.OAuthInfo, cfg *setting.Cfg, defaultName str
 		authStyle = oauth2.AuthStyleAutoDetect
 	}
 
+	var clientSecret string
+	switch info.ClientAuthentication {
+	case "client_secret_post":
+		clientSecret = info.ClientSecret
+	case "managed_identity":
+		clientSecret = ""
+	default:
+		clientSecret = info.ClientSecret
+	}
+
 	config := oauth2.Config{
 		ClientID:     info.ClientId,
-		ClientSecret: info.ClientSecret,
+		ClientSecret: clientSecret,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:   info.AuthUrl,
 			TokenURL:  info.TokenUrl,
@@ -155,9 +167,25 @@ func MustBool(value any, defaultValue bool) bool {
 	return result
 }
 
+// CreateOAuthInfoFromKeyValuesWithLogging creates an OAuthInfo struct from a map[string]any using mapstructure
+// it puts all extra key values into OAuthInfo's Extra map.
+// It logs as errors any parsing errors that are not critical
+func CreateOAuthInfoFromKeyValuesWithLogging(l log.Logger, provider string, settingsKV map[string]any) (*social.OAuthInfo, error) {
+	parsingWarns := []error{}
+	info, err := createOAuthInfoFromKeyValues(settingsKV, &parsingWarns)
+	if len(parsingWarns) > 0 {
+		l.Error("Invalid auth configuration setting", "error", errors.Join(parsingWarns...), "provider", provider)
+	}
+	return info, err
+}
+
 // CreateOAuthInfoFromKeyValues creates an OAuthInfo struct from a map[string]any using mapstructure
 // it puts all extra key values into OAuthInfo's Extra map
 func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*social.OAuthInfo, error) {
+	return createOAuthInfoFromKeyValues(settingsKV, nil)
+}
+
+func createOAuthInfoFromKeyValues(settingsKV map[string]any, parsingWarns *[]error) (*social.OAuthInfo, error) {
 	emptyStrToSliceDecodeHook := func(from reflect.Type, to reflect.Type, data any) (any, error) {
 		if from.Kind() == reflect.String && to.Kind() == reflect.Slice {
 			strData, ok := data.(string)
@@ -168,7 +196,12 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*social.OAuthInfo,
 			if strData == "" {
 				return []string{}, nil
 			}
-			return util.SplitString(strData), nil
+
+			splitStr, err := util.SplitStringWithError(strData)
+			if err != nil && parsingWarns != nil {
+				*parsingWarns = append(*parsingWarns, err)
+			}
+			return splitStr, nil
 		}
 		return data, nil
 	}

@@ -1,7 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import config from 'app/core/config';
-import { OrgUser, UsersState } from 'app/types';
+import { type UsersState, type OrgUser } from 'app/types/user';
 
 export const initialState: UsersState = {
   users: [],
@@ -9,21 +8,11 @@ export const initialState: UsersState = {
   page: 0,
   perPage: 30,
   totalPages: 1,
-  externalUserMngInfo: config.externalUserMngInfo,
-  externalUserMngLinkName: config.externalUserMngLinkName,
-  externalUserMngLinkUrl: config.externalUserMngLinkUrl,
   isLoading: false,
   rolesLoading: false,
 };
 
 export interface UsersFetchResult {
-  orgUsers: OrgUser[];
-  perPage: number;
-  page: number;
-  totalCount: number;
-}
-
-export interface UsersRolesFetchResult {
   orgUsers: OrgUser[];
   perPage: number;
   page: number;
@@ -79,7 +68,7 @@ const usersSlice = createSlice({
 
 export const {
   searchQueryChanged,
-  setUsersSearchPage,
+
   usersLoaded,
   usersFetchBegin,
   usersFetchEnd,

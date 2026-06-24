@@ -1,29 +1,27 @@
 import { css } from '@emotion/css';
-import { Fragment, useState } from 'react';
+import { Fragment, type JSX, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { getContactPointInUse } from '@grafana/alerting/unstable';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import {
-  canDeleteEntity,
-  canEditEntity,
-  getAnnotation,
-  shouldUseK8sApi,
-} from 'app/features/alerting/unified/utils/k8s/utils';
+import { isProvisionedResource, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { ContactPointAction, isInUse, isInsufficientPermissions } from '../../hooks/abilities/types';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import { ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
+import { type ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
@@ -31,35 +29,42 @@ interface ContactPointHeaderProps {
 }
 
 export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeaderProps) => {
-  const { name, id, provisioned, policies = [] } = contactPoint;
+  const { name, id, provenance, policies = [], grafana_managed_receiver_configs: integrations } = contactPoint;
   const styles = useStyles2(getStyles);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const { selectedAlertmanager } = useAlertmanager();
 
   const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
 
-  const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
-  const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
-  const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
+  const isProvisioned = isProvisionedResource(provenance);
+
+  // Entity-scoped ability checks
+  const exportAbility = useContactPointAbility({ action: ContactPointAction.Export, context: contactPoint });
+  const editAbility = useContactPointAbility({ action: ContactPointAction.Update, context: contactPoint });
+  const deleteAbility = useContactPointAbility({ action: ContactPointAction.Delete, context: contactPoint });
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
   const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
 
+  const { routes: k8sRoutesInUse, rules: k8sRulesInUse } = getContactPointInUse(contactPoint);
+
+  /**
+   * Non-k8s: policies that reference this contact point, excluding auto-generated simplified-routing
+   * policies (which are managed by the simplified-routing feature and cannot be edited by the user).
+   */
   const regularPolicyReferences = policies.filter((ref) => ref.route.type !== 'auto-generated');
 
-  const k8sRoutesInUse = getAnnotation(contactPoint, K8sAnnotations.InUseRoutes);
   /**
-   * Number of policies that reference this contact point
+   * Number of policies that reference this contact point (for display purposes).
    *
-   * When the k8s API is being used, this number will only be the regular policies
-   * (will not include the auto generated simplified routing policies in the count)
+   * When the k8s API is being used this is sourced from the InUseRoutes annotation, which
+   * only counts regular policies (auto-generated simplified-routing policies are excluded).
+   * On the non-k8s path we likewise exclude auto-generated policies.
    */
-  const numberOfPolicies = usingK8sApi ? Number(k8sRoutesInUse) : policies.length;
-
-  const numberOfPoliciesPreventingDeletion = usingK8sApi ? Number(k8sRoutesInUse) : regularPolicyReferences.length;
+  const numberOfPolicies = usingK8sApi ? k8sRoutesInUse : regularPolicyReferences.length;
 
   /** Number of rules that use this contact point for simplified routing */
-  const numberOfRules = Number(getAnnotation(contactPoint, K8sAnnotations.InUseRules)) || 0;
+  const numberOfRules = usingK8sApi ? k8sRulesInUse : 0;
 
   /**
    * Is the contact point referenced by anything such as notification policies or as a simplified routing contact point?
@@ -67,38 +72,38 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
    * Used to determine whether to show the "Unused" badge
    */
   const isReferencedByAnything = usingK8sApi ? Boolean(numberOfPolicies || numberOfRules) : policies.length > 0;
+  /** Can the contact point actually be edited? Ability encapsulates provisioning + k8s annotation + RBAC. */
+  const canEdit = isGranted(editAbility);
 
-  /** Does the current user have permissions to edit the contact point? */
-  const hasAbilityToEdit = canEditEntity(contactPoint) || editAllowed;
-  /** Can the contact point actually be edited via the UI? */
-  const contactPointIsEditable = !provisioned;
-  /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
-  const canEdit = editSupported && hasAbilityToEdit && contactPointIsEditable;
-
-  /** Does the current user have permissions to delete the contact point? */
-  const hasAbilityToDelete = canDeleteEntity(contactPoint) || deleteAllowed;
-  /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
-  const contactPointIsDeleteable = !provisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
-  /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
-  const canBeDeleted = deleteSupported && hasAbilityToDelete && contactPointIsDeleteable;
+  /**
+   * Can the contact point be deleted?
+   * On the k8s path this is fully encapsulated by the ability (RBAC + provisioning + in-use annotations).
+   * On the non-k8s path the ability covers RBAC + provisioning, and we additionally enforce the
+   * in-use check here using the policy/rule data fetched from the legacy API.
+   */
+  const canBeDeleted = isGranted(deleteAbility) && (usingK8sApi || (!regularPolicyReferences.length && !numberOfRules));
 
   const menuActions: JSX.Element[] = [];
   if (showManagePermissions) {
     menuActions.push(
       <Fragment key="manage-permissions">
-        <Menu.Item icon="unlock" label="Manage permissions" onClick={() => setShowPermissionsDrawer(true)} />
+        <Menu.Item
+          icon="unlock"
+          label={t('alerting.contact-point-header.label-manage-permissions', 'Manage permissions')}
+          onClick={() => setShowPermissionsDrawer(true)}
+        />
       </Fragment>
     );
   }
 
-  if (exportSupported) {
+  if (isSupported(exportAbility)) {
     menuActions.push(
       <Fragment key="export-contact-point">
         <Menu.Item
           icon="download-alt"
-          label="Export"
-          ariaLabel="export"
-          disabled={!exportAllowed}
+          label={t('alerting.contact-point-header.export-label-export', 'Export')}
+          ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
+          disabled={!exportAbility.granted}
           data-testid="export"
           onClick={() => openExportDrawer(name)}
         />
@@ -107,7 +112,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
   }
 
-  if (deleteSupported) {
+  if (isSupported(deleteAbility)) {
     const cannotDeleteNoPermissions = t(
       'alerting.contact-points.delete-reasons.no-permissions',
       'You do not have the required permission to delete this contact point'
@@ -125,11 +130,17 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
       'Contact point is referenced by one or more alert rules'
     );
 
+    const inUseAbility = isInUse(deleteAbility) ? deleteAbility : null;
+    // On the k8s path, in-use state is sourced from the ability's blockedBy field.
+    // On the non-k8s path, in-use state is derived from the fetched policies/rules arrays.
+    const routesBlockDeletion =
+      inUseAbility?.blockedBy.includes('routes') || (!usingK8sApi && regularPolicyReferences.length > 0);
+    const rulesBlockDeletion = inUseAbility?.blockedBy.includes('rules') || (!usingK8sApi && numberOfRules > 0);
     const reasonsDeleteIsDisabled = [
-      !hasAbilityToDelete ? cannotDeleteNoPermissions : '',
-      provisioned ? cannotDeleteProvisioned : '',
-      numberOfPoliciesPreventingDeletion > 0 ? cannotDeletePolicies : '',
-      numberOfRules ? cannotDeleteRules : '',
+      isInsufficientPermissions(deleteAbility) ? cannotDeleteNoPermissions : '',
+      isProvisioned ? cannotDeleteProvisioned : '',
+      routesBlockDeletion ? cannotDeletePolicies : '',
+      rulesBlockDeletion ? cannotDeleteRules : '',
     ].filter(Boolean);
 
     const deleteTooltipContent = (
@@ -155,8 +166,8 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         )}
       >
         <Menu.Item
-          label="Delete"
-          ariaLabel="delete"
+          label={t('alerting.contact-point-header.label-delete', 'Delete')}
+          ariaLabel={t('alerting.contact-point-header.ariaLabel-delete', 'Delete')}
           icon="trash-alt"
           destructive
           disabled={!canBeDeleted}
@@ -166,12 +177,16 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
     );
   }
 
-  const referencedByPoliciesText = t('alerting.contact-points.used-by', 'Used by {{ count }} notification policy', {
+  const referencedByPoliciesText = t('alerting.contact-points.used-by', '', {
     count: numberOfPolicies,
+    defaultValue_one: 'Used by {{count}} notification policies',
+    defaultValue_other: 'Used by {{count}} notification policies',
   });
 
-  const referencedByRulesText = t('alerting.contact-points.used-by-rules', 'Used by {{ count }} alert rule', {
+  const referencedByRulesText = t('alerting.contact-points.used-by-rules', '', {
     count: numberOfRules,
+    defaultValue_one: 'Used by {{count}} alert rules',
+    defaultValue_other: 'Used by {{count}} alert rules',
   });
 
   // TOOD: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of
@@ -206,27 +221,60 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
             {referencedByRulesText}
           </TextLink>
         )}
-        {provisioned && (
-          <ProvisioningBadge tooltip provenance={getAnnotation(contactPoint, K8sAnnotations.Provenance)} />
-        )}
+        {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
         {!isReferencedByAnything && <UnusedContactPointBadge />}
         <Spacer />
+        {config.featureToggles.alertingNotificationHistoryGlobal && (
+          <LinkButton
+            variant="secondary"
+            size="sm"
+            icon="history"
+            type="button"
+            disabled={integrations.length === 0}
+            tooltip={t(
+              'alerting.contact-point-header.tooltip-history',
+              'View the history of notification attempts made to this contact point'
+            )}
+            tooltipPlacement="top"
+            data-testid="history-action"
+            href={createRelativeUrl('/alerting/history', {
+              tab: 'notifications',
+              'var-RECEIVER_FILTER': name,
+            })}
+          >
+            {t('alerting.contact-point-header.button-history', 'History')}
+          </LinkButton>
+        )}
         <LinkButton
           tooltipPlacement="top"
-          tooltip={provisioned ? 'Provisioned contact points cannot be edited in the UI' : undefined}
+          tooltip={
+            isProvisioned
+              ? t(
+                  'alerting.contact-point-header.tooltip-provisioned-contact-points',
+                  'Provisioned contact points cannot be edited in the UI'
+                )
+              : undefined
+          }
           variant="secondary"
           size="sm"
           icon={canEdit ? 'pen' : 'eye'}
           type="button"
-          aria-label={`${canEdit ? 'edit' : 'view'}-action`}
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
           href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
         >
-          {canEdit ? 'Edit' : 'View'}
+          {canEdit
+            ? t('alerting.contact-point-header.button-edit', 'Edit')
+            : t('alerting.contact-point-header.button-view', 'View')}
         </LinkButton>
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
-            <MoreButton aria-label={`More actions for contact point "${contactPoint.name}"`} />
+            <MoreButton
+              aria-label={t(
+                'alerting.contact-point-header.aria-label-more-actions',
+                'More actions for contact point "{{contactPointName}}"',
+                { contactPointName: contactPoint.name }
+              )}
+            />
           </Dropdown>
         )}
       </Stack>
@@ -249,7 +297,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
 
     borderBottom: `solid 1px ${theme.colors.border.weak}`,
-    borderTopLeftRadius: `${theme.shape.radius.default}`,
-    borderTopRightRadius: `${theme.shape.radius.default}`,
+    borderTopLeftRadius: `${theme.shape.radius.lg}`,
+    borderTopRightRadius: `${theme.shape.radius.lg}`,
   }),
 });

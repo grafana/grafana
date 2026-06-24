@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type DataFrame, type DataFrameJSON, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { trackUseCentralHistoryExpandRow } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
@@ -14,13 +14,13 @@ import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { parse } from '../../../utils/rule-id';
 import { MetaText } from '../../MetaText';
-import { AnnotationValue } from '../../rule-viewer/tabs/Details';
+import { AnnotationValue } from '../../rule-viewer/Details';
+import { ErrorMessageRow } from '../state-history/ErrorMessageRow';
 import { LogTimelineViewer } from '../state-history/LogTimelineViewer';
 import { useFrameSubset } from '../state-history/LokiStateHistory';
-import { LogRecord } from '../state-history/common';
-import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
+import { type LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
-import { EventState, FilterType, LIMIT_EVENTS } from './EventListSceneObject';
+import { EventState, type FilterType, LIMIT_EVENTS } from './EventListSceneObject';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { logRecordsToDataFrameForState } from './utils';
 
@@ -72,6 +72,7 @@ export function EventDetails({ record, addFilter, timeRange }: EventDetailsProps
         <StateTransition record={record} addFilter={addFilter} />
         <ValueInTransition record={record} />
       </Stack>
+      {record.line.error && <ErrorMessageRow message={record.line.error} />}
       <Annotations rule={rule} />
       <StateVisualization ruleUID={ruleUID} timeRange={timeRange} labels={labelsInInstance ?? {}} />
     </Stack>
@@ -82,20 +83,7 @@ function useRuleHistoryRecordsForTheInstance(labelsForTheInstance: string, state
   const theme = useTheme2();
 
   return useMemo(() => {
-    // merge timestamp with "line"
-    const tsValues = stateHistory?.data?.values[0] ?? [];
-    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
-    const lines = stateHistory?.data?.values[1] ?? [];
-
-    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-      const line = lines[index];
-      // values property can be undefined for some instance states (e.g. NoData)
-      if (isLine(line)) {
-        acc.push({ timestamp, line });
-      }
-
-      return acc;
-    }, []);
+    const logRecords = historyDataFrameToLogRecords(stateHistory);
 
     // group all records by alert instance (unique set of labels)
     const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {
@@ -180,7 +168,8 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
     return null;
   }
 
-  const numberOfTransitions = dataFrames[0]?.fields[0]?.values?.length - 1 ?? 0; // we subtract 1 as the first value is the initial state
+  // we subtract 1 as the first value is the initial state
+  const numberOfTransitions = dataFrames[0]?.fields[0]?.values?.length - 1 || 0;
 
   return (
     <>
@@ -219,19 +208,17 @@ const Annotations = ({ rule }: AnnotationsProps) => {
     return null;
   }
   return (
-    <>
-      <div className={styles.metadataWrapper}>
-        {Object.entries(annotations).map(([name, value]) => {
-          const capitalizedName = capitalize(name);
-          return (
-            <MetaText direction="column" key={capitalizedName}>
-              {capitalizedName}
-              <AnnotationValue value={value} />
-            </MetaText>
-          );
-        })}
-      </div>
-    </>
+    <div className={styles.metadataWrapper}>
+      {Object.entries(annotations).map(([name, value]) => {
+        const capitalizedName = capitalize(name);
+        return (
+          <MetaText direction="column" key={capitalizedName}>
+            {capitalizedName}
+            <AnnotationValue value={value} />
+          </MetaText>
+        );
+      })}
+    </div>
   );
 };
 interface ValueInTransitionProps {

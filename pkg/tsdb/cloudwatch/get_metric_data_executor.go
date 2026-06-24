@@ -4,15 +4,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
+	"github.com/aws/aws-sdk-go-v2/aws"
+
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
-func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client cloudwatchiface.CloudWatchAPI,
+func (ds *DataSource) executeRequest(ctx context.Context, client models.CWClient,
 	metricDataInput *cloudwatch.GetMetricDataInput) ([]*cloudwatch.GetMetricDataOutput, error) {
 	mdo := make([]*cloudwatch.GetMetricDataOutput, 0)
 
@@ -26,9 +27,9 @@ func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client cloudwat
 			*metricDataInput.EndTime = metricDataInput.EndTime.Truncate(time.Minute).Add(time.Minute)
 		}
 
-		resp, err := client.GetMetricDataWithContext(ctx, metricDataInput)
+		resp, err := client.GetMetricData(ctx, metricDataInput)
 		if err != nil {
-			return mdo, errorsource.DownstreamError(err, false)
+			return mdo, backend.DownstreamError(err)
 		}
 
 		mdo = append(mdo, resp)

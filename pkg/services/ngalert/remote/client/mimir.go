@@ -11,42 +11,60 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+
+	alertingmodels "github.com/grafana/alerting/models"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
 
 // MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
 type MimirClient interface {
-	GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error)
+	GetFullState(ctx context.Context) (*UserState, error)
+	GetGrafanaAlertmanagerState(ctx context.Context) (*UserState, error)
 	CreateGrafanaAlertmanagerState(ctx context.Context, state string) error
 	DeleteGrafanaAlertmanagerState(ctx context.Context) error
 
 	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
-	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error
+	GetGrafanaAlertmanagerConfigStatus(ctx context.Context) (*GrafanaAlertmanagerConfigStatus, error)
+	CreateGrafanaAlertmanagerConfig(ctx context.Context, config *UserGrafanaConfig) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 
 	TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error)
 	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 
-	ShouldPromoteConfig() bool
-
 	// Mimir implements an extended version of the receivers API under a different path.
-	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
+	GetReceivers(ctx context.Context) ([]alertingmodels.ReceiverStatus, error)
+
+	// GetLimits retrieves tenant-scoped limits from the remote Alertmanager.
+	GetLimits(ctx context.Context) (*TenantLimits, error)
 }
 
 type Mimir struct {
-	client        client.Requester
-	endpoint      *url.URL
-	logger        log.Logger
-	metrics       *metrics.RemoteAlertmanager
-	promoteConfig bool
-	externalURL   string
-	staticHeaders map[string]string
+	client   alertingInstrument.Requester
+	endpoint *url.URL
+	logger   log.Logger
+	metrics  *metrics.RemoteAlertmanager
+}
+
+type SmtpConfig struct {
+	EhloIdentity   string            `json:"ehlo_identity"`
+	FromAddress    string            `json:"from_address"`
+	FromName       string            `json:"from_name"`
+	Host           string            `json:"host"`
+	Password       string            `json:"password"`
+	SkipVerify     bool              `json:"skip_verify"`
+	StartTLSPolicy string            `json:"start_tls_policy"`
+	StaticHeaders  map[string]string `json:"static_headers"`
+	User           string            `json:"user"`
 }
 
 type Config struct {
@@ -54,10 +72,8 @@ type Config struct {
 	TenantID string
 	Password string
 
-	Logger        log.Logger
-	PromoteConfig bool
-	ExternalURL   string
-	StaticHeaders map[string]string
+	Logger  log.Logger
+	Timeout time.Duration
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -85,23 +101,21 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
-		Next:     http.DefaultTransport,
+		Next:     httpclient.NewHTTPTransport(),
 	}
 
 	c := &http.Client{
 		Transport: rt,
+		Timeout:   cfg.Timeout,
 	}
-	tc := client.NewTimedClient(c, metrics.RequestLatency)
-	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
+	tc := alertingInstrument.NewTimedClient(c, metrics.RequestLatency)
+	trc := alertingInstrument.NewTracedClient(tc, tracer, "remote.alertmanager.client")
 
 	return &Mimir{
-		endpoint:      cfg.URL,
-		client:        trc,
-		logger:        cfg.Logger,
-		metrics:       metrics,
-		promoteConfig: cfg.PromoteConfig,
-		externalURL:   cfg.ExternalURL,
-		staticHeaders: cfg.StaticHeaders,
+		endpoint: cfg.URL,
+		client:   trc,
+		logger:   cfg.Logger,
+		metrics:  metrics,
 	}, nil
 }
 
@@ -136,13 +150,6 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 		}
 	}()
 
-	ct := resp.Header.Get("Content-Type")
-	if !strings.HasPrefix(ct, "application/json") {
-		msg := "Response content-type is not application/json"
-		mc.logger.Error(msg, "content-type", "url", r.URL.String(), "method", r.Method, ct, "status", resp.StatusCode)
-		return nil, fmt.Errorf("%s: %s", msg, ct)
-	}
-
 	if out == nil {
 		return resp, nil
 	}
@@ -156,17 +163,25 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 
 	if resp.StatusCode/100 != 2 {
 		errResponse := &errorResponse{}
-		err = json.Unmarshal(body, errResponse)
-
-		if err == nil && errResponse.Error() != "" {
-			msg := "Error response from the Mimir API"
-			mc.logger.Error(msg, "err", errResponse, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
-			return nil, fmt.Errorf("%s: %w", msg, errResponse)
+		errMsg := strings.TrimSpace(string(body))
+		if jsonErr := json.Unmarshal(body, errResponse); jsonErr == nil && errResponse.Error() != "" {
+			errMsg = errResponse.Error()
 		}
+		if errMsg == "" {
+			errMsg = fmt.Sprintf("received status code %d from the remote Alertmanager", resp.StatusCode)
+		}
+		mc.logger.Error("Error response from the remote Alertmanager", "err", errMsg, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, errutil.TooManyRequests("alerting.remote-alertmanager.rateLimited").Errorf("%s", errMsg)
+		}
+		return nil, fmt.Errorf("%s", errMsg)
+	}
 
-		msg := "Failed to decode non-2xx JSON response"
-		mc.logger.Error(msg, "err", err, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
-		return nil, fmt.Errorf("%s: %w", msg, err)
+	ct := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(ct, "application/json") {
+		msg := "Response content-type is not application/json"
+		mc.logger.Error(msg, "content-type", ct, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode, "body", string(body))
+		return nil, fmt.Errorf("%s: %s", msg, ct)
 	}
 
 	if err = json.Unmarshal(body, out); err != nil {

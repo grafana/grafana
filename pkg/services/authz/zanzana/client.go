@@ -2,39 +2,20 @@ package zanzana
 
 import (
 	"context"
-	"fmt"
 
-	"google.golang.org/grpc"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	authlib "github.com/grafana/authlib/types"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
-	"github.com/grafana/grafana/pkg/setting"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 // Client is a wrapper around [openfgav1.OpenFGAServiceClient]
 type Client interface {
-	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
-	Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error)
-	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
-	Write(ctx context.Context, in *openfgav1.WriteRequest) error
-}
+	authlib.AccessClient
+	List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error)
+	Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error)
+	Write(ctx context.Context, req *authzextv1.WriteRequest) error
 
-func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*client.Client, error) {
-	stackID := cfg.StackID
-	if stackID == "" {
-		stackID = "default"
-	}
-
-	return client.New(
-		ctx,
-		cc,
-		client.WithTenantID(fmt.Sprintf("stacks-%s", stackID)),
-		client.WithLogger(log.New("zanzana-client")),
-	)
-}
-
-func NewNoopClient() *client.NoopClient {
-	return client.NewNoop()
+	Mutate(ctx context.Context, req *authzextv1.MutateRequest) error
+	Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error)
 }

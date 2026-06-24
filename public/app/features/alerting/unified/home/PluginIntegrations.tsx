@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data/';
-import { Stack, Text } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Stack, useStyles2 } from '@grafana/ui';
 
 import { useAlertingHomePageExtensions } from '../plugins/useAlertingHomePageExtensions';
 
@@ -16,17 +15,12 @@ export function PluginIntegrations() {
   }
 
   return (
-    <Stack direction="column" gap={2}>
-      <Text element="h3" variant="h4">
-        Speed up your alerts creation now by using one of our tailored apps
-      </Text>
-      <Stack gap={2} wrap="wrap" direction="row">
-        {components.map((Component, i) => (
-          <div key={i} className={styles.box}>
-            <Component />
-          </div>
-        ))}
-      </Stack>
+    <Stack gap={2} wrap="wrap" direction="row">
+      {components.map((Component, i) => (
+        <div key={i} className={styles.box}>
+          <Component />
+        </div>
+      ))}
     </Stack>
   );
 }

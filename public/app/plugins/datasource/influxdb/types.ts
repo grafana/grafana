@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, DataQuery, DataSourceJsonData } from '@grafana/data';
+import { type AdHocVariableFilter, type DataQuery, type DataSourceJsonData } from '@grafana/data';
 
 export const DEFAULT_POLICY = 'default';
 
@@ -13,8 +13,12 @@ export interface InfluxOptions extends DataSourceJsonData {
 
   timeInterval?: string;
   httpMode?: string;
+  showTagTime?: string;
 
   dbName?: string;
+  product?: string;
+  pdcInjected?: boolean;
+  oauthPassThru?: boolean;
 
   // With Flux
   organization?: string;

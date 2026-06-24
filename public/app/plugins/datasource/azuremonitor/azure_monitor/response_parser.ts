@@ -1,19 +1,19 @@
 import { find, get } from 'lodash';
 
-import { FetchResponse } from '@grafana/runtime';
+import { type FetchResponse } from '@grafana/runtime';
 
 import TimeGrainConverter from '../time_grain_converter';
 import {
-  AzureMonitorLocalizedValue,
-  AzureMonitorLocations,
-  AzureMonitorMetricAvailabilityMetadata,
-  AzureMonitorMetricsMetadataResponse,
-  AzureMonitorOption,
-  AzureAPIResponse,
-  Location,
-  Subscription,
-  Resource,
-} from '../types';
+  type AzureAPIResponse,
+  type AzureMonitorLocalizedValue,
+  type AzureMonitorLocations,
+  type AzureMonitorMetricAvailabilityMetadata,
+  type AzureMonitorMetricsMetadataResponse,
+  type AzureMonitorOption,
+  type Location,
+  type Subscription,
+} from '../types/types';
+
 export default class ResponseParser {
   static parseResponseValues<T>(
     result: AzureAPIResponse<T>,
@@ -37,31 +37,6 @@ export default class ResponseParser {
         });
       }
     }
-    return list;
-  }
-
-  static parseResourceNames(
-    result: AzureAPIResponse<Resource>,
-    metricNamespace?: string
-  ): Array<{ text: string; value: string }> {
-    const list: Array<{ text: string; value: string }> = [];
-
-    if (!result) {
-      return list;
-    }
-
-    for (let i = 0; i < result.value.length; i++) {
-      if (
-        typeof result.value[i].type === 'string' &&
-        (!metricNamespace || result.value[i].type.toLocaleLowerCase() === metricNamespace.toLocaleLowerCase())
-      ) {
-        list.push({
-          text: result.value[i].name,
-          value: result.value[i].name,
-        });
-      }
-    }
-
     return list;
   }
 

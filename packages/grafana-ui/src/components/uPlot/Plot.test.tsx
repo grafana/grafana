@@ -1,13 +1,13 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import createMockRaf from 'mock-raf';
 import uPlot from 'uplot';
 
-import { FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
-import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
+import { type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
+import { type GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 
 import { UPlotChart } from './Plot';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
-import { SeriesProps } from './config/UPlotSeriesBuilder';
+import { type SeriesProps } from './config/UPlotSeriesBuilder';
 import { preparePlotData2, getStackingGroups } from './utils';
 
 const mockRaf = createMockRaf();
@@ -97,7 +97,7 @@ describe('UPlotChart', () => {
 
       expect(uPlot).toBeCalledTimes(1);
 
-      data.fields[1].values.set(0, 1);
+      data.fields[1].values[0] = 1;
 
       rerender(
         <UPlotChart
@@ -115,11 +115,11 @@ describe('UPlotChart', () => {
   describe('config update', () => {
     it('skips uPlot intialization for width and height equal 0', async () => {
       const { data, config } = mockData();
-      const { queryAllByTestId } = render(
+      render(
         <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={0} height={0} />
       );
 
-      expect(queryAllByTestId('uplot-main-div')).toHaveLength(1);
+      expect(screen.queryAllByTestId('uplot-main-div')).toHaveLength(1);
       expect(uPlot).not.toBeCalled();
     });
 

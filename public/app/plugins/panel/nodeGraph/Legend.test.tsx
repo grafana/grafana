@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { FieldColorModeId } from '@grafana/data';
 
 import { Legend } from './Legend';
-import { NodeDatum } from './types';
+import { type NodeDatum } from './types';
 
 describe('Legend', () => {
   it('renders ok without nodes', () => {

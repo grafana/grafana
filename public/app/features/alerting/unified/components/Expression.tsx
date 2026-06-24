@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { languages as prismLanguages } from 'prismjs';
-import { FC, useMemo } from 'react';
+import { type FC, useMemo } from 'react';
 import { Editor } from 'slate-react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { promqlGrammar } from '@grafana/prometheus';
-import { makeValue, SlatePrism, useStyles2 } from '@grafana/ui';
+import { SlatePrism, makeValue, useStyles2 } from '@grafana/ui';
 import LogqlSyntax from 'app/plugins/datasource/loki/syntax';
-import { RulesSource } from 'app/types/unified-alerting';
+import { type RulesSource } from 'app/types/unified-alerting';
 
 import { DataSourceType, isCloudRulesSource } from '../utils/datasource';
 
@@ -18,7 +18,7 @@ interface Props {
   rulesSource: RulesSource;
 }
 
-export const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }> = ({ language, expr }) => {
+const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }> = ({ language, expr }) => {
   const plugins = useMemo(
     () => [
       SlatePrism(
@@ -52,7 +52,7 @@ export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   well: css({
     fontFamily: theme.typography.fontFamilyMonospace,
   }),

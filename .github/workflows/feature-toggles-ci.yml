@@ -1,0 +1,53 @@
+name: Feature toggles CI
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  detect-changes:
+    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    name: Detect whether code changed
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    outputs:
+      changedbackend: ${{ steps.detect-changes.outputs.backend }}
+      changeddocs: ${{ steps.detect-changes.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 0
+          filter: blob:none
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/feature-toggles-ci.yml
+
+  test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changedbackend == 'true' || needs.detect-changes.outputs.changeddocs == 'true'
+
+    name: Feature toggles documentation is in sync with source
+
+    runs-on: ubuntu-arm64
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
+
+      - name: Run feature toggle tests
+        run: go test -v -run TestFeatureToggleFiles ./pkg/services/featuremgmt/

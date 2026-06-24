@@ -5,8 +5,8 @@
   "targets": {
     "start": {
       "dependsOn": [
+        "check-frontend-dev",
         "themes-generate",
-        "grafana-icons:generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"
@@ -16,7 +16,17 @@
     "build": {
       "dependsOn": [
         "themes-generate",
-        "grafana-icons:generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "outputs": ["{workspaceRoot}/public/build"],
+      "cache": true
+    },
+    "dev": {
+      "dependsOn": [
+        "themes-generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"
@@ -29,12 +39,14 @@
       "inputs": [
         "{workspaceRoot}/scripts/cli/generateSassVariableFiles.ts",
         "{workspaceRoot}/packages/grafana-data/src/themes/**",
-        "{workspaceRoot}/packages/grafana-ui/src/themes/**"
+        "{workspaceRoot}/packages/grafana-ui/src/themes/**",
+        "{workspaceRoot}/package.json"
       ],
       "outputs": [
         "{workspaceRoot}/public/sass/_variables.generated.scss",
         "{workspaceRoot}/public/sass/_variables.dark.generated.scss",
-        "{workspaceRoot}/public/sass/_variables.light.generated.scss"
+        "{workspaceRoot}/public/sass/_variables.light.generated.scss",
+        "{workspaceRoot}/public/app/features/theme-playground/schema.json"
       ],
       "cache": true
     }

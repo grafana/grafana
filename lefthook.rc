@@ -1,8 +1,6 @@
-# This file is used by lefthook to 'expose' the bingo-installed lefthook under
+# This file is used by lefthook to 'expose' the installed lefthook under
 # the name `lefthook`, as expected by the lefthook pre-commit scripts
 
-. .bingo/variables.env
-
 lefthook () {
-  ${LEFTHOOK} "$@"
+  GOWORK=off go tool -modfile=.citools/src/lefthook/go.mod github.com/evilmartians/lefthook "$@"
 }

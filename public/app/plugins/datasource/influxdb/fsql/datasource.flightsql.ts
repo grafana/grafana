@@ -1,19 +1,19 @@
-import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
-import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { DB, formatSQL, SqlDatasource, SQLQuery } from '@grafana/sql';
+import { type DataSourceInstanceSettings, type TimeRange, generateUUID } from '@grafana/data';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
+import { type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import { COMMON_FNS, type DB, type FuncParameter, type SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery } from './flightsqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
-import { FlightSQLOptions } from './types';
+import { type FlightSQLOptions } from './types';
 
 export class FlightSQLDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<FlightSQLOptions>,
+    instanceSettings: DataSourceInstanceSettings<FlightSQLOptions>,
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
@@ -32,7 +32,7 @@ export class FlightSQLDatasource extends SqlDatasource {
       getMeta: (identifier?: TableIdentifier) => this.fetchMeta(identifier),
     };
     this.sqlLanguageDefinition = {
-      id: 'flightsql',
+      id: 'sql',
       completionProvider: getSqlCompletionProvider(args),
       formatter: formatSQL,
     };
@@ -57,7 +57,7 @@ export class FlightSQLDatasource extends SqlDatasource {
     }
     const interpolatedTable = this.templateSrv.replace(query.table);
     const queryString = buildColumnQuery(interpolatedTable, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: 'fields' });
+    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${generateUUID()}` });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],
@@ -102,6 +102,36 @@ export class FlightSQLDatasource extends SqlDatasource {
     }
   }
 
+  getFunctions = (): ReturnType<DB['functions']> => {
+    const fns = [...COMMON_FNS, { name: 'VARIANCE' }, { name: 'STDDEV' }];
+    const columnParam: FuncParameter = {
+      name: 'Column',
+      required: true,
+      options: (query) => this.fetchFields(query),
+    };
+    const intervalParam: FuncParameter = {
+      name: 'Interval',
+      required: true,
+      options: () => {
+        return Promise.resolve([{ label: '$__interval', value: '$__interval' }]);
+      },
+    };
+
+    return [
+      ...fns.map((fn) => ({ ...fn, parameters: [columnParam] })),
+      {
+        name: '$__timeGroup',
+        description: 'Time grouping function',
+        parameters: [columnParam, intervalParam],
+      },
+      {
+        name: '$__timeGroupAlias',
+        description: 'Time grouping function with time as alias',
+        parameters: [columnParam, intervalParam],
+      },
+    ];
+  };
+
   getDB(): DB {
     if (this.db !== undefined) {
       return this.db;
@@ -112,9 +142,8 @@ export class FlightSQLDatasource extends SqlDatasource {
       fields: (query: SQLQuery) => this.fetchFields(query),
       validateQuery: (query: SQLQuery, range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
-      dsID: () => this.id,
       toRawSql,
-      functions: () => ['VARIANCE', 'STDDEV'],
+      functions: () => this.getFunctions(),
       getEditorLanguageDefinition: () => this.getSqlLanguageDefinition(),
     };
   }

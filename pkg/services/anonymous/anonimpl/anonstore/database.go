@@ -15,6 +15,7 @@ import (
 
 const cacheKeyPrefix = "anon-device"
 const anonymousDeviceExpiration = 30 * 24 * time.Hour
+const tableName = "anon_device"
 
 var ErrDeviceLimitReached = fmt.Errorf("device limit reached")
 
@@ -25,7 +26,7 @@ type AnonDBStore struct {
 }
 
 type Device struct {
-	ID        int64     `json:"-" xorm:"id" db:"id"`
+	ID        int64     `json:"-" xorm:"pk autoincr 'id'" db:"id"`
 	DeviceID  string    `json:"deviceId" xorm:"device_id" db:"device_id"`
 	ClientIP  string    `json:"clientIp" xorm:"client_ip" db:"client_ip"`
 	UserAgent string    `json:"userAgent" xorm:"user_agent" db:"user_agent"`
@@ -144,31 +145,37 @@ func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) 
 		}
 	}
 
-	args := []any{device.DeviceID, device.ClientIP, device.UserAgent,
-		device.CreatedAt.UTC(), device.UpdatedAt.UTC()}
+	// If CreatedAt time is not set (i.e. it's zero), and we end up creating the device, use current time as creation time.
+	// If database converts zero time to NULL, but CreatedAt is not nullable, this helps to fix that problem too.
+	created := device.CreatedAt
+	if created.IsZero() {
+		created = time.Now()
+	}
+
+	args := []any{device.DeviceID, device.ClientIP, device.UserAgent, created.UTC(), device.UpdatedAt.UTC()}
 	switch s.sqlStore.GetDBType() {
 	case migrator.Postgres:
 		query = `INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (device_id) DO UPDATE SET
-client_ip = $2,
-user_agent = $3,
-updated_at = $5
-RETURNING id`
+					VALUES ($1, $2, $3, $4, $5)
+					ON CONFLICT (device_id) DO UPDATE SET
+					client_ip = $2,
+					user_agent = $3,
+					updated_at = $5
+					RETURNING id`
 	case migrator.MySQL:
 		query = `INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE
-client_ip = VALUES(client_ip),
-user_agent = VALUES(user_agent),
-updated_at = VALUES(updated_at)`
+					VALUES (?, ?, ?, ?, ?)
+					ON DUPLICATE KEY UPDATE
+					client_ip = VALUES(client_ip),
+					user_agent = VALUES(user_agent),
+					updated_at = VALUES(updated_at)`
 	case migrator.SQLite:
 		query = `INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?)
-ON CONFLICT (device_id) DO UPDATE SET
-client_ip = excluded.client_ip,
-user_agent = excluded.user_agent,
-updated_at = excluded.updated_at`
+					VALUES (?, ?, ?, ?, ?)
+					ON CONFLICT (device_id) DO UPDATE SET
+					client_ip = excluded.client_ip,
+					user_agent = excluded.user_agent,
+					updated_at = excluded.updated_at`
 	default:
 		return fmt.Errorf("unsupported database driver: %s", s.sqlStore.GetDBType())
 	}
@@ -229,7 +236,7 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 			query.To = time.Now()
 		}
 
-		sess := dbSess.Table("anon_device").Alias("d")
+		sess := dbSess.Table(tableName).Alias("d")
 
 		if query.Limit > 0 {
 			offset := query.Limit * (query.Page - 1)
@@ -251,8 +258,8 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 		sess.Where("d.updated_at BETWEEN ? AND ?", query.From.UTC(), query.To.UTC())
 
 		if query.Query != "" {
-			queryWithWildcards := "%" + strings.Replace(query.Query, "\\", "", -1) + "%"
-			sess.Where("d.client_ip "+s.sqlStore.GetDialect().LikeStr()+" ?", queryWithWildcards)
+			sql, param := s.sqlStore.GetDialect().LikeOperator("d.client_ip", true, strings.ReplaceAll(query.Query, "\\", ""), true)
+			sess.Where(sql, param)
 		}
 
 		// get total

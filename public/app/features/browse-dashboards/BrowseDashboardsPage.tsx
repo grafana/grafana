@@ -1,33 +1,41 @@
 import { css } from '@emotion/css';
-import { memo, useEffect, useMemo } from 'react';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
+import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
+import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
-import { getConfig } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
-import { useDispatch } from 'app/types';
+import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
+import { useDispatch } from 'app/types/store';
 
-import { contextSrv } from '../../core/services/context_srv';
-import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
+import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
+import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
+import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
+import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
+import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
+import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
+import { isItemManagedByRepository } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { skipToken, useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
-import CreateNewButton from './components/CreateNewButton';
-import { FolderActionsButton } from './components/FolderActionsButton';
+import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
+import { QuotaLimitBanner } from './components/QuotaLimitBanner';
+import { RecentlyViewedDashboards } from './components/RecentlyViewedDashboards';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { setAllSelection, useHasSelection } from './state';
+import { useHasSelection } from './state/hooks';
+import { setAllSelection } from './state/slice';
 
 // New Browse/Manage/Search Dashboards views for nested folders
-const BrowseDashboardsPage = memo(() => {
+const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
   const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
@@ -36,6 +44,15 @@ const BrowseDashboardsPage = memo(() => {
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const {
+    isReadOnlyRepo,
+    status: repoViewStatus,
+    orphanedRepoName,
+    repository,
+  } = useGetResourceRepositoryView({ folderName: folderUID });
+  const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
+  const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
+  const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -60,34 +77,50 @@ const BrowseDashboardsPage = memo(() => {
     if (!isSearching && searchState.result) {
       stateManager.setState({ result: undefined, includePanels: undefined });
     }
+    if (isSearching && searchState.result?.totalRows === 0) {
+      reportInteraction('grafana_empty_state_shown', { source: 'browse_dashboards' });
+    }
   }, [isSearching, searchState.result, stateManager]);
 
-  const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
-  const [saveFolder] = useSaveFolderMutation();
-  const navModel = useMemo(() => {
-    if (!folderDTO) {
-      return undefined;
-    }
-    const model = buildNavModel(folderDTO);
+  // Emit exposure event for A/A test once when page loads
+  const hasEmittedExposureEvent = useRef(false);
 
-    // Set the "Dashboards" tab to active
-    const dashboardsTabID = getDashboardsTabID(folderDTO.uid);
-    const dashboardsTab = model.children?.find((child) => child.id === dashboardsTabID);
-    if (dashboardsTab) {
-      dashboardsTab.active = true;
+  useEffect(() => {
+    if (!isRecentlyViewedEnabled || hasEmittedExposureEvent.current) {
+      return;
     }
-    return model;
-  }, [folderDTO]);
 
+    hasEmittedExposureEvent.current = true;
+    const isExperimentTreatment = isExperimentRecentlyViewedDashboards;
+
+    reportInteraction('dashboards_browse_list_viewed', {
+      experiment_dashboard_list_recently_viewed: isExperimentTreatment ? 'treatment' : 'control',
+      has_recently_viewed_component: isExperimentTreatment,
+    });
+  }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
+
+  const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
+  const navModel = useNavModel(folderDTO, 'dashboards');
+
+  const [saveFolder] = useUpdateFolder();
   const hasSelection = useHasSelection();
 
-  const { data: rootFolder } = useGetFolderQuery('general');
-  let folder = folderDTO ? folderDTO : rootFolder;
-  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
-  const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  // Fetch the root (aka general) folder if we're not in a specific folder
+  const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
+  const folder = folderDTO ?? rootFolderDTO;
 
-  const showEditTitle = canEditFolders && folderUID;
-  const canSelect = canEditFolders || canEditDashboards;
+  const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
+  const isProvisionedFolder = isItemManagedByRepository(folder);
+  const isRepoRootFolder = isProvisionedFolder && folderUID === repository?.name;
+  const [showRenameDrawer, setShowRenameDrawer] = useState(false);
+  const showEditTitle = canEditFolders && !!folderUID;
+  const permissions = {
+    canEditFolders,
+    canEditDashboards,
+    canDeleteFolders,
+    canDeleteDashboards,
+    isReadOnlyRepo,
+  };
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -97,7 +130,6 @@ const BrowseDashboardsPage = memo(() => {
       if ('error' in result) {
         reportInteraction('grafana_browse_dashboards_page_edit_folder_name', {
           status: 'failed_with_error',
-          error: result.error,
         });
         throw result.error;
       } else {
@@ -108,40 +140,41 @@ const BrowseDashboardsPage = memo(() => {
     }
   };
 
-  const handleButtonClickToRecentlyDeleted = () => {
-    reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
-      origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
-    });
+  const renderTitle = (title: string) => {
+    return (
+      <Stack alignItems={'center'} gap={2}>
+        <Text element={'h1'}>{title}</Text>
+        {showEditTitle && isProvisionedFolder && !isRepoRootFolder && !isReadOnlyRepo && (
+          <IconButton
+            name="pen"
+            size="lg"
+            tooltip={t('browse-dashboards.action.rename-provisioned-folder', 'Rename provisioned folder')}
+            onClick={() => setShowRenameDrawer(true)}
+          />
+        )}
+        <FolderRepo folder={folder} />
+      </Stack>
+    );
   };
 
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
-      onEditTitle={showEditTitle ? onEditTitle : undefined}
-      actions={
-        <>
-          {config.featureToggles.dashboardRestore && hasAdminRights && (
-            <LinkButton
-              variant="secondary"
-              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
-              onClick={handleButtonClickToRecentlyDeleted}
-            >
-              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-            </LinkButton>
-          )}
-          {folderDTO && <FolderActionsButton folder={folderDTO} />}
-          {(canCreateDashboards || canCreateFolders) && (
-            <CreateNewButton
-              parentFolder={folderDTO}
-              canCreateDashboard={canCreateDashboards}
-              canCreateFolder={canCreateFolders}
-            />
-          )}
-        </>
-      }
+      onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
+      renderTitle={renderTitle}
+      actions={<FolderDetailsActions folderDTO={folderDTO} />}
     >
       <Page.Contents className={styles.pageContents}>
+        <ProvisionedFolderPreviewBanner queryParams={queryParams} />
+
+        {/* Only shown when viewing a folder (not root) whose managing repository has been deleted — the folder still has ownership annotations pointing to a repo that no longer exists. */}
+        {repoViewStatus === RepoViewStatus.Orphaned && orphanedRepoName && (
+          <OrphanedResourceBanner repositoryName={orphanedRepoName} />
+        )}
+        <QuotaLimitBanner />
+        {/* only show recently viewed dashboards when in root and flag is enabled */}
+        {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
@@ -151,38 +184,54 @@ const BrowseDashboardsPage = memo(() => {
           />
         </div>
 
-        {hasSelection ? (
-          <BrowseActions />
-        ) : (
-          <div className={styles.filters}>
-            <BrowseFilters />
-          </div>
-        )}
+        {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
 
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) =>
+            {({ width, height }: Size) =>
               isSearching ? (
                 <SearchView
-                  canSelect={canSelect}
+                  permissions={permissions}
                   width={width}
                   height={height}
                   searchState={searchState}
                   searchStateManager={stateManager}
                 />
               ) : (
-                <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
+                <BrowseView
+                  permissions={permissions}
+                  width={width}
+                  height={height}
+                  folderUID={folderUID}
+                  isReadOnlyRepo={isReadOnlyRepo}
+                  isProvisionedFolder={isProvisionedFolder}
+                />
               )
             }
           </AutoSizer>
         </div>
+        {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
       </Page.Contents>
+      {showRenameDrawer && folderDTO && (
+        <Drawer
+          title={
+            <Text variant="h3" element="h2">
+              {t('browse-dashboards.action.rename-provisioned-folder', 'Rename provisioned folder')}
+            </Text>
+          }
+          subtitle={folderDTO.title}
+          onClose={() => setShowRenameDrawer(false)}
+        >
+          <RenameProvisionedFolderForm folder={folderDTO} onDismiss={() => setShowRenameDrawer(false)} />
+        </Drawer>
+      )}
     </Page>
   );
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
+    label: 'pageContents',
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
@@ -191,15 +240,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
+    label: 'subView',
     height: '100%',
-  }),
-
-  filters: css({
-    display: 'none',
-
-    [theme.breakpoints.up('md')]: {
-      display: 'block',
-    },
+    minHeight: '300px',
   }),
 });
 

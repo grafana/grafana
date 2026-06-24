@@ -1,22 +1,24 @@
 import { isEmpty } from 'lodash';
 
+import {
+  type NotificationChannelOption,
+  type NotifierDTO,
+  type ReceiversStateDTO,
+} from 'app/features/alerting/unified/types/alerting';
 import { encodeMatcher } from 'app/features/alerting/unified/utils/matchers';
 import { dispatch } from 'app/store/store';
-import { ReceiversStateDTO } from 'app/types/alerting';
 
 import {
-  AlertManagerCortexConfig,
-  AlertmanagerAlert,
-  AlertmanagerChoice,
-  AlertmanagerGroup,
-  ExternalAlertmanagersConnectionStatus,
-  ExternalAlertmanagersStatusResponse,
-  GrafanaAlertingConfiguration,
-  GrafanaManagedContactPoint,
-  Matcher,
-  MuteTimeInterval,
+  type AlertManagerCortexConfig,
+  type AlertmanagerAlert,
+  type AlertmanagerChoice,
+  type AlertmanagerGroup,
+  type ExternalAlertmanagersConnectionStatus,
+  type ExternalAlertmanagersStatusResponse,
+  type GrafanaAlertingConfiguration,
+  type Matcher,
+  type PostableGrafanaAlertingConfiguration,
 } from '../../../../plugins/datasource/alertmanager/types';
-import { NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToMatcherField } from '../utils/alertmanager';
 import {
@@ -27,7 +29,7 @@ import {
 import { retryWhile } from '../utils/misc';
 import { messageFromError, withSerializedError } from '../utils/redux';
 
-import { alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { fetchAlertManagerConfig, fetchStatus } from './alertmanager';
 import { featureDiscoveryApi } from './featureDiscoveryApi';
 
@@ -48,12 +50,25 @@ interface AlertmanagerAlertsFilter {
   matchers?: Matcher[];
 }
 
+export interface AlertGroupsFilter {
+  /** Label matchers (PromQL-style) to filter alerts by */
+  matchers?: Matcher[];
+  /** Filter alert groups to a specific receiver/contact point name */
+  receiver?: string;
+  /** Include active alerts (default: true when omitted) */
+  active?: boolean;
+  /** Include silenced alerts (default: true when omitted) */
+  silenced?: boolean;
+  /** Include inhibited alerts (default: true when omitted) */
+  inhibited?: boolean;
+}
+
 /**
  * List of tags corresponding to entities that are implicitly provided by an alert manager configuration.
  *
  * i.e. "things that should be fetched fresh if the AM config has changed"
  */
-export const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
+const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
   'AlertingConfiguration',
   'AlertmanagerConfiguration',
   'AlertmanagerConnectionStatus',
@@ -100,14 +115,67 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       providesTags: ['AlertmanagerAlerts'],
     }),
 
-    getAlertmanagerAlertGroups: build.query<AlertmanagerGroup[], { amSourceName: string }>({
-      query: ({ amSourceName }) => ({
-        url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts/groups`,
-      }),
+    getAlertmanagerAlertGroups: build.query<AlertmanagerGroup[], { amSourceName: string; filter?: AlertGroupsFilter }>({
+      query: ({ amSourceName, filter }) => {
+        const params: Record<string, unknown> = {};
+
+        if (filter?.matchers?.length) {
+          params.filter = filter.matchers
+            .filter((m) => m.name && m.value)
+            .map((m) => encodeMatcher(matcherToMatcherField(m)));
+        }
+
+        if (filter?.receiver) {
+          params.receiver = filter.receiver;
+        }
+
+        if (filter?.active !== undefined) {
+          params.active = filter.active;
+        }
+
+        if (filter?.silenced !== undefined) {
+          params.silenced = filter.silenced;
+        }
+
+        if (filter?.inhibited !== undefined) {
+          params.inhibited = filter.inhibited;
+        }
+
+        return {
+          url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts/groups`,
+          params,
+        };
+      },
     }),
 
     grafanaNotifiers: build.query<NotifierDTO[], void>({
-      query: () => ({ url: '/api/alert-notifiers' }),
+      // NOTE: version=2 parameter required for versioned schema (PR #109969)
+      // This parameter will be removed in future when v2 becomes default
+      query: () => ({ url: '/api/alert-notifiers?version=2' }),
+      transformResponse: (response: NotifierDTO[]) => {
+        const populateSecureFieldKey = (
+          option: NotificationChannelOption,
+          prefix: string
+        ): NotificationChannelOption => ({
+          ...option,
+          secureFieldKey: option.secure && !option.secureFieldKey ? `${prefix}${option.propertyName}` : undefined,
+          subformOptions: option.subformOptions?.map((suboption) =>
+            populateSecureFieldKey(suboption, `${prefix}${option.propertyName}.`)
+          ),
+        });
+
+        // Keep versions array intact for version-specific options lookup
+        // Transform options with secureFieldKey population
+        return response.map((notifier) => ({
+          ...notifier,
+          options: (notifier.options || []).map((option) => populateSecureFieldKey(option, '')),
+          // Also transform options within each version
+          versions: notifier.versions?.map((version) => ({
+            ...version,
+            options: (version.options || []).map((option) => populateSecureFieldKey(option, '')),
+          })),
+        }));
+      },
     }),
 
     // this endpoint requires administrator privileges
@@ -130,12 +198,16 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       providesTags: ['AlertmanagerConnectionStatus'],
     }),
 
-    updateGrafanaAlertingConfiguration: build.mutation<{ message: string }, GrafanaAlertingConfiguration>({
-      query: (config) => ({
+    updateGrafanaAlertingConfiguration: build.mutation<
+      { message: string },
+      WithNotificationOptions<PostableGrafanaAlertingConfiguration>
+    >({
+      query: ({ notificationOptions, ...config }) => ({
         url: '/api/v1/ngalert/admin_config',
         method: 'POST',
         data: config,
         showSuccessAlert: false,
+        notificationOptions,
       }),
       invalidatesTags: [...ALERTMANAGER_PROVIDED_ENTITY_TAGS],
     }),
@@ -175,6 +247,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
               data: {
                 alertmanager_config: status.config,
                 template_files: {},
+                extra_config: undefined,
               },
             }))
           );
@@ -191,14 +264,15 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           alertmanager_config: {},
           template_files: {},
           template_file_provenances: {},
+          extra_config: undefined,
         };
 
         const lazyConfigInitSupported = alertmanagerFeatures?.lazyConfigInit ?? false;
 
         // wrap our fetchConfig function with some performance logging functions
         const fetchAMconfigWithLogging = withPerformanceLogging(
-          'unifiedalerting/fetchAmConfig',
           fetchAlertManagerConfig,
+          'unifiedalerting/fetchAmConfig',
           {
             dataSourceName: alertmanagerSourceName,
             thunk: 'unifiedalerting/fetchAmConfig',
@@ -228,6 +302,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
                 template_file_provenances: result.template_file_provenances,
                 last_applied: result.last_applied,
                 id: result.id,
+                extra_config: result.extra_config,
               }));
             }
 
@@ -292,16 +367,6 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         }));
       },
       providesTags: ['ContactPointsStatus'],
-    }),
-    // Grafana Managed Alertmanager only
-    // TODO: Remove as part of migration to k8s API for receivers
-    getContactPointsList: build.query<GrafanaManagedContactPoint[], void>({
-      query: () => ({ url: '/api/v1/notifications/receivers' }),
-      providesTags: ['ContactPoint'],
-    }),
-    getMuteTimingList: build.query<MuteTimeInterval[], void>({
-      query: () => ({ url: '/api/v1/notifications/time-intervals' }),
-      providesTags: ['AlertmanagerConfiguration'],
     }),
   }),
 });

@@ -1,12 +1,13 @@
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { ResourcesAPI } from '../../resources/ResourcesAPI';
+import { type ResourcesAPI } from '../../resources/ResourcesAPI';
+import { CLOUDWATCH_PPL_LANGUAGE_DEFINITION_ID } from '../cloudwatch-ppl/language';
 
-import { LinkedToken } from './LinkedToken';
+import { type LinkedToken } from './LinkedToken';
 import { linkedTokenBuilder } from './linkedTokenBuilder';
-import { LanguageDefinition } from './register';
-import { Completeable, StatementPosition, SuggestionKind, TokenTypes } from './types';
+import { type LanguageDefinition } from './register';
+import { type Completeable, StatementPosition, type SuggestionKind, type TokenTypes } from './types';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
@@ -69,8 +70,11 @@ export class CompletionItemProvider implements Completeable {
   // called by registerLanguage and passed to monaco with registerCompletionItemProvider
   // returns an object that implements https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.CompletionItemProvider.html
   getCompletionProvider(monaco: Monaco, languageDefinition: LanguageDefinition) {
+    const isPPL = languageDefinition.id === CLOUDWATCH_PPL_LANGUAGE_DEFINITION_ID; // backticks for field names in PPL
+    const triggerCharacters = [' ', '$', ',', '(', "'"].concat(isPPL ? ['`'] : []);
+
     return {
-      triggerCharacters: [' ', '$', ',', '(', "'"], // one of these characters indicates that it is time to look for a suggestion
+      triggerCharacters, // one of these characters indicates that it is time to look for a suggestion
       provideCompletionItems: async (model: monacoTypes.editor.ITextModel, position: monacoTypes.IPosition) => {
         const currentToken = linkedTokenBuilder(monaco, languageDefinition, model, position, this.tokenTypes);
         const statementPosition = this.getStatementPosition(currentToken);

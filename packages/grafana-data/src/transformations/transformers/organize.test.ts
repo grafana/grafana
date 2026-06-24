@@ -1,11 +1,11 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { organizeFieldsTransformer, OrganizeFieldsTransformerOptions } from './organize';
+import { organizeFieldsTransformer, type OrganizeFieldsTransformerOptions } from './organize';
 
 describe('OrganizeFields Transformer', () => {
   beforeAll(() => {
@@ -94,6 +94,10 @@ describe('OrganizeFields Transformer', () => {
             name: 'time',
             type: FieldType.time,
             values: [3000, 4000, 5000, 6000],
+            state: {
+              displayName: 'time',
+              multipleFrames: false,
+            },
           },
         ]);
       });

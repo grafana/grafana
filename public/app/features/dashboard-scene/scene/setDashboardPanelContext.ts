@@ -1,24 +1,35 @@
-import { AnnotationChangeEvent, AnnotationEventUIModel, CoreApp, DataFrame } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
-import { AdHocFilterItem, PanelContext } from '@grafana/ui';
-import { deleteAnnotation, saveAnnotation, updateAnnotation } from 'app/features/annotations/api';
+import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
+import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import { annotationServer } from 'app/features/annotations/api';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
-  context.app = CoreApp.Dashboard;
+  const dashboard = getDashboardSceneFor(vizPanel);
+  context.app = dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard;
+
+  dashboard.subscribeToState((state) => {
+    if (state.editPanel) {
+      context.app = CoreApp.PanelEditor;
+    } else {
+      context.app = CoreApp.Dashboard;
+    }
+  });
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
     const builtInLayer = getBuiltInAnnotationsLayer(dashboard);
 
     // When there is no builtin annotations query we disable the ability to add annotations
-    if (!builtInLayer || !dashboard.canEditDashboard()) {
+    if (!builtInLayer) {
       return false;
     }
 
@@ -29,29 +40,21 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.canEditAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (!dashboard.canEditDashboard()) {
-      return false;
-    }
-
-    if (dashboardUID) {
+    if (dashboard) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canEdit);
     }
 
-    return Boolean(dashboard.state.meta.annotationsPermissions?.organization.canEdit);
+    return false;
   };
 
   context.canDeleteAnnotations = (dashboardUID?: string) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
-    if (!dashboard.canEditDashboard()) {
-      return false;
-    }
-
-    if (dashboardUID) {
+    if (dashboard) {
       return Boolean(dashboard.state.meta.annotationsPermissions?.dashboard.canDelete);
     }
 
-    return Boolean(dashboard.state.meta.annotationsPermissions?.organization.canDelete);
+    return false;
   };
 
   context.onAnnotationCreate = async (event: AnnotationEventUIModel) => {
@@ -68,7 +71,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       text: event.description,
     };
 
-    await saveAnnotation(anno);
+    await annotationServer().save(anno, getCurrentScopeNames(vizPanel));
 
     reRunBuiltInAnnotationsLayer(dashboard);
 
@@ -90,7 +93,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       text: event.description,
     };
 
-    await updateAnnotation(anno);
+    await annotationServer().update(anno, getCurrentScopeNames(vizPanel));
 
     reRunBuiltInAnnotationsLayer(dashboard);
 
@@ -98,14 +101,14 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.onAnnotationDelete = async (id: string) => {
-    await deleteAnnotation({ id });
+    await annotationServer().delete({ id });
 
     reRunBuiltInAnnotationsLayer(getDashboardSceneFor(vizPanel));
 
     context.eventBus.publish(new AnnotationChangeEvent({ id }));
   };
 
-  context.onAddAdHocFilter = (newFilter: AdHocFilterItem) => {
+  context.onAddAdHocFilter = async (newFilter: AdHocFilterItem) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
     const queryRunner = getQueryRunnerFor(vizPanel);
@@ -113,8 +116,88 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return;
     }
 
-    const filterVar = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
+    let datasource = getDatasourceFromQueryRunner(queryRunner);
+
+    // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
+    // we need to resolve it to a full datasource
+    if (datasource && !datasource.uid) {
+      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      datasource = {
+        uid: datasourceToLoad.uid,
+        type: datasourceToLoad.type,
+      };
+    }
+
+    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
     updateAdHocFilterVariable(filterVar, newFilter);
+  };
+
+  context.getFiltersBasedOnGrouping = (items: AdHocFilterItem[]) => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return [];
+    }
+
+    const datasource = getDatasourceFromQueryRunner(queryRunner);
+    const groupByVar = getGroupByVariableFor(dashboard, datasource);
+
+    let currentValues: string[] = [];
+
+    if (groupByVar) {
+      const val = groupByVar.state.value;
+      currentValues = Array.isArray(val) ? val.map(String) : val ? [String(val)] : [];
+    } else {
+      const adhocVar = getAdHocGroupByVariableFor(dashboard, datasource);
+      if (adhocVar) {
+        currentValues = adhocVar.state.filters.filter((f) => f.operator === 'groupBy').map((f) => f.key);
+      }
+    }
+
+    if (currentValues.length === 0) {
+      return [];
+    }
+
+    return items
+      .map((item) => (currentValues.find((key) => key === item.key) ? item : undefined))
+      .filter((item) => item !== undefined);
+  };
+
+  context.onAddAdHocFilters = async (items: AdHocFilterItem[]) => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return;
+    }
+
+    let datasource = getDatasourceFromQueryRunner(queryRunner);
+
+    // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
+    // we need to resolve it to a full datasource
+    if (datasource && !datasource.uid) {
+      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      datasource = {
+        uid: datasourceToLoad.uid,
+        type: datasourceToLoad.type,
+      };
+    }
+    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
+    bulkUpdateAdHocFiltersVariable(filterVar, items);
+
+    if (items.length > 0) {
+      const isFilterOut = items.every((item) => item.operator === FILTER_OUT_OPERATOR);
+      reportInteraction(
+        isFilterOut ? 'grafana_unified_drilldown_tooltip_filter_out' : 'grafana_unified_drilldown_tooltip_filter_for',
+        { filtersCount: items.length }
+      );
+    }
+  };
+
+  context.canExecuteActions = () => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+    return dashboard.canEditDashboard();
   };
 
   context.onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
@@ -122,6 +205,15 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     //return onUpdatePanelSnapshotData(this.props.panel, frames);
     return Promise.resolve(true);
   };
+}
+
+/**
+ * Reads the current scope names from the scene graph so they can be persisted alongside
+ * a manually created/updated annotation, mirroring how `SceneQueryRunner` propagates
+ * `request.scopes` to panel queries.
+ */
+function getCurrentScopeNames(sceneObject: VizPanel): string[] {
+  return sceneGraph.getScopes(sceneObject)?.map((scope) => scope.metadata.name) ?? [];
 }
 
 function getBuiltInAnnotationsLayer(scene: DashboardScene): dataLayers.AnnotationsDataLayer | undefined {
@@ -146,6 +238,36 @@ function reRunBuiltInAnnotationsLayer(scene: DashboardScene) {
   }
 }
 
+function getGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  const variables = sceneGraph.getVariables(scene);
+
+  for (const variable of variables.state.variables) {
+    if (sceneUtils.isGroupByVariable(variable)) {
+      const filtersDs = variable.state.datasource;
+      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+        return variable;
+      }
+    }
+  }
+
+  return null;
+}
+
+function getAdHocGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+  const variables = sceneGraph.getVariables(scene);
+
+  for (const variable of variables.state.variables) {
+    if (sceneUtils.isAdHocVariable(variable) && variable.state.enableGroupBy) {
+      const filtersDs = variable.state.datasource;
+      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+        return variable;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
   const variables = sceneGraph.getVariables(scene);
 
@@ -163,7 +285,6 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
     datasource: ds,
     supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
     useQueriesAsFilterForOptions: true,
-    layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
   });
 
   // Add it to the scene
@@ -174,24 +295,53 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   return newVariable;
 }
 
-function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
-  // Check if we need to update an existing filter
-  for (const filter of filterVar.state.filters) {
-    if (filter.key === newFilter.key) {
-      filterVar.setState({
-        filters: filterVar.state.filters.map((f) => {
-          if (f.key === newFilter.key) {
-            return newFilter;
-          }
-          return f;
-        }),
-      });
-      return;
+function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilters: AdHocFilterItem[]) {
+  if (!newFilters.length) {
+    return;
+  }
+
+  const updatedFilters = filterVar.state.filters.slice();
+  let hasChanges = false;
+
+  for (const newFilter of newFilters) {
+    const filterToReplaceIndex = updatedFilters.findIndex(
+      (filter) =>
+        filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
+    );
+
+    if (filterToReplaceIndex >= 0) {
+      updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
+      hasChanges = true;
+      continue;
     }
+
+    updatedFilters.push(newFilter);
+    hasChanges = true;
+  }
+
+  if (hasChanges) {
+    filterVar.updateFilters(updatedFilters);
+  }
+}
+
+function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
+  // This function handles 'Filter for value' and 'Filter out value' from table cell
+  // We are allowing to add filters with the same key because elastic search ds supports that
+
+  // Update is only required when we change operator and keep key and value the same
+  //   key1 = value1 -> key1 != value1
+  const filterToReplaceIndex = filterVar.state.filters.findIndex(
+    (filter) =>
+      filter.key === newFilter.key && filter.value === newFilter.value && filter.operator !== newFilter.operator
+  );
+
+  if (filterToReplaceIndex >= 0) {
+    const updatedFilters = filterVar.state.filters.slice();
+    updatedFilters.splice(filterToReplaceIndex, 1, newFilter);
+    filterVar.updateFilters(updatedFilters);
+    return;
   }
 
   // Add new filter
-  filterVar.setState({
-    filters: [...filterVar.state.filters, newFilter],
-  });
+  filterVar.updateFilters([...filterVar.state.filters, newFilter]);
 }

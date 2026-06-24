@@ -1,34 +1,37 @@
-import { Component } from 'react';
 import * as React from 'react';
-import uPlot, { AlignedData } from 'uplot';
+import { Component } from 'react';
+import { type default as uPlot, type AlignedData } from 'uplot';
 
 import {
-  DataFrame,
-  DataLinkPostProcessor,
-  Field,
+  type DataFrame,
+  type DataLinkPostProcessor,
+  type Field,
   FieldMatcherID,
   fieldMatchers,
   FieldType,
   getLinksSupplier,
-  InterpolateFunction,
-  TimeRange,
-  TimeZone,
+  type InterpolateFunction,
+  type TimeRange,
+  type TimeZone,
 } from '@grafana/data';
-import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
-import { Themeable2, VizLayout } from '@grafana/ui';
-import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { Renderers, UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
-import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
+import { type DashboardCursorSync, type VizLegendOptions } from '@grafana/schema';
+import { type Themeable2, VizLayout, type VizLayoutLegendProps } from '@grafana/ui';
+import {
+  type AxisProps,
+  pluginLog,
+  type Renderers,
+  type ScaleProps,
+  UPlotChart,
+  type UPlotConfigBuilder,
+} from '@grafana/ui/internal';
 
-import { GraphNGLegendEvent, XYFieldMatchers } from './types';
+import { type GraphNGLegendEvent, type XYFieldMatchers } from './types';
 import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 
 /**
  * @internal -- not a public API
  */
-export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
+export type PropDiffFn<T extends Record<string, unknown> = {}> = (prev: T, next: T) => boolean;
 
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
@@ -44,13 +47,26 @@ export interface GraphNGProps extends Themeable2 {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
-  prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
+  prepConfig: (
+    alignedFrame: DataFrame,
+    allFrames: DataFrame[],
+    getTimeRange: () => TimeRange,
+    annotationLanes?: number
+  ) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement<VizLayoutLegendProps> | null;
   replaceVariables: InterpolateFunction;
   dataLinkPostProcessor?: DataLinkPostProcessor;
   cursorSync?: DashboardCursorSync;
+
+  // Remove fields that are hidden from the visualization before rendering
+  // The fields will still be available for other things like data links
+  // this is a temporary hack that only works when:
+  // 1. renderLegend (above) does not render <PlotLegend>
+  // 2. does not have legend series toggle
+  // 3. passes through all fields required for link/action gen (including those with hideFrom.viz)
+  omitHideFromViz?: boolean;
 
   /**
    * needed for propsToDiff to re-init the plot & config
@@ -59,9 +75,16 @@ export interface GraphNGProps extends Themeable2 {
    * similar to structureRev. then we can drop propsToDiff entirely.
    */
   options?: Record<string, any>;
+
+  // Annotation lanes count
+  annotationLanes?: number;
 }
 
-function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | PropDiffFn> = []) {
+function sameProps<T extends Record<string, unknown>>(
+  prevProps: T,
+  nextProps: T,
+  propsToDiff: Array<string | PropDiffFn> = []
+) {
   for (const propName of propsToDiff) {
     if (typeof propName === 'function') {
       if (!propName(prevProps, nextProps)) {
@@ -93,7 +116,7 @@ const defaultMatchers = {
  * "Time as X" core component, expects ascending x
  */
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
-  private plotInstance: React.RefObject<uPlot>;
+  private plotInstance: React.RefObject<uPlot | null>;
 
   constructor(props: GraphNGProps) {
     super(props);
@@ -171,10 +194,19 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         };
       }
 
+      if (props.omitHideFromViz) {
+        const nonHiddenFields = alignedFrameFinal.fields.filter((field) => field.config.custom?.hideFrom?.viz !== true);
+        alignedFrameFinal = {
+          ...alignedFrameFinal,
+          fields: nonHiddenFields,
+          length: nonHiddenFields.length,
+        };
+      }
+
       let config = this.state?.config;
 
       if (withConfig) {
-        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange);
+        config = props.prepConfig(alignedFrameFinal, this.props.frames, this.getTimeRange, this.props.annotationLanes);
         pluginLog('GraphNG', false, 'config prepared', config);
       }
 
@@ -212,7 +244,12 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           propsChanged;
 
         if (shouldReconfig) {
-          newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
+          newState.config = this.props.prepConfig(
+            newState.alignedFrame,
+            this.props.frames,
+            this.getTimeRange,
+            this.props.annotationLanes
+          );
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
 

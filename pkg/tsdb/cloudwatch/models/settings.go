@@ -61,13 +61,16 @@ func (duration *Duration) UnmarshalJSON(b []byte) error {
 	case float64:
 		*duration = Duration{time.Duration(value)}
 	case string:
+		if value == "" {
+			return nil
+		}
 		dur, err := time.ParseDuration(value)
 		if err != nil {
-			return err
+			return backend.DownstreamError(err)
 		}
 		*duration = Duration{dur}
 	default:
-		return fmt.Errorf("invalid duration: %#v", unmarshalledJson)
+		return backend.DownstreamError(fmt.Errorf("invalid duration: %#v", unmarshalledJson))
 	}
 
 	return nil

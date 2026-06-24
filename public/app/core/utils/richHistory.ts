@@ -1,32 +1,36 @@
 import { omit } from 'lodash';
 
-import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } from '@grafana/data';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import {
+  type DataQuery,
+  type DataSourceApi,
+  dateTimeFormat,
+  type ExploreUrlState,
+  urlUtil,
+  serializeStateToUrlParam,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import {
-  RichHistoryResults,
+  type RichHistoryResults,
   RichHistoryServiceError,
   RichHistoryStorageWarning,
-  RichHistoryStorageWarningDetails,
+  type RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
 import { createRetentionPeriodBoundary } from '../history/richHistoryLocalStorageUtils';
 import { getLocalRichHistoryStorage, getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { notifyApp } from '../reducers/appNotification';
 import { contextSrv } from '../services/context_srv';
 
 import {
-  RichHistorySearchBackendFilters,
-  RichHistorySearchFilters,
-  RichHistorySettings,
+  type RichHistorySearchBackendFilters,
+  type RichHistorySearchFilters,
+  type RichHistorySettings,
   SortOrder,
 } from './richHistoryTypes';
-
-export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.
@@ -196,8 +200,8 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
     range: {
-      from: t('explore.rich-history-utils.default-from', 'now-1h'),
-      to: t('explore.rich-history-utils.default-to', 'now'),
+      from: 'now-1h',
+      to: 'now',
     },
     datasource: query.datasourceName,
     queries: query.queries,
@@ -234,11 +238,11 @@ export const mapNumbertoTimeInSlider = (num: number) => {
 
 export function createDateStringFromTs(ts: number) {
   return dateTimeFormat(ts, {
-    format: 'MMMM D',
+    format: 'MMMM D, YYYY',
   });
 }
 
-export function getQueryDisplayText(query: DataQuery): string {
+function getQueryDisplayText(query: DataQuery): string {
   /* If datasource doesn't have getQueryDisplayText, create query display text by
    * stringifying query that was stripped of key, refId and datasource for nicer
    * formatting and improved readability
@@ -269,11 +273,11 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   let mappedQueriesToHeadings: Record<string, RichHistoryQuery[]> = {};
 
   query.forEach((q) => {
-    let heading = createQueryHeading(q, sortOrder);
+    const heading = createQueryHeading(q, sortOrder);
     if (!(heading in mappedQueriesToHeadings)) {
       mappedQueriesToHeadings[heading] = [q];
     } else {
-      mappedQueriesToHeadings[heading] = [...mappedQueriesToHeadings[heading], q];
+      mappedQueriesToHeadings[heading].push(q);
     }
   });
 
@@ -294,7 +298,7 @@ export function createDatasourcesList() {
     });
 }
 
-export function notEmptyQuery(query: DataQuery) {
+function notEmptyQuery(query: DataQuery) {
   /* Check if query has any other properties besides key, refId and datasource.
    * If not, then we consider it empty query.
    */

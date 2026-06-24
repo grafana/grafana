@@ -1,16 +1,17 @@
-import { ReactNode, useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
-import { DataFrame, formattedValueToString } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
-import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
-import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
-import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
-import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
-import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
-
-import { getDataLinks } from '../status-history/utils';
-import { isTooltipScrollable } from '../timeseries/utils';
+import { type DataFrame, formattedValueToString } from '@grafana/data';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import {
+  type VizTooltipItem,
+  VizTooltipContent,
+  VizTooltipFooter,
+  VizTooltipHeader,
+  VizTooltipWrapper,
+  getFieldDisplayItems,
+  getFieldDisplayLinks,
+  isTooltipScrollable,
+} from '@grafana/ui';
 
 export interface HistogramTooltipProps {
   // aligned series frame
@@ -48,15 +49,13 @@ export const HistogramTooltip = ({
   const xMinVal = formattedValueToString(xMinDisp!(xMinField.values[dataIdxs[0]!]));
   const xMaxVal = formattedValueToString(xMaxDisp!(xMaxField.values[dataIdxs[1]!]));
 
-  const headerItem: VizTooltipItem | null = xMinField.config.custom?.hideFrom?.tooltip
-    ? null
-    : {
-        label: 'Bucket',
-        value: `${xMinVal} - ${xMaxVal}`,
-      };
+  const headerItem: VizTooltipItem = {
+    label: 'Bucket',
+    value: `${xMinVal} - ${xMaxVal}`,
+  };
 
   const contentItems = useMemo(
-    () => getContentItems(xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder),
+    () => getFieldDisplayItems(xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder),
     [xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder]
   );
 
@@ -65,7 +64,7 @@ export const HistogramTooltip = ({
   if (isPinned && seriesIdx != null) {
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
-    const links = getDataLinks(field, dataIdx);
+    const links = getFieldDisplayLinks(field, dataIdx);
 
     footer = <VizTooltipFooter dataLinks={links} />;
   }

@@ -4,25 +4,33 @@ import {
   FieldType,
   identityOverrideProcessor,
   PanelPlugin,
+  histogramFieldInfo,
+  buildHistogram,
+  VisualizationSuggestionScore,
+  DataFrameType,
 } from '@grafana/data';
-import { histogramFieldInfo } from '@grafana/data/src/transformations/transformers/histogram';
-import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
-import { StackingEditor } from '@grafana/ui/src/options/builder';
+import { t } from '@grafana/i18n';
+import { commonOptionsBuilder, getGraphFieldOptions } from '@grafana/ui';
+import { StackingEditor } from '@grafana/ui/internal';
 
 import { HistogramPanel } from './HistogramPanel';
 import { defaultHistogramConfig } from './config';
 import { changeToHistogramPanelMigrationHandler } from './migrations';
-import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
+import { type FieldConfig, type Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { originalDataHasHistogram } from './utils';
+
+const MAX_SUGGESTIONS_SERIES = 20;
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
   .setPanelChangeHandler(changeToHistogramPanelMigrationHandler)
   .setPanelOptions((builder) => {
+    const category = [t('histogram.category-histogram', 'Histogram')];
     builder
       .addCustomEditor({
         id: '__calc__',
         path: '__calc__',
         name: 'Values',
+        category,
         description: 'Showing frequencies that are calculated in the query',
         editor: () => null, // empty editor
         showIf: (opts, data) => originalDataHasHistogram(data),
@@ -30,6 +38,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       .addNumberInput({
         path: 'bucketCount',
         name: histogramFieldInfo.bucketCount.name,
+        category,
         description: histogramFieldInfo.bucketCount.description,
         settings: {
           placeholder: `Default: ${defaultOptions.bucketCount}`,
@@ -40,6 +49,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       .addNumberInput({
         path: 'bucketSize',
         name: histogramFieldInfo.bucketSize.name,
+        category,
         description: histogramFieldInfo.bucketSize.description,
         settings: {
           placeholder: 'Auto',
@@ -51,6 +61,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       .addNumberInput({
         path: 'bucketOffset',
         name: histogramFieldInfo.bucketOffset.name,
+        category,
         description: histogramFieldInfo.bucketOffset.description,
         settings: {
           placeholder: `Default: ${defaultOptions.bucketOffset}`,
@@ -61,13 +72,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       .addBooleanSwitch({
         path: 'combine',
         name: histogramFieldInfo.combine.name,
+        category,
         description: histogramFieldInfo.combine.description,
         defaultValue: defaultOptions.combine,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .useFieldConfig({
     standardOptions: {
@@ -81,16 +93,23 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
           mode: FieldColorModeId.PaletteClassic,
         },
       },
+      [FieldConfigProperty.Links]: {
+        settings: {
+          showOneClick: true,
+        },
+      },
     },
     useCustomConfig: (builder) => {
       const cfg = defaultFieldConfig;
+      const graphFieldOptions = getGraphFieldOptions();
+      const category = [t('histogram.category-histogram', 'Histogram')];
 
       builder
         .addCustomEditor({
           id: 'stacking',
           path: 'stacking',
-          name: 'Stacking',
-          category: ['Histogram'],
+          name: t('histogram.name-stacking', 'Stacking'),
+          category,
           defaultValue: defaultHistogramConfig.stacking,
           editor: StackingEditor,
           override: StackingEditor,
@@ -103,7 +122,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         })
         .addSliderInput({
           path: 'lineWidth',
-          name: 'Line width',
+          name: t('histogram.name-line-width', 'Line width'),
+          category,
           defaultValue: cfg.lineWidth,
           settings: {
             min: 0,
@@ -113,7 +133,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         })
         .addSliderInput({
           path: 'fillOpacity',
-          name: 'Fill opacity',
+          name: t('histogram.name-fill-opacity', 'Fill opacity'),
+          category,
           defaultValue: cfg.fillOpacity,
           settings: {
             min: 0,
@@ -123,7 +144,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
         })
         .addRadio({
           path: 'gradientMode',
-          name: 'Gradient mode',
+          name: t('histogram.name-gradient-mode', 'Gradient mode'),
+          category,
           defaultValue: graphFieldOptions.fillGradient[0].value,
           settings: {
             options: graphFieldOptions.fillGradient,
@@ -132,4 +154,26 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
 
       commonOptionsBuilder.addHideFrom(builder);
     },
+  })
+  .setSuggestionsSupplier((ds) => {
+    if (ds.rawFrames && ds.hasData && buildHistogram(ds.rawFrames.slice(0, MAX_SUGGESTIONS_SERIES)) != null) {
+      return [
+        {
+          score: ds.hasDataFrameType(DataFrameType.Histogram)
+            ? VisualizationSuggestionScore.Best
+            : VisualizationSuggestionScore.OK,
+          cardOptions: {
+            maxSeries: MAX_SUGGESTIONS_SERIES,
+            previewModifier: (s) => {
+              s.options!.legend = {
+                calcs: [],
+                placement: 'bottom',
+                showLegend: false,
+              };
+            },
+          },
+        },
+      ];
+    }
+    return;
   });

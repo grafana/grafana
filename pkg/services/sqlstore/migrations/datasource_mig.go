@@ -142,4 +142,12 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Add api_version column", NewAddColumnMigration(tableV2, &Column{
 		Name: "api_version", Type: DB_Varchar, Nullable: true, Length: 20,
 	}))
+
+	mg.AddMigration("Update secure_json_data column to MediumText", NewRawSQLMigration("").
+		Mysql("ALTER TABLE data_source MODIFY COLUMN secure_json_data MEDIUMTEXT;"),
+	)
+
+	mg.AddMigration("Update json_data column to MediumText", NewRawSQLMigration("").
+		Mysql("ALTER TABLE data_source MODIFY COLUMN json_data MEDIUMTEXT;"),
+	)
 }

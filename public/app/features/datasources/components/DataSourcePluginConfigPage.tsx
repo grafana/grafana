@@ -1,4 +1,6 @@
-import { GenericDataSourcePlugin } from '../types';
+import { Trans } from '@grafana/i18n';
+
+import { type GenericDataSourcePlugin } from '../types';
 
 export type Props = {
   plugin?: GenericDataSourcePlugin | null;
@@ -17,5 +19,13 @@ export function DataSourcePluginConfigPage({ plugin, pageId }: Props) {
     return <page.body plugin={plugin} query={{}} />;
   }
 
+<<<<<<< HEAD
   return <div>Страница не найденас: {page}</div>;
+=======
+  return (
+    <div>
+      <Trans i18nKey="datasources.data-source-plugin-config-page.page-not-found">Page not found: {{ page }}</Trans>
+    </div>
+  );
+>>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 }

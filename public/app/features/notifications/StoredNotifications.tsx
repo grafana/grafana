@@ -3,10 +3,10 @@ import { useRef, useState } from 'react';
 import * as React from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Checkbox, EmptyState, useStyles2 } from '@grafana/ui';
 import { StoredNotificationItem } from 'app/core/components/AppNotifications/StoredNotificationItem';
-import { Trans, t } from 'app/core/internationalization';
 import {
   clearAllNotifications,
   clearNotification,
@@ -14,7 +14,7 @@ import {
   selectWarningsAndErrors,
   selectLastReadTimestamp,
 } from 'app/core/reducers/appNotification';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 export function StoredNotifications() {
   const dispatch = useDispatch();
@@ -67,15 +67,19 @@ export function StoredNotifications() {
     <div className={styles.wrapper}>
       <Alert
         severity="info"
-        title="This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
+        title={t(
+          'notifications.stored-notifications.title-alert',
+          'This page displays past errors and warnings. Once dismissed, they cannot be retrieved.'
+        )}
       />
       <div className={styles.topRow}>
         <Checkbox
           value={allNotificationsSelected}
+          aria-label={t('notifications.select-all', 'Select all notifications')}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleAllCheckboxToggle(event.target.checked)}
         />
         <Button disabled={selectedNotificationIds.length === 0} onClick={clearSelectedNotifications}>
-          Dismiss notifications
+          <Trans i18nKey="notifications.stored-notifications.dismiss-notifications">Dismiss notifications</Trans>
         </Button>
       </div>
       <ul className={styles.list}>

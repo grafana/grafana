@@ -13,11 +13,9 @@ weight: 250
 
 # Configure LBAC for data sources for Loki data source on Grafana Cloud
 
-LBAC for data sources is available in private preview on Grafana Cloud for Loki created with basic authentication. Loki data sources for LBAC for data sources can only be created, provisioning is currently not available.
+LBAC for data sources is available on Grafana Cloud using a new Loki data source with basic authentication configured. A new data source can be created as described in [LBAC Configuration for New Loki Data Source](https://grafana.com/docs/grafana/latest/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/#task-1-lbac-configuration-for-new-loki-data-source).
 
 ## Before you begin
-
-To be able to use LBAC for data sources rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
 
 - Be sure that you have the permission setup to create a Loki tenant in Grafana Cloud
 - Be sure that you have admin data source permissions for Grafana.

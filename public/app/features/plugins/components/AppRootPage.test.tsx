@@ -3,33 +3,36 @@ import { Component } from 'react';
 import { Routes, Route, Link } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { AppPlugin, PluginType, AppRootProps, NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
-import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { AppPlugin, PluginType, type AppRootProps, type NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test';
 import { setEchoSrv } from '@grafana/runtime';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 
 import { ExtensionRegistriesProvider } from '../extensions/ExtensionRegistriesContext';
-import { setupPluginExtensionRegistries } from '../extensions/registry/setup';
-import { getPluginSettings } from '../pluginSettings';
-import { importAppPlugin } from '../plugin_loader';
+import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
+import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
+import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
+import { pluginImporter } from '../importer/pluginImporter';
 
 import AppRootPage from './AppRootPage';
 
-jest.mock('../pluginSettings', () => ({
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: jest.fn(),
 }));
-jest.mock('../plugin_loader', () => ({
-  importAppPlugin: jest.fn(),
+jest.mock('../importer/pluginImporter', () => ({
+  pluginImporter: { importApp: jest.fn() },
 }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
-    featureToggles: {
-      accessControlOnCall: true,
-    },
+    featureToggles: {},
+    apps: {},
     theme2: {
       breakpoints: {
         values: {
@@ -40,12 +43,15 @@ jest.mock('@grafana/runtime', () => ({
         },
       },
     },
+    unifiedAlerting: {
+      minInterval: '10s',
+    },
   },
 }));
 
-const importAppPluginMock = importAppPlugin as jest.Mock<
-  ReturnType<typeof importAppPlugin>,
-  Parameters<typeof importAppPlugin>
+const importAppPluginMock = pluginImporter.importApp as jest.Mock<
+  ReturnType<typeof pluginImporter.importApp>,
+  Parameters<typeof pluginImporter.importApp>
 >;
 
 const getPluginSettingsMock = getPluginSettings as jest.Mock<
@@ -53,6 +59,8 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
   Parameters<typeof getPluginSettings>
 >;
 
+// don't care about this component - it's just for a test
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 class RootComponent extends Component<AppRootProps> {
   static timesRendered = 0;
   render() {
@@ -86,7 +94,12 @@ function renderUnderRouter(page = '') {
 
   appPluginNavItem.parentItem = appsSection;
 
-  const registries = setupPluginExtensionRegistries();
+  const registries = {
+    addedComponentsRegistry: new AddedComponentsRegistry([]),
+    exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    addedLinksRegistry: new AddedLinksRegistry([]),
+    addedFunctionsRegistry: new AddedFunctionsRegistry([]),
+  };
   const pagePath = page ? `/${page}` : '';
   const route = {
     path: `/a/:pluginId/*`,

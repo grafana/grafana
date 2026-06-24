@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, PanelContainer } from '@grafana/ui';
 
 export const NoData = () => {
@@ -19,7 +19,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'no-data-card',
     padding: theme.spacing(3),
     background: theme.colors.background.primary,
-    borderRadius: theme.shape.radius.default,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

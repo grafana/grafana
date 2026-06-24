@@ -1,5 +1,8 @@
-import { SelectableValue } from '@grafana/data';
-import { RadioButtonGroup, Label, Tooltip, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+import { type SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { Icon, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
@@ -8,6 +11,7 @@ interface Props {
 }
 
 export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) => {
+  const styles = useStyles2(getStyles);
   const alertStateOptions: SelectableValue[] = Object.entries(AlertState)
     .sort(([labelA], [labelB]) => (labelA < labelB ? -1 : 1))
     .map(([label, state]) => ({
@@ -16,19 +20,31 @@ export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) =>
     }));
 
   return (
-    <div>
+    <div className={styles.wrapper}>
       <Label>
-        <span>Notification state&nbsp;</span>
+        <span>
+          <Trans i18nKey="alerting.alert-state-filter.notification-state">Notification state</Trans>&nbsp;
+        </span>
         <Tooltip
           content={
             <div>
               <ul>
                 <li>
-                  Active: The alert notification has been handled. The alert is still firing and continues to be
-                  managed.
+                  <Trans i18nKey="alerting.alert-state-filter.active-the-alert-is-firing">
+                    Active: The alert notification has been handled. The alert is still firing and continues to be
+                    managed.
+                  </Trans>
                 </li>
-                <li>Suppressed: The alert has been silenced.</li>
-                <li>Unprocessed: The alert is received but its notification has not been processed yet.</li>
+                <li>
+                  <Trans i18nKey="alerting.alert-state-filter.suppressed-the-alert-has-been-silenced">
+                    Suppressed: The alert has been silenced.
+                  </Trans>
+                </li>
+                <li>
+                  <Trans i18nKey="alerting.alert-state-filter.unprocessed-the-alert-is-received">
+                    Unprocessed: The alert is received but its notification has not been processed yet.
+                  </Trans>
+                </li>
               </ul>
             </div>
           }
@@ -40,3 +56,10 @@ export const AlertStateFilter = ({ onStateFilterChange, stateFilter }: Props) =>
     </div>
   );
 };
+
+const getStyles = () => ({
+  wrapper: css({
+    minWidth: 0,
+    flex: '0 0 auto',
+  }),
+});

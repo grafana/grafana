@@ -1,14 +1,23 @@
 import { useParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { SourceLink } from 'app/features/provisioning/components/SourceLink';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isManagedByRepository,
+} from 'app/features/provisioning/utils/managedResource';
+
+import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
 import { PlaylistForm } from './PlaylistForm';
-import { getPlaylistAPI } from './api';
-import { Playlist } from './types';
 
 export interface RouteParams {
   uid: string;
@@ -16,11 +25,14 @@ export interface RouteParams {
 
 export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
-  const api = getPlaylistAPI();
-  const playlist = useAsync(() => api.getPlaylist(uid), [uid]);
+  const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
+  const [replacePlaylist] = useReplacePlaylistMutation();
 
   const onSubmit = async (playlist: Playlist) => {
-    await api.updatePlaylist(playlist);
+    replacePlaylist({
+      name: playlist.metadata?.name ?? '',
+      playlist,
+    });
     locationService.push('/playlists');
   };
 
@@ -32,16 +44,26 @@ export const PlaylistEditPage = () => {
     ),
   };
 
+  const renderTitle = (title: string) => (
+    <Stack direction="row" gap={1} alignItems="center" wrap>
+      <h1>{title}</h1>
+      {data && isManaged(data) && <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />}
+      {data && isManagedByRepository(data) && (
+        <SourceLink repositoryName={getManagerIdentity(data)} sourcePath={getSourcePath(data)} />
+      )}
+    </Stack>
+  );
+
   return (
-    <Page navId="dashboards/playlists" pageNav={pageNav}>
-      <Page.Contents isLoading={playlist.loading}>
-        {playlist.error && (
+    <Page navId="dashboards/playlists" pageNav={pageNav} renderTitle={renderTitle}>
+      <Page.Contents isLoading={isLoading}>
+        {isError && (
           <div>
             <Trans i18nKey="playlist-edit.error-prefix">Error loading playlist:</Trans>
-            {JSON.stringify(playlist.error)}
+            {JSON.stringify(error)}
           </div>
         )}
-        {playlist.value && <PlaylistForm onSubmit={onSubmit} playlist={playlist.value} />}
+        {data && <PlaylistForm onSubmit={onSubmit} playlist={data} />}
       </Page.Contents>
     </Page>
   );

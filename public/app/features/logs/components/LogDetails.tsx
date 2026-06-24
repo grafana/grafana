@@ -1,16 +1,30 @@
 import { cx } from '@emotion/css';
-import { PureComponent } from 'react';
+import { memo, useMemo } from 'react';
 
-import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
-import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
+import {
+  type TimeRange,
+  type CoreApp,
+  type DataFrame,
+  DataFrameType,
+  type IconName,
+  type LinkModel,
+  type LogRowModel,
+  PluginExtensionPoints,
+  type PluginExtensionResourceAttributesContext,
+} from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { usePluginLinks } from '@grafana/runtime';
+import { type PopoverContent, useTheme2 } from '@grafana/ui';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
+import { LogDetailsBody } from './LogDetailsBody';
 import { LogDetailsRow } from './LogDetailsRow';
-import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
+import { getLogLevelStyles, type LogRowStyles } from './getLogRowStyles';
 import { getAllFields, createLogLineLinks } from './logParser';
 
-export interface Props extends Themeable2 {
+export interface Props {
   row: LogRowModel;
   showDuplicates: boolean;
   getRows: () => LogRowModel[];
@@ -22,7 +36,7 @@ export interface Props extends Themeable2 {
 
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: GetFieldLinksFn;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
@@ -30,29 +44,78 @@ export interface Props extends Themeable2 {
 
   onPinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
+  timeRange: TimeRange;
 }
 
-class UnThemedLogDetails extends PureComponent<Props> {
-  render() {
-    const {
-      app,
-      row,
-      theme,
-      hasError,
-      onClickFilterOutLabel,
-      onClickFilterLabel,
-      getRows,
-      showDuplicates,
-      className,
-      onClickShowField,
-      onClickHideField,
-      displayedFields,
-      getFieldLinks,
-      wrapLogMessage,
-      onPinLine,
-      styles,
-      pinLineButtonTooltipTitle,
-    } = this.props;
+interface LinkModelWithIcon extends LinkModel {
+  icon?: IconName;
+}
+
+export const useAttributesExtensionLinks = (row: LogRowModel, timeRange: TimeRange) => {
+  // Stable context for useMemo inside usePluginLinks
+  const context: PluginExtensionResourceAttributesContext = useMemo(() => {
+    return {
+      attributes: Object.fromEntries(Object.entries(row.labels).map(([key, value]) => [key, [value]])),
+      timeRange: { from: timeRange.from.valueOf(), to: timeRange.to.valueOf() },
+      datasource: {
+        type: row.datasourceType ?? '',
+        uid: row.datasourceUid ?? '',
+      },
+    };
+  }, [row.labels, row.datasourceType, row.datasourceUid, timeRange]);
+
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.LogsViewResourceAttributes,
+    limitPerPlugin: 10,
+    context,
+  });
+
+  return useMemo(() => {
+    return links.reduce<Record<string, LinkModelWithIcon[]>>((acc, link) => {
+      if (link.category) {
+        const linkModel: LinkModelWithIcon = {
+          href: link.path ?? '',
+          target: '_blank',
+          origin: undefined,
+          title: link.title,
+          onClick: link.onClick,
+          icon: link.icon,
+        };
+
+        if (acc[link.category]) {
+          acc[link.category].push(linkModel);
+        } else {
+          acc[link.category] = [linkModel];
+        }
+      }
+      return acc;
+    }, {});
+  }, [links]);
+};
+
+export const LogDetails = memo(
+  ({
+    app,
+    row,
+    hasError,
+    onClickFilterOutLabel,
+    onClickFilterLabel,
+    getRows,
+    showDuplicates,
+    className,
+    onClickShowField,
+    onClickHideField,
+    displayedFields,
+    getFieldLinks,
+    wrapLogMessage,
+    onPinLine,
+    styles,
+    pinLineButtonTooltipTitle,
+    timeRange,
+    isFilterLabelActive,
+  }: Props) => {
+    const theme = useTheme2();
+    const links = useAttributesExtensionLinks(row, timeRange);
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
@@ -81,15 +144,41 @@ class UnThemedLogDetails extends PureComponent<Props> {
     return (
       <tr className={cx(className, styles.logDetails)}>
         {showDuplicates && <td />}
-        <td className={levelClassName} aria-label="Log level" />
+        <td className={levelClassName} aria-label={t('logs.un-themed-log-details.aria-label-log-level', 'Log level')} />
         <td colSpan={4}>
           <div className={styles.logDetailsContainer}>
             <table className={styles.logDetailsTable}>
               <tbody>
+                {displayedFields && displayedFields.length > 0 && (
+                  <>
+                    <tr>
+                      <td
+                        colSpan={100}
+                        className={styles.logDetailsHeading}
+                        aria-label={t('logs.un-themed-log-details.aria-label-line', 'Log line')}
+                      >
+                        <Trans i18nKey="logs.log-details.log-line">Log line</Trans>
+                      </td>
+                    </tr>
+                    <LogDetailsBody
+                      onClickShowField={onClickShowField}
+                      onClickHideField={onClickHideField}
+                      row={row}
+                      app={app}
+                      displayedFields={displayedFields}
+                      disableActions={false}
+                      theme={theme}
+                    />
+                  </>
+                )}
                 {(labelsAvailable || fieldsAvailable) && (
                   <tr>
-                    <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
-                      Fields
+                    <td
+                      colSpan={100}
+                      className={styles.logDetailsHeading}
+                      aria-label={t('logs.un-themed-log-details.aria-label-fields', 'Fields')}
+                    >
+                      <Trans i18nKey="logs.log-details.fields">Fields</Trans>
                     </td>
                   </tr>
                 )}
@@ -113,7 +202,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         wrapLogMessage={wrapLogMessage}
                         displayedFields={displayedFields}
                         disableActions={false}
-                        isFilterLabelActive={this.props.isFilterLabelActive}
+                        isFilterLabelActive={isFilterLabelActive}
+                        links={links?.[key]}
                       />
                     );
                   })}
@@ -134,15 +224,19 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       row={row}
                       app={app}
                       disableActions={false}
-                      isFilterLabelActive={this.props.isFilterLabelActive}
+                      isFilterLabelActive={isFilterLabelActive}
                     />
                   );
                 })}
 
                 {fieldsWithLinksAvailable && (
                   <tr>
-                    <td colSpan={100} className={styles.logDetailsHeading} aria-label="Data Links">
-                      Links
+                    <td
+                      colSpan={100}
+                      className={styles.logDetailsHeading}
+                      aria-label={t('logs.un-themed-log-details.aria-label-data-links', 'Data links')}
+                    >
+                      <Trans i18nKey="logs.log-details.links">Links</Trans>
                     </td>
                   </tr>
                 )}
@@ -191,8 +285,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
 
                 {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
                   <tr>
-                    <td colSpan={100} aria-label="No details">
-                      No details available
+                    <td colSpan={100} aria-label={t('logs.un-themed-log-details.aria-label-no-details', 'No details')}>
+                      <Trans i18nKey="logs.log-details.no-details">No details available</Trans>
                     </td>
                   </tr>
                 )}
@@ -203,7 +297,5 @@ class UnThemedLogDetails extends PureComponent<Props> {
       </tr>
     );
   }
-}
-
-export const LogDetails = withTheme2(UnThemedLogDetails);
+);
 LogDetails.displayName = 'LogDetails';

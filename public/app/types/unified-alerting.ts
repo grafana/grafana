@@ -1,19 +1,19 @@
 /* Prometheus internal models */
 
-import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
-import { PromOptions } from '@grafana/prometheus';
-import { LokiOptions } from 'app/plugins/datasource/loki/types';
+import { type AlertState, type DataSourceInstanceSettings } from '@grafana/data';
+import { type PromOptions } from '@grafana/prometheus';
+import { type LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
-  Annotations,
-  GrafanaAlertState,
-  GrafanaAlertStateWithReason,
-  Labels,
+  type Annotations,
+  type GrafanaAlertState,
+  type GrafanaAlertStateWithReason,
+  type Labels,
   mapStateWithReasonToBaseState,
-  PromAlertingRuleState,
-  PromRuleType,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
+  type PromAlertingRuleState,
+  type PromRuleType,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
 } from './unified-alerting-dto';
 
 export type Alert = {
@@ -38,6 +38,8 @@ interface RuleBase {
   lastEvaluation?: string;
   evaluationTime?: number;
   lastError?: string;
+  uid?: string;
+  folderUid?: string;
 }
 
 export interface AlertingRule extends RuleBase {
@@ -70,7 +72,17 @@ export interface RecordingRule extends RuleBase {
 
 export type Rule = AlertingRule | RecordingRule;
 
-export type BaseRuleGroup = { name: string };
+export interface GrafanaAlertingRule extends AlertingRule {
+  uid: string;
+  folderUid: string;
+}
+
+export interface GrafanaRecordingRule extends RecordingRule {
+  uid: string;
+  folderUid: string;
+}
+
+export type GrafanaRule = GrafanaAlertingRule | GrafanaRecordingRule;
 
 type TotalsWithoutAlerting = Exclude<AlertInstanceTotalState, AlertInstanceTotalState.Alerting>;
 enum FiringTotal {
@@ -90,12 +102,7 @@ export interface RuleNamespace {
   groups: RuleGroup[];
 }
 
-export interface RulesSourceResult {
-  dataSourceName: string;
-  error?: unknown;
-  namespaces?: RuleNamespace[];
-}
-
+/** @deprecated use RulesSourceIdentifier instead */
 export type RulesSource = DataSourceInstanceSettings<PromOptions | LokiOptions> | 'grafana';
 
 // combined prom and ruler result
@@ -110,12 +117,14 @@ export interface CombinedRule {
   namespace: CombinedRuleNamespace;
   instanceTotals: AlertInstanceTotals;
   filteredInstanceTotals: AlertInstanceTotals;
+  uid?: string;
 }
 
 // export type AlertInstanceState = PromAlertingRuleState | 'nodata' | 'error';
 export enum AlertInstanceTotalState {
   Alerting = 'alerting',
   Pending = 'pending',
+  Recovering = 'recovering',
   Normal = 'inactive',
   NoData = 'nodata',
   Error = 'error',
@@ -149,7 +158,25 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   rule: T;
 }
 
-// identifier for where we can find a RuleGroup
+export const GrafanaRulesSourceSymbol = Symbol('grafana');
+export type RulesSourceUid = string | typeof GrafanaRulesSourceSymbol;
+
+export interface DataSourceRulesSourceIdentifier {
+  uid: string;
+  name: string;
+  // discriminator
+  ruleSourceType: 'datasource';
+}
+export interface GrafanaRulesSourceIdentifier {
+  uid: typeof GrafanaRulesSourceSymbol;
+  name: 'grafana';
+  // discriminator
+  ruleSourceType: 'grafana';
+}
+
+export type RulesSourceIdentifier = DataSourceRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
+
+/** @deprecated use RuleGroupIdentifierV2 instead */
 export interface RuleGroupIdentifier {
   dataSourceName: string;
   /** ⚠️ use the Grafana folder UID for Grafana-managed rules */
@@ -157,14 +184,30 @@ export interface RuleGroupIdentifier {
   groupName: string;
 }
 
-export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
-
-export interface PromRuleWithLocation {
-  rule: AlertingRule;
-  dataSourceName: string;
-  namespaceName: string;
-  groupName: string;
+export interface GrafanaNamespaceIdentifier {
+  uid: string;
 }
+
+export interface DataSourceNamespaceIdentifier {
+  name: string;
+}
+
+export interface GrafanaRuleGroupIdentifier {
+  groupName: string;
+  namespace: GrafanaNamespaceIdentifier;
+  groupOrigin: 'grafana';
+}
+
+export interface DataSourceRuleGroupIdentifier {
+  rulesSource: DataSourceRulesSourceIdentifier;
+  groupName: string;
+  namespace: DataSourceNamespaceIdentifier;
+  groupOrigin: 'datasource';
+}
+
+export type RuleGroupIdentifierV2 = GrafanaRuleGroupIdentifier | DataSourceRuleGroupIdentifier;
+
+export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
 
 export interface CloudRuleIdentifier {
   ruleSourceName: string;
@@ -202,6 +245,7 @@ export interface FilterState {
   alertState?: string;
   groupBy?: string[];
   ruleType?: string;
+  receivers?: string[];
 }
 
 export interface SilenceFilterState {
@@ -243,13 +287,8 @@ export interface StateHistoryItem {
 
 export interface RulerDataSourceConfig {
   dataSourceName: string;
+  dataSourceUid: string;
   apiVersion: 'legacy' | 'config';
-}
-
-export interface PromBasedDataSource {
-  name: string;
-  id: string | number;
-  rulerConfig?: RulerDataSourceConfig;
 }
 
 export interface PaginationProps {

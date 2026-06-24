@@ -1,5 +1,5 @@
-import { Field, FieldType } from '@grafana/data';
-import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
+import { type Field, type FieldType } from '@grafana/data';
+import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
 export interface DimensionSupplier<T = any> {
   /**
@@ -85,3 +85,5 @@ export enum ResourcePickerSize {
   SMALL = 'small',
   NORMAL = 'normal',
 }
+
+export interface DirectionDimensionOptions {}

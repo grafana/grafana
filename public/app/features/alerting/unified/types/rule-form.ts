@@ -1,6 +1,5 @@
-import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
-
-import { Folder } from '../components/rule-editor/RuleFolderPicker';
+import { type EvalFunction } from 'app/features/alerting/state/alertDef';
+import { type AlertQuery, type GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
   grafana = 'grafana-alerting',
@@ -18,6 +17,7 @@ export interface ContactPoint {
   groupIntervalValue: string;
   repeatIntervalValue: string;
   muteTimeIntervals: string[];
+  activeTimeIntervals: string[];
 }
 
 // key: name of alert manager, value ContactPoint
@@ -27,7 +27,11 @@ export interface AlertManagerManualRouting {
 
 export interface SimplifiedEditor {
   simplifiedQueryEditor: boolean;
+  simplifiedNotificationEditor: boolean;
 }
+
+export type KVObject = { key: string; value: string };
+export type KBObjectArray = KVObject[];
 
 export interface RuleFormValues {
   // common
@@ -35,6 +39,8 @@ export interface RuleFormValues {
   type?: RuleFormType;
   dataSourceName: string | null;
   group: string;
+  // True when this Grafana-managed rule is saved without a real group (synthetic `no_group_for_rule_<uid>` group on the wire).
+  isUngroupedRuleGroup: boolean;
 
   labels: Array<{ key: string; value: string }>;
   annotations: Array<{ key: string; value: string }>;
@@ -44,15 +50,17 @@ export interface RuleFormValues {
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
-  folder: Folder | null;
+  folder: Folder | undefined;
   evaluateEvery: string;
   evaluateFor: string;
+  keepFiringFor?: string;
   isPaused?: boolean;
   manualRouting: boolean; // if true contactPoints are used. This field will not be used for saving the rule
   contactPoints?: AlertManagerManualRouting;
+  selectedPolicy?: string; // named notification policy for routing
   editorSettings?: SimplifiedEditor;
   metric?: string;
-
+  targetDatasourceUid?: string;
   // cortex / loki rules
   namespace: string;
   forTime: number;
@@ -60,4 +68,15 @@ export interface RuleFormValues {
   keepFiringForTime?: number;
   keepFiringForTimeUnit?: string;
   expression: string;
+  missingSeriesEvalsToResolve?: number;
+}
+
+export type Folder = { title: string; uid: string };
+
+export interface SimpleCondition {
+  whenField?: string;
+  evaluator: {
+    params: number[];
+    type: EvalFunction;
+  };
 }

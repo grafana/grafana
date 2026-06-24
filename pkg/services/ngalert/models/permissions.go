@@ -9,10 +9,12 @@ import (
 type ReceiverPermission string
 
 const (
-	ReceiverPermissionReadSecret ReceiverPermission = "secrets"
-	ReceiverPermissionAdmin      ReceiverPermission = "admin"
-	ReceiverPermissionWrite      ReceiverPermission = "write"
-	ReceiverPermissionDelete     ReceiverPermission = "delete"
+	ReceiverPermissionReadSecret      ReceiverPermission = "secrets"
+	ReceiverPermissionAdmin           ReceiverPermission = "admin"
+	ReceiverPermissionWrite           ReceiverPermission = "write"
+	ReceiverPermissionDelete          ReceiverPermission = "delete"
+	ReceiverPermissionModifyProtected ReceiverPermission = "modify-protected"
+	ReceiverPermissionTest            ReceiverPermission = "test"
 )
 
 // ReceiverPermissions returns all possible silence permissions.
@@ -22,6 +24,8 @@ func ReceiverPermissions() []ReceiverPermission {
 		ReceiverPermissionAdmin,
 		ReceiverPermissionWrite,
 		ReceiverPermissionDelete,
+		ReceiverPermissionModifyProtected,
+		ReceiverPermissionTest,
 	}
 }
 
@@ -30,6 +34,31 @@ type ReceiverPermissionSet = PermissionSet[ReceiverPermission]
 
 func NewReceiverPermissionSet() ReceiverPermissionSet {
 	return NewPermissionSet(ReceiverPermissions())
+}
+
+// RoutePermission is a type for representing permission to perform a route action.
+type RoutePermission string
+
+const (
+	RoutePermissionAdmin  RoutePermission = "admin"
+	RoutePermissionWrite  RoutePermission = "write"
+	RoutePermissionDelete RoutePermission = "delete"
+)
+
+// RoutePermissions returns all possible route permissions.
+func RoutePermissions() []RoutePermission {
+	return []RoutePermission{
+		RoutePermissionAdmin,
+		RoutePermissionWrite,
+		RoutePermissionDelete,
+	}
+}
+
+// RoutePermissionSet represents a set of permissions for a route.
+type RoutePermissionSet = PermissionSet[RoutePermission]
+
+func NewRoutePermissionSet() RoutePermissionSet {
+	return NewPermissionSet(RoutePermissions())
 }
 
 // PermissionSet represents a set of permissions on a resource.

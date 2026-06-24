@@ -3,6 +3,7 @@ package loki
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -15,7 +16,34 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// ErrGrafanaSQLStreamingNotSupported is returned when a Grafana SQL / schemads payload is used with Loki streaming.
+var ErrGrafanaSQLStreamingNotSupported = errors.New("grafana sql queries are not supported for Loki streaming")
+
+// rejectGrafanaSQLStreamPayload returns ErrGrafanaSQLStreamingNotSupported when the JSON envelope is a Grafana SQL query.
+// Malformed JSON returns nil so existing parsing can surface errors.
+func rejectGrafanaSQLStreamPayload(raw []byte) error {
+	if len(raw) == 0 {
+		return nil
+	}
+	var probe struct {
+		GrafanaSql bool `json:"grafanaSql"`
+	}
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return nil
+	}
+	if probe.GrafanaSql {
+		return ErrGrafanaSQLStreamingNotSupported
+	}
+	return nil
+}
+
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if !isFeatureEnabled(ctx, flagLokiExperimentalStreaming) {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusPermissionDenied,
+		}, fmt.Errorf("streaming is not supported")
+	}
+
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.SubscribeStreamResponse{
@@ -30,11 +58,17 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 		}, fmt.Errorf("expected tail in channel path")
 	}
 
+	if err := rejectGrafanaSQLStreamPayload(req.Data); err != nil {
+		return &backend.SubscribeStreamResponse{
+			Status: backend.SubscribeStreamStatusPermissionDenied,
+		}, err
+	}
+
 	query, err := parseQueryModel(req.Data)
 	if err != nil {
 		return nil, err
 	}
-	if query.Expr != nil {
+	if query.Expr == "" {
 		return &backend.SubscribeStreamResponse{
 			Status: backend.SubscribeStreamStatusNotFound,
 		}, fmt.Errorf("missing expr in channel (subscribe)")
@@ -65,11 +99,15 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return err
 	}
 
+	if err := rejectGrafanaSQLStreamPayload(req.Data); err != nil {
+		return err
+	}
+
 	query, err := parseQueryModel(req.Data)
 	if err != nil {
 		return err
 	}
-	if query.Expr != nil {
+	if query.Expr == "" {
 		return fmt.Errorf("missing expr in cuannel")
 	}
 
@@ -80,7 +118,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	signal.Notify(interrupt, os.Interrupt)
 
 	params := url.Values{}
-	params.Add("query", *query.Expr)
+	params.Add("query", query.Expr)
 
 	wsurl, _ := url.Parse(dsInfo.URL)
 

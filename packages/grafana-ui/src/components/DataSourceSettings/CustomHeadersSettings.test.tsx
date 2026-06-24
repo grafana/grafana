@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CustomHeadersSettings, Props } from './CustomHeadersSettings';
+import { CustomHeadersSettings, type Props } from './CustomHeadersSettings';
 
 const setup = (propOverrides?: object) => {
   const onChange = jest.fn();
@@ -66,7 +66,7 @@ describe('Render', () => {
     setup();
     const b = screen.getByRole('button', { name: 'Add header' });
     expect(b).toBeInTheDocument();
-    expect(b.getAttribute('type')).toBe('button');
+    expect(b).toHaveAttribute('type', 'button');
   });
 
   it('should remove a header', async () => {

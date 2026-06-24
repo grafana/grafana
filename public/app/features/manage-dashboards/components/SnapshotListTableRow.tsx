@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, LinkButton, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
-import { Trans } from 'app/core/internationalization';
-import { Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
+import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
+import { type Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 export interface Props {
   snapshot: Snapshot;
@@ -13,6 +15,10 @@ export interface Props {
 
 const SnapshotListTableRowComponent = ({ snapshot, onRemove }: Props) => {
   const url = snapshot.externalUrl || snapshot.url;
+  const hasDeletePermission = contextSrv.hasPermission(AccessControlAction.SnapshotsDelete);
+  const deleteTooltip = hasDeletePermission
+    ? ''
+    : t('snapshot.share.delete-permission-tooltip', "You don't have permission to delete snapshots");
   return (
     <tr>
       <td>
@@ -34,7 +40,14 @@ const SnapshotListTableRowComponent = ({ snapshot, onRemove }: Props) => {
         </LinkButton>
       </td>
       <td className="text-right">
-        <Button variant="destructive" size="sm" icon="times" onClick={onRemove} />
+        <Button
+          variant="destructive"
+          size="sm"
+          icon="times"
+          onClick={onRemove}
+          disabled={!hasDeletePermission}
+          tooltip={deleteTooltip}
+        />
       </td>
     </tr>
   );

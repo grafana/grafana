@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Telegram
 title: Configure Telegram for Alerting
-weight: 0
+weight: 160
 ---
 
 # Configure Telegram for Alerting
@@ -57,7 +57,7 @@ Add the bot to a group chat by following the steps below. Once the bot is added 
 
 To create your Telegram integration in Grafana Alerting, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification configuration**, then select the **Contact points** tab.
 1. Click **+ Add contact point**.
 1. Enter a contact point name.
 1. From the Integration list, select Telegram.

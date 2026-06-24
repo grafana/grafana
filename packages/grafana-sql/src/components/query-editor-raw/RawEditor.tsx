@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Modal, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { SQLQuery, QueryEditorProps } from '../../types';
+import { type SQLQuery, type QueryEditorProps } from '../../types';
 
 import { QueryEditorRaw } from './QueryEditorRaw';
 import { QueryToolbox } from './QueryToolbox';
@@ -60,7 +61,7 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
   const renderEditor = (standalone = false) => {
     return standalone ? (
       <AutoSizer>
-        {({ width, height }) => {
+        {({ width, height }: Size) => {
           return renderQueryEditor(width, height);
         }}
       </AutoSizer>
@@ -81,7 +82,9 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
           justifyContent: 'center',
         }}
       >
-        Editing in expanded code editor
+        <Trans i18nKey="grafana-sql.components.raw-editor.render-placeholder.editing-in-expanded-code-editor">
+          Editing in expanded code editor
+        </Trans>
       </div>
     );
   };
@@ -91,7 +94,9 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
       {isExpanded ? renderPlaceholder() : renderEditor()}
       {isExpanded && (
         <Modal
-          title={`Query ${query.refId}`}
+          title={t('grafana-sql.components.raw-editor.title-query-num', 'Query {{queryNum}}', {
+            queryNum: query.refId,
+          })}
           closeOnBackdropClick={false}
           closeOnEscape={false}
           className={styles.modal}

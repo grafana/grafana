@@ -1,21 +1,22 @@
 import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
-import { AnyAction } from 'redux';
+import { type AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
+import { type SplitOpenOptions, type TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
-import { PanelModel } from 'app/features/dashboard/state';
+import { generateExploreId, type GetExploreUrlArguments } from 'app/core/utils/explore';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
+import { type CorrelationEditorDetailsUpdate, type ExploreState } from 'app/types/explore';
+import { createAsyncThunk, type ThunkResult } from 'app/types/store';
 
-import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
-import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { createAsyncThunk, ThunkResult } from '../../../types';
+import { type RichHistoryResults } from '../../../core/history/RichHistoryStorage';
+import { type RichHistorySearchFilters, type RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { withUniqueRefIds } from '../utils/queries';
 
-import { initializeExplore, InitializeExploreOptions, paneReducer } from './explorePane';
-import { DEFAULT_RANGE, makeExplorePaneState } from './utils';
+import { DEFAULT_RANGE } from './constants';
+import { initializeExplore, type InitializeExploreOptions, paneReducer } from './explorePane';
+import { makeExplorePaneState } from './utils';
 
 //
 // Actions and Payloads
@@ -51,11 +52,6 @@ export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction')
  * Close the pane with the given id.
  */
 export const splitClose = createAction<string>('explore/splitClose');
-
-export interface SetPaneStateActionPayload {
-  [itemId: string]: Partial<ExploreItemState>;
-}
-export const setPaneState = createAction<SetPaneStateActionPayload>('explore/setPaneState');
 
 export const clearPanes = createAction('explore/clearPanes');
 
@@ -95,6 +91,7 @@ export const splitOpen = createAsyncThunk(
         panelsState: options?.panelsState || originState?.panelsState,
         correlationHelperData: options?.correlationHelperData,
         eventBridge: new EventBusSrv(),
+        compact: !!options?.compact,
       })
     );
 
@@ -134,7 +131,7 @@ export const navigateToExplore = (
   panel: PanelModel,
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
-  return async (dispatch) => {
+  return async () => {
     const { timeRange, getExploreUrl, openInNewWindow } = dependencies;
 
     const path = await getExploreUrl({
@@ -150,14 +147,14 @@ export const navigateToExplore = (
       return;
     }
 
-    locationService.push(path!);
+    locationService.push(locationUtil.stripBaseFromUrl(path!));
   };
 };
 
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
-const initialExploreItemState = makeExplorePaneState();
+const initialExploreItemState = () => makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
@@ -265,7 +262,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       ...state,
       panes: {
         ...state.panes,
-        [action.meta.arg.exploreId]: initialExploreItemState,
+        [action.meta.arg.exploreId]: initialExploreItemState(),
       },
     };
   }
@@ -274,7 +271,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     const initialPanes = Object.entries(state.panes);
     const before = initialPanes.slice(0, action.meta.arg.position);
     const after = initialPanes.slice(before.length);
-    const panes = [...before, [action.meta.arg.exploreId, initialExploreItemState] as const, ...after].reduce(
+    const panes = [...before, [action.meta.arg.exploreId, initialExploreItemState()] as const, ...after].reduce(
       (acc, [id, pane]) => ({ ...acc, [id]: pane }),
       {}
     );

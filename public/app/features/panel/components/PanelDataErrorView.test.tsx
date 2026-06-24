@@ -2,8 +2,16 @@ import { render, screen } from '@testing-library/react';
 import { defaultsDeep } from 'lodash';
 import { Provider } from 'react-redux';
 
-import { FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { PanelDataErrorViewProps } from '@grafana/runtime';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  EventBusSrv,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+} from '@grafana/data';
+import { type PanelDataErrorViewProps } from '@grafana/runtime';
+import { usePanelContext } from '@grafana/ui';
 import { configureStore } from 'app/store/configureStore';
 
 import { PanelDataErrorView } from './PanelDataErrorView';
@@ -16,7 +24,29 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
   },
 }));
 
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  usePanelContext: jest.fn(),
+}));
+
+const mockUsePanelContext = jest.mocked(usePanelContext);
+const RUN_QUERY_MESSAGE = 'Run a query to visualize it here or go to all visualizations to add other panel types';
+const panelContextRoot = {
+  app: CoreApp.Dashboard,
+  eventsScope: 'global',
+  eventBus: new EventBusSrv(),
+};
+const panelContextEditor = {
+  app: CoreApp.PanelEditor,
+  eventsScope: 'global',
+  eventBus: new EventBusSrv(),
+};
+
 describe('PanelDataErrorView', () => {
+  beforeEach(() => {
+    mockUsePanelContext.mockReturnValue(panelContextRoot);
+  });
+
   it('show No data when there is no data', () => {
     renderWithProps();
 
@@ -69,6 +99,55 @@ describe('PanelDataErrorView', () => {
     });
 
     expect(screen.getByText('Query returned nothing')).toBeInTheDocument();
+  });
+
+  it('should show "Run a query..." message when no query is configured in panel editor', () => {
+    mockUsePanelContext.mockReturnValue(panelContextEditor);
+
+    const { container } = renderWithProps({
+      data: {
+        state: LoadingState.Done,
+        series: [],
+        timeRange: getDefaultTimeRange(),
+      },
+    });
+
+    expect(screen.getByText(RUN_QUERY_MESSAGE)).toBeInTheDocument();
+    const icon = container.querySelector('svg');
+    expect(icon).toBeInTheDocument();
+  });
+
+  it('should show "No data" message when not in panel editor', () => {
+    mockUsePanelContext.mockReturnValue(panelContextRoot);
+
+    renderWithProps({
+      data: {
+        state: LoadingState.Done,
+        series: [],
+        timeRange: getDefaultTimeRange(),
+      },
+    });
+
+    expect(screen.getByText('No data')).toBeInTheDocument();
+    expect(screen.queryByText(RUN_QUERY_MESSAGE)).not.toBeInTheDocument();
+  });
+
+  it('should show "No data" message in panel editor when query is configured', () => {
+    mockUsePanelContext.mockReturnValue(panelContextEditor);
+
+    renderWithProps({
+      data: {
+        state: LoadingState.Done,
+        series: [],
+        timeRange: getDefaultTimeRange(),
+        request: {
+          targets: [{ refId: 'A' }],
+        } as unknown as DataQueryRequest,
+      },
+    });
+
+    expect(screen.getByText('No data')).toBeInTheDocument();
+    expect(screen.queryByText(RUN_QUERY_MESSAGE)).not.toBeInTheDocument();
   });
 });
 

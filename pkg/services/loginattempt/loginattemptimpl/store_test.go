@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -16,9 +17,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationLoginAttemptsQuery(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	user := "user"
 
 	beginningOfTime := time.Date(2017, 10, 22, 8, 0, 0, 0, time.Local)
@@ -60,21 +60,21 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 
 		_, err := s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
-			IpAddress: "192.168.0.1",
+			IPAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusOneMinute
 		_, err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
-			IpAddress: "192.168.0.1",
+			IPAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusTwoMinutes
 		_, err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
-			IpAddress: "192.168.0.1",
+			IPAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
@@ -85,9 +85,8 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 }
 
 func TestIntegrationLoginAttemptsDelete(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	user := "user"
 
 	beginningOfTime := time.Date(2017, 10, 22, 8, 0, 0, 0, time.Local)
@@ -125,21 +124,21 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 
 		_, err := s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
-			IpAddress: "192.168.0.1",
+			IPAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusOneMinute
 		_, err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
-			IpAddress: "192.168.0.1",
+			IPAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 
 		mockTime = timePlusTwoMinutes
 		_, err = s.CreateLoginAttempt(context.Background(), CreateLoginAttemptCommand{
 			Username:  user,
-			IpAddress: "192.168.0.1",
+			IPAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
 

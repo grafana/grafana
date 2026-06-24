@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/news/panelcfg.cue file.
+
 export interface Options {
   /**
    * empty/missing will default to grafana blog

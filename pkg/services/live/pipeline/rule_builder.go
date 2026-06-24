@@ -4,5 +4,5 @@ import "context"
 
 // RuleBuilder constructs in-memory representation of channel rules.
 type RuleBuilder interface {
-	BuildRules(ctx context.Context, orgID int64) ([]*LiveChannelRule, error)
+	BuildRules(ctx context.Context, ns string) ([]*LiveChannelRule, error)
 }

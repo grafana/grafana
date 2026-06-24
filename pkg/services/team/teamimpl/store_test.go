@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -30,12 +32,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
+		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
 			OrgID: 1,
@@ -47,17 +48,20 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				},
 			},
 		}
-		quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+		cfgProvider, err := configprovider.ProvideService(cfg)
+		require.NoError(t, err)
+		quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
 			var userIds []int64
+			var userUIDs []string
 			const testOrgID int64 = 1
 			var team1, team2 team.Team
 			var usr *user.User
@@ -65,7 +69,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			var err error
 
 			setup := func() {
-				for i := 0; i < 5; i++ {
+				for i := range 5 {
 					userCmd = user.CreateUserCommand{
 						Email: fmt.Sprint("user", i, "@test.com"),
 						Name:  fmt.Sprint("user", i),
@@ -74,10 +78,23 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					usr, err = userSvc.Create(context.Background(), &userCmd)
 					require.NoError(t, err)
 					userIds = append(userIds, usr.ID)
+					userUIDs = append(userUIDs, usr.UID)
 				}
-				team1, err = teamSvc.CreateTeam(context.Background(), "group1 name", "test1@test.com", testOrgID)
+
+				team1Cmd := team.CreateTeamCommand{
+					Name:  "group1 name",
+					Email: "test1@test.com",
+					OrgID: testOrgID,
+				}
+				team1, err = teamSvc.CreateTeam(context.Background(), &team1Cmd)
 				require.NoError(t, err)
-				team2, err = teamSvc.CreateTeam(context.Background(), "group2 name", "test2@test.com", testOrgID)
+
+				team2Cmd := team.CreateTeamCommand{
+					Name:  "group2 name",
+					Email: "test2@test.com",
+					OrgID: testOrgID,
+				}
+				team2, err = teamSvc.CreateTeam(context.Background(), &team2Cmd)
 				require.NoError(t, err)
 			}
 			setup()
@@ -108,9 +125,13 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 2, len(q1Result))
 				require.Equal(t, q1Result[0].TeamID, team1.ID)
+				require.Contains(t, userIds[:2], q1Result[0].UserID)
+				require.Contains(t, userUIDs[:2], q1Result[0].UserUID)
 				require.Equal(t, q1Result[0].Login, "loginuser0")
 				require.Equal(t, q1Result[0].OrgID, testOrgID)
 				require.Equal(t, q1Result[1].TeamID, team1.ID)
+				require.Contains(t, userIds[:2], q1Result[1].UserID)
+				require.Contains(t, userUIDs[:2], q1Result[1].UserUID)
 				require.Equal(t, q1Result[1].Login, "loginuser1")
 				require.Equal(t, q1Result[1].OrgID, testOrgID)
 				require.Equal(t, q1Result[1].External, true)
@@ -139,11 +160,14 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, team1.MemberCount, 2)
 
 				getIDsQuery := &team.GetTeamIDsByUserQuery{OrgID: testOrgID, UserID: userIds[0]}
-				getIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
+				getIDResult, getUIDResult, err := teamSvc.GetTeamIDsByUser(context.Background(), getIDsQuery)
 				require.NoError(t, err)
 
 				require.Equal(t, len(getIDResult), 1)
 				require.Equal(t, getIDResult[0], team1.ID)
+
+				require.Equal(t, len(getUIDResult), 1)
+				require.Equal(t, getUIDResult[0], team1.UID)
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
@@ -225,7 +249,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to search for teams", func(t *testing.T) {
-				query := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "group", Page: 1, SignedInUser: testUser}
+				// Use mixed-case to test case-insensitive search.
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "GrOuP", Page: 1, SignedInUser: testUser}
 				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.Equal(t, len(queryResult.Teams), 2)
@@ -297,7 +322,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
 
-				teamIds := make([]int64, 0)
+				teamIds := make([]int64, 0, len(allTeamsQueryResult.Teams))
 				for _, team := range allTeamsQueryResult.Teams {
 					teamIds = append(teamIds, team.ID)
 				}
@@ -309,6 +334,26 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, queryResult.TotalCount, 2)
 				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
 				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+			})
+
+			t.Run("Should be able to query teams by UIDs", func(t *testing.T) {
+				allTeamsQuery := &team.SearchTeamsQuery{OrgID: testOrgID, Query: "", SignedInUser: testUser}
+				allTeamsQueryResult, err := teamSvc.SearchTeams(context.Background(), allTeamsQuery)
+				require.NoError(t, err)
+				require.Equal(t, len(allTeamsQueryResult.Teams), 2)
+
+				teamUIDs := make([]string, 0, len(allTeamsQueryResult.Teams))
+				for _, tm := range allTeamsQueryResult.Teams {
+					teamUIDs = append(teamUIDs, tm.UID)
+				}
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, UIDs: teamUIDs}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Len(t, queryResult.Teams, 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				assert.Contains(t, teamUIDs, queryResult.Teams[0].UID)
+				assert.Contains(t, teamUIDs, queryResult.Teams[1].UID)
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
@@ -434,12 +479,14 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
-				quotaService := quotaimpl.ProvideService(sqlStore, cfg)
+				cfgProvider, err := configprovider.ProvideService(cfg)
+				require.NoError(t, err)
+				quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
 					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-					quotaService, supportbundlestest.NewFakeBundleService(),
+					quotaService, supportbundlestest.NewFakeBundleService(), nil,
 				)
 				require.NoError(t, err)
 				setup()
@@ -479,9 +526,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 }
 
 func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	type searchTeamsTestCase struct {
 		desc              string
 		query             *team.SearchTeamsQuery
@@ -529,12 +575,17 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
-		_, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), 1)
+		teamCmd := team.CreateTeamCommand{
+			Name:  fmt.Sprintf("team-%d", i),
+			Email: fmt.Sprintf("team-%d@example.org", i),
+			OrgID: 1,
+		}
+		_, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 		require.NoError(t, err)
 	}
 
@@ -558,26 +609,40 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 // TestSQLStore_GetTeamMembers_ACFilter tests the accesscontrol filtering of
 // team members based on the signed in user permissions
 func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	testOrgID := int64(2)
 	userIds := make([]int64, 4)
 
 	// Seed 2 teams with 2 members
 	setup := func(store db.DB, cfg *setting.Cfg) {
-		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
+		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
-		team1, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group1 name", "test1@example.org", testOrgID)
+
+		team1Cmd := team.CreateTeamCommand{
+			Name:  "group1 name",
+			Email: "test1@example.org",
+			OrgID: testOrgID,
+		}
+		team1, errCreateTeam := teamSvc.CreateTeam(context.Background(), &team1Cmd)
 		require.NoError(t, errCreateTeam)
-		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group2 name", "test2@example.org", testOrgID)
+
+		team2Cmd := team.CreateTeamCommand{
+			Name:  "group2 name",
+			Email: "test2@example.org",
+			OrgID: testOrgID,
+		}
+		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), &team2Cmd)
 		require.NoError(t, errCreateTeam)
-		quotaService := quotaimpl.ProvideService(store, cfg)
+
+		cfgProvider, err := configprovider.ProvideService(cfg)
+		require.NoError(t, err)
+		quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 
@@ -612,7 +677,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	setup(store, cfg)
-	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	type getTeamMembersTestCase struct {
@@ -645,7 +710,6 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			expectedNumUsers: 0,
 		},
 		{
-
 			desc: "should return some team members",
 			query: &team.GetTeamMembersQuery{
 				OrgID: testOrgID,

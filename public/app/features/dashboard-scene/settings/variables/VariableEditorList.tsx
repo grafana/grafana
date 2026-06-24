@@ -1,20 +1,25 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 import classNames from 'classnames';
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariable, SceneVariableState } from '@grafana/scenes';
+import { type SceneVariable, type SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
+import { type UsagesToNetwork, type VariableUsageTree } from '../../variables/utils';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
+import { isVariableEditable } from './utils';
 
 export interface Props {
   variables: Array<SceneVariable<SceneVariableState>>;
+  usages: VariableUsageTree[];
+  usagesNetwork: UsagesToNetwork[];
   onAdd: () => void;
   onChangeOrder: (fromIndex: number, toIndex: number) => void;
   onDuplicate: (identifier: string) => void;
@@ -24,6 +29,8 @@ export interface Props {
 
 export function VariableEditorList({
   variables,
+  usages,
+  usagesNetwork,
   onChangeOrder,
   onDelete,
   onDuplicate,
@@ -32,17 +39,25 @@ export function VariableEditorList({
 }: Props): ReactElement {
   const styles = useStyles2(getStyles);
 
+  const editableVariables = variables.filter(isVariableEditable);
+  const editableToOriginalIndex = editableVariables.map((v) => variables.indexOf(v));
+
   const onDragEnd = (result: DropResult) => {
     if (!result.destination || !result.source) {
       return;
     }
 
     reportInteraction('Variable drag and drop');
-    onChangeOrder(result.source.index, result.destination.index);
+    onChangeOrder(editableToOriginalIndex[result.source.index], editableToOriginalIndex[result.destination.index]);
   };
 
-  return variables.length <= 0 ? (
-    <EmptyVariablesList onAdd={onAdd} />
+  const onVariableAdd = () => {
+    onAdd();
+    DashboardInteractions.addVariableButtonClicked({ source: 'settings_pane' });
+  };
+
+  return editableVariables.length <= 0 ? (
+    <EmptyVariablesList onAdd={onVariableAdd} />
   ) : (
     <Stack direction="column" gap={3}>
       <table
@@ -52,8 +67,12 @@ export function VariableEditorList({
       >
         <thead>
           <tr>
-            <th>Variable</th>
-            <th>Definition</th>
+            <th>
+              <Trans i18nKey="dashboard-scene.variable-editor-list.variable">Variable</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="dashboard-scene.variable-editor-list.definition">Definition</Trans>
+            </th>
             <th colSpan={5} />
           </tr>
         </thead>
@@ -61,7 +80,7 @@ export function VariableEditorList({
           <Droppable droppableId="variables-list" direction="vertical">
             {(provided) => (
               <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                {variables.map((variableScene, index) => {
+                {editableVariables.map((variableScene, index) => {
                   const variableState = variableScene.state;
                   return (
                     <VariableEditorListRow
@@ -71,6 +90,8 @@ export function VariableEditorList({
                       onDelete={onDelete}
                       onDuplicate={onDuplicate}
                       onEdit={onEdit}
+                      usageTree={usages}
+                      usagesNetwork={usagesNetwork}
                     />
                   );
                 })}
@@ -82,8 +103,12 @@ export function VariableEditorList({
       </table>
       <Stack>
         <VariablesDependenciesButton variables={variables} />
-        <Button data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton} onClick={onAdd} icon="plus">
-          New variable
+        <Button
+          data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+          onClick={onVariableAdd}
+          icon="plus"
+        >
+          <Trans i18nKey="dashboard-scene.variable-editor-list.new-variable">New variable</Trans>
         </Button>
       </Stack>
     </Stack>

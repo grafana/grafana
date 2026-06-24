@@ -1,49 +1,324 @@
-import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
+import { configureStore } from '@reduxjs/toolkit';
+import { http, HttpResponse } from 'msw';
+import { type Store } from 'redux';
 
-import { listDashboards } from './services';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler, apiFoldersHandlers } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
+import { setStore } from 'app/store/store';
+
+import { listDashboards, listFolders, listStarredFolders } from './services';
+
+jest.mock('app/core/services/context_srv', () => {
+  const contextSrvModule = jest.requireActual('app/core/services/context_srv');
+  return {
+    ...contextSrvModule,
+    contextSrv: {
+      ...contextSrvModule.contextSrv,
+      hasPermission: jest.fn(),
+    },
+  };
+});
+
+setBackendSrv(backendSrv);
+setupMockServer();
+
+const dashboardHits = Array.from({ length: 7 }, (_, index) => ({
+  resource: 'dashboards',
+  name: `dashboard-${index + 1}`,
+  title: `Dashboard ${index + 1}`,
+  folder: 'abc-123',
+  field: {},
+}));
+const folderHits: DashboardHit[] = [
+  { resource: 'folders', name: 'folder-1', title: 'Folder 1', folder: 'parent-uid', field: {} },
+  {
+    resource: 'folders',
+    name: 'folder-2',
+    title: 'Folder 2',
+    folder: 'parent-uid',
+    field: {},
+  },
+  { resource: 'folders', name: 'root-folder-1', title: 'Root Folder 1', field: {} },
+  { resource: 'folders', name: 'root-folder-2', title: 'Root Folder 2', field: {} },
+];
+
+const allHits = [...dashboardHits, ...folderHits];
 
 describe('browse-dashboards services', () => {
   describe('listDashboards', () => {
-    const searchData: DataFrame = {
-      fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: [] },
-        { name: 'name', type: FieldType.string, config: {}, values: [] },
-        { name: 'uid', type: FieldType.string, config: {}, values: [] },
-        { name: 'url', type: FieldType.string, config: {}, values: [] },
-        { name: 'tags', type: FieldType.other, config: {}, values: [] },
-        { name: 'location', type: FieldType.string, config: {}, values: [] },
-      ],
-      length: 0,
-    };
-
-    const mockSearchResult: QueryResponse = {
-      isItemLoaded: jest.fn(),
-      loadMoreItems: jest.fn(),
-      totalRows: searchData.length,
-      view: new DataFrameView<DashboardQueryResult>(searchData),
-    };
-
-    const searchMock = jest.spyOn(getGrafanaSearcher(), 'search');
-    searchMock.mockResolvedValue(mockSearchResult);
-
-    const PAGE_SIZE = 50;
+    const PAGE_SIZE = 2;
 
     it.each([
-      { page: undefined, expectedFrom: 0 },
-      { page: 1, expectedFrom: 0 },
-      { page: 2, expectedFrom: 50 },
-      { page: 4, expectedFrom: 150 },
-    ])('skips first $expectedFrom when listing page $page', async ({ page, expectedFrom }) => {
-      await listDashboards('abc-123', page, PAGE_SIZE);
+      { page: undefined, expectedTitles: ['Dashboard 1', 'Dashboard 2'] },
+      { page: 1, expectedTitles: ['Dashboard 1', 'Dashboard 2'] },
+      { page: 2, expectedTitles: ['Dashboard 3', 'Dashboard 4'] },
+      { page: 4, expectedTitles: ['Dashboard 7'] },
+    ])('returns the correct dashboards for page $page', async ({ page, expectedTitles }) => {
+      server.use(getCustomSearchHandler(allHits));
+      const result = await listDashboards('abc-123', page, PAGE_SIZE);
 
-      expect(searchMock).toHaveBeenCalledWith({
-        kind: ['dashboard'],
-        query: '*',
-        location: 'abc-123',
-        from: expectedFrom,
-        limit: PAGE_SIZE,
+      expect(result.map((item) => item.title)).toEqual(expectedTitles);
+    });
+  });
+
+  describe('listFolders', () => {
+    const PAGE_SIZE = 2;
+    const mockContextSrv = contextSrv as jest.Mocked<typeof contextSrv>;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockContextSrv.hasPermission = jest.fn().mockReturnValue(true);
+      config.featureToggles.foldersAppPlatformAPI = false;
+      config.sharedWithMeFolderUID = 'sharedwithme';
+    });
+
+    describe('old API (foldersAppPlatformAPI = false)', () => {
+      beforeEach(() => {
+        config.featureToggles.foldersAppPlatformAPI = false;
       });
+
+      it('returns folders in correct format', async () => {
+        const result = await listFolders(undefined, 'Parent Title', 1, PAGE_SIZE);
+
+        expect(result).toHaveLength(2);
+        expect(result[0]).toMatchObject({
+          kind: 'folder',
+          uid: expect.any(String),
+          title: expect.any(String),
+          parentTitle: 'Parent Title',
+          parentUID: undefined,
+          managedBy: undefined,
+        });
+      });
+
+      it('handles pagination correctly', async () => {
+        const result1 = await listFolders(undefined, undefined, 1, 4);
+        const result2 = await listFolders(undefined, undefined, 2, 2);
+
+        expect(result1).toHaveLength(4);
+        expect(result2).toHaveLength(2);
+        expect(result1[2]).toMatchObject(result2[0]);
+        expect(result1[3]).toMatchObject(result2[1]);
+      });
+
+      it('does not add shared with me folder (handled by backend)', async () => {
+        const result = await listFolders(undefined, undefined, 1, 1);
+
+        expect(result).toHaveLength(1);
+        expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
+      });
+    });
+
+    describe('new API (foldersAppPlatformAPI = true)', () => {
+      beforeEach(() => {
+        config.featureToggles.foldersAppPlatformAPI = true;
+      });
+
+      it('returns the correct folders for the requested page', async () => {
+        server.use(getCustomSearchHandler(allHits));
+        const result = await listFolders('parent-uid', 'Parent Title', 1, 1);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].title).toBe('Folder 1');
+      });
+
+      it('returns folders in correct format', async () => {
+        server.use(getCustomSearchHandler(allHits));
+        const result = await listFolders('parent-uid', 'Parent Title', 1, PAGE_SIZE);
+
+        // Should have 2 folders (no shared with me when parentUID is provided)
+        expect(result).toHaveLength(2);
+        expect(result[0]).toMatchObject({
+          kind: 'folder',
+          uid: 'folder-1',
+          title: 'Folder 1',
+          parentTitle: 'Parent Title',
+          parentUID: 'parent-uid',
+        });
+        expect(result[1]).toMatchObject({
+          kind: 'folder',
+          uid: 'folder-2',
+          title: 'Folder 2',
+          parentTitle: 'Parent Title',
+          parentUID: 'parent-uid',
+        });
+      });
+
+      it('adds shared with me folder at root level', async () => {
+        server.use(getCustomSearchHandler(allHits));
+        const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
+
+        expect(result).toHaveLength(3);
+        expect(result[0]).toMatchObject({
+          kind: 'folder',
+          uid: 'sharedwithme',
+          title: 'Shared with me',
+          url: undefined, // shared with me has no URL
+        });
+      });
+
+      it('does not add shared with me folder on subsequent pages', async () => {
+        const result = await listFolders(undefined, undefined, 2, PAGE_SIZE);
+
+        expect(result).toHaveLength(2);
+        expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
+      });
+
+      it('does not add shared with me folder when parentUID is provided', async () => {
+        server.use(getCustomSearchHandler(allHits));
+        const result = await listFolders('parent-uid', undefined, 1, PAGE_SIZE);
+
+        expect(result).toHaveLength(2);
+        expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
+      });
+
+      it('does not add shared with me folder when config.sharedWithMeFolderUID is not set', async () => {
+        server.use(getCustomSearchHandler(allHits));
+        config.sharedWithMeFolderUID = undefined;
+
+        const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
+
+        expect(result).toHaveLength(2);
+        expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
+      });
+    });
+
+    describe('permissions', () => {
+      it('returns empty array when user does not have FoldersRead permission', async () => {
+        mockContextSrv.hasPermission = jest.fn().mockReturnValue(false);
+
+        const result = await listFolders();
+
+        expect(result).toEqual([]);
+      });
+    });
+
+    describe('URL generation', () => {
+      it('sets URL to undefined for shared with me folder', async () => {
+        server.use(
+          apiFoldersHandlers.minimalCustomFoldersHandler([
+            { uid: 'sharedwithme', title: 'Shared with me' },
+            { uid: 'regular-folder', title: 'Regular folder' },
+          ])
+        );
+        const result = await listFolders();
+
+        const sharedFolder = result.find((f) => f.uid === 'sharedwithme');
+        const regularFolder = result.find((f) => f.uid === 'regular-folder');
+
+        expect(sharedFolder?.url).toBeUndefined();
+        expect(regularFolder?.url).toBeDefined();
+      });
+    });
+
+    describe('starred folders virtual item', () => {
+      beforeEach(() => {
+        config.featureToggles.foldersAppPlatformAPI = true;
+        config.featureToggles.starsFromAPIServer = true;
+        setTestFlags({ 'grafana.starredFolders': true });
+      });
+
+      afterEach(() => {
+        config.featureToggles.starsFromAPIServer = false;
+        setTestFlags({});
+      });
+
+      it('inserts the starred folders item after shared with me and before real folders', async () => {
+        server.use(getCustomSearchHandler(allHits));
+
+        const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
+        const uids = result.map((f) => f.uid);
+
+        expect(uids[0]).toBe('sharedwithme');
+        expect(uids[1]).toBe('starred_folders');
+        expect(uids.indexOf('starred_folders')).toBeLessThan(uids.indexOf('root-folder-1'));
+        // The virtual container is a plain text row with no folder URL.
+        expect(result.find((f) => f.uid === 'starred_folders')?.url).toBeUndefined();
+      });
+
+      it('does not insert the starred folders item when starsFromAPIServer is disabled', async () => {
+        config.featureToggles.starsFromAPIServer = false;
+        server.use(getCustomSearchHandler(allHits));
+
+        const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
+
+        expect(result.find((f) => f.uid === 'starred_folders')).toBeUndefined();
+      });
+    });
+  });
+
+  describe('listStarredFolders', () => {
+    const STARS_URL = '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars';
+
+    const starsResponse = (resources: Array<{ group: string; kind: string; names: string[] }>) => ({
+      kind: 'StarsList',
+      apiVersion: 'collections.grafana.app/v1alpha1',
+      metadata: { resourceVersion: '1' },
+      items: [
+        {
+          metadata: { name: 'user-u000000001', namespace: 'default', resourceVersion: '1' },
+          spec: { resource: resources },
+        },
+      ],
+    });
+
+    const starredFolderHits: DashboardHit[] = [
+      { resource: 'folders', name: 'fa', title: 'Folder A', field: {} },
+      { resource: 'folders', name: 'fb', title: 'Folder B', field: {} },
+    ];
+
+    beforeEach(() => {
+      // listStarredFolders reads stars via an RTK Query dispatch on the global store, so wire one up.
+      const store = configureStore({
+        reducer: { [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer },
+        middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(collectionsAPIv1alpha1.middleware),
+      });
+      setStore(store as unknown as Store);
+    });
+
+    it('resolves starred folders to prefixed view items under the virtual root', async () => {
+      server.use(
+        http.get(STARS_URL, () =>
+          HttpResponse.json(
+            starsResponse([
+              { group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dash-1'] },
+              { group: 'folder.grafana.app', kind: 'Folder', names: ['fa', 'fb'] },
+            ])
+          )
+        ),
+        getCustomSearchHandler(starredFolderHits)
+      );
+
+      const result = await listStarredFolders();
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        kind: 'folder',
+        uid: 'starred_folders/fa',
+        title: 'Folder A',
+        parentUID: 'starred_folders',
+      });
+      expect(result[0].url).toContain('/dashboards/f/fa/');
+      expect(result[1]).toMatchObject({ uid: 'starred_folders/fb', title: 'Folder B', parentUID: 'starred_folders' });
+    });
+
+    it('returns an empty array when there is no starred folder resource', async () => {
+      server.use(
+        http.get(STARS_URL, () =>
+          HttpResponse.json(starsResponse([{ group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dash-1'] }]))
+        ),
+        getCustomSearchHandler(starredFolderHits)
+      );
+
+      const result = await listStarredFolders();
+
+      expect(result).toEqual([]);
     });
   });
 });

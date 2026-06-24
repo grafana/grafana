@@ -2,19 +2,19 @@ import { capitalize } from 'lodash';
 import pluralize from 'pluralize';
 
 import {
-  QueryBuilderOperation,
-  QueryBuilderOperationDefinition,
-  QueryBuilderOperationParamDef,
-  QueryBuilderOperationParamValue,
-  VisualQuery,
-  VisualQueryModeller,
-} from '@grafana/experimental';
+  type QueryBuilderOperation,
+  type QueryBuilderOperationDefinition,
+  type QueryBuilderOperationParamDef,
+  type QueryBuilderOperationParamValue,
+  type VisualQuery,
+  type VisualQueryModeller,
+} from '@grafana/plugin-ui';
 
 import { escapeLabelValueInExactSelector } from '../languageUtils';
 import { FUNCTIONS } from '../syntax';
 
 import { LabelParamEditor } from './components/LabelParamEditor';
-import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
+import { LokiOperationId, LokiOperationOrder, type LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function createRangeOperation(
   name: string,
@@ -48,6 +48,7 @@ export function createRangeOperation(
     name: getLokiOperationDisplayName(name),
     params: params,
     defaultParams,
+    toggleable: true,
     alternativesKey: 'range function',
     category: LokiVisualQueryOperationCategory.RangeFunctions,
     orderRank: LokiOperationOrder.RangeVectorFunction,
@@ -86,6 +87,7 @@ export function createRangeOperationWithGrouping(name: string): QueryBuilderOper
         },
       ],
       defaultParams: [...rangeOperation.defaultParams, ''],
+      toggleable: true,
       alternativesKey: 'range function with grouping',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
       renderer: getRangeAggregationWithGroupingRenderer(name, 'by'),
@@ -121,7 +123,7 @@ export function createRangeOperationWithGrouping(name: string): QueryBuilderOper
   return operations;
 }
 
-export function getRangeAggregationWithGroupingRenderer(aggregation: string, grouping: 'by' | 'without') {
+function getRangeAggregationWithGroupingRenderer(aggregation: string, grouping: 'by' | 'without') {
   return function aggregationRenderer(
     model: QueryBuilderOperation,
     def: QueryBuilderOperationDefinition,
@@ -334,11 +336,14 @@ export function getLineFilterRenderer(operation: string, caseInsensitive?: boole
     return `${innerExpr} ${operation} ${delimiter}${params.join(`${delimiter} or ${delimiter}`)}${delimiter}`;
   };
 }
+
 function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
   return {
     name: 'Range',
     type: 'string',
-    options: ['$__auto', '1m', '5m', '10m', '1h', '24h'],
+    options: ['$__auto'],
+    description:
+      'Use the default value "$__auto". Change the "step" value in the query options to change the bucket size.',
   };
 }
 
@@ -346,7 +351,7 @@ export function getOperationParamId(operationId: string, paramIndex: number) {
   return `operations.${operationId}.param.${paramIndex}`;
 }
 
-export function getOnLabelAddedHandler(changeToOperationId: string) {
+function getOnLabelAddedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDefinition) {
     // Check if we actually have the label param. As it's optional the aggregation can have one less, which is the
     // case of just simple aggregation without label. When user adds the label it now has the same number of params
@@ -364,7 +369,7 @@ export function getOnLabelAddedHandler(changeToOperationId: string) {
 /**
  * Very simple poc implementation, needs to be modified to support all aggregation operators
  */
-export function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
+function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
   return function aggregationExplainer(model: QueryBuilderOperation) {
     const labels = model.params.map((label) => `\`${label}\``).join(' and ');
     const labelWord = pluralize('label', model.params.length);
@@ -383,7 +388,7 @@ export function getAggregationExplainer(aggregationName: string, mode: 'by' | 'w
 /**
  * This function will transform operations without labels to their plan aggregation operation
  */
-export function getLastLabelRemovedHandler(changeToOperationId: string) {
+function getLastLabelRemovedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDefinition) {
     // If definition has more params then is defined there are no optional rest params anymore.
     // We then transform this operation into a different one
@@ -398,7 +403,7 @@ export function getLastLabelRemovedHandler(changeToOperationId: string) {
   };
 }
 
-export function getLokiOperationDisplayName(funcName: string) {
+function getLokiOperationDisplayName(funcName: string) {
   return capitalize(funcName.replace(/_/g, ' '));
 }
 
@@ -431,6 +436,7 @@ export function createAggregationOperation(
         },
       ],
       defaultParams: [],
+      toggleable: true,
       alternativesKey: 'plain aggregations',
       category: LokiVisualQueryOperationCategory.Aggregations,
       renderer: functionRendererLeft,
@@ -498,11 +504,7 @@ function getAggregationWithoutRenderer(aggregation: string) {
   };
 }
 
-export function functionRendererLeft(
-  model: QueryBuilderOperation,
-  def: QueryBuilderOperationDefinition,
-  innerExpr: string
-) {
+function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDefinition, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
   const str = model.id + '(';
 

@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import * as React from 'react';
-import { VariableSizeList } from 'react-window';
+import type * as React from 'react';
+import { type VariableSizeList } from 'react-window';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
-import { GrafanaTableState } from './types';
+import { type GrafanaTableState } from './types';
 
 /**
   To have the custom vertical scrollbar always visible (https://github.com/grafana/grafana/issues/52136),
@@ -14,8 +14,8 @@ import { GrafanaTableState } from './types';
   Select the scrollbar element from the VariableSizeList scope
  */
 export function useFixScrollbarContainer(
-  variableSizeListScrollbarRef: React.RefObject<HTMLDivElement>,
-  tableDivRef: React.RefObject<HTMLDivElement>
+  variableSizeListScrollbarRef: React.RefObject<HTMLDivElement | null>,
+  tableDivRef: React.RefObject<HTMLDivElement | null>
 ) {
   useEffect(() => {
     if (variableSizeListScrollbarRef.current && tableDivRef.current) {
@@ -43,7 +43,7 @@ export function useFixScrollbarContainer(
  */
 export function useResetVariableListSizeCache(
   extendedState: GrafanaTableState,
-  listRef: React.RefObject<VariableSizeList>,
+  listRef: React.RefObject<VariableSizeList | null>,
   data: DataFrame,
   hasUniqueId: boolean
 ) {

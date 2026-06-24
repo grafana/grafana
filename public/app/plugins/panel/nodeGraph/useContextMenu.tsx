@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
-import { MouseEvent, useCallback, useState } from 'react';
+import { type MouseEvent, useCallback, useState, type JSX } from 'react';
 import * as React from 'react';
 
-import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type DataFrame, type Field, type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
 
-import { Config } from './layout';
-import { EdgeDatumLayout, NodeDatum } from './types';
+import { type Config } from './layout';
+import { type EdgeDatumLayout, type NodeDatum } from './types';
 import { getEdgeFields, getNodeFields, statToString } from './utils';
 
 /**
@@ -82,7 +83,7 @@ function makeContextMenu(
       renderMenuItems={renderer}
       onClose={() => setMenu(undefined)}
       x={event.pageX}
-      y={event.pageY}
+      y={event.pageY - window.scrollY}
     />
   );
 }
@@ -129,7 +130,7 @@ function mapMenuItem<T extends NodeDatum | EdgeDatumLayout>(item: T) {
               }
             : undefined
         }
-        target={'_self'}
+        target={link.target || '_self'}
       />
     );
   };
@@ -140,6 +141,7 @@ type LinkData<T extends NodeDatum | EdgeDatumLayout> = {
   ariaLabel?: string;
   url?: string;
   onClick?: (item: T) => void;
+  target?: LinkTarget;
 };
 
 function getItems(links: LinkModel[]) {
@@ -169,6 +171,7 @@ function getItems(links: LinkModel[]) {
         ariaLabel: link.newTitle || link.l.title,
         url: link.l.href,
         onClick: link.l.onClick,
+        target: link.l.target,
       })),
     };
   });
@@ -208,10 +211,12 @@ function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
   } else {
     // Fallback if we don't have nodes dataFrame. Can happen if we use just the edges frame to construct this.
     if (node.title) {
-      rows.push(<HeaderRow key="title" label={'Title'} value={node.title} />);
+      rows.push(<HeaderRow key="title" label={t('nodeGraph.node-header.label-title', 'Title')} value={node.title} />);
     }
     if (node.subTitle) {
-      rows.push(<HeaderRow key="subtitle" label={'Subtitle'} value={node.subTitle} />);
+      rows.push(
+        <HeaderRow key="subtitle" label={t('nodeGraph.node-header.label-subtitle', 'Subtitle')} value={node.subTitle} />
+      );
     }
   }
 
@@ -233,7 +238,13 @@ function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame }) {
 
   const rows = [];
   if (valueSource && valueTarget) {
-    rows.push(<HeaderRow key={'header-row'} label={'Source → Target'} value={`${valueSource} → ${valueTarget}`} />);
+    rows.push(
+      <HeaderRow
+        key={'header-row'}
+        label={t('nodeGraph.edge-header.label-source-target', 'Source → Target')}
+        value={`${valueSource} → ${valueTarget}`}
+      />
+    );
   }
 
   for (const f of [fields.mainStat, fields.secondaryStat, ...fields.details]) {
@@ -249,7 +260,7 @@ function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame }) {
   );
 }
 
-export const getLabelStyles = (theme: GrafanaTheme2) => {
+const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
     label: css({
       label: 'Label',

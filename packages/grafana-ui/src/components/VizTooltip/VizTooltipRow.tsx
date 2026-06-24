@@ -1,23 +1,36 @@
-import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
+import { css } from '@emotion/css';
+import clsx from 'clsx';
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineToast } from '../InlineToast/InlineToast';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { ColorPlacement, VizTooltipItem } from './types';
+import { VizTooltipColorPlacement, type VizTooltipItem } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
+  /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
   value: string | number | null | ReactNode;
+  /** CSS `justify-content` value for the row layout. Defaults to `'start'`. */
   justify?: string;
-  isActive?: boolean; // for series list
+  /** Whether this row corresponds to the closest/hovered series — renders the label in bold. */
+  isActive?: boolean;
+  /** Right margin applied to the value cell, used to leave room for overlay elements such as the close button. */
   marginRight?: string;
-  isPinned: boolean;
+  /**
+   * Whether the tooltip is currently pinned (locked open by the user).
+   * When pinned, label and value become clickable to copy their text to the clipboard.
+   * Defaults to `false`.
+   */
+  isPinned?: boolean;
+  /** When true the value cell becomes vertically scrollable up to a fixed max-height. */
   showValueScroll?: boolean;
+  /** When true the color indicator is rendered hollow, signalling the field is not shown in the visualization. */
+  isHiddenFromViz?: boolean;
 }
 
 enum LabelValueTypes {
@@ -28,19 +41,22 @@ enum LabelValueTypes {
 const SUCCESSFULLY_COPIED_TEXT = 'Copied to clipboard';
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 const HORIZONTAL_PX_PER_CHAR = 7;
+const CAN_COPY = Boolean(navigator.clipboard && window.isSecureContext);
 
+/** @alpha */
 export const VizTooltipRow = ({
   label,
   value,
   color,
   colorIndicator,
-  colorPlacement = ColorPlacement.first,
-  justify = 'flex-start',
+  colorPlacement = VizTooltipColorPlacement.first,
+  justify,
   isActive = false,
-  marginRight = '0px',
-  isPinned,
+  marginRight,
+  isPinned = false,
   lineStyle,
   showValueScroll,
+  isHiddenFromViz,
 }: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
@@ -52,8 +68,9 @@ export const VizTooltipRow = ({
         overflowY: 'auto',
       }
     : {
-        whiteSpace: 'wrap',
+        whiteSpace: 'pre-line',
         wordBreak: 'break-word',
+        lineHeight: 1.2,
       };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
@@ -79,7 +96,7 @@ export const VizTooltipRow = ({
   }, [showCopySuccess]);
 
   const copyToClipboard = async (text: string, type: LabelValueTypes) => {
-    if (!(navigator?.clipboard && window.isSecureContext)) {
+    if (!CAN_COPY) {
       fallbackCopyToClipboard(text, type);
       return;
     }
@@ -128,13 +145,20 @@ export const VizTooltipRow = ({
 
   return (
     <div className={styles.contentWrapper}>
-      {(color || label) && (
-        <div className={styles.valueWrapper}>
-          {color && colorPlacement === ColorPlacement.first && (
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} lineStyle={lineStyle} />
-          )}
+      {color && colorPlacement === VizTooltipColorPlacement.first && (
+        <div className={styles.colorWrapper}>
+          <VizTooltipColorIndicator
+            color={color}
+            colorIndicator={colorIndicator}
+            lineStyle={lineStyle}
+            isHollow={isHiddenFromViz}
+          />
+        </div>
+      )}
+      {label && (
+        <div className={styles.labelWrapper}>
           {!isPinned ? (
-            <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>
+            <div className={clsx(styles.label, isActive ? styles.activeSeries : '')}>{label}</div>
           ) : (
             <>
               <Tooltip content={label} interactive={false} show={showLabelTooltip}>
@@ -146,7 +170,7 @@ export const VizTooltipRow = ({
                   )}
                   {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
                   <div
-                    className={cx(styles.label, isActive && styles.activeSeries, navigator?.clipboard && styles.copy)}
+                    className={clsx(styles.label, isActive ? styles.activeSeries : '', CAN_COPY ? styles.copy : '')}
                     onMouseEnter={onMouseEnterLabel}
                     onMouseLeave={onMouseLeaveLabel}
                     onClick={() => copyToClipboard(label, LabelValueTypes.label)}
@@ -162,7 +186,7 @@ export const VizTooltipRow = ({
       )}
 
       <div className={styles.valueWrapper}>
-        {color && colorPlacement === ColorPlacement.leading && (
+        {color && colorPlacement === VizTooltipColorPlacement.leading && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
@@ -172,7 +196,7 @@ export const VizTooltipRow = ({
         )}
 
         {!isPinned ? (
-          <div className={cx(styles.value, isActive)} style={innerValueScrollStyle}>
+          <div className={styles.value} style={innerValueScrollStyle}>
             {value}
           </div>
         ) : (
@@ -184,7 +208,7 @@ export const VizTooltipRow = ({
             )}
             {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions */}
             <div
-              className={cx(styles.value, isActive, navigator?.clipboard && styles.copy)}
+              className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
               style={innerValueScrollStyle}
               onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
               ref={valueRef}
@@ -194,7 +218,7 @@ export const VizTooltipRow = ({
           </>
         )}
 
-        {color && colorPlacement === ColorPlacement.trailing && (
+        {color && colorPlacement === VizTooltipColorPlacement.trailing && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
@@ -207,28 +231,37 @@ export const VizTooltipRow = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, justify: string, marginRight: string) => ({
+const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
   contentWrapper: css({
     display: 'flex',
+    maxWidth: '100%',
     alignItems: 'start',
     justifyContent: justify,
-    marginRight: marginRight,
+    columnGap: theme.spacing(0.75),
   }),
-  label: css({
-    color: theme.colors.text.secondary,
-    fontWeight: 400,
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    marginRight: theme.spacing(2),
-  }),
+  label: css({ display: 'inline' }),
   value: css({
     fontWeight: 500,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
   }),
+  colorWrapper: css({
+    alignSelf: 'center',
+    flexShrink: 0,
+  }),
+  labelWrapper: css({
+    flexGrow: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    color: theme.colors.text.secondary,
+    fontWeight: 400,
+  }),
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
+    flexShrink: 0,
+    alignSelf: 'center',
+    marginRight,
   }),
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,

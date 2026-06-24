@@ -1,22 +1,36 @@
-import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
+import { useMemo } from 'react';
+
+import { type NavModel, type NavModelItem, PageLayoutType, generateUUID } from '@grafana/data';
+import {
+  type SceneComponentProps,
+  SceneObjectBase,
+  type SceneVariable,
+  type SceneVariables,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
+import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { ProvisionedVariablesSection } from './variables/ProvisionedVariablesSection';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
+import { VariablesUnknownTable } from './variables/VariablesUnknownTable';
 import {
-  EditableVariableType,
+  type EditableVariableType,
   RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
   WORD_CHARACTERS_REGEX,
   getVariableDefault,
   getVariableScene,
+  isVariableEditable,
 } from './variables/utils';
+
 export interface VariablesEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
 }
@@ -103,10 +117,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       newName = `copy_of_${variableToUpdate.state.name}_${copyNumber}`;
     }
 
-    //clone the original variable
-    const newVariable = variableToUpdate.clone(variableToUpdate.state);
-    // update state name of the new variable
-    newVariable.setState({ name: newName });
+    //clone the original variable, update name and key
+    const newVariable = variableToUpdate.clone({ ...variableToUpdate.state, name: newName, key: generateUUID() });
 
     const updatedVariables = [
       ...variables.slice(0, variableIndex + 1),
@@ -197,6 +209,22 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
     return [false, null];
   };
+
+  public getSaveModel = () => {
+    return transformSceneToSaveModel(this.getDashboard());
+  };
+
+  public getUsages = () => {
+    const model = this.getSaveModel();
+    const usages = createUsagesNetwork(this.getVariables(), model);
+    return usages;
+  };
+
+  public getUsagesNetwork = () => {
+    const usages = this.getUsages();
+    const usagesNetwork = transformUsagesToNetwork(usages);
+    return usagesNetwork;
+  };
 }
 
 function VariableEditorSettingsListView({ model }: SceneComponentProps<VariablesEditView>) {
@@ -206,6 +234,10 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
+  const defaultVariables = useMemo(() => variables.filter((v) => !isVariableEditable(v)), [variables]);
+  const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
+  const usages = useMemo(() => model.getUsages(), [model]);
+  const saveModel = model.getSaveModel();
 
   if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];
@@ -219,7 +251,6 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
           navModel={navModel}
           dashboard={dashboard}
           onDelete={onDelete}
-          onValidateVariableName={model.onValidateVariableName}
         />
       );
     }
@@ -230,12 +261,16 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
       <NavToolbarActions dashboard={dashboard} />
       <VariableEditorList
         variables={variables}
+        usages={usages}
+        usagesNetwork={usagesNetwork}
         onDelete={onDelete}
         onDuplicate={onDuplicated}
         onChangeOrder={onOrderChanged}
         onAdd={onAdd}
         onEdit={onEdit}
       />
+      {defaultVariables.length > 0 && <ProvisionedVariablesSection variables={defaultVariables} />}
+      <VariablesUnknownTable variables={variables} dashboard={saveModel} />
     </Page>
   );
 }
@@ -248,7 +283,6 @@ interface VariableEditorSettingsEditViewProps {
   onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
-  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
 
 function VariableEditorSettingsView({
@@ -259,7 +293,6 @@ function VariableEditorSettingsView({
   onTypeChange,
   onGoBack,
   onDelete,
-  onValidateVariableName,
 }: VariableEditorSettingsEditViewProps) {
   const { name } = variable.useState();
 
@@ -275,7 +308,6 @@ function VariableEditorSettingsView({
         onTypeChange={onTypeChange}
         onGoBack={onGoBack}
         onDelete={onDelete}
-        onValidateVariableName={onValidateVariableName}
         // force refresh when navigating using back/forward between variables
         key={variable.state.key}
       />

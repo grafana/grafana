@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -22,7 +22,7 @@ export function initAlerting() {
       component: ({ dashboard }) =>
         alertingEnabled ? (
           <Suspense fallback={null} key="alert-rules-button">
-            {dashboard && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
+            {dashboard && dashboard.uid && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
           </Suspense>
         ) : null,
       index: -2,

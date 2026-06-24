@@ -2,25 +2,27 @@ package folders
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type subParentsREST struct {
-	service folder.Service
+	getter  rest.Getter
+	parents parentsGetter
 }
 
 var _ = rest.Connecter(&subParentsREST{})
 var _ = rest.StorageMetadata(&subParentsREST{})
 
 func (r *subParentsREST) New() runtime.Object {
-	return &v0alpha1.FolderInfoList{}
+	return &folders.FolderInfoList{}
 }
 
 func (r *subParentsREST) Destroy() {
@@ -35,7 +37,7 @@ func (r *subParentsREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subParentsREST) ProducesObject(verb string) interface{} {
-	return &v0alpha1.FolderInfoList{}
+	return &folders.FolderInfoList{}
 }
 
 func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -44,30 +46,29 @@ func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ns, err := request.NamespaceInfoFrom(ctx, true)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		parents, err := r.service.GetParents(ctx, folder.GetParentsQuery{
-			UID:   name,
-			OrgID: ns.OrgID,
-		})
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		info := &v0alpha1.FolderInfoList{
-			Items: make([]v0alpha1.FolderInfo, 0),
-		}
-		for _, parent := range parents {
-			info.Items = append(info.Items, v0alpha1.FolderInfo{
-				UID:    parent.UID,
-				Title:  parent.Title,
-				Parent: parent.ParentUID,
+		if name == folder.GeneralFolderUID || name == folder.SharedWithMeFolderUID {
+			responder.Object(http.StatusOK, &folders.FolderInfoList{
+				Items: []folders.FolderInfo{},
 			})
+			return
+		}
+
+		obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		folderObj, ok := obj.(*folders.Folder)
+		if !ok {
+			responder.Error(fmt.Errorf("expecting folder, found: %T", folderObj))
+			return
+		}
+
+		info, err := r.parents(ctx, folderObj)
+		if err != nil {
+			responder.Error(err)
+			return
 		}
 		responder.Object(http.StatusOK, info)
 	}), nil

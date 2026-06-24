@@ -1,11 +1,13 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
 import { useState } from 'react';
 
-import { KeyValue } from '@grafana/data';
-import { Field, Button, Input } from '@grafana/ui';
+import { type KeyValue } from '@grafana/data';
 
-import { getAvailableIcons } from '../../types';
+import { getAvailableIcons } from '../../types/icon';
+import { Button } from '../Button/Button';
+import { Field } from '../Forms/Field';
 
+import { Input } from './Input';
 import mdx from './Input.mdx';
 import { parseAccessory } from './storyUtils';
 
@@ -20,7 +22,7 @@ const prefixSuffixOpts = {
 };
 
 const meta: Meta = {
-  title: 'Forms/Input',
+  title: 'Inputs/Input',
   component: Input,
   parameters: {
     docs: {
@@ -71,18 +73,20 @@ export const Simple: StoryFn = (args) => {
   const suffix = parseAccessory(args.suffixVisible);
 
   return (
-    <Input
-      disabled={args.disabled}
-      width={args.width}
-      prefix={prefix}
-      invalid={args.invalid}
-      suffix={suffix}
-      loading={args.loading}
-      addonBefore={args.before && addonBefore}
-      addonAfter={args.after && addonAfter}
-      type={args.type}
-      placeholder={args.placeholder}
-    />
+    <Field label="Simple input">
+      <Input
+        disabled={args.disabled}
+        width={args.width}
+        prefix={prefix}
+        invalid={args.invalid}
+        suffix={suffix}
+        loading={args.loading}
+        addonBefore={args.before && addonBefore}
+        addonAfter={args.after && addonAfter}
+        type={args.type}
+        placeholder={args.placeholder}
+      />
+    </Field>
   );
 };
 Simple.args = {
@@ -97,7 +101,7 @@ export const WithFieldValidation: StoryFn = (args) => {
 
   return (
     <div>
-      <Field invalid={value === ''} error={value === '' ? 'This input is required' : ''}>
+      <Field invalid={value === ''} error={value === '' ? 'This input is required' : ''} label="Input with validation">
         <Input value={value} onChange={(e) => setValue(e.currentTarget.value)} {...args} />
       </Field>
     </div>

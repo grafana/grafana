@@ -1,16 +1,14 @@
-import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { action } from 'storybook/actions';
 
-import { ConfirmButton } from '@grafana/ui';
+import { Button } from '../Button/Button';
 
-import { Button } from '../Button';
-
-import { Props } from './ConfirmButton';
+import { ConfirmButton, type Props } from './ConfirmButton';
 import mdx from './ConfirmButton.mdx';
 import { DeleteButton } from './DeleteButton';
 
 const meta: Meta = {
-  title: 'Buttons/ConfirmButton',
+  title: 'Inputs/ConfirmButton',
   component: ConfirmButton,
   // SB7 has broken subcomponent types due to dropping support for the feature
   // https://github.com/storybookjs/storybook/issues/20782

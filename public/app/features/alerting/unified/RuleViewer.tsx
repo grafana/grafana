@@ -1,19 +1,23 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, withErrorBoundary } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
-import DetailView, { ActiveTab, useActiveTab } from './components/rule-viewer/RuleViewer';
+import DetailView, { useActiveTab } from './components/rule-viewer/RuleViewer';
+import { ActiveTab } from './components/rule-viewer/activeTab';
 import { useCombinedRule } from './hooks/useCombinedRule';
+import { getAlertRulesNavId } from './navigation/useAlertRulesNav';
 import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
+import { withPageErrorBoundary } from './withPageErrorBoundary';
 
-const RuleViewer = (): JSX.Element => {
+const RuleViewer = () => {
   const params = useParams();
   const id = getRuleIdFromPathname(params);
 
@@ -39,18 +43,14 @@ const RuleViewer = (): JSX.Element => {
 
   if (error) {
     return (
-      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+      <AlertingPageWrapper pageNav={defaultPageNav} navId={getAlertRulesNavId()}>
         <ErrorMessage error={error} />
       </AlertingPageWrapper>
     );
   }
 
   if (loading) {
-    return (
-      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list" isLoading={true}>
-        <></>
-      </AlertingPageWrapper>
-    );
+    return <AlertingPageWrapper pageNav={defaultPageNav} navId={getAlertRulesNavId()} isLoading={true} />;
   }
 
   if (rule) {
@@ -62,11 +62,16 @@ const RuleViewer = (): JSX.Element => {
   }
 
   // if we get here assume we can't find the rule
-  return (
-    <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
-      <EntityNotFound entity="Rule" />
-    </AlertingPageWrapper>
-  );
+  if (!rule && !loading) {
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId={getAlertRulesNavId()}>
+        <EntityNotFound entity="Rule" />
+      </AlertingPageWrapper>
+    );
+  }
+
+  // we should never get to this state
+  return null;
 };
 
 export const defaultPageNav: NavModelItem = {
@@ -83,7 +88,11 @@ function ErrorMessage({ error }: ErrorMessageProps) {
     return <EntityNotFound entity="Rule" />;
   }
 
-  return <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>;
+  return (
+    <Alert title={t('alerting.rule-viewer.error-loading', 'Something went wrong loading the rule')}>
+      {stringifyErrorLike(error)}
+    </Alert>
+  );
 }
 
-export default withErrorBoundary(RuleViewer, { style: 'page' });
+export default withPageErrorBoundary(RuleViewer);

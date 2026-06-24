@@ -4,13 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 var gvrTeams = schema.GroupVersionResource{
@@ -30,14 +33,18 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationIdentity(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
-		DisableAnonymous:  true,
+		AppModeProduction:      false, // required for experimental APIs
+		DisableAnonymous:       true,
+		RBACSingleOrganization: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesTeamsApi,
+			featuremgmt.FlagKubernetesUsersApi,
+			featuremgmt.FlagKubernetesServiceAccountsApi,
+			featuremgmt.FlagKubernetesServiceAccountTokensApi,
 		},
 	})
 	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("iam.grafana.app/v0alpha1")
@@ -51,7 +58,11 @@ func TestIntegrationIdentity(t *testing.T) {
 		})
 		rsp, err := teamClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		found := teamClient.SanitizeJSONList(rsp, "name")
+		// Members have randomly-generated UIDs; drop them from comparison.
+		for i := range rsp.Items {
+			unstructured.RemoveNestedField(rsp.Items[i].Object, "spec", "members")
+		}
+		found := teamClient.SanitizeJSONList(rsp, "name", "labels")
 		require.JSONEq(t, `{
       "items": [
         {
@@ -65,7 +76,9 @@ func TestIntegrationIdentity(t *testing.T) {
           },
           "spec": {
             "email": "staff@Org1",
-            "title": "staff"
+            "title": "staff",
+			"provisioned": false,
+			"externalUID": ""
           }
         }
       ]
@@ -82,18 +95,55 @@ func TestIntegrationIdentity(t *testing.T) {
 		// Get just the specs (avoids values that change with each deployment)
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
-			{},
 			{
-				"email": "admin-1",
-				"login": "admin-1"
+				"disabled": false,
+				"email": "admin@localhost",
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "admin",
+				"title": "",
+				"provisioned": false,
+				"role": "Admin"
 			},
 			{
-				"email": "editor-1",
-				"login": "editor-1"
+				"disabled": false,
+				"email": "grafana-admin@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "grafana-admin",
+				"title": "admin2",
+				"provisioned": false,
+				"role": "Admin"
 			},
 			{
-				"email": "viewer-1",
-				"login": "viewer-1"
+				"disabled": false,
+				"email": "editor@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "editor",
+				"title": "editor",
+				"provisioned": false,
+				"role": "Editor"
+			},
+			{
+				"disabled": false,
+				"email": "viewer@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "viewer",
+				"title": "viewer",
+				"provisioned": false,
+				"role": "Viewer"
+			},
+			{
+				"disabled": false,
+				"email": "none@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "none",
+				"title": "none",
+				"provisioned": false,
+				"role": "None"
 			}
 		]`, found)
 
@@ -110,17 +160,55 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
 			{
-				"email": "admin-3",
-				"login": "admin-3"
+				"disabled": false,
+				"email": "grafana-admin@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "grafana-admin",
+				"title": "admin2",
+				"provisioned": false,
+				"role": "Admin"
 			},
 			{
-				"email": "editor-3",
-				"login": "editor-3"
+				"disabled": false,
+				"email": "admin2-org-2@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "admin2-org-2",
+				"title": "admin2",
+				"provisioned": false,
+				"role": "Admin"
 			},
 			{
-				"email": "viewer-3",
-				"login": "viewer-3"
+				"disabled": false,
+				"email": "editor-org-2@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "editor-org-2",
+				"title": "editor",
+				"provisioned": false,
+				"role": "Editor"
+			},
+			{
+				"disabled": false,
+				"email": "viewer-org-2@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "viewer-org-2",
+				"title": "viewer",
+				"provisioned": false,
+				"role": "Viewer"
+			},
+			{
+				"disabled": false,
+				"email": "none-org-2@example.com",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "none-org-2",
+				"title": "none",
+				"provisioned": false,
+				"role": "None"
 			}
-		]`, found)
+		] `, found)
 	})
 }

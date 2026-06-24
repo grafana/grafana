@@ -1,125 +1,91 @@
 package zanzana
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 const (
-	TypeUser      string = "user"
-	TypeTeam      string = "team"
-	TypeRole      string = "role"
-	TypeFolder    string = "folder"
-	TypeDashboard string = "dashboard"
-	TypeOrg       string = "org"
+	TypeUser           = common.TypeUser
+	TypeServiceAccount = common.TypeServiceAccount
+	TypeRenderService  = common.TypeRenderService
+	TypeAnonymous      = common.TypeAnonymous
+	TypeTeam           = common.TypeTeam
+	TypeRole           = common.TypeRole
+	TypeFolder         = common.TypeFolder
+	TypeResource       = common.TypeResource
+	TypeNamespace      = common.TypeGroupResouce
+)
+
+// TokenPermissionUpdate is required for callers to perform write operations against Zanzana (Mutate/Write).
+const TokenPermissionUpdate = "zanzana:update" //nolint:gosec // G101: permission identifier, not a credential.
+
+const (
+	RelationTeamMember = common.RelationTeamMember
+	RelationTeamAdmin  = common.RelationTeamAdmin
+	RelationParent     = common.RelationParent
+	RelationAssignee   = common.RelationAssignee
+
+	RelationSetView  = common.RelationSetView
+	RelationSetEdit  = common.RelationSetEdit
+	RelationSetAdmin = common.RelationSetAdmin
+
+	RelationGet    = common.RelationGet
+	RelationUpdate = common.RelationUpdate
+	RelationCreate = common.RelationCreate
+	RelationDelete = common.RelationDelete
+
+	RelationGetPermissions = common.RelationGetPermissions
+	RelationSetPermissions = common.RelationSetPermissions
+
+	RelationSubresourceSetView  = common.RelationSubresourceSetView
+	RelationSubresourceSetEdit  = common.RelationSubresourceSetEdit
+	RelationSubresourceSetAdmin = common.RelationSubresourceSetAdmin
+
+	RelationSubresourceRead   = common.RelationSubresourceGet
+	RelationSubresourceWrite  = common.RelationSubresourceUpdate
+	RelationSubresourceCreate = common.RelationSubresourceCreate
+	RelationSubresourceDelete = common.RelationSubresourceDelete
+)
+
+var (
+	// RelationsFolder is used by reconciliation to list tuples for folder objects.
+	// It must include both verb relations (get/update/delete/...) and the permission-set relations (view/edit/admin)
+	RelationsFolder = append(append([]string{}, common.RelationsTyped...),
+		common.RelationSetView, common.RelationSetEdit, common.RelationSetAdmin,
+	)
+	// RelationsResouce is used by reconciliation to list tuples for resource objects.
+	// Include permission-set relations for the same reason as RelationsFolder.
+	RelationsResouce = append(append([]string{}, common.RelationsResource...),
+		common.RelationSetView, common.RelationSetEdit, common.RelationSetAdmin,
+	)
+	RelationsSubresource = common.RelationsSubresource
 )
 
 const (
-	RelationTeamMember string = "member"
-	RelationTeamAdmin  string = "admin"
-	RelationParent     string = "parent"
-	RelationAssignee   string = "assignee"
-	RelationOrg        string = "org"
+	KindDashboards = common.KindDashboards
+	KindFolders    = common.KindFolders
 )
 
-const (
-	KindOrg        string = "org"
-	KindDashboards string = "dashboards"
-	KindFolders    string = "folders"
+var (
+	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
+	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys
+	ToAuthzExtTupleKeyWithoutCondition  = common.ToAuthzExtTupleKeyWithoutCondition
+	ToAuthzExtTupleKeysWithoutCondition = common.ToAuthzExtTupleKeysWithoutCondition
+
+	ToOpenFGATuple                    = common.ToOpenFGATuple
+	ToOpenFGATuples                   = common.ToOpenFGATuples
+	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
+	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
+
+	NewTupleEntry             = common.NewTupleEntry
+	NewObjectEntry            = common.NewObjectEntry
+	NewGroupResourceTuple     = common.NewGroupResourceTuple
+	TranslateToResourceTuple  = common.TranslateToResourceTuple
+	IsFolderResourceTuple     = common.IsFolderResourceTuple
+	MergeFolderResourceTuples = common.MergeFolderResourceTuples
+
+	TranslateToCheckRequest  = common.TranslateToCheckRequest
+	TranslateToListRequest   = common.TranslateToListRequest
+	TranslateToGroupResource = common.TranslateToGroupResource
+	TranslateBasicRole       = common.TranslateBasicRole
 )
-
-const (
-	RoleGrafanaAdmin = "Grafana Admin"
-	RoleAdmin        = "Admin"
-	RoleEditor       = "Editor"
-	RoleViewer       = "Viewer"
-	RoleNone         = "None"
-
-	BasicRolePrefix    = "basic:"
-	BasicRoleUIDPrefix = "basic_"
-
-	GlobalOrgID = 0
-)
-
-// NewTupleEntry constructs new openfga entry type:id[#relation].
-// Relation allows to specify group of users (subjects) related to type:id
-// (for example, team:devs#member refers to users which are members of team devs)
-func NewTupleEntry(objectType, id, relation string) string {
-	obj := fmt.Sprintf("%s:%s", objectType, id)
-	if relation != "" {
-		obj = fmt.Sprintf("%s#%s", obj, relation)
-	}
-	return obj
-}
-
-// NewScopedTupleEntry constructs new openfga entry type:id[#relation]
-// with id prefixed by scope (usually org id)
-func NewScopedTupleEntry(objectType, id, relation, scope string) string {
-	return NewTupleEntry(objectType, fmt.Sprintf("%s-%s", scope, id), relation)
-}
-
-func TranslateToTuple(user string, action, kind, identifier string, orgID int64) (*openfgav1.TupleKey, bool) {
-	typeTranslation, ok := actionKindTranslations[kind]
-	if !ok {
-		return nil, false
-	}
-
-	relation, ok := typeTranslation.translations[action]
-	if !ok {
-		return nil, false
-	}
-
-	tuple := &openfgav1.TupleKey{
-		Relation: relation,
-	}
-
-	tuple.User = user
-	tuple.Relation = relation
-
-	// Some uid:s in grafana are not guarantee to be unique across orgs so we need to scope them.
-	if typeTranslation.orgScoped {
-		tuple.Object = NewScopedTupleEntry(typeTranslation.objectType, identifier, "", strconv.FormatInt(orgID, 10))
-	} else {
-		tuple.Object = NewTupleEntry(typeTranslation.objectType, identifier, "")
-	}
-
-	return tuple, true
-}
-
-func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.TupleKey, bool) {
-	typeTranslation, ok := actionKindTranslations[KindOrg]
-	if !ok {
-		return nil, false
-	}
-
-	relation, ok := typeTranslation.translations[action]
-	if !ok {
-		return nil, false
-	}
-
-	tuple := &openfgav1.TupleKey{
-		Relation: relation,
-		User:     user,
-		Object:   NewTupleEntry(typeTranslation.objectType, strconv.FormatInt(orgID, 10), ""),
-	}
-
-	return tuple, true
-}
-
-func TranslateBasicRole(role string) string {
-	return basicRolesTranslations[role]
-}
-
-func TranslateFixedRole(role string) string {
-	role = strings.ReplaceAll(role, ":", "_")
-	role = strings.ReplaceAll(role, ".", "_")
-	return role
-}
-
-// Translate "read" for the dashboard into "dashboard_read" for folder
-func TranslateToFolderRelation(relation, objectType string) string {
-	return fmt.Sprintf("%s_%s", objectType, relation)
-}

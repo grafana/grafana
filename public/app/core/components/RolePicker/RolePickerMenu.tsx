@@ -1,9 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 
-import { Button, CustomScrollbar, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
-import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { OrgRole, Role } from 'app/types';
+import { type OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { getSelectStyles } from '@grafana/ui/internal';
+import { type Role } from 'app/types/accessControl';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';
@@ -35,7 +37,7 @@ const fixedRoleGroupNames: Record<string, string> = {
 };
 
 const tooltipMessage = (
-  <>
+  <Trans i18nKey="role-picker.menu.tooltip">
     You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
     information in&nbsp;
     <TextLink
@@ -46,12 +48,13 @@ const tooltipMessage = (
       our documentation
     </TextLink>
     .
-  </>
+  </Trans>
 );
 
 interface RolePickerMenuProps {
   basicRole?: OrgRole;
   options: Role[];
+  isFiltered?: boolean;
   appliedRoles: Role[];
   showGroups?: boolean;
   basicRoleDisabled?: boolean;
@@ -69,6 +72,7 @@ interface RolePickerMenuProps {
 export const RolePickerMenu = ({
   basicRole,
   options,
+  isFiltered,
   appliedRoles,
   showGroups,
   basicRoleDisabled,
@@ -157,8 +161,15 @@ export const RolePickerMenu = ({
     return selectedGroupOptions.length > 0 && selectedGroupOptions.length < groupOptions!.options.length;
   };
 
+  const changeableGroupRolesSelected = (groupType: GroupType, group: string) => {
+    const selectedGroupOptions = getSelectedGroupOptions(group);
+    const changeableGroupOptions = selectedGroupOptions.filter((role) => role.delegatable && !role.mapped);
+    const groupOptions = rolesCollection[groupType]?.optionGroup.find((g) => g.value === group);
+    return changeableGroupOptions.length > 0 && changeableGroupOptions.length < groupOptions!.options.length;
+  };
+
   const onChange = (option: Role) => {
-    if (selectedOptions.find((role) => role.uid === option.uid)) {
+    if (selectedOptions.find((role) => role.uid === option.uid && !role.mapped)) {
       setSelectedOptions(selectedOptions.filter((role) => role.uid !== option.uid));
     } else {
       setSelectedOptions([...selectedOptions, option]);
@@ -174,12 +185,21 @@ export const RolePickerMenu = ({
       return;
     }
 
-    if (groupSelected(groupType, value) || groupPartiallySelected(groupType, value)) {
-      setSelectedOptions(selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid)));
-    } else {
-      const groupOptions = group.options.filter((role) => role.delegatable);
+    if (groupSelected(groupType, value) || changeableGroupRolesSelected(groupType, value)) {
+      const mappedGroupOptions = selectedOptions.filter((option) =>
+        group.options.find((role) => role.uid === option.uid && option.mapped)
+      );
       const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-      setSelectedOptions([...restOptions, ...groupOptions]);
+      setSelectedOptions([...restOptions, ...mappedGroupOptions]);
+    } else {
+      const mappedGroupOptions = selectedOptions.filter((option) =>
+        group.options.find((role) => role.uid === option.uid && role.delegatable)
+      );
+      const groupOptions = group.options.filter(
+        (role) => role.delegatable && !selectedOptions.find((option) => role.uid === option.uid && option.mapped)
+      );
+      const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
+      setSelectedOptions([...restOptions, ...groupOptions, ...mappedGroupOptions]);
     }
   };
 
@@ -188,13 +208,17 @@ export const RolePickerMenu = ({
   };
 
   const onClearInternal = async () => {
-    setSelectedOptions([]);
+    const mappedRoles = selectedOptions.filter((role) => role.mapped);
+    const nonDelegatableRoles = options.filter((role) =>
+      selectedOptions.find((option) => role.uid === option.uid && !role.delegatable)
+    );
+    setSelectedOptions([...mappedRoles, ...nonDelegatableRoles]);
   };
 
   const onClearSubMenu = (group: string) => {
     const options = selectedOptions.filter((role) => {
       const roleGroup = getRoleGroup(role);
-      return roleGroup !== group;
+      return roleGroup !== group || role.mapped;
     });
     setSelectedOptions(options);
   };
@@ -216,15 +240,12 @@ export const RolePickerMenu = ({
         })
       )}
     >
-      <div className={customStyles.menu} aria-label="Role picker menu">
-        <CustomScrollbar
-          autoHide={false}
-          autoHeightMax={`${MENU_MAX_HEIGHT}px`}
-          hideHorizontalTrack
-          hideVerticalTrack
+      <div className={customStyles.menu} aria-label={t('role-picker.menu-aria-label', 'Role picker menu')}>
+        <ScrollContainer
+          maxHeight={`${MENU_MAX_HEIGHT}px`}
           // NOTE: this is a way to force hiding of the scrollbar
           // the scrollbar makes the mouseEvents drop
-          className={cx(customStyles.hideScrollBar)}
+          scrollbarWidth="none"
         >
           {showBasicRole && (
             <div className={customStyles.menuSection}>
@@ -241,6 +262,7 @@ export const RolePickerMenu = ({
             <RoleMenuGroupsSection
               key={groupId}
               roles={collection.roles}
+              isFiltered={isFiltered}
               renderedName={collection.renderedName}
               showGroups={showGroups}
               optionGroups={collection.optionGroup}
@@ -254,11 +276,11 @@ export const RolePickerMenu = ({
               showOnLeftSubMenu={menuLeft}
             />
           ))}
-        </CustomScrollbar>
+        </ScrollContainer>
         <div className={customStyles.menuButtonRow}>
           <Stack justifyContent="flex-end">
             <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
-              Clear all
+              <Trans i18nKey="role-picker.menu.clear-button">Clear all</Trans>
             </Button>
             <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>
               {apply ? `Apply` : `Update`}

@@ -2,158 +2,124 @@ package client
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
+
+var _ authlib.AccessClient = (*Client)(nil)
+var _ zanzana.Client = (*Client)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
-type ClientOption func(c *Client)
-
-func WithTenantID(tenantID string) ClientOption {
-	return func(c *Client) {
-		c.tenantID = tenantID
-	}
-}
-
-func WithLogger(logger log.Logger) ClientOption {
-	return func(c *Client) {
-		c.logger = logger
-	}
-}
-
 type Client struct {
-	logger   log.Logger
-	client   openfgav1.OpenFGAServiceClient
-	tenantID string
-	storeID  string
-	modelID  string
+	logger         log.Logger
+	authz          authzv1.AuthzServiceClient
+	authzext       authzextv1.AuthzExtentionServiceClient
+	authzlibclient *authzlib.ClientImpl
+	metrics        *clientMetrics
 }
 
-func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*Client, error) {
+func New(cc grpc.ClientConnInterface, reg prometheus.Registerer) (*Client, error) {
+	authzlibclient := authzlib.NewClient(cc, authzlib.WithTracerClientOption(tracer))
 	c := &Client{
-		client: openfgav1.NewOpenFGAServiceClient(cc),
+		authzlibclient: authzlibclient,
+		authz:          authzv1.NewAuthzServiceClient(cc),
+		authzext:       authzextv1.NewAuthzExtentionServiceClient(cc),
+		logger:         log.New("zanzana.client"),
+		metrics:        newClientMetrics(reg),
 	}
-
-	for _, o := range opts {
-		o(c)
-	}
-
-	if c.logger == nil {
-		c.logger = log.NewNopLogger()
-	}
-
-	if c.tenantID == "" {
-		c.tenantID = "stacks-default"
-	}
-
-	store, err := c.getStore(ctx, c.tenantID)
-	if err != nil {
-		return nil, err
-	}
-
-	c.storeID = store.GetId()
-
-	modelID, err := c.loadModel(ctx, c.storeID)
-	if err != nil {
-		return nil, err
-	}
-
-	c.modelID = modelID
 
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
+func (c *Client) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Check")
 	defer span.End()
 
-	in.StoreId = c.storeID
-	in.AuthorizationModelId = c.modelID
-	return c.client.Check(ctx, in)
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("Check"))
+	defer timer.ObserveDuration()
+
+	return c.authzlibclient.Check(ctx, id, req, folder)
 }
 
-func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
+func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Compile")
 	defer span.End()
 
-	in.StoreId = c.storeID
-	return c.client.Read(ctx, in)
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("Compile"))
+	defer timer.ObserveDuration()
+
+	return c.authzlibclient.Compile(ctx, id, req)
 }
 
-func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.ListObjects")
-	span.SetAttributes(attribute.String("resource.type", in.Type))
+func (c *Client) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.BatchCheck")
 	defer span.End()
 
-	in.StoreId = c.storeID
-	in.AuthorizationModelId = c.modelID
-	return c.client.ListObjects(ctx, in)
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("BatchCheck"))
+	defer timer.ObserveDuration()
+
+	return c.authzlibclient.BatchCheck(ctx, id, req)
 }
 
-func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
-	in.StoreId = c.storeID
-	in.AuthorizationModelId = c.modelID
-	_, err := c.client.Write(ctx, in)
+func (c *Client) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.List")
+	defer span.End()
+
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("List"))
+	defer timer.ObserveDuration()
+
+	return c.authz.List(ctx, req)
+}
+
+func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Read")
+	defer span.End()
+
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("Read"))
+	defer timer.ObserveDuration()
+
+	return c.authzext.Read(ctx, req)
+}
+
+func (c *Client) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Write")
+	defer span.End()
+
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("Write"))
+	defer timer.ObserveDuration()
+
+	_, err := c.authzext.Write(ctx, req)
 	return err
 }
 
-var errStoreNotFound = errors.New("store not found")
+func (c *Client) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Mutate")
+	defer span.End()
 
-func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, error) {
-	var continuationToken string
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("Mutate"))
+	defer timer.ObserveDuration()
 
-	// OpenFGA client does not support any filters for stores.
-	// We should create an issue to support some way to get stores by name.
-	// For now we need to go thourh all stores until we find a match or we hit the end.
-	for {
-		res, err := c.client.ListStores(ctx, &openfgav1.ListStoresRequest{
-			PageSize:          &wrapperspb.Int32Value{Value: 20},
-			ContinuationToken: continuationToken,
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to initiate zanzana tenant: %w", err)
-		}
-
-		for _, s := range res.GetStores() {
-			if s.GetName() == name {
-				return s, nil
-			}
-		}
-
-		// we have no more stores to check
-		if res.GetContinuationToken() == "" {
-			return nil, errStoreNotFound
-		}
-
-		continuationToken = res.GetContinuationToken()
-	}
+	_, err := c.authzext.Mutate(ctx, req)
+	return err
 }
 
-func (c *Client) loadModel(ctx context.Context, storeID string) (string, error) {
-	// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
-	// So with a pageSize of 1 we will get the latest model.
-	res, err := c.client.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
-		StoreId:  storeID,
-		PageSize: &wrapperspb.Int32Value{Value: 1},
-	})
+func (c *Client) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Query")
+	defer span.End()
 
-	if err != nil {
-		return "", fmt.Errorf("failed to load latest authorization model: %w", err)
-	}
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("Query"))
+	defer timer.ObserveDuration()
 
-	if len(res.AuthorizationModels) != 1 {
-		return "", fmt.Errorf("failed to load latest authorization model")
-	}
-
-	return res.AuthorizationModels[0].GetId(), nil
+	return c.authzext.Query(ctx, req)
 }

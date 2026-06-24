@@ -1,9 +1,9 @@
 import { systemDateFormats } from '../datetime/formats';
 import { createTheme } from '../themes/createTheme';
-import { FieldConfig, FieldType } from '../types/dataFrame';
-import { DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { type FieldConfig, FieldType } from '../types/dataFrame';
+import { type DisplayProcessor, type DisplayValue } from '../types/displayValue';
 import { ThresholdsMode } from '../types/thresholds';
-import { MappingType, ValueMapping } from '../types/valueMapping';
+import { MappingType, type ValueMapping } from '../types/valueMapping';
 
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 
@@ -422,6 +422,11 @@ describe('Format value', () => {
     it('should not attempt to trim zeros when explicit decimals: 5', () => {
       const processor = getDisplayProcessorFromConfig({ decimals: 5 }, FieldType.number);
       expect(processor(35, 2).text).toEqual('35.00000');
+    });
+
+    it('does not attempt to coerce non-numeric strings back to numbers', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'dthms' }, FieldType.number);
+      expect(processor(35, 2).text).toEqual('00:00:35'); // we're checking that this isn't NaN.
     });
   });
 });

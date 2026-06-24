@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { config, getBackendSrv } from '@grafana/runtime';
+import { Button, useStyles2, getPortalContainer } from '@grafana/ui';
 
-import { MediaType, PickerTabType, ResourceFolderName } from '../types';
+import { type MediaType, PickerTabType, type ResourceFolderName } from '../types';
 
 import { FileUploader } from './FileUploader';
 import { FolderPickerTab } from './FolderPickerTab';
@@ -21,22 +21,35 @@ interface Props {
   mediaType: MediaType;
   folderName: ResourceFolderName;
   maxFiles?: number;
+  hidePopper?: () => void;
 }
 
 interface ErrorResponse {
   message: string;
 }
 export const ResourcePickerPopover = (props: Props) => {
-  const { value, onChange, mediaType, folderName, maxFiles } = props;
+  const { value, onChange, mediaType, folderName, maxFiles, hidePopper } = props;
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
     onChange(value);
+    hidePopper?.();
   };
 
-  const ref = createRef<HTMLElement>();
+  const ref = useRef<HTMLElement>(null);
   const { dialogProps } = useDialog({}, ref);
-  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
+  const { overlayProps } = useOverlay(
+    {
+      onClose,
+      isDismissable: true,
+      isOpen: true,
+      shouldCloseOnInteractOutside: (elem) => {
+        const portalCont = getPortalContainer();
+        return !portalCont.contains(elem);
+      },
+    },
+    ref
+  );
 
   const isURL = value && value.includes('://');
   const [newValue, setNewValue] = useState<string>(value ?? '');
@@ -92,17 +105,17 @@ export const ResourcePickerPopover = (props: Props) => {
               className={getTabClassName(PickerTabType.Folder)}
               onClick={() => setActivePicker(PickerTabType.Folder)}
             >
-              Folder
+              <Trans i18nKey="dimensions.resource-picker-popover.folder">Folder</Trans>
             </button>
             <button className={getTabClassName(PickerTabType.URL)} onClick={() => setActivePicker(PickerTabType.URL)}>
-              URL
+              <Trans i18nKey="dimensions.resource-picker-popover.url">URL</Trans>
             </button>
           </div>
           <div className={styles.resourcePickerPopoverContent}>
             {renderPicker()}
             <div className={styles.buttonRow}>
               <Button variant={'secondary'} onClick={() => onClose()} fill="outline">
-                Cancel
+                <Trans i18nKey="dimensions.resource-picker-popover.cancel">Cancel</Trans>
               </Button>
               <Button
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
@@ -124,15 +137,17 @@ export const ResourcePickerPopover = (props: Props) => {
                         getBackendSrv()
                           .get(`api/storage/read/${data.path}`)
                           .then(() => setNewValue(`${config.appUrl}api/storage/read/${data.path}`))
-                          .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`));
+                          .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`))
+                          .then(() => hidePopper?.());
                       })
                       .catch((err) => console.error(err));
                   } else {
                     onChange(newValue);
+                    hidePopper?.();
                   }
                 }}
               >
-                Select
+                <Trans i18nKey="dimensions.resource-picker-popover.select">Select</Trans>
               </Button>
             </div>
           </div>

@@ -1,14 +1,18 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
+import { z } from 'zod';
 
 /** @internal */
-export type ThemeSpacingOptions = {
-  gridSize?: number;
-};
+export const ThemeSpacingOptionsSchema = z.object({
+  gridSize: z.int().positive().optional(),
+});
 
 /** @internal */
-export type ThemeSpacingArgument = number | string;
+export type ThemeSpacingOptions = z.infer<typeof ThemeSpacingOptionsSchema>;
+
+/** @internal */
+type ThemeSpacingArgument = number | string;
 
 /**
  * @beta

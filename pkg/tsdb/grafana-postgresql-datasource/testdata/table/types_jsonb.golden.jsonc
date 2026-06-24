@@ -1,0 +1,277 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "executedQueryString": "SELECT * FROM tbl"
+//  }
+//  Name: 
+//  Dimensions: 9 Fields by 4 Rows
+//  +----------------+---------------------------------------------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------+-----------------------------------------------------------------------------+--------------------------+--------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
+//  | Name: id       | Name: simple_json                                             | Name: simple_json_nn          | Name: complex_json                                                                                                                                | Name: array_json                                         | Name: nested_json                                                           | Name: empty_json         | Name: null_json          | Name: network_response                                                                                                                          |
+//  | Labels:        | Labels:                                                       | Labels:                       | Labels:                                                                                                                                           | Labels:                                                  | Labels:                                                                     | Labels:                  | Labels:                  | Labels:                                                                                                                                         |
+//  | Type: []*int32 | Type: []*json.RawMessage                                      | Type: []*json.RawMessage      | Type: []*json.RawMessage                                                                                                                          | Type: []*json.RawMessage                                 | Type: []*json.RawMessage                                                    | Type: []*json.RawMessage | Type: []*json.RawMessage | Type: []*json.RawMessage                                                                                                                        |
+//  +----------------+---------------------------------------------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------+-----------------------------------------------------------------------------+--------------------------+--------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
+//  | 1              | {"key": "value"}                                              | {"status": "active"}          | {"user": {"id": 123, "name": "John Doe", "email": "john@example.com"}, "metadata": {"tags": ["user", "active"], "created": "2023-01-01"}}         | [1, 2, 3, "test"]                                        | {"level1": {"level2": {"level3": {"data": "deep"}}}}                        | {}                       | null                     | {"code": "network_error", "message": "The restore request was not successful The request failed because the MSISDN does not exist in the PPS."} |
+//  | 2              | {"number": 42, "boolean": true}                               | {"status": "inactive"}        | {"product": {"id": "abc-123", "price": 99.99, "available": true}, "inventory": {"count": 5, "warehouse": "US-WEST"}}                              | []                                                       | {"config": {"database": {"ssl": false, "host": "localhost", "port": 5432}}} | []                       | null                     | {"code": "network_error", "message": "The imei for the device 007abee2-2105-459b-b4a9-d218c8180a84 could not be found"}                         |
+//  | 3              | null                                                          | {"status": "pending"}         | null                                                                                                                                              | [{"id": 1, "name": "item1"}, {"id": 2, "name": "item2"}] | null                                                                        | {"empty": {}}            | null                     | []                                                                                                                                              |
+//  | 4              | {"special_chars": "test with spaces and symbols: !@#$%^&*()"} | {"unicode": "测试 🚀 émojis"} | {"error": {"code": 500, "details": {"timestamp": "2023-12-24T14:30:00Z", "stack_trace": "Error at line 42"}, "message": "Internal server error"}} | [null, true, false, 0, "", {}]                           | {"a": {"b": {"c": {"d": {"e": "very deep nesting"}}}}}                      | null                     | null                     | {"code": "network_error", "message": "The imei for the device cdfd9055-3b61-46f3-945a-dfd0f6aa4f27 could not be found"}                         |
+//  +----------------+---------------------------------------------------------------+-------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------+-----------------------------------------------------------------------------+--------------------------+--------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "executedQueryString": "SELECT * FROM tbl"
+        },
+        "fields": [
+          {
+            "name": "id",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int32",
+              "nullable": true
+            }
+          },
+          {
+            "name": "simple_json",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          },
+          {
+            "name": "simple_json_nn",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          },
+          {
+            "name": "complex_json",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          },
+          {
+            "name": "array_json",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          },
+          {
+            "name": "nested_json",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          },
+          {
+            "name": "empty_json",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          },
+          {
+            "name": "null_json",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          },
+          {
+            "name": "network_response",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          [
+            {
+              "key": "value"
+            },
+            {
+              "number": 42,
+              "boolean": true
+            },
+            null,
+            {
+              "special_chars": "test with spaces and symbols: !@#$%^\u0026*()"
+            }
+          ],
+          [
+            {
+              "status": "active"
+            },
+            {
+              "status": "inactive"
+            },
+            {
+              "status": "pending"
+            },
+            {
+              "unicode": "测试 🚀 émojis"
+            }
+          ],
+          [
+            {
+              "user": {
+                "id": 123,
+                "name": "John Doe",
+                "email": "john@example.com"
+              },
+              "metadata": {
+                "tags": [
+                  "user",
+                  "active"
+                ],
+                "created": "2023-01-01"
+              }
+            },
+            {
+              "product": {
+                "id": "abc-123",
+                "price": 99.99,
+                "available": true
+              },
+              "inventory": {
+                "count": 5,
+                "warehouse": "US-WEST"
+              }
+            },
+            null,
+            {
+              "error": {
+                "code": 500,
+                "details": {
+                  "timestamp": "2023-12-24T14:30:00Z",
+                  "stack_trace": "Error at line 42"
+                },
+                "message": "Internal server error"
+              }
+            }
+          ],
+          [
+            [
+              1,
+              2,
+              3,
+              "test"
+            ],
+            [],
+            [
+              {
+                "id": 1,
+                "name": "item1"
+              },
+              {
+                "id": 2,
+                "name": "item2"
+              }
+            ],
+            [
+              null,
+              true,
+              false,
+              0,
+              "",
+              {}
+            ]
+          ],
+          [
+            {
+              "level1": {
+                "level2": {
+                  "level3": {
+                    "data": "deep"
+                  }
+                }
+              }
+            },
+            {
+              "config": {
+                "database": {
+                  "ssl": false,
+                  "host": "localhost",
+                  "port": 5432
+                }
+              }
+            },
+            null,
+            {
+              "a": {
+                "b": {
+                  "c": {
+                    "d": {
+                      "e": "very deep nesting"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          [
+            {},
+            [],
+            {
+              "empty": {}
+            },
+            null
+          ],
+          [
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            {
+              "code": "network_error",
+              "message": "The restore request was not successful The request failed because the MSISDN does not exist in the PPS."
+            },
+            {
+              "code": "network_error",
+              "message": "The imei for the device 007abee2-2105-459b-b4a9-d218c8180a84 could not be found"
+            },
+            [],
+            {
+              "code": "network_error",
+              "message": "The imei for the device cdfd9055-3b61-46f3-945a-dfd0f6aa4f27 could not be found"
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

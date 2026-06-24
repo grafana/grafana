@@ -12,7 +12,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -208,21 +207,21 @@ func TestAddAppLinks(t *testing.T) {
 	t.Run("Should only add an 'Observability' section if a plugin exists that wants to live there", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 
-		// Check if the Monitoring section is not there if no apps try to register to it
+		// Check if the Observability section is not there if no apps try to register to it
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		monitoringNode := treeRoot.FindById(navtree.NavIDMonitoring)
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
 		require.Nil(t, monitoringNode)
 
 		// It should appear and once an app tries to register to it
 		treeRoot = navtree.NavTreeRoot{}
 		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"test-app1": {SectionID: navtree.NavIDMonitoring},
+			"test-app1": {SectionID: navtree.NavIDObservability},
 		}
 		err = service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
-		monitoringNode = treeRoot.FindById(navtree.NavIDMonitoring)
+		monitoringNode = treeRoot.FindById(navtree.NavIDObservability)
 		require.NotNil(t, monitoringNode)
 		require.Len(t, monitoringNode.Children, 1)
 		require.Equal(t, "Test app1 name", monitoringNode.Children[0].Text)
@@ -276,17 +275,36 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "Test app1 name", alertsAndIncidentsNode.Children[0].Text)
 	})
 
+	t.Run("Should use plugin name when Text is not provided in nav config, and custom Text when provided", func(t *testing.T) {
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDObservability, SortWeight: 1},                       // No Text - should use plugin.Name
+			"test-app2": {SectionID: navtree.NavIDObservability, SortWeight: 2, Text: "Custom Label"}, // Text provided
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+		require.Len(t, monitoringNode.Children, 2)
+		// test-app1 has no Text in config → uses plugin.Name
+		require.Equal(t, "Test app1 name", monitoringNode.Children[0].Text)
+		// test-app2 has Text in config → uses custom Text
+		require.Equal(t, "Custom Label", monitoringNode.Children[1].Text)
+	})
+
 	t.Run("Should be able to control app sort order with SortWeight (smaller SortWeight displayed first)", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{
-			"test-app2": {SectionID: navtree.NavIDMonitoring, SortWeight: 2},
-			"test-app1": {SectionID: navtree.NavIDMonitoring, SortWeight: 3},
-			"test-app3": {SectionID: navtree.NavIDMonitoring, SortWeight: 1},
+			"test-app2": {SectionID: navtree.NavIDObservability, SortWeight: 2},
+			"test-app1": {SectionID: navtree.NavIDObservability, SortWeight: 3},
+			"test-app3": {SectionID: navtree.NavIDObservability, SortWeight: 1},
 		}
 
 		treeRoot := navtree.NavTreeRoot{}
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		treeRoot.Sort()
-		monitoringNode := treeRoot.FindById(navtree.NavIDMonitoring)
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
 
 		require.NoError(t, err)
 		require.Equal(t, "Test app3 name", monitoringNode.Children[0].Text)
@@ -358,6 +376,104 @@ func TestAddAppLinks(t *testing.T) {
 	})
 }
 
+func TestBuildDataConnectionsNavLink(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+
+	t.Run("core items (add-new-connection, datasources) are added when user has ConfigurationPageAccess", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{{Action: datasources.ActionCreate, Scope: "*"}}),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		section := service.buildDataConnectionsNavLink(reqCtx)
+		require.NotNil(t, section)
+		require.Len(t, section.Children, 2)
+		require.Equal(t, "connections-add-new-connection", section.Children[0].Id)
+		require.Equal(t, "connections-datasources", section.Children[1].Id)
+	})
+
+	t.Run("section is returned with no core children when user lacks ConfigurationPageAccess", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{}),
+			features:      featuremgmt.WithFeatures(),
+		}
+
+		section := service.buildDataConnectionsNavLink(reqCtx)
+		require.NotNil(t, section, "section must always be returned so plugins can attach children")
+		require.Empty(t, section.Children)
+	})
+
+	t.Run("plugin pages under the connections section are visible to users without ConfigurationPageAccess", func(t *testing.T) {
+		pluginApp := pluginstore.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "grafana-collector-app",
+				Name: "Collector",
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{
+						Name:     "Collector",
+						Path:     "/a/grafana-collector-app",
+						Type:     "page",
+						AddToNav: false,
+					},
+				},
+			},
+		}
+		pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+			pluginApp.ID: {ID: 0, OrgID: 1, PluginID: pluginApp.ID, PluginVersion: "1.0.0", Enabled: true},
+		}}
+		service := ServiceImpl{
+			cfg: setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{
+				{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+			}),
+			pluginSettings: &pluginSettings,
+			features:       featuremgmt.WithFeatures(),
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{pluginApp},
+			},
+		}
+		service.navigationAppPathConfig = map[string]NavigationAppConfig{
+			"/a/grafana-collector-app": {SectionID: "connections"},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		connectionsNode := treeRoot.FindById("connections")
+		require.NotNil(t, connectionsNode)
+		require.Len(t, connectionsNode.Children, 1)
+		require.Equal(t, "standalone-plugin-page-/a/grafana-collector-app", connectionsNode.Children[0].Id)
+	})
+
+	t.Run("RemoveEmptyConnectionsSection removes the section when it has no children", func(t *testing.T) {
+		service := ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: accesscontrolmock.New().WithPermissions([]ac.Permission{}),
+			features:      featuremgmt.WithFeatures(),
+			pluginStore:   &pluginstore.FakePluginStore{},
+			pluginSettings: &pluginsettings.FakePluginSettings{
+				Plugins: map[string]*pluginsettings.DTO{},
+			},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
+		require.NotNil(t, treeRoot.FindById("connections"), "section should exist before app links are applied")
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		treeRoot.RemoveEmptyConnectionsSection()
+		require.Nil(t, treeRoot.FindById("connections"), "empty section should be pruned")
+	})
+}
+
 func TestReadingNavigationSettings(t *testing.T) {
 	t.Run("Should include defaults", func(t *testing.T) {
 		service := ServiceImpl{
@@ -368,7 +484,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
 		service.readNavigationSettings()
 
-		require.Equal(t, "infrastructure", service.navigationAppConfig["grafana-k8s-app"].SectionID)
+		require.Equal(t, "observability", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 	})
 
 	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
@@ -388,7 +504,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
 
-		require.Equal(t, int64(1), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
+		require.Equal(t, int64(6), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 
 		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
@@ -443,7 +559,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	service := ServiceImpl{
 		log:            log.New("navtree"),
 		cfg:            cfg,
-		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
 		pluginStore: &pluginstore.FakePluginStore{
@@ -451,114 +567,143 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		},
 	}
 
-	t.Run("Without plugin RBAC - Enforce role", func(t *testing.T) {
-		t.Run("Should not add app links when the user cannot access app plugins", func(t *testing.T) {
-			treeRoot := navtree.NavTreeRoot{}
-			user.Permissions = map[int64]map[string][]string{}
-			user.OrgRole = identity.RoleAdmin
+	t.Run("Should not see any includes with no app access", func(t *testing.T) {
+		treeRoot := navtree.NavTreeRoot{}
+		user.Permissions = map[int64]map[string][]string{
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:not-the-test-app1"}},
+		}
+		user.OrgRole = identity.RoleNone
+		service.features = featuremgmt.WithFeatures()
 
-			err := service.addAppLinks(&treeRoot, reqCtx)
-			require.NoError(t, err)
-			require.Len(t, treeRoot.Children, 0)
-		})
-		t.Run(" Should add all includes when the user is an editor", func(t *testing.T) {
-			treeRoot := navtree.NavTreeRoot{}
-			user.Permissions = map[int64]map[string][]string{
-				1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
-			}
-			user.OrgRole = identity.RoleEditor
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		require.Len(t, treeRoot.Children, 0)
+	})
+	t.Run("Should only see the announcements as a none role user with app access", func(t *testing.T) {
+		treeRoot := navtree.NavTreeRoot{}
+		user.Permissions = map[int64]map[string][]string{
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}},
+		}
+		user.OrgRole = identity.RoleNone
+		service.features = featuremgmt.WithFeatures()
 
-			err := service.addAppLinks(&treeRoot, reqCtx)
-			require.NoError(t, err)
-			appsNode := treeRoot.FindById(navtree.NavIDApps)
-			require.Len(t, appsNode.Children, 1)
-			require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
-			require.Equal(t, "/a/test-app1/home", appsNode.Children[0].Url)
-			require.Len(t, appsNode.Children[0].Children, 2)
-			require.Equal(t, "/a/test-app1/catalog", appsNode.Children[0].Children[0].Url)
-			require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[1].Url)
-		})
-		t.Run("Should add two includes when the user is a viewer", func(t *testing.T) {
-			treeRoot := navtree.NavTreeRoot{}
-			user.Permissions = map[int64]map[string][]string{
-				1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
-			}
-			user.OrgRole = identity.RoleViewer
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Len(t, appsNode.Children, 1)
+		require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
+		require.Len(t, appsNode.Children[0].Children, 1)
+		require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
+	})
+	t.Run("Should now see the catalog as a viewer with catalog read", func(t *testing.T) {
+		treeRoot := navtree.NavTreeRoot{}
+		user.Permissions = map[int64]map[string][]string{
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}, catalogReadAction: []string{}},
+		}
+		user.OrgRole = identity.RoleViewer
+		service.features = featuremgmt.WithFeatures()
 
-			err := service.addAppLinks(&treeRoot, reqCtx)
-			require.NoError(t, err)
-			appsNode := treeRoot.FindById(navtree.NavIDApps)
-			require.Len(t, appsNode.Children, 1)
-			require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
-			require.Equal(t, "/a/test-app1/home", appsNode.Children[0].Url)
-			require.Len(t, appsNode.Children[0].Children, 1)
-			require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
-		})
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Len(t, appsNode.Children, 1)
+		require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
+		require.Equal(t, "/a/test-app1/home", appsNode.Children[0].Url)
+		require.Len(t, appsNode.Children[0].Children, 2)
+		require.Equal(t, "/a/test-app1/catalog", appsNode.Children[0].Children[0].Url)
+		require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[1].Url)
+	})
+	t.Run("Should not see the catalog include as an editor without catalog read", func(t *testing.T) {
+		treeRoot := navtree.NavTreeRoot{}
+		user.Permissions = map[int64]map[string][]string{
+			1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
+		}
+		user.OrgRole = identity.RoleEditor
+		service.features = featuremgmt.WithFeatures()
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.Len(t, appsNode.Children, 1)
+		require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
+		require.Equal(t, "/a/test-app1/home", appsNode.Children[0].Url)
+		require.Len(t, appsNode.Children[0].Children, 1)
+		require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
+	})
+}
+
+func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	sloApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "grafana-slo-app", Name: "SLO", Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Home", Path: "/a/grafana-slo-app/home", Type: "page", AddToNav: true, DefaultNav: true},
+				{Name: "Manage SLOs", Path: "/a/grafana-slo-app/manage-slos", Type: "page", AddToNav: true},
+			},
+		},
+	}
+	mwApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "grafana-maintenancewindows-app", Name: "Maintenance Windows", Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Maintenance windows", Path: "/a/grafana-maintenancewindows-app/maintenance-windows", Type: "page", AddToNav: true, DefaultNav: true},
+			},
+		},
+	}
+
+	newService := func(plugins ...pluginstore.Plugin) ServiceImpl {
+		ps := map[string]*pluginsettings.DTO{}
+		list := make([]pluginstore.Plugin, 0, len(plugins))
+		for _, p := range plugins {
+			ps[p.ID] = &pluginsettings.DTO{OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+			list = append(list, p)
+		}
+		return ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: ps},
+			features:       featuremgmt.WithFeatures(),
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: list},
+			navigationAppConfig: map[string]NavigationAppConfig{
+				"grafana-slo-app": {SectionID: navtree.NavIDRoot},
+			},
+		}
+	}
+
+	t.Run("Should nest Maintenance Windows under SLO when both are enabled", func(t *testing.T) {
+		service := newService(sloApp, mwApp)
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		require.Nil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
+
+		sloNode := treeRoot.FindById("plugin-page-grafana-slo-app")
+		require.NotNil(t, sloNode)
+		mwChild := navtree.FindByURL(sloNode.Children, "/a/grafana-maintenancewindows-app/maintenance-windows")
+		require.NotNil(t, mwChild)
+		require.Equal(t, "Maintenance Windows", mwChild.Text)
+		require.Equal(t, "grafana-maintenancewindows-app", mwChild.PluginID)
+		require.Equal(t, "standalone-plugin-page-grafana-maintenancewindows-app", mwChild.Id)
+		require.True(t, mwChild.IsNew)
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDApps))
 	})
 
-	t.Run("With plugin RBAC - Enforce action first", func(t *testing.T) {
-		t.Run("Should not see any includes with no app access", func(t *testing.T) {
-			treeRoot := navtree.NavTreeRoot{}
-			user.Permissions = map[int64]map[string][]string{
-				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:not-the-test-app1"}},
-			}
-			user.OrgRole = identity.RoleNone
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
+	t.Run("Should keep Maintenance Windows as its own app when SLO is not enabled", func(t *testing.T) {
+		service := newService(mwApp)
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
 
-			err := service.addAppLinks(&treeRoot, reqCtx)
-			require.NoError(t, err)
-			require.Len(t, treeRoot.Children, 0)
-		})
-		t.Run("Should only see the announcements as a none role user with app access", func(t *testing.T) {
-			treeRoot := navtree.NavTreeRoot{}
-			user.Permissions = map[int64]map[string][]string{
-				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}},
-			}
-			user.OrgRole = identity.RoleNone
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
-
-			err := service.addAppLinks(&treeRoot, reqCtx)
-			require.NoError(t, err)
-			appsNode := treeRoot.FindById(navtree.NavIDApps)
-			require.Len(t, appsNode.Children, 1)
-			require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
-			require.Len(t, appsNode.Children[0].Children, 1)
-			require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
-		})
-		t.Run("Should now see the catalog as a viewer with catalog read", func(t *testing.T) {
-			treeRoot := navtree.NavTreeRoot{}
-			user.Permissions = map[int64]map[string][]string{
-				1: {pluginaccesscontrol.ActionAppAccess: []string{"plugins:id:test-app1"}, catalogReadAction: []string{}},
-			}
-			user.OrgRole = identity.RoleViewer
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
-
-			err := service.addAppLinks(&treeRoot, reqCtx)
-			require.NoError(t, err)
-			appsNode := treeRoot.FindById(navtree.NavIDApps)
-			require.Len(t, appsNode.Children, 1)
-			require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
-			require.Equal(t, "/a/test-app1/home", appsNode.Children[0].Url)
-			require.Len(t, appsNode.Children[0].Children, 2)
-			require.Equal(t, "/a/test-app1/catalog", appsNode.Children[0].Children[0].Url)
-			require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[1].Url)
-		})
-		t.Run("Should not see the catalog include as an editor without catalog read", func(t *testing.T) {
-			treeRoot := navtree.NavTreeRoot{}
-			user.Permissions = map[int64]map[string][]string{
-				1: {pluginaccesscontrol.ActionAppAccess: []string{"*"}},
-			}
-			user.OrgRole = identity.RoleEditor
-			service.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
-
-			err := service.addAppLinks(&treeRoot, reqCtx)
-			require.NoError(t, err)
-			appsNode := treeRoot.FindById(navtree.NavIDApps)
-			require.Len(t, appsNode.Children, 1)
-			require.Equal(t, "Test app1 name", appsNode.Children[0].Text)
-			require.Equal(t, "/a/test-app1/home", appsNode.Children[0].Url)
-			require.Len(t, appsNode.Children[0].Children, 1)
-			require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
-		})
+		require.Nil(t, treeRoot.FindById("plugin-page-grafana-slo-app"))
+		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
 	})
 }

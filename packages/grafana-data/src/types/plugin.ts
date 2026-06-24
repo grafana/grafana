@@ -1,7 +1,7 @@
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
-import { KeyValue } from './data';
-import { IconName } from './icon';
+import { type KeyValue } from './data';
+import { type IconName } from './icon';
 
 /** Describes plugins life cycle status */
 export enum PluginState {
@@ -17,7 +17,6 @@ export enum PluginType {
   datasource = 'datasource',
   app = 'app',
   renderer = 'renderer',
-  secretsmanager = 'secretsmanager',
 }
 
 /** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */
@@ -54,6 +53,7 @@ export interface PluginError {
   pluginType?: PluginType;
 }
 
+/** @deprecated it will be removed in a future release */
 export interface AngularMeta {
   detected: boolean;
   hideDeprecation: boolean;
@@ -86,6 +86,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   secureJsonData?: KeyValue;
   secureJsonFields?: KeyValue<boolean>;
   enabled?: boolean;
+  autoEnabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
   enterprise?: boolean;
@@ -100,11 +101,15 @@ export interface PluginMeta<T extends KeyValue = {}> {
   loadingStrategy?: PluginLoadingStrategy;
   extensions?: PluginExtensions;
   moduleHash?: string;
+
+  // Paths to the translations for the plugin
+  translations?: Record<string, string>;
 }
 
 interface PluginDependencyInfo {
   id: string;
   name: string;
+  /** @deprecated it will be removed in a future release */
   version: string;
   type: PluginType;
 }
@@ -128,6 +133,8 @@ export type ExtensionInfo = {
 export interface PluginExtensions {
   // The component extensions that the plugin registers
   addedComponents: ExtensionInfo[];
+
+  addedFunctions: ExtensionInfo[];
 
   // The link extensions that the plugin registers
   addedLinks: ExtensionInfo[];
@@ -174,6 +181,8 @@ export interface PluginInclude {
 
   // Angular app pages
   component?: string;
+
+  slug?: string;
 }
 
 interface PluginMetaInfoLink {
@@ -211,6 +220,7 @@ export interface PluginMetaInfo {
   screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
+  keywords?: string[] | null;
 }
 
 export interface PluginConfigPageProps<T extends PluginMeta> {
@@ -234,6 +244,7 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   loadError?: boolean;
 
   // Config control (app/datasource)
+  /** @deprecated it will be removed in a future release */
   angularConfigCtrl?: any;
 
   // Show configuration tabs on the plugin page

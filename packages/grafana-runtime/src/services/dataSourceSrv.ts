@@ -1,4 +1,11 @@
-import { ScopedVars, DataSourceApi, DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import {
+  type ScopedVars,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+} from '@grafana/data';
+
+import { type RuntimeDataSource } from './RuntimeDataSource';
 
 /**
  * This is the entry point for communicating with a datasource that is added as
@@ -11,18 +18,24 @@ import { ScopedVars, DataSourceApi, DataSourceInstanceSettings, DataSourceRef } 
 export interface DataSourceSrv {
   /**
    * Returns the requested dataSource. If it cannot be found it rejects the promise.
-   * @param ref - The datasource identifier, typically an object with UID and type,
+   * @param ref - The datasource identifier, it can be a name, UID or DataSourceRef (an object with UID),
    * @param scopedVars - variables used to interpolate a templated passed as name.
+   *
+   * @deprecated Use `getDataSourceInstance` or `useDataSourceInstance` from `@grafana/runtime/unstable` instead.
    */
   get(ref?: DataSourceRef | string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
    * Get a list of data sources
+   *
+   * @deprecated Use `getDataSourceInstanceSettingsList` or `useDataSourceInstanceSettingsList` from `@grafana/runtime/internal` instead.
    */
   getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[];
 
   /**
    * Get settings and plugin metadata by name or uid
+   *
+   * @deprecated Use `getDataSourceInstanceSettings` or `useDataSourceInstanceSettings` from `@grafana/runtime/unstable` instead.
    */
   getInstanceSettings(
     ref?: DataSourceRef | string | null,
@@ -31,8 +44,21 @@ export interface DataSourceSrv {
 
   /**
    * Reloads the DataSourceSrv
+   *
+   * @deprecated Use `reloadDataSourceInstanceSettings` from `@grafana/runtime/unstable` instead.
    */
-  reload(): void;
+  reload(): Promise<void>;
+
+  /**
+   * Registers a runtime data source. Make sure your data source uid is unique.
+   *
+   * @deprecated Use `registerRuntimeDataSourceInstance` from `@grafana/runtime/unstable` instead.
+   */
+  registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void;
+}
+
+export interface RuntimeDataSourceRegistration {
+  dataSource: RuntimeDataSource;
 }
 
 /** @public */
@@ -94,6 +120,10 @@ export function setDataSourceSrv(instance: DataSourceSrv) {
  * a datasource that is added as a plugin (both external and internal).
  *
  * @public
+ * @deprecated Import the specific functions/hooks directly from `@grafana/runtime/unstable`
+ *   (e.g. `getDataSourceInstanceSettings`, `getDataSourceInstance`) or `@grafana/runtime/internal`
+ *   (e.g. `getDataSourceInstanceSettingsList`, `useDataSourceInstanceSettingsList`).
+ *   This singleton will be removed once all callers have migrated.
  */
 export function getDataSourceSrv(): DataSourceSrv {
   return singletonInstance;

@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, Field } from '../../types/dataFrame';
-import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
+import { type DataFrame, type Field } from '../../types/dataFrame';
+import { type DataTransformerInfo, type MatcherConfig } from '../../types/transformations';
 import { getFieldMatcher, getFrameMatchers } from '../matchers';
 
 import { DataTransformerID } from './ids';
@@ -28,15 +28,15 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
     }
 
     if (typeof options.include?.options === 'string') {
-      options.include.options = ctx.interpolate(options.include?.options);
+      options.include.options = options.include?.options;
     } else if (typeof options.include?.options?.pattern === 'string') {
-      options.include.options.pattern = ctx.interpolate(options.include?.options.pattern);
+      options.include.options.pattern = options.include?.options.pattern;
     }
 
     if (typeof options.exclude?.options === 'string') {
-      options.exclude.options = ctx.interpolate(options.exclude?.options);
+      options.exclude.options = options.exclude?.options;
     } else if (typeof options.exclude?.options?.pattern === 'string') {
-      options.exclude.options.pattern = ctx.interpolate(options.exclude?.options.pattern);
+      options.exclude.options.pattern = options.exclude?.options.pattern;
     }
 
     return source.pipe(
