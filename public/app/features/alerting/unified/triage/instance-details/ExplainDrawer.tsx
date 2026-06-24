@@ -7,11 +7,14 @@ import { reportInteraction } from '@grafana/runtime';
 import { Drawer, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
 import { type GrafanaAlertState, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { useIrmPlugin } from '../../hooks/usePluginBridge';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { generateAlertDescriptionForGrafanaRule } from '../../utils/alert-annotations';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { createExplainAssistantContext } from './explainAssistantContext';
 import { buildExplainAssistantQuestions } from './explainAssistantPrompts';
+import { extractIncidentHistoryFromRule } from './extractIncidentHistoryFromRule';
 import { registerExplainAssistantQuestions } from './registerExplainAssistantQuestions';
 
 function calculateDrawerWidth(rightColumnWidth: number): number {
@@ -54,10 +57,12 @@ function ExplainDrawerView({
 }) {
   const { rightColumnWidth } = useWorkbenchContext();
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
+  const { installed: irmInstalled } = useIrmPlugin(SupportedPlugin.Incident);
 
   const description = useMemo(() => generateAlertDescriptionForGrafanaRule(rule), [rule]);
   const ruleTitle = rule.grafana_alert.title;
   const showAssistantLink = Boolean(openAssistant);
+  const incidentHistory = useMemo(() => extractIncidentHistoryFromRule(rule), [rule]);
 
   const assistantContext = useMemo(
     () =>
@@ -68,8 +73,17 @@ function ExplainDrawerView({
         commonLabels,
         instanceState,
         description,
+        incidentHistory,
       }),
-    [rule, ruleUID, instanceLabels, commonLabels, instanceState, description]
+    [rule, ruleUID, instanceLabels, commonLabels, instanceState, description, incidentHistory]
+  );
+
+  const assistantQuestionOptions = useMemo(
+    () => ({
+      includeIncidentHistoryPrompt: Boolean(irmInstalled),
+      hasLinkedIncidentHistory: incidentHistory !== undefined,
+    }),
+    [irmInstalled, incidentHistory]
   );
 
   const handleOpenAssistant = useCallback(
@@ -86,7 +100,7 @@ function ExplainDrawerView({
         alertState: instanceState,
       });
 
-      registerExplainAssistantQuestions(buildExplainAssistantQuestions(assistantContext));
+      registerExplainAssistantQuestions(buildExplainAssistantQuestions(assistantContext, assistantQuestionOptions));
 
       onDismissDrawers?.();
 
@@ -97,7 +111,7 @@ function ExplainDrawerView({
         autoSend: false,
       });
     },
-    [assistantContext, instanceState, onDismissDrawers, openAssistant, ruleUID]
+    [assistantContext, assistantQuestionOptions, instanceState, onDismissDrawers, openAssistant, ruleUID]
   );
 
   return (

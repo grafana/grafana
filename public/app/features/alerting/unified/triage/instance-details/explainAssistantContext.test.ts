@@ -74,4 +74,29 @@ describe('createExplainAssistantContext', () => {
       },
     });
   });
+
+  it('includes incident history in context when present on the rule', () => {
+    const { createAssistantContextItem } = jest.requireMock('@grafana/assistant');
+    createAssistantContextItem.mockClear();
+
+    const rule = buildRuleDto();
+    const incidentHistory = { incidents: [{ id: 'inc-1' }] };
+
+    createExplainAssistantContext({
+      rule,
+      ruleUID: 'rule-uid-1',
+      instanceLabels: { job: 'api' },
+      description: 'Description',
+      incidentHistory,
+    });
+
+    expect(createAssistantContextItem).toHaveBeenCalledWith(
+      'structured',
+      expect.objectContaining({
+        data: expect.objectContaining({
+          incidentHistory,
+        }),
+      })
+    );
+  });
 });

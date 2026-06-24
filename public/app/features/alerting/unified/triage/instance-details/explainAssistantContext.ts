@@ -2,6 +2,8 @@ import { type ChatContextItem, createAssistantContextItem } from '@grafana/assis
 import { type Labels } from '@grafana/data';
 import { type GrafanaAlertState, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { type IncidentHistoryContext } from './extractIncidentHistoryFromRule';
+
 export interface ExplainAssistantContextParams {
   rule: RulerGrafanaRuleDTO;
   ruleUID: string;
@@ -9,6 +11,7 @@ export interface ExplainAssistantContextParams {
   commonLabels?: Labels;
   instanceState?: GrafanaAlertState;
   description: string;
+  incidentHistory?: IncidentHistoryContext;
 }
 
 function serializeAlertQueries(rule: RulerGrafanaRuleDTO) {
@@ -36,6 +39,7 @@ export function createExplainAssistantContext({
   commonLabels,
   instanceState,
   description,
+  incidentHistory,
 }: ExplainAssistantContextParams): ChatContextItem[] {
   const ruleTitle = rule.grafana_alert.title;
 
@@ -57,6 +61,7 @@ export function createExplainAssistantContext({
           state: instanceState,
         },
         description,
+        ...(incidentHistory ? { incidentHistory } : {}),
       },
     }),
   ];

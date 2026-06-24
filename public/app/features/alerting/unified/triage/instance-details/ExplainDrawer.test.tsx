@@ -25,6 +25,14 @@ jest.mock('./registerExplainAssistantQuestions', () => ({
   registerExplainAssistantQuestions: jest.fn(),
 }));
 
+jest.mock('../../hooks/usePluginBridge', () => ({
+  useIrmPlugin: jest.fn(() => ({
+    pluginId: 'grafana-incident-app',
+    loading: false,
+    installed: true,
+  })),
+}));
+
 jest.mock('@grafana/assistant', () => {
   const actual = jest.requireActual('@grafana/assistant');
   return {
@@ -165,5 +173,29 @@ describe('ExplainDrawer', () => {
       autoSend: false,
       context: mockAssistantContext,
     });
+  });
+
+  it('omits the IRM prompt when the IRM plugin is not installed', async () => {
+    const user = userEvent.setup();
+    const { useIrmPlugin } = jest.requireMock('../../hooks/usePluginBridge');
+    useIrmPlugin.mockReturnValue({
+      pluginId: 'grafana-incident-app',
+      loading: false,
+      installed: false,
+    });
+
+    renderExplainDrawer();
+
+    await user.click(await screen.findByRole('link', { name: /explain with assistant/i }));
+
+    expect(mockRegisterExplainAssistantQuestions).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Show me similar alerts' }),
+        expect.objectContaining({ title: 'Show me the affected systems' }),
+      ])
+    );
+    expect(mockRegisterExplainAssistantQuestions).toHaveBeenCalledWith(
+      expect.not.arrayContaining([expect.objectContaining({ title: 'Show me incident/IRM history' })])
+    );
   });
 });
