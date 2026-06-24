@@ -12,15 +12,42 @@ import { HomeLink } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
+import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
+
 export interface Props {
   handleDockedMenu: () => void;
   onClose: () => void;
+  /** Customisation is available — show the "Customise menu" entry point */
+  canCustomise?: boolean;
+  /** The menu is in customise (edit) mode — show the Reset/Cancel/Done controls instead */
+  editMode?: boolean;
+  /** There is staged customisation to clear — show the Reset control */
+  canReset?: boolean;
+  /** Enter customise mode */
+  onEnterEditMode?: () => void;
+  /** Save the staged customisation and leave customise mode */
+  onSaveEdit?: () => void;
+  /** Discard the staged customisation and leave customise mode */
+  onCancelEdit?: () => void;
+  /** Stage a reset of all customisation back to defaults */
+  onResetToDefault?: () => void;
 }
 
 export const DOCK_MENU_BUTTON_ID = 'dock-menu-button';
 export const MEGA_MENU_HEADER_TOGGLE_ID = 'mega-menu-header-toggle';
+const CUSTOMISE_MENU_BUTTON_ID = 'customise-menu-button';
 
-export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
+export function MegaMenuHeader({
+  handleDockedMenu,
+  onClose,
+  canCustomise,
+  editMode,
+  canReset,
+  onEnterEditMode,
+  onSaveEdit,
+  onCancelEdit,
+  onResetToDefault,
+}: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -31,29 +58,51 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
         <HomeLink homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
-        <OrganizationSwitcher />
+        {/* The org switcher's auto-width control would overflow alongside the wider edit-mode
+            controls (Reset/Cancel/Done), so hide it while customising. */}
+        {!editMode && <OrganizationSwitcher />}
       </Stack>
       <div className={styles.flexGrow} />
-      <IconButton
-        id={DOCK_MENU_BUTTON_ID}
-        className={styles.dockMenuButton}
-        tooltip={
-          state.megaMenuDocked
-            ? t('navigation.megamenu.undock', 'Undock menu')
-            : t('navigation.megamenu.dock', 'Dock menu')
-        }
-        name="web-section-alt"
-        onClick={handleDockedMenu}
-        variant="secondary"
-      />
-      <IconButton
-        aria-label={t('navigation.megamenu.close', 'Close menu')}
-        tooltip={t('navigation.megamenu.close', 'Close menu')}
-        name="times"
-        onClick={onClose}
-        size="lg"
-        variant="secondary"
-      />
+      {editMode ? (
+        <MegaMenuCustomiseControls
+          canReset={canReset}
+          onResetToDefault={onResetToDefault}
+          onCancelEdit={onCancelEdit}
+          onSaveEdit={onSaveEdit}
+        />
+      ) : (
+        <>
+          {canCustomise && (
+            <IconButton
+              id={CUSTOMISE_MENU_BUTTON_ID}
+              tooltip={t('navigation.megamenu.customise', 'Customise menu')}
+              name="sliders-v-alt"
+              onClick={onEnterEditMode}
+              variant="secondary"
+            />
+          )}
+          <IconButton
+            id={DOCK_MENU_BUTTON_ID}
+            className={styles.dockMenuButton}
+            tooltip={
+              state.megaMenuDocked
+                ? t('navigation.megamenu.undock', 'Undock menu')
+                : t('navigation.megamenu.dock', 'Dock menu')
+            }
+            name="web-section-alt"
+            onClick={handleDockedMenu}
+            variant="secondary"
+          />
+          <IconButton
+            aria-label={t('navigation.megamenu.close', 'Close menu')}
+            tooltip={t('navigation.megamenu.close', 'Close menu')}
+            name="times"
+            onClick={onClose}
+            size="lg"
+            variant="secondary"
+          />
+        </>
+      )}
     </div>
   );
 }

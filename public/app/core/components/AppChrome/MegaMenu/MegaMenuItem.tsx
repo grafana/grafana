@@ -23,9 +23,18 @@ interface Props {
   level?: number;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
+  /** Menu is in customise mode: show visibility toggles instead of bookmark pins */
+  editMode?: boolean;
+  /** Whether an item is allowed to be hidden */
+  isHideable?: (item: NavModelItem) => boolean;
+  /** Whether an item's own id is in the in-progress hidden set */
+  isHidden?: (item: NavModelItem) => boolean;
+  onToggleHidden?: (item: NavModelItem, effectivelyHidden: boolean) => void;
+  /** Whether an ancestor of this item is hidden (so this item is implicitly hidden too) */
+  ancestorHidden?: boolean;
   /** This item is a pinned row rendered at the top of the menu */
   pinned?: boolean;
-  /** Customisation is enabled — gates the new pin behaviour; off restores the legacy bookmarks UI */
+  /** Customisation is enabled — gates the new pin/hide behaviour; off restores the legacy bookmarks UI */
   canCustomise?: boolean;
   /** Section-level only: children are being fetched, show placeholders instead of the empty message */
   loadingChildren?: boolean;
@@ -42,6 +51,11 @@ export function MegaMenuItem({
   onClick,
   onPin,
   isPinned,
+  editMode,
+  isHideable,
+  isHidden,
+  onToggleHidden,
+  ancestorHidden,
   pinned,
   canCustomise,
   loadingChildren,
@@ -50,6 +64,9 @@ export function MegaMenuItem({
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
+  // An item is effectively hidden if it's hidden itself or any ancestor is — children of a hidden
+  // parent are greyed out and show the eye-slash icon so individual ones can be revealed.
+  const effectivelyHidden = Boolean(ancestorHidden) || Boolean(isHidden?.(link));
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
@@ -133,6 +150,10 @@ export function MegaMenuItem({
             showPin={showPin}
             itemName={link.text}
             canCustomise={canCustomise}
+            editMode={editMode}
+            isHideable={isHideable?.(link)}
+            isHidden={effectivelyHidden}
+            onToggleHidden={() => onToggleHidden?.(link, effectivelyHidden)}
           >
             <div
               className={cx(styles.labelWrapper, {
@@ -184,6 +205,11 @@ export function MegaMenuItem({
                   level={level + 1}
                   onPin={onPin}
                   isPinned={isPinned}
+                  editMode={pinned ? false : editMode}
+                  isHideable={isHideable}
+                  isHidden={isHidden}
+                  onToggleHidden={onToggleHidden}
+                  ancestorHidden={effectivelyHidden}
                   pinned={pinned}
                   canCustomise={canCustomise}
                 />

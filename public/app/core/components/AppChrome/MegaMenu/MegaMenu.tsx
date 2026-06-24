@@ -41,6 +41,15 @@ export const MegaMenu = memo(
       activeItem,
       isPinned,
       onPinItem,
+      isHideable,
+      isHidden,
+      onToggleHidden,
+      editMode,
+      canReset,
+      onEnterEditMode,
+      onCancelEdit,
+      onSaveEdit,
+      onResetToDefault,
       unpinnedCollapsible,
       showUnpinnedItems,
       setUnpinnedExpanded,
@@ -62,6 +71,11 @@ export const MegaMenu = memo(
         activeItem={activeItem}
         // Pinned-area controls unpin (remove); normal-nav controls pin (add).
         onPin={(item) => onPinItem(item, pinned)}
+        editMode={pinned ? false : editMode}
+        isHideable={isHideable}
+        isHidden={isHidden}
+        onToggleHidden={onToggleHidden}
+        ancestorHidden={false}
         pinned={pinned}
         canCustomise={canCustomise}
         loadingChildren={link.id === 'starred' && starredItemsLoading}
@@ -69,8 +83,8 @@ export const MegaMenu = memo(
       />
     );
 
-    // Pinned layout: the pinned block (if any), then the collapsible rest.
-    const renderPinnedLayout = () => (
+    // Customised layout: the pinned block (if any), then the collapsible rest.
+    const renderCustomisableItems = () => (
       <>
         {pinnedNavItems.length > 0 && (
           <>
@@ -94,7 +108,17 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
+        <MegaMenuHeader
+          handleDockedMenu={handleDockedMenu}
+          onClose={onClose}
+          canCustomise={canCustomise}
+          editMode={editMode}
+          canReset={canReset}
+          onEnterEditMode={onEnterEditMode}
+          onSaveEdit={onSaveEdit}
+          onCancelEdit={onCancelEdit}
+          onResetToDefault={onResetToDefault}
+        />
         <nav className={styles.content}>
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
@@ -107,7 +131,7 @@ export const MegaMenu = memo(
                   {isLoading ? (
                     <MegaMenuSkeleton />
                   ) : canCustomise ? (
-                    renderPinnedLayout()
+                    renderCustomisableItems()
                   ) : (
                     navItems.map((link) => renderNavItem(link))
                   )}

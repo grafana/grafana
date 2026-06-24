@@ -284,9 +284,88 @@ export function partitionNavForPinning(
   return { pinned: buildPinnedTree(items, pinned), rest: removeMovedItems(items, pinned) };
 }
 
+// ----- Hiding -----
+
+// Top-level items that can never be hidden, so users can't customise their way out of the home
+// page or the bookmarks section (itself a customisation surface).
+const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks']);
+
 // Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
 // the logo, so it isn't repeated as a menu item.
 export const NON_MENU_NAV_IDS: Record<string, true> = { profile: true, help: true, [HOME_NAV_ID]: true };
+
+/** Whether an item can be hidden (any depth). Excludes Home/Bookmarks, create actions and starred sub-items. */
+export const isHideable = (item: NavModelItem): boolean =>
+  Boolean(item.id) && !PROTECTED_NAV_IDS.has(item.id ?? '') && !item.isCreateAction && !item.id?.startsWith(ID_PREFIX);
+
+// Children that can be hidden — used when "breaking apart" a hidden parent.
+const hideableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isHideable);
+
+/** Build the normal nav with hidden items removed. A hidden node takes its subtree with it; a
+ * partially-hidden parent keeps its non-hidden children (so all-children-hidden still shows the parent). */
+export function removeHiddenItems(items: NavModelItem[], hidden: Set<string>): NavModelItem[] {
+  return items
+    .filter((item) => !hidden.has(item.id ?? ''))
+    .map((item) => (item.children ? { ...item, children: removeHiddenItems(item.children, hidden) } : item));
+}
+
+/** All descendant ids of an item. */
+function getDescendantIds(item: NavModelItem): string[] {
+  return (item.children ?? []).flatMap((child) => [...(child.id ? [child.id] : []), ...getDescendantIds(child)]);
+}
+
+/** The chain of nodes from a top-level item down to (and including) the item with `id`. */
+function findNodePath(items: NavModelItem[], id: string): NavModelItem[] | null {
+  for (const item of items) {
+    if (item.id === id) {
+      return [item];
+    }
+    const childPath = item.children ? findNodePath(item.children, id) : null;
+    if (childPath) {
+      return [item, ...childPath];
+    }
+  }
+  return null;
+}
+
+/** Hide an item: add its id and drop any of its now-redundant descendant ids. Never adds the parent. */
+export function hideItem(hidden: string[], items: NavModelItem[], id: string): string[] {
+  const node = findNodePath(items, id)?.at(-1);
+  const descendants = new Set(node ? getDescendantIds(node) : []);
+  return [...hidden.filter((h) => h !== id && !descendants.has(h)), id];
+}
+
+/**
+ * Reveal an item. If it's hidden via an ancestor, "break apart" that hide: remove the hidden
+ * ancestor and hide every off-path sibling down the path to the item, so only the item's path is
+ * revealed and the rest of the hidden subtree stays hidden. If it was only explicitly hidden,
+ * this just removes its id.
+ */
+export function revealItem(hidden: string[], items: NavModelItem[], id: string): string[] {
+  const path = findNodePath(items, id);
+  const next = new Set(hidden);
+  next.delete(id);
+  if (!path) {
+    return [...next];
+  }
+  let underHidden = false;
+  for (let i = 0; i < path.length - 1; i++) {
+    const node = path[i];
+    const onPathChildId = path[i + 1].id;
+    if (node.id && next.has(node.id)) {
+      next.delete(node.id);
+      underHidden = true;
+    }
+    if (underHidden) {
+      for (const child of hideableChildren(node)) {
+        if (child.id && child.id !== onPathChildId) {
+          next.add(child.id);
+        }
+      }
+    }
+  }
+  return [...next];
+}
 
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
   for (const item of nodes) {
