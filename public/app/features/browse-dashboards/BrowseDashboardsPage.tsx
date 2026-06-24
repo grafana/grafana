@@ -7,6 +7,7 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
@@ -15,6 +16,7 @@ import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
+import { getDashboardTemplatesTab } from '../dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
@@ -52,6 +54,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
+  const isCustomDashboardTemplatesEnabled =
+    useFlagGrafanaCustomDashboardTemplates() && getDashboardTemplatesTab() !== null;
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
   useEffect(() => {
@@ -210,7 +214,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             }
           </AutoSizer>
         </div>
-        {config.featureToggles.dashboardTemplates && <TemplateDashboardModal />}
+        {(config.featureToggles.dashboardTemplates || isCustomDashboardTemplatesEnabled) && <TemplateDashboardModal />}
       </Page.Contents>
       {showRenameDrawer && folderDTO && (
         <Drawer

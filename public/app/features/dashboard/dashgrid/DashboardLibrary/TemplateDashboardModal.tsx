@@ -65,8 +65,9 @@ export const TemplateDashboardModal = () => {
     if (!isOpen) {
       grafanaLoadedFiredRef.current = false;
       customLoadedFiredRef.current = false;
+      setActiveTab(showCustomTemplates ? 'custom' : 'grafana');
     }
-  }, [isOpen]);
+  }, [isOpen, showCustomTemplates]);
 
   const showGrafanaTemplates = testDataSource && (dashboards.length > 0 || loading);
 

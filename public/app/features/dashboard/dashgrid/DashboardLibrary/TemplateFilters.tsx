@@ -60,6 +60,7 @@ export function TemplateFilters({
           getSortOptions={getSortOptions}
           placeholder={t('dashboard-library.custom-dashboard-template-filters.sort-placeholder', 'Sort')}
           isClearable
+          width={30}
         />
       </Stack>
     </Stack>
