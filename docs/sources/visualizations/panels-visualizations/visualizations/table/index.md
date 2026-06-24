@@ -210,7 +210,7 @@ This option is only available when you're editing the panel.
 ## Nested tables
 
 {{< admonition type="note" >}}
-The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+The nested table overrides feature is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
 To use these features, enable the `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
 {{< /admonition >}}
