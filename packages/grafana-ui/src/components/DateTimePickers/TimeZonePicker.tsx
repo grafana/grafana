@@ -66,7 +66,7 @@ export const TimeZonePicker = (props: Props) => {
     <Select
       inputId={inputId}
       value={selected}
-      placeholder={t('time-picker.zone.select-search-input', 'Type to search (country, city, abbreviation)')}
+      placeholder={t('time-picker.zone.select-search-input', 'Type to search (city, abbreviation, UTC offset)')}
       autoFocus={autoFocus}
       menuShouldPortal={menuShouldPortal}
       openMenuOnFocus={openMenuOnFocus}
@@ -176,11 +176,6 @@ const getSearchIndex = (label: string, info: TimeZoneInfo, timestamp: number): s
 
   if (label !== info.zone) {
     parts.push(label.toLowerCase());
-  }
-
-  for (const country of info.countries) {
-    parts.push(country.name.toLowerCase());
-    parts.push(country.code.toLowerCase());
   }
 
   return parts.join('|');

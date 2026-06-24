@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2, type TimeZone, dateTimeFormat } from '@grafana/data';
+import { type GrafanaTheme2, getTimeZoneInfo, getZone } from '@grafana/data';
+import { type TimeZone } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
@@ -18,20 +19,23 @@ export const TimeZoneOffset = (props: Props) => {
     return null;
   }
 
-  return (
-    <>
-      <span className={cx(styles.offset, className)}>{formatUtcOffset(timestamp, timeZone)}</span>
-    </>
-  );
+  return <span className={cx(styles.offset, className)}>{formatUtcOffset(timestamp, timeZone)}</span>;
 };
 
 export const formatUtcOffset = (timestamp: number, timeZone: TimeZone): string => {
-  const offset = dateTimeFormat(timestamp, {
-    timeZone,
-    format: 'Z',
-  });
+  const ianaName = getTimeZoneInfo(timeZone, timestamp)?.ianaName ?? timeZone;
+  const offsetInMinutes = getZone(ianaName)?.utcOffset(timestamp);
 
-  return `UTC${offset}`;
+  if (offsetInMinutes === undefined) {
+    return '';
+  }
+
+  const sign = offsetInMinutes <= 0 ? '+' : '-';
+  const absoluteOffset = Math.abs(offsetInMinutes);
+  const hours = String(Math.floor(absoluteOffset / 60)).padStart(2, '0');
+  const minutes = String(absoluteOffset % 60).padStart(2, '0');
+
+  return `UTC${sign}${hours}:${minutes}`;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

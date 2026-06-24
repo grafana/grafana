@@ -1,5 +1,4 @@
 import { memoize } from 'lodash';
-import moment from 'moment-timezone';
 
 import { type TimeZone } from '@grafana/schema';
 
@@ -25,10 +24,6 @@ export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   }
 };
 
-export const getZone = (timeZone: string) => {
-  return moment.tz.zone(timeZone);
-};
-
 export interface TimeZoneCountry {
   code: string;
   name: string;
@@ -46,6 +41,24 @@ export interface GroupedTimeZones {
   name: string;
   zones: TimeZone[];
 }
+
+interface TimeZoneOffsetInfo {
+  name: string;
+  utcOffset: (timestamp: number) => number;
+}
+
+export const getZone = (timeZone: string): TimeZoneOffsetInfo | undefined => {
+  const ianaName = getCanonicalTimeZone(timeZone);
+
+  if (!ianaName) {
+    return undefined;
+  }
+
+  return {
+    name: ianaName,
+    utcOffset: (timestamp: number) => getTimeZoneOffsetInMinutes(timestamp, ianaName),
+  };
+};
 
 export const getTimeZoneInfo = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
   const internal = mapInternal(zone, timestamp);
@@ -66,16 +79,7 @@ export const getTimeZones = memoize((includeInternal: boolean | InternalTimeZone
     initial.push(...includeInternal);
   }
 
-  return moment.tz.names().reduce((zones: TimeZone[], zone: string) => {
-    const countriesForZone = countriesByTimeZone[zone];
-
-    if (!Array.isArray(countriesForZone) || countriesForZone.length === 0) {
-      return zones;
-    }
-
-    zones.push(zone);
-    return zones;
-  }, initial);
+  return initial.concat(Intl.supportedValuesOf('timeZone') ?? []);
 });
 
 export const getTimeZoneGroups = memoize(
@@ -122,11 +126,11 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
 
     case InternalTimeZones.default: {
       const tz = getTimeZone();
-      const isInternal = tz === 'browser' || tz === 'utc';
+      const isInternal = tz === InternalTimeZones.localBrowserTime || tz === InternalTimeZones.utc;
       const info = isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp);
 
       return {
-        countries: countriesByTimeZone[tz] ?? [],
+        countries: [],
         abbreviation: '',
         offsetInMins: 0,
         ...info,
@@ -137,11 +141,11 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
     }
 
     case InternalTimeZones.localBrowserTime: {
-      const tz = moment.tz.guess(true);
+      const tz = getBrowserTimeZone();
       const info = mapToInfo(tz, timestamp);
 
       return {
-        countries: countriesByTimeZone[tz] ?? [],
+        countries: [],
         abbreviation: 'Your local time',
         offsetInMins: new Date().getTimezoneOffset(),
         ...info,
@@ -156,294 +160,253 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
   }
 };
 
-const abbrevationWithoutOffset = (abbrevation: string): string => {
-  if (/^(\+|\-).+/.test(abbrevation)) {
-    return '';
-  }
-  return abbrevation;
-};
-
 const mapToInfo = (timeZone: TimeZone, timestamp: number): TimeZoneInfo | undefined => {
-  const momentTz = moment.tz.zone(timeZone);
-  if (!momentTz) {
+  const ianaName = getCanonicalTimeZone(timeZone);
+
+  if (!ianaName) {
     return undefined;
   }
 
   return {
     name: timeZone,
-    ianaName: momentTz.name,
+    ianaName,
     zone: timeZone,
-    countries: countriesByTimeZone[timeZone] ?? [],
-    abbreviation: abbrevationWithoutOffset(momentTz.abbr(timestamp)),
-    offsetInMins: momentTz.utcOffset(timestamp),
+    countries: [],
+    abbreviation: getTimeZoneAbbreviation(timestamp, ianaName),
+    offsetInMins: getTimeZoneOffsetInMinutes(timestamp, ianaName),
   };
 };
 
-// Country names by ISO 3166-1-alpha-2 code
-const countryByCode: Record<string, string> = {
-  AF: 'Afghanistan',
-  AX: 'Aland Islands',
-  AL: 'Albania',
-  DZ: 'Algeria',
-  AS: 'American Samoa',
-  AD: 'Andorra',
-  AO: 'Angola',
-  AI: 'Anguilla',
-  AQ: 'Antarctica',
-  AG: 'Antigua And Barbuda',
-  AR: 'Argentina',
-  AM: 'Armenia',
-  AW: 'Aruba',
-  AU: 'Australia',
-  AT: 'Austria',
-  AZ: 'Azerbaijan',
-  BS: 'Bahamas',
-  BH: 'Bahrain',
-  BD: 'Bangladesh',
-  BB: 'Barbados',
-  BY: 'Belarus',
-  BE: 'Belgium',
-  BZ: 'Belize',
-  BJ: 'Benin',
-  BM: 'Bermuda',
-  BT: 'Bhutan',
-  BO: 'Bolivia',
-  BA: 'Bosnia And Herzegovina',
-  BW: 'Botswana',
-  BV: 'Bouvet Island',
-  BR: 'Brazil',
-  IO: 'British Indian Ocean Territory',
-  BN: 'Brunei Darussalam',
-  BG: 'Bulgaria',
-  BF: 'Burkina Faso',
-  BI: 'Burundi',
-  KH: 'Cambodia',
-  CM: 'Cameroon',
-  CA: 'Canada',
-  CV: 'Cape Verde',
-  KY: 'Cayman Islands',
-  CF: 'Central African Republic',
-  TD: 'Chad',
-  CL: 'Chile',
-  CN: 'China',
-  CX: 'Christmas Island',
-  CC: 'Cocos (Keeling) Islands',
-  CO: 'Colombia',
-  KM: 'Comoros',
-  CG: 'Congo',
-  CD: 'Congo, Democratic Republic',
-  CK: 'Cook Islands',
-  CR: 'Costa Rica',
-  CI: "Cote D'Ivoire",
-  HR: 'Croatia',
-  CU: 'Cuba',
-  CY: 'Cyprus',
-  CZ: 'Czech Republic',
-  DK: 'Denmark',
-  DJ: 'Djibouti',
-  DM: 'Dominica',
-  DO: 'Dominican Republic',
-  EC: 'Ecuador',
-  EG: 'Egypt',
-  SV: 'El Salvador',
-  GQ: 'Equatorial Guinea',
-  ER: 'Eritrea',
-  EE: 'Estonia',
-  ET: 'Ethiopia',
-  FK: 'Falkland Islands (Malvinas)',
-  FO: 'Faroe Islands',
-  FJ: 'Fiji',
-  FI: 'Finland',
-  FR: 'France',
-  GF: 'French Guiana',
-  PF: 'French Polynesia',
-  TF: 'French Southern Territories',
-  GA: 'Gabon',
-  GM: 'Gambia',
-  GE: 'Georgia',
-  DE: 'Germany',
-  GH: 'Ghana',
-  GI: 'Gibraltar',
-  GR: 'Greece',
-  GL: 'Greenland',
-  GD: 'Grenada',
-  GP: 'Guadeloupe',
-  GU: 'Guam',
-  GT: 'Guatemala',
-  GG: 'Guernsey',
-  GN: 'Guinea',
-  GW: 'Guinea-Bissau',
-  GY: 'Guyana',
-  HT: 'Haiti',
-  HM: 'Heard Island & Mcdonald Islands',
-  VA: 'Holy See (Vatican City State)',
-  HN: 'Honduras',
-  HK: 'Hong Kong',
-  HU: 'Hungary',
-  IS: 'Iceland',
-  IN: 'India',
-  ID: 'Indonesia',
-  IR: 'Iran (Islamic Republic Of)',
-  IQ: 'Iraq',
-  IE: 'Ireland',
-  IM: 'Isle Of Man',
-  IL: 'Israel',
-  IT: 'Italy',
-  JM: 'Jamaica',
-  JP: 'Japan',
-  JE: 'Jersey',
-  JO: 'Jordan',
-  KZ: 'Kazakhstan',
-  KE: 'Kenya',
-  KI: 'Kiribati',
-  KR: 'Korea',
-  KW: 'Kuwait',
-  KG: 'Kyrgyzstan',
-  LA: "Lao People's Democratic Republic",
-  LV: 'Latvia',
-  LB: 'Lebanon',
-  LS: 'Lesotho',
-  LR: 'Liberia',
-  LY: 'Libyan Arab Jamahiriya',
-  LI: 'Liechtenstein',
-  LT: 'Lithuania',
-  LU: 'Luxembourg',
-  MO: 'Macao',
-  MK: 'Macedonia',
-  MG: 'Madagascar',
-  MW: 'Malawi',
-  MY: 'Malaysia',
-  MV: 'Maldives',
-  ML: 'Mali',
-  MT: 'Malta',
-  MH: 'Marshall Islands',
-  MQ: 'Martinique',
-  MR: 'Mauritania',
-  MU: 'Mauritius',
-  YT: 'Mayotte',
-  MX: 'Mexico',
-  FM: 'Micronesia (Federated States Of)',
-  MD: 'Moldova',
-  MC: 'Monaco',
-  MN: 'Mongolia',
-  ME: 'Montenegro',
-  MS: 'Montserrat',
-  MA: 'Morocco',
-  MZ: 'Mozambique',
-  MM: 'Myanmar',
-  NA: 'Namibia',
-  NR: 'Nauru',
-  NP: 'Nepal',
-  NL: 'Netherlands',
-  AN: 'Netherlands Antilles',
-  NC: 'New Caledonia',
-  NZ: 'New Zealand',
-  NI: 'Nicaragua',
-  NE: 'Niger',
-  NG: 'Nigeria',
-  NU: 'Niue',
-  NF: 'Norfolk Island',
-  MP: 'Northern Mariana Islands',
-  NO: 'Norway',
-  OM: 'Oman',
-  PK: 'Pakistan',
-  PW: 'Palau',
-  PS: 'Palestine, State of',
-  PA: 'Panama',
-  PG: 'Papua New Guinea',
-  PY: 'Paraguay',
-  PE: 'Peru',
-  PH: 'Philippines',
-  PN: 'Pitcairn',
-  PL: 'Poland',
-  PT: 'Portugal',
-  PR: 'Puerto Rico',
-  QA: 'Qatar',
-  RE: 'Reunion',
-  RO: 'Romania',
-  RU: 'Russian Federation',
-  RW: 'Rwanda',
-  BL: 'Saint Barthelemy',
-  SH: 'Saint Helena',
-  KN: 'Saint Kitts And Nevis',
-  LC: 'Saint Lucia',
-  MF: 'Saint Martin',
-  PM: 'Saint Pierre And Miquelon',
-  VC: 'Saint Vincent And Grenadines',
-  WS: 'Samoa',
-  SM: 'San Marino',
-  ST: 'Sao Tome And Principe',
-  SA: 'Saudi Arabia',
-  SN: 'Senegal',
-  RS: 'Serbia',
-  SC: 'Seychelles',
-  SL: 'Sierra Leone',
-  SG: 'Singapore',
-  SK: 'Slovakia',
-  SI: 'Slovenia',
-  SB: 'Solomon Islands',
-  SO: 'Somalia',
-  ZA: 'South Africa',
-  GS: 'South Georgia And Sandwich Isl.',
-  ES: 'Spain',
-  LK: 'Sri Lanka',
-  SD: 'Sudan',
-  SR: 'Suriname',
-  SJ: 'Svalbard And Jan Mayen',
-  SZ: 'Swaziland',
-  SE: 'Sweden',
-  CH: 'Switzerland',
-  SY: 'Syrian Arab Republic',
-  TW: 'Taiwan',
-  TJ: 'Tajikistan',
-  TZ: 'Tanzania',
-  TH: 'Thailand',
-  TL: 'Timor-Leste',
-  TG: 'Togo',
-  TK: 'Tokelau',
-  TO: 'Tonga',
-  TT: 'Trinidad And Tobago',
-  TN: 'Tunisia',
-  TR: 'Turkey',
-  TM: 'Turkmenistan',
-  TC: 'Turks And Caicos Islands',
-  TV: 'Tuvalu',
-  UG: 'Uganda',
-  UA: 'Ukraine',
-  AE: 'United Arab Emirates',
-  GB: 'United Kingdom',
-  US: 'United States',
-  UM: 'United States Outlying Islands',
-  UY: 'Uruguay',
-  UZ: 'Uzbekistan',
-  VU: 'Vanuatu',
-  VE: 'Venezuela',
-  VN: 'Viet Nam',
-  VG: 'Virgin Islands, British',
-  VI: 'Virgin Islands, U.S.',
-  WF: 'Wallis And Futuna',
-  EH: 'Western Sahara',
-  YE: 'Yemen',
-  ZM: 'Zambia',
-  ZW: 'Zimbabwe',
+const getBrowserTimeZone = (): string => {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
 };
 
-const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
-  return moment.tz.countries().reduce<Record<string, TimeZoneCountry[]>>((all, code) => {
-    const timeZones = moment.tz.zonesForCountry(code);
-    return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
-      if (!all[timeZone]) {
-        all[timeZone] = [];
-      }
+const getCanonicalTimeZone = (timeZone: string): string | undefined => {
+  try {
+    return Intl.DateTimeFormat('en-US', { timeZone }).resolvedOptions().timeZone;
+  } catch {
+    return undefined;
+  }
+};
 
-      const name = countryByCode[code];
+const getTimeZoneOffsetInMinutes = (timestamp: number, timeZone: string): number => {
+  const offset = getTimeZoneNamePart(timestamp, timeZone, 'shortOffset');
+  const match = /^(?:GMT|UTC)([+-])(\d{1,2})(?::?(\d{2}))?$/.exec(offset);
 
-      if (!name) {
-        return all;
-      }
+  if (!match) {
+    return 0;
+  }
 
-      all[timeZone].push({ code, name });
-      return all;
-    }, all);
-  }, {});
-})();
+  const [, sign, hours, minutes = '0'] = match;
+  const offsetInMinutes = Number(hours) * 60 + Number(minutes);
+
+  return sign === '+' ? -offsetInMinutes : offsetInMinutes;
+};
+
+const getTimeZoneAbbreviation = (timestamp: number, timeZone: string): string => {
+  const shortName = getTimeZoneNamePart(timestamp, timeZone, 'short');
+
+  if (isTimeZoneAbbreviation(shortName)) {
+    return shortName;
+  }
+
+  const longName = getTimeZoneNamePart(timestamp, timeZone, 'long');
+  const abbreviationFromName = getTimeZoneNameAcronym(longName);
+
+  if (isTimeZoneAbbreviation(abbreviationFromName)) {
+    return abbreviationFromName;
+  }
+
+  return getKnownAbbreviationForTimeZone(timeZone) ?? '';
+};
+
+const getTimeZoneNamePart = (
+  timestamp: number,
+  timeZone: string,
+  timeZoneName: Intl.DateTimeFormatOptions['timeZoneName']
+): string => {
+  return (
+    new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      timeZoneName,
+    })
+      .formatToParts(timestamp)
+      .find((part) => part.type === 'timeZoneName')?.value ?? ''
+  );
+};
+
+const isTimeZoneAbbreviation = (value: string): boolean => {
+  return timeZoneAbbreviations.has(value);
+};
+
+const getTimeZoneNameAcronym = (timeZoneName: string): string => {
+  return timeZoneName
+    .split(/[\s&()-]+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+};
+
+const getKnownAbbreviationForTimeZone = (timeZone: string): string | undefined => {
+  return Object.entries(timeZoneNamesByAbbreviation).find(([, timeZones]) => timeZones.includes(timeZone))?.[0];
+};
+
+const timeZoneNamesByAbbreviation: Record<string, string[]> = {
+  ACDT: ['Australia/Adelaide'],
+  ACST: ['Australia/Adelaide', 'Australia/Darwin'],
+  ACWST: ['Australia/Eucla'],
+  ADT: ['America/Halifax'],
+  AEDT: ['Australia/Sydney', 'Australia/Melbourne'],
+  AEST: ['Australia/Sydney', 'Australia/Melbourne', 'Australia/Brisbane'],
+  AFT: ['Asia/Kabul'],
+  AKDT: ['America/Anchorage'],
+  AKST: ['America/Anchorage'],
+  ALMT: ['Asia/Almaty'],
+  AMST: ['America/Manaus'],
+  AMT: ['America/Manaus', 'Asia/Yerevan'],
+  ANAT: ['Asia/Anadyr'],
+  ART: ['America/Argentina/Buenos_Aires'],
+  AST: ['America/Halifax', 'America/Puerto_Rico'],
+  AWST: ['Australia/Perth'],
+  AZOST: ['Atlantic/Azores'],
+  AZOT: ['Atlantic/Azores'],
+  AZT: ['Asia/Baku'],
+  BNT: ['Asia/Brunei'],
+  BOT: ['America/La_Paz'],
+  BRST: ['America/Sao_Paulo'],
+  BRT: ['America/Sao_Paulo'],
+  BST: ['Europe/London', 'Asia/Dhaka'],
+  CAT: ['Africa/Maputo'],
+  CDT: ['America/Chicago', 'America/Havana'],
+  CEST: ['Europe/Stockholm', 'Europe/Berlin', 'Europe/Paris', 'Europe/Rome'],
+  CET: ['Europe/Stockholm', 'Europe/Berlin', 'Europe/Paris', 'Europe/Rome', 'Africa/Algiers'],
+  CHADT: ['Pacific/Chatham'],
+  CHAST: ['Pacific/Chatham'],
+  CHST: ['Pacific/Guam'],
+  CKT: ['Pacific/Rarotonga'],
+  CLST: ['America/Santiago'],
+  CLT: ['America/Santiago'],
+  COT: ['America/Bogota'],
+  CST: ['America/Chicago', 'America/Havana', 'Asia/Shanghai'],
+  CVT: ['Atlantic/Cape_Verde'],
+  CXT: ['Indian/Christmas'],
+  DAVT: ['Antarctica/Davis'],
+  DDUT: ['Antarctica/DumontDUrville'],
+  EASST: ['Pacific/Easter'],
+  EAST: ['Pacific/Easter'],
+  EAT: ['Africa/Nairobi'],
+  ECT: ['America/Guayaquil'],
+  EDT: ['America/New_York'],
+  EEST: ['Europe/Bucharest', 'Europe/Kyiv', 'Europe/Helsinki'],
+  EET: ['Europe/Bucharest', 'Europe/Kyiv', 'Europe/Helsinki', 'Africa/Cairo'],
+  EST: ['America/New_York', 'America/Panama'],
+  FJT: ['Pacific/Fiji'],
+  FKST: ['Atlantic/Stanley'],
+  FKT: ['Atlantic/Stanley'],
+  GALT: ['Pacific/Galapagos'],
+  GAMT: ['Pacific/Gambier'],
+  GET: ['Asia/Tbilisi'],
+  GFT: ['America/Cayenne'],
+  GILT: ['Pacific/Tarawa'],
+  GMT: ['Etc/GMT', 'Europe/London'],
+  GST: ['Asia/Dubai', 'Atlantic/South_Georgia'],
+  GYT: ['America/Guyana'],
+  HDT: ['Pacific/Honolulu'],
+  HKT: ['Asia/Hong_Kong'],
+  HOVT: ['Asia/Hovd'],
+  HST: ['Pacific/Honolulu'],
+  ICT: ['Asia/Bangkok'],
+  IDT: ['Asia/Jerusalem'],
+  IRDT: ['Asia/Tehran'],
+  IRKT: ['Asia/Irkutsk'],
+  IRST: ['Asia/Tehran'],
+  IST: ['Asia/Kolkata', 'Europe/Dublin', 'Asia/Jerusalem'],
+  JST: ['Asia/Tokyo'],
+  KGT: ['Asia/Bishkek'],
+  KOST: ['Pacific/Kosrae'],
+  KRAT: ['Asia/Krasnoyarsk'],
+  KST: ['Asia/Seoul'],
+  LHDT: ['Australia/Lord_Howe'],
+  LHST: ['Australia/Lord_Howe'],
+  LINT: ['Pacific/Kiritimati'],
+  MAGT: ['Asia/Magadan'],
+  MART: ['Pacific/Marquesas'],
+  MDT: ['America/Denver'],
+  MHT: ['Pacific/Majuro'],
+  MMT: ['Asia/Yangon'],
+  MSK: ['Europe/Moscow'],
+  MST: ['America/Denver', 'America/Phoenix'],
+  MUT: ['Indian/Mauritius'],
+  MVT: ['Indian/Maldives'],
+  MYT: ['Asia/Kuala_Lumpur'],
+  NCT: ['Pacific/Noumea'],
+  NDT: ['America/St_Johns'],
+  NFDT: ['Pacific/Norfolk'],
+  NFT: ['Pacific/Norfolk'],
+  NOVT: ['Asia/Novosibirsk'],
+  NPT: ['Asia/Kathmandu'],
+  NRT: ['Pacific/Nauru'],
+  NST: ['America/St_Johns'],
+  NUT: ['Pacific/Niue'],
+  NZDT: ['Pacific/Auckland'],
+  NZST: ['Pacific/Auckland'],
+  OMST: ['Asia/Omsk'],
+  PDT: ['America/Los_Angeles'],
+  PET: ['America/Lima'],
+  PGT: ['Pacific/Port_Moresby'],
+  PHT: ['Asia/Manila'],
+  PHOT: ['Pacific/Enderbury'],
+  PKT: ['Asia/Karachi'],
+  PMDT: ['America/Miquelon'],
+  PMST: ['America/Miquelon'],
+  PONT: ['Pacific/Pohnpei'],
+  PST: ['America/Los_Angeles', 'Pacific/Pitcairn'],
+  PWT: ['Pacific/Palau'],
+  PYST: ['America/Asuncion'],
+  PYT: ['America/Asuncion'],
+  RET: ['Indian/Reunion'],
+  SAKT: ['Asia/Sakhalin'],
+  SAMT: ['Europe/Samara'],
+  SAST: ['Africa/Johannesburg'],
+  SBT: ['Pacific/Guadalcanal'],
+  SCT: ['Indian/Mahe'],
+  SDT: ['Pacific/Apia'],
+  SGT: ['Asia/Singapore'],
+  SLST: ['Asia/Colombo'],
+  SRT: ['America/Paramaribo'],
+  SST: ['Pacific/Apia', 'Pacific/Pago_Pago'],
+  SYOT: ['Antarctica/Syowa'],
+  TAHT: ['Pacific/Tahiti'],
+  TFT: ['Indian/Kerguelen'],
+  TJT: ['Asia/Dushanbe'],
+  TKT: ['Pacific/Fakaofo'],
+  TLT: ['Asia/Dili'],
+  TMT: ['Asia/Ashgabat'],
+  TOT: ['Pacific/Tongatapu'],
+  TVT: ['Pacific/Funafuti'],
+  UTC: ['UTC'],
+  UYT: ['America/Montevideo'],
+  UZT: ['Asia/Tashkent'],
+  VET: ['America/Caracas'],
+  VLAT: ['Asia/Vladivostok'],
+  VOLT: ['Europe/Volgograd'],
+  VOST: ['Antarctica/Vostok'],
+  VUT: ['Pacific/Efate'],
+  WAKT: ['Pacific/Wake'],
+  WAT: ['Africa/Lagos'],
+  WEST: ['Atlantic/Canary', 'Europe/Lisbon'],
+  WET: ['Atlantic/Canary', 'Europe/Lisbon'],
+  WFT: ['Pacific/Wallis'],
+  WGST: ['America/Godthab'],
+  WGT: ['America/Godthab'],
+  WIB: ['Asia/Jakarta'],
+  WIT: ['Asia/Jayapura'],
+  WITA: ['Asia/Makassar'],
+  WST: ['Africa/El_Aaiun'],
+  WT: ['Africa/El_Aaiun'],
+  YAKT: ['Asia/Yakutsk'],
+  YEKT: ['Asia/Yekaterinburg'],
+};
+
+const timeZoneAbbreviations = new Set(Object.keys(timeZoneNamesByAbbreviation));
