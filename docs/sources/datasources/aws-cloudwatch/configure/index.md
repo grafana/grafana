@@ -394,3 +394,50 @@ datasources:
       assumeRoleArn: arn:aws:iam::123456789012:root
       defaultRegion: eu-west-2
 ```
+
+### Configure with Terraform
+
+You can configure the CloudWatch data source using [Terraform](https://www.terraform.io/) with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+For more information about provisioning resources with Terraform, refer to [Grafana as code using Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/).
+
+The following example uses the **Access and secret key** authentication method:
+
+```hcl
+resource "grafana_data_source" "cloudwatch" {
+  name = "CloudWatch"
+  type = "cloudwatch"
+
+  json_data_encoded = jsonencode({
+    authType      = "keys"
+    defaultRegion = "eu-west-2"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    accessKey = "<YOUR_ACCESS_KEY>"
+    secretKey = "<YOUR_SECRET_KEY>"
+  })
+}
+```
+
+The following example uses the **AWS SDK Default** authentication method with an assumed role:
+
+```hcl
+resource "grafana_data_source" "cloudwatch" {
+  name = "CloudWatch"
+  type = "cloudwatch"
+
+  json_data_encoded = jsonencode({
+    authType      = "default"
+    assumeRoleArn = "arn:aws:iam::123456789012:role/<ROLE_NAME>"
+    defaultRegion = "eu-west-2"
+  })
+}
+```
+
+Replace the placeholders with your own values:
+
+- `<YOUR_ACCESS_KEY>` and `<YOUR_SECRET_KEY>`: The AWS access key ID and secret access key for the **Access and secret key** method.
+- `<ROLE_NAME>`: The name of the IAM role to assume.
+
+For all available configuration options, refer to the [Grafana provider data source resource documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source).
