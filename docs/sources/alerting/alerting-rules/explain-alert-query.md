@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/explain-alert-query/
-description: Use the Explain toggle in the alert rule form to interpret the query and alert condition while creating or editing a rule.
+description: Use the Explain toggle while creating or editing an alert rule to open Grafana Assistant for the query and condition.
 keywords:
   - grafana
   - alerting
@@ -24,42 +24,23 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
-  search-related-context:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/search-related-context/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/search-related-context/
-  alerts-page:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/alerts-page/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/alerts-page/
 ---
 
 {{< docs/public-preview product="Explain alert queries" >}}
 
 # Explain alert queries
 
-In **2. Define query and alert condition**, enable the **Explain** toggle to get an Assistant interpretation of the query and alert condition while you create or edit a Grafana-managed alert rule.
+While you create or edit a Grafana-managed alert rule, turn on **Explain** in **2. Define query and alert condition** to open Grafana Assistant for the query and alert condition.
 
-Use Explain to understand what the rule measures before you autofill **Summary** and **Description** in **6. Configure notification message**.
+## Use Explain
 
-## Enable Explain
-
-1. Open **Alerts & IRM** → **Alerting** → **Alert rules** → **New alert rule** or **Edit** on an existing rule.
-1. In **2. Define query and alert condition**, turn on the **Explain** toggle above the query editor.
+1. Open **Alerts & IRM** → **Alerting** → **Alert rules** → **New alert rule** or **Edit**.
+1. In **2. Define query and alert condition**, turn on **Explain** above the query editor.
 1. Enter or update the query and alert condition.
-1. Review the Explain output for the query, threshold, and evaluation context.
+1. Review the Assistant response.
 
-## Use with Autofill
+## What you get
 
-Explain helps you validate the query logic during rule authoring. When you are ready to add notification context:
+Assistant helps you understand what the rule measures and when it fires before you add notification text.
 
-1. Continue to **6. Configure notification message**.
-1. Click **Autofill** to generate **Summary** and **Description** from the rule configuration.
-
-Refer to [Require and autofill annotations](ref:generate-required-annotations).
-
-{{< admonition type="note" >}}
-To find related firing notifications when triaging an instance on the [Alerts page](ref:alerts-page), use [Search for related context](ref:search-related-context). That feature searches notification history by correlation labels — it is separate from the Explain toggle in the alert rule form.
-{{< /admonition >}}
+When you are ready, continue to **6. Configure notification message** and click **Autofill** or enter **Summary** and **Description** manually. Refer to [Require and autofill annotations](ref:generate-required-annotations).

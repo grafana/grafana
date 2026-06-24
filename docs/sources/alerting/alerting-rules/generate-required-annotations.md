@@ -32,11 +32,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/explain-alert-query/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/explain-alert-query/
-  search-related-context:
+  explain-firing-alerts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/search-related-context/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/explain-firing-alerts/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/search-related-context/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/explain-firing-alerts/
   provision-alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/
@@ -92,7 +92,7 @@ Review and edit the generated text before saving.
 
 To preview how Assistant interprets the query before autofill, enable **Explain** in **2. Define query and alert condition**. Refer to [Explain alert queries](ref:explain-alert-query).
 
-When triaging a firing instance on the **Alerts** page, use [Search for related context](ref:search-related-context) to find other notifications that share correlation labels.
+On the **Alerts** page, click **Explain** on a firing instance to open Grafana Assistant. Refer to [Explain firing alerts](ref:explain-firing-alerts).
 
 ## Export updated annotations
 

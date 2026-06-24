@@ -109,7 +109,7 @@ Hackathon features are documented in the existing product doc trees:
 | -------------------- | --------------------------------- | -------------------------------------------------------------------------------------- |
 | **Grafana Alerting** | Required & autofill annotations   | `docs/sources/alerting/alerting-rules/generate-required-annotations.md`                |
 | **Grafana Alerting** | Explain alert queries (rule form) | `docs/sources/alerting/alerting-rules/explain-alert-query.md`                          |
-| **Grafana Alerting** | Search for related context        | `docs/sources/alerting/monitor-status/search-related-context.md`                       |
+| **Grafana Alerting** | Explain firing alerts             | `docs/sources/alerting/monitor-status/explain-firing-alerts.md`                        |
 | **Grafana Alerting** | Find under-documented alerts      | `docs/sources/alerting/alerting-rules/find-under-documented-alerts.md`                 |
 | **Grafana IRM**      | Alert usefulness check-in         | `irm/docs/sources/irm/manage-incidents/resolve-and-learn/alert-usefulness-check-in.md` |
 | **Grafana IRM**      | Incident context for alerts       | `irm/docs/sources/irm/respond-to-alerts/incident-context-for-alerts.md`                |

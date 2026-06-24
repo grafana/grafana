@@ -16,16 +16,11 @@ labels:
     - enterprise
     - oss
 refs:
-  view-active-notifications:
+  explain-firing-alerts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-active-notifications/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/explain-firing-alerts/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-active-notifications/
-  search-related-context:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/search-related-context/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/search-related-context/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/explain-firing-alerts/
 ---
 
 {{< docs/public-preview product="Alerts page" >}}
@@ -56,6 +51,6 @@ To filter by specific label values, click the **Filters** field and select a lab
 
 You can also select a time range from the time picker to further adjust your results. Click the **time range** field and enter an absolute time range or select a period from the quick ranges list to apply a new time window to the display results.
 
-## Search for related context
+## Explain firing alerts
 
-When an instance has sparse annotations, use **Search for related context** from the instance details drawer or instance row to find other firing notifications in the last 24 hours that share correlation labels such as `service` or `namespace`. Refer to [Search for related context](ref:search-related-context).
+When an instance has sparse annotations, click **Explain** from the instance details drawer or instance row to open Grafana Assistant. Refer to [Explain firing alerts](ref:explain-firing-alerts).
