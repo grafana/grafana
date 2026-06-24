@@ -9,8 +9,14 @@ import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { fromRulerRule } from '../utils/rule-id';
 
+import { Annotation } from '../utils/constants';
+
 import { useUpdateRuleInRuleGroup } from './ruleGroup/useUpsertRuleFromRuleGroup';
 import { type IncompleteRule } from './useIncompleteRules';
+
+// Placeholder runbook URL filled in when a rule is missing one, so the demo
+// shows a complete rule after "Fix with AI".
+const PLACEHOLDER_RUNBOOK_URL = 'https://sre.google';
 
 export interface FixProgress {
   total: number;
@@ -114,6 +120,9 @@ export function useFixIncompleteRules() {
           ...draft.annotations,
           ...(generated.summary ? { summary: generated.summary } : {}),
           ...(generated.description ? { description: generated.description } : {}),
+          ...(draft.annotations?.[Annotation.runbookURL]
+            ? {}
+            : { [Annotation.runbookURL]: PLACEHOLDER_RUNBOOK_URL }),
         };
       });
 
