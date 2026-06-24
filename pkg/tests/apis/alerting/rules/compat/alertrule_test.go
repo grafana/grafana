@@ -353,6 +353,15 @@ func TestIntegrationAlertRuleManagerPropertiesRoundTrip(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
+		// The create response itself should reflect the manager-derived provenance and
+		// preserve the manager annotations, without requiring a follow-up GET.
+		require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus(),
+			"create response provenance should reflect terraform→api mapping")
+		require.Equal(t, string(utils.ManagerKindTerraform), created.Annotations[utils.AnnoKeyManagerKind],
+			"create response should preserve ManagerKindTerraform")
+		require.Equal(t, "my-terraform-workspace", created.Annotations[utils.AnnoKeyManagerIdentity],
+			"create response should preserve manager identity")
+
 		// Legacy API should show ProvenanceAPI (coarse mapping of terraform → api)
 		legacyRule, status, _ := legacyClient.GetProvisioningAlertRule(t, created.Name)
 		require.Equal(t, 200, status)
