@@ -78,14 +78,14 @@ To create a variable, follow these steps:
 
 {{< docs/list >}}
 
-1. Click **Edit** in the top-right corner of the dashboard.
-1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
-1. In the sidebar, click **Settings**.
-1. Go to the **Variables** tab.
-1. Click **Add variable**, or if there are already variables, **+ New variable**.
-1. Choose an option in the **Select variable type** drop-down list.
-
 {{< shared id="add-variable" >}}
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click **+ Add variable** at the top of the dashboard or click the **Add new element** icon (blue plus sign) and select **Variable**.
+1. Choose a variable type from the list.
+
+   You can update the variable type by clicking **Change type** in the sidebar.
 
 1. Enter a **Name** for the variable.
 1. (Optional) In the **Label** field, enter the display name for the variable drop-down list.
@@ -116,11 +116,6 @@ To create a variable, follow these steps:
 {{< /docs/list >}}
 
 <!-- vale Grafana.Spelling = YES -->
-
-{{< admonition type="tip" >}}
-To add variables without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Variable**.
-For more information, refer to the [Dashboard controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
-{{< /admonition >}}
 
 ### Variable best practices
 
