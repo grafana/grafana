@@ -90,9 +90,26 @@ function healPanelItems(items: WidgetLayoutItem[]): WidgetLayoutItem[] {
 }
 
 /**
+ * Drop any item whose id repeats an earlier one's. An id uniquely identifies a single widget and is
+ * its grid/React key, so a duplicate is corruption (a hand-edited layout, or one mangled by the old
+ * bug) — keep the first, preserving its grid position, and stop duplicate keys from reaching the grid.
+ */
+function dedupeById(items: WidgetLayoutItem[]): WidgetLayoutItem[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+    seen.add(item.id);
+    return true;
+  });
+}
+
+/**
  * Parse a raw UserStorage string into a layout. Returns null on missing/invalid input
  * (treated as first-run, which triggers the persona chooser). Unknown widget ids inside an
- * otherwise-valid layout are tolerated and filtered at render time, not rejected here.
+ * otherwise-valid layout are tolerated and filtered at render time, not rejected here. Items that
+ * repeat an earlier item's id are collapsed to the first (see {@link dedupeById}).
  */
 export function parseWidgetLayout(raw: string | null): WidgetLayout | null {
   if (!raw) {
@@ -103,7 +120,7 @@ export function parseWidgetLayout(raw: string | null): WidgetLayout | null {
     if (!result.success) {
       return null;
     }
-    return { ...result.data, items: healPanelItems(result.data.items) };
+    return { ...result.data, items: dedupeById(healPanelItems(result.data.items)) };
   } catch {
     return null;
   }

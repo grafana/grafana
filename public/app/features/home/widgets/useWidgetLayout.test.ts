@@ -102,6 +102,35 @@ describe('parseWidgetLayout', () => {
     });
     expect(parseWidgetLayout(raw)?.items).toEqual([{ id: 'mystery', x: 0, y: 9, w: 12, h: 8 }]);
   });
+
+  it('collapses items that repeat an id, keeping the first (panel and non-panel)', () => {
+    const raw = JSON.stringify({
+      version: WIDGET_LAYOUT_VERSION,
+      items: [
+        { id: 'panel:abc:7', x: 0, y: 0, w: 12, h: 9, panel: { dashboardUid: 'abc', panelId: 7 } },
+        { id: 'panel:abc:7', x: 0, y: 9, w: 6, h: 4, panel: { dashboardUid: 'abc', panelId: 7 } },
+        { id: 'alerts', x: 0, y: 13, w: 12, h: 8 },
+        { id: 'alerts', x: 12, y: 13, w: 12, h: 8 },
+      ],
+    });
+    expect(parseWidgetLayout(raw)?.items).toEqual([
+      { id: 'panel:abc:7', x: 0, y: 0, w: 12, h: 9, panel: { dashboardUid: 'abc', panelId: 7 } },
+      { id: 'alerts', x: 0, y: 13, w: 12, h: 8 },
+    ]);
+  });
+
+  it('collapses a stripped panel duplicate after healing reconstructs its ref', () => {
+    const raw = JSON.stringify({
+      version: WIDGET_LAYOUT_VERSION,
+      items: [
+        { id: 'panel:abc:7', x: 4, y: 0, w: 12, h: 9 },
+        { id: 'panel:abc:7', x: 0, y: 9, w: 6, h: 4, panel: { dashboardUid: 'abc', panelId: 7 } },
+      ],
+    });
+    expect(parseWidgetLayout(raw)?.items).toEqual([
+      { id: 'panel:abc:7', x: 4, y: 0, w: 12, h: 9, panel: { dashboardUid: 'abc', panelId: 7 } },
+    ]);
+  });
 });
 
 describe('parsePanelWidgetId', () => {
