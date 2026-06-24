@@ -23,8 +23,17 @@ export interface IncompleteRule {
  * alerting rules considered. Recording rules are excluded because they don't produce
  * notifications.
  */
-export function useIncompleteRules(): { rules: IncompleteRule[]; totalRules: number; isLoading: boolean } {
-  const { data: namespaces = [], isLoading } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
+export function useIncompleteRules(): {
+  rules: IncompleteRule[];
+  totalRules: number;
+  isLoading: boolean;
+  refetch: () => void;
+} {
+  const {
+    data: namespaces = [],
+    isLoading,
+    refetch,
+  } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
     ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
     excludeAlerts: true,
   });
@@ -56,5 +65,5 @@ export function useIncompleteRules(): { rules: IncompleteRule[]; totalRules: num
     return { rules: result, totalRules: total };
   }, [namespaces]);
 
-  return { rules, totalRules, isLoading };
+  return { rules, totalRules, isLoading, refetch };
 }

@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Card, EmptyState, LinkButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { type FixProgress, useFixIncompleteRules } from '../hooks/useFixIncompleteRules';
 import { type IncompleteRule, useIncompleteRules } from '../hooks/useIncompleteRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { Annotation, annotationLabels } from '../utils/constants';
@@ -45,7 +47,9 @@ function qualityScore(rules: IncompleteRule[], total: number): number {
 
 function QualityTab() {
   const { navId, pageNav } = useAlertRulesNav();
-  const { rules: flaggedRules, totalRules, isLoading } = useIncompleteRules();
+  const { rules: flaggedRules, totalRules, isLoading, refetch } = useIncompleteRules();
+  const { isAvailable: isAssistantAvailable, isFixing, progress, fixRule, fixAll } = useFixIncompleteRules();
+  const [fixingUid, setFixingUid] = useState<string | undefined>(undefined);
 
   const incompleteCount = flaggedRules.length;
   const score = qualityScore(flaggedRules, totalRules);
@@ -59,6 +63,25 @@ function QualityTab() {
     return `${a.folder}/${a.group}/${a.name}`.localeCompare(`${b.folder}/${b.group}/${b.name}`);
   });
 
+  // The rule update mutation doesn't invalidate the Prometheus rules query backing
+  // this list, so refetch it after fixing to reflect the new summaries/descriptions.
+  const handleFixAll = async () => {
+    await fixAll(flaggedRules);
+    refetch();
+  };
+
+  const handleFixOne = async (rule: IncompleteRule) => {
+    setFixingUid(rule.uid);
+    try {
+      await fixRule(rule);
+      refetch();
+    } finally {
+      setFixingUid(undefined);
+    }
+  };
+
+  const isBusy = isFixing || fixingUid !== undefined;
+
   return (
     <AlertingPageWrapper
       navId={navId}
@@ -66,16 +89,13 @@ function QualityTab() {
       isLoading={isLoading}
       actions={
         incompleteCount > 0 ? (
-          <Tooltip
-            content={t(
-              'alerting.quality.fix-all-tooltip',
-              'Automatically generate descriptions and summaries for all flagged rules.'
-            )}
-          >
-            <Button icon="bolt" variant="primary">
-              <Trans i18nKey="alerting.quality.fix-all">Fix all with AI</Trans>
-            </Button>
-          </Tooltip>
+          <FixAllButton
+            isAvailable={isAssistantAvailable}
+            isFixing={isFixing}
+            progress={progress}
+            disabled={isBusy}
+            onClick={handleFixAll}
+          />
         ) : undefined
       }
     >
@@ -132,16 +152,12 @@ function QualityTab() {
                   </Stack>
                 </Card.Description>
                 <Card.Actions>
-                  <Tooltip
-                    content={t(
-                      'alerting.quality.fix-tooltip',
-                      'Automatically generate a description and summary for this rule.'
-                    )}
-                  >
-                    <Button icon="bolt" variant="primary" size="sm">
-                      <Trans i18nKey="alerting.quality.fix-with-ai">Fix with AI</Trans>
-                    </Button>
-                  </Tooltip>
+                  <FixWithAIButton
+                    isAvailable={isAssistantAvailable}
+                    isFixing={fixingUid === rule.uid}
+                    disabled={isBusy || !rule.uid}
+                    onClick={() => handleFixOne(rule)}
+                  />
                   {rule.uid && (
                     <LinkButton
                       icon="pen"
@@ -159,6 +175,80 @@ function QualityTab() {
         )}
       </Stack>
     </AlertingPageWrapper>
+  );
+}
+
+interface FixAllButtonProps {
+  isAvailable: boolean;
+  isFixing: boolean;
+  progress: FixProgress | null;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+function FixAllButton({ isAvailable, isFixing, progress, disabled, onClick }: FixAllButtonProps) {
+  if (!isAvailable) {
+    return (
+      <Tooltip
+        content={t(
+          'alerting.quality.fix-all-unavailable',
+          'Grafana Assistant is not available. Enable it to automatically generate descriptions and summaries.'
+        )}
+      >
+        <Button icon="ai-sparkle" variant="primary" disabled>
+          <Trans i18nKey="alerting.quality.fix-all">Fix all with AI</Trans>
+        </Button>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Button icon="ai-sparkle" variant="primary" disabled={disabled} onClick={onClick}>
+      {isFixing && progress ? (
+        <Trans
+          i18nKey="alerting.quality.fix-all-progress"
+          values={{ completed: progress.completed, total: progress.total }}
+        >
+          Fixing {'{{completed}}'} of {'{{total}}'}...
+        </Trans>
+      ) : (
+        <Trans i18nKey="alerting.quality.fix-all">Fix all with AI</Trans>
+      )}
+    </Button>
+  );
+}
+
+interface FixWithAIButtonProps {
+  isAvailable: boolean;
+  isFixing: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+function FixWithAIButton({ isAvailable, isFixing, disabled, onClick }: FixWithAIButtonProps) {
+  if (!isAvailable) {
+    return (
+      <Tooltip
+        content={t(
+          'alerting.quality.fix-unavailable',
+          'Grafana Assistant is not available. Enable it to automatically generate a description and summary.'
+        )}
+      >
+        <Button icon="ai-sparkle" variant="primary" size="sm" disabled>
+          <Trans i18nKey="alerting.quality.fix-with-ai">Fix with AI</Trans>
+        </Button>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Button icon="ai-sparkle" variant="primary" size="sm" disabled={disabled} onClick={onClick}>
+      {isFixing ? (
+        <Trans i18nKey="alerting.quality.fixing">Fixing...</Trans>
+      ) : (
+        <Trans i18nKey="alerting.quality.fix-with-ai">Fix with AI</Trans>
+      )}
+    </Button>
   );
 }
 
