@@ -253,11 +253,18 @@ func (cp *CascadePoller) drainTerminatingFolders(ctx context.Context) {
 
 // sweep runs one poll, guarded by serverlock so only one Grafana instance does it per interval.
 func (cp *CascadePoller) sweep(ctx context.Context) {
-	if cp.serverLock == nil {
+	// Bound a single sweep to the poll interval so it can never outrun the serverlock hold window and
+	// let another instance start a concurrent sweep over the same orgs.
+	run := func(ctx context.Context) {
+		ctx, cancel := context.WithTimeout(ctx, cp.pollInterval)
+		defer cancel()
 		cp.pollOnce(ctx)
+	}
+	if cp.serverLock == nil {
+		run(ctx)
 		return
 	}
-	if err := cp.serverLock.LockAndExecute(ctx, cascadeLockName, cp.pollInterval, cp.pollOnce); err != nil {
+	if err := cp.serverLock.LockAndExecute(ctx, cascadeLockName, cp.pollInterval, run); err != nil {
 		cp.log.Warn("folder cascade poll: serverlock failed", "error", err)
 	}
 }
