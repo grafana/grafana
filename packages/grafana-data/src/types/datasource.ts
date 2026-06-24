@@ -830,8 +830,6 @@ export interface DataSourceInstanceListItem {
   meta: DataSourcePluginMeta;
   readOnly: boolean;
   isDefault?: boolean;
-  /** When the name is based on a template variable, holds the real ref. */
-  rawRef?: DataSourceRef;
 }
 
 /**

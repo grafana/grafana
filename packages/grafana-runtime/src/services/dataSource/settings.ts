@@ -163,7 +163,6 @@ function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceLis
     meta: settings.meta,
     readOnly: settings.readOnly,
     isDefault: settings.isDefault,
-    rawRef: settings.rawRef,
   };
 }
 

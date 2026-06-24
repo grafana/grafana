@@ -583,7 +583,7 @@ describe('instanceSettings', () => {
         const items = await getDataSourceInstanceList({ variables: true });
         const injected = items.find((x) => x.name === '${dsVar}');
         // The first value (uid-alpha) resolves to Alpha.
-        expect(injected?.rawRef ?? injected?.ref.type).toBeDefined();
+        expect(injected?.ref.type).toBeDefined();
         expect(injected?.ref.type).toBe('test-db');
 
         setTemplateSrv(templateSrv);
@@ -837,7 +837,6 @@ describe('instanceSettings', () => {
             meta: fixtures.Alpha.meta,
             readOnly: fixtures.Alpha.readOnly,
             isDefault: fixtures.Alpha.isDefault,
-            rawRef: fixtures.Alpha.rawRef,
           },
         ]);
         expect(getList).toHaveBeenCalledWith({ metrics: true });
