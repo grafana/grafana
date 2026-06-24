@@ -1135,6 +1135,10 @@ const dashboardLinkSchema = z.object({
   includeVars: z.boolean().optional().describe('Append current template variable values to the link'),
   keepTime: z.boolean().optional().describe('Append the current time range to the link'),
   tags: z.array(z.string()).optional().describe('Tags used when type is "dashboards"'),
+  placement: z
+    .literal('inControlsMenu')
+    .optional()
+    .describe('Render the link in the dashboard controls dropdown menu instead of above the panels'),
 });
 
 const updateDashboardSettingsPayloadSchema = z.object({

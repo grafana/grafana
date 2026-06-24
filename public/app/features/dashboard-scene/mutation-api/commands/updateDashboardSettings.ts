@@ -2,7 +2,11 @@ import { type z } from 'zod';
 
 import { textUtil } from '@grafana/data';
 import { behaviors, sceneGraph } from '@grafana/scenes';
-import { DashboardCursorSync, type DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
+
+import { defaultDashboardLink } from '../../../../../../packages/grafana-schema/src/schema/dashboard/v2';
+import { transformCursorSyncV2ToV1 } from '../../serialization/transformToV1TypesUtils';
+import { transformCursorSynctoEnum } from '../../serialization/transformToV2TypesUtils';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -14,37 +18,23 @@ export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSetti
 type CursorSyncValue = NonNullable<UpdateDashboardSettingsPayload['cursorSync']>;
 type DashboardLinkPayload = NonNullable<UpdateDashboardSettingsPayload['links']>[number];
 
-const CURSOR_SYNC_TO_ENUM: Record<CursorSyncValue, DashboardCursorSync> = {
-  Off: DashboardCursorSync.Off,
-  Crosshair: DashboardCursorSync.Crosshair,
-  Tooltip: DashboardCursorSync.Tooltip,
-};
-
-function cursorSyncToString(sync?: DashboardCursorSync): CursorSyncValue {
-  switch (sync) {
-    case DashboardCursorSync.Crosshair:
-      return 'Crosshair';
-    case DashboardCursorSync.Tooltip:
-      return 'Tooltip';
-    default:
-      return 'Off';
-  }
-}
-
-// The payload links are partial; fill the full DashboardLink shape and sanitize
-// the URL since these render as clickable links and the input is model-controlled.
+// The payload links are partial; fill the full DashboardLink shape from the
+// shared defaults (mirrors transformSceneToSaveModelSchemaV2) and sanitize the
+// URL since these render as clickable links and the input is model-controlled.
 function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
+  const defaults = defaultDashboardLink();
   return {
-    title: link.title,
-    url: link.url ? textUtil.sanitizeUrl(link.url) : '',
-    type: link.type ?? 'link',
-    tooltip: link.tooltip ?? '',
-    icon: link.icon ?? '',
-    tags: link.tags ?? [],
-    asDropdown: link.asDropdown ?? false,
-    targetBlank: link.targetBlank ?? false,
-    includeVars: link.includeVars ?? false,
-    keepTime: link.keepTime ?? false,
+    title: link.title ?? defaults.title,
+    url: link.url ? textUtil.sanitizeUrl(link.url) : defaults.url,
+    type: link.type ?? defaults.type,
+    icon: link.icon ?? defaults.icon,
+    tooltip: link.tooltip ?? defaults.tooltip,
+    tags: link.tags ?? defaults.tags,
+    asDropdown: link.asDropdown ?? defaults.asDropdown,
+    targetBlank: link.targetBlank ?? defaults.targetBlank,
+    includeVars: link.includeVars ?? defaults.includeVars,
+    keepTime: link.keepTime ?? defaults.keepTime,
+    ...(link.placement !== undefined && { placement: link.placement }),
   };
 }
 
@@ -81,7 +71,7 @@ function readCurrentSettings(scene: Parameters<MutationCommand['handler']>[1]['s
       to: timeRange.state.to,
     },
     timezone: timeRange.state.timeZone ?? '',
-    cursorSync: cursorSyncToString(findCursorSyncBehavior(scene)?.state.sync),
+    cursorSync: transformCursorSynctoEnum(findCursorSyncBehavior(scene)?.state.sync),
     links: scene.state.links ?? [],
   };
 }
@@ -146,7 +136,7 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
       if (payload.cursorSync !== undefined) {
         const cursorSyncBehavior = findCursorSyncBehavior(scene);
         if (cursorSyncBehavior) {
-          cursorSyncBehavior.setState({ sync: CURSOR_SYNC_TO_ENUM[payload.cursorSync] });
+          cursorSyncBehavior.setState({ sync: transformCursorSyncV2ToV1(payload.cursorSync) });
         } else {
           warnings.push('cursorSync could not be set: CursorSync behavior not found in scene');
         }
