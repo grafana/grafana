@@ -10681,6 +10681,23 @@
       "error-title": "Could not load most used dashboards",
       "loading": "Loading most used dashboards..."
     },
+    "presets": {
+      "analytics": {
+        "description": "Dashboards and quick links",
+        "title": "Business analytics"
+      },
+      "default": {
+        "description": "Dashboards and firing alerts",
+        "title": "Default"
+      },
+      "sre": {
+        "description": "Alerts, incidents, on-call and dashboards",
+        "title": "SRE"
+      },
+      "start-blank": "Start blank",
+      "subtitle": "Choose a starting point for your homepage. You can customize it later.",
+      "title": "Get started"
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
@@ -10698,6 +10715,58 @@
     },
     "summary-card": {
       "retry": "Retry"
+    },
+    "widgets": {
+      "add": {
+        "action": "Add",
+        "empty": "All available widgets are already on your homepage.",
+        "group": {
+          "built-in": "Built-in",
+          "plugins": "Plugins"
+        },
+        "subtitle": "Pick widgets to add to your homepage",
+        "title": "Add a widget"
+      },
+      "alerts": {
+        "description": "Alerts currently firing across your instance",
+        "title": "Firing alerts"
+      },
+      "dashboards": {
+        "description": "Your recent, most-used and starred dashboards",
+        "title": "Dashboards"
+      },
+      "frame": {
+        "remove": "Remove widget"
+      },
+      "incidents": {
+        "cta": "View incidents",
+        "description": "Open incidents in your IRM app",
+        "title": "Active incidents"
+      },
+      "investigations": {
+        "cta": "Open investigations",
+        "description": "Recent investigations in your IRM app",
+        "title": "Investigations"
+      },
+      "loading": "Loading your homepage…",
+      "oncall": {
+        "cta": "Open on-call",
+        "description": "Who is on call right now",
+        "title": "On-call shifts"
+      },
+      "quick-links": {
+        "alerting": "Alerting",
+        "connections": "Connections",
+        "dashboards": "Dashboards",
+        "description": "Jump to common areas of Grafana",
+        "explore": "Explore",
+        "title": "Quick links"
+      },
+      "toolbar": {
+        "add": "Add widget",
+        "customize": "Customize",
+        "done": "Done"
+      }
     }
   },
   "import-overview": {

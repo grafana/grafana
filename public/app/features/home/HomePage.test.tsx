@@ -1,10 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
-import { act, render, screen } from 'test/test-utils';
+import { act, render, screen, within } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type UserStorage } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { useUserStorage } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -13,27 +14,57 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useUserStorage: jest.fn(),
+}));
+
+// Curated widgets probe installed plugins through these hooks. Mock them so HomePage renders do not
+// fire plugin-settings network requests, whose pending async would otherwise leak across tests.
+jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
+  useIrmPlugin: () => ({ pluginId: 'grafana-irm-app', loading: false, installed: false }),
+  usePluginBridge: () => ({ loading: false, installed: false }),
+}));
+
 setBackendSrv(backendSrv);
 setupMockServer();
+
+// In-memory stand-in for per-user widget storage; getItem reads the latest value at call time.
+let storedLayout: string | null;
+let setItemMock: jest.Mock;
+const LEGACY_HOMEPAGE_PRE_EXTENSION_POINT = 'grafana/homepage/pre/v1';
 
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
-  // Deny alerting permission so the FiringAlertsCard renders null
+  // Deny alerting permission so the alerts widget is not in the catalog
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-  // Stub endpoints the alerts/incidents cards probe so unhandled requests don't fail the test
+
+  storedLayout = null;
+  setItemMock = jest.fn((_key: string, value: string) => {
+    storedLayout = value;
+    return Promise.resolve();
+  });
+  jest.mocked(useUserStorage).mockReturnValue({
+    getItem: jest.fn((): Promise<string | null> => Promise.resolve(storedLayout)),
+    setItem: setItemMock,
+  } satisfies UserStorage);
+
+  // Stub endpoints widgets may touch: team filter, alertmanager alerts, and a catch-all plugin-settings
+  // 404. Curated plugin detection is also mocked at module scope, so curated widgets stay absent.
   server.use(
     http.get('/api/user/teams', () => HttpResponse.json([])),
     http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([])),
-    // IncidentsCard checks the IRM/Incident plugins; report them absent so it renders nothing
-    http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false }))
+    http.get('/api/plugins/:pluginId/settings', () =>
+      HttpResponse.json({ message: 'Plugin not found' }, { status: 404 })
+    )
   );
 });
 
 const createHomepageExtensionComponent = (
   pluginId: string,
   content: string,
-  extensionPointId: PluginExtensionPoints
+  extensionPointId: string
 ): ComponentTypeWithExtensionMeta<{}> =>
   createComponentWithMeta(
     {
@@ -43,6 +74,10 @@ const createHomepageExtensionComponent = (
     },
     extensionPointId
   );
+
+function expectDocumentOrder(before: HTMLElement, after: HTMLElement) {
+  expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+}
 
 describe('HomePage', () => {
   const originalBuildInfo = { ...config.buildInfo };
@@ -66,13 +101,71 @@ describe('HomePage', () => {
     expect(await screen.findByText('Welcome to Grafana.')).toBeInTheDocument();
   });
 
-  it('renders dashboard tabs and auto-switches to starred', async () => {
+  it('renders the dashboards widget from a stored layout', async () => {
+    storedLayout = JSON.stringify({ version: 1, items: [{ id: 'dashboards', x: 0, y: 0, w: 24, h: 10 }] });
+
     render(<HomePage />);
 
-    // Default mocks have starred dashboards but no recent impressions, so DashboardTabs
-    // auto-switches to the Starred tab once its fetches settle.
+    expect(await screen.findByRole('tab', { name: /recent/i })).toBeInTheDocument();
+    // Wait for DashboardTabs to finish loading and auto-switch to Starred so its async work settles
+    // inside the test and does not leak into later tests in the suite.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+  });
+
+  it('renders the customize toolbar before dashboards and keeps dashboards before the remaining widgets', async () => {
+    storedLayout = JSON.stringify({
+      version: 1,
+      items: [
+        { id: 'alerts', x: 0, y: 0, w: 12, h: 8 },
+        { id: 'dashboards', x: 0, y: 8, w: 24, h: 10 },
+      ],
+    });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    render(<HomePage />);
+
+    const customize = await screen.findByRole('button', { name: /customize/i });
+    const dashboardTabs = await screen.findByRole('tab', { name: /recent/i });
+    const alerts = await screen.findByText('Firing alerts');
+
+    expectDocumentOrder(customize, dashboardTabs);
+    expectDocumentOrder(dashboardTabs, alerts);
+  });
+
+  it('enters edit mode and lists only addable widgets in the drawer', async () => {
+    storedLayout = JSON.stringify({ version: 1, items: [{ id: 'dashboards', x: 0, y: 0, w: 24, h: 10 }] });
+    // Alerting permission makes the Firing alerts widget addable (the suite denies it by default).
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    const { user } = render(<HomePage />);
+    // Settle the dashboards widget before interacting.
+    await screen.findByRole('tab', { name: /starred/i, selected: true });
+
+    await user.click(screen.getByRole('button', { name: /customize/i }));
+    await user.click(screen.getByRole('button', { name: /add widget/i }));
+
+    const drawer = await screen.findByRole('dialog');
+    // Firing alerts is addable; the already-placed Dashboards widget is filtered out of the drawer.
+    expect(within(drawer).getByText('Firing alerts')).toBeInTheDocument();
+    expect(within(drawer).queryByText('Dashboards')).not.toBeInTheDocument();
+  });
+
+  it('shows the persona chooser on first run and seeds a layout when a persona is chosen', async () => {
+    const { user } = render(<HomePage />);
+
+    // No stored layout => first run => persona chooser.
+    expect(await screen.findByText('Incident response')).toBeInTheDocument();
+    expect(screen.getByText('Infrastructure monitoring')).toBeInTheDocument();
+    expect(screen.getByText('Service reliability')).toBeInTheDocument();
+    expect(screen.getByText('Dashboards')).toBeInTheDocument();
+
+    await user.click(screen.getByText('Incident response'));
+
+    // The persona seeds the dashboards widget — the only catalog entry available here (no alerting permission, no IRM).
+    expect(await screen.findByRole('tab', { name: /recent/i })).toBeInTheDocument();
+    expect(setItemMock).toHaveBeenCalledWith('widget-layout', expect.stringContaining('dashboards'));
+    // Let DashboardTabs settle (auto-switch to Starred) before the test ends.
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
   });
 
   it('renders the Enterprise welcome message', async () => {
@@ -89,7 +182,35 @@ describe('HomePage', () => {
     expect(await screen.findByText('Welcome to Grafana Cloud.')).toBeInTheDocument();
   });
 
-  it('renders homepage assistant extension components', async () => {
+  it('does not render legacy homepage pre extension components as page-level sections', async () => {
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === LEGACY_HOMEPAGE_PRE_EXTENSION_POINT
+          ? [
+              createHomepageExtensionComponent(
+                'grafana-setupguide-app',
+                'Homepage pre extension',
+                LEGACY_HOMEPAGE_PRE_EXTENSION_POINT
+              ),
+              createHomepageExtensionComponent(
+                'grafana-untrusted-app',
+                'Untrusted homepage pre extension',
+                LEGACY_HOMEPAGE_PRE_EXTENSION_POINT
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+
+    await screen.findByText('Get started');
+    expect(screen.queryByText('Homepage pre extension')).not.toBeInTheDocument();
+    expect(screen.queryByText('Untrusted homepage pre extension')).not.toBeInTheDocument();
+  });
+
+  it('renders the homepage assistant extension inside the dashboards card', async () => {
+    storedLayout = JSON.stringify({ version: 1, items: [{ id: 'dashboards', x: 0, y: 0, w: 24, h: 10 }] });
     setPluginComponentsHook(({ extensionPointId }) => ({
       isLoading: false,
       components:
@@ -97,12 +218,12 @@ describe('HomePage', () => {
           ? [
               createHomepageExtensionComponent(
                 'grafana-assistant-app',
-                'Homepage assistant extension',
+                'Assistant prompt',
                 PluginExtensionPoints.HomepageAssistant
               ),
               createHomepageExtensionComponent(
                 'grafana-untrusted-app',
-                'Untrusted homepage assistant extension',
+                'Untrusted assistant extension',
                 PluginExtensionPoints.HomepageAssistant
               ),
             ]
@@ -111,8 +232,14 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    expect(await screen.findByText('Homepage assistant extension')).toBeInTheDocument();
-    expect(screen.queryByText('Untrusted homepage assistant extension')).not.toBeInTheDocument();
+    const customize = await screen.findByRole('button', { name: /customize/i });
+    const assistant = await screen.findByText('Assistant prompt');
+    const dashboardTabs = await screen.findByRole('tab', { name: /recent/i });
+
+    expectDocumentOrder(customize, assistant);
+    expectDocumentOrder(assistant, dashboardTabs);
+    // renderLimitedComponents only renders components from the trusted Assistant plugin id.
+    expect(screen.queryByText('Untrusted assistant extension')).not.toBeInTheDocument();
   });
 
   it('renders homepage extra extension components', async () => {
@@ -142,8 +269,8 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // Once revealed, both trusted extra extensions are shown and the untrusted one is filtered out.
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    // Settle the layout hook's async load (the persona chooser) inside act before asserting.
+    await screen.findByText('Get started');
     expect(screen.getByText('Homepage extra extension 1')).toBeInTheDocument();
     expect(screen.getByText('Homepage extra extension 2')).toBeInTheDocument();
     expect(screen.queryByText('Untrusted homepage extra extension')).not.toBeInTheDocument();
@@ -159,6 +286,7 @@ describe('HomePage', () => {
   });
 
   it('renders a skeleton instead of the page content while extensions are loading', async () => {
+    storedLayout = JSON.stringify({ version: 1, items: [{ id: 'dashboards', x: 0, y: 0, w: 24, h: 10 }] });
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
 
     render(<HomePage />);
@@ -167,15 +295,8 @@ describe('HomePage', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
-  it('lands on the auto-switched Starred tab once the dashboard fetches settle', async () => {
-    render(<HomePage />);
-
-    // dashboards load inside DashboardTabs now; the page does not gate reveal on them
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
-  });
-
   it('reveals extension tabs together with the built-in tabs', async () => {
+    storedLayout = JSON.stringify({ version: 1, items: [{ id: 'dashboards', x: 0, y: 0, w: 24, h: 10 }] });
     const tabComponent = createComponentWithMeta(
       {
         pluginId: 'grafana-setupguide-app',
@@ -183,7 +304,7 @@ describe('HomePage', () => {
         component: (({ register }: HomepageTabExtensionProps) => {
           useEffect(() => register({ id: 'plugin-tab', label: 'Plugin tab' }), [register]);
           return null;
-        }) as React.ComponentType,
+        }) as ComponentType,
       },
       PluginExtensionPoints.HomepageTabs
     );
@@ -195,8 +316,6 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // The extension tab registers from inside DashboardTabs and shows alongside the
-    // built-in tabs once the tab list settles.
     expect(await screen.findByRole('tab', { name: 'Plugin tab' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
@@ -204,6 +323,7 @@ describe('HomePage', () => {
   });
 
   it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {
+    storedLayout = JSON.stringify({ version: 1, items: [{ id: 'dashboards', x: 0, y: 0, w: 24, h: 10 }] });
     let resolveComponent!: (module: { default: ComponentType<{}> }) => void;
     const LazyExtension = lazy(
       () =>
@@ -223,17 +343,13 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // While the lazy extension is pending, the local Suspense fallback shows the skeleton
-    // and the greeting stays — the suspension must not bubble to the route-level spinner.
-    expect(screen.getByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
     expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
 
     await act(async () => {
       resolveComponent({ default: () => <div>Lazy assistant content</div> });
     });
 
-    // Reveal waits only for the lazy extension to resolve; the dashboard list loads inside
-    // DashboardTabs. The final paint shows the resolved lazy content, built-in tabs, and no skeleton.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByText('Lazy assistant content')).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();

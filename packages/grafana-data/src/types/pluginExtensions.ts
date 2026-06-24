@@ -241,6 +241,7 @@ export enum PluginExtensionPoints {
   HomepageTabs = 'grafana/homepage/tabs/v1',
   HomepageAssistant = 'grafana/homepage/assistant/v1',
   HomepageExtra = 'grafana/homepage/extra/v1',
+  HomepageWidget = 'grafana/homepage/widget/v1',
 }
 
 // Don't use directly in a plugin!
