@@ -30,7 +30,7 @@ import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { getSummaryDurationStats } from '../utils/summary-span';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
-import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
+import { getSummaryStatsTooltipPlacement, SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
 import { type ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -200,7 +200,7 @@ function SpanBar({
         }}
       >
         {summaryStats ? (
-          <SummaryDurationStatsTooltip stats={summaryStats}>
+          <SummaryDurationStatsTooltip stats={summaryStats} placement={getSummaryStatsTooltipPlacement(viewStart, viewEnd)}>
             <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
               {label}
             </div>
