@@ -1,13 +1,21 @@
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
-import { aggregateDashboardTotals, aggregateFolderCounts, computeBreakdowns, percent } from './stats';
+import {
+  aggregateDashboardTotals,
+  aggregateFolderCounts,
+  aggregatePlaylistTotals,
+  computeBreakdowns,
+  percent,
+} from './stats';
 
 // 100 dashboards total, 40 managed by Git Sync, 10 by Terraform => 50 managed,
-// 50 unmanaged. 8 folders total, 6 managed (4 git sync + 2 terraform).
+// 50 unmanaged. 8 folders total, 6 managed (4 git sync + 2 terraform). 20
+// playlists total, 5 managed by Git Sync => 15 unmanaged.
 const stats: ResourceStats = {
   instance: [
     { group: 'dashboard.grafana.app', resource: 'dashboards', count: 100 },
     { group: 'folder.grafana.app', resource: 'folders', count: 8 },
+    { group: 'playlist.grafana.app', resource: 'playlists', count: 20 },
   ],
   managed: [
     {
@@ -15,6 +23,7 @@ const stats: ResourceStats = {
       stats: [
         { group: 'dashboard.grafana.app', resource: 'dashboards', count: 40 },
         { group: 'folder.grafana.app', resource: 'folders', count: 4 },
+        { group: 'playlist.grafana.app', resource: 'playlists', count: 5 },
       ],
     },
     {
@@ -28,10 +37,10 @@ const stats: ResourceStats = {
 };
 
 describe('computeBreakdowns', () => {
-  it('always emits a folder and dashboard row even with no data', () => {
+  it('always emits a folder, dashboard and playlist row even with no data', () => {
     const breakdowns = computeBreakdowns(undefined);
     const groups = breakdowns.map((b) => b.group).sort();
-    expect(groups).toEqual(['dashboard.grafana.app', 'folder.grafana.app']);
+    expect(groups).toEqual(['dashboard.grafana.app', 'folder.grafana.app', 'playlist.grafana.app']);
     breakdowns.forEach((b) => {
       expect(b.total).toBe(0);
       expect(b.gitSyncCount).toBe(0);
@@ -95,6 +104,24 @@ describe('aggregateDashboardTotals', () => {
   it('reports dashboard-only totals', () => {
     const totals = aggregateDashboardTotals(computeBreakdowns(stats));
     expect(totals).toEqual({ instanceTotal: 100, managed: 50 });
+  });
+});
+
+describe('aggregatePlaylistTotals', () => {
+  it('reports playlist-only totals', () => {
+    const totals = aggregatePlaylistTotals(computeBreakdowns(stats));
+    expect(totals).toEqual({ instanceTotal: 20, managed: 5 });
+  });
+
+  it('ignores non-playlist resources in the playlist group', () => {
+    const breakdowns = computeBreakdowns({
+      instance: [
+        { group: 'playlist.grafana.app', resource: 'playlists', count: 12 },
+        // Same group, different resource — must not count toward playlists.
+        { group: 'playlist.grafana.app', resource: 'somethingelse', count: 4 },
+      ],
+    });
+    expect(aggregatePlaylistTotals(breakdowns)).toEqual({ instanceTotal: 12, managed: 0 });
   });
 });
 
