@@ -8,8 +8,8 @@ import {
   toDataFrame,
 } from '@grafana/data';
 
-import { type TempoQuery } from './types';
 import { createTempoDatasource } from './test/mocks';
+import { type TempoQuery } from './types';
 
 function makeRequest(query: Partial<TempoQuery>): DataQueryRequest<TempoQuery> {
   return {

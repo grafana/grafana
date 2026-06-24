@@ -52,7 +52,10 @@ function escapeString(value: string): string {
 
 function predicate(facet: FlowFacetDef, values: string[]): string {
   if (values.length > 1) {
-    const alt = values.map(escapeRegex).join('|');
+    // escapeRegex makes each term match literally (backslashes are already doubled).
+    // A subsequent pass escapes any bare " so it cannot break out of the TraceQL
+    // double-quoted regex string — escapeRegex does not cover double-quotes.
+    const alt = values.map((v) => escapeRegex(v).replace(/"/g, '\\"')).join('|');
     return `${facet.attr} =~ "${alt}"`;
   }
   const v = values[0];

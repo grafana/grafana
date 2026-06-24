@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { Badge, InlineField, InlineFieldRow, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
+import { MetricsQueryType } from './dataquery.gen';
 import { type TempoDatasource } from './datasource';
 import { FLOW_FACETS, type FlowFacetDef, type FlowFacetFilter, type FlowView, composeFacetQuery, composeFilter } from './flowQuery';
 import { type TempoQuery } from './types';
@@ -43,6 +44,8 @@ export function FlowQuerySection({ datasource, query, onChange, onRunQuery, rang
 
   const setFlowView = useCallback(
     (view: FlowView) => {
+      // flowView only affects which panel the datasource renders; query is intentionally not
+      // recomposed here because the datasource table/topology branches recompose it from flowFilters.
       onChange({ ...query, flowView: view });
       onRunQuery();
     },
@@ -166,11 +169,16 @@ function FacetPanel({
   const [values, setValues] = useState<FacetValue[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Use stable numeric primitives rather than the range object so unrelated re-renders
+  // that produce a new range reference do not re-fire the side-query unnecessarily.
+  const rangeFrom = range?.from?.valueOf();
+  const rangeTo = range?.to?.valueOf();
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     const queryStr = composeFacetQuery(filters, facet);
-    const request = {
+    const request: DataQueryRequest<TempoQuery> = {
       requestId: `flow-facet-${facet.key}`,
       interval: '',
       intervalMs: 0,
@@ -180,9 +188,9 @@ function FacetPanel({
       timezone: 'browser',
       app: 'explore',
       targets: [
-        { refId: 'A', queryType: 'traceql', query: queryStr, metricsQueryType: 'instant' },
+        { refId: 'A', queryType: 'traceql', query: queryStr, metricsQueryType: MetricsQueryType.Instant, filters: [] },
       ],
-    } as unknown as DataQueryRequest<TempoQuery>;
+    };
 
     lastValueFrom(datasource.query(request))
       .then((res) => {
@@ -204,7 +212,8 @@ function FacetPanel({
     return () => {
       cancelled = true;
     };
-  }, [datasource, facet, filters, range]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datasource, facet, filters, rangeFrom, rangeTo]);
 
   return (
     <div className={styles.facetPanel}>
@@ -235,7 +244,7 @@ export function extractFacetValues(frames: DataFrame[], attr: string): FacetValu
     if (value === undefined) {
       continue;
     }
-    const samples = numberField.values.toArray ? numberField.values.toArray() : (numberField.values as unknown as number[]);
+    const samples = Array.from<number>(numberField.values);
     const count = Number(samples[samples.length - 1] ?? 0);
     out.push({ value, count });
   }

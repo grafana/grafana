@@ -34,6 +34,23 @@ describe('composeFilter', () => {
     expect(composeFilter(filters)).toBe('{ span.destination.address =~ "1\\.2\\.3\\.4|5\\.6\\.7\\.8" }');
   });
 
+  it('escapes double-quotes inside multi-value alternation to prevent breaking the TraceQL string', () => {
+    // A facet value containing a literal " must be escaped as \" inside the =~ "..." string;
+    // otherwise it would terminate the quoted regex early, producing a broken query.
+    const filters: FlowFacetFilter[] = [{ key: 'destination', values: ['a"b', 'c'] }];
+    const result = composeFilter(filters);
+    // The result must be a valid =~ "..." predicate: no bare (unescaped) " inside the quotes.
+    // Strip the outer double-quotes from the predicate value and assert no bare " remains.
+    const match = result.match(/=~ "(.*)"/);
+    expect(match).not.toBeNull();
+    // Within the alternation string, every " must be preceded by a backslash.
+    const inner = match![1];
+    // Check that there is no unescaped double-quote in the inner string.
+    expect(inner).not.toMatch(/(?<!\\)"/);
+    // And the 'c' term should be present unmodified.
+    expect(inner).toMatch(/c/);
+  });
+
   it('AND-joins multiple facets', () => {
     const filters: FlowFacetFilter[] = [
       { key: 'direction', values: ['egress'] },

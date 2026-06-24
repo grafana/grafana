@@ -40,6 +40,8 @@ import { type TempoVariableQuery, TempoVariableQueryType } from './VariableQuery
 import { type PrometheusDatasource, type PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { type TagLimitOptions } from './configuration/TagLimitSettings';
 import { MetricsQueryType, SearchTableType, type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { composeFilter, composeTopologyCountQuery, composeTopologyBytesQuery } from './flowQuery';
+import { extractFlowEdges, flowEdgesToNodeGraph } from './flowTransform';
 import {
   defaultTableFilter,
   durationMetric,
@@ -53,8 +55,6 @@ import {
   totalsMetric,
   nativeHistogramDurationMetric,
 } from './graphTransform';
-import { composeFilter, composeTopologyCountQuery, composeTopologyBytesQuery } from './flowQuery';
-import { extractFlowEdges, flowEdgesToNodeGraph } from './flowTransform';
 import TempoLanguageProvider from './language_provider';
 import {
   enhanceTraceQlMetricsResponse,

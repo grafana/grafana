@@ -20,7 +20,7 @@ function lastSample(frame: DataFrame): number {
   if (!field) {
     return 0;
   }
-  const arr = field.values.toArray ? field.values.toArray() : (field.values as unknown as number[]);
+  const arr = Array.from<number>(field.values);
   return Number(arr[arr.length - 1] ?? 0);
 }
 
