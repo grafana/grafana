@@ -26,6 +26,7 @@ var (
 	ErrThreadAlreadyClosed         = errors.New("thread is already closed")
 	ErrThreadNotClosed             = errors.New("thread is not closed")
 	ErrPulseUnsupported            = errors.New("pulse feature is not fully wired in this build")
+	ErrAssistantDisabled           = errors.New("the Grafana Assistant integration is not enabled")
 
 	// Pulse hook (named webhook) errors.
 	ErrHookNotFound      = errors.New("pulse hook not found")

@@ -48,6 +48,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
@@ -617,17 +618,29 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanel, editPanel, title, uid } = this.state;
     const isNew = !Boolean(uid);
+    // Trailing slash enforces a path-segment match so unrelated prefixes (e.g. `/dashboard/provisioning-foo/...`) don't match.
+    const isProvisioningPreview = location.pathname.startsWith(PROVISIONING_PREVIEW_URL + '/');
+    const clearPanelView = {
+      viewPanel: null,
+      inspect: null,
+      editview: null,
+      editPanel: null,
+      tab: null,
+      shareView: null,
+    };
 
     let pageNav: NavModelItem = {
       text: title,
-      url: getDashboardUrl({
-        uid,
-        slug: meta.slug,
-        currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
-        isSnapshot: meta.isSnapshot,
-      }),
+      url: isProvisioningPreview
+        ? locationUtil.getUrlForPartial(location, clearPanelView)
+        : getDashboardUrl({
+            uid,
+            slug: meta.slug,
+            currentQueryParams: location.search,
+            updateQuery: clearPanelView,
+            isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
+            isSnapshot: meta.isSnapshot,
+          }),
     };
 
     const { folderUid } = meta;

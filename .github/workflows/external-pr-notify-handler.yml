@@ -5,11 +5,7 @@ on:
     workflows: ["External PR Notify Trigger"]
     types: [completed]
 
-permissions:
-  contents: read
-  pull-requests: write
-  id-token: write
-  actions: read
+permissions: {}
 
 concurrency:
   group: notify-pr-handler-${{ github.event.workflow_run.id }}
@@ -21,6 +17,11 @@ jobs:
     runs-on: ubuntu-arm64-small
     # Only run if trigger workflow succeeded
     if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      actions: read
 
     steps:
       - name: Download PR number

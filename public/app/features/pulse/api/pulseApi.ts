@@ -3,6 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { createBaseQuery } from '@grafana/api-clients/rtkq';
 
 import {
+  type AddAssistantReplyRequest,
   type AddPulseRequest,
   type CreateHookRequest,
   type CreateThreadRequest,
@@ -409,6 +410,27 @@ export const pulseApi = createApi({
       ],
     }),
 
+    // Persists a Grafana Assistant reply (generated client-side) under the
+    // assistant service account. Same cache invalidation as addPulse so the
+    // assistant's answer shows up in the open thread and bumps the list.
+    // Errors are silenced: a failed auto-reply must never surface a toast
+    // over the user's own (already successful) pulse.
+    addAssistantReply: builder.mutation<Pulse, { threadUID: string; req: AddAssistantReplyRequest }>({
+      query: ({ threadUID, req }) => ({
+        url: `/threads/${encodeURIComponent(threadUID)}/assistant-reply`,
+        method: 'POST',
+        body: req,
+        showSuccessAlert: false,
+        showErrorAlert: false,
+      }),
+      invalidatesTags: (_r, _e, args) => [
+        { type: 'Pulse', id: args.threadUID },
+        { type: 'Thread', id: args.threadUID },
+        { type: 'AllThreads', id: 'LIST' },
+        { type: 'FolderRollupThreads', id: 'LIST' },
+      ],
+    }),
+
     editPulse: builder.mutation<Pulse, { pulseUID: string; threadUID: string; req: EditPulseRequest }>({
       query: ({ pulseUID, req }) => ({
         url: `/pulses/${encodeURIComponent(pulseUID)}`,
@@ -614,6 +636,7 @@ export const {
   useCloseThreadMutation,
   useReopenThreadMutation,
   useAddPulseMutation,
+  useAddAssistantReplyMutation,
   useEditPulseMutation,
   useDeletePulseMutation,
   useSubscribeMutation,

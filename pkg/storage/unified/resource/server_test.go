@@ -21,7 +21,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -280,6 +282,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Nil(t, created)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// invalid resource
 		key = &resourcepb.ResourceKey{
@@ -295,6 +298,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Nil(t, created)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// invalid namespace
 		key = &resourcepb.ResourceKey{
@@ -310,6 +314,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Nil(t, created)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// invalid name
 		key = &resourcepb.ResourceKey{
@@ -325,6 +330,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.Error(t, err)
 		require.Nil(t, created)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// legacy name - valid
 		key = &resourcepb.ResourceKey{
@@ -397,6 +403,7 @@ func TestSimpleServer(t *testing.T) {
 
 			require.Error(t, err)
 			require.Nil(t, created)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
 		}
 
 		// resource
@@ -415,6 +422,7 @@ func TestSimpleServer(t *testing.T) {
 
 			require.Error(t, err)
 			require.Nil(t, created)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
 		}
 
 		// namespace
@@ -438,6 +446,7 @@ func TestSimpleServer(t *testing.T) {
 
 			require.Error(t, err)
 			require.Nil(t, created)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
 		}
 	})
 
@@ -480,21 +489,72 @@ func TestSimpleServer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		// Update should return a conflict error the second time
-
+		// First update with different bytes advances the resource version.
+		rawV2 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "world"`, 1))
 		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
-			Value:           raw,
+			Value:           rawV2,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
+
+		// Second update with stale RV and different bytes should return a conflict.
+		rawV3 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "again"`, 1))
+		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             key,
+			Value:           rawV3,
+			ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
+		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+	})
+
+	t.Run("playlist update with identical bytes does not increment RV", func(t *testing.T) {
+		raw := []byte(`{
+    	"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "noop-rv-check",
+				"namespace": "default",
+				"uid": "noop-uid"
+			},
+			"spec": {
+				"title": "hello",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "vmie2cmWz"
+					}
+				]
+			}
+		}`)
+
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "rrrr",
+			Namespace: "default",
+			Name:      "noop-rv-check",
+		}
+
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
 
 		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+		require.Nil(t, rsp.Error)
+		require.Equal(t, created.ResourceVersion, rsp.ResourceVersion, "RV should not change when bytes are identical")
+
+		// The stored resource version should also be unchanged.
+		read := server.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, read.Error)
+		require.Equal(t, created.ResourceVersion, read.ResourceVersion)
 	})
 }
 
@@ -1933,4 +1993,268 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		require.Equal(t, parentFolderUID, capturedFolder)
 		require.NotEqual(t, folderName, capturedFolder)
 	})
+}
+
+// stubBlobSupport records whether PutResourceBlob was reached so tests can
+// assert that the authz gate short-circuits or delegates.
+type stubBlobSupport struct {
+	putReached bool
+}
+
+func (s *stubBlobSupport) SupportsSignedURLs() bool { return false }
+
+func (s *stubBlobSupport) PutResourceBlob(_ context.Context, _ *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	s.putReached = true
+	return &resourcepb.PutBlobResponse{Uid: "blob-uid"}, nil
+}
+
+func (s *stubBlobSupport) GetResourceBlob(_ context.Context, _ *resourcepb.ResourceKey, _ *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
+	return &resourcepb.GetBlobResponse{}, nil
+}
+
+// errorOnReadResourceBackend lets tests inject an arbitrary ReadResource
+// error to exercise PutBlob's failure passthrough.
+type errorOnReadResourceBackend struct {
+	StorageBackend
+	readErr *resourcepb.ErrorResult
+}
+
+func (b *errorOnReadResourceBackend) ReadResource(_ context.Context, _ *resourcepb.ReadRequest) *BackendReadResponse {
+	return &BackendReadResponse{Error: b.readErr}
+}
+
+// Embedding the StorageBackend interface doesn't promote Stop; without
+// this override srv.Stop can't reach the real backend's goroutines and
+// goleak flags them.
+func (b *errorOnReadResourceBackend) Stop(ctx context.Context) error {
+	if s, ok := b.StorageBackend.(ResourceServerStopper); ok {
+		return s.Stop(ctx)
+	}
+	return nil
+}
+
+// newBlobAuthzTestServer is the shared fixture for the PutBlob and
+// namespace-gate tests. backendWrap is optional and wraps the real KV
+// backend so tests can inject ReadResource failures.
+func newBlobAuthzTestServer(t *testing.T, backendWrap func(StorageBackend) StorageBackend) (*server, *callbackAccessClient, *stubBlobSupport) {
+	t.Helper()
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	var store StorageBackend
+	store, err = NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+	if backendWrap != nil {
+		store = backendWrap(store)
+	}
+
+	ac := &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }}
+	blob := &stubBlobSupport{}
+
+	srv, err := NewResourceServer(ResourceServerOptions{
+		Backend:      store,
+		AccessClient: ac,
+		Blob:         BlobConfig{Backend: blob},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Stop(stopCtx)
+	})
+	return srv, ac, blob
+}
+
+func ctxWithUserInNs(ns string) context.Context {
+	return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		UserID:    1,
+		UserUID:   "u1",
+		Namespace: ns,
+	})
+}
+
+func TestPutBlobPermissionChecks(t *testing.T) {
+	const (
+		group     = "playlist.grafana.app"
+		resource  = "playlists"
+		namespace = "default"
+		name      = "test-resource"
+	)
+	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
+	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `"},"spec":{"title":"t","interval":"5m","items":[]}}`)
+	ctxWithUser := ctxWithUserInNs(namespace)
+
+	// seedParent makes ReadResource inside PutBlob succeed. ac is left in
+	// allow() so callers can flip it before the PutBlob under test.
+	seedParent := func(t *testing.T, srv *server, ac *callbackAccessClient) {
+		t.Helper()
+		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }
+		rsp, err := srv.Create(ctxWithUser, &resourcepb.CreateRequest{Key: key, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	}
+
+	t.Run("rejects when no user in context", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rsp, err := srv.PutBlob(context.Background(), &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusUnauthorized), rsp.Error.Code)
+		require.False(t, blob.putReached)
+	})
+
+	t.Run("returns 404 when parent resource does not exist", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.putReached)
+	})
+
+	t.Run("rejects with 403 when access.Check denies update on parent", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		seedParent(t, srv, ac)
+		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.False(t, blob.putReached)
+	})
+
+	t.Run("surfaces access.Check error", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		seedParent(t, srv, ac)
+		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+			return authlib.CheckResponse{}, errors.New("authz backend unavailable")
+		}
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.False(t, blob.putReached)
+	})
+
+	t.Run("delegates to blob backend when access.Check allows update on parent", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		seedParent(t, srv, ac)
+
+		var capturedReq authlib.CheckRequest
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedReq, capturedFolder = req, folder
+			return allow()
+		}
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+		require.Equal(t, utils.VerbUpdate, capturedReq.Verb)
+		require.Equal(t, group, capturedReq.Group)
+		require.Equal(t, resource, capturedReq.Resource)
+		require.Equal(t, namespace, capturedReq.Namespace)
+		require.Equal(t, name, capturedReq.Name)
+		require.Equal(t, "", capturedFolder)
+	})
+
+	t.Run("propagates backend ReadResource error verbatim", func(t *testing.T) {
+		backendErr := &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "storage backend unavailable"}
+		srv, _, blob := newBlobAuthzTestServer(t, func(real StorageBackend) StorageBackend {
+			return &errorOnReadResourceBackend{StorageBackend: real, readErr: backendErr}
+		})
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, backendErr.Code, rsp.Error.Code, "must surface the backend error code, not collapse to 404")
+		require.Equal(t, backendErr.Message, rsp.Error.Message)
+		require.False(t, blob.putReached)
+	})
+}
+
+func TestRequireUserNamespace(t *testing.T) {
+	userInNs := func(ns string, typ authlib.IdentityType) context.Context {
+		return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: typ, Namespace: ns})
+	}
+	cases := []struct {
+		name      string
+		ctx       context.Context
+		namespace string
+		wantCode  int32 // 0 means nil result
+	}{
+		{"no user in context", context.Background(), "default", http.StatusUnauthorized},
+		{"matching namespace", userInNs("default", authlib.TypeUser), "default", 0},
+		{"cross-namespace", userInNs("org-1", authlib.TypeUser), "org-2", http.StatusForbidden},
+		{"wildcard user", userInNs("*", authlib.TypeAccessPolicy), "org-7", 0},
+		// authlib.NamespaceMatches only allows cluster-scoped requests (empty
+		// namespace) from callers with the "*" namespace.
+		{"tenant user on cluster-scoped request", userInNs("default", authlib.TypeUser), "", http.StatusForbidden},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := requireUserNamespace(c.ctx, c.namespace)
+			if c.wantCode == 0 {
+				require.Nil(t, got)
+				return
+			}
+			require.NotNil(t, got)
+			require.Equal(t, c.wantCode, got.Code)
+		})
+	}
+}
+
+// TestDelegatedRPCsNamespaceGate exercises requireUserNamespace through each
+// of the four delegated-only RPCs. Backends are intentionally unconfigured
+// so a request that should be rejected must be rejected before delegation.
+func TestDelegatedRPCsNamespaceGate(t *testing.T) {
+	rpcs := []struct {
+		name   string
+		invoke func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult
+	}{
+		{"GetBlob", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
+			rsp, _ := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
+				Resource: &resourcepb.ResourceKey{Namespace: ns, Group: "g", Resource: "r", Name: "n"},
+			})
+			return rsp.Error
+		}},
+		{"ListManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
+			rsp, _ := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
+			return rsp.Error
+		}},
+		{"CountManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
+			rsp, _ := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
+			return rsp.Error
+		}},
+		{"RebuildIndexes", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
+			rsp, _ := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
+			return rsp.Error
+		}},
+	}
+	scenarios := []struct {
+		name     string
+		ctx      context.Context
+		reqNs    string
+		wantCode int32
+	}{
+		{"missing user", context.Background(), "org-1", http.StatusUnauthorized},
+		{"cross-namespace", ctxWithUserInNs("org-1"), "org-2", http.StatusForbidden},
+	}
+	for _, rpc := range rpcs {
+		for _, sc := range scenarios {
+			t.Run(rpc.name+"/"+sc.name, func(t *testing.T) {
+				srv, _, _ := newBlobAuthzTestServer(t, nil)
+				got := rpc.invoke(sc.ctx, srv, sc.reqNs)
+				require.NotNil(t, got)
+				require.Equal(t, sc.wantCode, got.Code)
+			})
+		}
+	}
+}
+
+func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
+	srv, _, _ := newBlobAuthzTestServer(t, nil)
+	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
+	require.NoError(t, err)
+	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
 }

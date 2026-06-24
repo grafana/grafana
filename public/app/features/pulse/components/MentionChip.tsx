@@ -105,6 +105,14 @@ export function MentionChip({ mention, onClick, panelTitlesById, dashboardUID, o
     return <span className={styles.user}>@{label}</span>;
   }
 
+  if (mention.kind === 'assistant') {
+    // The assistant chip is a static label like the user chip — it
+    // doesn't navigate anywhere. It carries its own palette so a reader
+    // scanning a thread can tell at a glance that the Grafana Assistant
+    // was tagged (and, downstream, replied).
+    return <span className={styles.assistant}>@{label}</span>;
+  }
+
   // Webhook chips are stylized like user mentions (same `@` prefix and
   // primary palette) per the product ask — a mentioned hook reads as
   // "this participant", just one that happens to be an automation. The
@@ -202,6 +210,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
       color: theme.colors.success.text,
     },
+  }),
+  // Assistant chips tag the Grafana Assistant. They use the purple
+  // brand-adjacent secondary palette so they stand apart from human
+  // @user chips (primary) while still reading as an `@` mention.
+  assistant: css({
+    display: 'inline-block',
+    padding: '0 6px',
+    margin: '0 2px',
+    borderRadius: theme.shape.radius.pill,
+    background: theme.colors.secondary.transparent,
+    color: theme.colors.secondary.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    border: `1px solid ${theme.colors.secondary.border}`,
+    cursor: 'inherit',
+    whiteSpace: 'nowrap',
   }),
   // Time chips read as "this conversation pinned the dashboard at
   // <range>". Visually distinct from user/panel/resource chips so a

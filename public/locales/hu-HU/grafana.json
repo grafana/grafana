@@ -3312,6 +3312,10 @@
         "tooltip-description": "Némítások keresése egyezés alapján. Pontos egyezést keres a címke nevére, az értékre és az operátorra.",
         "tooltip-example": "Példa: Az <1>env=~\"prod.*\"</1> kifejezés <4>env=~\"prod.*\"</4> egyezéssel keresi meg a némításokat."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Csak az aktív állapotban lévő riasztáspéldányok jelennek meg.",
       "operator": {
         "equals": "Egyenlő",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} irányítópult",
       "label-no-dashboards-found": "Nem található irányítópult"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Irányítópult betöltésének megszakítása"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5792,8 +5793,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operátor",
-        "placeholder": "Válasszon operátort"
+        "aria-label": "Operátor"
       },
       "restore": "Alapértelmezett érték visszaállítása",
       "search": {
@@ -6028,13 +6028,6 @@
       },
       "ungroup-nested-text": "Ez megszünteti az összes beágyazott csoport csoportosítását.",
       "ungroup-nested-title": "Megszünteti a beágyazott csoportok csoportosítását?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Az irányítópult nem található"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Nem szerkeszthető irányítópult",
@@ -6627,8 +6620,8 @@
     "version-history-comparison": {
       "button-restore": "Visszaállítás erre a verzióra: {{version}}",
       "label-view-json-diff": "JSON-diff megtekintése",
-      "new-updated-by": "<0>{{version}} verzió</0>, frissítette: {{editor}}, {{timeAgo}}",
-      "old-updated-by": "<0>{{version}} verzió</0>, frissítette: {{editor}}, {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Verzió kijelölésének ki- és bekapcsolása: {{version}}",
@@ -7870,8 +7863,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON-diff megtekintése",
-      "new-version-updated": "<0>{{version}} verzió</0>, frissítette: {{editor}}, {{timeAgo}}",
-      "old-version-updated": "<0>{{version}} verzió</0>, frissítette: {{editor}}, {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}} <3></3> {{newVersion}} összehasonlítása",
@@ -9062,7 +9055,6 @@
       "copy-button": "Másolás vágólapra",
       "download-button": "Fájl letöltése",
       "download-successful_toast_message": "A JSON-fájlja letöltődött",
-      "export-externally-label": "Exportálja az irányítópultot egy másik példányban való használathoz",
       "export-format": "Formátum",
       "export-mode": "Modell",
       "info-text": "Másolja vagy töltse le az irányítópult definícióját tartalmazó fájlt",
@@ -9155,6 +9147,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Mappa törölve",
       "folder-move-error-provisioned": "A kiépített mappa nem helyezhető át. Az áthelyezéshez helyezze át az adattárba, és szinkronizálja a változtatások alkalmazásához.",
@@ -10230,7 +10223,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Súgó <1></1>",
-      "access-help-details": "A hozzáférési mód vezérli az adatforráshoz intézett kérések kezelési módját. Eltérő rendelkezés hiányában a <1><i>kiszolgálónak</i></1> kell lennie az előnyben részesített módnak.",
+      "access-help-details": "",
       "access-help-title": "Hozzáférés a súgóhoz",
       "access-label": "Hozzáférés",
       "allowed-cookies": "Engedélyezett cookie-k",
@@ -10916,6 +10909,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11700,11 +11697,10 @@
       "published-by": "Közzétette:",
       "updated-on": "Frissítve:"
     },
-    "import-resource-format-error": {
-      "cancel": "Mégse",
-      "title": "Nem támogatott formátum",
-      "v1-message": "Ez az irányítópult Kubernetes v1 erőforrás-formátumban van, és nem importálható, ha a Kubernetes-irányítópultok funkció le van tiltva. Az irányítópult importálásához engedélyezze a kubernetesDashboards funkcióváltót.",
-      "v2-message": "Ez az irányítópult v2 erőforrás-formátumban van, és nem importálható, ha a Kubernetes-irányítópultok funkció le van tiltva. Az irányítópult importálásához engedélyezze a kubernetesDashboards funkcióváltót."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Biztosan törölni szeretné a(z) „{{snapshotToRemove}}” elemet?",
@@ -13199,8 +13195,9 @@
       "label-branch": "Ág",
       "label-comment": "Megjegyzés",
       "label-filename": "Fájlnév",
-      "label-folder": "Mappa",
       "label-path": "Útvonal",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Válassza ki vagy adja meg a mappa elérési útját",
       "suffix-configured-branch": "Szinkronizált ág",
@@ -13527,7 +13524,7 @@
       "modal-title-set-up-public-access": "Nyilvános hozzáférés beállítása",
       "modal-title-set-up-required-features": "Kötelező funkciók beállítása",
       "step-description-copy-url": "Az ngrok kimenetéből másolja ki a https:// átirányítási URL-címet, amely így néz ki:",
-      "step-description-enable-feature-toggles": "Adja hozzá a kiépítési funkció kapcsolóját a custom.ini fájlhoz. Megjegyzés: A kubernetesDashboards alapértelmezés szerint engedélyezve van, de ha kifejezetten letiltotta, engedélyeznie kell a Grafana beállításaiban, vagy el kell távolítania a felülbírálást a konfigurációból.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Futtassa ezt a parancsot egy biztonságos alagút létrehozásához a helyi Grafanához:",
       "step-description-update-grafana-config": "Adja hozzá ezt a custom.ini fájlhoz, lecserélve az URL-t a tényleges ngrok URL-címre:",
       "step-title-copy-url": "A nyilvános URL-cím kimásolása",
@@ -13601,6 +13598,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": ""
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "A példányszinkronizálás jelenleg nem támogatott teljes mértékben, és használhatatlanná teszi a könyvtárpaneleket és a riasztásokat. A könyvtárpanelek és riasztások használatához válassza le az adattárat, és csatlakoztassa újra a mappaszinkronizálás használatával.",
@@ -13888,7 +13900,8 @@
     "sync-job": {
       "error-no-job-id": "A feladat indítása nem sikerült",
       "error-no-repository-name": "Nincs megadva az adattár neve",
-      "error-starting-job": "Hiba a feladat indításakor"
+      "error-starting-job": "Hiba a feladat indításakor",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Hiba az erőforrások lekérésekor",
@@ -14719,7 +14732,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportálás képként",
-      "export-json-title": "Exportálás JSON-fájlként",
       "share-externally-title": "Külső megosztás",
       "share-internally-title": "Belső megosztás",
       "share-snapshot-title": "Pillanatkép megosztása"
@@ -16610,7 +16622,7 @@
       "message": "Nincsenek felhasználók"
     },
     "token-revoked-modal": {
-      "auto-revoked": "A munkameneti tokent a rendszer automatikusan visszavonta, mert elérte <2>a(z) {{numSessions}} egyidejű munkamenet maximális számát</2> a fiókjában.",
+      "auto-revoked": "",
       "resume-message": "<strong>A munkamenet folytatásához jelentkezzen be újra.</strong>Vegye fel a kapcsolatot a rendszergazdával, vagy látogasson el a licencoldalra a kvóta áttekintéséhez, ha ismételten automatikusan kijelentkezteti a rendszer.",
       "sign-in": "Bejelentkezés",
       "title-you-have-been-automatically-signed-out": "A rendszer automatikusan kijelentkeztette"

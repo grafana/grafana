@@ -10,9 +10,14 @@ type CommitOptionsApplyConfiguration struct {
 	// Template for commit messages produced by single-resource UI operations
 	// (dashboard save/delete/move, folder create/rename/delete).
 	// Bulk operations and sync jobs are out of scope and build their own messages.
-	// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
+	// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}},
+	// {{userName}}, {{userLogin}}, {{userEmail}}.
 	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 	SingleResourceMessageTemplate *string `json:"singleResourceMessageTemplate,omitempty"`
+	// When true, the Comment field in Save drawers is pre-filled from
+	// SingleResourceMessageTemplate and rendered read-only. The
+	// Grafana-saved-by trailer is always appended regardless of this setting.
+	EnforceTemplate *bool `json:"enforceTemplate,omitempty"`
 }
 
 // CommitOptionsApplyConfiguration constructs a declarative configuration of the CommitOptions type for use with
@@ -26,5 +31,13 @@ func CommitOptions() *CommitOptionsApplyConfiguration {
 // If called multiple times, the SingleResourceMessageTemplate field is set to the value of the last call.
 func (b *CommitOptionsApplyConfiguration) WithSingleResourceMessageTemplate(value string) *CommitOptionsApplyConfiguration {
 	b.SingleResourceMessageTemplate = &value
+	return b
+}
+
+// WithEnforceTemplate sets the EnforceTemplate field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the EnforceTemplate field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithEnforceTemplate(value bool) *CommitOptionsApplyConfiguration {
+	b.EnforceTemplate = &value
 	return b
 }

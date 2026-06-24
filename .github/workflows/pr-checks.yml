@@ -7,16 +7,17 @@ concurrency:
   group: pr-checks-${{ github.event.number }}-new
   cancel-in-progress: true
 
-permissions:
-  statuses: write
-  checks: write
-  actions: write
-  contents: read
-  pull-requests: read
+permissions: {}
 
 jobs:
   main:
     runs-on: ubuntu-arm64-small
+    permissions:
+      statuses: write
+      checks: write
+      actions: write
+      contents: read
+      pull-requests: read
     if: github.event.pull_request.draft == false
     steps:
       - name: Run PR Checks

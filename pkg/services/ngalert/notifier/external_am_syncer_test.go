@@ -493,7 +493,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 // rejectingValidator is a DataSourceRequestValidator that always errors.
 type rejectingValidator struct{ err error }
 
-func (r *rejectingValidator) Validate(string, *simplejson.Json, *http.Request) error {
+func (r *rejectingValidator) Validate(string, map[string]any, *http.Request) error {
 	return r.err
 }
 

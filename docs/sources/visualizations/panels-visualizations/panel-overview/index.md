@@ -67,6 +67,7 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
 - **Time settings**: Opens the **Panel time settings** drawer where you can set panel-specific time options. Public preview. For more information, refer to [Panel time settings](#panel-time-settings).
+- **Styles**: Edit mode only. Copy and paste styles from one panel to another in the same dashboard.
 - **Assistant**: View mode only. Access Grafana Assistant help options. This option is only available on Grafana Cloud.
 - **Metrics drilldown**: Open the panel in the **Drilldown > Metrics** feature for further exploration. For more information, refer to [Metrics drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/metrics/).
 - **Extensions**: View mode only. Access other actions provided by installed applications, such as declaring an incident. This option is only available in view mode and only appears if you have app plugins installed that contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
@@ -83,7 +84,7 @@ If an option is only available in view mode or edit mode, that's indicated:
 
 Grafana has a number of keyboard shortcuts available specifically for panels. Press `?` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
 
-By hovering over a panel with the mouse you can use some shortcuts that will target that panel.
+By hovering over a panel with the mouse you can use some shortcuts that target that panel.
 
 - `e`: Toggle panel edit view
 - `v`: Toggle panel full screen view

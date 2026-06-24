@@ -3354,6 +3354,10 @@
         "tooltip-description": "Поиск временных отключений по сопоставлению. Точное сопоставление имени метки, значения и оператора.",
         "tooltip-example": "Пример: <1>env=~\"prod.*\"</1> находит временные отключения с помощью сопоставления <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Отображаются только экземпляры оповещения в состоянии отправки.",
       "operator": {
         "equals": "Равно",
@@ -5565,9 +5569,6 @@
       "aria-label-dashboard-name": "Дашборд {{dashboardName}}",
       "label-no-dashboards-found": "Дашборды не найдены"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Отменить загрузку дашборда"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5856,8 +5857,7 @@
         }
       },
       "operator": {
-        "aria-label": "Оператор",
-        "placeholder": "Выбрать оператора"
+        "aria-label": "Оператор"
       },
       "restore": "Восстановить значение по умолчанию",
       "search": {
@@ -6092,13 +6092,6 @@
       },
       "ungroup-nested-text": "Все вложенные группы будут разгруппированы.",
       "ungroup-nested-title": "Разгруппировать вложенные группы?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Дашборд не найден"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Нередактируемый дашборд",
@@ -6693,8 +6686,8 @@
     "version-history-comparison": {
       "button-restore": "Восстановить до версии {{version}} ",
       "label-view-json-diff": "Просмотр JSON Diff",
-      "new-updated-by": "<0>Версию {{version}}</0> обновил пользователь {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Версию {{version}}</0> обновил пользователь {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Переключить выбор версии {{version}}",
@@ -7966,8 +7959,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Просмотр JSON Diff",
-      "new-version-updated": "<0>Версию {{version}}</0> обновил пользователь {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Версию {{version}}</0> обновил пользователь {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Сравнение {{baseVersion}} <3></3> {{newVersion}}",
@@ -9162,7 +9155,6 @@
       "copy-button": "Копировать в буфер обмена",
       "download-button": "Загрузить файл",
       "download-successful_toast_message": "JSON-файл загружен",
-      "export-externally-label": "Экспорт дашборда для использования в другом экземпляре",
       "export-format": "Формат",
       "export-mode": "Модель",
       "info-text": "Скопируйте или загрузите файл, содержащий параметры вашего дашборда",
@@ -9255,6 +9247,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "Невозможно удалить подготовленную папку. Сначала удалите ее из репозитория и выполните синхронизацию, чтобы применить изменения.",
       "folder-deleted-success": "Папка удалена",
       "folder-move-error-provisioned": "Невозможно переместить подготовленную папку. Сначала перенесети ее в репозиторий и выполните синхронизацию, чтобы применить изменения.",
@@ -10350,7 +10343,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Справка <1></1>",
-      "access-help-details": "Режим доступа определяет, как будут обрабатываться запросы к источнику данных. Если не указано иное, предпочтительным способом является <1><i>сервер</i></1>.",
+      "access-help-details": "",
       "access-help-title": "Справка по доступу",
       "access-label": "Доступ",
       "allowed-cookies": "Разрешенные файлы cookie",
@@ -11036,6 +11029,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11836,11 +11833,10 @@
       "published-by": "Кем опубликовано",
       "updated-on": "Дата обновления"
     },
-    "import-resource-format-error": {
-      "cancel": "Отмена",
-      "title": "Неподдерживаемый формат",
-      "v1-message": "Формат ресурса этого дашборда — Kubernetes v1. Его нельзя импортировать, если отключена функция дашбордов Kubernetes. Для импорта измените положение переключателя функционала kubernetesDashboards.",
-      "v2-message": "Формат ресурса этого дашборда — v2. Его нельзя импортировать, если отключена функция дашбордов Kubernetes. Для импорта измените положение переключателя функционала kubernetesDashboards."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Действительно удалить «{{snapshotToRemove}}»?",
@@ -13341,8 +13337,9 @@
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
       "label-filename": "Имя файла",
-      "label-folder": "Папка",
       "label-path": "Путь",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "Выберите или введите имя ветви",
       "placeholder-folder": "Выберите или введите путь к папке",
       "suffix-configured-branch": "Синхронизированная ветвь",
@@ -13681,7 +13678,7 @@
       "modal-title-set-up-public-access": "Настройка общего доступа",
       "modal-title-set-up-required-features": "Настройка необходимых функций",
       "step-description-copy-url": "Из вывода ngrok скопируйте URL-адрес переадресации https://, который выглядит следующим образом:",
-      "step-description-enable-feature-toggles": "Добавьте переключатель функции подготовки в свой файл custom.ini. Примечание. Функция kubernetesDashboards включена по умолчанию. Если вы ее отключили, необходимо активировать ее в настройках Grafana или удалить переопределение из конфигурации.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Выполните эту команду, чтобы создать защищенный туннель к вашей локальной версии Grafana:",
       "step-description-update-grafana-config": "Добавьте данные в свой файл custom.ini, заменив URL-адрес на фактический URL-адрес ngrok:",
       "step-title-copy-url": "Копирование общедоступного URL-адреса",
@@ -13755,6 +13752,21 @@
       "authentication-failed": "Аутентификация не выполнена. Проверьте токен доступа.",
       "request-failed": "Запрос не выполнен",
       "resource-not-found": "Ресурс не найден. Проверьте URL-адрес или репозиторий."
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "Синхронизация экземпляров в настоящее время поддерживается не полностью. Она нарушает работу панелей библиотеки и оповещений. Чтобы их использовать, отключите репозиторий и повторно подключите его путем синхронизации папок.",
@@ -14058,7 +14070,8 @@
     "sync-job": {
       "error-no-job-id": "Не удалось запустить задание",
       "error-no-repository-name": "Не указано имя репозитория",
-      "error-starting-job": "Ошибка при запуске задания"
+      "error-starting-job": "Ошибка при запуске задания",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Ошибка при извлечении ресурсов",
@@ -14907,7 +14920,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Экспортировать как изображение",
-      "export-json-title": "Экспорт в формате JSON",
       "share-externally-title": "Общий доступ с внешними пользователями",
       "share-internally-title": "Общий доступ с внутренними пользователями",
       "share-snapshot-title": "Общий доступ к снимку"
@@ -16800,7 +16812,7 @@
       "message": "Пользователи не найдены"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Ваш токен сеанса автоматически отозван, поскольку вы достигли <2>максимального лимита в размере {{numSessions}} одновременных сеансов</2> для своей учетной записи.",
+      "auto-revoked": "",
       "resume-message": "<strong>Чтобы возобновить сеанс, выполните повторный вход.</strong>Если вас неоднократно автоматически выкидывает из системы, обратитесь к администратору или посетите страницу лицензии, чтобы проверить свою квоту.",
       "sign-in": "Войти",
       "title-you-have-been-automatically-signed-out": "Вы автоматически вышли из системы"

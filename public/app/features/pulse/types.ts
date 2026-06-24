@@ -23,6 +23,11 @@ export type ResourceKind = 'dashboard';
  *                   `from=<ms>&to=<ms>` onto the dashboard URL. The
  *                   backend validates the shape so renderers can
  *                   split on `|` without re-validating.
+ *   - `assistant` → tags the Grafana Assistant. `targetId` is the fixed
+ *                   sentinel `assistant`. When a user posts a pulse with
+ *                   this chip, the backend asks the configured assistant
+ *                   responder to reply back into the thread. Gated behind
+ *                   the `dashboardPulseAssistant` feature toggle.
  *
  * Mirrors `pkg/services/pulse/models.go::MentionKind`. Folder
  * mentions were dropped together with folder-as-a-resource; legacy
@@ -31,7 +36,11 @@ export type ResourceKind = 'dashboard';
  * navigable link. Future kinds (alert rule, SLO, etc.) widen this
  * union without reshaping existing rows.
  */
-export type MentionKind = 'user' | 'panel' | 'dashboard' | 'time' | 'webhook';
+export type MentionKind = 'user' | 'panel' | 'dashboard' | 'time' | 'assistant' | 'webhook';
+
+/** TargetID carried by every `@assistant` chip. Mirrors the backend's
+ *  pulse.AssistantMentionTarget. */
+export const ASSISTANT_MENTION_TARGET = 'assistant';
 
 export type AuthorKind = 'user' | 'service_account';
 
@@ -142,6 +151,19 @@ export interface AddPulseRequest {
 
 export interface EditPulseRequest {
   body: PulseBody;
+}
+
+/**
+ * AddAssistantReplyRequest carries a Grafana Assistant reply that the
+ * frontend generated (via the Assistant's inline generation API) for a
+ * pulse that tagged `@assistant`. The backend persists `markdown` under
+ * the assistant service account. Mirrors
+ * `pkg/services/pulse/models.go::AddAssistantReplyCommand`.
+ */
+export interface AddAssistantReplyRequest {
+  /** Pulse the assistant is replying to, so the answer threads under it. */
+  parentUID?: string;
+  markdown: string;
 }
 
 export interface MarkReadRequest {

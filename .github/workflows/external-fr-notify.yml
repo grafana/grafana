@@ -4,10 +4,7 @@ on:
   issues:
     types: [labeled]
 
-permissions:
-  contents: read
-  issues: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: notify-fr-${{ github.event.issue.number }}
@@ -20,6 +17,10 @@ jobs:
     if: |
       contains(github.event.issue.labels.*.name, 'type/feature-request') &&
       !contains(github.event.issue.labels.*.name, 'fr/auto-triaged')
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
 
     steps:
       - name: Checkout repository

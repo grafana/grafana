@@ -171,16 +171,13 @@ type ExtraConfiguration struct {
 	AlertmanagerConfig string
 }
 
+// GetAlertmanagerConfig parses the stored Prometheus/Mimir alertmanager YAML and converts it
+// to Grafana's PostableApiAlertingConfig, including route wrapping and receiver format conversion.
 func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
 	prometheusConfig, err := c.parsePrometheusConfig()
 	if err != nil {
 		return PostableApiAlertingConfig{}, err
 	}
-
-	return fromPrometheusConfig(prometheusConfig), nil
-}
-
-func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
 	config := PostableApiAlertingConfig{
 		Config: Config{
 			Global:            prometheusConfig.Global,
@@ -190,15 +187,17 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 			MuteTimeIntervals: MuteTimeIntervalsToModel(prometheusConfig.MuteTimeIntervals),
 			Templates:         prometheusConfig.Templates,
 		},
+		Receivers: make([]*PostableApiReceiver, 0, len(prometheusConfig.Receivers)),
 	}
-
 	for _, receiver := range prometheusConfig.Receivers {
-		config.Receivers = append(config.Receivers, &PostableApiReceiver{
-			Receiver: compat.UpstreamReceiverToDefinitionReceiver(receiver),
-		})
+		recv := &PostableApiReceiver{Receiver: compat.UpstreamReceiverToDefinitionReceiver(receiver)}
+		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		if err != nil {
+			return PostableApiAlertingConfig{}, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", recv.Name, err)
+		}
+		config.Receivers = append(config.Receivers, grafana)
 	}
-
-	return config
+	return config, nil
 }
 
 func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {

@@ -3312,6 +3312,10 @@
         "tooltip-description": "Find silences by matcher. Matches label name, value, and operator exactly.",
         "tooltip-example": "Example: <1>env=~\"prod.*\"</1> finds silences with an <4>env=~\"prod.*\"</4> matcher."
       },
+      "missing-alert-rule-warning": {
+        "text": "Alert rule unavailable",
+        "tooltip": "This alert rule may have been deleted, or you may not have permission to view it. Alert rule UID: {{ruleUid}}"
+      },
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "operator": {
         "equals": "Equals",
@@ -5539,9 +5543,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} dashboard",
       "label-no-dashboards-found": "No dashboards found"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancel loading dashboard"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "Back to dashboards",
       "provisioning-message": "Dashboard preview could not be loaded",
@@ -5811,11 +5812,6 @@
         "label": "Export dashboard menu"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Failed to fetch dashboard"
-      }
-    },
     "filters-overview": {
       "apply": "Apply",
       "apply-close": "Apply and close",
@@ -5830,8 +5826,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Select operator"
+        "aria-label": "Operator"
       },
       "restore": "Restore default value",
       "search": {
@@ -5973,11 +5968,6 @@
       "title-get-help-with-this-panel": "Get help with this panel",
       "troubleshooting-docs": "Troubleshooting docs"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Failed create dashboard model"
-      }
-    },
     "inspect": {
       "data-tab": "Data",
       "error-tab": "Error",
@@ -6066,13 +6056,6 @@
       },
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard not found"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Dashboard not editable",
@@ -6396,10 +6379,6 @@
       },
       "undo": "Undo"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Loading & initializing dashboard",
-      "title-not-found": "Panel with id {{panelId}} not found"
-    },
     "source-link": {
       "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
@@ -6673,8 +6652,8 @@
     "version-history-comparison": {
       "button-restore": "Restore to version {{version}}",
       "label-view-json-diff": "View JSON diff",
-      "new-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
+      "new-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
+      "old-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
@@ -7921,8 +7900,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "View JSON diff",
-      "new-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
+      "new-version-updated": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
+      "old-version-updated": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-header": {
       "compare-versions": "Comparing {{baseVersion}} <3></3> {{newVersion}}",
@@ -9113,7 +9092,6 @@
       "copy-button": "Copy to clipboard",
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
-      "export-externally-label": "Export the dashboard to use in another instance",
       "export-format": "Format",
       "export-mode": "Model",
       "info-text": "Copy or download a file containing the definition of your dashboard",
@@ -9206,6 +9184,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "Anonymous",
       "folder-delete-error-provisioned": "Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.",
       "folder-deleted-success": "Folder deleted",
       "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
@@ -10281,7 +10260,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
-      "access-help-details": "Access mode controls how requests to the data source will be handled.<1><i>Server</i></1> should be the preferred way if nothing else is stated.",
+      "access-help-details": "Access mode controls how requests to the data source will be handled.<strong><i>Server</i></strong> should be the preferred way if nothing else is stated.",
       "access-help-title": "Access help",
       "access-label": "Access",
       "allowed-cookies": "Allowed cookies",
@@ -10967,6 +10946,10 @@
       "loading": "Loading starred dashboards...",
       "retry": "Retry"
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "Could not check whether the target folder is managed by a repository. Please try again or contact an administrator.",
+    "error-provisioning-status-title": "Unable to determine provisioning status"
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11751,11 +11734,10 @@
       "published-by": "Published by",
       "updated-on": "Updated on"
     },
-    "import-resource-format-error": {
-      "cancel": "Cancel",
-      "title": "Unsupported format",
-      "v1-message": "This dashboard is in Kubernetes v1 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard.",
-      "v2-message": "This dashboard is in v2 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard."
+    "import-overview": {
+      "invalid-schema-action": "Try another dashboard",
+      "invalid-schema-body": "The dashboard could not be imported because its schema is not a recognized version.",
+      "invalid-schema-title": "Invalid or unknown dashboard schema"
     },
     "snapshot-list-table": {
       "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
@@ -13251,8 +13233,9 @@
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-filename": "Filename",
-      "label-folder": "Folder",
       "label-path": "Path",
+      "label-repository-folder": "Repository folder",
+      "path-exists": "A file with this name already exists at this path",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-folder": "Select or enter folder path",
       "suffix-configured-branch": "Synchronized branch",
@@ -13349,7 +13332,7 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A \"Grafana-saved-by: <name> (<login>)\" trailer is appended automatically. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13579,7 +13562,7 @@
       "modal-title-set-up-public-access": "Set up public access",
       "modal-title-set-up-required-features": "Set up required features",
       "step-description-copy-url": "From the ngrok output, copy the https:// forwarding URL that looks like this:",
-      "step-description-enable-feature-toggles": "Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.",
+      "step-description-enable-feature-toggles": "Add the provisioning feature toggle to your custom.ini file.",
       "step-description-start-ngrok": "Run this command to create a secure tunnel to your local Grafana:",
       "step-description-update-grafana-config": "Add this to your custom.ini file, replacing the URL with your actual ngrok URL:",
       "step-title-copy-url": "Copy your public URL",
@@ -13653,6 +13636,21 @@
       "authentication-failed": "Authentication failed. Please check your access token.",
       "request-failed": "Request failed",
       "resource-not-found": "Resource not found. Please check the URL or repository."
+    },
+    "import": {
+      "cancel": "Cancel",
+      "constant-required": "{{label}} needs a value",
+      "datasource-required": "Please select a data source",
+      "error": "An error occurred while importing the dashboard.",
+      "float-grid-items-body": "The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers will be truncated to integers.",
+      "float-grid-items-title": "Floating grid items",
+      "import": "Import",
+      "importing": "Importing...",
+      "label-folder": "Folder",
+      "label-name": "Name",
+      "library-panels-blocked-body": "This dashboard contains library panels that cannot be created through a provisioned import. Import into a non-provisioned folder instead, or remove the library panel references first.",
+      "library-panels-blocked-title": "Library panels not supported",
+      "name-required": "Name is required"
     },
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
@@ -13940,7 +13938,8 @@
     "sync-job": {
       "error-no-job-id": "Failed to start job",
       "error-no-repository-name": "No repository name provided",
-      "error-starting-job": "Error starting job"
+      "error-starting-job": "Error starting job",
+      "migrate-default-message": "Migrate Grafana resources into repository"
     },
     "sync-repository": {
       "error-pulling-resources": "Error pulling resources",
@@ -14209,7 +14208,20 @@
     }
   },
   "pulse": {
+    "assistant": {
+      "context-dashboard": "This question is from a Grafana Pulse conversation on the dashboard \"{{dashboardTitle}}\". You are replying inside the conversation thread and cannot open the dashboard yourself, so answer from the discussion. If you need specifics about the dashboard you have not been given, ask the user. A reference link for the user: {{link}}",
+      "context-panel": "This question is from a Grafana Pulse conversation about the panel \"{{panelTitle}}\" (panel id {{panelId}}) on the dashboard \"{{dashboardTitle}}\".{{panelConfig}}\n\nYou are replying inside the conversation thread and cannot open the dashboard or run its queries yourself, so answer from the panel details above and the discussion. If you need data values or specifics you have not been given, ask the user. A reference link for the user: {{link}}",
+      "empty-prompt": "Please help with this dashboard conversation.",
+      "history": "Earlier in this conversation:",
+      "history-self-label": "Assistant",
+      "history-truncated": "Earlier in this conversation ({{omitted}} older message(s) omitted):",
+      "system-prompt": "You are the Grafana Assistant replying inside a dashboard conversation thread. Answer concisely and helpfully in Markdown.",
+      "unavailable": "I'm the Grafana Assistant, but I'm not available in this Grafana instance right now, so I can't answer here."
+    },
     "composer": {
+      "assistant-display-name": "Grafana Assistant",
+      "assistant-suggestion-label": "Grafana Assistant",
+      "assistant-suggestion-sublabel": "Tag the assistant to reply in this thread",
       "cancel": "Cancel",
       "hint-markdown": "Cmd/Ctrl+Enter to send · @user · #panel · **markdown**",
       "hint-markdown-dashboard": "Cmd/Ctrl+Enter to send · @user · #dashboard · **markdown**",
@@ -14952,7 +14964,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Export as image",
-      "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
@@ -16843,7 +16854,7 @@
       "message": "No users found"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account.",
+      "auto-revoked": "Your session token was automatically revoked because you have reached <strong>the maximum number of {{numSessions}} concurrent sessions</strong> for your account.",
       "resume-message": "<strong>To resume your session, sign in again.</strong>Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.",
       "sign-in": "Sign in",
       "title-you-have-been-automatically-signed-out": "You have been automatically signed out"

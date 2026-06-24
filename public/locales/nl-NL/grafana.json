@@ -3312,6 +3312,10 @@
         "tooltip-description": "Stiltes zoeken op matcher. Komt exact overeen met labelnaam, waarde en operator.",
         "tooltip-example": "Voorbeeld: <1>env=~\"prod.*\"</1> vindt stiltes met een matcher <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Alleen waarschuwingsinstanties in de actieve status worden weergegeven.",
       "operator": {
         "equals": "Gelijk aan",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "Geen dashboards gevonden"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Laden van het dashboard annuleren"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5792,8 +5793,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operator",
-        "placeholder": "Operator selecteren"
+        "aria-label": "Operator"
       },
       "restore": "Standaardwaarde herstellen",
       "search": {
@@ -6028,13 +6028,6 @@
       },
       "ungroup-nested-text": "Hiermee worden alle geneste groepen gedegroepeerd.",
       "ungroup-nested-title": "Geneste groepen degroeperen?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard niet gevonden"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Dashboard kan niet worden bewerkt",
@@ -6627,8 +6620,8 @@
     "version-history-comparison": {
       "button-restore": "Herstellen naar versie {{version}}",
       "label-view-json-diff": "JSON diff weergeven",
-      "new-updated-by": "<0>Versie {{version}}</0> bijgewerkt door {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Versie {{version}}</0> bijgewerkt door {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Selectie van versie {{version}} in-/uitschakelen",
@@ -7870,8 +7863,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON diff weergeven",
-      "new-version-updated": "<0>Versie {{version}}</0> bijgewerkt door {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Versie {{version}}</0> bijgewerkt door {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}} <3></3> {{newVersion}} worden vergelijken",
@@ -9062,7 +9055,6 @@
       "copy-button": "Kopiëren naar klembord",
       "download-button": "Bestand downloaden",
       "download-successful_toast_message": "Je JSON is gedownload",
-      "export-externally-label": "Exporteer het dashboard om het in een andere instantie te gebruiken",
       "export-format": "Formaat",
       "export-mode": "Model",
       "info-text": "Kopieer of download een JSON-bestand met de JSON van je dashboard",
@@ -9155,6 +9147,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Map verwijderd",
       "folder-move-error-provisioned": "Kan de geprovisioneerde map niet verplaatsen. Om deze te verplaatsen, verplaats je de map in de repository en synchroniseer je ze om de wijzigingen toe te passen.",
@@ -10230,7 +10223,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
-      "access-help-details": "De toegangsmodus bepaalt hoe verzoeken naar de databron worden afgehandeld.<1><i>Server</i></1> moet de voorkeursoptie zijn als er niets anders is aangegeven.",
+      "access-help-details": "",
       "access-help-title": "Hulp inschakelen",
       "access-label": "Toegang",
       "allowed-cookies": "Toegestane cookies",
@@ -10916,6 +10909,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11700,11 +11697,10 @@
       "published-by": "Gepubliceerd door",
       "updated-on": "Bijgewerkt op"
     },
-    "import-resource-format-error": {
-      "cancel": "Annuleren",
-      "title": "Niet-ondersteunde indeling",
-      "v1-message": "Dit dashboard heeft de Kubernetes v1-bronindeling en kan niet worden geïmporteerd als de Kubernetes-dashboardfunctie is uitgeschakeld. Schakel de functieschakelaar kubernetesDashboards in om dit dashboard te importeren.",
-      "v2-message": "Dit dashboard heeft de bronindeling v2 en kan niet worden geïmporteerd als de Kubernetes-dashboardfunctie is uitgeschakeld. Schakel de functieschakelaar kubernetesDashboards in om dit dashboard te importeren."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "Weet je zeker dat je '{{snapshotToRemove}}' wilt verwijderen?",
@@ -13199,8 +13195,9 @@
       "label-branch": "Branch",
       "label-comment": "Opmerking",
       "label-filename": "Bestandsnaam",
-      "label-folder": "Map",
       "label-path": "Pad",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Selecteer of voer het mappad in",
       "suffix-configured-branch": "Gesynchroniseerde branch",
@@ -13527,7 +13524,7 @@
       "modal-title-set-up-public-access": "Openbare toegang instellen",
       "modal-title-set-up-required-features": "Vereiste functies instellen",
       "step-description-copy-url": "Kopieer vanuit de ngrok-uitvoer de https:// forwarding-URL die er als volgt uitziet:",
-      "step-description-enable-feature-toggles": "De provisioning-featuretoggle toevoegen aan je custom.ini-bestand. Opmerking: kubernetesDashboards is standaard ingeschakeld, maar als je dit expliciet hebt uitgeschakeld, moet je het inschakelen in je Grafana-instellingen of de override uit je configuratie verwijderen.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Voer dit commando uit om een veilige tunnel naar je lokale Grafana te maken:",
       "step-description-update-grafana-config": "Voeg dit toe aan je custom.ini-bestand en vervang de URL door je werkelijke ngrok-URL:",
       "step-title-copy-url": "Kopieer je openbare URL",
@@ -13601,6 +13598,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": ""
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "Instancesynchronisatie wordt momenteel niet volledig ondersteund en verbreekt bibliotheekpanelen en waarschuwingen. Om bibliotheekpanelen en waarschuwingen te gebruiken, koppelt je je repository los en sluit je deze opnieuw aan met behulp van mapsynchronisatie.",
@@ -13888,7 +13900,8 @@
     "sync-job": {
       "error-no-job-id": "Kan taak niet starten",
       "error-no-repository-name": "Geen repository-naam opgegeven",
-      "error-starting-job": "Er is een fout opgetreden bij het starten van de taak"
+      "error-starting-job": "Er is een fout opgetreden bij het starten van de taak",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Er is een fout opgetreden bij het ophalen van de bronnen",
@@ -14719,7 +14732,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exporteren als afbeelding",
-      "export-json-title": "Exporteren als JSON",
       "share-externally-title": "Extern delen",
       "share-internally-title": "Intern delen",
       "share-snapshot-title": "Snapshot delen"
@@ -16610,7 +16622,7 @@
       "message": "Geen gebruikers gevonden"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Je sessietoken is automatisch ingetrokken omdat je <2>het maximale aantal van {{numSessions}} gelijktijdige sessies</2> voor je account hebt bereikt.",
+      "auto-revoked": "",
       "resume-message": "<strong>Meld je opnieuw aan om je sessie te hervatten.</strong>Neem contact op met je beheerder of bezoek de licentiepagina om je quotum te bekijken als je herhaaldelijk automatisch wordt afgemeld.",
       "sign-in": "Aanmelden",
       "title-you-have-been-automatically-signed-out": "Je bent automatisch afgemeld"

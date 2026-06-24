@@ -223,3 +223,7 @@ export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
 }
+
+export class PanelEditNextFeedbackEvent extends BusEventBase {
+  static type = 'panel-edit-next-feedback';
+}

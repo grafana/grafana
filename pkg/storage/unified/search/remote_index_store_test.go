@@ -1160,11 +1160,12 @@ func TestRemoteIndexStore_BuildAndCleanupLockTTLsWiredIndependently(t *testing.T
 // mid-call callbacks, and controllable lock loss.
 //
 // Error injection and counters are at the interface-method level
-// (WriteSnapshotFile, ReadSnapshotFile, ListIndexKeys, ...). Test setters
-// like setUploadErr / setDownloadErr are spelled in terms of the
-// higher-level intent ("fail the upload") but plumb into the underlying
-// method-level field; this keeps test code readable without coupling it to
-// the exact interface shape.
+// (WriteSnapshotFile, ReadSnapshotFile, WriteSnapshotManifest,
+// ReadSnapshotManifest, ListIndexKeys, ...). Test setters like setUploadErr
+// / setDownloadErr are spelled in terms of the higher-level intent ("fail
+// the upload") but plumb into the underlying method-level fields; this
+// keeps test code readable without coupling it to the exact interface
+// shape.
 //
 // Tests seed snapshots by writing directly to the bucket via seedSnapshot or
 // seedDownloadableSnapshot, which lets them pin manifest fields independent
@@ -1178,9 +1179,9 @@ type hookableStore struct {
 	lockBuildErr         error
 	lockCleanupErr       error
 	listKeysErr          error
-	writeSnapshotFileErr error               // fires on any WriteSnapshotFile call
-	readSnapshotFileErr  error               // fires on non-manifest ReadSnapshotFile (data-file phase of a download)
-	readManifestErrs     map[ulid.ULID]error // fires on ReadSnapshotFile(manifest) for the keyed snapshot
+	writeSnapshotFileErr error               // fires on WriteSnapshotFile (data files) and WriteSnapshotManifest
+	readSnapshotFileErr  error               // fires on ReadSnapshotFile (data-file phase of a download)
+	readManifestErrs     map[ulid.ULID]error // fires on ReadSnapshotManifest for the keyed snapshot
 
 	onUpload func() error
 
@@ -1188,9 +1189,9 @@ type hookableStore struct {
 	lockAcquireCalls  atomic.Int32
 	lockReleaseCalls  atomic.Int32
 	listKeyCalls      atomic.Int32 // ListIndexKeys
-	readManifestCalls atomic.Int32 // ReadSnapshotFile(manifest)
-	downloadCalls     atomic.Int32 // ReadSnapshotFile(non-manifest)
-	uploadCalls       atomic.Int32 // WriteSnapshotFile(manifest) succeeded — upload complete
+	readManifestCalls atomic.Int32 // ReadSnapshotManifest
+	downloadCalls     atomic.Int32 // ReadSnapshotFile (data files)
+	uploadCalls       atomic.Int32 // WriteSnapshotManifest succeeded — upload complete
 
 	// Last-upload captures. Reset when a write for a new indexKey arrives.
 	lastUploadedMeta     IndexMeta
@@ -1245,9 +1246,7 @@ func (s *hookableStore) LockNamespaceForCleanup(ctx context.Context, namespace s
 	return s.inner.LockNamespaceForCleanup(ctx, namespace)
 }
 
-func (s *hookableStore) WriteSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, in io.Reader) error {
-	isManifest := relPath == snapshotManifestFile
-
+func (s *hookableStore) WriteSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
 	s.mu.Lock()
 	// Reset per-upload captures when we see a write for a new key.
 	if s.lastUploadedKey != indexKey {
@@ -1255,72 +1254,72 @@ func (s *hookableStore) WriteSnapshotFile(ctx context.Context, ns resource.Names
 		s.lastUploadedFiles = nil
 		s.lastUploadedMeta = IndexMeta{}
 	}
+	s.lastUploadedFiles = append(s.lastUploadedFiles, relPath)
+	injected := s.writeSnapshotFileErr
+	s.mu.Unlock()
+
+	if injected != nil {
+		return injected
+	}
+	return s.inner.WriteSnapshotFile(ctx, ns, indexKey, relPath, src)
+}
+
+func (s *hookableStore) WriteSnapshotManifest(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, manifest []byte) error {
+	s.mu.Lock()
+	if s.lastUploadedKey != indexKey {
+		s.lastUploadedKey = indexKey
+		s.lastUploadedFiles = nil
+		s.lastUploadedMeta = IndexMeta{}
+	}
+	var meta IndexMeta
+	_ = json.Unmarshal(manifest, &meta) // best-effort; tests inspect what they wrote
+	s.lastUploadedMeta = meta
 	onUpload := s.onUpload
 	injected := s.writeSnapshotFileErr
 	s.mu.Unlock()
 
-	if isManifest {
-		// Capture the manifest by reading in into a buffer; re-supply via a
-		// fresh Reader so the inner store sees the original bytes.
-		data, err := io.ReadAll(in)
-		if err != nil {
+	// onUpload fires between the data-file writes and the manifest
+	// write — a deterministic point where the upload is on the verge of
+	// being marked complete.
+	if onUpload != nil {
+		if err := onUpload(); err != nil {
 			return err
 		}
-		var meta IndexMeta
-		_ = json.Unmarshal(data, &meta) // best-effort; tests inspect what they wrote
-		s.mu.Lock()
-		s.lastUploadedMeta = meta
-		s.mu.Unlock()
-		in = bytes.NewReader(data)
-
-		// onUpload fires between the data-file writes and the manifest
-		// write — a deterministic point where the upload is on the verge of
-		// being marked complete.
-		if onUpload != nil {
-			if err := onUpload(); err != nil {
-				return err
-			}
-		}
-	} else {
-		s.mu.Lock()
-		s.lastUploadedFiles = append(s.lastUploadedFiles, relPath)
-		s.mu.Unlock()
 	}
-
 	if injected != nil {
 		return injected
 	}
-	if err := s.inner.WriteSnapshotFile(ctx, ns, indexKey, relPath, in); err != nil {
+	if err := s.inner.WriteSnapshotManifest(ctx, ns, indexKey, manifest); err != nil {
 		return err
 	}
-	if isManifest {
-		s.uploadCalls.Add(1)
-	}
+	s.uploadCalls.Add(1)
 	return nil
 }
 
-func (s *hookableStore) ReadSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, out io.Writer) error {
-	isManifest := relPath == snapshotManifestFile
-
+func (s *hookableStore) ReadSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
 	s.mu.Lock()
-	var injected error
-	if isManifest {
-		injected = s.readManifestErrs[indexKey]
-	} else {
-		injected = s.readSnapshotFileErr
-	}
+	injected := s.readSnapshotFileErr
 	s.mu.Unlock()
 
-	if isManifest {
-		s.readManifestCalls.Add(1)
-	} else {
-		s.downloadCalls.Add(1)
-	}
+	s.downloadCalls.Add(1)
 
 	if injected != nil {
 		return injected
 	}
-	return s.inner.ReadSnapshotFile(ctx, ns, indexKey, relPath, out)
+	return s.inner.ReadSnapshotFile(ctx, ns, indexKey, relPath, dst, expectedSize)
+}
+
+func (s *hookableStore) ReadSnapshotManifest(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID) ([]byte, error) {
+	s.mu.Lock()
+	injected := s.readManifestErrs[indexKey]
+	s.mu.Unlock()
+
+	s.readManifestCalls.Add(1)
+
+	if injected != nil {
+		return nil, injected
+	}
+	return s.inner.ReadSnapshotManifest(ctx, ns, indexKey)
 }
 
 func (s *hookableStore) ListNamespaces(ctx context.Context) ([]string, error) {
@@ -1361,15 +1360,16 @@ func (s *hookableStore) setListKeysErr(err error) {
 	s.mu.Unlock()
 }
 
-// setUploadErr makes the next WriteSnapshotFile call (data file or
-// manifest) return err. Used to simulate "the upload fails partway".
+// setUploadErr makes the next WriteSnapshotFile (data file) or
+// WriteSnapshotManifest call return err. Used to simulate "the upload
+// fails partway".
 func (s *hookableStore) setUploadErr(err error) {
 	s.mu.Lock()
 	s.writeSnapshotFileErr = err
 	s.mu.Unlock()
 }
 
-// setDownloadErr makes data-file ReadSnapshotFile calls return err.
+// setDownloadErr makes ReadSnapshotFile (data file) calls return err.
 // Manifest reads are not affected, so probes / ReadIndexSnapshotManifest still succeed;
 // only the actual file-streaming phase of DownloadIndexSnapshot fails.
 func (s *hookableStore) setDownloadErr(err error) {
@@ -1403,11 +1403,11 @@ func (s *hookableStore) getLastLockBuildVersion() string {
 	return s.lastLockBuildVersion
 }
 
-// setReadManifestErr installs an error to return on the next manifest read for
-// indexKey — i.e. ReadSnapshotFile(ns, indexKey, snapshotManifestFile, w).
-// Existing snapshot data in the bucket is left in place; only the manifest
-// read for this key fails. Used to simulate ErrSnapshotNotFound /
-// ErrInvalidManifest at a specific key without disturbing the bucket.
+// setReadManifestErr installs an error to return on the next
+// ReadSnapshotManifest call for indexKey. Existing snapshot data in the
+// bucket is left in place; only the manifest read for this key fails. Used
+// to simulate ErrSnapshotNotFound / ErrInvalidManifest at a specific key
+// without disturbing the bucket.
 func (s *hookableStore) setReadManifestErr(indexKey ulid.ULID, err error) {
 	s.mu.Lock()
 	if s.readManifestErrs == nil {
@@ -1417,11 +1417,12 @@ func (s *hookableStore) setReadManifestErr(indexKey ulid.ULID, err error) {
 	s.mu.Unlock()
 }
 
-// setOnUpload installs a callback fired inside WriteSnapshotFile just
-// before the manifest write — i.e. after all data files have been
-// uploaded, but before the upload is marked complete. The callback's
-// returned error short-circuits the upload. Used to trigger races (e.g.
-// concurrent mutations during upload) at a deterministic point.
+// setOnUpload installs a callback fired inside WriteSnapshotManifest just
+// before the manifest is written to the inner store — i.e. after all data
+// files have been uploaded, but before the upload is marked complete. The
+// callback's returned error short-circuits the upload. Used to trigger
+// races (e.g. concurrent mutations during upload) at a deterministic
+// point.
 func (s *hookableStore) setOnUpload(fn func() error) {
 	s.mu.Lock()
 	s.onUpload = fn

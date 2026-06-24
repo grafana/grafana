@@ -29,6 +29,7 @@ import {
   useListPanelMentionsQuery,
   useListThreadsQuery,
 } from '../api/pulseApi';
+import { useAssistantAutoReply, type PanelSnapshot } from '../hooks/useAssistantAutoReply';
 import { useResourcePulseStream } from '../hooks/useResourcePulseStream';
 import { type PulseThread } from '../types';
 import { type PanelSuggestion } from '../utils/lookups';
@@ -44,6 +45,11 @@ interface Props {
   /** Free-form search needle. Empty / whitespace-only is no filter. */
   searchFilter?: string;
   panels?: PanelSuggestion[];
+  /** Resolves a panel's live configuration for the assistant auto-reply, so
+   *  an @assistant pulse gets the panel's queries/type/thresholds embedded
+   *  in its prompt. Supplied by the dashboard scene; omit on surfaces
+   *  without scene access (the prompt then names the panel only). */
+  getPanelSnapshot?: (panelId: number) => PanelSnapshot | undefined;
   /** Extra resource sources for the composer's `#` picker on this
    *  surface. The dashboard drawer passes sibling dashboards here so
    *  a thread can reference other dashboards in the same folder
@@ -107,6 +113,7 @@ export function PulseDrawerContent({
   authorFilter,
   searchFilter,
   panels,
+  getPanelSnapshot,
   resourceMentions,
   currentUserId,
   isAdmin = false,
@@ -308,6 +315,7 @@ export function PulseDrawerContent({
   }, [currentPage, numberOfPages]);
 
   const [createThread, createThreadState] = useCreateThreadMutation();
+  const triggerAssistantReply = useAssistantAutoReply();
 
   // When the user opens a thread that isn't on the current page (e.g.
   // a deep link from the global overview), fall back to fetching the
@@ -347,9 +355,11 @@ export function PulseDrawerContent({
           thread={activeThread}
           panels={panels}
           panelTitlesById={panelTitlesById}
+          getPanelSnapshot={getPanelSnapshot}
           resourceMentions={resourceMentions}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
+          panelFilter={panelFilter}
           currentTimeRange={currentTimeRange}
           onTimeChipClick={onTimeChipClick}
           onMentionPanel={onMentionPanel}
@@ -399,6 +409,26 @@ export function PulseDrawerContent({
               // a deeper page that no longer makes sense.
               setCurrentPage(1);
               setActiveThreadUID(res.thread.uid);
+              // If the opening pulse tagged @assistant, generate and post
+              // the assistant's reply in the background. Pass the dashboard
+              // so the assistant gets a link it can open; the panel (if any)
+              // is derived from a `#panel` chip in the body by the hook.
+              void triggerAssistantReply(body, {
+                threadUID: res.thread.uid,
+                parentUID: res.pulse.uid,
+                dashboardUID: resourceUID,
+                // So a #panel chip in the opening pulse names the panel by
+                // its current title in the assistant prompt.
+                panelTitlesById,
+                // When Pulse was opened scoped to a panel, tell the assistant
+                // which panel — even without an explicit #panel chip. This
+                // informs the prompt only; it does not anchor the thread.
+                fallbackPanelId: panelFilter,
+                // Lets the prompt embed the panel's live config (queries,
+                // type, thresholds) — the only way the tool-less inline
+                // assistant can know what the panel shows.
+                getPanelSnapshot,
+              });
             }}
           />
         </Stack>

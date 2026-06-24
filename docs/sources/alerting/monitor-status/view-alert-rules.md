@@ -59,13 +59,7 @@ For details on how rule states and alert instance states are displayed, refer to
 
 ## View, compare and restore alert rules versions.
 
-You can view, compare, and restore previous alert rule versions.
-
-{{< admonition type="note" >}}
-In Grafana OSS and Enterprise, the number of alert rule versions is limited. Free users are allowed a maximum of 10 alert rule versions, while paid users have a maximum of 100 stored alert rule versions.
-{{< /admonition >}}
-
-To view or restore previous versions for an alert rule, complete the following steps.
+To view, compare, or restore previous versions for an alert rule, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 1. Select an alert rule and click **View**.
@@ -73,7 +67,15 @@ To view or restore previous versions for an alert rule, complete the following s
    The page displays a list of the previous rule versions.
 
 On the Alert rule's Versions page you can view, compare and restore the previous rule versions.
+
 {{< figure src="/media/docs/alerting/screenshot-grafana-alerting-version-history-v3.png" max-width="750px" alt="View alert rule history to compare and restore previous alert rules." >}}
+
+{{< admonition type="note" >}}
+
+- The alert rule does not guarantee sequential version increases.
+
+- In Grafana OSS and Enterprise, the number of alert rule versions can be limited using the [`rule_version_record_limit` option](/docs/grafana/latest/setup-grafana/configure-grafana/#rule_version_record_limit). In Grafana Cloud, free users are allowed a maximum of 10 alert rule versions, while paid users have a maximum of 100 stored alert rule versions.
+  {{< /admonition >}}
 
 ## Bulk pause or resume alert rules evaluations within a folder
 

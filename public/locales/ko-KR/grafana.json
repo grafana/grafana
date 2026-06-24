@@ -3291,6 +3291,10 @@
         "tooltip-description": "일치 조건으로 알림 끄기를 찾습니다. 라벨 이름, 값, 연산자와 정확히 일치합니다.",
         "tooltip-example": "예: <1>env=~\"prod.*\"</1>은(는) <4>env=~\"prod.*\"</4> 일치 조건이 있는 알림 끄기를 찾습니다."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "발생 상태의 경고 인스턴스만 표시됩니다.",
       "operator": {
         "equals": "동일함",
@@ -5469,9 +5473,6 @@
       "aria-label-dashboard-name": "{{dashboardName}} 대시보드",
       "label-no-dashboards-found": "검색된 대시보드 없음"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "대시보드 로딩 취소"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5760,8 +5761,7 @@
         }
       },
       "operator": {
-        "aria-label": "작업 수행자",
-        "placeholder": "연산자 선택"
+        "aria-label": "작업 수행자"
       },
       "restore": "기본값 복원",
       "search": {
@@ -5996,13 +5996,6 @@
       },
       "ungroup-nested-text": "중첩된 모든 그룹이 해제됩니다.",
       "ungroup-nested-title": "중첩된 그룹을 해제하시겠습니까?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "대시보드를 찾을 수 없습니다."
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "대시보드를 편집할 수 없습니다",
@@ -6594,8 +6587,8 @@
     "version-history-comparison": {
       "button-restore": "{{version}} 버전으로 복구",
       "label-view-json-diff": "JSON 차이 보기",
-      "new-updated-by": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨",
-      "old-updated-by": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "{{version}} 버전 선택 토글",
@@ -7822,8 +7815,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON 차이 보기",
-      "new-version-updated": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨",
-      "old-version-updated": "<0>{{version}} 버전</0>이 {{editor}}에 의해 {{timeAgo}}에 업데이트됨"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}} <3></3> {{newVersion}} 비교 중",
@@ -9012,7 +9005,6 @@
       "copy-button": "클립보드로 복사",
       "download-button": "파일 다운로드",
       "download-successful_toast_message": "JSON 다운로드 완료",
-      "export-externally-label": "다른 인스턴스에서 사용할 대시보드 내보내기",
       "export-format": "형식",
       "export-mode": "모델",
       "info-text": "대시보드의 정의가 포함된 파일을 복사하거나 다운로드",
@@ -9105,6 +9097,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "폴더 삭제됨",
       "folder-move-error-provisioned": "프로비저닝된 폴더를 이동할 수 없습니다. 이동하려면 리포지토리에서 이동하고 동기화해 변경 사항을 적용하세요.",
@@ -10170,7 +10163,7 @@
     },
     "data-source-http-settings": {
       "access-help": "도움말 <1></1>",
-      "access-help-details": "액세스 모드는 데이터 소스 요청 처리 방식을 제어합니다. 별도 안내가 없으면 <1><i>서버</i></1> 방식을 권장합니다.",
+      "access-help-details": "",
       "access-help-title": "액세스 권한 도움말",
       "access-label": "액세스 권한",
       "allowed-cookies": "허용된 쿠키",
@@ -10856,6 +10849,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11632,11 +11629,10 @@
       "published-by": "게시자",
       "updated-on": "업데이트 날짜"
     },
-    "import-resource-format-error": {
-      "cancel": "취소",
-      "title": "지원되지 않는 형식",
-      "v1-message": "이 대시보드는 Kubernetes v1 리소스 형식으로 되어 있으며, Kubernetes 대시보드 기능이 비활성화되어 있을 때는 가져올 수 없습니다. 이 대시보드를 가져오려면 kubernetesDashboards 기능 토글을 활성화하세요.",
-      "v2-message": "이 대시보드는 v2 리소스 형식이며 Kubernetes 대시보드 기능이 비활성화되어 있을 때 가져올 수 없습니다. 이 대시보드를 가져오려면 kubernetesDashboards 기능 토글을 활성화하세요."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "정말 '{{snapshotToRemove}}'을(를) 삭제하시겠어요?",
@@ -13128,8 +13124,9 @@
       "label-branch": "브랜치",
       "label-comment": "댓글",
       "label-filename": "파일 이름",
-      "label-folder": "폴더",
       "label-path": "경로",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "폴더 경로 선택 또는 입력",
       "suffix-configured-branch": "동기화된 브랜치",
@@ -13450,7 +13447,7 @@
       "modal-title-set-up-public-access": "공개 액세스 설정",
       "modal-title-set-up-required-features": "필수 기능 설정",
       "step-description-copy-url": "ngrok 출력에서 다음과 같은 https:// 전달 URL을 복사합니다.",
-      "step-description-enable-feature-toggles": "프로비저닝 기능 토글을 custom.ini 파일에 추가합니다. 참고: kubernetesDashboards는 기본적으로 활성화되어 있지만, 명시적으로 비활성화한 경우, Grafana 설정에서 활성화하거나 구성에서 재정의 설정을 삭제해야 합니다.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "이 명령을 실행하여 로컬 Grafana에 대한 보안 터널을 생성합니다.",
       "step-description-update-grafana-config": "이것을 custom.ini 파일에 추가하여, URL을 다음과 같은 실제 ngrok URL로 교체합니다.",
       "step-title-copy-url": "공개 URL 복사",
@@ -13524,6 +13521,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": ""
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "인스턴스 동기화는 현재 완전히 지원되지 않으며 라이브러리 패널 및 알림이 정상적으로 작동하지 않을 수도 있습니다. 라이브러리 패널 및 알림을 사용하려면 리포지토리의 연결을 해제한 후 폴더 동기화를 사용하여 다시 연결하세요.",
@@ -13803,7 +13815,8 @@
     "sync-job": {
       "error-no-job-id": "작업을 시작하지 못했습니다",
       "error-no-repository-name": "제공된 리포지토리 이름 없음",
-      "error-starting-job": "작업 시작 중 오류 발생"
+      "error-starting-job": "작업 시작 중 오류 발생",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "리소스를 가져오는 중 오류 발생",
@@ -14625,7 +14638,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "이미지로 내보내기",
-      "export-json-title": "JSON으로 내보내기",
       "share-externally-title": "외부 공유",
       "share-internally-title": "내부 공유",
       "share-snapshot-title": "스냅샷 공유"
@@ -16515,7 +16527,7 @@
       "message": "찾은 사용자 없음"
     },
     "token-revoked-modal": {
-      "auto-revoked": "계정의 <2>최대 동시 세션 수인 {{numSessions}}개</2>에 도달했기 때문에 세션 토큰이 자동으로 취소되었습니다.",
+      "auto-revoked": "",
       "resume-message": "<strong>세션을 다시 시작하려면 다시 로그인하세요.</strong>자동 로그아웃이 반복되는 경우, 관리자에게 문의하거나 라이선스 페이지에서 할당량을 확인하세요.",
       "sign-in": "로그인",
       "title-you-have-been-automatically-signed-out": "자동으로 로그아웃되었습니다"

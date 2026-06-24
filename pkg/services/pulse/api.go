@@ -65,6 +65,11 @@ func (s *PulseService) registerAPIEndpoints() {
 		r.Post("/threads/:threadUID/reopen", authorize(admin), routing.Wrap(s.reopenThreadHandler))
 		r.Get("/threads/:threadUID/pulses", authorize(read), routing.Wrap(s.listPulsesHandler))
 		r.Post("/threads/:threadUID/pulses", authorize(write), routing.Wrap(s.addPulseHandler))
+		// The Grafana Assistant reply is generated client-side and posted
+		// back here; the backend stamps it under the assistant service
+		// account. Gated by the same write action plus the
+		// dashboardPulseAssistant toggle (checked in the handler).
+		r.Post("/threads/:threadUID/assistant-reply", authorize(write), routing.Wrap(s.addAssistantReplyHandler))
 		r.Patch("/pulses/:pulseUID", authorize(write), routing.Wrap(s.editPulseHandler))
 		r.Delete("/pulses/:pulseUID", authorize(deleteOrAdmin), routing.Wrap(s.deletePulseHandler))
 		r.Post("/threads/:threadUID/subscribe", authorize(read), routing.Wrap(s.subscribeHandler))
@@ -575,12 +580,22 @@ func (s *PulseService) listPulsesHandler(c *contextmodel.ReqContext) response.Re
 // missing display names degrade to "User #<id>" on the frontend, which
 // is the pre-existing behavior.
 func (s *PulseService) populateAuthorDisplay(ctx context.Context, pulses []Pulse) {
-	if len(pulses) == 0 || s.userSvc == nil {
+	if len(pulses) == 0 {
+		return
+	}
+	// Stamp assistant-authored pulses first so their label is set even
+	// when there's no user service wired (tests) or no real-user ids to
+	// resolve in this batch.
+	stampAssistantAuthors(pulses)
+	if s.userSvc == nil {
 		return
 	}
 	ids := make([]int64, 0, len(pulses))
 	seen := make(map[int64]bool, len(pulses))
 	for _, p := range pulses {
+		// The assistant authors replies under a synthetic negative
+		// sentinel id, so it never has (and must not be looked up as) a
+		// real user row. Its display fields are stamped directly below.
 		if p.AuthorUserID <= 0 || seen[p.AuthorUserID] {
 			continue
 		}
@@ -617,6 +632,19 @@ func (s *PulseService) populateAuthorDisplay(ctx context.Context, pulses []Pulse
 		pulses[i].AuthorName = d.name
 		pulses[i].AuthorLogin = d.login
 		pulses[i].AuthorAvatarURL = d.avatarURL
+	}
+}
+
+// stampAssistantAuthors fills in the display name/login for pulses the
+// Grafana Assistant authored. These carry the AssistantAuthorUserID
+// sentinel (a negative id with no user row), so the userSvc lookup skips
+// them; without this the frontend would render them as "Automation #-1".
+func stampAssistantAuthors(pulses []Pulse) {
+	for i := range pulses {
+		if pulses[i].AuthorUserID == AssistantAuthorUserID {
+			pulses[i].AuthorName = AssistantDisplayName
+			pulses[i].AuthorLogin = AssistantLogin
+		}
 	}
 }
 
@@ -671,6 +699,51 @@ func (s *PulseService) addPulseHandler(c *contextmodel.ReqContext) response.Resp
 	p, err := s.AddPulse(c.Req.Context(), cmd)
 	if err != nil {
 		return mapPulseError(err, "Failed to add pulse")
+	}
+	one := []Pulse{p}
+	s.populateAuthorDisplay(c.Req.Context(), one)
+	return response.JSON(http.StatusOK, one[0])
+}
+
+// swagger:route POST /pulse/threads/{threadUID}/assistant-reply pulse alpha addAssistantReply
+//
+// Persist a Grafana Assistant reply on a thread.
+//
+// The reply markdown is generated client-side by the Grafana Assistant and
+// posted here; the backend stores it under the assistant service account.
+// Requires the dashboardPulseAssistant feature toggle — when it's off the
+// route 404s so the capability stays invisible.
+//
+// Responses:
+// 200: pulseAddPulseResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 409: conflictError
+// 500: internalServerError
+func (s *PulseService) addAssistantReplyHandler(c *contextmodel.ReqContext) response.Response {
+	if !s.assistantEnabled() {
+		// Match the feature-gate convention: an off toggle is invisible.
+		return response.Error(http.StatusNotFound, "Pulse assistant is not enabled", nil)
+	}
+	uid := web.Params(c.Req)[":threadUID"]
+	t, err := s.GetThread(c.Req.Context(), c.GetOrgID(), uid)
+	if err != nil {
+		return mapPulseError(err, "Failed to get thread")
+	}
+	if err := s.assertCanReadResource(c, t.ResourceKind, t.ResourceUID); err != nil {
+		return err
+	}
+	cmd := AddAssistantReplyCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.OrgID = c.GetOrgID()
+	cmd.ThreadUID = uid
+	p, err := s.AddAssistantReply(c.Req.Context(), cmd)
+	if err != nil {
+		return mapPulseError(err, "Failed to add assistant reply")
 	}
 	one := []Pulse{p}
 	s.populateAuthorDisplay(c.Req.Context(), one)

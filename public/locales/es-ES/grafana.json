@@ -3312,6 +3312,10 @@
         "tooltip-description": "Permite buscar silencios mediante un comparador. Se puede hacer coincidir exactamente con el nombre de la etiqueta, el valor y el operador.",
         "tooltip-example": "Ejemplo: <1>env=~\"prod.*\"</1> busca silencios con un comparador <4>env=~\"prod.*\"</4>."
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "Solo se muestran las instancias de alerta en estado de activación.",
       "operator": {
         "equals": "Igual a",
@@ -5501,9 +5505,6 @@
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "No se han encontrado dashboards"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "Cancelar la carga del dashboard"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5792,8 +5793,7 @@
         }
       },
       "operator": {
-        "aria-label": "Operador",
-        "placeholder": "Seleccionar operador"
+        "aria-label": "Operador"
       },
       "restore": "Restaurar el valor predeterminado",
       "search": {
@@ -6028,13 +6028,6 @@
       },
       "ungroup-nested-text": "Esto desagrupará todos los grupos anidados.",
       "ungroup-nested-title": "¿Desagrupar grupos anidados?"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard no encontrado"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "Dashboard no editable",
@@ -6627,8 +6620,8 @@
     "version-history-comparison": {
       "button-restore": "Restaurar a la versión {{version}} ",
       "label-view-json-diff": "Ver diferencia de JSON",
-      "new-updated-by": "<0>Versión {{version}}</0> actualizada por {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Versión {{version}}</0> actualizada por {{editor}} {{timeAgo}}"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Alternar selección de versión {{version}}",
@@ -7870,8 +7863,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "Ver diferencia de JSON",
-      "new-version-updated": "<0>Versión {{version}}</0> actualizada por {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Versión {{version}}</0> actualizada por {{editor}} {{timeAgo}}"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "Comparando {{baseVersion}} <3></3> {{newVersion}}",
@@ -9062,7 +9055,6 @@
       "copy-button": "Copiar al portapapeles",
       "download-button": "Descargar archivo",
       "download-successful_toast_message": "Tu JSON se ha descargado",
-      "export-externally-label": "Exportar el panel de control para utilizarlo en otra instancia",
       "export-format": "Formato",
       "export-mode": "Modelo",
       "info-text": "Copiar o descargar un archivo que contenga la definición de tu dashboard",
@@ -9155,6 +9147,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "Carpeta eliminada",
       "folder-move-error-provisioned": "No se puede mover la carpeta aprovisionada. Para moverla, desplázala en el repositorio y sincroniza para aplicar los cambios.",
@@ -10230,7 +10223,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Ayuda <1></1>",
-      "access-help-details": "El modo de acceso controla cómo se gestionarán las solicitudes a la fuente de datos.<1><i>Servidor</i></1> debería ser la opción preferida si no se indica nada más.",
+      "access-help-details": "",
       "access-help-title": "Acceder a la ayuda",
       "access-label": "Acceder",
       "allowed-cookies": "Cookies permitidas",
@@ -10916,6 +10909,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11700,11 +11697,10 @@
       "published-by": "Publicado por",
       "updated-on": "Actualizado el"
     },
-    "import-resource-format-error": {
-      "cancel": "Cancelar",
-      "title": "Formato no compatible",
-      "v1-message": "Este dashboard está en formato de recurso Kubernetes v1 y no se puede importar cuando la función de dashboards de Kubernetes está deshabilitada. Habilita la opción de alternar características kubernetesDashboards para importar este dashboard.",
-      "v2-message": "Este dashboard está en formato de recurso v2 y no se puede importar cuando la función de dashboards de Kubernetes está deshabilitada. Habilita la opción de alternar características kubernetesDashboards para importar este dashboard."
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "¿Seguro que quieres eliminar «{{snapshotToRemove}}»?",
@@ -13199,8 +13195,9 @@
       "label-branch": "Rama",
       "label-comment": "Comentario",
       "label-filename": "Nombre de archivo",
-      "label-folder": "Carpeta",
       "label-path": "Ruta",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "Selecciona o introduce la ruta de la carpeta.",
       "suffix-configured-branch": "Rama sincronizada",
@@ -13527,7 +13524,7 @@
       "modal-title-set-up-public-access": "Configurar el acceso público",
       "modal-title-set-up-required-features": "Configurar las características necesarias",
       "step-description-copy-url": "Desde la salida de ngrok, copia la URL de redireccionamiento https:// que tiene el siguiente aspecto:",
-      "step-description-enable-feature-toggles": "Añade la función de aprovisionamiento a tu archivo custom.ini. Nota: kubernetesDashboards está habilitado de forma predeterminada, pero si lo has deshabilitado explícitamente, deberás habilitarlo en la configuración de Grafana o eliminar la anulación de tu configuración.",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "Ejecuta este comando para crear un túnel seguro a tu Grafana local:",
       "step-description-update-grafana-config": "Añade esto a tu archivo custom.ini, sustituyendo la URL por tu URL real de ngrok:",
       "step-title-copy-url": "Copia tu URL pública",
@@ -13601,6 +13598,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": ""
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "La sincronización de instancias no es totalmente compatible actualmente y provoca errores en los paneles y las alertas. Para usar los paneles y las alertas de la librería, desconecta tu repositorio y vuelve a conectarlo utilizando la sincronización de carpetas.",
@@ -13888,7 +13900,8 @@
     "sync-job": {
       "error-no-job-id": "Error al iniciar el trabajo",
       "error-no-repository-name": "No se proporcionó ningún nombre de repositorio",
-      "error-starting-job": "Error al iniciar el trabajo"
+      "error-starting-job": "Error al iniciar el trabajo",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "Error al extraer los recursos",
@@ -14719,7 +14732,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "Exportar como imagen",
-      "export-json-title": "Exportar como JSON",
       "share-externally-title": "Compartir externamente",
       "share-internally-title": "Compartir internamente",
       "share-snapshot-title": "Compartir instantánea"
@@ -16610,7 +16622,7 @@
       "message": "No se han encontrado usuarios"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Su token de sesión se ha revocado automáticamente porque ha alcanzado <2>el número máximo de {{numSessions}} sesiones concurrentes</2> para su cuenta.",
+      "auto-revoked": "",
       "resume-message": "<strong>Para reanudar la sesión, inicia sesión de nuevo.</strong>Ponte en contacto con tu administrador o visita la página de licencias para revisar tu cuota si se cierra la sesión automáticamente en repetidas ocasiones.",
       "sign-in": "Iniciar sesión",
       "title-you-have-been-automatically-signed-out": "Se ha cerrado tu sesión automáticamente"

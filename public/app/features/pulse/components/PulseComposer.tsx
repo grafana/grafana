@@ -3,9 +3,10 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { renderMarkdown, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, TabsBar, Tab, TabContent, useStyles2 } from '@grafana/ui';
 
-import { type PulseBody, type PulseMention } from '../types';
+import { ASSISTANT_MENTION_TARGET, type PulseBody, type PulseMention } from '../types';
 import { bodyFromMarkdown, buildTimeMentionTarget, mentionMarkdownToken } from '../utils/body';
 import {
   filterPanels,
@@ -361,6 +362,31 @@ export function PulseComposer({
     };
   }, [picker, currentTimeRange]);
 
+  // assistantSuggestion is the synthetic `@assistant` row, surfaced in the
+  // `@` picker when the dashboardPulseAssistant toggle is on and the query
+  // is a prefix of "assistant". Selecting it inserts a chip that tags the
+  // Grafana Assistant; the backend then posts a reply into the thread.
+  // Like the time row it requires at least one character so a bare `@`
+  // (about to become `@alice`) doesn't surface it as the default target.
+  const assistantSuggestion: { label: string; sublabel?: string; mention: PulseMention } | null = useMemo(() => {
+    if (!picker || picker.kind !== 'user' || !config.featureToggles.dashboardPulseAssistant) {
+      return null;
+    }
+    const q = picker.query.toLowerCase();
+    if (q.length === 0 || !'assistant'.startsWith(q)) {
+      return null;
+    }
+    return {
+      label: t('pulse.composer.assistant-suggestion-label', 'Grafana Assistant'),
+      sublabel: t('pulse.composer.assistant-suggestion-sublabel', 'Tag the assistant to reply in this thread'),
+      mention: {
+        kind: 'assistant',
+        targetId: ASSISTANT_MENTION_TARGET,
+        displayName: t('pulse.composer.assistant-display-name', 'Grafana Assistant'),
+      },
+    };
+  }, [picker]);
+
   const suggestions: Array<{ label: string; sublabel?: string; mention: PulseMention }> = useMemo(() => {
     if (!picker) {
       return [];
@@ -379,15 +405,19 @@ export function PulseComposer({
         sublabel: t('pulse.composer.hook-suggestion-sublabel', 'webhook'),
         mention: { kind: 'webhook' as const, targetId: h.uid, displayName: h.name },
       }));
-      // Time row sits at the top of the user-picker dropdown so the
-      // arrow-key default selection lands on it when the query is `now`
-      // / `time`, matching the user's expectation that hitting Enter
-      // after typing `@now` inserts the time chip.
-      const rows = [...userRows, ...hookRows];
-      return timeSuggestion ? [timeSuggestion, ...rows] : rows;
+      // Synthetic rows (time, assistant) sit at the top of the user-picker
+      // dropdown so the arrow-key default selection lands on them when the
+      // query matches their keyword, matching the user's expectation that
+      // hitting Enter after typing `@now` or `@assistant` inserts that chip.
+      // Their queries are disjoint (`now`/`time` vs `assistant`), so at most
+      // one is ever non-null at a time.
+      const synthetic = [timeSuggestion, assistantSuggestion].filter(
+        (s): s is { label: string; sublabel?: string; mention: PulseMention } => s !== null
+      );
+      return [...synthetic, ...userRows, ...hookRows];
     }
     return resourceSuggestions;
-  }, [picker, userSuggestions, hookSuggestions, resourceSuggestions, timeSuggestion]);
+  }, [picker, userSuggestions, hookSuggestions, resourceSuggestions, timeSuggestion, assistantSuggestion]);
 
   // Only the user picker has async/networked state — the panel picker
   // is filtered locally from props and goes empty silently. So status

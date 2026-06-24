@@ -34,7 +34,7 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
-  const { openPane, selectionContext } = useSceneObjectState(editPane, {
+  const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid } = dashboard.useState();
@@ -132,7 +132,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             icon="list-ui-alt"
             onClick={() => {
               DashboardInteractions.dashboardOutlineClicked();
-              editPane.openPane(new DashboardOutline({}));
+              editPane.openPane(outlinePane!);
             }}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}

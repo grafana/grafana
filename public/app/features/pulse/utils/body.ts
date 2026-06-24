@@ -2,12 +2,13 @@ import { type MentionKind, type PulseBody, type PulseBodyNode, type PulseMention
 
 /**
  * isAtMention reports whether a mention kind was inserted via the `@`
- * trigger (and therefore renders with an `@` prefix). User, time, and
- * webhook chips are `@`-triggered; panel / dashboard are `#`. Centralized
- * so the token writer and the plain-text extractor can't drift.
+ * trigger (and therefore renders with an `@` prefix). User, time,
+ * assistant, and webhook chips are `@`-triggered; panel / dashboard are
+ * `#`. Centralized so the markdown token, the plain-text projection, and
+ * the composer all agree on the prefix.
  */
 export function isAtMention(kind: MentionKind): boolean {
-  return kind === 'user' || kind === 'time' || kind === 'webhook';
+  return kind === 'user' || kind === 'time' || kind === 'assistant' || kind === 'webhook';
 }
 
 /**
@@ -75,8 +76,8 @@ export function bodyToText(body: PulseBody): string {
     }
     if (n.type === 'mention' && n.mention) {
       // Resource chips (panel / dashboard) read as `#name`; user, time,
-      // and webhook chips share `@` because the author typed `@user`,
-      // `@now` / `@time`, or `@hook` to insert them.
+      // assistant, and webhook chips share `@` because the author typed
+      // `@user`, `@now` / `@time`, `@assistant`, or `@hook` to insert them.
       const prefix = isAtMention(n.mention.kind) ? '@' : '#';
       out.push(prefix + (n.mention.displayName ?? n.mention.targetId));
       return;
@@ -124,8 +125,8 @@ export function isSafeUrl(raw: string): string | undefined {
  * visually distinct from prose without needing a custom React node, and
  * it matches the user's earlier ask for an inline-code mention style.
  *
- * `user` and `time` chips use `@` (the trigger character the author
- * typed); resource chips (`panel`, `dashboard`) use `#`.
+ * `user`, `time`, and `assistant` chips use `@` (the trigger character
+ * the author typed); resource chips (`panel`, `dashboard`) use `#`.
  */
 export function mentionMarkdownToken(m: PulseMention): string {
   const prefix = isAtMention(m.kind) ? '@' : '#';

@@ -17,7 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
@@ -90,6 +90,29 @@ type BleveOptions struct {
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
 	Snapshot SnapshotOptions
+
+	// DiskCleanupInterval is how often the background on-disk cleanup pass runs.
+	// The first run after start is jittered uniformly in [0, DiskCleanupInterval)
+	// so the sweep doesn't run immediately at startup, when the instance is still
+	// busy opening or rebuilding indexes. Zero disables the loop (the goroutine
+	// is not started).
+	DiskCleanupInterval time.Duration
+
+	// DiskCleanupGracePeriod is the minimum age a candidate directory must have
+	// before it is eligible for deletion. Applied as a two-step mtime gate so a
+	// directory that is still being written to (active scorch index, in-flight
+	// snapshot CopyTo) is always preserved. Only consulted when
+	// DiskCleanupInterval > 0.
+	DiskCleanupGracePeriod time.Duration
+
+	// DiskCleanupUnopenedGracePeriod is a longer grace period applied only to
+	// the newest on-disk index of a resource this pod owns but has not opened
+	// in this process. A pod owning a resource it has not been queried for
+	// keeps the most recent on-disk index for this duration, so a later
+	// BuildIndex call can hand it to findPreviousFileBasedIndex and skip a full
+	// rebuild. Older siblings under the same resource still use
+	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
+	DiskCleanupUnopenedGracePeriod time.Duration
 }
 
 // SnapshotOptions configures remote index snapshot handling in BuildIndex and
@@ -254,6 +277,15 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 			be.bgTasksWg.Add(1)
 			go be.cleanupSnapshotsPeriodically(ctx)
 		}
+	}
+
+	if opts.DiskCleanupInterval > 0 {
+		// Same rationale as InitSnapshotMetrics: only emit the
+		// index_server_disk_cleanup_* series on instances where the feature is
+		// enabled.
+		be.indexMetrics.InitDiskCleanupMetrics()
+		be.bgTasksWg.Add(1)
+		go be.cleanupDiskPeriodically(ctx)
 	}
 
 	if be.indexMetrics != nil {

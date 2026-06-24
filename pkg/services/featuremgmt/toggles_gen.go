@@ -231,6 +231,10 @@ const (
 	// Sends email notifications to Pulse mention and subscription recipients. Requires dashboardPulse to be enabled and SMTP to be configured.
 	FlagDashboardPulseEmail = "dashboardPulseEmail"
 
+	// FlagDashboardPulseAssistant
+	// Lets users tag the Grafana Assistant in a Pulse thread (@assistant). When tagged, the assistant posts a reply back into the thread. Requires dashboardPulse to be enabled.
+	FlagDashboardPulseAssistant = "dashboardPulseAssistant"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"

@@ -76,6 +76,7 @@ var (
 
 	NewTupleEntry             = common.NewTupleEntry
 	NewObjectEntry            = common.NewObjectEntry
+	NewGroupResourceTuple     = common.NewGroupResourceTuple
 	TranslateToResourceTuple  = common.TranslateToResourceTuple
 	IsFolderResourceTuple     = common.IsFolderResourceTuple
 	MergeFolderResourceTuples = common.MergeFolderResourceTuples

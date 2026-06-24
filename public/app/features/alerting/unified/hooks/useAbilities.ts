@@ -214,7 +214,12 @@ export function useCanViewContactPoints(): boolean {
  * UI-only permission helper for actions that create silences.
  */
 export function useCanCreateSilences(): boolean {
-  return useMemo(() => ctx.hasPermission(AccessControlAction.AlertingInstanceCreate), []);
+  return useMemo(
+    () =>
+      ctx.hasPermission(AccessControlAction.AlertingInstanceCreate) ||
+      ctx.hasPermission(AccessControlAction.AlertingSilenceCreate),
+    []
+  );
 }
 
 /**

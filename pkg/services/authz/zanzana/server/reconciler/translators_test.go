@@ -690,9 +690,62 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 	})
 }
 
+// TestTranslateRoleToTuples_RoleManagementPermissions verifies the reconciler
+// end-to-end (Role CRD → tuples) for the three legacy role-management actions:
+//
+//   - roles:write + permissions:type:delegate → edit on group_resource:.../roles
+//   - roles:delete + permissions:type:delegate → delete on group_resource:.../roles
+//   - roles:read + roles:* → get on both .../roles and .../globalroles
+//
+// This is the reconciler-facing contract: when a Role with these permissions
+// is reconciled, the resulting tuples must let the bound principal exercise
+// the IAM roles/globalroles APIs.
+func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
+	role := &iamv0.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "role-admin"},
+		Spec: iamv0.RoleSpec{
+			Permissions: []iamv0.RolespecPermission{
+				{Action: "roles:read", Scope: "roles:*"},
+				{Action: "roles:write", Scope: "permissions:type:delegate"},
+				{Action: "roles:delete", Scope: "permissions:type:delegate"},
+			},
+		},
+	}
+
+	tuples, err := TranslateRoleToTuples(toUnstructured(t, role))
+	require.NoError(t, err)
+
+	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/globalroles"},
+		{User: "role:role-admin#assignee", Relation: "edit", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/roles"},
+	}), tupleKeyStrings(tuples))
+
+	// Every reconciled tuple must conform to the FGA model — catches drift
+	// between the helper output and the schema (e.g. unknown relation, wrong
+	// user type) before it reaches Zanzana.
+	ts := loadTypesystem(t)
+	for _, tu := range tuples {
+		validateTupleAgainstSchema(t, ts, tu)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Schema validation: verify that translated tuples conform to the FGA model.
 // ---------------------------------------------------------------------------
+
+// tupleKeyStrings returns the prototext (`.String()`) form of each tuple.
+// Comparing tuples by their textual form sidesteps proto-internal state
+// caches that confuse reflect-based comparators like require.ElementsMatch,
+// and automatically picks up any new public field added to TupleKey upstream.
+func tupleKeyStrings(tuples []*openfgav1.TupleKey) []string {
+	out := make([]string, len(tuples))
+	for i, t := range tuples {
+		out[i] = t.String()
+	}
+	return out
+}
 
 // loadTypesystem loads the Zanzana FGA schema modules and creates a TypeSystem
 // that can be used to validate tuples against the authorization model.

@@ -35,13 +35,15 @@ on:
         description: 'The repository to create the security branch in (e.g., grafana/grafana-security-mirror)'
         required: true
 
-permissions:
-  contents: write
-  id-token: write
+permissions: {}
 
 jobs:
   main:
     runs-on: ubuntu-arm64-small
+    permissions:
+      # Pushes use the app token via actions/checkout; GITHUB_TOKEN needs only OIDC for Vault.
+      contents: read
+      id-token: write
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:

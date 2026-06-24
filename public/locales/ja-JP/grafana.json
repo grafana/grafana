@@ -3291,6 +3291,10 @@
         "tooltip-description": "マッチャーでサイレンスを検索します。ラベル名、値、および演算子が完全に一致します。",
         "tooltip-example": "例：<1>env=~\"prod.*\"</1>は、<4>env=~\"prod.*\"</4>というマッチャーを持つサイレンスを検出します。"
       },
+      "missing-alert-rule-warning": {
+        "text": "",
+        "tooltip": ""
+      },
       "only-firing-instances": "発生ステートのアラートインスタンスのみが表示されます。",
       "operator": {
         "equals": "等しい",
@@ -5469,9 +5473,6 @@
       "aria-label-dashboard-name": "{{dashboardName}}ダッシュボード",
       "label-no-dashboards-found": "ダッシュボードが見つかりませんでした"
     },
-    "dashboard-loading": {
-      "cancel-loading-dashboard": "ダッシュボードの読み込みをキャンセル"
-    },
     "dashboard-page-error": {
       "back-to-dashboards": "",
       "provisioning-message": "",
@@ -5760,8 +5761,7 @@
         }
       },
       "operator": {
-        "aria-label": "演算子",
-        "placeholder": "演算子を選択"
+        "aria-label": "演算子"
       },
       "restore": "デフォルト値を復元",
       "search": {
@@ -5996,13 +5996,6 @@
       },
       "ungroup-nested-text": "これにより、ネストされたすべてのグループのグループ化が解除されます。",
       "ungroup-nested-title": "ネストされたグループのグループ化を解除しますか？"
-    },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "ダッシュボードが見つかりません"
-        }
-      }
     },
     "make-editable": {
       "dashboard-not-editable": "ダッシュボードは編集できません",
@@ -6594,8 +6587,8 @@
     "version-history-comparison": {
       "button-restore": "バージョン、{{version}}に復元",
       "label-view-json-diff": "JSON差分を表示",
-      "new-updated-by": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新",
-      "old-updated-by": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新"
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "バージョン{{version}}の選択を切り替え",
@@ -7822,8 +7815,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "JSON差分を表示",
-      "new-version-updated": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新",
-      "old-version-updated": "<0>バージョン{{version}}</0>、{{editor}}が{{timeAgo}}に更新"
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
       "compare-versions": "{{baseVersion}}<3></3>と{{newVersion}}を比較",
@@ -9012,7 +9005,6 @@
       "copy-button": "クリップボードにコピー",
       "download-button": "ファイルをダウンロード",
       "download-successful_toast_message": "JSONがダウンロードされました",
-      "export-externally-label": "ダッシュボードをエクスポートして別のインスタンスで使用する",
       "export-format": "形式",
       "export-mode": "モデル",
       "info-text": "ダッシュボードの定義を含むファイルをコピーまたはダウンロード",
@@ -9105,6 +9097,7 @@
   },
   "folders": {
     "api": {
+      "anonymous-user": "",
       "folder-delete-error-provisioned": "",
       "folder-deleted-success": "フォルダは削除されました",
       "folder-move-error-provisioned": "プロビジョニングされたフォルダを移動できません。フォルダを移動するには、リポジトリ内で移動して同期し、変更を適用してください。",
@@ -10170,7 +10163,7 @@
     },
     "data-source-http-settings": {
       "access-help": "ヘルプ<1></1>",
-      "access-help-details": "アクセスモードは、データソースへのリクエストの処理方法を制御します。特に明記されていない場合は、<1><i>サーバー</i></1>が望ましい方法です。",
+      "access-help-details": "",
       "access-help-title": "ヘルプにアクセス",
       "access-label": "アクセス",
       "allowed-cookies": "許可されたクッキー",
@@ -10856,6 +10849,10 @@
       "loading": "",
       "retry": ""
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "",
+    "error-provisioning-status-title": ""
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11632,11 +11629,10 @@
       "published-by": "公開者",
       "updated-on": "更新日"
     },
-    "import-resource-format-error": {
-      "cancel": "キャンセル",
-      "title": "サポートされていない形式",
-      "v1-message": "このダッシュボードはKubernetes v1リソース形式であり、Kubernetesダッシュボード機能が無効になっている場合はインポートできません。このダッシュボードをインポートするには、kubernetesDashboards機能トグルを有効にしてください。",
-      "v2-message": "このダッシュボードはv2リソース形式であり、Kubernetesダッシュボード機能が無効になっている場合はインポートできません。このダッシュボードをインポートするには、kubernetesDashboards機能トグルを有効にしてください。"
+    "import-overview": {
+      "invalid-schema-action": "",
+      "invalid-schema-body": "",
+      "invalid-schema-title": ""
     },
     "snapshot-list-table": {
       "body-delete": "「{{snapshotToRemove}}」を削除してもよろしいですか？",
@@ -13128,8 +13124,9 @@
       "label-branch": "ブランチ",
       "label-comment": "コメント",
       "label-filename": "ファイル名",
-      "label-folder": "フォルダ",
       "label-path": "パス",
+      "label-repository-folder": "",
+      "path-exists": "",
       "placeholder-branch": "",
       "placeholder-folder": "フォルダパスを選択または入力",
       "suffix-configured-branch": "同期済みブランチ",
@@ -13450,7 +13447,7 @@
       "modal-title-set-up-public-access": "公開アクセスを設定",
       "modal-title-set-up-required-features": "必要な機能を設定",
       "step-description-copy-url": "ngrokの出力から、https://ではじまる転送URLをコピーしてください。",
-      "step-description-enable-feature-toggles": "プロビジョニング機能トグルをcustom.iniファイルに追加します。注：kubernetesDashboardsはデフォルトで有効になっていますが、明示的に無効にした場合は、Grafana設定で有効にするか、設定からオーバーライドを削除する必要があります。",
+      "step-description-enable-feature-toggles": "",
       "step-description-start-ngrok": "このコマンドを実行して、ローカルのGrafanaへの安全なトンネルを作成します。",
       "step-description-update-grafana-config": "これをcustom.iniファイルに追加し、URLを実際のngrok URLに置き換えてください。",
       "step-title-copy-url": "公開URLをコピー",
@@ -13524,6 +13521,21 @@
       "authentication-failed": "",
       "request-failed": "",
       "resource-not-found": "リソースが見つかりません。URLまたはリポジトリを確認してください。"
+    },
+    "import": {
+      "cancel": "",
+      "constant-required": "",
+      "datasource-required": "",
+      "error": "",
+      "float-grid-items-body": "",
+      "float-grid-items-title": "",
+      "import": "",
+      "importing": "",
+      "label-folder": "",
+      "label-name": "",
+      "library-panels-blocked-body": "",
+      "library-panels-blocked-title": "",
+      "name-required": ""
     },
     "instance-sync-deprecation": {
       "message": "現在インスタンス同期は完全にはサポートされておらず、ライブラリパネルとアラートが正常に動作しません。ライブラリパネルとアラートを使用するには、リポジトリの接続を解除し、代わりにフォルダ同期を使用して再接続します。",
@@ -13803,7 +13815,8 @@
     "sync-job": {
       "error-no-job-id": "ジョブを開始できませんでした",
       "error-no-repository-name": "リポジトリ名が指定されていません",
-      "error-starting-job": "ジョブ開始時のエラー"
+      "error-starting-job": "ジョブ開始時のエラー",
+      "migrate-default-message": ""
     },
     "sync-repository": {
       "error-pulling-resources": "リソース取得時のエラー",
@@ -14625,7 +14638,6 @@
   "share-dashboard": {
     "menu": {
       "export-image-title": "画像としてエクスポート",
-      "export-json-title": "JSON形式でエクスポート",
       "share-externally-title": "外部と共有",
       "share-internally-title": "内部と共有",
       "share-snapshot-title": "スナップショットを共有"
@@ -16515,7 +16527,7 @@
       "message": "ユーザーが見つかりません"
     },
     "token-revoked-modal": {
-      "auto-revoked": "アカウントの<2>同時セッション数の上限（{{numSessions}}件）</2>に達したため、セッショントークンは自動的に失効しました。",
+      "auto-revoked": "",
       "resume-message": "<strong>セッションを再開するには、再度サインインしてください。</strong>自動的にサインアウトが繰り返される場合は、管理者に連絡するか、ライセンスページでクォータを確認してください。",
       "sign-in": "サインイン",
       "title-you-have-been-automatically-signed-out": "自動的にサインアウトされました"

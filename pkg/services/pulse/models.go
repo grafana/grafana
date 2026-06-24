@@ -39,6 +39,13 @@ func (k ResourceKind) Valid() bool {
 // viewing. They are NOT fan-out targets (no user/panel/dashboard id
 // to look up) and are intentionally skipped by the denormalized
 // pulse_mention table — see store.insertMentions.
+//
+// `assistant` chips tag the Grafana Assistant. Their TargetID is the
+// fixed sentinel AssistantMentionTarget. They are not user fan-out
+// targets (no user id to notify); instead the frontend's Grafana
+// Assistant generates a reply for the tagging pulse and posts it back
+// into the thread via AddAssistantReply, authored by the assistant
+// service account.
 type MentionKind string
 
 const (
@@ -46,6 +53,7 @@ const (
 	MentionKindPanel     MentionKind = "panel"
 	MentionKindDashboard MentionKind = "dashboard"
 	MentionKindTime      MentionKind = "time"
+	MentionKindAssistant MentionKind = "assistant"
 	// MentionKindWebhook references a named Pulse hook (an outbound
 	// integration configured under Administration). The TargetID is
 	// the hook's UID. Unlike user/panel/dashboard mentions, a webhook
@@ -58,7 +66,7 @@ const (
 
 func (k MentionKind) Valid() bool {
 	switch k {
-	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindTime, MentionKindWebhook:
+	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindTime, MentionKindAssistant, MentionKindWebhook:
 		return true
 	}
 	return false
@@ -272,6 +280,19 @@ type AddPulseCommand struct {
 	AuthorKind   AuthorKind      `json:"-"`
 	ParentUID    string          `json:"parentUID,omitempty"`
 	Body         json.RawMessage `json:"body"`
+}
+
+// AddAssistantReplyCommand persists a Grafana Assistant reply on a thread.
+// The reply markdown is produced client-side by the Grafana Assistant; the
+// backend stamps it under the assistant service account. OrgID and
+// ThreadUID are set by the API handler from the request context / route.
+//
+// swagger:model
+type AddAssistantReplyCommand struct {
+	OrgID     int64  `json:"-"`
+	ThreadUID string `json:"-"`
+	ParentUID string `json:"parentUID,omitempty"`
+	Markdown  string `json:"markdown"`
 }
 
 // EditPulseCommand updates the body of an existing pulse. Only the original

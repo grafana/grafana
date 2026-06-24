@@ -142,4 +142,55 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		require.Equal(t, "get", tuples[0].Relation)
 		require.Equal(t, "folder:folder1", tuples[0].Object)
 	})
+
+	t.Run("should reconcile role-management permissions", func(t *testing.T) {
+		// A typical "Grafana Admin" set of role-management permissions: read all roles,
+		// write any role (delegated), and delete any role (delegated). The reconciler
+		// must emit one group_resource tuple per IAM resource so the bound principal
+		// can act on the iam.grafana.app/{roles,globalroles} APIs.
+		permissions := []RolePermission{
+			{Action: "roles:read", Kind: "roles", Identifier: "*"},
+			{Action: "roles:write", Kind: "permissions", Identifier: "delegate"},
+			{Action: "roles:delete", Kind: "permissions", Identifier: "delegate"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-admin", permissions)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/roles"},
+			{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/globalroles"},
+			{User: "role:role-admin#assignee", Relation: "edit", Object: "group_resource:iam.grafana.app/roles"},
+			{User: "role:role-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/roles"},
+		}), tupleKeyStrings(tuples))
+	})
+
+	t.Run("scoped role-management permissions are dropped", func(t *testing.T) {
+		// A scoped role-management permission (e.g. roles:uid:specific) cannot
+		// be expressed in Zanzana — the FGA schema for iam.grafana.app only
+		// exposes group_resource, not a per-instance resource. Translating
+		// these would silently broaden the grant to all roles, so we drop them
+		// entirely (read, write, and delete all behave the same).
+		permissions := []RolePermission{
+			{Action: "roles:read", Kind: "roles", Identifier: "specific-role"},
+			{Action: "roles:write", Kind: "roles", Identifier: "specific-role"},
+			{Action: "roles:delete", Kind: "roles", Identifier: "specific-role"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-scoped", permissions)
+		require.NoError(t, err)
+		require.Empty(t, tuples)
+	})
+}
+
+// tupleKeyStrings returns the prototext (`.String()`) form of each tuple.
+// Comparing tuples by their textual form sidesteps proto-internal state
+// caches that confuse reflect-based comparators like require.ElementsMatch,
+// and automatically picks up any new public field added to TupleKey upstream.
+func tupleKeyStrings(tuples []*openfgav1.TupleKey) []string {
+	out := make([]string, len(tuples))
+	for i, t := range tuples {
+		out[i] = t.String()
+	}
+	return out
 }

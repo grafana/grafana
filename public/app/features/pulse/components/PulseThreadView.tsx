@@ -19,6 +19,7 @@ import {
   useSubscribeMutation,
   useUnsubscribeMutation,
 } from '../api/pulseApi';
+import { useAssistantAutoReply, type PanelSnapshot } from '../hooks/useAssistantAutoReply';
 import { type Pulse, type PulseBody, type PulseMention, type PulseThread } from '../types';
 import { bodyToMarkdown } from '../utils/body';
 import { type PanelSuggestion } from '../utils/lookups';
@@ -35,6 +36,10 @@ interface Props {
    * back to their stored displayName.
    */
   panelTitlesById?: ReadonlyMap<number, string>;
+  /** Resolves the thread's panel configuration for the assistant auto-reply,
+   *  so a reply tagging @assistant embeds the panel's queries/type in its
+   *  prompt. Supplied by the dashboard scene; omit elsewhere. */
+  getPanelSnapshot?: (panelId: number) => PanelSnapshot | undefined;
   /** Source for the `#` picker in the reply / edit composer when the
    *  thread lives outside a dashboard (today: the folder Pulse tab).
    *  When provided, replies on this thread offer `#dashboard` (or
@@ -46,6 +51,10 @@ interface Props {
   resourceMentions?: ResourceMentionSource[];
   currentUserId?: number;
   isAdmin?: boolean;
+  /** Panel the surrounding Pulse drawer is scoped to, when any. Forwarded
+   *  to the assistant auto-reply as a last-resort panel hint so a reply
+   *  tagging @assistant from a panel-scoped drawer still names that panel. */
+  panelFilter?: number;
   /** Dashboard's current time range, threaded to the reply / edit
    *  composer so `@now` / `@time` insertions can pre-fill a chip
    *  with the live window. Omit on surfaces (folder Pulse tab) that
@@ -72,10 +81,12 @@ export function PulseThreadView({
   thread,
   panels,
   panelTitlesById,
+  getPanelSnapshot,
   resourceMention,
   resourceMentions,
   currentUserId,
   isAdmin = false,
+  panelFilter,
   currentTimeRange,
   onTimeChipClick,
   onMentionPanel,
@@ -93,6 +104,7 @@ export function PulseThreadView({
   const [markRead] = useMarkReadMutation();
   const [subscribe] = useSubscribeMutation();
   const [unsubscribe] = useUnsubscribeMutation();
+  const triggerAssistantReply = useAssistantAutoReply();
 
   // Subscription is optimistic: flip the local flag immediately so the
   // toggle feels instant, then reconcile from the server (the mutation
@@ -137,7 +149,40 @@ export function PulseThreadView({
   }, [pulses, thread.uid, markRead]);
 
   async function handleSubmit(body: PulseBody) {
-    await addPulse({ threadUID: thread.uid, req: { body } }).unwrap();
+    const posted = await addPulse({ threadUID: thread.uid, req: { body } }).unwrap();
+    // Fire-and-forget: if the reply tagged @assistant, generate and post the
+    // assistant's answer in the background so the composer clears immediately.
+    // Pass the dashboard/panel the thread is on so the assistant gets a link
+    // it can open and inspect.
+    void triggerAssistantReply(body, {
+      threadUID: thread.uid,
+      parentUID: posted.uid,
+      dashboardUID: thread.resourceKind === 'dashboard' ? thread.resourceUID : undefined,
+      dashboardTitle: thread.resourceTitle || undefined,
+      panelId: thread.panelId,
+      // Pass the live id→title map so the prompt names the panel by its
+      // current title — whether it's the thread's anchored panel or a
+      // #panel chip in the reply.
+      panelTitlesById,
+      // Fall back to the drawer's panel scope so a reply from "Pulse on this
+      // panel" still tells the assistant which panel, chip or not.
+      fallbackPanelId: panelFilter,
+      // Lets the prompt embed the panel's live config — the tool-less inline
+      // assistant can't otherwise know what the panel shows.
+      getPanelSnapshot,
+      // The thread so far. `pulses` is the pre-reply transcript — the new
+      // pulse isn't in the query cache yet — so it's exactly the prior
+      // context, with the tagging pulse naturally excluded. The tool-less
+      // assistant can't read the thread itself, so this is the only
+      // discussion it sees.
+      transcript: pulses
+        .filter((p) => !p.deleted)
+        .map((p) => ({
+          author: authorDisplayLabel(p),
+          text: p.bodyText,
+          isAssistant: p.authorKind === 'service_account',
+        })),
+    });
   }
 
   function handleMention(m: PulseMention) {
