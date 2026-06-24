@@ -224,6 +224,11 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     setIsExplainOpen(false);
   }, []);
 
+  const handleDismissDrawersForAssistant = useCallback(() => {
+    setIsExplainOpen(false);
+    onClose();
+  }, [onClose]);
+
   const sharedTitleProps = useMemo(
     () => ({
       instanceLabels,
@@ -238,7 +243,15 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const explainDrawer =
     isExplainOpen &&
     (rule ? (
-      <ExplainDrawer rule={rule} onClose={handleCloseExplain} />
+      <ExplainDrawer
+        rule={rule}
+        ruleUID={ruleUID}
+        instanceLabels={instanceLabels}
+        commonLabels={commonLabels}
+        instanceState={instanceState ?? undefined}
+        onClose={handleCloseExplain}
+        onDismissDrawers={handleDismissDrawersForAssistant}
+      />
     ) : (
       <ExplainDrawerLoading onClose={handleCloseExplain} />
     ));

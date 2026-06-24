@@ -1,11 +1,18 @@
-import { useMemo } from 'react';
+import { type MouseEvent, useCallback, useMemo } from 'react';
 
+import { type OpenAssistantProps, useAssistant } from '@grafana/assistant';
+import { type Labels } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Drawer, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
-import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type GrafanaAlertState, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { generateAlertDescriptionForGrafanaRule } from '../../utils/alert-annotations';
 import { useWorkbenchContext } from '../WorkbenchContext';
+
+import { createExplainAssistantContext } from './explainAssistantContext';
+import { buildExplainAssistantQuestions } from './explainAssistantPrompts';
+import { registerExplainAssistantQuestions } from './registerExplainAssistantQuestions';
 
 function calculateDrawerWidth(rightColumnWidth: number): number {
   const calculatedWidth = rightColumnWidth + 32;
@@ -14,15 +21,84 @@ function calculateDrawerWidth(rightColumnWidth: number): number {
 
 interface ExplainDrawerProps {
   rule: RulerGrafanaRuleDTO;
+  ruleUID: string;
+  instanceLabels: Labels;
+  commonLabels?: Labels;
+  instanceState?: GrafanaAlertState;
   onClose: () => void;
+  /** Closes stacked drawers so the extension sidebar is visible when opening Assistant. */
+  onDismissDrawers?: () => void;
 }
 
-export function ExplainDrawer({ rule, onClose }: ExplainDrawerProps) {
+export function ExplainDrawer(props: ExplainDrawerProps) {
+  const { isAvailable, openAssistant } = useAssistant();
+
+  if (!isAvailable || !openAssistant) {
+    return <ExplainDrawerView {...props} />;
+  }
+
+  return <ExplainDrawerView {...props} openAssistant={openAssistant} />;
+}
+
+function ExplainDrawerView({
+  rule,
+  ruleUID,
+  instanceLabels,
+  commonLabels,
+  instanceState,
+  onClose,
+  onDismissDrawers,
+  openAssistant,
+}: ExplainDrawerProps & {
+  openAssistant?: (props: OpenAssistantProps) => void;
+}) {
   const { rightColumnWidth } = useWorkbenchContext();
   const drawerWidth = calculateDrawerWidth(rightColumnWidth);
 
   const description = useMemo(() => generateAlertDescriptionForGrafanaRule(rule), [rule]);
   const ruleTitle = rule.grafana_alert.title;
+  const showAssistantLink = Boolean(openAssistant);
+
+  const assistantContext = useMemo(
+    () =>
+      createExplainAssistantContext({
+        rule,
+        ruleUID,
+        instanceLabels,
+        commonLabels,
+        instanceState,
+        description,
+      }),
+    [rule, ruleUID, instanceLabels, commonLabels, instanceState, description]
+  );
+
+  const handleOpenAssistant = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+
+      if (!openAssistant) {
+        return;
+      }
+
+      reportInteraction('grafana_assistant_app_explain_drawer_opened', {
+        origin: 'alerting/triage/explain-drawer',
+        ruleUid: ruleUID,
+        alertState: instanceState,
+      });
+
+      registerExplainAssistantQuestions(buildExplainAssistantQuestions(assistantContext));
+
+      onDismissDrawers?.();
+
+      openAssistant({
+        origin: 'alerting/triage/explain-drawer',
+        mode: 'assistant',
+        context: assistantContext,
+        autoSend: false,
+      });
+    },
+    [assistantContext, instanceState, onDismissDrawers, openAssistant, ruleUID]
+  );
 
   return (
     <Drawer
@@ -36,14 +112,11 @@ export function ExplainDrawer({ rule, onClose }: ExplainDrawerProps) {
     >
       <Stack direction="column" gap={2}>
         <Text>{description}</Text>
-        <TextLink
-          href="#"
-          onClick={(event) => {
-            event.preventDefault();
-          }}
-        >
-          <Trans i18nKey="alerting.triage.explain.ai-assistant-link">Explain further with AI Assistant</Trans>
-        </TextLink>
+        {showAssistantLink && (
+          <TextLink href="#" onClick={handleOpenAssistant}>
+            <Trans i18nKey="alerting.triage.explain.ai-assistant-link">Explain with Assistant</Trans>
+          </TextLink>
+        )}
       </Stack>
     </Drawer>
   );

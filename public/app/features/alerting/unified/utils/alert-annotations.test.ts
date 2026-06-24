@@ -1,3 +1,5 @@
+import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+
 import { EvalFunction } from '../../state/alertDef';
 import { mockDataQuery, mockReduceExpression, mockThresholdExpression } from '../mocks';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
@@ -118,7 +120,7 @@ describe('validateRequiredAlertAnnotations', () => {
 
 describe('generateAlertDescriptionForGrafanaRule', () => {
   it('generates a description from rule title and queries', () => {
-    const dto = formValuesToRulerGrafanaRuleDTO(buildGrafanaAlertValues());
+    const dto = formValuesToRulerGrafanaRuleDTO(buildGrafanaAlertValues()) as RulerGrafanaRuleDTO;
     const description = generateAlertDescriptionForGrafanaRule(dto);
 
     expect(description).toContain('Alert rule "API availability" monitors query A: up{job="api"} == 0');

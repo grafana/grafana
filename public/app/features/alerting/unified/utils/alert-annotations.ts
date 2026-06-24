@@ -256,7 +256,6 @@ export function generateAlertDescriptionForGrafanaRule(rule: RulerGrafanaRuleDTO
     noDataState: grafanaAlert.no_data_state ?? getDefaultFormValues(RuleFormType.grafana).noDataState,
     execErrState: grafanaAlert.exec_err_state ?? getDefaultFormValues(RuleFormType.grafana).execErrState,
     keepFiringFor: rule.keep_firing_for ?? '0',
-    editorSettings: grafanaAlert.metadata?.editor_settings,
   };
 
   return generateGrafanaAlertDescription(values);
