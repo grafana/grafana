@@ -215,6 +215,18 @@ func otelTracer() trace.Tracer {
 	return otel.GetTracerProvider().Tracer("grafana")
 }
 
+// provideGraphiteConfig bridges the operator-tunable [tsdb.graphite] ini
+// keys from *setting.Cfg into the graphite package's local Config type.
+// graphite cannot import pkg/setting directly (depguard rule for core
+// plugins), so this thin adapter lives here in the wire layer.
+func provideGraphiteConfig(cfg *setting.Cfg) graphite.Config {
+	return graphite.Config{
+		RenderResponseMaxBytes:   cfg.GraphiteRenderResponseMaxBytes,
+		ResourceResponseMaxBytes: cfg.GraphiteResourceResponseMaxBytes,
+		ResourceRequestMaxBytes:  cfg.GraphiteResourceRequestMaxBytes,
+	}
+}
+
 var withOTelSet = wire.NewSet(
 	otelTracer,
 	grpcserver.ProvideService,
@@ -318,6 +330,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	loki.ProvideService,
 	graphite.ProvideService,
+	provideGraphiteConfig,
 	prometheus.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,

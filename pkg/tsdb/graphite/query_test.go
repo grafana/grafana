@@ -19,8 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestProcessQuery(t *testing.T) {
@@ -91,7 +89,7 @@ func TestProcessQuery(t *testing.T) {
 			},
 		}
 
-		service := ProvideService(&setting.Cfg{}, httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
+		service := ProvideService(Config{}, httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
 
 		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
@@ -130,7 +128,7 @@ func TestProcessQuery(t *testing.T) {
 		}))
 		t.Cleanup(server.Close)
 
-		service := ProvideService(&setting.Cfg{}, httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
+		service := ProvideService(Config{}, httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
 
 		queries := []backend.DataQuery{
 			{

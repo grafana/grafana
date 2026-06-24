@@ -14,9 +14,19 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"go.opentelemetry.io/otel/trace"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
+
+// Config carries the operator-tunable safety caps that bound per-request
+// memory consumption. A zero value on any field means "use the built-in
+// default". The Grafana-core wiring layer (which is allowed to import
+// pkg/setting) is responsible for populating this struct from
+// [tsdb.graphite] ini keys; this package stays free of any Grafana-core
+// dependency so it can also build as an external plugin.
+type Config struct {
+	RenderResponseMaxBytes   int64
+	ResourceResponseMaxBytes int64
+	ResourceRequestMaxBytes  int64
+}
 
 type Service struct {
 	im              instancemgmt.InstanceManager
@@ -38,15 +48,15 @@ const (
 	TargetModelField     = "target"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
+func ProvideService(cfg Config, httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
 	logger := backend.NewLoggerWith("logger", "graphite")
 	s := &Service{
 		im:                       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		tracer:                   tracer,
 		logger:                   logger,
-		renderResponseMaxBytes:   cfg.GraphiteRenderResponseMaxBytes,
-		resourceResponseMaxBytes: cfg.GraphiteResourceResponseMaxBytes,
-		resourceRequestMaxBytes:  cfg.GraphiteResourceRequestMaxBytes,
+		renderResponseMaxBytes:   cfg.RenderResponseMaxBytes,
+		resourceResponseMaxBytes: cfg.ResourceResponseMaxBytes,
+		resourceRequestMaxBytes:  cfg.ResourceRequestMaxBytes,
 	}
 
 	s.resourceHandler = httpadapter.New(s.newResourceMux())

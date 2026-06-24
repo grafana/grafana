@@ -8,8 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
-
-	"github.com/grafana/grafana/pkg/setting"
 	graphite "github.com/grafana/grafana/pkg/tsdb/graphite"
 )
 
@@ -21,10 +19,9 @@ var (
 
 func NewDatasource(context.Context, backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &Datasource{
-		// Standalone mode reads safety caps from the Grafana ini, not from
-		// plugin context, so we pass an empty Cfg and let the service fall
-		// back to its built-in defaults.
-		Service: graphite.ProvideService(&setting.Cfg{}, httpclient.NewProvider(), tracing.DefaultTracer()),
+		// Standalone mode runs outside Grafana core, so we pass a zero
+		// Config and let the service fall back to its built-in defaults.
+		Service: graphite.ProvideService(graphite.Config{}, httpclient.NewProvider(), tracing.DefaultTracer()),
 	}, nil
 }
 
