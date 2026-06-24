@@ -157,9 +157,9 @@ To confirm if the built-in query is enabled, take the following steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the **Dashboard options** icon in the toolbar.
-1. In the sidebar, click **Settings**.
-1. On the **Settings** page, go to the **Annotations** tab.
-1. Select the **Annotations & Alerts (Built-in query)**.
+1. In the sidebar, expand the **Annotations** section.
+1. Expand the **Hidden** section of annotations.
+1. Hover over the **Annotations & Alerts (Built-in query)** and click **Select**.
 1. Check if the **Enabled** checkbox is selected.
 
    If you don't want annotations to be fetched and drawn, clear the checkbox.
