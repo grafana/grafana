@@ -57,7 +57,7 @@ export const getExpireOptions = () => {
 const SNAPSHOT_SHARE_CONFIGURATION = 'grafana.dashboard.snapshot.shareConfiguration';
 
 type SnapshotShareConfiguration = {
-  selectedExpireOption: number;
+  expirationTime: number;
 };
 
 // Returns the snapshot share configuration persisted in local storage, if any
@@ -75,7 +75,7 @@ export function updateSnapshotShareConfiguration(config: SnapshotShareConfigurat
 const getDefaultExpireOption = () => {
   const savedConfiguration = getSnapshotShareConfiguration();
   if (savedConfiguration) {
-    const savedOption = getExpireOptions().find((o) => o.value === savedConfiguration.selectedExpireOption);
+    const savedOption = getExpireOptions().find((o) => o.value === savedConfiguration.expirationTime);
     if (savedOption) {
       return savedOption;
     }
@@ -139,7 +139,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     this.setState({
       selectedExpireOption: getExpireOptions().find((o) => o.value === option),
     });
-    updateSnapshotShareConfiguration({ selectedExpireOption: option });
+    updateSnapshotShareConfiguration({ expirationTime: option });
   };
 
   private prepareSnapshot() {

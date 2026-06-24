@@ -33,7 +33,7 @@ describe('ShareSnapshotTab', () => {
       tab.onExpireChange(ONE_HOUR);
 
       expect(tab.state.selectedExpireOption?.value).toBe(ONE_HOUR);
-      expect(getSnapshotShareConfiguration()).toEqual({ selectedExpireOption: ONE_HOUR });
+      expect(getSnapshotShareConfiguration()).toEqual({ expirationTime: ONE_HOUR });
     });
 
     it('persists the "Never" (0) option', () => {
@@ -42,11 +42,11 @@ describe('ShareSnapshotTab', () => {
       tab.onExpireChange(0);
 
       expect(tab.state.selectedExpireOption?.value).toBe(0);
-      expect(getSnapshotShareConfiguration()).toEqual({ selectedExpireOption: 0 });
+      expect(getSnapshotShareConfiguration()).toEqual({ expirationTime: 0 });
     });
 
     it('pre-populates the expire option from local storage when opened', () => {
-      updateSnapshotShareConfiguration({ selectedExpireOption: ONE_HOUR });
+      updateSnapshotShareConfiguration({ expirationTime: ONE_HOUR });
 
       const tab = buildSnapshotTab();
 
@@ -54,7 +54,7 @@ describe('ShareSnapshotTab', () => {
     });
 
     it('falls back to the default when the stored value is not a valid option', () => {
-      updateSnapshotShareConfiguration({ selectedExpireOption: 12345 });
+      updateSnapshotShareConfiguration({ expirationTime: 12345 });
 
       const tab = buildSnapshotTab();
 
@@ -75,7 +75,7 @@ describe('ShareSnapshotTab', () => {
 
       const stored = window.localStorage.getItem(SNAPSHOT_SHARE_CONFIGURATION);
       const parsed = JSON.parse(stored ?? '{}');
-      expect(validValues).toContain(parsed.selectedExpireOption);
+      expect(validValues).toContain(parsed.expirationTime);
     });
   });
 });
