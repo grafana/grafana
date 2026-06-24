@@ -6,10 +6,11 @@ import { useObservable } from 'react-use';
 import {
   type DataFrame,
   type GrafanaTheme2,
+  type NestedValueAccess,
   type PanelOptionsEditorBuilder,
+  type PanelOptionsSupplier,
   type StandardEditorContext,
 } from '@grafana/data';
-import { type NestedValueAccess, type PanelOptionsSupplier } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';

@@ -1,5 +1,7 @@
 # Catalog plugin IDs to bundle under data/plugins-bundled (one per line).
 # Optional pin: id:version.
 elasticsearch
+tempo
 zipkin
+opentsdb
 stackdriver

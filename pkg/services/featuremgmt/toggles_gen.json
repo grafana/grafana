@@ -1616,7 +1616,8 @@
       "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-08-30T20:22:05Z"
+        "creationTimestamp": "2023-08-30T20:22:05Z",
+        "deletionTimestamp": "2026-06-18T13:02:15Z"
       },
       "spec": {
         "description": "Enable AI powered features in dashboards",
@@ -1624,20 +1625,6 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
-      }
-    },
-    {
-      "metadata": {
-        "name": "dataplaneAggregator",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-08-09T08:41:07Z"
-      },
-      "spec": {
-        "description": "Enable grafana dataplane aggregator",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
-        "expression": "false"
       }
     },
     {
@@ -1853,6 +1840,21 @@
         "description": "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dataviz.experimentalColorSchemes",
+        "resourceVersion": "1782241743120",
+        "creationTimestamp": "2026-06-23T19:09:03Z"
+      },
+      "spec": {
+        "description": "Enables additional experimental color schemes for visualizations.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -2443,15 +2445,31 @@
     },
     {
       "metadata": {
+        "name": "grafana.newPanelQueryErrorsUI",
+        "resourceVersion": "1781775898347",
+        "creationTimestamp": "2026-06-18T09:44:58Z"
+      },
+      "spec": {
+        "description": "Enables a new UI for query errors and notices",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPreferencesPage",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781704114797",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-17 13:48:34.797786 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true,
         "expression": "false"
       }
     },
@@ -2502,6 +2520,20 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.starredFolders",
+        "resourceVersion": "1781683112920",
+        "creationTimestamp": "2026-06-17T07:58:32Z"
+      },
+      "spec": {
+        "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2698,18 +2730,18 @@
     {
       "metadata": {
         "name": "heatmapRowsAxisOptions",
-        "resourceVersion": "1779473680521",
+        "resourceVersion": "1782152165311",
         "creationTimestamp": "2025-12-18T22:45:00Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-05-22 18:14:40.521505 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-06-22 18:16:05.311396 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3176,7 +3208,7 @@
         "name": "kubernetesShortURLs",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2026-06-19T18:46:20Z"
       },
       "spec": {
         "description": "Enables k8s short URL API and uses it under the hood when handling legacy /api",
@@ -3494,12 +3526,15 @@
     {
       "metadata": {
         "name": "multiPropsVariables",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-09T17:11:49Z"
+        "resourceVersion": "1781873846528",
+        "creationTimestamp": "2025-12-09T17:11:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-19 12:57:26.528739 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables support for variables whose values can have multiple properties",
-        "stage": "GA",
+        "description": "Deprecated. Enables support for variables whose values can have multiple properties",
+        "stage": "deprecated",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
@@ -3637,7 +3672,8 @@
       "metadata": {
         "name": "newUnconfiguredPanel",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-24T11:58:10Z"
       },
       "spec": {
         "description": "Enables the new unconfigured panel experience",
@@ -3693,7 +3729,8 @@
       "metadata": {
         "name": "opentsdbBackendMigration",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-04T08:11:33Z"
+        "creationTimestamp": "2025-12-04T08:11:33Z",
+        "deletionTimestamp": "2026-06-18T19:53:42Z"
       },
       "spec": {
         "description": "Run queries through the data source backend",
@@ -3721,7 +3758,8 @@
       "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-11-03T12:15:54Z"
+        "creationTimestamp": "2023-11-03T12:15:54Z",
+        "deletionTimestamp": "2026-06-19T07:57:25Z"
       },
       "spec": {
         "description": "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
@@ -4269,12 +4307,15 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781715640825",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-17 17:00:40.825547 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"
@@ -4500,7 +4541,8 @@
       "metadata": {
         "name": "refactorVariablesTimeRange",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-06-06T13:12:09Z"
+        "creationTimestamp": "2023-06-06T13:12:09Z",
+        "deletionTimestamp": "2026-06-18T12:12:56Z"
       },
       "spec": {
         "description": "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
@@ -4788,7 +4830,8 @@
       "metadata": {
         "name": "sharingDashboardImage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-15T21:07:39Z"
+        "creationTimestamp": "2025-07-15T21:07:39Z",
+        "deletionTimestamp": "2026-06-18T17:19:31Z"
       },
       "spec": {
         "description": "Enables image sharing functionality for dashboards",
@@ -4823,6 +4866,20 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "splunk.useLegacyResultsApi",
+        "resourceVersion": "1781865637365",
+        "creationTimestamp": "2026-06-19T10:40:37Z"
+      },
+      "spec": {
+        "description": "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -4895,6 +4952,21 @@
     },
     {
       "metadata": {
+        "name": "starredFolders",
+        "resourceVersion": "1781683016308",
+        "creationTimestamp": "2026-06-17T07:56:56Z",
+        "deletionTimestamp": "2026-06-17T07:58:32Z"
+      },
+      "spec": {
+        "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "starsFromAPIServer",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-08-29T14:46:39Z",
@@ -4961,6 +5033,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.protoRowParser",
+        "resourceVersion": "1782139478281",
+        "creationTimestamp": "2026-06-22T14:44:38Z"
+      },
+      "spec": {
+        "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

@@ -5,32 +5,58 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { ResourceStatusCard } from './ResourceStatusCard';
-import { type FolderCounts, type MigrationTotals } from './stats';
+import { type MigrationTotals } from './stats';
 
 interface OverviewStatCardsProps {
-  totals: MigrationTotals;
-  folderCounts: FolderCounts;
+  dashboards: MigrationTotals;
+  /**
+   * Playlist totals, present only when the playlist kind is enabled for
+   * provisioning on this instance. When omitted, the overview stays
+   * dashboard-only and the combined "All resources" card is hidden (it would
+   * just duplicate the dashboards card).
+   */
+  playlists?: MigrationTotals;
 }
 
-export function OverviewStatCards({ totals, folderCounts }: OverviewStatCardsProps) {
+/**
+ * The migration objective is zero unmanaged resources. The overview reports how
+ * much of each migratable resource type is already managed. When more than one
+ * type is enabled (e.g. dashboards + playlists), a combined "All resources" card
+ * summarizes the total progress.
+ */
+export function OverviewStatCards({ dashboards, playlists }: OverviewStatCardsProps) {
   const styles = useStyles2(getStyles);
+  // Only worth a combined card when more than one kind actually has resources —
+  // otherwise it just duplicates the single populated card.
+  const combined: MigrationTotals | undefined =
+    playlists && dashboards.instanceTotal > 0 && playlists.instanceTotal > 0
+      ? {
+          managed: dashboards.managed + playlists.managed,
+          instanceTotal: dashboards.instanceTotal + playlists.instanceTotal,
+        }
+      : undefined;
+
   return (
     <div className={styles.statCardsRow}>
       <ResourceStatusCard
         label={t('provisioning.migrate.dashboards', 'Dashboards')}
-        managed={totals.managed}
-        total={totals.instanceTotal}
+        managed={dashboards.managed}
+        total={dashboards.instanceTotal}
       />
-      <ResourceStatusCard
-        label={t('provisioning.migrate.folders', 'Folders')}
-        managed={folderCounts.managed}
-        total={folderCounts.total}
-      />
-      <ResourceStatusCard
-        label={t('provisioning.migrate.all-resources', 'All resources')}
-        managed={totals.managed + folderCounts.managed}
-        total={totals.instanceTotal + folderCounts.total}
-      />
+      {playlists && (
+        <ResourceStatusCard
+          label={t('provisioning.migrate.playlists', 'Playlists')}
+          managed={playlists.managed}
+          total={playlists.instanceTotal}
+        />
+      )}
+      {combined && (
+        <ResourceStatusCard
+          label={t('provisioning.migrate.all-resources', 'All resources')}
+          managed={combined.managed}
+          total={combined.instanceTotal}
+        />
+      )}
     </div>
   );
 }

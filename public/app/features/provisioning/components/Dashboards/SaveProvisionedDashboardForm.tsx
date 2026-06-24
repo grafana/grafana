@@ -23,8 +23,9 @@ import {
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
@@ -96,6 +97,21 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
+  const templateVars: CommitTemplateVars = {
+    action: isNew ? 'create' : 'update',
+    resourceKind: 'dashboard',
+    resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+    title: title ?? '',
+    ...getCurrentCommitUser(),
+  };
+  const { locked, message } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(dirtyFields.comment),
+    setComment: (value) => setValue('comment', value, { shouldDirty: false }),
+  });
+
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
   // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
@@ -116,7 +132,6 @@ export function SaveProvisionedDashboardForm({
     setError(
       getProvisionedRequestError(
         error,
-        'dashboard',
         t('dashboard-scene.save-provisioned-dashboard-form.error-saving', 'An error occurred while saving.')
       )
     );
@@ -211,15 +226,7 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({
-    title,
-    description,
-    repo,
-    path,
-    comment,
-    ref,
-    copyTags,
-  }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, ref, copyTags }: ProvisionedDashboardFormData) => {
     setError(undefined);
     // Validate required fields
     if (!repo || !path) {
@@ -234,16 +241,6 @@ export function SaveProvisionedDashboardForm({
     // if (workflow === 'write' && !isNew) {
     //   ref = loadedFromRef;
     // }
-
-    const message = getSingleResourceCommitMessage({
-      comment,
-      repository,
-      action: isNew ? 'create' : 'update',
-      resourceKind: 'dashboard',
-      resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-      title: dashboard.state.title ?? '',
-      ...getCurrentCommitUser(),
-    });
 
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
@@ -365,6 +362,8 @@ export function SaveProvisionedDashboardForm({
             repository={repository}
             isNew={isNew}
             allowPathEdit={!isNew && !readOnly}
+            lockComment={locked}
+            commitMessage={message}
           />
 
           {saveAsCopy && (
