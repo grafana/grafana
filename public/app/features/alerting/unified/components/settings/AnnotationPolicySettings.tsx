@@ -32,7 +32,7 @@ export function AnnotationPolicySettings() {
           label={t('alerting.annotation-policy.reject-label', 'Require descriptions and summaries')}
           description={t(
             'alerting.annotation-policy.reject-description',
-            'Alerts without a description and summary annotation will be rejected at save time. Use this to enforce documentation standards across your team.'
+            'Enforce and auto-generate descriptions and summaries so every alert is actionable when it fires.'
           )}
           horizontal
         >
