@@ -6,7 +6,7 @@ import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './dataSource';
-import { useDataSourceInstance, useDataSourceInstanceSettingsList, useDataSourceInstanceSettings } from './hooks';
+import { useDataSourceInstance, useDataSourceInstanceList, useDataSourceInstanceSettings } from './hooks';
 import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings } from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
@@ -85,9 +85,9 @@ describe('useDataSourceInstanceSettings', () => {
   });
 });
 
-describe('useDataSourceInstanceSettingsList', () => {
+describe('useDataSourceInstanceList', () => {
   it('populates items', async () => {
-    const { result } = renderHook(() => useDataSourceInstanceSettingsList());
+    const { result } = renderHook(() => useDataSourceInstanceList());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.items.length).toBeGreaterThan(0);
@@ -95,7 +95,7 @@ describe('useDataSourceInstanceSettingsList', () => {
 
   it('does not re-fetch when the same filter function reference is re-rendered', async () => {
     const stableFilter = (x: DataSourceInstanceSettings) => Boolean(x.meta.metrics);
-    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceSettingsList({ filter }), {
+    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceList({ filter }), {
       initialProps: { filter: stableFilter },
     });
 
@@ -114,7 +114,7 @@ describe('useDataSourceInstanceSettingsList', () => {
     const filterA = (x: DataSourceInstanceSettings) => x.name === 'Alpha';
     const filterB = (x: DataSourceInstanceSettings) => x.name === 'Bravo';
 
-    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceSettingsList({ filter }), {
+    const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceList({ filter }), {
       initialProps: { filter: filterA },
     });
 

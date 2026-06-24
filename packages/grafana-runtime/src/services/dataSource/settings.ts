@@ -1,4 +1,5 @@
 import {
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type DataSourceRef,
   type ScopedVars,
@@ -130,14 +131,27 @@ export async function getDataSourceInstanceSettings(
 }
 
 /**
- * Search and filter data source instance settings from the in-memory cache.
+ * Search and filter data sources from the in-memory cache, returning a
+ * lightweight view of each match. The heavy per-instance settings are not
+ * included — fetch them on demand via {@link getDataSourceInstanceSettings}.
  *
  * @internal
  */
-export async function getDataSourceInstanceSettingsList(
+export async function getDataSourceInstanceList(
   filters?: GetDataSourceListFilters
-): Promise<DataSourceInstanceSettings[]> {
-  return applyFilters(filters);
+): Promise<DataSourceInstanceListItem[]> {
+  return applyFilters(filters).map(toListItem);
+}
+
+function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+  return {
+    ref: { uid: settings.uid, type: settings.type, apiVersion: settings.apiVersion },
+    name: settings.name,
+    meta: settings.meta,
+    readOnly: settings.readOnly,
+    isDefault: settings.isDefault,
+    rawRef: settings.rawRef,
+  };
 }
 
 /**

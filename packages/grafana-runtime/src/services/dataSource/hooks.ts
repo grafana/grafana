@@ -1,12 +1,17 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
+import {
+  type DataSourceApi,
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+} from '@grafana/data';
 
 import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
 import { getDataSourceInstance } from './dataSource';
-import { getDataSourceInstanceSettings, getDataSourceInstanceSettingsList } from './settings';
+import { getDataSourceInstanceSettings, getDataSourceInstanceList } from './settings';
 
 /**
  * @public
@@ -20,10 +25,10 @@ export interface UseDataSourceInstanceSettingsResult {
 /**
  * @public
  */
-export interface UseDataSourceInstanceSettingsListResult {
+export interface UseDataSourceInstanceListResult {
   isLoading: boolean;
   error?: Error;
-  items: DataSourceInstanceSettings[];
+  items: DataSourceInstanceListItem[];
 }
 
 /**
@@ -66,7 +71,7 @@ export function useDataSourceInstanceSettings(
 }
 
 /**
- * React hook wrapping {@link getDataSourceInstanceSettingsList}. Re-fetches when
+ * React hook wrapping {@link getDataSourceInstanceList}. Re-fetches when
  * `filters` changes (compared by value, so inline objects are safe).
  * When `filters.filter` (a callback) is set, the hook re-fetches when the
  * function reference changes. Wrap inline filter callbacks in `useCallback`
@@ -74,9 +79,9 @@ export function useDataSourceInstanceSettings(
  *
  * @internal
  */
-export function useDataSourceInstanceSettingsList(
+export function useDataSourceInstanceList(
   filters?: GetDataSourceListFilters
-): UseDataSourceInstanceSettingsListResult {
+): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);
 
   const filterFunc = filters?.filter;
@@ -88,7 +93,7 @@ export function useDataSourceInstanceSettingsList(
   }, [filterFunc]);
 
   const { loading, error, value } = useAsync(
-    () => getDataSourceInstanceSettingsList(filters),
+    () => getDataSourceInstanceList(filters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [filterValuesKey, filterFuncKey]
   );

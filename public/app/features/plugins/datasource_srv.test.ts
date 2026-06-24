@@ -5,6 +5,7 @@ import {
   type DataQueryRequest,
   type DataQueryResponse,
   DataSourceApi,
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   DataSourcePlugin,
   type ScopedVars,
@@ -12,7 +13,7 @@ import {
 import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
-  getDataSourceInstanceSettingsList,
+  getDataSourceInstanceList,
   initDataSourceInstanceSettings,
   setExpressionDataSourceInstance,
 } from '@grafana/runtime/internal';
@@ -660,7 +661,7 @@ describe('datasource_srv', () => {
         await dataSourceSrv.reload();
 
         // The new API reflects the freshly fetched datasources...
-        const list = await getDataSourceInstanceSettingsList({ all: true });
+        const list = await getDataSourceInstanceList({ all: true });
         expect(list.some((x) => x.name === 'mmm')).toBe(true);
         // ...the expression built-in still resolves...
         expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
@@ -744,7 +745,7 @@ describe('datasource_srv', () => {
 // sorting and built-in (-- Grafana --/-- Mixed --/-- Dashboard --) ordering. Both impls are
 // seeded with identical data and their outputs compared across a filter matrix. This is the
 // only place both can be imported together (the runtime package can't import core).
-describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceSettingsList', () => {
+describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', () => {
   const DEFAULT_NAME = 'BBB';
 
   // Datasource variables consumed by the `variables: true` filter.
@@ -803,6 +804,10 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceSettings
   const project = (list: DataSourceInstanceSettings[]) =>
     list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault ?? false }));
 
+  // The async list returns slim items where uid/type live under `ref`; project to the same shape.
+  const projectListItems = (list: DataSourceInstanceListItem[]) =>
+    list.map((d) => ({ name: d.name, uid: d.ref.uid, type: d.ref.type, isDefault: d.isDefault ?? false }));
+
   let legacySrv: DatasourceSrv;
 
   beforeEach(() => {
@@ -838,7 +843,7 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceSettings
 
   it.each(cases)('matches getList for $label', async ({ filters }) => {
     const legacy = project(legacySrv.getList(filters));
-    const asyncList = project(await getDataSourceInstanceSettingsList(filters));
+    const asyncList = projectListItems(await getDataSourceInstanceList(filters));
     expect(asyncList).toEqual(legacy);
   });
 });

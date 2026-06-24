@@ -124,7 +124,7 @@ async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInst
  * and the plugin-instance cache so the data source is available to
  * {@link getDataSourceInstanceSettings} and {@link getDataSourceInstance}.
  *
- * Runtime data sources are intentionally excluded from {@link getDataSourceInstanceSettingsList}
+ * Runtime data sources are intentionally excluded from {@link getDataSourceInstanceList}
  * results, matching the behaviour of the legacy `DatasourceSrv.registerRuntimeDataSourceInstance`.
  *
  * @public
