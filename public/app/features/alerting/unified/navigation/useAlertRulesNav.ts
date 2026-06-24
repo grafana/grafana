@@ -6,6 +6,9 @@ import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
 import { shouldAllowRecoveringDeletedRules } from '../featureToggles';
+import { useIncompleteRules } from '../hooks/useIncompleteRules';
+
+import { QualityTabWarningSuffix } from './QualityTabWarningSuffix';
 
 /**
  * Returns the correct navId for alerting pages based on the alertingNavigationV2 feature toggle.
@@ -18,6 +21,10 @@ export function getAlertRulesNavId(): string {
 export function useAlertRulesNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
+
+  // Surface a warning on the Quality tab when any rule is missing actionable annotations.
+  const { rules: incompleteRules } = useIncompleteRules();
+  const hasIncompleteRules = incompleteRules.length > 0;
 
   // Check if V2 navigation is enabled
   const useV2Nav = config.featureToggles.alertingNavigationV2;
@@ -50,9 +57,10 @@ export function useAlertRulesNav() {
     },
     {
       id: 'alert-rules-quality',
-      text: t('alerting.navigation.quality', 'Quality'),
+      text: t('alerting.navigation.quality', 'Alert quality'),
       url: '/alerting/list/quality',
       active: location.pathname === '/alerting/list/quality',
+      tabSuffix: hasIncompleteRules ? QualityTabWarningSuffix : undefined,
       parentItem: alertRulesNav,
     },
   ];

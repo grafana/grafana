@@ -1,0 +1,439 @@
+# Realistic seed data for the "Alert quality" tab demo.
+#
+# Per-team folders with uneven sizes (like a real org). Roughly a third of all rules are
+# fully annotated (summary + description + runbook_url) and won't appear on the Quality
+# tab; the rest are missing fields:
+#   - HIGH severity   = missing runbook_url
+#   - MEDIUM severity = has a runbook_url but missing summary and/or description
+#
+# IMPORTANT: provision this with the "Alert quality" reject toggles OFF, otherwise the
+# incomplete rules are rejected at load time (that's the enforcement working). Turn the
+# toggles on afterwards to block NEW incomplete rules.
+apiVersion: 1
+
+# Remove demo rules provisioned in earlier rounds so only the rules below remain.
+deleteRules:
+  - { orgId: 1, uid: quality_mystery_cpu }
+  - { orgId: 1, uid: quality_mystery_memory }
+  - { orgId: 1, uid: quality_disk_space }
+  - { orgId: 1, uid: quality_latency_p99 }
+  - { orgId: 1, uid: quality_error_budget }
+  - { orgId: 1, uid: quality_good_http_errors }
+  - { orgId: 1, uid: quality_good_db_connections }
+  - { orgId: 1, uid: quality_payments_declined }
+  - { orgId: 1, uid: quality_payments_latency }
+  - { orgId: 1, uid: quality_payments_gateway }
+  - { orgId: 1, uid: auth_provider_down }
+  - { orgId: 1, uid: search_zero_results_rate }
+
+groups:
+  # ============================ Payments (6) ============================
+  - orgId: 1
+    name: payments
+    folder: Payments
+    interval: 1m
+    rules:
+      # COMPLETE
+      - uid: pay_decline_rate_spike
+        title: Payment decline rate spike
+        condition: A
+        data: &alwaysFiring
+          - refId: A
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator: { params: [0], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last }
+                  type: query
+              datasource: { type: __expr__, uid: "__expr__" }
+              expression: 1==1
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+              type: math
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Decline rate above threshold for {{ $labels.region }}"
+          description: "The card decline rate exceeded the threshold for 5m. Current value: {{ $values.A }}."
+          runbook_url: "https://runbooks.example.com/payments/declines"
+        labels: { severity: critical, team: payments }
+      # COMPLETE
+      - uid: pay_gateway_unreachable
+        title: Payment gateway unreachable
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Gateway {{ $labels.gateway }} is unreachable"
+          description: "Grafana could not reach payment gateway {{ $labels.gateway }} for 5m. Transactions may be failing."
+          runbook_url: "https://runbooks.example.com/payments/gateway"
+        labels: { severity: critical, team: payments }
+      # MEDIUM (has runbook, no description)
+      - uid: pay_checkout_latency
+        title: Checkout latency degraded
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Checkout latency degraded for {{ $labels.region }}"
+          runbook_url: "https://runbooks.example.com/payments/checkout-latency"
+        labels: { severity: warning, team: payments }
+      # HIGH (summary + description, no runbook)
+      - uid: pay_refund_backlog
+        title: Refund processing backlog
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Refund backlog growing"
+          description: "Pending refunds have exceeded the backlog threshold for 5m."
+        labels: { severity: warning, team: payments }
+      # HIGH (nothing)
+      - uid: pay_settlement_delay
+        title: Settlement batch delayed
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: warning, team: payments }
+      # HIGH (nothing)
+      - uid: pay_fraud_queue_backlog
+        title: Fraud review queue backlog
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: warning, team: payments }
+
+  # ============================ Storefront (5) ============================
+  - orgId: 1
+    name: storefront
+    folder: Storefront
+    interval: 1m
+    rules:
+      # COMPLETE
+      - uid: store_5xx_error_rate
+        title: Storefront 5xx error rate
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "5xx error rate above threshold for {{ $labels.service }}"
+          description: "The storefront 5xx error rate exceeded the threshold for 5m. Current value: {{ $values.A }}."
+          runbook_url: "https://runbooks.example.com/storefront/5xx"
+        labels: { severity: critical, team: storefront }
+      # MEDIUM (has runbook, no description)
+      - uid: store_page_load_latency
+        title: Page load latency degraded
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Page load latency degraded for {{ $labels.route }}"
+          runbook_url: "https://runbooks.example.com/storefront/latency"
+        labels: { severity: warning, team: storefront }
+      # HIGH (summary + description, no runbook)
+      - uid: store_cdn_cache_miss
+        title: CDN cache miss ratio high
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "CDN cache miss ratio is high"
+          description: "Origin traffic is elevated because the CDN cache miss ratio exceeded the threshold."
+        labels: { severity: warning, team: storefront }
+      # HIGH (nothing)
+      - uid: store_cart_abandonment
+        title: Cart abandonment spike
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: warning, team: storefront }
+      # HIGH (nothing)
+      - uid: store_inventory_sync_lag
+        title: Inventory sync lag
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: warning, team: storefront }
+
+  # ============================ Platform (7) ============================
+  - orgId: 1
+    name: platform
+    folder: Platform
+    interval: 1m
+    rules:
+      # COMPLETE
+      - uid: infra_node_not_ready
+        title: Kubernetes node not ready
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Node {{ $labels.node }} is NotReady"
+          description: "Node {{ $labels.node }} has been NotReady for 5m. Workloads may be rescheduling."
+          runbook_url: "https://runbooks.example.com/platform/node-not-ready"
+        labels: { severity: critical, team: platform }
+      # COMPLETE
+      - uid: infra_cert_expiry
+        title: TLS certificate expiring soon
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Certificate for {{ $labels.domain }} expires soon"
+          description: "The TLS certificate for {{ $labels.domain }} expires in under 7 days."
+          runbook_url: "https://runbooks.example.com/platform/cert-renewal"
+        labels: { severity: warning, team: platform }
+      # MEDIUM (has runbook, no description)
+      - uid: infra_disk_pressure
+        title: Disk pressure on node
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Disk pressure on {{ $labels.node }}"
+          runbook_url: "https://runbooks.example.com/platform/disk-pressure"
+        labels: { severity: warning, team: platform }
+      # MEDIUM (has runbook, no description)
+      - uid: infra_etcd_latency
+        title: etcd request latency high
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "etcd request latency is high"
+          runbook_url: "https://runbooks.example.com/platform/etcd-latency"
+        labels: { severity: critical, team: platform }
+      # HIGH (summary + description, no runbook)
+      - uid: infra_oom_kills
+        title: Container OOM kills
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Containers are being OOM killed"
+          description: "One or more containers in {{ $labels.namespace }} have been OOM killed in the last 5m."
+        labels: { severity: warning, team: platform }
+      # HIGH (nothing)
+      - uid: infra_high_cpu
+        title: High CPU saturation
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: warning, team: platform }
+      # HIGH (nothing)
+      - uid: infra_pod_crashloop
+        title: Pods in CrashLoopBackOff
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: critical, team: platform }
+
+  # ============================ Identity (4) ============================
+  - orgId: 1
+    name: identity
+    folder: Identity
+    interval: 1m
+    rules:
+      # COMPLETE
+      - uid: auth_login_failure_spike
+        title: Login failure spike
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Login failure rate spiking"
+          description: "Failed logins exceeded the threshold for 5m, which may indicate an outage or credential-stuffing attack."
+          runbook_url: "https://runbooks.example.com/identity/login-failures"
+        labels: { severity: critical, team: identity }
+      # MEDIUM (has runbook, no description)
+      - uid: auth_token_issuance_errors
+        title: Token issuance errors
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Token issuance error rate elevated"
+          runbook_url: "https://runbooks.example.com/identity/token-errors"
+        labels: { severity: warning, team: identity }
+      # HIGH (summary + description, no runbook)
+      - uid: auth_session_store_latency
+        title: Session store latency
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Session store latency is high"
+          description: "Reads/writes to the session store have been slow for 5m, slowing authentication."
+        labels: { severity: warning, team: identity }
+      # HIGH (nothing)
+      - uid: auth_mfa_failures
+        title: MFA verification failures
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: warning, team: identity }
+
+  # ============================ Data (5) ============================
+  - orgId: 1
+    name: data
+    folder: Data
+    interval: 1m
+    rules:
+      # COMPLETE
+      - uid: data_pipeline_lag
+        title: Ingestion pipeline lag
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Ingestion pipeline lag is high"
+          description: "The ingestion pipeline is behind by more than the allowed threshold for 5m."
+          runbook_url: "https://runbooks.example.com/data/pipeline-lag"
+        labels: { severity: critical, team: data }
+      # COMPLETE
+      - uid: data_freshness_sla
+        title: Data freshness SLA breach
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Dataset {{ $labels.dataset }} is stale"
+          description: "Dataset {{ $labels.dataset }} has breached its freshness SLA for 5m."
+          runbook_url: "https://runbooks.example.com/data/freshness"
+        labels: { severity: warning, team: data }
+      # MEDIUM (has runbook, no description)
+      - uid: data_etl_failures
+        title: ETL job failures
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "ETL job {{ $labels.job }} is failing"
+          runbook_url: "https://runbooks.example.com/data/etl-failures"
+        labels: { severity: warning, team: data }
+      # HIGH (summary + description, no runbook)
+      - uid: data_event_drop_rate
+        title: Event drop rate high
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Event drop rate is high"
+          description: "The collector is dropping events above the allowed rate for 5m."
+        labels: { severity: warning, team: data }
+      # HIGH (nothing)
+      - uid: data_warehouse_query_latency
+        title: Warehouse query latency
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: warning, team: data }
+
+  # ============================ Search (4) ============================
+  - orgId: 1
+    name: search
+    folder: Search
+    interval: 1m
+    rules:
+      # COMPLETE
+      - uid: search_indexing_lag
+        title: Indexing lag high
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Search indexing lag is high"
+          description: "New documents are taking longer than the threshold to become searchable."
+          runbook_url: "https://runbooks.example.com/search/indexing-lag"
+        labels: { severity: warning, team: search }
+      # MEDIUM (has runbook, no description)
+      - uid: search_query_errors
+        title: Query error rate elevated
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Search query error rate elevated"
+          runbook_url: "https://runbooks.example.com/search/query-errors"
+        labels: { severity: warning, team: search }
+      # HIGH (summary + description, no runbook)
+      - uid: search_cluster_red
+        title: Search cluster status red
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Search cluster status is RED"
+          description: "One or more primary shards are unassigned; search results may be incomplete."
+        labels: { severity: critical, team: search }
+      # HIGH (nothing)
+      - uid: search_latency_p99
+        title: Query latency p99 high
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels: { severity: warning, team: search }
