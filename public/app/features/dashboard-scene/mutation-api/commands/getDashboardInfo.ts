@@ -1,12 +1,15 @@
 /**
  * GET_DASHBOARD_INFO command
  *
- * Returns dashboard metadata (title, description, uid, tags, folder info,
- * timestamps) from the DashboardScene state. Read-only, no permissions required.
+ * Returns dashboard identity/folder metadata plus every dashboard-level setting
+ * that UPDATE_DASHBOARD_SETTINGS can write (title, description, tags, editable,
+ * refresh, time range, timezone, cursorSync, links), read from the
+ * DashboardScene state. Read-only, no permissions required.
  */
 
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
+import { readDashboardSettings } from './updateDashboardSettings';
 
 export const getDashboardInfoCommand: MutationCommand<Record<string, never>> = {
   name: 'GET_DASHBOARD_INFO',
@@ -20,15 +23,13 @@ export const getDashboardInfoCommand: MutationCommand<Record<string, never>> = {
     const { scene } = context;
 
     try {
-      const { title, description, uid, tags, meta } = scene.state;
+      const { uid, meta } = scene.state;
 
       return {
         success: true,
         data: {
-          title: title ?? '',
-          description: description ?? '',
+          ...readDashboardSettings(scene),
           uid: uid ?? '',
-          tags: tags ?? [],
           ...(meta && {
             folderTitle: meta.folderTitle,
             folderUid: meta.folderUid,

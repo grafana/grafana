@@ -1205,7 +1205,9 @@ export const payloads = {
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'
   ),
-  getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
+  getDashboardInfo: emptyPayloadSchema.describe(
+    'Get dashboard identity/folder metadata plus all settings (title, description, tags, editable, refresh, time range, timezone, cursorSync, links)'
+  ),
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
     'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable, cursorSync, links)'
   ),

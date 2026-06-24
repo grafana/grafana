@@ -39,7 +39,7 @@ function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
   };
 }
 
-interface DashboardSettings {
+export interface DashboardSettings {
   title: string;
   description: string;
   tags: string[];
@@ -57,7 +57,7 @@ function findCursorSyncBehavior(
   return scene.state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync);
 }
 
-function readCurrentSettings(scene: Parameters<MutationCommand['handler']>[1]['scene']): DashboardSettings {
+export function readDashboardSettings(scene: Parameters<MutationCommand['handler']>[1]['scene']): DashboardSettings {
   const timeRange = sceneGraph.getTimeRange(scene);
   const refreshPicker = scene.state.controls?.state.refreshPicker;
 
@@ -90,7 +90,7 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
     enterEditModeIfNeeded(scene);
 
     try {
-      const previousValue = readCurrentSettings(scene);
+      const previousValue = readDashboardSettings(scene);
       const warnings: string[] = [];
 
       const sceneUpdates: Record<string, unknown> = {};
@@ -147,7 +147,7 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
         scene.setState({ links: payload.links.map(normalizeDashboardLink) });
       }
 
-      const newValue = readCurrentSettings(scene);
+      const newValue = readDashboardSettings(scene);
 
       return {
         success: true,
