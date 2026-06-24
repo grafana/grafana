@@ -9,8 +9,8 @@ import {
 } from '../../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { transformCursorSyncV2ToV1 } from '../../serialization/transformToV1TypesUtils';
 
-import { findCursorSyncBehavior, readDashboardSettings } from './dashboardSettingsUtils';
 import { payloads } from './schemas';
+import { findCursorSyncBehavior, readDashboardSettings } from './shared';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
