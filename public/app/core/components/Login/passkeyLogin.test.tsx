@@ -168,12 +168,14 @@ describe('usePasskeyButtonMode', () => {
     await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('hidden'));
   });
 
-  it('is hidden when the device has no platform authenticator', async () => {
+  it('is secondary even when the device has no platform authenticator (cross-device flow)', async () => {
+    // No local authenticator (e.g. desktop Linux Firefox) must still offer the button — "Use a
+    // passkey from another device" is exactly the flow for this case.
     setPlatformAuthenticatorAvailable(false);
 
     render(<ModeHarness />);
 
-    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('hidden'));
+    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('secondary'));
   });
 
   it('is primary when a passkey has been used on this browser before', async () => {
@@ -184,7 +186,7 @@ describe('usePasskeyButtonMode', () => {
     await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('primary'));
   });
 
-  it('is secondary on a capable browser with no prior passkey', async () => {
+  it('is secondary on a no-autofill browser with no prior passkey', async () => {
     render(<ModeHarness />);
 
     await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('secondary'));

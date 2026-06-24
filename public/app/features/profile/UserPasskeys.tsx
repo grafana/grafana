@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -26,6 +26,8 @@ export interface UserPasskey {
   name: string;
   created: string;
   lastUsed?: string;
+  credentialId: string;
+  userHandle: string;
 }
 
 const LIST_URL = '/api/user/passkey/credentials';
@@ -38,12 +40,14 @@ export const UserPasskeys = memo(() => {
   const [editingId, setEditingId] = useState<number | undefined>();
   const [pendingDelete, setPendingDelete] = useState<UserPasskey | undefined>();
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<UserPasskey[]> => {
     setIsLoading(true);
     setError(undefined);
     try {
       const result = await getBackendSrv().get<UserPasskey[]>(LIST_URL);
-      setPasskeys(result ?? []);
+      const creds = result ?? [];
+      setPasskeys(creds);
+      return creds;
     } catch (err) {
       // Treat load failures as an empty list — the empty state is friendlier than
       // a blocking alert, and it's the right UX whether the user has no passkeys
@@ -51,6 +55,7 @@ export const UserPasskeys = memo(() => {
       // still surface via the alert below.
       console.error('Failed to load passkeys', err);
       setPasskeys([]);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -75,15 +80,19 @@ export const UserPasskeys = memo(() => {
 
   const remove = useCallback(
     async (id: number) => {
+      // Capture the user handle from the current list before the delete so the
+      // signal call still has it even when the last credential is being removed.
+      const userHandle = passkeys[0]?.userHandle;
       try {
         await getBackendSrv().delete(`${LIST_URL}/${id}`);
         setPendingDelete(undefined);
-        await load();
+        const remaining = await load();
+        signalAcceptedCredentials(userHandle, remaining);
       } catch (err) {
         setError(t('user-passkeys.error.delete', 'Could not delete passkey.'));
       }
     },
-    [load]
+    [load, passkeys]
   );
 
   if (isLoading) {
@@ -242,6 +251,29 @@ const PasskeyNameEditor = ({ initialValue, onSave, onCancel }: EditorProps) => {
     </Stack>
   );
 };
+
+// signalAcceptedCredentials tells the browser's password manager which credentials still exist for
+// this account, so it can prune any that were deleted. This uses the WebAuthn Signal API
+// (signalAllAcceptedCredentials), available in Chrome ≥125. On unsupported browsers or when the
+// required config is missing it is a silent no-op — deletion still succeeds, the browser just
+// keeps the stale autofill entry until the credential is naturally garbage-collected.
+function signalAcceptedCredentials(userHandle: string | undefined, creds: UserPasskey[]) {
+  const rpId = config.passkey?.rpId;
+  if (!rpId || !userHandle) {
+    return;
+  }
+
+  // The Signal API is not in the standard TS lib yet (~Chrome 125+). Feature-detect via Reflect
+  // so we can call it without any type assertions — the function is invoked dynamically.
+  const signal = Reflect.get(window.PublicKeyCredential ?? {}, 'signalAllAcceptedCredentials');
+  if (typeof signal !== 'function') {
+    return;
+  }
+
+  const opts = { rpId, userId: userHandle, allAcceptedCredentialIds: creds.map((c) => c.credentialId) };
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  void Promise.resolve(signal(opts)).catch(() => {});
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({

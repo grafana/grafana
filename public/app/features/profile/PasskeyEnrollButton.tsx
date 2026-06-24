@@ -5,9 +5,11 @@ import {
 } from '@simplewebauthn/browser';
 import { useCallback, useState } from 'react';
 
+import { store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Icon, Input, Modal, Stack } from '@grafana/ui';
+import { PASSKEY_HINT_KEY } from 'app/core/components/Login/passkeyLogin';
 
 interface Props {
   onEnrolled: () => void;
@@ -63,6 +65,10 @@ export const PasskeyEnrollButton = ({ onEnrolled }: Props) => {
       const response = await startRegistration({ optionsJSON: begin.options });
       const finishBody: FinishRequest = { sessionID: begin.sessionID, name: trimmed, response };
       await getBackendSrv().post(FINISH_URL, finishBody, { showErrorAlert: false });
+
+      // Record that this browser now has a passkey so the login page shows the primary "Sign in with a
+      // passkey" label on the first login after enrolment, without waiting for a sign-in to set it.
+      store.set(PASSKEY_HINT_KEY, true);
 
       onEnrolled();
       reset();

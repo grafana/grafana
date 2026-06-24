@@ -144,17 +144,15 @@ export function usePasskeyButtonMode(): PasskeyButtonMode {
         return;
       }
 
-      // No autofill: the button is the only entry point. Only show it if the device can actually run a
-      // platform authenticator; otherwise the button would lead to a dead end.
-      const hasPlatformAuthenticator = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      // No autofill (e.g. Firefox): the button is the only entry point, so show it. We deliberately do
+      // NOT gate on a platform authenticator — the "another device" label is exactly the flow for a
+      // device without one (cross-device via the user's phone, or a roaming security key). The label,
+      // driven by the per-browser hint, sets the right expectation:
+      //   hint present -> the user has used a passkey here before -> "Sign in with a passkey".
+      //   no hint      -> "Use a passkey from another device".
       if (cancelled) {
         return;
       }
-      if (!hasPlatformAuthenticator) {
-        setMode('hidden');
-        return;
-      }
-
       setMode(store.getBool(PASSKEY_HINT_KEY, false) ? 'primary' : 'secondary');
     })();
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -172,25 +173,35 @@ func TestPasskeyRegisterBegin(t *testing.T) {
 }
 
 func TestPasskeyListCredentials(t *testing.T) {
+	credID := []byte{0xca, 0xfe, 0xba, 0xbe}
+	const userID = int64(99)
 	store := &fakePasskeyStore{listResult: []*passkey.Credential{
-		{ID: 1, Name: "laptop", PublicKey: []byte("secret-key"), SignCount: 7},
+		{ID: 1, Name: "laptop", UserID: userID, CredentialID: credID, PublicKey: []byte("secret-key"), SignCount: 7},
 	}}
 	server := setupPasskeyServer(t, &fakePasskeyService{}, store, nil)
 
 	req := webtest.RequestWithSignedInUser(
 		server.NewGetRequest("/api/user/passkey/credentials"),
-		&user.SignedInUser{UserID: 99, OrgID: 1},
+		&user.SignedInUser{UserID: userID, OrgID: 1},
 	)
 	res, err := server.Send(req)
 	require.NoError(t, err)
 	defer func() { require.NoError(t, res.Body.Close()) }()
 	require.Equal(t, http.StatusOK, res.StatusCode)
 
-	// Key material and the sign counter must never be serialized to the client.
 	raw := decodeRaw(t, res)
+
+	// Key material and the sign counter must never be serialized to the client.
 	require.Contains(t, raw, "laptop")
 	require.NotContains(t, raw, "secret-key")
 	require.NotContains(t, raw, "signCount")
+
+	// The WebAuthn credential ID and user handle are exposed (base64url, no padding) for the
+	// Signal API so the browser can prune deleted credentials from autofill.
+	expectedCredID := base64.RawURLEncoding.EncodeToString(credID)
+	require.Contains(t, raw, expectedCredID, "credentialId should be base64url-encoded in the response")
+	expectedHandle := base64.RawURLEncoding.EncodeToString(passkey.EncodeUserHandle(userID))
+	require.Contains(t, raw, expectedHandle, "userHandle should be base64url-encoded in the response")
 }
 
 func TestPasskeyRenameCredential(t *testing.T) {
