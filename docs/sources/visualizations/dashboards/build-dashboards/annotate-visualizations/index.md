@@ -102,23 +102,15 @@ To add an annotation query to a dashboard, follow these steps:
 
 {{< docs/list >}}
 
-1. Click **Edit** in the top-right corner of the dashboard.
-1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
-1. In the sidebar, click **Settings**.
-1. On the **Settings** page, go to the **Annotations** tab.
-1. Click **Add annotation query**.
+{{< shared id="add-annotation-query" >}}
 
-   If you've added a query before, the **+ New query** button is displayed.
-
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Annotation query**.
 1. Enter a name for the annotation query.
 
    This name is given to the toggle that allows you to enable/disable showing annotation events from this query.
-
-1. Select the data source for the annotations.
-
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
-
-{{< shared id="add-annotation-query" >}}
 
 1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
 1. Select a color for the event markers.
@@ -134,31 +126,24 @@ To add an annotation query to a dashboard, follow these steps:
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}}
 
-   {{< /shared >}}
-
-1. To create a query, do one of the following:
-   - Write or construct a query in the query language of your data source. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic.
-   - Open the **Saved queries** drop-down menu and click **Replace query** to reuse a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries).
-
-1. (Optional) To [save the query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#save-a-query) for reuse, open the **Saved queries** drop-down menu and click the **Save query** option.
-1. (Optional) Click **Test annotation query** to ensure that the query is working properly.
-1. (Optional) To add subsequent queries, click **+ Add query** or **+ Add from saved queries**, and test them as many times as needed.
+1. To add a query, do one of the following:
+   - Click **Open query editor** to open **Annotation Query** dialog box and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic.
+   - Click **Use saved query** to open a the **Saved queries** drawer and select a [saved query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries). Choose a query to reuse, click **Select query**, and proceed to step 13.
 
    {{< admonition type="note" >}}
    [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
    {{< /admonition >}}
 
+1. (Optional) In the **Annotation Query** dialog box, click **Test annotation query** to ensure that the query is working properly.
+1. Click **Close** when you've completed the query setup.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Exit edit**.
+
+{{< /shared >}}
 
 {{< /docs/list >}}
-
-{{< admonition type="tip" >}}
-To create annotation queries without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Annotation query**.
-For more information, refer to the [Dashboard controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/).
-{{< /admonition >}}
 
 ## Built-in query
 
