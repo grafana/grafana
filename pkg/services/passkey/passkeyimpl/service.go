@@ -89,7 +89,9 @@ func (s *Service) BeginLogin(ctx context.Context) (*passkey.BeginResult, error) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin passkey login: %w", err)
 	}
-	res, err := s.persistSession(ctx, session, assertion)
+	// Send the inner options object (PublicKeyCredentialRequestOptions), not the {"publicKey": …}
+	// wrapper, because @simplewebauthn/browser's startAuthentication consumes the options directly.
+	res, err := s.persistSession(ctx, session, assertion.Response)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +171,9 @@ func (s *Service) BeginRegistration(ctx context.Context, ru passkey.RegisteringU
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin passkey registration: %w", err)
 	}
-	res, err := s.persistSession(ctx, session, creation)
+	// Send the inner options object (PublicKeyCredentialCreationOptions), not the {"publicKey": …}
+	// wrapper, because @simplewebauthn/browser's startRegistration consumes the options directly.
+	res, err := s.persistSession(ctx, session, creation.Response)
 	if err != nil {
 		return nil, err
 	}

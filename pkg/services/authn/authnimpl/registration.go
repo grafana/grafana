@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/passkey"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -45,6 +46,7 @@ func ProvideRegistration(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
+	passkeyService passkey.Service,
 ) (Registration, error) {
 	logger := log.New("authn.registration")
 
@@ -83,6 +85,10 @@ func ProvideRegistration(
 		if !cfg.DisableLoginForm {
 			authnSvc.RegisterClient(clients.ProvideForm(passwordClient))
 		}
+	}
+
+	if cfg.Passkey.Enabled && features.IsEnabledGlobally(featuremgmt.FlagGrafanaPasskeyAuthn) {
+		authnSvc.RegisterClient(clients.ProvidePasskey(cfg, features, passkeyService))
 	}
 
 	if cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
