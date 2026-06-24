@@ -41,27 +41,32 @@ The following are the components of the CloudWatch query editor.
 | **Setting**     | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Region**      | Select an AWS region if it differs from the default.                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **Namespace**   | The AWS service namespace. Examples: `AWS/EC2`, `AWS_Lambda`.                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Namespace**   | The AWS service namespace. Examples: `AWS/EC2`, `AWS/Lambda`.                                                                                                                                                                                                                                                                                                                                                                                                               |
 | **Metric name** | The name of the metric you want to visualize. Example: `CPUUtilization`.                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **Statistic**   | Choose how to aggregate your data. Examples: `sum`, `average`, `maximum`.                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **Statistic**   | Choose how to aggregate your data. Options are `Average`, `Maximum`, `Minimum`, `Sum`, `SampleCount`, and `IQM`. You can also enter a custom value, such as a percentile like `p99`.                                                                                                                                                                                                                                                                                          |
 | **Dimensions**  | Select dimensions from the drop-down. Examples: `InstanceId`, `FunctionName`, `latency`. You can add several dimensions to your query.                                                                                                                                                                                                                                                                                                                                      |
 | **Match exact** | _Optional_. When enabled, this option restricts query results to metrics that precisely match the specified dimensions and their values. All dimensions of the queried metric must be explicitly defined in the query to ensure an exact schema match. If disabled, the query will also return metrics that match the defined schema but possess additional dimensions.                                                                                                     |
 | **ID**          | _Optional_. Unique identifier required by the GetMetricData API for referencing queries in math expressions. Must start with a lowercase letter and can include letters, numbers, and underscores. If not specified, Grafana generates an ID using the pattern `query[refId]` (for example, `queryA`for the first query row).                                                                                                                                               |
-| **Period**      | The minimum time interval, in seconds, between data points. The default is `auto`. Valid values are 1, 5, 10, 30, or any multiple of 60. When set to auto or left blank, Grafana calculates the period using time range in seconds / 2000, then rounds up to the next value (60, 300, 900, 3600, 21600, 86400) based on the [CloudWatch retention policy](https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/). |
+| **Period**      | The minimum time interval, in seconds, between data points. The default is `auto`. CloudWatch accepts periods of 1, 5, 10, 30, or any multiple of 60 seconds. When set to `auto` or left blank, Grafana calculates the period by dividing the time range in seconds by 2000, then rounding up to the next value among 60, 300, 900, 3600, 21600, and 86400. The available periods depend on the age of the data: because CloudWatch stores older metrics at a lower resolution under its [retention policy](https://aws.amazon.com/about-aws/whats-new/2016/11/cloudwatch-extends-metrics-retention-and-new-user-interface/), the shorter periods aren't available for older time ranges. |
 | **Label**       | _Optional_. Add a customized time series legend name. The label field overrides the default metric legend name using CloudWatch dynamic labels. Time-based dynamic labels like ${MIN_MAX_TIME_RANGE} derive legend values from the current timezone in the time range picker. For the full list of label patterns and limitations, refer to [CloudWatch dynamic labels](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html).          |
 
-## Use Builder mode
+## Use Builder and Code modes
 
-Create a query in Builder mode:
+Both the Metric Search and Metric Insights query types provide two editing modes. Use the **Builder** and **Code** toggle in the query editor to switch between them.
 
-1. Browse and select a metric namespace, metric name, filter, group, and order options using information from the [Metrics Insights keywords table](#use-metrics-insights-keywords).
-1. For each of these keywords, choose from the list of available options.
+### Builder mode
 
-Grafana constructs a SQL query based on your selections.
+Builder mode lets you construct a query from drop-downs and form fields without writing any syntax:
 
-## Use Code mode
+- For **Metric Search** queries, select the namespace, metric name, statistic, and dimensions.
+- For **Metric Insights** queries, select the namespace, metric name, filter, group, and order options using the [Metrics Insights keywords](#use-metrics-insights-keywords). Grafana constructs a SQL query based on your selections.
 
-You can also write your SQL query directly in a code editor by using Code mode.
+### Code mode
+
+Code mode lets you write your query directly in a code editor:
+
+- For **Metric Search** queries, write a metric math or `SEARCH` expression.
+- For **Metric Insights** queries, write a Metrics Insights SQL query.
 
 The code editor includes a built-in autocomplete feature that suggests keywords, aggregations, namespaces, metrics, labels, and label values.
 Suggestions appear after typing a space, comma, or dollar (`$`) character, or by pressing <key>CTRL</key>+<key>Space</key>.
@@ -76,8 +81,8 @@ To run the query, click **Run query** above the code editor.
 
 You can create two types of queries in the CloudWatch query editor:
 
-- [Metric Search](#metric-search-queries), which help you retrieve and filter available metrics.
-- [Metric Query](#use-metric-insights-syntax), which use the Metrics Insights feature to fetch time series data.
+- [Metric Search](#metric-search-queries), which helps you retrieve and filter available metrics.
+- [Metric Insights](#use-metric-insights-syntax), which uses the Metrics Insights feature to fetch time series data.
 
 The query type you use depends on how you want to interact with AWS metrics. Use the drop-down in the upper middle of the query editor to select which type you want to create.
 
@@ -103,7 +108,7 @@ When `Match Exact` is disabled, you can specify any subset of dimensions for fil
 
 This mode provides more flexible querying but may return metrics with unexpected additional dimensions.
 
-The data source returns up to 100 metrics matching your filter criteria.
+Because the data source retrieves metrics through the CloudWatch `GetMetricData` API, a single query returns data for up to 100 metrics matching your filter criteria, which is the per-request limit that AWS enforces.
 
 Enhance metric queries using template variables to create dynamic, reusable dashboards.
 
@@ -115,7 +120,7 @@ Use the asterisk (`*`) wildcard for dimension values to create dynamic queries t
 
 The query returns the average CPU utilization for all EC2 instances in the default region. With `Match Exact` disabled and `InstanceId` using a wildcard, the query retrieves metrics for any EC2 instance regardless of additional dimensions.
 
-Auto-scaling events add new instances to the graph without manual instance ID tracking. This feature supports up to 100 metrics.
+Auto-scaling events add new instances to the graph without manual instance ID tracking. As with other metric search queries, AWS returns up to 100 metrics per `GetMetricData` request.
 
 Click the [**Query inspector**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#navigate-the-query-editor) button and select **Meta Data** to see the search expression that's automatically built to support wildcards.
 
@@ -211,8 +216,8 @@ The logs query editor helps you write CloudWatch Logs queries across a selected 
 You can query CloudWatch Logs using three supported query language options:
 
 - **Logs Insights QL** - The AWS native query language specifically designed for CloudWatch Logs. It uses a SQL-like syntax with commands like `fields`, `filter`, `stats`, and `sort`. It's optimized for the CloudWatch log structure and offers built-in functions for parsing timestamps, extracting fields from JSON logs, and performing aggregations.
-- **OpenSearch PPL** - The OpenSearch query language is based on Elasticsearch's query DSL (Domain Specific Language). It uses a pipe-based syntax similar to Unix command-line tools or the Splunk search language, and supports complex boolean logic, range queries, wildcard matching, and full-text search capabilities.
 - **OpenSearch SQL** - OpenSearch SQL is a query language that uses a SQL-like syntax for querying data in OpenSearch. It supports standard SQL queries and is designed for users familiar with SQL.
+- **OpenSearch PPL** - The OpenSearch query language is based on Elasticsearch's query DSL (Domain Specific Language). It uses a pipe-based syntax similar to Unix command-line tools or the Splunk search language, and supports complex boolean logic, range queries, wildcard matching, and full-text search capabilities.
 
 **Create a CloudWatch Logs query:**
 
