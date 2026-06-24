@@ -56,6 +56,7 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
 | Incorrect access key or secret key      | Verify the credentials in the AWS Console under **IAM** > **Users** > your user > **Security credentials**. Generate new credentials if necessary.                                                                                                                                                                                                                                                                                    |
 | Credentials have expired                | For temporary credentials, generate new ones. For access keys, verify they haven't been deactivated or deleted.                                                                                                                                                                                                                                                                                                                       |
 | Wrong AWS region                        | Verify the default region in the data source configuration matches where your resources are located.                                                                                                                                                                                                                                                                                                                                  |
+| IAM role lacks permissions in the queried region | AWS evaluates permissions per region. If your role only has CloudWatch access in some regions, querying another region returns `AccessDenied`, and the error might not name the region. Set the data source **Default Region** to a region where your role has permissions, and only query regions your IAM policy allows.                                                                                                       |
 | Assume Role ARN is incorrect            | Verify the role ARN format: `arn:aws:iam::<account-id>:role/<role-name>`. Check that the role exists in the AWS Console.                                                                                                                                                                                                                                                                                                              |
 
 <!-- vale Grafana.Headings = NO -->
@@ -90,6 +91,7 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
 
 1. Verify the trust relationship on the IAM role allows the Grafana credentials to assume it.
 1. Check the trust policy includes the correct principal (the user or role running Grafana).
+1. If you use the **Grafana Assume Role** authentication method, confirm the trust policy uses the exact Grafana AWS account ID and external ID shown in the instructions box on the data source's **Settings** tab. Entering a different account ID is a common mistake that causes the assume-role request to fail.
 1. If using an external ID, ensure it matches exactly in both the role's trust policy and the Grafana data source configuration.
 1. Verify the base credentials have the `sts:AssumeRole` permission.
 1. Check that the role ARN is correct and the role exists.
@@ -132,22 +134,6 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
 | The assumed role is missing CloudWatch permissions | Add the metrics and logs actions, such as `cloudwatch:ListMetrics`, `cloudwatch:GetMetricData`, `logs:DescribeLogGroups`, and `logs:StartQuery`, to the assumed role's policy. Refer to [Configure CloudWatch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/) for complete policy examples. |
 | Permissions are attached to the wrong identity | Confirm that the policy is attached to the role named in **Assume Role ARN**, not to the IAM user or role that provides the primary credentials. |
 
-### Access blocked by a VPC endpoint policy or service control policy
-
-**Symptoms:**
-
-- Credentials are valid and the IAM policy grants the action, but requests still fail with `AccessDenied`
-- The error references a VPC endpoint policy, for example, `AccessDenied: ... no VPC endpoint policy allows the cloudwatch:ListMetrics action`
-- Access fails only from within a VPC or in a restricted account, such as a FedRAMP environment
-
-**Possible causes and solutions:**
-
-| Cause | Solution |
-| --- | --- |
-| A VPC endpoint policy restricts which actions are allowed | Update the policy on the CloudWatch, Logs, EC2, or STS VPC endpoints to allow the required actions, such as `cloudwatch:ListMetrics` and `cloudwatch:GetMetricData`. |
-| A service control policy (SCP) explicitly denies a required action | Review the service control policies applied to the account or organizational unit. An explicit `Deny` in an SCP overrides any `Allow` in an IAM policy, so the action must be permitted at both levels. |
-| Requests route through the wrong endpoint | Confirm that the data source region and any custom endpoint match the VPC endpoints that permit the required actions. |
-
 ### Data source stops working after about an hour
 
 **Symptoms:**
@@ -163,6 +149,22 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
 | Temporary credentials expired and weren't refreshed | Methods that use temporary credentials, such as Assume Role or STS, issue short-lived tokens. If the data source uses static temporary credentials, switch to an authentication method that refreshes automatically, such as Assume Role with long-lived base credentials or an EKS/EC2 instance role. Refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/). |
 | You're running an outdated Grafana version | Token-refresh behavior has been affected by bugs in specific Grafana versions. If restarting or re-saving the data source only restores access temporarily, upgrade to the latest Grafana version, which may contain a fix. |
 | Programmatic workaround needed in the interim | As a temporary workaround, re-save the data source on a schedule through the [data source HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/data_source/#update-an-existing-data-source) to force a credential refresh until you can upgrade. |
+
+### Access blocked by a VPC endpoint policy or service control policy
+
+**Symptoms:**
+
+- Credentials are valid and the IAM policy grants the action, but requests still fail with `AccessDenied`
+- The error references a VPC endpoint policy, for example, `AccessDenied: ... no VPC endpoint policy allows the cloudwatch:ListMetrics action`
+- Access fails only from within a VPC or in a restricted account, such as a FedRAMP environment
+
+**Possible causes and solutions:**
+
+| Cause | Solution |
+| --- | --- |
+| A VPC endpoint policy restricts which actions are allowed | Update the policy on the CloudWatch, Logs, EC2, or STS VPC endpoints to allow the required actions, such as `cloudwatch:ListMetrics` and `cloudwatch:GetMetricData`. |
+| A service control policy (SCP) explicitly denies a required action | Review the service control policies applied to the account or organizational unit. An explicit `Deny` in an SCP overrides any `Allow` in an IAM policy, so the action must be permitted at both levels. |
+| Requests route through the wrong endpoint | Confirm that the data source region and any custom endpoint match the VPC endpoints that permit the required actions. |
 
 ### AWS SDK Default authentication not working
 
@@ -299,6 +301,8 @@ These errors occur when querying CloudWatch Metrics.
 1. Use fewer dimensions or wildcard queries per panel.
 1. Request a quota increase for `GetMetricData` requests per second in the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/).
 1. Enable query caching in Grafana to reduce API calls.
+
+This section covers throttling at the query level. For account-wide rate limits and quota increases, refer to [API throttling errors](#api-throttling-errors).
 
 ### Metric math expression errors
 
@@ -479,6 +483,8 @@ These issues relate to AWS service quotas and cost management.
 1. Enable query caching in Grafana (available in Grafana Enterprise and Grafana Cloud).
 1. Request a quota increase in the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/).
 1. Consider consolidating similar queries using metric math.
+
+If throttling happens because a single query returns too many data points, refer to ["Too many data points" or API throttling](#too-many-data-points-or-api-throttling).
 
 ### Unexpectedly high CloudWatch costs
 
