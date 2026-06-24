@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
-import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { useDispatch } from 'app/types/store';
@@ -34,11 +34,11 @@ export interface SaveProvisionedResourceDrawerProps {
   resourceName: string;
   /** Human-readable title used in the commit message and as the drawer subtitle. */
   title: string;
-  /** The file content committed to the repository. */
-  body: Record<string, unknown>;
+  /** The file content committed to the repository. Not required when `action` is `delete`. */
+  body?: Record<string, unknown>;
   /** Header shown at the top of the drawer (e.g. "Save provisioned playlist"). */
   drawerTitle: string;
-  /** Commit action recorded in the commit message. Defaults to `update`. */
+  /** Commit action recorded in the commit message. Defaults to `update`. `delete` removes the file. */
   action?: CommitAction;
   /**
    * Whether this commits a brand-new file to the repository (create) rather than replacing an
@@ -83,9 +83,12 @@ function FormContent({
 }: FormProps) {
   const dispatch = useDispatch();
   const [error, setError] = useState<string | undefined>(undefined);
+  const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
-  const [saveFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : initialValues.path);
+  const [saveFile, saveRequest] = useCreateOrUpdateRepositoryFile(isNew ? undefined : initialValues.path);
+  const [deleteFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
+  const request = isDelete ? deleteRequest : saveRequest;
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
   const { handleSubmit, watch, formState } = methods;
@@ -153,7 +156,9 @@ function FormContent({
     });
 
     try {
-      const data = await saveFile({ name: repoName, path, ref: branchRef, message, body }).unwrap();
+      const data = isDelete
+        ? await deleteFile({ name: repoName, path, ref: branchRef, message }).unwrap()
+        : await saveFile({ name: repoName, path, ref: branchRef, message, body: body ?? {} }).unwrap();
       handleSuccess(data, { workflow, selectedBranch: ref });
     } catch (err) {
       showError(err);
@@ -179,10 +184,14 @@ function FormContent({
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
               {t('provisioning.save-resource.button-cancel', 'Cancel')}
             </Button>
-            <Button type="submit" disabled={request.isLoading}>
-              {request.isLoading
-                ? t('provisioning.save-resource.button-saving', 'Saving...')
-                : t('provisioning.save-resource.button-save', 'Save')}
+            <Button type="submit" variant={isDelete ? 'destructive' : 'primary'} disabled={request.isLoading}>
+              {isDelete
+                ? request.isLoading
+                  ? t('provisioning.save-resource.button-deleting', 'Deleting...')
+                  : t('provisioning.save-resource.button-delete', 'Delete')
+                : request.isLoading
+                  ? t('provisioning.save-resource.button-saving', 'Saving...')
+                  : t('provisioning.save-resource.button-save', 'Save')}
             </Button>
           </Stack>
         </Stack>

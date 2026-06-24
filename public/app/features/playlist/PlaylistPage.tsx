@@ -4,6 +4,8 @@ import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
+import { DeleteProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/DeleteProvisionedPlaylistDrawer';
+import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
 
@@ -81,18 +83,22 @@ export const PlaylistPage = () => {
                 </Trans>
               </EmptyState>
             )}
-            {playlistToDelete && (
-              <ConfirmModal
-                title={playlistToDelete.spec?.title ?? ''}
-                confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
-                body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
-                  name: playlistToDelete.spec?.title,
-                })}
-                onConfirm={onDeletePlaylist}
-                isOpen={Boolean(playlistToDelete)}
-                onDismiss={onDismissDelete}
-              />
-            )}
+            {playlistToDelete &&
+              (isManagedByRepository(playlistToDelete) ? (
+                // Repository-managed playlists are removed by committing the deletion to git.
+                <DeleteProvisionedPlaylistDrawer playlist={playlistToDelete} onDismiss={onDismissDelete} />
+              ) : (
+                <ConfirmModal
+                  title={playlistToDelete.spec?.title ?? ''}
+                  confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
+                  body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
+                    name: playlistToDelete.spec?.title,
+                  })}
+                  onConfirm={onDeletePlaylist}
+                  isOpen={Boolean(playlistToDelete)}
+                  onDismiss={onDismissDelete}
+                />
+              ))}
             {startPlaylist && <StartModal playlist={startPlaylist} onDismiss={() => setStartPlaylist(undefined)} />}
           </>
         )}

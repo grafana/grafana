@@ -12543,6 +12543,9 @@
       "body": "Are you sure you want to delete {{name}} playlist?",
       "confirm-text": "Delete"
     },
+    "delete-provisioned": {
+      "drawer-title": "Delete provisioned playlist"
+    },
     "empty": {
       "button": "Create playlist",
       "pro-tip": "You can use playlists to cycle dashboards on TVs without user control. <2>Learn more</2>",
@@ -13647,6 +13650,8 @@
     },
     "save-resource": {
       "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
       "button-save": "Save",
       "button-saving": "Saving...",
       "error-saving": "Failed to save changes",
