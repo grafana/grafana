@@ -15,7 +15,11 @@ import (
 )
 
 func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return apppluginV0.GetOpenAPIDefinitions
+	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		defs := apppluginV0.GetOpenAPIDefinitions(ref)
+		b.mergeStoredObjectOpenAPIDefinitions(defs)
+		return defs
+	}
 }
 
 func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {

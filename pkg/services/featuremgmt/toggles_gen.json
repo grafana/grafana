@@ -3988,6 +3988,21 @@
     },
     {
       "metadata": {
+        "name": "plugins.pluginSchemaManifest",
+        "resourceVersion": "1782135353147",
+        "creationTimestamp": "2026-06-22T13:35:53Z",
+        "deletionTimestamp": "2026-06-23T13:49:46Z"
+      },
+      "spec": {
+        "description": "Enables generating typed apps from the plugin schema artifact (StoredObjects), routing admission via the plugin SDK gRPC AdmissionHandler",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.useMTPluginSettings",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

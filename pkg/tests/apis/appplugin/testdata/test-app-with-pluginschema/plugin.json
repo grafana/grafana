@@ -1,0 +1,21 @@
+{
+  "type": "app",
+  "name": "Test App with Plugin Schema",
+  "id": "test-app-with-pluginschema",
+  "info": {
+    "description": "App plugin that declares a Watchlist stored object via the plugin schema artifact",
+    "author": {
+      "name": "Test Inc.",
+      "url": "http://test.com"
+    },
+    "version": "0.0.1",
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    }
+  },
+  "dependencies": {
+    "grafanaVersion": "12.x.x",
+    "plugins": []
+  }
+}

@@ -34,13 +34,17 @@ import (
 var (
 	_ builder.APIGroupBuilder         = (*AppPluginAPIBuilder)(nil)
 	_ builder.APIGroupVersionProvider = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupValidation      = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupMutation        = (*AppPluginAPIBuilder)(nil)
 )
 
 // PluginClient is a subset of the plugins.Client interface with only the
-// functions supported by the app plugins
+// functions supported by the app plugins. AdmissionHandler is included so
+// stored-object admission can route to the plugin's existing gRPC service.
 type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.AdmissionHandler
 }
 
 // PluginContext requires adding system settings (feature flags, etc) to the datasource config
@@ -184,6 +188,10 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err := apppluginV0.AddKnownTypes(scheme, b.groupVersion); err != nil {
 		return err
 	}
+	// Register any stored objects the plugin declares in its schema artifact.
+	if err := b.installStoredObjectSchemas(scheme); err != nil {
+		return err
+	}
 	return scheme.SetVersionPriority(b.groupVersion)
 }
 
@@ -229,6 +237,13 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	}
 	if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
 		storage[settingsRI.StoragePath("proxy")] = newProxy(b)
+	}
+
+	// Append any stored-object stores declared in the plugin's schema artifact
+	// into the same storage map so they share the (group, version) discovery
+	// surface with the settings resource.
+	if err := b.installStoredObjectStorage(storage, opts); err != nil {
+		return err
 	}
 
 	b.getter = storage[settingsRI.StoragePath()].(rest.Getter)

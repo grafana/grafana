@@ -566,9 +566,21 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
+	elemType := v.Type().Elem()
 	for _, r := range results {
 		if r.shouldAppend {
-			v.Set(reflect.Append(v, reflect.ValueOf(r.obj).Elem()))
+			rv := reflect.ValueOf(r.obj)
+			// Most list types have a concrete element type (e.g. []Playlist), so the
+			// pointer returned by newFunc() is dereferenced to a value before appending.
+			// Untyped lists (used by manifest-style apps) have an interface element type
+			// (e.g. []resource.Object); those objects implement the interface via pointer
+			// receivers, so the pointer must be appended directly — dereferencing would
+			// yield a value that does not satisfy the interface and panic in
+			// reflect.Append.
+			if elemType.Kind() != reflect.Interface {
+				rv = rv.Elem()
+			}
+			v.Set(reflect.Append(v, rv))
 		}
 	}
 

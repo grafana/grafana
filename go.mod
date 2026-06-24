@@ -725,6 +725,11 @@ require (
 )
 
 replace (
+	// Local development POC: pick up the StoredObjects extension to
+	// experimental/pluginschema. Will be removed once the SDK change is
+	// released.
+	github.com/grafana/grafana-plugin-sdk-go => /Users/wbrowne/dev/grafana-plugin-sdk-go
+
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 	github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
