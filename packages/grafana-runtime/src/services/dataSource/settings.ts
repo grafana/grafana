@@ -185,9 +185,11 @@ function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceLis
   };
 }
 
-// getDataSourceInstanceList appends the built-in -- Grafana -- data source for type queries,
-// so callers that want only true instances of a type must re-check the type. Mirrors the
-// type predicate used inside applyFilters (exact type or an aliasID match).
+// getDataSourceInstanceList appends the built-in -- Grafana -- data source to most results
+// (suppressed only when pluginId or alerting filters are set, or when tracing is set).
+// Callers that want only true instances of a given type must re-check the type to avoid a
+// false positive from that appended built-in. Mirrors the type predicate used inside
+// applyFilters (exact type or an aliasID match).
 function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
   return item.type === type || (item.meta.aliasIDs?.includes(type) ?? false);
 }
