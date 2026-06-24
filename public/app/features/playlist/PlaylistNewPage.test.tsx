@@ -117,10 +117,12 @@ describe('PlaylistNewPage', () => {
       expect(await screen.findByText('Repository')).toBeInTheDocument();
     });
 
-    it('is shown even when no repositories are configured', async () => {
-      getTestContext({ isAvailable: true, repositories: [] });
+    it('is not shown when no repositories are configured', async () => {
+      // The hook reports isAvailable=false when there are no repositories, so the selector is hidden.
+      getTestContext({ isAvailable: false, repositories: [] });
 
-      expect(await screen.findByText('Repository')).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /new playlist/i })).toBeInTheDocument();
+      expect(screen.queryByText('Repository')).not.toBeInTheDocument();
     });
 
     it('opens the provisioning save drawer instead of creating directly once a repository is selected', async () => {
@@ -132,6 +134,7 @@ describe('PlaylistNewPage', () => {
       // queryable in jsdom, but downshift still tracks the highlighted index.
       const combobox = await screen.findByRole('combobox', { name: /repository/i });
       await userEvent.click(combobox);
+      // The options list is virtualized (rows aren't reliably queryable in jsdom), so select via the keyboard.
       await userEvent.keyboard('{ArrowDown}{Enter}');
 
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));

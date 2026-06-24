@@ -7,12 +7,12 @@ import { isResourceKindAvailable, type ResourceKindInfo } from '../utils/resourc
 
 export interface ResourceRepositorySelection {
   /**
-   * Whether a resource of this kind can be saved to a repository: provisioning is enabled and the
-   * kind is declared (and not disabled) in the settings endpoint's `availableResources`. This does
-   * not require a repository to be configured — `repositories` may be empty.
+   * Whether a resource of this kind can be saved to a repository: provisioning is enabled, the kind
+   * is declared (and not disabled) in the settings endpoint's `availableResources`, and at least one
+   * repository is configured.
    */
   isAvailable: boolean;
-  /** Configured repositories the resource can be committed to (may be empty). */
+  /** Configured repositories the resource can be committed to. */
   repositories: RepositoryView[];
 }
 
@@ -32,7 +32,7 @@ export function useResourceRepositorySelection(info: ResourceKindInfo): Resource
   const kindEnabled = isResourceKindAvailable(info, data?.availableResources ?? []);
 
   return {
-    isAvailable: provisioningEnabled && kindEnabled,
+    isAvailable: provisioningEnabled && kindEnabled && repositories.length > 0,
     repositories,
   };
 }

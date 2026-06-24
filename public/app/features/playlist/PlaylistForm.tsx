@@ -3,7 +3,7 @@ import { useId, useMemo, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
+import { Box, Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
@@ -59,7 +59,7 @@ export const PlaylistForm = ({
     ? isManagedByRepository(playlist)
       ? (getManagerIdentity(playlist) ?? '')
       : ''
-    : (selectedRepository ?? '');
+    : selectedRepository; // undefined leaves nothing selected (placeholder)
 
   const doSubmit = (specUpdates: Playlist['spec']) => {
     setSaving(true);
@@ -82,15 +82,6 @@ export const PlaylistForm = ({
         const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
         return (
           <>
-            {showRepositorySelect && (
-              <RepositorySelect
-                repositories={repositories}
-                value={repositoryFieldValue}
-                onChange={disableRepositorySelect ? () => {} : (onRepositoryChange ?? (() => {}))}
-                includeNoneOption
-                readOnly={disableRepositorySelect}
-              />
-            )}
             <Field
               label={t('playlist-edit.form.name-label', 'Name')}
               invalid={!!errors.title}
@@ -121,6 +112,19 @@ export const PlaylistForm = ({
                 id={playlistIntervalId}
               />
             </Field>
+
+            {showRepositorySelect && (
+              // RepositorySelect uses noMargin (shared component); add bottom spacing to match the
+              // surrounding fields and keep it from butting against the "Add dashboards" section.
+              <Box marginBottom={2}>
+                <RepositorySelect
+                  repositories={repositories}
+                  value={repositoryFieldValue}
+                  onChange={disableRepositorySelect ? () => {} : (onRepositoryChange ?? (() => {}))}
+                  readOnly={disableRepositorySelect}
+                />
+              </Box>
+            )}
 
             <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
 

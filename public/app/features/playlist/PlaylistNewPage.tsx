@@ -17,8 +17,8 @@ export const PlaylistNewPage = () => {
   const [playlist] = useState<Playlist>(getDefaultPlaylist());
   const [createPlaylist] = useCreatePlaylistMutation();
   const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
-  // Empty string = save to Grafana; a repository name routes the save through the provisioning drawer.
-  const [selectedRepository, setSelectedRepository] = useState('');
+  // No selection = save to Grafana; a repository name routes the save through the provisioning drawer.
+  const [selectedRepository, setSelectedRepository] = useState<string | undefined>(undefined);
   // Holds the playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 

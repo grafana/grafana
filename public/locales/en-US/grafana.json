@@ -13570,9 +13570,10 @@
       "webhook-url": "View Webhook"
     },
     "repository-select": {
-      "description": "Save this resource to a repository instead of Grafana. The repository cannot be changed after the resource is created.",
+      "description": "Pick a repository to store this resource in version control, or leave it empty to keep it in Grafana.",
+      "disabled-reason": "The storage location can't be changed after the resource is created.",
       "label": "Repository",
-      "none-option": "Grafana (no repository)"
+      "placeholder": "Select a repository"
     },
     "repository-status": {
       "error": "Failed to load repository"
