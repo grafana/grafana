@@ -54,11 +54,8 @@ export interface DeleteCompletedProperties extends EventProperty {
 export interface LoadedProperties extends EventProperty {
   /** UID of the template the user is starting from. */
   templateUid: string;
-}
-
-export interface EditOpenedProperties extends EventProperty {
-  /** UID of the template the user is editing. */
-  templateUid: string;
+  /** The mode the user is starting from. */
+  mode: 'edit' | 'use';
 }
 
 export interface DashboardSavedFromTemplateProperties extends EventProperty {

@@ -1170,10 +1170,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     const resourceVersion = response.metadata?.resourceVersion;
 
+    CustomDashboardTemplateInteractions.loaded({
+      templateUid: dashboardTemplateUid,
+      mode: editMode ? 'edit' : 'use',
+    });
+
     if (editMode) {
-      CustomDashboardTemplateInteractions.editOpened({
-        templateUid: dashboardTemplateUid,
-      });
       // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
       // irrelevant actions.
       // canEdit and canSave will change in the future with specific RBAC permissions.
@@ -1185,10 +1187,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         canSave: true,
       });
     }
-
-    CustomDashboardTemplateInteractions.loaded({
-      templateUid: dashboardTemplateUid,
-    });
 
     // Use-template flow: The embedded dashboard spec is hydrated
     // into a fresh scene so the user can "Save as" a brand-new dashboard. Do NOT mark the

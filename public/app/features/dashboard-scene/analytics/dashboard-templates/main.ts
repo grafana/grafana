@@ -3,7 +3,6 @@ import { defineFeatureEvents } from '@grafana/runtime/unstable';
 import {
   type BannerDismissedProperties,
   type DashboardSavedFromTemplateProperties,
-  type EditOpenedProperties,
   type CreatedProperties,
   type SaveAsOpenedProperties,
   type UpdatedProperties,
@@ -34,10 +33,8 @@ export const CustomDashboardTemplateInteractions = {
   updatedMetadata: createCustomTemplateEvent<UpdatedMetadataProperties>('updated_metadata'),
   /** Fired when the user successfully deletes a template. */
   deleted: createCustomTemplateEvent<DeleteCompletedProperties>('deleted'),
-  /** Fired when a user opens the "use template" flow that hydrates a new (unsaved) dashboard from a template. */
+  /** Fired when a user opens the "use template" or "edit template" flow that hydrates a dashboard from a template. */
   loaded: createCustomTemplateEvent<LoadedProperties>('loaded'),
-  /** Fired when a user opens an existing template in edit mode. */
-  editOpened: createCustomTemplateEvent<EditOpenedProperties>('edit_opened'),
   /** Fired on the first save of a dashboard that was created from a custom template. */
   dashboardSavedFromTemplate: createCustomTemplateEvent<DashboardSavedFromTemplateProperties>(
     'dashboard_saved_from_template'
