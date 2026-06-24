@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Badge, Button, Card, EmptyState, LinkButton, Stack, Text, Tooltip } from '@grafana/ui';
+import { Badge, Button, Card, EmptyState, LinkButton, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
@@ -85,7 +85,12 @@ function QualityTab() {
           <EmptyState
             variant="completed"
             message={t('alerting.quality.empty', 'Every alert rule has a summary, description, and runbook URL.')}
-          />
+          >
+            <Trans i18nKey="alerting.quality.empty-description">
+              To enforce these fields across your organization, enable the requirements in{' '}
+              <TextLink href="/alerting/admin/annotations">Alert quality settings</TextLink>.
+            </Trans>
+          </EmptyState>
         ) : (
           <Stack direction="column" gap={1}>
             {flaggedRules.map((rule) => (
