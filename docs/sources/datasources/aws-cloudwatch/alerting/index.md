@@ -112,7 +112,7 @@ If you receive an error such as `input data must be a wide series but got ...`, 
 
 ## CloudWatch Logs timeouts during alert evaluation
 
-For CloudWatch Logs queries, Grafana polls AWS until the query completes or a timeout is reached. During alert evaluation, the timeout defined in the [Grafana configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) takes precedence over the **Query timeout result** setting on the data source. Set the configuration timeout high enough for your log queries to finish.
+For CloudWatch Logs queries, Grafana polls AWS until the query completes or a timeout is reached. During alert evaluation, the timeout defined in the [Grafana configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) takes precedence over the **Query Result Timeout** setting on the data source. Set the configuration timeout high enough for your log queries to finish.
 
 ## Best practices
 

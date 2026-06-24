@@ -343,7 +343,7 @@ These errors occur when querying CloudWatch Logs.
 
 **Solutions:**
 
-1. Increase the **Query timeout result** setting in the data source configuration (default is 30 minutes).
+1. Increase the **Query Result Timeout** setting in the data source configuration (default is 30 minutes).
 1. Narrow the time range to reduce the amount of data scanned.
 1. Add filters to your query to limit results.
 1. Break complex queries into smaller, more focused queries.
