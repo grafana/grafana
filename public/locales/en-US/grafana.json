@@ -6488,6 +6488,9 @@
       },
       "no-description": "No description available"
     },
+    "grafana-dashboard-template-modal": {
+      "no-results-found": "No template dashboards found"
+    },
     "merged-description": "Browse and select from data-source provided or community dashboards",
     "merged-empty-no-dashboards": "No dashboards are available for this datasource.",
     "merged-empty-search": "Try a different search term or browse more dashboards on Grafana.com.",

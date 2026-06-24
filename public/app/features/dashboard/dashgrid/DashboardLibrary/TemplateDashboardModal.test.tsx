@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { locationService, setBackendSrv } from '@grafana/runtime';
+import { config, locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -64,6 +64,7 @@ jest.mock('@grafana/assistant', () => ({
 describe('TemplateDashboardModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    config.featureToggles.dashboardTemplates = true;
     mockGetList.mockReturnValue([
       { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
     ]);
@@ -112,7 +113,7 @@ describe('TemplateDashboardModal', () => {
       expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
     });
 
-    it('should not show TemplateDashboard modal when query param is present but there are no template dashboards', async () => {
+    it('renders an empty state in the Grafana templates tab when there are no template dashboards', async () => {
       server.use(
         http.get('/api/gnet/dashboards', () => {
           return HttpResponse.json({
@@ -125,9 +126,11 @@ describe('TemplateDashboardModal', () => {
       render(<TemplateDashboardModal />, {
         historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
       });
-      await waitFor(() => {
-        expect(screen.queryByRole('dialog', { name: 'Start a dashboard from a template' })).not.toBeInTheDocument();
-      });
+
+      // The modal still renders, but the Grafana tab shows an empty state instead of cards.
+      expect(await screen.findByRole('dialog', { name: 'Start a dashboard from a template' })).toBeInTheDocument();
+      expect(await screen.findByText('No template dashboards found')).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
     });
 
     it('should not show TemplateDashboard modal when query param is not present', async () => {
@@ -417,24 +420,6 @@ describe('TemplateDashboardModal', () => {
           expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
         });
         expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
-      });
-
-      it('renders only the Custom tab content (no tab bar) when no grafana templates are available', async () => {
-        server.use(
-          http.get('/api/gnet/dashboards', () => {
-            return HttpResponse.json({ page: 1, pages: 1, items: [] });
-          })
-        );
-
-        render(<TemplateDashboardModal />, {
-          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
-        });
-
-        // Modal still renders because the Custom tab is available even without grafana templates.
-        expect(await screen.findByTestId('custom-templates-tab')).toBeInTheDocument();
-        // Tab bar is only shown when both sources are available.
-        expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('tab', { name: 'Grafana-provisioned' })).not.toBeInTheDocument();
       });
     });
 

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
@@ -14,6 +14,7 @@ import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { useSelector } from 'app/types/store';
 
@@ -147,43 +148,41 @@ export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
 
-    if (config.featureToggles.dashboardTemplates) {
-      const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-      if (testDataSources.length > 0) {
-        const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
-        const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
+    if (isTemplateDashboardsAvailable) {
+      const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
+      const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
 
-        navBarActionsWithActions.splice(1, 0, {
-          id: 'browse-template-dashboard',
-          name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
-          section: t('command-palette.section.actions', 'Actions'),
-          priority: ACTIONS_PRIORITY,
-          perform: () => {
-            isAnalyticsFrameworkEnabled
-              ? NewDashboardLibraryInteractions.entryPointClicked({
-                  entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
-                  contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
-                  contentKinds: isCustomDashboardTemplatesEnabled
-                    ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
-                    : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
-                })
-              : DashboardLibraryInteractions.entryPointClicked({
-                  entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
-                  contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
-                  contentKinds: isCustomDashboardTemplatesEnabled
-                    ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
-                    : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
-                });
-            locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
-          },
-        });
+      navBarActionsWithActions.splice(1, 0, {
+        id: 'browse-template-dashboard',
+        name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
+        section: t('command-palette.section.actions', 'Actions'),
+        priority: ACTIONS_PRIORITY,
+        perform: () => {
+          isAnalyticsFrameworkEnabled
+            ? NewDashboardLibraryInteractions.entryPointClicked({
+                entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+                contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                contentKinds: isCustomDashboardTemplatesEnabled
+                  ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                  : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+              })
+            : DashboardLibraryInteractions.entryPointClicked({
+                entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
+                contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                contentKinds: isCustomDashboardTemplatesEnabled
+                  ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                  : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
+              });
+          locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
+        },
+      });
 
-        navBarActions = [...navBarActionsWithoutActions, ...navBarActionsWithActions];
-      }
+      navBarActions = [...navBarActionsWithoutActions, ...navBarActionsWithActions];
     }
 
     if (shouldRenderInviteUserButton()) {
@@ -198,5 +197,5 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
     return [...getGlobalActions(), ...navBarActions];
-  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, navBarTree]);
+  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, isTemplateDashboardsAvailable, navBarTree]);
 }

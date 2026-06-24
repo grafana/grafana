@@ -4,20 +4,31 @@ import { render } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { configureStore } from 'app/store/configureStore';
 
 import { QuickAdd } from './QuickAdd';
+
+jest.mock(
+  'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension',
+  () => ({
+    getDashboardTemplatesTab: jest.fn(() => null),
+  })
+);
+
+const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
+
+let mockTestDataSources: Array<{ name: string; uid: string; type: string }> = [
+  { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
+];
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
     getDataSourceSrv: () => ({
-      getList: jest
-        .fn()
-        .mockReturnValue([
-          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-        ]),
+      getList: jest.fn(() => mockTestDataSources),
     }),
   };
 });
@@ -121,6 +132,12 @@ describe('QuickAdd', () => {
   describe('Use template button', () => {
     beforeEach(() => {
       config.featureToggles.dashboardTemplates = true;
+      // Reset to defaults: a test datasource is available, custom templates are off.
+      mockTestDataSources = [
+        { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
+      ];
+      mockGetDashboardTemplatesTab.mockReturnValue(null);
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
     });
 
     it('shows a `Use template` button when the feature flag is enabled', async () => {
@@ -129,11 +146,22 @@ describe('QuickAdd', () => {
       expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
-    it('does not show a `Use template` button when the feature flag is disabled', async () => {
+    it('does not show a `Use template` button when neither templates feature is enabled', async () => {
       config.featureToggles.dashboardTemplates = false;
       setup();
       await userEvent.click(screen.getByRole('button', { name: 'New' }));
       expect(screen.queryByRole('menuitem', { name: 'Use template' })).not.toBeInTheDocument();
+    });
+
+    it('shows a `Use template` button when only custom templates are enabled, even without a test datasource', async () => {
+      config.featureToggles.dashboardTemplates = false;
+      mockTestDataSources = [];
+      mockGetDashboardTemplatesTab.mockReturnValue(() => null);
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
+
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.getByRole('menuitem', { name: 'Use template' })).toBeInTheDocument();
     });
 
     it('redirects the user to the dashboard from template page when the button is clicked', async () => {

@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, Drawer, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
 import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
@@ -13,6 +13,7 @@ import { DASHBOARD_GROUP_COLOR_NAME, ITEM_ICONS } from 'app/core/components/AppC
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
@@ -53,6 +54,7 @@ export default function CreateNewButton({
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
 
   const theme = useTheme2();
 
@@ -64,12 +66,6 @@ export default function CreateNewButton({
     }
     setIsOpen(!isOpen);
   };
-
-  let renderPreBuiltDashboardAction = false;
-  if (config.featureToggles.dashboardTemplates) {
-    const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
-    renderPreBuiltDashboardAction = testDataSources.length > 0;
-  }
 
   const onCreateFolder = async (folderName: string, teamOwnerRefs?: OwnerReference[]) => {
     try {

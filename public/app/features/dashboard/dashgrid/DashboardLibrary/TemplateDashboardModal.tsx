@@ -1,17 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Box, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 
 import { GrafanaTemplatesTab } from './GrafanaTemplatesTab';
 import { getDashboardTemplatesTab } from './enterprise-components/DashboardTemplatesTabExtension';
-import { type GnetDashboardsResponse } from './types';
+import { useTemplateDashboardsAvailability } from './hooks/useTemplateDashboardsAvailability';
 
 type TemplateTab = 'grafana' | 'custom';
 
@@ -20,7 +17,7 @@ export const TemplateDashboardModal = () => {
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
   const DashboardTemplatesTab = getDashboardTemplatesTab();
-  const showCustomTemplates = useFlagGrafanaCustomDashboardTemplates() && DashboardTemplatesTab !== null;
+  const { testDataSource, showGrafanaTemplates, showCustomTemplates } = useTemplateDashboardsAvailability();
   const [activeTab, setActiveTab] = useState<TemplateTab>(showCustomTemplates ? 'custom' : 'grafana');
 
   // Guard the per-tab `loaded` events to fire once per open. Owned here (not in the tab
@@ -28,36 +25,12 @@ export const TemplateDashboardModal = () => {
   const grafanaLoadedFiredRef = useRef(false);
   const customLoadedFiredRef = useRef(false);
 
-  const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
-
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
     searchParams.delete('templateDashboards');
     setSearchParams(searchParams);
   };
-
-  const { value: dashboards = [], loading } = useAsync(async () => {
-    if (!isOpen) {
-      return [];
-    }
-
-    try {
-      const response = await getBackendSrv().get<GnetDashboardsResponse>(
-        `/api/gnet/dashboards?orgSlug=raintank&categorySlug=templates&includeScreenshots=true`,
-        undefined,
-        undefined,
-        {
-          showErrorAlert: false,
-        }
-      );
-
-      return response.items;
-    } catch (error) {
-      console.error('Error loading template dashboards ', error);
-      return [];
-    }
-  }, [isOpen]);
 
   // Reset the once-per-open guards whenever the modal closes, so the `loaded` events can
   // fire again the next time the modal is opened.
@@ -69,8 +42,6 @@ export const TemplateDashboardModal = () => {
     }
   }, [isOpen, showCustomTemplates]);
 
-  const showGrafanaTemplates = testDataSource && (dashboards.length > 0 || loading);
-
   if (!showGrafanaTemplates && !showCustomTemplates) {
     return null;
   }
@@ -81,8 +52,6 @@ export const TemplateDashboardModal = () => {
     }
     return (
       <GrafanaTemplatesTab
-        dashboards={dashboards}
-        loading={loading}
         entryPoint={entryPoint}
         testDataSource={testDataSource}
         onClose={onClose}

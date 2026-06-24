@@ -1,13 +1,15 @@
 import { type MutableRefObject, useEffect } from 'react';
+import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
   useFlagAnalyticsFramework,
   useFlagAssistantFrontendToolsDashboardTemplates,
   useFlagDashboardTemplatesAssistantButton,
 } from '@grafana/runtime/internal';
-import { Grid } from '@grafana/ui';
+import { EmptyState, Grid } from '@grafana/ui';
 
 import { DashboardCard } from './DashboardCard';
 import { NewTemplateDashboardInteractions } from './analytics/main';
@@ -19,12 +21,10 @@ import {
   TemplateDashboardSourceEntryPoint,
 } from './constants';
 import { TemplateDashboardInteractions } from './interactions';
-import { type GnetDashboard, type Link } from './types';
+import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 
 interface GrafanaTemplatesTabProps {
-  dashboards: GnetDashboard[];
-  loading: boolean;
   /** Raw `source` search param value, mapped to a known entry point when fired. */
   entryPoint: string;
   testDataSource: DataSourceInstanceSettings | undefined;
@@ -38,8 +38,6 @@ interface GrafanaTemplatesTabProps {
 }
 
 export const GrafanaTemplatesTab = ({
-  dashboards,
-  loading,
   entryPoint,
   testDataSource,
   onClose,
@@ -49,7 +47,23 @@ export const GrafanaTemplatesTab = ({
   const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
   const isAnalyticsFrameworkEnabled = useFlagAnalyticsFramework();
 
-  const showGrafanaTemplates = testDataSource && (dashboards.length > 0 || loading);
+  const { value: dashboards = [], loading } = useAsync(async () => {
+    try {
+      const response = await getBackendSrv().get<GnetDashboardsResponse>(
+        `/api/gnet/dashboards?orgSlug=raintank&categorySlug=templates&includeScreenshots=true`,
+        undefined,
+        undefined,
+        {
+          showErrorAlert: false,
+        }
+      );
+
+      return response.items;
+    } catch (error) {
+      console.error('Error loading template dashboards ', error);
+      return [];
+    }
+  }, []);
 
   // Fire `loaded` once per open, after templates resolve. Mounting this component means
   // the Grafana templates tab is the selected view, so this tracks tab selection.
@@ -102,8 +116,21 @@ export const GrafanaTemplatesTab = ({
     locationService.push(templateUrl);
   };
 
-  if (!showGrafanaTemplates) {
+  // Without a test data source there is nothing to power the templates, so render nothing.
+  if (!testDataSource) {
     return null;
+  }
+
+  if (!loading && dashboards.length === 0) {
+    return (
+      <EmptyState
+        variant="not-found"
+        message={t(
+          'dashboard-library.grafana-dashboard-template-modal.no-results-found',
+          'No template dashboards found'
+        )}
+      />
+    );
   }
 
   return (
