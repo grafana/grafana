@@ -1,6 +1,6 @@
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { type SelectableValue } from '@grafana/data';
+import { store, type SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -54,7 +54,32 @@ export const getExpireOptions = () => {
   ];
 };
 
+const SNAPSHOT_SHARE_CONFIGURATION = 'grafana.dashboard.snapshot.shareConfiguration';
+
+type SnapshotShareConfiguration = {
+  selectedExpireOption: number;
+};
+
+// Returns the snapshot share configuration persisted in local storage, if any
+export function getSnapshotShareConfiguration(): SnapshotShareConfiguration | undefined {
+  if (store.exists(SNAPSHOT_SHARE_CONFIGURATION)) {
+    return store.getObject<SnapshotShareConfiguration>(SNAPSHOT_SHARE_CONFIGURATION);
+  }
+  return undefined;
+}
+
+export function updateSnapshotShareConfiguration(config: SnapshotShareConfiguration) {
+  store.setObject(SNAPSHOT_SHARE_CONFIGURATION, config);
+}
+
 const getDefaultExpireOption = () => {
+  const savedConfiguration = getSnapshotShareConfiguration();
+  if (savedConfiguration) {
+    const savedOption = getExpireOptions().find((o) => o.value === savedConfiguration.selectedExpireOption);
+    if (savedOption) {
+      return savedOption;
+    }
+  }
   return getExpireOptions()[2];
 };
 
@@ -114,6 +139,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     this.setState({
       selectedExpireOption: getExpireOptions().find((o) => o.value === option),
     });
+    updateSnapshotShareConfiguration({ selectedExpireOption: option });
   };
 
   private prepareSnapshot() {
@@ -150,12 +176,6 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
   public onSnapshotCreate = async (external = false) => {
     const { selectedExpireOption } = this.state;
     const snapshot = this.prepareSnapshot();
-
-    // TODO
-    // snapshot.snapshot = {
-    //   originalUrl: window.location.href,
-    // };
-
     const cmdData = {
       dashboard: snapshot,
       name: snapshot.title,
