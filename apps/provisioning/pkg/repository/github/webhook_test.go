@@ -94,6 +94,7 @@ func TestGithubRequestProcessor_ProcessRequest_Errors(t *testing.T) {
 	}{
 		{"push missing repository", "push", `{"ref": "refs/heads/main"}`, "missing repository in push event"},
 		{"pull request missing repository", "pull_request", `{"action": "opened", "pull_request": {"number": 1}}`, "missing repository in pull request event"},
+		{"pull request missing pull request info", "pull_request", `{"action": "opened", "repository": {"full_name": "grafana/grafana"}}`, "expected PR in event"},
 	}
 
 	for _, tt := range tests {
@@ -129,17 +130,105 @@ func TestGithubRequestProcessor_ProcessRequest_Verify(t *testing.T) {
 	})
 }
 
-func TestGithubRequestProcessor_ProcessRequest_Replay(t *testing.T) {
-	p := newTestRequestProcessor()
-	payload := []byte(`{"zen": "ok"}`)
+func TestGithubRequestProcessor_ProcessRequest_ReplayProtection(t *testing.T) {
+	pushPayload := []byte(`{"ref": "refs/heads/main", "repository": {"full_name": "grafana/grafana"}}`)
+	// A byte-different but still valid push payload — produces a different
+	// HMAC signature, so it is a distinct (non-replayed) request.
+	otherPayload := []byte(`{"ref": "refs/heads/main", "after": "deadbeef", "repository": {"full_name": "grafana/grafana"}}`)
 
-	first, err := p.ProcessRequest(context.Background(), signedWebhookRequest(t, "ping", payload))
-	require.NoError(t, err)
-	require.Equal(t, repo.WebhookEventPing, first.Type)
+	newProcessor := func(cache *replayCache, secret string) requestProcessor {
+		return requestProcessor{secret: common.RawSecureValue(secret), replay: cache}
+	}
 
-	replay, err := p.ProcessRequest(context.Background(), signedWebhookRequest(t, "ping", payload))
-	require.NoError(t, err)
-	require.Equal(t, repo.WebhookEventReplay, replay.Type)
+	t.Run("first delivery is accepted", func(t *testing.T) {
+		p := newProcessor(newReplayCache(defaultReplayCacheTTL), testWebhookSecret)
+		event, err := p.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-1"))
+		require.NoError(t, err)
+		require.Equal(t, repo.WebhookEventPush, event.Type)
+	})
+
+	t.Run("replayed request is silently dropped", func(t *testing.T) {
+		p := newProcessor(newReplayCache(defaultReplayCacheTTL), testWebhookSecret)
+
+		first, err := p.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-dup"))
+		require.NoError(t, err)
+		require.Equal(t, repo.WebhookEventPush, first.Type)
+
+		dup, err := p.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-dup"))
+		require.NoError(t, err)
+		require.Equal(t, repo.WebhookEventReplay, dup.Type)
+	})
+
+	t.Run("replay with a fresh delivery id is still dropped", func(t *testing.T) {
+		// Regression: the X-GitHub-Delivery header is not covered by the HMAC,
+		// so an attacker can replay a captured (body, signature) under a new
+		// delivery ID. Keying on the signature must still catch it.
+		p := newProcessor(newReplayCache(defaultReplayCacheTTL), testWebhookSecret)
+
+		_, err := p.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-A"))
+		require.NoError(t, err)
+
+		dup, err := p.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-B"))
+		require.NoError(t, err)
+		require.Equal(t, repo.WebhookEventReplay, dup.Type)
+	})
+
+	t.Run("distinct payloads are independent", func(t *testing.T) {
+		p := newProcessor(newReplayCache(defaultReplayCacheTTL), testWebhookSecret)
+
+		_, err := p.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-A"))
+		require.NoError(t, err)
+
+		event, err := p.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", otherPayload, testWebhookSecret, "delivery-B"))
+		require.NoError(t, err)
+		require.Equal(t, repo.WebhookEventPush, event.Type)
+	})
+
+	t.Run("identical body under different secrets does not collide", func(t *testing.T) {
+		// Two repos with distinct webhook secrets produce distinct signatures
+		// for the same body, so one repo's delivery must not shadow another's.
+		cache := newReplayCache(defaultReplayCacheTTL)
+		pA := newProcessor(cache, "secret-a")
+		pB := newProcessor(cache, "secret-b")
+
+		_, err := pA.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, "secret-a", "delivery-A"))
+		require.NoError(t, err)
+
+		event, err := pB.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, "secret-b", "delivery-B"))
+		require.NoError(t, err)
+		require.Equal(t, repo.WebhookEventPush, event.Type)
+	})
+
+	t.Run("processors sharing a cache drop cross-instance replays", func(t *testing.T) {
+		cache := newReplayCache(defaultReplayCacheTTL)
+		first := newProcessor(cache, testWebhookSecret)
+		second := newProcessor(cache, testWebhookSecret)
+
+		_, err := first.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-1"))
+		require.NoError(t, err)
+
+		dup, err := second.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-2"))
+		require.NoError(t, err)
+		require.Equal(t, repo.WebhookEventReplay, dup.Type)
+	})
+
+	t.Run("invalid signature is rejected before the replay check", func(t *testing.T) {
+		p := newProcessor(newReplayCache(defaultReplayCacheTTL), testWebhookSecret)
+
+		req, err := http.NewRequest("POST", "/webhook", bytes.NewReader(pushPayload))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-GitHub-Event", "push")
+		req.Header.Set("X-Hub-Signature-256", "sha256=deadbeef")
+
+		_, err = p.ProcessRequest(context.Background(), req)
+		require.Error(t, err)
+
+		// A failed signature must not poison the replay cache.
+		event, err := p.ProcessRequest(context.Background(), signedWebhookRequestWith(t, "push", pushPayload, testWebhookSecret, "delivery-good"))
+		require.NoError(t, err)
+		require.Equal(t, repo.WebhookEventPush, event.Type)
+	})
 }
 
 func newTestRequestProcessor() requestProcessor {
@@ -147,14 +236,21 @@ func newTestRequestProcessor() requestProcessor {
 }
 
 func signedWebhookRequest(t *testing.T, eventType string, payload []byte) *http.Request {
+	return signedWebhookRequestWith(t, eventType, payload, testWebhookSecret, "")
+}
+
+func signedWebhookRequestWith(t *testing.T, eventType string, payload []byte, secret, deliveryID string) *http.Request {
 	t.Helper()
-	mac := hmac.New(sha256.New, []byte(testWebhookSecret))
+	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write(payload)
 
 	req, err := http.NewRequest("POST", "/webhook", bytes.NewReader(payload))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-GitHub-Event", eventType)
+	if deliveryID != "" {
+		req.Header.Set("X-GitHub-Delivery", deliveryID)
+	}
 	req.Header.Set("X-Hub-Signature-256", "sha256="+hex.EncodeToString(mac.Sum(nil)))
 	return req
 }
