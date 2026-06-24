@@ -724,7 +724,18 @@
     "annotation-header-field": {
       "message": {
         "required": "Required."
-      }
+      },
+      "required-by-policy": "Required by your organization’s alert quality settings."
+    },
+    "annotation-policy": {
+      "autofill-description": "When an alert rule is saved without a description or summary, Grafana generates both using AI — based on the alert name, query, and labels. You can edit them at any time.",
+      "autofill-label": "Auto-fill descriptions and summaries with AI",
+      "description": "Control whether alert rules must include descriptions, summaries, and runbook links — and whether Grafana can generate missing descriptions automatically.",
+      "reject-description": "Alert rules without a summary or description can't be saved. Enable \"Auto-fill with AI\" to generate them automatically.",
+      "reject-label": "Require descriptions and summaries",
+      "reject-runbook-description": "Alert rules without a runbook URL can't be saved.",
+      "reject-runbook-label": "Require runbook URL",
+      "title": "Alert quality"
     },
     "annotations": {
       "dashboard-annotation-field": {
@@ -742,7 +753,8 @@
       },
       "link-dashboard-and-panel": "Link dashboard and panel",
       "placeholder-value-input": "Enter a {{key}}...",
-      "placeholder-value-input-default": "Enter custom annotation content..."
+      "placeholder-value-input-default": "Enter custom annotation content...",
+      "required-by-org-policy": "Required by your organization policy."
     },
     "backtest": {
       "error-title": "Failed to run backtest",
@@ -2159,6 +2171,7 @@
       "alerts": "Alerts",
       "contact-points": "Contact points",
       "notification-policies": "Notification policies",
+      "quality": "Alert quality",
       "recently-deleted": "Recently deleted",
       "templates": "Templates",
       "time-intervals": "Time intervals"
@@ -2265,6 +2278,30 @@
       "enrichment-no-logs": "No log lines",
       "enrichment-type-logs": "logs",
       "enrichments": "Enrichments:"
+    },
+    "notification-message-preview": {
+      "actionability-complete": "This alert has enough context for on-call to act quickly.",
+      "actionability-label": "Actionability",
+      "actionability-score": "Actionability: {{score}}%",
+      "actionability-score-value": "{{score}}%",
+      "approximate-description-short": "Final formatting may differ for {{integration}} based on contact point settings.",
+      "auto-refresh-hint": "Updates when you refresh or change the contact point.",
+      "empty-state": "Select a contact point to see what on-call receives.",
+      "firing-badge": "FIRING",
+      "integration-label": "Integration",
+      "loading-labels": "Loading sample instance labels…",
+      "missing-hints": "Still missing: {{items}}",
+      "no-contact-point-short": "Select a contact point to preview its message template.",
+      "on-call-label": "On-call preview",
+      "phone-label": "Notification preview",
+      "query-hint": "Add a query, condition, and folder to include real instance labels and values in the preview.",
+      "raw-template-label": "Raw template output",
+      "refresh": "Refresh preview",
+      "refresh-aria-label": "Refresh notification preview",
+      "render-error": "Could not render template",
+      "template-error": "Template error",
+      "title": "Notification preview",
+      "via-policy-short": "via policy → {{type}}"
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Contact point",
@@ -2609,6 +2646,31 @@
         "text-provisioned": "Provisioned"
       }
     },
+    "quality": {
+      "description": "These alert rules are missing a summary, description, or runbook URL. Select <strong>Edit</strong> on a rule to add the missing details — or use <strong>Fix with AI</strong> to generate them automatically, so responders know what fired and what to do.",
+      "edit": "Edit",
+      "empty": "Every alert rule has a summary, description, and runbook URL.",
+      "empty-description": "To enforce these fields across your organization, enable the requirements in <2>Alert quality settings</2>.",
+      "filter": {
+        "clear": "Clear filters",
+        "name-label": "Search by name",
+        "name-placeholder": "Filter by name..."
+      },
+      "fix-all": "Fix all with AI",
+      "fix-all-progress": "Fixing {{completed}} of {{total}}...",
+      "fix-all-unavailable": "Grafana Assistant is not available. Enable it to automatically generate descriptions and summaries.",
+      "fix-unavailable": "Grafana Assistant is not available. Enable it to automatically generate a description and summary.",
+      "fix-with-ai": "Fix with AI",
+      "fixing": "Fixing...",
+      "incomplete-summary": "{{incomplete}} of {{total}} alert rules need attention",
+      "missing-label": "Missing:",
+      "needs-attention": "Some alert rules are missing annotations",
+      "no-matches": "No incomplete alert rules match your filters.",
+      "score-out-of": "{{score}} / 10",
+      "score-title": "Alert quality score",
+      "severity-high": "High priority",
+      "severity-medium": "Medium priority"
+    },
     "query-and-expressions-step": {
       "add-query": "Add query",
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
@@ -2625,6 +2687,15 @@
     "query-box": {
       "text-alert-condition": "Alert condition",
       "view-in-explore": "View in Explore"
+    },
+    "query-description": {
+      "disabled-tooltip": "Add a data source query to generate a summary",
+      "generate-summary": "Generate summary from query",
+      "generating": "Generating...",
+      "hint": "Reads your query — no AI required",
+      "polish-summary": "Polish summary with Assistant",
+      "review-oncall": "Review like a tired on-call engineer",
+      "stop": "Stop"
     },
     "query-options": {
       "button-options": "Options",
@@ -2966,6 +3037,9 @@
       "more-errors_other": "{{count}} more errors",
       "unknown-error": "Unknown error."
     },
+    "rule-list-item": {
+      "missing-required-annotations": "Missing annotations required by your organization policy."
+    },
     "rule-list-v1": {
       "collapse-all": "Collapse all",
       "expand-all": "Expand all"
@@ -3206,7 +3280,8 @@
         "title": "Auto-sync configuration"
       },
       "tabs": {
-        "alert-managers": "Alertmanagers"
+        "alert-managers": "Alertmanagers",
+        "rule-annotations": "Alert quality"
       }
     },
     "settings-content": {

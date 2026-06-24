@@ -1,3 +1,5 @@
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+
 import { alertingApi } from 'app/features/alerting/unified/api/alertingApi';
 import { type Template } from 'app/features/alerting/unified/components/receivers/form/fields/TemplateSelector';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
@@ -20,16 +22,7 @@ export interface TemplatePreviewResponse {
   errors?: TemplatePreviewErrors[];
 }
 
-export interface KeyValueField {
-  key: string;
-  value: string;
-}
-export interface AlertField {
-  annotations: KeyValueField[];
-  labels: KeyValueField[];
-}
-
-export type TemplatesTestPayload = { template: string; alerts: AlertField[]; name: string };
+export type TemplatesTestPayload = { template: string; alerts: TestTemplateAlert[]; name: string };
 
 export const templatesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({

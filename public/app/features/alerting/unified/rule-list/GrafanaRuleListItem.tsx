@@ -1,6 +1,8 @@
 import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { type GrafanaPromRuleDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { alertmanagerApi } from '../api/alertmanagerApi';
+import { Annotation } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, GrafanaRulesSource } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 import { totalFromStats } from '../utils/ruleStats';
@@ -32,6 +34,10 @@ export function GrafanaRuleListItem({
   showLocation = true,
   evalIntervalSeconds,
 }: GrafanaRuleListItemProps) {
+  const { currentData: alertingConfig } = alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
+  const requireDescriptions = alertingConfig?.reject_alerts_without_descriptions ?? false;
+  const requireRunbookURL = alertingConfig?.reject_alerts_without_runbook_url ?? false;
+
   const { name, uid, labels, provenance } = rule;
 
   const groupUrl = groups.detailsPageLink(
@@ -63,14 +69,21 @@ export function GrafanaRuleListItem({
     const promAlertingRule = rule && rule.type === PromRuleType.Alerting ? rule : undefined;
     const instancesCount = totalFromStats(promAlertingRule?.totals ?? {});
 
+    const annotations = rule.annotations ?? {};
+    const isMissingRequiredAnnotations =
+      (requireDescriptions &&
+        (!annotations[Annotation.summary]?.trim() || !annotations[Annotation.description]?.trim())) ||
+      (requireRunbookURL && !annotations[Annotation.runbookURL]?.trim());
+
     return (
       <AlertRuleListItem
         {...commonProps}
-        summary={rule.annotations?.summary}
+        summary={annotations[Annotation.summary]}
         state={promAlertingRule?.state}
         instancesCount={instancesCount}
         operation={operation}
         showLocation={showLocation}
+        isMissingRequiredAnnotations={isMissingRequiredAnnotations}
       />
     );
   }

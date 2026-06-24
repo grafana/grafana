@@ -15,7 +15,10 @@ type OrgID int64
 
 type AlertingFile struct {
 	configVersion
-	Filename            string
+	Filename string
+	// DisableProvenance provisions the rules in this file with no provenance, leaving
+	// them editable in the UI (they will still be reset to file state on the next provision).
+	DisableProvenance   bool
 	Groups              []models.AlertRuleGroupWithFolderFullpath
 	DeleteRules         []RuleDelete
 	ContactPoints       []ContactPoint
@@ -31,6 +34,7 @@ type AlertingFile struct {
 type AlertingFileV1 struct {
 	configVersion
 	Filename            string
+	DisableProvenance   values.BoolValue        `json:"disableProvenance" yaml:"disableProvenance"`
 	Groups              []AlertRuleGroupV1      `json:"groups" yaml:"groups"`
 	DeleteRules         []RuleDeleteV1          `json:"deleteRules" yaml:"deleteRules"`
 	ContactPoints       []ContactPointV1        `json:"contactPoints" yaml:"contactPoints"`
@@ -46,6 +50,7 @@ type AlertingFileV1 struct {
 func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
 	alertingFile := AlertingFile{}
 	alertingFile.Filename = fileV1.Filename
+	alertingFile.DisableProvenance = fileV1.DisableProvenance.Value()
 	if err := fileV1.mapRules(&alertingFile); err != nil {
 		return AlertingFile{}, fmt.Errorf("failure parsing rules: %w", err)
 	}

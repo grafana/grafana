@@ -69,11 +69,15 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           key: string;
           value: string;
         }>;
+        annotations?: Array<{
+          key: string;
+          value: string;
+        }>;
         alertName?: string;
         alertUid?: string;
       }
     >({
-      query: ({ alertQueries, condition, customLabels, folder, alertName, alertUid }) => ({
+      query: ({ alertQueries, condition, customLabels, folder, alertName, alertUid, annotations }) => ({
         url: PREVIEW_URL,
         data: {
           rule: {
@@ -86,7 +90,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
             },
             for: '0s',
             labels: arrayKeyValuesToObject(customLabels),
-            annotations: {},
+            annotations: arrayKeyValuesToObject(
+              (annotations ?? []).filter(({ key }) => Boolean(key?.trim()))
+            ),
           },
           folderUid: folder.uid,
           folderTitle: folder.title,
