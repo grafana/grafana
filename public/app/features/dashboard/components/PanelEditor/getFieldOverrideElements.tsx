@@ -189,6 +189,38 @@ export function getFieldOverrideCategories(
       );
     }
 
+    // we want to append variables to be used as fields here, so copy the incoming dataframe and add to it
+    const fieldsForList = data ?? [];
+
+    if (fieldsForList.length > 0) {
+      const wat = context.getSuggestions();
+      const sugsAsFields = wat
+        .filter((sug) => sug.origin === 'template')
+        .map((templateSug) => {
+          return {
+            name: `\${${templateSug.label}}`,
+            state: {
+              displayName: templateSug.label,
+            },
+            type: FieldType.string,
+            config: {},
+            values: [],
+          };
+        });
+
+      fieldsForList[fieldsForList.length - 1].fields = [
+        ...fieldsForList[fieldsForList.length - 1].fields,
+        ...sugsAsFields,
+      ];
+    }
+
+    /* data.push({
+      name: 'variables', fields: [context.getSuggestions().map(sug => {
+        return {
+        
+      }
+    })], length: 0}) */
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         id: htmlId,
@@ -198,8 +230,9 @@ export function getFieldOverrideCategories(
             <matcherUi.component
               id={htmlId}
               matcher={matcherUi.matcher}
-              data={data ?? []}
+              data={fieldsForList}
               scope={override.matcher.scope}
+              // options={{ ...override.matcher.options, variables: context.getSuggestions() }}
               options={override.matcher.options}
               onChange={onMatcherConfigChange}
             />
