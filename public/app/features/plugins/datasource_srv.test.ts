@@ -811,6 +811,28 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
   const projectListItems = (list: DataSourceInstanceListItem[]) =>
     list.map((d) => ({ name: d.name, uid: d.ref.uid, type: d.ref.type, isDefault: d.isDefault ?? false }));
 
+  // Adapt GetDataSourceInstanceListFilters for the legacy getList() call: the slim filter
+  // callback receives a DataSourceInstanceListItem, so wrap it to construct one from the full
+  // DataSourceInstanceSettings. This avoids an `any` cast and stays safe if future cases add
+  // filter callbacks that read ref.* or other DataSourceInstanceListItem-specific fields.
+  const toLegacyFilters = (filters: GetDataSourceInstanceListFilters): GetDataSourceListFilters => {
+    const { filter, ...rest } = filters;
+    if (!filter) {
+      return rest;
+    }
+    return {
+      ...rest,
+      filter: (ds: DataSourceInstanceSettings) =>
+        filter({
+          ref: { uid: ds.uid, type: ds.type, apiVersion: ds.apiVersion },
+          name: ds.name,
+          meta: ds.meta,
+          readOnly: ds.readOnly,
+          isDefault: ds.isDefault,
+        }),
+    };
+  };
+
   let legacySrv: DatasourceSrv;
 
   beforeEach(() => {
@@ -822,10 +844,6 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
     initDataSourceInstanceSettings(clone() as any, DEFAULT_NAME);
   });
 
-  // Cases use GetDataSourceInstanceListFilters (the slim filter type) so they can be
-  // passed to both getList() and getDataSourceInstanceList(). The filter callback in the
-  // last case only reads `name`, which is present on both DataSourceInstanceSettings and
-  // DataSourceInstanceListItem, so the legacy getList() call below is safe.
   const cases: Array<{ label: string; filters: GetDataSourceInstanceListFilters }> = [
     { label: 'no filters', filters: {} },
     { label: 'all: true (includes non-queryable)', filters: { all: true } },
@@ -849,8 +867,7 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
   ];
 
   it.each(cases)('matches getList for $label', async ({ filters }) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const legacy = project(legacySrv.getList(filters as any));
+    const legacy = project(legacySrv.getList(toLegacyFilters(filters)));
     const asyncList = projectListItems(await getDataSourceInstanceList(filters));
     expect(asyncList).toEqual(legacy);
   });
