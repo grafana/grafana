@@ -20,8 +20,8 @@ function renderWithTheme(themeId: string, actionability: ActionabilityScore) {
   return { ...view, restoreTheme, theme };
 }
 
-function getScoreText(score: number) {
-  return screen.getByText(`${score}%`);
+function getScoreText() {
+  return screen.getByTestId('actionability-score-value');
 }
 
 describe('ActionabilityProgressBar', () => {
@@ -40,11 +40,12 @@ describe('ActionabilityProgressBar', () => {
 
     for (const themeId of ['dark', 'visual_refresh_dark']) {
       const { restoreTheme, theme, unmount } = renderWithTheme(themeId, actionability);
-      const scoreText = getScoreText(score);
+      const scoreText = getScoreText();
       const styles = window.getComputedStyle(scoreText);
 
       expect(styles.color).toBe(toComputedColor(theme.colors[severity].text));
       expect(styles.fontWeight).toBe(String(theme.typography.fontWeightBold));
+      expect(styles.fontSize).toBe(toComputedFontSize(theme.typography.h5.fontSize));
       expect(styles.backgroundColor).not.toBe(toComputedBackground(theme.colors[severity].transparent));
 
       const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
@@ -82,4 +83,10 @@ function toComputedBackground(color: string) {
   const el = document.createElement('span');
   el.style.backgroundColor = color;
   return window.getComputedStyle(el).backgroundColor;
+}
+
+function toComputedFontSize(fontSize: string) {
+  const el = document.createElement('span');
+  el.style.fontSize = fontSize;
+  return window.getComputedStyle(el).fontSize;
 }
