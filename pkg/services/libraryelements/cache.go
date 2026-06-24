@@ -57,12 +57,17 @@ func panelFolderFromContext(ctx context.Context, panelUID string) (string, bool)
 type folderTreeCache struct {
 	cache     *localcache.CacheService
 	folderSvc folder.Service
+	// useSearch builds the tree from the search index (lightweight UID+parent
+	// refs) instead of a full folder object list, avoiding the paged object-list
+	// round-trips that dominate large instances. Feature-flag controlled.
+	useSearch bool
 }
 
-func newFolderTreeCache(folderSvc folder.Service) *folderTreeCache {
+func newFolderTreeCache(folderSvc folder.Service, useSearch bool) *folderTreeCache {
 	return &folderTreeCache{
 		cache:     localcache.New(30*time.Second, 1*time.Minute),
 		folderSvc: folderSvc,
+		useSearch: useSearch,
 	}
 }
 
@@ -74,11 +79,7 @@ func (c *folderTreeCache) get(ctx context.Context, user identity.Requester) (*fo
 		return cached.(*folder.FolderTree), nil
 	}
 
-	// Get folders accessible to this user
-	folders, err := c.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
-		OrgID:        user.GetOrgID(),
-		SignedInUser: user,
-	})
+	folders, err := c.listFolders(ctx, user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list accessible folders: %w", err)
 	}
@@ -89,4 +90,35 @@ func (c *folderTreeCache) get(ctx context.Context, user identity.Requester) (*fo
 	c.cache.Set(cacheKey, tree, 0)
 
 	return tree, nil
+}
+
+// listFolders returns the folders accessible to the user. When useSearch is set
+// it queries the search index (lightweight refs), otherwise it lists full folder
+// objects. Both paths return the data NewFolderTree needs (ID, UID, parent, title).
+func (c *folderTreeCache) listFolders(ctx context.Context, user identity.Requester) ([]*folder.Folder, error) {
+	if !c.useSearch {
+		return c.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
+			OrgID:        user.GetOrgID(),
+			SignedInUser: user,
+		})
+	}
+
+	hits, err := c.folderSvc.SearchFolders(ctx, folder.SearchFoldersQuery{
+		OrgID:        user.GetOrgID(),
+		SignedInUser: user,
+	})
+	if err != nil {
+		return nil, err
+	}
+	folders := make([]*folder.Folder, 0, len(hits))
+	for _, hit := range hits {
+		folders = append(folders, &folder.Folder{
+			ID:        hit.ID, // nolint:staticcheck
+			UID:       hit.UID,
+			Title:     hit.Title,
+			ParentUID: hit.FolderUID,
+			OrgID:     user.GetOrgID(),
+		})
+	}
+	return folders, nil
 }
