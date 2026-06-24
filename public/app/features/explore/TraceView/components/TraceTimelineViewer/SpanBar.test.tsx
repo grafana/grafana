@@ -22,10 +22,12 @@ import SpanBar, { type Props } from './SpanBar';
 describe('<SpanBar>', () => {
   const shortLabel = 'omg-so-awesome';
   const longLabel = 'omg-awesome-long-label';
+  const labelDetail = 'my-service::my-operation';
 
   const props = {
     longLabel,
     shortLabel,
+    labelDetail,
     color: '#fff',
     hintSide: 'right',
     viewEnd: 1,
@@ -124,14 +126,20 @@ describe('<SpanBar>', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
-  it('keeps the stats label (does not expand to the long label) when hovering a summary span', async () => {
+  it('reveals the service::operation detail on hover while keeping the stats label as the tooltip anchor', async () => {
     const summarySpan = {
       ...props.span,
       aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMaxNs: 60_000_000 },
     };
+    // The detail is rendered as its own span sibling (not merged into the stats label).
+    const detailSpan = (content: string, el: Element | null) =>
+      el?.tagName === 'SPAN' && content.includes(labelDetail);
+
     render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    expect(screen.queryByText(detailSpan)).not.toBeInTheDocument();
+
     await userEvent.hover(screen.getByText(shortLabel));
     expect(screen.getByText(shortLabel)).toBeInTheDocument();
-    expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
+    expect(screen.getByText(detailSpan)).toBeInTheDocument();
   });
 });

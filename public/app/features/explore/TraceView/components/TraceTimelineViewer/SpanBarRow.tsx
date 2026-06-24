@@ -670,6 +670,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
           color={color}
           shortLabel={label}
           longLabel={longLabel}
+          labelDetail={labelDetail}
           traceStartTime={traceStartTime}
           span={span}
           labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
