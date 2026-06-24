@@ -101,8 +101,6 @@ linters:
             - '**/pkg/tsdb/mysql/**/*'
             - '**/pkg/tsdb/parca/*'
             - '**/pkg/tsdb/parca/**/*'
-            - '**/pkg/tsdb/tempo/*'
-            - '**/pkg/tsdb/tempo/**/*'
             - '**/pkg/tsdb/cloudwatch/*'
             - '**/pkg/tsdb/cloudwatch/**/*'
             - '**/pkg/tsdb/loki/*'
