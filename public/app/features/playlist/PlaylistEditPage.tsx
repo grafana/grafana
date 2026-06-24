@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
@@ -8,7 +8,9 @@ import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { SaveProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
+import { RepositorySelect } from 'app/features/provisioning/components/Shared/RepositorySelect';
 import { SourceLink } from 'app/features/provisioning/components/SourceLink';
+import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
   getManagerIdentity,
   getManagerKind,
@@ -16,11 +18,11 @@ import {
   isManaged,
   isManagedByRepository,
 } from 'app/features/provisioning/utils/managedResource';
+import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
-import { PlaylistForm, type PlaylistRepositorySelect } from './PlaylistForm';
-import { usePlaylistProvisioning } from './usePlaylistProvisioning';
+import { PlaylistForm } from './PlaylistForm';
 
 export interface RouteParams {
   uid: string;
@@ -30,7 +32,7 @@ export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
-  const { isAvailable, repositories } = usePlaylistProvisioning();
+  const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
   // Holds the edited playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
@@ -51,26 +53,20 @@ export const PlaylistEditPage = () => {
 
   // The repository can't be changed after creation, so the selector is read-only on edit. It shows
   // the managing repository (or "no repository" for an unmanaged playlist).
-  const repositorySelect = useMemo<PlaylistRepositorySelect | undefined>(() => {
-    if (!isAvailable || !data) {
-      return undefined;
-    }
-    const managedRepo = isManagedByRepository(data) ? (getManagerIdentity(data) ?? '') : '';
-    const repoOptions = repositories.map((repo) => ({ label: repo.title || repo.name, value: repo.name }));
-    // Surface an orphaned/inaccessible repository so the locked value still renders.
-    if (managedRepo && !repoOptions.some((option) => option.value === managedRepo)) {
-      repoOptions.push({ label: managedRepo, value: managedRepo });
-    }
-    return {
-      options: [
-        { label: t('playlist-edit.form.repository-none', 'Grafana (no repository)'), value: '' },
-        ...repoOptions,
-      ],
-      value: managedRepo,
-      onChange: () => {},
-      readOnly: true,
-    };
-  }, [isAvailable, data, repositories]);
+  const repositorySelect =
+    isAvailable && data ? (
+      <RepositorySelect
+        repositories={repositories}
+        value={isManagedByRepository(data) ? (getManagerIdentity(data) ?? '') : ''}
+        onChange={() => {}}
+        includeNoneOption
+        readOnly
+        description={t(
+          'playlist-edit.form.repository-description',
+          'Save this playlist to a repository instead of Grafana. The repository cannot be changed after the playlist is created.'
+        )}
+      />
+    ) : undefined;
 
   const pageNav: NavModelItem = {
     text: t('playlist-edit.title', 'Edit playlist'),

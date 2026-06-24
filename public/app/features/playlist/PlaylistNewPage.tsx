@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -7,15 +7,17 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { type Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist/v1';
 import { SaveProvisionedPlaylistDrawer } from '../provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
+import { RepositorySelect } from '../provisioning/components/Shared/RepositorySelect';
+import { useResourceRepositorySelection } from '../provisioning/hooks/useResourceRepositorySelection';
+import { resourceKindInfos } from '../provisioning/utils/resourceKinds';
 
-import { PlaylistForm, type PlaylistRepositorySelect } from './PlaylistForm';
-import { usePlaylistProvisioning } from './usePlaylistProvisioning';
+import { PlaylistForm } from './PlaylistForm';
 import { getDefaultPlaylist } from './utils';
 
 export const PlaylistNewPage = () => {
   const [playlist] = useState<Playlist>(getDefaultPlaylist());
   const [createPlaylist] = useCreatePlaylistMutation();
-  const { isAvailable, repositories } = usePlaylistProvisioning();
+  const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
   // Empty string = save to Grafana; a repository name routes the save through the provisioning drawer.
   const [selectedRepository, setSelectedRepository] = useState('');
   // Holds the playlist while the provisioning save drawer is open.
@@ -31,19 +33,18 @@ export const PlaylistNewPage = () => {
     locationService.push('/playlists');
   };
 
-  const repositorySelect = useMemo<PlaylistRepositorySelect | undefined>(() => {
-    if (!isAvailable) {
-      return undefined;
-    }
-    return {
-      options: [
-        { label: t('playlist-edit.form.repository-none', 'Grafana (no repository)'), value: '' },
-        ...repositories.map((repo) => ({ label: repo.title || repo.name, value: repo.name })),
-      ],
-      value: selectedRepository,
-      onChange: setSelectedRepository,
-    };
-  }, [isAvailable, repositories, selectedRepository]);
+  const repositorySelect = isAvailable ? (
+    <RepositorySelect
+      repositories={repositories}
+      value={selectedRepository}
+      onChange={setSelectedRepository}
+      includeNoneOption
+      description={t(
+        'playlist-edit.form.repository-description',
+        'Save this playlist to a repository instead of Grafana. The repository cannot be changed after the playlist is created.'
+      )}
+    />
+  ) : undefined;
 
   const pageNav: NavModelItem = {
     text: t('playlist.playlist-new-page.page-nav.text.new-playlist', 'New playlist'),

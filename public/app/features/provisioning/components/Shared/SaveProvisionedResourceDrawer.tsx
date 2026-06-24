@@ -47,6 +47,7 @@ export interface SaveProvisionedResourceDrawerProps {
    * annotations, so callers creating a new resource must synthesise them for the chosen repository.
    */
   isNew?: boolean;
+  /** Prefix for generated branch names. Defaults to the `resourceType`. */
   branchPrefix?: string;
   /** Notification shown on a successful write to the configured branch. */
   successMessage?: string;
@@ -201,7 +202,8 @@ function FormContent({
  * `CommitResourceKind` (and the shared fields / request handler, which key off the same type).
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
-  const { resource, title, drawerTitle, branchPrefix = 'resource', readOnlyMessage, onDismiss } = props;
+  const { resource, resourceType, title, drawerTitle, readOnlyMessage, onDismiss } = props;
+  const branchPrefix = props.branchPrefix ?? resourceType;
 
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(resource),

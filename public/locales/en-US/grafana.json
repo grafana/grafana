@@ -12518,8 +12518,6 @@
       "name-placeholder": "Name",
       "name-required": "Name is required",
       "repository-description": "Save this playlist to a repository instead of Grafana. The repository cannot be changed after the playlist is created.",
-      "repository-label": "Repository",
-      "repository-none": "Grafana (no repository)",
       "save": "Save",
       "table-delete": "Delete playlist item",
       "table-drag": "Reorder playlist item",
@@ -13571,6 +13569,10 @@
       "webhook-id": "ID:",
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
+    },
+    "repository-select": {
+      "label": "Repository",
+      "none-option": "Grafana (no repository)"
     },
     "repository-status": {
       "error": "Failed to load repository"

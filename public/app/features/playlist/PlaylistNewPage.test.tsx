@@ -7,16 +7,16 @@ import { locationService } from '@grafana/runtime';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
 import { backendSrv } from '../../core/services/backend_srv';
+import { useResourceRepositorySelection } from '../provisioning/hooks/useResourceRepositorySelection';
 
 import { PlaylistNewPage } from './PlaylistNewPage';
-import { usePlaylistProvisioning } from './usePlaylistProvisioning';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('./usePlaylistProvisioning');
+jest.mock('../provisioning/hooks/useResourceRepositorySelection');
 
 jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
@@ -24,14 +24,16 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-const mockUsePlaylistProvisioning = usePlaylistProvisioning as jest.MockedFunction<typeof usePlaylistProvisioning>;
+const mockUseResourceRepositorySelection = useResourceRepositorySelection as jest.MockedFunction<
+  typeof useResourceRepositorySelection
+>;
 
 function getTestContext(
-  provisioning: ReturnType<typeof usePlaylistProvisioning> = { isAvailable: false, repositories: [] }
+  provisioning: ReturnType<typeof useResourceRepositorySelection> = { isAvailable: false, repositories: [] }
 ) {
   jest.clearAllMocks();
   // Provisioning unavailable by default, so the repository selector is hidden.
-  mockUsePlaylistProvisioning.mockReturnValue(provisioning);
+  mockUseResourceRepositorySelection.mockReturnValue(provisioning);
 
   // Create separate spies for different HTTP methods
   const postSpy = jest.fn();

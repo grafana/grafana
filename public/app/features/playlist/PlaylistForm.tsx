@@ -1,9 +1,9 @@
-import { useId, useMemo, useState } from 'react';
+import { type ReactNode, useId, useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, Combobox, type ComboboxOption, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
@@ -14,22 +14,11 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
 
-/** Repository selector shown when a playlist can be saved to a provisioning repository. */
-export interface PlaylistRepositorySelect {
-  /** Selectable repositories, including the "no repository" (save to Grafana) option. */
-  options: Array<ComboboxOption<string>>;
-  /** Selected repository name. Empty string means "save to Grafana". */
-  value: string;
-  onChange: (value: string) => void;
-  /** When true the selection is fixed (the edit page does not allow changing the repository). */
-  readOnly?: boolean;
-}
-
 interface Props {
   onSubmit: (playlist: Playlist) => void;
   playlist: Playlist;
-  /** When provided, renders a repository selector so the playlist can be saved to a repository. */
-  repositorySelect?: PlaylistRepositorySelect;
+  /** Optional repository selector (rendered at the top of the form) for saving to a repository. */
+  repositorySelect?: ReactNode;
 }
 
 export const PlaylistForm = ({ onSubmit, playlist, repositorySelect }: Props) => {
@@ -64,25 +53,7 @@ export const PlaylistForm = ({ onSubmit, playlist, repositorySelect }: Props) =>
         const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
         return (
           <>
-            {repositorySelect && (
-              <Field
-                noMargin
-                htmlFor="playlist-repository"
-                label={t('playlist-edit.form.repository-label', 'Repository')}
-                description={t(
-                  'playlist-edit.form.repository-description',
-                  'Save this playlist to a repository instead of Grafana. The repository cannot be changed after the playlist is created.'
-                )}
-              >
-                <Combobox
-                  id="playlist-repository"
-                  options={repositorySelect.options}
-                  value={repositorySelect.value}
-                  disabled={repositorySelect.readOnly}
-                  onChange={(option) => repositorySelect.onChange(option?.value ?? '')}
-                />
-              </Field>
-            )}
+            {repositorySelect}
             <Field
               label={t('playlist-edit.form.name-label', 'Name')}
               invalid={!!errors.title}

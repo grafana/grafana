@@ -11,8 +11,11 @@ import {
 import { useDispatch } from 'app/types/store';
 
 import { type ManagedResource } from '../../utils/managedResource';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 import { SaveProvisionedResourceDrawer } from '../Shared/SaveProvisionedResourceDrawer';
 import { slugifyForFilename } from '../utils/path';
+
+const playlistKind = resourceKindInfos.playlist;
 
 interface SaveProvisionedPlaylistDrawerProps {
   /** The playlist with the edited spec that should be committed to the repository. */
@@ -46,7 +49,7 @@ export function SaveProvisionedPlaylistDrawer({
     // The playlist list is managed elsewhere; invalidate so the change shows up there.
     dispatch(playlistAPIv1.util.invalidateTags(['Playlist']));
     onDismiss?.();
-    navigate('/playlists');
+    navigate(playlistKind.listRoute);
   };
 
   // A new playlist has no manager annotations yet, so synthesise them for the repository the user
@@ -71,7 +74,6 @@ export function SaveProvisionedPlaylistDrawer({
       resourceName={playlist.metadata?.name ?? ''}
       title={playlist.spec?.title ?? ''}
       drawerTitle={t('playlist-edit.save-provisioned.drawer-title', 'Save provisioned playlist')}
-      branchPrefix="playlist"
       isNew={isNew}
       action={isNew ? 'create' : 'update'}
       body={{
