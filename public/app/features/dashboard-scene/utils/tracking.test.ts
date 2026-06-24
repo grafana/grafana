@@ -55,7 +55,7 @@ describe('dashboard tracking', () => {
   describe('save v2 dashboard tracking', () => {
     it('should call report interaction with correct parameters when saving a new dashboard', async () => {
       const scene = buildTestScene();
-      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'new dashboard', url: 'new-url' });
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'new dashboard', url: 'new-url', diff_count: 5 });
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_created', {
         isDynamicDashboard: true,
         uid: 'dashboard-test',
@@ -77,6 +77,7 @@ describe('dashboard tracking', () => {
         variable_type_query_count: 1,
         variable_type_datasource_count: 1,
         variable_type_adhoc_count: 1,
+        diff_count: 5,
       });
     });
 
@@ -85,6 +86,7 @@ describe('dashboard tracking', () => {
       await trackDashboardSceneCreatedOrSaved(true, scene, {
         name: 'new dashboard',
         url: 'new-url',
+        diff_count: 7,
         transformation_counts: { organize: 2, reduce: 1 },
         expression_counts: { sql: 3, math: 1 },
       });
@@ -111,6 +113,7 @@ describe('dashboard tracking', () => {
         variable_type_adhoc_count: 1,
         transformation_counts: { organize: 2, reduce: 1 },
         expression_counts: { sql: 3, math: 1 },
+        diff_count: 7,
       });
     });
   });

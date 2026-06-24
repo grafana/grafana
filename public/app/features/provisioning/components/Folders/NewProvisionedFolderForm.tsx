@@ -13,10 +13,11 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
@@ -49,6 +50,22 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   const { handleSubmit, watch, register, formState } = methods;
 
   const [workflow] = watch(['workflow']);
+
+  const title = watch('title');
+  const templateVars: CommitTemplateVars = {
+    action: 'create',
+    resourceKind: 'folder',
+    resourceID: '',
+    title: title ?? '',
+    ...getCurrentCommitUser(),
+  };
+  const { locked, message } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(formState.dirtyFields.comment),
+    setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
+  });
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
@@ -90,29 +107,25 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setError(
       getProvisionedRequestError(
         error,
-        'folder',
         t('browse-dashboards.new-provisioned-folder-form.error-saving', 'An error occurred while creating folder.')
       )
     );
   };
 
   // Use the repository-type and resource-type aware provisioned request handler
-  useProvisionedRequestHandler<FolderDTO>({
+  const { handleSuccess } = useProvisionedRequestHandler<FolderDTO>({
     folderUID: folder?.metadata.name,
-    request,
     workflow,
     repository,
     resourceType: 'folder',
-    selectedBranch: methods.getValues().ref,
     handlers: {
       onDismiss,
       onBranchSuccess,
       onWriteSuccess,
-      onError,
     },
   });
 
-  const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
@@ -133,6 +146,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       type: 'folder',
     };
 
+    // The branch entered in the form, before the ref is dropped for the write workflow
+    const selectedBranch = ref;
     if (workflow === 'write') {
       ref = undefined;
     }
@@ -143,21 +158,18 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    create({
-      ref,
-      name: repoName,
-      path,
-      message: getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'create',
-        resourceKind: 'folder',
-        resourceID: '',
-        title,
-        ...getCurrentCommitUser(),
-      }),
-      body: folderModel,
-    });
+    try {
+      const data = await create({
+        ref,
+        name: repoName,
+        path,
+        message,
+        body: folderModel,
+      }).unwrap();
+      handleSuccess(data, { workflow, selectedBranch });
+    } catch (err) {
+      onError(err);
+    }
   };
 
   return (
@@ -202,6 +214,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             hiddenFields={['path']}
+            lockComment={locked}
+            commitMessage={message}
           />
 
           {prURL && (

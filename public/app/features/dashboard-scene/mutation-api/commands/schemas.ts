@@ -509,6 +509,7 @@ const rowsLayoutRowSpecSchema = z.object({
   fillScreen: z.boolean().optional().default(false).describe('Row fills viewport height'),
   repeat: rowRepeatOptionsSchema.optional().describe('Repeat row for each value of a variable'),
   conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this row'),
+  variables: z.array(variableKindSchema).optional().describe('Section-scoped variables for this row.'),
 });
 
 const partialRowSpecSchema = z
@@ -523,6 +524,10 @@ const partialRowSpecSchema = z
     conditionalRendering: conditionalRenderingGroupKindSchema
       .optional()
       .describe('Show/hide rules for this row. Omit to leave unchanged.'),
+    variables: z
+      .array(variableKindSchema)
+      .optional()
+      .describe('Section-scoped variables for this row. Omit to leave unchanged. Pass [] to clear section variables.'),
   })
   .describe('Fields to update (partial RowsLayoutRowSpec)');
 
@@ -530,6 +535,7 @@ const tabsLayoutTabSpecSchema = z.object({
   title: z.string().optional().describe('Tab title'),
   repeat: tabRepeatOptionsSchema.optional().describe('Repeat tab for each value of a variable'),
   conditionalRendering: conditionalRenderingGroupKindSchema.optional().describe('Show/hide rules for this tab'),
+  variables: z.array(variableKindSchema).optional().describe('Section-scoped variables for this tab.'),
 });
 
 const partialTabSpecSchema = z
@@ -541,6 +547,10 @@ const partialTabSpecSchema = z
     conditionalRendering: conditionalRenderingGroupKindSchema
       .optional()
       .describe('Show/hide rules for this tab. Omit to leave unchanged.'),
+    variables: z
+      .array(variableKindSchema)
+      .optional()
+      .describe('Section-scoped variables for this tab. Omit to leave unchanged. Pass [] to clear section variables.'),
   })
   .describe('Fields to update (partial TabsLayoutTabSpec)');
 
@@ -647,15 +657,42 @@ const partialAnnotationQueryKindSchema = z.object({
 const addVariablePayloadSchema = z.object({
   variable: variableKindSchema.describe('Variable definition (VariableKind)'),
   position: z.number().optional().describe('Position in variables list (optional, appends if not set)'),
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe(
+      'Variable scope: "/" (default) = dashboard-level variables; "/rows/N" or "/tabs/N" (or nested) = section variables on that row or tab.'
+    ),
 });
 
 const updateVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to update'),
   variable: variableKindSchema.describe('New variable definition (VariableKind)'),
+  parentPath: layoutPathSchema
+    .optional()
+    .describe(
+      'Variable scope: omit or "/" = dashboard-level. Pass a row/tab path (e.g. "/rows/0") to target section scope. ' +
+        'Runtime returns a friendly error if the variable exists only on a section and parentPath is omitted.'
+    ),
 });
 
 const removeVariablePayloadSchema = z.object({
   name: z.string().describe('Variable name to remove'),
+  parentPath: layoutPathSchema
+    .optional()
+    .describe(
+      'Variable scope: omit or "/" = dashboard-level. Pass a row/tab path to target section scope. ' +
+        'Runtime returns a friendly error if the variable exists only on a section and parentPath is omitted.'
+    ),
+});
+
+const listVariablesPayloadSchema = z.object({
+  parentPath: layoutPathSchema
+    .optional()
+    .default('/')
+    .describe(
+      'Variable scope: "/" (default) = list dashboard-level variables; "/rows/N" or "/tabs/N" = list variables for that section only.'
+    ),
 });
 
 // Annotation payload schemas
@@ -1112,13 +1149,13 @@ export const payloads = {
   addVariable: addVariablePayloadSchema.describe('Add a new template variable'),
   removeVariable: removeVariablePayloadSchema.describe('Remove a template variable'),
   updateVariable: updateVariablePayloadSchema.describe('Update an existing template variable'),
-  listVariables: emptyPayloadSchema.describe('List all template variables on the dashboard'),
   addAnnotation: addAnnotationPayloadSchema.describe('Add a new dashboard annotation layer'),
   updateAnnotation: updateAnnotationPayloadSchema.describe(
     'Update an existing dashboard annotation layer by name (partial update, deep-merge)'
   ),
   removeAnnotation: removeAnnotationPayloadSchema.describe('Remove a dashboard annotation layer by name'),
   listAnnotations: emptyPayloadSchema.describe('List all annotation layers on the dashboard'),
+  listVariables: listVariablesPayloadSchema.describe('List template variables for a scope (dashboard or section)'),
   enterEditMode: emptyPayloadSchema.describe('Enter dashboard edit mode'),
   getLayout: getLayoutPayloadSchema.describe('Get the dashboard layout tree and trimmed elements map'),
   addRow: addRowPayloadSchema.describe('Add a new row to the dashboard layout'),

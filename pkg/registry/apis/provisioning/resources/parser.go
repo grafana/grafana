@@ -138,6 +138,11 @@ type ParsedResource struct {
 	// Client that can talk to this resource
 	Client dynamic.ResourceInterface
 
+	// FolderScoped reports whether this resource's kind carries the folder annotation
+	// (i.e. lives in folders). Org-scoped kinds such as playlists are not folder-scoped
+	// and must never have a folder annotation stamped onto them.
+	FolderScoped bool
+
 	// The Existing object (same name)
 	// ?? do we need/want the whole thing??
 	Existing *unstructured.Unstructured
@@ -250,7 +255,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// are contained in folders. Org-scoped resources (those not folder-scoped in the
 	// configured supported set) must not have a folder annotation stamped onto them:
 	// it would be meaningless and possibly dangling.
-	if info.Path != "" && supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
+	parsed.FolderScoped = supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK)
+	if info.Path != "" && parsed.FolderScoped {
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
 	}
 
@@ -385,6 +391,11 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		f.Action = provisioning.ResourceActionUpdate
 		// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
 		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
+		// Carry the existing object's resourceVersion into the update. The parser
+		// clears the RV on parse because it is not persisted in the repository file,
+		// but some apiservers (e.g. playlists) reject an RV-less update. Dashboards
+		// and folders tolerate it, so restoring the live RV is safe for all kinds.
+		f.Obj.SetResourceVersion(f.Existing.GetResourceVersion())
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun:          []string{"All"},
 			FieldValidation: fieldValidation,
@@ -506,9 +517,28 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
 
+	// The update needs the live resourceVersion: the parser clears it on parse
+	// (it is not stored in the repository file) and some apiservers (e.g.
+	// playlists) reject an RV-less update. If we don't already have the existing
+	// object (e.g. we fell through here after a create returned AlreadyExists),
+	// fetch it now so we can carry its RV.
+	if f.Existing == nil {
+		existing, getErr := f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
+		switch {
+		case getErr == nil:
+			f.Existing = existing
+		case apierrors.IsNotFound(getErr):
+			// Expected when the resource doesn't exist yet; the update→create
+			// fallback below handles it.
+		default:
+			return fmt.Errorf("get existing resource to carry resourceVersion into update: %w", getErr)
+		}
+	}
+
 	// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
 	if f.Existing != nil {
 		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
+		f.Obj.SetResourceVersion(f.Existing.GetResourceVersion())
 	}
 
 	updateCtx, updateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.update")
@@ -523,6 +553,9 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	if apierrors.IsNotFound(err) {
 		f.Action = provisioning.ResourceActionCreate
+		// The resource was deleted between the read and the update. Clear the
+		// stale resourceVersion we carried for the update — create rejects it.
+		f.Obj.SetResourceVersion("")
 		fallbackCreateCtx, fallbackCreateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.create_fallback")
 		fallbackCreateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
 		f.Upsert, err = f.Client.Create(fallbackCreateCtx, f.Obj, metav1.CreateOptions{

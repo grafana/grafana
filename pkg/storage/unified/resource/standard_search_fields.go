@@ -7,9 +7,9 @@ package resource
 // Not every standard field appears here. Fields excluded:
 //
 //   - Pseudo / wire-only columns (_id, _legacy_id, _score, _explain,
-//     _all_columns, rv, kind, namespace, group/resource, created): they exist
-//     solely to populate ResourceTable column metadata in the gRPC response
-//     and are not indexed.
+//     _all_columns, rv, kind, namespace, group/resource): they exist solely
+//     to populate ResourceTable column metadata in the gRPC response and are
+//     not indexed.
 //   - Sub-document fields under "manager." and "source.": nested documents
 //     whose bleve mappings are emitted hardcoded.
 //   - Fields under "labels." and "reference.": open key sets, served by
@@ -81,6 +81,34 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Type:         SearchFieldTypeString,
 			Capabilities: []SearchCapability{SearchCapabilityFacet},
 			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
+		},
+		// created and updated are advertised in the proto column list but were
+		// never indexed before this declaration. Capabilities here are a
+		// compromise:
+		//
+		//   - retrieve: the actual intent — surface the timestamp in search
+		//     results so clients can display it.
+		//   - filter: required only because the bleve capability mapper does
+		//     not currently emit a mapping for retrieve-only fields. Filter
+		//     gives us a keyword mapping with Store: true. Exact-ms equality
+		//     filters are not a useful query and we expect no consumer to rely
+		//     on them.
+		//   - sort: omitted because the mapper emits a keyword mapping
+		//     regardless of Type, so int64 values would sort lexically.
+		//
+		// The end state is store-only with proper numeric semantics; both
+		// require a type-aware mapper, tracked as a follow-up.
+		{
+			Name:         SEARCH_FIELD_CREATED,
+			Type:         SearchFieldTypeInt64,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Creation timestamp (unix millis).",
+		},
+		{
+			Name:         SEARCH_FIELD_UPDATED,
+			Type:         SearchFieldTypeInt64,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Update timestamp (unix millis).",
 		},
 	}
 }

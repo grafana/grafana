@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
-import { type RepositoryView, type Unstructured } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, type ResourceWrapper, type Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
@@ -23,8 +23,9 @@ import {
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
@@ -96,6 +97,21 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
+  const templateVars: CommitTemplateVars = {
+    action: isNew ? 'create' : 'update',
+    resourceKind: 'dashboard',
+    resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+    title: title ?? '',
+    ...getCurrentCommitUser(),
+  };
+  const { locked, message } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(dirtyFields.comment),
+    setComment: (value) => setValue('comment', value, { shouldDirty: false }),
+  });
+
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
   // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
@@ -116,7 +132,6 @@ export function SaveProvisionedDashboardForm({
     setError(
       getProvisionedRequestError(
         error,
-        'dashboard',
         t('dashboard-scene.save-provisioned-dashboard-form.error-saving', 'An error occurred while saving.')
       )
     );
@@ -150,17 +165,20 @@ export function SaveProvisionedDashboardForm({
     [navigate, defaultValues.repo]
   );
 
-  const handleDismiss = useCallback(() => {
-    const model = dashboard.getSaveModel();
-    const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
-    const saveResponse = createSaveResponseFromResource(resourceData);
-    dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
-    dashboardWatcher.clearIgnoreSave();
-  }, [dashboard, defaultValues.folder?.uid, request?.data?.resource]);
+  const handleDismiss = useCallback(
+    (wrapper: ResourceWrapper) => {
+      const model = dashboard.getSaveModel();
+      const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
+      const saveResponse = createSaveResponseFromResource(resourceData);
+      dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
+      dashboardWatcher.clearIgnoreSave();
+    },
+    [dashboard, defaultValues.folder?.uid]
+  );
 
   const onWriteSuccess = useCallback(
-    (upsert: Resource<Dashboard>) => {
-      handleDismiss();
+    (upsert: Resource<Dashboard>, wrapper: ResourceWrapper) => {
+      handleDismiss(wrapper);
       if (isNew && upsert?.metadata.name) {
         handleNewDashboard(upsert);
       }
@@ -180,8 +198,14 @@ export function SaveProvisionedDashboardForm({
   );
 
   const onBranchSuccess = useCallback(
-    (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
-      handleDismiss();
+    (
+      ref: string,
+      path: string,
+      info: ProvisionedOperationInfo,
+      upsert: Resource<Dashboard>,
+      wrapper: ResourceWrapper
+    ) => {
+      handleDismiss(wrapper);
       if (isNew && upsert?.metadata?.name) {
         handleNewDashboard(upsert);
       } else {
@@ -191,35 +215,18 @@ export function SaveProvisionedDashboardForm({
     [isNew, navigateToPreview, handleNewDashboard, handleDismiss]
   );
 
-  useProvisionedRequestHandler<Dashboard>({
+  const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
-    request,
-    workflow,
     resourceType: 'dashboard',
     repository,
-    selectedBranch: methods.getValues().ref,
     handlers: {
-      onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
+      onBranchSuccess: ({ ref, path }, info, resource, wrapper) => onBranchSuccess(ref, path, info, resource, wrapper),
       onWriteSuccess,
-      onError: (err) => {
-        // Release suppression so later live save/conflict events from other sessions
-        // aren't hidden while the user retries or abandons the save.
-        dashboardWatcher.clearIgnoreSave();
-        showError(err);
-      },
     },
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({
-    title,
-    description,
-    repo,
-    path,
-    comment,
-    ref,
-    copyTags,
-  }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, ref, copyTags }: ProvisionedDashboardFormData) => {
     setError(undefined);
     // Validate required fields
     if (!repo || !path) {
@@ -234,16 +241,6 @@ export function SaveProvisionedDashboardForm({
     // if (workflow === 'write' && !isNew) {
     //   ref = loadedFromRef;
     // }
-
-    const message = getSingleResourceCommitMessage({
-      comment,
-      repository,
-      action: isNew ? 'create' : 'update',
-      resourceKind: 'dashboard',
-      resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-      title: dashboard.state.title ?? '',
-      ...getCurrentCommitUser(),
-    });
 
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
@@ -265,15 +262,23 @@ export function SaveProvisionedDashboardForm({
     // Git operations can exceed the default 5s ignoreNextSave window.
     dashboardWatcher.ignoreSaveIndefinitely();
 
-    createOrUpdateFile({
-      // Skip adding ref to the default branch request
-      ref: ref === repository?.branch ? undefined : ref,
-      name: repo,
-      path,
-      message,
-      body,
-      originalPath: isRename ? originalPath : undefined,
-    });
+    try {
+      const data = await createOrUpdateFile({
+        // Skip adding ref to the default branch request
+        ref: ref === repository?.branch ? undefined : ref,
+        name: repo,
+        path,
+        message,
+        body,
+        originalPath: isRename ? originalPath : undefined,
+      }).unwrap();
+      handleSuccess(data, { workflow, selectedBranch: ref });
+    } catch (err) {
+      // Release suppression so later live save/conflict events from other sessions
+      // aren't hidden while the user retries or abandons the save.
+      dashboardWatcher.clearIgnoreSave();
+      showError(err);
+    }
   };
 
   return (
@@ -357,6 +362,8 @@ export function SaveProvisionedDashboardForm({
             repository={repository}
             isNew={isNew}
             allowPathEdit={!isNew && !readOnly}
+            lockComment={locked}
+            commitMessage={message}
           />
 
           {saveAsCopy && (

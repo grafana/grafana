@@ -65,6 +65,13 @@ async function openOutline(
     }
     await expect(outlineButton).toHaveAttribute('aria-expanded', 'true');
   }).toPass();
+
+  // Clicking the toggle leaves the pointer parked on it, so its "Content
+  // outline" tooltip stays open and overlaps the top of the outline pane,
+  // intercepting clicks on outline items. Move the pointer away and wait for
+  // the tooltip to leave the document before callers interact with the pane.
+  await page.mouse.move(0, 0);
+  await expect(page.getByTestId(selectors.components.Tooltip.container)).not.toBeAttached();
 }
 
 test.describe(

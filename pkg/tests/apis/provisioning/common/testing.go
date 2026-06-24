@@ -67,12 +67,10 @@ const (
 	waitTimeoutCleanup = 2 * WaitTimeoutDefault
 
 	// waitTimeoutFolderCleanup is the budget for the folders step in
-	// CleanupAllResources. Folder admission validates "folder is empty"
-	// against the resource search index, which is eventually consistent
-	// with respect to dashboard deletes. Under SQLite write contention that
-	// lag has been observed to exceed waitTimeoutCleanup, so folders alone
-	// get a larger budget — bumping every step would slow the common case
-	// for no benefit.
+	// CleanupAllResources. Folders are force-deleted, so this is no longer
+	// gated on the eventually-consistent empty-folder check; the larger budget
+	// is a safety margin for the delete/list round-trips under SQLite write
+	// contention when many folders are left over.
 	waitTimeoutFolderCleanup = 4 * WaitTimeoutDefault
 )
 
@@ -804,6 +802,7 @@ type TestRepo struct {
 	TokenUser                 string
 	WebhookSecret             string
 	WebhookBaseURL            string
+	WebhookDisabled           bool
 	GenerateName              string
 	GenerateDashboardPreviews bool
 
@@ -861,6 +860,8 @@ type GitHubRepositorySpec struct {
 	Token                     string
 	TokenUser                 string
 	WebhookSecret             string
+	WebhookBaseURL            string
+	WebhookDisabled           bool
 	GenerateDashboardPreviews bool
 	Workflows                 []string
 	WorkflowsJSON             string
@@ -930,16 +931,32 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
 	}
 
-	// Verify initial state
+	// Verify initial state. ExpectedDashboards/ExpectedFolders count this
+	// repo's synced resources plus any unmanaged resources a test pre-seeds
+	// (e.g. the selective export/migrate tests). It deliberately does NOT
+	// count dangling orphans — resources still annotated as managed by a
+	// repository that no longer exists. Those can leak from a prior test: the
+	// per-test cleanup deletes a repo whose RemoveOrphanResources finalizer
+	// then enumerates its managed resources through the eventually-consistent
+	// search index; if that index lags and reports none, the finalizer deletes
+	// nothing and the folder survives as a managed orphan that surfaces later
+	// and would otherwise inflate this count.
 	if !repo.SkipResourceAssertions {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			existingRepos, err := h.repoNameSet(t.Context())
+			if err != nil {
+				collect.Errorf("could not list repositories: error: %s", err.Error())
+				return
+			}
+
 			dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 			if err != nil {
 				collect.Errorf("could not list dashboards error: %s", err.Error())
 				return
 			}
-			if len(dashboards.Items) != repo.ExpectedDashboards {
-				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), repo.ExpectedDashboards)
+			dashboardCount := countNonOrphanedResources(dashboards.Items, existingRepos)
+			if dashboardCount != repo.ExpectedDashboards {
+				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", dashboardCount, repo.ExpectedDashboards)
 				return
 			}
 			folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
@@ -947,14 +964,48 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 				collect.Errorf("could not list folders: error: %s", err.Error())
 				return
 			}
-			if len(folders.Items) != repo.ExpectedFolders {
-				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), repo.ExpectedFolders)
+			folderCount := countNonOrphanedResources(folders.Items, existingRepos)
+			if folderCount != repo.ExpectedFolders {
+				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", folderCount, repo.ExpectedFolders)
 				return
 			}
-			assert.Len(collect, dashboards.Items, repo.ExpectedDashboards)
-			assert.Len(collect, folders.Items, repo.ExpectedFolders)
 		}, WaitTimeoutDefault, WaitIntervalDefault, "should have the expected dashboards and folders after sync")
 	}
+}
+
+// repoNameSet returns the set of repository names that currently exist.
+func (h *ProvisioningTestHelper) repoNameSet(ctx context.Context) (map[string]struct{}, error) {
+	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	names := make(map[string]struct{}, len(repos.Items))
+	for i := range repos.Items {
+		names[repos.Items[i].GetName()] = struct{}{}
+	}
+	return names, nil
+}
+
+// countNonOrphanedResources counts resources except dangling repo orphans:
+// resources annotated as managed by a repository (managedBy=repo) whose
+// repository no longer exists. Those leak from a prior test and would inflate
+// the count. Unmanaged resources and resources managed by other kinds
+// (kubectl, terraform, ...) are always counted, as are repo-managed resources
+// whose repository still exists.
+func countNonOrphanedResources(items []unstructured.Unstructured, existingRepos map[string]struct{}) int {
+	var count int
+	for i := range items {
+		annotations := items[i].GetAnnotations()
+		managerKind := annotations["grafana.app/managedBy"]
+		managerID := annotations["grafana.app/managerId"]
+		if managerKind == "repo" {
+			if _, ok := existingRepos[managerID]; !ok {
+				continue
+			}
+		}
+		count++
+	}
+	return count
 }
 
 // WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
@@ -1275,6 +1326,12 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 	}
 }
 
+func WithProvisioningPublicRootURL(url string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningPublicRootURL = url
+	}
+}
+
 // WithFolderAPIVersion sets the provisioning folder API version (e.g. "v1" or "v1beta1").
 func WithFolderAPIVersion(version string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
@@ -1321,6 +1378,11 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagProvisioningExport,
+			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),
+			// bypassing the eventually-consistent "folder is empty" admission check.
+			// Normal (non-force) deletes still enforce the check, so test behavior
+			// outside cleanup is unchanged.
+			featuremgmt.FlagKubernetesFolderCascadeDelete,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
@@ -1460,8 +1522,10 @@ func runGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTest
 
 // deleteAndWait deletes all resources from a dynamic client and polls until
 // none remain. It retries deletes on each iteration to handle transient
-// resource-version conflicts from concurrent controller updates.
-func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeout time.Duration) error {
+// resource-version conflicts from concurrent controller updates. deleteOpts is
+// applied to every delete (e.g. gracePeriodSeconds=0 to force-delete folders
+// past the empty-folder admission check).
+func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeout time.Duration, deleteOpts metav1.DeleteOptions) error {
 	list, err := client.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("deleteAndWait: initial list: %w", err)
@@ -1472,7 +1536,7 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 
 	var lastErr error
 	for _, item := range list.Items {
-		if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		if err := client.Delete(ctx, item.GetName(), deleteOpts); err != nil && !apierrors.IsNotFound(err) {
 			lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
 		}
 	}
@@ -1491,7 +1555,7 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 			return nil
 		}
 		for _, item := range remaining.Items {
-			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			if err := client.Delete(ctx, item.GetName(), deleteOpts); err != nil && !apierrors.IsNotFound(err) {
 				lastErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
 			}
 		}
@@ -1517,24 +1581,32 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
 //
-// Every step uses waitTimeoutCleanup because each one can be blocked by an
-// eventually-consistent signal: repository finalizers draining orphan
-// resources, dashboards freeing their folder reference in the search index,
-// and folder admission rejecting deletion until that index catches up. Under
-// SQLite write contention these lags routinely exceed short timeouts.
+// Repositories, connections, and dashboards can be briefly blocked by an
+// eventually-consistent signal (finalizers draining orphans, the search index
+// catching up), so they get waitTimeoutCleanup.
+//
+// Folders are force-deleted (gracePeriodSeconds=0, enabled by
+// FlagKubernetesFolderCascadeDelete). The default folder delete is rejected
+// until the search index reflects that the folder is empty, and that index lag
+// is unbounded under SQLite write contention — repeatedly bumping the timeout
+// (see git history) only masks it. Cleanup deletes every folder anyway, so the
+// empty-folder check serves no purpose here; bypassing it makes folder cleanup
+// deterministic instead of racing the index.
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
+	forceDelete := metav1.DeleteOptions{GracePeriodSeconds: new(int64)} // gracePeriodSeconds=0
 	for _, c := range []struct {
-		name    string
-		client  dynamic.ResourceInterface
-		timeout time.Duration
+		name       string
+		client     dynamic.ResourceInterface
+		timeout    time.Duration
+		deleteOpts metav1.DeleteOptions
 	}{
-		{"repositories", h.Repositories.Resource, waitTimeoutCleanup},
-		{"connections", h.Connections.Resource, waitTimeoutCleanup},
-		{"dashboards", h.DashboardsV1.Resource, waitTimeoutCleanup},
-		{"folders", h.Folders.Resource, waitTimeoutFolderCleanup},
+		{"repositories", h.Repositories.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+		{"connections", h.Connections.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+		{"dashboards", h.DashboardsV1.Resource, waitTimeoutCleanup, metav1.DeleteOptions{}},
+		{"folders", h.Folders.Resource, waitTimeoutFolderCleanup, forceDelete},
 	} {
-		if err := deleteAndWait(ctx, c.client, c.timeout); err != nil {
+		if err := deleteAndWait(ctx, c.client, c.timeout, c.deleteOpts); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
@@ -2795,11 +2867,26 @@ type GitTestHelper struct {
 	*ProvisioningTestHelper
 	gitServer       *gittest.Server
 	exportRepoInfos map[string]*exportRepoInfo
+	githubUserOnce  sync.Once
+	githubUser      *gittest.User
+	githubUserErr   error
 }
 
 // GitServer returns the underlying gittest.Server.
 func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
+}
+
+func (h *GitTestHelper) githubTransportUser(t *testing.T) *gittest.User {
+	t.Helper()
+
+	h.githubUserOnce.Do(func() {
+		h.githubUser, h.githubUserErr = h.gitServer.CreateUser(context.Background(), gittest.WithUsername("git"))
+	})
+	require.NoError(t, h.githubUserErr, "failed to create github transport user")
+	require.NotNil(t, h.githubUser, "github transport user should be created")
+
+	return h.githubUser
 }
 
 // SharedGitEnv lazily starts and reuses one GitTestHelper across tests.
@@ -2968,9 +3055,6 @@ func (h *GitTestHelper) CreateSyncEnabledGitRepo(t *testing.T, repoName string, 
 }
 
 // CreateGithubRepo creates a github-type repository backed by the gittest server.
-// The repo will NOT become healthy (git auth uses default "git" user which doesn't
-// exist on gittest), but webhooks are created before the health check runs, so
-// Status.Webhook will be populated if the GitHub API mock is configured.
 // workflows is optional; defaults to ["write"].
 // webhookBaseURL is optional; pass it to enable webhook creation on the repo.
 func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
@@ -2979,10 +3063,23 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 		extraValues["WebhookBaseURL"] = webhookBaseURL
 	}
 	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
-		waitForReady:      false,
+		waitForReady:      true,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
+		user:              h.githubTransportUser(t),
 		workflows:         workflows,
+	})
+}
+
+func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady: true,
+		initialFiles: initialFiles,
+		templateVariables: map[string]any{
+			"WebhookDisabled": true,
+		},
+		user:      h.githubTransportUser(t),
+		workflows: workflows,
 	})
 }
 
@@ -3001,6 +3098,7 @@ type createRepoOpts struct {
 	exportRepo        bool
 	initialFiles      map[string][]byte
 	templateVariables map[string]any
+	user              *gittest.User
 	workflows         []string
 }
 
@@ -3015,8 +3113,12 @@ func (h *GitTestHelper) createRepo(
 
 	ctx := context.Background()
 
-	user, err := h.gitServer.CreateUser(ctx)
-	require.NoError(t, err, "failed to create user")
+	user := opts.user
+	if user == nil {
+		var err error
+		user, err = h.gitServer.CreateUser(ctx)
+		require.NoError(t, err, "failed to create user")
+	}
 
 	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
 	require.NoError(t, err, "failed to create remote repository")

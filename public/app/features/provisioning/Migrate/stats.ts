@@ -3,22 +3,34 @@ import { API_GROUP as FOLDER_BUCKET } from '@grafana/api-clients/rtkq/folder/v1b
 import { type ManagerStats, type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
+import { resourceKindInfos } from '../utils/resourceKinds';
+
+// The playlist group comes from the kind registry (its single source of truth)
+// rather than re-importing the playlist API client here.
+const PLAYLIST_BUCKET = resourceKindInfos.playlist.group;
+
 // `folders` is the legacy storage group; the app-platform group is FOLDER_BUCKET.
 const FOLDER_GROUPS: string[] = [FOLDER_BUCKET, 'folders'];
 const DASHBOARD_GROUPS: string[] = [DASHBOARD_BUCKET];
+const PLAYLIST_GROUPS: string[] = [PLAYLIST_BUCKET];
+
+type BucketKey = typeof DASHBOARD_BUCKET | typeof FOLDER_BUCKET | typeof PLAYLIST_BUCKET;
 
 /**
- * Classify a stats entry into the dashboard or folder bucket, keyed by BOTH
- * group and resource. A group like `dashboard.grafana.app` also exposes other
- * resources (e.g. `variables`, `librarypanels`); those must not be counted as
- * dashboards. Anything that isn't a dashboard or folder is ignored.
+ * Classify a stats entry into the dashboard, folder, or playlist bucket, keyed
+ * by BOTH group and resource. A group like `dashboard.grafana.app` also exposes
+ * other resources (e.g. `variables`, `librarypanels`); those must not be counted
+ * as dashboards. Anything that isn't a tracked resource is ignored.
  */
-function bucketKeyFor(group: string, resource: string): typeof DASHBOARD_BUCKET | typeof FOLDER_BUCKET | undefined {
-  if (DASHBOARD_GROUPS.includes(group) && resource === 'dashboards') {
+function bucketKeyFor(group: string, resource: string): BucketKey | undefined {
+  if (DASHBOARD_GROUPS.includes(group) && resource === resourceKindInfos.dashboard.resource) {
     return DASHBOARD_BUCKET;
   }
-  if (FOLDER_GROUPS.includes(group) && resource === 'folders') {
+  if (FOLDER_GROUPS.includes(group) && resource === resourceKindInfos.folder.resource) {
     return FOLDER_BUCKET;
+  }
+  if (PLAYLIST_GROUPS.includes(group) && resource === resourceKindInfos.playlist.resource) {
+    return PLAYLIST_BUCKET;
   }
   return undefined;
 }
@@ -31,7 +43,7 @@ export interface GroupBreakdown {
   unmanagedCount: number;
 }
 
-/** Dashboard-level totals shown in the KPI cards. */
+/** Per-resource-type totals shown in the KPI cards. */
 export interface MigrationTotals {
   instanceTotal: number;
   managed: number;
@@ -49,7 +61,7 @@ export interface FolderCounts {
  * report any, so the cards read consistently.
  */
 export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
-  const seedKeys = [FOLDER_BUCKET, DASHBOARD_BUCKET];
+  const seedKeys = [FOLDER_BUCKET, DASHBOARD_BUCKET, PLAYLIST_BUCKET];
 
   const map = new Map<string, GroupBreakdown>();
   for (const group of seedKeys) {
@@ -92,18 +104,29 @@ export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
   return Array.from(map.values());
 }
 
-export function aggregateDashboardTotals(breakdowns: GroupBreakdown[]): MigrationTotals {
-  // The Migrate to GitOps page is dashboard-centric: the KPI row reports
-  // dashboard counts (folders are tracked separately by the gauge card). Skip
-  // non-dashboard groups so totals don't double-count.
-  const dashboardBreakdowns = breakdowns.filter((b) => DASHBOARD_GROUPS.includes(b.group));
+/**
+ * Sum the total and managed counts across the breakdowns whose group is in
+ * `groups`. Managed means anything already owned by a manager (Git Sync or
+ * another tool), so it isn't a migration candidate.
+ */
+function aggregateTotals(breakdowns: GroupBreakdown[], groups: string[]): MigrationTotals {
   let instanceTotal = 0;
   let managed = 0;
-  dashboardBreakdowns.forEach((b) => {
-    instanceTotal += b.total;
-    managed += b.gitSyncCount + b.otherManagedCount;
-  });
+  breakdowns
+    .filter((b) => groups.includes(b.group))
+    .forEach((b) => {
+      instanceTotal += b.total;
+      managed += b.gitSyncCount + b.otherManagedCount;
+    });
   return { instanceTotal, managed };
+}
+
+export function aggregateDashboardTotals(breakdowns: GroupBreakdown[]): MigrationTotals {
+  return aggregateTotals(breakdowns, DASHBOARD_GROUPS);
+}
+
+export function aggregatePlaylistTotals(breakdowns: GroupBreakdown[]): MigrationTotals {
+  return aggregateTotals(breakdowns, PLAYLIST_GROUPS);
 }
 
 /** Managed and total folder counts, derived from the folder breakdown. */

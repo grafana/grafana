@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	notifymerge "github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/util"
@@ -55,19 +56,19 @@ func TestGetTemplates(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := []v1.TemplateGroup{
-			v1.NewTemplateGroup(
+			v1.NewTemplateGroup("",
 				"template1",
 				"test1",
 				v1.TemplateKindGrafana,
 				models.ProvenanceAPI,
 			),
-			v1.NewTemplateGroup(
+			v1.NewTemplateGroup("",
 				"template2",
 				"test2",
 				v1.TemplateKindGrafana,
 				models.ProvenanceFile,
 			),
-			v1.NewTemplateGroup(
+			v1.NewTemplateGroup("",
 				"template3",
 				"test3",
 				v1.TemplateKindGrafana,
@@ -111,32 +112,47 @@ func TestGetTemplates(t *testing.T) {
 		result, err := sut.GetTemplates(context.Background(), orgID)
 		require.NoError(t, err)
 
+		// Compute the UIDs that MergeTemplates assigns for imported templates so the expected
+		// values stay in sync with the production UID scheme without hardcoding hash strings.
+		extraCfg := revision.Config.ExtraConfigs[0]
+		importedMerged, _, _, err := notifymerge.MergeTemplates(revision.Config.Templates, extraCfg.TemplateFiles, extraCfg.Identifier)
+		require.NoError(t, err)
+		importedUID := func(name string) v1.ResourceUID {
+			for uid, tmpl := range importedMerged {
+				if tmpl.Kind == v1.TemplateKindMimir && tmpl.Title == name {
+					return uid
+				}
+			}
+			t.Fatalf("imported template %q not found in merged map", name)
+			return ""
+		}
+
 		expected := []v1.TemplateGroup{
-			v1.NewTemplateGroup(
+			v1.NewTemplateGroup("",
 				"template1",
 				"test1",
 				v1.TemplateKindGrafana,
 				models.ProvenanceAPI,
 			),
-			v1.NewTemplateGroup(
+			v1.NewTemplateGroup("",
 				"template2",
 				"test2",
 				v1.TemplateKindGrafana,
 				models.ProvenanceFile,
 			),
-			v1.NewTemplateGroup(
+			v1.NewTemplateGroup("",
 				"template3",
 				"test3",
 				v1.TemplateKindGrafana,
 				models.ProvenanceNone,
 			),
-			v1.NewTemplateGroup(
+			v1.NewTemplateGroup(importedUID("template1"),
 				"template1",
 				"imported-test1",
 				v1.TemplateKindMimir,
 				models.ProvenanceConvertedPrometheus,
 			),
-			v1.NewTemplateGroup(
+			v1.NewTemplateGroup(importedUID("template4"),
 				"template4",
 				"imported-test4",
 				v1.TemplateKindMimir,
@@ -217,7 +233,7 @@ func TestGetTemplate(t *testing.T) {
 		result, err := sut.GetTemplate(context.Background(), orgID, templateName)
 		require.NoError(t, err)
 
-		expected := v1.NewTemplateGroup(
+		expected := v1.NewTemplateGroup("",
 			templateName,
 			templateContent,
 			v1.TemplateKindGrafana,
@@ -253,7 +269,7 @@ func TestGetTemplate(t *testing.T) {
 		result, err := sut.GetTemplate(context.Background(), orgID, string(v1.TemplateUID(v1.TemplateKindGrafana, templateName)))
 		require.NoError(t, err)
 
-		expected := v1.NewTemplateGroup(
+		expected := v1.NewTemplateGroup("",
 			templateName,
 			templateContent,
 			v1.TemplateKindGrafana,
@@ -269,7 +285,19 @@ func TestGetTemplate(t *testing.T) {
 			return revision, nil
 		}
 
-		uid := string(v1.TemplateUID(v1.TemplateKindMimir, importedTemplateName))
+		// Compute the UID that MergeTemplates assigns so the lookup matches production.
+		extraCfg := revision.Config.ExtraConfigs[0]
+		importedMerged, _, _, err := notifymerge.MergeTemplates(revision.Config.Templates, extraCfg.TemplateFiles, extraCfg.Identifier)
+		require.NoError(t, err)
+		var uid string
+		for u, tmpl := range importedMerged {
+			if tmpl.Kind == v1.TemplateKindMimir && tmpl.Title == importedTemplateName {
+				uid = string(u)
+				break
+			}
+		}
+		require.NotEmpty(t, uid, "imported template UID should not be empty")
+
 		t.Run("should be not found without flag enabled", func(t *testing.T) {
 			_, err := sut.GetTemplate(context.Background(), orgID, uid)
 			require.ErrorIs(t, err, ErrTemplateNotFound)
@@ -278,7 +306,7 @@ func TestGetTemplate(t *testing.T) {
 		result, err := sut.WithIncludeImported().GetTemplate(context.Background(), orgID, uid)
 		require.NoError(t, err)
 
-		expected := v1.NewTemplateGroup(
+		expected := v1.NewTemplateGroup(v1.ResourceUID(uid),
 			importedTemplateName,
 			importedTemplateContent,
 			v1.TemplateKindMimir,
@@ -335,7 +363,7 @@ func TestUpsertTemplate(t *testing.T) {
 	templateName := "template1"
 	currentTemplateContent := "test1"
 	amConfigToken := util.GenerateShortUID()
-	currentTemplate := v1.NewTemplateGroup(templateName, currentTemplateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
+	currentTemplate := v1.NewTemplateGroup("", templateName, currentTemplateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
 			Config: &v1.AMConfigV1{
@@ -377,7 +405,7 @@ func TestUpsertTemplate(t *testing.T) {
 		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		require.Equal(t, v1.NewTemplateGroup(
+		require.Equal(t, v1.NewTemplateGroup("",
 			tmpl.Title,
 			tmpl.Content,
 			tmpl.Kind,
@@ -421,7 +449,7 @@ func TestUpsertTemplate(t *testing.T) {
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.NoError(t, err)
-			assert.Equal(t, v1.NewTemplateGroup(
+			assert.Equal(t, v1.NewTemplateGroup("",
 				tmpl.Title,
 				tmpl.Content,
 				tmpl.Kind,
@@ -459,7 +487,7 @@ func TestUpsertTemplate(t *testing.T) {
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.NoError(t, err)
-			assert.Equal(t, v1.NewTemplateGroup(
+			assert.Equal(t, v1.NewTemplateGroup("",
 				tmpl.Title,
 				tmpl.Content,
 				v1.TemplateKindGrafana,
@@ -496,7 +524,7 @@ func TestUpsertTemplate(t *testing.T) {
 		result, _ := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		expectedContent := fmt.Sprintf("{{ define \"%s\" }}\n  content\n{{ end }}", templateName)
-		require.Equal(t, v1.NewTemplateGroup(
+		require.Equal(t, v1.NewTemplateGroup("",
 			tmpl.Title,
 			expectedContent,
 			tmpl.Kind,
@@ -750,7 +778,7 @@ func TestCreateTemplate(t *testing.T) {
 		result, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		require.Equal(t, v1.NewTemplateGroup(
+		require.Equal(t, v1.NewTemplateGroup("",
 			tmpl.Title,
 			tmpl.Content,
 			tmpl.Kind,
@@ -978,7 +1006,7 @@ func TestUpdateTemplate(t *testing.T) {
 				result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 				require.NoError(t, err)
-				assert.Equal(t, v1.NewTemplateGroup(
+				assert.Equal(t, v1.NewTemplateGroup("",
 					tmpl.Title,
 					tmpl.Content,
 					tmpl.Kind,
@@ -1007,7 +1035,7 @@ func TestUpdateTemplate(t *testing.T) {
 				result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 				require.NoError(t, err)
-				assert.Equal(t, v1.NewTemplateGroup(
+				assert.Equal(t, v1.NewTemplateGroup("",
 					tmpl.Title,
 					tmpl.Content,
 					tmpl.Kind,
@@ -1043,7 +1071,7 @@ func TestUpdateTemplate(t *testing.T) {
 		result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		assert.Equal(t, v1.NewTemplateGroup(
+		assert.Equal(t, v1.NewTemplateGroup("",
 			tmpl.Title,
 			tmpl.Content,
 			tmpl.Kind,
@@ -1260,7 +1288,7 @@ func TestDeleteTemplate(t *testing.T) {
 	orgID := int64(1)
 	templateName := "template1"
 	templateContent := "test-1"
-	tmplToDelete := v1.NewTemplateGroup(templateName, templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
+	tmplToDelete := v1.NewTemplateGroup("", templateName, templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
 	templateVersion := tmplToDelete.Version
 	amConfigToken := util.GenerateShortUID()
 	revision := func() *legacy_storage.ConfigRevision {
@@ -1347,9 +1375,9 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 
 	t.Run("should look by name before uid", func(t *testing.T) {
-		expectedToKeep := v1.NewTemplateGroup(templateName, templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
+		expectedToKeep := v1.NewTemplateGroup("", templateName, templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
 		// This template has a name that is the UID of expectedToKeep.
-		expectedToDelete := v1.NewTemplateGroup(string(v1.TemplateUID(v1.TemplateKindGrafana, templateName)), templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
+		expectedToDelete := v1.NewTemplateGroup("", string(v1.TemplateUID(v1.TemplateKindGrafana, templateName)), templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
@@ -1513,12 +1541,12 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 	orgID := int64(1)
 	amConfigToken := util.GenerateShortUID()
 
-	newTmpl := v1.NewTemplateGroup("new-template", "{{ define \"test\"}} test {{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	newTmpl := v1.NewTemplateGroup("", "new-template", "{{ define \"test\"}} test {{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
 
 	revision := func(existingCount int) *legacy_storage.ConfigRevision {
 		templates := make(map[v1.ResourceUID]v1.TemplateGroup, existingCount)
 		for i := 0; i < existingCount; i++ {
-			tmpl := v1.NewTemplateGroup(fmt.Sprintf("existing-%d", i), "content", v1.TemplateKindGrafana, models.ProvenanceNone)
+			tmpl := v1.NewTemplateGroup("", fmt.Sprintf("existing-%d", i), "content", v1.TemplateKindGrafana, models.ProvenanceNone)
 			templates[tmpl.UID] = tmpl
 		}
 		return &legacy_storage.ConfigRevision{
@@ -1716,7 +1744,7 @@ func (m *mockLimitsProvider) GetLimits(_ context.Context) (*client.TenantLimits,
 func generateTemplates(templates map[string]string, kind v1.TemplateKind) map[v1.ResourceUID]v1.TemplateGroup {
 	templatesUIDs := make(map[v1.ResourceUID]v1.TemplateGroup, len(templates))
 	for name, content := range templates {
-		tmpl := v1.NewTemplateGroup(name, content, kind, models.ProvenanceNone)
+		tmpl := v1.NewTemplateGroup("", name, content, kind, models.ProvenanceNone)
 		templatesUIDs[tmpl.UID] = tmpl
 	}
 	return templatesUIDs

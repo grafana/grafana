@@ -1,6 +1,6 @@
 {
   "name": "@mapbox/jsonlint-lines-primitives",
-  "version": "2.0.2-grafana.0",
+  "version": "13.2.0-pre",
   "description": "Vendored fork of @mapbox/jsonlint-lines-primitives — see VENDORED.md",
   "license": "MIT",
   "private": true,
