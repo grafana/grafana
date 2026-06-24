@@ -79,7 +79,7 @@ Each filter has a key and a comma-separated list of matching values. Use the [fi
 
 ### Select attributes
 
-A query returns one attribute per instance. You can select any attribute that has a single value and isn't an object or array, also known as a flat attribute:
+A query returns one attribute per instance. You can select any attribute that has a single value and isn't an object or array, also known as a flat attribute. These attributes mirror the fields of the AWS EC2 [`Instance`](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_Instance.html) object, where you can find a definition of each one. Because the available attributes track the AWS API, the following list might not be exhaustive:
 
 - `AmiLaunchIndex`
 - `Architecture`

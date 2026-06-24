@@ -144,7 +144,12 @@ To log the `@xrayTraceId`, refer to the [AWS Application Signals documentation](
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Private data source connect** | Establishes a private, secured connection between a Grafana Cloud stack and data sources within a private network. Use the drop-down to locate the PDC URL. For setup instructions, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc). Click **Manage private data source connect** to open your PDC connection page and view your configuration details. |
 
-After configuring your Amazon CloudWatch data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
+After configuring your Amazon CloudWatch data source options, click **Save & test** at the bottom to test the connection. When the test succeeds, Grafana confirms that it reached both CloudWatch APIs:
+
+```
+1. Successfully queried the CloudWatch metrics API.
+2. Successfully queried the CloudWatch logs API.
+```
 
 {{< figure src="/media/docs/CloudWatch/CloudWatch-config-success-message.png" >}}
 
