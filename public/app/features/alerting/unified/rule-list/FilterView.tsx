@@ -16,6 +16,7 @@ import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
+import { useGroupDisplayParams } from './groupDisplay';
 import {
   type GrafanaRuleWithOrigin,
   type PromRuleWithOrigin,
@@ -52,6 +53,11 @@ type KeyedRuleWithOrigin = RuleWithOrigin & {
  */
 function FilterViewResults({ filterState }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
+
+  // Option 1 (group rows) isn't applied here: the merged multi-source stream isn't group-contiguous.
+  // The per-row pill works regardless, so `pill` and `merged` both fall back to it in this view.
+  const { mode } = useGroupDisplayParams();
+  const groupAsPill = mode === 'pill' || mode === 'merged';
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
   const getFilteredRulesIterator = useFilteredRulesIteratorProvider();
@@ -160,6 +166,8 @@ function FilterViewResults({ filterState }: FilterViewProps) {
                   groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}
                   showLocation={true}
+                  groupAsPill={groupAsPill}
+                  interval={ruleWithOrigin.interval}
                 />
               );
             case 'datasource':

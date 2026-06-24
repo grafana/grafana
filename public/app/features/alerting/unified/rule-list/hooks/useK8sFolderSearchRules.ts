@@ -32,7 +32,9 @@ export function useK8sFolderSearchRules(
   folderUid: string,
   folderTitle: string,
   groupFilter?: string,
-  ruleFilter?: K8sRuleFilter
+  ruleFilter?: K8sRuleFilter,
+  // When true, request `sort=group` so rules of the same group arrive contiguously (Option 1).
+  sortByGroup = false
 ): UseK8sFolderSearchRulesResult {
   const [triggerSearch] = useLazyGetSearchRulesQuery();
 
@@ -43,7 +45,7 @@ export function useK8sFolderSearchRules(
   const [error, setError] = useState<unknown>(undefined);
   const didInit = useRef(false);
 
-  const baseArgs = buildFolderSearchArgs(folderUid, groupFilter, ruleFilter);
+  const baseArgs = buildFolderSearchArgs(folderUid, groupFilter, ruleFilter, sortByGroup);
 
   const fetchPage = useCallback(
     async (token: string | undefined) => {
@@ -66,7 +68,7 @@ export function useK8sFolderSearchRules(
     },
     // baseArgs is derived from the same inputs as the reset effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [triggerSearch, folderTitle, folderUid, groupFilter, ruleFilter]
+    [triggerSearch, folderTitle, folderUid, groupFilter, ruleFilter, sortByGroup]
   );
 
   // Reset + eager first page whenever the folder or filter changes.
@@ -81,7 +83,7 @@ export function useK8sFolderSearchRules(
     didInit.current = true;
     fetchPage(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folderUid, groupFilter, ruleFilter]);
+  }, [folderUid, groupFilter, ruleFilter, sortByGroup]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || isLoading) {
@@ -112,16 +114,18 @@ function mapHit(hit: RuleSearchHit, folderTitle: string): GrafanaRuleWithOrigin 
     },
     namespaceName: folderTitle,
     origin: 'grafana',
+    interval: hit.interval,
   };
 }
 
 function buildFolderSearchArgs(
   folderUid: string,
   groupFilter?: string,
-  ruleFilter?: K8sRuleFilter
+  ruleFilter?: K8sRuleFilter,
+  sortByGroup = false
 ): GetSearchRulesApiArg {
   // Single-value filters here, so the generated `string`-typed args fit without coercion.
-  const args: GetSearchRulesApiArg = { folders: folderUid, sort: 'title' };
+  const args: GetSearchRulesApiArg = { folders: folderUid, sort: sortByGroup ? 'group' : 'title' };
 
   if (groupFilter?.trim()) {
     args.groups = groupFilter.trim();

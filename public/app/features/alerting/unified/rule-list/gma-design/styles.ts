@@ -52,6 +52,72 @@ export const getRuleDesignStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 
+  // Container for the group-rows layout (Option 1). Mirrors ListSection's groupItemsWrapper:
+  // the indentation is applied per element type via descendant selectors rather than a flat
+  // paddingLeft, so group headers and rules nested inside a group line up correctly.
+  groupRulesContainer: css({
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+
+    // Continuous folder guide line alongside every direct child (groups + ungrouped rules).
+    '&:before': {
+      content: "''",
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: theme.spacing(2.5),
+      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    },
+
+    // Direct rule rows are ungrouped rules at the folder level. Align them with group headers.
+    '> li[role=treeitem]': {
+      listStyle: 'none',
+      paddingLeft: theme.spacing(4),
+    },
+
+    // Rules nested inside an expanded group: deeper indentation + per-row guide line.
+    'div[role=treeitem] li[role=treeitem]': {
+      listStyle: 'none',
+      position: 'relative',
+      paddingLeft: theme.spacing(6.5),
+
+      '&:before': {
+        content: "''",
+        position: 'absolute',
+        height: '100%',
+        marginLeft: theme.spacing(-1.5),
+        marginTop: theme.spacing(-1),
+        borderLeft: `solid 1px ${theme.colors.border.weak}`,
+      },
+    },
+  }),
+
+  // Inline group header (Option 1, minimal style). Aligned with ListGroup headers.
+  inlineGroupHeader: css({
+    padding: theme.spacing(1, 1, 1, 4),
+  }),
+
+  // Lightweight section label for multi-rule groups (merged mode). Quiet, non-collapsible.
+  mergedGroupLabel: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+    padding: theme.spacing(1.5, 1, 0.5, 4),
+    fontSize: 11,
+    fontWeight: 500,
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: theme.colors.text.secondary,
+  }),
+  mergedGroupCount: css({
+    color: theme.colors.text.disabled,
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontWeight: 400,
+    fontVariantNumeric: 'tabular-nums',
+  }),
+
   // ---- Rule row ----
   rule: css({
     display: 'grid',

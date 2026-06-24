@@ -30,6 +30,8 @@ export interface GrafanaRuleWithOrigin {
    */
   namespaceName: string;
   origin: 'grafana';
+  /** Group evaluation interval as a Prometheus duration (e.g. "1m"), when known from the search hit. */
+  interval?: string;
 }
 
 export interface PromRuleWithOrigin {
