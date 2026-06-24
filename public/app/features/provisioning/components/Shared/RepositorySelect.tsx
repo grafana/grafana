@@ -14,7 +14,7 @@ interface RepositorySelectProps {
   includeNoneOption?: boolean;
   /** Render the selection read-only — the value is visible but can't be changed. */
   readOnly?: boolean;
-  /** Optional field description; the rest of the field chrome (label) is shared. */
+  /** Overrides the default field description. */
   description?: string;
   id?: string;
 }
@@ -32,6 +32,13 @@ export function RepositorySelect({
   description,
   id = 'repository-select',
 }: RepositorySelectProps) {
+  const fieldDescription =
+    description ??
+    t(
+      'provisioning.repository-select.description',
+      'Save this resource to a repository instead of Grafana. The repository cannot be changed after the resource is created.'
+    );
+
   const options = useMemo<Array<ComboboxOption<string>>>(() => {
     const repoOptions = repositories.map((repo) => ({ label: repo.title || repo.name, value: repo.name }));
     // Keep a selected-but-missing repository (orphaned / inaccessible) visible so the value still renders.
@@ -53,7 +60,7 @@ export function RepositorySelect({
       noMargin
       htmlFor={id}
       label={t('provisioning.repository-select.label', 'Repository')}
-      description={description}
+      description={fieldDescription}
     >
       <Combobox
         id={id}

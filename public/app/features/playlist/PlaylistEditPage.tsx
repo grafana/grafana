@@ -61,10 +61,6 @@ export const PlaylistEditPage = () => {
         onChange={() => {}}
         includeNoneOption
         readOnly
-        description={t(
-          'playlist-edit.form.repository-description',
-          'Save this playlist to a repository instead of Grafana. The repository cannot be changed after the playlist is created.'
-        )}
       />
     ) : undefined;
 

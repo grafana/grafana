@@ -12517,7 +12517,6 @@
       "name-label": "Name",
       "name-placeholder": "Name",
       "name-required": "Name is required",
-      "repository-description": "Save this playlist to a repository instead of Grafana. The repository cannot be changed after the playlist is created.",
       "save": "Save",
       "table-delete": "Delete playlist item",
       "table-drag": "Reorder playlist item",
@@ -13571,6 +13570,7 @@
       "webhook-url": "View Webhook"
     },
     "repository-select": {
+      "description": "Save this resource to a repository instead of Grafana. The repository cannot be changed after the resource is created.",
       "label": "Repository",
       "none-option": "Grafana (no repository)"
     },
