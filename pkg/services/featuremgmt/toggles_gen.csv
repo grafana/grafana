@@ -123,7 +123,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-05-22,savedQueriesRBAC,preview,@grafana/sharing-squad,false,false,false
 2026-05-22,newSavedQueriesExperience,preview,@grafana/sharing-squad,false,false,true
-2026-05-22,newUnconfiguredPanel,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 2025-11-07,suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 2026-05-22,dashboardValidatorApp,experimental,@grafana/sharing-squad,false,false,false
