@@ -1,439 +1,1541 @@
 # Realistic seed data for the "Alert quality" tab demo.
 #
-# Per-team folders with uneven sizes (like a real org). Roughly a third of all rules are
-# fully annotated (summary + description + runbook_url) and won't appear on the Quality
-# tab; the rest are missing fields:
-#   - HIGH severity   = missing runbook_url
-#   - MEDIUM severity = has a runbook_url but missing summary and/or description
+# Per-team folders with uneven sizes. ~a third of rules are fully annotated and won't
+# appear on the Quality tab; the rest are missing fields (HIGH = missing runbook_url,
+# MEDIUM = has runbook_url but missing summary/description).
 #
-# IMPORTANT: provision this with the "Alert quality" reject toggles OFF, otherwise the
-# incomplete rules are rejected at load time (that's the enforcement working). Turn the
-# toggles on afterwards to block NEW incomplete rules.
+# Each rule queries the 'demo-prometheus' datasource (make devenv sources=prometheus)
+# with a PromQL query (refId A) and a threshold expression condition (refId C).
+#
+# Provision with the "Alert quality" reject toggles OFF (else incomplete rules are
+# rejected at load). Turn them on afterwards to block NEW incomplete rules.
 apiVersion: 1
-
-# Remove demo rules provisioned in earlier rounds so only the rules below remain.
+# Provision these rules without provenance so they stay editable in the UI (handy for
+# demoing "Fix with AI" / editing). They're still reset to file state on the next provision.
+disableProvenance: true
 deleteRules:
-  - { orgId: 1, uid: quality_mystery_cpu }
-  - { orgId: 1, uid: quality_mystery_memory }
-  - { orgId: 1, uid: quality_disk_space }
-  - { orgId: 1, uid: quality_latency_p99 }
-  - { orgId: 1, uid: quality_error_budget }
-  - { orgId: 1, uid: quality_good_http_errors }
-  - { orgId: 1, uid: quality_good_db_connections }
-  - { orgId: 1, uid: quality_payments_declined }
-  - { orgId: 1, uid: quality_payments_latency }
-  - { orgId: 1, uid: quality_payments_gateway }
-  - { orgId: 1, uid: auth_provider_down }
-  - { orgId: 1, uid: search_zero_results_rate }
-
+- orgId: 1
+  uid: quality_mystery_cpu
+- orgId: 1
+  uid: quality_mystery_memory
+- orgId: 1
+  uid: quality_disk_space
+- orgId: 1
+  uid: quality_latency_p99
+- orgId: 1
+  uid: quality_error_budget
+- orgId: 1
+  uid: quality_good_http_errors
+- orgId: 1
+  uid: quality_good_db_connections
+- orgId: 1
+  uid: quality_payments_declined
+- orgId: 1
+  uid: quality_payments_latency
+- orgId: 1
+  uid: quality_payments_gateway
+- orgId: 1
+  uid: auth_provider_down
+- orgId: 1
+  uid: search_zero_results_rate
 groups:
-  # ============================ Payments (6) ============================
-  - orgId: 1
-    name: payments
-    folder: Payments
-    interval: 1m
-    rules:
-      # COMPLETE
-      - uid: pay_decline_rate_spike
-        title: Payment decline rate spike
-        condition: A
-        data: &alwaysFiring
-          - refId: A
-            datasourceUid: "__expr__"
-            model:
-              conditions:
-                - evaluator: { params: [0], type: gt }
-                  operator: { type: and }
-                  query: { params: [A] }
-                  reducer: { type: last }
-                  type: query
-              datasource: { type: __expr__, uid: "__expr__" }
-              expression: 1==1
-              intervalMs: 1000
-              maxDataPoints: 43200
-              refId: A
-              type: math
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Decline rate above threshold for {{ $labels.region }}"
-          description: "The card decline rate exceeded the threshold for 5m. Current value: {{ $values.A }}."
-          runbook_url: "https://runbooks.example.com/payments/declines"
-        labels: { severity: critical, team: payments }
-      # COMPLETE
-      - uid: pay_gateway_unreachable
-        title: Payment gateway unreachable
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Gateway {{ $labels.gateway }} is unreachable"
-          description: "Grafana could not reach payment gateway {{ $labels.gateway }} for 5m. Transactions may be failing."
-          runbook_url: "https://runbooks.example.com/payments/gateway"
-        labels: { severity: critical, team: payments }
-      # MEDIUM (has runbook, no description)
-      - uid: pay_checkout_latency
-        title: Checkout latency degraded
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Checkout latency degraded for {{ $labels.region }}"
-          runbook_url: "https://runbooks.example.com/payments/checkout-latency"
-        labels: { severity: warning, team: payments }
-      # HIGH (summary + description, no runbook)
-      - uid: pay_refund_backlog
-        title: Refund processing backlog
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Refund backlog growing"
-          description: "Pending refunds have exceeded the backlog threshold for 5m."
-        labels: { severity: warning, team: payments }
-      # HIGH (nothing)
-      - uid: pay_settlement_delay
-        title: Settlement batch delayed
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: warning, team: payments }
-      # HIGH (nothing)
-      - uid: pay_fraud_queue_backlog
-        title: Fraud review queue backlog
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: warning, team: payments }
-
-  # ============================ Storefront (5) ============================
-  - orgId: 1
-    name: storefront
-    folder: Storefront
-    interval: 1m
-    rules:
-      # COMPLETE
-      - uid: store_5xx_error_rate
-        title: Storefront 5xx error rate
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "5xx error rate above threshold for {{ $labels.service }}"
-          description: "The storefront 5xx error rate exceeded the threshold for 5m. Current value: {{ $values.A }}."
-          runbook_url: "https://runbooks.example.com/storefront/5xx"
-        labels: { severity: critical, team: storefront }
-      # MEDIUM (has runbook, no description)
-      - uid: store_page_load_latency
-        title: Page load latency degraded
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Page load latency degraded for {{ $labels.route }}"
-          runbook_url: "https://runbooks.example.com/storefront/latency"
-        labels: { severity: warning, team: storefront }
-      # HIGH (summary + description, no runbook)
-      - uid: store_cdn_cache_miss
-        title: CDN cache miss ratio high
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "CDN cache miss ratio is high"
-          description: "Origin traffic is elevated because the CDN cache miss ratio exceeded the threshold."
-        labels: { severity: warning, team: storefront }
-      # HIGH (nothing)
-      - uid: store_cart_abandonment
-        title: Cart abandonment spike
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: warning, team: storefront }
-      # HIGH (nothing)
-      - uid: store_inventory_sync_lag
-        title: Inventory sync lag
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: warning, team: storefront }
-
-  # ============================ Platform (7) ============================
-  - orgId: 1
-    name: platform
-    folder: Platform
-    interval: 1m
-    rules:
-      # COMPLETE
-      - uid: infra_node_not_ready
-        title: Kubernetes node not ready
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Node {{ $labels.node }} is NotReady"
-          description: "Node {{ $labels.node }} has been NotReady for 5m. Workloads may be rescheduling."
-          runbook_url: "https://runbooks.example.com/platform/node-not-ready"
-        labels: { severity: critical, team: platform }
-      # COMPLETE
-      - uid: infra_cert_expiry
-        title: TLS certificate expiring soon
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Certificate for {{ $labels.domain }} expires soon"
-          description: "The TLS certificate for {{ $labels.domain }} expires in under 7 days."
-          runbook_url: "https://runbooks.example.com/platform/cert-renewal"
-        labels: { severity: warning, team: platform }
-      # MEDIUM (has runbook, no description)
-      - uid: infra_disk_pressure
-        title: Disk pressure on node
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Disk pressure on {{ $labels.node }}"
-          runbook_url: "https://runbooks.example.com/platform/disk-pressure"
-        labels: { severity: warning, team: platform }
-      # MEDIUM (has runbook, no description)
-      - uid: infra_etcd_latency
-        title: etcd request latency high
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "etcd request latency is high"
-          runbook_url: "https://runbooks.example.com/platform/etcd-latency"
-        labels: { severity: critical, team: platform }
-      # HIGH (summary + description, no runbook)
-      - uid: infra_oom_kills
-        title: Container OOM kills
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Containers are being OOM killed"
-          description: "One or more containers in {{ $labels.namespace }} have been OOM killed in the last 5m."
-        labels: { severity: warning, team: platform }
-      # HIGH (nothing)
-      - uid: infra_high_cpu
-        title: High CPU saturation
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: warning, team: platform }
-      # HIGH (nothing)
-      - uid: infra_pod_crashloop
-        title: Pods in CrashLoopBackOff
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: critical, team: platform }
-
-  # ============================ Identity (4) ============================
-  - orgId: 1
-    name: identity
-    folder: Identity
-    interval: 1m
-    rules:
-      # COMPLETE
-      - uid: auth_login_failure_spike
-        title: Login failure spike
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Login failure rate spiking"
-          description: "Failed logins exceeded the threshold for 5m, which may indicate an outage or credential-stuffing attack."
-          runbook_url: "https://runbooks.example.com/identity/login-failures"
-        labels: { severity: critical, team: identity }
-      # MEDIUM (has runbook, no description)
-      - uid: auth_token_issuance_errors
-        title: Token issuance errors
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Token issuance error rate elevated"
-          runbook_url: "https://runbooks.example.com/identity/token-errors"
-        labels: { severity: warning, team: identity }
-      # HIGH (summary + description, no runbook)
-      - uid: auth_session_store_latency
-        title: Session store latency
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Session store latency is high"
-          description: "Reads/writes to the session store have been slow for 5m, slowing authentication."
-        labels: { severity: warning, team: identity }
-      # HIGH (nothing)
-      - uid: auth_mfa_failures
-        title: MFA verification failures
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: warning, team: identity }
-
-  # ============================ Data (5) ============================
-  - orgId: 1
-    name: data
-    folder: Data
-    interval: 1m
-    rules:
-      # COMPLETE
-      - uid: data_pipeline_lag
-        title: Ingestion pipeline lag
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Ingestion pipeline lag is high"
-          description: "The ingestion pipeline is behind by more than the allowed threshold for 5m."
-          runbook_url: "https://runbooks.example.com/data/pipeline-lag"
-        labels: { severity: critical, team: data }
-      # COMPLETE
-      - uid: data_freshness_sla
-        title: Data freshness SLA breach
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Dataset {{ $labels.dataset }} is stale"
-          description: "Dataset {{ $labels.dataset }} has breached its freshness SLA for 5m."
-          runbook_url: "https://runbooks.example.com/data/freshness"
-        labels: { severity: warning, team: data }
-      # MEDIUM (has runbook, no description)
-      - uid: data_etl_failures
-        title: ETL job failures
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "ETL job {{ $labels.job }} is failing"
-          runbook_url: "https://runbooks.example.com/data/etl-failures"
-        labels: { severity: warning, team: data }
-      # HIGH (summary + description, no runbook)
-      - uid: data_event_drop_rate
-        title: Event drop rate high
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Event drop rate is high"
-          description: "The collector is dropping events above the allowed rate for 5m."
-        labels: { severity: warning, team: data }
-      # HIGH (nothing)
-      - uid: data_warehouse_query_latency
-        title: Warehouse query latency
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: warning, team: data }
-
-  # ============================ Search (4) ============================
-  - orgId: 1
-    name: search
-    folder: Search
-    interval: 1m
-    rules:
-      # COMPLETE
-      - uid: search_indexing_lag
-        title: Indexing lag high
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Search indexing lag is high"
-          description: "New documents are taking longer than the threshold to become searchable."
-          runbook_url: "https://runbooks.example.com/search/indexing-lag"
-        labels: { severity: warning, team: search }
-      # MEDIUM (has runbook, no description)
-      - uid: search_query_errors
-        title: Query error rate elevated
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Search query error rate elevated"
-          runbook_url: "https://runbooks.example.com/search/query-errors"
-        labels: { severity: warning, team: search }
-      # HIGH (summary + description, no runbook)
-      - uid: search_cluster_red
-        title: Search cluster status red
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        annotations:
-          summary: "Search cluster status is RED"
-          description: "One or more primary shards are unassigned; search results may be incomplete."
-        labels: { severity: critical, team: search }
-      # HIGH (nothing)
-      - uid: search_latency_p99
-        title: Query latency p99 high
-        condition: A
-        data: *alwaysFiring
-        noDataState: NoData
-        execErrState: Alerting
-        for: 5m
-        labels: { severity: warning, team: search }
+- orgId: 1
+  name: payments
+  folder: Payments
+  interval: 1m
+  rules:
+  - uid: pay_decline_rate_spike
+    title: Payment decline rate spike
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(payment_attempts_total{status="declined"}[5m])) / sum(rate(payment_attempts_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.1
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Decline rate above threshold for {{ $labels.region }}
+      description: 'The card decline rate exceeded the threshold for 5m. Current value: {{ $values.A }}.'
+      runbook_url: https://runbooks.example.com/payments/declines
+    labels:
+      severity: critical
+      team: payments
+  - uid: pay_gateway_unreachable
+    title: Payment gateway unreachable
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: min(up{job="payment-gateway"})
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: lt
+            params:
+            - 1
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Gateway {{ $labels.gateway }} is unreachable
+      description: Grafana could not reach payment gateway {{ $labels.gateway }} for 5m. Transactions may be failing.
+      runbook_url: https://runbooks.example.com/payments/gateway
+    labels:
+      severity: critical
+      team: payments
+  - uid: pay_checkout_latency
+    title: Checkout latency degraded
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: histogram_quantile(0.95, sum(rate(checkout_request_duration_seconds_bucket[5m])) by (le))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 2
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Checkout latency degraded for {{ $labels.region }}
+      runbook_url: https://runbooks.example.com/payments/checkout-latency
+    labels:
+      severity: warning
+      team: payments
+  - uid: pay_refund_backlog
+    title: Refund processing backlog
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(refunds_pending)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 100
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Refund backlog growing
+      description: Pending refunds have exceeded the backlog threshold for 5m.
+    labels:
+      severity: warning
+      team: payments
+  - uid: pay_settlement_delay
+    title: Settlement batch delayed
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: time() - max(settlement_batch_last_success_timestamp_seconds)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 3600
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: warning
+      team: payments
+  - uid: pay_fraud_queue_backlog
+    title: Fraud review queue backlog
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(fraud_review_queue_size)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 500
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: warning
+      team: payments
+- orgId: 1
+  name: storefront
+  folder: Storefront
+  interval: 1m
+  rules:
+  - uid: store_5xx_error_rate
+    title: Storefront 5xx error rate
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(http_requests_total{job="storefront",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="storefront"}[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.05
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: 5xx error rate above threshold for {{ $labels.service }}
+      description: 'The storefront 5xx error rate exceeded the threshold for 5m. Current value: {{ $values.A }}.'
+      runbook_url: https://runbooks.example.com/storefront/5xx
+    labels:
+      severity: critical
+      team: storefront
+  - uid: store_page_load_latency
+    title: Page load latency degraded
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: histogram_quantile(0.95, sum(rate(page_load_duration_seconds_bucket[5m])) by (le))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 3
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Page load latency degraded for {{ $labels.route }}
+      runbook_url: https://runbooks.example.com/storefront/latency
+    labels:
+      severity: warning
+      team: storefront
+  - uid: store_cdn_cache_miss
+    title: CDN cache miss ratio high
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(cdn_cache_misses_total[5m])) / sum(rate(cdn_requests_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.3
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: CDN cache miss ratio is high
+      description: Origin traffic is elevated because the CDN cache miss ratio exceeded the threshold.
+    labels:
+      severity: warning
+      team: storefront
+  - uid: store_cart_abandonment
+    title: Cart abandonment spike
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(cart_abandoned_total[5m])) / sum(rate(cart_created_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.7
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: warning
+      team: storefront
+  - uid: store_inventory_sync_lag
+    title: Inventory sync lag
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: time() - max(inventory_last_sync_timestamp_seconds)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 600
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: warning
+      team: storefront
+- orgId: 1
+  name: platform
+  folder: Platform
+  interval: 1m
+  rules:
+  - uid: infra_node_not_ready
+    title: Kubernetes node not ready
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(kube_node_status_condition{condition="Ready",status="true"} == 0)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Node {{ $labels.node }} is NotReady
+      description: Node {{ $labels.node }} has been NotReady for 5m. Workloads may be rescheduling.
+      runbook_url: https://runbooks.example.com/platform/node-not-ready
+    labels:
+      severity: critical
+      team: platform
+  - uid: infra_cert_expiry
+    title: TLS certificate expiring soon
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: min(probe_ssl_earliest_cert_expiry - time())
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: lt
+            params:
+            - 604800
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Certificate for {{ $labels.domain }} expires soon
+      description: The TLS certificate for {{ $labels.domain }} expires in under 7 days.
+      runbook_url: https://runbooks.example.com/platform/cert-renewal
+    labels:
+      severity: warning
+      team: platform
+  - uid: infra_disk_pressure
+    title: Disk pressure on node
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: max(1 - node_filesystem_avail_bytes / node_filesystem_size_bytes)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.9
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Disk pressure on {{ $labels.node }}
+      runbook_url: https://runbooks.example.com/platform/disk-pressure
+    labels:
+      severity: warning
+      team: platform
+  - uid: infra_etcd_latency
+    title: etcd request latency high
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: histogram_quantile(0.99, sum(rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m])) by (le))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.5
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: etcd request latency is high
+      runbook_url: https://runbooks.example.com/platform/etcd-latency
+    labels:
+      severity: critical
+      team: platform
+  - uid: infra_oom_kills
+    title: Container OOM kills
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(container_oom_events_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Containers are being OOM killed
+      description: One or more containers in {{ $labels.namespace }} have been OOM killed in the last 5m.
+    labels:
+      severity: warning
+      team: platform
+  - uid: infra_high_cpu
+    title: High CPU saturation
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: max(instance:node_cpu_utilisation:rate5m)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.9
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: warning
+      team: platform
+  - uid: infra_pod_crashloop
+    title: Pods in CrashLoopBackOff
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(kube_pod_container_status_restarts_total[15m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: critical
+      team: platform
+- orgId: 1
+  name: identity
+  folder: Identity
+  interval: 1m
+  rules:
+  - uid: auth_login_failure_spike
+    title: Login failure spike
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(auth_login_failures_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 50
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Login failure rate spiking
+      description: Failed logins exceeded the threshold for 5m, which may indicate an outage or credential-stuffing attack.
+      runbook_url: https://runbooks.example.com/identity/login-failures
+    labels:
+      severity: critical
+      team: identity
+  - uid: auth_token_issuance_errors
+    title: Token issuance errors
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(auth_token_issuance_errors_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 1
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Token issuance error rate elevated
+      runbook_url: https://runbooks.example.com/identity/token-errors
+    labels:
+      severity: warning
+      team: identity
+  - uid: auth_session_store_latency
+    title: Session store latency
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: histogram_quantile(0.95, sum(rate(session_store_op_duration_seconds_bucket[5m])) by (le))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.2
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Session store latency is high
+      description: Reads/writes to the session store have been slow for 5m, slowing authentication.
+    labels:
+      severity: warning
+      team: identity
+  - uid: auth_mfa_failures
+    title: MFA verification failures
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(auth_mfa_failures_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 20
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: warning
+      team: identity
+- orgId: 1
+  name: data
+  folder: Data
+  interval: 1m
+  rules:
+  - uid: data_pipeline_lag
+    title: Ingestion pipeline lag
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: max(ingestion_pipeline_lag_seconds)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 300
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Ingestion pipeline lag is high
+      description: The ingestion pipeline is behind by more than the allowed threshold for 5m.
+      runbook_url: https://runbooks.example.com/data/pipeline-lag
+    labels:
+      severity: critical
+      team: data
+  - uid: data_freshness_sla
+    title: Data freshness SLA breach
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: time() - max(dataset_last_updated_timestamp_seconds)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 1800
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Dataset {{ $labels.dataset }} is stale
+      description: Dataset {{ $labels.dataset }} has breached its freshness SLA for 5m.
+      runbook_url: https://runbooks.example.com/data/freshness
+    labels:
+      severity: warning
+      team: data
+  - uid: data_etl_failures
+    title: ETL job failures
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(etl_job_failures_total[15m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: ETL job {{ $labels.job }} is failing
+      runbook_url: https://runbooks.example.com/data/etl-failures
+    labels:
+      severity: warning
+      team: data
+  - uid: data_event_drop_rate
+    title: Event drop rate high
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(collector_events_dropped_total[5m])) / sum(rate(collector_events_received_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.01
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Event drop rate is high
+      description: The collector is dropping events above the allowed rate for 5m.
+    labels:
+      severity: warning
+      team: data
+  - uid: data_warehouse_query_latency
+    title: Warehouse query latency
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: histogram_quantile(0.95, sum(rate(warehouse_query_duration_seconds_bucket[5m])) by (le))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 30
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: warning
+      team: data
+- orgId: 1
+  name: search
+  folder: Search
+  interval: 1m
+  rules:
+  - uid: search_indexing_lag
+    title: Indexing lag high
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: max(search_indexing_lag_seconds)
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 120
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Search indexing lag is high
+      description: New documents are taking longer than the threshold to become searchable.
+      runbook_url: https://runbooks.example.com/search/indexing-lag
+    labels:
+      severity: warning
+      team: search
+  - uid: search_query_errors
+    title: Query error rate elevated
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: sum(rate(search_query_errors_total[5m])) / sum(rate(search_queries_total[5m]))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.02
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Search query error rate elevated
+      runbook_url: https://runbooks.example.com/search/query-errors
+    labels:
+      severity: warning
+      team: search
+  - uid: search_cluster_red
+    title: Search cluster status red
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: max(elasticsearch_cluster_health_status{color="red"})
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    annotations:
+      summary: Search cluster status is RED
+      description: One or more primary shards are unassigned; search results may be incomplete.
+    labels:
+      severity: critical
+      team: search
+  - uid: search_latency_p99
+    title: Query latency p99 high
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: demo-prometheus
+      model:
+        refId: A
+        instant: true
+        range: false
+        editorMode: code
+        expr: histogram_quantile(0.99, sum(rate(search_query_duration_seconds_bucket[5m])) by (le))
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: prometheus
+          uid: demo-prometheus
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: A
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 1
+        intervalMs: 1000
+        maxDataPoints: 43200
+        datasource:
+          type: __expr__
+          uid: __expr__
+    noDataState: NoData
+    execErrState: Alerting
+    for: 5m
+    labels:
+      severity: warning
+      team: search
