@@ -103,12 +103,17 @@ flowchart LR
 
 ## Published product docs
 
-Hackathon product documentation lives in the official docs tree (for deploy preview):
+Hackathon features are documented in the existing product doc trees:
 
-| Product              | Path                                                     |
-| -------------------- | -------------------------------------------------------- |
-| **Grafana Alerting** | `docs/sources/alerting/mystery-alert/`                   |
-| **Grafana IRM**      | `irm/docs/sources/irm/mystery-alert/` (grafana/irm repo) |
+| Product              | Feature                          | Path                                                                                         |
+| -------------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Grafana Alerting** | Required & generated annotations | `docs/sources/alerting/alerting-rules/generate-required-annotations.md`                      |
+| **Grafana Alerting** | Explain alert instances          | `docs/sources/alerting/monitor-status/explain-alert-instances.md`                          |
+| **Grafana Alerting** | Find under-documented alerts     | `docs/sources/alerting/alerting-rules/find-under-documented-alerts.md`                       |
+| **Grafana IRM**      | Alert usefulness check-in        | `irm/docs/sources/irm/manage-incidents/resolve-and-learn/alert-usefulness-check-in.md`      |
+| **Grafana IRM**      | Incident context for alerts      | `irm/docs/sources/irm/respond-to-alerts/incident-context-for-alerts.md`                      |
+
+Existing pages updated with cross-links: `create-grafana-managed-rule.md`, `annotation-label.md`.
 
 Open PRs on branch `hackathon/mystery-alert` in each repo to get deploy previews.
 

@@ -170,3 +170,7 @@ Consider scaling the server's resources and investigating bottlenecks.
 ```
 
 Like labels, annotations can use a [template](ref:templates) to include dynamic data from queries.
+
+{{< admonition type="note" >}}
+Grafana-managed alert rules created in the UI now require `summary` and `description`. You can generate both with Grafana Assistant on save. Refer to [Require and generate annotations](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/generate-required-annotations/).
+{{< /admonition >}}

@@ -125,6 +125,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
+  generate-required-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/generate-required-annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/generate-required-annotations/
   tutorials:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/tutorials/
@@ -324,11 +329,15 @@ Annotations are included by default in notification messages, and can use text o
 
 Grafana provides several optional annotations.
 
-1. Optional: Add a summary.
+{{< admonition type="note" >}}
+Grafana-managed alert rules now require **Summary** and **Description** annotations in the UI. You can also generate both with Grafana Assistant on save. Refer to [Require and generate annotations](ref:generate-required-annotations).
+{{< /admonition >}}
+
+1. Add a summary.
 
    Short summary of what happened and why.
 
-1. Optional: Add a description.
+1. Add a description.
 
    Description of what the alert rule does.
 
