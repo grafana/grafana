@@ -26,6 +26,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/explain-alert-query/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/explain-alert-query/
+  search-related-context:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/search-related-context/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/search-related-context/
 ---
 
 {{< docs/public-preview product="Find under-documented alerts" >}}
@@ -49,4 +54,4 @@ The list shows only rules that need better notification context.
 1. Review and edit the generated **Summary** and **Description**.
 1. Click **Save rule**.
 
-For a single rule during creation, refer to [Require and autofill annotations](ref:generate-required-annotations). To interpret the query first, use [Explain alert queries](ref:explain-alert-query).
+For a single rule during creation, refer to [Require and autofill annotations](ref:generate-required-annotations). When triaging firing instances, use [Search for related context](ref:search-related-context).

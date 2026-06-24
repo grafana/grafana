@@ -105,13 +105,14 @@ flowchart LR
 
 Hackathon features are documented in the existing product doc trees:
 
-| Product              | Feature                         | Path                                                                                   |
-| -------------------- | ------------------------------- | -------------------------------------------------------------------------------------- |
-| **Grafana Alerting** | Required & autofill annotations | `docs/sources/alerting/alerting-rules/generate-required-annotations.md`                |
-| **Grafana Alerting** | Explain alert queries           | `docs/sources/alerting/alerting-rules/explain-alert-query.md`                          |
-| **Grafana Alerting** | Find under-documented alerts    | `docs/sources/alerting/alerting-rules/find-under-documented-alerts.md`                 |
-| **Grafana IRM**      | Alert usefulness check-in       | `irm/docs/sources/irm/manage-incidents/resolve-and-learn/alert-usefulness-check-in.md` |
-| **Grafana IRM**      | Incident context for alerts     | `irm/docs/sources/irm/respond-to-alerts/incident-context-for-alerts.md`                |
+| Product              | Feature                           | Path                                                                                   |
+| -------------------- | --------------------------------- | -------------------------------------------------------------------------------------- |
+| **Grafana Alerting** | Required & autofill annotations   | `docs/sources/alerting/alerting-rules/generate-required-annotations.md`                |
+| **Grafana Alerting** | Explain alert queries (rule form) | `docs/sources/alerting/alerting-rules/explain-alert-query.md`                          |
+| **Grafana Alerting** | Search for related context        | `docs/sources/alerting/monitor-status/search-related-context.md`                       |
+| **Grafana Alerting** | Find under-documented alerts      | `docs/sources/alerting/alerting-rules/find-under-documented-alerts.md`                 |
+| **Grafana IRM**      | Alert usefulness check-in         | `irm/docs/sources/irm/manage-incidents/resolve-and-learn/alert-usefulness-check-in.md` |
+| **Grafana IRM**      | Incident context for alerts       | `irm/docs/sources/irm/respond-to-alerts/incident-context-for-alerts.md`                |
 
 Existing pages updated with cross-links: `create-grafana-managed-rule.md`, `annotation-label.md`.
 

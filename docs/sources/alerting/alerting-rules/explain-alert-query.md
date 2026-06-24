@@ -24,9 +24,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
-  incident-context-for-alerts:
+  search-related-context:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/search-related-context/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/irm/respond-to-alerts/incident-context-for-alerts/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/search-related-context/
+  alerts-page:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/alerts-page/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/alerts-page/
 ---
 
 {{< docs/public-preview product="Explain alert queries" >}}
@@ -53,10 +60,6 @@ Explain helps you validate the query logic during rule authoring. When you are r
 
 Refer to [Require and autofill annotations](ref:generate-required-annotations).
 
-## Assistant inputs
-
-Explain uses the alert rule query, alert condition, labels, and evaluation settings. It may also use:
-
-- Similar alerts with existing summaries and descriptions
-- Notification history for the rule
-- [IRM incident context](/docs/grafana-cloud/alerting-and-irm/irm/respond-to-alerts/incident-context-for-alerts/) for rules linked to past incidents
+{{< admonition type="note" >}}
+To find related firing notifications when triaging an instance on the [Alerts page](ref:alerts-page), use [Search for related context](ref:search-related-context). That feature searches notification history by correlation labels — it is separate from the Explain toggle in the alert rule form.
+{{< /admonition >}}
