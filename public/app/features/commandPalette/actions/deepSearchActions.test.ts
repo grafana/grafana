@@ -33,8 +33,8 @@ describe('groupDeepSearchResults', () => {
   it('groups panel hits into one entry per dashboard', () => {
     const grouped = groupDeepSearchResults([
       panelResult({ content: 'p99 latency', score: 0.1 }),
-      panelResult({ content: 'p50 latency', score: 0.2 }),
-      panelResult({ dashboardUid: 'dash-2', dashboardTitle: 'Checkout', content: 'checkout errors', score: 0.15 }),
+      panelResult({ content: 'p50 latency', score: 0.1 }),
+      panelResult({ dashboardUid: 'dash-2', dashboardTitle: 'Checkout', content: 'checkout errors', score: 0.1 }),
     ]);
 
     expect(grouped).toHaveLength(2);
@@ -48,49 +48,86 @@ describe('groupDeepSearchResults', () => {
     });
   });
 
-  it('ranks by matched panel count, then by best score', () => {
+  it('keeps dashboards in backend order (first appearance of each dashboard)', () => {
     const grouped = groupDeepSearchResults([
-      // dash-1: 1 hit with the single best score
-      panelResult({ dashboardUid: 'dash-1', score: 0.05 }),
-      // dash-2 and dash-3: 2 hits each; dash-3 has the better best score
-      panelResult({ dashboardUid: 'dash-2', score: 0.2 }),
-      panelResult({ dashboardUid: 'dash-2', score: 0.4 }),
+      // Uniform scores so the average filter keeps everything — this isolates ordering
+      panelResult({ dashboardUid: 'dash-2', score: 0.1 }),
+      panelResult({ dashboardUid: 'dash-1', score: 0.1 }),
+      panelResult({ dashboardUid: 'dash-1', score: 0.1 }),
       panelResult({ dashboardUid: 'dash-3', score: 0.1 }),
-      panelResult({ dashboardUid: 'dash-3', score: 0.5 }),
     ]);
 
-    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-3', 'dash-2', 'dash-1']);
+    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-2', 'dash-1', 'dash-3']);
   });
 
-  it('keeps at most 3 snippets per dashboard in arrival (best-first) order', () => {
+  it('caps snippets at MAX_SNIPPETS_PER_DASHBOARD but still counts all matched panels', () => {
     const grouped = groupDeepSearchResults([
-      panelResult({ content: 'first', score: 0.1 }),
+      // Equal scores so all four survive the cutoff
+      panelResult({ content: 'first', score: 0.2 }),
       panelResult({ content: 'second', score: 0.2 }),
-      panelResult({ content: 'third', score: 0.3 }),
-      panelResult({ content: 'fourth', score: 0.4 }),
+      panelResult({ content: 'third', score: 0.2 }),
+      panelResult({ content: 'fourth', score: 0.2 }),
     ]);
 
     expect(grouped[0].snippets).toEqual([
-      { text: 'first', score: 0.1 },
+      { text: 'first', score: 0.2 },
       { text: 'second', score: 0.2 },
-      { text: 'third', score: 0.3 },
+      { text: 'third', score: 0.2 },
     ]);
+    // matchedPanelCount tracks every survivor, so the UI can show "N more matched panels"
     expect(grouped[0].matchedPanelCount).toBe(4);
   });
 
-  it('sorts panel snippets by score (best first) and caps at 3', () => {
+  it('sorts surviving panel snippets by score (best first) and caps at 2', () => {
     const grouped = groupDeepSearchResults([
-      panelResult({ content: 'third', score: 0.3 }),
-      panelResult({ content: 'first', score: 0.1 }),
-      panelResult({ content: 'fourth', score: 0.4 }),
+      // 'far' (0.9) is above the average and dropped; the rest are sorted best-first
       panelResult({ content: 'second', score: 0.2 }),
+      panelResult({ content: 'first', score: 0.1 }),
+      panelResult({ content: 'far', score: 0.9 }),
     ]);
 
     expect(grouped[0].snippets).toEqual([
       { text: 'first', score: 0.1 },
       { text: 'second', score: 0.2 },
-      { text: 'third', score: 0.3 },
     ]);
+  });
+
+  it('global scope: cutoff is the min/max midpoint, not the mean, and removes weak dashboards', () => {
+    const grouped = groupDeepSearchResults(
+      [
+        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.1 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'good', score: 0.1 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'mid', score: 0.4 }),
+        panelResult({ dashboardUid: 'dash-2', content: 'worst', score: 0.9 }),
+      ],
+      'global'
+    );
+
+    // Midpoint = (0.1 + 0.9) / 2 = 0.5, whereas the mean would be 0.375.
+    // dash-1's 0.4 panel survives under the midpoint (it would be dropped under the mean),
+    // so matchedPanelCount is 3. dash-2's only panel (0.9) is past 0.5, so dash-2 disappears.
+    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1']);
+    expect(grouped[0].matchedPanelCount).toBe(3);
+    expect(grouped[0].snippets.map((s) => s.text)).toEqual(['best', 'good', 'mid']);
+  });
+
+  it('per-dashboard scope: each card keeps only its own better-than-average panels', () => {
+    const grouped = groupDeepSearchResults(
+      [
+        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.1 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'mid', score: 0.2 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'worst', score: 0.6 }),
+        panelResult({ dashboardUid: 'dash-2', content: 'only', score: 0.5 }),
+      ],
+      'per-dashboard'
+    );
+
+    // dash-1 average = 0.3 → keeps 0.1 and 0.2. dash-2 averages its single panel, so it
+    // survives (unlike global scope) keeping its one panel.
+    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1', 'dash-2']);
+    expect(grouped[0].matchedPanelCount).toBe(2);
+    expect(grouped[0].snippets.map((s) => s.text)).toEqual(['best', 'mid']);
+    expect(grouped[1].matchedPanelCount).toBe(1);
   });
 
   it('strips the redundant folder and dashboard title from snippet breadcrumbs and hoists tags', () => {
@@ -156,7 +193,7 @@ describe('groupDeepSearchResults', () => {
 });
 
 describe('getDeepSearchResults', () => {
-  it('fetches, groups and ranks results', async () => {
+  it('fetches, groups and keeps backend order', async () => {
     server.use(
       getVectorSearchHandler([
         { name: 'dash-1', title: 'API latency', snippet: 'p99', score: 0.1 },
@@ -167,7 +204,8 @@ describe('getDeepSearchResults', () => {
 
     const results = await getDeepSearchResults('latency');
 
-    expect(results.map((r) => r.dashboardUid)).toEqual(['dash-2', 'dash-1']);
+    // dash-1's best hit comes first in the backend response, so it ranks first
+    expect(results.map((r) => r.dashboardUid)).toEqual(['dash-1', 'dash-2']);
   });
 
   it('resolves folder titles from the folder lookup', async () => {
@@ -231,8 +269,9 @@ describe('useDeepSearchResults', () => {
   it('fetches and returns grouped results', async () => {
     server.use(
       getVectorSearchHandler([
+        // Equal scores so both panels survive the average filter
         { name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 },
-        { name: 'dash-1', title: 'API latency', snippet: 'p50 latency', score: 0.3 },
+        { name: 'dash-1', title: 'API latency', snippet: 'p50 latency', score: 0.1 },
       ])
     );
 

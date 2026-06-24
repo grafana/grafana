@@ -102,7 +102,7 @@ describe('CommandPalette', () => {
       const user = userEvent.setup();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
-      expect(await screen.findByText('Deep search')).toBeInTheDocument();
+      expect(await screen.findByText('Dashboards deep search')).toBeInTheDocument();
       // Deep search debounces for 500ms, so allow extra time for results
       expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
       expect(screen.getByText('p99 latency by region')).toBeInTheDocument();
@@ -134,6 +134,29 @@ describe('CommandPalette', () => {
       expect(screen.queryByText(/Tags:/)).not.toBeInTheDocument();
     });
 
+    it('caps visible snippets and shows a "more matched panels" line', async () => {
+      server.use(
+        getVectorSearchHandler([
+          // Equal scores so all five survive the cutoff; only MAX_SNIPPETS_PER_DASHBOARD (3) show
+          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
+          { name: 'dash-1', title: 'API latency', snippet: 'panel two', score: 0.1 },
+          { name: 'dash-1', title: 'API latency', snippet: 'panel three', score: 0.1 },
+          { name: 'dash-1', title: 'API latency', snippet: 'panel four', score: 0.1 },
+          { name: 'dash-1', title: 'API latency', snippet: 'panel five', score: 0.1 },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      expect(await screen.findByText('panel one', {}, { timeout: 3000 })).toBeInTheDocument();
+      expect(screen.getByText('panel three')).toBeInTheDocument();
+      // The 4th and 5th collapse into the count
+      expect(screen.queryByText('panel four')).not.toBeInTheDocument();
+      expect(screen.getByText('2 more matched panels')).toBeInTheDocument();
+    });
+
     it('hides the empty state when only deep search has results', async () => {
       server.use(
         getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 }])
@@ -151,8 +174,9 @@ describe('CommandPalette', () => {
     it('supports keyboard navigation into and out of the deep search column', async () => {
       server.use(
         getVectorSearchHandler([
+          // Equal scores so both dashboards survive the average filter
           { name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'checkout errors', score: 0.2 },
+          { name: 'dash-2', title: 'Checkout', snippet: 'checkout errors', score: 0.1 },
         ])
       );
 
@@ -247,13 +271,13 @@ describe('CommandPalette', () => {
       const user = userEvent.setup();
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
 
-      expect(screen.queryByText('Deep search')).not.toBeInTheDocument();
+      expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
       // Outwait the 500ms deep search debounce to prove no request fires
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 600));
       });
       expect(deepSearchCalled).toBe(false);
-      expect(screen.queryByText('Deep search')).not.toBeInTheDocument();
+      expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
     });
   });
 });

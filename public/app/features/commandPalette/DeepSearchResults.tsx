@@ -45,7 +45,7 @@ export function DeepSearchResults({ results, isFetching, onNavigate, navRef }: D
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        {t('command-palette.section.deep-search', 'Deep search')}
+        {t('command-palette.section.deep-search', 'Dashboards deep search')}
         <div className={styles.loadingBarContainer}>{isFetching && <LoadingBar width={240} delay={0} />}</div>
       </div>
       {results.length === 0 && !isFetching ? (
@@ -97,6 +97,15 @@ export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSear
             {snippet.text}
           </div>
         ))}
+        {result.matchedPanelCount > result.snippets.length && (
+          <div className={styles.moreMatches}>
+            {t('command-palette.deep-search.more-panels', '', {
+              count: result.matchedPanelCount - result.snippets.length,
+              defaultValue_one: '{{count}} more matched panel',
+              defaultValue_other: '{{count}} more matched panels',
+            })}
+          </div>
+        )}
         {result.tags.length > 0 && <TagList tags={result.tags} className={styles.tagList} displayMax={5} />}
       </a>
     );
@@ -202,6 +211,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginRight: theme.spacing(1),
       fontFamily: theme.typography.fontFamilyMonospace,
       color: theme.colors.text.disabled,
+    }),
+    moreMatches: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      fontStyle: 'italic',
     }),
     tagList: css({
       // TagList centers by default; left-align under the snippets

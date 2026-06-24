@@ -9,6 +9,21 @@ import { type DeepSearchPanelResult, searchDashboardVector } from '../api/deepSe
 // to give grouping enough hits to rank dashboards by match count
 export const DEEP_SEARCH_FETCH_LIMIT = 50;
 export const MAX_SNIPPETS_PER_DASHBOARD = 3;
+
+/**
+ * Which set the score cutoff is computed over. Panels worse (higher distance)
+ * than the cutoff are dropped entirely.
+ * - 'global': cutoff is the midpoint of the best and worst matched panel scores
+ *   ((min + max) / 2) across the whole response. Using the midpoint instead of
+ *   the mean keeps a large tail of bad (high-distance) results from dragging the
+ *   cutoff up. Weak dashboards disappear if their best panel is past the midpoint.
+ * - 'per-dashboard': each dashboard averages (mean) its own panels, so every
+ *   dashboard keeps at least its best panel(s).
+ * Flip this to compare the two behaviours.
+ */
+export type AverageScoreScope = 'global' | 'per-dashboard';
+export const AVERAGE_SCORE_SCOPE: AverageScoreScope = 'global';
+
 // Vector search is slower than the keyword search (200ms debounce), so wait
 // longer before firing — the deep column loads independently anyway
 const DEEP_SEARCH_DEBOUNCE_MS = 500;
@@ -98,54 +113,87 @@ function extractDashboardTitle(content: string, hitTitle: string): string {
   return dashboardSegment ?? hitTitle;
 }
 
-/**
- * Groups panel-level search results into one entry per dashboard, ranked by
- * number of matched panels (desc), then by best score (asc). The panel snippets
- * within each dashboard are sorted by score (best first) and capped at
- * MAX_SNIPPETS_PER_DASHBOARD.
- */
-export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSearchDashboardResult[] {
-  const byDashboard = new Map<string, DeepSearchDashboardResult>();
+function average(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
 
-  for (const result of results) {
-    if (!result.dashboardUid) {
+/** Midpoint between the smallest and largest value — unlike the mean, it ignores how many values cluster at either end. */
+function midpoint(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  return (Math.min(...values) + Math.max(...values)) / 2;
+}
+
+/**
+ * Groups panel-level search results into one entry per dashboard. Dashboards are
+ * kept in backend order — i.e. the position where each dashboard's first (best)
+ * panel hit appears — since the backend returns hits in ascending-distance order
+ * and the Map preserves first-insertion order.
+ *
+ * Panels worse (higher distance) than the cutoff are dropped entirely. In 'global'
+ * scope the cutoff is the midpoint of the best/worst matched panel scores; in
+ * 'per-dashboard' scope it's the mean of each dashboard's own panels. The best
+ * panel always survives (its score can't exceed either cutoff), so in
+ * 'per-dashboard' mode every dashboard keeps at least one panel; in 'global' mode a
+ * dashboard disappears if its best panel is past the midpoint. Surviving snippets
+ * are sorted by score and capped at MAX_SNIPPETS_PER_DASHBOARD; matchedPanelCount
+ * counts all survivors.
+ */
+export function groupDeepSearchResults(
+  results: DeepSearchPanelResult[],
+  scope: AverageScoreScope = AVERAGE_SCORE_SCOPE
+): DeepSearchDashboardResult[] {
+  const matched = results.filter((result) => result.dashboardUid);
+  const globalCutoff = midpoint(matched.map((result) => result.score));
+
+  // Group panels per dashboard, preserving backend (first-appearance) order
+  const byDashboard = new Map<string, DeepSearchPanelResult[]>();
+  for (const result of matched) {
+    const panels = byDashboard.get(result.dashboardUid);
+    if (panels) {
+      panels.push(result);
+    } else {
+      byDashboard.set(result.dashboardUid, [result]);
+    }
+  }
+
+  const groups: DeepSearchDashboardResult[] = [];
+  for (const panels of byDashboard.values()) {
+    const cutoff = scope === 'global' ? globalCutoff : average(panels.map((panel) => panel.score));
+    const kept = panels.filter((panel) => panel.score <= cutoff);
+    if (kept.length === 0) {
       continue;
     }
 
-    let group = byDashboard.get(result.dashboardUid);
-    if (!group) {
-      group = {
-        dashboardUid: result.dashboardUid,
-        title: extractDashboardTitle(result.content, result.dashboardTitle),
-        url: `/d/${result.dashboardUid}`,
-        folderTitle: result.folderTitle,
-        // Tags are dashboard-level, so the same on every panel snippet — take the first
-        tags: parseSnippetTags(result.content),
-        snippets: [],
-        matchedPanelCount: 0,
-        bestScore: result.score,
-      };
-      byDashboard.set(result.dashboardUid, group);
-    }
+    // Backend order is ascending distance, so the first kept panel is the best
+    const best = kept[0];
+    const snippets = kept
+      .map((panel) => ({
+        text: formatSnippet(panel.content, panel.dashboardTitle, panel.folderTitle),
+        score: panel.score,
+      }))
+      .filter((snippet) => snippet.text)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, MAX_SNIPPETS_PER_DASHBOARD);
 
-    group.matchedPanelCount += 1;
-    group.bestScore = Math.min(group.bestScore, result.score);
-    if (result.content) {
-      const text = formatSnippet(result.content, result.dashboardTitle, result.folderTitle);
-      if (text) {
-        group.snippets.push({ text, score: result.score });
-      }
-    }
+    groups.push({
+      dashboardUid: best.dashboardUid,
+      title: extractDashboardTitle(best.content, best.dashboardTitle),
+      url: `/d/${best.dashboardUid}`,
+      folderTitle: best.folderTitle,
+      // Tags are dashboard-level, so the same on every panel snippet — take the best panel's
+      tags: parseSnippetTags(best.content),
+      snippets,
+      matchedPanelCount: kept.length,
+      bestScore: best.score,
+    });
   }
 
-  const groups = [...byDashboard.values()];
-  for (const group of groups) {
-    // Show the best-scoring panels first (lower distance = closer match)
-    group.snippets.sort((a, b) => a.score - b.score);
-    group.snippets = group.snippets.slice(0, MAX_SNIPPETS_PER_DASHBOARD);
-  }
-
-  return groups.sort((a, b) => b.matchedPanelCount - a.matchedPanelCount || a.bestScore - b.bestScore);
+  return groups;
 }
 
 /**
