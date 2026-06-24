@@ -1783,8 +1783,11 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:      "no webhook update when webhookDisabled is true",
-			setupMock: func(_ *MockClient) {},
+			name: "delete stale webhook when webhookDisabled is true",
+			setupMock: func(m *MockClient) {
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
+					Return(nil)
+			},
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -1800,7 +1803,27 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 					},
 				},
 			},
-			webhookURL:    "https://example.com/webhook",
+			webhookURL:      "",
+			expectedHook:    nil,
+			expectedCleanup: true,
+			expectedError:   nil,
+		},
+		{
+			name:      "no-op when webhookDisabled is true and no existing webhook",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: nil,
+				},
+			},
+			webhookURL:    "",
 			expectedHook:  nil,
 			expectedError: nil,
 		},

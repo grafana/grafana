@@ -116,7 +116,6 @@ datasource/Postgres
 datasource/Prometheus
 datasource/SiteWIse
 datasource/Splunk
-datasource/Tempo
 datasource/TestDataDB
 datasource/Timestream
 datasource/X-Ray

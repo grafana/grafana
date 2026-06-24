@@ -2525,6 +2525,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.starredFolders",
+        "resourceVersion": "1781683112920",
+        "creationTimestamp": "2026-06-17T07:58:32Z"
+      },
+      "spec": {
+        "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3195,7 +3209,7 @@
         "name": "kubernetesShortURLs",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2026-06-19T18:46:20Z"
       },
       "spec": {
         "description": "Enables k8s short URL API and uses it under the hood when handling legacy /api",
@@ -4933,6 +4947,21 @@
         "description": "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "starredFolders",
+        "resourceVersion": "1781683016308",
+        "creationTimestamp": "2026-06-17T07:56:56Z",
+        "deletionTimestamp": "2026-06-17T07:58:32Z"
+      },
+      "spec": {
+        "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
