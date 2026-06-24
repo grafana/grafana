@@ -25,7 +25,6 @@ jobs:
       event_number: ${{ github.event.number }}
       repo: grafana
       sha: ${{ github.event.pull_request.head.sha }}
-      toolkit_ref: robbymilo/deploy-preview
       sources: |
         [
           {
