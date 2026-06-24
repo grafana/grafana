@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { type GrafanaTheme2, useTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, CollapsableSection, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
@@ -22,7 +22,6 @@ import {
 } from './useSelectedContactPoint';
 
 export function NotificationMessagePreview() {
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { control } = useFormContext<RuleFormValues>();
   const [integrationIndex, setIntegrationIndex] = useState(0);
@@ -112,7 +111,7 @@ export function NotificationMessagePreview() {
 
   const showRawTemplate = shouldShowRawTemplateOutput(renderedBody, humanDisplay);
   const integrationBadgeLabel = getIntegrationBadgeLabel(integrationType, integrationLabel);
-  const accentColor = getIntegrationAccentColor(integrationType, theme);
+  const accentColor = styles.getAccentColor(integrationType);
 
   const actionability = computeActionabilityScore({
     annotations: resolvedAnnotations,
@@ -364,6 +363,7 @@ const getSkeletonStyles = (theme: GrafanaTheme2) => ({
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  getAccentColor: (integrationType: string | undefined) => getIntegrationAccentColor(integrationType, theme),
   container: css({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
