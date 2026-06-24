@@ -13650,7 +13650,6 @@
     },
     "save-resource": {
       "button-cancel": "Cancel",
-      "button-close": "Close",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
       "button-save": "Save",

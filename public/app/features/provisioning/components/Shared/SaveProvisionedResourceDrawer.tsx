@@ -19,7 +19,6 @@ import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 
-import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
 export interface SaveProvisionedResourceDrawerProps {
@@ -54,7 +53,7 @@ export interface SaveProvisionedResourceDrawerProps {
   /** Called after a successful write to the configured branch (e.g. navigate / invalidate caches). */
   onWriteSuccess?: () => void;
   /** Called after a successful push to a non-configured branch (PR workflow). */
-  onBranchSuccess?: (data: { ref: string; urls?: Record<string, string> }) => void;
+  onBranchSuccess?: (data: { ref: string; urls?: Record<string, string>; repoType?: string }) => void;
 }
 
 interface FormProps extends SaveProvisionedResourceDrawerProps {
@@ -79,9 +78,6 @@ function FormContent({
   onBranchSuccess,
 }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
-  // Set when the branch (PR) workflow succeeds, so the drawer shows a pull-request banner inline
-  // (instead of a toast) offering to open the PR.
-  const [branchResult, setBranchResult] = useState<{ ref: string; urls?: Record<string, string> } | undefined>();
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -118,16 +114,11 @@ function FormContent({
     repository,
     successMessage,
     handlers: {
-      // Write commits to the configured branch, so close the drawer and let the caller navigate.
-      onWriteSuccess: () => {
-        onWriteSuccess?.();
-        onDismiss?.();
-      },
-      // Branch (PR) workflow keeps the drawer open to show the pull-request banner instead of a toast.
-      onBranchSuccess: ({ ref, urls }) => {
-        setBranchResult({ ref, urls });
-        onBranchSuccess?.({ ref, urls });
-      },
+      onDismiss,
+      onWriteSuccess: () => onWriteSuccess?.(),
+      // Branch (PR) workflow: forward to the caller so it can navigate and surface the PR banner on
+      // the destination page (like dashboards), passing the repo type for the banner copy.
+      onBranchSuccess: ({ ref, urls }) => onBranchSuccess?.({ ref, urls, repoType: repository?.type }),
     },
   });
 
@@ -160,31 +151,6 @@ function FormContent({
       showError(err);
     }
   };
-
-  // The branch workflow pushed to a new branch: offer the pull request via a banner instead of a toast.
-  if (branchResult) {
-    return (
-      <Stack direction="column" gap={2}>
-        <PreviewBannerViewPR
-          prURL={branchResult.urls?.newPullRequestURL}
-          repoUrl={repository?.url}
-          isNewPr
-          action={action === 'delete' || action === 'update' ? action : 'create'}
-          repoType={repository?.type}
-          branchInfo={{
-            targetBranch: branchResult.ref,
-            configuredBranch: repository?.branch,
-            repoBaseUrl: branchResult.urls?.repositoryURL ?? repository?.url,
-          }}
-        />
-        <Stack>
-          <Button variant="secondary" onClick={onDismiss}>
-            {t('provisioning.save-resource.button-close', 'Close')}
-          </Button>
-        </Stack>
-      </Stack>
-    );
-  }
 
   return (
     <FormProvider {...methods}>

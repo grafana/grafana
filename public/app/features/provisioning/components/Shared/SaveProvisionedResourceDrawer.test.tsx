@@ -178,8 +178,6 @@ describe('SaveProvisionedResourceDrawer', () => {
     await waitFor(() => {
       expect(onBranchSuccess).toHaveBeenCalled();
     });
-    // Instead of a toast, the drawer shows a pull-request banner offering to open the PR.
-    expect(await screen.findByText(/open pull request/i)).toBeInTheDocument();
   });
 
   it('calls onWriteSuccess after committing to the configured branch', async () => {

@@ -13,6 +13,7 @@ import {
 import { useDispatch } from 'app/types/store';
 
 import { type ManagedResource } from '../../utils/managedResource';
+import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { resourceKindInfos } from '../../utils/resourceKinds';
 import { SaveProvisionedResourceDrawer } from '../Shared/SaveProvisionedResourceDrawer';
 import { slugifyForFilename } from '../utils/path';
@@ -63,6 +64,21 @@ export function SaveProvisionedPlaylistDrawer({
     navigate(playlistKind.listRoute);
   };
 
+  // Branch (PR) workflow: navigate to the playlist list with the PR link params so the page shows
+  // the pull-request banner (mirrors the dashboard flow).
+  const onBranchSuccess = ({ urls, repoType }: { urls?: Record<string, string>; repoType?: string }) => {
+    invalidatePlaylists();
+    navigate(
+      buildResourceBranchRedirectUrl({
+        baseUrl: playlistKind.listRoute,
+        paramName: 'new_pull_request_url',
+        paramValue: urls?.newPullRequestURL,
+        repoType,
+        action: isNew ? 'create' : 'update',
+      })
+    );
+  };
+
   // A new playlist has no manager annotations yet, so synthesise them for the repository the user
   // picked: the drawer resolves the managing repository and the initial file path from these.
   // An existing repository-managed playlist already carries them.
@@ -95,7 +111,7 @@ export function SaveProvisionedPlaylistDrawer({
       }}
       onDismiss={onDismiss}
       onWriteSuccess={goToPlaylists}
-      onBranchSuccess={invalidatePlaylists}
+      onBranchSuccess={onBranchSuccess}
     />
   );
 }

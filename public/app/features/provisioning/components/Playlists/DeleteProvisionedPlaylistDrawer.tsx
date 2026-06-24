@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 import { type Playlist, playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { useDispatch } from 'app/types/store';
 
+import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { resourceKindInfos } from '../../utils/resourceKinds';
 import { SaveProvisionedResourceDrawer } from '../Shared/SaveProvisionedResourceDrawer';
 
@@ -27,6 +28,21 @@ export function DeleteProvisionedPlaylistDrawer({ playlist, onDismiss }: DeleteP
     navigate(playlistKind.listRoute);
   };
 
+  // Branch (PR) workflow: navigate to the playlist list with the PR link params so the page shows
+  // the pull-request banner (mirrors the dashboard flow).
+  const onBranchSuccess = ({ urls, repoType }: { urls?: Record<string, string>; repoType?: string }) => {
+    invalidatePlaylists();
+    navigate(
+      buildResourceBranchRedirectUrl({
+        baseUrl: playlistKind.listRoute,
+        paramName: 'new_pull_request_url',
+        paramValue: urls?.newPullRequestURL,
+        repoType,
+        action: 'delete',
+      })
+    );
+  };
+
   return (
     <SaveProvisionedResourceDrawer
       resource={playlist}
@@ -37,7 +53,7 @@ export function DeleteProvisionedPlaylistDrawer({ playlist, onDismiss }: DeleteP
       action="delete"
       onDismiss={onDismiss}
       onWriteSuccess={goToPlaylists}
-      onBranchSuccess={invalidatePlaylists}
+      onBranchSuccess={onBranchSuccess}
     />
   );
 }
