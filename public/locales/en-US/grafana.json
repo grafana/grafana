@@ -15459,6 +15459,9 @@
       "tooltip-delete": "Delete",
       "tooltip-edit": "Edit"
     },
+    "assistant-tooltip-button": {
+      "ask-assistant": "Ask Assistant"
+    },
     "category-axis": "Axis",
     "config": {
       "get-graph-field-config": {

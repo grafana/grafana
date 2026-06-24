@@ -24,6 +24,9 @@ import {
 
 import { getFieldActions } from '../status-history/utils';
 
+import { AssistantTooltipButton } from './AssistantTooltipButton';
+import { type AssistantTooltipContext } from './buildAssistantContext';
+
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
 
@@ -53,6 +56,8 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  /** When provided, renders an "Ask Assistant" button in the pinned tooltip footer. */
+  assistantContext?: AssistantTooltipContext;
 }
 
 export const TimeSeriesTooltip = ({
@@ -72,6 +77,7 @@ export const TimeSeriesTooltip = ({
   canExecuteActions,
   compareDiffMs,
   filterByGroupedLabels,
+  assistantContext,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -116,6 +122,18 @@ export const TimeSeriesTooltip = ({
           annotate={annotate}
           adHocFilters={adHocFilters}
           filterByGroupedLabels={filterByGroupedLabels}
+          // Only offered on the pinned tooltip — hover tooltips aren't interactive (pointerEvents: none).
+          additionalContent={
+            isPinned && assistantContext != null ? (
+              <AssistantTooltipButton
+                series={series}
+                seriesIdx={seriesIdx}
+                dataIdxs={dataIdxs}
+                replaceVariables={replaceVariables}
+                context={assistantContext}
+              />
+            ) : undefined
+          }
         />
       );
     }

@@ -45,6 +45,7 @@ export const TimeSeriesPanel = ({
   onOptionsChange,
   replaceVariables,
   id,
+  title,
 }: TimeSeriesPanelProps) => {
   const {
     sync,
@@ -222,6 +223,13 @@ export const TimeSeriesPanel = ({
                       }
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
+                      assistantContext={{
+                        panelId: id,
+                        panelTitle: title,
+                        timeRange,
+                        dataSeries: data.series,
+                        annotations: data.annotations,
+                      }}
                     />
                   );
                 }}

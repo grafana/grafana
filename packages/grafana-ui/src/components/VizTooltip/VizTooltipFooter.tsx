@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 import {
   type ActionModel,
@@ -43,6 +43,8 @@ export interface VizTooltipFooterProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   /** Callback to open the annotation editor for the hovered point. */
   annotate?: () => void;
+  /** Arbitrary content rendered as a trailing footer section (e.g. an app-layer action button). */
+  additionalContent?: ReactNode;
 }
 
 const ADD_ANNOTATION_ID = 'add-annotation-button';
@@ -113,6 +115,7 @@ export const VizTooltipFooter = ({
   annotate,
   adHocFilters = [],
   filterByGroupedLabels,
+  additionalContent,
 }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
@@ -167,6 +170,7 @@ export const VizTooltipFooter = ({
           </Button>
         </div>
       )}
+      {additionalContent != null && <div className={styles.footerSection}>{additionalContent}</div>}
     </div>
   );
 };
