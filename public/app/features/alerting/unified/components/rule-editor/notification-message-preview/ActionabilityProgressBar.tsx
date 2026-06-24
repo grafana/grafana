@@ -26,9 +26,9 @@ export function ActionabilityProgressBar({ actionability }: ActionabilityProgres
         <Text variant="bodySmall" color="primary">
           <Trans i18nKey="alerting.notification-message-preview.actionability-label">Actionability</Trans>
         </Text>
-        <span className={styles.scorePill(severity)} aria-label={scoreAriaLabel}>
+        <Text variant="bodySmall" color={severity} weight="bold" aria-label={scoreAriaLabel}>
           {scoreLabel}
-        </span>
+        </Text>
       </Stack>
       <div
         className={styles.track}
@@ -65,18 +65,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     border: `1px solid ${theme.colors.border.weak}`,
   }),
-  scorePill: (severity: 'error' | 'warning' | 'success') =>
-    css({
-      display: 'inline-block',
-      backgroundColor: theme.colors[severity].transparent,
-      color: theme.colors[severity].text,
-      border: `1px solid ${theme.colors[severity].borderTransparent}`,
-      borderRadius: theme.shape.radius.pill,
-      padding: `${theme.spacing(0.25)} ${theme.spacing(0.75)}`,
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      lineHeight: theme.typography.bodySmall.lineHeight,
-    }),
   fill: ({ severity, score }: { severity: 'error' | 'warning' | 'success'; score: number }) =>
     css({
       height: '100%',

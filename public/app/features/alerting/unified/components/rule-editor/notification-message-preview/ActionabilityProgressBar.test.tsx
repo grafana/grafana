@@ -20,7 +20,7 @@ function renderWithTheme(themeId: string, actionability: ActionabilityScore) {
   return { ...view, restoreTheme, theme };
 }
 
-function getScorePill(score: number) {
+function getScoreText(score: number) {
   return screen.getByText(`${score}%`);
 }
 
@@ -29,21 +29,34 @@ describe('ActionabilityProgressBar', () => {
     jest.restoreAllMocks();
   });
 
-  it('uses severity text on a tinted background in dark themes', () => {
-    const actionability: ActionabilityScore = { score: 25, missing: ['summary', 'description'] };
+  it.each([
+  { score: 35, severity: 'error' as const },
+  { score: 50, severity: 'warning' as const },
+  { score: 85, severity: 'success' as const },
+])(
+  'uses bold severity text without a pill background in dark themes for $severity scores',
+  ({ score, severity }) => {
+    const actionability: ActionabilityScore = { score, missing: ['summary'] };
 
     for (const themeId of ['dark', 'visual_refresh_dark']) {
       const { restoreTheme, theme, unmount } = renderWithTheme(themeId, actionability);
-      const pill = getScorePill(25);
-      const styles = window.getComputedStyle(pill);
+      const scoreText = getScoreText(score);
+      const styles = window.getComputedStyle(scoreText);
 
-      expect(styles.color).toBe(toComputedColor(theme.colors.error.text));
-      expect(styles.backgroundColor).toBe(toComputedBackground(theme.colors.error.transparent));
+      expect(styles.color).toBe(toComputedColor(theme.colors[severity].text));
+      expect(styles.fontWeight).toBe(String(theme.typography.fontWeightBold));
+      expect(styles.backgroundColor).not.toBe(toComputedBackground(theme.colors[severity].transparent));
+
+      const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
+      expect(window.getComputedStyle(fill).backgroundColor).toBe(
+        toComputedBackground(theme.colors[severity].main)
+      );
 
       restoreTheme();
       unmount();
     }
-  });
+  }
+);
 
   it('renders actionability label and missing hints', () => {
     const { restoreTheme } = renderWithTheme('visual_refresh_dark', {
