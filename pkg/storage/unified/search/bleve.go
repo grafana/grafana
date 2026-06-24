@@ -2261,7 +2261,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = standard.Name               // analyze the text
+					if field.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+						q.Analyzer = TITLE_ANALYZER
+					} else {
+						q.Analyzer = standard.Name // analyze the text
+					}
 					q.Operator = query.MatchQueryOperatorAnd // all terms must match
 					disjoin.AddQuery(q)
 

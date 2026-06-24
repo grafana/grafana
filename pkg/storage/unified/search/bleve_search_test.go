@@ -275,6 +275,32 @@ func TestCanSearchByTitle(t *testing.T) {
 	})
 }
 
+// TestSearchHyphenatedTitleSubstring reproduces the regression vs. the legacy
+// SQL search, which matched titles with a plain substring `title LIKE '%q%'`.
+// A search-as-you-type query that truncates the final hyphen-separated token
+// (e.g. "alpha-beta-ga") should still match "alpha-beta-gamma", the way the
+// legacy substring match did.
+func TestSearchHyphenatedTitleSubstring(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 2, noop)
+	indexDocumentsWithTitles(t, index, key, map[string]string{
+		"name1": "alpha-beta-gamma",
+		"name2": "unrelated",
+	})
+
+	// Truncated final token (2 chars). Legacy LIKE '%alpha-beta-ga%' matched.
+	checkSearchQuery(t, index, newTestQuery("alpha-beta-ga"), []string{"name1"})
+	// Truncated final token (3 chars, hits the ngram index).
+	checkSearchQuery(t, index, newTestQuery("alpha-beta-gam"), []string{"name1"})
+	// Whole leading tokens.
+	checkSearchQuery(t, index, newTestQuery("alpha-beta"), []string{"name1"})
+}
+
 // TestTitleNgramFieldSearch queries exclusively against the title_ngram field
 // (via explicit QueryFields) to prove partial/prefix matching works without
 // relying on the title field mapping.
