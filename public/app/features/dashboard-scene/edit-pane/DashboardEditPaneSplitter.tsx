@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useMeasure, useMedia } from 'react-use';
+import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -16,7 +16,7 @@ import {
   type SidebarContextValue,
 } from '@grafana/ui';
 import { getInternalRadius } from '@grafana/ui/internal';
-import NativeScrollbar from 'app/core/components/NativeScrollbar';
+import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -72,8 +72,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { editPane } = dashboard.state;
-  const [controlsRef, { height: controlsHeight }] = useMeasure<HTMLDivElement>();
-  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled, controlsHeight);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -175,6 +174,12 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     editPane.clearSelection();
   };
 
+  const onBodyRef = (ref: HTMLDivElement | null) => {
+    if (ref) {
+      dashboard.onSetScrollRef(new DivScrollElement(ref));
+    }
+  };
+
   function renderBody() {
     const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
 
@@ -191,24 +196,28 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
 
     return (
-      <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
-        <div className={styles.bodyWrapper} data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}>
-          <div
-            className={cx(styles.bodyContent, sidebarContext.isHiddenPreference && styles.bodyContentNoSidebar)}
-            onPointerDown={onClearSelection}
-            data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
-            {...sidebarContext.outerWrapperProps}
-          >
-            {body}
-          </div>
-
-          <div className={styles.stickySidebar}>
-            <Sidebar contextValue={sidebarContext}>
-              <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
-            </Sidebar>
-          </div>
+      <div
+        className={styles.bodyWrapper}
+        data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+        {...sidebarContext.outerWrapperProps}
+      >
+        <div
+          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
+          ref={onBodyRef}
+          onPointerDown={onClearSelection}
+          data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+          // The dashboard scrolls inside this element rather than the document body, so make it
+          // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+        >
+          {body}
         </div>
-      </NativeScrollbar>
+
+        <Sidebar contextValue={sidebarContext}>
+          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+        </Sidebar>
+      </div>
     );
   }
 
@@ -218,7 +227,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     <AssistantPopoverContext.Provider value={popoverContextValue}>
       <div className={styles.container}>
         <ElementSelectionContext.Provider value={selectionContext}>
-          <div ref={controlsRef} className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
+          <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
             {controls}
           </div>
           {renderBody()}
@@ -287,7 +296,7 @@ function renderDynamicNavActions() {
   });
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean, controlsHeight = 0) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -305,11 +314,11 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     bodyWrapper: css({
       label: 'body-wrapper',
       display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'flex-start',
+      flexDirection: 'column',
       flexGrow: 1,
       position: 'relative',
       flex: '1 1 0',
+      overflow: 'hidden',
 
       [theme.breakpoints.down('sm')]: {
         flex: 1,
@@ -323,24 +332,21 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
       padding: theme.spacing(0, 2, 2, 2),
       overflow: 'unset',
     }),
-    bodyContent: css({
+    scrollContainer: css({
       display: 'flex',
       flexDirection: 'column',
-      flex: '1 1 0',
-      minWidth: 0,
-      // without top padding the fixed controls header is rendered over the selection outline.
+      flexGrow: 1,
+      minHeight: 0,
+      overflow: 'auto',
+      scrollbarWidth: 'thin',
+      scrollbarGutter: 'stable',
+      // the tabIndex is only here to allow keyboard scrolling, so suppress the focus outline.
+      outline: 'none',
+      // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
     }),
-    bodyContentNoSidebar: css({
+    scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),
-    }),
-    stickySidebar: css({
-      position: 'sticky',
-      top: headerHeight + controlsHeight,
-      alignSelf: 'flex-start',
-      width: 0,
-      height: `calc(100vh - ${headerHeight + controlsHeight}px)`,
-      zIndex: theme.zIndex.navbarFixed,
     }),
     body: css({
       label: 'body',

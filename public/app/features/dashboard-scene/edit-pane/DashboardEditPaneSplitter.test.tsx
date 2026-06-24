@@ -62,40 +62,13 @@ describe('DashboardEditPaneSplitter', () => {
     });
   });
 
-  describe('scroll architecture (native body scroll)', () => {
-    afterEach(() => {
-      // Reset the overridden scroll position between cases.
-      Object.defineProperty(document.documentElement, 'scrollTop', { value: 0, configurable: true });
-    });
+  it('makes the scroll container keyboard-focusable so arrow/page keys can scroll the dashboard', () => {
+    const scene = buildTestScene();
 
-    it.each([
-      ['view mode', false],
-      ['edit mode', true],
-    ])('scrolls the document body (not an inner container) in %s', (_label, isEditing) => {
-      const scene = buildTestScene();
-      scene.setState({ isEditing });
-      const spy = jest.spyOn(scene, 'onSetScrollRef');
+    render(<DashboardEditPaneSplitter dashboard={scene} />);
 
-      render(<DashboardEditPaneSplitter dashboard={scene} />);
-
-      expect(spy).toHaveBeenCalled();
-      const ref = spy.mock.calls[spy.mock.calls.length - 1][0];
-
-      Object.defineProperty(document.documentElement, 'scrollTop', { value: 137, configurable: true });
-      expect(ref.scrollTop).toBe(137);
-    });
-
-    it('does not render an inner overflow:auto scroll container', () => {
-      const scene = buildTestScene();
-      scene.setState({ isEditing: false });
-
-      render(<DashboardEditPaneSplitter dashboard={scene} />);
-
-      const body = screen.queryByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer);
-      if (body) {
-        expect(getComputedStyle(body).overflow).not.toBe('auto');
-      }
-    });
+    const scrollContainer = screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer);
+    expect(scrollContainer).toHaveAttribute('tabindex', '0');
   });
 });
 
