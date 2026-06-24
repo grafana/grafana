@@ -335,6 +335,26 @@ describe('<SpanBarRow>', () => {
       expect(screen.getByText('(9ms)')).toBeInTheDocument();
     });
 
+    it('labels the duration stats in a tooltip on hover (median present)', async () => {
+      const span = summarySpanFromFixture(summaryWithConditionalAttrs);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      await userEvent.hover(screen.getByText('(4ms | 9ms | 60ms)'));
+      const tooltip = await screen.findByRole('tooltip');
+      expect(tooltip).toHaveTextContent('Min');
+      expect(tooltip).toHaveTextContent('Median');
+      expect(tooltip).toHaveTextContent('Max');
+    });
+
+    it('omits the median label in the tooltip when median is absent', async () => {
+      const span = summarySpanFromFixture(summaryDefaultsOnly);
+      render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
+      await userEvent.hover(screen.getByText('(4ms | 60ms)'));
+      const tooltip = await screen.findByRole('tooltip');
+      expect(tooltip).toHaveTextContent('Min');
+      expect(tooltip).toHaveTextContent('Max');
+      expect(tooltip).not.toHaveTextContent('Median');
+    });
+
     it('does not render a count badge for normal (non-summary) spans', () => {
       render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
       expect(screen.queryByLabelText(/aggregated spans/)).not.toBeInTheDocument();

@@ -28,7 +28,7 @@ import { type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
-import { formatSummaryDurations } from '../utils/summary-span';
+import { getSummaryDurationStats } from '../utils/summary-span';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
@@ -433,7 +433,8 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
   const isSummarySpan = span.aggregation?.isSummary === true;
   // Summary spans show aggregated (min | median | max) stats in place of the single
   // duration, falling back to the wall-clock duration when min/max are unavailable.
-  const summaryStats = isSummarySpan && span.aggregation ? formatSummaryDurations(span.aggregation) : null;
+  const summaryDurationStats = isSummarySpan && span.aggregation ? getSummaryDurationStats(span.aggregation) : null;
+  const summaryStats = summaryDurationStats?.map((stat) => stat.value).join(' | ') ?? null;
   const label = summaryStats ?? formatDuration(duration);
   const showAdaptiveTracesRestoredHint = spanHasAdaptiveTraceRestoredTag(span.tags ?? []);
 
@@ -581,10 +582,28 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
                 {span.aggregation.spanCount}
               </span>
             )}
-            <span className={styles.endpointName}>
-              {' '}
-              {isSummarySpan ? `(${label})` : getSpanBarLabel(span, spanBarOptions, label)}
-            </span>
+            {isSummarySpan ? (
+              summaryDurationStats ? (
+                <Tooltip
+                  placement="top"
+                  content={
+                    <div>
+                      {summaryDurationStats.map((stat) => (
+                        <div key={stat.label}>
+                          {stat.label}: {stat.value}
+                        </div>
+                      ))}
+                    </div>
+                  }
+                >
+                  <span className={styles.endpointName}> ({label})</span>
+                </Tooltip>
+              ) : (
+                <span className={styles.endpointName}> ({label})</span>
+              )
+            ) : (
+              <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+            )}
           </button>
           {showAdaptiveTracesRestoredHint && (
             <Tooltip

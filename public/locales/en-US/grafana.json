@@ -8631,6 +8631,11 @@
     "span-flame-graph": {
       "flame-graph": "Flame graph"
     },
+    "summary-span": {
+      "stat-max": "Max",
+      "stat-median": "Median",
+      "stat-min": "Min"
+    },
     "supplementary-result-error": {
       "show-details": "Show details"
     },
