@@ -6,6 +6,13 @@ import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { actionabilitySeverity, type ActionabilityScore } from './computeActionabilityScore';
 
+/** Hardcoded severity colors — theme tokens can match parent background in some themes. */
+const SCORE_COLORS = {
+  error: '#FF5286',
+  warning: '#FFB357',
+  success: '#73BF69',
+} as const;
+
 interface ActionabilityProgressBarProps {
   actionability: ActionabilityScore;
 }
@@ -13,6 +20,7 @@ interface ActionabilityProgressBarProps {
 export function ActionabilityProgressBar({ actionability }: ActionabilityProgressBarProps) {
   const styles = useStyles2(getStyles);
   const severity = actionabilitySeverity(actionability.score);
+  const scoreColor = SCORE_COLORS[severity];
   const scoreLabel = t('alerting.notification-message-preview.actionability-score-value', '{{score}}%', {
     score: actionability.score,
   });
@@ -27,9 +35,15 @@ export function ActionabilityProgressBar({ actionability }: ActionabilityProgres
           <Trans i18nKey="alerting.notification-message-preview.actionability-label">Actionability</Trans>
         </Text>
         <span
-          className={styles.scoreValue(severity)}
           data-testid="actionability-score-value"
           aria-label={scoreAriaLabel}
+          style={{
+            color: scoreColor,
+            fontSize: '18px',
+            fontWeight: 700,
+            display: 'block',
+            lineHeight: 1.2,
+          }}
         >
           {scoreLabel}
         </span>
@@ -42,7 +56,13 @@ export function ActionabilityProgressBar({ actionability }: ActionabilityProgres
         aria-valuemax={100}
         aria-label={scoreAriaLabel}
       >
-        <div className={styles.fill({ severity, score: actionability.score })} />
+        <div
+          className={styles.fill}
+          style={{
+            width: `${Math.min(Math.max(actionability.score, 0), 100)}%`,
+            backgroundColor: scoreColor,
+          }}
+        />
       </div>
       {actionability.missing.length > 0 ? (
         <Text variant="bodySmall" color="secondary">
@@ -69,29 +89,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     border: `1px solid ${theme.colors.border.weak}`,
   }),
-  scoreValue: (severity: 'error' | 'warning' | 'success') =>
-    css({
-      color:
-        severity === 'success'
-          ? theme.colors.success.text
-          : severity === 'warning'
-            ? theme.colors.warning.text
-            : theme.colors.error.text,
-      fontSize: theme.typography.h5.fontSize,
-      fontWeight: theme.typography.fontWeightBold,
-      lineHeight: theme.typography.h5.lineHeight,
-    }),
-  fill: ({ severity, score }: { severity: 'error' | 'warning' | 'success'; score: number }) =>
-    css({
-      height: '100%',
-      width: `${Math.min(Math.max(score, 0), 100)}%`,
-      borderRadius: theme.shape.radius.pill,
-      transition: 'width 200ms ease-out',
-      background:
-        severity === 'success'
-          ? theme.colors.success.main
-          : severity === 'warning'
-            ? theme.colors.warning.main
-            : theme.colors.error.main,
-    }),
+  fill: css({
+    height: '100%',
+    borderRadius: theme.shape.radius.pill,
+    transition: 'width 200ms ease-out',
+  }),
 });
