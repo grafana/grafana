@@ -7,7 +7,6 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { type Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist/v1';
 import { SaveProvisionedPlaylistDrawer } from '../provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
-import { RepositorySelect } from '../provisioning/components/Shared/RepositorySelect';
 import { useResourceRepositorySelection } from '../provisioning/hooks/useResourceRepositorySelection';
 import { resourceKindInfos } from '../provisioning/utils/resourceKinds';
 
@@ -33,14 +32,9 @@ export const PlaylistNewPage = () => {
     locationService.push('/playlists');
   };
 
-  const repositorySelect = isAvailable ? (
-    <RepositorySelect
-      repositories={repositories}
-      value={selectedRepository}
-      onChange={setSelectedRepository}
-      includeNoneOption
-    />
-  ) : undefined;
+  const repositorySelect = isAvailable
+    ? { repositories, value: selectedRepository, onChange: setSelectedRepository }
+    : undefined;
 
   const pageNav: NavModelItem = {
     text: t('playlist.playlist-new-page.page-nav.text.new-playlist', 'New playlist'),

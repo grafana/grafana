@@ -8,7 +8,6 @@ import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { SaveProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
-import { RepositorySelect } from 'app/features/provisioning/components/Shared/RepositorySelect';
 import { SourceLink } from 'app/features/provisioning/components/SourceLink';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
@@ -54,15 +53,14 @@ export const PlaylistEditPage = () => {
   // The repository can't be changed after creation, so the selector is read-only on edit. It shows
   // the managing repository (or "no repository" for an unmanaged playlist).
   const repositorySelect =
-    isAvailable && data ? (
-      <RepositorySelect
-        repositories={repositories}
-        value={isManagedByRepository(data) ? (getManagerIdentity(data) ?? '') : ''}
-        onChange={() => {}}
-        includeNoneOption
-        readOnly
-      />
-    ) : undefined;
+    isAvailable && data
+      ? {
+          repositories,
+          value: isManagedByRepository(data) ? (getManagerIdentity(data) ?? '') : '',
+          onChange: () => {},
+          readOnly: true,
+        }
+      : undefined;
 
   const pageNav: NavModelItem = {
     text: t('playlist-edit.title', 'Edit playlist'),

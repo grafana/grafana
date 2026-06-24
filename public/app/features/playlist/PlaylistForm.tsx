@@ -1,12 +1,14 @@
-import { type ReactNode, useId, useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { RepositorySelect } from 'app/features/provisioning/components/Shared/RepositorySelect';
 
 import { type Playlist, type PlaylistSpec } from '../../api/clients/playlist/v1';
 import { getGrafanaSearcher } from '../search/service/searcher';
@@ -14,11 +16,22 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
 
+/** Repository selection for saving the playlist to a provisioning repository. */
+export interface PlaylistRepositorySelect {
+  /** Configured repositories to choose from (may be empty). */
+  repositories: RepositoryView[];
+  /** Selected repository name. Empty string = "no repository" (save to Grafana). */
+  value: string;
+  onChange: (repositoryName: string) => void;
+  /** When true the selection is fixed — the edit page does not allow changing the repository. */
+  readOnly?: boolean;
+}
+
 interface Props {
   onSubmit: (playlist: Playlist) => void;
   playlist: Playlist;
-  /** Optional repository selector (rendered at the top of the form) for saving to a repository. */
-  repositorySelect?: ReactNode;
+  /** When provided, renders a repository selector at the top of the form. */
+  repositorySelect?: PlaylistRepositorySelect;
 }
 
 export const PlaylistForm = ({ onSubmit, playlist, repositorySelect }: Props) => {
@@ -53,7 +66,15 @@ export const PlaylistForm = ({ onSubmit, playlist, repositorySelect }: Props) =>
         const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
         return (
           <>
-            {repositorySelect}
+            {repositorySelect && (
+              <RepositorySelect
+                repositories={repositorySelect.repositories}
+                value={repositorySelect.value}
+                onChange={repositorySelect.onChange}
+                includeNoneOption
+                readOnly={repositorySelect.readOnly}
+              />
+            )}
             <Field
               label={t('playlist-edit.form.name-label', 'Name')}
               invalid={!!errors.title}
