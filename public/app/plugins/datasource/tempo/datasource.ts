@@ -1,6 +1,6 @@
 import { groupBy } from 'lodash';
-import { EMPTY, from, merge, type Observable, of } from 'rxjs';
-import { catchError, concatMap, finalize, map, mergeMap, toArray } from 'rxjs/operators';
+import { EMPTY, forkJoin, from, merge, type Observable, of } from 'rxjs';
+import { catchError, concatMap, finalize, last, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
   CoreApp,
@@ -39,7 +39,7 @@ import { interpolateFilters } from './SearchTraceQLEditor/utils';
 import { type TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { type PrometheusDatasource, type PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { type TagLimitOptions } from './configuration/TagLimitSettings';
-import { SearchTableType, type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
+import { MetricsQueryType, SearchTableType, type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   defaultTableFilter,
   durationMetric,
@@ -53,7 +53,8 @@ import {
   totalsMetric,
   nativeHistogramDurationMetric,
 } from './graphTransform';
-import { composeFilter } from './flowQuery';
+import { composeFilter, composeTopologyCountQuery, composeTopologyBytesQuery } from './flowQuery';
+import { extractFlowEdges, flowEdgesToNodeGraph } from './flowTransform';
 import TempoLanguageProvider from './language_provider';
 import {
   enhanceTraceQlMetricsResponse,
@@ -720,10 +721,38 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   handleFlowTopologyQuery(
     options: DataQueryRequest<TempoQuery>,
-    _filters: TempoQuery['flowFilters'] = []
+    filters: TempoQuery['flowFilters'] = []
   ): Observable<DataQueryResponse> {
-    // Implemented in the topology task.
-    return of({ data: [], state: LoadingState.Done });
+    const countQuery = composeTopologyCountQuery(filters ?? []);
+    const bytesQuery = composeTopologyBytesQuery(filters ?? []);
+
+    const countTarget: TempoQuery = {
+      refId: 'flow-topology-count',
+      filters: [],
+      query: countQuery,
+      queryType: 'traceql',
+      metricsQueryType: MetricsQueryType.Instant,
+    };
+    const bytesTarget: TempoQuery = {
+      refId: 'flow-topology-bytes',
+      filters: [],
+      query: bytesQuery,
+      queryType: 'traceql',
+      metricsQueryType: MetricsQueryType.Instant,
+    };
+
+    return forkJoin([
+      this.handleTraceQlMetricsQuery(options, [countTarget], countQuery).pipe(last()),
+      this.handleTraceQlMetricsQuery(options, [bytesTarget], bytesQuery).pipe(last()),
+    ]).pipe(
+      map(([countResp, bytesResp]) => {
+        const { nodes, edges } = flowEdgesToNodeGraph(
+          extractFlowEdges(countResp.data ?? [], bytesResp.data ?? [])
+        );
+        return { data: [nodes, edges], state: LoadingState.Done };
+      }),
+      catchError(() => of({ data: [], state: LoadingState.Done }))
+    );
   }
 
   handleTraceQlMetricsQuery(

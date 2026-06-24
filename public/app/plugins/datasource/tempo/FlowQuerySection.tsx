@@ -10,10 +10,10 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { Badge, InlineField, InlineFieldRow, Spinner, useStyles2 } from '@grafana/ui';
+import { Badge, InlineField, InlineFieldRow, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
 import { type TempoDatasource } from './datasource';
-import { FLOW_FACETS, type FlowFacetDef, type FlowFacetFilter, composeFacetQuery, composeFilter } from './flowQuery';
+import { FLOW_FACETS, type FlowFacetDef, type FlowFacetFilter, type FlowView, composeFacetQuery, composeFilter } from './flowQuery';
 import { type TempoQuery } from './types';
 
 interface Props {
@@ -31,9 +31,23 @@ interface FacetValue {
 
 const TOP_N = 10;
 
+const VIEW_OPTIONS: Array<{ label: string; value: FlowView }> = [
+  { label: 'Table', value: 'table' },
+  { label: 'Topology', value: 'topology' },
+];
+
 export function FlowQuerySection({ datasource, query, onChange, onRunQuery, range }: Props) {
   const styles = useStyles2(getStyles);
   const filters = useMemo(() => query.flowFilters ?? [], [query.flowFilters]);
+  const flowView = query.flowView ?? 'table';
+
+  const setFlowView = useCallback(
+    (view: FlowView) => {
+      onChange({ ...query, flowView: view });
+      onRunQuery();
+    },
+    [onChange, onRunQuery, query]
+  );
 
   const applyFilters = useCallback(
     (next: FlowFacetFilter[]) => {
@@ -72,6 +86,15 @@ export function FlowQuerySection({ datasource, query, onChange, onRunQuery, rang
 
   return (
     <div className={styles.container}>
+      <InlineFieldRow>
+        <InlineField label="View">
+          <RadioButtonGroup<FlowView>
+            options={VIEW_OPTIONS}
+            value={flowView}
+            onChange={setFlowView}
+          />
+        </InlineField>
+      </InlineFieldRow>
       <ChipBar filters={filters} onRemove={removeValue} />
       <InlineFieldRow>
         <InlineField label="Flow filters" grow>

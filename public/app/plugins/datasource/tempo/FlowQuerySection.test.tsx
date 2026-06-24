@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { of } from 'rxjs';
 
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data';
@@ -45,6 +45,30 @@ describe('FlowQuerySection drill-down', () => {
         flowFilters: [{ key: 'destination', values: ['1.2.3.4'] }],
         query: '{ span.destination.address = "1.2.3.4" }',
       })
+    );
+    expect(onRunQuery).toHaveBeenCalled();
+  });
+
+  it('renders a table|topology toggle and updates flowView on click', async () => {
+    const onChange = jest.fn();
+    const onRunQuery = jest.fn();
+    const ds = makeDatasource([]);
+
+    await act(async () => {
+      render(
+        <FlowQuerySection datasource={ds} query={baseQuery} onChange={onChange} onRunQuery={onRunQuery} />
+      );
+    });
+
+    // The toggle should show "Table" and "Topology" options
+    const topologyButton = screen.getByRole('radio', { name: /topology/i });
+    expect(topologyButton).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /table/i })).toBeInTheDocument();
+
+    fireEvent.click(topologyButton);
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ flowView: 'topology' })
     );
     expect(onRunQuery).toHaveBeenCalled();
   });
