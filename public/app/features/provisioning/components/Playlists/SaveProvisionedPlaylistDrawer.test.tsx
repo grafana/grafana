@@ -168,6 +168,40 @@ describe('SaveProvisionedPlaylistDrawer', () => {
     expect(body.metadata?.name).toMatch(/^[a-z0-9]{12}$/);
   });
 
+  it('commits to the path the user edits in the drawer (new playlist)', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        capturedRequest = { url: new URL(request.url), body: await request.json() };
+        return HttpResponse.json({ resource: { upsert: {} } });
+      })
+    );
+
+    const newPlaylist: Playlist = {
+      apiVersion: 'playlist.grafana.app/v1',
+      kind: 'Playlist',
+      metadata: { name: '' },
+      spec: { title: 'My New Playlist', interval: '5m', items: [{ type: 'dashboard_by_uid', value: 'xyz' }] },
+    };
+
+    const { user } = render(
+      <SaveProvisionedPlaylistDrawer playlist={newPlaylist} repositoryName="test-repo" isNew onDismiss={jest.fn()} />
+    );
+
+    // The path field is editable for new resources (initial value is the title-derived slug);
+    // the edited value must be the committed path.
+    const pathInput = await screen.findByDisplayValue('my-new-playlist.json');
+    await user.clear(pathInput);
+    await user.type(pathInput, 'custom/folder/my-file.json');
+    await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+    expect(requireCapturedRequest(capturedRequest).url.pathname).toContain(
+      '/repositories/test-repo/files/custom/folder/my-file.json'
+    );
+  });
+
   it('shows the read-only banner when the repository cannot be edited', () => {
     mockRepoView({ isReadOnlyRepo: true });
     render(<SaveProvisionedPlaylistDrawer playlist={mockPlaylist} onDismiss={jest.fn()} />);

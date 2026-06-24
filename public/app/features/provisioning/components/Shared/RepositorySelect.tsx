@@ -56,7 +56,9 @@ export function RepositorySelect({
       <Combobox
         id={id}
         options={options}
-        value={value}
+        // Empty string means "no repository"; pass undefined so the Combobox shows the placeholder
+        // (a clearable Combobox treats "" as a real selected value).
+        value={value || undefined}
         disabled={readOnly}
         isClearable
         placeholder={t('provisioning.repository-select.placeholder', 'Select a repository')}

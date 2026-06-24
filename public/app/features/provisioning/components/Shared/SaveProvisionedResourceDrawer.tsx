@@ -137,10 +137,11 @@ function FormContent({
     },
   });
 
-  const doSave = async ({ ref, workflow }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, workflow, path }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
-    const path = initialValues.path;
+    // Use the submitted path: for new resources the path field is editable, so the user may have
+    // changed it from the initial slug. For existing resources the field is read-only (== initial).
 
     if (!repoName || !path) {
       showError(t('provisioning.save-resource.missing-info', 'Missing required fields for saving'));
