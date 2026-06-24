@@ -814,7 +814,7 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
   // Adapt GetDataSourceInstanceListFilters for the legacy getList() call: the slim filter
   // callback receives a DataSourceInstanceListItem, so wrap it to construct one from the full
   // DataSourceInstanceSettings. This avoids an `any` cast and stays safe if future cases add
-  // filter callbacks that read ref.* or other DataSourceInstanceListItem-specific fields.
+  // filter callbacks that read uid/type/meta or other DataSourceInstanceListItem fields.
   const toLegacyFilters = (filters: GetDataSourceInstanceListFilters): GetDataSourceListFilters => {
     const { filter, ...rest } = filters;
     if (!filter) {
