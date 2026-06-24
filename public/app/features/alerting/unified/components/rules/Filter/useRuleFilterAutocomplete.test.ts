@@ -16,6 +16,9 @@ const server = setupMswServer();
 
 const GRAFANA_RULES_URL = '/api/prometheus/grafana/api/v1/rules';
 
+// Mirrors GROUP_FETCH_LIMIT in useRuleFilterAutocomplete.ts (the per-source group fetch cap).
+const GROUP_FETCH_LIMIT = 2000;
+
 const wrapper = getWrapper({ renderWithRouter: true });
 
 /**
@@ -116,10 +119,10 @@ describe('useNamespaceAndGroupOptions', () => {
     });
 
     it.each([
-      { groupCount: 501, expectInfoOption: true },
-      { groupCount: 500, expectInfoOption: false },
+      { groupCount: GROUP_FETCH_LIMIT + 1, expectInfoOption: true },
+      { groupCount: GROUP_FETCH_LIMIT, expectInfoOption: false },
     ])(
-      'shows the info option when an external page exceeds the 500 limit (groups=$groupCount)',
+      'shows the info option when an external page exceeds the group fetch limit (groups=$groupCount)',
       async ({ groupCount, expectInfoOption }) => {
         setGrafanaPromRules([]);
         const externalDs = buildExternalDataSource('mimir-threshold');
@@ -133,24 +136,32 @@ describe('useNamespaceAndGroupOptions', () => {
       }
     );
 
-    it('shows the info option if any external source is capped, even when another is not', async () => {
-      setGrafanaPromRules([]);
+    it('prepends the indicator but keeps the options we found when an external source is capped', async () => {
+      setGrafanaPromRules([{ name: 'g1', file: 'folder-a', folderUid: 'a', interval: 60, rules: [] }]);
       const cappedDs = buildExternalDataSource('mimir-capped');
-      const smallDs = buildExternalDataSource('mimir-small');
-      setPrometheusRules(cappedDs, buildExternalGroups(501));
-      setPrometheusRules(smallDs, buildExternalGroups(2));
+      // Many groups but all in a single namespace: exceeds the group cap yet collapses to one
+      // namespace, exactly the case the group-based cap is a poor proxy for.
+      const cappedGroups = Array.from({ length: GROUP_FETCH_LIMIT + 1 }, (_, i) => ({
+        name: `g${i}`,
+        file: 'big-namespace',
+        interval: 60,
+        rules: [],
+      }));
+      setPrometheusRules(cappedDs, cappedGroups);
 
       const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
 
       const options = await resolveOptions(() => result.current.namespaceOptions(''));
 
-      expect(options).toEqual([
-        {
-          label: 'Due to a large number of groups, search might not be complete in external data sources.',
-          value: '__GRAFANA_INFO_OPTION__',
-          infoOption: true,
-        },
-      ]);
+      // The indicator is surfaced at the top...
+      expect(options[0]).toEqual({
+        label: 'Due to a large number of groups, search might not be complete in external data sources.',
+        value: '__GRAFANA_INFO_OPTION__',
+        infoOption: true,
+      });
+      // ...but the options we did find are retained, not discarded.
+      expect(options).toContainEqual({ label: 'folder-a', value: 'folder-a', description: 'Grafana folder' });
+      expect(options).toContainEqual({ label: 'big-namespace', value: 'big-namespace', description: 'big-namespace' });
     });
 
     it('formats external namespaces: yaml paths use the filename, long names are truncated', async () => {

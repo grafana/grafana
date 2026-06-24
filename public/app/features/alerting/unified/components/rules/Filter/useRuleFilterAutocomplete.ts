@@ -19,7 +19,10 @@ function getExternalRuleDataSources() {
   return getRulesDataSources().filter((ds: DataSourceInstanceSettings) => !!ds?.url);
 }
 
-const NAMESPACE_THRESHOLD_LIMIT = 500;
+// Cap on how many groups we fetch per source to keep the request fast. Note this limits
+// groups, not namespaces: many groups can share one namespace, so a busy source may yield
+// few namespace suggestions even at this cap.
+const GROUP_FETCH_LIMIT = 2000;
 const MIN_GROUP_SEARCH_CHARACTERS = 3;
 const GROUP_SEARCH_LIMIT = 100;
 const STATUS_FULFILLED = 'fulfilled';
@@ -82,7 +85,7 @@ async function fetchGrafanaFolderNames(
 ): Promise<string[]> {
   const response = await fetchGrafanaGroups({
     limitAlerts: 0,
-    groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+    groupLimit: GROUP_FETCH_LIMIT + 1,
     searchFolder: searchFolder || undefined,
   }).unwrap();
   return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
@@ -96,7 +99,7 @@ async function fetchExternalNamespaceNames(
     fetchExternalGroups({
       ruleSource: { uid: ds.uid },
       excludeAlerts: true,
-      groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+      groupLimit: GROUP_FETCH_LIMIT + 1,
       notificationOptions: { showErrorAlert: false },
     }).unwrap()
   );
@@ -106,7 +109,7 @@ async function fetchExternalNamespaceNames(
   for (const res of results) {
     if (res.status === STATUS_FULFILLED) {
       const groups = res.value.data.groups;
-      isLimitReached = isLimitReached || groups.length > NAMESPACE_THRESHOLD_LIMIT;
+      isLimitReached = isLimitReached || groups.length > GROUP_FETCH_LIMIT;
       groups.forEach((group: { file?: string }) => externalNamespaces.add(group.file || 'default'));
     }
   }
@@ -127,23 +130,28 @@ export function useNamespaceAndGroupOptions(): {
       const grafanaFolderNames = await fetchGrafanaFolderNames(fetchGrafanaGroups, inputValue);
       const { externalNamespaces, isLimitReached } = await fetchExternalNamespaceNames(fetchExternalGroups);
 
+      // Grafana folders are filtered server-side via `search.folder`. External namespaces have no
+      // backend folder search, so they're filtered client-side here.
+      const options = [
+        ...toGrafanaFolderOptions(grafanaFolderNames),
+        ...filterBySearch(toExternalNamespaceOptions(externalNamespaces), inputValue),
+      ];
+
+      // When an external source hits the group fetch cap, surface an indicator that its results
+      // may be incomplete without discarding the options we did find (Grafana folders are
+      // unaffected since they're searched server-side).
       if (isLimitReached) {
-        return [
+        options.unshift(
           createInfoOption(
             t(
               'alerting.rules-filter.namespace-autocomplete-unavailable',
               'Due to a large number of groups, search might not be complete in external data sources.'
             )
-          ),
-        ];
+          )
+        );
       }
 
-      // Grafana folders are filtered server-side via `search.folder`. External namespaces have no
-      // backend folder search, so they're filtered client-side here.
-      return [
-        ...toGrafanaFolderOptions(grafanaFolderNames),
-        ...filterBySearch(toExternalNamespaceOptions(externalNamespaces), inputValue),
-      ];
+      return options;
     },
     [fetchGrafanaGroups, fetchExternalGroups]
   );
