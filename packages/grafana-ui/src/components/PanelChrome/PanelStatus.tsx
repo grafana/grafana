@@ -10,7 +10,7 @@ import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
-import { Toggletip } from '../Toggletip/Toggletip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { type PanelStatusItem, type PanelStatusSeverity } from './types';
 
@@ -70,31 +70,32 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
   const topSeverity = getTopSeverity(items);
 
   const content = (
-    <Stack direction="column" gap={1}>
-      {items.map((item, index) => (
-        <div key={`${item.severity}-${index}`} className={styles.item}>
-          <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
-          <span className={styles.itemText}>{item.text}</span>
-        </div>
-      ))}
-    </Stack>
-  );
-
-  const title = (
-    <div className={styles.popoverHeader}>
-      <span className={styles.popoverTitle}>
-        {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
-      </span>
-      {onInspect && (
-        <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
-          {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
-        </Button>
-      )}
+    <div className={styles.popover}>
+      <div className={styles.popoverHeader}>
+        <span className={styles.popoverTitle}>
+          {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
+        </span>
+        {onInspect && (
+          <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
+            {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
+          </Button>
+        )}
+      </div>
+      <Stack direction="column" gap={1}>
+        {items.map((item, index) => (
+          <div key={`${item.severity}-${index}`} className={styles.item}>
+            <span className={styles.itemIcon}>
+              <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
+            </span>
+            <span className={styles.itemText}>{item.text}</span>
+          </div>
+        ))}
+      </Stack>
     </div>
   );
 
   return (
-    <Toggletip title={title} content={content} placement="bottom-start" closeButton={false} fitContent>
+    <Tooltip content={content} placement="bottom-start" interactive>
       <Button
         variant={topSeverity === 'error' ? 'destructive' : 'secondary'}
         className={topSeverity !== 'error' ? styles[`${topSeverity}Button`] : undefined}
@@ -103,11 +104,17 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         aria-label={ariaLabel}
         data-testid={selectors.components.Panels.Panel.status(topSeverity)}
       />
-    </Toggletip>
+    </Tooltip>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  popover: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1, 1),
+  }),
   popoverHeader: css({
     display: 'flex',
     alignItems: 'center',
@@ -120,13 +127,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   item: css({
     display: 'flex',
-    alignItems: 'baseline',
+    alignItems: 'flex-start',
     gap: theme.spacing(1),
     maxWidth: theme.spacing(40),
+  }),
+  itemIcon: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    // Match the first text line's height so the icon is centered on it, even when the text wraps.
+    height: `calc(${theme.typography.bodySmall.fontSize} * ${theme.typography.bodySmall.lineHeight})`,
   }),
   itemText: css({
     minWidth: 0,
     fontSize: theme.typography.bodySmall.fontSize,
+    lineHeight: theme.typography.bodySmall.lineHeight,
     display: '-webkit-box',
     WebkitBoxOrient: 'vertical',
     WebkitLineClamp: 2,
@@ -134,15 +149,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   error: css({
     color: theme.colors.error.text,
-    flexShrink: 0,
   }),
   warning: css({
     color: theme.colors.warning.text,
-    flexShrink: 0,
   }),
   info: css({
     color: theme.colors.info.text,
-    flexShrink: 0,
   }),
   warningButton: css({
     color: theme.colors.warning.text,
