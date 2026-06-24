@@ -6440,6 +6440,7 @@
       "edit-template-button-label": "Edit template: {{title}}",
       "no-preview": "No preview available ",
       "use-template-button": "Use template",
+      "use-template-button-label": "Use template: {{title}}",
       "view-dashboard-button": "View dashboard",
       "view-dashboard-button-label": "View dashboard: {{title}}",
       "view-template-button": "View template",

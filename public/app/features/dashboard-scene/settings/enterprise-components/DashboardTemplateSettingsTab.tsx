@@ -1,10 +1,10 @@
 import { type ComponentType } from 'react';
 
-export interface DashboardTemplateSettingsTabProps {
+interface DashboardTemplateSettingsTabProps {
   dashboardTemplateUid: string;
 }
 
-export type DashboardTemplateSettingsTabComponent = ComponentType<DashboardTemplateSettingsTabProps>;
+type DashboardTemplateSettingsTabComponent = ComponentType<DashboardTemplateSettingsTabProps>;
 
 let internal: DashboardTemplateSettingsTabComponent | undefined;
 
