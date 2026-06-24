@@ -27,7 +27,7 @@ import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
-import { pinPanelToHomepage } from 'app/features/home/widgets/storage';
+import { isPanelPinnedToHomepage, pinPanelToHomepage } from 'app/features/home/widgets/storage';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { dispatch } from 'app/store/store';
@@ -104,16 +104,22 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     }
 
     // Pin the panel to the per-user homepage grid (live reference by dashboard uid + panel id).
-    // Only for saved dashboards (a panel needs a uid to reference) and when the homepage flag is on.
+    // Only for saved dashboards (a panel needs a uid to reference), when the homepage flag is on,
+    // and when this panel is not already pinned — the action is offered at most once per panel.
     const homepageUid = dashboard.state.uid;
-    if (homepageUid && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUnifiedHomepage, false)) {
+    const panelId = getPanelIdForVizPanel(panel);
+    if (
+      homepageUid &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUnifiedHomepage, false) &&
+      !(await isPanelPinnedToHomepage(homepageUid, panelId))
+    ) {
       items.push({
         text: t('panel.header-menu.add-to-home', 'Add to home page'),
         iconClassName: 'home',
         onClick: () => {
           pinPanelToHomepage({
             dashboardUid: homepageUid,
-            panelId: getPanelIdForVizPanel(panel),
+            panelId,
             title: panel.state.title,
           })
             .then(() =>

@@ -1,6 +1,6 @@
 import { UserStorage } from '@grafana/runtime/internal';
 
-import { pinPanelToHomepage } from './storage';
+import { isPanelPinnedToHomepage, pinPanelToHomepage } from './storage';
 import { parseWidgetLayout } from './types';
 
 jest.mock('@grafana/runtime/internal', () => ({ UserStorage: jest.fn() }));
@@ -23,15 +23,15 @@ function fakeStorage(initial: string | null): Fake {
   };
 }
 
+function withStored(raw: string | null): Fake {
+  const storage = fakeStorage(raw);
+  MockUserStorage.mockImplementation(() => storage as unknown as UserStorage);
+  return storage;
+}
+
+afterEach(() => jest.clearAllMocks());
+
 describe('pinPanelToHomepage', () => {
-  afterEach(() => jest.clearAllMocks());
-
-  function withStored(raw: string | null): Fake {
-    const storage = fakeStorage(raw);
-    MockUserStorage.mockImplementation(() => storage as unknown as UserStorage);
-    return storage;
-  }
-
   it('appends a single panel item to a fresh layout', async () => {
     const storage = withStored(null);
 
@@ -95,5 +95,50 @@ describe('pinPanelToHomepage', () => {
     const parsed = parseWidgetLayout(storage.setItem.mock.calls[0][1]);
     expect(parsed?.items.find((i) => i.id === 'panel:d1:3')?.panel).toEqual({ dashboardUid: 'd1', panelId: 3 });
     expect(parsed?.items.find((i) => i.id === 'panel:d2:4')?.panel).toEqual({ dashboardUid: 'd2', panelId: 4 });
+  });
+});
+
+describe('isPanelPinnedToHomepage', () => {
+  it('is true when the panel id is present in the layout', async () => {
+    withStored(
+      JSON.stringify({
+        version: 1,
+        items: [{ id: 'panel:d1:3', x: 0, y: 0, w: 12, h: 9, panel: { dashboardUid: 'd1', panelId: 3 } }],
+      })
+    );
+
+    expect(await isPanelPinnedToHomepage('d1', 3)).toBe(true);
+  });
+
+  it('is false when the panel id is absent from the layout', async () => {
+    withStored(JSON.stringify({ version: 1, items: [{ id: 'alerts', x: 0, y: 0, w: 12, h: 8 }] }));
+
+    expect(await isPanelPinnedToHomepage('d1', 3)).toBe(false);
+  });
+
+  it('is false when nothing is stored', async () => {
+    withStored(null);
+
+    expect(await isPanelPinnedToHomepage('d1', 3)).toBe(false);
+  });
+
+  it('is false when the stored value is invalid', async () => {
+    withStored('{bad');
+
+    expect(await isPanelPinnedToHomepage('d1', 3)).toBe(false);
+  });
+
+  it('is true for a pinned item whose panel ref was stripped (id-keyed)', async () => {
+    withStored(JSON.stringify({ version: 1, items: [{ id: 'panel:d1:3', x: 0, y: 0, w: 12, h: 9 }] }));
+
+    expect(await isPanelPinnedToHomepage('d1', 3)).toBe(true);
+  });
+
+  it('never writes back to storage', async () => {
+    const storage = withStored(JSON.stringify({ version: 1, items: [{ id: 'panel:d1:3', x: 0, y: 0, w: 12, h: 9 }] }));
+
+    await isPanelPinnedToHomepage('d1', 3);
+
+    expect(storage.setItem).not.toHaveBeenCalled();
   });
 });

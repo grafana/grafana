@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, locationService } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { FlagKeys, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -22,11 +22,13 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { isPanelPinnedToHomepage } from 'app/features/home/widgets/storage';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -56,6 +58,11 @@ jest.mock('app/core/services/context_srv');
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
+}));
+
+jest.mock('app/features/home/widgets/storage', () => ({
+  isPanelPinnedToHomepage: jest.fn(),
+  pinPanelToHomepage: jest.fn(),
 }));
 
 const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
@@ -1135,6 +1142,57 @@ describe('panelMenuBehavior', () => {
       const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
       expect(stylesMenu).toHaveLength(1);
       expect(stylesMenu?.[0].text).toBe('Copy styles');
+    });
+  });
+
+  describe('add to home page', () => {
+    beforeEach(() => {
+      jest.mocked(isPanelPinnedToHomepage).mockReset();
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('offers the action when the homepage flag is on and the panel is not pinned', async () => {
+      setTestFlags({ [FlagKeys.GrafanaUnifiedHomepage]: true });
+      jest.mocked(isPanelPinnedToHomepage).mockResolvedValue(false);
+
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.some((i) => i.text === 'Add to home page')).toBe(true);
+      // keyed on the panel's identity (dashboard uid + panel id), not its title
+      expect(isPanelPinnedToHomepage).toHaveBeenCalledWith('dash-1', 12);
+    });
+
+    it('hides the action when the panel is already pinned', async () => {
+      setTestFlags({ [FlagKeys.GrafanaUnifiedHomepage]: true });
+      jest.mocked(isPanelPinnedToHomepage).mockResolvedValue(true);
+
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.some((i) => i.text === 'Add to home page')).toBe(false);
+    });
+
+    it('hides the action when the homepage flag is off', async () => {
+      jest.mocked(isPanelPinnedToHomepage).mockResolvedValue(false);
+
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.some((i) => i.text === 'Add to home page')).toBe(false);
+      expect(isPanelPinnedToHomepage).not.toHaveBeenCalled();
     });
   });
 });

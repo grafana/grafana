@@ -24,3 +24,19 @@ export async function pinPanelToHomepage(ref: PanelRef): Promise<void> {
   };
   await storage.setItem(LAYOUT_KEY, JSON.stringify(next));
 }
+
+/**
+ * Whether the given panel is already pinned to the per-user homepage layout. Keyed on the panel's
+ * identity (dashboard uid + panel id), so it stays true even for an item whose `panel` ref was
+ * stripped by the old drag/resize bug. Used to suppress a duplicate "Add to home page" affordance;
+ * {@link pinPanelToHomepage} remains idempotent as the backstop.
+ */
+export async function isPanelPinnedToHomepage(dashboardUid: string, panelId: number): Promise<boolean> {
+  const storage = new UserStorage(SERVICE);
+  const layout = parseWidgetLayout(await storage.getItem(LAYOUT_KEY));
+  if (!layout) {
+    return false;
+  }
+  const id = panelWidgetId(dashboardUid, panelId);
+  return layout.items.some((item) => item.id === id);
+}
