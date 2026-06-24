@@ -8,7 +8,7 @@ import {
   type DataSourceRef,
 } from '@grafana/data';
 
-import { type GetDataSourceListFilters } from '../dataSourceSrv';
+import { type GetDataSourceInstanceListFilters, type GetDataSourceListFilters } from '../dataSourceSrv';
 
 import { getDataSourceInstance } from './dataSource';
 import { getDataSourceInstanceSettings, getDataSourceInstanceList } from './settings';
@@ -44,7 +44,7 @@ function stableKey(value: unknown): string {
   return JSON.stringify(value ?? null);
 }
 
-function filtersKey(filters: GetDataSourceListFilters | undefined): string {
+function filtersKey(filters: GetDataSourceInstanceListFilters | GetDataSourceListFilters | undefined): string {
   if (!filters) {
     return stableKey(null);
   }
@@ -79,7 +79,7 @@ export function useDataSourceInstanceSettings(
  *
  * @public
  */
-export function useDataSourceInstanceList(filters?: GetDataSourceListFilters): UseDataSourceInstanceListResult {
+export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFilters): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);
 
   const filterFunc = filters?.filter;

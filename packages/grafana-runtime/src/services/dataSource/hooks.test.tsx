@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
@@ -94,7 +94,7 @@ describe('useDataSourceInstanceList', () => {
   });
 
   it('does not re-fetch when the same filter function reference is re-rendered', async () => {
-    const stableFilter = (x: DataSourceInstanceSettings) => Boolean(x.meta.metrics);
+    const stableFilter = (x: DataSourceInstanceListItem) => Boolean(x.meta.metrics);
     const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceList({ filter }), {
       initialProps: { filter: stableFilter },
     });
@@ -111,8 +111,8 @@ describe('useDataSourceInstanceList', () => {
   });
 
   it('re-fetches and updates items when the filter function reference changes', async () => {
-    const filterA = (x: DataSourceInstanceSettings) => x.name === 'Alpha';
-    const filterB = (x: DataSourceInstanceSettings) => x.name === 'Bravo';
+    const filterA = (x: DataSourceInstanceListItem) => x.name === 'Alpha';
+    const filterB = (x: DataSourceInstanceListItem) => x.name === 'Bravo';
 
     const { result, rerender } = renderHook(({ filter }) => useDataSourceInstanceList({ filter }), {
       initialProps: { filter: filterA },

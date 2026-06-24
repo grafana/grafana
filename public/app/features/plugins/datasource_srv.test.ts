@@ -10,13 +10,17 @@ import {
   DataSourcePlugin,
   type ScopedVars,
 } from '@grafana/data';
-import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
   initDataSourceInstanceSettings,
   setExpressionDataSourceInstance,
 } from '@grafana/runtime/internal';
-import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
@@ -818,7 +822,11 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
     initDataSourceInstanceSettings(clone() as any, DEFAULT_NAME);
   });
 
-  const cases: Array<{ label: string; filters: GetDataSourceListFilters }> = [
+  // Cases use GetDataSourceInstanceListFilters (the slim filter type) so they can be
+  // passed to both getList() and getDataSourceInstanceList(). The filter callback in the
+  // last case only reads `name`, which is present on both DataSourceInstanceSettings and
+  // DataSourceInstanceListItem, so the legacy getList() call below is safe.
+  const cases: Array<{ label: string; filters: GetDataSourceInstanceListFilters }> = [
     { label: 'no filters', filters: {} },
     { label: 'all: true (includes non-queryable)', filters: { all: true } },
     { label: 'metrics: true', filters: { metrics: true } },
@@ -841,7 +849,8 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
   ];
 
   it.each(cases)('matches getList for $label', async ({ filters }) => {
-    const legacy = project(legacySrv.getList(filters));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const legacy = project(legacySrv.getList(filters as any));
     const asyncList = projectListItems(await getDataSourceInstanceList(filters));
     expect(asyncList).toEqual(legacy);
   });

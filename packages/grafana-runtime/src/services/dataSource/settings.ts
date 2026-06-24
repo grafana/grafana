@@ -10,7 +10,11 @@ import {
 import { isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
-import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
+import {
+  getDataSourceSrv,
+  type GetDataSourceInstanceListFilters,
+  type GetDataSourceListFilters,
+} from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
@@ -144,13 +148,12 @@ export async function getDataSourceInstanceSettings(
  * @public
  */
 export async function getDataSourceInstanceList(
-  filters?: GetDataSourceListFilters
+  filters?: GetDataSourceInstanceListFilters
 ): Promise<DataSourceInstanceListItem[]> {
-  const results = applyFilters(filters);
-  if (results.length > 0) {
-    return results.map(toListItem);
-  }
-  return getInstanceSettingsListFallback(filters).map(toListItem);
+  const { filter: itemFilter, ...settingsFilters } = filters ?? {};
+  const results = applyFilters(settingsFilters);
+  const items = (results.length > 0 ? results : getInstanceSettingsListFallback(settingsFilters)).map(toListItem);
+  return itemFilter ? items.filter(itemFilter) : items;
 }
 
 function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
