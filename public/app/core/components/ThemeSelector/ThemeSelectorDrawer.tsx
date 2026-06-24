@@ -1,12 +1,9 @@
 import { css } from '@emotion/css';
 
-import { useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import { type GrafanaTheme2, type ThemeRegistryItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { Drawer, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
 
 import { ThemeCard } from './ThemeCard';
@@ -20,23 +17,14 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
   const styles = useStyles2(getStyles);
   const themes = getSelectableThemes();
   const currentTheme = useTheme2();
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const [updatePreferences] = useUpdatePreferencesMutation();
 
   const onChange = (theme: ThemeRegistryItem) => {
     reportInteraction('grafana_preferences_theme_changed', {
       toTheme: theme.id,
       preferenceType: 'theme_drawer',
     });
-
-    if (newPrefsEnabled) {
-      // Apply the theme at runtime, then persist via the k8s preferences API.
-      changeTheme(theme.id, true);
-      const resourceName = contextSrv.user.uid ? `user-${contextSrv.user.uid}` : 'user';
-      updatePreferences({ patch: { spec: { theme: theme.id } }, name: resourceName });
-    } else {
-      changeTheme(theme.id, false);
-    }
+    // changeTheme persists via the legacy or k8s preferences API depending on the newPreferencesPage flag.
+    changeTheme(theme.id, false);
   };
 
   const subTitle = (
