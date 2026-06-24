@@ -7,10 +7,14 @@ import {
   type DataSourceRef,
 } from '@grafana/data';
 
-import { type GetDataSourceInstanceListFilters, type GetDataSourceListFilters } from '../dataSourceSrv';
+import { type GetDataSourceListFilters } from '../dataSourceSrv';
 
 import { getDataSourceInstance } from './dataSource';
-import { getDataSourceInstanceSettings, getDataSourceInstanceList } from './settings';
+import {
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceSettings,
+  getDataSourceInstanceList,
+} from './settings';
 
 /**
  * @public

@@ -10,11 +10,7 @@ import {
 import { isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
-import {
-  getDataSourceSrv,
-  type GetDataSourceInstanceListFilters,
-  type GetDataSourceListFilters,
-} from '../dataSourceSrv';
+import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
@@ -138,6 +134,21 @@ export async function getDataSourceInstanceSettings(
     return result;
   }
   return getInstanceSettingsFallback(ref, scopedVars);
+}
+
+/**
+ * Filters for {@link getDataSourceInstanceList} and {@link useDataSourceInstanceList}.
+ *
+ * Identical to {@link GetDataSourceListFilters} except the `filter` callback receives a
+ * {@link DataSourceInstanceListItem} instead of the full {@link DataSourceInstanceSettings}.
+ * This reflects the long-term data model: the list API will only expose the slim item shape,
+ * so filter callbacks must not rely on settings-specific fields such as `jsonData` or `url`.
+ *
+ * @public
+ */
+export interface GetDataSourceInstanceListFilters extends Omit<GetDataSourceListFilters, 'filter'> {
+  /** Apply a function to filter the list. Receives a slim {@link DataSourceInstanceListItem}. */
+  filter?: (item: DataSourceInstanceListItem) => boolean;
 }
 
 /**

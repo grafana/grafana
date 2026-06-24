@@ -10,7 +10,7 @@ import {
   DataSourcePlugin,
   type ScopedVars,
 } from '@grafana/data';
-import { RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
   initDataSourceInstanceSettings,

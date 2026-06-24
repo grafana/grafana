@@ -16,8 +16,8 @@ export type { EventProperty, Event } from './analyticsFramework/types';
 export { getPluginSettings } from './services/pluginSettings/getPluginSettings';
 export { updateAppPluginSettings } from './services/pluginSettings/updateAppPluginSettings';
 export { usePluginSettings } from './services/pluginSettings/hooks';
-export { type GetDataSourceInstanceListFilters } from './services/dataSourceSrv';
 export {
+  type GetDataSourceInstanceListFilters,
   getDataSourceInstanceSettings,
   getDataSourceInstanceList,
   reloadDataSourceInstanceSettings,
