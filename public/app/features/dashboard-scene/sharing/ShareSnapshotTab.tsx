@@ -61,14 +61,14 @@ type SnapshotShareConfiguration = {
 };
 
 // Returns the snapshot share configuration persisted in local storage, if any
-export function getSnapshotShareConfiguration(): SnapshotShareConfiguration | undefined {
+function getSnapshotShareConfiguration(): SnapshotShareConfiguration | undefined {
   if (store.exists(SNAPSHOT_SHARE_CONFIGURATION)) {
     return store.getObject<SnapshotShareConfiguration>(SNAPSHOT_SHARE_CONFIGURATION);
   }
   return undefined;
 }
 
-export function updateSnapshotShareConfiguration(config: SnapshotShareConfiguration) {
+function updateSnapshotShareConfiguration(config: SnapshotShareConfiguration) {
   store.setObject(SNAPSHOT_SHARE_CONFIGURATION, config);
 }
 

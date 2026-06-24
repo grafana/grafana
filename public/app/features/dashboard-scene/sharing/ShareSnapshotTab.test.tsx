@@ -3,12 +3,7 @@ import { SceneTimeRange } from '@grafana/scenes';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
-import {
-  getExpireOptions,
-  getSnapshotShareConfiguration,
-  ShareSnapshotTab,
-  updateSnapshotShareConfiguration,
-} from './ShareSnapshotTab';
+import { getExpireOptions, ShareSnapshotTab } from './ShareSnapshotTab';
 
 const SNAPSHOT_SHARE_CONFIGURATION = 'grafana.dashboard.snapshot.shareConfiguration';
 
@@ -33,7 +28,7 @@ describe('ShareSnapshotTab', () => {
       tab.onExpireChange(ONE_HOUR);
 
       expect(tab.state.selectedExpireOption?.value).toBe(ONE_HOUR);
-      expect(getSnapshotShareConfiguration()).toEqual({ expirationTime: ONE_HOUR });
+      expect(readStoredConfiguration()).toEqual({ expirationTime: ONE_HOUR });
     });
 
     it('persists the "Never" (0) option', () => {
@@ -42,11 +37,11 @@ describe('ShareSnapshotTab', () => {
       tab.onExpireChange(0);
 
       expect(tab.state.selectedExpireOption?.value).toBe(0);
-      expect(getSnapshotShareConfiguration()).toEqual({ expirationTime: 0 });
+      expect(readStoredConfiguration()).toEqual({ expirationTime: 0 });
     });
 
     it('pre-populates the expire option from local storage when opened', () => {
-      updateSnapshotShareConfiguration({ expirationTime: ONE_HOUR });
+      seedStoredConfiguration({ expirationTime: ONE_HOUR });
 
       const tab = buildSnapshotTab();
 
@@ -54,17 +49,17 @@ describe('ShareSnapshotTab', () => {
     });
 
     it('falls back to the default when the stored value is not a valid option', () => {
-      updateSnapshotShareConfiguration({ expirationTime: 12345 });
+      seedStoredConfiguration({ expirationTime: 12345 });
 
       const tab = buildSnapshotTab();
 
       expect(tab.state.selectedExpireOption.value).toBe(ONE_WEEK);
     });
-  });
 
-  describe('getSnapshotShareConfiguration', () => {
-    it('returns undefined when nothing is stored', () => {
-      expect(getSnapshotShareConfiguration()).toBeUndefined();
+    it('does not store anything until the user changes the option', () => {
+      buildSnapshotTab();
+
+      expect(readStoredConfiguration()).toBeUndefined();
     });
 
     it('only stores known expire option values', () => {
@@ -73,9 +68,7 @@ describe('ShareSnapshotTab', () => {
 
       tab.onExpireChange(ONE_HOUR);
 
-      const stored = window.localStorage.getItem(SNAPSHOT_SHARE_CONFIGURATION);
-      const parsed = JSON.parse(stored ?? '{}');
-      expect(validValues).toContain(parsed.expirationTime);
+      expect(validValues).toContain(readStoredConfiguration()?.expirationTime);
     });
   });
 });
@@ -90,4 +83,13 @@ function buildSnapshotTab() {
   });
 
   return new ShareSnapshotTab({ dashboardRef: scene.getRef() });
+}
+
+function readStoredConfiguration(): { expirationTime: number } | undefined {
+  const stored = window.localStorage.getItem(SNAPSHOT_SHARE_CONFIGURATION);
+  return stored ? JSON.parse(stored) : undefined;
+}
+
+function seedStoredConfiguration(config: { expirationTime: number }) {
+  window.localStorage.setItem(SNAPSHOT_SHARE_CONFIGURATION, JSON.stringify(config));
 }
