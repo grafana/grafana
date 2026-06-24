@@ -4267,6 +4267,8 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-actions": {
+      "commit-title-resource-count_one": "{{count}} resource",
+      "commit-title-resource-count_other": "{{count}} resources",
       "error-generic": "Unexpected error happened when creating job"
     },
     "bulk-delete-resources-form": {
@@ -12984,6 +12986,7 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
+      "bulk-resource-kind": "resource",
       "create-default": "Create {{resourceKind}}: {{title}}",
       "delete-default": "Delete {{resourceKind}}: {{title}}",
       "move-default": "Move {{resourceKind}}: {{title}}",
