@@ -2112,6 +2112,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "grafana.starredFolders",
+			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+		},
+		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
