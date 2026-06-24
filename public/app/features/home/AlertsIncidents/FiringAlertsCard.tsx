@@ -48,7 +48,7 @@ function severityLabel(level?: SeverityLevel): string {
     case 'low':
       return t('home.firing-alerts-card.severity-low', 'Low');
     default:
-      return t('home.firing-alerts-card.severity-unknown', 'Unknown severity');
+      return t('home.firing-alerts-card.severity-unknown', 'Unknown');
   }
 }
 

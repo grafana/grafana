@@ -11,7 +11,7 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
-import { severityLevelColor, severityLevelRank } from './severity';
+import { severityLevelColor } from './severity';
 
 export function IncidentsCard() {
   const { pluginId, installed, loading, settings } = useIrmPlugin(SupportedPlugin.Incident);
@@ -25,42 +25,36 @@ export function IncidentsCard() {
   // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
   // access to the plugin's incidents page sees titles as plain text, not links that 403 on click.
   const canAccess = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents')) : false;
+  // canDeclare gates on the plugin's /incidents/declare write include; the button itself deep-links to
+  // /incidents?declare=new (IRM's declare flow), and canAccessPluginPage ignores the query string.
   const canDeclare = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare')) : false;
 
   return <IncidentsCardInner pluginId={pluginId} canAccess={canAccess} canDeclare={canDeclare} />;
 }
 
+type IncidentsCardInnerProps = {
+  pluginId: string;
+  canAccess: boolean;
+  canDeclare: boolean;
+};
+
 /**
  * Inner component avoids calling hooks conditionally —
  * the availability gate lives in the parent wrapper.
  */
-function IncidentsCardInner({
-  pluginId,
-  canAccess,
-  canDeclare,
-}: {
-  pluginId: string;
-  canAccess: boolean;
-  canDeclare: boolean;
-}) {
-  const { data: incidents, isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
-
+function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardInnerProps) {
+  const { data: incidents = [], isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
+  const incidentCount = incidents?.length ?? 0;
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
   // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other
   // error (401/403/5xx/network) is genuine and surfaced to the user.
   const loadError = !!error && !(isFetchError(error) && error.status === 404);
 
-  // Most severe first, then most recent within a severity; capped client-side. Unmapped org-custom
-  // severity labels (canonicalSeverity → undefined) rank lowest, after all known severities.
+  // Most recent incidents first; capped client-side.
   const displayed = useMemo(
     () =>
-      [...(incidents ?? [])]
-        .sort(
-          (a, b) =>
-            severityLevelRank(canonicalSeverity(b.severityLabel)) -
-              severityLevelRank(canonicalSeverity(a.severityLabel)) ||
-            new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
-        )
+      [...incidents]
+        .sort((a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime())
         .slice(0, HOME_CARD_MAX_ITEMS),
     [incidents]
   );
@@ -68,7 +62,7 @@ function IncidentsCardInner({
   return (
     <SummaryCard
       title={t('home.incidents-card.title', 'Active incidents')}
-      count={incidents?.length ?? 0}
+      count={incidentCount}
       countLimit={ACTIVE_INCIDENTS_QUERY_LIMIT}
       loading={isLoading}
       error={
@@ -91,23 +85,23 @@ function IncidentsCardInner({
         </>
       )}
       footer={
-        (incidents?.length ?? 0) === 0 ? (
-          canDeclare ? (
-            <LinkButton
-              variant="secondary"
-              size="sm"
-              fill="text"
-              icon="fire"
-              href={createBridgeURL(pluginId, '/incidents/declare')}
-            >
-              <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
-            </LinkButton>
-          ) : undefined
-        ) : canAccess ? (
-          <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
-            <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
-          </LinkButton>
-        ) : undefined
+        !incidentCount
+          ? canDeclare && (
+              <LinkButton
+                variant="secondary"
+                size="sm"
+                fill="text"
+                icon="fire"
+                href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
+              >
+                <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
+              </LinkButton>
+            )
+          : canAccess && (
+              <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
+                <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
+              </LinkButton>
+            )
       }
     />
   );

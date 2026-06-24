@@ -48,53 +48,55 @@ export function SummaryCard<T>({
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
   return (
-    <HomeSection>
-      <Stack direction="column" gap={2}>
-        <Stack alignItems="center" justifyContent="space-between">
-          <Stack alignItems="center">
-            <Text element="h2" variant="h5">
-              {title}
-            </Text>
-            {!loading && count > 0 && <Badge text={countText} color="red" />}
+    <HomeSection display="flex" direction="column">
+      <Stack direction="column" gap={2} grow={1}>
+        <Stack direction="column" gap={2} grow={1}>
+          <Stack alignItems="center" justifyContent="space-between">
+            <Stack alignItems="center">
+              <Text element="h2" variant="h5">
+                {title}
+              </Text>
+              {!loading && count > 0 && <Badge text={countText} color="red" />}
+            </Stack>
+            {!loading && headerExtra}
           </Stack>
-          {!loading && headerExtra}
+
+          {loading && (
+            <Stack direction="column">
+              {Array.from({ length: 3 }, (_, i) => (
+                <Skeleton key={i} height={20} />
+              ))}
+            </Stack>
+          )}
+
+          {error && (
+            <Alert
+              severity="warning"
+              title={error.title}
+              action={
+                <Button onClick={error.onRetry} variant="secondary" size="sm">
+                  <Trans i18nKey="home.summary-card.retry">Retry</Trans>
+                </Button>
+              }
+            />
+          )}
+
+          {!loading && !error && items.length === 0 && (
+            <Stack direction="column" alignItems="center">
+              <Text color="secondary">{emptyMessage}</Text>
+            </Stack>
+          )}
+
+          {!loading && !error && items.length > 0 && (
+            <ul className={styles.list}>
+              {items.map((item) => (
+                <li key={getItemKey(item)} className={styles.row}>
+                  {renderItem(item)}
+                </li>
+              ))}
+            </ul>
+          )}
         </Stack>
-
-        {loading && (
-          <Stack direction="column">
-            {Array.from({ length: 3 }, (_, i) => (
-              <Skeleton key={i} height={20} />
-            ))}
-          </Stack>
-        )}
-
-        {error && (
-          <Alert
-            severity="warning"
-            title={error.title}
-            action={
-              <Button onClick={error.onRetry} variant="secondary" size="sm">
-                <Trans i18nKey="home.summary-card.retry">Retry</Trans>
-              </Button>
-            }
-          />
-        )}
-
-        {!loading && !error && items.length === 0 && (
-          <Stack direction="column" alignItems="center">
-            <Text color="secondary">{emptyMessage}</Text>
-          </Stack>
-        )}
-
-        {!loading && !error && items.length > 0 && (
-          <ul className={styles.list}>
-            {items.map((item) => (
-              <li key={getItemKey(item)} className={styles.row}>
-                {renderItem(item)}
-              </li>
-            ))}
-          </ul>
-        )}
 
         {!loading && !error && footer && <Stack justifyContent="flex-end">{footer}</Stack>}
       </Stack>

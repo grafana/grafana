@@ -119,7 +119,7 @@ describe('FiringAlertsCard', () => {
     render(<FiringAlertsCard />);
 
     expect(await screen.findByText('No Severity')).toBeInTheDocument();
-    expect(await screen.findByText('Unknown severity')).toBeInTheDocument();
+    expect(await screen.findByText('Unknown')).toBeInTheDocument();
 
     // Missing severity must not crash canonicalSeverity and must not be counted in either badge
     expect(screen.queryByText(/\d+ critical/i)).not.toBeInTheDocument();

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { PageLayoutType, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
+import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { Grid, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
@@ -59,14 +59,10 @@ export default function HomePage() {
             })}
             <DashboardTabs />
           </HomeSection>
-          <div className={styles.cardGrid}>
-            <div className={styles.card}>
-              <FiringAlertsCard />
-            </div>
-            <div className={styles.card}>
-              <IncidentsCard />
-            </div>
-          </div>
+          <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+            <FiringAlertsCard />
+            <IncidentsCard />
+          </Grid>
 
           {renderLimitedComponents({
             props: {},
@@ -84,7 +80,7 @@ export default function HomePage() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   extra: css({
     display: 'contents',
 
@@ -92,27 +88,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       '&:empty': {
         display: 'none',
       },
-    },
-  }),
-  cardGrid: css({
-    display: 'grid',
-    gap: theme.spacing(2),
-    // auto-fit collapses the empty track when a card renders null, so the other fills the row;
-    // min(100%, 22rem) yields one column on narrow containers and two once ~2x22rem+gap fits — no calc.
-    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 22rem), 1fr))',
-  }),
-  card: css({
-    display: 'flex',
-    flexDirection: 'column',
-    minWidth: 0,
-    // A card renders null when unavailable; its empty wrapper collapses so auto-fit drops the track
-    // and the remaining card spans the full row.
-    '&:empty': {
-      display: 'none',
-    },
-    // Stretch the card body to fill the grid cell so both cards stay equal height.
-    '> *': {
-      flex: 1,
     },
   }),
 });

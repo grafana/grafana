@@ -10606,7 +10606,7 @@
       "severity-high": "High",
       "severity-low": "Low",
       "severity-minor": "Minor",
-      "severity-unknown": "Unknown severity",
+      "severity-unknown": "Unknown",
       "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
