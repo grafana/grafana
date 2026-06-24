@@ -185,11 +185,11 @@ function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceLis
   };
 }
 
-// getDataSourceInstanceList appends the built-in -- Grafana -- data source to most results
-// (suppressed only when pluginId or alerting filters are set, or when tracing is set).
-// Callers that want only true instances of a given type must re-check the type to avoid a
-// false positive from that appended built-in. Mirrors the type predicate used inside
-// applyFilters (exact type or an aliasID match).
+// getDataSourceInstanceList appends the built-in -- Grafana -- data source to most results.
+// It is suppressed when pluginId or alerting filters are set, when tracing is set, or when
+// a custom filter callback returns false for it. Callers that want only true instances of a
+// given type must re-check the type to guard against a false positive from that appended
+// built-in. Mirrors the type predicate used inside applyFilters (exact type or aliasID match).
 function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
   return item.type === type || (item.meta.aliasIDs?.includes(type) ?? false);
 }
@@ -198,7 +198,7 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
  * Resolve the default data source instance of a given type. Returns the instance flagged
  * as default, otherwise the first instance of that type, or `undefined` when none exist.
  *
- * Covers the common "get my data source" pattern (`getList({ type }).find(isDefault) ?? [0]`)
+ * Covers the common "get my data source" pattern (`list.find(ds => ds.isDefault) ?? list[0]`)
  * without exposing the full list. The heavy per-instance settings are not included — fetch
  * them on demand via {@link getDataSourceInstanceSettings}.
  *
