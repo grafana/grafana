@@ -31,7 +31,7 @@ type ClientOptions struct {
 // ClientOption customizes how a GitHub client is created.
 type ClientOption func(*ClientOptions)
 
-// WithCustomServerURL targets a GitHub Enterprise Server instance at the given
+// WithCustomServerURL targets a GitHub Enterprise instance at the given REST API
 // base URL. An empty url is ignored, keeping the default github.com client.
 func WithCustomServerURL(url string) ClientOption {
 	return func(o *ClientOptions) {
