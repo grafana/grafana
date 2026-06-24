@@ -77,17 +77,17 @@ If the alert requires coordinated response, [declare an incident from the firing
 
 Explain sends the following to Grafana Assistant:
 
-| Input | Used for |
-| --- | --- |
-| Alert rule query and expressions | Interpreting what is being measured |
-| Labels and existing annotations | Instance-specific context |
-| Notification history (bonus) | Whether the alert was previously silenced or ignored |
-| IRM incident history (bonus) | Past incidents triggered by this rule |
+| Input                            | Used for                                             |
+| -------------------------------- | ---------------------------------------------------- |
+| Alert rule query and expressions | Interpreting what is being measured                  |
+| Labels and existing annotations  | Instance-specific context                            |
+| Notification history (bonus)     | Whether the alert was previously silenced or ignored |
+| IRM incident history (bonus)     | Past incidents triggered by this rule                |
 
-| Output | Destination |
-| --- | --- |
-| Proposed summary | Explain drawer; optional notification template |
-| Proposed description | Explain drawer; optional notification template |
+| Output                         | Destination                                          |
+| ------------------------------ | ---------------------------------------------------- |
+| Proposed summary               | Explain drawer; optional notification template       |
+| Proposed description           | Explain drawer; optional notification template       |
 | Recurrence and quality signals | [Evaluate alert quality](ref:evaluate-alert-quality) |
 
 ## Next steps

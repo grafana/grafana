@@ -2,12 +2,12 @@
 
 ## Milestones
 
-| Day | Milestone | Demoable output |
-| --- | --- | --- |
-| 1 | Form validation + Assistant stub | Cannot save rule without summary/description; Assistant returns mock text from query |
-| 2 | Explain button + drawer | Firing instance → Explain → see generated context |
-| 3 | Persist context to rule | "Add this context to the alert" updates rule annotations |
-| 4 | Polish + bonus | IRM check-in, bulk filter, or provisioning export |
+| Day | Milestone                        | Demoable output                                                                      |
+| --- | -------------------------------- | ------------------------------------------------------------------------------------ |
+| 1   | Form validation + Assistant stub | Cannot save rule without summary/description; Assistant returns mock text from query |
+| 2   | Explain button + drawer          | Firing instance → Explain → see generated context                                    |
+| 3   | Persist context to rule          | "Add this context to the alert" updates rule annotations                             |
+| 4   | Polish + bonus                   | IRM check-in, bulk filter, or provisioning export                                    |
 
 ---
 
@@ -15,14 +15,14 @@
 
 ### Frontend validation — Lauren
 
-| Task | Priority | Status |
-| --- | --- | --- |
-| Add Summary field to alert rule form (`annotations.summary`) | Must | |
-| Add Description field to alert rule form (`annotations.description`) | Must | |
-| Form validation: block save when empty | Must | |
-| Helper text / links to docs | Should | |
-| Wire save-time generation hook (calls Assistant API) | Bonus | |
-| Bulk filter: missing/short annotations on rules list | Bonus | |
+| Task                                                                 | Priority | Status |
+| -------------------------------------------------------------------- | -------- | ------ |
+| Add Summary field to alert rule form (`annotations.summary`)         | Must     |        |
+| Add Description field to alert rule form (`annotations.description`) | Must     |        |
+| Form validation: block save when empty                               | Must     |        |
+| Helper text / links to docs                                          | Should   |        |
+| Wire save-time generation hook (calls Assistant API)                 | Bonus    |        |
+| Bulk filter: missing/short annotations on rules list                 | Bonus    |        |
 
 **Likely files**
 
@@ -33,14 +33,14 @@
 
 ### Assistant tool — Pepe
 
-| Task | Priority | Status |
-| --- | --- | --- |
-| Tool: generate summary + description from query, labels, annotations | Must | |
-| Tool: read notification history for a rule | Should | |
-| Tool: read IRM history for related incidents | Bonus | |
-| Tool: find similar alerts (query/label similarity) | Should | |
-| Tool: analyse query quality (too broad, missing filters) | Stretch | |
-| Tool: consolidate incident context for rule improvement | Bonus | |
+| Task                                                                 | Priority | Status |
+| -------------------------------------------------------------------- | -------- | ------ |
+| Tool: generate summary + description from query, labels, annotations | Must     |        |
+| Tool: read notification history for a rule                           | Should   |        |
+| Tool: read IRM history for related incidents                         | Bonus    |        |
+| Tool: find similar alerts (query/label similarity)                   | Should   |        |
+| Tool: analyse query quality (too broad, missing filters)             | Stretch  |        |
+| Tool: consolidate incident context for rule improvement              | Bonus    |        |
 
 **Inputs**
 
@@ -73,14 +73,14 @@
 
 ### Explain UI — TBD
 
-| Task | Priority | Status |
-| --- | --- | --- |
-| Explain button on alert instance view | Must | |
-| Drawer component for Assistant output | Must | |
-| Loading and error states | Must | |
-| **Add this context to the alert** CTA | Must | |
-| Show impact evaluation signals (recurring, similar alerts) | Should | |
-| Add Explain output to notification template (bonus) | Bonus | |
+| Task                                                       | Priority | Status |
+| ---------------------------------------------------------- | -------- | ------ |
+| Explain button on alert instance view                      | Must     |        |
+| Drawer component for Assistant output                      | Must     |        |
+| Loading and error states                                   | Must     |        |
+| **Add this context to the alert** CTA                      | Must     |        |
+| Show impact evaluation signals (recurring, similar alerts) | Should   |        |
+| Add Explain output to notification template (bonus)        | Bonus    |        |
 
 **Likely files**
 
@@ -91,12 +91,12 @@
 
 ### IRM integration — TBD
 
-| Task | Priority | Status |
-| --- | --- | --- |
-| "Was this alert useful?" at incident resolution | Bonus | |
-| Link IRM incident context on alert instance | Bonus | |
-| No → trigger Assistant rule improvement flow | Bonus | |
-| Suggest Alert or SLO after incident | Stretch | |
+| Task                                            | Priority | Status |
+| ----------------------------------------------- | -------- | ------ |
+| "Was this alert useful?" at incident resolution | Bonus    |        |
+| Link IRM incident context on alert instance     | Bonus    |        |
+| No → trigger Assistant rule improvement flow    | Bonus    |        |
+| Suggest Alert or SLO after incident             | Stretch  |        |
 
 ---
 
@@ -137,18 +137,18 @@ Exact endpoints TBD based on existing Assistant and ngalert APIs.
 
 ## Risks
 
-| Risk | Mitigation |
-| --- | --- |
-| Assistant latency | Show skeleton UI; cache similar-alert lookups |
-| Poor generated text | Always show editable preview before save |
-| Scope creep (IRM + bulk + export) | Timebox bonuses; ship must-have first |
+| Risk                               | Mitigation                                    |
+| ---------------------------------- | --------------------------------------------- |
+| Assistant latency                  | Show skeleton UI; cache similar-alert lookups |
+| Poor generated text                | Always show editable preview before save      |
+| Scope creep (IRM + bulk + export)  | Timebox bonuses; ship must-have first         |
 | OSS vs Cloud Assistant differences | Stub tool locally; integrate GCX if available |
 
 ---
 
 ## Team contacts
 
-| Name | Area |
-| --- | --- |
+| Name   | Area                |
+| ------ | ------------------- |
 | Lauren | Frontend validation |
-| Pepe | Assistant tool |
+| Pepe   | Assistant tool      |

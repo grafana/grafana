@@ -32,11 +32,11 @@ By the end of the hackathon, a user should be able to:
 
 ## Solution overview
 
-| Phase | When | What |
-| --- | --- | --- |
-| **Prevent** | Alert rule creation / save | Require or auto-generate summary & description |
-| **Explain** | Alert instance is firing | Use Assistant to infer context from query, labels, and history |
-| **Improve** | After incident resolution | Ask "Was this alert useful?" and feed learnings back into the rule |
+| Phase       | When                       | What                                                               |
+| ----------- | -------------------------- | ------------------------------------------------------------------ |
+| **Prevent** | Alert rule creation / save | Require or auto-generate summary & description                     |
+| **Explain** | Alert instance is firing   | Use Assistant to infer context from query, labels, and history     |
+| **Improve** | After incident resolution  | Ask "Was this alert useful?" and feed learnings back into the rule |
 
 ```mermaid
 flowchart LR
@@ -82,22 +82,22 @@ flowchart LR
 
 ## Doc index
 
-| Document | Purpose |
-| --- | --- |
-| [Product spec](./product-spec.md) | Feature requirements, acceptance criteria, and technical notes |
-| [User flows](./user-flows.md) | Step-by-step flows for creation, Explain, impact evaluation, and IRM check-in |
-| [Work breakdown](./work-breakdown.md) | Ownership, milestones, and demo script |
+| Document                              | Purpose                                                                       |
+| ------------------------------------- | ----------------------------------------------------------------------------- |
+| [Product spec](./product-spec.md)     | Feature requirements, acceptance criteria, and technical notes                |
+| [User flows](./user-flows.md)         | Step-by-step flows for creation, Explain, impact evaluation, and IRM check-in |
+| [Work breakdown](./work-breakdown.md) | Ownership, milestones, and demo script                                        |
 
 ---
 
 ## Team
 
-| Area | Owner | Focus |
-| --- | --- | --- |
+| Area                | Owner  | Focus                                                               |
+| ------------------- | ------ | ------------------------------------------------------------------- |
 | Frontend validation | Lauren | Mandatory summary & description on alert rule form; save validation |
-| Assistant tool | Pepe | Query/history analysis; description & summary generation |
-| Explain UI | TBD | Explain button, drawer, "add context to alert" action |
-| IRM integration | TBD | Incident check-in, usefulness question, context feedback loop |
+| Assistant tool      | Pepe   | Query/history analysis; description & summary generation            |
+| Explain UI          | TBD    | Explain button, drawer, "add context to alert" action               |
+| IRM integration     | TBD    | Incident check-in, usefulness question, context feedback loop       |
 
 ---
 
@@ -105,10 +105,10 @@ flowchart LR
 
 Hackathon product documentation lives in the official docs tree (for deploy preview):
 
-| Product | Path |
-| --- | --- |
-| **Grafana Alerting** | `docs/sources/alerting/mystery-alert/` |
-| **Grafana IRM** | `irm/docs/sources/irm/mystery-alert/` (grafana/irm repo) |
+| Product              | Path                                                     |
+| -------------------- | -------------------------------------------------------- |
+| **Grafana Alerting** | `docs/sources/alerting/mystery-alert/`                   |
+| **Grafana IRM**      | `irm/docs/sources/irm/mystery-alert/` (grafana/irm repo) |
 
 Open PRs on branch `hackathon/mystery-alert` in each repo to get deploy previews.
 
@@ -120,9 +120,9 @@ Open PRs on branch `hackathon/mystery-alert` in each repo to get deploy previews
 
 ## Repo pointers
 
-| Area | Path |
-| --- | --- |
-| Alerting product docs | `docs/sources/alerting/` |
-| Alerting UI | `public/app/features/alerting/unified/` |
-| ngalert backend | `pkg/services/ngalert/` |
-| Alerting package | `packages/grafana-alerting/` |
+| Area                  | Path                                    |
+| --------------------- | --------------------------------------- |
+| Alerting product docs | `docs/sources/alerting/`                |
+| Alerting UI           | `public/app/features/alerting/unified/` |
+| ngalert backend       | `pkg/services/ngalert/`                 |
+| Alerting package      | `packages/grafana-alerting/`            |

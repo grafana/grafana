@@ -109,12 +109,12 @@ flowchart TD
 
 ### Decision guide (for UI copy)
 
-| Signal | Likely diagnosis | Suggested action |
-| --- | --- | --- |
-| First time firing, empty annotations | Under-documented | Explain → add context |
-| Fires often, frequently silenced | Noisy / useless | Review threshold or delete |
-| Similar rules have good annotations | Copy-paste gap | Pull from similar alert |
-| IRM incidents with "not useful" votes | Useless | Improve or remove in check-in flow |
+| Signal                                | Likely diagnosis | Suggested action                   |
+| ------------------------------------- | ---------------- | ---------------------------------- |
+| First time firing, empty annotations  | Under-documented | Explain → add context              |
+| Fires often, frequently silenced      | Noisy / useless  | Review threshold or delete         |
+| Similar rules have good annotations   | Copy-paste gap   | Pull from similar alert            |
+| IRM incidents with "not useful" votes | Useless          | Improve or remove in check-in flow |
 
 ---
 
@@ -174,10 +174,10 @@ sequenceDiagram
 
 ## UI touchpoints
 
-| Surface | Change |
-| --- | --- |
-| Alert rule form (create/edit) | Required Summary & Description fields; save validation |
-| Alert instance detail | Explain button; context drawer |
-| Alert rules list | Filter for missing/short annotations; bulk actions |
-| Notification template (bonus) | Include Explain-generated context |
-| IRM incident resolution (bonus) | Usefulness check-in; link back to alert rule |
+| Surface                         | Change                                                 |
+| ------------------------------- | ------------------------------------------------------ |
+| Alert rule form (create/edit)   | Required Summary & Description fields; save validation |
+| Alert instance detail           | Explain button; context drawer                         |
+| Alert rules list                | Filter for missing/short annotations; bulk actions     |
+| Notification template (bonus)   | Include Explain-generated context                      |
+| IRM incident resolution (bonus) | Usefulness check-in; link back to alert rule           |

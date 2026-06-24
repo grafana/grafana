@@ -36,12 +36,12 @@ Make alert rules created in the UI include meaningful **summary** and **descript
 
 **Solution:** Treat summary and description as required fields on the Grafana-managed alert rule form.
 
-| Requirement | Priority | Notes |
-| --- | --- | --- |
-| Add visible **Summary** and **Description** fields to create/edit alert rule UI | Must | Map to `annotations.summary` and `annotations.description` |
-| Block save when either field is empty | Must | Inline validation + error message |
-| Show helper text explaining what each field is for | Should | Link to [annotation docs](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/) |
-| On save with missing fields, offer **Generate with Assistant** | Bonus | Ties into Assistant tool (Pepe) |
+| Requirement                                                                     | Priority | Notes                                                                                                                  |
+| ------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Add visible **Summary** and **Description** fields to create/edit alert rule UI | Must     | Map to `annotations.summary` and `annotations.description`                                                             |
+| Block save when either field is empty                                           | Must     | Inline validation + error message                                                                                      |
+| Show helper text explaining what each field is for                              | Should   | Link to [annotation docs](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/) |
+| On save with missing fields, offer **Generate with Assistant**                  | Bonus    | Ties into Assistant tool (Pepe)                                                                                        |
 
 **Acceptance criteria**
 
@@ -60,12 +60,12 @@ Make alert rules created in the UI include meaningful **summary** and **descript
 
 **Solution:** On save, if summary or description is missing, call the Assistant tool to generate them before persisting the rule.
 
-| Requirement | Priority | Notes |
-| --- | --- | --- |
-| Detect missing summary/description at save time | Bonus | Extends frontend validation |
-| Call Assistant with rule query, labels, and existing annotations | Bonus | |
-| Pre-fill generated values; allow user to edit before final save | Bonus | |
-| Export updated rule for provisioning workflows | Bonus | File export / API / Terraform |
+| Requirement                                                      | Priority | Notes                         |
+| ---------------------------------------------------------------- | -------- | ----------------------------- |
+| Detect missing summary/description at save time                  | Bonus    | Extends frontend validation   |
+| Call Assistant with rule query, labels, and existing annotations | Bonus    |                               |
+| Pre-fill generated values; allow user to edit before final save  | Bonus    |                               |
+| Export updated rule for provisioning workflows                   | Bonus    | File export / API / Terraform |
 
 **Acceptance criteria**
 
@@ -83,13 +83,13 @@ Make alert rules created in the UI include meaningful **summary** and **descript
 
 **Solution:** Add an **Explain** action on the alert instance that calls Assistant/GCX and surfaces inferred context in a drawer.
 
-| Requirement | Priority | Notes |
-| --- | --- | --- |
-| **Explain** button on alert instance detail | Must | Alerting → Alert rules → instance, or Alerts page |
-| Drawer UI showing generated summary, description, and rationale | Must | |
-| Assistant reads query, labels, and annotations | Must | |
-| **Add this context to the alert?** action | Must | Writes generated summary/description back to the rule |
-| Include Explain output in default notification template | Bonus | So pages are richer even before rule is updated |
+| Requirement                                                     | Priority | Notes                                                 |
+| --------------------------------------------------------------- | -------- | ----------------------------------------------------- |
+| **Explain** button on alert instance detail                     | Must     | Alerting → Alert rules → instance, or Alerts page     |
+| Drawer UI showing generated summary, description, and rationale | Must     |                                                       |
+| Assistant reads query, labels, and annotations                  | Must     |                                                       |
+| **Add this context to the alert?** action                       | Must     | Writes generated summary/description back to the rule |
+| Include Explain output in default notification template         | Bonus    | So pages are richer even before rule is updated       |
 
 **Assistant tool inputs**
 
@@ -121,13 +121,13 @@ Make alert rules created in the UI include meaningful **summary** and **descript
 
 **Solution:** Before or alongside Explain, analyse whether similar alerts are actionable and what happened historically.
 
-| Signal | What to check |
-| --- | --- |
-| **Similar alerts** | Other rules with same/similar query or labels; do they have summary/description? |
-| **Past actions** | Silences, resolutions, acknowledgement patterns |
-| **Notification history** | Was anyone paged? Did notifications get muted? |
-| **Alert history** | Is this recurring? Same instance flapping? |
-| **Query analysis** | Is the query meaningful, too broad, or copy-pasted? |
+| Signal                   | What to check                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| **Similar alerts**       | Other rules with same/similar query or labels; do they have summary/description? |
+| **Past actions**         | Silences, resolutions, acknowledgement patterns                                  |
+| **Notification history** | Was anyone paged? Did notifications get muted?                                   |
+| **Alert history**        | Is this recurring? Same instance flapping?                                       |
+| **Query analysis**       | Is the query meaningful, too broad, or copy-pasted?                              |
 
 **Decision tree**
 
@@ -157,11 +157,11 @@ flowchart TD
 
 **Solution:** Bulk view or filter for alert rules with missing or short summary/description.
 
-| Requirement | Priority | Notes |
-| --- | --- | --- |
-| Filter or report: rules with empty summary and/or description | Should | Alert rules list |
-| Filter: summary or description below N characters | Should | Configurable threshold |
-| Bulk **Explain** or **Generate** for selected rules | Bonus | |
+| Requirement                                                   | Priority | Notes                  |
+| ------------------------------------------------------------- | -------- | ---------------------- |
+| Filter or report: rules with empty summary and/or description | Should   | Alert rules list       |
+| Filter: summary or description below N characters             | Should   | Configurable threshold |
+| Bulk **Explain** or **Generate** for selected rules           | Bonus    |                        |
 
 **Acceptance criteria**
 
@@ -178,12 +178,12 @@ flowchart TD
 
 **Solution:** After incident resolution, ask whether the triggering alert was useful and offer to improve it.
 
-| Requirement | Priority | Notes |
-| --- | --- | --- |
-| **Was this alert useful?** prompt at end of IRM incident flow | Bonus | Yes → no action; No → improvement flow |
-| Feed IRM timeline/context into alert instance view | Bonus | Link incident notes back to alert |
-| If not useful, consolidate incident context to suggest better rule | Bonus | Reuse Assistant tool |
-| Suggest related Alert or SLO after incident | Stretch | |
+| Requirement                                                        | Priority | Notes                                  |
+| ------------------------------------------------------------------ | -------- | -------------------------------------- |
+| **Was this alert useful?** prompt at end of IRM incident flow      | Bonus    | Yes → no action; No → improvement flow |
+| Feed IRM timeline/context into alert instance view                 | Bonus    | Link incident notes back to alert      |
+| If not useful, consolidate incident context to suggest better rule | Bonus    | Reuse Assistant tool                   |
+| Suggest related Alert or SLO after incident                        | Stretch  |                                        |
 
 **Acceptance criteria**
 
@@ -197,9 +197,9 @@ flowchart TD
 
 Grafana uses standard annotation keys on alert rules:
 
-| Key | Purpose | Example |
-| --- | --- | --- |
-| `summary` | Short text for notifications | `Instance {{ $labels.instance }} is down` |
+| Key           | Purpose                         | Example                                                                                                   |
+| ------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `summary`     | Short text for notifications    | `Instance {{ $labels.instance }} is down`                                                                 |
 | `description` | Detailed context / runbook hint | `The uptime check for {{ $labels.job }} has failed for 5m. Check the service logs and restart if needed.` |
 
 See: `docs/sources/alerting/fundamentals/alert-rules/annotation-label.md`

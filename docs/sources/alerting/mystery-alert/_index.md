@@ -48,12 +48,12 @@ Grafana Alerting already supports [summary and description annotations](ref:anno
 
 ## End-to-end workflow
 
-| Phase | Product | What happens |
-| --- | --- | --- |
-| **Prevent** | Grafana Alerting | Require or auto-generate summary and description when creating alert rules |
-| **Explain** | Grafana Alerting + Assistant | Add context to firing alerts with missing annotations |
-| **Respond** | Grafana IRM | [Declare an incident](ref:declare-incident) from the alert and collaborate on resolution |
-| **Improve** | Grafana IRM + Grafana Alerting | Ask whether the alert was useful and feed incident learnings back into the rule |
+| Phase       | Product                        | What happens                                                                             |
+| ----------- | ------------------------------ | ---------------------------------------------------------------------------------------- |
+| **Prevent** | Grafana Alerting               | Require or auto-generate summary and description when creating alert rules               |
+| **Explain** | Grafana Alerting + Assistant   | Add context to firing alerts with missing annotations                                    |
+| **Respond** | Grafana IRM                    | [Declare an incident](ref:declare-incident) from the alert and collaborate on resolution |
+| **Improve** | Grafana IRM + Grafana Alerting | Ask whether the alert was useful and feed incident learnings back into the rule          |
 
 ## Explore
 

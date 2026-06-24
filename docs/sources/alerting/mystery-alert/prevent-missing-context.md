@@ -51,10 +51,10 @@ Stop vague alerts at the source by making **summary** and **description** annota
 
 When you [create a Grafana-managed alert rule](ref:create-grafana-managed-rule), the rule form includes dedicated fields for:
 
-| Field | Annotation key | Purpose |
-| --- | --- | --- |
-| **Summary** | `summary` | Short text shown in notifications — what happened |
-| **Description** | `description` | Longer context — why it matters and what to do |
+| Field           | Annotation key | Purpose                                           |
+| --------------- | -------------- | ------------------------------------------------- |
+| **Summary**     | `summary`      | Short text shown in notifications — what happened |
+| **Description** | `description`  | Longer context — why it matters and what to do    |
 
 {{< admonition type="tip" >}}
 Use template variables such as `{{ $labels.instance }}` in both fields so notifications stay specific to each alert instance.

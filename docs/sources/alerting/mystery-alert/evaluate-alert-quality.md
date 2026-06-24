@@ -36,13 +36,13 @@ Not every vague alert needs a better description. Some alerts are noisy, misconf
 
 ## Signals to check
 
-| Signal | What it tells you |
-| --- | --- |
-| **Similar alerts** | Other rules with comparable queries or labels that already have good summaries |
-| **Notification history** | Whether responders acknowledged, silenced, or ignored pages |
-| **Alert state history** | Whether the alert is recurring or flapping. Refer to [View alert state and history](ref:view-alert-state-history). |
-| **Query analysis** | Whether the query is too broad, missing filters, or otherwise low-signal |
-| **IRM incident history** | Whether past incidents linked to this alert were marked as not useful |
+| Signal                   | What it tells you                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| **Similar alerts**       | Other rules with comparable queries or labels that already have good summaries                                     |
+| **Notification history** | Whether responders acknowledged, silenced, or ignored pages                                                        |
+| **Alert state history**  | Whether the alert is recurring or flapping. Refer to [View alert state and history](ref:view-alert-state-history). |
+| **Query analysis**       | Whether the query is too broad, missing filters, or otherwise low-signal                                           |
+| **IRM incident history** | Whether past incidents linked to this alert were marked as not useful                                              |
 
 ## Decision guide
 
