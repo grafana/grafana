@@ -1,8 +1,8 @@
 import saveAs from 'file-saver';
 
-import { type Connection, type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { API_GROUP, API_VERSION, type Connection, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
-const API_VERSION = 'provisioning.grafana.app/v0alpha1';
+const DEFAULT_API_VERSION = `${API_GROUP}/${API_VERSION}`;
 
 /**
  * Builds a `secure` block where every secret present on the resource is replaced with a
@@ -31,11 +31,15 @@ function toSecurePlaceholders(secure: unknown): Record<string, { create: string 
  * (apiVersion/kind/metadata/spec[/secure]). Status and manager annotations are stripped so the file
  * can be dropped straight into the provisioning manifests directory. Secret values are never
  * exported; each configured secret becomes a `{ create: <placeholder> }` entry to fill in.
+ *
+ * apiVersion/kind are taken from the resource when present (e.g. a detail GET) and fall back to the
+ * client's API group/version and `fallbackKind`, because Kubernetes list responses — which back the
+ * admin cards — do not populate per-item TypeMeta.
  */
-export function exportResourceAsJson(resource: Repository | Connection, kind: 'Repository' | 'Connection') {
+export function exportResourceAsJson(resource: Repository | Connection, fallbackKind: 'Repository' | 'Connection') {
   const manifest: Record<string, unknown> = {
-    apiVersion: API_VERSION,
-    kind,
+    apiVersion: resource.apiVersion ?? DEFAULT_API_VERSION,
+    kind: resource.kind ?? fallbackKind,
     metadata: {
       name: resource.metadata?.name,
       namespace: resource.metadata?.namespace,
@@ -49,5 +53,5 @@ export function exportResourceAsJson(resource: Repository | Connection, kind: 'R
   }
 
   const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
-  saveAs(blob, `${resource.metadata?.name ?? kind.toLowerCase()}.json`);
+  saveAs(blob, `${resource.metadata?.name ?? fallbackKind.toLowerCase()}.json`);
 }

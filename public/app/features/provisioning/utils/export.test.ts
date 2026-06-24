@@ -80,6 +80,35 @@ describe('exportResourceAsJson', () => {
     expect(JSON.stringify(manifest)).not.toContain('enc-token-ref');
   });
 
+  it('prefers the resource own apiVersion/kind over the fallback', async () => {
+    const repository: Repository = {
+      apiVersion: 'provisioning.grafana.app/v1beta1',
+      kind: 'Repository',
+      metadata: { name: 'r' },
+      spec: { title: 'r', type: 'github', sync: { target: 'folder', enabled: false }, workflows: [] },
+    };
+
+    // Pass a deliberately different fallback to prove the resource values win.
+    exportResourceAsJson(repository, 'Connection');
+    const manifest = await savedManifest();
+
+    expect(manifest.apiVersion).toBe('provisioning.grafana.app/v1beta1');
+    expect(manifest.kind).toBe('Repository');
+  });
+
+  it('falls back to the client API version and the given kind when the resource omits them', async () => {
+    const connection: Connection = {
+      metadata: { name: 'c' },
+      spec: { title: 'c', type: 'github' },
+    };
+
+    exportResourceAsJson(connection, 'Connection');
+    const manifest = await savedManifest();
+
+    expect(manifest.apiVersion).toBe('provisioning.grafana.app/v0alpha1');
+    expect(manifest.kind).toBe('Connection');
+  });
+
   it('omits the secure block when the resource has no secrets', async () => {
     const connection: Connection = {
       metadata: { name: 'conn' },
