@@ -42,26 +42,26 @@ describe('PanelStatus', () => {
       expect(screen.getByTestId(selectors.components.Panels.Panel.status('warning'))).toBeInTheDocument();
     });
 
-    it('opens a popover listing all items', async () => {
+    it('shows a tooltip listing all items on hover', async () => {
       render(<PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />);
 
-      // Popover content is not shown until the trigger is clicked.
+      // Tooltip content is not shown until the trigger is hovered.
       expect(screen.queryByText('Errors and notices')).not.toBeInTheDocument();
 
-      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
 
-      expect(screen.getByText('Errors and notices')).toBeInTheDocument();
+      expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
       expect(screen.getByText('Preparing expression failed')).toBeInTheDocument();
       expect(screen.getByText('Query marked as big')).toBeInTheDocument();
       expect(screen.getByText('Window size adjusted')).toBeInTheDocument();
     });
 
-    it('calls onClick (inspect) from the popover', async () => {
+    it('calls onClick (inspect) from the tooltip', async () => {
       const onClick = jest.fn();
       render(<PanelStatus items={items} onClick={onClick} />);
 
-      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
-      await userEvent.click(screen.getByRole('button', { name: 'Inspect' }));
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
 
       expect(onClick).toHaveBeenCalledTimes(1);
     });
@@ -69,7 +69,8 @@ describe('PanelStatus', () => {
     it('does not render an Inspect button when no onClick is provided', async () => {
       render(<PanelStatus items={items} />);
 
-      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Inspect' })).not.toBeInTheDocument();
     });
   });
