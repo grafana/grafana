@@ -26,6 +26,13 @@ function ruleWeight(rule: IncompleteRule): number {
   return isHighSeverity(rule) ? HIGH_SEVERITY_WEIGHT : MEDIUM_SEVERITY_WEIGHT;
 }
 
+// Ranks rules for sorting: high-severity (missing a runbook URL) always sorts above
+// medium, and within a tier, rules missing more fields sort first. Higher = more severe.
+function severityRank(rule: IncompleteRule): number {
+  const tier = isHighSeverity(rule) ? 1000 : 0;
+  return tier + rule.missing.length;
+}
+
 // Score on a 0–10 scale, rounded to one decimal.
 function qualityScore(rules: IncompleteRule[], total: number): number {
   if (total === 0) {
@@ -43,8 +50,14 @@ function QualityTab() {
   const incompleteCount = flaggedRules.length;
   const score = qualityScore(flaggedRules, totalRules);
 
-  // Show the most severe rules (missing a runbook URL) first.
-  const sortedRules = [...flaggedRules].sort((a, b) => ruleWeight(b) - ruleWeight(a));
+  // Show the most severe rules first; ties broken by folder/group/name so the order is stable.
+  const sortedRules = [...flaggedRules].sort((a, b) => {
+    const diff = severityRank(b) - severityRank(a);
+    if (diff !== 0) {
+      return diff;
+    }
+    return `${a.folder}/${a.group}/${a.name}`.localeCompare(`${b.folder}/${b.group}/${b.name}`);
+  });
 
   return (
     <AlertingPageWrapper
@@ -53,7 +66,12 @@ function QualityTab() {
       isLoading={isLoading}
       actions={
         incompleteCount > 0 ? (
-          <Tooltip content={t('alerting.quality.fix-all-tooltip', 'Automatically generate descriptions and summaries for all flagged rules.')}>
+          <Tooltip
+            content={t(
+              'alerting.quality.fix-all-tooltip',
+              'Automatically generate descriptions and summaries for all flagged rules.'
+            )}
+          >
             <Button icon="bolt" variant="primary">
               <Trans i18nKey="alerting.quality.fix-all">Fix all with AI</Trans>
             </Button>
@@ -92,13 +110,13 @@ function QualityTab() {
                     <Badge
                       color="red"
                       icon="exclamation-triangle"
-                      text={t('alerting.quality.severity-high', 'High severity')}
+                      text={t('alerting.quality.severity-high', 'High piority')}
                     />
                   ) : (
                     <Badge
                       color="orange"
                       icon="exclamation-circle"
-                      text={t('alerting.quality.severity-medium', 'Medium severity')}
+                      text={t('alerting.quality.severity-medium', 'Medium priority')}
                     />
                   )}
                 </Card.Tags>
@@ -114,7 +132,10 @@ function QualityTab() {
                 </Card.Description>
                 <Card.Actions>
                   <Tooltip
-                    content={t('alerting.quality.fix-tooltip', 'Automatically generate a description and summary for this rule.')}
+                    content={t(
+                      'alerting.quality.fix-tooltip',
+                      'Automatically generate a description and summary for this rule.'
+                    )}
                   >
                     <Button icon="bolt" variant="primary" size="sm">
                       <Trans i18nKey="alerting.quality.fix-with-ai">Fix with AI</Trans>
@@ -158,13 +179,7 @@ function QualityScoreCard({ score, incompleteCount, totalRules }: QualityScoreCa
           </Text>
           <span className={styles.score}>{score.toFixed(1)} / 10</span>
         </Stack>
-        <div
-          className={styles.track}
-          role="progressbar"
-          aria-valuenow={score}
-          aria-valuemin={0}
-          aria-valuemax={10}
-        >
+        <div className={styles.track} role="progressbar" aria-valuenow={score} aria-valuemin={0} aria-valuemax={10}>
           <div className={styles.fill} />
         </div>
         <Text color="secondary" variant="bodySmall">
