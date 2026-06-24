@@ -99,7 +99,9 @@ function notifySaveSuccess(
         filePath: ensureFolderPathTrailingSlash(repository.path),
       })
     : undefined;
-  const linkUrl = repoFileUrl || urls?.repositoryURL || repository?.url;
+  // Prefer the branch/file-specific URLs (the configured-path link, then the backend's `sourceURL`
+  // which points at the file on the committed ref) over `repositoryURL`, which is only the repo root.
+  const linkUrl = repoFileUrl || urls?.sourceURL || urls?.repositoryURL || repository?.url;
 
   if (branch) {
     // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
