@@ -93,6 +93,13 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 		resp.ExternalAlertmanagerUID = *cfg.ExternalAlertmanagerUID
 	}
 
+	if cfg.RejectAlertsWithoutDescriptions != nil {
+		resp.RejectAlertsWithoutDescriptions = *cfg.RejectAlertsWithoutDescriptions
+	}
+	if cfg.AutoFillDescriptionsWithAI != nil {
+		resp.AutoFillDescriptionsWithAI = *cfg.AutoFillDescriptionsWithAI
+	}
+
 	return response.JSON(http.StatusOK, resp)
 }
 
@@ -104,7 +111,8 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		return accessForbiddenResp()
 	}
 
-	if body.AlertmanagersChoice == nil && body.ExternalAlertmanagerUID == nil {
+	if body.AlertmanagersChoice == nil && body.ExternalAlertmanagerUID == nil &&
+		body.RejectAlertsWithoutDescriptions == nil && body.AutoFillDescriptionsWithAI == nil {
 		return response.Error(http.StatusBadRequest, "No fields to update", nil)
 	}
 
@@ -197,6 +205,14 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		}
 
 		adminConfig.ExternalAlertmanagerUID = body.ExternalAlertmanagerUID
+	}
+
+	if body.RejectAlertsWithoutDescriptions != nil {
+		adminConfig.RejectAlertsWithoutDescriptions = body.RejectAlertsWithoutDescriptions
+	}
+
+	if body.AutoFillDescriptionsWithAI != nil {
+		adminConfig.AutoFillDescriptionsWithAI = body.AutoFillDescriptionsWithAI
 	}
 
 	if err := srv.store.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{

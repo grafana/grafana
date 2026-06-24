@@ -80,6 +80,12 @@ type PostableNGalertConfig struct {
 	// ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource to sync
 	// configuration from. Empty string disables sync for this org.
 	ExternalAlertmanagerUID *string `json:"external_alertmanager_uid,omitempty"`
+	// RejectAlertsWithoutDescriptions makes rule validation fail when an alert rule is
+	// missing a summary or description annotation.
+	RejectAlertsWithoutDescriptions *bool `json:"reject_alerts_without_descriptions,omitempty"`
+	// AutoFillDescriptionsWithAI enables auto-generating missing summary/description
+	// annotations via the LLM plugin in the UI.
+	AutoFillDescriptionsWithAI *bool `json:"auto_fill_descriptions_with_ai,omitempty"`
 }
 
 // swagger:model
@@ -88,6 +94,12 @@ type GettableNGalertConfig struct {
 	// ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource being
 	// synced, or empty if sync is not configured for this org.
 	ExternalAlertmanagerUID string `json:"external_alertmanager_uid,omitempty"`
+	// RejectAlertsWithoutDescriptions makes rule validation fail when an alert rule is
+	// missing a summary or description annotation.
+	RejectAlertsWithoutDescriptions bool `json:"reject_alerts_without_descriptions"`
+	// AutoFillDescriptionsWithAI enables auto-generating missing summary/description
+	// annotations via the LLM plugin in the UI.
+	AutoFillDescriptionsWithAI bool `json:"auto_fill_descriptions_with_ai"`
 }
 
 // swagger:model

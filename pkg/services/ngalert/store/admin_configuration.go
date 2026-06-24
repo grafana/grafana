@@ -84,6 +84,14 @@ func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) erro
 		}
 
 		if !has {
+			// send_alerts_to is NOT NULL. When this row is created by an update that
+			// doesn't touch the alertmanager choice (e.g. only annotation settings),
+			// default to the internal Alertmanager to match the no-config behavior in
+			// RouteGetAlertingStatus and avoid silently forwarding alerts externally.
+			if cmd.AdminConfiguration.SendAlertsTo == nil {
+				internal := ngmodels.InternalAlertmanager
+				cmd.AdminConfiguration.SendAlertsTo = &internal
+			}
 			_, err := sess.Table("ngalert_configuration").Insert(cmd.AdminConfiguration)
 			return err
 		}
@@ -108,6 +116,14 @@ func buildUpdateCols(adminConfig *ngmodels.AdminConfiguration) []string {
 
 	if adminConfig.ExternalAlertmanagerUID != nil {
 		cols = append(cols, "external_alertmanager_uid")
+	}
+
+	if adminConfig.RejectAlertsWithoutDescriptions != nil {
+		cols = append(cols, "reject_alerts_without_descriptions")
+	}
+
+	if adminConfig.AutoFillDescriptionsWithAI != nil {
+		cols = append(cols, "auto_fill_descriptions_with_ai")
 	}
 
 	return cols

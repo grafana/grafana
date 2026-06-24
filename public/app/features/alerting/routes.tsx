@@ -411,6 +411,14 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () => import(/* webpackChunkName: "AlertingSettings" */ 'app/features/alerting/unified/Settings')
       ),
     },
+    {
+      path: '/alerting/admin/annotations',
+      roles: () => ['Admin'],
+      component: importAlertingComponent(
+        () =>
+          import(/* webpackChunkName: "AlertingAnnotationSettings" */ 'app/features/alerting/unified/AnnotationSettings')
+      ),
+    },
   ];
 
   if (cfg.featureToggles.alertingTriage) {

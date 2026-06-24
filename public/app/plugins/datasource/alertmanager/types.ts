@@ -337,6 +337,8 @@ export interface GrafanaAlertingConfiguration {
   alertmanagersChoice: AlertmanagerChoice;
   // Snake_case mirrors the wire format from /api/v1/ngalert/admin_config.
   external_alertmanager_uid?: string;
+  reject_alerts_without_descriptions?: boolean;
+  auto_fill_descriptions_with_ai?: boolean;
 }
 
 // POST /api/v1/ngalert/admin_config accepts partial updates.

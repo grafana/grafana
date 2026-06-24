@@ -18,10 +18,18 @@ export function useSettingsPageNav() {
   const allTabs: NavModelItem[] = [
     {
       id: 'alertmanager',
-      text: t('alerting.settings.tabs.alert-managers', 'Alert managers'),
+      text: t('alerting.settings.tabs.alert-managers', 'Alertmanagers'),
       url: '/alerting/admin/alertmanager',
       active: location.pathname === '/alerting/admin/alertmanager',
       icon: 'cloud',
+      parentItem: settingsNav,
+    },
+    {
+      id: 'annotations',
+      text: t('alerting.settings.tabs.rule-annotations', 'Alert rules'),
+      url: '/alerting/admin/annotations',
+      active: location.pathname === '/alerting/admin/annotations',
+      icon: 'comment-alt',
       parentItem: settingsNav,
     },
     ...extensionTabs,

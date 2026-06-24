@@ -3206,7 +3206,7 @@
         "title": "Auto-sync configuration"
       },
       "tabs": {
-        "alert-managers": "Alert managers"
+        "alert-managers": "Alertmanagers"
       }
     },
     "settings-content": {

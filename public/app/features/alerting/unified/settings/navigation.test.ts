@@ -37,7 +37,7 @@ describe('useSettingsPageNav', () => {
     expect(result.current.pageNav.children).toEqual([
       expect.objectContaining({
         id: 'alertmanager',
-        text: 'Alert managers',
+        text: 'Alertmanagers',
         url: '/alerting/admin/alertmanager',
         active: true,
         icon: 'cloud',
@@ -84,7 +84,7 @@ describe('useSettingsPageNav', () => {
     expect(result.current.pageNav.children).toEqual([
       expect.objectContaining({
         id: 'alertmanager',
-        text: 'Alert managers',
+        text: 'Alertmanagers',
         url: '/alerting/admin/alertmanager',
         active: false,
         icon: 'cloud',

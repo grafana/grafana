@@ -35,6 +35,10 @@ interface Context {
   updateAlertmanagerSettings: (name: string, oldConfig: string, newConfig: string) => void;
   resetAlertmanagerSettings: (name: string) => void;
 
+  // org-wide annotation policy for alert rules
+  setRejectAlertsWithoutDescriptions: (enabled: boolean) => void;
+  setAutoFillDescriptionsWithAI: (enabled: boolean) => void;
+
   // this feature toggle is for disabling the "send to external Alertmanagers" feature
   forwardingDisabled: boolean;
 }
@@ -118,6 +122,14 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     dispatch(deleteAlertManagerConfigAction(alertmanagerName));
   };
 
+  const setRejectAlertsWithoutDescriptions = (enabled: boolean) => {
+    updateConfiguration({ reject_alerts_without_descriptions: enabled });
+  };
+
+  const setAutoFillDescriptionsWithAI = (enabled: boolean) => {
+    updateConfiguration({ auto_fill_descriptions_with_ai: enabled });
+  };
+
   const value: Context = {
     configuration,
     forwardingDisabled,
@@ -132,6 +144,9 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     // CRUD for Alertmanager settings
     updateAlertmanagerSettings,
     resetAlertmanagerSettings,
+
+    setRejectAlertsWithoutDescriptions,
+    setAutoFillDescriptionsWithAI,
   };
 
   return <SettingsContext.Provider value={value}>{props.children}</SettingsContext.Provider>;

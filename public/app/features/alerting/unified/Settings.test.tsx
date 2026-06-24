@@ -40,7 +40,7 @@ const ui = {
   provisionedBadge: byText(/^Provisioned$/),
 
   // New selectors for extension tabs
-  alertmanagerTab: byRole('tab', { name: 'Alert managers' }),
+  alertmanagerTab: byRole('tab', { name: 'Alertmanagers' }),
   enrichmentTab: byRole('tab', { name: 'Enrichment' }),
   notificationsTab: byRole('tab', { name: 'Notifications' }),
   customTab: (name: string) => byRole('tab', { name }),

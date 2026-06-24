@@ -30,6 +30,14 @@ type AdminConfiguration struct {
 	// configuration should be synced into Grafana for this org. Empty means no sync.
 	ExternalAlertmanagerUID *string `xorm:"external_alertmanager_uid"`
 
+	// RejectAlertsWithoutDescriptions makes rule validation fail when an alert rule
+	// is missing a summary or description annotation. Nil means unset (defaults to off).
+	RejectAlertsWithoutDescriptions *bool `xorm:"reject_alerts_without_descriptions"`
+
+	// AutoFillDescriptionsWithAI enables auto-generating missing summary/description
+	// annotations via the LLM plugin in the UI. Nil means unset (defaults to off).
+	AutoFillDescriptionsWithAI *bool `xorm:"auto_fill_descriptions_with_ai"`
+
 	CreatedAt int64 `xorm:"created"`
 	UpdatedAt int64 `xorm:"updated"`
 }
