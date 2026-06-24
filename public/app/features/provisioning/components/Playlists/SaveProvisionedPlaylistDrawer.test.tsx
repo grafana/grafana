@@ -163,6 +163,9 @@ describe('SaveProvisionedPlaylistDrawer', () => {
     // Path is derived from the playlist title (slugified).
     expect(req.url.pathname).toContain('/repositories/test-repo/files/my-new-playlist.json');
     expect(req.url.searchParams.get('message')).toBe('Create playlist: My New Playlist');
+    // A new playlist with no name gets a generated k8s-safe name in the committed file.
+    const body = req.body as { metadata?: { name?: string } };
+    expect(body.metadata?.name).toMatch(/^[a-z0-9]{12}$/);
   });
 
   it('shows the read-only banner when the repository cannot be edited', () => {

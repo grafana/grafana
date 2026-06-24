@@ -1,3 +1,5 @@
+import { customAlphabet } from 'nanoid';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
@@ -16,6 +18,10 @@ import { SaveProvisionedResourceDrawer } from '../Shared/SaveProvisionedResource
 import { slugifyForFilename } from '../utils/path';
 
 const playlistKind = resourceKindInfos.playlist;
+
+// New playlists need a stable k8s name in the committed file (unlike the direct API, the
+// provisioning write validates the resource has one). Generate an RFC 1123-safe UID.
+const generatePlaylistName = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
 
 interface SaveProvisionedPlaylistDrawerProps {
   /** The playlist with the edited spec that should be committed to the repository. */
@@ -45,6 +51,10 @@ export function SaveProvisionedPlaylistDrawer({
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // A new playlist has no name yet; generate one once for the lifetime of the drawer.
+  const generatedName = useMemo(() => generatePlaylistName(), []);
+  const resourceName = isNew ? generatedName : (playlist.metadata?.name ?? '');
+
   const goToPlaylists = () => {
     // The playlist list is managed elsewhere; invalidate so the change shows up there.
     dispatch(playlistAPIv1.util.invalidateTags(['Playlist']));
@@ -71,7 +81,7 @@ export function SaveProvisionedPlaylistDrawer({
     <SaveProvisionedResourceDrawer
       resource={resource}
       resourceType="playlist"
-      resourceName={playlist.metadata?.name ?? ''}
+      resourceName={resourceName}
       title={playlist.spec?.title ?? ''}
       drawerTitle={t('playlist-edit.save-provisioned.drawer-title', 'Save provisioned playlist')}
       isNew={isNew}
@@ -79,7 +89,7 @@ export function SaveProvisionedPlaylistDrawer({
       body={{
         apiVersion: playlist.apiVersion,
         kind: playlist.kind,
-        metadata: { name: playlist.metadata?.name },
+        metadata: { name: resourceName },
         spec: playlist.spec,
       }}
       onDismiss={onDismiss}

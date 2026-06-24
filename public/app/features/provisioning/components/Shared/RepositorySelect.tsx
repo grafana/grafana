@@ -12,10 +12,8 @@ interface RepositorySelectProps {
   onChange: (repositoryName: string) => void;
   /** Render the selection read-only — the value is visible but can't be changed. */
   readOnly?: boolean;
-  /** Overrides the default field description shown when the selector is editable. */
+  /** Overrides the default field description. */
   description?: string;
-  /** Overrides the default reason shown when the selector is read-only. */
-  disabledReason?: string;
   id?: string;
 }
 
@@ -30,20 +28,14 @@ export function RepositorySelect({
   onChange,
   readOnly = false,
   description,
-  disabledReason,
   id = 'repository-select',
 }: RepositorySelectProps) {
-  const fieldDescription = readOnly
-    ? (disabledReason ??
-      t(
-        'provisioning.repository-select.disabled-reason',
-        "The storage location can't be changed after the resource is created."
-      ))
-    : (description ??
-      t(
-        'provisioning.repository-select.description',
-        'Pick a repository to store this resource in version control, or leave it empty to keep it in Grafana.'
-      ));
+  const fieldDescription =
+    description ??
+    t(
+      'provisioning.repository-select.description',
+      "Pick a repository to store this resource in version control and sync it from there, or leave it empty to keep it in Grafana. This can't be changed after the resource is created."
+    );
 
   const options = useMemo<Array<ComboboxOption<string>>>(() => {
     const repoOptions = repositories.map((repo) => ({ label: repo.title || repo.name, value: repo.name }));

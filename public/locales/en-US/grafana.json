@@ -13570,8 +13570,7 @@
       "webhook-url": "View Webhook"
     },
     "repository-select": {
-      "description": "Pick a repository to store this resource in version control, or leave it empty to keep it in Grafana.",
-      "disabled-reason": "The storage location can't be changed after the resource is created.",
+      "description": "Pick a repository to store this resource in version control and sync it from there, or leave it empty to keep it in Grafana. This can't be changed after the resource is created.",
       "label": "Repository",
       "placeholder": "Select a repository"
     },
