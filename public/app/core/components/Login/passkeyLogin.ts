@@ -4,8 +4,9 @@ import {
   type AuthenticationResponseJSON,
   type PublicKeyCredentialRequestOptionsJSON,
 } from '@simplewebauthn/browser';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+import { store } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
@@ -23,6 +24,11 @@ interface FinishRequest {
 
 const BEGIN_URL = '/api/auth/passkey/login/begin';
 const FINISH_URL = '/api/auth/passkey/login/finish';
+
+// PASSKEY_HINT_KEY flags that this browser has been used to sign in with (or register) a passkey. It
+// is a per-origin localStorage hint, not a security signal — it only drives the login button's label
+// (primary vs "another device") since a relying party cannot enumerate the user's local credentials.
+export const PASSKEY_HINT_KEY = 'grafana.passkeyUsed';
 
 interface RunPasskeyLoginOptions {
   // useBrowserAutofill runs the discoverable login as a Conditional UI ceremony (the browser surfaces
@@ -102,4 +108,60 @@ export function usePasskeyAutofill(): void {
       mounted.current = false;
     };
   }, []);
+}
+
+// PasskeyButtonMode is the resolved visibility/label state of the explicit passkey button:
+//   checking   — capability detection has not finished yet (render nothing).
+//   hidden      — passkeys are off, the browser supports autofill (Conditional UI covers it), or the
+//                 device has no platform authenticator. The button must not render.
+//   primary     — show "Sign in with a passkey" (a passkey was used on this browser before).
+//   secondary   — show "Use a passkey from another device" (capable browser, no prior passkey).
+export type PasskeyButtonMode = 'checking' | 'hidden' | 'primary' | 'secondary';
+
+// usePasskeyButtonMode is the single source of truth for whether the explicit passkey button renders
+// and with which label. Both the button and the surrounding LoginServiceButtons layout consume it: the
+// layout needs to know the button's runtime visibility so it does not draw the "or" divider above a
+// button that hides itself.
+export function usePasskeyButtonMode(): PasskeyButtonMode {
+  const [mode, setMode] = useState<PasskeyButtonMode>('checking');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      if (!config.passkey?.enabled || typeof window === 'undefined' || !('PublicKeyCredential' in window)) {
+        setMode('hidden');
+        return;
+      }
+
+      // When the browser supports Conditional UI, the username field's autofill already offers the
+      // passkey (including "from another device"), so the explicit button would be a redundant second
+      // prompt. Hide it and let autofill be the single entry point.
+      if (await browserSupportsWebAuthnAutofill()) {
+        if (!cancelled) {
+          setMode('hidden');
+        }
+        return;
+      }
+
+      // No autofill: the button is the only entry point. Only show it if the device can actually run a
+      // platform authenticator; otherwise the button would lead to a dead end.
+      const hasPlatformAuthenticator = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if (cancelled) {
+        return;
+      }
+      if (!hasPlatformAuthenticator) {
+        setMode('hidden');
+        return;
+      }
+
+      setMode(store.getBool(PASSKEY_HINT_KEY, false) ? 'primary' : 'secondary');
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return mode;
 }

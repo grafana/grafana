@@ -1,13 +1,26 @@
 import { useCallback, useState } from 'react';
 
+import { store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { type FetchError, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Icon, Stack } from '@grafana/ui';
-import config from 'app/core/config';
 
-import { isWebAuthnAbort, redirectAfterPasskeyLogin, runPasskeyLogin } from './passkeyLogin';
+import {
+  isWebAuthnAbort,
+  type PasskeyButtonMode,
+  PASSKEY_HINT_KEY,
+  redirectAfterPasskeyLogin,
+  runPasskeyLogin,
+} from './passkeyLogin';
 
-export const PasskeyLoginButton = () => {
+interface Props {
+  // mode is resolved by usePasskeyButtonMode in the parent; the button is purely presentational. It
+  // renders nothing for 'checking'/'hidden' as a defensive guard, though the parent only mounts it
+  // when the mode is 'primary' or 'secondary'.
+  mode: PasskeyButtonMode;
+}
+
+export const PasskeyLoginButton = ({ mode }: Props) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
@@ -17,6 +30,9 @@ export const PasskeyLoginButton = () => {
 
     try {
       const result = await runPasskeyLogin();
+      // Record that this browser has signed in with a passkey before the redirect navigates away, so
+      // the next visit shows the primary "Sign in with a passkey" label.
+      store.set(PASSKEY_HINT_KEY, true);
       redirectAfterPasskeyLogin(result);
     } catch (err) {
       setIsAuthenticating(false);
@@ -29,7 +45,7 @@ export const PasskeyLoginButton = () => {
     }
   }, []);
 
-  if (!isPasskeyAvailable()) {
+  if (mode === 'checking' || mode === 'hidden') {
     return null;
   }
 
@@ -47,8 +63,10 @@ export const PasskeyLoginButton = () => {
           <Icon name="key-skeleton-alt" />
           {isAuthenticating ? (
             <Trans i18nKey="login.passkey.signing-in">Signing in…</Trans>
-          ) : (
+          ) : mode === 'primary' ? (
             <Trans i18nKey="login.passkey.sign-in">Sign in with a passkey</Trans>
+          ) : (
+            <Trans i18nKey="login.passkey.use-another-device">Use a passkey from another device</Trans>
           )}
         </Stack>
       </Button>
@@ -65,10 +83,6 @@ export const PasskeyLoginButton = () => {
     </Stack>
   );
 };
-
-function isPasskeyAvailable(): boolean {
-  return Boolean(config.passkey?.enabled) && typeof window !== 'undefined' && 'PublicKeyCredential' in window;
-}
 
 function toErrorMessage(err: unknown): string {
   if (isFetchError(err)) {

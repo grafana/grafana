@@ -1,10 +1,10 @@
 import { browserSupportsWebAuthnAutofill, startAuthentication } from '@simplewebauthn/browser';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 
-import { usePasskeyAutofill } from './passkeyLogin';
+import { PASSKEY_HINT_KEY, usePasskeyAutofill, usePasskeyButtonMode } from './passkeyLogin';
 
 jest.mock('@simplewebauthn/browser', () => ({
   startAuthentication: jest.fn(),
@@ -26,6 +26,17 @@ const mockSupportsAutofill = browserSupportsWebAuthnAutofill as jest.MockedFunct
 
 const setLocation = (value: { assign: jest.Mock }) => {
   Object.defineProperty(window, 'location', { value, writable: true });
+};
+
+// usePasskeyButtonMode reads isUserVerifyingPlatformAuthenticatorAvailable off the PublicKeyCredential
+// static; this redefines it per scenario.
+const setPlatformAuthenticatorAvailable = (available: boolean) => {
+  Object.defineProperty(window, 'PublicKeyCredential', {
+    value: Object.assign(function () {}, {
+      isUserVerifyingPlatformAuthenticatorAvailable: jest.fn().mockResolvedValue(available),
+    }),
+    configurable: true,
+  });
 };
 
 const beginResponse = {
@@ -57,8 +68,12 @@ function Harness() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  localStorage.clear();
   config.passkey = { enabled: true };
-  Object.defineProperty(window, 'PublicKeyCredential', { value: function () {}, configurable: true });
+  // Default: no autofill and a usable platform authenticator, so usePasskeyButtonMode resolves to a
+  // visible state. Individual tests override these to exercise other branches.
+  mockSupportsAutofill.mockResolvedValue(false);
+  setPlatformAuthenticatorAvailable(true);
   setLocation({ assign: jest.fn() });
 });
 
@@ -118,5 +133,60 @@ describe('usePasskeyAutofill', () => {
 
     await waitFor(() => expect(mockStartAuthentication).toHaveBeenCalled());
     expect(window.location.assign).not.toHaveBeenCalled();
+  });
+});
+
+// Renders the resolved mode so a test can assert on it once the async capability checks settle.
+function ModeHarness() {
+  const mode = usePasskeyButtonMode();
+  return <div data-testid="mode">{mode}</div>;
+}
+
+describe('usePasskeyButtonMode', () => {
+  it('is hidden when passkeys are disabled', async () => {
+    config.passkey = { enabled: false };
+
+    render(<ModeHarness />);
+
+    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('hidden'));
+  });
+
+  it('is hidden when the browser lacks PublicKeyCredential', async () => {
+    // @ts-expect-error — deleting an intrinsic for the test environment.
+    delete window.PublicKeyCredential;
+
+    render(<ModeHarness />);
+
+    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('hidden'));
+  });
+
+  it('is hidden when the browser supports autofill (Conditional UI covers it)', async () => {
+    mockSupportsAutofill.mockResolvedValue(true);
+
+    render(<ModeHarness />);
+
+    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('hidden'));
+  });
+
+  it('is hidden when the device has no platform authenticator', async () => {
+    setPlatformAuthenticatorAvailable(false);
+
+    render(<ModeHarness />);
+
+    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('hidden'));
+  });
+
+  it('is primary when a passkey has been used on this browser before', async () => {
+    localStorage.setItem(PASSKEY_HINT_KEY, 'true');
+
+    render(<ModeHarness />);
+
+    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('primary'));
+  });
+
+  it('is secondary on a capable browser with no prior passkey', async () => {
+    render(<ModeHarness />);
+
+    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('secondary'));
   });
 });
