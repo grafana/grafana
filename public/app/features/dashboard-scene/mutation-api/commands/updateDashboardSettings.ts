@@ -1,15 +1,15 @@
 import { type z } from 'zod';
 
 import { textUtil } from '@grafana/data';
-import { behaviors, sceneGraph } from '@grafana/scenes';
+import { sceneGraph } from '@grafana/scenes';
 
 import {
   type DashboardLink,
   defaultDashboardLink,
 } from '../../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { transformCursorSyncV2ToV1 } from '../../serialization/transformToV1TypesUtils';
-import { transformCursorSynctoEnum } from '../../serialization/transformToV2TypesUtils';
 
+import { findCursorSyncBehavior, readDashboardSettings } from './dashboardSettingsUtils';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
@@ -17,7 +17,6 @@ const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
 
 export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSettingsPayloadSchema>;
 
-type CursorSyncValue = NonNullable<UpdateDashboardSettingsPayload['cursorSync']>;
 type DashboardLinkPayload = NonNullable<UpdateDashboardSettingsPayload['links']>[number];
 
 // URLs are sanitized because links render as clickable and the input is
@@ -36,44 +35,6 @@ function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
     includeVars: link.includeVars ?? defaults.includeVars,
     keepTime: link.keepTime ?? defaults.keepTime,
     ...(link.placement !== undefined && { placement: link.placement }),
-  };
-}
-
-export interface DashboardSettings {
-  title: string;
-  description: string;
-  tags: string[];
-  editable: boolean;
-  refresh: string;
-  timeRange: { from: string; to: string };
-  timezone: string;
-  cursorSync: CursorSyncValue;
-  links: DashboardLink[];
-}
-
-function findCursorSyncBehavior(
-  scene: Parameters<MutationCommand['handler']>[1]['scene']
-): behaviors.CursorSync | undefined {
-  return scene.state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync);
-}
-
-export function readDashboardSettings(scene: Parameters<MutationCommand['handler']>[1]['scene']): DashboardSettings {
-  const timeRange = sceneGraph.getTimeRange(scene);
-  const refreshPicker = scene.state.controls?.state.refreshPicker;
-
-  return {
-    title: scene.state.title ?? '',
-    description: scene.state.description ?? '',
-    tags: scene.state.tags ?? [],
-    editable: scene.state.editable ?? true,
-    refresh: refreshPicker?.state.refresh ?? '',
-    timeRange: {
-      from: timeRange.state.from,
-      to: timeRange.state.to,
-    },
-    timezone: timeRange.state.timeZone ?? '',
-    cursorSync: transformCursorSynctoEnum(findCursorSyncBehavior(scene)?.state.sync),
-    links: scene.state.links ?? [],
   };
 }
 

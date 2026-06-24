@@ -7,9 +7,9 @@
  * DashboardScene state. Read-only, no permissions required.
  */
 
+import { readDashboardSettings } from './dashboardSettingsUtils';
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
-import { readDashboardSettings } from './updateDashboardSettings';
 
 export const getDashboardInfoCommand: MutationCommand<Record<string, never>> = {
   name: 'GET_DASHBOARD_INFO',
