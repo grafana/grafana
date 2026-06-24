@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/passkey"
 )
 
 const (
@@ -13,23 +14,13 @@ const (
 	enrollTTL       = 5 * time.Minute
 )
 
-// enrollSource records which anonymous flow created the pending enrollment, so finish can run the
-// right post-step (complete signup / apply invite org / finish bootstrap).
-type enrollSource string
-
-const (
-	enrollSourceSignup    enrollSource = "signup"
-	enrollSourceInvite    enrollSource = "invite"
-	enrollSourceBootstrap enrollSource = "bootstrap"
-)
-
 // enrollmentSession is the state carried between an anonymous enroll begin and finish: the user the
 // credential will belong to (resolved from a TempUser code or bootstrap token at begin), the flow it
 // came from, and the opaque WebAuthn SessionData (serialized by the caller; opaque to this store).
 type enrollmentSession struct {
-	UserID          int64        `json:"userID"`
-	Source          enrollSource `json:"source"`
-	WebAuthnSession []byte       `json:"webAuthnSession"`
+	UserID          int64                `json:"userID"`
+	Source          passkey.EnrollSource `json:"source"`
+	WebAuthnSession []byte               `json:"webAuthnSession"`
 }
 
 // enrollmentStore holds the short-lived, single-use state for an anonymous passkey enrollment between

@@ -46,6 +46,14 @@ func (s *recordingPasskeyService) BeginRegistration(context.Context, passkey.Reg
 	return nil, nil
 }
 
+func (s *recordingPasskeyService) BeginEnrollment(context.Context, passkey.RegisteringUser, passkey.EnrollSource) (*passkey.BeginResult, error) {
+	return nil, nil
+}
+
+func (s *recordingPasskeyService) FinishEnrollment(context.Context, string, string, []byte) (int64, passkey.EnrollSource, error) {
+	return 0, "", nil
+}
+
 func (s *recordingPasskeyService) FinishRegistration(context.Context, string, passkey.RegisteringUser, string, []byte) (*passkey.Credential, error) {
 	return nil, nil
 }

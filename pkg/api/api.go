@@ -89,6 +89,8 @@ func (hs *HTTPServer) registerRoutes() {
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaPasskeyAuthn) {
 		r.Post("/api/auth/passkey/login/begin", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.PasskeyLoginBegin))
 		r.Post("/api/auth/passkey/login/finish", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.PasskeyLoginFinish))
+		r.Post("/api/user/credential-enroll/begin", requestmeta.SetOwner(requestmeta.TeamAuth), routing.Wrap(hs.CredentialEnrollBegin))
+		r.Post("/api/user/credential-enroll/finish", requestmeta.SetOwner(requestmeta.TeamAuth), routing.Wrap(hs.CredentialEnrollFinish))
 	}
 
 	r.Get("/login", hs.LoginView)

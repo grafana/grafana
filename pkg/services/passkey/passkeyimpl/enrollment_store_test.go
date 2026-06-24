@@ -8,11 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/passkey"
 )
 
 func TestEnrollmentStore(t *testing.T) {
 	ctx := context.Background()
-	sess := enrollmentSession{UserID: 42, Source: enrollSourceSignup, WebAuthnSession: []byte("webauthn-session")}
+	sess := enrollmentSession{UserID: 42, Source: passkey.EnrollSourceSignup, WebAuthnSession: []byte("webauthn-session")}
 
 	t.Run("set then take returns the stored session", func(t *testing.T) {
 		store := newEnrollmentStore(newFakeCache())

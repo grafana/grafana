@@ -30,12 +30,13 @@ var _ passkey.Service = (*Service)(nil)
 var errDisabled = errors.New("passkey auth is not enabled")
 
 type Service struct {
-	wa      *wan.WebAuthn
-	store   passkey.Store
-	cache   *challengeStore
-	cfg     setting.PasskeySettings
-	metrics *metrics
-	log     log.Logger
+	wa         *wan.WebAuthn
+	store      passkey.Store
+	cache      *challengeStore
+	enrollment *enrollmentStore
+	cfg        setting.PasskeySettings
+	metrics    *metrics
+	log        log.Logger
 }
 
 func ProvideService(cfg *setting.Cfg, store passkey.Store, remoteCache *remotecache.RemoteCache, reg prometheus.Registerer) (*Service, error) {
@@ -47,11 +48,12 @@ func ProvideService(cfg *setting.Cfg, store passkey.Store, remoteCache *remoteca
 // webauthn.New (which requires a valid RP config) so the server still boots with the feature off.
 func newService(settings setting.PasskeySettings, store passkey.Store, cache cacheStorage, reg prometheus.Registerer) (*Service, error) {
 	s := &Service{
-		store:   store,
-		cache:   newChallengeStore(cache),
-		cfg:     settings,
-		metrics: newMetrics(reg),
-		log:     log.New("passkey.service"),
+		store:      store,
+		cache:      newChallengeStore(cache),
+		enrollment: newEnrollmentStore(cache),
+		cfg:        settings,
+		metrics:    newMetrics(reg),
+		log:        log.New("passkey.service"),
 	}
 
 	if settings.Enabled {
@@ -181,6 +183,27 @@ func (s *Service) BeginRegistration(ctx context.Context, ru passkey.RegisteringU
 	return res, nil
 }
 
+// BeginEnrollment starts a registration ceremony for a user created by an anonymous flow (signup,
+// invite, bootstrap) and stores the pending state — including the user id and source — in the
+// enrollment store so the anonymous finish can persist the credential without a session.
+func (s *Service) BeginEnrollment(ctx context.Context, ru passkey.RegisteringUser, source passkey.EnrollSource) (*passkey.BeginResult, error) {
+	if s.wa == nil {
+		return nil, errDisabled
+	}
+	// A freshly-created user has no credentials yet, so there is nothing to exclude.
+	user := newWebAuthnUser(ru.UserID, ru.Name, ru.DisplayName, nil)
+	creation, session, err := s.wa.BeginRegistration(user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin passkey enrollment: %w", err)
+	}
+	res, err := s.persistEnrollment(ctx, ru.UserID, source, session, creation.Response)
+	if err != nil {
+		return nil, err
+	}
+	s.metrics.registrationBegin.Inc()
+	return res, nil
+}
+
 func (s *Service) FinishRegistration(ctx context.Context, sessionID string, ru passkey.RegisteringUser, name string, responseBody []byte) (*passkey.Credential, error) {
 	if s.wa == nil {
 		return nil, errDisabled
@@ -218,6 +241,56 @@ func (s *Service) FinishRegistration(ctx context.Context, sessionID string, ru p
 	return stored, nil
 }
 
+// FinishEnrollment verifies an attestation against a pending anonymous enrollment (signup/invite/
+// bootstrap) and persists the credential for the user recorded at begin. It mirrors FinishRegistration
+// but reads the user id + source from the enrollment store instead of an authenticated session.
+func (s *Service) FinishEnrollment(ctx context.Context, sessionID, name string, responseBody []byte) (int64, passkey.EnrollSource, error) {
+	if s.wa == nil {
+		return 0, "", errDisabled
+	}
+	sess, err := s.enrollment.take(ctx, sessionID)
+	if err != nil {
+		if errors.Is(err, remotecache.ErrCacheItemNotFound) {
+			return 0, "", passkey.ErrChallengeExpired
+		}
+		return 0, "", err
+	}
+
+	var wanSession wan.SessionData
+	if err := json.Unmarshal(sess.WebAuthnSession, &wanSession); err != nil {
+		return 0, "", err
+	}
+
+	existing, err := s.store.ListByUser(ctx, sess.UserID)
+	if err != nil {
+		return 0, "", err
+	}
+	// Name/display name don't matter at finish — only the user handle (encodeUserHandle(UserID)) must
+	// match the one bound into the session at begin.
+	user := newWebAuthnUser(sess.UserID, "", "", existing)
+
+	parsed, err := protocol.ParseCredentialCreationResponseBytes(responseBody)
+	if err != nil {
+		s.metrics.registrationFinish.WithLabelValues(resultFailure).Inc()
+		return 0, "", err
+	}
+
+	credential, err := s.wa.CreateCredential(user, wanSession, parsed)
+	if err != nil {
+		s.metrics.registrationFinish.WithLabelValues(resultFailure).Inc()
+		return 0, "", err
+	}
+
+	stored := toStoreCredential(sess.UserID, name, credential)
+	if err := s.store.Create(ctx, stored); err != nil {
+		s.metrics.registrationFinish.WithLabelValues(resultFailure).Inc()
+		return 0, "", err
+	}
+
+	s.metrics.registrationFinish.WithLabelValues(resultSuccess).Inc()
+	return sess.UserID, sess.Source, nil
+}
+
 // persistSession stores the ceremony's SessionData under a fresh opaque id and returns it together
 // with the begin options (raw JSON) the client needs for navigator.credentials.*.
 func (s *Service) persistSession(ctx context.Context, session *wan.SessionData, options any) (*passkey.BeginResult, error) {
@@ -231,6 +304,27 @@ func (s *Service) persistSession(ctx context.Context, session *wan.SessionData, 
 	}
 	if err := s.cache.set(ctx, sessionID, data); err != nil {
 		return nil, fmt.Errorf("failed to store passkey challenge: %w", err)
+	}
+	opts, err := json.Marshal(options)
+	if err != nil {
+		return nil, err
+	}
+	return &passkey.BeginResult{SessionID: sessionID, Options: opts}, nil
+}
+
+// persistEnrollment mirrors persistSession but stores into the enrollment store, carrying the user id
+// and source so the anonymous finish knows whose credential to create and which post-step to run.
+func (s *Service) persistEnrollment(ctx context.Context, userID int64, source passkey.EnrollSource, session *wan.SessionData, options any) (*passkey.BeginResult, error) {
+	data, err := json.Marshal(session)
+	if err != nil {
+		return nil, err
+	}
+	sessionID, err := util.GetRandomString(sessionIDLength)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.enrollment.set(ctx, sessionID, enrollmentSession{UserID: userID, Source: source, WebAuthnSession: data}); err != nil {
+		return nil, fmt.Errorf("failed to store passkey enrollment: %w", err)
 	}
 	opts, err := json.Marshal(options)
 	if err != nil {

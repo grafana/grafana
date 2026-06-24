@@ -112,6 +112,37 @@ func TestSessionRoundTrip(t *testing.T) {
 	require.Equal(t, original.UserVerification, loaded.UserVerification)
 }
 
+func TestBeginEnrollment(t *testing.T) {
+	ctx := context.Background()
+	cache := newFakeCache()
+	svc, err := newService(validSettings(), nil, cache, nil)
+	require.NoError(t, err)
+
+	res, err := svc.BeginEnrollment(ctx, passkey.RegisteringUser{UserID: 7, Name: "newbie", DisplayName: "New Bie"}, passkey.EnrollSourceSignup)
+	require.NoError(t, err)
+	require.NotEmpty(t, res.SessionID)
+	require.True(t, json.Valid(res.Options), "begin options must be valid JSON for the client")
+
+	// The pending enrollment is stored in the enrollment namespace, carrying the user id + source so
+	// the anonymous finish (which has no session) knows whose credential to persist.
+	raw, ok := cache.data[enrollKeyPrefix+res.SessionID]
+	require.True(t, ok, "enrollment session should be stored")
+	var sess enrollmentSession
+	require.NoError(t, json.Unmarshal(raw, &sess))
+	require.Equal(t, int64(7), sess.UserID)
+	require.Equal(t, passkey.EnrollSourceSignup, sess.Source)
+	require.NotEmpty(t, sess.WebAuthnSession)
+}
+
+func TestFinishEnrollmentUnknownMapsToExpired(t *testing.T) {
+	ctx := context.Background()
+	svc, err := newService(validSettings(), nil, newFakeCache(), nil)
+	require.NoError(t, err)
+
+	_, _, err = svc.FinishEnrollment(ctx, "never-stored", "my passkey", []byte(`{}`))
+	require.ErrorIs(t, err, passkey.ErrChallengeExpired)
+}
+
 func TestLoadSessionUnknownMapsToExpired(t *testing.T) {
 	ctx := context.Background()
 	svc, err := newService(validSettings(), nil, newFakeCache(), nil)
