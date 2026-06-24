@@ -70,3 +70,21 @@ func (hs *HTTPServer) injectSpan(c *contextmodel.ReqContext, name string) (*cont
 	c.Req = c.Req.WithContext(ctx)
 	return c, span
 }
+
+// injectSpanScoped starts a child span named `name` and scopes c's request
+// context to it, so that work done by callees that read c.Req.Context()
+// (database queries, access-control evaluations, etc.) is grouped under the
+// span in traces. The returned function ends the span and restores the previous
+// request context; callers must call it — via defer to scope a whole function,
+// or explicitly to close a single step. Restoring the context keeps sibling
+// steps as siblings rather than nesting them under a span that has already
+// ended, which is what makes these traces readable.
+func (hs *HTTPServer) injectSpanScoped(c *contextmodel.ReqContext, name string) (*contextmodel.ReqContext, func()) {
+	prevReq := c.Req
+	ctx, span := hs.tracer.Start(c.Req.Context(), name)
+	c.Req = c.Req.WithContext(ctx)
+	return c, func() {
+		span.End()
+		c.Req = prevReq
+	}
+}
