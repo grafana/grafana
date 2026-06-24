@@ -20,6 +20,10 @@ import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, type PanelDTO, getVisualPanels } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
+import { AlertAIAssistPanel } from './query-description/AlertAIAssistPanel';
+import { GenerateSummaryButton } from './query-description/GenerateSummaryButton';
+import { compileQueryDescription } from './query-description/compileQueryDescription';
+import { extractQuerySummaryInput } from './query-description/extractQuerySummaryInput';
 import { type DashboardResponse, useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
@@ -35,12 +39,39 @@ const AnnotationsStep = () => {
   } = useFormContext<RuleFormValues>();
   const annotations = watch('annotations');
   const type = watch('type');
+  const queries = watch('queries');
+  const condition = watch('condition');
+  const cloudExpression = watch('expression');
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
   const { currentData: alertingConfig } = alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
   const requireDescriptions = alertingConfig?.reject_alerts_without_descriptions ?? false;
   const requireRunbookURL = alertingConfig?.reject_alerts_without_runbook_url ?? false;
+
+  const summaryInput = extractQuerySummaryInput(queries ?? [], condition, cloudExpression);
+  const ruleName = watch('name');
+  const summaryValue = annotations.find((annotation) => annotation.key === Annotation.summary)?.value ?? '';
+  const descriptionValue = annotations.find((annotation) => annotation.key === Annotation.description)?.value ?? '';
+
+  const applySummaryText = (text: string) => {
+    const summaryIndex = annotations.findIndex((annotation) => annotation.key === Annotation.summary);
+    if (summaryIndex >= 0) {
+      setValue(`annotations.${summaryIndex}.value`, text, { shouldDirty: true });
+    } else {
+      append({ key: Annotation.summary, value: text });
+    }
+  };
+
+  const handleGenerateSummary = () => {
+    if (!summaryInput) {
+      return;
+    }
+    const { text } = compileQueryDescription(summaryInput.expr, { threshold: summaryInput.threshold });
+    if (text) {
+      applySummaryText(text);
+    }
+  };
 
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = Number(annotations.find((annotation) => annotation.key === Annotation.panelID)?.value);
@@ -143,6 +174,13 @@ const AnnotationsStep = () => {
     >
       <Stack direction="column" gap={1}>
         {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
+        <GenerateSummaryButton onClick={handleGenerateSummary} disabled={!summaryInput} />
+        <AlertAIAssistPanel
+          summaryInput={summaryInput}
+          ruleName={ruleName ?? ''}
+          summary={summaryValue}
+          description={descriptionValue}
+        />
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
