@@ -80,6 +80,14 @@ const AnnotationHeaderField = ({
       <Text variant="bodySmall" color="secondary">
         {annotationDescriptions[annotation]}
       </Text>
+      {isRequired && (
+        <Text variant="bodySmall" color="secondary">
+          {t(
+            'alerting.annotation-header-field.required-by-policy',
+            'Required by your organization\u2019s alert quality settings.'
+          )}
+        </Text>
+      )}
     </Stack>
   );
 };
