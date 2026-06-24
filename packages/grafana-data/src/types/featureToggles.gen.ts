@@ -99,11 +99,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default true
-  */
-  renderAuthJWT?: boolean;
-  /**
   * Enable the data source selector within the Frontend Apps section of the Frontend Observability
   * @default false
   */
@@ -689,11 +684,6 @@ export interface FeatureToggles {
   * @default true
   */
   prometheusAzureOverrideAudience?: boolean;
-  /**
-  * Enable grafana dataplane aggregator
-  * @default false
-  */
-  dataplaneAggregator?: boolean;
   /**
   * Allows authenticated API calls in actions
   * @default false

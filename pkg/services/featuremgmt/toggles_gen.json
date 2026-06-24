@@ -1629,20 +1629,6 @@
     },
     {
       "metadata": {
-        "name": "dataplaneAggregator",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-08-09T08:41:07Z"
-      },
-      "spec": {
-        "description": "Enable grafana dataplane aggregator",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "datasource.useNewCRUDAPIs",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -1854,6 +1840,21 @@
         "description": "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dataviz.experimentalColorSchemes",
+        "resourceVersion": "1782241743120",
+        "creationTimestamp": "2026-06-23T19:09:03Z"
+      },
+      "spec": {
+        "description": "Enables additional experimental color schemes for visualizations.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

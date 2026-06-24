@@ -174,7 +174,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: false, React: false}, // BE-only toggle
 		},
 		{
 			Name:        "faroDatasourceSelector",
@@ -430,7 +430,7 @@ var (
 			Description: "Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",
 		},
 
@@ -1292,15 +1292,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 
-		{
-			Name:            "dataplaneAggregator",
-			Description:     "Enable grafana dataplane aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
 		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
@@ -3157,6 +3148,15 @@ var (
 		{
 			Name:         "table.protoRowParser",
 			Description:  "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "dataviz.experimentalColorSchemes",
+			Description:  "Enables additional experimental color schemes for visualizations.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,

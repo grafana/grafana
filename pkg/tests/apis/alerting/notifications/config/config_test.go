@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -106,13 +107,24 @@ func newConfig(name string) *alertingnotifv0alpha1.Config {
 	}
 }
 
-// seedSingleton creates the "default" singleton (admins may create it) so tests
-// that operate on an existing object have one. Creating from scratch — via both
-// POST and the PUT upsert — is covered explicitly by TestIntegrationConfigCreate.
+// seedSingleton brings the "default" singleton into existence the way production
+// does — by driving the sync worker's flag-on-but-unconfigured pass, which seeds
+// it. Human create is denied, so this is the only way to get an existing object
+// for the read/update tests. The pass is re-run until the singleton is readable to
+// absorb boot-time ordering (the seed pass skips an org until its Alertmanager has
+// been created) and unified-storage read-after-write lag.
 func seedSingleton(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper) {
 	t.Helper()
-	_, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-	require.NoError(t, err)
+	moa := helper.GetEnv().Server.HTTPServer.AlertNG.MultiOrgAlertmanager
+	require.NotNil(t, moa, "MultiOrgAlertmanager must be wired in the test env")
+	adminClient := newConfigClient(t, helper.Org1.Admin)
+	require.Eventually(t, func() bool {
+		if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
+			return false
+		}
+		_, err := adminClient.Get(ctx, singletonID)
+		return err == nil
+	}, 30*time.Second, 500*time.Millisecond, "sync worker did not seed the Config singleton")
 }
 
 func requireForbidden(t *testing.T, err error, msgContains string) {
@@ -122,15 +134,6 @@ func requireForbidden(t *testing.T, err error, msgContains string) {
 	if msgContains != "" {
 		require.Contains(t, err.Error(), msgContains)
 	}
-}
-
-// requireSingletonRejection asserts the admission validator rejected a write for
-// violating the singleton-name rule. The status code isn't pinned because the
-// message is the stable contract.
-func requireSingletonRejection(t *testing.T, err error) {
-	t.Helper()
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "singleton")
 }
 
 // configWildcardPermission grants the given Config actions over the all-uid
@@ -147,7 +150,9 @@ func configWildcardPermission(actions ...string) resourcepermissions.SetResource
 
 // TestIntegrationConfigAccessControl pins down the custom authorizer behavior:
 //   - get/list gated by configs:get (read), granted to Viewer and Admin.
-//   - create/patch/update gated by configs:update, granted to Admin only.
+//   - patch/update gated by configs:update, granted to Admin only.
+//   - create is service-identity only: forbidden for every human (the singleton is
+//     seeded by the sync worker).
 //   - delete/deletecollection is rejected for everyone ("cannot be deleted").
 //   - /status writes require the service-identity-only configs/status:update and
 //     are forbidden for every human, including Admin.
@@ -222,20 +227,13 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 				})
 			}
 
-			// create is gated by the update permission. The singleton already exists
-			// (seeded), so an update-holder gets AlreadyExists while a user without
-			// update is forbidden.
-			if tc.canUpdate {
-				t.Run("create returns AlreadyExists (singleton already created)", func(t *testing.T) {
-					_, err := client.Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-					require.Truef(t, errors.IsAlreadyExists(err), "expected AlreadyExists but got: %v", err)
-				})
-			} else {
-				t.Run("is forbidden to create", func(t *testing.T) {
-					_, err := client.Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-					requireForbidden(t, err, "")
-				})
-			}
+			// create is service-identity only: every human is forbidden regardless of
+			// update permission. The singleton is brought into existence by the sync
+			// worker; humans only read/update the seeded object.
+			t.Run("is forbidden to create", func(t *testing.T) {
+				_, err := client.Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
+				requireForbidden(t, err, "seeded automatically")
+			})
 
 			t.Run("is forbidden to delete", func(t *testing.T) {
 				err := client.Delete(ctx, singletonID, resource.DeleteOptions{})
@@ -252,51 +250,25 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 	}
 }
 
-// TestIntegrationConfigCreate verifies an admin can bring the singleton into
-// existence from scratch via both supported paths — a POST create and a PUT
-// upsert (create-on-update, the path a GitOps apply uses). Each subtest uses a
-// fresh server because the singleton cannot be deleted once created.
+// TestIntegrationConfigCreate verifies that humans cannot bring the singleton into
+// existence — it is seeded by the sync worker, and human create is denied on every
+// path. A POST is rejected by the authorizer (verb=create); a PUT upsert to the
+// missing object is re-authorized by the apiserver as create and rejected the same
+// way. Each subtest uses a fresh server so the singleton does not yet exist.
 func TestIntegrationConfigCreate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
-	t.Run("via POST create", func(t *testing.T) {
+	t.Run("POST create is forbidden for humans", func(t *testing.T) {
 		helper := getTestHelper(t)
-		got, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-		require.NoError(t, err)
-		require.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, got.Name)
+		_, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingnotifv0alpha1.ConfigSingletonName), resource.CreateOptions{})
+		requireForbidden(t, err, "seeded automatically")
 	})
 
-	t.Run("via PUT upsert (create-on-update)", func(t *testing.T) {
+	t.Run("PUT upsert (create-on-update) is forbidden for humans", func(t *testing.T) {
 		helper := getTestHelper(t)
-		got, err := rawUpdate(t, ctx, helper.Org1.Admin, newConfig(alertingnotifv0alpha1.ConfigSingletonName))
-		require.NoError(t, err)
-		require.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, got.Name)
-	})
-}
-
-// TestIntegrationConfigSingleton verifies the singleton admission validator: the
-// only valid name is "default". A non-default name is rejected on both the
-// create and the update (upsert) paths.
-func TestIntegrationConfigSingleton(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx := context.Background()
-	helper := getTestHelper(t)
-	admin := helper.Org1.Admin
-	adminClient := newConfigClient(t, admin)
-
-	t.Run("update with a non-default name is rejected as a singleton violation", func(t *testing.T) {
-		_, err := rawUpdate(t, ctx, admin, newConfig("not-the-singleton"))
-		requireSingletonRejection(t, err)
-	})
-
-	// create is allowed for admins (gated by the update permission), so a
-	// non-default create reaches the admission validator and is rejected for
-	// violating the singleton-name rule — same as the update path above.
-	t.Run("create with a non-default name is rejected as a singleton violation", func(t *testing.T) {
-		_, err := adminClient.Create(ctx, newConfig("not-the-singleton"), resource.CreateOptions{})
-		requireSingletonRejection(t, err)
+		_, err := rawUpdate(t, ctx, helper.Org1.Admin, newConfig(alertingnotifv0alpha1.ConfigSingletonName))
+		requireForbidden(t, err, "")
 	})
 }
 

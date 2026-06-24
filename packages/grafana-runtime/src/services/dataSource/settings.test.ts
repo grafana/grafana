@@ -2,8 +2,10 @@ import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/da
 
 import { setBackendSrv } from '../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
+import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
+import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { setExpressionDataSourceInstance } from './expressionDs';
 import {
   _resetForTests,
@@ -114,6 +116,7 @@ const templateSrv: TemplateSrv = {
 } as unknown as TemplateSrv;
 
 const backendGet = jest.fn();
+const logWarning = jest.fn();
 
 beforeAll(() => {
   setTemplateSrv(templateSrv);
@@ -126,6 +129,14 @@ beforeAll(() => {
 beforeEach(() => {
   _resetForTests();
   backendGet.mockReset();
+  logWarning.mockClear();
+  setLogger('grafana/runtime.plugins.datasource', {
+    logDebug: jest.fn(),
+    logError: jest.fn(),
+    logInfo: jest.fn(),
+    logMeasurement: jest.fn(),
+    logWarning,
+  });
   // No legacy srv by default — reloadDataSourceInstanceSettings() should use the fetch path.
   setDataSourceSrv(undefined as unknown as DataSourceSrv);
 });
@@ -768,6 +779,97 @@ describe('instanceSettings', () => {
 
       const result = await getDataSourceInstanceSettings('runtime-ds');
       expect(result?.name).toBe('Runtime');
+    });
+  });
+
+  describe('legacy DataSourceSrv fallback', () => {
+    describe('getDataSourceInstanceSettings', () => {
+      it('falls back to the legacy srv and logs a warning when the new cache misses but legacy resolves', async () => {
+        initDataSourceInstanceSettings({}, '');
+        const getInstanceSettings = jest.fn().mockReturnValue(fixtures.Alpha);
+        setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+
+        const result = await getDataSourceInstanceSettings('uid-alpha');
+
+        expect(result).toBe(fixtures.Alpha);
+        expect(getInstanceSettings).toHaveBeenCalledWith('uid-alpha', undefined);
+        expect(logWarning).toHaveBeenCalledTimes(1);
+        expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_SETTINGS_WARNING, { ref: 'uid-alpha' });
+      });
+
+      it('returns undefined and does not log when both the new cache and the legacy srv miss', async () => {
+        initDataSourceInstanceSettings({}, '');
+        const getInstanceSettings = jest.fn().mockReturnValue(undefined);
+        setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+
+        const result = await getDataSourceInstanceSettings('uid-alpha');
+
+        expect(result).toBeUndefined();
+        expect(getInstanceSettings).toHaveBeenCalledTimes(1);
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+
+      it('never consults the legacy srv when the new cache hits', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const getInstanceSettings = jest.fn();
+        setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+
+        const result = await getDataSourceInstanceSettings('uid-alpha');
+
+        expect(result?.name).toBe('Alpha');
+        expect(getInstanceSettings).not.toHaveBeenCalled();
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('getDataSourceInstanceList', () => {
+      it('falls back to the legacy srv and logs a warning when the new list is empty but legacy is not', async () => {
+        initDataSourceInstanceSettings({}, '');
+        const getList = jest.fn().mockReturnValue([fixtures.Alpha]);
+        setDataSourceSrv({ getList } as unknown as DataSourceSrv);
+
+        const items = await getDataSourceInstanceList({ metrics: true });
+
+        expect(items).toEqual([
+          {
+            ref: { uid: fixtures.Alpha.uid, type: fixtures.Alpha.type, apiVersion: fixtures.Alpha.apiVersion },
+            name: fixtures.Alpha.name,
+            meta: fixtures.Alpha.meta,
+            readOnly: fixtures.Alpha.readOnly,
+            isDefault: fixtures.Alpha.isDefault,
+            rawRef: fixtures.Alpha.rawRef,
+          },
+        ]);
+        expect(getList).toHaveBeenCalledWith({ metrics: true });
+        expect(logWarning).toHaveBeenCalledTimes(1);
+        expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_LIST_WARNING, {
+          filters: JSON.stringify({ metrics: true }),
+        });
+      });
+
+      it('returns the empty list and does not log when both the new list and the legacy srv are empty', async () => {
+        initDataSourceInstanceSettings({}, '');
+        const getList = jest.fn().mockReturnValue([]);
+        setDataSourceSrv({ getList } as unknown as DataSourceSrv);
+
+        const items = await getDataSourceInstanceList({ metrics: true });
+
+        expect(items).toEqual([]);
+        expect(getList).toHaveBeenCalledTimes(1);
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+
+      it('never consults the legacy srv when the new list is non-empty', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const getList = jest.fn();
+        setDataSourceSrv({ getList } as unknown as DataSourceSrv);
+
+        const items = await getDataSourceInstanceList();
+
+        expect(items.length).toBeGreaterThan(0);
+        expect(getList).not.toHaveBeenCalled();
+        expect(logWarning).not.toHaveBeenCalled();
+      });
     });
   });
 });

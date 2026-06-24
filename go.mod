@@ -267,7 +267,6 @@ require (
 	github.com/grafana/grafana/apps/scope v0.0.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/apps/secret v0.0.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/apps/shorturl v0.0.0 // @grafana/sharing-squad
-	github.com/grafana/grafana/pkg/aggregator v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // @grafana/grafana-backend-services-squad
@@ -304,7 +303,6 @@ replace (
 	github.com/grafana/grafana/apps/shorturl => ./apps/shorturl
 
 	// Packages
-	github.com/grafana/grafana/pkg/aggregator => ./pkg/aggregator
 	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
 	github.com/grafana/grafana/pkg/infra/features => ./pkg/infra/features
@@ -541,7 +539,6 @@ require (
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/matryer/is v1.4.1 // indirect
-	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
