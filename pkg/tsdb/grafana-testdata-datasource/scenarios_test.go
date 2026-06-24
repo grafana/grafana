@@ -227,6 +227,62 @@ func TestTestdataScenarios(t *testing.T) {
 			require.Len(t, dResp.Frames, 1)
 		})
 	})
+
+	t.Run("errors and notices", func(t *testing.T) {
+		t.Run("Should attach one notice of each severity to the frame meta", func(t *testing.T) {
+			from := time.Now()
+			to := from.Add(5 * time.Minute)
+
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: from,
+					To:   to,
+				},
+				Interval:      100 * time.Millisecond,
+				MaxDataPoints: 100,
+				JSON:          []byte(`{}`),
+			}
+
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
+
+			resp, err := s.handleErrorsAndNoticesScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.NotNil(t, frame.Meta)
+			require.Len(t, frame.Meta.Notices, 3)
+
+			severities := map[data.NoticeSeverity]string{}
+			for _, n := range frame.Meta.Notices {
+				severities[n.Severity] = n.Text
+				require.NotEmpty(t, n.Text)
+			}
+
+			require.Contains(t, severities, data.NoticeSeverityInfo)
+			require.Contains(t, severities, data.NoticeSeverityWarning)
+			require.Contains(t, severities, data.NoticeSeverityError)
+
+			// The error notice points the inspector at the error tab.
+			var errNotice *data.Notice
+			for i := range frame.Meta.Notices {
+				if frame.Meta.Notices[i].Severity == data.NoticeSeverityError {
+					errNotice = &frame.Meta.Notices[i]
+				}
+			}
+			require.NotNil(t, errNotice)
+			require.Equal(t, data.InspectTypeError, errNotice.Inspect)
+		})
+	})
 }
 
 func TestParseLabels(t *testing.T) {

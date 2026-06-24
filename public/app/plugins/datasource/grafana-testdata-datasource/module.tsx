@@ -1,6 +1,7 @@
 import { DataSourcePlugin } from '@grafana/data';
 
 import { ConfigEditor } from './ConfigEditor';
+import { ErrorsAndNoticesInspector } from './ErrorsAndNoticesInspector';
 import { MetaDataInspector } from './MetaDataInspector';
 import { QueryEditor } from './QueryEditor';
 import { TestInfoTab } from './TestInfoTab';
@@ -10,6 +11,7 @@ export const plugin = new DataSourcePlugin(TestDataDataSource)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(QueryEditor)
   .setMetadataInspector(MetaDataInspector)
+  .setErrorsAndNoticesInspector(ErrorsAndNoticesInspector)
   .addConfigPage({
     title: 'Setup',
     icon: 'list-ul',

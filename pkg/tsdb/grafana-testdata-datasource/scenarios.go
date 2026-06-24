@@ -225,6 +225,13 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		handler: s.handleErrorWithSourceScenario,
 	})
 
+	s.registerScenario(&Scenario{
+		ID:          kinds.TestDataQueryTypeErrorsAndNotices,
+		Name:        "Errors and notices",
+		handler:     s.handleErrorsAndNoticesScenario,
+		Description: "Returns a random walk series with one query-result notice of each severity (info, warning, error) attached to the frame meta. Useful for previewing the panel query errors and notices UI.",
+	})
+
 	s.queryMux.HandleFunc("", s.handleFallbackScenario)
 }
 
@@ -426,6 +433,50 @@ func (s *Service) handleQueryMetaScenario(ctx context.Context, req *backend.Quer
 	r.Frames = data.Frames{frame}
 
 	resp.Responses[refId] = r
+	return resp, nil
+}
+
+// handleErrorsAndNoticesScenario returns a normal random walk time series whose
+// frame meta carries one query-result notice of each severity (info, warning,
+// error). It is a live example for the unified panel query errors and notices UI
+// (feature toggle grafana.newPanelQueryErrorsUI). One notice sets Inspect so the
+// inspector has a tab to navigate to.
+func (s *Service) handleErrorsAndNoticesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	notices := []data.Notice{
+		{
+			Severity: data.NoticeSeverityInfo,
+			Text:     "This is an info notice",
+		},
+		{
+			Severity: data.NoticeSeverityWarning,
+			Text:     "This query is slow - consider narrowing the range",
+		},
+		{
+			Severity: data.NoticeSeverityError,
+			Text:     "Datasource returned a partial result",
+			Inspect:  data.InspectTypeError,
+		},
+	}
+
+	for _, q := range req.Queries {
+		model, err := GetJSONModel(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		frame := RandomWalk(q, model, 0)
+		if frame.Meta == nil {
+			frame.Meta = &data.FrameMeta{}
+		}
+		frame.Meta.Notices = notices
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
 	return resp, nil
 }
 
