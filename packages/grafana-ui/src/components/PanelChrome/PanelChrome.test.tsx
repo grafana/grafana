@@ -1,11 +1,9 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import { ElementSelectionContext } from '../ElementSelectionContext/ElementSelectionContext';
 
@@ -22,11 +20,7 @@ const setup = (propOverrides?: Partial<PanelChromeProps>) => {
 
   Object.assign(props, propOverrides);
   return {
-    ...render(
-      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <PanelChrome {...props} />
-      </OpenFeatureProvider>
-    ),
+    ...render(<PanelChrome {...props} />),
     user: userEvent.setup(),
   };
 };
@@ -50,11 +44,7 @@ const setupWithToggleCollapsed = (propOverrides?: Partial<PanelChromeProps>) => 
   };
 
   return {
-    ...render(
-      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <ControlledCollapseComponent />
-      </OpenFeatureProvider>
-    ),
+    ...render(<ControlledCollapseComponent />),
     user: userEvent.setup(),
   };
 };
@@ -249,28 +239,26 @@ it('does not select the panel when clicking interactive content', async () => {
         onClear: jest.fn(),
       }}
     >
-      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <PanelChrome width={100} height={100} selectionId="panel-1">
-          {() => (
-            <div>
-              <button type="button">Button text</button>
-              <input role="combobox" />
-              {/* eslint-disable-next-line @grafana/no-plain-links */}
-              <a href="#">Anchor text</a>
-              <canvas />
-              <svg />
-              <div className="u-over" />
-              <div className="u-axis" />
-              <div role="button" />
-              <div role="columnheader">Column header</div>
-              <div>Non-interactive</div>
-            </div>
-          )}
-        </PanelChrome>
-        <div id="grafana-portal-container">
-          <div />
-        </div>
-      </OpenFeatureProvider>
+      <PanelChrome width={100} height={100} selectionId="panel-1">
+        {() => (
+          <div>
+            <button type="button">Button text</button>
+            <input role="combobox" />
+            {/* eslint-disable-next-line @grafana/no-plain-links */}
+            <a href="#">Anchor text</a>
+            <canvas />
+            <svg />
+            <div className="u-over" />
+            <div className="u-axis" />
+            <div role="button" />
+            <div role="columnheader">Column header</div>
+            <div>Non-interactive</div>
+          </div>
+        )}
+      </PanelChrome>
+      <div id="grafana-portal-container">
+        <div />
+      </div>
     </ElementSelectionContext.Provider>
   );
 

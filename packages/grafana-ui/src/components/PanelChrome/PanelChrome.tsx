@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useFlag } from '@openfeature/react-sdk';
 import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
@@ -160,8 +159,8 @@ export function PanelChrome({
   subHeaderContent,
 }: PanelChromeProps) {
   const theme = useTheme2();
-  const visualRefreshEnabled = useFlag('grafana.visualDesignRefresh', false).value;
-  const styles = useStyles2(getStyles, visualRefreshEnabled);
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
@@ -519,8 +518,9 @@ const getContentStyle = (
   return { contentStyle, innerWidth, innerHeight };
 };
 
-const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const { background, borderColor, contentBackground, contentBorderColor } = theme.components.panel;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   return {
     container: css({

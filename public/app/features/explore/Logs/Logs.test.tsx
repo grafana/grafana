@@ -1,4 +1,3 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
@@ -19,7 +18,6 @@ import {
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
@@ -172,9 +170,7 @@ describe('Logs', () => {
 
     const rendered = render(
       <Provider store={fakeStore}>
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          {getComponent(partialProps, dataFrame ? dataFrame : getMockLokiFrame(), logs)}
-        </OpenFeatureProvider>
+        {getComponent(partialProps, dataFrame ? dataFrame : getMockLokiFrame(), logs)}
       </Provider>
     );
     return { ...rendered, store: fakeStore };
@@ -221,40 +217,38 @@ describe('Logs', () => {
     });
     render(
       <Provider store={store}>
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <Logs
-            logsFrames={undefined}
-            exploreId={'left'}
-            splitOpen={() => undefined}
-            logsVolumeEnabled={true}
-            onSetLogsVolumeEnabled={() => null}
-            onClickFilterLabel={() => null}
-            onClickFilterOutLabel={() => null}
-            logsVolumeData={undefined}
-            loadLogsVolumeData={() => undefined}
-            logRows={[]}
-            onStartScanning={scanningStarted}
-            timeZone={'utc'}
-            width={50}
-            loading={false}
-            loadingState={LoadingState.Done}
-            absoluteRange={{
-              from: toUtc('2019-01-01 10:00:00').valueOf(),
-              to: toUtc('2019-01-01 16:00:00').valueOf(),
-            }}
-            range={{
-              from: toUtc('2019-01-01 10:00:00'),
-              to: toUtc('2019-01-01 16:00:00'),
-              raw: { from: 'now-1h', to: 'now' },
-            }}
-            onChangeTime={() => {}}
-            getFieldLinks={() => {
-              return [];
-            }}
-            eventBus={new EventBusSrv()}
-            isFilterLabelActive={jest.fn()}
-          />
-        </OpenFeatureProvider>
+        <Logs
+          logsFrames={undefined}
+          exploreId={'left'}
+          splitOpen={() => undefined}
+          logsVolumeEnabled={true}
+          onSetLogsVolumeEnabled={() => null}
+          onClickFilterLabel={() => null}
+          onClickFilterOutLabel={() => null}
+          logsVolumeData={undefined}
+          loadLogsVolumeData={() => undefined}
+          logRows={[]}
+          onStartScanning={scanningStarted}
+          timeZone={'utc'}
+          width={50}
+          loading={false}
+          loadingState={LoadingState.Done}
+          absoluteRange={{
+            from: toUtc('2019-01-01 10:00:00').valueOf(),
+            to: toUtc('2019-01-01 16:00:00').valueOf(),
+          }}
+          range={{
+            from: toUtc('2019-01-01 10:00:00'),
+            to: toUtc('2019-01-01 16:00:00'),
+            raw: { from: 'now-1h', to: 'now' },
+          }}
+          onChangeTime={() => {}}
+          getFieldLinks={() => {
+            return [];
+          }}
+          eventBus={new EventBusSrv()}
+          isFilterLabelActive={jest.fn()}
+        />
       </Provider>
     );
     const button = screen.getByRole('button', {
@@ -272,40 +266,38 @@ describe('Logs', () => {
     });
     render(
       <Provider store={store}>
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <Logs
-            logsFrames={undefined}
-            exploreId={'left'}
-            splitOpen={() => undefined}
-            logsVolumeEnabled={true}
-            onSetLogsVolumeEnabled={() => null}
-            onClickFilterLabel={() => null}
-            onClickFilterOutLabel={() => null}
-            logsVolumeData={undefined}
-            loadLogsVolumeData={() => undefined}
-            logRows={[]}
-            scanning={true}
-            timeZone={'utc'}
-            width={50}
-            loading={false}
-            loadingState={LoadingState.Done}
-            absoluteRange={{
-              from: toUtc('2019-01-01 10:00:00').valueOf(),
-              to: toUtc('2019-01-01 16:00:00').valueOf(),
-            }}
-            range={{
-              from: toUtc('2019-01-01 10:00:00'),
-              to: toUtc('2019-01-01 16:00:00'),
-              raw: { from: 'now-1h', to: 'now' },
-            }}
-            onChangeTime={() => {}}
-            getFieldLinks={() => {
-              return [];
-            }}
-            eventBus={new EventBusSrv()}
-            isFilterLabelActive={jest.fn()}
-          />
-        </OpenFeatureProvider>
+        <Logs
+          logsFrames={undefined}
+          exploreId={'left'}
+          splitOpen={() => undefined}
+          logsVolumeEnabled={true}
+          onSetLogsVolumeEnabled={() => null}
+          onClickFilterLabel={() => null}
+          onClickFilterOutLabel={() => null}
+          logsVolumeData={undefined}
+          loadLogsVolumeData={() => undefined}
+          logRows={[]}
+          scanning={true}
+          timeZone={'utc'}
+          width={50}
+          loading={false}
+          loadingState={LoadingState.Done}
+          absoluteRange={{
+            from: toUtc('2019-01-01 10:00:00').valueOf(),
+            to: toUtc('2019-01-01 16:00:00').valueOf(),
+          }}
+          range={{
+            from: toUtc('2019-01-01 10:00:00'),
+            to: toUtc('2019-01-01 16:00:00'),
+            raw: { from: 'now-1h', to: 'now' },
+          }}
+          onChangeTime={() => {}}
+          getFieldLinks={() => {
+            return [];
+          }}
+          eventBus={new EventBusSrv()}
+          isFilterLabelActive={jest.fn()}
+        />
       </Provider>
     );
 
@@ -325,41 +317,39 @@ describe('Logs', () => {
     });
     render(
       <Provider store={store}>
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <Logs
-            logsFrames={undefined}
-            exploreId={'left'}
-            splitOpen={() => undefined}
-            logsVolumeEnabled={true}
-            onSetLogsVolumeEnabled={() => null}
-            onClickFilterLabel={() => null}
-            onClickFilterOutLabel={() => null}
-            logsVolumeData={undefined}
-            loadLogsVolumeData={() => undefined}
-            logRows={[]}
-            scanning={true}
-            onStopScanning={scanningStopped}
-            timeZone={'utc'}
-            width={50}
-            loading={false}
-            loadingState={LoadingState.Done}
-            absoluteRange={{
-              from: toUtc('2019-01-01 10:00:00').valueOf(),
-              to: toUtc('2019-01-01 16:00:00').valueOf(),
-            }}
-            range={{
-              from: toUtc('2019-01-01 10:00:00'),
-              to: toUtc('2019-01-01 16:00:00'),
-              raw: { from: 'now-1h', to: 'now' },
-            }}
-            onChangeTime={() => {}}
-            getFieldLinks={() => {
-              return [];
-            }}
-            eventBus={new EventBusSrv()}
-            isFilterLabelActive={jest.fn()}
-          />
-        </OpenFeatureProvider>
+        <Logs
+          logsFrames={undefined}
+          exploreId={'left'}
+          splitOpen={() => undefined}
+          logsVolumeEnabled={true}
+          onSetLogsVolumeEnabled={() => null}
+          onClickFilterLabel={() => null}
+          onClickFilterOutLabel={() => null}
+          logsVolumeData={undefined}
+          loadLogsVolumeData={() => undefined}
+          logRows={[]}
+          scanning={true}
+          onStopScanning={scanningStopped}
+          timeZone={'utc'}
+          width={50}
+          loading={false}
+          loadingState={LoadingState.Done}
+          absoluteRange={{
+            from: toUtc('2019-01-01 10:00:00').valueOf(),
+            to: toUtc('2019-01-01 16:00:00').valueOf(),
+          }}
+          range={{
+            from: toUtc('2019-01-01 10:00:00'),
+            to: toUtc('2019-01-01 16:00:00'),
+            raw: { from: 'now-1h', to: 'now' },
+          }}
+          onChangeTime={() => {}}
+          getFieldLinks={() => {
+            return [];
+          }}
+          eventBus={new EventBusSrv()}
+          isFilterLabelActive={jest.fn()}
+        />
       </Provider>
     );
 
@@ -409,16 +399,8 @@ describe('Logs', () => {
       const panelState = { logs: { id: '1' } };
       const { rerender, store } = setup({ loading: false, panelState });
 
-      rerender(
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <Provider store={store}>{getComponent({ loading: true, exploreId: 'right', panelState })}</Provider>
-        </OpenFeatureProvider>
-      );
-      rerender(
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <Provider store={store}>{getComponent({ loading: false, exploreId: 'right', panelState })}</Provider>
-        </OpenFeatureProvider>
-      );
+      rerender(<Provider store={store}>{getComponent({ loading: true, exploreId: 'right', panelState })}</Provider>);
+      rerender(<Provider store={store}>{getComponent({ loading: false, exploreId: 'right', panelState })}</Provider>);
 
       expect(fakeChangePanelState).toHaveBeenCalledWith('right', 'logs', { logs: {} });
     });

@@ -1,10 +1,8 @@
 // Wrap the DocsContainer for theme switching support.
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { DocsContainer, type DocsContextProps } from '@storybook/addon-docs/blocks';
 import * as React from 'react';
 
 import { getThemeById, ThemeContext } from '@grafana/data';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import { createStorybookTheme } from '../../../.storybook/storybookTheme';
 import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
@@ -27,12 +25,10 @@ export const ThemedDocsContainer = ({ children, context }: Props) => {
 
   return (
     <DocsContainer theme={createStorybookTheme(theme)} context={context}>
-      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <ThemeContext.Provider value={theme}>
-          <GlobalStyles />
-          {children}
-        </ThemeContext.Provider>
-      </OpenFeatureProvider>
+      <ThemeContext.Provider value={theme}>
+        <GlobalStyles />
+        {children}
+      </ThemeContext.Provider>
     </DocsContainer>
   );
 };

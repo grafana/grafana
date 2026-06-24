@@ -4,6 +4,7 @@ import { SkeletonTheme } from 'react-loading-skeleton';
 
 import { type GrafanaTheme2, ThemeContext } from '@grafana/data';
 import { ThemeChangedEvent, config } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 
 import { appEvents } from '../app_events';
 
@@ -11,6 +12,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 
 export const ThemeProvider = ({ children, value }: { children: React.ReactNode; value: GrafanaTheme2 }) => {
   const [theme, setTheme] = useState(value);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
 
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
@@ -26,7 +28,15 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
   }, [value]);
 
   return (
-    <ThemeContext.Provider value={theme}>
+    <ThemeContext.Provider
+      value={{
+        ...theme,
+        flags: {
+          ...theme.flags,
+          visualDesignRefresh: visualRefreshEnabled,
+        },
+      }}
+    >
       <SkeletonTheme
         baseColor={theme.colors.emphasize(theme.colors.background.secondary)}
         highlightColor={theme.colors.emphasize(theme.colors.background.secondary, 0.1)}
