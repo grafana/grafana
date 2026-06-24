@@ -43,10 +43,10 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 	if err != nil {
 		return nil, err
 	}
-	if user.GetIdentityType() != authlib.TypeUser {
-		return nil, fmt.Errorf("only users may list preferences")
-	}
-	if user.GetIdentifier() == "" {
+	// Non-user identities (e.g. the image renderer) may list preferences, but
+	// they only receive the namespace (org) preferences -- never user or team ones.
+	isUser := user.GetIdentityType() == authlib.TypeUser
+	if isUser && user.GetIdentifier() == "" {
 		return nil, fmt.Errorf("user identifier is required")
 	}
 	if options == nil {
@@ -72,11 +72,11 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		case utils.NamespaceResourceOwner:
 			// OK
 		case utils.UserResourceOwner:
-			if user.GetIdentifier() != owner.Identifier {
+			if !isUser || user.GetIdentifier() != owner.Identifier {
 				return nil
 			}
 		case utils.TeamResourceOwner:
-			if !slices.Contains(groups, owner.Identifier) {
+			if !isUser || !slices.Contains(groups, owner.Identifier) {
 				return nil
 			}
 		default:
@@ -119,19 +119,21 @@ func (s *preferencesStorage) ListPreferences(ctx context.Context, options *inter
 		return result, nil
 	}
 
-	// Add the explicit user values
-	if err = addPreferencesToResult(utils.UserOwner(user.GetIdentifier())); err != nil {
-		return nil, err
-	}
-
-	// predictable order
-	slices.Sort(groups)
-	for i, group := range groups {
-		if i >= PreferencesTeamLimit {
-			break // only process the first PreferencesTeamLimit -- to keep it bounded
-		}
-		if err = addPreferencesToResult(utils.TeamOwner(group)); err != nil {
+	if isUser {
+		// Add the explicit user values
+		if err = addPreferencesToResult(utils.UserOwner(user.GetIdentifier())); err != nil {
 			return nil, err
+		}
+
+		// predictable order
+		slices.Sort(groups)
+		for i, group := range groups {
+			if i >= PreferencesTeamLimit {
+				break // only process the first PreferencesTeamLimit -- to keep it bounded
+			}
+			if err = addPreferencesToResult(utils.TeamOwner(group)); err != nil {
+				return nil, err
+			}
 		}
 	}
 
