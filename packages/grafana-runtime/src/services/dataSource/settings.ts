@@ -185,6 +185,42 @@ function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceLis
   };
 }
 
+// getDataSourceInstanceList appends the built-in -- Grafana -- data source for type queries,
+// so callers that want only true instances of a type must re-check the type. Mirrors the
+// type predicate used inside applyFilters (exact type or an aliasID match).
+function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
+  return item.type === type || (item.meta.aliasIDs?.includes(type) ?? false);
+}
+
+/**
+ * Resolve the default data source instance of a given type. Returns the instance flagged
+ * as default, otherwise the first instance of that type, or `undefined` when none exist.
+ *
+ * Covers the common "get my data source" pattern (`getList({ type }).find(isDefault) ?? [0]`)
+ * without exposing the full list. The heavy per-instance settings are not included — fetch
+ * them on demand via {@link getDataSourceInstanceSettings}.
+ *
+ * @public
+ */
+export async function getDefaultDataSourceInstanceListItem(
+  type: string
+): Promise<DataSourceInstanceListItem | undefined> {
+  const list = (await getDataSourceInstanceList({ type, all: true })).filter((item) => matchesType(item, type));
+  return list.find((item) => item.isDefault) ?? list[0];
+}
+
+/**
+ * Check whether at least one data source instance of the given type is installed.
+ *
+ * Covers presence checks (`getList({ type }).length > 0`) without returning a list.
+ *
+ * @public
+ */
+export async function hasDataSourceInstance(type: string): Promise<boolean> {
+  const list = await getDataSourceInstanceList({ type, all: true });
+  return list.some((item) => matchesType(item, type));
+}
+
 /**
  * Register the instance settings for a runtime data source so it is returned
  * by future lookups. Throws if the uid is already in use.
