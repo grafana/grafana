@@ -449,11 +449,6 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
-  * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default true
-  */
-  useScopeSingleNodeEndpoint?: boolean;
-  /**
   * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
   * @default true
   */

@@ -882,15 +882,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "useScopeSingleNodeEndpoint",
-			Description:  "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Expression:   "true",
-			Generate:     Generate{LegacyFrontend: true},
-			HideFromDocs: true,
-		},
-		{
 			Name:         "useMultipleScopeNodesEndpoint",
 			Description:  "Makes the frontend use the 'names' param for fetching multiple scope nodes at once",
 			Stage:        FeatureStagePublicPreview,

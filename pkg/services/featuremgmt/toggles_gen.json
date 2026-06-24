@@ -5332,7 +5332,8 @@
       "metadata": {
         "name": "useScopeSingleNodeEndpoint",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-31T14:32:41Z"
+        "creationTimestamp": "2025-07-31T14:32:41Z",
+        "deletionTimestamp": "2026-06-24T02:41:49Z"
       },
       "spec": {
         "description": "Use the single node endpoint for the scope api. This is used to fetch the scope parent node.",
