@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { type IconName } from '@grafana/data';
 
 /** Where a catalog entry originates: core built-in, core-authored curated (plugin-gated), or open plugin extension. */
-export type WidgetSource = 'core' | 'curated' | 'plugin';
+export type WidgetSource = 'core' | 'curated' | 'plugin' | 'panel';
 
 /** A widget that can be placed on the grid. Already-translated, fully resolved (availability decided upstream). */
 export interface HomeWidgetCatalogEntry {
@@ -24,12 +24,21 @@ export interface HomeWidgetCatalogEntry {
 
 export const WIDGET_LAYOUT_VERSION = 1;
 
+/** Reference to a dashboard panel pinned as a homepage widget. Re-fetched live on render. */
+const PanelRefSchema = z.object({
+  dashboardUid: z.string(),
+  panelId: z.number().int(),
+  title: z.string().optional(),
+});
+
 const WidgetLayoutItemSchema = z.object({
   id: z.string(),
   x: z.number().int().nonnegative(),
   y: z.number().int().nonnegative(),
   w: z.number().int().positive(),
   h: z.number().int().positive(),
+  // Present only for pinned-panel widgets; ordinary widgets omit it (backward compatible).
+  panel: PanelRefSchema.optional(),
 });
 
 const WidgetLayoutSchema = z.object({
@@ -39,6 +48,46 @@ const WidgetLayoutSchema = z.object({
 
 export type WidgetLayoutItem = z.infer<typeof WidgetLayoutItemSchema>;
 export type WidgetLayout = z.infer<typeof WidgetLayoutSchema>;
+export type PanelRef = z.infer<typeof PanelRefSchema>;
+
+/** Stable layout id for a pinned panel, and the dedup key. The id alone encodes the panel reference. */
+export function panelWidgetId(dashboardUid: string, panelId: number): string {
+  return `panel:${dashboardUid}:${panelId}`;
+}
+
+// dashboardUid is `[a-zA-Z0-9_-]+` (never contains `:`), so a well-formed id is exactly three
+// `:`-segments with a canonical non-negative integer panelId — the precise inverse of panelWidgetId.
+const PANEL_WIDGET_ID_RE = /^panel:([^:]+):(0|[1-9]\d*)$/;
+
+/** Inverse of {@link panelWidgetId}. Returns null for any non-panel or malformed id. */
+export function parsePanelWidgetId(id: string): PanelRef | null {
+  const match = PANEL_WIDGET_ID_RE.exec(id);
+  if (!match) {
+    return null;
+  }
+  const panelId = Number(match[2]);
+  if (!Number.isSafeInteger(panelId)) {
+    return null;
+  }
+  return { dashboardUid: match[1], panelId };
+}
+
+/**
+ * The old drag/resize bug stripped `panel` from pinned items; the id is the only surviving source of
+ * the ref, so rebuild it. A stripped panel item with an unparseable id is irrecoverable — it can
+ * neither render nor be repaired — so it is intentionally dropped here (this is narrower than, and
+ * distinct from, WidgetGrid's policy of keeping unknown non-panel ids in storage). Every other item,
+ * including unknown non-panel ids, passes through untouched.
+ */
+function healPanelItems(items: WidgetLayoutItem[]): WidgetLayoutItem[] {
+  return items.flatMap((item) => {
+    if (item.panel || !item.id.startsWith('panel:')) {
+      return [item];
+    }
+    const panel = parsePanelWidgetId(item.id);
+    return panel ? [{ ...item, panel }] : [];
+  });
+}
 
 /**
  * Parse a raw UserStorage string into a layout. Returns null on missing/invalid input
@@ -51,7 +100,10 @@ export function parseWidgetLayout(raw: string | null): WidgetLayout | null {
   }
   try {
     const result = WidgetLayoutSchema.safeParse(JSON.parse(raw));
-    return result.success ? result.data : null;
+    if (!result.success) {
+      return null;
+    }
+    return { ...result.data, items: healPanelItems(result.data.items) };
   } catch {
     return null;
   }

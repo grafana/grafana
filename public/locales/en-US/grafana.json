@@ -10754,6 +10754,12 @@
         "description": "Who is on call right now",
         "title": "On-call shifts"
       },
+      "panel": {
+        "description": "Pinned from a dashboard",
+        "loading": "Loading panel…",
+        "unavailable": "This panel is no longer available.",
+        "untitled": "Dashboard panel"
+      },
       "quick-links": {
         "alerting": "Alerting",
         "connections": "Connections",
@@ -12396,6 +12402,9 @@
       }
     },
     "header-menu": {
+      "add-to-home": "Add to home page",
+      "add-to-home-error": "Failed to add panel to home page",
+      "add-to-home-success": "Panel added to your home page",
       "copy": "Copy",
       "copy-styles": "Copy styles",
       "duplicate": "Duplicate",

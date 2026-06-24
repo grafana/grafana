@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useUserStorage } from '@grafana/runtime/internal';
 
 import { packItems } from './layout';
+import { SERVICE, LAYOUT_KEY } from './storage';
 import {
   type HomeWidgetCatalogEntry,
   type WidgetLayout,
@@ -10,9 +11,6 @@ import {
   WIDGET_LAYOUT_VERSION,
   parseWidgetLayout,
 } from './types';
-
-const SERVICE = 'grafana-homepage';
-const LAYOUT_KEY = 'widget-layout';
 
 export interface UseWidgetLayoutResult {
   /** null = not-yet-loaded OR first-run; disambiguate with isLoading. */

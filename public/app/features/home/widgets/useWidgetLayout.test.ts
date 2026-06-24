@@ -3,7 +3,13 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { type UserStorage } from '@grafana/data';
 import { useUserStorage } from '@grafana/runtime/internal';
 
-import { type HomeWidgetCatalogEntry, parseWidgetLayout, WIDGET_LAYOUT_VERSION } from './types';
+import {
+  type HomeWidgetCatalogEntry,
+  panelWidgetId,
+  parsePanelWidgetId,
+  parseWidgetLayout,
+  WIDGET_LAYOUT_VERSION,
+} from './types';
 import { useWidgetLayout } from './useWidgetLayout';
 
 jest.mock('@grafana/runtime/internal', () => ({
@@ -55,6 +61,67 @@ describe('parseWidgetLayout', () => {
   it('parses a valid layout round-trip', () => {
     const layout = { version: WIDGET_LAYOUT_VERSION, items: [{ id: 'a', x: 1, y: 2, w: 3, h: 4 }] };
     expect(parseWidgetLayout(JSON.stringify(layout))).toEqual(layout);
+  });
+
+  it('reconstructs a stripped panel ref from the item id', () => {
+    const raw = JSON.stringify({
+      version: WIDGET_LAYOUT_VERSION,
+      items: [{ id: 'panel:abc:7', x: 4, y: 0, w: 12, h: 9 }],
+    });
+    expect(parseWidgetLayout(raw)?.items[0]).toEqual({
+      id: 'panel:abc:7',
+      x: 4,
+      y: 0,
+      w: 12,
+      h: 9,
+      panel: { dashboardUid: 'abc', panelId: 7 },
+    });
+  });
+
+  it('leaves an intact panel item untouched', () => {
+    const item = {
+      id: 'panel:abc:7',
+      x: 0,
+      y: 0,
+      w: 12,
+      h: 9,
+      panel: { dashboardUid: 'abc', panelId: 7, title: 'CPU' },
+    };
+    expect(parseWidgetLayout(JSON.stringify({ version: WIDGET_LAYOUT_VERSION, items: [item] }))?.items[0]).toEqual(
+      item
+    );
+  });
+
+  it('drops a stripped panel item with an unparseable id but keeps unknown non-panel ids', () => {
+    const raw = JSON.stringify({
+      version: WIDGET_LAYOUT_VERSION,
+      items: [
+        { id: 'panel:abc:x', x: 0, y: 0, w: 12, h: 9 },
+        { id: 'mystery', x: 0, y: 9, w: 12, h: 8 },
+      ],
+    });
+    expect(parseWidgetLayout(raw)?.items).toEqual([{ id: 'mystery', x: 0, y: 9, w: 12, h: 8 }]);
+  });
+});
+
+describe('parsePanelWidgetId', () => {
+  it('round-trips with panelWidgetId, including panel id 0', () => {
+    expect(parsePanelWidgetId(panelWidgetId('abc', 7))).toEqual({ dashboardUid: 'abc', panelId: 7 });
+    expect(parsePanelWidgetId(panelWidgetId('abc', 0))).toEqual({ dashboardUid: 'abc', panelId: 0 });
+  });
+  it('returns null for non-panel and malformed ids', () => {
+    for (const id of [
+      'alerts',
+      'panel:abc',
+      'panel:abc:',
+      'panel::7',
+      'panel:abc:7e2',
+      'panel:abc:7.2',
+      'panel:abc:-1',
+      'panel:a:b:7',
+    ]) {
+      expect(parsePanelWidgetId(id)).toBeNull();
+    }
   });
 });
 
@@ -153,5 +220,39 @@ describe('useWidgetLayout', () => {
     act(() => result.current.applyPreset(['alerts', 'unknown', 'dashboards'], CATALOG));
 
     expect(result.current.layout?.items.map((i) => i.id)).toEqual(['alerts', 'dashboards']);
+  });
+
+  it('reconstructs a stripped panel ref on load', async () => {
+    storage = fakeStorage(
+      JSON.stringify({ version: WIDGET_LAYOUT_VERSION, items: [{ id: 'panel:d1:3', x: 0, y: 0, w: 12, h: 9 }] })
+    );
+    mockUseUserStorage.mockReturnValue(storage);
+
+    const { result } = renderHook(() => useWidgetLayout());
+
+    await waitFor(() => expect(result.current.layout).not.toBeNull());
+    expect(result.current.layout?.items[0]).toEqual({
+      id: 'panel:d1:3',
+      x: 0,
+      y: 0,
+      w: 12,
+      h: 9,
+      panel: { dashboardUid: 'd1', panelId: 3 },
+    });
+  });
+
+  it('persists the healed panel ref on the next mutation', async () => {
+    storage = fakeStorage(
+      JSON.stringify({ version: WIDGET_LAYOUT_VERSION, items: [{ id: 'panel:d1:3', x: 0, y: 0, w: 12, h: 9 }] })
+    );
+    mockUseUserStorage.mockReturnValue(storage);
+
+    const { result } = renderHook(() => useWidgetLayout());
+    await waitFor(() => expect(result.current.layout).not.toBeNull());
+
+    act(() => result.current.setPositions(result.current.layout!.items));
+
+    const written = JSON.parse(storage.setItem.mock.calls.at(-1)![1]);
+    expect(written.items[0].panel).toEqual({ dashboardUid: 'd1', panelId: 3 });
   });
 });

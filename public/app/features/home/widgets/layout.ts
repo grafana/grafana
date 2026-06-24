@@ -1,3 +1,5 @@
+import { type Layout } from 'react-grid-layout';
+
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { type HomeWidgetCatalogEntry, type WidgetLayoutItem } from './types';
@@ -37,4 +39,18 @@ export function packItems(ids: string[], catalog: HomeWidgetCatalogEntry[]): Wid
   }
 
   return items;
+}
+
+/**
+ * Merge react-grid-layout's new positions onto the existing items, preserving every non-position
+ * field (notably a pinned panel's `panel` reference). Items absent from the RGL layout — excluded
+ * from the grid because their id has no catalog entry (uninstalled plugin / lost permission) — are
+ * returned untouched so they survive in storage.
+ */
+export function mergeItemPositions(items: WidgetLayoutItem[], rglLayout: Layout[]): WidgetLayoutItem[] {
+  const byId = new Map(rglLayout.map((l) => [l.i, l] as const));
+  return items.map((item) => {
+    const l = byId.get(item.id);
+    return l ? { ...item, x: l.x, y: l.y, w: l.w, h: l.h } : item;
+  });
 }

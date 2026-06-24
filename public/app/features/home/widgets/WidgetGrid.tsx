@@ -9,6 +9,7 @@ import { useStyles2 } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { WidgetFrame } from './WidgetFrame';
+import { mergeItemPositions } from './layout';
 import { type HomeWidgetCatalogEntry, type WidgetLayoutItem } from './types';
 
 // WidthProvider measures the container and injects `width`, so the grid is responsive without a manual layout map.
@@ -39,12 +40,7 @@ export function WidgetGrid({ items, catalog, editing, onChange, onRemove }: Widg
   // were excluded from the layout above survive untouched rather than being dropped from storage.
   const handleStop = useCallback(
     (rglLayout: Layout[]) => {
-      const byId = new Map(rglLayout.map((l) => [l.i, l] as const));
-      const next: WidgetLayoutItem[] = items.map((item) => {
-        const l = byId.get(item.id);
-        return l ? { id: item.id, x: l.x, y: l.y, w: l.w, h: l.h } : item;
-      });
-      onChange(next);
+      onChange(mergeItemPositions(items, rglLayout));
     },
     [items, onChange]
   );

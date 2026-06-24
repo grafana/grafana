@@ -13,10 +13,11 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
 import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { createErrorNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -26,6 +27,7 @@ import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
+import { pinPanelToHomepage } from 'app/features/home/widgets/storage';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { dispatch } from 'app/store/store';
@@ -97,6 +99,37 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
           DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel');
+        },
+      });
+    }
+
+    // Pin the panel to the per-user homepage grid (live reference by dashboard uid + panel id).
+    // Only for saved dashboards (a panel needs a uid to reference) and when the homepage flag is on.
+    const homepageUid = dashboard.state.uid;
+    if (homepageUid && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUnifiedHomepage, false)) {
+      items.push({
+        text: t('panel.header-menu.add-to-home', 'Add to home page'),
+        iconClassName: 'home',
+        onClick: () => {
+          pinPanelToHomepage({
+            dashboardUid: homepageUid,
+            panelId: getPanelIdForVizPanel(panel),
+            title: panel.state.title,
+          })
+            .then(() =>
+              dispatch(
+                notifyApp(
+                  createSuccessNotification(t('panel.header-menu.add-to-home-success', 'Panel added to your home page'))
+                )
+              )
+            )
+            .catch(() =>
+              dispatch(
+                notifyApp(
+                  createErrorNotification(t('panel.header-menu.add-to-home-error', 'Failed to add panel to home page'))
+                )
+              )
+            );
         },
       });
     }

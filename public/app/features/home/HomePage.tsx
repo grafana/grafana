@@ -18,6 +18,7 @@ import useHomeGreeting from './useHomeGreeting';
 import { AddWidgetDrawer } from './widgets/AddWidgetDrawer';
 import { PersonaPicker } from './widgets/PersonaPicker';
 import { WidgetGrid } from './widgets/WidgetGrid';
+import { usePanelWidgetEntries } from './widgets/panel/usePanelWidgetEntries';
 import { useHomeWidgetCatalog } from './widgets/useHomeWidgetCatalog';
 import { useWidgetLayout } from './widgets/useWidgetLayout';
 
@@ -56,6 +57,9 @@ export default function HomePage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const items = layout?.items ?? [];
+  // Pinned dashboard panels are a dynamic catalog source derived from the layout itself.
+  const panelEntries = usePanelWidgetEntries(items);
+  const allEntries = [...entries, ...panelEntries];
   const loading = catalogLoading || layoutLoading || isLoadingAssistant || isLoadingExtra || isLoadingTabs;
   // First run (no saved widgets) shows the persona chooser; "Start blank" enters edit mode with an empty grid.
   const showPersona = !loading && items.length === 0 && !editing;
@@ -116,7 +120,7 @@ export default function HomePage() {
                   </Stack>
                   <WidgetGrid
                     items={items}
-                    catalog={entries}
+                    catalog={allEntries}
                     editing={editing}
                     onChange={setPositions}
                     onRemove={removeWidget}
@@ -131,7 +135,7 @@ export default function HomePage() {
 
         {drawerOpen && (
           <AddWidgetDrawer
-            catalog={entries}
+            catalog={allEntries}
             layoutIds={items.map((item) => item.id)}
             onAdd={addWidget}
             onClose={() => setDrawerOpen(false)}
