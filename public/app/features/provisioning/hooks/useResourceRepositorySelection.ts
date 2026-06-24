@@ -28,9 +28,7 @@ export function useResourceRepositorySelection(info: ResourceKindInfo): Resource
   const provisioningEnabled = Boolean(config.featureToggles.provisioning);
   const { data } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
 
-  // Non-folder-scoped kinds (e.g. playlists) can't live in a folder-target repository — they'd get a
-  // `grafana.app/folder` annotation the backend rejects — so only offer instance/folderless repos.
-  const repositories = (data?.items ?? []).filter((repo) => info.folderScoped || repo.target !== 'folder');
+  const repositories = data?.items ?? [];
   const kindEnabled = isResourceKindAvailable(info, data?.availableResources ?? []);
 
   return {
