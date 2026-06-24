@@ -110,6 +110,33 @@ describe('UPlotChart', () => {
 
       expect(setDataMock).toBeCalledTimes(1);
     });
+
+    it('updates uPlot data when dimensions also change', () => {
+      const { data, config } = mockData();
+
+      const { rerender } = render(
+        <UPlotChart
+          data={preparePlotData2(data, getStackingGroups(data))}
+          config={config}
+          width={100}
+          height={100}
+        />
+      );
+
+      data.fields[1].values[0] = 1;
+
+      rerender(
+        <UPlotChart
+          data={preparePlotData2(data, getStackingGroups(data))}
+          config={config}
+          width={200}
+          height={200}
+        />
+      );
+
+      expect(setDataMock).toBeCalledTimes(1);
+      expect(setSizeMock).toBeCalledTimes(1);
+    });
   });
 
   describe('config update', () => {
