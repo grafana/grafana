@@ -1845,6 +1845,21 @@
     },
     {
       "metadata": {
+        "name": "dataviz.experimentalColorSchemes",
+        "resourceVersion": "1782241743120",
+        "creationTimestamp": "2026-06-23T19:09:03Z"
+      },
+      "spec": {
+        "description": "Enables additional experimental color schemes for visualizations.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "disableNumericMetricsSortingInExpressions",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-04-16T14:52:47Z"
