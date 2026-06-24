@@ -73,10 +73,10 @@ const DefaultRendererAuthToken = "-"
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 
 // ProvisioningMaxBulkFetchSizeDefault is the default value for the
-// [provisioning] max_bulk_fetch_size key (100 MiB). It caps multi-object git
+// [provisioning] max_bulk_fetch_size key (1 GiB). It caps multi-object git
 // fetches (recursive tree listings, commit comparisons) so a malicious or
 // misbehaving server cannot exhaust client memory.
-const ProvisioningMaxBulkFetchSizeDefault int64 = 100 * 1024 * 1024
+const ProvisioningMaxBulkFetchSizeDefault int64 = 1024 * 1024 * 1024
 
 // ProvisioningMaxRefsSizeDefault is the default value for the
 // [provisioning] max_refs_size key (10 MiB). It caps git ref-listing and
@@ -191,7 +191,7 @@ type Cfg struct {
 	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
-	ProvisioningMaxBulkFetchSize              int64         // bytes; default 100 MiB; <=0 = unlimited
+	ProvisioningMaxBulkFetchSize              int64         // bytes; default 1 GiB; <=0 = unlimited
 	ProvisioningMaxRefsSize                   int64         // bytes; default 10 MiB; <=0 = unlimited
 	ProvisioningMaxPushResponseSize           int64         // bytes; default 10 MiB; <=0 = unlimited
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
