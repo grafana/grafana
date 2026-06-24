@@ -66,7 +66,12 @@ function QualityTab() {
       isLoading={isLoading}
       actions={
         incompleteCount > 0 ? (
-          <Tooltip content={t('alerting.quality.fix-all-tooltip', 'Automatically generate descriptions and summaries for all flagged rules.')}>
+          <Tooltip
+            content={t(
+              'alerting.quality.fix-all-tooltip',
+              'Automatically generate descriptions and summaries for all flagged rules.'
+            )}
+          >
             <Button icon="bolt" variant="primary">
               <Trans i18nKey="alerting.quality.fix-all">Fix all with AI</Trans>
             </Button>
@@ -106,13 +111,13 @@ function QualityTab() {
                     <Badge
                       color="red"
                       icon="exclamation-triangle"
-                      text={t('alerting.quality.severity-high', 'High severity')}
+                      text={t('alerting.quality.severity-high', 'High piority')}
                     />
                   ) : (
                     <Badge
                       color="orange"
                       icon="exclamation-circle"
-                      text={t('alerting.quality.severity-medium', 'Medium severity')}
+                      text={t('alerting.quality.severity-medium', 'Medium priority')}
                     />
                   )}
                 </Card.Tags>
@@ -128,7 +133,10 @@ function QualityTab() {
                 </Card.Description>
                 <Card.Actions>
                   <Tooltip
-                    content={t('alerting.quality.fix-tooltip', 'Automatically generate a description and summary for this rule.')}
+                    content={t(
+                      'alerting.quality.fix-tooltip',
+                      'Automatically generate a description and summary for this rule.'
+                    )}
                   >
                     <Button icon="bolt" variant="primary" size="sm">
                       <Trans i18nKey="alerting.quality.fix-with-ai">Fix with AI</Trans>
@@ -172,13 +180,7 @@ function QualityScoreCard({ score, incompleteCount, totalRules }: QualityScoreCa
           </Text>
           <span className={styles.score}>{score.toFixed(1)} / 10</span>
         </Stack>
-        <div
-          className={styles.track}
-          role="progressbar"
-          aria-valuenow={score}
-          aria-valuemin={0}
-          aria-valuemax={10}
-        >
+        <div className={styles.track} role="progressbar" aria-valuenow={score} aria-valuemin={0} aria-valuemax={10}>
           <div className={styles.fill} />
         </div>
         <Text color="secondary" variant="bodySmall">
