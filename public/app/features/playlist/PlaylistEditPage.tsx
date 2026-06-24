@@ -50,17 +50,9 @@ export const PlaylistEditPage = () => {
     locationService.push('/playlists');
   };
 
-  // The repository can't be changed after creation, so the selector is read-only on edit. It shows
-  // the managing repository (or "no repository" for an unmanaged playlist).
-  const repositorySelect =
-    isAvailable && data
-      ? {
-          repositories,
-          value: isManagedByRepository(data) ? (getManagerIdentity(data) ?? '') : '',
-          onChange: () => {},
-          readOnly: true,
-        }
-      : undefined;
+  // The repository can't be changed after creation, so the selector is read-only on edit. The form
+  // derives the displayed value (managing repository, or "no repository") from the playlist itself.
+  const repositorySelect = isAvailable && data ? { repositories, readOnly: true as const } : undefined;
 
   const pageNav: NavModelItem = {
     text: t('playlist-edit.title', 'Edit playlist'),
