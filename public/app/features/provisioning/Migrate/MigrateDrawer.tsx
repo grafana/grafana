@@ -21,10 +21,10 @@ interface MigrateDrawerProps {
    * no dashboard refs is never silently treated as a migrate-everything.
    */
   selective: boolean;
-  /** Dashboard refs to migrate in selective mode. The folders that contain them come along. */
+  /** Resource refs to migrate in selective mode. The folders that contain them come along. */
   resources?: ResourceRef[];
   /** Counts behind `resources`, used for the selective-mode summary copy. */
-  selection?: { folders: number; dashboards: number };
+  selection?: { folders: number; resources: number };
 }
 
 /**
@@ -114,7 +114,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
         {isSelective ? (
           <Text color="secondary">
             {t('provisioning.migrate.drawer-description-selective', '', {
-              count: selection?.dashboards ?? resources?.length ?? 0,
+              count: selection?.resources ?? resources?.length ?? 0,
               defaultValue_one:
                 '{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.',
               defaultValue_other:

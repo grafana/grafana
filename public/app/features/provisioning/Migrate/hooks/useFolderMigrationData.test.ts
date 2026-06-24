@@ -44,12 +44,12 @@ describe('useFolderMigrationData', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const parent = result.current.data.find((f) => f.uid === 'parent');
-    expect(parent?.dashboardCount).toBe(1);
-    expect(parent?.directDashboards.map((d) => d.uid)).toEqual(['d1']);
+    expect(parent?.resourceCount).toBe(1);
+    expect(parent?.directResources.map((d) => d.uid)).toEqual(['d1']);
 
     const child = result.current.data.find((f) => f.uid === 'child');
-    expect(child?.dashboardCount).toBe(1);
-    expect(child?.directDashboards.map((d) => d.uid)).toEqual(['d2']);
+    expect(child?.resourceCount).toBe(1);
+    expect(child?.directResources.map((d) => d.uid)).toEqual(['d2']);
   });
 
   it('hides folders with no unmanaged dashboards directly inside them', async () => {
@@ -84,8 +84,8 @@ describe('useFolderMigrationData', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const general = result.current.data.find((f) => f.uid === 'general');
-    expect(general?.dashboardCount).toBe(3);
-    expect(result.current.data.find((f) => f.uid === 'a')?.dashboardCount).toBe(1);
+    expect(general?.resourceCount).toBe(3);
+    expect(result.current.data.find((f) => f.uid === 'a')?.resourceCount).toBe(1);
   });
 
   it('falls back to the folder UID as the title when the folder is missing from the list', async () => {
@@ -99,7 +99,7 @@ describe('useFolderMigrationData', () => {
 
     expect(result.current.data).toHaveLength(1);
     const row = result.current.data[0];
-    expect(row.dashboardCount).toBe(1);
+    expect(row.resourceCount).toBe(1);
     expect(row.title).toBe(row.uid);
   });
 
@@ -119,7 +119,7 @@ describe('useFolderMigrationData', () => {
 
     expect(result.current.data.map((f) => f.uid)).toEqual(['parent']);
     const parent = result.current.data.find((f) => f.uid === 'parent');
-    expect(parent?.directDashboards.map((d) => d.uid)).toEqual(['d1']);
+    expect(parent?.directResources.map((d) => d.uid)).toEqual(['d1']);
   });
 
   it('orders folders by dashboard count descending, then title', async () => {
@@ -145,7 +145,7 @@ describe('useFolderMigrationData', () => {
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.data.find((f) => f.uid === 'f')?.dashboardCount).toBe(201);
+    expect(result.current.data.find((f) => f.uid === 'f')?.resourceCount).toBe(201);
   });
 
   it('fails loudly instead of truncating when results exceed the page cap', async () => {
