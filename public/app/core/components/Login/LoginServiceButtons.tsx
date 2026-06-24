@@ -7,6 +7,7 @@ import { Icon, type IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@
 import config from 'app/core/config';
 
 import { PasskeyLoginButton } from './PasskeyLoginButton';
+import { usePasskeyAutofill } from './passkeyLogin';
 
 const PASSKEY_KEY = 'passkey';
 
@@ -158,6 +159,10 @@ export const LoginServiceButtons = () => {
   const hasServices = Object.keys(enabledServices).length > 0;
   const theme = useTheme2();
   const styles = useStyles2(getServiceStyles);
+
+  // Offer an enrolled passkey via the username field's autofill (Conditional UI). Self-gating and
+  // silent when passkeys are off or the browser/user has none, so it never disrupts password login.
+  usePasskeyAutofill();
 
   if (hasServices) {
     return (

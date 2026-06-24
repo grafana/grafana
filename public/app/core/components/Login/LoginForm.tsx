@@ -42,6 +42,9 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
             id={usernameId}
             autoFocus
             autoCapitalize="none"
+            // The "webauthn" token lets the browser offer an enrolled passkey in this field's autofill
+            // (Conditional UI). Required for the passkey autofill ceremony started on the login page.
+            autoComplete="username webauthn"
             placeholder={loginHint || t('login.form.username-placeholder', 'email or username')}
             data-testid={selectors.pages.Login.username}
           />

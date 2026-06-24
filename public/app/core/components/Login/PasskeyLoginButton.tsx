@@ -1,63 +1,23 @@
-import {
-  startAuthentication,
-  type AuthenticationResponseJSON,
-  type PublicKeyCredentialRequestOptionsJSON,
-} from '@simplewebauthn/browser';
 import { useCallback, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Icon, Stack } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { type LoginDTO } from './types';
-
-interface BeginResponse {
-  sessionID: string;
-  options: PublicKeyCredentialRequestOptionsJSON;
-}
-
-interface FinishRequest {
-  sessionID: string;
-  response: AuthenticationResponseJSON;
-}
-
-const BEGIN_URL = '/api/auth/passkey/login/begin';
-const FINISH_URL = '/api/auth/passkey/login/finish';
+import { isWebAuthnAbort, redirectAfterPasskeyLogin, runPasskeyLogin } from './passkeyLogin';
 
 export const PasskeyLoginButton = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
-
-  const redirectAfterLogin = useCallback((result: LoginDTO) => {
-    if (result.redirectUrl) {
-      if (config.appSubUrl !== '' && !result.redirectUrl.startsWith(config.appSubUrl)) {
-        window.location.assign(config.appSubUrl + result.redirectUrl);
-      } else {
-        window.location.assign(result.redirectUrl);
-      }
-    } else {
-      window.location.assign(config.appSubUrl + '/');
-    }
-  }, []);
 
   const onClick = useCallback(async () => {
     setErrorMessage(undefined);
     setIsAuthenticating(true);
 
     try {
-      const begin = await getBackendSrv().post<BeginResponse>(BEGIN_URL, undefined, {
-        showErrorAlert: false,
-      });
-
-      const assertion = await startAuthentication({ optionsJSON: begin.options });
-
-      const finishBody: FinishRequest = { sessionID: begin.sessionID, response: assertion };
-      const result = await getBackendSrv().post<LoginDTO>(FINISH_URL, finishBody, {
-        showErrorAlert: false,
-      });
-
-      redirectAfterLogin(result);
+      const result = await runPasskeyLogin();
+      redirectAfterPasskeyLogin(result);
     } catch (err) {
       setIsAuthenticating(false);
       // User dismissed the OS prompt, no credential available, or the browser
@@ -67,7 +27,7 @@ export const PasskeyLoginButton = () => {
       }
       setErrorMessage(toErrorMessage(err));
     }
-  }, [redirectAfterLogin]);
+  }, []);
 
   if (!isPasskeyAvailable()) {
     return null;
@@ -108,10 +68,6 @@ export const PasskeyLoginButton = () => {
 
 function isPasskeyAvailable(): boolean {
   return Boolean(config.passkey?.enabled) && typeof window !== 'undefined' && 'PublicKeyCredential' in window;
-}
-
-function isWebAuthnAbort(err: unknown): boolean {
-  return err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'AbortError');
 }
 
 function toErrorMessage(err: unknown): string {
