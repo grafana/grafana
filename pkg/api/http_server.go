@@ -88,6 +88,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginscorecard"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -178,6 +179,7 @@ type HTTPServer struct {
 	tracer                       tracing.Tracer
 	grafanaUpdateChecker         *updatemanager.GrafanaService
 	pluginsUpdateChecker         *updatemanager.PluginsService
+	pluginScorecardService       *pluginscorecard.Service
 	searchUsersService           searchusers.Service
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
@@ -283,6 +285,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	starApi *starApi.API, promRegister prometheus.Registerer, anonService anonymous.Service,
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientGenerator resource.ClientGenerator,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
+	pluginScorecardService *pluginscorecard.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -307,6 +310,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginFileStore:              pluginFileStore,
 		grafanaUpdateChecker:         grafanaUpdateChecker,
 		pluginsUpdateChecker:         pluginsUpdateChecker,
+		pluginScorecardService:       pluginScorecardService,
 		pluginPreinstall:             pluginPreinstall,
 		SettingsProvider:             settingsProvider,
 		DataSourceCache:              dataSourceCache,

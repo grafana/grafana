@@ -126,6 +126,30 @@ export interface CatalogPluginInsights {
   insights: InsightCategory[];
 }
 
+export type PluginSecurityFindingLevel = 'critical' | 'high' | 'medium' | 'low';
+
+export type PluginSecurityDimensionKind = 'safety' | 'quality' | 'community';
+
+export interface PluginSecurityFinding {
+  id: string;
+  reference?: string;
+  level: PluginSecurityFindingLevel;
+}
+
+export interface PluginSecurityDimension {
+  kind: PluginSecurityDimensionKind;
+  score: number;
+  findings: PluginSecurityFinding[];
+}
+
+export interface PluginSecurityInsights {
+  pluginId: string;
+  version: string;
+  score: number;
+  scannedAt: string;
+  dimensions: PluginSecurityDimension[];
+}
+
 interface CatalogPluginInfo {
   logos: { large: string; small: string };
   keywords: string[];

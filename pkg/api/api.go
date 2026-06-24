@@ -580,6 +580,11 @@ func (hs *HTTPServer) registerRoutes() {
 	// rendering
 	r.Get("/render/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.RenderHandler)
 
+	// Plugin security insights — served locally from scorecard kvstore cache before proxying to GCOM.
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPluginScorecard) {
+		r.Get("/api/gnet/plugins/:pluginId/versions/:version/insights", reqSignedIn, hs.GetPluginSecurityInsights)
+	}
+
 	// grafana.net proxy
 	r.Any("/api/gnet/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.ProxyGnetRequest)
 

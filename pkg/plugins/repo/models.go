@@ -39,4 +39,5 @@ type PluginInfo struct {
 	Status  string `json:"status"`
 	Slug    string `json:"slug"`
 	Version string `json:"version"`
+	URL     string `json:"url"`
 }

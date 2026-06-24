@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginscoring"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -612,3 +613,27 @@ func mdFilepath(mdFilename string) (string, error) {
 		return "", ErrUnexpectedFileExtension
 	}
 }
+
+// GetPluginSecurityInsights handles GET /api/gnet/plugins/:pluginId/versions/:version/insights.
+// Returns pluginscoring.CatalogPluginInsights from the local kvstore cache, falling back to the GCOM proxy
+// if no local score exists. The response schema is Grafana-owned and tool-agnostic.
+func (hs *HTTPServer) GetPluginSecurityInsights(c *contextmodel.ReqContext) response.Response {
+	pluginID := web.Params(c.Req)[":pluginId"]
+	version := web.Params(c.Req)[":version"]
+
+	if hs.pluginScorecardService != nil {
+		if insights, ok := hs.pluginScorecardService.GetInsights(c.Req.Context(), pluginID, version); ok {
+			return response.JSON(http.StatusOK, insights)
+		}
+	}
+
+	proxyPath := fmt.Sprintf("plugins/%s/versions/%s/insights", pluginID, version)
+	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion, hs.Cfg.GrafanaComAPIURL, hs.Cfg.GrafanaComProxyAPIToken)
+	proxy.Transport = grafanaComProxyTransport
+	proxy.ServeHTTP(c.Resp, c.Req)
+	return nil
+}
+
+// pluginSecurityInsightsResponse is an alias so the handler return type is explicit in this file.
+// The canonical type definition lives in pluginscoring.CatalogPluginInsights.
+type pluginSecurityInsightsResponse = pluginscoring.CatalogPluginInsights

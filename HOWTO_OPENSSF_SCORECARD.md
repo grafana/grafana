@@ -16,6 +16,18 @@ export GITHUB_AUTH_TOKEN=ghp_yourtoken
 make devenv sources=scorecard_sidecar
 ```
 
+## Configure Grafana
+
+Add to `conf/custom.ini`:
+
+```ini
+[plugin_security]
+scorecard_sidecar_url = http://localhost:8088/cgi-bin/score.sh
+
+[feature_toggles]
+pluginScorecard = true
+```
+
 ## Start Grafana
 
 ```bash
@@ -36,8 +48,36 @@ If `GITHUB_AUTH_TOKEN` is missing you'll get an immediate error rather than a si
 { "error": "GITHUB_AUTH_TOKEN is not set. Start the container with -e GITHUB_AUTH_TOKEN=<token>" }
 ```
 
+## Test the Grafana API endpoint
+
+With `make run` running, verify the backend is serving scorecard data for an installed plugin:
+
+```bash
+# Find installed plugin versions
+curl -s -u admin:admin "http://localhost:3000/api/plugins" | grep -A2 '"id"'
+
+# Fetch scorecard insights for a specific plugin (example: azure monitor)
+curl -s -u admin:admin \
+  "http://localhost:3000/api/gnet/plugins/grafana-azure-monitor-datasource/versions/13.1.0-pre/insights" \
+  | jq .
+```
+
+This endpoint works regardless of the `pluginScorecard` feature toggle — the toggle only gates the UI component. To enable the UI, add to `conf/custom.ini`:
+
+```ini
+[feature_toggles]
+pluginScorecard = true
+```
+
+Scorecard data is populated on Grafana startup and refreshed every 24h. If the response contains an empty `insights: []` array, the background service hasn't scored the plugin yet — wait a moment and retry, or check that the sidecar is running for plugins not in the public Scorecard database.
+
 ## Stop the sidecar
 
 ```bash
 make devenv-down
 ```
+
+## References
+
+- [OpenSSF Scorecard checks](https://scorecard.dev/#the-checks) — all 18 checks with risk levels and remediation guidance, grouped by theme (holistic security, source risk, build risk)
+- [OpenSSF Best Practices Badge](https://www.bestpractices.dev/en) — self-certification program that satisfies the `CII-Best-Practices` Scorecard check

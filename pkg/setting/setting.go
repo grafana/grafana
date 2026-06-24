@@ -197,6 +197,7 @@ type Cfg struct {
 	RendererServerUrl              string
 	RendererCallbackUrl            string
 	RendererAuthToken              string
+	PluginScorecardSidecarURL      string
 	RendererConcurrentRequestLimit int
 	RendererRenderKeyLifeTime      time.Duration
 	RendererDefaultImageWidth      int
@@ -1626,6 +1627,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readZanzanaSettings()
 
 	cfg.readRenderingSettings(iniFile)
+	cfg.readPluginSecuritySettings(iniFile)
 
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
@@ -2294,6 +2296,11 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
+}
+
+func (cfg *Cfg) readPluginSecuritySettings(iniFile *ini.File) {
+	sec := iniFile.Section("plugin_security")
+	cfg.PluginScorecardSidecarURL = valueAsString(sec, "scorecard_sidecar_url", "")
 }
 
 func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
