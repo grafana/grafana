@@ -2725,6 +2725,58 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 	require.False(t, dashboardExists(), "dashboard in a cascaded folder should have been deleted")
 }
 
+// TestIntegrationFolderEmptyDeleteIsImmediate verifies that, even with cascade delete ON, deleting an
+// empty folder removes it synchronously rather than parking it Terminating until the next poll. That
+// keeps a delete followed by an immediate same-UID recreate working: with the folder gone, the
+// recreate must not conflict with a still-terminating object.
+func TestIntegrationFolderEmptyDeleteIsImmediate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagKubernetesFolderCascadeDelete,
+		},
+		// A long interval ensures the immediate recreate below cannot be rescued by the poller: it must
+		// work because the empty folder was deleted synchronously, not because a poll tick removed it.
+		FolderCascadeDeletePollInterval: time.Minute,
+	})
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	ctx := context.Background()
+
+	const uid = "empty-recreate"
+	newFolder := func() *unstructured.Unstructured {
+		obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{"title": "empty-recreate"}}}
+		obj.SetName(uid)
+		return obj
+	}
+
+	_, err := client.Resource.Create(ctx, newFolder(), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// An empty-folder delete is a normal (non-force) delete; admission allows it because the folder is
+	// empty, and the storage fast-path removes it in place.
+	require.NoError(t, client.Resource.Delete(ctx, uid, metav1.DeleteOptions{}))
+
+	// The folder is gone immediately, not stuck Terminating.
+	_, err = client.Resource.Get(ctx, uid, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "empty folder should be deleted synchronously, not terminating; got %v", err)
+
+	// The same-UID recreate succeeds because nothing is terminating.
+	_, err = client.Resource.Create(ctx, newFolder(), metav1.CreateOptions{})
+	require.NoError(t, err, "recreating a just-deleted empty folder must not conflict with a terminating object")
+}
+
 // TestIntegrationFolderDeleteStripsFinalizerWhenCascadeDisabled verifies that with the cascade
 // feature OFF, a folder still carrying the cascade finalizer (e.g. created while the feature was on,
 // before a restart that turned it off) can still be deleted: the storage wrapper strips the now

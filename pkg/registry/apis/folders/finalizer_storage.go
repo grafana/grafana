@@ -110,14 +110,24 @@ func (s *finalizerStorage) Delete(
 
 	// Cascade disabled: the finalizer (stamped while the feature was on) is now vestigial and would
 	// otherwise block deletion forever, since nothing drives it to completion. Strip it, then delete
-	// normally. Stripping before the delete is crash-safe: a crash here leaves an ordinary,
-	// non-finalized folder rather than one stuck Terminating.
+	// normally.
 	if !s.cascadeEnabled {
-		newRV, err := removeTerminationMetadata(ctx, s.Store, name, expectedRV)
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, false, err
-		}
-		return s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, finalDeleteOptions(options, newRV))
+		return s.deleteImmediately(ctx, name, options, expectedRV)
+	}
+
+	// An empty folder has nothing to cascade, so delete it synchronously rather than leaving it
+	// Terminating until the poller's next tick. That keeps a delete followed by an immediate same-UID
+	// recreate working -- otherwise the recreate would conflict with the still-terminating object for
+	// up to a poll interval. Emptiness is the same eventually-consistent search check delete admission
+	// uses; a folder that has just gained contents not yet in the index is the same race the admission
+	// empty-check already has, and the cascade poller still covers anything that slips through into the
+	// async path below.
+	empty, err := s.folderIsEmpty(ctx, genericapirequest.NamespaceValue(ctx), name)
+	if err != nil {
+		return nil, false, err
+	}
+	if empty {
+		return s.deleteImmediately(ctx, name, options, expectedRV)
 	}
 
 	// Stamp the terminating label and finalizer BEFORE the deletion timestamp, so the folder is
@@ -139,6 +149,30 @@ func (s *finalizerStorage) Delete(
 	}
 	s.markSubtreeAsync(genericapirequest.NamespaceValue(ctx), name)
 	return out, deleted, nil
+}
+
+// deleteImmediately strips the cascade finalizer (and terminating label, if any) and deletes the
+// folder in place, with no Terminating state. It is used when there is nothing to cascade: the
+// feature is off (the finalizer is vestigial) or the folder is empty. Stripping before the delete is
+// crash-safe: a crash here leaves an ordinary, non-finalized folder rather than one stuck
+// Terminating.
+func (s *finalizerStorage) deleteImmediately(ctx context.Context, name string, options *metav1.DeleteOptions, expectedRV string) (runtime.Object, bool, error) {
+	newRV, err := removeTerminationMetadata(ctx, s.Store, name, expectedRV)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return nil, false, err
+	}
+	return s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, finalDeleteOptions(options, newRV))
+}
+
+// folderIsEmpty reports whether the folder contains nothing the cascade would need to delete -- no
+// child folders, dashboards, alert rules, or library elements -- using the same search stats as the
+// admission empty-folder check.
+func (s *finalizerStorage) folderIsEmpty(ctx context.Context, namespace, name string) (bool, error) {
+	res, _, err := folderContents(ctx, s.searcher, namespace, name)
+	if err != nil {
+		return false, err
+	}
+	return res == "", nil
 }
 
 // finalizeCascadeDelete runs the post-stamp store delete and, on failure, rolls the termination

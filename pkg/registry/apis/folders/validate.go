@@ -624,25 +624,41 @@ func validateOnDelete(ctx context.Context,
 		return nil
 	}
 
-	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
+	res, count, err := folderContents(ctx, searcher, f.Namespace, f.Name)
 	if err != nil {
 		return err
 	}
+	if res != "" {
+		return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", count, res)
+	}
+	return nil
+}
+
+// folderContentResourceTypes are the resource kinds whose presence makes a folder non-empty.
+var folderContentResourceTypes = []string{"alertrules", "dashboards", "library_elements", "folders"}
+
+// folderContents reports the first counted resource type the folder still contains (a child folder,
+// dashboard, alert rule, or library element) and its count, or ("", 0) when the folder is empty. It
+// is the shared source of truth for the empty-folder check used by both delete admission and the
+// storage fast-path. The counts come from search stats, so the answer is eventually consistent.
+func folderContents(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace, name string) (string, int64, error) {
+	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: namespace, Kinds: countedKinds, Folder: []string{name}})
+	if err != nil {
+		return "", 0, err
+	}
 
 	if resp != nil && resp.Error != nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+		return "", 0, fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
 
 	if resp.Stats == nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+		return "", 0, fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
-
-	allowedResourceTypes := []string{"alertrules", "dashboards", "library_elements", "folders"}
 
 	for _, v := range resp.Stats {
-		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
-			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
+		if slices.Contains(folderContentResourceTypes, v.Resource) && v.Count > 0 {
+			return v.Resource, v.Count, nil
 		}
 	}
-	return nil
+	return "", 0, nil
 }

@@ -502,3 +502,53 @@ func TestMarkDescendants(t *testing.T) {
 		require.Contains(t, store.folders[name].Finalizers, CascadeDeleteFinalizer, "finalizer on %s", name)
 	}
 }
+
+// fakeStatsSearcher implements only GetStats (over an embedded ResourceIndexClient).
+type fakeStatsSearcher struct {
+	resourcepb.ResourceIndexClient
+	stats []*resourcepb.ResourceStatsResponse_Stats
+	err   error
+}
+
+func (f *fakeStatsSearcher) GetStats(_ context.Context, _ *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &resourcepb.ResourceStatsResponse{Stats: f.stats}, nil
+}
+
+func TestFolderIsEmpty(t *testing.T) {
+	t.Run("empty when no counted resource has a positive count", func(t *testing.T) {
+		s := &finalizerStorage{searcher: &fakeStatsSearcher{stats: []*resourcepb.ResourceStatsResponse_Stats{
+			{Resource: "dashboards", Count: 0},
+			{Resource: "folders", Count: 0},
+		}}}
+		empty, err := s.folderIsEmpty(context.Background(), "ns", "f")
+		require.NoError(t, err)
+		require.True(t, empty)
+	})
+
+	t.Run("not empty when it contains dashboards", func(t *testing.T) {
+		s := &finalizerStorage{searcher: &fakeStatsSearcher{stats: []*resourcepb.ResourceStatsResponse_Stats{
+			{Resource: "dashboards", Count: 2},
+		}}}
+		empty, err := s.folderIsEmpty(context.Background(), "ns", "f")
+		require.NoError(t, err)
+		require.False(t, empty)
+	})
+
+	t.Run("not empty when it contains child folders", func(t *testing.T) {
+		s := &finalizerStorage{searcher: &fakeStatsSearcher{stats: []*resourcepb.ResourceStatsResponse_Stats{
+			{Resource: "folders", Count: 1},
+		}}}
+		empty, err := s.folderIsEmpty(context.Background(), "ns", "f")
+		require.NoError(t, err)
+		require.False(t, empty)
+	})
+
+	t.Run("propagates a search error", func(t *testing.T) {
+		s := &finalizerStorage{searcher: &fakeStatsSearcher{err: errors.New("boom")}}
+		_, err := s.folderIsEmpty(context.Background(), "ns", "f")
+		require.Error(t, err)
+	})
+}
