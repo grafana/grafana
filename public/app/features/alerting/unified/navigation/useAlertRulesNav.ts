@@ -48,6 +48,13 @@ export function useAlertRulesNav() {
       active: location.pathname === '/alerting/list',
       parentItem: alertRulesNav,
     },
+    {
+      id: 'alert-rules-quality',
+      text: t('alerting.navigation.quality', 'Quality'),
+      url: '/alerting/list/quality',
+      active: location.pathname === '/alerting/list/quality',
+      parentItem: alertRulesNav,
+    },
   ];
 
   // Add Recently deleted tab if user has permission
