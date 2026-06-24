@@ -75,8 +75,6 @@ export { invalidatePluginSettingsCache } from '../services/pluginSettings/invali
 export {
   initDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
-  getDataSourceInstanceList,
 } from '../services/dataSource/settings';
 export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
-export { useDataSourceInstanceList, type UseDataSourceInstanceListResult } from '../services/dataSource/hooks';

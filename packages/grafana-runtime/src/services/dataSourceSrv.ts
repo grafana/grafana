@@ -28,7 +28,7 @@ export interface DataSourceSrv {
   /**
    * Get a list of data sources
    *
-   * @deprecated Use `getDataSourceInstanceList` or `useDataSourceInstanceList` from `@grafana/runtime/internal` instead.
+   * @deprecated Use `getDataSourceInstanceList` or `useDataSourceInstanceList` from `@grafana/runtime/unstable` instead.
    */
   getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[];
 
@@ -121,8 +121,8 @@ export function setDataSourceSrv(instance: DataSourceSrv) {
  *
  * @public
  * @deprecated Import the specific functions/hooks directly from `@grafana/runtime/unstable`
- *   (e.g. `getDataSourceInstanceSettings`, `getDataSourceInstance`) or `@grafana/runtime/internal`
- *   (e.g. `getDataSourceInstanceList`, `useDataSourceInstanceList`).
+ *   (e.g. `getDataSourceInstanceSettings`, `getDataSourceInstance`,
+ *   `getDataSourceInstanceList`, `useDataSourceInstanceList`).
  *   This singleton will be removed once all callers have migrated.
  */
 export function getDataSourceSrv(): DataSourceSrv {

@@ -77,7 +77,7 @@ export function useDataSourceInstanceSettings(
  * function reference changes. Wrap inline filter callbacks in `useCallback`
  * to avoid unnecessary re-fetches.
  *
- * @internal
+ * @public
  */
 export function useDataSourceInstanceList(filters?: GetDataSourceListFilters): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);

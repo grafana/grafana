@@ -135,7 +135,7 @@ export async function getDataSourceInstanceSettings(
  * lightweight view of each match. The heavy per-instance settings are not
  * included — fetch them on demand via {@link getDataSourceInstanceSettings}.
  *
- * @internal
+ * @public
  */
 export async function getDataSourceInstanceList(
   filters?: GetDataSourceListFilters
