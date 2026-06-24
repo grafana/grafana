@@ -162,9 +162,15 @@ export async function getDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters
 ): Promise<DataSourceInstanceListItem[]> {
   const { filter: itemFilter, ...settingsFilters } = filters ?? {};
-  const results = applyFilters(settingsFilters);
-  const items = (results.length > 0 ? results : getInstanceSettingsListFallback(settingsFilters)).map(toListItem);
-  return itemFilter ? items.filter(itemFilter) : items;
+  // Wrap the slim filter into a settings-compatible callback so applyFilters applies
+  // it with the same semantics as the legacy getList(): checked on base items and on
+  // -- Grafana --, but NOT on -- Mixed -- or -- Dashboard -- (which are appended
+  // unconditionally). Passing it through here avoids a post-map filter pass that would
+  // incorrectly gate those built-ins.
+  const settingsFilter = itemFilter ? (ds: DataSourceInstanceSettings) => itemFilter(toListItem(ds)) : undefined;
+  const filtersWithAdapter = { ...settingsFilters, filter: settingsFilter };
+  const results = applyFilters(filtersWithAdapter);
+  return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
 }
 
 function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {

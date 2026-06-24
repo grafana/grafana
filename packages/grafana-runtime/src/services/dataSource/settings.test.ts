@@ -435,6 +435,20 @@ describe('instanceSettings', () => {
       expect(names).toEqual(['Alpha']);
     });
 
+    it('does not apply the custom `filter` to -- Mixed -- or -- Dashboard -- (matching legacy getList semantics)', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      // A filter that would exclude built-ins if applied universally.
+      const items = await getDataSourceInstanceList({
+        mixed: true,
+        dashboard: true,
+        filter: (x) => !x.name.startsWith('--'),
+      });
+      const names = items.map((x) => x.name);
+      expect(names).toContain('-- Mixed --');
+      expect(names).toContain('-- Dashboard --');
+      expect(names).not.toContain('-- Grafana --');
+    });
+
     it('excludes datasources with no capabilities unless `all` is set', async () => {
       const noCapability: Record<string, DataSourceInstanceSettings> = {
         NoOp: ds({
