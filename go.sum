@@ -1,7 +1,3 @@
-buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1 h1:MXQkdpJwbCwskYLQ3dUv/5gmk8fSsUwu78u+kXebbek=
-buf.build/gen/go/parca-dev/parca/connectrpc/go v1.18.1-20250703125925-3f0fcf4bff96.1/go.mod h1:pjl83IqpNF7Lm/lOPMLQ5IIfCg+yTu2A9OgYTcEncCs=
-buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1 h1:9nqE/pDc/HXAXiD5pZncPywjAzWgKuBkFFYgdK2lVU8=
-buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.36.2-20250703125925-3f0fcf4bff96.1/go.mod h1:1M7nlq2ljfzb95x9LaA2j1gYIvDkVZii58mGvTa9ExM=
 c2sp.org/CCTV/age v0.0.0-20251208015420-e9274a7bdbfd h1:ZLsPO6WdZ5zatV4UfVpr7oAwLGRZ+sebTUruuM4Ra3M=
 c2sp.org/CCTV/age v0.0.0-20251208015420-e9274a7bdbfd/go.mod h1:SrHC2C7r5GkDk8R+NFVzYy/sdj0Ypg9htaPXQq5Cqeo=
 cel.dev/expr v0.25.1 h1:1KrZg61W6TWSxuNZ37Xy49ps13NUovb66QLprthtwi4=

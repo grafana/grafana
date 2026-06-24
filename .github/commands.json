@@ -141,14 +141,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/Parca",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Elasticsearch",
     "action": "addToProject",
     "addToProject": {
@@ -993,14 +985,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/911"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Parca",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {
