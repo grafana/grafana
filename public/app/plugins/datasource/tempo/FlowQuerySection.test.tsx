@@ -43,7 +43,7 @@ describe('FlowQuerySection drill-down', () => {
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         flowFilters: [{ key: 'destination', values: ['1.2.3.4'] }],
-        query: '{ span.destination.address = "1.2.3.4" }',
+        query: '{ name = "network.flow" && span.destination.address = "1.2.3.4" }',
       })
     );
     expect(onRunQuery).toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe('FlowQuerySection drill-down', () => {
 
     fireEvent.click(screen.getByLabelText('Remove filter Direction: egress'));
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ flowFilters: [], query: '{}' })
+      expect.objectContaining({ flowFilters: [], query: '{ name = "network.flow" }' })
     );
   });
 });

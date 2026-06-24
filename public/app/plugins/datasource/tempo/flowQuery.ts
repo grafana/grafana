@@ -65,13 +65,17 @@ function predicate(facet: FlowFacetDef, values: string[]): string {
   return `${facet.attr} = "${escapeString(v)}"`;
 }
 
+// Every flow query is scoped to the flow span name so facets, table, and topology
+// only consider network.flow spans — a datasource may also carry unrelated traces
+// (e.g. the cluster's own application traces), which would otherwise dominate with
+// nil flow attributes.
+export const FLOW_SPAN_MATCHER = 'name = "network.flow"';
+
 export function composeFilter(filters: FlowFacetFilter[]): string {
-  const parts = filters
-    .filter((f) => f.values.length > 0)
-    .map((f) => predicate(facetByKey[f.key], f.values));
-  if (parts.length === 0) {
-    return '{}';
-  }
+  const parts = [
+    FLOW_SPAN_MATCHER,
+    ...filters.filter((f) => f.values.length > 0).map((f) => predicate(facetByKey[f.key], f.values)),
+  ];
   return `{ ${parts.join(' && ')} }`;
 }
 

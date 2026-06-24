@@ -29,7 +29,7 @@ describe('TempoDatasource flow table branch', () => {
 
     expect(spy).toHaveBeenCalledTimes(1);
     const passedTargets = spy.mock.calls[0][1].traceql;
-    expect(passedTargets[0].query).toBe('{ span.flow.direction = "egress" }');
+    expect(passedTargets[0].query).toBe('{ name = "network.flow" && span.flow.direction = "egress" }');
     expect(passedTargets[0].tableType).toBe('spans');
   });
 });
