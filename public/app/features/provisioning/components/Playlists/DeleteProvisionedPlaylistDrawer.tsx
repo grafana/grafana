@@ -20,9 +20,10 @@ export function DeleteProvisionedPlaylistDrawer({ playlist, onDismiss }: DeleteP
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const invalidatePlaylists = () => dispatch(playlistAPIv1.util.invalidateTags(['Playlist']));
+
   const goToPlaylists = () => {
-    dispatch(playlistAPIv1.util.invalidateTags(['Playlist']));
-    onDismiss?.();
+    invalidatePlaylists();
     navigate(playlistKind.listRoute);
   };
 
@@ -36,7 +37,7 @@ export function DeleteProvisionedPlaylistDrawer({ playlist, onDismiss }: DeleteP
       action="delete"
       onDismiss={onDismiss}
       onWriteSuccess={goToPlaylists}
-      onBranchSuccess={goToPlaylists}
+      onBranchSuccess={invalidatePlaylists}
     />
   );
 }

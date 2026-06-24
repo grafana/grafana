@@ -55,10 +55,11 @@ export function SaveProvisionedPlaylistDrawer({
   const generatedName = useMemo(() => generatePlaylistName(), []);
   const resourceName = isNew ? generatedName : (playlist.metadata?.name ?? '');
 
+  // The playlist list is managed elsewhere; invalidate so the change shows up there.
+  const invalidatePlaylists = () => dispatch(playlistAPIv1.util.invalidateTags(['Playlist']));
+
   const goToPlaylists = () => {
-    // The playlist list is managed elsewhere; invalidate so the change shows up there.
-    dispatch(playlistAPIv1.util.invalidateTags(['Playlist']));
-    onDismiss?.();
+    invalidatePlaylists();
     navigate(playlistKind.listRoute);
   };
 
@@ -94,7 +95,7 @@ export function SaveProvisionedPlaylistDrawer({
       }}
       onDismiss={onDismiss}
       onWriteSuccess={goToPlaylists}
-      onBranchSuccess={goToPlaylists}
+      onBranchSuccess={invalidatePlaylists}
     />
   );
 }

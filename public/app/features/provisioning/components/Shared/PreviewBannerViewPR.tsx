@@ -15,6 +15,10 @@ interface Props {
   behindBranch?: boolean;
   repoUrl?: string;
   branchInfo?: PreviewBranchInfo;
+  /** Repository type, for the provider name in the copy. Defaults to the `repo_type` URL param. */
+  repoType?: string;
+  /** Commit action, for the banner wording. Defaults to the `action` URL param. */
+  action?: 'create' | 'update' | 'delete';
 }
 
 export type PreviewBranchInfo = {
@@ -45,8 +49,19 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
-  const { repoType, action } = usePullRequestParam();
+export function PreviewBannerViewPR({
+  prURL,
+  isNewPr,
+  behindBranch,
+  repoUrl,
+  branchInfo,
+  repoType: repoTypeProp,
+  action: actionProp,
+}: Props) {
+  const params = usePullRequestParam();
+  // Props win over URL params so the banner can be rendered outside a preview page (e.g. in a drawer).
+  const repoType = repoTypeProp ?? params.repoType;
+  const action = actionProp ?? params.action;
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
   const linkUrl = prURL || branchInfo?.repoBaseUrl || repoUrl;

@@ -5,12 +5,8 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
-import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { PushSuccessMessage } from '../../hooks/PushSuccessMessage';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
@@ -23,6 +19,7 @@ import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 
+import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
 export interface SaveProvisionedResourceDrawerProps {
@@ -81,8 +78,10 @@ function FormContent({
   onWriteSuccess,
   onBranchSuccess,
 }: FormProps) {
-  const dispatch = useDispatch();
   const [error, setError] = useState<string | undefined>(undefined);
+  // Set when the branch (PR) workflow succeeds, so the drawer shows a pull-request banner inline
+  // (instead of a toast) offering to open the PR.
+  const [branchResult, setBranchResult] = useState<{ ref: string; urls?: Record<string, string> } | undefined>();
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -113,25 +112,22 @@ function FormContent({
     setError(getProvisionedRequestError(err, t('provisioning.save-resource.error-saving', 'Failed to save changes')));
   };
 
-  const handleBranchSuccess = ({ ref, urls }: { ref: string; urls?: Record<string, string> }) => {
-    // The request handler suppresses its own notification for the branch workflow (it expects a
-    // preview page). Resources without a preview page surface the branch/PR link here instead.
-    const linkUrl = urls?.newPullRequestURL ?? repository?.url;
-    dispatch(
-      notifyApp(createSuccessNotification('', '', undefined, <PushSuccessMessage branch={ref} url={linkUrl} />))
-    );
-    onBranchSuccess?.({ ref, urls });
-  };
-
   const { handleSuccess } = useProvisionedRequestHandler({
     workflow,
     resourceType,
     repository,
     successMessage,
     handlers: {
-      onDismiss,
-      onWriteSuccess: () => onWriteSuccess?.(),
-      onBranchSuccess: ({ ref, urls }) => handleBranchSuccess({ ref, urls }),
+      // Write commits to the configured branch, so close the drawer and let the caller navigate.
+      onWriteSuccess: () => {
+        onWriteSuccess?.();
+        onDismiss?.();
+      },
+      // Branch (PR) workflow keeps the drawer open to show the pull-request banner instead of a toast.
+      onBranchSuccess: ({ ref, urls }) => {
+        setBranchResult({ ref, urls });
+        onBranchSuccess?.({ ref, urls });
+      },
     },
   });
 
@@ -164,6 +160,31 @@ function FormContent({
       showError(err);
     }
   };
+
+  // The branch workflow pushed to a new branch: offer the pull request via a banner instead of a toast.
+  if (branchResult) {
+    return (
+      <Stack direction="column" gap={2}>
+        <PreviewBannerViewPR
+          prURL={branchResult.urls?.newPullRequestURL}
+          repoUrl={repository?.url}
+          isNewPr
+          action={action === 'delete' || action === 'update' ? action : 'create'}
+          repoType={repository?.type}
+          branchInfo={{
+            targetBranch: branchResult.ref,
+            configuredBranch: repository?.branch,
+            repoBaseUrl: branchResult.urls?.repositoryURL ?? repository?.url,
+          }}
+        />
+        <Stack>
+          <Button variant="secondary" onClick={onDismiss}>
+            {t('provisioning.save-resource.button-close', 'Close')}
+          </Button>
+        </Stack>
+      </Stack>
+    );
+  }
 
   return (
     <FormProvider {...methods}>
