@@ -14,11 +14,11 @@ describe('buildExplainAssistantQuestions', () => {
       expect(question.context).toBe(mockAssistantContext);
     }
 
-    expect(questions[0].prompt).toMatch(/similar/i);
+    expect(questions[0].prompt).toMatch(/alerting_manage_rules/i);
     expect(questions[0].prompt).toMatch(/10/);
-    expect(questions[0].prompt).toMatch(/Do not invent details/i);
-    expect(questions[1].prompt).toMatch(/components affected by this alert/i);
-    expect(questions[1].prompt).toMatch(/job, service, namespace, cluster, and instance/i);
+    expect(questions[0].prompt).toMatch(/do not invent details/i);
+    expect(questions[1].prompt).toMatch(/describe_infrastructure/i);
+    expect(questions[1].prompt).toMatch(/Never guess label names/i);
   });
 
   it('omits the IRM prompt when incident history suggestions are disabled', () => {
