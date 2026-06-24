@@ -1263,10 +1263,10 @@ func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, 
 			Key:             key,
 			ResourceVersion: rv,
 		},
-		Response: NewReadResponse(),
+		Response: NewHistoryReadResponse(),
 	}
 
-	var res *resource.BackendReadResponse
+	var res *historyReadResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		res, err = dbutil.QueryRow(ctx, tx, sqlResourceHistoryRead, readReq)
@@ -1279,8 +1279,11 @@ func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, 
 	if err != nil {
 		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
 	}
+	if res.Action == int(resourcepb.WatchEvent_DELETED) {
+		return &resource.BackendReadResponse{Error: resource.NewNotFoundError(key)}
+	}
 
-	return res
+	return res.ReadResponse()
 }
 
 // getHistory fetches the resource history from the resource_history table.
