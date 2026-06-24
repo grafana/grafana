@@ -3194,7 +3194,7 @@
         "name": "kubernetesShortURLs",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2026-06-19T18:46:20Z"
       },
       "spec": {
         "description": "Enables k8s short URL API and uses it under the hood when handling legacy /api",
