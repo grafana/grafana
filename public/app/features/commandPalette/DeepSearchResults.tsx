@@ -93,7 +93,7 @@ export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSear
         </div>
         {result.snippets.map((snippet, index) => (
           <div key={index} className={styles.snippet} title={snippet.text}>
-            <span className={styles.score}>{snippet.score.toFixed(2)}</span>
+            <span className={styles.score}>{toSimilarity(snippet.score).toFixed(2)}</span>
             {snippet.text}
           </div>
         ))}
@@ -113,6 +113,14 @@ export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSear
 );
 
 DeepSearchResultItem.displayName = 'DeepSearchResultItem';
+
+/**
+ * Converts a raw cosine distance (0 = best, 2 = worst) into a 0–1 similarity
+ * score (1 = best) for display. Clamped in case of floating-point drift.
+ */
+function toSimilarity(distance: number): number {
+  return Math.max(0, Math.min(1, 1 - distance / 2));
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
