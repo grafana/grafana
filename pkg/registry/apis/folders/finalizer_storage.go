@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -26,6 +27,17 @@ import (
 // folder validation already prevents) can never spin forever.
 const maxCascadeMarkDepth = 100
 
+// maxConcurrentSubtreeMarks bounds how many detached subtree-marking passes run at once, so a burst
+// of folder deletes (or a collection delete) cannot spawn unbounded goroutines all hammering search
+// and storage. When every slot is taken the async mark is skipped and the cascade poller marks that
+// subtree instead -- it is the backstop for anything the async pass does not do.
+const maxConcurrentSubtreeMarks = 8
+
+// subtreeMarkTimeout bounds a single async mark so a stuck search or storage call cannot keep a
+// detached goroutine alive indefinitely. A timeout just leaves a partial mark for the poller to
+// finish, exactly like a crash or shutdown.
+const subtreeMarkTimeout = 5 * time.Minute
+
 // finalizerStorage wraps a folder registry store to manage the cascade-delete finalizer. It is
 // installed regardless of the feature flag, because folders created while the flag was on carry the
 // finalizer durably and something must always be able to take it off -- otherwise toggling the flag
@@ -43,10 +55,17 @@ type finalizerStorage struct {
 	*registry.Store
 	searcher       resourcepb.ResourceIndexClient
 	cascadeEnabled bool
+	// markSlots gates concurrent async subtree marks; a free slot must be acquired before launching one.
+	markSlots chan struct{}
 }
 
 func newFinalizerStorage(store *registry.Store, searcher resourcepb.ResourceIndexClient, cascadeEnabled bool) *finalizerStorage {
-	return &finalizerStorage{Store: store, searcher: searcher, cascadeEnabled: cascadeEnabled}
+	return &finalizerStorage{
+		Store:          store,
+		searcher:       searcher,
+		cascadeEnabled: cascadeEnabled,
+		markSlots:      make(chan struct{}, maxConcurrentSubtreeMarks),
+	}
 }
 
 // finalizerStorage must intercept both single and collection deletes; otherwise DeleteCollection is
@@ -307,9 +326,25 @@ func finalDeleteOptions(options *metav1.DeleteOptions, newRV string) *metav1.Del
 // markSubtreeAsync launches a detached, best-effort DFS that marks every descendant of name
 // terminating. It runs under the service identity on a background context, so a crash or shutdown
 // just leaves a partial mark that the cascade poller finishes.
+//
+// Concurrency is bounded (maxConcurrentSubtreeMarks): if every slot is taken, the async mark is
+// skipped and left to the poller, so a burst of deletes cannot spawn unbounded goroutines. Each pass
+// is also time-bounded (subtreeMarkTimeout) so a stuck search/storage call cannot keep a goroutine
+// alive forever. Both cases just defer work to the poller, which marks anything this pass does not.
 func (s *finalizerStorage) markSubtreeAsync(namespace, name string) {
+	select {
+	case s.markSlots <- struct{}{}:
+	default:
+		logging.FromContext(context.Background()).Debug("folder cascade: subtree-mark concurrency limit reached; poller will mark this subtree",
+			"namespace", namespace, "folder", name)
+		return
+	}
+
 	go func() {
-		ctx := context.Background()
+		defer func() { <-s.markSlots }()
+
+		ctx, cancel := context.WithTimeout(context.Background(), subtreeMarkTimeout)
+		defer cancel()
 		if info, err := claims.ParseNamespace(namespace); err == nil {
 			ctx = identity.WithServiceIdentityContext(ctx, info.OrgID)
 		}

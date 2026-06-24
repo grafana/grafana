@@ -552,3 +552,27 @@ func TestFolderIsEmpty(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestMarkSubtreeAsyncConcurrencyLimit(t *testing.T) {
+	s := &finalizerStorage{markSlots: make(chan struct{}, maxConcurrentSubtreeMarks)}
+
+	// Saturate every slot so no async mark can be launched.
+	for i := 0; i < maxConcurrentSubtreeMarks; i++ {
+		s.markSlots <- struct{}{}
+	}
+
+	// At capacity, markSubtreeAsync must return immediately without launching a mark (which would
+	// otherwise dereference the nil embedded store). The poller covers the skipped subtree.
+	done := make(chan struct{})
+	go func() {
+		s.markSubtreeAsync("default", "f")
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("markSubtreeAsync blocked when all slots were taken")
+	}
+
+	require.Len(t, s.markSlots, maxConcurrentSubtreeMarks, "no slot consumed or released when skipping")
+}
