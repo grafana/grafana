@@ -617,7 +617,7 @@ The following image shows the "Info" field with the styling from the "Style" fie
 #### Apply overrides to nested table fields
 
 {{< admonition type="note" >}}
-The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+The nested table overrides feature is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
 To use this feature, enable the `nestedFramesFieldOverrides` feature toggle in your Grafana configuration file or contact Support.
 {{< /admonition >}}
