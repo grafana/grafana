@@ -123,8 +123,8 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 //
 //nolint:gocyclo
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
-	c, endSpan := hs.injectSpanScoped(c, "api.getFrontendSettings")
-	defer endSpan()
+	c, span := hs.injectSpanScoped(c, "api.getFrontendSettings")
+	defer span.End()
 
 	frontendSettings, err := frontendsettings.GetBaseFrontendSettings(c, hs.Cfg, hs.License, hs.pluginsCDNService)
 
@@ -223,8 +223,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 //nolint:gocyclo
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
-	c, endSpan := hs.injectSpanScoped(c, "api.getFSDataSources")
-	defer endSpan()
+	c, span := hs.injectSpanScoped(c, "api.getFSDataSources")
+	defer span.End()
 
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.GetOrgID() != 0 {
@@ -386,8 +386,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 }
 
 func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels map[string]*availablePluginDTO) map[string]plugins.PanelDTO {
-	c, endSpan := hs.injectSpanScoped(c, "api.getFSPanels")
-	defer endSpan()
+	c, span := hs.injectSpanScoped(c, "api.getFSPanels")
+	defer span.End()
 
 	panels := make(map[string]plugins.PanelDTO)
 	for _, ap := range availablePanels {
@@ -420,8 +420,8 @@ func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels ma
 }
 
 func (hs *HTTPServer) getFSApps(c *contextmodel.ReqContext, availableApps map[string]*availablePluginDTO) map[string]*plugins.AppDTO {
-	c, endSpan := hs.injectSpanScoped(c, "api.getFSApps")
-	defer endSpan()
+	c, span := hs.injectSpanScoped(c, "api.getFSApps")
+	defer span.End()
 
 	apps := make(map[string]*plugins.AppDTO, 0)
 	for _, ap := range availableApps {
