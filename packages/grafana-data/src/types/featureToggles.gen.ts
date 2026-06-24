@@ -454,11 +454,6 @@ export interface FeatureToggles {
   */
   scopeApi?: boolean;
   /**
-  * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default true
-  */
-  useMultipleScopeNodesEndpoint?: boolean;
-  /**
   * In-development feature that will allow injection of labels into loki queries.
   * @default false
   */
