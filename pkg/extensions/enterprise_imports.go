@@ -617,6 +617,7 @@ import (
 	_ "go.opentelemetry.io/otel/semconv/v1.17.0"
 	_ "go.opentelemetry.io/otel/semconv/v1.25.0"
 	_ "go.opentelemetry.io/otel/trace"
+	_ "go.opentelemetry.io/otel/trace/embedded"
 	_ "go.yaml.in/yaml/v3"
 	_ "gocloud.dev/secrets"
 	_ "gocloud.dev/secrets/awskms"
