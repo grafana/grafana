@@ -809,7 +809,7 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
 
   // The async list returns slim items; project to the same shape as the legacy projection.
   const projectListItems = (list: DataSourceInstanceListItem[]) =>
-    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault ?? false }));
+    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault }));
 
   // Adapt GetDataSourceInstanceListFilters for the legacy getList() call: the slim filter
   // callback receives a DataSourceInstanceListItem, so wrap it to construct one from the full
@@ -830,7 +830,7 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
           name: ds.name,
           meta: ds.meta,
           readOnly: ds.readOnly,
-          isDefault: ds.isDefault,
+          isDefault: ds.isDefault ?? false,
         }),
     };
   };

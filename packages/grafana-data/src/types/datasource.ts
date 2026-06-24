@@ -830,7 +830,7 @@ export interface DataSourceInstanceListItem {
   name: string;
   meta: DataSourcePluginMeta;
   readOnly: boolean;
-  isDefault?: boolean;
+  isDefault: boolean;
 }
 
 /**
