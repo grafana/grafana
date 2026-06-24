@@ -300,9 +300,8 @@ describe('<SpanBarRow>', () => {
     it('renders a count badge with the aggregated span_count', () => {
       const span = summarySpanFromFixture(summaryDefaultsOnly); // span_count = 8
       render(<SpanBarRow {...(summaryProps as unknown as SpanBarRowProps)} span={span} />);
-      const badge = screen.getByTestId('SpanBarRow--summaryCountBadge');
+      const badge = screen.getByLabelText('8 aggregated spans');
       expect(badge).toHaveTextContent('8');
-      expect(badge).toHaveAccessibleName('8 aggregated spans');
     });
 
     it('renders (min | median | max) duration stats when median is present', () => {
@@ -338,7 +337,7 @@ describe('<SpanBarRow>', () => {
 
     it('does not render a count badge for normal (non-summary) spans', () => {
       render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
-      expect(screen.queryByTestId('SpanBarRow--summaryCountBadge')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/aggregated spans/)).not.toBeInTheDocument();
     });
 
     it('renders the stat string (no parens) on the span bar itself', () => {

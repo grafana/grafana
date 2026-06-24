@@ -571,7 +571,6 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
             {isSummarySpan && span.aggregation?.spanCount !== undefined && (
               <span
                 className={styles.summaryCountBadge}
-                data-testid="SpanBarRow--summaryCountBadge"
                 style={{ background: color, color: theme.colors.getContrastText(color) }}
                 aria-label={t('explore.span-bar-row.summary-count-aria', '', {
                   count: span.aggregation.spanCount,
