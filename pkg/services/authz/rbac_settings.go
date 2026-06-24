@@ -32,7 +32,8 @@ type authzClientSettings struct {
 	tokenExchangeURL string
 	tokenNamespace   string
 
-	cacheTTL time.Duration
+	cacheTTL            time.Duration
+	localFolderCacheTTL time.Duration
 }
 
 func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
@@ -47,6 +48,10 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 	s := &authzClientSettings{}
 	// Cache duration applies to the server cache in proc, so it's relevant for both modes.
 	s.cacheTTL = authzSection.Key("cache_ttl").MustDuration(30 * time.Second)
+	// In-memory L1 cache in front of the (potentially remote) folder cache. Reusing the
+	// deserialized folder tree across the many permission checks in a single request avoids
+	// re-unmarshalling the whole tree per check, which dominates on instances with many folders.
+	s.localFolderCacheTTL = authzSection.Key("local_folder_cache_ttl").MustDuration(30 * time.Second)
 
 	s.mode = mode
 	if s.mode == clientModeInproc {
