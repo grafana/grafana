@@ -7,6 +7,9 @@ import { useIrmPlugin, usePluginBridge } from 'app/features/alerting/unified/hoo
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
+import { IncidentsCard } from '../AlertsIncidents/IncidentsCard';
+import { OnCallCard } from '../AlertsIncidents/OnCallCard';
+
 import { useHomeWidgetCatalog } from './useHomeWidgetCatalog';
 
 jest.mock('@grafana/i18n', () => ({
@@ -66,7 +69,6 @@ describe('useHomeWidgetCatalog', () => {
     const ids = result.current.entries.map((e) => e.id);
     expect(ids).not.toContain('incidents');
     expect(ids).not.toContain('oncall');
-    expect(ids).not.toContain('investigations');
   });
 
   it('includes curated widgets when the IRM plugin is installed', () => {
@@ -75,9 +77,31 @@ describe('useHomeWidgetCatalog', () => {
 
     const { result } = renderHook(() => useHomeWidgetCatalog());
 
-    for (const id of ['incidents', 'oncall', 'investigations']) {
+    for (const id of ['incidents', 'oncall']) {
       expect(result.current.entries.find((e) => e.id === id)?.source).toBe('curated');
     }
+    // The investigations widget was removed; it must not appear even when IRM is installed.
+    expect(result.current.entries.map((e) => e.id)).not.toContain('investigations');
+  });
+
+  it('wires the incidents widget to the live IncidentsCard when installed', () => {
+    mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Irm, loading: false, installed: true });
+
+    const { result } = renderHook(() => useHomeWidgetCatalog());
+
+    const incidents = result.current.entries.find((e) => e.id === 'incidents');
+    // The incidents widget surfaces the live IncidentsCard, not a CTA link card.
+    expect(incidents?.render()).toEqual(<IncidentsCard />);
+  });
+
+  it('wires the on-call widget to the live OnCallCard when installed', () => {
+    mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Irm, loading: false, installed: true });
+
+    const { result } = renderHook(() => useHomeWidgetCatalog());
+
+    const oncall = result.current.entries.find((e) => e.id === 'oncall');
+    // The on-call widget surfaces the live OnCallCard, not a CTA link card.
+    expect(oncall?.render()).toEqual(<OnCallCard />);
   });
 
   it('surfaces open plugin-extension widgets keyed by their stable meta.id', () => {

@@ -5,11 +5,9 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Alert, Badge, Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, type BadgeColor, Button, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { HomeSection } from '../HomeSection';
-
-import { CARD_LIST_MAX_HEIGHT } from './constants';
 
 interface SummaryCardProps<T> {
   title: string;
@@ -17,6 +15,8 @@ interface SummaryCardProps<T> {
   // reads `${countLimit}+` (server-capped data); otherwise the exact count.
   count: number;
   countLimit?: number;
+  // Tone of the header count badge; defaults to 'red' (positive count = bad). Set 'blue' for neutral counts.
+  countColor?: BadgeColor;
   // Right-aligned header content (e.g. a severity breakdown). Hidden while loading.
   headerExtra?: ReactNode;
   loading: boolean;
@@ -34,6 +34,7 @@ export function SummaryCard<T>({
   title,
   count,
   countLimit,
+  countColor,
   headerExtra,
   loading,
   error,
@@ -48,15 +49,15 @@ export function SummaryCard<T>({
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
   return (
-    <HomeSection display="flex" direction="column">
-      <Stack direction="column" gap={2} grow={1}>
-        <Stack direction="column" gap={2} grow={1}>
+    <HomeSection display="flex" direction="column" height="100%">
+      <Stack direction="column" gap={2} grow={1} minHeight={0}>
+        <Stack direction="column" gap={2} grow={1} minHeight={0}>
           <Stack alignItems="center" justifyContent="space-between">
             <Stack alignItems="center">
               <Text element="h2" variant="h5">
                 {title}
               </Text>
-              {!loading && count > 0 && <Badge text={countText} color="red" />}
+              {!loading && count > 0 && <Badge text={countText} color={countColor ?? 'red'} />}
             </Stack>
             {!loading && headerExtra}
           </Stack>
@@ -129,6 +130,18 @@ export function SummaryCardAge({ date }: { date: Date | number }) {
   );
 }
 
+/** Right-aligned secondary text cell (e.g. a schedule name), shared with SummaryCardAge's column. */
+export function SummaryCardMeta({ children }: { children: string }) {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={styles.age}>
+      <Text color="secondary" variant="bodySmall" truncate>
+        {children}
+      </Text>
+    </span>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
@@ -137,7 +150,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.5),
-    maxHeight: CARD_LIST_MAX_HEIGHT,
+    flex: 1,
+    minHeight: 0,
     overflowY: 'auto',
     // Negative margin + matching padding gives the scrollbar a gutter clear of the age column
     // while keeping that column's right edge aligned with the sibling cards.

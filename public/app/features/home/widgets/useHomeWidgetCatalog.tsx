@@ -4,7 +4,7 @@ import { usePluginComponents } from '@grafana/runtime';
 import { HomeSection } from '../HomeSection';
 
 import { getCoreWidgets } from './core/coreWidgets';
-import { useIncidentsWidget, useInvestigationsWidget, useOnCallWidget } from './curated/curatedWidgets';
+import { useIncidentsWidget, useOnCallWidget } from './curated/curatedWidgets';
 import { type HomeWidgetCatalogEntry } from './types';
 
 export interface UseHomeWidgetCatalogResult {
@@ -36,7 +36,6 @@ export function useHomeWidgetCatalog(): UseHomeWidgetCatalogResult {
 
   const incidents = useIncidentsWidget();
   const oncall = useOnCallWidget();
-  const investigations = useInvestigationsWidget();
 
   const { components, isLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageWidget,
@@ -61,7 +60,7 @@ export function useHomeWidgetCatalog(): UseHomeWidgetCatalogResult {
     })
   );
 
-  const entries = [...core, incidents, oncall, investigations, ...plugin].filter(
+  const entries = [...core, incidents, oncall, ...plugin].filter(
     (entry): entry is HomeWidgetCatalogEntry => entry !== null
   );
 

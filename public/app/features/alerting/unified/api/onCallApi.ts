@@ -41,6 +41,17 @@ export function getProxyApiUrl(path: string, pluginId: string) {
   return `/api/plugins/${pluginId}/resources${path}`;
 }
 
+export interface OnCallNowUser {
+  pk: string;
+  username: string;
+}
+
+export interface OnCallSchedule {
+  id: string;
+  name: string;
+  on_call_now: OnCallNowUser[];
+}
+
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], { pluginId: string }>({
@@ -90,6 +101,15 @@ export const onCallApi = alertingApi.injectEndpoints({
         url: getProxyApiUrl('/organization/config-checks/', pluginId),
         showErrorAlert: false,
       }),
+    }),
+    getOnCallSchedules: build.query<OnCallSchedule[], { pluginId: string }>({
+      query: ({ pluginId }) => ({
+        url: getProxyApiUrl('/schedules/', pluginId),
+        params: { perpage: 100 },
+        method: 'GET',
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: OnCallPaginatedResult<OnCallSchedule>) => response.results ?? [],
     }),
   }),
 });

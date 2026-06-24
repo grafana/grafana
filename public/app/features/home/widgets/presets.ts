@@ -19,7 +19,7 @@ export function getHomePresets(): HomePreset[] {
       title: t('home.presets.sre.title', 'SRE'),
       description: t('home.presets.sre.description', 'Alerts, incidents, on-call and dashboards'),
       icon: 'bell',
-      widgetIds: ['alerts', 'incidents', 'oncall', 'investigations', 'dashboards'],
+      widgetIds: ['alerts', 'incidents', 'oncall', 'dashboards'],
     },
     {
       id: 'analytics',

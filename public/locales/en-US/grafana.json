@@ -10682,6 +10682,12 @@
       "error-title": "Could not load most used dashboards",
       "loading": "Loading most used dashboards..."
     },
+    "oncall-card": {
+      "empty": "No one is on call right now.",
+      "error-title": "Could not load on-call schedules",
+      "title": "On call now",
+      "view-schedules": "View schedules"
+    },
     "presets": {
       "analytics": {
         "description": "Dashboards and quick links",
@@ -10740,18 +10746,11 @@
         "remove": "Remove widget"
       },
       "incidents": {
-        "cta": "View incidents",
-        "description": "Open incidents in your IRM app",
+        "description": "Incidents currently active in your IRM app",
         "title": "Active incidents"
-      },
-      "investigations": {
-        "cta": "Open investigations",
-        "description": "Recent investigations in your IRM app",
-        "title": "Investigations"
       },
       "loading": "Loading your homepage…",
       "oncall": {
-        "cta": "Open on-call",
         "description": "Who is on call right now",
         "title": "On-call shifts"
       },

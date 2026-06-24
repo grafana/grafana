@@ -180,7 +180,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const linkTabs = extensionTabs.filter((tab) => tab.href);
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={2} grow={1} minHeight={0}>
       <TabsBar>
         {contentTabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -207,7 +207,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
 
       {DEFAULT_TAB_IDS.includes(activeTab) && (
         <TabContent className={styles.tabContent}>
-          <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
+          <ScrollContainer showScrollIndicators>
             {activeTab === RECENT_TAB_ID && (
               <RecentDashboardsTab
                 dashboards={recentDashboards ?? []}
@@ -255,6 +255,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0,
     background: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column',
   }),
   linkTabsSpacer: css({
     flex: 1,
