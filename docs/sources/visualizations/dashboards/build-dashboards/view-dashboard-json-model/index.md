@@ -77,14 +77,14 @@ You can also reach the Swagger schema documentation from your Grafana Cloud inst
 The V1 Resource schema model formats the [Classic JSON model](#classic-model) schema as a Kubernetes-style resource.
 The `spec` property of the schema contains the Classic-style model of the schema.
 
-For the detailed V1 Resource model schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1beta1).
+For the detailed V1 Resource model schema, refer to the [Swagger documentation](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1).
 You can also reach the Swagger schema documentation from your Grafana Cloud instance at: https://grafana.com/launch/swagger.
 
 The following code snippet shows the fields included in the V1 Resource model:
 
 ```json
 {
-  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "apiVersion": "dashboard.grafana.app/v1",
   "kind": "Dashboard",
   "metadata": {
     "name": "isnt5ss",
