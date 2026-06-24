@@ -4,6 +4,7 @@ import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 
+import { RepoTypeDisplay } from '../Wizard/types';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { getRepoFileUrl } from '../utils/git';
 
@@ -49,11 +50,13 @@ export function SourceLink({ repositoryName, sourcePath, size = 'sm' }: SourceLi
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      icon="brackets-curly"
+      icon="external-link-alt"
       variant="secondary"
       size={size}
     >
-      <Trans i18nKey="provisioning.source-link.title">Source</Trans>
+      <Trans i18nKey="provisioning.source-link.title" values={{ provider: RepoTypeDisplay[repoType] }}>
+        Source ({'{{provider}}'})
+      </Trans>
     </LinkButton>
   );
 }
