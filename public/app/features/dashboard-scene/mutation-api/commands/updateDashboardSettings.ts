@@ -2,9 +2,11 @@ import { type z } from 'zod';
 
 import { textUtil } from '@grafana/data';
 import { behaviors, sceneGraph } from '@grafana/scenes';
-import { type DashboardLink } from '@grafana/schema';
 
-import { defaultDashboardLink } from '../../../../../../packages/grafana-schema/src/schema/dashboard/v2';
+import {
+  type DashboardLink,
+  defaultDashboardLink,
+} from '../../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { transformCursorSyncV2ToV1 } from '../../serialization/transformToV1TypesUtils';
 import { transformCursorSynctoEnum } from '../../serialization/transformToV2TypesUtils';
 
@@ -18,9 +20,10 @@ export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSetti
 type CursorSyncValue = NonNullable<UpdateDashboardSettingsPayload['cursorSync']>;
 type DashboardLinkPayload = NonNullable<UpdateDashboardSettingsPayload['links']>[number];
 
-// The payload links are partial; fill the full DashboardLink shape from the
-// shared defaults (mirrors transformSceneToSaveModelSchemaV2) and sanitize the
-// URL since these render as clickable links and the input is model-controlled.
+// The payload links are partial v2 DashboardLinks; fill the full shape from the
+// shared v2 defaults and sanitize the URL since these render as clickable links
+// and the input is model-controlled. The completed v2 links are assigned onto
+// the scene directly, the same way transformSaveModelSchemaV2ToScene does.
 function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
   const defaults = defaultDashboardLink();
   return {
