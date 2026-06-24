@@ -18,6 +18,7 @@ type FakeProvisioningStore struct {
 	DeleteProvenanceFunc           func(ctx context.Context, o models.Provisionable, org int64) error
 	GetManagerPropertiesFunc       func(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
 	GetManagerPropertiesByUIDsFunc func(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
+	GetManagerPropertiesByTypeFunc func(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
 	SetManagerPropertiesFunc       func(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
@@ -124,6 +125,22 @@ func (f *FakeProvisioningStore) GetManagerPropertiesByUIDs(ctx context.Context, 
 			key := uid + resourceType
 			if prov, ok := val[key]; ok {
 				result[uid] = models.ProvenanceToManagerProperties(prov)
+			}
+		}
+	}
+	return result, nil
+}
+
+func (f *FakeProvisioningStore) GetManagerPropertiesByType(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error) {
+	f.Calls = append(f.Calls, Call{MethodName: "GetManagerPropertiesByType", Arguments: []any{ctx, org, resourceType}})
+	if f.GetManagerPropertiesByTypeFunc != nil {
+		return f.GetManagerPropertiesByTypeFunc(ctx, org, resourceType)
+	}
+	result := make(map[string]utils.ManagerProperties)
+	if val, ok := f.Records[org]; ok {
+		for k, v := range val {
+			if strings.HasSuffix(k, resourceType) {
+				result[strings.TrimSuffix(k, resourceType)] = models.ProvenanceToManagerProperties(v)
 			}
 		}
 	}

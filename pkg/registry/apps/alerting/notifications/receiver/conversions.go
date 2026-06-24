@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -19,6 +20,7 @@ import (
 func convertToK8sResources(
 	orgID int64,
 	receivers []*ngmodels.Receiver,
+	managerProps map[string]utils.ManagerProperties,
 	accesses map[string]ngmodels.ReceiverPermissionSet,
 	metadatas map[string]ngmodels.ReceiverMetadata,
 	namespacer request.NamespaceMapper,
@@ -40,7 +42,7 @@ func convertToK8sResources(
 				metadata = &m
 			}
 		}
-		k8sResource, err := convertToK8sResource(orgID, receiver, access, metadata, namespacer)
+		k8sResource, err := convertToK8sResource(orgID, receiver, managerProps[receiver.GetUID()], access, metadata, namespacer)
 		if err != nil {
 			return nil, err
 		}
@@ -55,6 +57,7 @@ func convertToK8sResources(
 func convertToK8sResource(
 	orgID int64,
 	receiver *ngmodels.Receiver,
+	manager utils.ManagerProperties,
 	access *ngmodels.ReceiverPermissionSet,
 	metadata *ngmodels.ReceiverMetadata,
 	namespacer request.NamespaceMapper,
@@ -89,6 +92,17 @@ func convertToK8sResource(
 	}
 	r.SetProvenanceStatus(string(receiver.Provenance))
 
+	// Surface the richer ManagerProperties when present, falling back to deriving them from
+	// provenance so resources without a stored manager are still labelled.
+	if manager.Kind == utils.ManagerKindUnknown {
+		manager = ngmodels.ProvenanceToManagerProperties(receiver.Provenance)
+	}
+	if manager.Kind != utils.ManagerKindUnknown {
+		if meta, err := utils.MetaAccessor(r); err == nil {
+			meta.SetManagerProperties(manager)
+		}
+	}
+
 	if access != nil {
 		for _, action := range ngmodels.ReceiverPermissions() {
 			mappedAction, ok := permissionMapper[action]
@@ -122,10 +136,10 @@ var permissionMapper = map[ngmodels.ReceiverPermission]string{
 	ngmodels.ReceiverPermissionTest:            "canTest",
 }
 
-func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
+func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, utils.ManagerProperties, error) {
 	prov, err := ngmodels.ProvenanceFromString(receiver.GetProvenanceStatus())
 	if err != nil {
-		return nil, nil, ngmodels.ErrReceiverInvalid(err)
+		return nil, nil, utils.ManagerProperties{}, ngmodels.ErrReceiverInvalid(err)
 	}
 	domain := &ngmodels.Receiver{
 		UID:          receiver.Name,
@@ -135,17 +149,27 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 		Provenance:   prov,
 		Origin:       ngmodels.ResourceOriginGrafana, // Set to Grafana by default.
 	}
+
+	// Prefer explicit ManagerProperties annotations (set by app-platform tooling) over the
+	// coarser provenance annotation, so a richer manager kind/identity survives the write.
+	var manager utils.ManagerProperties
+	if meta, err := utils.MetaAccessor(receiver); err == nil {
+		if mp, ok := meta.GetManagerProperties(); ok {
+			manager = mp
+		}
+	}
+
 	storedSecureFields := make(map[string][]string, len(receiver.Spec.Integrations))
 	for _, integration := range receiver.Spec.Integrations {
 		grafanaIntegration, secureFields, err := convertReceiverIntegrationToIntegration(receiver.Spec.Title, integration)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, utils.ManagerProperties{}, err
 		}
 		domain.Integrations = append(domain.Integrations, &grafanaIntegration)
 		storedSecureFields[grafanaIntegration.UID] = secureFields
 	}
 
-	return domain, storedSecureFields, nil
+	return domain, storedSecureFields, manager, nil
 }
 
 func convertReceiverIntegrationToIntegration(receiverTitle string, integration model.ReceiverIntegration) (ngmodels.Integration, []string, error) {

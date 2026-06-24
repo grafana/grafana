@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -382,7 +383,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			sut.ruleNotificationsStore = store
 
 			if tc.existing != nil {
-				created, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID(), tc.user)
+				created, err := sut.CreateReceiver(context.Background(), tc.existing, utils.ManagerProperties{}, tc.user.GetOrgID(), tc.user)
 				require.NoError(t, err)
 
 				if tc.version == "" {
@@ -621,7 +622,7 @@ func TestReceiverService_Create(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService, tc.opts...)
 
-			created, err := sut.CreateReceiver(context.Background(), &tc.receiver, tc.user.GetOrgID(), tc.user)
+			created, err := sut.CreateReceiver(context.Background(), &tc.receiver, utils.ManagerProperties{}, tc.user.GetOrgID(), tc.user)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -968,7 +969,7 @@ func TestReceiverService_Update(t *testing.T) {
 			}
 
 			tc.receiver.Version = tc.version
-			updated, err := sut.UpdateReceiver(context.Background(), &tc.receiver, tc.secureFields, tc.user.GetOrgID(), tc.user)
+			updated, err := sut.UpdateReceiver(context.Background(), &tc.receiver, utils.ManagerProperties{}, tc.secureFields, tc.user.GetOrgID(), tc.user)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
@@ -1043,7 +1044,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut := createReceiverServiceSut(t, &secretsService)
 		sut.ruleNotificationsStore = ruleStore
 
-		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.NoError(t, err)
 
 		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
@@ -1076,7 +1077,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		}
 		sut.ruleNotificationsStore = ruleStore
 
-		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.ErrorIs(t, err, models.ErrReceiverDependentResourcesProvenance)
 
 		require.Len(t, ruleStore.Calls, 1)
@@ -1099,7 +1100,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		}
 		sut.ruleNotificationsStore = ruleStore
 
-		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.ErrorIs(t, err, models.ErrReceiverDependentResourcesProvenance)
 
 		require.Len(t, ruleStore.Calls, 1)
@@ -1117,7 +1118,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		sut.ruleNotificationsStore = ruleStore
 		baseReceiver.Name = ""
 
-		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.ErrorIs(t, err, models.ErrReceiverInvalidBase)
 	})
 
@@ -1135,7 +1136,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 
 		baseReceiver.Name = newReceiverName
 
-		recv, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		recv, err := sut.UpdateReceiver(context.Background(), &baseReceiver, utils.ManagerProperties{}, nil, writer.GetOrgID(), writer)
 		require.NoError(t, err)
 		require.NotEqual(t, actual, recv)
 		require.Equal(t, models.ResourceOriginGrafana, recv.Origin)
@@ -1330,7 +1331,7 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
 
 			for _, recv := range tc.existing {
-				_, err := sut.CreateReceiver(context.Background(), &recv, orgId, admin)
+				_, err := sut.CreateReceiver(context.Background(), &recv, utils.ManagerProperties{}, orgId, admin)
 				require.NoError(t, err)
 			}
 
@@ -1450,7 +1451,7 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 				return false
 			}
 			for _, recv := range allReceivers() {
-				response, err := sut.CreateReceiver(context.Background(), &recv, orgId, usr)
+				response, err := sut.CreateReceiver(context.Background(), &recv, utils.ManagerProperties{}, orgId, usr)
 				if hasAccess(recv.UID) {
 					require.NoErrorf(t, err, "should have access to receiver '%s', but doesn't", recv.Name)
 					assert.NotNil(t, response)
@@ -1619,7 +1620,7 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 
 			versions := map[string]string{}
 			for _, recv := range tc.existing {
-				created, err := sut.CreateReceiver(context.Background(), &recv, orgId, admin)
+				created, err := sut.CreateReceiver(context.Background(), &recv, utils.ManagerProperties{}, orgId, admin)
 				require.NoError(t, err)
 				versions[recv.UID] = created.Version
 			}
@@ -1643,7 +1644,7 @@ func TestReceiverServiceAC_Update(t *testing.T) {
 			for _, recv := range incoming {
 				clone := recv.Clone()
 				clone.Version = versions[recv.UID]
-				response, err := sut.UpdateReceiver(context.Background(), &clone, nil, orgId, usr)
+				response, err := sut.UpdateReceiver(context.Background(), &clone, utils.ManagerProperties{}, nil, orgId, usr)
 				if hasAccess(clone.UID) {
 					require.NoErrorf(t, err, "should have access to receiver '%s', but doesn't", clone.Name)
 					assert.NotNil(t, response)
@@ -1775,7 +1776,7 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 
 			versions := map[string]string{}
 			for _, recv := range tc.existing {
-				created, err := sut.CreateReceiver(context.Background(), &recv, orgId, admin)
+				created, err := sut.CreateReceiver(context.Background(), &recv, utils.ManagerProperties{}, orgId, admin)
 				require.NoError(t, err)
 				versions[recv.UID] = created.Version
 			}
@@ -1883,7 +1884,7 @@ func TestReceiverService_InUseMetadata(t *testing.T) {
 			sut.ruleNotificationsStore = store
 
 			for _, recv := range tc.existing {
-				_, err := sut.CreateReceiver(context.Background(), recv, tc.user.GetOrgID(), tc.user)
+				_, err := sut.CreateReceiver(context.Background(), recv, utils.ManagerProperties{}, tc.user.GetOrgID(), tc.user)
 				require.NoError(t, err)
 			}
 

@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -15,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
-func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TimeIntervalList, error) {
+func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, managerProps map[string]utils.ManagerProperties, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TimeIntervalList, error) {
 	data, err := json.Marshal(intervals)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 	for idx := range specs {
 		interval := intervals[idx]
 		spec := specs[idx]
-		item := buildTimeInterval(orgID, interval, spec, namespacer)
+		item := buildTimeInterval(orgID, interval, spec, managerProps[interval.Name], namespacer)
 		if selector != nil && !selector.Empty() && !selector.Matches(model.TimeIntervalSelectableFields(&item)) {
 			continue
 		}
@@ -39,7 +40,7 @@ func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 	return result, nil
 }
 
-func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, namespacer request.NamespaceMapper) (*model.TimeInterval, error) {
+func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, manager utils.ManagerProperties, namespacer request.NamespaceMapper) (*model.TimeInterval, error) {
 	data, err := json.Marshal(interval)
 	if err != nil {
 		return nil, err
@@ -49,12 +50,12 @@ func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 	if err != nil {
 		return nil, err
 	}
-	result := buildTimeInterval(orgID, interval, spec, namespacer)
+	result := buildTimeInterval(orgID, interval, spec, manager, namespacer)
 	result.UID = gapiutil.CalculateClusterWideUID(&result)
 	return &result, nil
 }
 
-func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
+func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, manager utils.ManagerProperties, namespacer request.NamespaceMapper) model.TimeInterval {
 	i := model.TimeInterval{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
@@ -69,6 +70,18 @@ func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec 
 		Spec: spec,
 	}
 	i.SetProvenanceStatus(string(interval.Provenance))
+
+	// Surface the richer ManagerProperties when present, falling back to deriving them from
+	// provenance so resources without a stored manager (incl. imported ones) are still labelled.
+	if manager.Kind == utils.ManagerKindUnknown {
+		manager = ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(interval.Provenance))
+	}
+	if manager.Kind != utils.ManagerKindUnknown {
+		if meta, err := utils.MetaAccessor(&i); err == nil {
+			meta.SetManagerProperties(manager)
+		}
+	}
+
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
 
 	i.SetCanUse(ngmodels.Provenance(interval.Provenance) != ngmodels.ProvenanceConvertedPrometheus)
@@ -76,28 +89,37 @@ func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec 
 	return i
 }
 
-func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInterval, error) {
+func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInterval, utils.ManagerProperties, error) {
 	b, err := json.Marshal(interval.Spec)
 	if err != nil {
-		return definitions.MuteTimeInterval{}, err
+		return definitions.MuteTimeInterval{}, utils.ManagerProperties{}, err
 	}
 	result := definitions.MuteTimeInterval{}
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
+		return definitions.MuteTimeInterval{}, utils.ManagerProperties{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
 	result.Version = interval.ResourceVersion
 	result.UID = interval.Name
 
 	prov, err := ngmodels.ProvenanceFromString(interval.GetProvenanceStatus())
 	if err != nil {
-		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
+		return definitions.MuteTimeInterval{}, utils.ManagerProperties{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
 	result.Provenance = definitions.Provenance(prov)
 
+	// Prefer explicit ManagerProperties annotations (set by app-platform tooling) over the
+	// coarser provenance annotation, so a richer manager kind/identity survives the write.
+	var manager utils.ManagerProperties
+	if meta, err := utils.MetaAccessor(interval); err == nil {
+		if mp, ok := meta.GetManagerProperties(); ok {
+			manager = mp
+		}
+	}
+
 	err = result.Validate()
 	if err != nil {
-		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
+		return definitions.MuteTimeInterval{}, utils.ManagerProperties{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
-	return result, nil
+	return result, manager, nil
 }

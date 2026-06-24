@@ -251,6 +251,33 @@ func (st DBstore) GetManagerPropertiesByUIDs(ctx context.Context, org int64, res
 	return result, err
 }
 
+// GetManagerPropertiesByType returns ManagerProperties for all records of a resource type in an org.
+// Mirrors GetProvenances. Legacy rows (empty manager_kind) fall back to deriving from provenance.
+func (st DBstore) GetManagerPropertiesByType(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error) {
+	result := make(map[string]utils.ManagerProperties)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var records []provenanceRecord
+		err := sess.Table(provenanceRecord{}).
+			Where("record_type = ? AND org_id = ?", resourceType, org).
+			Find(&records)
+		if err != nil {
+			return fmt.Errorf("failed to query for manager properties: %w", err)
+		}
+		for _, r := range records {
+			if r.ManagerKind != "" {
+				result[r.RecordKey] = utils.ManagerProperties{
+					Kind:     utils.ParseManagerKindString(r.ManagerKind),
+					Identity: r.ManagerIdentity,
+				}
+			} else {
+				result[r.RecordKey] = models.ProvenanceToManagerProperties(r.Provenance)
+			}
+		}
+		return nil
+	})
+	return result, err
+}
+
 // SetManagerProperties stores ManagerProperties for a provisionable object.
 // It also derives and stores the legacy provenance value for backwards compatibility.
 func (st DBstore) SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error {

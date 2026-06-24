@@ -27,6 +27,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -1844,4 +1845,71 @@ func createWildcardPermission(actions ...string) resourcepermissions.SetResource
 		ResourceAttribute: "uid",
 		ResourceID:        "*",
 	}
+}
+
+func TestIntegrationReceiverManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	adminClient := test_common.NewReceiverClient(t, helper.Org1.Admin)
+
+	newReceiver := func(title string) *v1beta1.Receiver {
+		return &v1beta1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.ReceiverSpec{
+				Title: title,
+				Integrations: []v1beta1.ReceiverIntegration{{
+					Type:    "webhook",
+					Version: "v1",
+					Settings: map[string]interface{}{
+						"url": "http://localhost:9999",
+					},
+				}},
+			},
+		}
+	}
+
+	t.Run("ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		recv := newReceiver("mp-roundtrip")
+		recv.Annotations = map[string]string{
+			utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+			utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+		}
+
+		created, err := adminClient.Create(ctx, recv, v1.CreateOptions{})
+		require.NoError(t, err)
+		// The create response itself reflects the manager kind/identity and the derived provenance.
+		require.Equal(t, string(utils.ManagerKindTerraform), created.GetAnnotations()[utils.AnnoKeyManagerKind])
+		require.Equal(t, "my-terraform-workspace", created.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+
+		// A fresh read resolves the manager from storage (per-integration) and preserves kind +
+		// identity losslessly, while the provenance view is the coarse ProvenanceAPI.
+		retrieved, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindTerraform), retrieved.GetAnnotations()[utils.AnnoKeyManagerKind],
+			"ManagerKindTerraform should survive round-trip through legacy storage")
+		require.Equal(t, "my-terraform-workspace", retrieved.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"manager identity should survive round-trip through legacy storage")
+		require.Equal(t, string(ngmodels.ProvenanceAPI), retrieved.GetProvenanceStatus(),
+			"terraform manager should map to ProvenanceAPI for legacy readers")
+
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("legacy ProvenanceAPI maps to the classic-api manager when read via k8s", func(t *testing.T) {
+		recv := newReceiver("mp-classic-api")
+		recv.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+
+		created, err := adminClient.Create(ctx, recv, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		retrieved, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.GetAnnotations()[utils.AnnoKeyManagerKind]) //nolint:staticcheck
+		require.Equal(t, string(ngmodels.ProvenanceAPI), retrieved.GetProvenanceStatus())
+
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -60,17 +61,26 @@ func (t *TemplateService) WithLimitsProvider(limits LimitsProvider) *TemplateSer
 	}
 }
 
-func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, error) {
+// GetTemplates returns all template groups for the org along with their ManagerProperties,
+// keyed by resource ID. The manager map lets app-platform callers surface the richer manager
+// kind/identity; legacy callers can ignore it and rely on each template's Provenance.
+func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, map[string]utils.ManagerProperties, error) {
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var templates []v1.TemplateGroup
+	managerProps := map[string]utils.ManagerProperties{}
 	if len(revision.Config.Templates) > 0 {
-		provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&v1.TemplateGroup{}).ResourceType())
+		resourceType := (&v1.TemplateGroup{}).ResourceType()
+		provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, resourceType)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
+		}
+		managerProps, err = t.provenanceStore.GetManagerPropertiesByType(ctx, orgID, resourceType)
+		if err != nil {
+			return nil, nil, err
 		}
 		templates = make([]v1.TemplateGroup, 0, len(revision.Config.Templates))
 
@@ -97,29 +107,34 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 			cmp.Compare(a.Kind, b.Kind),
 			cmp.Compare(a.Title, b.Title),
 		)
-	}), nil
+	}), managerProps, nil
 }
 
-func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, error) {
+// GetTemplate returns a single template group along with its ManagerProperties.
+func (t *TemplateService) GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, utils.ManagerProperties, error) {
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
-		return v1.TemplateGroup{}, err
+		return v1.TemplateGroup{}, utils.ManagerProperties{}, err
 	}
 	result, found, err := t.getTemplateByName(ctx, revision, orgID, nameOrUid)
 	if err != nil {
-		return v1.TemplateGroup{}, err
+		return v1.TemplateGroup{}, utils.ManagerProperties{}, err
 	}
-	if found {
-		return result, nil
+	if !found {
+		result, found, err = t.getTemplateByUID(ctx, revision, orgID, nameOrUid)
+		if err != nil {
+			return v1.TemplateGroup{}, utils.ManagerProperties{}, err
+		}
 	}
-	result, found, err = t.getTemplateByUID(ctx, revision, orgID, nameOrUid)
+	if !found {
+		return v1.TemplateGroup{}, utils.ManagerProperties{}, ErrTemplateNotFound.Errorf("")
+	}
+
+	manager, err := t.provenanceStore.GetManagerProperties(ctx, &result, orgID)
 	if err != nil {
-		return v1.TemplateGroup{}, err
+		return v1.TemplateGroup{}, utils.ManagerProperties{}, err
 	}
-	if found {
-		return result, nil
-	}
-	return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
+	return result, manager, nil
 }
 
 // UpsertTemplate is used by the legacy provisioning API and matches by Name/Title only as the legacy provisioning API
@@ -142,9 +157,9 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 	}
 
 	if found {
-		// Update the existing template.
+		// Update the existing template. Legacy provisioning speaks provenance, so no manager.
 		tmpl.UID = existing.UID
-		return t.updateTemplate(ctx, revision, orgID, tmpl)
+		return t.updateTemplate(ctx, revision, orgID, tmpl, utils.ManagerProperties{})
 	}
 
 	// If template was not found, this is assumed to be a create operation except for two cases:
@@ -155,16 +170,21 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 		return v1.TemplateGroup{}, ErrTemplateNotFound.Errorf("")
 	}
 
-	return t.createTemplate(ctx, revision, orgID, tmpl)
+	return t.createTemplate(ctx, revision, orgID, tmpl, utils.ManagerProperties{})
 }
 
-func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error) {
+func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup, manager utils.ManagerProperties) (v1.TemplateGroup, error) {
 	err := tmpl.Validate()
 	if err != nil {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
 	}
 	if tmpl.Kind == v1.TemplateKindMimir {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
+	}
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		tmpl.Provenance = models.ManagerPropertiesToProvenance(manager)
 	}
 	if err := t.validator(ctx, models.ProvenanceNone, tmpl.Provenance); err != nil {
 		return v1.TemplateGroup{}, err
@@ -174,10 +194,21 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 	if err != nil {
 		return v1.TemplateGroup{}, err
 	}
-	return t.createTemplate(ctx, revision, orgID, tmpl)
+	return t.createTemplate(ctx, revision, orgID, tmpl, manager)
 }
 
-func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error) {
+// persistManagerOrProvenance stores the full ManagerProperties when manager carries a rich kind
+// (so app-platform managers such as Terraform are preserved losslessly) in the caller's transaction,
+// and otherwise falls back to the legacy provenance write. Exactly one store setter runs per write,
+// and the store keeps the provenance and manager_kind columns consistent, so the views cannot diverge.
+func (t *TemplateService) persistManagerOrProvenance(ctx context.Context, o models.Provisionable, orgID int64, provenance models.Provenance, manager utils.ManagerProperties) error {
+	if manager.Kind != utils.ManagerKindUnknown {
+		return t.provenanceStore.SetManagerProperties(ctx, o, orgID, manager)
+	}
+	return t.provenanceStore.SetProvenance(ctx, o, orgID, provenance)
+}
+
+func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl v1.TemplateGroup, manager utils.ManagerProperties) (v1.TemplateGroup, error) {
 	if tmpl.Kind == v1.TemplateKindMimir {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
 	}
@@ -200,7 +231,7 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return t.provenanceStore.SetProvenance(ctx, &created, orgID, created.Provenance)
+		return t.persistManagerOrProvenance(ctx, &created, orgID, created.Provenance, manager)
 	})
 	if err != nil {
 		return v1.TemplateGroup{}, err
@@ -209,20 +240,26 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 	return created, nil
 }
 
-func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error) {
+func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup, manager utils.ManagerProperties) (v1.TemplateGroup, error) {
 	err := tmpl.Validate()
 	if err != nil {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
+	}
+
+	// When a rich manager is provided, derive the effective provenance from it so the validation,
+	// persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		tmpl.Provenance = models.ManagerPropertiesToProvenance(manager)
 	}
 
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
 		return v1.TemplateGroup{}, err
 	}
-	return t.updateTemplate(ctx, revision, orgID, tmpl)
+	return t.updateTemplate(ctx, revision, orgID, tmpl, manager)
 }
 
-func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error) {
+func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, tmpl v1.TemplateGroup, manager utils.ManagerProperties) (v1.TemplateGroup, error) {
 	if revision.Config.Templates == nil {
 		revision.Config.Templates = make(map[v1.ResourceUID]v1.TemplateGroup)
 	}
@@ -281,7 +318,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return t.provenanceStore.SetProvenance(ctx, &updated, orgID, updated.Provenance)
+		return t.persistManagerOrProvenance(ctx, &updated, orgID, updated.Provenance, manager)
 	})
 	if err != nil {
 		return v1.TemplateGroup{}, err
@@ -290,7 +327,8 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	return updated, nil
 }
 
-func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance models.Provenance, version string) error {
+func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, manager utils.ManagerProperties, version string) error {
+	provenance := models.ManagerPropertiesToProvenance(manager)
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err

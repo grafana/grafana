@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
@@ -111,6 +112,26 @@ func GetReceiverProvenance(storedProvenances map[string]models.Provenance, r *v1
 		}
 	}
 	return models.ProvenanceNone
+}
+
+// GetReceiverManager resolves the receiver-level ManagerProperties from the per-integration manager
+// properties, mirroring GetReceiverProvenance: it returns the first non-unknown manager among the
+// receiver's integrations. Imported receivers map to the classic converted-prometheus shim.
+func GetReceiverManager(storedManagers map[string]utils.ManagerProperties, r *v1.PostableApiReceiver, origin models.ResourceOrigin) utils.ManagerProperties {
+	if origin == models.ResourceOriginImported {
+		return models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
+	}
+
+	if len(r.GrafanaManagedReceivers) == 0 || len(storedManagers) == 0 {
+		return utils.ManagerProperties{}
+	}
+
+	for _, contactPoint := range r.GrafanaManagedReceivers {
+		if m, exists := storedManagers[contactPoint.UID]; exists && m.Kind != utils.ManagerKindUnknown {
+			return m
+		}
+	}
+	return utils.ManagerProperties{}
 }
 
 func PostableGrafanaReceiversToIntegrations(postables []*v1.PostableGrafanaReceiver) ([]*models.Integration, error) {

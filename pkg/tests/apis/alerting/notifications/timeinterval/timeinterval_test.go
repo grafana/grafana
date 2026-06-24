@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
@@ -511,6 +512,76 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	})
 }
 
+func TestIntegrationTimeIntervalManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminClient := common.NewTimeIntervalClient(t, helper.Org1.Admin)
+
+	t.Run("ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		interval := &v1beta1.TimeInterval{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+				},
+			},
+			Spec: v1beta1.TimeIntervalSpec{
+				Name:          "mp-roundtrip",
+				TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
+			},
+		}
+
+		created, err := adminClient.Create(ctx, interval, v1.CreateOptions{})
+		require.NoError(t, err)
+		// The create response itself reflects the manager kind/identity and the derived provenance.
+		require.Equal(t, string(utils.ManagerKindTerraform), created.GetAnnotations()[utils.AnnoKeyManagerKind])
+		require.Equal(t, "my-terraform-workspace", created.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+
+		// A fresh read resolves the manager from storage and preserves kind + identity losslessly,
+		// while the provenance view is the coarse ProvenanceAPI for legacy readers.
+		retrieved, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindTerraform), retrieved.GetAnnotations()[utils.AnnoKeyManagerKind],
+			"ManagerKindTerraform should survive round-trip through legacy storage")
+		require.Equal(t, "my-terraform-workspace", retrieved.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"manager identity should survive round-trip through legacy storage")
+		require.Equal(t, string(ngmodels.ProvenanceAPI), retrieved.GetProvenanceStatus(),
+			"terraform manager should map to ProvenanceAPI for legacy readers")
+
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("legacy ProvenanceAPI maps to the classic-api manager when read via k8s", func(t *testing.T) {
+		interval := &v1beta1.TimeInterval{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v1beta1.TimeIntervalSpec{
+				Name:          "mp-classic-api",
+				TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
+			},
+		}
+		interval.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+
+		created, err := adminClient.Create(ctx, interval, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
+
+		retrieved, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		// ProvenanceAPI is surfaced as the classic-api manager kind for app-platform readers.
+		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.GetAnnotations()[utils.AnnoKeyManagerKind]) //nolint:staticcheck
+		require.Equal(t, string(ngmodels.ProvenanceAPI), retrieved.GetProvenanceStatus())
+
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+}
+
 func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -774,7 +845,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
-	v1intervals, err := timeinterval.ConvertToK8sResources(orgID, mtis, func(int64) string { return "default" }, nil)
+	v1intervals, err := timeinterval.ConvertToK8sResources(orgID, mtis, nil, func(int64) string { return "default" }, nil)
 	require.NoError(t, err)
 	for _, interval := range v1intervals.Items {
 		_, err := adminClient.Create(ctx, &interval, resource.CreateOptions{})

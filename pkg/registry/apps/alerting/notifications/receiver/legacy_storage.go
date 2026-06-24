@@ -13,6 +13,7 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -26,8 +27,9 @@ var (
 type ReceiverService interface {
 	GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*ngmodels.Receiver, error)
 	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
-	CreateReceiver(ctx context.Context, r *ngmodels.Receiver, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
-	UpdateReceiver(ctx context.Context, r *ngmodels.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
+	GetReceiverManagerProperties(ctx context.Context, orgID int64) (map[string]utils.ManagerProperties, error)
+	CreateReceiver(ctx context.Context, r *ngmodels.Receiver, manager utils.ManagerProperties, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
+	UpdateReceiver(ctx context.Context, r *ngmodels.Receiver, manager utils.ManagerProperties, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
 	DeleteReceiver(ctx context.Context, name string, provenance ngmodels.Provenance, version string, orgID int64, user identity.Requester) error
 }
 
@@ -106,7 +108,12 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
 	}
 
-	return convertToK8sResources(orgId, res, accesses, inUses, s.namespacer, opts.FieldSelector)
+	managerProps, err := s.service.GetReceiverManagerProperties(ctx, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertToK8sResources(orgId, res, managerProps, accesses, inUses, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -145,7 +152,12 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 	}
 
-	return convertToK8sResource(info.OrgID, r, access, inUse, s.namespacer)
+	managerProps, err := s.service.GetReceiverManagerProperties(ctx, info.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertToK8sResource(info.OrgID, r, managerProps[r.GetUID()], access, inUse, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -169,7 +181,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, apierrors.NewBadRequest("object's metadata.name should be empty")
 	}
-	model, _, err := convertToDomainModel(p)
+	model, _, manager, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
@@ -179,11 +191,11 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	out, err := s.service.CreateReceiver(ctx, model, info.OrgID, user)
+	out, err := s.service.CreateReceiver(ctx, model, manager, info.OrgID, user)
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, nil, nil, s.namespacer)
+	return convertToK8sResource(info.OrgID, out, manager, nil, nil, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -221,17 +233,17 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if !ok {
 		return nil, false, fmt.Errorf("expected receiver but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	model, storedSecureFields, err := convertToDomainModel(p)
+	model, storedSecureFields, manager, err := convertToDomainModel(p)
 	if err != nil {
 		return old, false, err
 	}
 
-	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID, user)
+	updated, err := s.service.UpdateReceiver(ctx, model, manager, storedSecureFields, info.OrgID, user)
 	if err != nil {
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, nil, nil, s.namespacer)
+	r, err := convertToK8sResource(info.OrgID, updated, manager, nil, nil, s.namespacer)
 	return r, false, err
 }
 

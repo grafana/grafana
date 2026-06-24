@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -87,6 +88,8 @@ type provisoningStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+	GetManagerPropertiesByType(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
+	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
 type transactionManager interface {
@@ -142,6 +145,28 @@ func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
 
 func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
 	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
+}
+
+// GetReceiverManagerProperties returns ManagerProperties for all receivers in the org, keyed by
+// receiver UID. Provenance/manager are stored per integration, so the receiver-level value is
+// resolved the same way as provenance (first non-unknown manager among the receiver's integrations).
+func (rs *ReceiverService) GetReceiverManagerProperties(ctx context.Context, orgID int64) (map[string]utils.ManagerProperties, error) {
+	revision, err := rs.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	managers, err := rs.provisioningStore.GetManagerPropertiesByType(ctx, orgID, (&models.Integration{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]utils.ManagerProperties)
+	for _, r := range revision.Config.AlertmanagerConfig.Receivers {
+		m := legacy_storage.GetReceiverManager(managers, r, models.ResourceOriginGrafana)
+		if m.Kind != utils.ManagerKindUnknown {
+			result[legacy_storage.NameToUid(r.GetName())] = m
+		}
+	}
+	return result, nil
 }
 
 // GetReceiver returns a receiver by its UID.
@@ -364,7 +389,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 	return nil
 }
 
-func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, orgID int64, user identity.Requester) (result *models.Receiver, err error) {
+func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receiver, manager utils.ManagerProperties, orgID int64, user identity.Requester) (result *models.Receiver, err error) {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.create", trace.WithAttributes(
 		attribute.String("receiver", r.Name),
 		attribute.StringSlice("integrations", r.GetIntegrationTypes()),
@@ -377,6 +402,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	r.Provenance = effectiveProvenance(r.Provenance, manager)
 	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
 		return nil, err
 	}
@@ -423,7 +451,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 			return err
 		}
 		rs.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, createdReceiver.GetUID())
-		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver)
+		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver, manager)
 	})
 	if err != nil {
 		return nil, err
@@ -437,7 +465,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	return result, nil
 }
 
-func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
+func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, manager utils.ManagerProperties, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
 	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.update", trace.WithAttributes(
 		attribute.String("receiver", r.Name),
 		attribute.String("uid", r.UID),
@@ -449,6 +477,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "update")
 	}
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	r.Provenance = effectiveProvenance(r.Provenance, manager)
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
@@ -576,7 +607,7 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 			return err
 		}
 
-		return rs.setReceiverProvenance(ctx, orgID, &updatedReceiver)
+		return rs.setReceiverProvenance(ctx, orgID, &updatedReceiver, manager)
 	})
 	if err != nil {
 		return nil, err
@@ -698,9 +729,28 @@ func removedIntegrations(old, new *models.Receiver) []*models.Integration {
 	return removed
 }
 
-func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver) error {
-	// Add provenance for all integrations in the receiver.
+// effectiveProvenance returns the provenance derived from a rich manager, or the provided
+// provenance when the manager is unknown. Keeps create/update validation, the persisted
+// provenance column and the returned object consistent.
+func effectiveProvenance(provenance models.Provenance, manager utils.ManagerProperties) models.Provenance {
+	if manager.Kind != utils.ManagerKindUnknown {
+		return models.ManagerPropertiesToProvenance(manager)
+	}
+	return provenance
+}
+
+func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver, manager utils.ManagerProperties) error {
+	// Add provenance for all integrations in the receiver. When the caller provides a rich manager
+	// (e.g. Terraform), persist the full ManagerProperties so the manager kind/identity survive
+	// losslessly; otherwise fall back to the legacy provenance write. Both keep the provenance and
+	// manager_kind columns consistent in the store, so the two views cannot diverge.
 	for _, integration := range receiver.Integrations {
+		if manager.Kind != utils.ManagerKindUnknown {
+			if err := rs.provisioningStore.SetManagerProperties(ctx, integration, orgID, manager); err != nil {
+				return err
+			}
+			continue
+		}
 		if err := rs.provisioningStore.SetProvenance(ctx, integration, orgID, receiver.Provenance); err != nil { // TODO: Should we set ProvenanceNone?
 			return err
 		}
