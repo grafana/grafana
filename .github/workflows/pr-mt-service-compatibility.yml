@@ -61,7 +61,6 @@ jobs:
               - '!public/app/plugins/datasource/mssql/**'
               - '!public/app/plugins/datasource/mysql/**'
               - '!public/app/plugins/datasource/parca/**'
-              - '!public/app/plugins/datasource/tempo/**'
             backend_strict:
               - 'pkg/**'
               - 'go.mod'
@@ -91,7 +90,6 @@ jobs:
               - 'public/app/plugins/datasource/mssql/**'
               - 'public/app/plugins/datasource/mysql/**'
               - 'public/app/plugins/datasource/parca/**'
-              - 'public/app/plugins/datasource/tempo/**'
 
       - name: Check for exception label
         if: steps.changed-files.outputs.frontend_strict_any_changed == 'true' && steps.changed-files.outputs.backend_strict_any_changed == 'true'
