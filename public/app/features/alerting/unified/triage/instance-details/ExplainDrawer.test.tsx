@@ -151,6 +151,13 @@ describe('ExplainDrawer', () => {
 
     await user.click(await screen.findByRole('link', { name: /explain with assistant/i }));
 
+    expect(mockRegisterExplainAssistantQuestions).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Show me similar alerts' }),
+        expect.objectContaining({ title: 'Show me the affected systems' }),
+        expect.objectContaining({ title: 'Show me incident/IRM history' }),
+      ])
+    );
     expect(onDismissDrawers).toHaveBeenCalled();
     expect(openAssistant).toHaveBeenCalledWith({
       origin: 'alerting/triage/explain-drawer',

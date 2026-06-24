@@ -5,6 +5,7 @@ import { withErrorBoundary } from '@grafana/ui';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { useAlertsNav } from '../navigation/useAlertActivityNav';
 
+import { ExplainAssistantQuestionsCleanup } from './ExplainAssistantQuestionsCleanup';
 import { useApplyDefaultTriageSearch } from './hooks/useApplyDefaultTriageSearch';
 import { TriageScene, triageScene } from './scene/TriageScene';
 
@@ -23,6 +24,7 @@ export const TriagePage = () => {
       )}
     >
       <UrlSyncContextProvider scene={triageScene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
+        <ExplainAssistantQuestionsCleanup />
         <TriageScene key={triageScene.state.key} />
       </UrlSyncContextProvider>
     </AlertingPageWrapper>
