@@ -124,7 +124,7 @@ Annotations appear as vertical lines on time series panels at the timestamps whe
 - The event description (from the OpenTSDB annotation's `description` field)
 - The timestamp
 
-Different annotation queries can be assigned different colors in the dashboard settings to distinguish between event types.
+Different annotation queries can be assigned different colors in the annotation settings to distinguish between event types.
 
 ## Create annotations in OpenTSDB
 

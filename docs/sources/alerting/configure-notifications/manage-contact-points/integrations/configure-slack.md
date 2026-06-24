@@ -47,19 +47,6 @@ You can customize the `title` and `body` of the Slack message using [notificatio
 
 ## Before you begin
 
-### Slack workspace permissions
-
-Slack workspaces with strict security policies may restrict or block third-party app installations that request high-risk OAuth scopes (such as `chat:write` or `channels:read`). These restrictions are enforced at the Slack workspace level by a workspace admin, not by Grafana.
-
-If your Slack workspace has **App Approval** or **High-Risk Scope Restrictions** enabled, the Grafana Slack app must be approved by a workspace admin before users can complete the integration. Without approval, the OAuth flow will fail for affected users while others (for example, workspace admins) may connect without issue.
-
-To resolve this, ask your Slack workspace admin to:
-
-- Approve the Grafana Cloud Slack app in the Slack Admin portal under **Manage** > **Apps**.
-- Allow the required OAuth scopes (`chat:write`, `channels:read`) if high-risk scope restrictions are enabled.
-
-For more information, refer to the [Slack documentation on approving apps](https://slack.com/help/articles/222386767-Manage-app-approval-for-your-workspace).
-
 ### Slack API Token
 
 If you are using a Slack API Token, complete the following steps.
@@ -141,22 +128,6 @@ For specialized environments, you can override the default Slack API endpoint:
 | Option       | Description                                                                                                                                                                 |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Endpoint URL | Specify a custom Slack API endpoint for non-webhook requests. Set the `endpointUrl` field to your custom endpoint. The default is `https://slack.com/api/chat.postMessage`. |
-
-## Troubleshoot Slack integration
-
-### OAuth scopes blocked by workspace security settings
-
-**Symptom**: Some users in the same Slack workspace cannot connect their Slack account to Grafana, while others can. The OAuth flow fails silently or returns an authorization error.
-
-**Cause**: The Slack workspace has App Approval or High-Risk Scope Restrictions enabled. These settings are managed by the workspace admin and can prevent specific OAuth scopes (`chat:write`, `channels:read`) from being granted to third-party apps.
-
-**Resolution**: Contact your Slack workspace admin and ask them to:
-
-1. Navigate to **Slack Admin** > **Manage** > **Apps**.
-1. Find and approve the Grafana Cloud Slack app.
-1. If high-risk scope restrictions are active, explicitly allow the required scopes.
-
-Once approved, affected users can retry the integration setup.
 
 ## Next steps
 

@@ -31,7 +31,7 @@ In the **Variables** section of the sidebar, you can [add](https://grafana.com/d
 
 ## Manage variables
 
-You can take the following actions in the **Variables** tab:
+You can take the following actions in the **Variables** section of the sidebar:
 
 - **Move**: Move a variable up or down the list using drag and drop.
 - **Clone**: Clone a variable by clicking the clone icon in the set of icons on the right. This creates a copy of the variable with the name of the original variable prefixed with `copy_of_`.
