@@ -174,7 +174,7 @@ require (
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260616104851-587c401ed754 // indirect
+	github.com/grafana/alerting v0.0.0-20260624092630-e3cde2289ada // indirect
 	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
