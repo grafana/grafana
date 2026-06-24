@@ -1,6 +1,5 @@
 import { act, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { render } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -59,23 +58,6 @@ jest.mock('../Shared/ProvisioningAwareFolderPicker', () => ({
       {value || 'Select folder'}
     </button>
   )),
-}));
-
-// Mirror the real shared field: when the comment is locked render the resolved message read-only,
-// otherwise drive a react-hook-form-registered textarea (so pre-fill / freeze-on-edit behave).
-jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
-  ResourceEditFormSharedFields: ({ lockComment, commitMessage }: { lockComment?: boolean; commitMessage?: string }) => {
-    const { register } = useFormContext<{ comment?: string }>();
-    return (
-      <div data-testid="resource-edit-form">
-        {lockComment ? (
-          <textarea aria-label="comment" value={commitMessage ?? ''} readOnly />
-        ) : (
-          <textarea aria-label="comment" {...register('comment')} />
-        )}
-      </div>
-    );
-  },
 }));
 
 jest.mock('@grafana/runtime', () => ({
