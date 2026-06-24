@@ -98,8 +98,7 @@ function defaultMessage({
 
 /**
  * Renders the commit-message template against `vars`. When no template is configured the message
- * falls back to `fallbackMessage` if supplied (bulk callers pass their own multi-resource default),
- * otherwise to the single-resource built-in default.
+ * falls back to `fallbackMessage` if it has non-whitespace content otherwise to the single-resource built-in default.
  */
 export function renderCommitMessage(
   template: string | undefined | null,
@@ -108,7 +107,7 @@ export function renderCommitMessage(
 ): string {
   const trimmed = template?.trim();
   if (!trimmed) {
-    return fallbackMessage ?? defaultMessage(vars);
+    return fallbackMessage?.trim() ? fallbackMessage : defaultMessage(vars);
   }
   // Bulk operations omit `resourceKind`, so substitute a generic noun. Otherwise a
   // `{{resourceKind}}` placeholder would collapse to an empty token — e.g. a `feat({{resourceKind}}s)`
@@ -187,9 +186,9 @@ export function getSingleResourceCommitMessage({ comment, repository, ...vars }:
 
 type BulkResourceCommitMessageArgs = ResourceCommitMessageArgs & {
   /**
-   * Multi-resource default used when no repo template is configured. Must be a non-empty,
-   * human-readable string (e.g. "Delete resources"): it is used verbatim, so an empty string would
-   * produce an empty commit message.
+   * Multi-resource default used when no repo template is configured (e.g. "Delete resources"). Used
+   * verbatim when it has non-whitespace content; an empty/whitespace-only value is treated as absent
+   * and falls through to the built-in default rather than producing a blank commit.
    */
   fallbackMessage: string;
 };
