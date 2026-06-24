@@ -89,10 +89,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 
 //nolint:gocyclo
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
-	// Building the nav tree performs many access-control evaluations. Scope the
-	// request context to a span so they're grouped under it in traces rather than
-	// appearing as a flat list of accesscontrol.acimpl.Evaluate spans. The context
-	// is restored on return so the span doesn't leak to sibling operations.
+	// The context is restored on the ReqContext return so the span doesn't leak to sibling operations.
 	ctx, span := tracer.Start(c.Req.Context(), "navtree.GetNavTree")
 	defer span.End()
 	prevReq := c.Req
