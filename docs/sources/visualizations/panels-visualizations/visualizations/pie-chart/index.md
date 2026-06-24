@@ -184,8 +184,6 @@ Use these settings to define how the legend appears in your visualization. For m
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Thresholds aren't supported for pie chart visualizations.
-
 ### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}

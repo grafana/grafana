@@ -215,7 +215,7 @@ In node graphs, some data fields may have pre-configured data links. To add a di
 
 ## Data API
 
-This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it.
+This visualization needs a specific shape of the data to be returned from the data source to correctly display it.
 
 Node graphs, at minimum, require a data frame describing the edges of the graph. By default, node graphs compute the nodes and any stats based on this data frame. Optionally a second data frame describing the nodes can be sent when you need to show more node-specific metadata. Grafana recognizes node graph frames when `frame.meta.preferredVisualisationType = 'nodeGraph'`, when the frame name or `refId` is `nodes` or `edges`, or when a frame contains an `id` field.
 
