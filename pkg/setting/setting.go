@@ -646,6 +646,7 @@ type Cfg struct {
 	NewsFeedEnabled bool
 
 	// Experimental scope settings
+	ScopesApiEnabled        bool
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
@@ -1819,6 +1820,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")
+	cfg.ScopesApiEnabled = scopesSection.Key("api_enabled").MustBool(false)
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 

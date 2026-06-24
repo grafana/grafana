@@ -12,7 +12,9 @@ import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
+import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
+import { describeRef, logDataSourceWarning } from './logging';
 import { clearPluginCache } from './pluginCache';
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
@@ -126,7 +128,11 @@ export async function getDataSourceInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  return lookupFromMaps(ref, scopedVars);
+  const result = lookupFromMaps(ref, scopedVars);
+  if (result) {
+    return result;
+  }
+  return getInstanceSettingsFallback(ref, scopedVars);
 }
 
 /**
@@ -137,7 +143,11 @@ export async function getDataSourceInstanceSettings(
 export async function getDataSourceInstanceSettingsList(
   filters?: GetDataSourceListFilters
 ): Promise<DataSourceInstanceSettings[]> {
-  return applyFilters(filters);
+  const results = applyFilters(filters);
+  if (results.length > 0) {
+    return results;
+  }
+  return getInstanceSettingsListFallback(filters);
 }
 
 /**
@@ -321,6 +331,46 @@ function variableInterpolation<T>(value: T | T[]): T {
     return value[0];
   }
   return value;
+}
+
+/**
+ * Last resort while the legacy `DataSourceSrv` still exists: the new in-memory cache found
+ * nothing, so consult the legacy service. If it resolves what the new path missed, that's a
+ * divergence worth tracking. Delete this (and its call site) once `DataSourceSrv` is gone.
+ */
+function getInstanceSettingsFallback(
+  ref: DataSourceRef | string | null | undefined,
+  scopedVars: ScopedVars | undefined
+): DataSourceInstanceSettings | undefined {
+  const legacy = getDataSourceSrv()?.getInstanceSettings(ref, scopedVars);
+  if (legacy) {
+    logDataSourceWarning(FALLBACK_TO_LEGACY_SETTINGS_WARNING, { ref: describeRef(ref) });
+    return legacy;
+  }
+  return undefined;
+}
+
+/**
+ * Last resort while the legacy `DataSourceSrv` still exists: the new in-memory cache produced
+ * an empty list, so consult the legacy service. Delete this (and its call site) once
+ * `DataSourceSrv` is gone.
+ */
+function getInstanceSettingsListFallback(filters: GetDataSourceListFilters | undefined): DataSourceInstanceSettings[] {
+  const legacy = getDataSourceSrv()?.getList(filters) ?? [];
+  if (legacy.length > 0) {
+    logDataSourceWarning(FALLBACK_TO_LEGACY_LIST_WARNING, { filters: filtersForLog(filters) });
+    return legacy;
+  }
+  return [];
+}
+
+function filtersForLog(filters: GetDataSourceListFilters | undefined): string {
+  if (!filters) {
+    return 'none';
+  }
+  // The `filter` callback can't be serialized; the rest is enough to identify the query.
+  const { filter: _filter, ...rest } = filters;
+  return JSON.stringify(rest);
 }
 
 /**
