@@ -19,6 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestProcessQuery(t *testing.T) {
@@ -89,7 +91,7 @@ func TestProcessQuery(t *testing.T) {
 			},
 		}
 
-		service := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
+		service := ProvideService(&setting.Cfg{}, httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
 
 		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
@@ -128,7 +130,7 @@ func TestProcessQuery(t *testing.T) {
 		}))
 		t.Cleanup(server.Close)
 
-		service := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
+		service := ProvideService(&setting.Cfg{}, httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
 
 		queries := []backend.DataQuery{
 			{
@@ -868,14 +870,17 @@ func TestAliasMatching(t *testing.T) {
 }
 
 func TestParseResponseBodyCap(t *testing.T) {
-	service := &Service{logger: backend.Logger}
+	// Override the cap to a small value so the test exercises the same code
+	// path without allocating the production-default 200 MiB.
+	const testCap = 4 << 10
+	service := &Service{logger: backend.Logger, renderResponseMaxBytes: testCap}
 
 	t.Run("response exactly at the cap parses successfully", func(t *testing.T) {
 		// Wrap a minimal valid JSON payload in padding to reach the cap.
-		pad := maxRenderBodyBytes - len(`[{"target":"","datapoints":[]}]`)
+		pad := testCap - len(`[{"target":"","datapoints":[]}]`)
 		require.Greater(t, pad, 0)
 		body := `[{"target":"` + strings.Repeat("t", pad) + `","datapoints":[]}]`
-		require.Equal(t, maxRenderBodyBytes, len(body))
+		require.Equal(t, testCap, len(body))
 
 		resp := &http.Response{
 			StatusCode: 200,
@@ -888,7 +893,7 @@ func TestParseResponseBodyCap(t *testing.T) {
 	t.Run("response over the cap is rejected", func(t *testing.T) {
 		// One byte past the cap -- io.LimitReader reads cap+1 and the
 		// overflow check fires.
-		oversized := strings.Repeat("x", maxRenderBodyBytes+1)
+		oversized := strings.Repeat("x", testCap+1)
 		resp := &http.Response{
 			StatusCode: 200,
 			Body:       io.NopCloser(strings.NewReader(oversized)),

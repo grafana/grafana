@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
@@ -22,6 +24,13 @@ type Service struct {
 	logger          log.Logger
 	resourceHandler backend.CallResourceHandler
 	HTTPClient      *http.Client
+
+	// Safety caps. Zero falls back to the package-level defaults
+	// (defaultRenderResponseMaxBytes, defaultResourceResponseMaxBytes,
+	// defaultResourceRequestMaxBytes).
+	renderResponseMaxBytes   int64
+	resourceResponseMaxBytes int64
+	resourceRequestMaxBytes  int64
 }
 
 const (
@@ -29,17 +38,47 @@ const (
 	TargetModelField     = "target"
 )
 
-func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
 	logger := backend.NewLoggerWith("logger", "graphite")
 	s := &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		tracer: tracer,
-		logger: logger,
+		im:                       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		tracer:                   tracer,
+		logger:                   logger,
+		renderResponseMaxBytes:   cfg.GraphiteRenderResponseMaxBytes,
+		resourceResponseMaxBytes: cfg.GraphiteResourceResponseMaxBytes,
+		resourceRequestMaxBytes:  cfg.GraphiteResourceRequestMaxBytes,
 	}
 
 	s.resourceHandler = httpadapter.New(s.newResourceMux())
 
 	return s
+}
+
+// renderResponseCap returns the active /render response body cap. A zero
+// field value (no ini override, or test fixture that leaves it unset) falls
+// back to defaultRenderResponseMaxBytes.
+func (s *Service) renderResponseCap() int64 {
+	if s.renderResponseMaxBytes > 0 {
+		return s.renderResponseMaxBytes
+	}
+	return defaultRenderResponseMaxBytes
+}
+
+// resourceResponseCap returns the active resource-call response body cap.
+func (s *Service) resourceResponseCap() int64 {
+	if s.resourceResponseMaxBytes > 0 {
+		return s.resourceResponseMaxBytes
+	}
+	return defaultResourceResponseMaxBytes
+}
+
+// resourceRequestCap returns the active inbound resource-handler request
+// body cap.
+func (s *Service) resourceRequestCap() int64 {
+	if s.resourceRequestMaxBytes > 0 {
+		return s.resourceRequestMaxBytes
+	}
+	return defaultResourceRequestMaxBytes
 }
 
 type datasourceInfo struct {

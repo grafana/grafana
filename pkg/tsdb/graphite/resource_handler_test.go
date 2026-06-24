@@ -901,13 +901,17 @@ func TestHandleResourceReq_InboundBodyTooLarge(t *testing.T) {
 		HTTPClient: &http.Client{Transport: &mockRoundTripper{respBody: []byte("{}"), status: 200}},
 	}
 
+	// Override the cap to a small value so the test exercises the same code
+	// path without allocating the production-default 1 MiB.
+	const testCap = 1 << 10
 	svc := &Service{
-		logger: log.NewNullLogger(),
-		im:     &mockInstanceManager{instance: dsInfo},
+		logger:                  log.NewNullLogger(),
+		im:                      &mockInstanceManager{instance: dsInfo},
+		resourceRequestMaxBytes: testCap,
 	}
 
 	// One byte over the inbound cap.
-	oversized := bytes.Repeat([]byte("x"), maxInboundResourceBodyBytes+1)
+	oversized := bytes.Repeat([]byte("x"), testCap+1)
 	req := httptest.NewRequest("POST", "/events", bytes.NewReader(oversized))
 	req = req.WithContext(backend.WithPluginContext(context.Background(), backend.PluginContext{}))
 	rr := httptest.NewRecorder()
@@ -1049,7 +1053,7 @@ func TestDoGraphiteRequest(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			result, _, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.dsInfo, svc.logger, req, false)
+			result, _, status, err := doGraphiteRequest[[]GraphiteEventsResponse](ctx, tt.dsInfo, svc.logger, req, false, defaultResourceResponseMaxBytes)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1108,7 +1112,7 @@ func TestDoGraphiteRequestGenericTypes(t *testing.T) {
 				})
 				assert.NoError(t, err)
 
-				result, _, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, svc.logger, req, false)
+				result, _, status, err := doGraphiteRequest[[]GraphiteMetricsFindResponse](ctx, dsInfo, svc.logger, req, false, defaultResourceResponseMaxBytes)
 
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -1136,7 +1140,7 @@ func TestDoGraphiteRequestGenericTypes(t *testing.T) {
 				})
 				assert.NoError(t, err)
 
-				result, _, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, svc.logger, req, false)
+				result, _, status, err := doGraphiteRequest[GraphiteMetricsExpandResponse](ctx, dsInfo, svc.logger, req, false, defaultResourceResponseMaxBytes)
 
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
@@ -1280,7 +1284,7 @@ func TestParseResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, _, err := parseResponse[[]GraphiteEventsResponse](tt.response, false, log.NewNullLogger())
+			result, _, err := parseResponse[[]GraphiteEventsResponse](tt.response, false, log.NewNullLogger(), defaultResourceResponseMaxBytes)
 
 			if tt.expectError {
 				assert.Error(t, err)

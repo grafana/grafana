@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
@@ -214,7 +215,7 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Graphite:
-		svc = graphite.ProvideService(httpClientProvider, tracer)
+		svc = graphite.ProvideService(&setting.Cfg{}, httpClientProvider, tracer)
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider)
 	case Loki:

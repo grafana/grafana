@@ -360,6 +360,11 @@ type Cfg struct {
 	DataProxyUserAgent             string
 	DataProxyForwardUserAgent      bool
 
+	// Graphite data source safety caps. Zero means "use the built-in default".
+	GraphiteRenderResponseMaxBytes   int64
+	GraphiteResourceResponseMaxBytes int64
+	GraphiteResourceRequestMaxBytes  int64
+
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
 
@@ -1566,6 +1571,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	if err := readDataProxySettings(iniFile, cfg); err != nil {
+		return err
+	}
+
+	if err := readGraphiteSettings(iniFile, cfg); err != nil {
 		return err
 	}
 

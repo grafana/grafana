@@ -28,16 +28,17 @@ type queryModel struct {
 	rawTarget string
 }
 
-// maxRenderBodyBytes caps the /render response body we read into memory.
-// Inuse profiling on prod pods under a 20 GiB GOMEMLIMIT showed individual
-// in-flight /render responses retaining 10+ GB of live heap (the io.ReadAll
-// buffer plus the json.Unmarshal slice growth that follows). 200 MiB aligns
-// with the plugin gRPC receive ceiling: anything larger can't traverse the
-// plugin boundary anyway, so the cap only rejects payloads Grafana could
-// not have delivered. Legitimate Graphite responses sit orders of magnitude
-// below this; the cap exists so oversized responses fail the one request
-// rather than the whole pod.
-const maxRenderBodyBytes = 200 << 20
+// defaultRenderResponseMaxBytes caps the /render response body we read into
+// memory when no ini override (tsdb.graphite.render_response_max_bytes) is
+// set. Inuse profiling on prod pods under a 20 GiB GOMEMLIMIT showed
+// individual in-flight /render responses retaining 10+ GB of live heap (the
+// io.ReadAll buffer plus the json.Unmarshal slice growth that follows).
+// 200 MiB aligns with the plugin gRPC receive ceiling: anything larger
+// can't traverse the plugin boundary anyway, so the cap only rejects
+// payloads Grafana could not have delivered. Legitimate Graphite responses
+// sit orders of magnitude below this; the cap exists so oversized
+// responses fail the one request rather than the whole pod.
+const defaultRenderResponseMaxBytes = 200 << 20
 
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
@@ -265,15 +266,16 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 	// defers res.Body.Close() on the same response before calling
 	// toDataFrames -> parseResponse.
 	//
-	// Read at most maxRenderBodyBytes+1 so we can distinguish "exactly at
+	// Read at most renderResponseCap+1 so we can distinguish "exactly at
 	// the cap" from "over the cap".
-	body, err := io.ReadAll(io.LimitReader(res.Body, maxRenderBodyBytes+1))
+	maxBytes := s.renderResponseCap()
+	body, err := io.ReadAll(io.LimitReader(res.Body, maxBytes+1))
 	if err != nil {
 		return nil, backend.DownstreamError(err)
 	}
-	if int64(len(body)) > maxRenderBodyBytes {
-		s.logger.Error("Graphite /render response exceeded maximum allowed size", "status", res.Status, "limit", maxRenderBodyBytes)
-		return nil, backend.DownstreamError(fmt.Errorf("graphite response exceeded maximum allowed size of %d bytes", maxRenderBodyBytes))
+	if int64(len(body)) > maxBytes {
+		s.logger.Error("Graphite /render response exceeded maximum allowed size", "status", res.Status, "limit", maxBytes)
+		return nil, backend.DownstreamError(fmt.Errorf("graphite response exceeded maximum allowed size of %d bytes", maxBytes))
 	}
 
 	if res.StatusCode/100 != 2 {
