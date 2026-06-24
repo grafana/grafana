@@ -30,7 +30,7 @@ You can annotate visualizations in three ways:
 
 - Directly in the panel, using the [built-in annotations query](#built-in-query)
 - Using the HTTP API
-- Configuring annotation queries in the dashboard settings
+- Configuring annotation queries
 
 In the first two cases, you're creating new annotations, while in the last you're querying existing annotations from data sources. The built-in annotation query also supports this.
 
