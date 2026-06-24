@@ -109,7 +109,7 @@ export function SummaryCardTitle({ href, children }: { href?: string; children: 
   const styles = useStyles2(getStyles);
   if (href) {
     return (
-      <TextLink href={href} inline={false} className={styles.title}>
+      <TextLink href={href} inline={false} color="primary" className={styles.title}>
         {children}
       </TextLink>
     );

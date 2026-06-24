@@ -98,6 +98,22 @@ describe('FiringAlertsCard', () => {
     expect(screen.getByText('High')).toBeInTheDocument();
   });
 
+  it('links alert titles to their detail pages', async () => {
+    const linkedAlert = makeAlert({
+      generatorURL: 'https://grafana.example.com/alerting/grafana/abc123/view?orgId=1',
+      labels: { alertname: 'Linked alert', severity: 'critical', team: 'platform' },
+    });
+    mockTeams([]);
+    mockAlerts([linkedAlert]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByRole('link', { name: 'Linked alert' })).toHaveAttribute(
+      'href',
+      '/alerting/grafana/abc123/view?orgId=1'
+    );
+  });
+
   it('counts non-canonical severity aliases by canonical level', async () => {
     mockTeams([]);
     mockAlerts([critAliasAlert, sev2Alert]);
