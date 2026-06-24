@@ -128,7 +128,7 @@ describe('dashboard tracking', () => {
       setTestFlags({ 'grafana.customDashboardTemplates': true });
       locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
-      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
 
       expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).toHaveBeenCalledWith({
         dashboardUid: 'dashboard-test',
@@ -140,7 +140,7 @@ describe('dashboard tracking', () => {
       setTestFlags({ 'grafana.customDashboardTemplates': true });
       locationService.push('/d/abc/my-dash?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
-      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
 
       expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
     });
@@ -149,7 +149,7 @@ describe('dashboard tracking', () => {
       setTestFlags({ 'grafana.customDashboardTemplates': true });
       locationService.push('/dashboard/template');
       const scene = buildTestScene();
-      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
 
       expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
     });
@@ -158,7 +158,7 @@ describe('dashboard tracking', () => {
       setTestFlags({ 'grafana.customDashboardTemplates': false });
       locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
-      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
 
       expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
     });
