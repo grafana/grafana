@@ -25,7 +25,7 @@ type AdminConfigurationStore interface {
 	UpdateAdminConfiguration(UpdateAdminConfigurationCmd) error
 }
 
-func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error) {
+func (st DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error) {
 	cfg := &ngmodels.AdminConfiguration{}
 	err := st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		ok, err := sess.Table("ngalert_configuration").Where("org_id = ?", orgID).Get(cfg)
@@ -124,6 +124,10 @@ func buildUpdateCols(adminConfig *ngmodels.AdminConfiguration) []string {
 
 	if adminConfig.AutoFillDescriptionsWithAI != nil {
 		cols = append(cols, "auto_fill_descriptions_with_ai")
+	}
+
+	if adminConfig.RejectAlertsWithoutRunbookURL != nil {
+		cols = append(cols, "reject_alerts_without_runbook_url")
 	}
 
 	return cols

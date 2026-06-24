@@ -4,11 +4,17 @@ import { Box, Field, Stack, Switch, Text } from '@grafana/ui';
 import { useSettings } from './SettingsContext';
 
 export function AnnotationPolicySettings() {
-  const { configuration, isUpdating, setRejectAlertsWithoutDescriptions, setAutoFillDescriptionsWithAI } =
-    useSettings();
+  const {
+    configuration,
+    isUpdating,
+    setRejectAlertsWithoutDescriptions,
+    setAutoFillDescriptionsWithAI,
+    setRejectAlertsWithoutRunbookURL,
+  } = useSettings();
 
   const rejectEnabled = configuration?.reject_alerts_without_descriptions ?? false;
   const autoFillEnabled = configuration?.auto_fill_descriptions_with_ai ?? false;
+  const rejectRunbookEnabled = configuration?.reject_alerts_without_runbook_url ?? false;
 
   return (
     <Box>
@@ -23,10 +29,10 @@ export function AnnotationPolicySettings() {
         </Text>
 
         <Field
-          label={t('alerting.annotation-policy.reject-label', 'Require alert descriptions')}
+          label={t('alerting.annotation-policy.reject-label', 'Require descriptions and summaries')}
           description={t(
             'alerting.annotation-policy.reject-description',
-            'Alerts without a description will be rejected at save time. Use this to enforce documentation standards across your team.'
+            'Alerts without a description and summary annotation will be rejected at save time. Use this to enforce documentation standards across your team.'
           )}
           horizontal
         >
@@ -34,6 +40,21 @@ export function AnnotationPolicySettings() {
             value={rejectEnabled}
             disabled={isUpdating}
             onChange={(e) => setRejectAlertsWithoutDescriptions(e.currentTarget.checked)}
+          />
+        </Field>
+
+        <Field
+          label={t('alerting.annotation-policy.reject-runbook-label', 'Require a runbook URL')}
+          description={t(
+            'alerting.annotation-policy.reject-runbook-description',
+            'Alerts without a runbook URL annotation will be rejected at save time, so responders always have a place to start.'
+          )}
+          horizontal
+        >
+          <Switch
+            value={rejectRunbookEnabled}
+            disabled={isUpdating}
+            onChange={(e) => setRejectAlertsWithoutRunbookURL(e.currentTarget.checked)}
           />
         </Field>
 

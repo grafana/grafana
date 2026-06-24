@@ -134,6 +134,12 @@ const (
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
 
+	// User-facing annotation keys that make a notification actionable. These can be
+	// required at save time via the per-org admin configuration.
+	SummaryAnnotation     = "summary"
+	DescriptionAnnotation = "description"
+	RunbookURLAnnotation  = "runbook_url"
+
 	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
 	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
 	// way as manually configured labels.

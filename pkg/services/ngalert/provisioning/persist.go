@@ -41,6 +41,10 @@ type RuleStore interface {
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
 	GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*models.AlertRuleVersion, error)
 	ListDeletedRules(ctx context.Context, orgID int64) ([]*models.AlertRule, error)
+
+	// GetAdminConfiguration returns the per-org ngalert admin configuration, used to
+	// enforce org-level rule policies such as required annotations.
+	GetAdminConfiguration(orgID int64) (*models.AdminConfiguration, error)
 }
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.

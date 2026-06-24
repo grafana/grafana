@@ -3,6 +3,7 @@ import { Controller, type FieldArrayWithId, useFormContext } from 'react-hook-fo
 import { t } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
 
@@ -22,6 +23,15 @@ const AnnotationHeaderField = ({
   labelId: string;
 }) => {
   const { control } = useFormContext<RuleFormValues>();
+
+  // The org admin config can make certain annotations mandatory; when it does we drop
+  // the "(optional)" hint so the editor matches what the API will enforce on save.
+  const { currentData: alertingConfig } = alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
+  const requireDescriptions = alertingConfig?.reject_alerts_without_descriptions ?? false;
+  const requireRunbookURL = alertingConfig?.reject_alerts_without_runbook_url ?? false;
+  const isRequired =
+    (requireDescriptions && (annotation === Annotation.summary || annotation === Annotation.description)) ||
+    (requireRunbookURL && annotation === Annotation.runbookURL);
 
   return (
     <Stack direction="column" gap={0}>
@@ -45,7 +55,8 @@ const AnnotationHeaderField = ({
                   label = '';
                   break;
                 default:
-                  label = annotationLabels[annotation] && annotationLabels[annotation] + ' (optional)';
+                  label =
+                    annotationLabels[annotation] && annotationLabels[annotation] + (isRequired ? '' : ' (optional)');
               }
 
               return (

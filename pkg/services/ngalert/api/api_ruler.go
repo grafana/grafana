@@ -435,6 +435,10 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
+	if resp := srv.enforceRequiredAnnotations(c.GetOrgID(), rules); resp != nil {
+		return resp
+	}
+
 	groupKey := ngmodels.AlertRuleGroupKey{
 		OrgID:        c.GetOrgID(),
 		NamespaceUID: namespace.UID,
@@ -453,6 +457,22 @@ func (srv RulerSrv) RouteDeleteAlertRuleFromTrashByGUID(ctx *contextmodel.ReqCon
 		return response.Empty(http.StatusNotFound)
 	}
 	return response.Empty(http.StatusOK)
+}
+
+// enforceRequiredAnnotations rejects the request when any alert rule is missing an
+// annotation required by the org's admin configuration. Returns nil when all rules
+// pass so the caller can proceed.
+func (srv RulerSrv) enforceRequiredAnnotations(orgID int64, rules []*ngmodels.AlertRuleWithOptionals) response.Response {
+	cfg, err := srv.store.GetAdminConfiguration(orgID)
+	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
+		return ErrResp(http.StatusInternalServerError, err, "failed to fetch alerting admin configuration")
+	}
+	for _, r := range rules {
+		if err := ngmodels.ValidateRequiredAnnotations(&r.AlertRule, cfg); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+	}
+	return nil
 }
 
 func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) error {

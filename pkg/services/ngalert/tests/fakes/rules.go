@@ -29,6 +29,8 @@ type RuleStore struct {
 	Hook        func(cmd any) error // use Hook if you need to intercept some query and return an error
 	RecordedOps []any
 	Folders     map[int64][]*folder.Folder
+	// AdminConfig holds per-org admin configuration. Unset orgs return (nil, nil).
+	AdminConfig map[int64]*models.AdminConfiguration
 }
 
 type GenericRecordedQuery struct {
@@ -46,6 +48,13 @@ func NewRuleStore(t *testing.T) *RuleStore {
 		Folders: map[int64][]*folder.Folder{},
 		History: map[string][]*models.AlertRuleVersion{},
 	}
+}
+
+// GetAdminConfiguration returns the per-org admin configuration, or (nil, nil) if unset.
+func (f *RuleStore) GetAdminConfiguration(orgID int64) (*models.AdminConfiguration, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	return f.AdminConfig[orgID], nil
 }
 
 // PutRule puts the rule in the Rules map. If there are existing rule in the same namespace, they will be overwritten

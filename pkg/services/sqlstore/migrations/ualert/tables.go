@@ -36,6 +36,9 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add column auto_fill_descriptions_with_ai in ngalert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "ngalert_configuration"}, &migrator.Column{
 		Name: "auto_fill_descriptions_with_ai", Type: migrator.DB_Bool, Nullable: true,
 	}))
+	mg.AddMigration("add column reject_alerts_without_runbook_url in ngalert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "ngalert_configuration"}, &migrator.Column{
+		Name: "reject_alerts_without_runbook_url", Type: migrator.DB_Bool, Nullable: true,
+	}))
 	// End of migration log, add new migrations above this line.
 }
 

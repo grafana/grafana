@@ -38,5 +38,9 @@ type RuleStore interface {
 	// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules in the specified folders
 	UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error
 	GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRuleVersion, error)
+
+	// GetAdminConfiguration returns the per-org ngalert admin configuration, used to
+	// enforce org-level rule policies such as required annotations.
+	GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error)
 	accesscontrol.RuleUIDToNamespaceStore
 }

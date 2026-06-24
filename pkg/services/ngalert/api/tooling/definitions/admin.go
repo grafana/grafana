@@ -86,6 +86,9 @@ type PostableNGalertConfig struct {
 	// AutoFillDescriptionsWithAI enables auto-generating missing summary/description
 	// annotations via the LLM plugin in the UI.
 	AutoFillDescriptionsWithAI *bool `json:"auto_fill_descriptions_with_ai,omitempty"`
+	// RejectAlertsWithoutRunbookURL makes rule validation fail when an alert rule is
+	// missing a runbook_url annotation.
+	RejectAlertsWithoutRunbookURL *bool `json:"reject_alerts_without_runbook_url,omitempty"`
 }
 
 // swagger:model
@@ -100,6 +103,9 @@ type GettableNGalertConfig struct {
 	// AutoFillDescriptionsWithAI enables auto-generating missing summary/description
 	// annotations via the LLM plugin in the UI.
 	AutoFillDescriptionsWithAI bool `json:"auto_fill_descriptions_with_ai"`
+	// RejectAlertsWithoutRunbookURL makes rule validation fail when an alert rule is
+	// missing a runbook_url annotation.
+	RejectAlertsWithoutRunbookURL bool `json:"reject_alerts_without_runbook_url"`
 }
 
 // swagger:model

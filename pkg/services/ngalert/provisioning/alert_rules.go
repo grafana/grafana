@@ -452,6 +452,17 @@ func (service *AlertRuleService) GetDeletedAlertRules(ctx context.Context, user 
 
 // CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
 // interval that is set in the rule struct and use the already existing group interval or the default one.
+// enforceRequiredAnnotations rejects rules missing any annotation required by the
+// org's admin configuration. Provisioning has no interactive "fix it" step, so the
+// policy is enforced as a hard validation error on create/update.
+func (service *AlertRuleService) enforceRequiredAnnotations(rule models.AlertRule) error {
+	cfg, err := service.ruleStore.GetAdminConfiguration(rule.OrgID)
+	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
+		return err
+	}
+	return models.ValidateRequiredAnnotations(&rule, cfg)
+}
+
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	if models.IsNoGroupRuleGroup(rule.RuleGroup) {
 		return models.AlertRule{}, fmt.Errorf("%w: rules must have a valid group", models.ErrAlertRuleFailedValidation)
@@ -497,6 +508,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	}
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if err := service.enforceRequiredAnnotations(rule); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -838,6 +852,26 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 }
 
 func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, provenance models.Provenance, versionMessage string) error {
+	// Enforce the org-level required-annotation policy on every rule being created or
+	// updated. This covers the group-replace path used by file and Terraform provisioning,
+	// which does not flow through CreateAlertRule/UpdateAlertRule.
+	if len(delta.New) > 0 || len(delta.Update) > 0 {
+		cfg, err := service.ruleStore.GetAdminConfiguration(user.GetOrgID())
+		if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
+			return err
+		}
+		for _, r := range delta.New {
+			if err := models.ValidateRequiredAnnotations(r, cfg); err != nil {
+				return err
+			}
+		}
+		for _, update := range delta.Update {
+			if err := models.ValidateRequiredAnnotations(update.New, cfg); err != nil {
+				return err
+			}
+		}
+	}
+
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// Delete first as this could prevent future unique constraint violations.
 		if len(delta.Delete) > 0 {
@@ -985,6 +1019,9 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		if err := validator.Validate(*rule.NotificationSettings); err != nil {
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
+	}
+	if err := service.enforceRequiredAnnotations(rule); err != nil {
+		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID

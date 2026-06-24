@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 )
 
 type AlertmanagersChoice int
@@ -38,8 +39,47 @@ type AdminConfiguration struct {
 	// annotations via the LLM plugin in the UI. Nil means unset (defaults to off).
 	AutoFillDescriptionsWithAI *bool `xorm:"auto_fill_descriptions_with_ai"`
 
+	// RejectAlertsWithoutRunbookURL makes rule validation fail when an alert rule is
+	// missing a runbook_url annotation. Nil means unset (defaults to off).
+	RejectAlertsWithoutRunbookURL *bool `xorm:"reject_alerts_without_runbook_url"`
+
 	CreatedAt int64 `xorm:"created"`
 	UpdatedAt int64 `xorm:"updated"`
+}
+
+// RequiredAnnotations returns the user-facing annotation keys that alert rules must
+// carry according to this admin configuration. An empty slice means no requirement.
+func (amc *AdminConfiguration) RequiredAnnotations() []string {
+	if amc == nil {
+		return nil
+	}
+	var required []string
+	if amc.RejectAlertsWithoutDescriptions != nil && *amc.RejectAlertsWithoutDescriptions {
+		required = append(required, SummaryAnnotation, DescriptionAnnotation)
+	}
+	if amc.RejectAlertsWithoutRunbookURL != nil && *amc.RejectAlertsWithoutRunbookURL {
+		required = append(required, RunbookURLAnnotation)
+	}
+	return required
+}
+
+// ValidateRequiredAnnotations checks that the alert rule carries every annotation
+// required by the org's admin configuration. Recording rules are exempt because they
+// don't produce notifications. Returns ErrAlertRuleFailedValidation when any are missing.
+func ValidateRequiredAnnotations(rule *AlertRule, cfg *AdminConfiguration) error {
+	if rule == nil || rule.Record != nil {
+		return nil
+	}
+	var missing []string
+	for _, key := range cfg.RequiredAnnotations() {
+		if strings.TrimSpace(rule.Annotations[key]) == "" {
+			missing = append(missing, key)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("%w: alert rule is missing required annotations: %s", ErrAlertRuleFailedValidation, strings.Join(missing, ", "))
+	}
+	return nil
 }
 
 // String implements the Stringer interface
