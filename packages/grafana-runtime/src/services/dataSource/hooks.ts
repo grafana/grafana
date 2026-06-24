@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -81,19 +80,12 @@ export function useDataSourceInstanceSettings(
  */
 export function useDataSourceInstanceList(filters?: GetDataSourceInstanceListFilters): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);
-
   const filterFunc = filters?.filter;
-  const filterFuncKey = useMemo(() => {
-    if (filterFunc) {
-      return Date.now();
-    }
-    return null;
-  }, [filterFunc]);
 
   const { loading, error, value } = useAsync(
     () => getDataSourceInstanceList(filters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filterValuesKey, filterFuncKey]
+    [filterValuesKey, filterFunc]
   );
 
   return { isLoading: loading, error, items: value ?? [] };
