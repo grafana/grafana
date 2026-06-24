@@ -172,13 +172,13 @@ func cascadeDeleteFlagEnabled(ctx context.Context) bool {
 }
 
 // Run implements registry.BackgroundService.
-func (w *CascadePoller) Run(ctx context.Context) error {
-	restCfg, err := w.restConfig.GetRestConfig(ctx)
+func (cp *CascadePoller) Run(ctx context.Context) error {
+	restCfg, err := cp.restConfig.GetRestConfig(ctx)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return nil
 		}
-		w.log.Debug("folder cascade poller not started", "reason", err)
+		cp.log.Debug("folder cascade poller not started", "reason", err)
 		return nil
 	}
 
@@ -187,28 +187,28 @@ func (w *CascadePoller) Run(ctx context.Context) error {
 		return fmt.Errorf("create folder dynamic client: %w", err)
 	}
 
-	w.folderMutator = &dynamicFolderMutator{client: dyn.Resource(foldersv1.FolderResourceInfo.GroupVersionResource())}
+	cp.folderMutator = &dynamicFolderMutator{client: dyn.Resource(foldersv1.FolderResourceInfo.GroupVersionResource())}
 
 	// Feature disabled: the API server no longer drives cascades, but folders deleted while it was
 	// enabled may still be stuck Terminating with the finalizer and nothing to remove it. Drain those
 	// once (strip their finalizers so they complete), then stop -- no ongoing polling is needed.
-	if w.flagEnabled == nil || !w.flagEnabled(ctx) {
-		w.log.Info("folder cascade poller disabled; draining leftover terminating folders", "flag", featuremgmt.FlagKubernetesFolderCascadeDelete)
-		w.drainTerminatingFolders(ctx)
+	if cp.flagEnabled == nil || !cp.flagEnabled(ctx) {
+		cp.log.Info("folder cascade poller disabled; draining leftover terminating folders", "flag", featuremgmt.FlagKubernetesFolderCascadeDelete)
+		cp.drainTerminatingFolders(ctx)
 		return nil
 	}
 
-	ticker := time.NewTicker(w.pollInterval)
+	ticker := time.NewTicker(cp.pollInterval)
 	defer ticker.Stop()
 
-	w.log.Info("folder cascade poller started", "pollInterval", w.pollInterval)
-	w.sweep(ctx)
+	cp.log.Info("folder cascade poller started", "pollInterval", cp.pollInterval)
+	cp.sweep(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			w.sweep(ctx)
+			cp.sweep(ctx)
 		}
 	}
 }
@@ -221,13 +221,13 @@ func (w *CascadePoller) Run(ctx context.Context) error {
 // contents or mark child folders, so stripping its finalizer would orphan them -- it stays
 // Terminating until the feature is re-enabled and the poller completes it. This runs once at
 // startup: with the feature off no new terminating folders appear.
-func (w *CascadePoller) drainTerminatingFolders(ctx context.Context) {
-	if w.folderMutator == nil {
+func (cp *CascadePoller) drainTerminatingFolders(ctx context.Context) {
+	if cp.folderMutator == nil {
 		return
 	}
-	orgs, err := w.orgs.Search(ctx, &org.SearchOrgsQuery{})
+	orgs, err := cp.orgs.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
-		w.log.Warn("folder cascade drain: list orgs failed", "error", err)
+		cp.log.Warn("folder cascade drain: list orgs failed", "error", err)
 		return
 	}
 	for _, o := range orgs {
@@ -237,36 +237,36 @@ func (w *CascadePoller) drainTerminatingFolders(ctx context.Context) {
 		default:
 		}
 		svcCtx := identity.WithServiceIdentityContext(ctx, o.ID)
-		names, err := searchTerminatingFolders(svcCtx, w.folderSearch, o.ID)
+		names, err := searchTerminatingFolders(svcCtx, cp.folderSearch, o.ID)
 		if err != nil {
-			w.log.Warn("folder cascade drain: search terminating folders failed", "orgID", o.ID, "error", err)
+			cp.log.Warn("folder cascade drain: search terminating folders failed", "orgID", o.ID, "error", err)
 			continue
 		}
-		ns := w.namespaceMapper(o.ID)
+		ns := cp.namespaceMapper(o.ID)
 		for _, name := range names {
-			if err := w.folderMutator.StripCascadeMetadata(svcCtx, ns, name); err != nil && !apierrors.IsNotFound(err) {
-				w.log.Warn("folder cascade drain: strip cascade metadata failed", "namespace", ns, "name", name, "error", err)
+			if err := cp.folderMutator.StripCascadeMetadata(svcCtx, ns, name); err != nil && !apierrors.IsNotFound(err) {
+				cp.log.Warn("folder cascade drain: strip cascade metadata failed", "namespace", ns, "name", name, "error", err)
 			}
 		}
 	}
 }
 
 // sweep runs one poll, guarded by serverlock so only one Grafana instance does it per interval.
-func (w *CascadePoller) sweep(ctx context.Context) {
-	if w.serverLock == nil {
-		w.pollOnce(ctx)
+func (cp *CascadePoller) sweep(ctx context.Context) {
+	if cp.serverLock == nil {
+		cp.pollOnce(ctx)
 		return
 	}
-	if err := w.serverLock.LockAndExecute(ctx, cascadeLockName, w.pollInterval, w.pollOnce); err != nil {
-		w.log.Warn("folder cascade poll: serverlock failed", "error", err)
+	if err := cp.serverLock.LockAndExecute(ctx, cascadeLockName, cp.pollInterval, cp.pollOnce); err != nil {
+		cp.log.Warn("folder cascade poll: serverlock failed", "error", err)
 	}
 }
 
 // pollOnce reconciles terminating folders across all orgs once.
-func (w *CascadePoller) pollOnce(ctx context.Context) {
-	orgs, err := w.orgs.Search(ctx, &org.SearchOrgsQuery{})
+func (cp *CascadePoller) pollOnce(ctx context.Context) {
+	orgs, err := cp.orgs.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
-		w.log.Warn("folder cascade poll: list orgs failed", "error", err)
+		cp.log.Warn("folder cascade poll: list orgs failed", "error", err)
 		return
 	}
 	for _, o := range orgs {
@@ -275,23 +275,23 @@ func (w *CascadePoller) pollOnce(ctx context.Context) {
 			return
 		default:
 		}
-		w.reconcileOrg(ctx, o.ID)
+		cp.reconcileOrg(ctx, o.ID)
 	}
 }
 
 // reconcileOrg searches one org for terminating folders and finalizes each.
-func (w *CascadePoller) reconcileOrg(ctx context.Context, orgID int64) {
+func (cp *CascadePoller) reconcileOrg(ctx context.Context, orgID int64) {
 	svcCtx := identity.WithServiceIdentityContext(ctx, orgID)
 
-	names, err := searchTerminatingFolders(svcCtx, w.folderSearch, orgID)
+	names, err := searchTerminatingFolders(svcCtx, cp.folderSearch, orgID)
 	if err != nil {
-		w.log.Warn("folder cascade poll: search terminating folders failed", "orgID", orgID, "error", err)
+		cp.log.Warn("folder cascade poll: search terminating folders failed", "orgID", orgID, "error", err)
 		return
 	}
 
-	ns := w.namespaceMapper(orgID)
+	ns := cp.namespaceMapper(orgID)
 	for _, name := range names {
-		w.finalizeTerminatingFolder(svcCtx, orgID, ns, name)
+		cp.finalizeTerminatingFolder(svcCtx, orgID, ns, name)
 	}
 }
 
@@ -307,14 +307,14 @@ func (w *CascadePoller) reconcileOrg(ctx context.Context, orgID int64) {
 // independent of its parent, so removing a parent before its terminating children are gone cannot
 // lose a child. The benefit is that a fully-marked subtree collapses in a single tick instead of one
 // level per tick.
-func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int64, namespace, name string) {
-	if w.folderMutator == nil {
+func (cp *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int64, namespace, name string) {
+	if cp.folderMutator == nil {
 		return
 	}
 
-	children, err := listDirectChildFolders(ctx, w.folderSearch, orgID, name)
+	children, err := listDirectChildFolders(ctx, cp.folderSearch, orgID, name)
 	if err != nil {
-		w.log.Warn("folder cascade poll: list child folders failed", "namespace", namespace, "name", name, "error", err)
+		cp.log.Warn("folder cascade poll: list child folders failed", "namespace", namespace, "name", name, "error", err)
 		return
 	}
 
@@ -328,8 +328,8 @@ func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int
 		if child.terminating {
 			continue
 		}
-		if err := w.folderMutator.Delete(ctx, namespace, child.name, &zero); err != nil && !apierrors.IsNotFound(err) {
-			w.log.Warn("folder cascade poll: mark child terminating failed", "namespace", namespace, "parent", name, "child", child.name, "error", err)
+		if err := cp.folderMutator.Delete(ctx, namespace, child.name, &zero); err != nil && !apierrors.IsNotFound(err) {
+			cp.log.Warn("folder cascade poll: mark child terminating failed", "namespace", namespace, "parent", name, "child", child.name, "error", err)
 			allChildrenTerminating = false
 		}
 	}
@@ -340,21 +340,21 @@ func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int
 
 	// Every child folder is marked terminating: delete this folder's contained resources (dashboards,
 	// library elements, alert rules) before removing the finalizer, so they aren't orphaned by GC.
-	if err := w.deleteFolderContents(ctx, orgID, name); err != nil {
-		w.log.Warn("folder cascade poll: delete folder contents failed", "namespace", namespace, "name", name, "error", err)
+	if err := cp.deleteFolderContents(ctx, orgID, name); err != nil {
+		cp.log.Warn("folder cascade poll: delete folder contents failed", "namespace", namespace, "name", name, "error", err)
 		return // keep the finalizer and retry next tick
 	}
-	terminating, err := w.folderMutator.RemoveCascadeFinalizer(ctx, namespace, name)
+	terminating, err := cp.folderMutator.RemoveCascadeFinalizer(ctx, namespace, name)
 	if err != nil && !apierrors.IsNotFound(err) {
-		w.log.Warn("folder cascade poll: remove finalizer failed", "namespace", namespace, "name", name, "error", err)
+		cp.log.Warn("folder cascade poll: remove finalizer failed", "namespace", namespace, "name", name, "error", err)
 		return
 	}
 	if !terminating {
 		// The folder carries the terminating label but has no deletion timestamp: its delete was
 		// interrupted before the timestamp was set. Resume it with a force delete so it is actually
 		// removed; next tick it has a deletion timestamp and the finalizer comes off normally.
-		if err := w.folderMutator.Delete(ctx, namespace, name, &zero); err != nil && !apierrors.IsNotFound(err) {
-			w.log.Warn("folder cascade poll: resume interrupted delete failed", "namespace", namespace, "name", name, "error", err)
+		if err := cp.folderMutator.Delete(ctx, namespace, name, &zero); err != nil && !apierrors.IsNotFound(err) {
+			cp.log.Warn("folder cascade poll: resume interrupted delete failed", "namespace", namespace, "name", name, "error", err)
 		}
 	}
 }
@@ -362,15 +362,15 @@ func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int
 // deleteFolderContents deletes the non-folder resources contained in folderUID (dashboards,
 // library elements, alert rules) via the folder service registry, under the poller's service
 // identity.
-func (w *CascadePoller) deleteFolderContents(ctx context.Context, orgID int64, folderUID string) error {
-	if w.contentsDeleter == nil {
+func (cp *CascadePoller) deleteFolderContents(ctx context.Context, orgID int64, folderUID string) error {
+	if cp.contentsDeleter == nil {
 		return nil
 	}
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return err
 	}
-	return w.contentsDeleter.deleteChildrenInFolder(ctx, orgID, []string{folderUID}, user)
+	return cp.contentsDeleter.deleteChildrenInFolder(ctx, orgID, []string{folderUID}, user)
 }
 
 // searchTerminatingFolders returns the UIDs of folders in orgID that carry the terminating label,
@@ -561,8 +561,8 @@ func (d *dynamicFolderMutator) StripCascadeMetadata(ctx context.Context, namespa
 }
 
 // IsDisabled implements registry.CanBeDisabled.
-func (w *CascadePoller) IsDisabled() bool {
-	return w.restConfig == nil
+func (cp *CascadePoller) IsDisabled() bool {
+	return cp.restConfig == nil
 }
 
 var (
