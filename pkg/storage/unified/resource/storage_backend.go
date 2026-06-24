@@ -971,7 +971,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		}
 
 		// Verify the current RV matches the PreviousRV
-		if latestKey.ResourceVersion != event.PreviousRV {
+		if !rvmanager.IsRvEqual(latestKey.ResourceVersion, event.PreviousRV) {
 			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "requested RV does not match current RV")
 		}
