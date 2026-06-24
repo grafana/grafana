@@ -48,6 +48,7 @@ describe('ActionabilityProgressBar', () => {
   });
 
   it.each([
+    { score: 0, severity: 'error' as const },
     { score: 35, severity: 'error' as const },
     { score: 50, severity: 'warning' as const },
     { score: 85, severity: 'success' as const },
@@ -61,12 +62,19 @@ describe('ActionabilityProgressBar', () => {
 
       expect(styles.color).toBe(toComputedColor(SCORE_COLORS[severity]));
       expect(styles.fontWeight).toBe('700');
-      expect(styles.fontSize).toBe('18px');
+      expect(styles.fontSize).toBe('20px');
       expect(styles.display).toBe('block');
+      expect(scoreText).toHaveClass('grafana-alerting-actionability-score-value');
       expect(scoreText.textContent).toBe(`${score}%`);
 
       const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
-      expect(window.getComputedStyle(fill).backgroundColor).toBe(toComputedBackground(SCORE_COLORS[severity]));
+      const fillStyles = window.getComputedStyle(fill);
+      expect(fillStyles.backgroundColor).toBe(toComputedBackground(SCORE_COLORS[severity]));
+      if (score === 0) {
+        expect(fillStyles.minWidth).toBe('6px');
+      } else {
+        expect(fillStyles.width).toBe(`${score}%`);
+      }
 
       restoreTheme();
       unmount();
