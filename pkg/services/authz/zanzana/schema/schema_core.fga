@@ -6,6 +6,9 @@ type user
     define update: [user, service-account, team#member, role#assignee]
     define delete: [user, service-account, team#member, role#assignee]
 
+    define get_permissions: [user, service-account, team#member, role#assignee]
+    define set_permissions: [user, service-account, team#member, role#assignee]
+
 type service-account
   relations
     define get: [user, service-account, team#member, role#assignee]

@@ -269,6 +269,32 @@ func teamWildcardScope() string {
 	return ac.Scope("teams", "id", "*")
 }
 
+// isUserRBACAction matches user-management actions whose scopes need UID→ID translation.
+func isUserRBACAction(action string) bool {
+	return strings.HasPrefix(action, "users:") || strings.HasPrefix(action, "users.")
+}
+
+// resolveUserScope translates a user UID to the legacy users:id:<numericID> scope.
+func (r *ZanzanaPermissionResolver) resolveUserScope(ctx context.Context, namespace, userUID string) (string, error) {
+	if r.scopeResolver == nil {
+		return "", errors.New("scope resolver not initialized")
+	}
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse namespace: %w", err)
+	}
+	id, err := r.scopeResolver.GetUserIDByUID(ctx, nsInfo, userUID)
+	if err != nil {
+		return "", err
+	}
+	return ac.Scope("users", "id", fmt.Sprintf("%d", id)), nil
+}
+
+// userWildcardScope returns the legacy wildcard scope for users (users:id:*).
+func userWildcardScope() string {
+	return ac.Scope("users", "id", "*")
+}
+
 // listPermissions lists permissions for a subject on a given group/resource
 func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, verb, action, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
@@ -337,6 +363,11 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 				Action: action,
 				Scope:  teamWildcardScope(),
 			})
+		} else if isUserRBACAction(action) {
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  userWildcardScope(),
+			})
 		} else {
 			appendIfMatches(ac.Permission{
 				Action: action,
@@ -346,10 +377,12 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	}
 
 	// Items are objects of the listed resource type, scoped by that resource.
-	// Team actions need UID→ID translation so scopes match legacy RBAC (teams:id:<n>).
+	// Team and user actions need UID→ID translation so scopes match legacy RBAC
+	// (teams:id:<n> / users:id:<n>).
 	for _, item := range resp.Items {
 		var itemScope string
-		if isTeamRBACAction(action) {
+		switch {
+		case isTeamRBACAction(action):
 			resolved, err := r.resolveTeamScope(ctx, namespace, item)
 			if err != nil {
 				zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", item, "error", err)
@@ -357,7 +390,15 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			} else {
 				itemScope = resolved
 			}
-		} else {
+		case isUserRBACAction(action):
+			resolved, err := r.resolveUserScope(ctx, namespace, item)
+			if err != nil {
+				zLogger.Warn("failed to resolve user UID to ID, using uid scope", "uid", item, "error", err)
+				itemScope = resourceScope(resource, item)
+			} else {
+				itemScope = resolved
+			}
+		default:
 			itemScope = resourceScope(resource, item)
 		}
 		appendIfMatches(ac.Permission{
@@ -506,9 +547,15 @@ func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identit
 }
 
 var teamGVR = schema.GroupVersionResource{
-	Group:    "iam.grafana.com",
+	Group:    "iam.grafana.app",
 	Version:  "v0alpha1",
 	Resource: "teams",
+}
+
+var userGVR = schema.GroupVersionResource{
+	Group:    "iam.grafana.app",
+	Version:  "v0alpha1",
+	Resource: "users",
 }
 
 type uidToIDResolver struct {
@@ -575,4 +622,8 @@ func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.Namespac
 
 func (r *uidToIDResolver) GetTeamIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
 	return r.getObjectID(ctx, nsInfo, teamGVR, uid)
+}
+
+func (r *uidToIDResolver) GetUserIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
+	return r.getObjectID(ctx, nsInfo, userGVR, uid)
 }
