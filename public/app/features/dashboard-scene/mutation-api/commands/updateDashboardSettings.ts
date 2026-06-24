@@ -20,10 +20,8 @@ export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSetti
 type CursorSyncValue = NonNullable<UpdateDashboardSettingsPayload['cursorSync']>;
 type DashboardLinkPayload = NonNullable<UpdateDashboardSettingsPayload['links']>[number];
 
-// The payload links are partial v2 DashboardLinks; fill the full shape from the
-// shared v2 defaults and sanitize the URL since these render as clickable links
-// and the input is model-controlled. The completed v2 links are assigned onto
-// the scene directly, the same way transformSaveModelSchemaV2ToScene does.
+// URLs are sanitized because links render as clickable and the input is
+// model-controlled (could carry a javascript:/data: scheme).
 function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
   const defaults = defaultDashboardLink();
   return {
