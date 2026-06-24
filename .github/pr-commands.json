@@ -180,15 +180,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/tempo/**/*",
-      "pkg/tsdb/tempo/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Tempo"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/features/variables/**/*",
       "public/app/features/templating/**/*"
     ],

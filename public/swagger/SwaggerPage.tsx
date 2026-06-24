@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import getDefaultMonacoLanguages from 'lib/monaco-languages';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
@@ -5,6 +6,7 @@ import SwaggerUI from 'swagger-ui-react';
 
 import { createTheme, monacoLanguageRegistry, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Icon, Stack, Select, UserIcon, type UserView, Button } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
@@ -80,56 +82,58 @@ export const Page = () => {
 
   return (
     <div>
-      <ThemeProvider value={theme}>
-        <NamespaceContext.Provider value={namespace.value}>
-          <div style={{ backgroundColor: '#000', padding: '10px' }}>
-            <Stack justifyContent={'space-between'}>
-              <Icon name="grafana" size="xxl" />
-              <Select
-                options={urls.value}
-                isClearable={false /* TODO -- when we allow a landing page, this can be true */}
-                onChange={(v) => {
-                  const url = new URL(window.location.href);
-                  url.hash = '';
-                  if (v?.key) {
-                    url.searchParams.set('api', v.key);
-                  } else {
-                    url.searchParams.delete('api');
-                  }
-                  window.history.pushState(null, '', url);
-                  setURL(v);
-                }}
-                value={url}
-                isLoading={urls.loading}
-              />
-              <div style={{ marginTop: '5px' }}>
-                {userView ? (
-                  <UserIcon userView={userView} />
-                ) : (
-                  <a href="/login">
-                    <Button variant="primary">
-                      <Trans i18nKey="swagger.login">Login</Trans>
-                    </Button>
-                  </a>
-                )}
-              </div>
-            </Stack>
-          </div>
+      <OpenFeatureProvider client={getFeatureFlagClient()}>
+        <ThemeProvider value={theme}>
+          <NamespaceContext.Provider value={namespace.value}>
+            <div style={{ backgroundColor: '#000', padding: '10px' }}>
+              <Stack justifyContent={'space-between'}>
+                <Icon name="grafana" size="xxl" />
+                <Select
+                  options={urls.value}
+                  isClearable={false /* TODO -- when we allow a landing page, this can be true */}
+                  onChange={(v) => {
+                    const url = new URL(window.location.href);
+                    url.hash = '';
+                    if (v?.key) {
+                      url.searchParams.set('api', v.key);
+                    } else {
+                      url.searchParams.delete('api');
+                    }
+                    window.history.pushState(null, '', url);
+                    setURL(v);
+                  }}
+                  value={url}
+                  isLoading={urls.loading}
+                />
+                <div style={{ marginTop: '5px' }}>
+                  {userView ? (
+                    <UserIcon userView={userView} />
+                  ) : (
+                    <a href="/login">
+                      <Button variant="primary">
+                        <Trans i18nKey="swagger.login">Login</Trans>
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              </Stack>
+            </div>
 
-          {url?.value && (
-            <SwaggerUI
-              url={url.value}
-              presets={[WrappedPlugins]}
-              deepLinking={true}
-              tryItOutEnabled={true}
-              queryConfigEnabled={false}
-              persistAuthorization={false}
-              displayOperationId
-            />
-          )}
-          {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
-        </NamespaceContext.Provider>
-      </ThemeProvider>
+            {url?.value && (
+              <SwaggerUI
+                url={url.value}
+                presets={[WrappedPlugins]}
+                deepLinking={true}
+                tryItOutEnabled={true}
+                queryConfigEnabled={false}
+                persistAuthorization={false}
+                displayOperationId
+              />
+            )}
+            {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
+          </NamespaceContext.Provider>
+        </ThemeProvider>
+      </OpenFeatureProvider>
     </div>
   );
 };

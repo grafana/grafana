@@ -21,7 +21,6 @@ const externalisedDatasources = [
   'mssql',
   'mysql',
   'parca',
-  'tempo',
 ];
 
 const config: KnipConfig = {

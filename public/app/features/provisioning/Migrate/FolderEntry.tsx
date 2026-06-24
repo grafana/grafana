@@ -4,17 +4,19 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow, resourceKey } from './hooks/useFolderMigrationData';
 
 interface FolderEntryProps {
   folder: FolderRow;
   isExpanded: boolean;
   isSelected: boolean;
-  selectedDashboardUids: Set<string>;
-  folderCoveredDashboardUids: Set<string>;
+  /** Composite keys (see `resourceKey`) of individually-ticked resources. */
+  selectedResourceKeys: Set<string>;
+  /** Composite keys of resources covered by a selected folder. */
+  folderCoveredResourceKeys: Set<string>;
   onToggleExpanded: () => void;
   onToggleFolder: () => void;
-  onToggleDashboard: (uid: string) => void;
+  onToggleResource: (key: string) => void;
 }
 
 /**
@@ -27,11 +29,11 @@ export function FolderEntry({
   folder,
   isExpanded,
   isSelected,
-  selectedDashboardUids,
-  folderCoveredDashboardUids,
+  selectedResourceKeys,
+  folderCoveredResourceKeys,
   onToggleExpanded,
   onToggleFolder,
-  onToggleDashboard,
+  onToggleResource,
 }: FolderEntryProps) {
   const styles = useStyles2(getStyles);
   return (
@@ -58,7 +60,7 @@ export function FolderEntry({
           <Text>{folder.title}</Text>
           <Text variant="bodySmall" color="secondary">
             {t('provisioning.migrate.resources-folder-summary', '', {
-              count: folder.dashboardCount,
+              count: folder.resourceCount,
               defaultValue_one: '{{count}} resource',
               defaultValue_other: '{{count}} resources',
             })}
@@ -67,19 +69,20 @@ export function FolderEntry({
       </div>
       {isExpanded && (
         <div className={styles.children}>
-          {folder.directDashboards.map((dash) => {
-            const coveredByFolder = folderCoveredDashboardUids.has(dash.uid);
-            const checked = coveredByFolder || selectedDashboardUids.has(dash.uid);
+          {folder.directResources.map((resource) => {
+            const key = resourceKey(resource);
+            const coveredByFolder = folderCoveredResourceKeys.has(key);
+            const checked = coveredByFolder || selectedResourceKeys.has(key);
             return (
-              <div key={`dash-${dash.uid}`} className={styles.childRow}>
+              <div key={`resource-${key}`} className={styles.childRow}>
                 <Checkbox
                   value={checked}
                   disabled={coveredByFolder}
-                  onChange={() => onToggleDashboard(dash.uid)}
-                  aria-label={dash.title}
+                  onChange={() => onToggleResource(key)}
+                  aria-label={resource.title}
                 />
-                <Icon name="apps" size="sm" />
-                <Text variant="bodySmall">{dash.title}</Text>
+                <Icon name={resource.kind.icon} size="sm" />
+                <Text variant="bodySmall">{resource.title}</Text>
               </div>
             );
           })}

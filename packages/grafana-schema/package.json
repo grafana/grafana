@@ -197,12 +197,6 @@
       "import": "./dist/esm/raw/composable/table/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/table/panelcfg/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/tempo/dataquery/x/TempoDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/tempo/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/tempo/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/tempo/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/tempo/dataquery/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/text/panelcfg/x/TextPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/text/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/text/panelcfg/x/types.gen.d.ts",
