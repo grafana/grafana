@@ -14,6 +14,7 @@ export interface IncompleteRule {
   name: string;
   folder: string;
   group: string;
+  labels: Record<string, string>;
   missing: Annotation[];
 }
 
@@ -56,6 +57,7 @@ export function useIncompleteRules(): {
               name: rule.name,
               folder: namespace.name,
               group: group.name,
+              labels: rule.labels ?? {},
               missing,
             });
           }

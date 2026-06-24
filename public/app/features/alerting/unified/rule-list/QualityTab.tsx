@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Card, EmptyState, LinkButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { useRulesFilter } from '../hooks/useFilteredRules';
 import { type FixProgress, useFixIncompleteRules } from '../hooks/useFixIncompleteRules';
 import { type IncompleteRule, useIncompleteRules } from '../hooks/useIncompleteRules';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
@@ -13,12 +14,17 @@ import { Annotation, annotationLabels } from '../utils/constants';
 import { createRelativeUrl } from '../utils/url';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
+import { QualityFilter } from './quality/QualityFilter';
+import { filterIncompleteRules } from './quality/filterIncompleteRules';
+
 // A missing runbook URL leaves responders with nowhere to start, so it's treated as a
 // high-severity issue and costs a full point. A missing summary/description is medium and
 // costs half a point. The score sums these penalties across all rules, so all-rules-missing
 // a runbook bottoms out at 0%, while only-summary/description gaps floor around 50%.
 const HIGH_SEVERITY_WEIGHT = 1;
 const MEDIUM_SEVERITY_WEIGHT = 0.5;
+
+const collator = new Intl.Collator();
 
 function isHighSeverity(rule: IncompleteRule): boolean {
   return rule.missing.includes(Annotation.runbookURL);
@@ -50,18 +56,27 @@ function QualityTab() {
   const { rules: flaggedRules, totalRules, isLoading, refetch } = useIncompleteRules();
   const { isAvailable: isAssistantAvailable, isFixing, progress, fixRule, fixAll } = useFixIncompleteRules();
   const [fixingUid, setFixingUid] = useState<string | undefined>(undefined);
+  const { filterState } = useRulesFilter();
 
+  // The score reflects the whole org and stays stable while filtering; the list below
+  // narrows to the rules matching the active folder / label / name filters.
   const incompleteCount = flaggedRules.length;
   const score = qualityScore(flaggedRules, totalRules);
 
+  const filteredRules = useMemo(() => filterIncompleteRules(flaggedRules, filterState), [flaggedRules, filterState]);
+
   // Show the most severe rules first; ties broken by folder/group/name so the order is stable.
-  const sortedRules = [...flaggedRules].sort((a, b) => {
-    const diff = severityRank(b) - severityRank(a);
-    if (diff !== 0) {
-      return diff;
-    }
-    return `${a.folder}/${a.group}/${a.name}`.localeCompare(`${b.folder}/${b.group}/${b.name}`);
-  });
+  const sortedRules = useMemo(
+    () =>
+      [...filteredRules].sort((a, b) => {
+        const diff = severityRank(b) - severityRank(a);
+        if (diff !== 0) {
+          return diff;
+        }
+        return collator.compare(`${a.folder}/${a.group}/${a.name}`, `${b.folder}/${b.group}/${b.name}`);
+      }),
+    [filteredRules]
+  );
 
   // The rule update mutation doesn't invalidate the Prometheus rules query backing
   // this list, so refetch it after fixing to reflect the new summaries/descriptions.
@@ -121,56 +136,66 @@ function QualityTab() {
             </Trans>
           </EmptyState>
         ) : (
-          <Stack direction="column" gap={1}>
-            {sortedRules.map((rule) => (
-              <Card key={`${rule.folder}-${rule.group}-${rule.name}`}>
-                <Card.Heading>{rule.name}</Card.Heading>
-                <Card.Meta>{[rule.folder, rule.group].filter(Boolean)}</Card.Meta>
-                <Card.Tags>
-                  {isHighSeverity(rule) ? (
-                    <Badge
-                      color="red"
-                      icon="exclamation-triangle"
-                      text={t('alerting.quality.severity-high', 'High piority')}
-                    />
-                  ) : (
-                    <Badge
-                      color="orange"
-                      icon="exclamation-circle"
-                      text={t('alerting.quality.severity-medium', 'Medium priority')}
-                    />
-                  )}
-                </Card.Tags>
-                <Card.Description>
-                  <Stack direction="row" gap={1} wrap="wrap">
-                    <Text variant="bodySmall" color="secondary">
-                      <Trans i18nKey="alerting.quality.missing-label">Missing:</Trans>
-                    </Text>
-                    {rule.missing.map((key) => (
-                      <Badge key={key} color="orange" text={annotationLabels[key]} />
-                    ))}
-                  </Stack>
-                </Card.Description>
-                <Card.Actions>
-                  <FixWithAIButton
-                    isAvailable={isAssistantAvailable}
-                    isFixing={fixingUid === rule.uid}
-                    disabled={isBusy || !rule.uid}
-                    onClick={() => handleFixOne(rule)}
-                  />
-                  {rule.uid && (
-                    <LinkButton
-                      icon="pen"
-                      variant="secondary"
-                      size="sm"
-                      href={createRelativeUrl(`/alerting/${rule.uid}/edit`)}
-                    >
-                      <Trans i18nKey="alerting.quality.edit">Edit</Trans>
-                    </LinkButton>
-                  )}
-                </Card.Actions>
-              </Card>
-            ))}
+          <Stack direction="column" gap={2}>
+            <QualityFilter />
+            {sortedRules.length === 0 ? (
+              <EmptyState
+                variant="not-found"
+                message={t('alerting.quality.no-matches', 'No incomplete alert rules match your filters.')}
+              />
+            ) : (
+              <Stack direction="column" gap={1}>
+                {sortedRules.map((rule) => (
+                  <Card noMargin key={`${rule.folder}-${rule.group}-${rule.name}`}>
+                    <Card.Heading>{rule.name}</Card.Heading>
+                    <Card.Meta>{[rule.folder, rule.group].filter(Boolean)}</Card.Meta>
+                    <Card.Tags>
+                      {isHighSeverity(rule) ? (
+                        <Badge
+                          color="red"
+                          icon="exclamation-triangle"
+                          text={t('alerting.quality.severity-high', 'High priority')}
+                        />
+                      ) : (
+                        <Badge
+                          color="orange"
+                          icon="exclamation-circle"
+                          text={t('alerting.quality.severity-medium', 'Medium priority')}
+                        />
+                      )}
+                    </Card.Tags>
+                    <Card.Description>
+                      <Stack direction="row" gap={1} wrap="wrap">
+                        <Text variant="bodySmall" color="secondary">
+                          <Trans i18nKey="alerting.quality.missing-label">Missing:</Trans>
+                        </Text>
+                        {rule.missing.map((key) => (
+                          <Badge key={key} color="orange" text={annotationLabels[key]} />
+                        ))}
+                      </Stack>
+                    </Card.Description>
+                    <Card.Actions>
+                      <FixWithAIButton
+                        isAvailable={isAssistantAvailable}
+                        isFixing={fixingUid === rule.uid}
+                        disabled={isBusy || !rule.uid}
+                        onClick={() => handleFixOne(rule)}
+                      />
+                      {rule.uid && (
+                        <LinkButton
+                          icon="pen"
+                          variant="secondary"
+                          size="sm"
+                          href={createRelativeUrl(`/alerting/${rule.uid}/edit`)}
+                        >
+                          <Trans i18nKey="alerting.quality.edit">Edit</Trans>
+                        </LinkButton>
+                      )}
+                    </Card.Actions>
+                  </Card>
+                ))}
+              </Stack>
+            )}
           </Stack>
         )}
       </Stack>
@@ -268,7 +293,11 @@ function QualityScoreCard({ score, incompleteCount, totalRules }: QualityScoreCa
           <Text variant="h4">
             <Trans i18nKey="alerting.quality.score-title">Alert quality score</Trans>
           </Text>
-          <span className={styles.score}>{score.toFixed(1)} / 10</span>
+          <span className={styles.score}>
+            <Trans i18nKey="alerting.quality.score-out-of" values={{ score: score.toFixed(1) }}>
+              {'{{score}}'} / 10
+            </Trans>
+          </span>
         </Stack>
         <div className={styles.track} role="progressbar" aria-valuenow={score} aria-valuemin={0} aria-valuemax={10}>
           <div className={styles.fill} />
@@ -319,7 +348,9 @@ const getStyles = (theme: GrafanaTheme2, score: number) => ({
     width: `${score * 10}%`,
     height: '100%',
     backgroundColor: scoreColor(theme, score),
-    transition: 'width 0.3s ease',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create('width', { duration: theme.transitions.duration.short }),
+    },
   }),
 });
 
