@@ -19757,6 +19757,8 @@
     },
     "/org/preferences": {
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
         "operationId": "getOrgPreferences",
         "responses": {
           "200": {
@@ -19776,6 +19778,8 @@
         "tags": ["org", "preferences"]
       },
       "patch": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
         "operationId": "patchOrgPreferences",
         "requestBody": {
           "content": {
@@ -19809,6 +19813,8 @@
         "tags": ["org", "preferences"]
       },
       "put": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
         "operationId": "updateOrgPreferences",
         "requestBody": {
           "content": {
@@ -23647,6 +23653,8 @@
     },
     "/user/preferences": {
       "get": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
         "operationId": "getUserPreferences",
         "responses": {
           "200": {
@@ -23663,6 +23671,8 @@
         "tags": ["signed_in_user", "preferences"]
       },
       "patch": {
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
         "operationId": "patchUserPreferences",
         "requestBody": {
           "content": {
@@ -23693,7 +23703,8 @@
         "tags": ["signed_in_user", "preferences"]
       },
       "put": {
-        "description": "Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
+        "deprecated": true,
+        "description": "Please refer to [new API](?api=preferences.grafana.app-v1).",
         "operationId": "updateUserPreferences",
         "requestBody": {
           "content": {

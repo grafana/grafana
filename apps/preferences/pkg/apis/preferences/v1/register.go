@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 import (
 	"fmt"
@@ -8,12 +8,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	prefsv1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-var PreferencesResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
-	"preferences", "preferences", "Preferences",
+const (
+	GROUP         = APIGroup
+	VERSION       = APIVersion
+	RESOURCE      = "preferences"
+	APIVERSION    = GROUP + "/" + VERSION
+	RESOURCEGROUP = RESOURCE + "." + GROUP
+)
+
+var PreferencesResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	RESOURCE, "preferences", "Preferences",
 	func() runtime.Object { return &Preferences{} },
 	func() runtime.Object { return &PreferencesList{} },
 	utils.TableColumns{
@@ -36,9 +43,5 @@ var PreferencesResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
 
 var (
 	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: APIGroup, Version: APIVersion}
-
-	// GetOpenAPIDefinitions is shared with v1 (identical schema); the served v1alpha1
-	// spec uses v1 model keys, mirroring the folder app.
-	GetOpenAPIDefinitions = prefsv1.GetOpenAPIDefinitions
+	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 )

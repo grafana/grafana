@@ -1,8 +1,8 @@
 package preferences
 
 manifest: {
-	appName:       "preferences"
-	groupOverride: "preferences.grafana.app"
+	appName:          "preferences"
+	groupOverride:    "preferences.grafana.app"
 	preferredVersion: "v1"
 	versions: {
 		"v1": {

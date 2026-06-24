@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -23,6 +23,10 @@ var ofClient = openfeature.NewDefaultClient()
 // swagger:route GET /user/preferences signed_in_user preferences getUserPreferences
 //
 // Get user preferences.
+//
+// Please refer to [new API](?api=preferences.grafana.app-v1).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getPreferencesResponse
@@ -45,6 +49,10 @@ func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Re
 // swagger:route PUT /user/preferences signed_in_user preferences updateUserPreferences
 //
 // Update user preferences.
+//
+// Please refer to [new API](?api=preferences.grafana.app-v1).
+//
+// Deprecated: true
 //
 // Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.
 //
@@ -76,6 +84,10 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 // swagger:route PATCH /user/preferences signed_in_user preferences patchUserPreferences
 //
 // Patch user preferences.
+//
+// Please refer to [new API](?api=preferences.grafana.app-v1).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse
@@ -163,6 +175,10 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 //
 // Get Current Org Prefs.
 //
+// Please refer to [new API](?api=preferences.grafana.app-v1).
+//
+// Deprecated: true
+//
 // Responses:
 // 200: getPreferencesResponse
 // 401: unauthorisedError
@@ -179,6 +195,10 @@ func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Res
 // swagger:route PUT /org/preferences org preferences updateOrgPreferences
 //
 // Update Current Org Prefs.
+//
+// Please refer to [new API](?api=preferences.grafana.app-v1).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse
@@ -203,6 +223,10 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 // swagger:route PATCH /org/preferences org preferences patchOrgPreferences
 //
 // Patch Current Org Prefs.
+//
+// Please refer to [new API](?api=preferences.grafana.app-v1).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse

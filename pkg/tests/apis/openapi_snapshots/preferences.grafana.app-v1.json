@@ -2,10 +2,10 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Configure user, team, and org preferences",
-    "title": "preferences.grafana.app/v1alpha1"
+    "title": "preferences.grafana.app/v1"
   },
   "paths": {
-    "/apis/preferences.grafana.app/v1alpha1/": {
+    "/apis/preferences.grafana.app/v1/": {
       "get": {
         "tags": [
           "API Discovery"
@@ -31,7 +31,7 @@
         }
       }
     },
-    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences": {
+    "/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences": {
       "get": {
         "tags": [
           "Preferences"
@@ -128,7 +128,7 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1",
           "kind": "Preferences"
         }
       },
@@ -232,7 +232,7 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1",
           "kind": "Preferences"
         }
       },
@@ -258,7 +258,7 @@
         }
       ]
     },
-    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/merged": {
+    "/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/merged": {
       "get": {
         "tags": [
           "Preferences"
@@ -290,7 +290,7 @@
         }
       }
     },
-    "/apis/preferences.grafana.app/v1alpha1/namespaces/{namespace}/preferences/{name}": {
+    "/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}": {
       "get": {
         "tags": [
           "Preferences"
@@ -317,7 +317,7 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1",
           "kind": "Preferences"
         }
       },
@@ -406,7 +406,7 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1",
           "kind": "Preferences"
         }
       },
@@ -498,7 +498,7 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1",
           "kind": "Preferences"
         }
       },
@@ -606,7 +606,7 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "preferences.grafana.app",
-          "version": "v1alpha1",
+          "version": "v1",
           "kind": "Preferences"
         }
       },
