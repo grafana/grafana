@@ -44,10 +44,10 @@ export function AnnotationPolicySettings() {
         </Field>
 
         <Field
-          label={t('alerting.annotation-policy.reject-runbook-label', 'Require a runbook URL')}
+          label={t('alerting.annotation-policy.reject-runbook-label', 'Require runbook URL')}
           description={t(
             'alerting.annotation-policy.reject-runbook-description',
-            'Alerts without a runbook URL annotation will be rejected at save time, so responders always have a place to start.'
+            'Alerts without a runbook URL will be blocked from saving.'
           )}
           horizontal
         >
