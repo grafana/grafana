@@ -66,7 +66,19 @@ export function SaveProvisionedPlaylistDrawer({
 
   // Branch (PR) workflow: navigate to the playlist list with the PR link params so the page shows
   // the pull-request banner (mirrors the dashboard flow).
-  const onBranchSuccess = ({ urls, repoType }: { urls?: Record<string, string>; repoType?: string }) => {
+  const onBranchSuccess = ({
+    ref,
+    urls,
+    repoType,
+    configuredBranch,
+    repoUrl,
+  }: {
+    ref: string;
+    urls?: Record<string, string>;
+    repoType?: string;
+    configuredBranch?: string;
+    repoUrl?: string;
+  }) => {
     invalidatePlaylists();
     navigate(
       buildResourceBranchRedirectUrl({
@@ -75,6 +87,9 @@ export function SaveProvisionedPlaylistDrawer({
         paramValue: urls?.newPullRequestURL,
         repoType,
         action: isNew ? 'create' : 'update',
+        ref,
+        configuredBranch,
+        repoUrl: urls?.repositoryURL ?? repoUrl,
       })
     );
   };

@@ -53,7 +53,15 @@ export interface SaveProvisionedResourceDrawerProps {
   /** Called after a successful write to the configured branch (e.g. navigate / invalidate caches). */
   onWriteSuccess?: () => void;
   /** Called after a successful push to a non-configured branch (PR workflow). */
-  onBranchSuccess?: (data: { ref: string; urls?: Record<string, string>; repoType?: string }) => void;
+  onBranchSuccess?: (data: {
+    ref: string;
+    urls?: Record<string, string>;
+    repoType?: string;
+    /** The repository's configured (default) branch, for the PR banner's branch display. */
+    configuredBranch?: string;
+    /** The repository's base URL, for the PR banner's branch links. */
+    repoUrl?: string;
+  }) => void;
 }
 
 interface FormProps extends SaveProvisionedResourceDrawerProps {
@@ -117,8 +125,15 @@ function FormContent({
       onDismiss,
       onWriteSuccess: () => onWriteSuccess?.(),
       // Branch (PR) workflow: forward to the caller so it can navigate and surface the PR banner on
-      // the destination page (like dashboards), passing the repo type for the banner copy.
-      onBranchSuccess: ({ ref, urls }) => onBranchSuccess?.({ ref, urls, repoType: repository?.type }),
+      // the destination page (like dashboards), passing the repo info for the banner copy/branches.
+      onBranchSuccess: ({ ref, urls }) =>
+        onBranchSuccess?.({
+          ref,
+          urls,
+          repoType: repository?.type,
+          configuredBranch: repository?.branch,
+          repoUrl: repository?.url,
+        }),
     },
   });
 

@@ -4,6 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
+import { useUrlParams } from 'app/core/navigation/hooks';
 import { DeleteProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/DeleteProvisionedPlaylistDrawer';
 import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -20,6 +21,12 @@ export const PlaylistPage = () => {
   const [deletePlaylist] = useDeletePlaylistMutation();
   // Set after a repository-managed playlist is committed to a new branch; surfaces the PR banner.
   const { newPrURL, repoURL } = usePullRequestParam();
+  const [urlParams] = useUrlParams();
+  const branchInfo = {
+    targetBranch: urlParams.get('ref') || undefined,
+    configuredBranch: urlParams.get('repo_branch') || undefined,
+    repoBaseUrl: repoURL,
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const allPlaylists = useMemo(() => data?.items ?? [], [data?.items]);
   const playlists = useMemo(() => searchPlaylists(allPlaylists, searchQuery), [searchQuery, allPlaylists]);
@@ -54,7 +61,7 @@ export const PlaylistPage = () => {
       navId="dashboards/playlists"
     >
       <Page.Contents>
-        {newPrURL && <PreviewBannerViewPR prURL={newPrURL} isNewPr repoUrl={repoURL} />}
+        {newPrURL && <PreviewBannerViewPR prURL={newPrURL} isNewPr repoUrl={repoURL} branchInfo={branchInfo} />}
 
         {showSearch && <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
 
