@@ -26,15 +26,19 @@ type extra struct {
 	incrementalPolicy repository.IncrementalSyncPolicy
 	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
 	allowInsecure bool
+	// maxFileSize caps, in bytes, the size of a single file read from the
+	// repository. 0 means unlimited.
+	maxFileSize int64
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, incrementalPolicy repository.IncrementalSyncPolicy, allowInsecure bool) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, incrementalPolicy repository.IncrementalSyncPolicy, allowInsecure bool, maxFileSize int64) repository.Extra {
 	return &extra{
 		decrypter:         decrypter,
 		factory:           factory,
 		webhookBuilder:    webhookBuilder,
 		incrementalPolicy: incrementalPolicy,
 		allowInsecure:     allowInsecure,
+		maxFileSize:       maxFileSize,
 	}
 }
 
@@ -68,6 +72,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		CommitSigningKey: signingKey,
 		SigningMethod:    git.SigningMethodFromSpec(r),
 		SMIMECertificate: git.SMIMECertificateFromSpec(r),
+		MaxFileSize:      e.maxFileSize,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)

@@ -44,13 +44,14 @@ func ProvideProvisioningOSSRepositoryExtras(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
 		),
-		git.Extra(decrypter, allowInsecure),
+		git.Extra(decrypter, allowInsecure, cfg.ProvisioningMaxFileSize),
 		github.Extra(
 			decrypter,
 			ghFactory,
 			webhooksBuilder,
 			repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges),
 			allowInsecure,
+			cfg.ProvisioningMaxFileSize,
 		),
 	}
 }

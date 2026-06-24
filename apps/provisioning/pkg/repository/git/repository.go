@@ -44,6 +44,11 @@ type RepositoryConfig struct {
 	SMIMECertificate string
 	Path             string
 	SkipGitSuffix    bool
+	// MaxFileSize caps, in bytes, the size of a single object (blob or tree)
+	// nanogit will read from the server. 0 means unlimited. It is pushed down
+	// into nanogit so oversized responses are aborted mid-read rather than
+	// after the whole object has been buffered in memory.
+	MaxFileSize int64
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -63,6 +68,14 @@ func NewRepository(
 	opts := []options.Option{options.WithCapabilityNegotiation()}
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
+	}
+	// Push the per-file size cap into nanogit so a malicious or misbehaving
+	// server cannot exhaust client memory: oversized single-object fetches
+	// (GetBlob/GetTree, used by GetBlobByPath) are aborted mid-read.
+	if gitConfig.MaxFileSize > 0 {
+		opts = append(opts, options.WithLimits(options.Limits{
+			SingleObjectFetchMaxBytes: gitConfig.MaxFileSize,
+		}))
 	}
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
@@ -90,12 +103,18 @@ func NewRepository(
 		writerOptions = append(writerOptions, signer)
 	}
 
-	return &gitRepository{
+	repo := &gitRepository{
 		config:        config,
 		gitConfig:     gitConfig,
 		client:        client,
 		writerOptions: writerOptions,
-	}, nil
+	}
+	// Mirror the nanogit wire-level cap with the post-read content check so the
+	// limit applies even if WithMaxFileSize is never called explicitly.
+	if gitConfig.MaxFileSize > 0 {
+		repo.maxBytes.Store(gitConfig.MaxFileSize)
+	}
+	return repo, nil
 }
 
 func (r *gitRepository) URL() string {
@@ -1120,6 +1139,16 @@ func mapNanogitError(err error) error {
 	}
 	if errors.Is(err, client.ErrServerUnavailable) {
 		return repository.ErrServerUnavailable
+	}
+
+	// nanogit aborted the read because the response exceeded a configured byte
+	// limit (e.g. a file larger than the per-file cap). Surface it as a 413 so
+	// callers and the API layer treat it the same as the post-read size check.
+	var tooLarge *client.ErrResponseTooLarge
+	if errors.As(err, &tooLarge) {
+		return apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("git response for %s operation exceeded the %d byte limit", tooLarge.Op, tooLarge.Limit),
+		)
 	}
 
 	// Return original error if not a known nanogit error

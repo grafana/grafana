@@ -579,12 +579,13 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := c.Settings.Env == setting.Dev || provisioningSec.Key("allow_insecure").MustBool(false)
+	maxFileSize := provisioningSec.Key("max_file_size").MustInt64(setting.ProvisioningMaxFileSizeDefault)
 
 	extras := make([]repository.Extra, 0)
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, maxFileSize))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
@@ -594,7 +595,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, repository.NewIncrementalSyncPolicy(
 				resources.IsFolderMetadataEnabled(c.Settings),
 				provisioningSec.Key("max_incremental_changes").MustInt(100),
-			), allowInsecure))
+			), allowInsecure, maxFileSize))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
