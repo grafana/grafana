@@ -29,11 +29,12 @@ jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
   useGetResourceRepositoryView: jest.fn(),
 }));
 
+const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
     ...actual,
-    useNavigate: () => jest.fn(),
+    useNavigate: () => mockNavigate,
   };
 });
 
@@ -130,6 +131,10 @@ describe('SaveProvisionedPlaylistDrawer', () => {
         interval: '5m',
         items: [{ type: 'dashboard_by_uid', value: 'abc' }],
       },
+    });
+    // After a successful write-workflow save the drawer navigates back to the playlist list.
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/playlists');
     });
   });
 
