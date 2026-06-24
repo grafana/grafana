@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { type CSSProperties } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -14,36 +13,15 @@ const SCORE_COLORS = {
   success: '#73BF69',
 } as const;
 
-const ACTIONABILITY_SCORE_CLASS = 'grafana-alerting-actionability-score-value';
-const ACTIONABILITY_SCORE_STYLE_ID = 'grafana-alerting-actionability-score-styles';
-
-function ensureActionabilityScoreStyles() {
-  if (typeof document === 'undefined' || document.getElementById(ACTIONABILITY_SCORE_STYLE_ID)) {
-    return;
-  }
-
-  const style = document.createElement('style');
-  style.id = ACTIONABILITY_SCORE_STYLE_ID;
-  style.textContent = `
-    .${ACTIONABILITY_SCORE_CLASS} {
-      color: var(--grafana-alerting-actionability-score-color, #FF5286) !important;
-      font-size: 20px !important;
-      font-weight: 700 !important;
-    }
-  `;
-  document.head.appendChild(style);
-}
+type ScoreSeverity = keyof typeof SCORE_COLORS;
 
 interface ActionabilityProgressBarProps {
   actionability: ActionabilityScore;
 }
 
 export function ActionabilityProgressBar({ actionability }: ActionabilityProgressBarProps) {
-  ensureActionabilityScoreStyles();
-
   const styles = useStyles2(getStyles);
   const severity = actionabilitySeverity(actionability.score);
-  const scoreColor = SCORE_COLORS[severity];
   const fillPercent = Math.min(Math.max(actionability.score, 0), 100);
   const showMinimumFill = fillPercent === 0;
   const scoreLabel = t('alerting.notification-message-preview.actionability-score-value', '{{score}}%', {
@@ -52,14 +30,6 @@ export function ActionabilityProgressBar({ actionability }: ActionabilityProgres
   const scoreAriaLabel = t('alerting.notification-message-preview.actionability-score', 'Actionability: {{score}}%', {
     score: actionability.score,
   });
-  const scoreStyle: CSSProperties = {
-    color: scoreColor,
-    fontSize: 20,
-    fontWeight: 700,
-    display: 'block',
-    lineHeight: 1.2,
-    ['--grafana-alerting-actionability-score-color' as string]: scoreColor,
-  };
 
   return (
     <Stack direction="column" gap={0.75} data-testid="actionability-progress">
@@ -68,10 +38,9 @@ export function ActionabilityProgressBar({ actionability }: ActionabilityProgres
           <Trans i18nKey="alerting.notification-message-preview.actionability-label">Actionability</Trans>
         </Text>
         <span
-          className={ACTIONABILITY_SCORE_CLASS}
+          className={styles.scoreValue(severity)}
           data-testid="actionability-score-value"
           aria-label={scoreAriaLabel}
-          style={scoreStyle}
         >
           {scoreLabel}
         </span>
@@ -84,14 +53,7 @@ export function ActionabilityProgressBar({ actionability }: ActionabilityProgres
         aria-valuemax={100}
         aria-label={scoreAriaLabel}
       >
-        <div
-          className={styles.fill}
-          style={{
-            width: showMinimumFill ? undefined : `${fillPercent}%`,
-            minWidth: showMinimumFill ? 6 : undefined,
-            backgroundColor: scoreColor,
-          }}
-        />
+        <div className={styles.fill(severity, showMinimumFill, fillPercent)} />
       </div>
       {actionability.missing.length > 0 ? (
         <Text variant="bodySmall" color="secondary">
@@ -118,6 +80,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(0.75),
   }),
+  scoreValue: (severity: ScoreSeverity) =>
+    css({
+      color: SCORE_COLORS[severity],
+      fontSize: '20px',
+      fontWeight: 700,
+      display: 'block',
+      lineHeight: 1.2,
+    }),
   track: css({
     height: theme.spacing(0.75),
     borderRadius: theme.shape.radius.pill,
@@ -125,9 +95,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     border: `1px solid ${theme.colors.border.weak}`,
   }),
-  fill: css({
-    height: '100%',
-    borderRadius: theme.shape.radius.pill,
-    transition: 'width 200ms ease-out',
-  }),
+  fill: (severity: ScoreSeverity, showMinimumFill: boolean, fillPercent: number) =>
+    css({
+      height: '100%',
+      borderRadius: theme.shape.radius.pill,
+      transition: 'width 200ms ease-out',
+      backgroundColor: SCORE_COLORS[severity],
+      ...(showMinimumFill ? { minWidth: 6 } : { width: `${fillPercent}%` }),
+    }),
 });

@@ -64,7 +64,6 @@ describe('ActionabilityProgressBar', () => {
       expect(styles.fontWeight).toBe('700');
       expect(styles.fontSize).toBe('20px');
       expect(styles.display).toBe('block');
-      expect(scoreText).toHaveClass('grafana-alerting-actionability-score-value');
       expect(scoreText.textContent).toBe(`${score}%`);
 
       const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
