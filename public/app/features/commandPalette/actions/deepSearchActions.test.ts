@@ -78,37 +78,70 @@ describe('groupDeepSearchResults', () => {
     expect(grouped[0].matchedPanelCount).toBe(4);
   });
 
-  it('sorts surviving panel snippets by score (best first) and caps at 2', () => {
+  it('sorts surviving panel snippets by score (best first)', () => {
     const grouped = groupDeepSearchResults([
-      // 'far' (0.9) is above the average and dropped; the rest are sorted best-first
+      // 'far' (0.9) is beyond the spread-aware cutoff and dropped; the rest sort best-first
       panelResult({ content: 'second', score: 0.2 }),
       panelResult({ content: 'first', score: 0.1 }),
+      panelResult({ content: 'third', score: 0.15 }),
       panelResult({ content: 'far', score: 0.9 }),
     ]);
 
     expect(grouped[0].snippets).toEqual([
       { text: 'first', score: 0.1 },
+      { text: 'third', score: 0.15 },
       { text: 'second', score: 0.2 },
     ]);
   });
 
-  it('global scope: cutoff is the min/max midpoint, not the mean, and removes weak dashboards', () => {
+  it('global scope: low spread keeps panels up to the worst score', () => {
     const grouped = groupDeepSearchResults(
       [
-        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.1 }),
-        panelResult({ dashboardUid: 'dash-1', content: 'good', score: 0.1 }),
-        panelResult({ dashboardUid: 'dash-1', content: 'mid', score: 0.4 }),
-        panelResult({ dashboardUid: 'dash-2', content: 'worst', score: 0.9 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'a', score: 0.4 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'b', score: 0.45 }),
+        panelResult({ dashboardUid: 'dash-2', content: 'c', score: 0.5 }),
       ],
       'global'
     );
 
-    // Midpoint = (0.1 + 0.9) / 2 = 0.5, whereas the mean would be 0.375.
-    // dash-1's 0.4 panel survives under the midpoint (it would be dropped under the mean),
-    // so matchedPanelCount is 3. dash-2's only panel (0.9) is past 0.5, so dash-2 disappears.
+    // spread = 0.5 - 0.4 = 0.1 (at the keep-all threshold) → cutoff = max (0.5), nothing dropped
+    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1', 'dash-2']);
+    expect(grouped[0].matchedPanelCount).toBe(2);
+    expect(grouped[1].matchedPanelCount).toBe(1);
+  });
+
+  it('global scope: high spread pulls the cutoff toward the best score, dropping the tail', () => {
+    const grouped = groupDeepSearchResults(
+      [
+        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.2 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'good', score: 0.25 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'ok', score: 0.3 }),
+        panelResult({ dashboardUid: 'dash-2', content: 'weak', score: 0.8 }),
+        panelResult({ dashboardUid: 'dash-3', content: 'worst', score: 0.9 }),
+      ],
+      'global'
+    );
+
+    // spread = 0.7 (fully tightened) → cutoff ≈ 0.2 + 0.25 * 0.7 = 0.375.
+    // dash-1's 0.2–0.3 cluster survives; the 0.8 / 0.9 tail and its dashboards are dropped.
     expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1']);
     expect(grouped[0].matchedPanelCount).toBe(3);
-    expect(grouped[0].snippets.map((s) => s.text)).toEqual(['best', 'good', 'mid']);
+  });
+
+  it('global scope: the floor keeps at least MIN_KEPT_PANELS even at high spread', () => {
+    const grouped = groupDeepSearchResults(
+      [
+        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.1 }),
+        panelResult({ dashboardUid: 'dash-2', content: 'second', score: 0.2 }),
+        panelResult({ dashboardUid: 'dash-3', content: 'third', score: 0.85 }),
+        panelResult({ dashboardUid: 'dash-4', content: 'tail', score: 0.95 }),
+      ],
+      'global'
+    );
+
+    // The cutoff alone would keep only the 0.1 / 0.2 cluster, but the floor raises it to
+    // the 3rd-best score (0.85) so at least three panels survive; only the 0.95 tail drops.
+    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1', 'dash-2', 'dash-3']);
   });
 
   it('per-dashboard scope: each card keeps only its own better-than-average panels', () => {
