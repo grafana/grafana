@@ -86,3 +86,14 @@ export function composeTopologyCountQuery(filters: FlowFacetFilter[]): string {
 export function composeTopologyBytesQuery(filters: FlowFacetFilter[]): string {
   return `${composeFilter(filters)} | sum_over_time(span.flow.io.bytes) by (resource.service.name, span.destination.address)`;
 }
+
+// TraceQL serializes string attribute values in metrics-series labels wrapped in
+// double quotes (e.g. `"egress"`). Strip one surrounding pair so values display
+// cleanly and round-trip correctly back into composeFilter. Numeric/boolean
+// labels are unquoted and pass through unchanged.
+export function unquoteLabel(value: string): string {
+  if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
+    return value.slice(1, -1);
+  }
+  return value;
+}

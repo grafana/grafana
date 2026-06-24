@@ -751,7 +751,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         );
         return { data: [nodes, edges], state: LoadingState.Done };
       }),
-      catchError(() => of({ data: [], state: LoadingState.Done }))
+      catchError((err) =>
+        of({ error: { message: `flow topology: ${err?.message ?? String(err)}` }, data: [], state: LoadingState.Error })
+      )
     );
   }
 

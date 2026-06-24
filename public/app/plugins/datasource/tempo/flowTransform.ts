@@ -5,6 +5,8 @@ import {
   NodeGraphDataFrameFieldNames as Fields,
 } from '@grafana/data';
 
+import { unquoteLabel } from './flowQuery';
+
 const HOST_ATTR = 'resource.service.name';
 const DEST_ATTR = 'span.destination.address';
 
@@ -33,22 +35,22 @@ export function extractFlowEdges(countFrames: DataFrame[], bytesFrames: DataFram
   const bytesByKey = new Map<string, number>();
   for (const frame of bytesFrames) {
     const labels = labelsOf(frame);
-    const host = labels[HOST_ATTR];
-    const dest = labels[DEST_ATTR];
-    if (host === undefined || dest === undefined) {
+    if (labels[HOST_ATTR] === undefined || labels[DEST_ATTR] === undefined) {
       continue;
     }
+    const host = unquoteLabel(labels[HOST_ATTR]);
+    const dest = unquoteLabel(labels[DEST_ATTR]);
     bytesByKey.set(`${host} ${dest}`, lastSample(frame));
   }
 
   const edges: FlowEdgeDatum[] = [];
   for (const frame of countFrames) {
     const labels = labelsOf(frame);
-    const host = labels[HOST_ATTR];
-    const dest = labels[DEST_ATTR];
-    if (host === undefined || dest === undefined) {
+    if (labels[HOST_ATTR] === undefined || labels[DEST_ATTR] === undefined) {
       continue;
     }
+    const host = unquoteLabel(labels[HOST_ATTR]);
+    const dest = unquoteLabel(labels[DEST_ATTR]);
     edges.push({
       host,
       destination: dest,
