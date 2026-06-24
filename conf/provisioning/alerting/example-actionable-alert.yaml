@@ -1,0 +1,165 @@
+# Seed data for the "Quality" tab demo.
+#
+# Most of these rules are missing the actionable annotations (summary / description /
+# runbook_url) and will show up under Alert rules > Quality. Two are fully filled in
+# and should NOT appear there.
+#
+# IMPORTANT: provision this with the "Alert quality" reject toggles OFF, otherwise the
+# bad rules are rejected at load time and never get created (that's the enforcement
+# working as intended). Turn the toggles on afterwards to block NEW bad rules.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: quality_demo_group
+    folder: Quality Demo
+    interval: 1m
+    rules:
+      # --- MEDIUM: has a runbook_url, but no summary or description ---
+      - uid: quality_mystery_cpu
+        title: High CPU
+        condition: A
+        data: &alwaysFiring
+          - refId: A
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator: { params: [0], type: gt }
+                  operator: { type: and }
+                  query: { params: [A] }
+                  reducer: { type: last }
+                  type: query
+              datasource: { type: __expr__, uid: "__expr__" }
+              expression: 1==1
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+              type: math
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        # MEDIUM: has a runbook_url but still missing summary + description
+        annotations:
+          runbook_url: "https://runbooks.example.com/high-cpu"
+        labels:
+          severity: warning
+
+      # --- HIGH: missing everything (incl. runbook_url) ---
+      - uid: quality_mystery_memory
+        title: Memory pressure
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels:
+          severity: warning
+
+      # --- MEDIUM: has a summary + runbook_url, but no description ---
+      - uid: quality_disk_space
+        title: Disk almost full
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Disk usage is high on {{ $labels.instance }}"
+          runbook_url: "https://runbooks.example.com/disk-space"
+
+      # --- BAD: has summary + description, but no runbook_url ---
+      - uid: quality_latency_p99
+        title: p99 latency too high
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "p99 latency above SLO for {{ $labels.service }}"
+          description: "The p99 request latency for {{ $labels.service }} has been above the SLO for 5 minutes."
+
+      # --- BAD: missing everything ---
+      - uid: quality_error_budget
+        title: Error budget burn
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels:
+          severity: critical
+
+      # --- GOOD: fully annotated, should NOT appear on the Quality tab ---
+      - uid: quality_good_http_errors
+        title: HTTP 5xx error rate
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "5xx error rate above threshold for {{ $labels.service }}"
+          description: "The 5xx error rate for {{ $labels.service }} exceeded the threshold for 5m. Current value: {{ $values.A }}."
+          runbook_url: "https://runbooks.example.com/http-5xx"
+        labels:
+          severity: critical
+
+      # --- GOOD: fully annotated, should NOT appear on the Quality tab ---
+      - uid: quality_good_db_connections
+        title: Database connection pool saturated
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Connection pool near capacity on {{ $labels.instance }}"
+          description: "The DB connection pool on {{ $labels.instance }} is above 90% utilization for 5m."
+          runbook_url: "https://runbooks.example.com/db-pool-saturation"
+        labels:
+          severity: warning
+
+  # A second folder, to show the Quality tab spans all folders.
+  - orgId: 1
+    name: payments_team_group
+    folder: Payments Team
+    interval: 1m
+    rules:
+      # --- HIGH: missing everything (incl. runbook_url) ---
+      - uid: quality_payments_declined
+        title: Payment decline rate spike
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        labels:
+          severity: critical
+
+      # --- MEDIUM: has a summary + runbook_url, but no description ---
+      - uid: quality_payments_latency
+        title: Checkout latency degraded
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Checkout latency degraded for {{ $labels.region }}"
+          runbook_url: "https://runbooks.example.com/checkout-latency"
+
+      # --- GOOD: fully annotated, should NOT appear on the Quality tab ---
+      - uid: quality_payments_gateway
+        title: Payment gateway unreachable
+        condition: A
+        data: *alwaysFiring
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "Payment gateway {{ $labels.gateway }} is unreachable"
+          description: "Grafana could not reach payment gateway {{ $labels.gateway }} for 5m. Transactions may be failing."
+          runbook_url: "https://runbooks.example.com/gateway-unreachable"
+        labels:
+          severity: critical
