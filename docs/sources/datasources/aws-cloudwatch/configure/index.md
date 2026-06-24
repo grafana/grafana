@@ -35,6 +35,19 @@ This document provides instructions for configuring the Amazon CloudWatch data s
 
 - Familiarize yourself with your CloudWatch security configuration and gather any necessary security certificates, client certificates, and client keys.
 
+## Key concepts
+
+If you're new to AWS, these terms are used throughout the configuration:
+
+| Term | Description |
+| --- | --- |
+| **IAM policy** | A JSON document attached to an identity that grants permissions to AWS API actions. |
+| **IAM role** | An identity with permissions that trusted entities can assume temporarily, instead of using long-lived keys. |
+| **Assume role** | An AWS mechanism that lets one identity take on the temporary permissions of an IAM role, often used for cross-account access. |
+| **External ID** | A shared secret in a role's trust policy that prevents another party from assuming the role on your behalf. |
+| **STS (Security Token Service)** | The AWS service that issues the short-lived temporary credentials used when assuming a role. |
+| **Cross-account observability (OAM)** | An AWS feature, managed through Observability Access Manager, that links monitoring and source accounts so you can query metrics and logs across accounts. |
+
 ## Add the CloudWatch data source
 
 Complete the following steps to set up a new CloudWatch data source:

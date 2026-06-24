@@ -105,7 +105,7 @@ region = us-west-2
 
 EKS IAM roles for service accounts (IRSA) are an AWS EKS feature that allows pods to assume IAM roles without storing long-term credentials. When you configure IRSA in your EKS cluster, AWS injects temporary credentials into your pod as projected volume mounts.
 
-In Grafana containers, the process runs as user `472` ("grafana").
+In Grafana containers, the process runs as user `472` (`grafana`).
 By default, Kubernetes mounts the projected credentials with permissions for the root user only.
 
 To grant user `472` permission to access the credentials, and prevent fallback to the IAM role attached to the EC2 instance, set a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for your pod.

@@ -107,7 +107,7 @@ Quotas are defined per account and per region.
 
 If you use multiple regions or have configured more than one CloudWatch data source to query against multiple accounts, you must request a quota increase for each account and region in which you reach the limit.
 
-To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
+To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home#!/services/monitoring/quotas/L-5E141212).
 For more information, refer to the AWS documentation for [Service Quotas](https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html) and [CloudWatch limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html).
 
 ## Cross-account observability

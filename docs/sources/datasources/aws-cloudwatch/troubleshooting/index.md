@@ -183,7 +183,7 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
    - ECS task role (if running in ECS)
    - EKS service account (if running in EKS)
 1. Ensure the Grafana process has permission to read the credentials file.
-1. For EKS with IRSA, set the pod's security context to allow user 472 (grafana) to access the projected token. Refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/) for details.
+1. For EKS with IRSA, set the pod's security context to allow user `472` (`grafana`) to access the projected token. Refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/) for details.
 
 ### Credentials file not found
 

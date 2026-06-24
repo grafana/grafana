@@ -25,6 +25,22 @@ review_date: 2026-06-23
 
 Grafana provides a query editor for the CloudWatch data source, which allows you to query, visualize, and alert on logs and metrics stored in Amazon CloudWatch. It is located on the [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) page. For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
+## Key concepts
+
+If you're new to CloudWatch, these terms are used throughout this documentation:
+
+| Term | Description |
+| --- | --- |
+| **Namespace** | A container for CloudWatch metrics, usually one per AWS service, such as `AWS/EC2` or `AWS/Lambda`. |
+| **Metric** | A time-ordered set of data points published to CloudWatch, such as `CPUUtilization`. |
+| **Dimension** | A name-value pair that identifies a specific resource for a metric, such as `InstanceId=i-1234567890abcdef0`. |
+| **Statistic** | An aggregation applied to metric data over a period, such as `Average`, `Sum`, or `Maximum`. |
+| **Period** | The length of time, in seconds, used to aggregate metric data points. |
+| **Metric math** | Expressions that combine or transform metrics, such as computing a rate or a sum across metrics. |
+| **Metrics Insights** | A SQL-like query engine for filtering and aggregating metrics in near real time. |
+| **Search expression** | A CloudWatch expression that matches multiple metrics at query time, often used with wildcards. |
+| **Logs Insights QL** | The CloudWatch Logs query language used to search and aggregate log data. |
+
 ## Choose a query editing mode
 
 The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor.
@@ -122,7 +138,7 @@ The query returns the average CPU utilization for all EC2 instances in the defau
 
 Auto-scaling events add new instances to the graph without manual instance ID tracking. As with other metric search queries, AWS returns up to 100 metrics per `GetMetricData` request.
 
-Click the [**Query inspector**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#navigate-the-query-editor) button and select **Meta Data** to see the search expression that's automatically built to support wildcards.
+Click the [**Query inspector**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#navigate-the-query-editor) button and select **Meta Data** to see the search expression that's automatically built to support wildcards.
 
 To learn more about search expressions, refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 The search expression is defined by default in such a way that the queried metrics must match the defined dimension names exactly.
@@ -318,6 +334,16 @@ If you receive an error like `input data must be a wide series but got ...` when
 {{< /admonition >}}
 
 For more information on Grafana alerts, refer to [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/).
+
+## Common use cases
+
+The following scenarios show how to combine the query editor's features to solve real monitoring problems.
+
+- **Monitor an EC2 fleet:** Use a Metric Search query for `AWS/EC2` `CPUUtilization` with the `InstanceId` dimension set to a wildcard (`*`) and `Match Exact` disabled. The graph automatically includes new instances as your fleet scales.
+- **Track Lambda errors and invocations:** Query the `AWS/Lambda` namespace for the `Errors` and `Invocations` metrics, then add a metric math expression such as `errors / invocations * 100` to chart an error rate.
+- **Rank the busiest resources:** Use a Metrics Insights query with `ORDER BY` and `LIMIT` to return the top N resources by a metric, for example, the 10 EC2 instances with the highest average CPU utilization.
+- **Investigate application errors:** Use a CloudWatch Logs query with `filter` and `stats` to count errors over time, then correlate the spikes with metric panels on the same dashboard.
+- **Alert on log error rates:** Build a Logs query that returns numeric data with the `stats` command, then create an alert rule on the result. Refer to [Create queries for alerting](#create-queries-for-alerting).
 
 ## Cross-account observability
 
