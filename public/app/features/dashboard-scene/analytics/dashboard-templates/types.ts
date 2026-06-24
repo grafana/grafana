@@ -51,7 +51,7 @@ export interface DeleteCompletedProperties extends EventProperty {
   templateUid: string;
 }
 
-export interface BrowsedProperties extends EventProperty {
+export interface LoadedProperties extends EventProperty {
   /** UID of the template the user is starting from. */
   templateUid: string;
 }

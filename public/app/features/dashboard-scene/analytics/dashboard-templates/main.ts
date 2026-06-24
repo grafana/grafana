@@ -8,7 +8,7 @@ import {
   type SaveAsOpenedProperties,
   type UpdatedProperties,
   type SavedBannerGalleryClickedProperties,
-  type BrowsedProperties,
+  type LoadedProperties,
   type VersionRestoredProperties,
   type UpdatedMetadataProperties,
   type DeleteCompletedProperties,
@@ -35,7 +35,7 @@ export const CustomDashboardTemplateInteractions = {
   /** Fired when the user successfully deletes a template. */
   deleted: createCustomTemplateEvent<DeleteCompletedProperties>('deleted'),
   /** Fired when a user opens the "use template" flow that hydrates a new (unsaved) dashboard from a template. */
-  browsed: createCustomTemplateEvent<BrowsedProperties>('browsed'),
+  loaded: createCustomTemplateEvent<LoadedProperties>('loaded'),
   /** Fired when a user opens an existing template in edit mode. */
   editOpened: createCustomTemplateEvent<EditOpenedProperties>('edit_opened'),
   /** Fired on the first save of a dashboard that was created from a custom template. */

@@ -1186,7 +1186,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       });
     }
 
-    CustomDashboardTemplateInteractions.browsed({
+    CustomDashboardTemplateInteractions.loaded({
       templateUid: dashboardTemplateUid,
     });
 
