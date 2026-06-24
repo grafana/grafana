@@ -3450,6 +3450,111 @@ func TestService_BatchCheck(t *testing.T) {
 	})
 }
 
+func TestGetScopeMap_Settings(t *testing.T) {
+	s := setupService()
+
+	t.Run("section wildcard is not promoted to global grant", func(t *testing.T) {
+		// settings:auth.saml:* splits to Kind=settings, Attribute=auth.saml, Identifier=*
+		// Without the settings-aware branch this would trigger the generic Identifier=="*"
+		// wildcard collapse and return {"*": true} — an over-grant.
+		perms := []accesscontrol.Permission{
+			{
+				Action:     accesscontrol.ActionSettingsRead,
+				Scope:      "settings:auth.saml:*",
+				Kind:       "settings",
+				Attribute:  "auth.saml",
+				Identifier: "*",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.True(t, scopeMap["settings:uid:auth.saml"], "section grant must collapse to settings:uid:auth.saml")
+		assert.False(t, scopeMap["*"], "section wildcard must not produce a global grant")
+	})
+
+	t.Run("per-key grant collapses to section scope", func(t *testing.T) {
+		// settings:smtp:host splits to Kind=settings, Attribute=smtp, Identifier=host
+		perms := []accesscontrol.Permission{
+			{
+				Action:     accesscontrol.ActionSettingsRead,
+				Scope:      "settings:smtp:host",
+				Kind:       "settings",
+				Attribute:  "smtp",
+				Identifier: "host",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.True(t, scopeMap["settings:uid:smtp"], "per-key grant must collapse to section scope")
+		assert.False(t, scopeMap["*"], "per-key grant must not produce a global grant")
+	})
+
+	t.Run("global settings grant produces wildcard", func(t *testing.T) {
+		// settings:* splits to Kind=settings, Attribute=*, Identifier=*
+		perms := []accesscontrol.Permission{
+			{
+				Action:    accesscontrol.ActionSettingsRead,
+				Scope:     "settings:*",
+				Kind:      "settings",
+				Attribute: "*",
+			},
+		}
+		scopeMap := s.getScopeMap(perms)
+		assert.True(t, scopeMap["*"], "global settings grant must produce wildcard")
+	})
+
+	t.Run("Check allows auth.saml section and denies smtp section", func(t *testing.T) {
+		callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Claims: jwt.Claims{
+				Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+				Audience: []string{"authzservice"},
+			},
+			Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		})
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fakeStr := &fakeStore{
+			userID: userID,
+			userPermissions: []accesscontrol.Permission{
+				{
+					Action:     accesscontrol.ActionSettingsRead,
+					Scope:      "settings:auth.saml:*",
+					Kind:       "settings",
+					Attribute:  "auth.saml",
+					Identifier: "*",
+				},
+			},
+		}
+
+		svc := setupService()
+		svc.store = fakeStr
+		svc.permissionStore = fakeStr
+
+		// auth.saml section is granted
+		resp, err := svc.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "setting.grafana.app",
+			Resource:  "settings",
+			Verb:      "get",
+			Name:      "auth.saml",
+		})
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed, "user with settings:auth.saml:* should be allowed to get auth.saml")
+
+		// smtp section is not granted
+		resp, err = svc.Check(ctx, &authzv1.CheckRequest{
+			Namespace: "org-12",
+			Subject:   "user:test-uid",
+			Group:     "setting.grafana.app",
+			Resource:  "settings",
+			Verb:      "get",
+			Name:      "smtp",
+		})
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed, "user with settings:auth.saml:* should not be allowed to get smtp")
+	})
+}
+
 // trackingFolderStore wraps a folder store and counts ListFolders calls.
 type trackingFolderStore struct {
 	inner            store.FolderStore

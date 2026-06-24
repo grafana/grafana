@@ -1053,6 +1053,18 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 			s.logger.Warn("found unsplit permission scope", "scope", perm.Scope)
 			perm.Kind, perm.Attribute, perm.Identifier = accesscontrol.SplitScope(perm.Scope)
 		}
+		// Settings are three-tier (settings:<section>:<key>) but authorized at the
+		// section level. Collapse section and key grants to the canonical
+		// settings:uid:<section> (the legacy section sits in the Attribute slot), so a
+		// section wildcard (settings:<section>:*) is NOT promoted to a global settings
+		// grant (over-grant) and key granularity is dropped. A true global grant
+		// (settings:*) has attribute "*" and falls through to the generic wildcard
+		// handling below. This branch must run before the generic wildcard check to
+		// prevent Identifier="*" from triggering a global grant.
+		if perm.Kind == "settings" && perm.Attribute != "*" {
+			permMap["settings:uid:"+perm.Attribute] = true
+			continue
+		}
 		// If has any wildcard, return immediately
 		if perm.Kind == "*" || perm.Attribute == "*" || perm.Identifier == "*" {
 			return map[string]bool{"*": true}
