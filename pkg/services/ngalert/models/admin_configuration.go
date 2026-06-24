@@ -63,6 +63,14 @@ func (amc *AdminConfiguration) RequiredAnnotations() []string {
 	return required
 }
 
+// annotationDisplayNames maps internal annotation keys to the human-readable field
+// labels shown in the rule editor, so error messages use the same terminology as the UI.
+var annotationDisplayNames = map[string]string{
+	SummaryAnnotation:     "Summary",
+	DescriptionAnnotation: "Description",
+	RunbookURLAnnotation:  "Runbook URL",
+}
+
 // ValidateRequiredAnnotations checks that the alert rule carries every annotation
 // required by the org's admin configuration. Recording rules are exempt because they
 // don't produce notifications. Returns ErrAlertRuleFailedValidation when any are missing.
@@ -73,11 +81,15 @@ func ValidateRequiredAnnotations(rule *AlertRule, cfg *AdminConfiguration) error
 	var missing []string
 	for _, key := range cfg.RequiredAnnotations() {
 		if strings.TrimSpace(rule.Annotations[key]) == "" {
-			missing = append(missing, key)
+			label := annotationDisplayNames[key]
+			if label == "" {
+				label = key
+			}
+			missing = append(missing, label)
 		}
 	}
 	if len(missing) > 0 {
-		return fmt.Errorf("%w: alert rule is missing required annotations: %s", ErrAlertRuleFailedValidation, strings.Join(missing, ", "))
+		return fmt.Errorf("%w: alert rule is missing required fields: %s", ErrAlertRuleFailedValidation, strings.Join(missing, ", "))
 	}
 	return nil
 }

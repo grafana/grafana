@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Badge, Button, Card, EmptyState, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Card, EmptyState, LinkButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { type IncompleteRule, useIncompleteRules } from '../hooks/useIncompleteRules';
@@ -53,7 +53,8 @@ function QualityTab() {
       isLoading={isLoading}
       actions={
         incompleteCount > 0 ? (
-          <Tooltip content={t('alerting.quality.fix-all-coming-soon', 'Coming soon — AI auto-fill is not wired up yet')}>
+          <Tooltip content={t('alerting.quality.fix-all-coming-soon', 'Coming soon — automatically generate descriptions and summaries for all flagged rules.')}>
+
             <Button icon="bolt" variant="primary" disabled>
               <Trans i18nKey="alerting.quality.fix-all">Fix all with AI</Trans>
             </Button>
@@ -66,8 +67,9 @@ function QualityTab() {
 
         <Text variant="body" color="secondary">
           <Trans i18nKey="alerting.quality.description">
-            These alert rules are missing annotations that make a notification actionable. Add a summary, description,
-            and runbook URL so responders know what fired and what to do.
+            These alert rules are missing a summary, description, or runbook URL. Select <strong>Edit</strong> on a rule
+            to add the missing details — or use <strong>Fix with AI</strong> to generate them automatically, so
+            responders know what fired and what to do.
           </Trans>
         </Text>
 
@@ -75,7 +77,12 @@ function QualityTab() {
           <EmptyState
             variant="completed"
             message={t('alerting.quality.empty', 'Every alert rule has a summary, description, and runbook URL.')}
-          />
+          >
+            <Trans i18nKey="alerting.quality.empty-description">
+              To enforce these fields across your organization, enable the requirements in{' '}
+              <TextLink href="/alerting/admin/annotations">Alert quality settings</TextLink>.
+            </Trans>
+          </EmptyState>
         ) : (
           <Stack direction="column" gap={1}>
             {sortedRules.map((rule) => (
@@ -109,7 +116,7 @@ function QualityTab() {
                 </Card.Description>
                 <Card.Actions>
                   <Tooltip
-                    content={t('alerting.quality.fix-coming-soon', 'Coming soon — AI auto-fill is not wired up yet')}
+                    content={t('alerting.quality.fix-coming-soon', 'Coming soon — automatically generate a description and summary for this rule.')}
                   >
                     <Button icon="bolt" variant="primary" size="sm" disabled>
                       <Trans i18nKey="alerting.quality.fix-with-ai">Fix with AI</Trans>
@@ -120,7 +127,7 @@ function QualityTab() {
                       icon="pen"
                       variant="secondary"
                       size="sm"
-                      href={createRelativeUrl(`/alerting/grafana/${rule.uid}/view`)}
+                      href={createRelativeUrl(`/alerting/${rule.uid}/edit`)}
                     >
                       <Trans i18nKey="alerting.quality.edit">Edit</Trans>
                     </LinkButton>
