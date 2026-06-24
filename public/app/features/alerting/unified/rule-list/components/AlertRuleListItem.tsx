@@ -5,7 +5,7 @@ import { type ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 import { AlertLabels, StateIcon } from '@grafana/alerting/unstable';
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import {
   type Rule,
   type RuleGroupIdentifierV2,
@@ -56,6 +56,7 @@ export interface AlertRuleListItemProps {
   // used for alert rules that use simplified routing
   contactPoint?: string;
   actions?: ReactNode;
+  isMissingRequiredAnnotations?: boolean;
   origin?: RulePluginOrigin;
   operation?: 'creating' | 'deleting';
   // the grouped view doesn't need to show the location again – it's redundant
@@ -91,6 +92,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     labels,
     origin,
     actions = null,
+    isMissingRequiredAnnotations = false,
     operation,
     showLocation = true,
     querySourceUIDs = [],
@@ -160,6 +162,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     );
   }
 
+  const styles = useStyles2(getStyles);
   const ruleHealth = normalizeHealth(health);
   const ruleState = normalizeState(state);
 
@@ -182,7 +185,23 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       icon={
         <StateIcon type="alerting" state={ruleState} health={ruleHealth} isPaused={isPaused} operation={operation} />
       }
-      actions={actions}
+      actions={
+        isMissingRequiredAnnotations ? (
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <Tooltip
+              content={t(
+                'alerting.rule-list-item.missing-required-annotations',
+                'Missing annotations required by your organization policy.'
+              )}
+            >
+              <Icon name="exclamation-triangle" className={styles.policyViolationIcon} />
+            </Tooltip>
+            {actions}
+          </Stack>
+        ) : (
+          actions
+        )
+      }
       meta={metadata}
       metaRight={
         evalIntervalSeconds !== undefined
@@ -491,6 +510,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   resetMargin: css({
     margin: 0,
+  }),
+  policyViolationIcon: css({
+    color: theme.colors.warning.text,
   }),
   ruleLabels: {
     tooltip: css({

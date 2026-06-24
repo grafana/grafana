@@ -7,8 +7,10 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
+import { mockPreviewApiResponse } from '../../mocks/grafanaRulerApi';
+import { mockPreviewTemplateResponse } from '../../mocks/templatesApi';
 import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
-import { setupAdminConfigGet } from '../../mocks/server/configure/admin_config';
+import { setupAdminConfigGet, setupStatefulAdminConfig } from '../../mocks/server/configure/admin_config';
 import { getDefaultFormValues } from '../../rule-editor/formDefaults';
 import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
@@ -38,9 +40,12 @@ const ui = {
 } as const;
 
 const server = setupMswServer();
+const adminConfigState = { lastPayload: null };
 
 beforeEach(() => {
-  setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+  setupStatefulAdminConfig(server, adminConfigState, { alertmanagersChoice: AlertmanagerChoice.Internal });
+  mockPreviewApiResponse(server, []);
+  mockPreviewTemplateResponse(server, { results: [] });
 });
 
 function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
@@ -319,7 +324,7 @@ describe('AnnotationsField', function () {
 
       await user.click(await screen.findByRole('button', { name: 'Save' }));
 
-      const errors = await screen.findAllByText('Required.');
+      const errors = await screen.findAllByText('Required by your organization policy.');
       expect(errors).toHaveLength(2);
     });
 
@@ -333,7 +338,7 @@ describe('AnnotationsField', function () {
 
       await user.click(await screen.findByRole('button', { name: 'Save' }));
 
-      const errors = await screen.findAllByText('Required.');
+      const errors = await screen.findAllByText('Required by your organization policy.');
       expect(errors).toHaveLength(1);
     });
 
@@ -342,7 +347,7 @@ describe('AnnotationsField', function () {
 
       await user.click(await screen.findByRole('button', { name: 'Save' }));
 
-      expect(screen.queryByText('Required.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Required by your organization policy.')).not.toBeInTheDocument();
     });
 
     it('clears required error once annotation value is filled in', async () => {
@@ -354,13 +359,13 @@ describe('AnnotationsField', function () {
       const { user } = render(<FormWrapperWithSubmit />);
 
       await user.click(await screen.findByRole('button', { name: 'Save' }));
-      expect(await screen.findByText('Required.')).toBeInTheDocument();
+      expect(await screen.findByText('Required by your organization policy.')).toBeInTheDocument();
 
       const runbookInput = screen.getByTestId('annotation-value-2');
       await user.type(runbookInput, 'https://my-runbook.example.com');
       await user.click(screen.getByRole('button', { name: 'Save' }));
 
-      expect(screen.queryByText('Required.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Required by your organization policy.')).not.toBeInTheDocument();
     });
   });
 
