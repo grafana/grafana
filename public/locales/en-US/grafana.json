@@ -11072,20 +11072,7 @@
       "end-of-range": "End of the selected time range.",
       "load-more": "Scroll to load more",
       "load-newer": "Loading newer logs...",
-      "load-older": "Loading older logs...",
-      "older-logs": "Older logs"
-    },
-    "log-details": {
-      "fields": "Fields",
-      "links": "Links",
-      "log-line": "Log line",
-      "no-details": "No details available"
-    },
-    "log-details-body": {
-      "toggle-field-button": {
-        "tooltip-hide-log-line": "Hide log line",
-        "tooltip-show-log-line": "Show log line"
-      }
+      "load-older": "Loading older logs..."
     },
     "log-labels": {
       "collapse": "Collapse labels",
@@ -11186,22 +11173,6 @@
       "input-placeholder": "Search in logs",
       "next": "Next result",
       "prev": "Previous result"
-    },
-    "log-row-menu-cell": {
-      "aria-label-copy-shortlink": "Copy shortlink",
-      "aria-label-pin-line": "Pin line",
-      "aria-label-show-context": "Show context",
-      "aria-label-unpin-line": "Unpin line",
-      "tooltip-copy-shortlink": "Copy shortlink",
-      "tooltip-copy-to-clipboard": "Copy to clipboard",
-      "tooltip-show-context": "Show context",
-      "tooltip-unpin-line": "Unpin line"
-    },
-    "log-row-message": {
-      "ellipsis": "… ",
-      "more": "more",
-      "see-details": "See log details",
-      "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-rows": {
       "disable-popover": {
@@ -11334,9 +11305,6 @@
       "label-newest-first": "Newest first",
       "label-oldest-first": "Oldest first"
     },
-    "out-of-range-message": {
-      "end-of-the-selected-time-range": "End of the selected time range."
-    },
     "popover-menu": {
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
@@ -11346,24 +11314,6 @@
     },
     "show-log-attributes": "Enable log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
-    "un-themed-log-details": {
-      "aria-label-data-links": "Data links",
-      "aria-label-fields": "Fields",
-      "aria-label-line": "Log line",
-      "aria-label-log-level": "Log level",
-      "aria-label-no-details": "No details"
-    },
-    "un-themed-log-details-row": {
-      "filter-out": "Filter out value",
-      "filter-out-query": "Filter out value in query {{query}}",
-      "title-copy-value-to-clipboard": "Copy value to clipboard",
-      "toggle-field-button": {
-        "tooltip-field-instead-message": "Show this field instead of the message",
-        "tooltip-hide-this-field": "Hide this field"
-      },
-      "tooltip-adhoc-statistics": "Ad-hoc statistics",
-      "tooltip-hide-adhoc-statistics": "Hide ad-hoc statistics"
-    },
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"

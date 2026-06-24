@@ -93,10 +93,10 @@ interface LogsPanelProps extends PanelProps<Options> {
    * Called from the new Log Details Panel when fields are reordered. If ommited, a default implementation is used.
    * setDisplayedFields?: (key: string) => void;
    *
-   * Passed to the LogRowMenuCell component to be rendered before the default actions in the menu.
+   * Passed to the LogLineMenu component to be rendered before the default actions in the menu.
    * logRowMenuIconsBefore?: ReactNode[];
    *
-   * Passed to the LogRowMenuCell component to be rendered after the default actions in the menu.
+   * Passed to the LogLineMenu component to be rendered after the default actions in the menu.
    * logRowMenuIconsAfter?: ReactNode[];
    *
    * Callback to be invoked when enableInfiniteScrolling and new logs have been received after an scroll event.
@@ -177,7 +177,6 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
   const loadingRef = useRef(false);
   const [panelData, setPanelData] = useState(data);
   const dataSourcesMap = useDatasourcesFromTargets(panelData.request?.targets);
-  const keepScrollPositionRef = useRef<null | 'infinite-scroll' | 'user'>(null);
   const closeCallback = useRef<(() => void) | undefined>(undefined);
   const { app, eventBus, onAddAdHocFilter } = usePanelContext();
 
@@ -397,28 +396,6 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     }
   }, [options.displayedFields]);
 
-  useEffect(() => {
-    function handleScroll() {
-      if (!scrollElement) {
-        return;
-      }
-      keepScrollPositionRef.current = 'user';
-      const atTheBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight === 0;
-      const isAscending = sortOrder === LogsSortOrder.Ascending;
-      if (scrollElement.scrollTop === 0 && !isAscending) {
-        keepScrollPositionRef.current = null;
-      } else if (atTheBottom && isAscending) {
-        keepScrollPositionRef.current = null;
-      }
-    }
-    scrollElement?.addEventListener('scroll', handleScroll);
-    scrollElement?.addEventListener('wheel', handleScroll);
-    return () => {
-      scrollElement?.removeEventListener('scroll', handleScroll);
-      scrollElement?.removeEventListener('wheel', handleScroll);
-    };
-  }, [scrollElement, sortOrder]);
-
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
       if (!data.request || loadingRef.current) {
@@ -444,7 +421,6 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
         loadingRef.current = false;
       }
 
-      keepScrollPositionRef.current = 'infinite-scroll';
       setPanelData({
         ...panelData,
         series: newSeries,

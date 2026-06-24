@@ -642,10 +642,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
 
   const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
-  const infiniteScrollAvailable = useMemo(
-    () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
-    [logsQueries]
-  );
 
   const visibilityChangedRef = useRef(true);
   const onLogOptionsChange = useCallback(
@@ -895,53 +891,31 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
               <ControlledLogRows
                 ref={logsContainerRef}
-                logsTableFrames={props.logsFrames}
-                width={width}
-                updatePanelState={updatePanelState}
-                panelState={panelState?.logs}
+                absoluteRange={props.absoluteRange}
                 datasourceType={props.datasourceType}
-                splitOpen={splitOpen}
-                visualisationType={visualisationType}
-                loading={loading}
-                loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
-                range={props.range}
-                pinnedLogs={pinnedLogs}
-                logRows={logRows}
-                deduplicatedRows={dedupedRows}
                 dedupStrategy={dedupStrategy}
+                displayedFields={displayedFields}
+                exploreId={props.exploreId}
+                filterLevels={filterLevels}
+                logOptionsStorageKey={SETTING_KEY_ROOT}
+                logRows={logRows}
+                logsMeta={logsMeta}
+                logsSortOrder={logsSortOrder}
+                logsTableFrames={props.logsFrames}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
-                showContextToggle={showContextToggle}
-                getRowContextQuery={getRowContextQuery}
+                onLogOptionsChange={onLogOptionsChange}
+                panelState={panelState?.logs}
+                prettifyLogMessage={prettifyLogMessage}
+                range={props.range}
                 showLabels={showLabels}
                 showTime={showTime}
-                enableLogDetails={true}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
+                splitOpen={splitOpen}
                 timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                displayedFields={displayedFields}
-                onClickShowField={showField}
-                onClickHideField={hideField}
-                app={CoreApp.Explore}
-                onLogRowHover={onLogRowHover}
-                onOpenContext={onOpenContext}
-                onPermalinkClick={onPermalinkClick}
-                permalinkedRowId={panelState?.logs?.id}
-                isFilterLabelActive={props.isFilterLabelActive}
-                onClickFilterString={props.onClickFilterString}
-                onClickFilterOutString={props.onClickFilterOutString}
-                onUnpinLine={onPinToContentOutlineClick}
-                onPinLine={onPinToContentOutlineClick}
-                pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                logsMeta={logsMeta}
-                logOptionsStorageKey={SETTING_KEY_ROOT}
-                onLogOptionsChange={onLogOptionsChange}
-                filterLevels={filterLevels}
-                timeRange={props.range}
-                exploreId={props.exploreId}
-                absoluteRange={props.absoluteRange}
+                updatePanelState={updatePanelState}
+                visualisationType={visualisationType}
+                width={width}
+                wrapLogMessage={wrapLogMessage}
               />
             </div>
           )}
