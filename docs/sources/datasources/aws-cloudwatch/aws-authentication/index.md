@@ -129,7 +129,7 @@ Grafana Assume Role is available only in Grafana Cloud. It's supported for the f
 - Amazon Athena
 - Amazon Redshift
 - Amazon Timestream
-- Amazon X-Ray
+- AWS Application Signals (formerly Amazon X-Ray)
 - Amazon OpenSearch
 - Amazon SiteWise
 - Amazon Managed Service for Prometheus (AMP)

@@ -61,9 +61,9 @@ The IAM user or IAM role must have the associated policies to perform certain AP
 
 For authentication options and configuration details, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
 
-| Setting            | Description                                                                                                                                                                                                                  |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Authentication** | Specify which AWS credentials chain to use. A Grafana plugin's requests to AWS are made on behalf of an IAM role or IAM user. The IAM user or IAM role must have the necessary policies to perform the required API actions. |
+| Setting                     | Description                                                                                                                                                                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Authentication Provider** | Specify which AWS credentials chain to use. A Grafana plugin's requests to AWS are made on behalf of an IAM role or IAM user. The IAM user or IAM role must have the necessary policies to perform the required API actions. |
 
 **Access & secret key:**
 
@@ -73,6 +73,14 @@ You must use both an access key ID and a secret access key to authenticate.
 | --------------------- | ---------------------------- |
 | **Access Key ID**     | Enter your key ID.           |
 | **Secret Access Key** | Enter the secret access key. |
+
+**Credentials file:**
+
+When you select the **Credentials file** authentication provider, you can specify which profile to read from the AWS shared credentials file.
+
+| Setting                      | Description                                                                                          |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Credentials Profile Name** | The profile name in `~/.aws/credentials`, as specified in the credentials file. Leave blank to use the `default` profile. |
 
 **Assume Role**:
 
@@ -89,11 +97,22 @@ You must use both an access key ID and a secret access key to authenticate.
 | **Default Region**               | Specify the AWS region. Example: If the region is US West (Oregon), use `us-west-2`.                                                                                                                                                                                                                                                                                                                                                                           |
 | **Namespaces of Custom Metrics** | Add one or more custom metric namespaces, separated by commas (for example,`Namespace1,Namespace2`). Grafana can't automatically load custom namespaces using the [CloudWatch GetMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html). To make custom metrics available in the query editor, manually specify the namespaces in the `Namespaces of Custom Metrics` field in the data source configuration. |
 
+**Proxy configuration:**
+
+The **Proxy Configuration** settings appear only when per-data source HTTP proxy support is enabled with the `per_datasource_http_proxy_enabled` option in the Grafana configuration file. They let each CloudWatch data source use its own outbound HTTP proxy for AWS requests.
+
+| Setting            | Description                                                                                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Proxy Type**     | Select how the proxy is configured: `Environment (default)` uses the `HTTP_PROXY` and `HTTPS_PROXY` environment variables, `None` disables the proxy, and `URL` lets you specify a proxy URL. Don't set this when Secure Socks Proxy is enabled. |
+| **Proxy URL**      | _Only when Proxy Type is `URL`._ The proxy URL, for example `https://localhost:3004`. Don't include the username or password in the URL.                                          |
+| **Proxy Username** | _Only when Proxy Type is `URL`._ _Optional._ The proxy username.                                                                                                                  |
+| **Proxy Password** | _Only when Proxy Type is `URL`._ _Optional._ The proxy password.                                                                                                                  |
+
 **CloudWatch Logs**:
 
 | Setting                  | Description                                                                                                                                                                                                                                                                                                                          |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Query timeout result** | Grafana polls CloudWatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana configuration file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
+| **Query Result Timeout** | Grafana polls CloudWatch Logs every second until AWS returns a `Done` status or the timeout is reached. An error is returned if the timeout is exceeded. For alerting, the timeout defined in the Grafana configuration file takes precedence. Enter a valid duration string, such as `30m`, `30s` or `200ms`. The default is `30m`. |
 | **Default Log Groups**   | _Optional_. Specify the default log groups for CloudWatch Logs queries.                                                                                                                                                                                                                                                              |
 
 **Application Signals trace link:**
@@ -310,7 +329,7 @@ The Grafana [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSI
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `allowed_auth_providers`  | Specifies which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in open source Grafana: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_IAM_role` (EC2 IAM role).                                                                                                                                                       |
+| `allowed_auth_providers`  | Specifies which authentication providers are allowed for the CloudWatch data source as a comma-separated list. The default is `default,keys,credentials`: `default` (AWS SDK Default), `keys` (Access and secret key), and `credentials` (Credentials file). The `ec2_iam_role` (EC2 IAM role) provider is also available but isn't enabled by default.                                                                                                |
 | `assume_role_enabled`     | Allows you to disable `assume role (ARN)` in the CloudWatch data source. The assume role (ARN) is enabled by default in open source Grafana.                                                                                                                                                                                                                                                                                                    |
 | `per_datasource_http_proxy_enabled` | Allows each CloudWatch data source instance to use its own HTTP proxy configuration for requests to AWS, instead of a shared proxy. Disabled by default. Set to `true` to enable.                                                                                                                                                                                                                                                          |
 | `list_metrics_page_limit` | Sets the limit of List Metrics API pages. When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) populates the _Metrics_ field and _Dimension_ fields. The API is paginated and returns up to 500 results per page, and the data source also limits the number of pages to 500 by default. This setting customizes that limit. |

@@ -34,7 +34,7 @@ Grafana includes native support for the Amazon CloudWatch plugin, so there's no 
 | --- | --- |
 | Metrics | Yes |
 | Logs | Yes |
-| Traces | No. Use the [AWS X-Ray data source](https://grafana.com/docs/plugins/grafana-x-ray-datasource/latest/). |
+| Traces | No. Use the [AWS Application Signals data source](https://grafana.com/docs/plugins/grafana-x-ray-datasource/latest/) (formerly the AWS X-Ray data source) for AWS X-Ray traces. |
 | Alerting | Yes |
 | Annotations | Yes |
 
