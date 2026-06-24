@@ -47,7 +47,7 @@ func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
 }
 
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
-	c, span := hs.injectSpanScoped(c, "api.setIndexViewData")
+	c, span := hs.injectSpan(c, "api.setIndexViewData")
 	defer span.End()
 
 	settings, err := hs.getFrontendSettings(c)
@@ -62,7 +62,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		OrgID:  c.GetOrgID(),
 		Teams:  c.TeamIDs, // nolint:staticcheck
 	}
-	c, prefsSpan := hs.injectSpanScoped(c, "api.setIndexViewData.preferences")
+	c, prefsSpan := hs.injectSpan(c, "api.setIndexViewData.preferences")
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	prefsSpan.End()
 	if err != nil {
@@ -236,7 +236,7 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 		return 1
 	}
 
-	c, span := hs.injectSpanScoped(c, "api.getUserOrgCount")
+	c, span := hs.injectSpan(c, "api.getUserOrgCount")
 	defer span.End()
 
 	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: userID})
