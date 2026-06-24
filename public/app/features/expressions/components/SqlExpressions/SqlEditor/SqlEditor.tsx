@@ -5,6 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
+import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
+
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
 
 export interface SqlEditorProps {
@@ -46,6 +48,9 @@ export const SqlEditor = ({
       <div className={styles.editorBorder}>
         <CodeMirrorEditor
           language="sql"
+          // SQL Expressions run against a MySQL backend, where identifiers are quoted with backticks.
+          // Same source of truth as identifier quoting so parsing and writing can't drift.
+          sqlDialect={SQL_EXPRESSIONS_DIALECT}
           value={value}
           onChange={onChange}
           height={typeof height === 'number' ? `${height}px` : height}

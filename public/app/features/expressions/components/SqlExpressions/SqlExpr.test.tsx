@@ -221,9 +221,30 @@ describe('SqlExpr', () => {
       })
     );
 
-    expect(SqlEditorMock.mock.calls[0][0].completionProvider?.tables?.()).toEqual([
+    // Assert against the latest render: a prior test's component can emit a late re-render
+    // (see the afterEach note on lingering components) that would otherwise land as calls[0].
+    expect(SqlEditorMock.mock.lastCall?.[0].completionProvider?.tables?.()).toEqual([
       expect.objectContaining({ label: 'Query A', insertText: 'A' }),
     ]);
+  });
+
+  it('quotes refId names with spaces in the seeded query and table completions', async () => {
+    setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    const onChange = jest.fn();
+    const refIds = [{ label: 'table A', value: 'table A' }];
+    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
+
+    // Read the editor props synchronously, before the await below can let a late re-render
+    // (see the afterEach note on lingering components) land as a newer mock call.
+    expect(SqlEditorMock.mock.lastCall?.[0].completionProvider?.tables?.()).toEqual([
+      expect.objectContaining({ label: 'table A', insertText: '`table A`' }),
+    ]);
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    expect(onChange.mock.calls[0][0].expression).toContain('`table A`');
   });
 
   describe('autocomplete metadata', () => {

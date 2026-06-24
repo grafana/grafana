@@ -3,11 +3,21 @@ import { type SyntaxNode } from '@lezer/common';
 
 import { type CodeMirrorCompletionContext } from '@grafana/ui/unstable';
 
+import { SQL_EXPRESSIONS_DIALECT, unquoteIdentifier } from '../../../utils/sqlIdentifier';
+
 const SQL_STATEMENT_NODE_NAME = 'Statement';
 const SQL_COMPOSITE_IDENTIFIER_NODE_NAME = 'CompositeIdentifier';
 const SQL_IDENTIFIER_NODE_NAME = 'Identifier';
+const SQL_QUOTED_IDENTIFIER_NODE_NAME = 'QuotedIdentifier';
 const SQL_KEYWORD_NODE_NAME = 'Keyword';
 const SQL_PUNCTUATION_NODE_NAME = 'Punctuation';
+
+// Bare table/alias identifiers, quoted or not. Qualified names (`table.column`) are composite.
+const SQL_IDENTIFIER_NODE_NAMES = new Set<string>([SQL_IDENTIFIER_NODE_NAME, SQL_QUOTED_IDENTIFIER_NODE_NAME]);
+const SQL_IDENTIFIER_LIKE_NODE_NAMES = new Set<string>([
+  ...SQL_IDENTIFIER_NODE_NAMES,
+  SQL_COMPOSITE_IDENTIFIER_NODE_NAME,
+]);
 
 const SQL_SELECT_KEYWORD = 'SELECT';
 const SQL_FROM_KEYWORD = 'FROM';
@@ -187,7 +197,8 @@ function getQualifiedColumnContext(
     return undefined;
   }
 
-  const table = textBeforeCursor.slice(0, dotIndex).trim();
+  // The qualifier may be quoted (e.g. `table A`.column), so unquote it to match parsed table refs.
+  const table = unquoteIdentifier(textBeforeCursor.slice(0, dotIndex), SQL_EXPRESSIONS_DIALECT);
 
   if (!table) {
     return undefined;
@@ -288,7 +299,7 @@ function readTableRefAt(
     return undefined;
   }
 
-  const table = getNodeText(context, tableNode).trim();
+  const table = unquoteIdentifier(getNodeText(context, tableNode), SQL_EXPRESSIONS_DIALECT);
   const aliasResult = readAliasAt(context, children, index + 1);
 
   return {
@@ -306,12 +317,12 @@ function readAliasAt(
   const aliasIndex = getKeywordText(context, maybeAsKeyword) === SQL_AS_KEYWORD ? index + 1 : index;
   const aliasNode = children[aliasIndex];
 
-  if (!aliasNode || aliasNode.name !== SQL_IDENTIFIER_NODE_NAME) {
+  if (!isIdentifierNode(aliasNode)) {
     return { nextIndex: aliasIndex };
   }
 
   return {
-    alias: getNodeText(context, aliasNode).trim(),
+    alias: unquoteIdentifier(getNodeText(context, aliasNode), SQL_EXPRESSIONS_DIALECT),
     nextIndex: aliasIndex + 1,
   };
 }
@@ -331,7 +342,7 @@ function resolveQualifiedTable(tableRefs: TableRef[], tableOrAlias: string): Res
 }
 
 function isSameIdentifier(identifier: string | undefined, otherIdentifier: string): boolean {
-  // This parser path only handles unquoted identifiers, which SQL treats as case-insensitive.
+  // Identifiers are already unquoted here; compare case-insensitively like unquoted SQL names.
   return identifier?.toLowerCase() === otherIdentifier.toLowerCase();
 }
 
@@ -444,7 +455,11 @@ function getStatementChildren(statement: SyntaxNode): SyntaxNode[] {
 }
 
 function isIdentifierLike(node: SyntaxNode | undefined): node is SyntaxNode {
-  return node?.name === SQL_IDENTIFIER_NODE_NAME || node?.name === SQL_COMPOSITE_IDENTIFIER_NODE_NAME;
+  return node !== undefined && SQL_IDENTIFIER_LIKE_NODE_NAMES.has(node.name);
+}
+
+function isIdentifierNode(node: SyntaxNode | undefined): node is SyntaxNode {
+  return node !== undefined && SQL_IDENTIFIER_NODE_NAMES.has(node.name);
 }
 
 function isComma(context: CodeMirrorCompletionContext, node: SyntaxNode | undefined): boolean {

@@ -5,6 +5,8 @@ import type {
   CodeMirrorCompletionSource,
 } from '@grafana/ui/unstable';
 
+import { SQL_EXPRESSIONS_DIALECT, unquoteIdentifier } from '../../../utils/sqlIdentifier';
+
 import { getSqlCompletionSituation } from './completionSituation';
 
 type SqlCompletionKind = 'column' | 'function' | 'keyword' | 'table';
@@ -182,13 +184,16 @@ async function resolveKnownCompletionTable(
   table: string
 ): Promise<string | undefined> {
   const tables = await resolveTables(completionProvider);
-  const tableMatch = tables.find((t) => isSameIdentifier(getCompletionInsertText(t), table));
+  // Table completions may carry quoted insert text (e.g. `table A`), but the parsed qualifier is unquoted.
+  const tableMatch = tables.find((t) =>
+    isSameIdentifier(unquoteIdentifier(getCompletionInsertText(t), SQL_EXPRESSIONS_DIALECT), table)
+  );
 
-  return tableMatch ? getCompletionInsertText(tableMatch) : undefined;
+  return tableMatch ? unquoteIdentifier(getCompletionInsertText(tableMatch), SQL_EXPRESSIONS_DIALECT) : undefined;
 }
 
 function isSameIdentifier(identifier: string, otherIdentifier: string): boolean {
-  // Completion table names are currently unquoted identifiers, so matching should be case-insensitive.
+  // Both identifiers are unquoted here, so matching should be case-insensitive like unquoted SQL names.
   return identifier.toLowerCase() === otherIdentifier.toLowerCase();
 }
 

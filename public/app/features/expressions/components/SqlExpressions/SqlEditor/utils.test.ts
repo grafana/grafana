@@ -1,5 +1,5 @@
 import { CompletionContext } from '@codemirror/autocomplete';
-import { sql as sqlLanguage } from '@codemirror/lang-sql';
+import { MySQL, sql as sqlLanguage } from '@codemirror/lang-sql';
 import { EditorState } from '@codemirror/state';
 
 import { getSqlCompletionSource, type SqlCompletionProvider } from './utils';
@@ -11,7 +11,12 @@ const getCompletionResult = (
   explicit = true
 ) => {
   const completionSource = getSqlCompletionSource(completionProvider);
-  const context = new CompletionContext(EditorState.create({ doc: sql, extensions: [sqlLanguage()] }), pos, explicit);
+  // Match the editor: SQL Expressions parse with the MySQL dialect so backtick-quoted identifiers are supported.
+  const context = new CompletionContext(
+    EditorState.create({ doc: sql, extensions: [sqlLanguage({ dialect: MySQL })] }),
+    pos,
+    explicit
+  );
 
   return completionSource(context);
 };
@@ -348,5 +353,79 @@ LIMIT
     const result = await getCompletionResult({ functions: () => [] }, 'SELECT ca');
 
     expect(result?.options).not.toEqual(expect.arrayContaining([expect.objectContaining({ label: 'CASE' })]));
+  });
+
+  describe('quoted table names with spaces', () => {
+    it('suggests quoted table names in FROM positions', async () => {
+      const completionProvider = {
+        tables: () => [{ label: 'table A', insertText: '`table A`' }],
+      };
+
+      await expect(getCompletionResult(completionProvider, 'SELECT * FROM ')).resolves.toEqual(
+        expect.objectContaining({
+          options: expect.arrayContaining([expect.objectContaining({ label: 'table A', apply: '`table A`' })]),
+        })
+      );
+    });
+
+    it('resolves columns for backtick-quoted table refs in qualified column completions', async () => {
+      const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
+      const result = await getCompletionResult(
+        { columns },
+        'SELECT `table A`. FROM `table A`',
+        'SELECT `table A`.'.length
+      );
+
+      expect(columns).toHaveBeenCalledWith({ table: 'table A' });
+      expect(result).toEqual(
+        expect.objectContaining({
+          options: expect.arrayContaining([expect.objectContaining({ label: 'value' })]),
+        })
+      );
+    });
+
+    it('resolves columns through aliases of backtick-quoted table refs', async () => {
+      const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
+      const result = await getCompletionResult({ columns }, 'SELECT t. FROM `table A` t', 'SELECT t.'.length);
+
+      expect(columns).toHaveBeenCalledWith({ table: 'table A' });
+      expect(result).toEqual(
+        expect.objectContaining({
+          options: expect.arrayContaining([expect.objectContaining({ label: 'value' })]),
+        })
+      );
+    });
+
+    it('resolves global table completions for quoted insert text in qualified column completions', async () => {
+      const columns = jest.fn().mockReturnValue([{ label: 'value', insertText: 'value' }]);
+      const result = await getCompletionResult(
+        { tables: () => [{ label: 'table A', insertText: '`table A`' }], columns },
+        'SELECT `table A`.',
+        'SELECT `table A`.'.length
+      );
+
+      expect(columns).toHaveBeenCalledWith({ table: 'table A' });
+      expect(result).toEqual(
+        expect.objectContaining({
+          options: expect.arrayContaining([expect.objectContaining({ label: 'value' })]),
+        })
+      );
+    });
+
+    it('suggests columns from quoted FROM tables in the SELECT list without qualification', async () => {
+      const columns = jest.fn().mockReturnValue([{ label: 'time', insertText: 'time' }]);
+      const result = await getCompletionResult(
+        { columns, functions: () => [] },
+        'SELECT  FROM `table A`',
+        'SELECT '.length
+      );
+
+      expect(columns).toHaveBeenCalledWith({ table: 'table A' });
+      expect(result).toEqual(
+        expect.objectContaining({
+          options: expect.arrayContaining([expect.objectContaining({ label: 'time' })]),
+        })
+      );
+    });
   });
 });

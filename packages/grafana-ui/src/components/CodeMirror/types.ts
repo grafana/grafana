@@ -12,6 +12,13 @@ export type CodeMirrorCompletionMode = 'override' | 'merge';
 
 export type CodeMirrorEditorLanguage = 'json' | 'sql';
 
+/**
+ * SQL dialect used for parsing and syntax highlighting when `language` is `'sql'`.
+ * - `'standard'` (default) — ANSI SQL, where identifiers are quoted with double quotes.
+ * - `'mysql'` — MySQL, where identifiers are quoted with backticks.
+ */
+export type CodeMirrorSqlDialect = 'standard' | 'mysql';
+
 export interface CodeMirrorEditorProps {
   /**
    * The current editor contents.
@@ -21,6 +28,11 @@ export interface CodeMirrorEditorProps {
    * Syntax highlighting and language-aware behavior to enable.
    */
   language?: CodeMirrorEditorLanguage;
+  /**
+   * SQL dialect to parse with when `language` is `'sql'`. Defaults to `'standard'`.
+   * Ignored for non-SQL languages.
+   */
+  sqlDialect?: CodeMirrorSqlDialect;
   /**
    * Editor height, such as `'200px'` or `'100%'`.
    */
