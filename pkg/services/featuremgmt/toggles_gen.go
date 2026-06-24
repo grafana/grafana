@@ -139,10 +139,6 @@ const (
 	// Enable folder.grafana.app force delete: honor gracePeriodSeconds=0 to delete a folder bypassing the eventually-consistent empty-folder check. Without cascade delete this removes only the folder and leaves contained resources orphaned, so it is intended for callers that delete contents separately
 	FlagKubernetesFolderForceDelete = "kubernetesFolderForceDelete"
 
-	// FlagKubernetesShortURLs
-	// Enables k8s short URL API and uses it under the hood when handling legacy /api
-	FlagKubernetesShortURLs = "kubernetesShortURLs"
-
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
