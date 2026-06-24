@@ -174,15 +174,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "refactorVariablesTimeRange",
-			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: false, React: false}, // BE-only toggle
 		},
 		{
 			Name:        "faroDatasourceSelector",
@@ -424,21 +416,13 @@ var (
 			Expression:      "false",
 			Generate:        Generate{React: true},
 		},
-		{
-			Name:            "kubernetesShortURLs",
-			Description:     "Enables k8s short URL API and uses it under the hood when handling legacy /api",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
+
 		{
 			Name:        "useKubernetesShortURLsAPI",
 			Description: "Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",
 		},
 
@@ -1301,15 +1285,6 @@ var (
 		},
 
 		{
-			Name:            "dataplaneAggregator",
-			Description:     "Enable grafana dataplane aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
 			Stage:        FeatureStagePublicPreview,
@@ -2137,6 +2112,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "grafana.starredFolders",
+			Description: "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+		},
+		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
@@ -2263,10 +2246,10 @@ var (
 		{
 			Name:        "heatmapRowsAxisOptions",
 			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "pieChartGradientColorScheme",
@@ -2368,15 +2351,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
-		},
-		{
-			Name:            "opentsdbBackendMigration",
-			Description:     "Run queries through the data source backend",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaDataSourcesPlugins,
-			Expression:      "false",
-			RequiresRestart: true,
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "ttlPluginInstanceManager",
@@ -3174,6 +3148,15 @@ var (
 		{
 			Name:         "table.protoRowParser",
 			Description:  "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "dataviz.experimentalColorSchemes",
+			Description:  "Enables additional experimental color schemes for visualizations.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,

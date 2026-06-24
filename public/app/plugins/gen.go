@@ -20,6 +20,7 @@ import (
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
+
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/codegen/pfs"
@@ -28,7 +29,6 @@ import (
 var skipPlugins = map[string]bool{
 	"influxdb": true, // plugin.json fails validation (defaultMatchFormat)
 	"mixed":    true, // plugin.json fails validation (mixed)
-	"opentsdb": true, // plugin.json fails validation (defaultMatchFormat)
 }
 
 const sep = string(filepath.Separator)

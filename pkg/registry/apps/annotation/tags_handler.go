@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -24,6 +25,7 @@ type TagItem struct {
 
 func newTagsHandler(
 	tagProvider TagProvider,
+	accessClient authtypes.AccessClient,
 	tracer trace.Tracer,
 	metrics *Metrics,
 	logger log.Logger,
@@ -37,6 +39,12 @@ func newTagsHandler(
 		defer span.End()
 		start := time.Now()
 		defer func() { observe(ctx, logger, metrics.RequestDuration, "tags", start, err) }()
+
+		// Tags are an org-wide aggregate, so gate the request on org-level
+		// annotation read before exposing any tag metadata.
+		if err = authorizeReadOrganizationAnnotations(ctx, accessClient, namespace); err != nil {
+			return err
+		}
 
 		opts := TagListOptions{}
 		queryParams := request.URL.Query()

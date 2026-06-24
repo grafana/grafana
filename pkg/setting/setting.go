@@ -646,6 +646,7 @@ type Cfg struct {
 	NewsFeedEnabled bool
 
 	// Experimental scope settings
+	ScopesApiEnabled        bool
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
@@ -1160,16 +1161,34 @@ type AnnotationAppPlatformSettings struct {
 	// annotation. 0 means no scopes are allowed. Negative values are
 	// rejected at load time. Default 5.
 	MaxScopeCount int
+
+	// APIMigrationPhase controls legacy API proxy behavior.
+	// Values: "off" (default), "proxy-writes", "proxy-all".
+	APIMigrationPhase string
+
+	// APIServerURL is the URL of the standalone annotation API server.
+	// Empty means proxy is disabled regardless of APIMigrationPhase.
+	APIServerURL string
+}
+
+func (s AnnotationAppPlatformSettings) ProxyEnabled() bool {
+	return s.APIMigrationPhase == "proxy-writes" || s.APIMigrationPhase == "proxy-all"
+}
+
+func (s AnnotationAppPlatformSettings) ProxyAll() bool {
+	return s.APIMigrationPhase == "proxy-all"
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) (AnnotationAppPlatformSettings, error) {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	settings := AnnotationAppPlatformSettings{
-		Enabled:        appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:   appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:   appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
-		EnableLegacyID: appPlatformSection.Key("enable_legacy_id").MustBool(false),
-		MaxScopeCount:  appPlatformSection.Key("max_scope_count").MustInt(5),
+		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		MaxScopeCount:     appPlatformSection.Key("max_scope_count").MustInt(5),
+		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString("off"),
+		APIServerURL:      appPlatformSection.Key("api_server_url").MustString(""),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
@@ -1801,6 +1820,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")
+	cfg.ScopesApiEnabled = scopesSection.Key("api_enabled").MustBool(false)
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 
