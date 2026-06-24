@@ -1141,22 +1141,22 @@ const dashboardLinkSchema = z.object({
     .describe('Render the link in the dashboard controls dropdown menu instead of above the panels'),
 });
 
+const timeSettingsSchema = z
+  .object({
+    from: z.string().optional().describe('Start of time range (e.g. "now-6h")'),
+    to: z.string().optional().describe('End of time range (e.g. "now")'),
+    autoRefresh: z
+      .string()
+      .optional()
+      .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
+    timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
+  })
+  .describe('Dashboard time settings. Partial update: only the provided fields change.');
+
 const updateDashboardSettingsPayloadSchema = z.object({
   title: z.string().optional().describe('Dashboard title'),
   description: z.string().optional().describe('Dashboard description'),
   tags: z.array(z.string()).optional().describe('Dashboard tags'),
-  refresh: z
-    .string()
-    .optional()
-    .describe('Auto-refresh interval (e.g. "5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d", "" to disable)'),
-  timeRange: z
-    .object({
-      from: z.string().describe('Start of time range (e.g. "now-6h")'),
-      to: z.string().describe('End of time range (e.g. "now")'),
-    })
-    .optional()
-    .describe('Dashboard time range'),
-  timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
   editable: z.boolean().optional().describe('Whether the dashboard is editable'),
   cursorSync: z
     .enum(['Off', 'Crosshair', 'Tooltip'])
@@ -1166,6 +1166,9 @@ const updateDashboardSettingsPayloadSchema = z.object({
     .array(dashboardLinkSchema)
     .optional()
     .describe('Replaces the full dashboard links list. Pass [] to clear all links.'),
+  timeSettings: timeSettingsSchema.optional(),
+  liveNow: z.boolean().optional().describe('Continuously redraw panels to keep live data moving left'),
+  preload: z.boolean().optional().describe('Load all panels when the dashboard loads'),
 });
 
 /**
@@ -1206,9 +1209,9 @@ export const payloads = {
     'Move a panel to a different group or reposition within the current group'
   ),
   getDashboardInfo: emptyPayloadSchema.describe(
-    'Get dashboard identity/folder metadata plus all settings (title, description, tags, editable, refresh, time range, timezone, cursorSync, links)'
+    'Get dashboard identity/folder metadata plus all settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
   ),
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
-    'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable, cursorSync, links)'
+    'Update dashboard settings (title, description, tags, editable, cursorSync, links, timeSettings, liveNow, preload)'
   ),
 };

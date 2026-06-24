@@ -12,9 +12,18 @@ jest.mock('@grafana/scenes', () => {
       this.state = state;
     }
   }
+  class LiveNowTimer {
+    public state: { enabled: boolean };
+    constructor(state: { enabled: boolean }) {
+      this.state = state;
+    }
+    public get isEnabled() {
+      return this.state.enabled;
+    }
+  }
   return {
     sceneGraph: { getTimeRange: jest.fn() },
-    behaviors: { CursorSync },
+    behaviors: { CursorSync, LiveNowTimer },
   };
 });
 
@@ -22,6 +31,7 @@ function buildTestScene() {
   const timeRange = { state: { from: 'now-12h', to: 'now', timeZone: 'utc' } };
   const refreshPicker = { state: { refresh: '30s' } };
   const cursorSync = new behaviors.CursorSync({ sync: DashboardCursorSync.Crosshair });
+  const liveNowTimer = new behaviors.LiveNowTimer({ enabled: true });
 
   const scene = {
     state: {
@@ -29,10 +39,11 @@ function buildTestScene() {
       description: 'desc',
       tags: ['a', 'b'],
       editable: false,
+      preload: true,
       links: [{ title: 'Runbook', url: 'https://x' }],
       uid: 'dash-1',
       meta: { folderTitle: 'General', folderUid: 'f1', created: 'c', updated: 'u' },
-      $behaviors: [cursorSync],
+      $behaviors: [cursorSync, liveNowTimer],
       controls: { state: { refreshPicker } },
     },
   };
@@ -62,11 +73,11 @@ describe('GET_DASHBOARD_INFO', () => {
       description: 'desc',
       tags: ['a', 'b'],
       editable: false,
-      refresh: '30s',
-      timeRange: { from: 'now-12h', to: 'now' },
-      timezone: 'utc',
       cursorSync: 'Crosshair',
       links: [{ title: 'Runbook', url: 'https://x' }],
+      timeSettings: { from: 'now-12h', to: 'now', timezone: 'utc', autoRefresh: '30s' },
+      liveNow: true,
+      preload: true,
     });
   });
 });

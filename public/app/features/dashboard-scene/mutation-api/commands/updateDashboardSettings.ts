@@ -10,7 +10,7 @@ import {
 import { transformCursorSyncV2ToV1 } from '../../serialization/transformToV1TypesUtils';
 
 import { payloads } from './schemas';
-import { findCursorSyncBehavior, readDashboardSettings } from './shared';
+import { findCursorSyncBehavior, findLiveNowBehavior, readDashboardSettings } from './shared';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
@@ -67,6 +67,12 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
       if (payload.editable !== undefined) {
         sceneUpdates.editable = payload.editable;
       }
+      if (payload.preload !== undefined) {
+        sceneUpdates.preload = payload.preload;
+      }
+      if (payload.links !== undefined) {
+        sceneUpdates.links = payload.links.map(normalizeDashboardLink);
+      }
 
       if (Object.keys(sceneUpdates).length > 0) {
         scene.setState(sceneUpdates);
@@ -74,24 +80,26 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
 
       const timeRange = sceneGraph.getTimeRange(scene);
       const timeRangeUpdates: Record<string, unknown> = {};
-      if (payload.timeRange !== undefined) {
-        timeRangeUpdates.from = payload.timeRange.from;
-        timeRangeUpdates.to = payload.timeRange.to;
+      if (payload.timeSettings?.from !== undefined) {
+        timeRangeUpdates.from = payload.timeSettings.from;
       }
-      if (payload.timezone !== undefined) {
-        timeRangeUpdates.timeZone = payload.timezone;
+      if (payload.timeSettings?.to !== undefined) {
+        timeRangeUpdates.to = payload.timeSettings.to;
+      }
+      if (payload.timeSettings?.timezone !== undefined) {
+        timeRangeUpdates.timeZone = payload.timeSettings.timezone;
       }
 
       if (Object.keys(timeRangeUpdates).length > 0) {
         timeRange.setState(timeRangeUpdates);
       }
 
-      if (payload.refresh !== undefined) {
+      if (payload.timeSettings?.autoRefresh !== undefined) {
         const refreshPicker = scene.state.controls?.state.refreshPicker;
         if (refreshPicker) {
-          refreshPicker.setState({ refresh: payload.refresh });
+          refreshPicker.setState({ refresh: payload.timeSettings.autoRefresh });
         } else {
-          warnings.push('refresh interval could not be set: refresh picker not found in scene controls');
+          warnings.push('autoRefresh could not be set: refresh picker not found in scene controls');
         }
       }
 
@@ -104,8 +112,13 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
         }
       }
 
-      if (payload.links !== undefined) {
-        scene.setState({ links: payload.links.map(normalizeDashboardLink) });
+      if (payload.liveNow !== undefined) {
+        const liveNowBehavior = findLiveNowBehavior(scene);
+        if (liveNowBehavior) {
+          liveNowBehavior.setState({ enabled: payload.liveNow });
+        } else {
+          warnings.push('liveNow could not be set: LiveNowTimer behavior not found in scene');
+        }
       }
 
       const newValue = readDashboardSettings(scene);

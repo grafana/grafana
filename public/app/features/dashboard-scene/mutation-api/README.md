@@ -926,7 +926,7 @@ For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variable
 
 ### `UPDATE_DASHBOARD_SETTINGS`
 
-Update dashboard-level settings. Requires edit permissions. All fields are optional; only the fields provided are changed. `tags` and `links` replace the full list.
+Update dashboard-level settings. Requires edit permissions. All fields are optional; only the fields provided are changed. `tags` and `links` replace the full list. Time-related fields are nested under `timeSettings` (matching the v2 dashboard spec).
 
 **Request:**
 
@@ -938,16 +938,16 @@ Update dashboard-level settings. Requires edit permissions. All fields are optio
     "description": "Key production service metrics",
     "tags": ["production", "sre"],
     "editable": true,
-    "refresh": "1m",
-    "timeRange": { "from": "now-7d", "to": "now" },
-    "timezone": "utc",
     "cursorSync": "Crosshair",
-    "links": [{ "title": "Runbook", "url": "https://runbooks.example.com", "type": "link", "targetBlank": true }]
+    "links": [{ "title": "Runbook", "url": "https://runbooks.example.com", "type": "link", "targetBlank": true }],
+    "timeSettings": { "from": "now-7d", "to": "now", "autoRefresh": "1m", "timezone": "utc" },
+    "liveNow": false,
+    "preload": true
   }
 }
 ```
 
-`cursorSync` accepts `"Off"`, `"Crosshair"`, or `"Tooltip"`. When the dashboard has no `CursorSync` behavior, a warning is returned. The response `data` contains the updated settings (same shape as `GET_DASHBOARD_INFO`).
+`cursorSync` accepts `"Off"`, `"Crosshair"`, or `"Tooltip"`. `cursorSync` and `liveNow` are behavior-based; when the dashboard has no `CursorSync` / `LiveNowTimer` behavior a warning is returned. The response `data` contains the updated settings (same shape as `GET_DASHBOARD_INFO`).
 
 ---
 
@@ -973,11 +973,11 @@ Get dashboard identity/folder metadata plus every dashboard-level setting that `
     "description": "Dashboard description",
     "tags": ["production", "monitoring"],
     "editable": true,
-    "refresh": "30s",
-    "timeRange": { "from": "now-6h", "to": "now" },
-    "timezone": "utc",
     "cursorSync": "Crosshair",
     "links": [{ "title": "Runbook", "url": "https://runbooks.example.com", "type": "link" }],
+    "timeSettings": { "from": "now-6h", "to": "now", "autoRefresh": "30s", "timezone": "utc" },
+    "liveNow": false,
+    "preload": true,
     "uid": "abc123",
     "folderTitle": "Infrastructure",
     "folderUid": "folder-1",

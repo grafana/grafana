@@ -3,6 +3,7 @@ import { behaviors, sceneGraph } from '@grafana/scenes';
 import {
   type DashboardCursorSync,
   type DashboardLink,
+  type TimeSettingsSpec,
 } from '../../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { transformCursorSynctoEnum } from '../../serialization/transformToV2TypesUtils';
 
@@ -13,15 +14,19 @@ export interface DashboardSettings {
   description: string;
   tags: string[];
   editable: boolean;
-  refresh: string;
-  timeRange: { from: string; to: string };
-  timezone: string;
   cursorSync: DashboardCursorSync;
   links: DashboardLink[];
+  timeSettings: Partial<TimeSettingsSpec>;
+  liveNow: boolean;
+  preload: boolean;
 }
 
 export function findCursorSyncBehavior(scene: MutationContext['scene']): behaviors.CursorSync | undefined {
   return scene.state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync);
+}
+
+export function findLiveNowBehavior(scene: MutationContext['scene']): behaviors.LiveNowTimer | undefined {
+  return scene.state.$behaviors?.find((b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer);
 }
 
 export function readDashboardSettings(scene: MutationContext['scene']): DashboardSettings {
@@ -33,13 +38,15 @@ export function readDashboardSettings(scene: MutationContext['scene']): Dashboar
     description: scene.state.description ?? '',
     tags: scene.state.tags ?? [],
     editable: scene.state.editable ?? true,
-    refresh: refreshPicker?.state.refresh ?? '',
-    timeRange: {
-      from: timeRange.state.from,
-      to: timeRange.state.to,
-    },
-    timezone: timeRange.state.timeZone ?? '',
     cursorSync: transformCursorSynctoEnum(findCursorSyncBehavior(scene)?.state.sync),
     links: scene.state.links ?? [],
+    timeSettings: {
+      from: timeRange.state.from,
+      to: timeRange.state.to,
+      timezone: timeRange.state.timeZone ?? '',
+      autoRefresh: refreshPicker?.state.refresh ?? '',
+    },
+    liveNow: findLiveNowBehavior(scene)?.isEnabled ?? false,
+    preload: scene.state.preload ?? false,
   };
 }
