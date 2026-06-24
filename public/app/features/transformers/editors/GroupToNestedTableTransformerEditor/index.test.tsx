@@ -1,12 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, fireEvent, screen } from '@testing-library/react';
 
-import { FieldMatcherID, FieldType, toDataFrame } from '@grafana/data';
-import {
-  GroupByOperationID,
-  type GroupToNestedTableTransformerOptions,
-  type GroupToNestedTableTransformerOptionsV2,
-} from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
+import { FieldMatcherID, FieldType, ReducerID, toDataFrame } from '@grafana/data';
+import { GroupByOperationID, type GroupToNestedTableTransformerOptionsV2 } from '@grafana/data/internal';
 
 import { GroupToNestedTableTransformerEditor } from '.';
 
@@ -19,19 +14,57 @@ const input = [
   }),
 ];
 
-describe('GroupToNestedTableTransformerEditor routing', () => {
-  let originalFeatureToggles: typeof config.featureToggles;
+describe('GroupToNestedTableTransformerEditor', () => {
+  it('new rules added via "Add rule" default keepNestedField to true', () => {
+    const onChange = jest.fn();
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'message' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      ],
+    };
 
-  beforeEach(() => {
-    originalFeatureToggles = config.featureToggles;
+    render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={onChange} />);
+
+    fireEvent.click(screen.getByText('Add rule'));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+    const newRule = updatedOptions.rules[updatedOptions.rules.length - 1];
+    expect(newRule.keepNestedField).toBe(true);
   });
 
-  afterEach(() => {
-    config.featureToggles = originalFeatureToggles;
+  it('removes the correct rule when its delete button is clicked', () => {
+    const onChange = jest.fn();
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'message' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'values' },
+          operation: GroupByOperationID.aggregate,
+          aggregations: [ReducerID.sum],
+        },
+      ],
+    };
+
+    render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={onChange} />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove rule' })[0]);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+    expect(updatedOptions.rules).toHaveLength(1);
+    expect(updatedOptions.rules[0].matcher.options).toBe('values');
   });
 
-  it('renders the V2 editor when options are already in V2 shape (regardless of toggle)', () => {
-    config.featureToggles = { ...originalFeatureToggles, groupToNestedTableV2: false };
+  it('renders a byName rule with a field-name combobox in the matcher sub-options', () => {
     const options: GroupToNestedTableTransformerOptionsV2 = {
       rules: [
         {
@@ -44,27 +77,193 @@ describe('GroupToNestedTableTransformerEditor routing', () => {
 
     render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={jest.fn()} />);
 
-    // "Add rule" button is V2-only
-    expect(screen.getByRole('button', { name: 'Add rule' })).toBeInTheDocument();
+    // FieldNameMatcherEditor renders a Combobox with placeholder "Choose" for field selection
+    expect(screen.getByPlaceholderText('Choose')).toBeInTheDocument();
   });
 
-  it('renders the V1 editor when toggle is off and options are V1 shape', () => {
-    config.featureToggles = { ...originalFeatureToggles, groupToNestedTableV2: false };
-    const options: GroupToNestedTableTransformerOptions = { fields: {} };
+  it('renders a byRegexp rule with a regex text input in the matcher sub-options', () => {
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byRegexp, options: '/message/' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      ],
+    };
 
     render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={jest.fn()} />);
 
-    // V1 editor lists field names as inline labels; no "Add rule" button
-    expect(screen.getByText('message')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Add rule' })).not.toBeInTheDocument();
+    // FieldNameByRegexMatcherEditor renders an Input with placeholder "Enter regular expression"
+    expect(screen.getByPlaceholderText('Enter regular expression')).toBeInTheDocument();
   });
 
-  it('renders the V2 editor when the toggle is on, even with V1-shaped options', () => {
-    config.featureToggles = { ...originalFeatureToggles, groupToNestedTableV2: true };
-    const options: GroupToNestedTableTransformerOptions = { fields: {} };
+  it('renders a byType rule with a field-type combobox in the matcher sub-options', () => {
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byType, options: FieldType.string },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      ],
+    };
 
     render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={jest.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Add rule' })).toBeInTheDocument();
+    // Three comboboxes total: matcher type, field-type picker, and operation
+    expect(screen.getAllByRole('combobox')).toHaveLength(3);
+    // No regex input is present (which would indicate a byRegexp matcher instead)
+    expect(screen.queryByPlaceholderText('Enter regular expression')).not.toBeInTheDocument();
+  });
+
+  it('deletes the correct rule when the first of two identical rules is deleted', () => {
+    const onChange = jest.fn();
+    const identicalRule = {
+      matcher: { id: FieldMatcherID.byName, options: 'message' },
+      operation: GroupByOperationID.groupBy,
+      aggregations: [],
+      keepNestedField: false,
+    };
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [identicalRule, { ...identicalRule }],
+    };
+
+    render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={onChange} />);
+
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove rule' });
+    expect(removeButtons).toHaveLength(2);
+    fireEvent.click(removeButtons[0]);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+    expect(updatedOptions.rules).toHaveLength(1);
+  });
+
+  it('edits the correct rule when the first of two identical rules is edited', () => {
+    const onChange = jest.fn();
+    const identicalRule = {
+      matcher: { id: FieldMatcherID.byName, options: 'message' },
+      operation: GroupByOperationID.aggregate,
+      aggregations: [],
+      keepNestedField: true,
+    };
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [identicalRule, { ...identicalRule }],
+    };
+
+    render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={onChange} />);
+
+    // Two "Keep nested field(s)" switches (one per rule) plus the "Show field names" switch at the bottom
+    const switches = screen.getAllByRole('switch');
+    fireEvent.click(switches[0]);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+    expect(updatedOptions.rules[0].keepNestedField).toBe(false);
+    expect(updatedOptions.rules[1].keepNestedField).toBe(true);
+  });
+
+  // though similar to the tests above, this is more of a test of whether the `key` is working
+  // correctly as opposed to the `onChange` handlers.
+  it('keeps the correct regex value displayed after the first of two byRegexp rules is deleted', () => {
+    const onChange = jest.fn();
+    const options: GroupToNestedTableTransformerOptionsV2 = {
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byRegexp, options: '/foo/' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+        {
+          matcher: { id: FieldMatcherID.byRegexp, options: '/bar/' },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      ],
+    };
+
+    const { rerender } = render(
+      <GroupToNestedTableTransformerEditor input={input} options={options} onChange={onChange} />
+    );
+
+    const inputs = screen.getAllByPlaceholderText('Enter regular expression');
+    expect(inputs[0]).toHaveValue('/foo/');
+    expect(inputs[1]).toHaveValue('/bar/');
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove rule' })[0]);
+
+    const updatedOptions = onChange.mock.calls[0][0] as GroupToNestedTableTransformerOptionsV2;
+
+    rerender(<GroupToNestedTableTransformerEditor input={input} options={updatedOptions} onChange={onChange} />);
+
+    const remaining = screen.getAllByPlaceholderText('Enter regular expression');
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]).toHaveValue('/bar/');
+  });
+
+  describe('Expand nested rows by default', () => {
+    it('switch renders unchecked when expandAllRows is undefined', () => {
+      const options: GroupToNestedTableTransformerOptionsV2 = {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      };
+
+      render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={jest.fn()} />);
+
+      const switches = screen.getAllByRole('switch');
+      const expandSwitch = switches[switches.length - 1];
+      expect(expandSwitch).not.toBeChecked();
+    });
+
+    it('calls onChange with expandAllRows: true when toggled from undefined', () => {
+      const onChange = jest.fn();
+      const options: GroupToNestedTableTransformerOptionsV2 = {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      };
+
+      render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={onChange} />);
+
+      const switches = screen.getAllByRole('switch');
+      fireEvent.click(switches[switches.length - 1]);
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+      expect(updatedOptions.expandAllRows).toBe(true);
+    });
+
+    it('calls onChange with expandAllRows: false when toggled from true', () => {
+      const onChange = jest.fn();
+      const options: GroupToNestedTableTransformerOptionsV2 = {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+        expandAllRows: true,
+      };
+
+      render(<GroupToNestedTableTransformerEditor input={input} options={options} onChange={onChange} />);
+
+      const switches = screen.getAllByRole('switch');
+      fireEvent.click(switches[switches.length - 1]);
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+      expect(updatedOptions.expandAllRows).toBe(false);
+    });
   });
 });

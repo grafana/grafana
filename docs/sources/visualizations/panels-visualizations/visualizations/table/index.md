@@ -212,7 +212,7 @@ This option is only available when you're editing the panel.
 {{< admonition type="note" >}}
 The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-To use these features, enable the `groupToNestedTableV2` and `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
+To use these features, enable the `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
 {{< /admonition >}}
 
 A table can display sub-tables inside expandable rows. You can add these nested tables using the [Group to nested tables transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables), which groups rows by one or more fields, and can summarize nested row data by applying calculations.
@@ -619,7 +619,7 @@ The following image shows the "Info" field with the styling from the "Style" fie
 {{< admonition type="note" >}}
 The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 
-To use these features, enable the `groupToNestedTableV2` and `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
+To use these features, enable the `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
 {{< /admonition >}}
 
 By default, field overrides apply only to columns in the parent table.
