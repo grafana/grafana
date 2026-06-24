@@ -117,6 +117,7 @@ func ProvideService(
 	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
+	eventualResourceClient *resource.EventualClient,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
 	appInstallers []appsdkapiserver.AppInstaller,
@@ -208,6 +209,10 @@ func ProvideService(
 
 	eventualRestConfigProvider.cfg = s
 	close(eventualRestConfigProvider.ready)
+
+	// Hand the resource client to consumers wired before it (e.g. the authz
+	// folder store, which lists folders via search). See resource.EventualClient.
+	eventualResourceClient.Set(unified)
 
 	return s, nil
 }

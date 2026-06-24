@@ -1100,6 +1100,20 @@
     },
     {
       "metadata": {
+        "name": "authz.listFoldersViaSearch",
+        "resourceVersion": "1782267268333",
+        "creationTimestamp": "2026-06-24T02:14:28Z"
+      },
+      "spec": {
+        "description": "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAsyncQueryCaching",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-07-21T15:34:07Z"
