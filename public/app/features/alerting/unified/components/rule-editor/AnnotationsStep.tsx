@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { produce } from 'immer';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
@@ -49,29 +49,57 @@ const AnnotationsStep = () => {
   const requireDescriptions = alertingConfig?.reject_alerts_without_descriptions ?? false;
   const requireRunbookURL = alertingConfig?.reject_alerts_without_runbook_url ?? false;
 
-  const summaryInput = extractQuerySummaryInput(queries ?? [], condition, cloudExpression);
   const ruleName = watch('name');
-  const summaryValue = annotations.find((annotation) => annotation.key === Annotation.summary)?.value ?? '';
-  const descriptionValue = annotations.find((annotation) => annotation.key === Annotation.description)?.value ?? '';
 
-  const applySummaryText = (text: string) => {
-    const summaryIndex = annotations.findIndex((annotation) => annotation.key === Annotation.summary);
+  const summaryInput = useMemo(
+    () => extractQuerySummaryInput(queries, condition, cloudExpression),
+    [queries, condition, cloudExpression]
+  );
+
+  const summaryAnnotation = annotations.find((a) => a.key === Annotation.summary);
+  const descriptionAnnotation = annotations.find((a) => a.key === Annotation.description);
+
+  const handleGenerateSummary = useCallback(() => {
+    if (!summaryInput) {
+      return;
+    }
+    const { text } = compileQueryDescription(summaryInput.expr, {
+      threshold: summaryInput.threshold,
+    });
+    if (!text) {
+      return;
+    }
+    const summaryIndex = annotations.findIndex((a) => a.key === Annotation.summary);
     if (summaryIndex >= 0) {
       setValue(`annotations.${summaryIndex}.value`, text, { shouldDirty: true });
     } else {
       append({ key: Annotation.summary, value: text });
     }
-  };
+  }, [summaryInput, annotations, setValue, append]);
 
-  const handleGenerateSummary = () => {
-    if (!summaryInput) {
-      return;
-    }
-    const { text } = compileQueryDescription(summaryInput.expr, { threshold: summaryInput.threshold });
-    if (text) {
-      applySummaryText(text);
-    }
-  };
+  const handleAISummaryGenerated = useCallback(
+    (text: string) => {
+      const idx = annotations.findIndex((a) => a.key === Annotation.summary);
+      if (idx >= 0) {
+        setValue(`annotations.${idx}.value`, text, { shouldDirty: true });
+      } else {
+        append({ key: Annotation.summary, value: text });
+      }
+    },
+    [annotations, setValue, append]
+  );
+
+  const handleAIDescriptionGenerated = useCallback(
+    (text: string) => {
+      const idx = annotations.findIndex((a) => a.key === Annotation.description);
+      if (idx >= 0) {
+        setValue(`annotations.${idx}.value`, text, { shouldDirty: true });
+      } else {
+        append({ key: Annotation.description, value: text });
+      }
+    },
+    [annotations, setValue, append]
+  );
 
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = Number(annotations.find((annotation) => annotation.key === Annotation.panelID)?.value);
@@ -174,13 +202,17 @@ const AnnotationsStep = () => {
     >
       <Stack direction="column" gap={1}>
         {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
-        <GenerateSummaryButton onClick={handleGenerateSummary} disabled={!summaryInput} />
-        <AlertAIAssistPanel
-          summaryInput={summaryInput}
-          ruleName={ruleName ?? ''}
-          summary={summaryValue}
-          description={descriptionValue}
-        />
+        <Stack direction="row" gap={1} alignItems="flex-start">
+          <GenerateSummaryButton onClick={handleGenerateSummary} disabled={!summaryInput} />
+          <AlertAIAssistPanel
+            summaryInput={summaryInput}
+            ruleName={ruleName}
+            summary={summaryAnnotation?.value ?? ''}
+            description={descriptionAnnotation?.value ?? ''}
+            onSummaryGenerated={handleAISummaryGenerated}
+            onDescriptionGenerated={handleAIDescriptionGenerated}
+          />
+        </Stack>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;

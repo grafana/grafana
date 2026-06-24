@@ -1,71 +1,29 @@
-// Deterministic PromQL/LogQL -> plain English compiler.
-//
-// This intentionally avoids a full AST/grammar dependency: alert queries follow a
-// small set of common shapes (rate/increase, histogram_quantile, aggregations with
-// `by (...)`, range windows, inline thresholds) and a pattern matcher covers them
-// reliably and offline. The structured `QueryFacts` it produces is reused by the
-// adversarial review step, so parsing happens once and both features share it.
-
-export type QueryLanguage = 'promql' | 'logql' | 'unknown';
-
-export interface LabelMatcher {
-  label: string;
-  op: string; // = != =~ !~
-  value: string;
-}
-
 export interface QueryFacts {
-  language: QueryLanguage;
-  raw: string;
-  /** Primary metric or, for LogQL, the stream selector matchers. */
+  language: 'promql' | 'logql' | 'unknown';
   metric?: string;
-  /** sum | avg | min | max | count | stddev | stdvar | topk | bottomk | quantile */
   aggregation?: string;
-  /** Labels in a `by (...)` / `without (...)` clause. */
   groupBy?: string[];
-  /** rate | irate | increase | delta | histogram_quantile | <agg>_over_time */
+  groupByMode?: 'by' | 'without';
   func?: string;
-  /** Quantile argument of histogram_quantile, e.g. 0.95. */
   quantile?: number;
-  /** Range-vector window, e.g. "5m". */
-  range?: string;
-  /** Comparison operator of an inline threshold, e.g. ">". */
+  rangeWindow?: string;
   comparator?: string;
-  /** Right-hand side of an inline threshold, e.g. "0.5". */
-  threshold?: string;
-  /** Label matchers on the metric / stream selector. */
-  matchers?: LabelMatcher[];
-  /** LogQL line filters, already rendered to English fragments. */
-  logFilters?: string[];
+  threshold?: number;
+  labelMatchers?: Array<{ label: string; op: string; value: string }>;
+  logLineFilters?: Array<{ op: string; value: string }>;
 }
 
-export interface QueryDescription {
+interface CompileOpts {
+  threshold?: { comparator: string; value: number };
+}
+
+interface CompileResult {
   text: string;
   facts: QueryFacts;
-  /** False when the parser fell back to echoing the raw expression. */
   confident: boolean;
 }
 
-/** A threshold sourced from a separate expression query rather than inline in the expr. */
-export interface ThresholdInfo {
-  comparator: string;
-  value: string;
-}
-
-const RANGE_VECTOR_FUNCS = ['rate', 'irate', 'increase', 'delta', 'idelta', 'deriv'];
-const OVER_TIME_FUNCS = [
-  'avg_over_time',
-  'min_over_time',
-  'max_over_time',
-  'sum_over_time',
-  'count_over_time',
-  'last_over_time',
-  'stddev_over_time',
-  'quantile_over_time',
-];
-const AGGREGATIONS = ['sum', 'avg', 'min', 'max', 'count', 'stddev', 'stdvar', 'topk', 'bottomk', 'group', 'count_values'];
-
-const COMPARATOR_PHRASES: Record<string, string> = {
+const COMPARATOR_WORDS: Record<string, string> = {
   '>': 'rises above',
   '>=': 'reaches or exceeds',
   '<': 'drops below',
@@ -74,371 +32,316 @@ const COMPARATOR_PHRASES: Record<string, string> = {
   '!=': 'is not equal to',
 };
 
-const AGGREGATION_WORDS: Record<string, string> = {
-  sum: 'total',
-  avg: 'average',
-  min: 'minimum',
-  max: 'maximum',
-  count: 'number of series of',
-  stddev: 'standard deviation of',
-  stdvar: 'variance of',
+const QUANTILE_NAMES: Record<number, string> = {
+  0.5: 'median',
+  0.9: '90th percentile',
+  0.95: '95th percentile',
+  0.99: '99th percentile',
+  0.999: '99.9th percentile',
 };
 
-function detectLanguage(expr: string): QueryLanguage {
-  // LogQL is identifiable by line/label filter pipes following a stream selector.
-  const hasLineFilter = /\|[=~]|!~|!=\s*`|!=\s*"/.test(expr);
-  const hasLogPipe = /\|\s*(json|logfmt|pattern|regexp|line_format|label_format|unwrap|decolorize|drop|keep)\b/.test(
-    expr
-  );
-  const hasOverTimeOnStream = /_over_time\s*\(\s*\{/.test(expr);
-  if (hasLineFilter || hasLogPipe || hasOverTimeOnStream) {
-    return 'logql';
+const AGGREGATIONS = ['sum', 'avg', 'min', 'max', 'count', 'stddev', 'stdvar', 'topk', 'bottomk', 'group'];
+const RANGE_FUNCS = [
+  'rate',
+  'irate',
+  'increase',
+  'delta',
+  'deriv',
+  'idelta',
+  'avg_over_time',
+  'sum_over_time',
+  'min_over_time',
+  'max_over_time',
+  'count_over_time',
+  'stddev_over_time',
+  'stdvar_over_time',
+  'last_over_time',
+  'present_over_time',
+  'quantile_over_time',
+  'absent_over_time',
+];
+
+function extractGroupBy(expr: string): { mode?: 'by' | 'without'; labels: string[]; rest: string } {
+  const m = expr.match(/\b(by|without)\s*\(([^)]*)\)/i);
+  if (!m) {
+    return { labels: [], rest: expr };
   }
-  if (/[a-zA-Z_:][a-zA-Z0-9_:]*\s*(\{|\[|\()/.test(expr) || /\d/.test(expr)) {
-    return 'promql';
-  }
-  return 'unknown';
+  const lowered = m[1].toLowerCase();
+  const mode: 'by' | 'without' = lowered === 'without' ? 'without' : 'by';
+  const labels = m[2]
+    .split(',')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const rest = expr.replace(m[0], '').trim();
+  return { mode, labels, rest };
 }
 
-function parseMatchers(inner: string): LabelMatcher[] {
-  const matchers: LabelMatcher[] = [];
-  // label op "value" — value may use single or double quotes / backticks.
-  const re = /([a-zA-Z_][a-zA-Z0-9_]*)\s*(=~|!~|!=|=)\s*(["'`])((?:\\.|[^\\])*?)\3/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(inner)) !== null) {
-    matchers.push({ label: m[1], op: m[2], value: m[4] });
+function extractLabelMatchers(expr: string): Array<{ label: string; op: string; value: string }> {
+  const matchers: Array<{ label: string; op: string; value: string }> = [];
+  const re = /\{([^}]*)\}/g;
+  let m;
+  while ((m = re.exec(expr)) !== null) {
+    const inner = m[1];
+    const pairRe = /(\w+)\s*(=~|!~|!=|=)\s*"([^"]*)"/g;
+    let pair;
+    while ((pair = pairRe.exec(inner)) !== null) {
+      matchers.push({ label: pair[1], op: pair[2], value: pair[3] });
+    }
   }
   return matchers;
 }
 
-function parseLogFilters(expr: string): string[] {
-  const filters: string[] = [];
-  const re = /(\|=|\|~|!=|!~)\s*(["'`])((?:\\.|[^\\])*?)\2/g;
-  let m: RegExpExecArray | null;
+function extractLogLineFilters(expr: string): Array<{ op: string; value: string }> {
+  const filters: Array<{ op: string; value: string }> = [];
+  const re = /(\|=|!\~|!=|\|~)\s*`([^`]*)`|\b(\|=|!\~|!=|\|~)\s*"([^"]*)"/g;
+  let m;
   while ((m = re.exec(expr)) !== null) {
-    const [, op, , value] = m;
-    if (op === '|=') {
-      filters.push(`containing "${value}"`);
-    } else if (op === '|~') {
-      filters.push(`matching /${value}/`);
-    } else if (op === '!=') {
-      filters.push(`not containing "${value}"`);
-    } else if (op === '!~') {
-      filters.push(`not matching /${value}/`);
-    }
+    const op = m[1] || m[3];
+    const value = m[2] || m[4];
+    filters.push({ op, value });
   }
   return filters;
 }
 
-function parseGroupBy(expr: string): string[] | undefined {
-  // Matches both `sum by (a, b) (...)` and `sum(...) by (a, b)`.
-  const m = expr.match(/\b(?:by|without)\s*\(([^)]*)\)/);
+function extractInlineComparison(expr: string): { comparator?: string; threshold?: number; baseExpr: string } {
+  const m = expr.match(/\s*(>=|<=|!=|==|>|<)\s*(-?[\d.]+)\s*$/);
   if (!m) {
-    return undefined;
+    return { baseExpr: expr };
   }
-  const labels = m[1]
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return labels.length ? labels : undefined;
-}
-
-function parseInlineThreshold(expr: string): { comparator: string; threshold: string } | undefined {
-  // Top-level comparison, typically trailing: `... > 0.5` or `... >= bool 10`.
-  const m = expr.match(/(>=|<=|==|!=|>|<)\s*(?:bool\s+)?(-?\d+(?:\.\d+)?)\s*$/);
-  if (!m) {
-    return undefined;
-  }
-  return { comparator: m[1], threshold: m[2] };
-}
-
-function findMetricName(expr: string): string | undefined {
-  // First identifier followed by `{` or `[`, skipping known function names.
-  const re = /([a-zA-Z_:][a-zA-Z0-9_:]*)\s*(\{|\[)/g;
-  const reserved = new Set([...RANGE_VECTOR_FUNCS, ...OVER_TIME_FUNCS, ...AGGREGATIONS, 'histogram_quantile']);
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(expr)) !== null) {
-    if (!reserved.has(m[1])) {
-      return m[1];
-    }
-  }
-  // Fall back to a bare metric name (no selector), e.g. `up`.
-  const bare = expr.match(/\b([a-zA-Z_:][a-zA-Z0-9_:]*)\b/);
-  return bare && !reserved.has(bare[1]) ? bare[1] : undefined;
-}
-
-function parsePromQL(expr: string): QueryFacts {
-  const facts: QueryFacts = { language: 'promql', raw: expr };
-
-  const hq = expr.match(/histogram_quantile\s*\(\s*(-?\d+(?:\.\d+)?)\s*,/);
-  if (hq) {
-    facts.func = 'histogram_quantile';
-    facts.quantile = Number(hq[1]);
-  } else {
-    const overTime = OVER_TIME_FUNCS.find((fn) => new RegExp(`\\b${fn}\\s*\\(`).test(expr));
-    const rangeFn = RANGE_VECTOR_FUNCS.find((fn) => new RegExp(`\\b${fn}\\s*\\(`).test(expr));
-    facts.func = overTime ?? rangeFn;
-  }
-
-  const agg = AGGREGATIONS.find((fn) => new RegExp(`\\b${fn}\\b\\s*(by|without)?\\s*\\(`).test(expr));
-  if (agg) {
-    facts.aggregation = agg;
-  }
-
-  facts.groupBy = parseGroupBy(expr);
-
-  const range = expr.match(/\[\s*(\d+[smhdwy]+)\s*\]/);
-  if (range) {
-    facts.range = range[1];
-  }
-
-  const matcherBlock = expr.match(/\{([^}]*)\}/);
-  if (matcherBlock) {
-    const matchers = parseMatchers(matcherBlock[1]);
-    if (matchers.length) {
-      facts.matchers = matchers;
-    }
-  }
-
-  facts.metric = findMetricName(expr);
-
-  const inline = parseInlineThreshold(expr);
-  if (inline) {
-    facts.comparator = inline.comparator;
-    facts.threshold = inline.threshold;
-  }
-
-  return facts;
-}
-
-function parseLogQL(expr: string): QueryFacts {
-  const facts: QueryFacts = { language: 'logql', raw: expr };
-
-  const overTime = OVER_TIME_FUNCS.find((fn) => new RegExp(`\\b${fn}\\s*\\(`).test(expr));
-  const rateFn = /\brate\s*\(/.test(expr) ? 'rate' : undefined;
-  facts.func = overTime ?? rateFn;
-
-  const agg = AGGREGATIONS.find((fn) => new RegExp(`\\b${fn}\\b\\s*(by|without)?\\s*\\(`).test(expr));
-  if (agg) {
-    facts.aggregation = agg;
-  }
-
-  facts.groupBy = parseGroupBy(expr);
-
-  const range = expr.match(/\[\s*(\d+[smhdwy]+)\s*\]/);
-  if (range) {
-    facts.range = range[1];
-  }
-
-  const selector = expr.match(/\{([^}]*)\}/);
-  if (selector) {
-    const matchers = parseMatchers(selector[1]);
-    if (matchers.length) {
-      facts.matchers = matchers;
-    }
-  }
-
-  const logFilters = parseLogFilters(expr);
-  if (logFilters.length) {
-    facts.logFilters = logFilters;
-  }
-
-  const inline = parseInlineThreshold(expr);
-  if (inline) {
-    facts.comparator = inline.comparator;
-    facts.threshold = inline.threshold;
-  }
-
-  return facts;
+  return {
+    comparator: m[1],
+    threshold: parseFloat(m[2]),
+    baseExpr: expr.slice(0, m.index).trim(),
+  };
 }
 
 export function parseQueryFacts(expr: string): QueryFacts {
+  if (!expr || !expr.trim()) {
+    return { language: 'unknown' };
+  }
+
   const trimmed = expr.trim();
-  const language = detectLanguage(trimmed);
-  if (language === 'logql') {
-    return parseLogQL(trimmed);
-  }
-  if (language === 'promql') {
-    return parsePromQL(trimmed);
-  }
-  return { language: 'unknown', raw: trimmed };
-}
+  const logLineFilters = extractLogLineFilters(trimmed);
+  const labelMatchers = extractLabelMatchers(trimmed);
 
-function percentile(quantile: number): string {
-  const pct = quantile <= 1 ? quantile * 100 : quantile;
-  if (pct === 50) {
-    return 'median';
+  let language: 'promql' | 'logql' | 'unknown' = 'unknown';
+  if (logLineFilters.length > 0 || /^\s*\{[^}]*\}\s*(\||$)/.test(trimmed)) {
+    language = 'logql';
+  } else if (labelMatchers.length > 0 || /\b(rate|sum|avg|histogram_quantile|increase)\s*\(/.test(trimmed)) {
+    language = 'promql';
   }
-  const rounded = Number.isInteger(pct) ? pct : Number(pct.toFixed(1));
-  const tens = Math.floor(rounded) % 100;
-  const ones = Math.floor(rounded) % 10;
-  let suffix = 'th';
-  if (tens < 11 || tens > 13) {
-    if (ones === 1) {
-      suffix = 'st';
-    } else if (ones === 2) {
-      suffix = 'nd';
-    } else if (ones === 3) {
-      suffix = 'rd';
+
+  const { comparator, threshold, baseExpr } = extractInlineComparison(trimmed);
+  const working = baseExpr;
+
+  const facts: QueryFacts = { language };
+  if (comparator) {
+    facts.comparator = comparator;
+  }
+  if (threshold !== undefined) {
+    facts.threshold = threshold;
+  }
+  if (labelMatchers.length > 0) {
+    facts.labelMatchers = labelMatchers;
+  }
+  if (logLineFilters.length > 0) {
+    facts.logLineFilters = logLineFilters;
+  }
+
+  const histMatch = working.match(/histogram_quantile\s*\(\s*([\d.]+)\s*,/);
+  if (histMatch) {
+    facts.func = 'histogram_quantile';
+    facts.quantile = parseFloat(histMatch[1]);
+  }
+
+  const aggPattern = new RegExp(`\\b(${AGGREGATIONS.join('|')})\\s*(\\(|\\s+by\\s*\\(|\\s+without\\s*\\()`, 'i');
+  const aggMatch = working.match(aggPattern);
+  if (aggMatch) {
+    facts.aggregation = aggMatch[1].toLowerCase();
+  }
+
+  const { mode, labels } = extractGroupBy(working);
+  if (labels.length > 0) {
+    facts.groupBy = labels;
+    facts.groupByMode = mode;
+  }
+
+  const funcPattern = new RegExp(`\\b(${RANGE_FUNCS.join('|')})\\s*\\(`, 'i');
+  const funcMatch = working.match(funcPattern);
+  if (funcMatch) {
+    facts.func = facts.func || funcMatch[1].toLowerCase();
+  }
+
+  const rangeMatch = working.match(/\[(\d+[smhdwy])\]/);
+  if (rangeMatch) {
+    facts.rangeWindow = rangeMatch[1];
+  }
+
+  const metricRe = /\b([a-zA-Z_:][a-zA-Z0-9_:]*)\s*[\{[({]/;
+  const allMetricMatches = [...working.matchAll(new RegExp(metricRe, 'g'))];
+  for (const mm of allMetricMatches) {
+    const name = mm[1];
+    if (
+      !AGGREGATIONS.includes(name.toLowerCase()) &&
+      !RANGE_FUNCS.includes(name.toLowerCase()) &&
+      name !== 'histogram_quantile' &&
+      name !== 'by' &&
+      name !== 'without'
+    ) {
+      facts.metric = name;
+      break;
     }
   }
-  return `${rounded}${suffix} percentile`;
+
+  if (!facts.metric) {
+    const bareMetricMatch = working.match(/\b([a-zA-Z_][a-zA-Z0-9_:]*[a-zA-Z0-9_])\b/);
+    if (bareMetricMatch) {
+      const candidate = bareMetricMatch[1];
+      if (
+        !AGGREGATIONS.includes(candidate.toLowerCase()) &&
+        !RANGE_FUNCS.includes(candidate.toLowerCase()) &&
+        candidate !== 'histogram_quantile' &&
+        candidate !== 'by' &&
+        candidate !== 'without' &&
+        candidate !== 'le'
+      ) {
+        facts.metric = candidate;
+      }
+    }
+  }
+
+  return facts;
 }
 
-function matchersToPhrase(matchers: LabelMatcher[]): string {
-  return matchers
-    .map((m) => {
-      if (m.op === '=') {
-        return `${m.label}=${m.value}`;
-      }
-      if (m.op === '!=') {
-        return `${m.label}≠${m.value}`;
-      }
-      if (m.op === '=~') {
-        return `${m.label} matching /${m.value}/`;
-      }
-      return `${m.label} not matching /${m.value}/`;
-    })
-    .join(', ');
+function describeQuantile(q: number): string {
+  return QUANTILE_NAMES[q] || `${q * 100}th percentile`;
 }
 
-/** Builds the measurement core phrase (no leading article). */
-function measurementCore(facts: QueryFacts): string {
-  const metric = facts.metric ? `\`${facts.metric}\`` : 'the series';
-
-  let core: string;
-  switch (facts.func) {
+function describeFunc(func: string): string {
+  switch (func) {
     case 'rate':
+      return 'per-second rate of';
     case 'irate':
-      core = `per-second rate of ${metric}`;
-      break;
+      return 'instant per-second rate of';
     case 'increase':
-      core = `increase in ${metric}`;
-      break;
+      return 'increase in';
     case 'delta':
-    case 'idelta':
-      core = `change in ${metric}`;
-      break;
-    case 'deriv':
-      core = `per-second derivative of ${metric}`;
-      break;
-    case 'avg_over_time':
-      core = `average of ${metric}`;
-      break;
-    case 'max_over_time':
-      core = `maximum of ${metric}`;
-      break;
-    case 'min_over_time':
-      core = `minimum of ${metric}`;
-      break;
-    case 'sum_over_time':
-      core = `sum of ${metric}`;
-      break;
-    case 'last_over_time':
-      core = `most recent value of ${metric}`;
-      break;
-    case 'count_over_time':
-      core = facts.language === 'logql' ? `count of log lines` : `count of samples of ${metric}`;
-      break;
-    case 'histogram_quantile':
-      core = facts.quantile != null ? `${percentile(facts.quantile)} of ${metric}` : `quantile of ${metric}`;
-      break;
+      return 'delta of';
     default:
-      core = facts.language === 'logql' ? `rate of log lines` : metric;
+      if (func.endsWith('_over_time')) {
+        const agg = func.replace('_over_time', '');
+        return `${agg} over time of`;
+      }
+      return `${func} of`;
+  }
+}
+
+function describeComparator(comp: string, value: number): string {
+  const word = COMPARATOR_WORDS[comp];
+  if (!word) {
+    return `${comp} ${value}`;
+  }
+  return `${word} ${value}`;
+}
+
+function describeLabelFilters(matchers: Array<{ label: string; op: string; value: string }>, skipLabels: string[] = []): string {
+  const relevant = matchers.filter((m) => !skipLabels.includes(m.label));
+  if (relevant.length === 0) {
+    return '';
+  }
+  const parts = relevant.map((m) => `${m.label}${m.op}${m.value}`);
+  return `filtered to ${parts.join(', ')}`;
+}
+
+export function compileQueryDescription(expr: string, opts?: CompileOpts): CompileResult {
+  if (!expr || !expr.trim()) {
+    return { text: '', facts: { language: 'unknown' }, confident: true };
   }
 
-  // For histogram_quantile the metric is a `_bucket` series; describe the observed thing.
-  if (facts.func === 'histogram_quantile' && facts.metric?.endsWith('_bucket')) {
-    const base = facts.metric.replace(/_bucket$/, '');
-    core = facts.quantile != null ? `${percentile(facts.quantile)} of \`${base}\`` : `quantile of \`${base}\``;
-  }
+  const facts = parseQueryFacts(expr);
+  const parts: string[] = [];
 
-  // Aggregation wrapper (skip for histogram_quantile — the `by (le)` there is mechanical).
-  if (facts.aggregation && facts.func !== 'histogram_quantile') {
-    const word = AGGREGATION_WORDS[facts.aggregation] ?? `${facts.aggregation} of`;
-    core = `${word} ${core}`;
-  }
+  const comp = facts.comparator || opts?.threshold?.comparator;
+  const threshVal = facts.threshold ?? opts?.threshold?.value;
 
-  if (facts.language === 'logql') {
-    if (facts.matchers?.length) {
-      core += ` from ${matchersToPhrase(facts.matchers)}`;
-    }
-    if (facts.logFilters?.length) {
-      core += ` ${facts.logFilters.join(' and ')}`;
-    }
-    if (facts.range) {
-      core += ` over the last ${facts.range}`;
-    }
+  const isHistogram = facts.func === 'histogram_quantile';
+  const metricName = isHistogram && facts.metric?.endsWith('_bucket')
+    ? facts.metric.slice(0, -'_bucket'.length)
+    : facts.metric;
+
+  if (isHistogram && facts.quantile !== undefined) {
+    parts.push(`the ${describeQuantile(facts.quantile)} of \`${metricName || 'the metric'}\``);
   } else {
-    if (facts.range && facts.func !== 'histogram_quantile') {
-      core += ` over the last ${facts.range}`;
+    if (facts.aggregation) {
+      parts.push(`the total ${facts.aggregation} of`);
+    } else {
+      parts.push('');
     }
-    if (facts.matchers?.length && facts.func !== 'histogram_quantile') {
-      core += ` (filtered to ${matchersToPhrase(facts.matchers)})`;
+
+    if (facts.func && facts.func !== 'histogram_quantile') {
+      parts.push(describeFunc(facts.func));
+    }
+
+    parts.push(`\`${metricName || expr.trim()}\``);
+  }
+
+  if (facts.rangeWindow) {
+    parts.push(`over the last ${facts.rangeWindow}`);
+  }
+
+  const skipLabels = isHistogram ? ['le'] : [];
+  if (facts.labelMatchers && facts.labelMatchers.length > 0) {
+    const filterStr = describeLabelFilters(facts.labelMatchers, skipLabels);
+    if (filterStr) {
+      parts.push(`(${filterStr})`);
     }
   }
 
-  // Grouping. histogram_quantile always carries the mechanical `le` label — drop it
-  // and only surface the labels the percentile is actually broken down by.
-  let groupBy = facts.groupBy;
-  if (facts.func === 'histogram_quantile' && groupBy) {
-    groupBy = groupBy.filter((label) => label !== 'le');
-  }
-  if (groupBy?.length) {
-    core += `, grouped by ${groupBy.join(', ')}`;
-  }
+  const groupLabels = isHistogram
+    ? facts.groupBy?.filter((l) => l !== 'le')
+    : facts.groupBy;
 
-  return core;
-}
-
-function factsToEnglish(facts: QueryFacts, threshold?: ThresholdInfo): string {
-  const core = measurementCore(facts);
-
-  const comparator = facts.comparator ?? threshold?.comparator;
-  const value = facts.threshold ?? threshold?.value;
-
-  if (comparator && value != null) {
-    const phrase = COMPARATOR_PHRASES[comparator] ?? `crosses ${comparator}`;
-    return `Fires when the ${core} ${phrase} ${value}.`;
+  if (groupLabels && groupLabels.length > 0) {
+    if (facts.groupByMode === 'without') {
+      parts.push(`grouped without ${groupLabels.join(', ')}`);
+    } else {
+      parts.push(`grouped by ${groupLabels.join(', ')}`);
+    }
   }
 
-  return `Fires based on the ${core}.`;
-}
+  if (facts.logLineFilters && facts.logLineFilters.length > 0) {
+    const filterDescs = facts.logLineFilters.map((f) => {
+      switch (f.op) {
+        case '|=':
+          return `containing "${f.value}"`;
+        case '|~':
+          return `matching /${f.value}/`;
+        case '!=':
+          return `not containing "${f.value}"`;
+        case '!~':
+          return `not matching /${f.value}/`;
+        default:
+          return `${f.op} "${f.value}"`;
+      }
+    });
+    parts.push(filterDescs.join(' and '));
+  }
 
-/**
- * Compile an alert query expression into a plain-English description.
- *
- * @param expr the PromQL/LogQL expression (typically the condition query's `model.expr`)
- * @param options.threshold a threshold sourced from a separate expression query, used
- *   when the expression itself has no inline comparison
- */
-export function compileQueryDescription(expr: string, options?: { threshold?: ThresholdInfo }): QueryDescription {
-  const trimmed = (expr ?? '').trim();
-  if (!trimmed) {
+  if (comp && threshVal !== undefined) {
+    parts.push(describeComparator(comp, threshVal));
+  }
+
+  let text = parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+
+  if (!text || text === `\`${expr.trim()}\``) {
     return {
-      text: '',
-      facts: { language: 'unknown', raw: '' },
-      confident: false,
-    };
-  }
-
-  const facts = parseQueryFacts(trimmed);
-
-  // Confident when we recognised structure we can describe meaningfully.
-  const confident =
-    facts.language !== 'unknown' && Boolean(facts.metric || facts.func || facts.aggregation || facts.matchers?.length);
-
-  if (!confident) {
-    return {
-      text: `Fires based on the query \`${trimmed}\`.`,
+      text: `Fires based on the query \`${expr.trim()}\`.`,
       facts,
       confident: false,
     };
   }
 
-  return {
-    text: factsToEnglish(facts, options?.threshold),
-    facts,
-    confident: true,
-  };
+  text = `Fires when ${text}.`;
+
+  return { text, facts, confident: true };
 }

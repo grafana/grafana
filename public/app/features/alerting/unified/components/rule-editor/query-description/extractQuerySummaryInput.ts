@@ -1,10 +1,13 @@
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { type ExpressionQuery } from 'app/features/expressions/types';
-import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { type ThresholdInfo } from './compileQueryDescription';
+interface SummaryInput {
+  expr: string;
+  threshold?: { comparator: string; value: number };
+}
 
-const EVAL_FUNCTION_TO_COMPARATOR: Partial<Record<EvalFunction, string>> = {
+const EVAL_TO_COMPARATOR: Record<string, string> = {
   [EvalFunction.IsAbove]: '>',
   [EvalFunction.IsBelow]: '<',
   [EvalFunction.IsEqual]: '==',
@@ -13,60 +16,65 @@ const EVAL_FUNCTION_TO_COMPARATOR: Partial<Record<EvalFunction, string>> = {
   [EvalFunction.IsLessThanEqual]: '<=',
 };
 
-export interface QuerySummaryInput {
-  expr: string;
-  threshold?: ThresholdInfo;
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null;
 }
 
-function readExpr(model: AlertDataQuery | ExpressionQuery): string | undefined {
-  // Prometheus/Loki datasource queries carry the expression on `expr`, which isn't
-  // declared on the model union — narrow at runtime rather than asserting.
-  if ('expr' in model && typeof model.expr === 'string' && model.expr.trim()) {
-    return model.expr.trim();
+function getExpr(model: unknown): string | undefined {
+  if (isRecord(model) && 'expr' in model && typeof model.expr === 'string') {
+    return model.expr;
   }
   return undefined;
 }
 
-/**
- * Reads a threshold out of the condition's expression query (a separate `threshold`
- * node), so the description can state the firing condition even when the data query
- * has no inline comparison — the common shape for Grafana-managed rules.
- */
-function extractThreshold(queries: AlertQuery[], condition: string | null): ThresholdInfo | undefined {
-  const model = queries.find((query) => query.refId === condition)?.model;
-  if (!model || !('conditions' in model)) {
+function getThreshold(model: unknown): SummaryInput['threshold'] | undefined {
+  if (!isRecord(model) || !('conditions' in model)) {
     return undefined;
   }
-  const evaluator = model.conditions?.[0]?.evaluator;
-  if (!evaluator?.params?.length) {
+  const conditions = model.conditions;
+  if (!Array.isArray(conditions) || conditions.length === 0) {
     return undefined;
   }
-  const comparator = EVAL_FUNCTION_TO_COMPARATOR[evaluator.type];
-  if (!comparator) {
+  const first = conditions[0];
+  if (!first || typeof first !== 'object' || !('evaluator' in first)) {
     return undefined;
   }
-  return { comparator, value: String(evaluator.params[0]) };
+  const evaluator = first.evaluator;
+  if (!evaluator || typeof evaluator !== 'object' || !('type' in evaluator) || !('params' in evaluator)) {
+    return undefined;
+  }
+  const evalType = String(evaluator.type);
+  const comp = EVAL_TO_COMPARATOR[evalType];
+  const params = evaluator.params;
+  if (comp && Array.isArray(params) && params.length > 0 && typeof params[0] === 'number') {
+    return { comparator: comp, value: params[0] };
+  }
+  return undefined;
 }
 
-/**
- * Extracts the alert's query expression (and any separate threshold) from the rule
- * form. Handles Grafana-managed rules (expression on a data query in `queries`) and
- * cloud rules (a single expression string), returning undefined when neither is set.
- */
 export function extractQuerySummaryInput(
   queries: AlertQuery[],
   condition: string | null,
   cloudExpression?: string
-): QuerySummaryInput | undefined {
-  for (const query of queries) {
-    const expr = readExpr(query.model);
-    if (expr) {
-      return { expr, threshold: extractThreshold(queries, condition) };
+): SummaryInput | undefined {
+  const dataQuery = queries.find((q) => q.datasourceUid !== ExpressionDatasourceUID);
+  const expr = getExpr(dataQuery?.model);
+
+  let threshold: SummaryInput['threshold'] | undefined;
+
+  if (condition) {
+    const conditionQuery = queries.find((q) => q.refId === condition);
+    if (conditionQuery) {
+      threshold = getThreshold(conditionQuery.model);
     }
   }
 
-  if (cloudExpression?.trim()) {
-    return { expr: cloudExpression.trim() };
+  if (expr && expr.trim()) {
+    return { expr, threshold };
+  }
+
+  if (cloudExpression && cloudExpression.trim()) {
+    return { expr: cloudExpression, threshold };
   }
 
   return undefined;
