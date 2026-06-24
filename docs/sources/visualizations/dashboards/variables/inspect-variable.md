@@ -23,7 +23,9 @@ weight: 500
 
 # Manage and inspect variables
 
-In the **Variables** tab, you can [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) variables and [manage](#manage-variables) existing variables. You can also [inspect](#inspect-variables) variables to identify any dependencies between them.
+In the **Variables** section of the sidebar, you can [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) variables and [manage](#manage-variables) existing variables. You can also [inspect](#inspect-variables) variables to identify any dependencies between them.
+
+<!--TODO: Add a screenshot here -->
 
 <!--whether a variable is being referenced (or used) in other variables or dashboard.-->
 
@@ -37,11 +39,11 @@ You can take the following actions in the **Variables** tab:
 
 ## Inspect variables
 
-In addition to [managing variables](#manage-variables), the **Variables** tab lets you quickly identify whether variables have any dependencies. To check, click **Show dependencies** at the bottom of the list, which opens the dependencies diagram:
+In addition to [managing variables](#manage-variables), the **Variables** section lets you quickly identify whether variables have any dependencies. To check, click **Show dependencies** at the bottom of the list, which opens the dependencies diagram:
 
 <!-- Update and comment this back in when the reference functionality is working again
 
-The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) and [manage variables](#manage-variables) on this page.
+The variables section lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) and [manage variables](#manage-variables).
 
 ![Variables list](/static/img/docs/variables-templates/variables-list-7-4.png)
 
