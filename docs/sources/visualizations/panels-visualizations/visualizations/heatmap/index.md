@@ -107,7 +107,9 @@ The following options control how data in the heatmap is calculated and grouped.
 
 <!-- prettier-ignore-end -->
 
-{{< docs/public-preview product="The **Y Bucket scale** option for pre-bucketed data" featureFlag="`heatmapRowsAxisOptions`" >}}
+| Y Bucket scale | When **Calculate from data** is **No**. Set the y-axis scale for pre-bucketed data in the wide, one-field-per-bucket data structure (not available when the response uses the heatmap-cells data frame type). Choose from:<ul><li>**Auto** - Uses the default scale behavior.</li><li>**Linear** - Linear scale.</li><li>**Log** - Logarithmic scale. Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symmetrical logarithmic scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
+
+<!-- prettier-ignore-end -->
 
 ### Y-Axis options
 

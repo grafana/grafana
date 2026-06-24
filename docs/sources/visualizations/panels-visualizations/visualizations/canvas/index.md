@@ -80,6 +80,8 @@ The following sections describe the different elements available.
 - [Triangle](#basic-shapes)
 - [Cloud](#basic-shapes)
 - [Parallelogram](#basic-shapes)
+- [Button](#button)
+
 
 {{< /column-list >}}
 
