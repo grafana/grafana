@@ -39,10 +39,10 @@ Before you create alert rules with CloudWatch data, ensure you have:
 
 Alert rules require queries that return numeric data that Grafana can evaluate against a threshold. CloudWatch supports alerting for the following query types:
 
-| Query type | Use case | Notes |
-| --- | --- | --- |
-| Metrics | Threshold-based alerts on CloudWatch metrics | Returns time series data; best suited for alerting. |
-| Logs | Alert on log patterns, error counts, or thresholds | Use the `stats` command to aggregate logs into numeric values. |
+| Query type | Use case                                           | Notes                                                          |
+| ---------- | -------------------------------------------------- | -------------------------------------------------------------- |
+| Metrics    | Threshold-based alerts on CloudWatch metrics       | Returns time series data; best suited for alerting.            |
+| Logs       | Alert on log patterns, error counts, or thresholds | Use the `stats` command to aggregate logs into numeric values. |
 
 {{< admonition type="note" >}}
 You can't create an alert rule from a metric math expression that references another query, such as `queryA * 2`. Define the metric directly in the alert query instead.

@@ -56,17 +56,17 @@ To add a CloudWatch annotation to a dashboard:
 
 The annotation query editor provides the following fields:
 
-| Field | Description |
-| --- | --- |
-| **Region** | The AWS region to query for alarms. |
-| **Namespace** | The metric namespace, for example, `AWS/EC2`. |
-| **Metric name** | The name of the metric the alarm watches, for example, `CPUUtilization`. |
-| **Statistic** | The statistic the alarm uses, for example, `Average`. |
-| **Dimensions** | The dimensions that identify the resource, for example, `InstanceId`. |
-| **Period** | _Optional._ The minimum interval between data points, in seconds. Defaults to `300` when prefix matching is disabled. |
-| **Enable Prefix Matching** | _Optional._ Match alarms by name and action prefix instead of by metric. |
-| **Action** | Match only alarms whose actions start with this prefix. Available when prefix matching is enabled, and required for the query to run. |
-| **Alarm Name** | Match only alarms whose names start with this prefix. Available when prefix matching is enabled, and required for the query to run. |
+| Field                      | Description                                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **Region**                 | The AWS region to query for alarms.                                                                                                   |
+| **Namespace**              | The metric namespace, for example, `AWS/EC2`.                                                                                         |
+| **Metric name**            | The name of the metric the alarm watches, for example, `CPUUtilization`.                                                              |
+| **Statistic**              | The statistic the alarm uses, for example, `Average`.                                                                                 |
+| **Dimensions**             | The dimensions that identify the resource, for example, `InstanceId`.                                                                 |
+| **Period**                 | _Optional._ The minimum interval between data points, in seconds. Defaults to `300` when prefix matching is disabled.                 |
+| **Enable Prefix Matching** | _Optional._ Match alarms by name and action prefix instead of by metric.                                                              |
+| **Action**                 | Match only alarms whose actions start with this prefix. Available when prefix matching is enabled, and required for the query to run. |
+| **Alarm Name**             | Match only alarms whose names start with this prefix. Available when prefix matching is enabled, and required for the query to run.   |
 
 ### Match alarms by metric
 
@@ -99,11 +99,7 @@ Annotation queries require the following CloudWatch API actions in the IAM polic
     {
       "Sid": "AllowReadingAlarmsFromCloudWatch",
       "Effect": "Allow",
-      "Action": [
-        "cloudwatch:DescribeAlarms",
-        "cloudwatch:DescribeAlarmsForMetric",
-        "cloudwatch:DescribeAlarmHistory"
-      ],
+      "Action": ["cloudwatch:DescribeAlarms", "cloudwatch:DescribeAlarmsForMetric", "cloudwatch:DescribeAlarmHistory"],
       "Resource": "*"
     }
   ]

@@ -44,7 +44,7 @@ Use them to fill a variable's options list with values like `regions`, `namespac
 | **Resource ARNs**           | ARNs matching the specified `region`, `resource type`, and `tags`.                                                                               |
 | **Statistics**              | All standard statistics.                                                                                                                         |
 | **Log Groups**              | Log groups matching the specified `region` and optional log group `prefix`. The variable value is the log group ARN.                             |
-| **Accounts**                | The IDs of linked monitoring accounts for the specified `region`. Available only when cross-account observability is enabled.                     |
+| **Accounts**                | The IDs of linked monitoring accounts for the specified `region`. Available only when cross-account observability is enabled.                    |
 
 When cross-account observability is enabled, the **Metrics**, **Dimension Keys**, **Dimension Values**, and **Log Groups** query types also show an optional **Account** field. Use it to target a specific linked monitoring account, or leave it unset to query all linked accounts. For more information, refer to [Cross-account observability](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/#cross-account-observability).
 

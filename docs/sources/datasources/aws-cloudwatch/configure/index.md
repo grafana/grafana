@@ -39,13 +39,13 @@ This document provides instructions for configuring the Amazon CloudWatch data s
 
 If you're new to AWS, these terms are used throughout the configuration:
 
-| Term | Description |
-| --- | --- |
-| **IAM policy** | A JSON document attached to an identity that grants permissions to AWS API actions. |
-| **IAM role** | An identity with permissions that trusted entities can assume temporarily, instead of using long-lived keys. |
-| **Assume role** | An AWS mechanism that lets one identity take on the temporary permissions of an IAM role, often used for cross-account access. |
-| **External ID** | A shared secret in a role's trust policy that prevents another party from assuming the role on your behalf. |
-| **STS (Security Token Service)** | The AWS service that issues the short-lived temporary credentials used when assuming a role. |
+| Term                                  | Description                                                                                                                                                |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **IAM policy**                        | A JSON document attached to an identity that grants permissions to AWS API actions.                                                                        |
+| **IAM role**                          | An identity with permissions that trusted entities can assume temporarily, instead of using long-lived keys.                                               |
+| **Assume role**                       | An AWS mechanism that lets one identity take on the temporary permissions of an IAM role, often used for cross-account access.                             |
+| **External ID**                       | A shared secret in a role's trust policy that prevents another party from assuming the role on your behalf.                                                |
+| **STS (Security Token Service)**      | The AWS service that issues the short-lived temporary credentials used when assuming a role.                                                               |
 | **Cross-account observability (OAM)** | An AWS feature, managed through Observability Access Manager, that links monitoring and source accounts so you can query metrics and logs across accounts. |
 
 ## Add the CloudWatch data source
@@ -91,8 +91,8 @@ You must use both an access key ID and a secret access key to authenticate.
 
 When you select the **Credentials file** authentication provider, you can specify which profile to read from the AWS shared credentials file.
 
-| Setting                      | Description                                                                                          |
-| ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| Setting                      | Description                                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | **Credentials Profile Name** | The profile name in `~/.aws/credentials`, as specified in the credentials file. Leave blank to use the `default` profile. |
 
 **Assume Role**:
@@ -114,12 +114,12 @@ When you select the **Credentials file** authentication provider, you can specif
 
 The **Proxy Configuration** settings appear only when per-data source HTTP proxy support is enabled with the `per_datasource_http_proxy_enabled` option in the Grafana configuration file. They let each CloudWatch data source use its own outbound HTTP proxy for AWS requests.
 
-| Setting            | Description                                                                                                                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting            | Description                                                                                                                                                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Proxy Type**     | Select how the proxy is configured: `Environment (default)` uses the `HTTP_PROXY` and `HTTPS_PROXY` environment variables, `None` disables the proxy, and `URL` lets you specify a proxy URL. Don't set this when Secure Socks Proxy is enabled. |
-| **Proxy URL**      | _Only when Proxy Type is `URL`._ The proxy URL, for example `https://localhost:3004`. Don't include the username or password in the URL.                                          |
-| **Proxy Username** | _Only when Proxy Type is `URL`._ _Optional._ The proxy username.                                                                                                                  |
-| **Proxy Password** | _Only when Proxy Type is `URL`._ _Optional._ The proxy password.                                                                                                                  |
+| **Proxy URL**      | _Only when Proxy Type is `URL`._ The proxy URL, for example `https://localhost:3004`. Don't include the username or password in the URL.                                                                                                         |
+| **Proxy Username** | _Only when Proxy Type is `URL`._ _Optional._ The proxy username.                                                                                                                                                                                 |
+| **Proxy Password** | _Only when Proxy Type is `URL`._ _Optional._ The proxy password.                                                                                                                                                                                 |
 
 **CloudWatch Logs**:
 
@@ -317,23 +317,23 @@ For more information on configuring authentication, refer to [Configure AWS auth
 
 The following table explains why each permission is needed and whether it's required, so you can scope a policy to only the features you use. Grant `cloudwatch:GetMetricData` only for metrics, the `logs:` actions only for logs, and the EC2 and tag actions only if you use the related template variables. Granting a permission that you don't use has no effect on functionality.
 
-| Permission | Purpose | Required |
-| --- | --- | --- |
-| `cloudwatch:ListMetrics` | Lists available metrics and populates the namespace, metric, and dimension fields in the query editor. | Required for metrics queries and metrics template variables. |
-| `cloudwatch:GetMetricData` | Retrieves metric data points for queries and metric math expressions. | Required for metrics queries. |
-| `cloudwatch:GetInsightRuleReport` | Retrieves data from CloudWatch Contributor Insights rules. | Optional. Only needed if you query Contributor Insights rules. |
-| `cloudwatch:DescribeAlarms`, `cloudwatch:DescribeAlarmsForMetric`, `cloudwatch:DescribeAlarmHistory` | Reads CloudWatch alarm configuration and history. | Optional. Only needed if you display alarm data. |
-| `pi:GetResourceMetrics` | Retrieves Performance Insights metrics for supported resources, such as RDS databases. | Optional. Only needed if you query Performance Insights metrics. |
-| `logs:DescribeLogGroups` | Lists log groups and populates the log group selector. | Required for logs queries and the Log Groups template variable. |
-| `logs:StartQuery`, `logs:StopQuery`, `logs:GetQueryResults` | Runs CloudWatch Logs Insights queries and retrieves their results. | Required for logs queries. |
-| `logs:GetLogGroupFields` | Retrieves the fields available in a log group for autocomplete. | Optional. Improves the logs query editor experience. |
-| `logs:GetLogEvents` | Retrieves individual log events. | Optional. Only needed for queries that read raw log events. |
-| `logs:Unmask` | Reveals data masked by a CloudWatch Logs data protection policy. | Optional. Only needed to view masked sensitive data. |
-| `ec2:DescribeRegions` | Lists available AWS regions. | Optional. Only needed if you rely on dynamic region discovery. |
-| `ec2:DescribeInstances`, `ec2:DescribeTags` | Resolves EC2 instance attributes and tags for dimension and EC2 template variables. | Optional. Only needed for EC2 Instance Attributes template variables. |
-| `ec2:DescribeVolumes` | Resolves EBS volume IDs for the EBS Volume IDs template variable. | Optional. Only needed for EBS Volume IDs template variables. |
-| `tag:GetResources` | Resolves resource ARNs for the Resource ARNs template variable. | Optional. Only needed for Resource ARNs template variables. |
-| `oam:ListSinks`, `oam:ListAttachedLinks` | Discovers linked accounts for CloudWatch cross-account observability. | Optional. Only needed for cross-account observability. |
+| Permission                                                                                           | Purpose                                                                                                | Required                                                              |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `cloudwatch:ListMetrics`                                                                             | Lists available metrics and populates the namespace, metric, and dimension fields in the query editor. | Required for metrics queries and metrics template variables.          |
+| `cloudwatch:GetMetricData`                                                                           | Retrieves metric data points for queries and metric math expressions.                                  | Required for metrics queries.                                         |
+| `cloudwatch:GetInsightRuleReport`                                                                    | Retrieves data from CloudWatch Contributor Insights rules.                                             | Optional. Only needed if you query Contributor Insights rules.        |
+| `cloudwatch:DescribeAlarms`, `cloudwatch:DescribeAlarmsForMetric`, `cloudwatch:DescribeAlarmHistory` | Reads CloudWatch alarm configuration and history.                                                      | Optional. Only needed if you display alarm data.                      |
+| `pi:GetResourceMetrics`                                                                              | Retrieves Performance Insights metrics for supported resources, such as RDS databases.                 | Optional. Only needed if you query Performance Insights metrics.      |
+| `logs:DescribeLogGroups`                                                                             | Lists log groups and populates the log group selector.                                                 | Required for logs queries and the Log Groups template variable.       |
+| `logs:StartQuery`, `logs:StopQuery`, `logs:GetQueryResults`                                          | Runs CloudWatch Logs Insights queries and retrieves their results.                                     | Required for logs queries.                                            |
+| `logs:GetLogGroupFields`                                                                             | Retrieves the fields available in a log group for autocomplete.                                        | Optional. Improves the logs query editor experience.                  |
+| `logs:GetLogEvents`                                                                                  | Retrieves individual log events.                                                                       | Optional. Only needed for queries that read raw log events.           |
+| `logs:Unmask`                                                                                        | Reveals data masked by a CloudWatch Logs data protection policy.                                       | Optional. Only needed to view masked sensitive data.                  |
+| `ec2:DescribeRegions`                                                                                | Lists available AWS regions.                                                                           | Optional. Only needed if you rely on dynamic region discovery.        |
+| `ec2:DescribeInstances`, `ec2:DescribeTags`                                                          | Resolves EC2 instance attributes and tags for dimension and EC2 template variables.                    | Optional. Only needed for EC2 Instance Attributes template variables. |
+| `ec2:DescribeVolumes`                                                                                | Resolves EBS volume IDs for the EBS Volume IDs template variable.                                      | Optional. Only needed for EBS Volume IDs template variables.          |
+| `tag:GetResources`                                                                                   | Resolves resource ARNs for the Resource ARNs template variable.                                        | Optional. Only needed for Resource ARNs template variables.           |
+| `oam:ListSinks`, `oam:ListAttachedLinks`                                                             | Discovers linked accounts for CloudWatch cross-account observability.                                  | Optional. Only needed for cross-account observability.                |
 
 When you use an **Assume Role ARN**, attach these query permissions to the assumed role. The primary credentials only need permission to perform `sts:AssumeRole`. For details, refer to [Assume a role](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/#assume-a-role).
 
@@ -345,12 +345,12 @@ CloudWatch Logs can protect data by applying log group data protection policies.
 
 The Grafana [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#aws) includes an `AWS` section where you can configure data source options:
 
-| Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `allowed_auth_providers`  | Specifies which authentication providers are allowed for the CloudWatch data source as a comma-separated list. The default is `default,keys,credentials`: `default` (AWS SDK Default), `keys` (Access and secret key), and `credentials` (Credentials file). The `ec2_iam_role` (EC2 IAM role) provider is also available but isn't enabled by default.                                                                                                |
-| `assume_role_enabled`     | Allows you to disable `assume role (ARN)` in the CloudWatch data source. The assume role (ARN) is enabled by default in open source Grafana.                                                                                                                                                                                                                                                                                                    |
-| `per_datasource_http_proxy_enabled` | Allows each CloudWatch data source instance to use its own HTTP proxy configuration for requests to AWS, instead of a shared proxy. Disabled by default. Set to `true` to enable.                                                                                                                                                                                                                                                          |
-| `list_metrics_page_limit` | Sets the limit of List Metrics API pages. When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) populates the _Metrics_ field and _Dimension_ fields. The API is paginated and returns up to 500 results per page, and the data source also limits the number of pages to 500 by default. This setting customizes that limit. |
+| Configuration option                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `allowed_auth_providers`            | Specifies which authentication providers are allowed for the CloudWatch data source as a comma-separated list. The default is `default,keys,credentials`: `default` (AWS SDK Default), `keys` (Access and secret key), and `credentials` (Credentials file). The `ec2_iam_role` (EC2 IAM role) provider is also available but isn't enabled by default.                                                                                         |
+| `assume_role_enabled`               | Allows you to disable `assume role (ARN)` in the CloudWatch data source. The assume role (ARN) is enabled by default in open source Grafana.                                                                                                                                                                                                                                                                                                    |
+| `per_datasource_http_proxy_enabled` | Allows each CloudWatch data source instance to use its own HTTP proxy configuration for requests to AWS, instead of a shared proxy. Disabled by default. Set to `true` to enable.                                                                                                                                                                                                                                                               |
+| `list_metrics_page_limit`           | Sets the limit of List Metrics API pages. When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) populates the _Metrics_ field and _Dimension_ fields. The API is paginated and returns up to 500 results per page, and the data source also limits the number of pages to 500 by default. This setting customizes that limit. |
 
 ### Provision the data source
 
