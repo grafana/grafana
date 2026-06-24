@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Switch, TextLink, useTheme2 } from '@grafana/ui';
+import { Field, Switch, TextLink, useStyles2 } from '@grafana/ui';
 
 import { type AzureMonitorDataSourceJsonData } from '../../types/types';
 
@@ -11,24 +12,25 @@ export interface Props {
   onBatchAPIEnabledChange: (batchAPIEnabled: boolean) => void;
 }
 
+const getStyles = (theme: GrafanaTheme2) => ({
+  text: css({
+    ...theme.typography.body,
+    color: theme.colors.text.secondary,
+    fontSize: '11px',
+    a: css({
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
+      '&:hover': {
+        textDecoration: 'none',
+      },
+    }),
+  }),
+});
+
 export const BatchAPIToggle = (props: Props) => {
   const { options, onBatchAPIEnabledChange } = props;
 
-  const theme = useTheme2();
-  const styles = {
-    text: css({
-      ...theme.typography.body,
-      color: theme.colors.text.secondary,
-      fontSize: '11px',
-      a: css({
-        color: theme.colors.text.link,
-        textDecoration: 'underline',
-        '&:hover': {
-          textDecoration: 'none',
-        },
-      }),
-    }),
-  };
+  const styles = useStyles2(getStyles);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => onBatchAPIEnabledChange(e.target.checked);
 

@@ -1,4 +1,5 @@
 import { type PanelData } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/plugin-ui';
 
 import { multiResourceCompatibleTypes } from '../../azureMetadata/resourceTypes';
@@ -30,6 +31,59 @@ interface MetricsQueryEditorProps {
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
+const supportsMultipleResources = (namespace?: string): boolean =>
+  multiResourceCompatibleTypes[namespace?.toLocaleLowerCase() ?? ''] ?? false;
+
+// isResourceRowDisabled decides whether a resource row can be added to the current
+// selection. With the batch API enabled, resources only need to share a metric namespace
+// (they can span subscriptions and regions); otherwise they must also share the same
+// subscription and region and use a multi-resource-compatible namespace.
+export const isResourceRowDisabled = (
+  row: ResourceRow,
+  selectedRows: ResourceRowGroup,
+  batchAPIEnabled?: boolean
+): boolean => {
+  // Only disable rows once something is already selected.
+  if (selectedRows.length === 0) {
+    return false;
+  }
+
+  const rowResource = parseResourceDetails(row.uri, row.location);
+  const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
+
+  if (batchAPIEnabled) {
+    return rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase();
+  }
+
+  return (
+    rowResource.subscription !== selectedRowSample.subscription ||
+    rowResource.region !== selectedRowSample.region ||
+    rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase() ||
+    !supportsMultipleResources(rowResource.metricNamespace)
+  );
+};
+
+// getSelectionNotice returns the helper text shown under the resource picker for the
+// current selection. The text differs when the batch API is enabled.
+export const getSelectionNotice = (selectedRows: ResourceRowGroup, batchAPIEnabled?: boolean): string => {
+  if (selectedRows.length === 0) {
+    return '';
+  }
+  if (batchAPIEnabled) {
+    return t(
+      'components.metrics-query-editor.selection-notice-batch',
+      'You can select items of the same resource type across subscriptions and regions. Resources in different subscriptions or regions are queried in separate requests and may fail independently. To select resources of a different resource type, please first uncheck your current selection.'
+    );
+  }
+  const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
+  return supportsMultipleResources(selectedRowSample.metricNamespace)
+    ? t(
+        'components.metrics-query-editor.selection-notice-standard',
+        'You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection.'
+      )
+    : '';
+};
+
 const MetricsQueryEditor = ({
   data,
   query,
@@ -52,48 +106,10 @@ const MetricsQueryEditor = ({
 
   const batchAPIEnabled = datasource.azureMonitorDatasource.batchAPIEnabled;
 
-  const supportMultipleResource = (namespace?: string) => {
-    return multiResourceCompatibleTypes[namespace?.toLocaleLowerCase() ?? ''] ?? false;
-  };
+  const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) =>
+    isResourceRowDisabled(row, selectedRows, batchAPIEnabled);
 
-  const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
-    if (selectedRows.length === 0) {
-      // Only if there is some resource(s) selected we should disable rows
-      return false;
-    }
-
-    const rowResource = parseResourceDetails(row.uri, row.location);
-    const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
-
-    if (batchAPIEnabled) {
-      // Resources must share the same metric namespace to be queried together via the batch API
-      return (
-        rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase()
-      );
-    }
-
-    // Without the batch API, resources must also share the same subscription, region,
-    // and have a namespace that supports multi-resource queries.
-    return (
-      rowResource.subscription !== selectedRowSample.subscription ||
-      rowResource.region !== selectedRowSample.region ||
-      rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase() ||
-      !supportMultipleResource(rowResource.metricNamespace)
-    );
-  };
-
-  const selectionNotice = (selectedRows: ResourceRowGroup) => {
-    if (selectedRows.length === 0) {
-      return '';
-    }
-    if (batchAPIEnabled) {
-      return 'You can select items of the same resource type across subscriptions and regions. Resources in different subscriptions or regions are queried in separate requests and may fail independently. To select resources of a different resource type, please first uncheck your current selection.';
-    }
-    const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
-    return supportMultipleResource(selectedRowSample.metricNamespace)
-      ? 'You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection.'
-      : '';
-  };
+  const selectionNotice = (selectedRows: ResourceRowGroup) => getSelectionNotice(selectedRows, batchAPIEnabled);
 
   return (
     <span data-testid={selectors.components.queryEditor.metricsQueryEditor.container.input}>

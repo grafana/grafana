@@ -183,18 +183,19 @@ export function setResources(
 
   // Resource object for metrics
   const parsedResource = resources.length ? parseResourceDetails(resources[0]) : {};
+
+  // Store the shared region when all resources agree, or clear it when they span multiple
+  // regions so that cross-region batch queries don't carry a misleading value.
+  const uniqueRegions = [...new Set(resources.map((r) => parseResourceDetails(r).region).filter(Boolean))];
+  const sharedRegion = uniqueRegions.length === 1 ? uniqueRegions[0] : '';
+
   return {
     ...query,
     subscription: parsedResource.subscription,
     azureMonitor: {
       ...query.azureMonitor,
       metricNamespace: parsedResource.metricNamespace?.toLocaleLowerCase(),
-      region: (() => {
-        const regions = [...new Set(resources.map((r) => parseResourceDetails(r).region).filter(Boolean))];
-        // Store the shared region when all resources agree, or clear it when they span
-        // multiple regions so that cross-region batch queries don't carry a misleading value.
-        return regions.length === 1 ? regions[0] : '';
-      })(),
+      region: sharedRegion,
       resources: parseMultipleResourceDetails(resources).filter(
         (resource) =>
           resource.resourceName !== '' &&
