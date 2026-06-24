@@ -24,10 +24,10 @@ interface TemplateDashboardsAvailability {
  */
 export function useTemplateDashboardsAvailability(): TemplateDashboardsAvailability {
   const showCustomTemplates = useFlagGrafanaCustomDashboardTemplates() && getDashboardTemplatesTab() !== null;
-  // The test datasource requirement is specific to the Grafana-provisioned templates; custom
-  // templates do not need it.
-  const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
-  const showGrafanaTemplates = Boolean(config.featureToggles.dashboardTemplates && testDataSource);
+  const testDataSource = config.featureToggles.dashboardTemplates
+    ? getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0]
+    : undefined;
+  const showGrafanaTemplates = Boolean(testDataSource);
 
   return {
     testDataSource,
