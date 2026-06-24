@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { type GrafanaTheme2, useTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Badge, Button, CollapsableSection, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, CollapsableSection, Select, Stack, Text, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { type RuleFormValues } from '../../../types/rule-form';
