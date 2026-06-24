@@ -14,7 +14,7 @@ import { Badge, InlineField, InlineFieldRow, RadioButtonGroup, Spinner, useStyle
 
 import { MetricsQueryType } from './dataquery.gen';
 import { type TempoDatasource } from './datasource';
-import { FLOW_FACETS, type FlowFacetDef, type FlowFacetFilter, type FlowView, composeFacetQuery, composeFilter } from './flowQuery';
+import { FLOW_FACETS, type FlowFacetDef, type FlowFacetFilter, type FlowView, composeFacetQuery, composeFilter, unquoteLabel } from './flowQuery';
 import { type TempoQuery } from './types';
 
 interface Props {
@@ -169,10 +169,11 @@ function FacetPanel({
   const [values, setValues] = useState<FacetValue[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Use stable numeric primitives rather than the range object so unrelated re-renders
-  // that produce a new range reference do not re-fire the side-query unnecessarily.
-  const rangeFrom = range?.from?.valueOf();
-  const rangeTo = range?.to?.valueOf();
+  // Depend on the RAW range bounds, not the resolved absolute values. For a relative
+  // range like "now-1h", the resolved from/to advance every render (now keeps moving),
+  // which would re-fire this side-query on every tick and cancel the in-flight request
+  // in a loop. The raw bounds ("now-1h"/"now") are stable until the user changes them.
+  const rangeKey = range ? `${String(range.raw.from)}/${String(range.raw.to)}` : 'default';
 
   useEffect(() => {
     let cancelled = false;
@@ -213,7 +214,7 @@ function FacetPanel({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasource, facet, filters, rangeFrom, rangeTo]);
+  }, [datasource, facet, filters, rangeKey]);
 
   return (
     <div className={styles.facetPanel}>
@@ -240,13 +241,13 @@ export function extractFacetValues(frames: DataFrame[], attr: string): FacetValu
     if (!numberField) {
       continue;
     }
-    const value = numberField.labels?.[attr];
-    if (value === undefined) {
+    const rawValue = numberField.labels?.[attr];
+    if (rawValue === undefined) {
       continue;
     }
     const samples = Array.from<number>(numberField.values);
     const count = Number(samples[samples.length - 1] ?? 0);
-    out.push({ value, count });
+    out.push({ value: unquoteLabel(rawValue), count });
   }
   return out.sort((a, b) => b.count - a.count);
 }
