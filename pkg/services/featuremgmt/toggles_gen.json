@@ -3672,7 +3672,8 @@
       "metadata": {
         "name": "newUnconfiguredPanel",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-24T11:58:10Z"
       },
       "spec": {
         "description": "Enables the new unconfigured panel experience",
