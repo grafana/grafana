@@ -55,15 +55,17 @@ func TestIntegrationGitMaxBytes_RawRead(t *testing.T) {
 	helper := sharedGitHelper(t)
 
 	const repo = "git-max-bytes-raw-read"
+	// Only .md is served as a raw file by the files API; other extensions are
+	// rejected with 400 before any repository read happens.
 	smallContent := []byte("small file under the limit\n")
 	_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
-		"small.txt": smallContent,
+		"README.md": smallContent,
 	}, "write")
 
 	// Push the oversized file after the repo is healthy so it never interferes
 	// with the connectivity/health check at creation time.
 	oversized := incompressibleBytes(t, int(testMaxFileSize)*16)
-	pushFile(t, local, "huge.bin", oversized, "add oversized file")
+	pushFile(t, local, "huge/README.md", oversized, "add oversized file")
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 	rawURL := func(path string) string {
@@ -71,7 +73,7 @@ func TestIntegrationGitMaxBytes_RawRead(t *testing.T) {
 	}
 
 	t.Run("GET small file under limit succeeds", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, rawURL("small.txt"), nil)
+		req, err := http.NewRequest(http.MethodGet, rawURL("README.md"), nil)
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
@@ -95,7 +97,7 @@ func TestIntegrationGitMaxBytes_RawRead(t *testing.T) {
 	})
 
 	t.Run("GET file over limit returns 413", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, rawURL("huge.bin"), nil)
+		req, err := http.NewRequest(http.MethodGet, rawURL("huge/README.md"), nil)
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
