@@ -79,9 +79,7 @@ export function useDataSourceInstanceSettings(
  *
  * @internal
  */
-export function useDataSourceInstanceList(
-  filters?: GetDataSourceListFilters
-): UseDataSourceInstanceListResult {
+export function useDataSourceInstanceList(filters?: GetDataSourceListFilters): UseDataSourceInstanceListResult {
   const filterValuesKey = filtersKey(filters);
 
   const filterFunc = filters?.filter;
