@@ -14,7 +14,7 @@ export function AnnotationPolicySettings() {
     <Box>
       <Stack direction="column" gap={1}>
         <Text variant="h5">
-          <Trans i18nKey="alerting.annotation-policy.title">Alert rules</Trans>
+          <Trans i18nKey="alerting.annotation-policy.title">Alert quality</Trans>
         </Text>
         <Text variant="bodySmall" color="secondary">
           <Trans i18nKey="alerting.annotation-policy.description">
@@ -38,7 +38,7 @@ export function AnnotationPolicySettings() {
         </Field>
 
         <Field
-          label={t('alerting.annotation-policy.autofill-label', 'Auto-fill descriptions with AI')}
+          label={t('alerting.annotation-policy.autofill-label', 'Auto-fill descriptions and summaries with AI')}
           description={t(
             'alerting.annotation-policy.autofill-description',
             'When an alert is saved without a description, generate one from the alert name, query, and labels. You can edit it at any time.'

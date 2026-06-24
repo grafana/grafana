@@ -26,7 +26,7 @@ export function useSettingsPageNav() {
     },
     {
       id: 'annotations',
-      text: t('alerting.settings.tabs.rule-annotations', 'Alert rules'),
+      text: t('alerting.settings.tabs.rule-annotations', 'Alert quality'),
       url: '/alerting/admin/annotations',
       active: location.pathname === '/alerting/admin/annotations',
       icon: 'comment-alt',
