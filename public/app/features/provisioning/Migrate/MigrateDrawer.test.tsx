@@ -160,7 +160,7 @@ describe('MigrateDrawer', () => {
           selective
           repos={[makeRepo('repo-1', 'My only repo')]}
           resources={resources}
-          selection={{ folders: 1, dashboards: 2 }}
+          selection={{ folders: 1, resources: 2 }}
           onDismiss={jest.fn()}
         />
       );
@@ -178,7 +178,7 @@ describe('MigrateDrawer', () => {
           selective
           repos={[makeRepo('repo-1', 'My only repo')]}
           resources={[]}
-          selection={{ folders: 0, dashboards: 0 }}
+          selection={{ folders: 0, resources: 0 }}
           onDismiss={jest.fn()}
         />
       );
@@ -201,7 +201,7 @@ describe('MigrateDrawer', () => {
           selective
           repos={[makeRepo('repo-1', 'My only repo')]}
           resources={resources}
-          selection={{ folders: 1, dashboards: 2 }}
+          selection={{ folders: 1, resources: 2 }}
           onDismiss={jest.fn()}
         />
       );

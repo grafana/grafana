@@ -64,7 +64,7 @@ jobs:
               scope=security-mirror
               ;;
             grafana/grafana-enterprise)
-              app=grafana-pr-automation
+              app=grafana-enterprise-writer
               scope=enterprise
               ;;
             *)
