@@ -51,12 +51,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
           <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} size="md" />
         )}
         {canWritePlaylists() && (
-          <Button
-            disabled={false}
-            onClick={() => setPlaylistToDelete(playlist)}
-            icon="trash-alt"
-            variant="destructive"
-          >
+          <Button disabled={false} onClick={() => setPlaylistToDelete(playlist)} icon="trash-alt" variant="destructive">
             <Trans i18nKey="playlist-page.card.delete">Delete playlist</Trans>
           </Button>
         )}
