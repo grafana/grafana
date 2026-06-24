@@ -3471,8 +3471,11 @@ func TestGetScopeMap_Settings(t *testing.T) {
 		assert.False(t, scopeMap["*"], "section wildcard must not produce a global grant")
 	})
 
-	t.Run("per-key grant collapses to section scope", func(t *testing.T) {
-		// settings:smtp:host splits to Kind=settings, Attribute=smtp, Identifier=host
+	t.Run("per-key grant is not widened to the section (no up-grant)", func(t *testing.T) {
+		// settings:smtp:host splits to Kind=settings, Attribute=smtp, Identifier=host.
+		// A per-key grant must NOT authorize the whole section — widening it would be a
+		// privilege escalation. It is left as its literal scope, which never matches a
+		// section-level check (settings:uid:smtp).
 		perms := []accesscontrol.Permission{
 			{
 				Action:     accesscontrol.ActionSettingsRead,
@@ -3483,8 +3486,9 @@ func TestGetScopeMap_Settings(t *testing.T) {
 			},
 		}
 		scopeMap := s.getScopeMap(perms)
-		assert.True(t, scopeMap["settings:uid:smtp"], "per-key grant must collapse to section scope")
+		assert.False(t, scopeMap["settings:uid:smtp"], "per-key grant must not be widened to the section")
 		assert.False(t, scopeMap["*"], "per-key grant must not produce a global grant")
+		assert.True(t, scopeMap["settings:smtp:host"], "per-key grant is kept as its literal scope")
 	})
 
 	t.Run("global settings grant produces wildcard", func(t *testing.T) {
