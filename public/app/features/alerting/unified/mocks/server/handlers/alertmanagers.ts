@@ -11,11 +11,20 @@ import {
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { type AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertManagerCortexConfig,
+  AlertState,
+  AlertmanagerChoice,
+} from 'app/plugins/datasource/alertmanager/types';
 
 export const grafanaAlertingConfigurationStatusHandler = (
   response = defaultGrafanaAlertingConfigurationStatusResponse
 ) => http.get('/api/v1/ngalert', () => HttpResponse.json(response));
+
+export const grafanaAlertingAdminConfigHandler = () =>
+  http.get('/api/v1/ngalert/admin_config', () =>
+    HttpResponse.json({ alertmanagersChoice: AlertmanagerChoice.Internal })
+  );
 
 const getInvalidMatcher = (matchers: string[]) => {
   return matchers.find((matcher) => {
@@ -168,6 +177,7 @@ const getGroupsHandler = () =>
 const handlers = [
   alertmanagerAlertsListHandler(),
   grafanaAlertingConfigurationStatusHandler(),
+  grafanaAlertingAdminConfigHandler(),
   getAlertmanagerConfigHandler(),
   updateAlertmanagerConfigHandler(),
   getGrafanaAlertmanagerTemplatePreview(),

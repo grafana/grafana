@@ -190,12 +190,18 @@ const AnnotationsStep = () => {
                           ) {
                             return value?.trim()
                               ? true
-                              : t('alerting.annotations-step.required-annotation-value', 'Required.');
+                              : t(
+                                  'alerting.annotations-step.required-by-org-policy',
+                                  'Required by your organization policy.'
+                                );
                           }
                           if (requireRunbookURL && annotation === Annotation.runbookURL) {
                             return value?.trim()
                               ? true
-                              : t('alerting.annotations-step.required-annotation-value', 'Required.');
+                              : t(
+                                  'alerting.annotations-step.required-by-org-policy',
+                                  'Required by your organization policy.'
+                                );
                           }
                           return true;
                         },

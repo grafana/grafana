@@ -319,7 +319,7 @@ describe('AnnotationsField', function () {
 
       await user.click(await screen.findByRole('button', { name: 'Save' }));
 
-      const errors = await screen.findAllByText('Required.');
+      const errors = await screen.findAllByText('Required by your organization policy.');
       expect(errors).toHaveLength(2);
     });
 
@@ -333,7 +333,7 @@ describe('AnnotationsField', function () {
 
       await user.click(await screen.findByRole('button', { name: 'Save' }));
 
-      const errors = await screen.findAllByText('Required.');
+      const errors = await screen.findAllByText('Required by your organization policy.');
       expect(errors).toHaveLength(1);
     });
 
@@ -342,7 +342,7 @@ describe('AnnotationsField', function () {
 
       await user.click(await screen.findByRole('button', { name: 'Save' }));
 
-      expect(screen.queryByText('Required.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Required by your organization policy.')).not.toBeInTheDocument();
     });
 
     it('clears required error once annotation value is filled in', async () => {
@@ -354,13 +354,13 @@ describe('AnnotationsField', function () {
       const { user } = render(<FormWrapperWithSubmit />);
 
       await user.click(await screen.findByRole('button', { name: 'Save' }));
-      expect(await screen.findByText('Required.')).toBeInTheDocument();
+      expect(await screen.findByText('Required by your organization policy.')).toBeInTheDocument();
 
       const runbookInput = screen.getByTestId('annotation-value-2');
       await user.type(runbookInput, 'https://my-runbook.example.com');
       await user.click(screen.getByRole('button', { name: 'Save' }));
 
-      expect(screen.queryByText('Required.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Required by your organization policy.')).not.toBeInTheDocument();
     });
   });
 
