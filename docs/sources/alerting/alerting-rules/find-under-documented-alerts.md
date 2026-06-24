@@ -6,6 +6,7 @@ keywords:
   - alerting
   - annotations
   - bulk
+  - autofill
 labels:
   products:
     - cloud
@@ -20,18 +21,18 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/generate-required-annotations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/generate-required-annotations/
-  explain-alert-instances:
+  explain-alert-query:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/explain-alert-instances/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/explain-alert-query/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/explain-alert-instances/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/explain-alert-query/
 ---
 
 {{< docs/public-preview product="Find under-documented alerts" >}}
 
 # Find under-documented alerts
 
-Filter the alert rules list to find Grafana-managed rules with missing or very short `summary` and `description` annotations.
+Filter the alert rules list to find Grafana-managed rules with missing or very short `summary` and `description` annotations, then use **Autofill** to update them.
 
 ## Filter alert rules
 
@@ -41,12 +42,11 @@ Filter the alert rules list to find Grafana-managed rules with missing or very s
 
 The list shows only rules that need better notification context.
 
-## Bulk generate annotations
+## Bulk autofill annotations
 
-Select one or more filtered rules and click **Generate annotations** to run Grafana Assistant across them.
+1. Select one or more filtered rules and click **Edit**, or open each rule individually.
+1. In **6. Configure notification message**, click **Autofill**.
+1. Review and edit the generated **Summary** and **Description**.
+1. Click **Save rule**.
 
-1. Review proposed summaries and descriptions for each selected rule.
-1. Edit or skip individual rules.
-1. Save to update annotations in bulk.
-
-For single-rule generation at save time, refer to [Require and generate annotations](ref:generate-required-annotations). For firing instances, use [Explain alert instances](ref:explain-alert-instances).
+For a single rule during creation, refer to [Require and autofill annotations](ref:generate-required-annotations). To interpret the query first, use [Explain alert queries](ref:explain-alert-query).

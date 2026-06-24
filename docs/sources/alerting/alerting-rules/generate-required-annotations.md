@@ -1,20 +1,20 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/generate-required-annotations/
-description: Require summary and description annotations on Grafana-managed alert rules, with optional Assistant generation on save.
+description: Require summary and description annotations on Grafana-managed alert rules and use Autofill to generate them from the alert query.
 keywords:
   - grafana
   - alerting
   - summary
   - description
   - annotations
-  - assistant
+  - autofill
 labels:
   products:
     - cloud
     - enterprise
     - oss
 menuTitle: Required annotations
-title: Require and generate annotations
+title: Require and autofill annotations
 weight: 95
 refs:
   annotation-label:
@@ -27,6 +27,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
+  explain-alert-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/explain-alert-query/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/explain-alert-query/
   provision-alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/
@@ -36,29 +41,51 @@ refs:
 
 {{< docs/public-preview product="Required annotations" >}}
 
-# Require and generate annotations
+# Require and autofill annotations
 
-Grafana-managed alert rules now require `summary` and `description` [annotations](ref:annotation-label) before you can save a rule in the UI. You can also generate both fields with Grafana Assistant when you save.
-
-This reduces vague notifications that only show an alert name and query.
+When you [create or edit a Grafana-managed alert rule](ref:create-grafana-managed-rule), **Summary** and **Description** are required in **6. Configure notification message**. Use **Autofill** to generate both from the alert query, condition, and evaluation settings.
 
 ## Required summary and description
 
-When you [create or edit a Grafana-managed alert rule](ref:create-grafana-managed-rule), the **Summary** and **Description** fields are mandatory.
+In **6. Configure notification message**, enter values for:
 
-- **Summary** maps to `annotations.summary` and appears in notifications.
-- **Description** maps to `annotations.description` and provides runbook-style context.
+| Field           | Maps to                   | Helper text in UI                        |
+| --------------- | ------------------------- | ---------------------------------------- |
+| **Summary**     | `annotations.summary`     | Short summary of what happened and why.  |
+| **Description** | `annotations.description` | Description of what the alert rule does. |
 
-If either field is empty, save is blocked and the form shows a field-level error.
+If either field is empty when you click **Save rule**, the form shows a field-level error:
 
-## Generate with Assistant on save
+- `Summary is required. Enter a value or use Autofill.`
+- `Description is required. Enter a value or use Autofill.`
 
-If you save a rule with missing annotations, Grafana Assistant can propose values from the rule query, labels, and existing annotations.
+A notification also appears: **There are errors in the form. Please correct them and try again!**
 
-1. Click **Save** on the alert rule form.
-1. Review the proposed summary and description.
-1. Edit the text if needed.
-1. Confirm to save the rule.
+## Autofill summary and description
+
+Click **Autofill** above the Summary field to generate both annotations from the alert rule configuration.
+
+Autofill uses:
+
+- Alert rule name
+- Query and alert condition
+- Pending period and evaluation interval
+
+For example, for a rule named `API availability` with query `up{job="api"} == 0`, Autofill may generate:
+
+- **Summary:** `API availability: last() is above 0`
+- **Description:** `Alert rule "API availability" monitors query A: up{job="api"} == 0. It fires when last() is above 0. The condition must hold for 5m before firing. Evaluated every 1m.`
+
+Review and edit the generated text before saving.
+
+## Procedure
+
+1. Complete steps 1–5 of the alert rule form, including the query in **2. Define query and alert condition**.
+1. In **6. Configure notification message**, click **Autofill** or enter a **Summary** and **Description** manually.
+1. Optionally add a **Runbook URL**, custom annotations, or **Link dashboard and panel**.
+1. Click **Save rule**.
+
+To preview how Assistant interprets the query before autofill, enable **Explain** in **2. Define query and alert condition**. Refer to [Explain alert queries](ref:explain-alert-query).
 
 ## Export updated annotations
 

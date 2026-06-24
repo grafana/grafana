@@ -130,6 +130,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/generate-required-annotations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/generate-required-annotations/
+  explain-alert-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/explain-alert-query/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/explain-alert-query/
   tutorials:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/tutorials/
@@ -197,6 +202,10 @@ In this case, a warning message asks if you want to continue to reset to default
 ## Define query and condition
 
 Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
+
+{{< admonition type="note" >}}
+Turn on **Explain** above the query editor to get an Assistant interpretation of the query and alert condition. Refer to [Explain alert queries](ref:explain-alert-query).
+{{< /admonition >}}
 
 You can toggle between **Default** and **Advanced** options. If the [Default vs. Advanced feature](#default-vs-advanced-options) is not enabled in your Grafana instance, follow the **Advanced options** instructions.
 
@@ -327,11 +336,11 @@ Use [annotations](ref:shared-annotations) to add information to alert messages t
 
 Annotations are included by default in notification messages, and can use text or [templates](ref:shared-alert-rule-template) to display dynamic data from queries.
 
-Grafana provides several optional annotations.
-
 {{< admonition type="note" >}}
-Grafana-managed alert rules now require **Summary** and **Description** annotations in the UI. You can also generate both with Grafana Assistant on save. Refer to [Require and generate annotations](ref:generate-required-annotations).
+**Summary** and **Description** are required. Click **Autofill** to generate both from the alert query and condition, or enter values manually. Refer to [Require and autofill annotations](ref:generate-required-annotations).
 {{< /admonition >}}
+
+1. Optional: Click **Autofill** to generate **Summary** and **Description**.
 
 1. Add a summary.
 
