@@ -922,11 +922,40 @@ For section scope, `changes[0].path` is prefixed (for example `"/rows/0/variable
 
 ---
 
+## Settings
+
+### `UPDATE_DASHBOARD_SETTINGS`
+
+Update dashboard-level settings. Requires edit permissions. All fields are optional; only the fields provided are changed. `tags` and `links` replace the full list.
+
+**Request:**
+
+```json
+{
+  "type": "UPDATE_DASHBOARD_SETTINGS",
+  "payload": {
+    "title": "Production Overview",
+    "description": "Key production service metrics",
+    "tags": ["production", "sre"],
+    "editable": true,
+    "refresh": "1m",
+    "timeRange": { "from": "now-7d", "to": "now" },
+    "timezone": "utc",
+    "cursorSync": "Crosshair",
+    "links": [{ "title": "Runbook", "url": "https://runbooks.example.com", "type": "link", "targetBlank": true }]
+  }
+}
+```
+
+`cursorSync` accepts `"Off"`, `"Crosshair"`, or `"Tooltip"`. When the dashboard has no `CursorSync` behavior, a warning is returned. The response `data` contains the updated settings (same shape as `GET_DASHBOARD_INFO`).
+
+---
+
 ## Metadata
 
 ### `GET_DASHBOARD_INFO`
 
-Get dashboard metadata. Read-only, no permissions required.
+Get dashboard identity/folder metadata plus every dashboard-level setting that `UPDATE_DASHBOARD_SETTINGS` can write. Read-only, no permissions required.
 
 **Request:**
 
@@ -942,8 +971,14 @@ Get dashboard metadata. Read-only, no permissions required.
   "data": {
     "title": "My Dashboard",
     "description": "Dashboard description",
-    "uid": "abc123",
     "tags": ["production", "monitoring"],
+    "editable": true,
+    "refresh": "30s",
+    "timeRange": { "from": "now-6h", "to": "now" },
+    "timezone": "utc",
+    "cursorSync": "Crosshair",
+    "links": [{ "title": "Runbook", "url": "https://runbooks.example.com", "type": "link" }],
+    "uid": "abc123",
     "folderTitle": "Infrastructure",
     "folderUid": "folder-1",
     "created": "2025-01-15T10:00:00Z",
