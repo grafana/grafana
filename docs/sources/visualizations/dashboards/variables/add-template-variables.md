@@ -82,7 +82,10 @@ To create a variable, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click **+ Add variable** at the top of the dashboard or click the **Add new element** icon (blue plus sign) and select **Variable**.
+1. Click the **Add new element** icon (blue plus sign) and select **Variable**.
+
+  You can also click the add **Add variable** icon at the top of the dashboard (plus sign).
+
 1. Choose a variable type from the list.
 
    You can update the variable type by clicking **Change type** in the sidebar.
