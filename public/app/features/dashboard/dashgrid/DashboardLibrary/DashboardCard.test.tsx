@@ -763,8 +763,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'View dashboard: My Custom Template' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'View dashboard: My Custom Template' })).toHaveTextContent(
+      expect(screen.getByRole('button', { name: 'Use template: My Custom Template' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Use template: My Custom Template' })).toHaveTextContent(
         'Use template'
       );
     });
@@ -841,7 +841,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'View dashboard: My Custom Template' }));
+      await user.click(screen.getByRole('button', { name: 'Use template: My Custom Template' }));
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
