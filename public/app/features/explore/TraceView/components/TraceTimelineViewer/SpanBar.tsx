@@ -27,8 +27,10 @@ import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
 import type TNil from '../types/TNil';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
+import { getSummaryDurationStats } from '../utils/summary-span';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
+import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
 import { type ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -166,6 +168,8 @@ function SpanBar({
   const setShortLabel = () => setLabel(shortLabel);
   const setLongLabel = () => setLabel(longLabel);
 
+  const summaryStats = span.aggregation?.isSummary ? getSummaryDurationStats(span.aggregation) : null;
+
   // group logs based on timestamps
   const logGroups = _groupBy(span.logs, (log) => {
     const posPercent = getViewedBounds(log.timestamp, log.timestamp).start;
@@ -195,9 +199,17 @@ function SpanBar({
           width: toPercent(viewEnd - viewStart),
         }}
       >
-        <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
-          {label}
-        </div>
+        {summaryStats ? (
+          <SummaryDurationStatsTooltip stats={summaryStats}>
+            <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
+              {label}
+            </div>
+          </SummaryDurationStatsTooltip>
+        ) : (
+          <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
+            {label}
+          </div>
+        )}
       </div>
       <div>
         {Object.keys(logGroups).map((positionKey) => (

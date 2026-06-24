@@ -104,4 +104,23 @@ describe('<SpanBar>', () => {
     render(<SpanBar {...(props as unknown as Props)} />);
     expect(screen.getByTestId('SpanBar--bar').className).not.toMatch(/barSummary/);
   });
+
+  it('labels the bar-side duration stats in a tooltip for summary spans', async () => {
+    const summarySpan = {
+      ...props.span,
+      aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMedianNs: 9_000_000, durationMaxNs: 60_000_000 },
+    };
+    render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Min');
+    expect(tooltip).toHaveTextContent('Median');
+    expect(tooltip).toHaveTextContent('Max');
+  });
+
+  it('does not show a duration-stats tooltip for normal spans', async () => {
+    render(<SpanBar {...(props as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
 });

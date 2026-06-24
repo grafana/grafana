@@ -33,6 +33,7 @@ import { getSummaryDurationStats } from '../utils/summary-span';
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
+import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
 import { type ViewedBoundsFunctionType } from './utils';
@@ -584,20 +585,9 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
             )}
             {isSummarySpan ? (
               summaryDurationStats ? (
-                <Tooltip
-                  placement="top"
-                  content={
-                    <div>
-                      {summaryDurationStats.map((stat) => (
-                        <div key={stat.label}>
-                          {stat.label}: {stat.value}
-                        </div>
-                      ))}
-                    </div>
-                  }
-                >
+                <SummaryDurationStatsTooltip stats={summaryDurationStats}>
                   <span className={styles.endpointName}> ({label})</span>
-                </Tooltip>
+                </SummaryDurationStatsTooltip>
               ) : (
                 <span className={styles.endpointName}> ({label})</span>
               )
