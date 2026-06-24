@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
@@ -145,6 +146,7 @@ function getGlobalActions(): CommandPaletteAction[] {
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
@@ -164,11 +166,17 @@ export function useStaticActions(): CommandPaletteAction[] {
             isAnalyticsFrameworkEnabled
               ? NewDashboardLibraryInteractions.entryPointClicked({
                   entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                  contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                  contentKinds: isCustomDashboardTemplatesEnabled
+                    ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                    : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
                 })
               : DashboardLibraryInteractions.entryPointClicked({
                   entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                  contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                  contentKinds: isCustomDashboardTemplatesEnabled
+                    ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                    : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
                 });
             locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
           },
@@ -190,5 +198,5 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
     return [...getGlobalActions(), ...navBarActions];
-  }, [isAnalyticsFrameworkEnabled, navBarTree]);
+  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, navBarTree]);
 }

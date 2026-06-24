@@ -4,6 +4,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
 import { type ToolbarActionProps } from '../types';
@@ -99,6 +100,9 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                 label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
                 icon="grid"
                 onClick={() => {
+                  CustomDashboardTemplateInteractions.saveAsOpened({
+                    dashboardUid: uid ?? '',
+                  });
                   dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
                 }}
               />

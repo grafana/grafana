@@ -7,6 +7,7 @@ import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { registerSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
@@ -19,6 +20,12 @@ import { SaveDashboard } from './SaveDashboard';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+}));
+
+jest.mock('app/features/dashboard-scene/analytics/dashboard-templates/main', () => ({
+  CustomDashboardTemplateInteractions: {
+    saveAsOpened: jest.fn(),
+  },
 }));
 
 setPluginImportUtils({
@@ -173,6 +180,23 @@ describe('SaveDashboard (toolbar)', () => {
       await user.click(menuItem);
 
       expect(scene.openSaveDrawer).toHaveBeenCalledWith({ saveAsDashboardTemplate: true });
+    });
+
+    it('fires save_as_opened analytics when the menu item is clicked', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
+      });
+      registerSaveAsTemplateForm(() => null);
+
+      const scene = buildTestScene({ canSave: true, uid: 'my-dash' });
+      const { user } = render(<SaveDashboard dashboard={scene} />);
+
+      await user.click(await screen.findByRole('button', { name: /More save options/i }));
+      await user.click(await screen.findByRole('menuitem', { name: /Save as template/i }));
+
+      expect(CustomDashboardTemplateInteractions.saveAsOpened).toHaveBeenCalledWith({
+        dashboardUid: 'my-dash',
+      });
     });
   });
 

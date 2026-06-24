@@ -6,6 +6,7 @@ export const EVENT_LOCATIONS = {
   MODAL_VIEW: 'suggested_dashboards_modal',
   BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page',
   DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER: 'dashboard_page_suggested_dashboards_banner',
+  DASHBOARD_TEMPLATES_MODAL: 'dashboard_templates_modal',
 } as const;
 
 /**
@@ -17,6 +18,7 @@ export const CONTENT_KINDS = {
   DATASOURCE_DASHBOARD: 'datasource_dashboard',
   COMMUNITY_DASHBOARD: 'community_dashboard',
   TEMPLATE_DASHBOARD: 'template_dashboard',
+  CUSTOM_DASHBOARD_TEMPLATE: 'custom_dashboard_template',
   SUGGESTED_DASHBOARDS: 'suggested_dashboards',
 } as const;
 
@@ -66,7 +68,14 @@ export const CREATION_ORIGINS = {
   DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD: 'dashboard_library_datasource_dashboard',
   DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD: 'dashboard_library_community_dashboard',
   DASHBOARD_LIBRARY_TEMPLATE_DASHBOARD: 'dashboard_library_template_dashboard',
+  DASHBOARD_LIBRARY_CUSTOM_DASHBOARD_TEMPLATE: 'dashboard_library_custom_dashboard_template',
 } as const;
+
+export const DashboardTemplatesSourceEntryPointMap: Record<string, SourceEntryPoint> = {
+  quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
+  commandPalette: TemplateDashboardSourceEntryPoint.COMMAND_PALETTE,
+  createNewButton: TemplateDashboardSourceEntryPoint.BROWSE_DASHBOARDS_PAGE,
+};
 
 export type EventLocation = (typeof EVENT_LOCATIONS)[keyof typeof EVENT_LOCATIONS];
 export type ContentKind = (typeof CONTENT_KINDS)[keyof typeof CONTENT_KINDS];

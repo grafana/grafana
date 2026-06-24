@@ -8,6 +8,7 @@ import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/interna
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 
+import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 
@@ -58,7 +59,12 @@ export function DashboardTemplateEditBanner({ dashboard }: { dashboard: Dashboar
       })}
       severity="info"
       className={styles.banner}
-      onRemove={() => setDismissed(true)}
+      onRemove={() => {
+        CustomDashboardTemplateInteractions.templateEditBannerDismissed({
+          templateUid: dashboardTemplateUid,
+        });
+        setDismissed(true);
+      }}
     >
       <Trans i18nKey="dashboard-scene.dashboard-template-edit-banner.body">
         Edits made will update this template.{' '}

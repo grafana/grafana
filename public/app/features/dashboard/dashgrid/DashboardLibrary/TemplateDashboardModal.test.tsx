@@ -26,6 +26,8 @@ const MockCustomTemplatesTab = ({ isOpen, onClose }: { isOpen: boolean; onClose:
 
 const mockItemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockImplementation();
 const mockNewItemClicked = jest.spyOn(NewTemplateDashboardInteractions, 'itemClicked').mockImplementation();
+const mockLoaded = jest.spyOn(TemplateDashboardInteractions, 'loaded').mockImplementation();
+const mockNewLoaded = jest.spyOn(NewTemplateDashboardInteractions, 'loaded').mockImplementation();
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -469,6 +471,64 @@ describe('TemplateDashboardModal', () => {
 
         expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();
         expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Grafana templates loaded tracking', () => {
+    it('fires loaded once on open when the Grafana tab is the only view', async () => {
+      setTestFlags({ analyticsFramework: false });
+      render(<TemplateDashboardModal />, {
+        historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+      });
+
+      await waitFor(() => {
+        expect(mockLoaded).toHaveBeenCalledTimes(1);
+      });
+      expect(mockNewLoaded).not.toHaveBeenCalled();
+    });
+
+    describe('with the custom templates tab registered', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
+        setTestFlags({ 'grafana.customDashboardTemplates': true, analyticsFramework: false });
+      });
+
+      it('does not fire loaded on open while the Custom tab is the active (default) view', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        // Wait for the gnet fetch to resolve (tabs become available) so we know the
+        // loaded effect had a chance to run had it been wired to modal open.
+        await screen.findByRole('tab', { name: 'Grafana-provisioned' });
+
+        expect(mockLoaded).not.toHaveBeenCalled();
+        expect(mockNewLoaded).not.toHaveBeenCalled();
+      });
+
+      it('fires loaded once when the user selects the Grafana tab, and not again on toggle', async () => {
+        const { user } = render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByTestId('custom-templates-tab');
+
+        // Select the Grafana-provisioned tab -> fires loaded once.
+        await user.click(screen.getByRole('tab', { name: 'Grafana-provisioned' }));
+        await waitFor(() => {
+          expect(mockLoaded).toHaveBeenCalledTimes(1);
+        });
+
+        // Grafana -> Custom -> Grafana must not fire a second loaded event.
+        await user.click(screen.getByRole('tab', { name: 'Custom templates' }));
+        await screen.findByTestId('custom-templates-tab');
+        await user.click(screen.getByRole('tab', { name: 'Grafana-provisioned' }));
+
+        await waitFor(() => {
+          expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(2);
+        });
+        expect(mockLoaded).toHaveBeenCalledTimes(1);
       });
     });
   });

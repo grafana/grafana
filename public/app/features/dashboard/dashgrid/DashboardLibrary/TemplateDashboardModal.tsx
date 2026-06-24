@@ -1,37 +1,17 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
-import {
-  useFlagAnalyticsFramework,
-  useFlagAssistantFrontendToolsDashboardTemplates,
-  useFlagDashboardTemplatesAssistantButton,
-  useFlagGrafanaCustomDashboardTemplates,
-} from '@grafana/runtime/internal';
-import { Box, Grid, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
+import { Box, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 
-import { DashboardCard } from './DashboardCard';
-import { NewTemplateDashboardInteractions } from './analytics/main';
-import {
-  CONTENT_KINDS,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  type SourceEntryPoint,
-  TemplateDashboardSourceEntryPoint,
-} from './constants';
+import { GrafanaTemplatesTab } from './GrafanaTemplatesTab';
 import { getDashboardTemplatesTab } from './enterprise-components/DashboardTemplatesTabExtension';
-import { TemplateDashboardInteractions } from './interactions';
-import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';
-import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
-const SourceEntryPointMap: Record<string, SourceEntryPoint> = {
-  quickAdd: TemplateDashboardSourceEntryPoint.QUICK_ADD_BUTTON,
-  commandPalette: TemplateDashboardSourceEntryPoint.COMMAND_PALETTE,
-  createNewButton: TemplateDashboardSourceEntryPoint.BROWSE_DASHBOARDS_PAGE,
-};
+import { type GnetDashboardsResponse } from './types';
 
 type TemplateTab = 'grafana' | 'custom';
 
@@ -42,9 +22,11 @@ export const TemplateDashboardModal = () => {
   const DashboardTemplatesTab = getDashboardTemplatesTab();
   const showCustomTemplates = useFlagGrafanaCustomDashboardTemplates() && DashboardTemplatesTab !== null;
   const [activeTab, setActiveTab] = useState<TemplateTab>(showCustomTemplates ? 'custom' : 'grafana');
-  const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
-  const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
-  const isAnalyticsFrameworkEnabled = useFlagAnalyticsFramework();
+
+  // Guard the per-tab `loaded` events to fire once per open. Owned here (not in the tab
+  // components) so they survive a tab unmounting/remounting when the user toggles tabs.
+  const grafanaLoadedFiredRef = useRef(false);
+  const customLoadedFiredRef = useRef(false);
 
   const testDataSource = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0];
 
@@ -53,38 +35,6 @@ export const TemplateDashboardModal = () => {
   const onClose = () => {
     searchParams.delete('templateDashboards');
     setSearchParams(searchParams);
-  };
-
-  const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
-    const sourceEntryPoint = SourceEntryPointMap[entryPoint] || 'unknown';
-    isAnalyticsFrameworkEnabled
-      ? NewTemplateDashboardInteractions.itemClicked({
-          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-          datasourceTypes: [String(testDataSource?.type)],
-          libraryItemId: String(dashboard.id),
-          libraryItemTitle: dashboard.name,
-          sourceEntryPoint,
-          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-          discoveryMethod: DISCOVERY_METHODS.BROWSE,
-          action: customizeWithAssistant ? 'assistant' : 'view_template',
-        })
-      : TemplateDashboardInteractions.itemClicked({
-          contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
-          datasourceTypes: [String(testDataSource?.type)],
-          libraryItemId: String(dashboard.id),
-          libraryItemTitle: dashboard.name,
-          sourceEntryPoint,
-          eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-          discoveryMethod: DISCOVERY_METHODS.BROWSE,
-          action: customizeWithAssistant ? 'assistant' : 'view_template',
-        });
-
-    const templateUrl = getTemplateDashboardUrl(
-      dashboard,
-      sourceEntryPoint,
-      customizeWithAssistant ? TemplateDashboardSourceEntryPoint.ASSISTANT_BUTTON : undefined
-    );
-    locationService.push(templateUrl);
   };
 
   const { value: dashboards = [], loading } = useAsync(async () => {
@@ -109,25 +59,14 @@ export const TemplateDashboardModal = () => {
     }
   }, [isOpen]);
 
+  // Reset the once-per-open guards whenever the modal closes, so the `loaded` events can
+  // fire again the next time the modal is opened.
   useEffect(() => {
-    if (isOpen && !loading && dashboards.length > 0) {
-      isAnalyticsFrameworkEnabled
-        ? NewTemplateDashboardInteractions.loaded({
-            numberOfItems: dashboards.length,
-            contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
-            datasourceTypes: [String(testDataSource?.type)],
-            sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
-            eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-          })
-        : TemplateDashboardInteractions.loaded({
-            numberOfItems: dashboards.length,
-            contentKinds: [CONTENT_KINDS.TEMPLATE_DASHBOARD],
-            datasourceTypes: [String(testDataSource?.type)],
-            sourceEntryPoint: SourceEntryPointMap[entryPoint] || 'unknown',
-            eventLocation: EVENT_LOCATIONS.BROWSE_DASHBOARDS_PAGE,
-          });
+    if (!isOpen) {
+      grafanaLoadedFiredRef.current = false;
+      customLoadedFiredRef.current = false;
     }
-  }, [isOpen, dashboards, entryPoint, testDataSource?.type, loading, isAnalyticsFrameworkEnabled]);
+  }, [isOpen]);
 
   const showGrafanaTemplates = testDataSource && (dashboards.length > 0 || loading);
 
@@ -140,38 +79,14 @@ export const TemplateDashboardModal = () => {
       return null;
     }
     return (
-      <Grid
-        gap={4}
-        columns={{
-          xs: 1,
-          sm: 2,
-          lg: 3,
-        }}
-      >
-        {loading
-          ? Array.from({ length: 4 }).map((_, index) => <DashboardCard.Skeleton key={index} />)
-          : dashboards?.map((dashboard) => {
-              const thumbnail = dashboard.screenshots?.[0]?.links.find((l: Link) => l.rel === 'image')?.href ?? '';
-              const thumbnailUrl = thumbnail ? `/api/gnet${thumbnail}` : '';
-
-              return (
-                <DashboardCard
-                  key={dashboard.id}
-                  title={dashboard.name}
-                  imageUrl={thumbnailUrl}
-                  onClick={(customizeWithAssistant?: boolean) =>
-                    onPreviewDashboardClick(dashboard, customizeWithAssistant)
-                  }
-                  onClose={onClose}
-                  dashboard={dashboard}
-                  kind="template_dashboard"
-                  showAssistantButton={
-                    isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
-                  }
-                />
-              );
-            })}
-      </Grid>
+      <GrafanaTemplatesTab
+        dashboards={dashboards}
+        loading={loading}
+        entryPoint={entryPoint}
+        testDataSource={testDataSource}
+        onClose={onClose}
+        loadedFiredRef={grafanaLoadedFiredRef}
+      />
     );
   };
 
@@ -179,7 +94,7 @@ export const TemplateDashboardModal = () => {
     if (!DashboardTemplatesTab || !showCustomTemplates) {
       return null;
     }
-    return <DashboardTemplatesTab isOpen={isOpen} onClose={onClose} />;
+    return <DashboardTemplatesTab isOpen={isOpen} onClose={onClose} loadedFiredRef={customLoadedFiredRef} />;
   };
 
   return (
