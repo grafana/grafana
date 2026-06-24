@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
@@ -15,10 +16,14 @@ import (
 	"github.com/grafana/authlib/types"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -133,20 +138,99 @@ func (s *SQLFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 
 var _ FolderStore = (*APIFolderStore)(nil)
 
+// folderSearcher is the subset of the unified-storage resource client needed to
+// list folders via the search index. A lazily-resolved implementation
+// (resource.EventualClient) is used to break the wiring cycle between authz and
+// the resource client.
+type folderSearcher interface {
+	Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error)
+}
+
 func NewAPIFolderStore(tracer tracing.Tracer, reg prometheus.Registerer, configProvider func(ctx context.Context) (*rest.Config, error)) *APIFolderStore {
 	registerMetrics(reg)
-	return &APIFolderStore{tracer, configProvider}
+	return &APIFolderStore{tracer: tracer, configProvider: configProvider}
+}
+
+// WithSearcher enables listing folders via the unified-storage search index
+// instead of a full object list. Search hits carry only indexed fields (UID +
+// parent, no value blob), so the response is small and not subject to the
+// value-byte page cap — collapsing what would otherwise be many paged
+// object-list round-trips. Used behind a feature flag.
+func (s *APIFolderStore) WithSearcher(searcher folderSearcher) *APIFolderStore {
+	s.searcher = searcher
+	return s
 }
 
 type APIFolderStore struct {
 	tracer         tracing.Tracer
 	configProvider func(ctx context.Context) (*rest.Config, error)
+	// searcher, when set, lists folders via the search index (see WithSearcher).
+	searcher folderSearcher
 }
 
 func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.apistore.ListFolders")
 	defer span.End()
 
+	if s.searcher != nil {
+		return s.listFoldersViaSearch(ctx, ns)
+	}
+	return s.listFoldersViaList(ctx, ns)
+}
+
+// listFoldersViaSearch lists folder references (UID + parent) from the search
+// index in a single call. The search runs under a service identity so it
+// returns every folder in the namespace (the folder tree is built for inherited
+// authorization, not filtered to the calling user) and does not recurse into
+// per-item authorization.
+func (s *APIFolderStore) listFoldersViaSearch(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.apistore.ListFolders.search")
+	defer span.End()
+
+	// The folder tree must contain all folders regardless of the caller; run the
+	// search as a service identity (matching the all-folders object-list path).
+	ctx, _ = identity.WithServiceIdentity(ctx, ns.OrgID)
+
+	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: ns.Value,
+				Group:     gvr.Group,
+				Resource:  gvr.Resource,
+			},
+		},
+	}
+
+	// dashboardsearch.SearchAll expects a (ctx, orgID, req) search func; the
+	// resource client's Search takes no orgID (the namespace identifies the
+	// tenant), so adapt it.
+	searchFn := func(ctx context.Context, _ int64, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+		return s.searcher.Search(ctx, req)
+	}
+
+	results, err := dashboardsearch.SearchAll(ctx, ns.OrgID, req, searchFn)
+	if err != nil {
+		requestCount.WithLabelValues("error").Inc()
+		return nil, fmt.Errorf("searching folders: %w", err)
+	}
+	requestCount.WithLabelValues("success").Inc()
+
+	folders := make([]Folder, 0, len(results.Hits))
+	for _, hit := range results.Hits {
+		f := Folder{UID: hit.Name}
+		// hit.Folder is the parent reference; the root/general folder is not a
+		// real tree node, so treat it as no parent (matching the object-list path,
+		// where root folders report an empty parent).
+		if parent := hit.Folder; parent != "" && parent != accesscontrol.GeneralFolderUID {
+			f.ParentUID = &parent
+		}
+		folders = append(folders, f)
+	}
+	return folders, nil
+}
+
+func (s *APIFolderStore) listFoldersViaList(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
 	client, err := s.client(ctx, ns.Value)
 	if err != nil {
 		return nil, fmt.Errorf("create resource client: %w", err)

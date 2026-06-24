@@ -981,4 +981,8 @@ const (
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata
 	FlagGrafanaMultiTenantNavTree = "grafana.multiTenantNavTree"
+
+	// FlagAuthzListFoldersViaSearch
+	// Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.
+	FlagAuthzListFoldersViaSearch = "authz.listFoldersViaSearch"
 )
