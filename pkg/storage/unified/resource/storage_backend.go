@@ -1519,7 +1519,7 @@ func filterHistoryKeysByVersion(historyKeys []DataKey, req *resourcepb.ListReque
 	case resourcepb.ResourceVersionMatchV2_Exact:
 		exactKeys := make([]DataKey, 0, len(historyKeys))
 		for _, key := range historyKeys {
-			if key.ResourceVersion == req.ResourceVersion {
+			if rvmanager.IsRvEqual(key.ResourceVersion, req.ResourceVersion) {
 				exactKeys = append(exactKeys, key)
 			}
 		}
@@ -1986,7 +1986,7 @@ func (k *kvStorageBackend) processTrashEntries(
 func matchesTrashVersionFilter(req *resourcepb.ListRequest, key DataKey) bool {
 	switch req.GetVersionMatchV2() {
 	case resourcepb.ResourceVersionMatchV2_Exact:
-		return key.ResourceVersion == req.ResourceVersion
+		return rvmanager.IsRvEqual(key.ResourceVersion, req.ResourceVersion)
 	case resourcepb.ResourceVersionMatchV2_NotOlderThan:
 		return req.ResourceVersion == 0 || key.ResourceVersion >= req.ResourceVersion
 	default:
