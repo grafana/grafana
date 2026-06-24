@@ -144,11 +144,11 @@ func TestIntegrationPluginManager(t *testing.T) {
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(hcp)
 	cw := cloudwatch.ProvideService()
-	grap := graphite.ProvideService(graphite.Config{
+	grap := graphite.ProvideService(hcp, tracer).Configure(graphite.Config{
 		RenderResponseMaxBytes:   cfg.GraphiteRenderResponseMaxBytes,
 		ResourceResponseMaxBytes: cfg.GraphiteResourceResponseMaxBytes,
 		ResourceRequestMaxBytes:  cfg.GraphiteResourceRequestMaxBytes,
-	}, hcp, tracer)
+	})
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, tracer)
 	pr := prometheus.ProvideService(hcp)

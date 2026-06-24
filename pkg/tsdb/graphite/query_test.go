@@ -89,7 +89,7 @@ func TestProcessQuery(t *testing.T) {
 			},
 		}
 
-		service := ProvideService(Config{}, httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
+		service := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
 
 		rsp, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
@@ -128,7 +128,7 @@ func TestProcessQuery(t *testing.T) {
 		}))
 		t.Cleanup(server.Close)
 
-		service := ProvideService(Config{}, httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
+		service := ProvideService(httpclient.NewProvider(), noop.NewTracerProvider().Tracer("graphite-tests"))
 
 		queries := []backend.DataQuery{
 			{

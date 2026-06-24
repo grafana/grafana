@@ -215,16 +215,18 @@ func otelTracer() trace.Tracer {
 	return otel.GetTracerProvider().Tracer("grafana")
 }
 
-// provideGraphiteConfig bridges the operator-tunable [tsdb.graphite] ini
-// keys from *setting.Cfg into the graphite package's local Config type.
-// graphite cannot import pkg/setting directly (depguard rule for core
-// plugins), so this thin adapter lives here in the wire layer.
-func provideGraphiteConfig(cfg *setting.Cfg) graphite.Config {
-	return graphite.Config{
+// provideGraphiteService constructs the Graphite data source service and
+// applies the operator-tunable [tsdb.graphite] safety caps. graphite
+// itself cannot import pkg/setting (depguard rule for core plugins) and
+// its ProvideService signature is intentionally left unchanged so wire
+// graphs in repos that don't track this feature continue to build; the
+// Cfg -> Config mapping lives here in the OSS wire layer.
+func provideGraphiteService(httpClientProvider *sdkhttpclient.Provider, tracer trace.Tracer, cfg *setting.Cfg) *graphite.Service {
+	return graphite.ProvideService(httpClientProvider, tracer).Configure(graphite.Config{
 		RenderResponseMaxBytes:   cfg.GraphiteRenderResponseMaxBytes,
 		ResourceResponseMaxBytes: cfg.GraphiteResourceResponseMaxBytes,
 		ResourceRequestMaxBytes:  cfg.GraphiteResourceRequestMaxBytes,
-	}
+	})
 }
 
 var withOTelSet = wire.NewSet(
@@ -329,8 +331,7 @@ var wireBasicSet = wire.NewSet(
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	loki.ProvideService,
-	graphite.ProvideService,
-	provideGraphiteConfig,
+	provideGraphiteService,
 	prometheus.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,

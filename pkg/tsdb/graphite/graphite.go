@@ -48,19 +48,31 @@ const (
 	TargetModelField     = "target"
 )
 
-func ProvideService(cfg Config, httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
 	logger := backend.NewLoggerWith("logger", "graphite")
 	s := &Service{
-		im:                       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		tracer:                   tracer,
-		logger:                   logger,
-		renderResponseMaxBytes:   cfg.RenderResponseMaxBytes,
-		resourceResponseMaxBytes: cfg.ResourceResponseMaxBytes,
-		resourceRequestMaxBytes:  cfg.ResourceRequestMaxBytes,
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		tracer: tracer,
+		logger: logger,
 	}
 
 	s.resourceHandler = httpadapter.New(s.newResourceMux())
 
+	return s
+}
+
+// Configure applies operator-tunable safety caps. Callers that have access
+// to *setting.Cfg (the OSS wire layer) populate the Config and call this
+// after ProvideService; callers that don't (standalone, external builds,
+// the enterprise wire which doesn't import pkg/setting) skip it and the
+// service uses its built-in defaults. ProvideService's signature is
+// intentionally left unchanged so wire graphs in repos that don't track
+// this feature continue to build without modification. Returns s for
+// fluent chaining.
+func (s *Service) Configure(cfg Config) *Service {
+	s.renderResponseMaxBytes = cfg.RenderResponseMaxBytes
+	s.resourceResponseMaxBytes = cfg.ResourceResponseMaxBytes
+	s.resourceRequestMaxBytes = cfg.ResourceRequestMaxBytes
 	return s
 }
 

@@ -19,9 +19,7 @@ var (
 
 func NewDatasource(context.Context, backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &Datasource{
-		// Standalone mode runs outside Grafana core, so we pass a zero
-		// Config and let the service fall back to its built-in defaults.
-		Service: graphite.ProvideService(graphite.Config{}, httpclient.NewProvider(), tracing.DefaultTracer()),
+		Service: graphite.ProvideService(httpclient.NewProvider(), tracing.DefaultTracer()),
 	}, nil
 }
 

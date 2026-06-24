@@ -214,7 +214,7 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Graphite:
-		svc = graphite.ProvideService(graphite.Config{}, httpClientProvider, tracer)
+		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider)
 	case Loki:
