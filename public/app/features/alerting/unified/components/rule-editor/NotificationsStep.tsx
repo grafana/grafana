@@ -20,6 +20,7 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
 import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
+import { NotificationMessagePreview } from './notification-message-preview/NotificationMessagePreview';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 import { PolicyTreeSelector } from './notificaton-preview/PolicyTreeSelector';
 
@@ -141,6 +142,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <ManualAndAutomaticRouting alertUid={alertUid} />
       )}
       {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
+      {shouldRenderpreview && <NotificationMessagePreview />}
     </RuleEditorSection>
   );
 };

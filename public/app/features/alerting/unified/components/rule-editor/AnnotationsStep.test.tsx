@@ -7,8 +7,10 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
+import { mockPreviewApiResponse } from '../../mocks/grafanaRulerApi';
+import { mockPreviewTemplateResponse } from '../../mocks/templatesApi';
 import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
-import { setupAdminConfigGet } from '../../mocks/server/configure/admin_config';
+import { setupAdminConfigGet, setupStatefulAdminConfig } from '../../mocks/server/configure/admin_config';
 import { getDefaultFormValues } from '../../rule-editor/formDefaults';
 import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
@@ -38,9 +40,12 @@ const ui = {
 } as const;
 
 const server = setupMswServer();
+const adminConfigState = { lastPayload: null };
 
 beforeEach(() => {
-  setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+  setupStatefulAdminConfig(server, adminConfigState, { alertmanagersChoice: AlertmanagerChoice.Internal });
+  mockPreviewApiResponse(server, []);
+  mockPreviewTemplateResponse(server, { results: [] });
 });
 
 function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {

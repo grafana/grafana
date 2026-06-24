@@ -1,6 +1,8 @@
 import { useCallback, useEffect } from 'react';
 
-import { type AlertField, usePreviewTemplateMutation } from '../../api/templateApi';
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+
+import { usePreviewTemplateMutation } from '../../api/templateApi';
 
 export function usePreviewTemplate(
   templateContent: string,
@@ -12,7 +14,7 @@ export function usePreviewTemplate(
 
   const onPreview = useCallback(() => {
     try {
-      const alertList: AlertField[] = JSON.parse(payload);
+      const alertList: TestTemplateAlert[] = JSON.parse(payload);
       JSON.stringify([...alertList]); // check if it's iterable, in order to be able to add more data
       trigger({ template: templateContent, alerts: alertList, name: templateName });
       setPayloadFormatError(null);
