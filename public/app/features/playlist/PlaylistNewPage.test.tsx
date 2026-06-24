@@ -117,6 +117,12 @@ describe('PlaylistNewPage', () => {
       expect(await screen.findByText('Repository')).toBeInTheDocument();
     });
 
+    it('is shown even when no repositories are configured', async () => {
+      getTestContext({ isAvailable: true, repositories: [] });
+
+      expect(await screen.findByText('Repository')).toBeInTheDocument();
+    });
+
     it('opens the provisioning save drawer instead of creating directly once a repository is selected', async () => {
       const { postSpy } = getTestContext({ isAvailable: true, repositories });
 
