@@ -53,9 +53,8 @@ function QualityTab() {
       isLoading={isLoading}
       actions={
         incompleteCount > 0 ? (
-          <Tooltip content={t('alerting.quality.fix-all-coming-soon', 'Coming soon — automatically generate descriptions and summaries for all flagged rules.')}>
-
-            <Button icon="bolt" variant="primary" disabled>
+          <Tooltip content={t('alerting.quality.fix-all-tooltip', 'Automatically generate descriptions and summaries for all flagged rules.')}>
+            <Button icon="bolt" variant="primary">
               <Trans i18nKey="alerting.quality.fix-all">Fix all with AI</Trans>
             </Button>
           </Tooltip>
@@ -116,9 +115,9 @@ function QualityTab() {
                 </Card.Description>
                 <Card.Actions>
                   <Tooltip
-                    content={t('alerting.quality.fix-coming-soon', 'Coming soon — automatically generate a description and summary for this rule.')}
+                    content={t('alerting.quality.fix-tooltip', 'Automatically generate a description and summary for this rule.')}
                   >
-                    <Button icon="bolt" variant="primary" size="sm" disabled>
+                    <Button icon="bolt" variant="primary" size="sm">
                       <Trans i18nKey="alerting.quality.fix-with-ai">Fix with AI</Trans>
                     </Button>
                   </Tooltip>
