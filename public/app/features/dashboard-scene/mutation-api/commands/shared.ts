@@ -1,12 +1,3 @@
-/**
- * Helpers shared between mutation commands.
- *
- * readDashboardSettings/findCursorSyncBehavior are used by UPDATE_DASHBOARD_SETTINGS
- * (to diff before/after) and GET_DASHBOARD_INFO (to report current values), so the
- * set of settings stays in sync between the command that writes them and the one
- * that reads them.
- */
-
 import { behaviors, sceneGraph } from '@grafana/scenes';
 
 import {
