@@ -1,3 +1,4 @@
+import { setupMockUserPreferences } from './preferences';
 import { setupMockStarredDashboards } from './starred';
 import { setupMockTeams } from './teams';
 
@@ -7,4 +8,5 @@ import { setupMockTeams } from './teams';
 export const resetFixtures = () => {
   setupMockStarredDashboards();
   setupMockTeams();
+  setupMockUserPreferences();
 };

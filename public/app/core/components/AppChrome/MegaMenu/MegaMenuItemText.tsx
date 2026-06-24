@@ -15,10 +15,25 @@ export interface Props {
   url: string;
   onPin: (id?: string) => void;
   isPinned?: boolean;
+  /** Whether to render the bookmark/pin control at all (default true) */
+  showPin?: boolean;
+  /** Customisation is enabled — when off, keep the legacy "Bookmark" tooltip wording */
+  canCustomise?: boolean;
   itemName: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned, itemName }: Props) {
+export function MegaMenuItemText({
+  children,
+  isActive,
+  onClick,
+  target,
+  url,
+  onPin,
+  isPinned,
+  showPin = true,
+  canCustomise,
+  itemName,
+}: Props) {
   const theme = useTheme2();
 
   const styles = getStyles(theme, isActive);
@@ -47,16 +62,22 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {contextSrv.isSignedIn && url && url !== '/bookmarks' && (
-        <IconButton
-          name="bookmark"
-          className={'pin-icon'}
-          iconType={isPinned ? 'solid' : 'default'}
-          onClick={() => onPin(url)}
-          aria-pressed={isPinned}
-          tooltip={t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })}
-        />
-      )}
+      <div className={styles.actions}>
+        {showPin && contextSrv.isSignedIn && url && url !== '/bookmarks' && (
+          <IconButton
+            name="bookmark"
+            className={'pin-icon'}
+            iconType={isPinned ? 'solid' : 'default'}
+            onClick={() => onPin(url)}
+            aria-pressed={isPinned}
+            tooltip={
+              canCustomise && isPinned
+                ? t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName })
+                : t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })
+            }
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -66,20 +87,23 @@ MegaMenuItemText.displayName = 'MegaMenuItemText';
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
   wrapper: css({
     display: 'flex',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
     height: '100%',
+    // The pin control only shows on hover/focus.
     '.pin-icon': {
       visibility: 'hidden',
     },
     '&:hover, &:focus-within': {
-      a: {
-        width: 'calc(100% - 20px)',
-      },
       '.pin-icon': {
         visibility: 'visible',
       },
     },
+  }),
+  actions: css({
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
   }),
   wrapperActive: css({
     backgroundColor: theme.colors.action.selected,
@@ -105,7 +129,8 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
     height: '100%',
     position: 'relative',
-    width: '100%',
+    flex: 1,
+    minWidth: 0,
 
     '&:hover span, &:focus-visible span': {
       color: theme.colors.text.primary,

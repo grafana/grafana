@@ -12051,6 +12051,9 @@
     "item": {
       "bookmark": {
         "tooltip": "Bookmark {{itemName}}"
+      },
+      "unpin": {
+        "tooltip": "Unpin {{itemName}}"
       }
     },
     "kiosk": {
@@ -12060,8 +12063,11 @@
       "close": "Close menu",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "hide-unpinned-items": "Hide unpinned items",
       "list-label": "Navigation",
       "open": "Main menu",
+      "pinned-list-label": "Pinned",
+      "show-unpinned-items": "Show unpinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {
