@@ -277,7 +277,7 @@ func TestUnifiedStorageQueries(t *testing.T) {
 								Name:      "nm",
 							},
 						},
-						Response: NewReadResponse(),
+						Response: NewHistoryReadResponse(),
 					},
 				},
 			},

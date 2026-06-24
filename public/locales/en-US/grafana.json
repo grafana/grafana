@@ -4267,6 +4267,8 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-actions": {
+      "commit-title-resource-count_one": "{{count}} resource",
+      "commit-title-resource-count_other": "{{count}} resources",
       "error-generic": "Unexpected error happened when creating job"
     },
     "bulk-delete-resources-form": {
@@ -5891,13 +5893,10 @@
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
       "configure-button": "Edit visualization",
-      "configure-button-menu": "Toggle menu",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
-      "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
       "menu-use-saved-query": "Use saved query",
-      "missing-config": "Missing panel configuration",
       "no-visualization": "No visualization configured",
       "saved-query-apply-error": "Failed to apply saved query",
       "saved-query-apply-error-detail": "An error occurred while applying the saved query. Please try again.",
@@ -12915,6 +12914,7 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
+      "bulk-resource-kind": "resource",
       "create-default": "Create {{resourceKind}}: {{title}}",
       "delete-default": "Delete {{resourceKind}}: {{title}}",
       "move-default": "Move {{resourceKind}}: {{title}}",

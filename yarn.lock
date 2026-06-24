@@ -2957,7 +2957,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/test-utils@workspace:*, @grafana/test-utils@workspace:^, @grafana/test-utils@workspace:packages/grafana-test-utils":
+"@grafana/test-utils@workspace:*, @grafana/test-utils@workspace:packages/grafana-test-utils":
   version: 0.0.0-use.local
   resolution: "@grafana/test-utils@workspace:packages/grafana-test-utils"
   dependencies:
@@ -3010,7 +3010,7 @@ __metadata:
     "@grafana/i18n": "npm:13.2.0-pre"
     "@grafana/react-data-grid": "npm:7.0.0-beta.57"
     "@grafana/schema": "npm:13.2.0-pre"
-    "@grafana/test-utils": "workspace:^"
+    "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
