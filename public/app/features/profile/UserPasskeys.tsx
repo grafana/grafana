@@ -252,11 +252,13 @@ const PasskeyNameEditor = ({ initialValue, onSave, onCancel }: EditorProps) => {
   );
 };
 
-// signalAcceptedCredentials tells the browser's password manager which credentials still exist for
-// this account, so it can prune any that were deleted. This uses the WebAuthn Signal API
-// (signalAllAcceptedCredentials), available in Chrome ≥125. On unsupported browsers or when the
-// required config is missing it is a silent no-op — deletion still succeeds, the browser just
-// keeps the stale autofill entry until the credential is naturally garbage-collected.
+// signalAcceptedCredentials reports the still-valid credentials to the browser via the WebAuthn
+// Signal API (signalAllAcceptedCredentials, ~Chrome 125+) so a deleted passkey can be dropped from
+// autofill. This is strictly best-effort, on two levels: it is a silent no-op when the browser lacks
+// the API or rpId/userHandle is missing, AND even when the call succeeds the actual pruning is up to
+// the passkey provider. Google Password Manager honours the signal; many third-party managers
+// (1Password, Bitwarden, iCloud Keychain, etc.) currently ignore it, so the deleted passkey may still
+// linger there. Deletion on the server always succeeds regardless — this only nudges the client.
 function signalAcceptedCredentials(userHandle: string | undefined, creds: UserPasskey[]) {
   const rpId = config.passkey?.rpId;
   if (!rpId || !userHandle) {
