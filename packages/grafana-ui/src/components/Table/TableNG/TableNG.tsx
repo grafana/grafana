@@ -828,7 +828,6 @@ export function TableNG(props: TableNGProps) {
               // (which would line-clamp/cut off the content).
               textWrap: true,
               shouldOverflow: false,
-              maxHeight: undefined,
             } satisfies TableCellStyleOptions;
             const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
             const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
