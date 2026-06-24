@@ -408,7 +408,7 @@ describe('instanceSettings', () => {
       const items = await getDataSourceInstanceList({ type: 'test-db' });
       // Grafana DS is always appended, so filter the base items.
       const baseItems = items.filter((x) => x.meta.id !== 'grafana');
-      expect(baseItems.every((x) => x.ref.type === 'test-db')).toBe(true);
+      expect(baseItems.every((x) => x.type === 'test-db')).toBe(true);
       expect(baseItems.length).toBeGreaterThan(0);
     });
 
@@ -515,7 +515,7 @@ describe('instanceSettings', () => {
       upsertRuntimeDataSourceInstanceSettings(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
 
       const items = await getDataSourceInstanceList({ all: true });
-      expect(items.some((x) => x.ref.uid === 'runtime-ds')).toBe(false);
+      expect(items.some((x) => x.uid === 'runtime-ds')).toBe(false);
     });
 
     it('injects datasource variables when `variables` filter is set', async () => {
@@ -597,8 +597,8 @@ describe('instanceSettings', () => {
         const items = await getDataSourceInstanceList({ variables: true });
         const injected = items.find((x) => x.name === '${dsVar}');
         // The first value (uid-alpha) resolves to Alpha.
-        expect(injected?.ref.type).toBeDefined();
-        expect(injected?.ref.type).toBe('test-db');
+        expect(injected?.type).toBeDefined();
+        expect(injected?.type).toBe('test-db');
 
         setTemplateSrv(templateSrv);
       });
@@ -614,8 +614,8 @@ describe('instanceSettings', () => {
         const injected = items.find((x) => x.name === '${dsVar}');
         // 'default' maps to the configured default datasource (Bravo).
         expect(injected).toBeDefined();
-        expect(injected?.ref.uid).toBe('${dsVar}');
-        expect(injected?.ref.type).toBe('test-db');
+        expect(injected?.uid).toBe('${dsVar}');
+        expect(injected?.type).toBe('test-db');
 
         setTemplateSrv(templateSrv);
       });
@@ -689,7 +689,7 @@ describe('instanceSettings', () => {
 
       expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
       const items = await getDataSourceInstanceList({ all: true });
-      expect(items.some((x) => x.ref.uid === '__expr__')).toBe(false);
+      expect(items.some((x) => x.uid === '__expr__')).toBe(false);
     });
 
     it('preserves a runtime datasource', async () => {
@@ -737,7 +737,7 @@ describe('instanceSettings', () => {
       setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings(withoutExpression, 'Bravo');
       const items = await getDataSourceInstanceList({ all: true });
-      expect(items.some((x) => x.ref.uid === '__expr__')).toBe(false);
+      expect(items.some((x) => x.uid === '__expr__')).toBe(false);
     });
 
     it('survives a cache repopulate via no-arg reload', async () => {
@@ -846,7 +846,9 @@ describe('instanceSettings', () => {
 
         expect(items).toEqual([
           {
-            ref: { uid: fixtures.Alpha.uid, type: fixtures.Alpha.type, apiVersion: fixtures.Alpha.apiVersion },
+            uid: fixtures.Alpha.uid,
+            type: fixtures.Alpha.type,
+            apiVersion: fixtures.Alpha.apiVersion,
             name: fixtures.Alpha.name,
             meta: fixtures.Alpha.meta,
             readOnly: fixtures.Alpha.readOnly,

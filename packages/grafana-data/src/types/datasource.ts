@@ -824,8 +824,9 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
  * data source is actually used.
  */
 export interface DataSourceInstanceListItem {
-  /** Identity of the data source — uid, type and apiVersion. */
-  ref: DataSourceRef;
+  uid: string;
+  type: string;
+  apiVersion?: string;
   name: string;
   meta: DataSourcePluginMeta;
   readOnly: boolean;

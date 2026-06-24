@@ -175,7 +175,9 @@ export async function getDataSourceInstanceList(
 
 function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
-    ref: { uid: settings.uid, type: settings.type, apiVersion: settings.apiVersion },
+    uid: settings.uid,
+    type: settings.type,
+    apiVersion: settings.apiVersion,
     name: settings.name,
     meta: settings.meta,
     readOnly: settings.readOnly,
