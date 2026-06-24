@@ -123,4 +123,15 @@ describe('<SpanBar>', () => {
     await userEvent.hover(screen.getByText(shortLabel));
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
+
+  it('keeps the stats label (does not expand to the long label) when hovering a summary span', async () => {
+    const summarySpan = {
+      ...props.span,
+      aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMaxNs: 60_000_000 },
+    };
+    render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    expect(screen.getByText(shortLabel)).toBeInTheDocument();
+    expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
+  });
 });

@@ -30,7 +30,7 @@ import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { getSummaryDurationStats } from '../utils/summary-span';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
-import { getSummaryStatsTooltipPlacement, SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
+import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
 import { type ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -164,11 +164,15 @@ function SpanBar({
   className,
   labelClassName,
 }: Props) {
+  const summaryStats = span.aggregation?.isSummary ? getSummaryDurationStats(span.aggregation) : null;
+
   const [label, setLabel] = useState(shortLabel);
   const setShortLabel = () => setLabel(shortLabel);
-  const setLongLabel = () => setLabel(longLabel);
-
-  const summaryStats = span.aggregation?.isSummary ? getSummaryDurationStats(span.aggregation) : null;
+  // Summary bars keep the stats label on hover instead of expanding to the long
+  // service::operation label: that label already shows in the name column, and
+  // keeping the trigger stats-sized lets the stats tooltip (and its arrow) stay
+  // centered over the numbers.
+  const setLongLabel = () => setLabel(summaryStats ? shortLabel : longLabel);
 
   // group logs based on timestamps
   const logGroups = _groupBy(span.logs, (log) => {
@@ -200,7 +204,7 @@ function SpanBar({
         }}
       >
         {summaryStats ? (
-          <SummaryDurationStatsTooltip stats={summaryStats} placement={getSummaryStatsTooltipPlacement(viewStart, viewEnd)}>
+          <SummaryDurationStatsTooltip stats={summaryStats}>
             <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
               {label}
             </div>
