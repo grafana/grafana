@@ -17,6 +17,7 @@ import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getKindInfoByStatGroup, getRepositoryRoute } from '../utils/resourceKinds';
+import { getProvisionedFromFileTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -130,14 +131,7 @@ export function RepositoryListItem({ repository }: Props) {
             href={`${PROVISIONING_URL}/${name}/edit`}
             size="md"
             disabled={isProvisioned}
-            tooltip={
-              isProvisioned
-                ? t(
-                    'provisioning.repository-card.settings-provisioned-tooltip',
-                    'This repository is provisioned from a file and is read-only'
-                  )
-                : undefined
-            }
+            tooltip={isProvisioned ? getProvisionedFromFileTooltip() : undefined}
             onClick={() => {
               reportInteraction('grafana_provisioning_repository_settings_opened', {
                 repositoryName: name,

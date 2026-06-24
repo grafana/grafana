@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { ProvisionedFromFileBanner } from '../components/ProvisionedFromFileBanner';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
@@ -124,17 +125,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
         <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
         <Stack direction="column" gap={2}>
-          {isProvisioned && (
-            <Alert
-              severity="info"
-              title={t('provisioning.connection-form.provisioned-title', 'This connection is provisioned from a file')}
-            >
-              <Trans i18nKey="provisioning.connection-form.provisioned-body">
-                Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to
-                change it.
-              </Trans>
-            </Alert>
-          )}
+          {isProvisioned && <ProvisionedFromFileBanner />}
           {submitError && <Alert severity="error" title={submitError} />}
           <Field
             noMargin

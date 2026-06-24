@@ -13034,9 +13034,7 @@
       "option-managed-folder": "Managed folder",
       "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
-      "placeholder-my-config": "My config",
-      "provisioned-body": "Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to change it.",
-      "provisioned-title": "This repository is provisioned from a file"
+      "placeholder-my-config": "My config"
     },
     "connect-page": {
       "subTitle": {
@@ -13093,9 +13091,7 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "My GitHub App",
-      "provisioned-body": "Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to change it.",
-      "provisioned-title": "This connection is provisioned from a file"
+      "placeholder-title": "My GitHub App"
     },
     "connection-options": {
       "loading": "Loading...",
@@ -13470,6 +13466,11 @@
       "submit-error": "Failed to create job for orphaned resources",
       "title": "This resource is managed by a repository that no longer exists"
     },
+    "provisioned-from-file-banner": {
+      "body": "Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to change it.",
+      "title": "This resource is provisioned from a file"
+    },
+    "provisioned-from-file-tooltip": "This resource is provisioned from a file and is read-only",
     "provisioning-wizard": {
       "on-submit": {
         "error": {
@@ -13537,7 +13538,6 @@
       "export": "Export",
       "last-sync": "Last sync: {{date}}",
       "settings": "Settings",
-      "settings-provisioned-tooltip": "This repository is provisioned from a file and is read-only",
       "view": "View"
     },
     "repository-link": {

@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Alert,
@@ -29,6 +29,7 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
+import { ProvisionedFromFileBanner } from '../components/ProvisionedFromFileBanner';
 import { PROVISIONING_URL } from '../constants';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
@@ -175,17 +176,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Stack direction="column" gap={2}>
-        {isProvisioned && (
-          <Alert
-            severity="info"
-            title={t('provisioning.config-form.provisioned-title', 'This repository is provisioned from a file')}
-          >
-            <Trans i18nKey="provisioning.config-form.provisioned-body">
-              Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to
-              change it.
-            </Trans>
-          </Alert>
-        )}
+        {isProvisioned && <ProvisionedFromFileBanner />}
         {submitError && (
           <Alert
             severity="error"
