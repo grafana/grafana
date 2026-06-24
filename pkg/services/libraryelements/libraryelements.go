@@ -29,7 +29,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		features:          features,
 		AccessControl:     ac,
 		k8sHandler:        newLibraryElementsK8sHandler(cfg, clientConfigProvider, folderService, userService, dashboardsService),
-		treeCache:         newFolderTreeCache(folderService),
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		treeCache: newFolderTreeCache(folderService, features.IsEnabledGlobally(featuremgmt.FlagLibraryElementsFolderTreeViaSearch)),
 	}
 
 	if routeRegister != nil {
