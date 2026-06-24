@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -38,12 +39,17 @@ type passkeyRenameRequest struct {
 
 // passkeyCredentialDTO is the safe, user-facing view of a stored credential. Key material
 // (PublicKey), the sign counter, and the internal credential-id hash are intentionally omitted.
+// CredentialID and UserHandle are non-secret WebAuthn identifiers added so the frontend can
+// call the WebAuthn Signal API (signalAllAcceptedCredentials) to prune deleted credentials
+// from the browser's password manager. Both are base64url-encoded (no padding).
 type passkeyCredentialDTO struct {
-	ID         int64      `json:"id"`
-	Name       string     `json:"name"`
-	Created    time.Time  `json:"created"`
-	LastUsed   *time.Time `json:"lastUsed,omitempty"`
-	Transports string     `json:"transports,omitempty"`
+	ID           int64      `json:"id"`
+	Name         string     `json:"name"`
+	Created      time.Time  `json:"created"`
+	LastUsed     *time.Time `json:"lastUsed,omitempty"`
+	Transports   string     `json:"transports,omitempty"`
+	CredentialID string     `json:"credentialId"`
+	UserHandle   string     `json:"userHandle"`
 }
 
 // mapPasskeyError translates the passkey domain errors into HTTP responses. response.Err only
@@ -239,10 +245,12 @@ func (hs *HTTPServer) PasskeyDeleteCredential(c *contextmodel.ReqContext) respon
 
 func toPasskeyCredentialDTO(cred *passkey.Credential) passkeyCredentialDTO {
 	return passkeyCredentialDTO{
-		ID:         cred.ID,
-		Name:       cred.Name,
-		Created:    cred.Created,
-		LastUsed:   cred.LastUsed,
-		Transports: cred.Transports,
+		ID:           cred.ID,
+		Name:         cred.Name,
+		Created:      cred.Created,
+		LastUsed:     cred.LastUsed,
+		Transports:   cred.Transports,
+		CredentialID: base64.RawURLEncoding.EncodeToString(cred.CredentialID),
+		UserHandle:   base64.RawURLEncoding.EncodeToString(passkey.EncodeUserHandle(cred.UserID)),
 	}
 }

@@ -350,6 +350,7 @@ export interface GrafanaConfig {
   };
   passkey?: {
     enabled: boolean;
+    rpId?: string;
   };
 }
 

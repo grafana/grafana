@@ -250,7 +250,7 @@ func passkeyFrontendSettings(cfg *setting.Cfg) *dtos.FrontendSettingsPasskeyDTO 
 	if !cfg.Passkey.Enabled {
 		return nil
 	}
-	return &dtos.FrontendSettingsPasskeyDTO{Enabled: true}
+	return &dtos.FrontendSettingsPasskeyDTO{Enabled: true, RPID: cfg.Passkey.RPID}
 }
 
 func getShortCommitHash(commitHash string, maxLength int) string {

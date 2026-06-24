@@ -1,63 +1,39 @@
-import {
-  startAuthentication,
-  type AuthenticationResponseJSON,
-  type PublicKeyCredentialRequestOptionsJSON,
-} from '@simplewebauthn/browser';
 import { useCallback, useState } from 'react';
 
+import { store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Icon, Stack } from '@grafana/ui';
-import config from 'app/core/config';
 
-import { type LoginDTO } from './types';
+import {
+  isWebAuthnAbort,
+  type PasskeyButtonMode,
+  PASSKEY_HINT_KEY,
+  redirectAfterPasskeyLogin,
+  runPasskeyLogin,
+} from './passkeyLogin';
 
-interface BeginResponse {
-  sessionID: string;
-  options: PublicKeyCredentialRequestOptionsJSON;
+interface Props {
+  // mode is resolved by usePasskeyButtonMode in the parent; the button is purely presentational. It
+  // renders nothing for 'checking'/'hidden' as a defensive guard, though the parent only mounts it
+  // when the mode is 'primary' or 'secondary'.
+  mode: PasskeyButtonMode;
 }
 
-interface FinishRequest {
-  sessionID: string;
-  response: AuthenticationResponseJSON;
-}
-
-const BEGIN_URL = '/api/auth/passkey/login/begin';
-const FINISH_URL = '/api/auth/passkey/login/finish';
-
-export const PasskeyLoginButton = () => {
+export const PasskeyLoginButton = ({ mode }: Props) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
-
-  const redirectAfterLogin = useCallback((result: LoginDTO) => {
-    if (result.redirectUrl) {
-      if (config.appSubUrl !== '' && !result.redirectUrl.startsWith(config.appSubUrl)) {
-        window.location.assign(config.appSubUrl + result.redirectUrl);
-      } else {
-        window.location.assign(result.redirectUrl);
-      }
-    } else {
-      window.location.assign(config.appSubUrl + '/');
-    }
-  }, []);
 
   const onClick = useCallback(async () => {
     setErrorMessage(undefined);
     setIsAuthenticating(true);
 
     try {
-      const begin = await getBackendSrv().post<BeginResponse>(BEGIN_URL, undefined, {
-        showErrorAlert: false,
-      });
-
-      const assertion = await startAuthentication({ optionsJSON: begin.options });
-
-      const finishBody: FinishRequest = { sessionID: begin.sessionID, response: assertion };
-      const result = await getBackendSrv().post<LoginDTO>(FINISH_URL, finishBody, {
-        showErrorAlert: false,
-      });
-
-      redirectAfterLogin(result);
+      const result = await runPasskeyLogin();
+      // Record that this browser has signed in with a passkey before the redirect navigates away, so
+      // the next visit shows the primary "Sign in with a passkey" label.
+      store.set(PASSKEY_HINT_KEY, true);
+      redirectAfterPasskeyLogin(result);
     } catch (err) {
       setIsAuthenticating(false);
       // User dismissed the OS prompt, no credential available, or the browser
@@ -67,9 +43,9 @@ export const PasskeyLoginButton = () => {
       }
       setErrorMessage(toErrorMessage(err));
     }
-  }, [redirectAfterLogin]);
+  }, []);
 
-  if (!isPasskeyAvailable()) {
+  if (mode === 'checking' || mode === 'hidden') {
     return null;
   }
 
@@ -87,8 +63,10 @@ export const PasskeyLoginButton = () => {
           <Icon name="key-skeleton-alt" />
           {isAuthenticating ? (
             <Trans i18nKey="login.passkey.signing-in">Signing in…</Trans>
-          ) : (
+          ) : mode === 'primary' ? (
             <Trans i18nKey="login.passkey.sign-in">Sign in with a passkey</Trans>
+          ) : (
+            <Trans i18nKey="login.passkey.use-another-device">Use a passkey from another device</Trans>
           )}
         </Stack>
       </Button>
@@ -105,14 +83,6 @@ export const PasskeyLoginButton = () => {
     </Stack>
   );
 };
-
-function isPasskeyAvailable(): boolean {
-  return Boolean(config.passkey?.enabled) && typeof window !== 'undefined' && 'PublicKeyCredential' in window;
-}
-
-function isWebAuthnAbort(err: unknown): boolean {
-  return err instanceof DOMException && (err.name === 'NotAllowedError' || err.name === 'AbortError');
-}
 
 function toErrorMessage(err: unknown): string {
   if (isFetchError(err)) {

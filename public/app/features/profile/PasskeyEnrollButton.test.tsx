@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { PASSKEY_HINT_KEY } from 'app/core/components/Login/passkeyLogin';
 
 import { PasskeyEnrollButton } from './PasskeyEnrollButton';
 
@@ -45,6 +46,7 @@ const installBackendSrv = (overrides: { begin?: unknown; finish?: unknown } = {}
 
 beforeEach(() => {
   jest.clearAllMocks();
+  localStorage.clear();
 });
 
 describe('PasskeyEnrollButton', () => {
@@ -84,6 +86,8 @@ describe('PasskeyEnrollButton', () => {
       { sessionID: 'sess-1', name: 'Work laptop', response: credential },
       { showErrorAlert: false }
     );
+    // Enrolling records the per-browser hint so the next login shows the primary passkey label.
+    expect(localStorage.getItem(PASSKEY_HINT_KEY)).toBe('true');
   });
 
   it('keeps the modal open and stays silent when the user cancels the OS prompt', async () => {
@@ -100,6 +104,8 @@ describe('PasskeyEnrollButton', () => {
     expect(screen.queryByText(/could not register passkey/i)).not.toBeInTheDocument();
     // Modal still open — name input is still present.
     expect(screen.getByLabelText('Passkey name')).toBeInTheDocument();
+    // A cancelled enrolment must not write the hint.
+    expect(localStorage.getItem(PASSKEY_HINT_KEY)).toBeNull();
   });
 
   it('blocks submission with a field-level error when the user hits Enter on an empty name', async () => {

@@ -226,6 +226,7 @@ export class GrafanaBootConfig {
   };
   passkey?: {
     enabled: boolean;
+    rpId?: string;
   };
   googleAnalyticsId?: string;
   googleAnalytics4Id?: string;

@@ -10,12 +10,29 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...original,
     getBackendSrv: jest.fn(),
+    config: {
+      ...original.config,
+      passkey: { enabled: true, rpId: 'localhost' },
+    },
   };
 });
 
 const samplePasskeys: UserPasskey[] = [
-  { id: 1, name: 'Yubikey', created: '2026-01-15T10:00:00Z', lastUsed: '2026-06-20T08:30:00Z' },
-  { id: 2, name: 'MacBook Touch ID', created: '2026-03-02T12:00:00Z' },
+  {
+    id: 1,
+    name: 'Yubikey',
+    created: '2026-01-15T10:00:00Z',
+    lastUsed: '2026-06-20T08:30:00Z',
+    credentialId: 'Y3JlZC0x',
+    userHandle: 'AAAAAAAAAAE',
+  },
+  {
+    id: 2,
+    name: 'MacBook Touch ID',
+    created: '2026-03-02T12:00:00Z',
+    credentialId: 'Y3JlZC0y',
+    userHandle: 'AAAAAAAAAAE',
+  },
 ];
 
 const installBackendSrv = (overrides: { get?: jest.Mock; patch?: jest.Mock; delete?: jest.Mock } = {}) => {
@@ -26,8 +43,25 @@ const installBackendSrv = (overrides: { get?: jest.Mock; patch?: jest.Mock; dele
   return { get, patch, delete: del };
 };
 
+// Installs a mock signalAllAcceptedCredentials on PublicKeyCredential and returns the spy.
+const installSignalSpy = () => {
+  const spy = jest.fn().mockResolvedValue(undefined);
+  Object.defineProperty(window, 'PublicKeyCredential', {
+    value: Object.assign(function () {}, { signalAllAcceptedCredentials: spy }),
+    configurable: true,
+    writable: true,
+  });
+  return spy;
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
+  // Default: no PublicKeyCredential so Signal API tests are isolated by explicit opt-in.
+  Object.defineProperty(window, 'PublicKeyCredential', {
+    value: undefined,
+    configurable: true,
+    writable: true,
+  });
 });
 
 describe('UserPasskeys', () => {
@@ -86,6 +120,70 @@ describe('UserPasskeys', () => {
     await userEvent.click(confirmButton);
 
     await waitFor(() => expect(del).toHaveBeenCalledWith('/api/user/passkey/credentials/1'));
+  });
+
+  it('signals the remaining credentials to the browser after a delete', async () => {
+    const signalSpy = installSignalSpy();
+    const remaining = [samplePasskeys[1]];
+    const get = jest.fn().mockResolvedValueOnce(samplePasskeys).mockResolvedValueOnce(remaining);
+    installBackendSrv({ get });
+
+    render(<UserPasskeys />);
+    await screen.findByText('Yubikey');
+
+    const yubikeyRow = screen.getByText('Yubikey').closest('tr')!;
+    await userEvent.click(within(yubikeyRow).getByLabelText('Delete passkey'));
+    await userEvent.type(within(await screen.findByRole('dialog')).getByRole('textbox'), 'Delete');
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(signalSpy).toHaveBeenCalledWith({
+        rpId: 'localhost',
+        userId: samplePasskeys[0].userHandle,
+        allAcceptedCredentialIds: [samplePasskeys[1].credentialId],
+      })
+    );
+  });
+
+  it('signals an empty list when the last passkey is deleted', async () => {
+    const signalSpy = installSignalSpy();
+    const singlePasskey = [samplePasskeys[0]];
+    const get = jest.fn().mockResolvedValueOnce(singlePasskey).mockResolvedValueOnce([]);
+    installBackendSrv({ get });
+
+    render(<UserPasskeys />);
+    await screen.findByText('Yubikey');
+
+    const yubikeyRow = screen.getByText('Yubikey').closest('tr')!;
+    await userEvent.click(within(yubikeyRow).getByLabelText('Delete passkey'));
+    await userEvent.type(within(await screen.findByRole('dialog')).getByRole('textbox'), 'Delete');
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() =>
+      expect(signalSpy).toHaveBeenCalledWith({
+        rpId: 'localhost',
+        userId: samplePasskeys[0].userHandle,
+        allAcceptedCredentialIds: [],
+      })
+    );
+  });
+
+  it('completes the delete silently when the Signal API is unsupported', async () => {
+    // PublicKeyCredential is undefined (set in beforeEach) — no signalAllAcceptedCredentials.
+    const get = jest.fn().mockResolvedValueOnce(samplePasskeys).mockResolvedValueOnce([samplePasskeys[1]]);
+    const { delete: del } = installBackendSrv({ get });
+
+    render(<UserPasskeys />);
+    await screen.findByText('Yubikey');
+
+    const yubikeyRow = screen.getByText('Yubikey').closest('tr')!;
+    await userEvent.click(within(yubikeyRow).getByLabelText('Delete passkey'));
+    await userEvent.type(within(await screen.findByRole('dialog')).getByRole('textbox'), 'Delete');
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    // Delete still happened; no error and the list updated.
+    await waitFor(() => expect(del).toHaveBeenCalledWith('/api/user/passkey/credentials/1'));
+    await waitFor(() => expect(screen.queryByText('Yubikey')).not.toBeInTheDocument());
   });
 
   it('does not call DELETE when the user cancels the modal', async () => {

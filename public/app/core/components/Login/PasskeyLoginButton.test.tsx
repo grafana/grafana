@@ -3,9 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getBackendSrv } from '@grafana/runtime';
-import config from 'app/core/config';
 
 import { PasskeyLoginButton } from './PasskeyLoginButton';
+import { PASSKEY_HINT_KEY } from './passkeyLogin';
 
 jest.mock('@simplewebauthn/browser', () => ({
   startAuthentication: jest.fn(),
@@ -52,36 +52,37 @@ const makeBackendSrv = (overrides: Partial<{ begin: unknown; finish: unknown }> 
 
 beforeEach(() => {
   jest.clearAllMocks();
-  config.passkey = { enabled: true };
-  // PublicKeyCredential is required for the capability check.
-  Object.defineProperty(window, 'PublicKeyCredential', { value: function () {}, configurable: true });
+  localStorage.clear();
   setLocation({ assign: jest.fn() });
 });
 
-afterEach(() => {
-  delete config.passkey;
-});
-
 describe('PasskeyLoginButton', () => {
-  it('renders nothing when the feature flag is disabled', () => {
-    config.passkey = { enabled: false };
-    const { container } = render(<PasskeyLoginButton />);
+  it('renders nothing while capability detection is in progress', () => {
+    const { container } = render(<PasskeyLoginButton mode="checking" />);
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders nothing when the browser lacks PublicKeyCredential', () => {
-    // @ts-expect-error — deleting an intrinsic for the test environment.
-    delete window.PublicKeyCredential;
-    const { container } = render(<PasskeyLoginButton />);
+  it('renders nothing when the mode is hidden', () => {
+    const { container } = render(<PasskeyLoginButton mode="hidden" />);
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('redirects on a successful login ceremony', async () => {
+  it('shows the primary label in primary mode', () => {
+    render(<PasskeyLoginButton mode="primary" />);
+    expect(screen.getByTestId('passkey-login-button')).toHaveTextContent(/sign in with a passkey/i);
+  });
+
+  it('shows the "another device" label in secondary mode', () => {
+    render(<PasskeyLoginButton mode="secondary" />);
+    expect(screen.getByTestId('passkey-login-button')).toHaveTextContent(/use a passkey from another device/i);
+  });
+
+  it('redirects on a successful login ceremony and records the hint', async () => {
     const post = makeBackendSrv();
     const assertion = { id: 'cred-1', response: {} };
     mockStartAuthentication.mockResolvedValueOnce(assertion as never);
 
-    render(<PasskeyLoginButton />);
+    render(<PasskeyLoginButton mode="secondary" />);
     await userEvent.click(screen.getByTestId('passkey-login-button'));
 
     await waitFor(() => expect(window.location.assign).toHaveBeenCalled());
@@ -93,13 +94,14 @@ describe('PasskeyLoginButton', () => {
       { showErrorAlert: false }
     );
     expect(window.location.assign).toHaveBeenCalledWith('/d/home');
+    expect(localStorage.getItem(PASSKEY_HINT_KEY)).toBe('true');
   });
 
   it('re-enables silently when the user cancels the ceremony', async () => {
     makeBackendSrv();
     mockStartAuthentication.mockRejectedValueOnce(new DOMException('cancelled', 'NotAllowedError'));
 
-    render(<PasskeyLoginButton />);
+    render(<PasskeyLoginButton mode="secondary" />);
     const button = screen.getByTestId('passkey-login-button');
     await userEvent.click(button);
 
@@ -117,7 +119,7 @@ describe('PasskeyLoginButton', () => {
     makeBackendSrv({ finish: err });
     mockStartAuthentication.mockResolvedValueOnce({ id: 'cred-1', response: {} } as never);
 
-    render(<PasskeyLoginButton />);
+    render(<PasskeyLoginButton mode="secondary" />);
     await userEvent.click(screen.getByTestId('passkey-login-button'));
 
     expect(await screen.findByTestId('passkey-login-error')).toHaveTextContent(/no passkey was found/i);
@@ -133,7 +135,7 @@ describe('PasskeyLoginButton', () => {
     makeBackendSrv({ finish: err });
     mockStartAuthentication.mockResolvedValueOnce({ id: 'cred-1', response: {} } as never);
 
-    render(<PasskeyLoginButton />);
+    render(<PasskeyLoginButton mode="secondary" />);
     await userEvent.click(screen.getByTestId('passkey-login-button'));
 
     expect(await screen.findByTestId('passkey-login-error')).toHaveTextContent(/took too long/i);

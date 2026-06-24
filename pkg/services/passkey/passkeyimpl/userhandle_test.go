@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/passkey"
 )
 
 func TestUserHandleRoundTrip(t *testing.T) {
@@ -19,7 +21,7 @@ func TestUserHandleRoundTrip(t *testing.T) {
 func TestEncodeUserHandleIsStableBigEndian(t *testing.T) {
 	// Guards the on-the-wire encoding: a change here would orphan every enrolled credential.
 	require.Equal(t, []byte{0, 0, 0, 0, 0, 0, 0, 1}, encodeUserHandle(1))
-	require.Len(t, encodeUserHandle(math.MaxInt64), userHandleLen)
+	require.Len(t, encodeUserHandle(math.MaxInt64), passkey.UserHandleLen)
 }
 
 func TestDecodeUserHandleRejectsWrongLength(t *testing.T) {

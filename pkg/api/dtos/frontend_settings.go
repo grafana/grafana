@@ -96,7 +96,8 @@ type FrontendSettingsAnalyticsDTO struct {
 }
 
 type FrontendSettingsPasskeyDTO struct {
-	Enabled bool `json:"enabled"`
+	Enabled bool   `json:"enabled"`
+	RPID    string `json:"rpId,omitempty"`
 }
 
 type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {

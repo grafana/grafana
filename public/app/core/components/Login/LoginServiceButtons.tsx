@@ -7,11 +7,9 @@ import { Icon, type IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@
 import config from 'app/core/config';
 
 import { PasskeyLoginButton } from './PasskeyLoginButton';
+import { usePasskeyAutofill, usePasskeyButtonMode } from './passkeyLogin';
 
 const PASSKEY_KEY = 'passkey';
-
-const isPasskeyEnabled = () =>
-  Boolean(config.passkey?.enabled) && typeof window !== 'undefined' && 'PublicKeyCredential' in window;
 
 export interface LoginService {
   bgColor: string;
@@ -79,12 +77,13 @@ const loginServices: () => LoginServices = () => {
       icon: config.oauth?.generic_oauth?.icon || ('signin' as const),
       hrefName: 'generic_oauth',
     },
-    // Passkey is rendered as an action button (LinkButton replacement) in the
-    // map below — the descriptor only carries `enabled`, the other fields are
+    // Passkey is rendered as an action button (LinkButton replacement) in the map below. Its
+    // visibility is decided at runtime by usePasskeyButtonMode (capability detection), so this
+    // descriptor's `enabled` is a placeholder that the component overrides — the other fields are
     // unused for this entry.
     [PASSKEY_KEY]: {
       bgColor: '#262628',
-      enabled: isPasskeyEnabled(),
+      enabled: false,
       name: 'Passkey',
       icon: 'key-skeleton-alt' as const,
     },
@@ -154,10 +153,23 @@ function getButtonStyleFor(service: LoginService, styles: ReturnType<typeof getS
 }
 
 export const LoginServiceButtons = () => {
-  const enabledServices = pickBy(loginServices(), (service) => service.enabled);
-  const hasServices = Object.keys(enabledServices).length > 0;
   const theme = useTheme2();
   const styles = useStyles2(getServiceStyles);
+
+  // Offer an enrolled passkey via the username field's autofill (Conditional UI). Self-gating and
+  // silent when passkeys are off or the browser/user has none, so it never disrupts password login.
+  usePasskeyAutofill();
+
+  // The passkey button's visibility is a runtime capability decision. We resolve it here too (not just
+  // inside the button) so the "or" divider and the has-services check reflect whether the button will
+  // actually render — otherwise the divider could appear above a button that hides itself.
+  const passkeyMode = usePasskeyButtonMode();
+  const passkeyVisible = passkeyMode === 'primary' || passkeyMode === 'secondary';
+
+  const enabledServices = pickBy(loginServices(), (service, key) =>
+    key === PASSKEY_KEY ? passkeyVisible : service.enabled
+  );
+  const hasServices = Object.keys(enabledServices).length > 0;
 
   if (hasServices) {
     return (
@@ -165,7 +177,7 @@ export const LoginServiceButtons = () => {
         <LoginDivider />
         {Object.entries(enabledServices).map(([key, service]) => {
           if (key === PASSKEY_KEY) {
-            return <PasskeyLoginButton key={key} />;
+            return <PasskeyLoginButton key={key} mode={passkeyMode} />;
           }
           const serviceName = service.name;
           return (
