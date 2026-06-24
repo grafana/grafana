@@ -39,10 +39,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -151,9 +149,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, tracer)
-	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp)
-	tmpo := tempo.ProvideService(hcp, tracer)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService()
 	my := mysql.ProvideService()
@@ -162,7 +158,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
 	jaeger := jaeger.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca, jaeger)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, grap, idb, lk, pr, td, pg, my, ms, graf, pyroscope, parca, jaeger)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -241,9 +237,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"graphite":                         {},
 		"influxdb":                         {},
 		"loki":                             {},
-		"opentsdb":                         {},
 		"prometheus":                       {},
-		"tempo":                            {},
 		"grafana-testdata-datasource":      {},
 		"grafana-postgresql-datasource":    {},
 		"mysql":                            {},
