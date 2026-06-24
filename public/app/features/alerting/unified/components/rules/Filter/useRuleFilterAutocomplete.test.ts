@@ -153,18 +153,20 @@ describe('useNamespaceAndGroupOptions', () => {
 
       const options = await resolveOptions(() => result.current.namespaceOptions(''));
 
-      // The indicator is surfaced at the top...
+      // The indicator is surfaced at the top, with a warning icon...
       expect(options[0]).toEqual({
         label: 'Due to a large number of groups, search might not be complete in external data sources.',
         value: '__GRAFANA_INFO_OPTION__',
         infoOption: true,
+        icon: 'exclamation-triangle',
       });
-      // ...but the options we did find are retained, not discarded.
+      // ...but the options we did find are retained, not discarded. External namespaces are
+      // described by their data source.
       expect(options).toContainEqual({ label: 'folder-a', value: 'folder-a', description: 'Grafana folder' });
-      expect(options).toContainEqual({ label: 'big-namespace', value: 'big-namespace', description: 'big-namespace' });
+      expect(options).toContainEqual({ label: 'big-namespace', value: 'big-namespace', description: 'mimir-capped' });
     });
 
-    it('formats external namespaces: yaml paths use the filename, long names are truncated', async () => {
+    it('formats external namespaces: yaml paths use the filename, long names are truncated, described by data source', async () => {
       // Isolate the external path: no Grafana folders.
       setGrafanaPromRules([]);
       const externalDs = buildExternalDataSource('mimir-ext');
@@ -179,19 +181,49 @@ describe('useNamespaceAndGroupOptions', () => {
 
       const options = await resolveOptions(() => result.current.namespaceOptions(''));
 
-      // yaml path -> filename label; long plain name -> truncated label/description; sorted by label
+      // yaml path -> filename label; long plain name -> truncated label; description is the
+      // data source name; sorted by label
       expect(options).toEqual([
         {
           label: 'alerts.yml',
           value: '/etc/prometheus/rules/alerts.yml',
-          description: '/etc/prometheus/rules/alerts.yml',
+          description: 'mimir-ext',
         },
         {
-          label: `${longNamespace.substring(0, 50)}...`,
+          label: `${longNamespace.substring(0, 47)}...`,
           value: longNamespace,
-          description: `${longNamespace.substring(0, 100)}...`,
+          description: 'mimir-ext',
         },
       ]);
+    });
+
+    it('describes a namespace shared across data sources as "Multiple data sources"', async () => {
+      setGrafanaPromRules([]);
+      const dsA = buildExternalDataSource('mimir-a');
+      const dsB = buildExternalDataSource('mimir-b');
+      setPrometheusRules(dsA, [{ name: 'g1', file: 'shared-namespace', interval: 60, rules: [] }]);
+      setPrometheusRules(dsB, [{ name: 'g2', file: 'shared-namespace', interval: 60, rules: [] }]);
+
+      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
+
+      const options = await resolveOptions(() => result.current.namespaceOptions(''));
+
+      expect(options).toEqual([
+        { label: 'shared-namespace', value: 'shared-namespace', description: 'Multiple data sources' },
+      ]);
+    });
+
+    it('truncates a long data source name in the description', async () => {
+      setGrafanaPromRules([]);
+      const longName = 'd'.repeat(120);
+      const externalDs = buildExternalDataSource(longName);
+      setPrometheusRules(externalDs, [{ name: 'g1', file: 'ns', interval: 60, rules: [] }]);
+
+      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
+
+      const options = await resolveOptions(() => result.current.namespaceOptions(''));
+
+      expect(options).toEqual([{ label: 'ns', value: 'ns', description: `${longName.substring(0, 97)}...` }]);
     });
 
     it('should find a folder whose rule groups are outside the default group page', async () => {

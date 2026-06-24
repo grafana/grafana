@@ -3084,6 +3084,7 @@
       },
       "manage-alerts": "In these data sources, you can select Manage alerts via Alerting UI to be able to manage these alert rules in the Grafana UI as well as in the data source where they were configured.",
       "namespace-autocomplete-unavailable": "Due to a large number of groups, search might not be complete in external data sources.",
+      "namespace-multiple-datasources": "Multiple data sources",
       "placeholder-all-data-sources": "All data sources",
       "placeholder-contact-point": "Select contact point",
       "placeholder-data-sources": "Select data sources",

@@ -1,7 +1,7 @@
-import { chain } from 'lodash';
+import { chain, truncate } from 'lodash';
 import { useCallback } from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type ComboboxOption } from '@grafana/ui';
@@ -27,11 +27,12 @@ const MIN_GROUP_SEARCH_CHARACTERS = 3;
 const GROUP_SEARCH_LIMIT = 100;
 const STATUS_FULFILLED = 'fulfilled';
 
-function createInfoOption(message: string): ComboboxOption<string> {
+function createInfoOption(message: string, icon?: IconName): ComboboxOption<string> {
   return {
     label: message,
     value: '__GRAFANA_INFO_OPTION__',
     infoOption: true,
+    ...(icon && { icon }),
   };
 }
 
@@ -39,26 +40,25 @@ function isYAMLNamespace(namespaceName: string) {
   return namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'));
 }
 
-function formatNamespaceOption(namespaceName: string): ComboboxOption {
+// The combobox doesn't wrap long labels/descriptions, so truncate them to keep options readable.
+const LABEL_MAX_LENGTH = 50;
+const DESCRIPTION_MAX_LENGTH = 100;
+
+function formatNamespaceOption(namespaceName: string, dataSourceNames: Set<string>): ComboboxOption {
+  // The description tells the user which external data source the namespace lives in. The same
+  // namespace can appear in several sources, in which case we can't name a single one.
+  const sourceName =
+    dataSourceNames.size > 1
+      ? t('alerting.rules-filter.namespace-multiple-datasources', 'Multiple data sources')
+      : (dataSourceNames.values().next().value ?? '');
+  const description = truncate(sourceName, { length: DESCRIPTION_MAX_LENGTH });
+
   if (isYAMLNamespace(namespaceName)) {
     const filename = namespaceName.split('/').pop() || namespaceName;
-    const maxDescriptionLength = 100;
-    const truncatedDescription =
-      namespaceName.length > maxDescriptionLength
-        ? `${namespaceName.substring(0, maxDescriptionLength)}...`
-        : namespaceName;
-    return { label: filename, value: namespaceName, description: truncatedDescription };
+    return { label: truncate(filename, { length: LABEL_MAX_LENGTH }), value: namespaceName, description };
   }
 
-  const maxLength = 50;
-  const maxDescriptionLength = 100;
-  const truncatedName =
-    namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
-  const truncatedDescription =
-    namespaceName.length > maxDescriptionLength
-      ? `${namespaceName.substring(0, maxDescriptionLength)}...`
-      : namespaceName;
-  return { label: truncatedName, value: namespaceName, description: truncatedDescription };
+  return { label: truncate(namespaceName, { length: LABEL_MAX_LENGTH }), value: namespaceName, description };
 }
 
 function sortByLabel(options: ComboboxOption[]): ComboboxOption[] {
@@ -75,8 +75,8 @@ function toGrafanaFolderOptions(folderNames: string[]): ComboboxOption[] {
   );
 }
 
-function toExternalNamespaceOptions(namespaceNames: Iterable<string>): ComboboxOption[] {
-  return sortByLabel(Array.from(namespaceNames).map(formatNamespaceOption));
+function toExternalNamespaceOptions(namespaceSources: Map<string, Set<string>>): ComboboxOption[] {
+  return sortByLabel(Array.from(namespaceSources, ([namespace, sources]) => formatNamespaceOption(namespace, sources)));
 }
 
 async function fetchGrafanaFolderNames(
@@ -93,9 +93,11 @@ async function fetchGrafanaFolderNames(
 
 async function fetchExternalNamespaceNames(
   fetchExternalGroups: FetchExternalGroups
-): Promise<{ externalNamespaces: Set<string>; isLimitReached: boolean }> {
-  const externalNamespaces = new Set<string>();
-  const calls = getExternalRuleDataSources().map((ds) =>
+): Promise<{ externalNamespaces: Map<string, Set<string>>; isLimitReached: boolean }> {
+  // Map each namespace to the data source(s) it appears in, so options can show their origin.
+  const externalNamespaces = new Map<string, Set<string>>();
+  const dataSources = getExternalRuleDataSources();
+  const calls = dataSources.map((ds) =>
     fetchExternalGroups({
       ruleSource: { uid: ds.uid },
       excludeAlerts: true,
@@ -103,16 +105,22 @@ async function fetchExternalNamespaceNames(
       notificationOptions: { showErrorAlert: false },
     }).unwrap()
   );
+  // Promise.allSettled preserves order, so results[i] belongs to dataSources[i].
   const results = await Promise.allSettled(calls);
   let isLimitReached = false;
 
-  for (const res of results) {
+  results.forEach((res, i) => {
     if (res.status === STATUS_FULFILLED) {
       const groups = res.value.data.groups;
       isLimitReached = isLimitReached || groups.length > GROUP_FETCH_LIMIT;
-      groups.forEach((group: { file?: string }) => externalNamespaces.add(group.file || 'default'));
+      groups.forEach((group: { file?: string }) => {
+        const namespace = group.file || 'default';
+        const sources = externalNamespaces.get(namespace) ?? new Set<string>();
+        sources.add(dataSources[i].name);
+        externalNamespaces.set(namespace, sources);
+      });
     }
-  }
+  });
   return { externalNamespaces, isLimitReached };
 }
 
@@ -146,7 +154,8 @@ export function useNamespaceAndGroupOptions(): {
             t(
               'alerting.rules-filter.namespace-autocomplete-unavailable',
               'Due to a large number of groups, search might not be complete in external data sources.'
-            )
+            ),
+            'exclamation-triangle'
           )
         );
       }
