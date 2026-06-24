@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 
@@ -14,6 +14,17 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
   const [theme, setTheme] = useState(value);
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
 
+  const themeWithFlags = useMemo(
+    () => ({
+      ...theme,
+      flags: {
+        ...theme.flags,
+        visualDesignRefresh: visualRefreshEnabled,
+      },
+    }),
+    [theme, visualRefreshEnabled]
+  );
+
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
       config.theme2 = event.payload;
@@ -28,15 +39,7 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
   }, [value]);
 
   return (
-    <ThemeContext.Provider
-      value={{
-        ...theme,
-        flags: {
-          ...theme.flags,
-          visualDesignRefresh: visualRefreshEnabled,
-        },
-      }}
-    >
+    <ThemeContext.Provider value={themeWithFlags}>
       <SkeletonTheme
         baseColor={theme.colors.emphasize(theme.colors.background.secondary)}
         highlightColor={theme.colors.emphasize(theme.colors.background.secondary, 0.1)}
