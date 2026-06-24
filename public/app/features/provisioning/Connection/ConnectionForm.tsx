@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
@@ -14,6 +14,7 @@ import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
+import { isManagedResourceReadOnly } from '../utils/managedResource';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -26,6 +27,8 @@ const providerOptions = [{ value: 'github', label: 'GitHub' }];
 export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
+  // File-provisioned connections are managed from disk and read-only in the UI.
+  const isProvisioned = data ? isManagedResourceReadOnly(data) : false;
   const privateKey = data?.secure?.privateKey;
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
   const navigate = useNavigate();
@@ -121,6 +124,17 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
         <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
         <Stack direction="column" gap={2}>
+          {isProvisioned && (
+            <Alert
+              severity="info"
+              title={t('provisioning.connection-form.provisioned-title', 'This connection is provisioned from a file')}
+            >
+              <Trans i18nKey="provisioning.connection-form.provisioned-body">
+                Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to
+                change it.
+              </Trans>
+            </Alert>
+          )}
           {submitError && <Alert severity="error" title={submitError} />}
           <Field
             noMargin
@@ -146,12 +160,14 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
 
           <Stack gap={2}>
-            <Button type="submit" disabled={request.isLoading}>
+            <Button type="submit" disabled={request.isLoading || isProvisioned}>
               {request.isLoading
                 ? t('provisioning.connection-form.button-saving', 'Saving...')
                 : t('provisioning.connection-form.button-save', 'Save')}
             </Button>
-            {connectionName && data && <DeleteConnectionButton name={connectionName} connection={data} />}
+            {connectionName && data && !isProvisioned && (
+              <DeleteConnectionButton name={connectionName} connection={data} />
+            )}
           </Stack>
         </Stack>
       </form>

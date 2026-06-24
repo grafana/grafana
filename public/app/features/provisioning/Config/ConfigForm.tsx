@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { getAppEvents, isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Alert,
@@ -36,6 +36,7 @@ import { type RepositoryFormData } from '../types';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
+import { isManagedResourceReadOnly } from '../utils/managedResource';
 import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
@@ -82,6 +83,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   });
 
   const isEdit = Boolean(repositoryName);
+  // File-provisioned repositories are managed from disk; their config cannot be edited in the UI.
+  const isProvisioned = data ? isManagedResourceReadOnly(data) : false;
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
@@ -172,6 +175,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Stack direction="column" gap={2}>
+        {isProvisioned && (
+          <Alert
+            severity="info"
+            title={t('provisioning.config-form.provisioned-title', 'This repository is provisioned from a file')}
+          >
+            <Trans i18nKey="provisioning.config-form.provisioned-body">
+              Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to
+              change it.
+            </Trans>
+          </Alert>
+        )}
         {submitError && (
           <Alert
             severity="error"
@@ -473,12 +487,12 @@ export function ConfigForm({ data }: ConfigFormProps) {
         )}
 
         <Stack gap={2}>
-          <Button type={'submit'} disabled={isLoading}>
+          <Button type={'submit'} disabled={isLoading || isProvisioned}>
             {isLoading
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}
           </Button>
-          {repositoryName && data && (
+          {repositoryName && data && !isProvisioned && (
             <DeleteRepositoryButton name={repositoryName} repository={data} redirectTo={PROVISIONING_URL} />
           )}
         </Stack>

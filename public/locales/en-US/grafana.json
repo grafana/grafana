@@ -13034,7 +13034,9 @@
       "option-managed-folder": "Managed folder",
       "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
-      "placeholder-my-config": "My config"
+      "placeholder-my-config": "My config",
+      "provisioned-body": "Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to change it.",
+      "provisioned-title": "This repository is provisioned from a file"
     },
     "connect-page": {
       "subTitle": {
@@ -13091,7 +13093,9 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "My GitHub App"
+      "placeholder-title": "My GitHub App",
+      "provisioned-body": "Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to change it.",
+      "provisioned-title": "This connection is provisioned from a file"
     },
     "connection-options": {
       "loading": "Loading...",
@@ -13106,6 +13110,7 @@
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
+      "export": "Export",
       "no-connections": "No connections configured",
       "no-results": "No results matching your query",
       "search-placeholder": "Search connections",
@@ -13529,8 +13534,10 @@
       "view-folder": "View folder"
     },
     "repository-card": {
+      "export": "Export",
       "last-sync": "Last sync: {{date}}",
       "settings": "Settings",
+      "settings-provisioned-tooltip": "This repository is provisioned from a file and is read-only",
       "view": "View"
     },
     "repository-link": {
