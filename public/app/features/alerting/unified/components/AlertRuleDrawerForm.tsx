@@ -21,6 +21,7 @@ import { useAddRuleToRuleGroup } from '../hooks/ruleGroup/useUpsertRuleFromRuleG
 import { useUpsertUngroupedGrafanaRule } from '../hooks/useUpsertUngroupedGrafanaRule';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
+import { bindAlertRuleFormSubmit } from '../utils/alertAnnotationFormSubmit';
 import { formValuesToRulerGrafanaRuleDTO, normalizeContactPoints } from '../utils/rule-form';
 import { getRuleGroupLocationFromFormValues } from '../utils/rules';
 
@@ -192,7 +193,13 @@ export function AlertRuleDrawerForm({
               <Button
                 variant="primary"
                 type="button"
-                onClick={methods.handleSubmit((values) => submit(values), onInvalid)}
+                onClick={bindAlertRuleFormSubmit(
+                  methods.handleSubmit,
+                  methods.getValues,
+                  methods.setError,
+                  (values) => submit(values),
+                  onInvalid
+                )}
                 disabled={methods.formState.isSubmitting}
                 icon={methods.formState.isSubmitting ? 'spinner' : undefined}
               >

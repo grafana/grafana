@@ -57,6 +57,7 @@ import {
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import { bindAlertRuleFormSubmit } from '../../../utils/alertAnnotationFormSubmit';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { rulesNav } from '../../../utils/navigation';
 import {
@@ -129,6 +130,8 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
   const {
     handleSubmit,
     watch,
+    getValues,
+    setError,
     formState: { isSubmitting },
     trigger,
   } = formAPI;
@@ -355,7 +358,13 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 data-testid="save-rule"
                 variant="primary"
                 type="button"
-                onClick={handleSubmit((values) => submit(values), onInvalid)}
+                onClick={bindAlertRuleFormSubmit(
+                  handleSubmit,
+                  getValues,
+                  setError,
+                  (values) => submit(values),
+                  onInvalid
+                )}
                 disabled={isSubmitting}
                 icon={isSubmitting ? 'spinner' : undefined}
               >

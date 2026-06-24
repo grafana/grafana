@@ -13,6 +13,7 @@ import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { DOCS_URL_ANNOTATIONS } from '../../utils/docs';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
+import { AutofillAnnotationsButton } from '../AutofillAnnotationsButton';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
@@ -31,6 +32,7 @@ const AnnotationsStep = () => {
     watch,
     formState: { errors },
     setValue,
+    clearErrors,
   } = useFormContext<RuleFormValues>();
   const annotations = watch('annotations');
   const type = watch('type');
@@ -137,12 +139,16 @@ const AnnotationsStep = () => {
       fullWidth
     >
       <Stack direction="column" gap={1}>
-        {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
+        <Stack direction="row" gap={1}>
+          <AutofillAnnotationsButton />
+          {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
+        </Stack>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
           // eslint-disable-next-line
           const annotation = annotationField.key as Annotation;
+          const valueRegistration = register(`annotations.${index}.value`);
           return (
             <div key={annotationField.id} className={styles.flexRow}>
               <div>
@@ -177,7 +183,16 @@ const AnnotationsStep = () => {
                       data-testid={`annotation-value-${index}`}
                       id={`annotation-${index}`}
                       className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                      {...register(`annotations.${index}.value`)}
+                      {...valueRegistration}
+                      onChange={(event) => {
+                        valueRegistration.onChange(event);
+                        if (
+                          annotationField.key === Annotation.summary ||
+                          annotationField.key === Annotation.description
+                        ) {
+                          clearErrors(`annotations.${index}.value`);
+                        }
+                      }}
                       placeholder={
                         isUrl
                           ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings

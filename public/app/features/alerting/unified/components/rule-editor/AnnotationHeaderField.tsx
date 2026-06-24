@@ -44,6 +44,10 @@ const AnnotationHeaderField = ({
                 case Annotation.panelID:
                   label = '';
                   break;
+                case Annotation.summary:
+                case Annotation.description:
+                  label = annotationLabels[annotation];
+                  break;
                 default:
                   label = annotationLabels[annotation] && annotationLabels[annotation] + ' (optional)';
               }

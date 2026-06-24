@@ -24,9 +24,11 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { type RuleFormValues } from '../types/rule-form';
+import { clearRequiredAnnotationValidationErrors, findAnnotationIndex } from '../utils/alert-annotations';
 import { Annotation } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
+import { AutofillAnnotationsButton } from './AutofillAnnotationsButton';
 import { NeedHelpInfoForNotificationPolicy } from './rule-editor/NotificationsStep';
 import { PolicyTreeSelector } from './rule-editor/notificaton-preview/PolicyTreeSelector';
 
@@ -82,7 +84,7 @@ export function RuleNotificationSection() {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
 
-  const { watch, setValue } = useFormContext<RuleFormValues>();
+  const { watch, setValue, clearErrors, formState } = useFormContext<RuleFormValues>();
   const manualRouting = watch('manualRouting');
   const useNotificationPolicy = !manualRouting;
   const selectedContactPoint = watch(CONTACT_POINT_PATH);
@@ -119,8 +121,12 @@ export function RuleNotificationSection() {
       }
 
       setValue('annotations', updatedAnnotations, { shouldDirty: true, shouldValidate: true });
+
+      if (key === Annotation.summary || key === Annotation.description) {
+        clearRequiredAnnotationValidationErrors(updatedAnnotations, clearErrors);
+      }
     },
-    [annotations, setValue]
+    [annotations, clearErrors, setValue]
   );
 
   const summaryValue = getAnnotationValue(Annotation.summary);
@@ -130,6 +136,11 @@ export function RuleNotificationSection() {
   // Validate runbook URL for form-level validation feedback
   const runbookUrlError = useMemo(() => validateRunbookUrl(runbookUrlValue), [runbookUrlValue]);
   const runbookUrlErrorId = useId();
+  const summaryIndex = findAnnotationIndex(annotations, Annotation.summary);
+  const descriptionIndex = findAnnotationIndex(annotations, Annotation.description);
+  const summaryError = summaryIndex >= 0 ? formState.errors.annotations?.[summaryIndex]?.value?.message : undefined;
+  const descriptionError =
+    descriptionIndex >= 0 ? formState.errors.annotations?.[descriptionIndex]?.value?.message : undefined;
   const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
 
   return (
@@ -254,7 +265,16 @@ export function RuleNotificationSection() {
             )}
           </Stack>
 
-          <Field label={t('alerting.simplified.notification.summary.label', 'Summary (optional)')} noMargin>
+          <Stack direction="row" gap={1} alignItems="center">
+            <AutofillAnnotationsButton />
+          </Stack>
+
+          <Field
+            label={t('alerting.simplified.notification.summary.label', 'Summary')}
+            noMargin
+            invalid={!!summaryError}
+            error={summaryError}
+          >
             <TextArea
               id="summary-text-area"
               value={summaryValue}
@@ -264,10 +284,16 @@ export function RuleNotificationSection() {
                 'Enter a summary of what happened and why…'
               )}
               aria-label={t('alerting.simplified.notification.summary.aria-label', 'Summary')}
+              aria-invalid={!!summaryError}
             />
           </Field>
 
-          <Field label={t('alerting.simplified.notification.description.label', 'Description (optional)')} noMargin>
+          <Field
+            label={t('alerting.simplified.notification.description.label', 'Description')}
+            noMargin
+            invalid={!!descriptionError}
+            error={descriptionError}
+          >
             <TextArea
               id="description-text-area"
               value={descriptionValue}
@@ -277,6 +303,7 @@ export function RuleNotificationSection() {
                 'Enter a description of what the alert rule does…'
               )}
               aria-label={t('alerting.simplified.notification.description.aria-label', 'Description')}
+              aria-invalid={!!descriptionError}
             />
           </Field>
 

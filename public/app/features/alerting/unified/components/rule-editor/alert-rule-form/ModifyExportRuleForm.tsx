@@ -17,6 +17,7 @@ import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import { bindAlertRuleFormSubmit } from '../../../utils/alertAnnotationFormSubmit';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { formValuesToRulerGrafanaRuleDTO, getDefaultQueries } from '../../../utils/rule-form';
 import { rulerRuleType } from '../../../utils/rules';
@@ -105,7 +106,16 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
         </form>
         {exportData && <GrafanaRuleDesignExporter exportValues={exportData} onClose={onClose} uid={alertUid} />}
         <Stack direction="row">
-          <Button key="export-rule" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
+          <Button
+            key="export-rule"
+            onClick={bindAlertRuleFormSubmit(
+              formAPI.handleSubmit,
+              formAPI.getValues,
+              formAPI.setError,
+              (formValues) => submit(formValues),
+              onInvalid
+            )}
+          >
             <Trans i18nKey="alerting.modify-export-rule-form.action-buttons.export">Export</Trans>
           </Button>
           <LinkButton href={returnTo} key="cancel" variant="secondary" onClick={() => submit(undefined)}>
