@@ -14,7 +14,7 @@ import { getTemplateSrv } from '../templateSrv';
 
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
-import { logDataSourceWarning } from './logging';
+import { describeRef, logDataSourceWarning } from './logging';
 import { clearPluginCache } from './pluginCache';
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
@@ -147,7 +147,7 @@ export async function getDataSourceInstanceSettingsList(
   if (results.length > 0) {
     return results;
   }
-  return getInstanceSettingsListFallback(filters) ?? results;
+  return getInstanceSettingsListFallback(filters);
 }
 
 /**
@@ -344,7 +344,7 @@ function getInstanceSettingsFallback(
 ): DataSourceInstanceSettings | undefined {
   const legacy = getDataSourceSrv()?.getInstanceSettings(ref, scopedVars);
   if (legacy) {
-    logDataSourceWarning(FALLBACK_TO_LEGACY_SETTINGS_WARNING, { ref: describeRefForLog(ref) });
+    logDataSourceWarning(FALLBACK_TO_LEGACY_SETTINGS_WARNING, { ref: describeRef(ref) });
     return legacy;
   }
   return undefined;
@@ -355,25 +355,13 @@ function getInstanceSettingsFallback(
  * an empty list, so consult the legacy service. Delete this (and its call site) once
  * `DataSourceSrv` is gone.
  */
-function getInstanceSettingsListFallback(
-  filters: GetDataSourceListFilters | undefined
-): DataSourceInstanceSettings[] | undefined {
+function getInstanceSettingsListFallback(filters: GetDataSourceListFilters | undefined): DataSourceInstanceSettings[] {
   const legacy = getDataSourceSrv()?.getList(filters) ?? [];
   if (legacy.length > 0) {
     logDataSourceWarning(FALLBACK_TO_LEGACY_LIST_WARNING, { filters: filtersForLog(filters) });
     return legacy;
   }
-  return undefined;
-}
-
-function describeRefForLog(ref: DataSourceRef | string | null | undefined): string {
-  if (ref == null) {
-    return 'default';
-  }
-  if (typeof ref === 'string') {
-    return ref;
-  }
-  return ref.uid ?? ref.type ?? 'unknown';
+  return [];
 }
 
 function filtersForLog(filters: GetDataSourceListFilters | undefined): string {

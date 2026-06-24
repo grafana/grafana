@@ -6,7 +6,7 @@ import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSou
 
 import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
 import { getExpressionDataSourceInstance } from './expressionDs';
-import { logDataSourceInstanceError, logDataSourceWarning } from './logging';
+import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
@@ -168,16 +168,6 @@ async function getDataSourceInstanceFallback(
     }
   }
   throw originalError;
-}
-
-function describeRef(ref: DataSourceRef | string | null | undefined): string {
-  if (ref == null) {
-    return 'default';
-  }
-  if (typeof ref === 'string') {
-    return ref;
-  }
-  return ref.uid ?? ref.type ?? 'unknown';
 }
 
 /**
