@@ -4021,6 +4021,8 @@
       "tls-client-key-label": "TLS client key",
       "tls-skip-verify-description": "If enabled, the client accepts any certificate presented by the server and any host \nname in that certificate. You should only use this for testing, because this mode leaves \nSSL/TLS susceptible to man-in-the-middle attacks.",
       "tls-skip-verify-label": "TLS skip verify",
+      "token-exchange-timeout-description": "The timeout in seconds for the OAuth token exchange request. Defaults to 15 seconds if not set or set to 0.",
+      "token-exchange-timeout-label": "Token exchange timeout (seconds)",
       "token-url-description": "The token endpoint of your OAuth2 provider.",
       "token-url-required": "This field is required and must be a valid URL.",
       "use-pkce-description": "If enabled, Grafana will use <2>Proof Key for Code Exchange (PKCE)</2> with the OAuth2 Authorization Code Grant.",
@@ -4372,6 +4374,7 @@
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
+      "starred-folders": "Starred folders",
       "team-folders": "Team folders",
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
@@ -4460,6 +4463,7 @@
       "view-folder": "View folder"
     },
     "shared-with-me": "Shared with me",
+    "starred-folders": "Starred folders",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
       "label": {
@@ -12983,16 +12987,11 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
-      "dashboard-create-default": "New dashboard: {{title}}",
-      "dashboard-delete-default": "Delete dashboard: {{title}}",
-      "dashboard-move-default": "Move dashboard: {{title}}",
-      "dashboard-rename-default": "Rename dashboard: {{title}}",
-      "dashboard-update-default": "Save dashboard: {{title}}",
-      "folder-create-default": "Create folder: {{title}}",
-      "folder-delete-default": "Delete folder: {{title}}",
-      "folder-move-default": "Move folder: {{title}}",
-      "folder-rename-default": "Rename folder: {{title}}",
-      "folder-update-default": "Save folder: {{title}}"
+      "create-default": "Create {{resourceKind}}: {{title}}",
+      "delete-default": "Delete {{resourceKind}}: {{title}}",
+      "move-default": "Move {{resourceKind}}: {{title}}",
+      "rename-default": "Rename {{resourceKind}}: {{title}}",
+      "update-default": "Save {{resourceKind}}: {{title}}"
     },
     "commit-options": {
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
@@ -13154,8 +13153,7 @@
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
     "error": {
-      "branch-not-found-dashboard": "You have selected a branch that does not contain this dashboard. Select another branch.",
-      "branch-not-found-folder": "You have selected a branch that does not contain this folder. Select another branch."
+      "branch-not-found": "You have selected a branch that does not contain this resource. Select another branch."
     },
     "error-title-default": "Error",
     "expanded-row": {
@@ -13362,6 +13360,7 @@
       "truncated": "Message truncated"
     },
     "migrate": {
+      "all-resources": "All resources",
       "dashboards": "Dashboards",
       "drawer-cancel": "Cancel",
       "drawer-description": "All resources not yet managed by Git will be migrated into the selected repository. This is a one-time operation.",
@@ -13384,6 +13383,8 @@
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
+      "playlists": "Playlists",
+      "playlists-folder-title": "Playlists",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
       "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
@@ -13400,7 +13401,7 @@
       "resources-sort-count-desc": "Most resources",
       "resources-sort-title-asc": "Name (A–Z)",
       "resources-sort-title-desc": "Name (Z–A)",
-      "resources-to-migrate-all-managed": "All dashboards are already managed by Git.",
+      "resources-to-migrate-all-managed": "All supported resources are already managed by Git.",
       "resources-to-migrate-empty": "No folders or resources match the current search.",
       "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
       "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",
@@ -13410,7 +13411,7 @@
       "resources-to-migrate-migrate-selected_one": "Migrate selected ({{count}})",
       "resources-to-migrate-migrate-selected_other": "Migrate selected ({{count}})",
       "resources-to-migrate-search": "Search folders and resources",
-      "resources-to-migrate-subtitle": "Pick whole folders, or individual dashboards within them. Selecting a folder migrates only the resources directly inside it — anything in subfolders migrates through its own folder."
+      "resources-to-migrate-subtitle": "Pick whole folders, or individual resources within them. Selecting a folder migrates only the resources directly inside it — anything in subfolders migrates through its own folder."
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
@@ -13642,6 +13643,14 @@
         }
       },
       "title-error-saving-file": "Error saving file"
+    },
+    "save-resource": {
+      "button-cancel": "Cancel",
+      "button-save": "Save",
+      "button-saving": "Saving...",
+      "error-saving": "Failed to save changes",
+      "missing-info": "Missing required fields for saving",
+      "read-only-message": "To edit this resource, please update it in your repository directly."
     },
     "setup-modal": {
       "done": "Done",
@@ -14856,6 +14865,14 @@
       "more-info": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "external-badge": "External",
+    "load-error": {
+      "retry": "Retry",
+      "title": "Failed to load snapshots"
+    },
+    "load-more": {
+      "label": "Show more snapshots",
+      "loading": "Loading more snapshots…"
+    },
     "name-column-header": "Name",
     "share": {
       "cancel-button": "Cancel",

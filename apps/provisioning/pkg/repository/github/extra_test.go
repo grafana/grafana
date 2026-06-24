@@ -200,6 +200,44 @@ func TestExtra_Build(t *testing.T) {
 			},
 		},
 		{
+			name: "wrap with webhook repo for cleanup when webhookDisabled is true and stale webhook exists",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  456,
+						URL: "https://grafana.example.com/webhook",
+					},
+				},
+			},
+			setupDecrypter: func() repository.Decrypter {
+				return func(r *provisioning.Repository) repository.SecureValues {
+					return &mockSecureValues{
+						token: common.RawSecureValue("test-token"),
+					}
+				}
+			},
+			// No webhook URL needed for deletion — builder must not be called.
+			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
+				return github.NewMockWebhookURLBuilder(t)
+			},
+			validateResult: func(t *testing.T, repo repository.Repository) {
+				_, ok := repo.(github.GithubWebhookRepository)
+				assert.True(t, ok, "expected a GithubWebhookRepository so OnUpdate can clean up the stale webhook")
+			},
+		},
+		{
 			name: "skip webhook setup when URL is empty",
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{

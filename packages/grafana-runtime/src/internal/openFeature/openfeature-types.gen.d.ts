@@ -19,6 +19,7 @@ declare module "@openfeature/core" {
     | "provisioning.gitConventions"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
+    | "useKubernetesShortURLsAPI"
     | "stateTimeline.nameAboveBars"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
@@ -30,6 +31,7 @@ declare module "@openfeature/core" {
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
     | "newLogContext"
+    | "grafana.starredFolders"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
     | "globalDashboardVariables"
@@ -55,7 +57,8 @@ declare module "@openfeature/core" {
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
-    | "table.protoRowParser";
+    | "table.protoRowParser"
+    | "dataviz.experimentalColorSchemes";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

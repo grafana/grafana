@@ -118,7 +118,6 @@ If you want to contribute to any of the plugins listed below (that are found wit
 - jaeger
 - mysql
 - parca
-- tempo
 - loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
@@ -127,7 +126,7 @@ To build and watch all these plugins you can run the following command. Note thi
 yarn plugin:build:dev
 ```
 
-If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/jaeger`.
 
 ```
 yarn workspace <name_of_plugin> dev

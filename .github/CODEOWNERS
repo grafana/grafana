@@ -326,7 +326,6 @@
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
 /devenv/docker/blocks/slow_proxy/ @bergquist
 /devenv/docker/blocks/smtp/ @bergquist
-/devenv/docker/blocks/tempo/ @grafana/data-sources-plugins
 /devenv/docker/blocks/traefik/ @mckn
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
 /devenv/docker/buildcontainer/ @bergquist
@@ -368,7 +367,6 @@
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/data-sources-plugins
 /pkg/tsdb/loki/ @grafana/data-sources-plugins
-/pkg/tsdb/tempo/ @grafana/data-sources-plugins
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
 /pkg/tsdb/parca/ @grafana/data-sources-plugins
 
@@ -729,7 +727,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad
 /packages/grafana-schema/src/**/table @grafana/dataviz-squad
-/packages/grafana-schema/src/**/tempo @grafana/data-sources-plugins
 /packages/grafana-schema/src/**/text @grafana/dataviz-squad
 /packages/grafana-schema/src/**/timeseries @grafana/dataviz-squad
 /packages/grafana-schema/src/**/trend @grafana/dataviz-squad
@@ -908,7 +905,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
-/public/app/core/services/theme.ts @grafana/grafana-frontend-platform
+/public/app/core/services/theme* @grafana/grafana-frontend-platform
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/factors.test.ts @grafana/dashboards-squad
 /public/app/core/specs/flatten.test.ts @grafana/grafana-frontend-platform
@@ -1143,7 +1140,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/tempo/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/parca/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad

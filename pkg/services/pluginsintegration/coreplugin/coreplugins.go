@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
 
 const (
@@ -94,7 +93,7 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
 	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service,
-	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
+	pr *prometheus.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, jaeger *jaeger.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
@@ -107,7 +106,6 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		InfluxDB:        asBackendPlugin(idb),
 		Loki:            asBackendPlugin(lk),
 		Prometheus:      asBackendPlugin(pr),
-		Tempo:           asBackendPlugin(t),
 		TestData:        asBackendPlugin(td),
 		PostgreSQL:      asBackendPlugin(pg),
 		MySQL:           asBackendPlugin(my),
@@ -229,8 +227,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = loki.ProvideService(httpClientProvider, tracer)
 	case Prometheus:
 		svc = prometheus.ProvideService(httpClientProvider)
-	case Tempo:
-		svc = tempo.ProvideService(httpClientProvider, tracer)
 	case PostgreSQL:
 		svc = postgres.ProvideService()
 	case MySQL:
