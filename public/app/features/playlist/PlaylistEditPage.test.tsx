@@ -107,5 +107,24 @@ describe('PlaylistEditPage', () => {
       );
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });
+
+    it('opens the provisioning save drawer for a repository-managed playlist instead of calling the API', async () => {
+      const { backendSrvMock } = await getTestContext({
+        'grafana.app/managedBy': 'repo',
+        'grafana.app/managerId': 'test-repo',
+        'grafana.app/sourcePath': 'playlists/foo.json',
+      });
+
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      const saveButton = await screen.findByRole('button', { name: /save/i });
+      backendSrvMock.mockClear();
+
+      fireEvent.submit(saveButton);
+
+      // The provisioning save drawer opens...
+      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
+      // ...and the playlist replace API is not called.
+      expect(backendSrvMock).not.toHaveBeenCalledWith(expect.objectContaining({ method: 'PUT' }));
+    });
   });
 });

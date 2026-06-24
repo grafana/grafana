@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
-import { type RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { useDispatch } from 'app/types/store';
@@ -12,6 +12,7 @@ import { useDispatch } from 'app/types/store';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { PushSuccessMessage } from '../../hooks/PushSuccessMessage';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
@@ -39,6 +40,13 @@ export interface SaveProvisionedResourceDrawerProps {
   drawerTitle: string;
   /** Commit action recorded in the commit message. Defaults to `update`. */
   action?: CommitAction;
+  /**
+   * Whether this commits a brand-new file to the repository (create) rather than replacing an
+   * existing one (update). When true the path field becomes editable and the create mutation is
+   * used. The managing repository and initial path are still resolved from the resource's
+   * annotations, so callers creating a new resource must synthesise them for the chosen repository.
+   */
+  isNew?: boolean;
   branchPrefix?: string;
   /** Notification shown on a successful write to the configured branch. */
   successMessage?: string;
@@ -63,6 +71,7 @@ function FormContent({
   title,
   body,
   action = 'update',
+  isNew = false,
   successMessage,
   initialValues,
   repository,
@@ -73,7 +82,9 @@ function FormContent({
 }: FormProps) {
   const dispatch = useDispatch();
   const [error, setError] = useState<string | undefined>(undefined);
-  const [replaceFile, request] = useReplaceRepositoryFilesWithPathMutation();
+  // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
+  // original path: passing it selects update, omitting it selects create.
+  const [saveFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : initialValues.path);
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
   const { handleSubmit, watch, formState } = methods;
@@ -141,7 +152,7 @@ function FormContent({
     });
 
     try {
-      const data = await replaceFile({ name: repoName, path, ref: branchRef, message, body }).unwrap();
+      const data = await saveFile({ name: repoName, path, ref: branchRef, message, body }).unwrap();
       handleSuccess(data, { workflow, selectedBranch: ref });
     } catch (err) {
       showError(err);
@@ -154,7 +165,7 @@ function FormContent({
         <Stack direction="column" gap={2}>
           <ResourceEditFormSharedFields
             resourceType={resourceType}
-            isNew={false}
+            isNew={isNew}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             lockComment={locked}

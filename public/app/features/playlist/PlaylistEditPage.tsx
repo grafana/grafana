@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
@@ -6,6 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { SaveProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
 import { SourceLink } from 'app/features/provisioning/components/SourceLink';
 import {
   getManagerIdentity,
@@ -17,7 +19,8 @@ import {
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
-import { PlaylistForm } from './PlaylistForm';
+import { PlaylistForm, type PlaylistRepositorySelect } from './PlaylistForm';
+import { usePlaylistProvisioning } from './usePlaylistProvisioning';
 
 export interface RouteParams {
   uid: string;
@@ -27,14 +30,47 @@ export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
+  const { isAvailable, repositories } = usePlaylistProvisioning();
+  // Holds the edited playlist while the provisioning save drawer is open.
+  const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
   const onSubmit = async (playlist: Playlist) => {
+    // Repository-managed playlists are committed to git via the save drawer instead of
+    // being written directly through the playlist API.
+    if (isManagedByRepository(playlist)) {
+      setProvisionedPlaylist(playlist);
+      return;
+    }
+
     replacePlaylist({
       name: playlist.metadata?.name ?? '',
       playlist,
     });
     locationService.push('/playlists');
   };
+
+  // The repository can't be changed after creation, so the selector is read-only on edit. It shows
+  // the managing repository (or "no repository" for an unmanaged playlist).
+  const repositorySelect = useMemo<PlaylistRepositorySelect | undefined>(() => {
+    if (!isAvailable || !data) {
+      return undefined;
+    }
+    const managedRepo = isManagedByRepository(data) ? (getManagerIdentity(data) ?? '') : '';
+    const repoOptions = repositories.map((repo) => ({ label: repo.title || repo.name, value: repo.name }));
+    // Surface an orphaned/inaccessible repository so the locked value still renders.
+    if (managedRepo && !repoOptions.some((option) => option.value === managedRepo)) {
+      repoOptions.push({ label: managedRepo, value: managedRepo });
+    }
+    return {
+      options: [
+        { label: t('playlist-edit.form.repository-none', 'Grafana (no repository)'), value: '' },
+        ...repoOptions,
+      ],
+      value: managedRepo,
+      onChange: () => {},
+      readOnly: true,
+    };
+  }, [isAvailable, data, repositories]);
 
   const pageNav: NavModelItem = {
     text: t('playlist-edit.title', 'Edit playlist'),
@@ -63,8 +99,14 @@ export const PlaylistEditPage = () => {
             {JSON.stringify(error)}
           </div>
         )}
-        {data && <PlaylistForm onSubmit={onSubmit} playlist={data} />}
+        {data && <PlaylistForm onSubmit={onSubmit} playlist={data} repositorySelect={repositorySelect} />}
       </Page.Contents>
+      {provisionedPlaylist && (
+        <SaveProvisionedPlaylistDrawer
+          playlist={provisionedPlaylist}
+          onDismiss={() => setProvisionedPlaylist(undefined)}
+        />
+      )}
     </Page>
   );
 };

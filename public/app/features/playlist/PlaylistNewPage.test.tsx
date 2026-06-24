@@ -9,11 +9,14 @@ import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
 import { backendSrv } from '../../core/services/backend_srv';
 
 import { PlaylistNewPage } from './PlaylistNewPage';
+import { usePlaylistProvisioning } from './usePlaylistProvisioning';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
+
+jest.mock('./usePlaylistProvisioning');
 
 jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
@@ -21,8 +24,14 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-function getTestContext() {
+const mockUsePlaylistProvisioning = usePlaylistProvisioning as jest.MockedFunction<typeof usePlaylistProvisioning>;
+
+function getTestContext(
+  provisioning: ReturnType<typeof usePlaylistProvisioning> = { isAvailable: false, repositories: [] }
+) {
   jest.clearAllMocks();
+  // Provisioning unavailable by default, so the repository selector is hidden.
+  mockUsePlaylistProvisioning.mockReturnValue(provisioning);
 
   // Create separate spies for different HTTP methods
   const postSpy = jest.fn();
@@ -85,6 +94,44 @@ describe('PlaylistNewPage', () => {
       await waitFor(() => {
         expect(locationService.getLocation().pathname).toEqual('/playlists');
       });
+    });
+  });
+
+  describe('repository selector', () => {
+    const repositories = [
+      { name: 'test-repo', title: 'Test Repository', target: 'instance' as const, type: 'git' as const, workflows: [] },
+    ];
+
+    it('is not shown when provisioning is unavailable', async () => {
+      getTestContext();
+
+      expect(await screen.findByRole('heading', { name: /new playlist/i })).toBeInTheDocument();
+      expect(screen.queryByText('Repository')).not.toBeInTheDocument();
+    });
+
+    it('is shown when provisioning is available', async () => {
+      getTestContext({ isAvailable: true, repositories });
+
+      expect(await screen.findByText('Repository')).toBeInTheDocument();
+    });
+
+    it('opens the provisioning save drawer instead of creating directly once a repository is selected', async () => {
+      const { postSpy } = getTestContext({ isAvailable: true, repositories });
+
+      await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), 'Repo Playlist');
+      // Open the repository combobox and select the repository (the second option, after "Grafana
+      // (no repository)") via the keyboard — the options list is virtualized so the row may not be
+      // queryable in jsdom, but downshift still tracks the highlighted index.
+      const combobox = await screen.findByRole('combobox', { name: /repository/i });
+      await userEvent.click(combobox);
+      await userEvent.keyboard('{ArrowDown}{Enter}');
+
+      fireEvent.submit(screen.getByRole('button', { name: /save/i }));
+
+      // The provisioning save drawer opens...
+      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
+      // ...and the playlist is not created directly through the playlist API.
+      expect(postSpy).not.toHaveBeenCalled();
     });
   });
 });
