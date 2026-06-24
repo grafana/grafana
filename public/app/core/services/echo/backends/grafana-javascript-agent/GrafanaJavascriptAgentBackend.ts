@@ -11,6 +11,7 @@ import {
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { GRAFANA_ROUTE_CONTENT_READY_EVENT } from 'app/core/navigation/routeContentReady';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
@@ -99,25 +100,32 @@ export class GrafanaJavascriptAgentBackend
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
     if (faro && getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false)) {
-      this.initReplayAfterDomRendered(faro);
+      this.initReplayAfterRouteContentRendered(faro);
     }
   }
 
   /**
-   * Defer rrweb session replay until React has committed its initial render.
+   * Defer rrweb session replay until Grafana's first route content has rendered.
    *
    * rrweb's record() takes a full DOM snapshot on start and then tracks
-   * incremental mutations. If it starts before React renders, the snapshot
-   * captures an empty #reactRoot and the entire first render arrives as one
-   * massive mutation batch — which triggers a known rrweb bug where the
-   * MutationBuffer.emit() addList silently drops nodes it cannot resolve.
-   * Those dropped nodes later surface as "[replayer] Node with id 'X' not found."
+   * incremental mutations. If it starts before the real UI is in the DOM, the
+   * snapshot captures a near-empty app and the entire first render arrives as
+   * one massive mutation batch — which triggers a known rrweb bug where the
+   * MutationBuffer.emit() addList silently drops nodes it cannot resolve (and
+   * nodes detached mid-batch are lost). Those dropped nodes later surface as
+   * "[replayer] Node with id 'X' not found."
    *
-   * By observing #reactRoot for its first child, we start rrweb only after
-   * React has committed, so the snapshot contains the real UI and the
-   * problematic initial mutation batch never occurs.
+   * Grafana's routes are lazily loaded (React.lazy), so the app commits an empty
+   * shell, then a Suspense loading fallback, and only later the real route
+   * content once its chunk resolves. We therefore start rrweb on the
+   * GRAFANA_ROUTE_CONTENT_READY_EVENT that GrafanaRoute dispatches from inside its
+   * Suspense boundary — i.e. only once real route content has committed — and
+   * wait two animation frames so the browser has painted it before snapshotting.
+   *
+   * This guarantees the snapshot captures the first committed route content; it
+   * does not wait for nested Suspense boundaries or async data within a route.
    */
-  private initReplayAfterDomRendered(faro: Faro): void {
+  private initReplayAfterRouteContentRendered(faro: Faro): void {
     const addReplay = () => {
       faro.instrumentations.add(
         new ReplayInstrumentation({
@@ -132,18 +140,46 @@ export class GrafanaJavascriptAgentBackend
       );
     };
 
-    const reactRoot = document.getElementById('reactRoot');
-    if (reactRoot && reactRoot.childNodes.length > 0) {
-      requestAnimationFrame(addReplay);
-      return;
+    let started = false;
+    let raf1 = 0;
+    let raf2 = 0;
+
+    function cancelPending() {
+      if (raf1) {
+        cancelAnimationFrame(raf1);
+        raf1 = 0;
+      }
+      if (raf2) {
+        cancelAnimationFrame(raf2);
+        raf2 = 0;
+      }
     }
 
-    const observer = new MutationObserver((_mutations, obs) => {
-      obs.disconnect();
-      requestAnimationFrame(addReplay);
-    });
+    function startReplay() {
+      if (started) {
+        return;
+      }
+      started = true;
+      cancelPending();
+      window.removeEventListener(GRAFANA_ROUTE_CONTENT_READY_EVENT, scheduleReplayStart);
+      addReplay();
+    }
 
-    observer.observe(reactRoot ?? document.body, { childList: true });
+    // Wait two animation frames after route content commits so it has painted
+    // before rrweb snapshots. A later route-ready event (e.g. an immediate
+    // redirect) supersedes a still-pending start so we snapshot the final route.
+    function scheduleReplayStart() {
+      if (started) {
+        return;
+      }
+      cancelPending();
+      raf1 = requestAnimationFrame(() => {
+        raf1 = 0;
+        raf2 = requestAnimationFrame(startReplay);
+      });
+    }
+
+    window.addEventListener(GRAFANA_ROUTE_CONTENT_READY_EVENT, scheduleReplayStart);
   }
 
   // noop because the EchoSrvTransport registered in Faro will already broadcast all signals emitted by the Faro API

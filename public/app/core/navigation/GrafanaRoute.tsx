@@ -11,6 +11,7 @@ import { contextSrv } from '../services/context_srv';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
 import { GrafanaRouteLoading } from './GrafanaRouteLoading';
+import { GRAFANA_ROUTE_CONTENT_READY_EVENT, type RouteContentReadyEventDetail } from './routeContentReady';
 import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 
 export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
@@ -51,17 +52,42 @@ export function GrafanaRoute(props: Props) {
     <ErrorBoundary boundaryName="grafana-route" dependencies={[props.route]}>
       {({ error, errorInfo }) => {
         if (error) {
-          return <GrafanaRouteError error={error} errorInfo={errorInfo} />;
+          return (
+            <>
+              <GrafanaRouteError error={error} errorInfo={errorInfo} />
+              <RouteContentReadySignal location={props.location} />
+            </>
+          );
         }
 
         return (
           <Suspense fallback={<GrafanaRouteLoading />}>
             <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+            <RouteContentReadySignal location={props.location} />
           </Suspense>
         );
       }}
     </ErrorBoundary>
   );
+}
+
+/**
+ * Renders nothing; on commit it signals that real route content (the lazily-loaded
+ * route component or its error page) is now in the DOM. Placed INSIDE the Suspense
+ * boundary so its effect cannot run while the loading fallback is showing — i.e. it
+ * fires only once the lazy route chunk has resolved and committed.
+ */
+function RouteContentReadySignal({ location }: Pick<Props, 'location'>) {
+  useEffect(() => {
+    const detail: RouteContentReadyEventDetail = {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+    };
+    window.dispatchEvent(new CustomEvent<RouteContentReadyEventDetail>(GRAFANA_ROUTE_CONTENT_READY_EVENT, { detail }));
+  }, [location.pathname, location.search, location.hash]);
+
+  return null;
 }
 
 export function GrafanaRouteWrapper({ route }: Pick<Props, 'route'>) {
