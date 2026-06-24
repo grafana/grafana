@@ -2294,7 +2294,8 @@
       "metadata": {
         "name": "frontendServiceUseSettingsService",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-20T16:13:44Z"
       },
       "spec": {
         "description": "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",

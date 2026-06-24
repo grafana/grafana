@@ -826,10 +826,6 @@ const (
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
 
-	// FlagFrontendServiceUseSettingsService
-	// Enables the frontend service to fetch tenant-specific settings overrides from the settings service
-	FlagFrontendServiceUseSettingsService = "frontendServiceUseSettingsService"
-
 	// FlagFrontendServiceSettingsSourceFilter
 	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
 	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
