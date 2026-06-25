@@ -6,7 +6,7 @@ import { useDispatch } from 'app/types/store';
 
 import { type ResourceKindInfo } from '../../utils/resourceKinds';
 
-import { type MigrationSource, type RawMigratable, fetchAllFolders, kindPluralLabel } from './migrationSources';
+import { type MigrationSource, type RawMigratable, fetchAllFolders } from './migrationSources';
 
 /**
  * A single resource that can be migrated, tagged with its kind so the selection
@@ -83,7 +83,7 @@ function aggregate(folders: Array<{ uid: string; title: string }>, results: Sour
       if (unmanaged.length > 0) {
         syntheticRows.push({
           uid: syntheticFolderUid(kind),
-          title: kindPluralLabel(kind),
+          title: kind.pluralLabel(),
           resourceCount: unmanaged.length,
           directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind })),
         });

@@ -1,4 +1,3 @@
-import { t } from '@grafana/i18n';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -36,19 +35,17 @@ export function readImmediateParent(location: string): string | undefined {
 }
 
 /**
- * Pages through every item of a kind via the unified searcher. The first page
- * reports `totalRows`, so the remaining pages are fetched in small concurrent
- * batches (PAGE_CONCURRENCY) rather than one sequential round-trip at a time or
- * one big burst. Bounded by MAX_PAGES.
- *
- * Only the unified-search kinds (`folder`, `dashboard`) go through here; other
- * kinds list through their own API (see the per-kind listers below).
+ * Pages through every item of a search kind via the unified searcher. The first
+ * page reports `totalRows`, so the remaining pages are fetched in small
+ * concurrent batches (PAGE_CONCURRENCY) rather than one sequential round-trip at
+ * a time or one big burst. Bounded by MAX_PAGES. Only kinds the search index
+ * serves go through here (`ResourceKindInfo.searchable`).
  */
-async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQueryResult[]> {
+async function fetchAllPages(searchKind: string): Promise<DashboardQueryResult[]> {
   const searcher = getGrafanaSearcher();
   const searchPage = (page: number) =>
     searcher.search({
-      kind: [kind],
+      kind: [searchKind],
       query: '*',
       from: page * PAGE_SIZE,
       offset: page * PAGE_SIZE,
@@ -63,7 +60,9 @@ async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQue
   // Fail loudly rather than silently truncating: a partial list would drop rows
   // from the table and, worse, from the selective-migration payload.
   if (pageCount > MAX_PAGES) {
-    throw new Error(`Too many ${kind}s to enumerate (${totalRows}); aborting to avoid an incomplete migration list.`);
+    throw new Error(
+      `Too many ${searchKind}s to enumerate (${totalRows}); aborting to avoid an incomplete migration list.`
+    );
   }
 
   for (let page = 1; page < pageCount; page += PAGE_CONCURRENCY) {
@@ -77,12 +76,19 @@ async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQue
   return items;
 }
 
+// The unified search index keys a kind by its lowercased Kind ("Dashboard" →
+// "dashboard", "Folder" → "folder").
+function searchKindFor(info: ResourceKindInfo): string {
+  return info.kind.toLowerCase();
+}
+
 /**
- * `kind: ['folder']` returns every folder on the instance; we only need each
- * folder's UID and title to label the rows that folder-scoped kinds nest under.
+ * `folder` is searchable, so folders list through the search index; we only need
+ * each folder's UID and title to label the rows that folder-scoped kinds nest
+ * under.
  */
 export async function fetchAllFolders(): Promise<Array<{ uid: string; title: string }>> {
-  const items = await fetchAllPages('folder');
+  const items = await fetchAllPages(searchKindFor(resourceKindInfos.folder));
   return items.map((item) => ({ uid: item.uid, title: item.name }));
 }
 
@@ -104,38 +110,34 @@ interface ListerDeps {
   dispatch: AppDispatch;
 }
 
+type Lister = (deps: ListerDeps) => Promise<RawMigratable[]>;
+
 /**
- * A migratable resource kind paired with how to enumerate it. The registry below
- * is the single place new kinds plug into the migrate UI: add an entry and the
- * enumeration, table rows, stat cards, and selection payload pick it up
- * generically. Each kind lists differently (dashboards come from the unified
- * search index; playlists from their own apiserver list), so the `list` function
- * encapsulates that per-kind difference behind one shape.
+ * A migratable kind paired with how to enumerate it. The kind's identity, label,
+ * containment, and availability all come from the `ResourceKindInfo` registry —
+ * this only adds the one thing the registry can't carry: the data-fetching
+ * `list` function (which pulls in the searcher / per-kind API clients).
  */
 export interface MigrationSource {
   kind: ResourceKindInfo;
-  /**
-   * True for kinds in the static provisioning base (folder + dashboard), which
-   * the backend always supports — so they're enumerated regardless of
-   * `availableResources`. Other kinds are gated on it.
-   */
-  alwaysAvailable?: boolean;
-  list: (deps: ListerDeps) => Promise<RawMigratable[]>;
+  list: Lister;
 }
 
-async function listDashboards(): Promise<RawMigratable[]> {
-  const items = await fetchAllPages('dashboard');
+/** Lists a searchable kind (dashboards) through the unified search index. */
+async function listViaSearch(info: ResourceKindInfo): Promise<RawMigratable[]> {
+  const items = await fetchAllPages(searchKindFor(info));
   return items.map((item) => {
     const view = queryResultToViewItem(item);
     return {
       uid: view.uid,
       title: view.title,
-      parentUid: readImmediateParent(item.location),
+      parentUid: info.folderScoped ? readImmediateParent(item.location) : undefined,
       managed: Boolean(view.managedBy),
     };
   });
 }
 
+/** Lists playlists through the playlist apiserver list. */
 async function listPlaylists({ dispatch }: ListerDeps): Promise<RawMigratable[]> {
   // Read imperatively (not via the React-Query hook) so the generic hook can
   // iterate kinds in a plain loop. forceRefetch keeps a manual refetch honest;
@@ -154,46 +156,48 @@ async function listPlaylists({ dispatch }: ListerDeps): Promise<RawMigratable[]>
 }
 
 /**
- * Registry of the resource kinds the migrate UI can enumerate, each with how to
- * list it. Folders are intentionally absent: they're the container the
- * folder-scoped kinds nest under, not a migratable content kind here. Adding a
- * kind (e.g. library panels) is one entry plus a `list` implementation — and,
- * for kinds the unified search index doesn't serve, that means a dedicated API
- * list rather than `fetchAllPages`.
+ * Listers for kinds the unified search index doesn't serve (`searchable: false`),
+ * keyed by Kubernetes Kind. Each such kind needs its own API list; this map is
+ * the only per-kind code adding a kind requires (searchable kinds list
+ * generically). Adding library panels, for example, is one entry here.
  */
-export const migrationSources: MigrationSource[] = [
-  { kind: resourceKindInfos.dashboard, alwaysAvailable: true, list: () => listDashboards() },
-  { kind: resourceKindInfos.playlist, list: (deps) => listPlaylists(deps) },
-];
+const nonSearchListers: Partial<Record<string, Lister>> = {
+  [resourceKindInfos.playlist.kind]: listPlaylists,
+};
 
-/**
- * The sources to enumerate for this instance: those in the static base plus any
- * other kind the backend currently reports as available for provisioning. The
- * availability check is strict — it requires `availableResources` to be
- * populated — so a kind the backend ships disabled never appears until settings
- * load and confirm it.
- */
-export function activeMigrationSources(availableResources?: SupportedResource[]): MigrationSource[] {
-  return migrationSources.filter(
-    (source) =>
-      source.alwaysAvailable ||
-      (Boolean(availableResources) && isResourceKindAvailable(source.kind, availableResources))
-  );
+function listerFor(info: ResourceKindInfo): Lister | undefined {
+  if (info.searchable) {
+    return () => listViaSearch(info);
+  }
+  return nonSearchListers[info.kind];
 }
 
 /**
- * Human, pluralized label for a kind, used for stat-card titles and the
- * synthetic folder row that groups a non-folder kind. i18n keys must be static
- * for extraction, so this is a switch with a per-kind key rather than a lookup;
- * unknown kinds fall back to the registry's item-type label.
+ * The migration sources for this instance, derived from the kind registry: every
+ * registered kind except folders (the container others nest under), that is both
+ * available — in the static base (`alwaysAvailable`) or reported by the backend's
+ * `availableResources` — and has a known way to be listed. The availability check
+ * is strict: a non-base kind only appears once `availableResources` is populated
+ * and confirms it, so a kind the backend ships disabled never shows up early.
  */
-export function kindPluralLabel(kind: ResourceKindInfo): string {
-  switch (kind.kind) {
-    case resourceKindInfos.dashboard.kind:
-      return t('provisioning.migrate.dashboards', 'Dashboards');
-    case resourceKindInfos.playlist.kind:
-      return t('provisioning.migrate.playlists', 'Playlists');
-    default:
-      return kind.itemType;
+export function activeMigrationSources(availableResources?: SupportedResource[]): MigrationSource[] {
+  const sources: MigrationSource[] = [];
+  for (const info of Object.values(resourceKindInfos)) {
+    if (info.kind === resourceKindInfos.folder.kind) {
+      continue;
+    }
+    const available =
+      info.alwaysAvailable || (Boolean(availableResources) && isResourceKindAvailable(info, availableResources));
+    if (!available) {
+      continue;
+    }
+    const list = listerFor(info);
+    if (!list) {
+      // Available, but we don't yet know how to enumerate it (no lister). Skip
+      // rather than guess — adding one is a `nonSearchListers` entry above.
+      continue;
+    }
+    sources.push({ kind: info, list });
   }
+  return sources;
 }

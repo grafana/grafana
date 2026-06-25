@@ -5,7 +5,6 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { ResourceStatusCard } from './ResourceStatusCard';
-import { kindPluralLabel } from './hooks/migrationSources';
 import { type KindTotals } from './stats';
 
 interface OverviewStatCardsProps {
@@ -46,7 +45,7 @@ export function OverviewStatCards({ totals }: OverviewStatCardsProps) {
       {totals.map(({ kind, totals }) => (
         <ResourceStatusCard
           key={`${kind.group}/${kind.kind}`}
-          label={kindPluralLabel(kind)}
+          label={kind.pluralLabel()}
           managed={totals.managed}
           total={totals.instanceTotal}
         />

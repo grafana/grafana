@@ -1,6 +1,7 @@
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
@@ -25,6 +26,12 @@ export interface ResourceKindInfo {
   resource: string;
   /** Label shown for this kind in the combined files/resources tree. */
   itemType: ItemType;
+  /**
+   * Translated, pluralized label for this kind (e.g. "Dashboards"), used wherever
+   * a kind is named to the user — stat cards, the synthetic per-kind migrate
+   * folder, etc. A function so the translation resolves at render, not module load.
+   */
+  pluralLabel: () => string;
   /** Icon shown for this kind in the resource tree. Sourced from the search package's getIconForKind. */
   icon: IconName;
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
@@ -37,6 +44,19 @@ export interface ResourceKindInfo {
    * dashboards browse; others (e.g. playlists) only have their `listRoute`.
    */
   folderScoped: boolean;
+  /**
+   * Whether the unified search index lists this kind by kind. Dashboards and
+   * folders are indexed and queryable via the searcher; other kinds (playlists)
+   * are not and must be listed through their own API. Consumers that enumerate a
+   * kind pick their data source from this.
+   */
+  searchable: boolean;
+  /**
+   * Whether the kind is in the static provisioning base (folder + dashboard),
+   * which the backend always supports. Such kinds are acted on regardless of the
+   * settings endpoint's `availableResources`; others are gated on it.
+   */
+  alwaysAvailable: boolean;
 }
 
 /**
@@ -51,26 +71,33 @@ export const resourceKindInfos = {
     kind: 'Folder',
     resource: 'folders',
     itemType: 'Folder',
+    pluralLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
     icon: getIconForKind('folder'),
     getRoute: (name: string) => `/dashboards/f/${name}`,
     listRoute: '/dashboards',
     folderScoped: true,
+    searchable: true,
+    alwaysAvailable: true,
   },
   dashboard: {
     group: DASHBOARD_API_GROUP,
     kind: 'Dashboard',
     resource: 'dashboards',
     itemType: 'Dashboard',
+    pluralLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
     icon: getIconForKind('dashboard'),
     getRoute: (name: string) => `/d/${name}`,
     listRoute: '/dashboards',
     folderScoped: true,
+    searchable: true,
+    alwaysAvailable: true,
   },
   playlist: {
     group: PLAYLIST_API_GROUP,
     kind: 'Playlist',
     resource: 'playlists',
     itemType: 'Playlist',
+    pluralLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
     // The search package's getIconForKind doesn't know playlists, so use the
     // playlist nav icon directly.
     icon: 'presentation-play',
@@ -80,6 +107,10 @@ export const resourceKindInfos = {
     // Playlists aren't folder-contained — they only have their own collection page.
     listRoute: '/playlists',
     folderScoped: false,
+    // Playlists aren't in the unified search index; they list through their own API.
+    searchable: false,
+    // Gated on availableResources — not part of the static folder+dashboard base.
+    alwaysAvailable: false,
   },
   librarypanel: {
     // Library panels share the dashboards API group but are keyed by their own

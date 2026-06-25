@@ -4,17 +4,27 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 
-import { migrationSources } from './migrationSources';
+import { activeMigrationSources } from './migrationSources';
 import { useMigrationData } from './useMigrationData';
 
 setupProvisioningMswServer();
 
 const PLAYLISTS_ROUTE = '/apis/playlist.grafana.app/v1/namespaces/:namespace/playlists';
-const [dashboardSource, playlistSource] = migrationSources;
+
+// Sources are derived from the kind registry. With no availableResources only
+// the always-on base (dashboards) is active; declaring the playlist kind brings
+// in the playlist source too.
+const dashboardSources = activeMigrationSources(undefined);
+const playlistAvailable: SupportedResource[] = [
+  { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+  { group: 'playlist.grafana.app', kind: 'Playlist' },
+];
+const dashboardAndPlaylistSources = activeMigrationSources(playlistAvailable);
 
 // A fresh store per test so RTK Query's playlist cache doesn't leak between
 // tests; the searcher is driven through MSW directly.
@@ -60,7 +70,7 @@ describe('useMigrationData (folder-scoped kinds)', () => {
   it('nests unmanaged dashboards under the folder directly containing them (not recursively)', async () => {
     mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
 
-    const { result } = renderHook(() => useMigrationData([dashboardSource]), { wrapper });
+    const { result } = renderHook(() => useMigrationData(dashboardSources), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const parent = result.current.data.find((f) => f.uid === 'parent');
@@ -77,7 +87,7 @@ describe('useMigrationData (folder-scoped kinds)', () => {
       dashboard('m1', 'a', ManagerKind.Repo),
     ]);
 
-    const { result } = renderHook(() => useMigrationData([dashboardSource]), { wrapper });
+    const { result } = renderHook(() => useMigrationData(dashboardSources), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.find((f) => f.uid === 'general')?.resourceCount).toBe(2);
@@ -88,7 +98,7 @@ describe('useMigrationData (folder-scoped kinds)', () => {
   it('sets isError when the search request fails', async () => {
     server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
-    const { result } = renderHook(() => useMigrationData([dashboardSource]), { wrapper });
+    const { result } = renderHook(() => useMigrationData(dashboardSources), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.isError).toBe(true);
@@ -98,7 +108,7 @@ describe('useMigrationData (folder-scoped kinds)', () => {
   it('reloads the data when refetch is called', async () => {
     mockSearch([folder('a'), dashboard('d1', 'a')]);
 
-    const { result } = renderHook(() => useMigrationData([dashboardSource]), { wrapper });
+    const { result } = renderHook(() => useMigrationData(dashboardSources), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.data).toHaveLength(1);
 
@@ -118,9 +128,10 @@ describe('useMigrationData (non-folder kinds)', () => {
       playlist('p3', 'Git managed', ManagerKind.Repo),
     ]);
 
-    const { result } = renderHook(() => useMigrationData([playlistSource]), { wrapper });
+    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistSources), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
+    // No dashboards in the search response, so only the synthetic playlists row.
     expect(result.current.data).toHaveLength(1);
     const row = result.current.data[0];
     expect(row.title).toBe('Playlists');
@@ -133,7 +144,7 @@ describe('useMigrationData (non-folder kinds)', () => {
     mockSearch([folder('a'), dashboard('d1', 'a')]);
     mockPlaylists([playlist('p1', 'Morning rotation')]);
 
-    const { result } = renderHook(() => useMigrationData([dashboardSource, playlistSource]), { wrapper });
+    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistSources), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.find((f) => f.uid === 'a')?.directResources.map((d) => d.uid)).toEqual(['d1']);
