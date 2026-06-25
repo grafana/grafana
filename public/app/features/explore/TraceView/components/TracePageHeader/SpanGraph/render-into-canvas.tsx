@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type TNil from '../../types/TNil';
-
 // exported for tests
 export const ITEM_ALPHA = 0.8;
 export const MIN_ITEM_HEIGHT = 2;
@@ -21,42 +19,77 @@ export const MAX_TOTAL_HEIGHT = 200;
 export const MIN_ITEM_WIDTH = 10;
 export const MIN_TOTAL_HEIGHT = 60;
 export const MAX_ITEM_HEIGHT = 6;
+// Summary spans carry a fixed elevated vertical weight so pruning (N spans -> 1
+// summary) does not collapse the minimap's density shape. Fixed, NOT proportional
+// to span_count, to avoid wild density swings between summaries. Tunable / pending
+// design (Figma "Overview - shape preservation"). See grafana-adaptivetraces-app#1031.
+export const SUMMARY_WEIGHT = 3;
+export const MAX_SUMMARY_ITEM_HEIGHT = MAX_ITEM_HEIGHT * SUMMARY_WEIGHT;
+
+type SpanGraphItem = { valueWidth: number; valueOffset: number; serviceName: string; isSummary?: boolean };
+
+// Light-to-dark gradient within the service hue, matching the waterfall summary
+// bar (which uses CSS color-mix; canvas has no color-mix so we mix in JS).
+const TINT = 0.3; // toward white at the left
+const SHADE = 0.55; // toward black at the right
+const rgba = ([r, g, b]: [number, number, number]) => `rgba(${r},${g},${b},${ITEM_ALPHA})`;
+const tint = ([r, g, b]: [number, number, number]) => rgba([r + (255 - r) * TINT, g + (255 - g) * TINT, b + (255 - b) * TINT]);
+const shade = ([r, g, b]: [number, number, number]) => rgba([r * (1 - SHADE), g * (1 - SHADE), b * (1 - SHADE)]);
 
 export default function renderIntoCanvas(
   canvas: HTMLCanvasElement,
-  items: Array<{ valueWidth: number; valueOffset: number; serviceName: string }>,
+  items: SpanGraphItem[],
   totalValueWidth: number,
   getFillColor: (serviceName: string) => [number, number, number],
   bgColor: string
 ) {
-  const fillCache: Map<string, string | TNil> = new Map();
-  const cHeight = items.length < MIN_TOTAL_HEIGHT ? MIN_TOTAL_HEIGHT : Math.min(items.length, MAX_TOTAL_HEIGHT);
+  const colorCache: Map<string, [number, number, number]> = new Map();
+  const weightOf = (item: SpanGraphItem) => (item.isSummary ? SUMMARY_WEIGHT : 1);
+  const totalWeight = items.reduce((sum, item) => sum + weightOf(item), 0);
+  const cHeight = totalWeight < MIN_TOTAL_HEIGHT ? MIN_TOTAL_HEIGHT : Math.min(totalWeight, MAX_TOTAL_HEIGHT);
   const cWidth = window.innerWidth * 2;
   // eslint-disable-next-line no-param-reassign
   canvas.width = cWidth;
   // eslint-disable-next-line no-param-reassign
   canvas.height = cHeight;
-  const itemHeight = Math.min(MAX_ITEM_HEIGHT, Math.max(MIN_ITEM_HEIGHT, cHeight / items.length));
-  const itemYChange = cHeight / items.length;
+  // Pixels per unit of weight. A normal span occupies one unit; a summary span
+  // occupies SUMMARY_WEIGHT units (taller bar + larger vertical step). With no
+  // summary spans, weight === index and this matches the previous layout exactly.
+  const step = cHeight / totalWeight;
 
   const ctx = canvas.getContext('2d', { alpha: false });
   if (ctx) {
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, cWidth, cHeight);
+    let cumulativeWeight = 0;
     for (let i = 0; i < items.length; i++) {
-      const { valueWidth, valueOffset, serviceName } = items[i];
+      const { valueWidth, valueOffset, serviceName, isSummary } = items[i];
       const x = (valueOffset / totalValueWidth) * cWidth;
       let width = (valueWidth / totalValueWidth) * cWidth;
       if (width < MIN_ITEM_WIDTH) {
         width = MIN_ITEM_WIDTH;
       }
-      let fillStyle = fillCache.get(serviceName);
-      if (!fillStyle) {
-        fillStyle = `rgba(${getFillColor(serviceName).concat(ITEM_ALPHA).join()})`;
-        fillCache.set(serviceName, fillStyle);
+      const weight = isSummary ? SUMMARY_WEIGHT : 1;
+      const maxHeight = isSummary ? MAX_SUMMARY_ITEM_HEIGHT : MAX_ITEM_HEIGHT;
+      const itemHeight = Math.min(maxHeight, Math.max(MIN_ITEM_HEIGHT, step * weight));
+      const y = step * cumulativeWeight;
+
+      let rgb = colorCache.get(serviceName);
+      if (!rgb) {
+        rgb = getFillColor(serviceName);
+        colorCache.set(serviceName, rgb);
       }
-      ctx.fillStyle = fillStyle;
-      ctx.fillRect(x, i * itemYChange, width, itemHeight);
+      if (isSummary) {
+        const gradient = ctx.createLinearGradient(x, 0, x + width, 0);
+        gradient.addColorStop(0, tint(rgb));
+        gradient.addColorStop(0.38, rgba(rgb));
+        gradient.addColorStop(1, shade(rgb));
+        ctx.fillStyle = gradient;
+      } else {
+        ctx.fillStyle = rgba(rgb);
+      }
+      ctx.fillRect(x, y, width, itemHeight);
+      cumulativeWeight += weight;
     }
   }
 }

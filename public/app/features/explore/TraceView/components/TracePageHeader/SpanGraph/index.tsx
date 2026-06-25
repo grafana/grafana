@@ -51,13 +51,16 @@ type SpanItem = {
   valueOffset: number;
   valueWidth: number;
   serviceName: string;
+  isSummary: boolean;
 };
 
-function getItem(span: TraceSpan): SpanItem {
+// exported for tests
+export function getItem(span: TraceSpan): SpanItem {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,
     serviceName: getServiceColorKey(span.process),
+    isSummary: span.aggregation?.isSummary === true,
   };
 }
 

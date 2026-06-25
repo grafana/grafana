@@ -37,7 +37,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 type CanvasSpanGraphProps = {
-  items: Array<{ valueWidth: number; valueOffset: number; serviceName: string }>;
+  items: Array<{ valueWidth: number; valueOffset: number; serviceName: string; isSummary?: boolean }>;
   valueWidth: number;
 };
 
