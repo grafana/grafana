@@ -29,10 +29,6 @@ refs:
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< admonition type="note" >}}
-Core dashboard operations (create, read, update, delete, list) have migrated to the new [Dashboard API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/). These shared dashboard endpoints don't have an exact equivalent in the new API yet. Refer to the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/) for details.
-{{< /admonition >}}
-
 ## Requirements
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.

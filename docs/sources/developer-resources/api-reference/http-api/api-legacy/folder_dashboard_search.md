@@ -25,10 +25,6 @@ title: Folder/Dashboard Search HTTP API
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< admonition type="note" >}}
-Core folder and dashboard operations have migrated to the new [Folder API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder/) and [Dashboard API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/). Both new APIs support listing resources with pagination. Refer to the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/) for details.
-{{< /admonition >}}
-
 ## Search folders and dashboards
 
 `GET /api/search/`

@@ -25,10 +25,6 @@ title: 'Dashboard Versions HTTP API '
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< admonition type="note" >}}
-Core dashboard operations (create, read, update, delete, list) have migrated to the new [Dashboard API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/). These versioning endpoints don't have an exact equivalent in the new API yet. Refer to the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/) for details.
-{{< /admonition >}}
-
 ## Get all dashboard versions by dashboard UID
 
 Query parameters:
