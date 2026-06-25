@@ -2,8 +2,11 @@ package userimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -79,18 +82,44 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 }
 
 func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetByID", trace.WithAttributes(
+		attribute.Int64("userID", cmd.ID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
+		usr, err := s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
+		if err == nil || !errors.Is(err, user.ErrUserNotFound) {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return usr, err
+		}
+		ctxLogger.Debug("user not found in unified storage, falling back to legacy", "method", "GetByID", "userID", cmd.ID)
 	}
 
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByID(ctx, cmd)
 }
 
 func (s *Service) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetByUID", trace.WithAttributes(
+		attribute.String("userUID", cmd.UID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
+		usr, err := s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
+		if err == nil || !errors.Is(err, user.ErrUserNotFound) {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return usr, err
+		}
+		ctxLogger.Debug("user not found in unified storage, falling back to legacy", "method", "GetByUID", "userUID", cmd.UID)
 	}
 
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByUID(ctx, cmd)
 }
 
@@ -140,15 +169,29 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.GetSignedInUser", trace.WithAttributes(
+		attribute.Int64("userID", cmd.UserID),
+		attribute.Int64("orgID", cmd.OrgID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
 		k8sCmd := *cmd
 		if !hasOrgID(ctx) && k8sCmd.OrgID == 0 {
 			k8sCmd.OrgID = s.cfg.DefaultOrgID()
 		}
 
-		return s.k8sService.GetSignedInUser(s.k8sCtxWithIdentity(ctx), &k8sCmd)
+		usr, err := s.k8sService.GetSignedInUser(s.k8sCtxWithIdentity(ctx), &k8sCmd)
+		if err == nil || !errors.Is(err, user.ErrUserNotFound) {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return usr, err
+		}
+		ctxLogger.Debug("user not found in unified storage, falling back to legacy", "method", "GetSignedInUser", "userID", cmd.UserID)
 	}
 
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetSignedInUser(ctx, cmd)
 }
 
