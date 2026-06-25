@@ -14,6 +14,7 @@ import {
   colorManipulator,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { logWarning } from '@grafana/runtime';
 import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { type FacetedData, type FacetSeries } from '@grafana/ui/internal';
@@ -567,15 +568,38 @@ interface FieldColorValuesWithCache extends FieldColorValues {
 type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
-/** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
-// exported for golden tests that freeze its palette+index output ahead of the
-// field.display.colors() migration
-export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
-  let index: unknown[] = [];
-  let getAll: GetAllValues = () => [];
-  let getOne: GetOneValue = () => -1;
+/**
+ * A single value->palette-index rule. The order of rules is significant: the
+ * first matching rule wins, mirroring the right-associative ternary chain the
+ * compiled fast path builds.
+ */
+type ColorRule =
+  | { kind: 'eq'; rhs: number | string } // ValueToText:  v === rhs
+  | { kind: 'range'; from?: number; to?: number } // RangeToText:  v >= from && v <= to
+  | { kind: 'isNaN' } // SpecialValue NaN
+  | { kind: 'nullOrNaN' } // SpecialValue NullAndNaN
+  | { kind: 'eqStrict'; rhs: boolean | string } // SpecialValue True / False / Empty
+  | { kind: 'isNullLoose' } // SpecialValue Null / default
+  | { kind: 'gte'; rhs: number }; // absolute threshold step:  v >= rhs
 
-  let conds = '';
+/**
+ * Resolved description of how to map field values to palette indices, derived
+ * once from the field config. It is the single source of truth shared by the
+ * fast (`new Function`) and slow (interpreted) evaluators, so the two can never
+ * drift. `getAllOverride` is set only for continuous gradients, which resolve
+ * colors directly (no eval) and leave `getOne` at the -1 default.
+ */
+interface ColorSpec {
+  index: unknown[];
+  rules: Array<{ rule: ColorRule; idx: number }>;
+  fallback: number;
+  getAllOverride?: GetAllValues;
+}
+
+/** Build the value->color spec from a field config, or null when no color branch applies. */
+export function buildColorSpec(f: Field, theme: GrafanaTheme2): ColorSpec | null {
+  const index: unknown[] = [];
+  const rules: Array<{ rule: ColorRule; idx: number }> = [];
 
   // if any mappings exist, use them regardless of other settings
   if (f.config.mappings?.length ?? 0 > 0) {
@@ -589,8 +613,8 @@ export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValu
           let { color } = m.options[k];
 
           if (color != null) {
-            let rhs = f.type === FieldType.string ? JSON.stringify(k) : Number(k);
-            conds += `v === ${rhs} ? ${index.length} : `;
+            let rhs = f.type === FieldType.string ? k : Number(k);
+            rules.push({ rule: { kind: 'eq', rhs }, idx: index.length });
             index.push(getHex8Color(color, theme));
           }
         }
@@ -598,42 +622,33 @@ export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValu
         let { color } = m.options.result;
 
         if (m.type === MappingType.RangeToText) {
-          let range = [];
+          let from = m.options.from != null ? Number(m.options.from) : undefined;
+          let to = m.options.to != null ? Number(m.options.to) : undefined;
 
-          if (m.options.from != null) {
-            range.push(`v >= ${Number(m.options.from)}`);
-          }
-
-          if (m.options.to != null) {
-            range.push(`v <= ${Number(m.options.to)}`);
-          }
-
-          if (range.length > 0) {
-            conds += `${range.join(' && ')} ? ${index.length} : `;
+          if (from !== undefined || to !== undefined) {
+            rules.push({ rule: { kind: 'range', from, to }, idx: index.length });
             index.push(getHex8Color(color, theme));
           }
         } else if (m.type === MappingType.SpecialValue) {
           let spl = m.options.match;
+          let rule: ColorRule;
 
           if (spl === SpecialValueMatch.NaN) {
-            conds += `isNaN(v)`;
+            rule = { kind: 'isNaN' };
           } else if (spl === SpecialValueMatch.NullAndNaN) {
-            conds += `v == null || isNaN(v)`;
+            rule = { kind: 'nullOrNaN' };
+          } else if (spl === SpecialValueMatch.True) {
+            rule = { kind: 'eqStrict', rhs: true };
+          } else if (spl === SpecialValueMatch.False) {
+            rule = { kind: 'eqStrict', rhs: false };
+          } else if (spl === SpecialValueMatch.Empty) {
+            rule = { kind: 'eqStrict', rhs: '' };
           } else {
-            conds += `v ${
-              spl === SpecialValueMatch.True
-                ? '=== true'
-                : spl === SpecialValueMatch.False
-                  ? '=== false'
-                  : spl === SpecialValueMatch.Null
-                    ? '== null'
-                    : spl === SpecialValueMatch.Empty
-                      ? '=== ""'
-                      : '== null'
-            }`;
+            // SpecialValueMatch.Null and any other match fall back to loose null
+            rule = { kind: 'isNullLoose' };
           }
 
-          conds += ` ? ${index.length} : `;
+          rules.push({ rule, idx: index.length });
           index.push(getHex8Color(color, theme));
         } else if (m.type === MappingType.RegexToText) {
           // TODO
@@ -641,42 +656,97 @@ export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValu
       }
     }
 
-    conds += '-1'; // ?? what default here? null? FALLBACK_COLOR?
-  } else if (f.config.color?.mode === FieldColorModeId.Thresholds) {
+    // the mappings branch always installs a -1 fallback, so even a config with
+    // no usable rule (e.g. RegexToText only) resolves to -1 rather than the
+    // empty defaults below
+    return { index, rules, fallback: -1 };
+  }
+
+  if (f.config.color?.mode === FieldColorModeId.Thresholds) {
     if (f.config.thresholds?.mode === ThresholdsMode.Absolute) {
       let steps = f.config.thresholds.steps;
       let lasti = steps.length - 1;
 
       for (let i = lasti; i > 0; i--) {
-        let rhs = Number(steps[i].value);
-        conds += `v >= ${rhs} ? ${i} : `;
+        rules.push({ rule: { kind: 'gte', rhs: Number(steps[i].value) }, idx: i });
       }
 
-      conds += '0';
-
-      index = steps.map((s) => getHex8Color(s.color, theme));
-    } else {
-      // TODO: percent thresholds?
-    }
-  } else if (f.config.color?.mode?.startsWith('continuous')) {
-    let calc = getFieldColorModeForField(f).getCalculator(f, theme);
-
-    index = Array(32);
-
-    for (let i = 0; i < index.length; i++) {
-      let pct = i / (index.length - 1);
-      index[i] = getHex8Color(calc(pct, pct), theme);
+      return { index: steps.map((s) => getHex8Color(s.color, theme)), rules, fallback: 0 };
     }
 
-    getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
+    // TODO: percent thresholds — falls through to the empty defaults
+    return null;
   }
 
-  if (conds !== '') {
-    getOne = new Function('v', `return ${conds};`) as GetOneValue;
+  if (f.config.color?.mode?.startsWith('continuous')) {
+    let calc = getFieldColorModeForField(f).getCalculator(f, theme);
 
-    getAll = new Function(
-      'vals',
-      `
+    const gradient: unknown[] = Array(32);
+
+    for (let i = 0; i < gradient.length; i++) {
+      let pct = i / (gradient.length - 1);
+      gradient[i] = getHex8Color(calc(pct, pct), theme);
+    }
+
+    return {
+      index: gradient,
+      rules: [],
+      fallback: -1,
+      getAllOverride: (vals, min, max) => valuesToFills(vals as number[], gradient as string[], min!, max!),
+    };
+  }
+
+  return null;
+}
+
+/** Serialize a rule to its JS condition string, matching the historical compiled form exactly. */
+function serializeRule(rule: ColorRule): string {
+  switch (rule.kind) {
+    case 'eq':
+    case 'eqStrict':
+      return `v === ${typeof rule.rhs === 'string' ? JSON.stringify(rule.rhs) : rule.rhs}`;
+    case 'range': {
+      let parts = [];
+      if (rule.from !== undefined) {
+        parts.push(`v >= ${rule.from}`);
+      }
+      if (rule.to !== undefined) {
+        parts.push(`v <= ${rule.to}`);
+      }
+      return parts.join(' && ');
+    }
+    case 'isNaN':
+      return 'isNaN(v)';
+    case 'nullOrNaN':
+      return 'v == null || isNaN(v)';
+    case 'isNullLoose':
+      return 'v == null';
+    case 'gte':
+      return `v >= ${rule.rhs}`;
+  }
+}
+
+function serializeConds(spec: ColorSpec): string {
+  let conds = '';
+  for (const { rule, idx } of spec.rules) {
+    conds += `${serializeRule(rule)} ? ${idx} : `;
+  }
+  return conds + spec.fallback;
+}
+
+/** Fast path: compile the spec to native functions via `new Function`. Throws when CSP blocks eval. */
+export function compileSpec(spec: ColorSpec): FieldColorValues {
+  if (spec.getAllOverride) {
+    return { index: spec.index, getOne: () => -1, getAll: spec.getAllOverride };
+  }
+
+  const conds = serializeConds(spec);
+
+  const getOne = new Function('v', `return ${conds};`) as GetOneValue;
+
+  const getAll = new Function(
+    'vals',
+    `
       let idxs = Array(vals.length);
 
       for (let i = 0; i < vals.length; i++) {
@@ -686,12 +756,94 @@ export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValu
 
       return idxs;
     `
-    ) as GetAllValues;
+  ) as GetAllValues;
+
+  return { index: spec.index, getOne, getAll };
+}
+
+/**
+ * Build the runtime predicate for a rule, matching `serializeRule`'s JS semantics exactly.
+ * Numeric comparisons coerce via Number(v), which is equivalent to the compiled `v >= rhs`
+ * (and global `isNaN(v)`) for every value the renderer passes — strings, null, undefined,
+ * booleans — while staying clear of disallowed type assertions.
+ */
+function rulePredicate(rule: ColorRule): (v: unknown) => boolean {
+  switch (rule.kind) {
+    case 'eq':
+    case 'eqStrict':
+      return (v) => v === rule.rhs;
+    case 'range':
+      return (v) =>
+        (rule.from === undefined || Number(v) >= rule.from) && (rule.to === undefined || Number(v) <= rule.to);
+    case 'isNaN':
+      return (v) => Number.isNaN(Number(v));
+    case 'nullOrNaN':
+      return (v) => v == null || Number.isNaN(Number(v));
+    case 'isNullLoose':
+      return (v) => v == null;
+    case 'gte':
+      return (v) => Number(v) >= rule.rhs;
+  }
+}
+
+/** Slow path: interpret the spec with closures. Used when `new Function` is blocked by CSP. */
+export function interpretSpec(spec: ColorSpec): FieldColorValues {
+  if (spec.getAllOverride) {
+    return { index: spec.index, getOne: () => -1, getAll: spec.getAllOverride };
   }
 
-  return {
-    index,
-    getOne,
-    getAll,
+  const tests = spec.rules.map(({ rule, idx }) => ({ test: rulePredicate(rule), idx }));
+  const { fallback } = spec;
+
+  const getOne: GetOneValue = (v) => {
+    for (let i = 0; i < tests.length; i++) {
+      if (tests[i].test(v)) {
+        return tests[i].idx;
+      }
+    }
+    return fallback;
   };
+
+  const getAll: GetAllValues = (vals) => {
+    let idxs = Array(vals.length);
+    for (let i = 0; i < vals.length; i++) {
+      idxs[i] = getOne(vals[i]);
+    }
+    return idxs;
+  };
+
+  return { index: spec.index, getOne, getAll };
+}
+
+// reported once per session so a blocked-eval environment surfaces in telemetry
+// without spamming on every config build
+let reportedEvalBlocked = false;
+
+/**
+ * compiler for values to palette color idxs (from thresholds, mappings, by-value gradients)
+ *
+ * Progressive enhancement: prefers a `new Function`-compiled evaluator for speed, and
+ * falls back to an interpreted one (with identical output) when a Content-Security-Policy
+ * without `unsafe-eval` makes `new Function` throw.
+ */
+// exported for golden tests that freeze its palette+index output ahead of the
+// field.display.colors() migration
+export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
+  const spec = buildColorSpec(f, theme);
+
+  if (spec == null) {
+    return { index: [], getOne: () => -1, getAll: () => [] };
+  }
+
+  try {
+    return compileSpec(spec);
+  } catch {
+    if (!reportedEvalBlocked) {
+      reportedEvalBlocked = true;
+      logWarning('xychart: new Function blocked (likely CSP unsafe-eval); using interpreted color fallback', {
+        panel: 'xychart',
+      });
+    }
+    return interpretSpec(spec);
+  }
 }

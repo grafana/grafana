@@ -1,7 +1,13 @@
 import { createDataFrame, createTheme, FieldType, MappingType, SpecialValueMatch, ThresholdsMode } from '@grafana/data';
+import { logWarning } from '@grafana/runtime';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { fieldValueColors } from './scatter';
+import { buildColorSpec, compileSpec, fieldValueColors, interpretSpec } from './scatter';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  logWarning: jest.fn(),
+}));
 
 // Golden baseline for the value->color compiler that scatter currently builds via
 // `new Function`. The upcoming field.display.colors() migration must reproduce the
@@ -211,5 +217,222 @@ describe('fieldValueColors (golden baseline)', () => {
       },
     };
     expect(resolve(config, [1, 100])).toMatchSnapshot();
+  });
+});
+
+// Every branch of fieldValueColors, driven through both evaluators. The slow
+// (interpreted) path is the CSP-without-unsafe-eval fallback; it must produce
+// output identical to the fast (new Function) path for every case, and identical
+// to what the public fieldValueColors returns (which the snapshots above pin to
+// the golden colors).
+const PARITY_CASES: Array<{
+  name: string;
+  config: Record<string, unknown>;
+  values: unknown[];
+  type?: FieldType;
+  min?: number;
+  max?: number;
+}> = [
+  {
+    name: 'ValueToText (number field)',
+    config: {
+      mappings: [
+        {
+          type: MappingType.ValueToText,
+          options: { '1': { color: 'green' }, '2': { color: 'yellow' }, '3': { color: 'red' } },
+        },
+      ],
+    },
+    values: [1, 2, 3, 4],
+  },
+  {
+    name: 'ValueToText (string field)',
+    config: {
+      mappings: [{ type: MappingType.ValueToText, options: { a: { color: 'green' }, b: { color: 'yellow' } } }],
+    },
+    values: ['a', 'b', 'c'],
+    type: FieldType.string,
+  },
+  {
+    name: 'ValueToText with color-less entry',
+    config: {
+      mappings: [{ type: MappingType.ValueToText, options: { '1': { text: 'one' }, '2': { color: 'red' } } }],
+    },
+    values: [1, 2],
+  },
+  {
+    name: 'RangeToText (both bounds)',
+    config: {
+      mappings: [
+        { type: MappingType.RangeToText, options: { from: 0, to: 50, result: { color: 'blue' } } },
+        { type: MappingType.RangeToText, options: { from: 51, to: 100, result: { color: 'red' } } },
+      ],
+    },
+    values: [10, 75, 200],
+  },
+  {
+    name: 'RangeToText (open-ended / unbounded)',
+    config: {
+      mappings: [
+        { type: MappingType.RangeToText, options: { from: 10, result: { color: 'green' } } },
+        { type: MappingType.RangeToText, options: { to: 5, result: { color: 'blue' } } },
+        { type: MappingType.RangeToText, options: { result: { color: 'red' } } },
+      ],
+    },
+    values: [3, 7, 20],
+  },
+  {
+    name: 'SpecialValue NaN / Null',
+    config: {
+      mappings: [
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.NaN, result: { color: 'orange' } } },
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'purple' } } },
+      ],
+    },
+    values: [NaN, null, 5],
+  },
+  {
+    name: 'SpecialValue NullAndNaN / Empty',
+    config: {
+      mappings: [
+        {
+          type: MappingType.SpecialValue,
+          options: { match: SpecialValueMatch.NullAndNaN, result: { color: 'green' } },
+        },
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Empty, result: { color: 'blue' } } },
+      ],
+    },
+    values: [null, NaN, '', 5],
+  },
+  {
+    name: 'SpecialValue True / False',
+    config: {
+      mappings: [
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.True, result: { color: 'green' } } },
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.False, result: { color: 'red' } } },
+      ],
+    },
+    values: [true, false],
+    type: FieldType.boolean,
+  },
+  {
+    name: 'SpecialValue Null matches null and undefined',
+    config: {
+      mappings: [
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'purple' } } },
+      ],
+    },
+    values: [null, undefined, 0],
+  },
+  {
+    name: 'RegexToText no-op (fallback only)',
+    config: {
+      mappings: [{ type: MappingType.RegexToText, options: { pattern: '/^foo/', result: { color: 'orange' } } }],
+    },
+    values: ['foobar', 'baz'],
+    type: FieldType.string,
+  },
+  {
+    name: 'absolute thresholds',
+    config: {
+      color: { mode: FieldColorModeId.Thresholds },
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'yellow' },
+          { value: 80, color: 'red' },
+        ],
+      },
+    },
+    values: [10, 50, 79, 80, 100],
+  },
+  {
+    name: 'single-step absolute thresholds',
+    config: {
+      color: { mode: FieldColorModeId.Thresholds },
+      thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: -Infinity, color: 'green' }] },
+    },
+    values: [1, 100],
+  },
+  {
+    name: 'continuous gradient',
+    config: { color: { mode: FieldColorModeId.ContinuousGrYlRd } },
+    values: [0, 50, 100],
+    min: 0,
+    max: 100,
+  },
+  {
+    name: 'no color branch',
+    config: {},
+    values: [1, 2, 3],
+  },
+];
+
+describe('fieldValueColors fast/slow parity', () => {
+  const byAll = (fns: ReturnType<typeof fieldValueColors>, values: unknown[], min?: number, max?: number) =>
+    fns.getAll(values, min, max).map((i) => fns.index[i] ?? null);
+  const byOne = (fns: ReturnType<typeof fieldValueColors>, values: unknown[], min?: number, max?: number) =>
+    values.map((v) => fns.index[fns.getOne(v, min, max)] ?? null);
+
+  it.each(PARITY_CASES)('$name', ({ config, values, type, min, max }) => {
+    const field = makeColorField(config, values, type);
+    const spec = buildColorSpec(field, theme);
+
+    // a null spec means no color branch ran -> the public defaults; the eval/no-eval
+    // distinction only exists when a spec is produced
+    const fast = spec == null ? fieldValueColors(field, theme) : compileSpec(spec);
+    const slow = spec == null ? fieldValueColors(field, theme) : interpretSpec(spec);
+    const pub = fieldValueColors(field, theme);
+
+    // slow (interpreted) path matches the fast (compiled) path exactly
+    expect(slow.index).toEqual(fast.index);
+    expect(byAll(slow, values, min, max)).toEqual(byAll(fast, values, min, max));
+    expect(byOne(slow, values, min, max)).toEqual(byOne(fast, values, min, max));
+
+    // and both match what the public entry point returns (pinned to golden by the snapshots above)
+    expect(byAll(pub, values, min, max)).toEqual(byAll(slow, values, min, max));
+  });
+});
+
+describe('fieldValueColors progressive enhancement', () => {
+  const config = {
+    color: { mode: FieldColorModeId.Thresholds },
+    thresholds: {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 50, color: 'yellow' },
+        { value: 80, color: 'red' },
+      ],
+    },
+  };
+  const values = [10, 50, 79, 80, 100];
+
+  it('falls back to the interpreted path (and reports once) when new Function is blocked', () => {
+    const field = makeColorField(config, values);
+    const compiled = fieldValueColors(field, theme);
+    const expected = compiled.getAll(values).map((i) => compiled.index[i] ?? null);
+
+    // simulate a CSP without unsafe-eval: new Function throws
+    const spy = jest.spyOn(global, 'Function').mockImplementation(() => {
+      throw new EvalError('blocked by CSP');
+    });
+
+    let first;
+    let second;
+    try {
+      first = fieldValueColors(field, theme);
+      second = fieldValueColors(field, theme);
+    } finally {
+      spy.mockRestore();
+    }
+
+    // the interpreted fallback yields the same colors as the compiled path
+    expect(first.getAll(values).map((i) => first.index[i] ?? null)).toEqual(expected);
+    expect(second.getAll(values).map((i) => second.index[i] ?? null)).toEqual(expected);
+
+    // telemetry fires once per session, not on every config build
+    expect(logWarning).toHaveBeenCalledTimes(1);
   });
 });
