@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"time"
@@ -10,6 +11,15 @@ import (
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/grafana-app-sdk/simple"
 )
+
+// RuleAccessChecker determines which alert rules the current user can read.
+// The user identity is extracted from the request context.
+type RuleAccessChecker interface {
+	// CanReadAllRules returns true if the user has unrestricted read access to all rules.
+	CanReadAllRules(ctx context.Context) (bool, error)
+	// AccessibleRuleUIDs returns the subset of ruleUIDs that the user can read.
+	AccessibleRuleUIDs(ctx context.Context, ruleUIDs []string) (map[string]bool, error)
+}
 
 const (
 	lokiDefaultMaxQueryLength = 721 * time.Hour // 30d1h, matches the default value in Loki
@@ -29,6 +39,7 @@ type NotificationConfig struct {
 type RuntimeConfig struct {
 	GetAlertStateHistoryHandler simple.AppCustomRouteHandler
 	Notification                NotificationConfig
+	RuleAccess                  RuleAccessChecker
 }
 
 func (n *NotificationConfig) AddFlagsWithPrefix(prefix string, flags *pflag.FlagSet) {
