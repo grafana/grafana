@@ -35,11 +35,21 @@ describe('FlowQuerySection drill-down', () => {
       <FlowQuerySection datasource={ds} query={baseQuery} onChange={onChange} onRunQuery={onRunQuery} />
     );
 
-    // Facet value appears once the (deferred) side-query resolves; allow for
-    // FACET_QUERY_DELAY_MS plus query time.
-    await waitFor(() => expect(screen.getByText('1.2.3.4')).toBeInTheDocument(), { timeout: 2500 });
+    // The value can appear both as a facet button and in the results table, so scope to
+    // the facet button (the clickable one). Facet side-queries are deferred
+    // (FACET_QUERY_DELAY_MS), so allow for that.
+    const facetButton = await waitFor(
+      () => {
+        const el = screen.getAllByText('1.2.3.4').find((node) => node.closest('button'));
+        if (!el) {
+          throw new Error('facet value not rendered yet');
+        }
+        return el;
+      },
+      { timeout: 2500 }
+    );
 
-    fireEvent.click(screen.getByText('1.2.3.4'));
+    fireEvent.click(facetButton);
 
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({

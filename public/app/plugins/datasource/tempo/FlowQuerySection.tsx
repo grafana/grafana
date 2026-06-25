@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -9,10 +8,9 @@ import {
   type GrafanaTheme2,
   type TimeRange,
   FieldType,
-  applyFieldOverrides,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { Badge, InlineField, InlineFieldRow, RadioButtonGroup, Spinner, Table, useStyles2, useTheme2 } from '@grafana/ui';
+import { Badge, InlineField, InlineFieldRow, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
 import { MetricsQueryType } from './dataquery.gen';
 import { type TempoDatasource } from './datasource';
@@ -50,6 +48,9 @@ const TOP_N = 10;
 // Delay (ms) before facet side-queries fire, so they don't starve Explore's main
 // query (table/topology) on initial load. See the FacetPanel effect.
 const FACET_QUERY_DELAY_MS = 1200;
+
+// Max rows rendered in the flow/topology result table (top-N by flow count).
+const TABLE_MAX_ROWS = 100;
 
 const VIEW_OPTIONS: Array<{ label: string; value: FlowView }> = [
   { label: 'Table', value: 'table' },
@@ -156,7 +157,6 @@ function FlowResults({
   range?: TimeRange;
 }) {
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
   const [frame, setFrame] = useState<DataFrame | null>(null);
   const [loading, setLoading] = useState(false);
   const rangeKey = range ? `${String(range.raw.from)}/${String(range.raw.to)}` : 'default';
@@ -195,28 +195,78 @@ function FlowResults({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource, flowView, filters, rangeKey]);
 
-  const prepared = useMemo(
-    () =>
-      frame
-        ? applyFieldOverrides({ data: [frame], fieldConfig: { defaults: {}, overrides: [] }, theme, replaceVariables: (v) => v })[0]
-        : null,
-    [frame, theme]
-  );
+  // Plain HTML table on purpose: @grafana/ui's Table code-splits into an async chunk that
+  // fails to load from this plugin (ChunkLoadError), and a few-column table doesn't need it.
+  const rows = useMemo(() => frameToRows(frame, TABLE_MAX_ROWS), [frame]);
 
   return (
     <div className={styles.results}>
       <div className={styles.facetTitle}>
         {flowView === 'topology' ? 'Topology — top talkers' : 'Flows'} {loading && <Spinner size="sm" />}
       </div>
-      {prepared && prepared.length > 0 ? (
+      {frame && frame.fields.length > 0 && rows.length > 0 ? (
         <div className={styles.tableWrap}>
-          <AutoSizer>{({ width, height }) => <Table data={prepared} width={width} height={height} />}</AutoSizer>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                {frame.fields.map((f) => (
+                  <th key={f.name}>{f.name}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i}>
+                  {row.map((cell, j) => (
+                    <td key={j}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
         !loading && <div className={styles.facetEmpty}>No data</div>
       )}
     </div>
   );
+}
+
+function frameToRows(frame: DataFrame | null, max: number): string[][] {
+  if (!frame) {
+    return [];
+  }
+  const len = Math.min(frame.length, max);
+  const cols = frame.fields.map((f) => ({ values: Array.from<unknown>(f.values), isBytes: f.name === 'Bytes' }));
+  const rows: string[][] = [];
+  for (let i = 0; i < len; i++) {
+    rows.push(cols.map((c) => formatCell(c.values[i], c.isBytes)));
+  }
+  return rows;
+}
+
+function formatCell(value: unknown, isBytes: boolean): string {
+  if (value === undefined || value === null || value === '') {
+    return '';
+  }
+  if (typeof value === 'number') {
+    return isBytes ? humanizeBytes(value) : value.toLocaleString();
+  }
+  return String(value);
+}
+
+function humanizeBytes(n: number): string {
+  if (n < 1024) {
+    return `${n} B`;
+  }
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let v = n / 1024;
+  let u = 0;
+  while (v >= 1024 && u < units.length - 1) {
+    v /= 1024;
+    u++;
+  }
+  return `${v.toFixed(1)} ${units[u]}`;
 }
 
 async function runFlowMetrics(
@@ -420,5 +470,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
   facetValueLabel: css({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }),
   facetEmpty: css({ color: theme.colors.text.secondary, fontStyle: 'italic' }),
   results: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(0.5), marginTop: theme.spacing(1) }),
-  tableWrap: css({ height: '360px', width: '100%' }),
+  tableWrap: css({
+    maxHeight: '360px',
+    overflow: 'auto',
+    width: '100%',
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+  }),
+  table: css({
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: theme.typography.bodySmall.fontSize,
+    '& th, & td': {
+      textAlign: 'left',
+      padding: theme.spacing(0.5, 1),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      whiteSpace: 'nowrap',
+    },
+    '& th': {
+      position: 'sticky',
+      top: 0,
+      background: theme.colors.background.secondary,
+      fontWeight: theme.typography.fontWeightMedium,
+    },
+  }),
 });
