@@ -122,6 +122,18 @@ export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undef
 }
 
 /**
+ * Look up a kind from a job summary row, which carries both the API group
+ * (`dashboard.grafana.app`) and the Kubernetes Kind (`Dashboard`). Matches on
+ * whichever identifiers are present so partially-populated summary rows still resolve.
+ */
+export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
+  if (!group && !kind) {
+    return undefined;
+  }
+  return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
+}
+
+/**
  * Resolves which kinds the backend currently exposes for provisioning, gating on
  * the config-derived `availableResources` from the settings endpoint. Disabled
  * kinds (declared but not acted on) are excluded.
