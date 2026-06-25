@@ -1,5 +1,5 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
