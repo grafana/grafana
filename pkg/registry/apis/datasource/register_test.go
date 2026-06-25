@@ -1,9 +1,13 @@
 package datasource
 
 import (
+	"sync"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -91,4 +95,41 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 			require.Equal(t, rest.Mode1, cfg.DualWriterMode)
 		}
 	})
+}
+
+func TestUpdateAPIGroupInfoRegistersSubresourceMetricsOnProvidedRegisterer(t *testing.T) {
+	reg := prometheus.NewRegistry()
+
+	// Reset the package-level registration guard so this test can verify the
+	// registerer used by UpdateAPIGroupInfo directly.
+	registerSubresourceMetricsOnce = sync.Once{}
+
+	b := &DataSourceAPIBuilder{
+		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(
+			"grafana-testdata-datasource.datasource.grafana.app",
+			"grafana-testdata-datasource",
+		),
+	}
+
+	apiGroupInfo := &genericapiserver.APIGroupInfo{
+		VersionedResourcesStorageMap: map[string]map[string]k8srest.Storage{},
+	}
+
+	err := b.UpdateAPIGroupInfo(apiGroupInfo, builder.APIGroupOptions{
+		MetricsRegister: reg,
+	})
+	require.NoError(t, err)
+
+	newConnectMetric("resource", "grafana-testdata-datasource").Record()
+
+	metricFamilies, err := reg.Gather()
+	require.NoError(t, err)
+
+	names := make(map[string]struct{}, len(metricFamilies))
+	for _, mf := range metricFamilies {
+		names[mf.GetName()] = struct{}{}
+	}
+
+	require.Contains(t, names, "grafana_ds_apiserver_subresource_requests_total")
+	require.Contains(t, names, "grafana_ds_apiserver_subresource_request_duration_seconds")
 }

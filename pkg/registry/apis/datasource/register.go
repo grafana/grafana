@@ -183,8 +183,6 @@ func NewDataSourceAPIBuilder(
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDeps *ProxyDependencies,
 ) (*DataSourceAPIBuilder, error) {
-	registerSubresourceMetrics(prometheus.DefaultRegisterer)
-
 	builder := &DataSourceAPIBuilder{
 		datasourceResourceInfo:     datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
 		pluginJSON:                 plugin,
@@ -260,6 +258,8 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	registerSubresourceMetrics(opts.MetricsRegister)
+
 	if opts.StorageOptsRegister != nil {
 		opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
 			Index: nil, // TODO, required to check that they are unique
