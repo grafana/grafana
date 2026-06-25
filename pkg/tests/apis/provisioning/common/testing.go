@@ -378,17 +378,23 @@ func (h *ProvisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 	job = h.AwaitJob(t, ctx, job)
 	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
 	lastState := MustNestedString(job.Object, "status", "state")
+	// A worker that returns an error records it in status.message, not
+	// status.errors, so surface it explicitly — otherwise a failed job only
+	// reports state=error with no reason.
+	lastMessage := MustNestedString(job.Object, "status", "message")
 
 	repo := job.GetLabels()[jobs.LabelRepository]
 
 	// Debug state if job failed
 	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		t.Logf("job '%s' did not succeed: state=%q message=%q errors=%v",
+			job.GetName(), lastState, lastMessage, lastErrors)
 		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
 	}
 
 	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"historic job '%s' was not successful", job.GetName())
+		"historic job '%s' was not successful (message: %q)", job.GetName(), lastMessage)
 }
 
 func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job *unstructured.Unstructured) *unstructured.Unstructured {

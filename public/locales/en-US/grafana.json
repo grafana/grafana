@@ -10605,12 +10605,11 @@
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
       "high-count_other": "{{count}} high",
-      "retry": "Retry",
       "severity-critical": "Critical",
       "severity-high": "High",
       "severity-low": "Low",
       "severity-minor": "Minor",
-      "severity-unknown": "Unknown severity",
+      "severity-unknown": "Unknown",
       "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
@@ -10627,6 +10626,13 @@
         "morning": "Good morning."
       },
       "placeholder": "Welcome to {{edition}}."
+    },
+    "incidents-card": {
+      "declare": "Declare an incident",
+      "empty": "No active incidents.",
+      "error-title": "Could not load active incidents",
+      "title": "Active incidents",
+      "view-all": "View all incidents"
     },
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
@@ -10648,6 +10654,9 @@
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
+    },
+    "summary-card": {
+      "retry": "Retry"
     }
   },
   "import-overview": {
@@ -11071,24 +11080,7 @@
       "end-of-range": "End of the selected time range.",
       "load-more": "Scroll to load more",
       "load-newer": "Loading newer logs...",
-      "load-older": "Loading older logs...",
-      "older-logs": "Older logs"
-    },
-    "log-context-buttons": {
-      "center-matched-line": "Center matched line",
-      "label-wrap-lines": "Wrap lines"
-    },
-    "log-details": {
-      "fields": "Fields",
-      "links": "Links",
-      "log-line": "Log line",
-      "no-details": "No details available"
-    },
-    "log-details-body": {
-      "toggle-field-button": {
-        "tooltip-hide-log-line": "Hide log line",
-        "tooltip-show-log-line": "Show log line"
-      }
+      "load-older": "Loading older logs..."
     },
     "log-labels": {
       "collapse": "Collapse labels",
@@ -11190,28 +11182,6 @@
       "next": "Next result",
       "prev": "Previous result"
     },
-    "log-row-context-modal": {
-      "error-loading-log-more-logs": "Error loading more logs.",
-      "no-more-logs-available": "No more logs available.",
-      "open-in-split-view": "Open in split view",
-      "title-log-context": "Log context"
-    },
-    "log-row-menu-cell": {
-      "aria-label-copy-shortlink": "Copy shortlink",
-      "aria-label-pin-line": "Pin line",
-      "aria-label-show-context": "Show context",
-      "aria-label-unpin-line": "Unpin line",
-      "tooltip-copy-shortlink": "Copy shortlink",
-      "tooltip-copy-to-clipboard": "Copy to clipboard",
-      "tooltip-show-context": "Show context",
-      "tooltip-unpin-line": "Unpin line"
-    },
-    "log-row-message": {
-      "ellipsis": "… ",
-      "more": "more",
-      "see-details": "See log details",
-      "tooltip-error": "Error: {{errorMessage}}"
-    },
     "log-rows": {
       "disable-popover": {
         "confirm": "Confirm",
@@ -11236,7 +11206,6 @@
     "logs-controls": {
       "collapse": "Collapse",
       "deduplication": "Deduplication",
-      "disable-prettify-json": "Collapse JSON logs",
       "display-level-all": "All levels",
       "download": "Download logs",
       "download-logs": {
@@ -11250,7 +11219,6 @@
       "font-large": "Set large font",
       "font-small": "Set small font",
       "hide-search": "Close search",
-      "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "label": {
         "collapse": "Expanded",
@@ -11283,14 +11251,12 @@
       },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
-      "prettify-json": "Expand JSON logs",
       "remove-escaping": "Remove escaping",
       "resolution-ms": "ms",
       "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
       "show-search": "Search in logs result",
-      "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "table-wrap-text": {
         "disable": "Disable text wrapping",
@@ -11314,7 +11280,6 @@
         "enable-highlighting": "Enable highlighting",
         "filter-level": "Filter logs result by level"
       },
-      "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {
         "disable": "Disable columns",
         "disabled-label": "Columns not supported",
@@ -11322,16 +11287,9 @@
         "enable": "Enable columns",
         "enabled-text": "Columns disabled",
         "not-supported": "Columns are not supported with line wrapping enabled"
-      },
-      "wrap-lines": "Wrap lines"
-    },
-    "logs-panel": {
-      "render-common-labels": {
-        "common-labels": "Common labels:"
       }
     },
     "name-allow-download": "Display download control",
-    "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
     "name-details-mode": "Log details panel mode",
     "name-details-options": {
@@ -11355,9 +11313,6 @@
       "label-newest-first": "Newest first",
       "label-oldest-first": "Oldest first"
     },
-    "out-of-range-message": {
-      "end-of-the-selected-time-range": "End of the selected time range."
-    },
     "popover-menu": {
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
@@ -11367,24 +11322,6 @@
     },
     "show-log-attributes": "Enable log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
-    "un-themed-log-details": {
-      "aria-label-data-links": "Data links",
-      "aria-label-fields": "Fields",
-      "aria-label-line": "Log line",
-      "aria-label-log-level": "Log level",
-      "aria-label-no-details": "No details"
-    },
-    "un-themed-log-details-row": {
-      "filter-out": "Filter out value",
-      "filter-out-query": "Filter out value in query {{query}}",
-      "title-copy-value-to-clipboard": "Copy value to clipboard",
-      "toggle-field-button": {
-        "tooltip-field-instead-message": "Show this field instead of the message",
-        "tooltip-hide-this-field": "Hide this field"
-      },
-      "tooltip-adhoc-statistics": "Ad-hoc statistics",
-      "tooltip-hide-adhoc-statistics": "Hide ad-hoc statistics"
-    },
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
@@ -12526,6 +12463,9 @@
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
+    "save-provisioned": {
+      "drawer-title": "Save provisioned playlist"
+    },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
   },
@@ -12542,6 +12482,9 @@
     "delete-modal": {
       "body": "Are you sure you want to delete {{name}} playlist?",
       "confirm-text": "Delete"
+    },
+    "delete-provisioned": {
+      "drawer-title": "Delete provisioned playlist"
     },
     "empty": {
       "button": "Create playlist",
@@ -13340,6 +13283,17 @@
         "error-fetching-active-job": "Error fetching active job"
       }
     },
+    "job-summary": {
+      "column-created": "Created",
+      "column-deleted": "Deleted",
+      "column-errors": "Errors",
+      "column-resource": "Resource",
+      "column-total": "Total",
+      "column-unchanged": "Unchanged",
+      "column-updated": "Updated",
+      "column-warnings": "Warnings",
+      "unknown-kind": "Unknown"
+    },
     "local": {
       "path-description": "Local file system path to the repository",
       "path-label": "Repository Path",
@@ -13573,6 +13527,11 @@
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
     },
+    "repository-select": {
+      "description": "Pick a repository to store this resource in version control and sync it from there, or leave it empty to keep it in Grafana. This can't be changed after the resource is created.",
+      "label": "Repository",
+      "placeholder": "Select a repository"
+    },
     "repository-status": {
       "error": "Failed to load repository"
     },
@@ -13646,6 +13605,8 @@
     },
     "save-resource": {
       "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
       "button-save": "Save",
       "button-saving": "Saving...",
       "error-saving": "Failed to save changes",
@@ -16620,11 +16581,6 @@
     },
     "static-options": {
       "add-option-button-label": "Add new option"
-    },
-    "text-box-variable-editor": {
-      "name-default-value": "Default value",
-      "placeholder-default-value-if-any": "default value, if any",
-      "text-options": "Text options"
     },
     "transform-usages-to-network": {
       "result": {

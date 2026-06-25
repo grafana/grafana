@@ -46,6 +46,9 @@ func ToPatchLibraryElementCommand(raw runtime.Object) (*model.PatchLibraryElemen
 		FolderUID: &folderUID,
 		Kind:      1, // the only kind... LibraryPanel
 		Name:      obj.FindTitle("library panel"),
+		// generation mirrors the legacy library element version, so it carries the
+		// optimistic-concurrency token through the k8s update path.
+		Version: obj.GetGeneration(),
 	}
 	cmd.Model, err = toRawMessage(raw)
 	return cmd, err
