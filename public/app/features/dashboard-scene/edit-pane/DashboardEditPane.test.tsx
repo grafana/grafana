@@ -26,7 +26,7 @@ import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardOutline } from './DashboardOutline';
+import { DashboardOutline } from './outline/DashboardOutline';
 import { dashboardEditActions } from './shared';
 import { type DashboardEditPaneLike } from './types';
 

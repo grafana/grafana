@@ -138,6 +138,44 @@ describe('DashboardScene', () => {
       });
     });
 
+    describe('Edit session start tracking', () => {
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it('reports edit_session_started with source "user" when entering edit mode manually', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
+      });
+
+      it('reports source "assistant" when the assistant enters edit mode', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode('assistant');
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+      });
+
+      it('does not report again when already in edit mode', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        scene.onEnterEditMode();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode();
+
+        expect(spy).not.toHaveBeenCalled();
+      });
+    });
+
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
       let deactivateScene: () => void;

@@ -9,8 +9,8 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
-import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
+import { DashboardOutline } from './outline/DashboardOutline';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,

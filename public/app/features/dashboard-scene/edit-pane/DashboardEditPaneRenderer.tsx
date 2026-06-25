@@ -20,9 +20,9 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
-import { DashboardOutline } from './DashboardOutline';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { ToggleViewPanePaneEvent } from './events';
+import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardEditPaneLike, type DashboardSidebarPane } from './types';
 
 export interface Props {

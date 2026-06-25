@@ -1544,6 +1544,28 @@ spec:
 	}
 	oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"] = commitSchema
 
+	// Re-attach the RepositoryView.branchOptions ref for the same reason as commit above.
+	branchOptionsSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["branchOptions"]
+	branchOptionsSchema.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "BranchOptions"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryView"].Properties["branchOptions"] = branchOptionsSchema
+
+	// Re-attach the RepositoryView.pullRequest ref for the same reason as commit above.
+	pullRequestSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["pullRequest"]
+	pullRequestSchema.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "PullRequestOptions"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryView"].Properties["pullRequest"] = pullRequestSchema
+
 	countSpec := &spec.SchemaOrArray{
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{

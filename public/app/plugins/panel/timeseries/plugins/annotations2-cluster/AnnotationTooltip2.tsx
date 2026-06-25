@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type ActionModel, type GrafanaTheme2, type LinkModel } from '@grafana/data';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
-import { VizTooltipFooter } from '@grafana/ui/internal';
+import { usePanelContext, useStyles2, VizTooltipFooter } from '@grafana/ui';
 
 import { AnnotationTooltipBody } from './AnnotationTooltipBody';
 import { AnnotationTooltipHeader } from './AnnotationTooltipHeader';

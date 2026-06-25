@@ -5,6 +5,7 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
@@ -14,6 +15,7 @@ import {
   Sidebar,
   type SidebarContextValue,
 } from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -51,8 +53,9 @@ export function DashboardEditPaneSplitter(props: Props) {
 }
 
 function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
 
   return (
     <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
@@ -67,8 +70,9 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
 
 function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { editPane } = dashboard.state;
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -288,7 +292,7 @@ function renderDynamicNavActions() {
   });
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -360,14 +364,24 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
-    controlsWrapperSticky: css({
-      [theme.breakpoints.up('md')]: {
-        position: 'sticky',
-        // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
-        zIndex: theme.zIndex.sidemenu,
-        background: theme.colors.background.canvas,
-        top: headerHeight,
+    controlsWrapperSticky: css(
+      {
+        [theme.breakpoints.up('md')]: {
+          position: 'sticky',
+          // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
+          zIndex: theme.zIndex.sidemenu,
+          background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+          top: headerHeight,
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        borderTopLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+        borderTopRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+      }
+    ),
   };
 }

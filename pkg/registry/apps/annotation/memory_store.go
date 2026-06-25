@@ -84,7 +84,7 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 		}
 
 		if opts.LegacyID > 0 {
-			if getLegacyID(anno) != opts.LegacyID {
+			if GetLegacyID(anno) != opts.LegacyID {
 				continue
 			}
 		}

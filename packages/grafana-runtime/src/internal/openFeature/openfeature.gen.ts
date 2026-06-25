@@ -29,6 +29,8 @@ export const FlagKeys = {
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
+  /** Enables additional experimental color schemes for visualizations. */
+  DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -37,6 +39,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Enables custom dashboard templates for enterprise */
+  GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables usage of the new annotations API client */
@@ -53,6 +57,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
+  GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
@@ -103,6 +109,10 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
+  TableProtoRowParser: "table.protoRowParser",
+  /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
+  UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
 
 /**
@@ -194,6 +204,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
 };
 
 /**
+ * Enables additional experimental color schemes for visualizations.
+ *
+ * **Details:**
+ * - flag key: `dataviz.experimentalColorSchemes`
+ * - default value: `false`
+ */
+export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
  * A/A test for recently viewed dashboards feature
  *
  * **Details:**
@@ -235,6 +256,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
+ * Enables custom dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.customDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customDashboardTemplates", false, options).value;
 };
 
 /**
@@ -323,6 +355,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.scenesFlickeringFix", true, options).value;
+};
+
+/**
+ * Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker
+ *
+ * **Details:**
+ * - flag key: `grafana.starredFolders`
+ * - default value: `false`
+ */
+export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.starredFolders", false, options).value;
 };
 
 /**
@@ -598,5 +641,27 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.
+ *
+ * **Details:**
+ * - flag key: `table.protoRowParser`
+ * - default value: `false`
+ */
+export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.protoRowParser", false, options).value;
+};
+
+/**
+ * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+ *
+ * **Details:**
+ * - flag key: `useKubernetesShortURLsAPI`
+ * - default value: `true`
+ */
+export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useKubernetesShortURLsAPI", true, options).value;
 };
 
