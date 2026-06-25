@@ -6,9 +6,12 @@ import (
 	"errors"
 	"net"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -21,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -697,6 +701,165 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		utMap := utJSON.MustMap()
 
 		require.True(t, reflect.DeepEqual(utMap, uatMap))
+	})
+}
+
+// TestIntegrationUserAuthTokenRotationGrace covers the grace window that prevents the rotation
+// race from logging users out and ensures LookupToken never diverges from the persisted row.
+func TestIntegrationUserAuthTokenRotationGrace(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	usr := &user.User{ID: int64(10)}
+	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+	defer func() { getTime = time.Now }()
+
+	// rotateOnce creates and rotates a token once, returning the previous (in-flight) unhashed
+	// token, the rotated token, and the rotation time.
+	rotateOnce := func(t *testing.T, ctx *testContext) (prevUnhashed string, rotated *auth.UserToken, rotatedAt int64) {
+		t.Helper()
+		getTime = func() time.Time { return now }
+		gen0, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User: usr, ClientIP: net.ParseIP("192.168.10.11"), UserAgent: "agent",
+		})
+		require.NoError(t, err)
+		_, err = ctx.tokenService.LookupToken(context.Background(), gen0.UnhashedToken)
+		require.NoError(t, err)
+
+		getTime = func() time.Time { return now.Add(SkipRotationTime + time.Second) }
+		gen1, err := ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: gen0.UnhashedToken})
+		require.NoError(t, err)
+		require.NotEqual(t, gen0.UnhashedToken, gen1.UnhashedToken)
+		_, err = ctx.tokenService.LookupToken(context.Background(), gen1.UnhashedToken)
+		require.NoError(t, err)
+
+		return gen0.UnhashedToken, gen1, now.Add(SkipRotationTime + time.Second).Unix()
+	}
+
+	withGrace := func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
+	}
+
+	t.Run("prev token within grace window is accepted without re-rotation", func(t *testing.T) {
+		ctx := createTestContext(t)
+		withGrace(t)
+		prevUnhashed, gen1, rotatedAt := rotateOnce(t, ctx)
+
+		// In-flight request with the previous token, still within the grace window.
+		prevLookup, err := ctx.tokenService.LookupToken(context.Background(), prevUnhashed)
+		require.NoError(t, err)
+		require.NotNil(t, prevLookup)
+		// The returned token must not be marked unseen or backdated, otherwise the
+		// session middleware's NeedsRotation check would force a spurious rotation.
+		require.True(t, prevLookup.AuthTokenSeen)
+		require.Equal(t, rotatedAt, prevLookup.RotatedAt)
+
+		// The DB row must be untouched by the in-flight lookup.
+		model, err := ctx.getAuthTokenByID(gen1.Id)
+		require.NoError(t, err)
+		require.True(t, model.AuthTokenSeen)
+		require.Equal(t, rotatedAt, model.RotatedAt)
+	})
+
+	t.Run("stale model is not returned when theft update is a no-op", func(t *testing.T) {
+		ctx := createTestContext(t)
+		withGrace(t)
+		prevUnhashed, gen1, rotatedAt := rotateOnce(t, ctx)
+
+		// Past the grace window but within UrgentRotateTime: the theft update matches no rows, so
+		// the returned token must reflect the persisted state, not the locally-backdated candidate.
+		getTime = func() time.Time { return now.Add(SkipRotationTime + time.Second + PrevTokenGraceWindow + time.Second) }
+		prevLookup, err := ctx.tokenService.LookupToken(context.Background(), prevUnhashed)
+		require.NoError(t, err)
+		require.NotNil(t, prevLookup)
+		require.True(t, prevLookup.AuthTokenSeen)
+		require.Equal(t, rotatedAt, prevLookup.RotatedAt)
+
+		model, err := ctx.getAuthTokenByID(gen1.Id)
+		require.NoError(t, err)
+		require.True(t, model.AuthTokenSeen)
+		require.Equal(t, rotatedAt, model.RotatedAt)
+	})
+
+	t.Run("prev token outside grace window still triggers theft re-rotation", func(t *testing.T) {
+		ctx := createTestContext(t)
+		withGrace(t)
+		prevUnhashed, gen1, _ := rotateOnce(t, ctx)
+
+		// Well past both the grace window and UrgentRotateTime: using the previous token
+		// now is treated as suspicious and forces an urgent re-rotation (unseen + backdated).
+		getTime = func() time.Time { return now.Add(SkipRotationTime + time.Second + 2*time.Minute) }
+		prevLookup, err := ctx.tokenService.LookupToken(context.Background(), prevUnhashed)
+		require.NoError(t, err)
+		require.NotNil(t, prevLookup)
+		require.False(t, prevLookup.AuthTokenSeen)
+
+		model, err := ctx.getAuthTokenByID(gen1.Id)
+		require.NoError(t, err)
+		require.False(t, model.AuthTokenSeen)
+	})
+
+	t.Run("prev token within window is marked unseen when grace period is disabled", func(t *testing.T) {
+		// Feature toggle off: legacy theft-detection still applies within the would-be grace
+		// window, marking the token unseen to drive a re-rotation.
+		ctx := createTestContext(t)
+		prevUnhashed, _, _ := rotateOnce(t, ctx)
+
+		prevLookup, err := ctx.tokenService.LookupToken(context.Background(), prevUnhashed)
+		require.NoError(t, err)
+		require.NotNil(t, prevLookup)
+		require.False(t, prevLookup.AuthTokenSeen)
+	})
+
+	t.Run("concurrent seen-marking of the current token stays benign", func(t *testing.T) {
+		getTime = func() time.Time { return now }
+		ctx := createTestContext(t)
+		withGrace(t)
+		token, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+			User: usr, ClientIP: net.ParseIP("192.168.10.11"), UserAgent: "agent",
+		})
+		require.NoError(t, err)
+
+		const goroutines = 8
+		var wg sync.WaitGroup
+		results := make([]*auth.UserToken, goroutines)
+		errs := make([]error, goroutines)
+		wg.Add(goroutines)
+		for i := 0; i < goroutines; i++ {
+			go func(idx int) {
+				defer wg.Done()
+				results[idx], errs[idx] = ctx.tokenService.LookupToken(context.Background(), token.UnhashedToken)
+			}(i)
+		}
+		wg.Wait()
+
+		for i := 0; i < goroutines; i++ {
+			require.NoError(t, errs[i])
+			require.NotNil(t, results[i])
+		}
+
+		model, err := ctx.getAuthTokenByID(token.Id)
+		require.NoError(t, err)
+		require.True(t, model.AuthTokenSeen)
+	})
+}
+
+var openfeatureTestMutex sync.Mutex
+
+func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		flag: setting.NewInMemoryFlag(flag, value),
+	})
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
 	})
 }
 

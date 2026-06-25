@@ -3146,6 +3146,7 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+
 			Name:         "table.protoRowParser",
 			Description:  "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
 			Stage:        FeatureStageExperimental,
@@ -3162,6 +3163,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "auth.tokenRotationGracePeriod",
+			Description: "Accepts the previous session token as valid for a short grace period after rotation instead of forcing an immediate re-rotation, reducing race-condition logouts",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
@@ -35,13 +36,17 @@ var (
 
 const SkipRotationTime = 5 * time.Second
 
+// PrevTokenGraceWindow is how long after a rotation the previous auth token is still accepted
+// without theft-detection re-rotation, absorbing in-flight requests. Must be >= SkipRotationTime.
+const PrevTokenGraceWindow = 30 * time.Second
+
 var _ auth.UserTokenService = (*UserAuthTokenService)(nil)
 
 func ProvideUserAuthTokenService(ctx context.Context, sqlStore db.DB,
 	serverLockService *serverlock.ServerLockService,
 	quotaService quota.Service, secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	cfgProvider configprovider.ConfigProvider, tracer tracing.Tracer,
-	features featuremgmt.FeatureToggles,
+	_ featuremgmt.FeatureToggles,
 ) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
@@ -49,7 +54,6 @@ func ProvideUserAuthTokenService(ctx context.Context, sqlStore db.DB,
 		cfgProvider:       cfgProvider,
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
-		features:          features,
 		tracer:            tracer,
 	}
 
@@ -82,7 +86,6 @@ type UserAuthTokenService struct {
 	log                  log.Logger
 	externalSessionStore auth.ExternalSessionStore
 	singleflight         *singleflight.Group
-	features             featuremgmt.FeatureToggles
 	tracer               tracing.Tracer
 }
 
@@ -196,43 +199,60 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 		}
 	}
 
+	// Opt-in grace window so a previous token used by an in-flight request shortly after rotation
+	// is not treated as theft, which would force a re-rotation that logs the user out.
+	graceEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthTokenRotationGracePeriod, false, openfeature.TransactionContext(ctx))
+
 	// Current incoming token is the previous auth token in the DB and the auth_token_seen is true
 	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {
-		model.AuthTokenSeen = false
-		model.RotatedAt = getTime().Add(-usertoken.UrgentRotateTime).Unix()
-
-		var affectedRows int64
-		err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
-			affectedRows, err = dbSession.Where("id = ? AND prev_auth_token = ? AND rotated_at < ?",
-				model.Id,
-				model.PrevAuthToken,
-				model.RotatedAt).
-				AllCols().Update(&model)
-
-			return err
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		if affectedRows == 0 {
-			ctxLogger.Debug("Prev seen token unchanged", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+		// Within the grace window, accept the previous token as-is without mutating any state.
+		if graceEnabled && getTime().Unix()-model.RotatedAt < int64(PrevTokenGraceWindow.Seconds()) {
+			ctxLogger.Debug("Prev token used within grace window, treating as valid", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
 		} else {
-			ctxLogger.Debug("Prev seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			candidate := model
+			candidate.AuthTokenSeen = false
+			candidate.RotatedAt = getTime().Add(-usertoken.UrgentRotateTime).Unix()
+
+			var affectedRows int64
+			err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+				affectedRows, err = dbSession.Where("id = ? AND prev_auth_token = ? AND rotated_at < ?",
+					candidate.Id,
+					candidate.PrevAuthToken,
+					candidate.RotatedAt).
+					AllCols().Update(&candidate)
+
+				return err
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if affectedRows == 0 {
+				ctxLogger.Debug("Prev seen token unchanged", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+				// DB row unchanged: when enabled, keep the freshly-read model so NeedsRotation does
+				// not fire on a stale value; when disabled, keep the legacy backdated model.
+				if !graceEnabled {
+					model = candidate
+				}
+			} else {
+				model = candidate
+				ctxLogger.Debug("Prev seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			}
 		}
 	}
 
 	// Current incoming token is not seen and it is the latest valid auth token in the db
 	if !model.AuthTokenSeen && model.AuthToken == hashedToken {
-		model.AuthTokenSeen = true
-		model.SeenAt = getTime().Unix()
+		candidate := model
+		candidate.AuthTokenSeen = true
+		candidate.SeenAt = getTime().Unix()
 
 		var affectedRows int64
 		err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 			affectedRows, err = dbSession.Where("id = ? AND auth_token = ?",
-				model.Id,
-				model.AuthToken).
-				AllCols().Update(&model)
+				candidate.Id,
+				candidate.AuthToken).
+				AllCols().Update(&candidate)
 
 			return err
 		})
@@ -242,7 +262,13 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 		if affectedRows == 0 {
 			ctxLogger.Debug("Seen wrong token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+			// DB row unchanged: when enabled, keep the freshly-read model so the returned token
+			// matches what was persisted; when disabled, keep the legacy candidate.
+			if !graceEnabled {
+				model = candidate
+			}
 		} else {
+			model = candidate
 			ctxLogger.Debug("Seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		}
 	}
