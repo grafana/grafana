@@ -31,6 +31,17 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
+## Endpoints
+
+| Method | URI | Summary |
+| ------ | --- | ------- |
+| POST | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards | [Create Dashboard](#create-dashboard) |
+| PUT | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid | [Update Dashboard](#update-dashboard) |
+| GET | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid | [Get Dashboard](#get-dashboard) |
+| GET | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto | [Get Dashboard (DTO format)](#get-dashboard) |
+| GET | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards | [List Dashboards](#list-dashboards) |
+| DELETE | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid | [Delete Dashboard](#delete-dashboard) |
+
 ## Create Dashboard
 
 `POST /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`

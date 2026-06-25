@@ -42,6 +42,16 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
+## Endpoints
+
+| Method | URI | Summary |
+| ------ | --- | ------- |
+| GET | /apis/folder.grafana.app/v1/namespaces/:namespace/folders | [Get all folders](#get-all-folders) |
+| GET | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Get folder by uid](#get-folder-by-uid) |
+| POST | /apis/folder.grafana.app/v1/namespaces/:namespace/folders | [Create folder](#create-folder) |
+| PUT | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Update folder](#update-folder) |
+| DELETE | /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid | [Delete folder](#delete-folder) |
+
 ## Get all folders
 
 `GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders`

@@ -28,6 +28,23 @@ title: Data source HTTP API
 
 If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
+## Endpoints
+
+| Method | URI | Summary |
+| ------ | --- | ------- |
+| GET | /api/datasources | [Get all data sources](#get-all-data-sources) |
+| GET | /api/datasources/uid/:uid | [Get a single data source by uid](#get-a-single-data-source-by-uid) |
+| GET | /api/datasources/name/:name | [Get a single data source by name](#get-a-single-data-source-by-name) (deprecated) |
+| GET | /api/datasources/id/:name | [Get data source Id by name](#get-data-source-id-by-name) (deprecated) |
+| POST | /api/datasources | [Create a data source](#create-a-data-source) |
+| PUT | /api/datasources/uid/:uid | [Update an existing data source](#update-an-existing-data-source) |
+| DELETE | /api/datasources/uid/:uid | [Delete an existing data source by uid](#delete-an-existing-data-source-by-uid) |
+| DELETE | /api/datasources/name/:datasourceName | [Delete an existing data source by name](#delete-an-existing-data-source-by-name) (deprecated) |
+| GET | /api/datasources/proxy/uid/:uid/* | [Data source proxy calls](#data-source-proxy-calls) |
+| GET | /api/datasources/uid/:uid/health | [Check data source health](#check-data-source-health) |
+| GET | /api/datasources/uid/:uid/resources/* | [Fetch data source resources](#fetch-data-source-resources) |
+| POST | /api/ds/query | [Query a data source](#query-a-data-source) |
+
 ## Get all data sources
 
 `GET /api/datasources`
