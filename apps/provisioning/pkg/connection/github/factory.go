@@ -46,7 +46,15 @@ func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue, opts .
 	}
 
 	if r.Client != nil {
-		return NewClient(github.NewClient(r.Client)), nil
+		ghClient := github.NewClient(r.Client)
+		if options.customServerURL != "" {
+			enterprise, err := ghClient.WithEnterpriseURLs(options.customServerURL, options.customServerURL)
+			if err != nil {
+				return nil, fmt.Errorf("failed to configure GitHub Enterprise URLs for %q: %w", options.customServerURL, err)
+			}
+			ghClient = enterprise
+		}
+		return NewClient(ghClient), nil
 	}
 
 	httpClient := &http.Client{}
