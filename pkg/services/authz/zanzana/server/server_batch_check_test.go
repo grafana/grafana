@@ -158,6 +158,29 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.True(t, res.GetResults()["check1"].GetAllowed())
 	})
 
+	t.Run("user without teams:create is denied, not errored", func(t *testing.T) {
+		// team has no per-object `create` relation in the model (it only exists on the
+		// group_resource), so an unresolved teams:create item must resolve to denied
+		// rather than erroring the whole batch on an invalid ListObjects relation.
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbCreate, teamGroup, teamResource, "", "", ""),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 1)
+		assert.False(t, res.GetResults()["check1"].GetAllowed())
+	})
+
+	t.Run("user with group_resource teams:create is allowed", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("check1", utils.VerbCreate, teamGroup, teamResource, "", "", ""),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:20", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 1)
+		assert.True(t, res.GetResults()["check1"].GetAllowed())
+	})
+
 	t.Run("subresource permissions check", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, statusSubresource, "", "10"), // has access

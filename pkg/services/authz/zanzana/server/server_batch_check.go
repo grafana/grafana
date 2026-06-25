@@ -706,6 +706,14 @@ func (s *Server) resolveTypedItems(
 		sample := groupItems[0]
 		allowed := make(map[string]bool)
 
+		// Flat typed objects (team, user, service-account) only carry `create` on the
+		// group_resource, never per object, so there is nothing to list here and the
+		// per-object ListObjects relation does not exist. Leaving these items unresolved
+		// denies them. Folders keep their folder-scoped create.
+		if key.relation == common.RelationCreate && key.typ != common.TypeFolder {
+			continue
+		}
+
 		subresourceRelation := common.SubresourceRelation(key.relation)
 		if sample.resource.HasSubresource() && sample.resource.IsValidRelation(subresourceRelation) {
 			if err := s.collectAllowedObjects(ctx, allowed, &openfgav1.ListObjectsRequest{
