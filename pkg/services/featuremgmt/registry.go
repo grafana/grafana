@@ -1073,14 +1073,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newUnconfiguredPanel",
-			Description: "Enables the new unconfigured panel experience",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
-		},
-		{
 			Name:        "dashboardLibrary",
 			Description: "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:       FeatureStageExperimental,
@@ -1115,6 +1107,14 @@ var (
 		{
 			Name:        "grafana.orgDashboardTemplates",
 			Description: "Enables org-defined dashboard templates for enterprise",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.customDashboardTemplates",
+			Description: "Enables custom dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{Go: true, React: true},
@@ -3162,6 +3162,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.customizableMegaMenu",
+			Description: "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

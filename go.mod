@@ -90,14 +90,15 @@ require (
 	github.com/golang/snappy v1.0.0 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
 	github.com/google/go-github/v82 v82.0.0 // @grafana/grafana-git-ui-sync-team
+	github.com/google/safetext v0.0.0-20260330151545-1fb717a317c5 // @grafana/grafana-app-platform-squad
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.22.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20260624092630-e3cde2289ada // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // @grafana/grafana-backend-group
@@ -718,6 +719,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
+
+require github.com/pborman/uuid v1.2.1 // indirect
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

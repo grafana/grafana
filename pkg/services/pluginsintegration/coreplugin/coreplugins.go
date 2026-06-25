@@ -42,7 +42,6 @@ const (
 	InfluxDB        = "influxdb"
 	Loki            = "loki"
 	Prometheus      = "prometheus"
-	Tempo           = "tempo"
 	TestData        = "grafana-testdata-datasource"
 	TestDataAlias   = "testdata"
 	PostgreSQL      = "grafana-postgresql-datasource"

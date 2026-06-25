@@ -116,9 +116,38 @@ export function getKindInfoByItemType(itemType: ItemType): ResourceKindInfo | un
  * Look up a kind by a resource-stat group, accepting both the full API group
  * (`folder.grafana.app`) and the legacy short plural (`folders`) that the stats
  * endpoint can return interchangeably.
+ *
+ * Prefer `getKindInfoByStat` when a `resource` is available: several kinds can
+ * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
   return allKindInfos.find((info) => info.group === group || info.resource === group);
+}
+
+/**
+ * Look up a kind from a job summary row, which carries both the API group
+ * (`dashboard.grafana.app`) and the Kubernetes Kind (`Dashboard`). Matches on
+ * whichever identifiers are present so partially-populated summary rows still resolve.
+ */
+export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
+  if (!group && !kind) {
+    return undefined;
+  }
+  return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
+}
+
+/**
+ * Look up a kind from a resource-stat entry (`ResourceCount`), which carries both
+ * an API `group` and a plural `resource` name. The plural resource uniquely
+ * identifies the kind even when kinds share a group, so we match on it first and
+ * fall back to a group-only match for stats that omit the resource.
+ */
+export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindInfo | undefined {
+  const byResource = allKindInfos.find((info) => info.resource === stat.resource);
+  if (byResource) {
+    return byResource;
+  }
+  return getKindInfoByStatGroup(stat.group);
 }
 
 /**

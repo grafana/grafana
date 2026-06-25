@@ -4267,6 +4267,8 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-actions": {
+      "commit-title-resource-count_one": "{{count}} resource",
+      "commit-title-resource-count_other": "{{count}} resources",
       "error-generic": "Unexpected error happened when creating job"
     },
     "bulk-delete-resources-form": {
@@ -5891,13 +5893,10 @@
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
       "configure-button": "Edit visualization",
-      "configure-button-menu": "Toggle menu",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
-      "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
       "menu-use-saved-query": "Use saved query",
-      "missing-config": "Missing panel configuration",
       "no-visualization": "No visualization configured",
       "saved-query-apply-error": "Failed to apply saved query",
       "saved-query-apply-error-detail": "An error occurred while applying the saved query. Please try again.",
@@ -10606,12 +10605,11 @@
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
       "high-count_other": "{{count}} high",
-      "retry": "Retry",
       "severity-critical": "Critical",
       "severity-high": "High",
       "severity-low": "Low",
       "severity-minor": "Minor",
-      "severity-unknown": "Unknown severity",
+      "severity-unknown": "Unknown",
       "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
@@ -10628,6 +10626,13 @@
         "morning": "Good morning."
       },
       "placeholder": "Welcome to {{edition}}."
+    },
+    "incidents-card": {
+      "declare": "Declare an incident",
+      "empty": "No active incidents.",
+      "error-title": "Could not load active incidents",
+      "title": "Active incidents",
+      "view-all": "View all incidents"
     },
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
@@ -10649,6 +10654,9 @@
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
+    },
+    "summary-card": {
+      "retry": "Retry"
     }
   },
   "import-overview": {
@@ -12987,6 +12995,7 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
+      "bulk-resource-kind": "resource",
       "create-default": "Create {{resourceKind}}: {{title}}",
       "delete-default": "Delete {{resourceKind}}: {{title}}",
       "move-default": "Move {{resourceKind}}: {{title}}",
@@ -13339,6 +13348,17 @@
       "title": {
         "error-fetching-active-job": "Error fetching active job"
       }
+    },
+    "job-summary": {
+      "column-created": "Created",
+      "column-deleted": "Deleted",
+      "column-errors": "Errors",
+      "column-resource": "Resource",
+      "column-total": "Total",
+      "column-unchanged": "Unchanged",
+      "column-updated": "Updated",
+      "column-warnings": "Warnings",
+      "unknown-kind": "Unknown"
     },
     "local": {
       "path-description": "Local file system path to the repository",
@@ -16620,11 +16640,6 @@
     },
     "static-options": {
       "add-option-button-label": "Add new option"
-    },
-    "text-box-variable-editor": {
-      "name-default-value": "Default value",
-      "placeholder-default-value-if-any": "default value, if any",
-      "text-options": "Text options"
     },
     "transform-usages-to-network": {
       "result": {

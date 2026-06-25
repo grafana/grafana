@@ -39,6 +39,10 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Enables custom dashboard templates for enterprise */
+  GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
+  /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
+  GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables usage of the new annotations API client */
@@ -254,6 +258,28 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
+ * Enables custom dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.customDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customDashboardTemplates", false, options).value;
+};
+
+/**
+ * Allows users to customise the mega menu by hiding top-level navigation items they are not interested in
+ *
+ * **Details:**
+ * - flag key: `grafana.customizableMegaMenu`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customizableMegaMenu", false, options).value;
 };
 
 /**

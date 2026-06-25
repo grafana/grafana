@@ -24,6 +24,7 @@ declare module "@openfeature/core" {
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
+    | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"
@@ -58,7 +59,8 @@ declare module "@openfeature/core" {
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
     | "table.protoRowParser"
-    | "dataviz.experimentalColorSchemes";
+    | "dataviz.experimentalColorSchemes"
+    | "grafana.customizableMegaMenu";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
