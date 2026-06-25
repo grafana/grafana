@@ -46,13 +46,30 @@ func githubHealthCheckMocks() []ghmock.MockBackendOption {
 }
 
 // webhookCreationMocks returns ghmock handlers for webhook creation.
+//
+// The handlers are stateful: the created hook is remembered and served back by
+// the list and get-by-id endpoints. This mirrors real GitHub, where GetHook
+// returns the existing hook so the reconciler's OnUpdate path is a no-op. If
+// get-by-id is left unmocked it 404s, which the reconciler reads as
+// ErrFileNotFound and "recreates" the webhook on every reconcile — rotating the
+// webhook secret each time and racing any concurrent job that decrypts it
+// (yielding intermittent "decrypt webhookSecret: not found").
 func webhookCreationMocks(hookID int64) []ghmock.MockBackendOption {
+	var mu sync.Mutex
+	var created *github.Hook
+
 	return []ghmock.MockBackendOption{
 		ghmock.WithRequestMatchHandler(
 			ghmock.GetReposHooksByOwnerByRepo,
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				mu.Lock()
+				hooks := []*github.Hook{}
+				if created != nil {
+					hooks = append(hooks, created)
+				}
+				mu.Unlock()
 				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode([]*github.Hook{})
+				_ = json.NewEncoder(w).Encode(hooks)
 			}),
 		),
 		ghmock.WithRequestMatchHandler(
@@ -63,14 +80,32 @@ func webhookCreationMocks(hookID int64) []ghmock.MockBackendOption {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 					return
 				}
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(&github.Hook{
+				h := &github.Hook{
 					ID:     github.Ptr(hookID),
 					URL:    hook.GetConfig().URL,
 					Config: hook.Config,
 					Events: hook.Events,
 					Active: hook.Active,
-				})
+				}
+				mu.Lock()
+				created = h
+				mu.Unlock()
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(h)
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetReposHooksByOwnerByRepoByHookId,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				mu.Lock()
+				h := created
+				mu.Unlock()
+				if h == nil {
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(h)
 			}),
 		),
 	}
