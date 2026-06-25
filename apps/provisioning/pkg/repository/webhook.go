@@ -6,7 +6,6 @@ type WebhookEventType int
 const (
 	WebhookEventUnsupported WebhookEventType = iota
 	WebhookEventPing
-	WebhookEventReplay
 	WebhookEventPush
 	WebhookEventPullRequest
 )
@@ -33,4 +32,8 @@ type WebhookEvent struct {
 	SourceRef    string
 	Hash         string
 	Message      string
+	// ReplayKey deduplicates retried deliveries. The provider sets it to its
+	// validated request signature; an empty key disables the replay check for
+	// that event.
+	ReplayKey string
 }

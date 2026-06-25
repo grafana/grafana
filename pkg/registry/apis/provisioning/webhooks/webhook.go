@@ -35,6 +35,9 @@ type webhookConnector struct {
 	renderer        pullrequest.ScreenshotRenderer
 	registry        prometheus.Registerer
 	metrics         webhookMetrics
+	// replayCache is the process-wide webhook replay cache, shared across every
+	// provider repository the connector dispatches for.
+	replayCache *replayCache
 }
 
 func NewWebhookConnector(
@@ -51,6 +54,7 @@ func NewWebhookConnector(
 		renderer:        renderer,
 		registry:        registry,
 		metrics:         metrics,
+		replayCache:     newReplayCache(defaultReplayCacheTTL),
 	}
 }
 
@@ -220,6 +224,14 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, hooks
 		return nil, err
 	}
 
+	// Silently drop a delivery whose replay key we have already processed within
+	// the cache TTL — returning a generic 200 avoids confirming to a replay
+	// attacker that the captured payload was a real previously-processed delivery.
+	if s.replayCache.seenOrAdd(event.ReplayKey) {
+		logging.FromContext(ctx).Debug("dropping replayed webhook delivery")
+		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
+	}
+
 	switch event.Type {
 	case repository.WebhookEventPush:
 		if event.RepoSlug != hooks.Slug() {
@@ -255,8 +267,6 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, hooks
 		return pullRequestResponse(event), nil
 	case repository.WebhookEventPing:
 		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ping received"}, nil
-	case repository.WebhookEventReplay:
-		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
 	default:
 		return &provisioning.WebhookResponse{Code: http.StatusNotImplemented, Message: event.Message}, nil
 	}
