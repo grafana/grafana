@@ -2,12 +2,13 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModel, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useDatasourcePluginMeta } from '@grafana/runtime/internal';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useDataSource, useDataSourceSettings } from 'app/features/datasources/state/hooks';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from 'app/features/datasources/state/navModel';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { useSelector } from 'app/types/store';
+
+import { useIsAlertingSupported } from './useIsAlertingSupported';
 
 export function useDataSourceSettingsNav(pageIdParam?: string) {
   const { uid = '' } = useParams<{ uid: string }>();
@@ -18,10 +19,7 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
   const pageId = pageIdParam || params.get('page');
 
   const { plugin, loadError, loading } = useDataSourceSettings();
-  const { value: dataSourcePluginMeta } = useDatasourcePluginMeta(datasource.type);
-  const hasAlertingEnabled = Boolean(dataSourcePluginMeta?.alerting ?? false);
-  const isAlertManagerDatasource = dataSourcePluginMeta?.id === 'alertmanager';
-  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
+  const alertingSupported = useIsAlertingSupported(datasource.type);
 
   const navIndex = useSelector((state) => state.navIndex);
   const navIndexId = pageId ? `datasource-${pageId}-${uid}` : `datasource-settings-${uid}`;
