@@ -29,7 +29,7 @@ Add CI jobs that enforce three build paths on every relevant PR:
 - Job `gen-wire`: `make gen-wire` and fail if `wire_gen.go` dirty.
 
 **Cross-repo (optional):**
-- Trigger GE CI when OSS `pkg/server/wiresets` or `bootstrap` changes (path filter).
+- Trigger GE CI when OSS `pkg/server/bootstrap/wire`, `pkg/server/wireext`, or `bootstrap` changes (path filter).
 
 ### Out of scope
 
@@ -80,7 +80,7 @@ Add CI jobs that enforce three build paths on every relevant PR:
 
 - [ ] All three build paths green on main branch after merge.
 - [ ] Intentional break in GE wire sets fails GE CI.
-- [ ] Intentional break in OSS wiresets fails both OSS and GE CI.
+- [ ] Intentional break in OSS `pkg/server/bootstrap/wire` fails both OSS and GE CI.
 - [ ] No change to local `make run` / `make build` developer experience.
 - [ ] All three CI paths run integration tests (`make test-go-integration-postgres` or equivalent).
 - [ ] All three CI paths run E2E acceptance smoke (`yarn e2e:playwright --grep @acceptance`).

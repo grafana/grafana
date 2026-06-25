@@ -15,7 +15,7 @@ Consolidate how `pkg/extensions` side effects (primarily `extensions.IsEnterpris
 
 Today:
 - `pkg/server/server.go` blank-imports `pkg/extensions`.
-- Generated `wire_gen.go` may also blank-import `pkg/extensions`.
+- Generated `pkg/server/bootstrap/wire/wire_gen.go` may also blank-import `pkg/extensions`.
 - `pkg/cmd/grafana-server/commands/buildinfo.go` sets `setting.IsEnterprise = extensions.IsEnterprise`.
 - OSS stub: `pkg/extensions/main.go` sets `IsEnterprise = false`.
 - Enterprise overlay: `pkg/extensions/ext.go` sets `IsEnterprise = true` in `init()`.
@@ -67,7 +67,7 @@ OSS must not import Grafana Enterprise, but the neutral `pkg/extensions` stub in
 - `pkg/server/server.go`
 - `pkg/server/bootstrap/buildinfo.go`
 - `pkg/extensions/main.go` (comment only)
-- `pkg/server/wire_gen.go` (regenerated)
+- `pkg/server/bootstrap/wire/wire_gen.go` (regenerated)
 - `pkg/server/enterprise_wire_gen.go` (regenerated, if linked)
 
 ## Acceptance criteria

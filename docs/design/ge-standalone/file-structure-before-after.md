@@ -45,17 +45,19 @@ graph TB
 graph TB
     subgraph OSS["github.com/grafana/grafana (one or more modules)"]
         MAIN_OSS["pkg/cmd/grafana/main.go"]
-        WIRE_OSS["pkg/wire/"]
+        WIRE_OSS["OSS wire graph"]
         SERVICES["pkg/services/, pkg/api/, apps/, …"]
     end
 
     subgraph BOOTGRAPH["bootstrap module (in OSS most likely)"]
         BOOT["pkg/server/bootstrap/"]
+        BOOT_WIRE["pkg/server/bootstrap/wire"]
     end
 
     subgraph GEM["github.com/grafana/grafana-enterprise (one or more modules)"]
         MAIN_GE["cmd/grafana-enterprise/main.go"]
-        WIRE_GE["pkg/wire/"]
+        WIRE_GE["GE wire graph"]
+        WIRE_GE_EXT["pkg/server/wireexts]
         PKG["pkg/accesscontrol, pkg/apiserver, …"]
     end
 
@@ -63,8 +65,8 @@ graph TB
     MAIN_GE -->|"composes graph from"| WIRE_GE
     WIRE_GE -->|"imports dependencies"| PKG
     WIRE_GE -->|"imports dependencies"| SERVICES
-    MAIN_OSS -->|"bootstraps server with"| BOOT
-    MAIN_OSS -->|"composes graph from"| WIRE_OSS
+    MAIN_OSS -->|"bootstraps server with"| BOOT_WIRE
+    WIRE_OSS -->|"composes graph from"| WIRE_OSS
     WIRE_OSS -->|"fed to"| BOOT
     WIRE_GE -->|"fed to"| BOOT
     WIRE_OSS -->|"imports dependencies"| SERVICES

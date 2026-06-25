@@ -1,4 +1,4 @@
-# Step 03: Delegate CLI to bootstrap
+# Step 03: Delegate CLI to bootstrap + injectable ServerDeps
 
 | Field | Value |
 |-------|-------|
@@ -9,7 +9,9 @@
 
 ## Goal
 
-Make `pkg/cmd/grafana-server/commands/cli.go` and `target.go` thin wrappers around `pkg/server/bootstrap`. All server startup behavior flows through bootstrap.
+Make `pkg/cmd/grafana-server/commands` thin wrappers around `pkg/server/bootstrap`, and introduce an **injectable `ServerDeps`** so Grafana Enterprise can import the same commands package later (Step 06) without hardcoding OSS wire or `pkg/extensions`.
+
+All server startup behavior flows through bootstrap; commands owns flags and subcommand registration only.
 
 ## Scope
 
@@ -17,10 +19,24 @@ Make `pkg/cmd/grafana-server/commands/cli.go` and `target.go` thin wrappers arou
 
 - Refactor `RunServer` in `cli.go` to call `bootstrap.RunServer`.
 - Refactor `RunTargetServer` in `target.go` to call `bootstrap.RunTarget`.
+- Introduce **`ServerDeps`** — edition injectors and metadata passed in by each binary's `main`:
+  ```go
+  type ServerDeps struct {
+      Initialize       bootstrap.ServerInitializer
+      ModuleInitialize bootstrap.ModuleServerInitializer
+      IsEnterprise     bool
+  }
+
+  func ServerCommand(buildInfo standalone.BuildInfo, deps ServerDeps) *cli.Command
+  func TargetCommand(buildInfo standalone.BuildInfo, deps ServerDeps) *cli.Command
+  ```
+- Remove hardcoded `server.Initialize` / `server.InitializeModuleServer` from `cli.go` and `target.go`.
+- Remove direct `pkg/extensions` import from `buildinfo.go` — `IsEnterprise` comes from `ServerDeps` (OSS `main` passes `extensions.IsEnterprise`).
 - Remove duplicated logic from commands package (keep flag definitions in `flags.go`).
 - Move `listenToSystemSignals` and `checkPrivileges` into bootstrap if not already done in Step 02.
-- Consolidate `SetBuildInfo` — single implementation in bootstrap; commands call it or bootstrap sets internally.
-- Ensure `TargetCommand` and `ServerCommand` subcommand structure unchanged.
+- Consolidate `SetBuildInfo` — single implementation in bootstrap; commands passes `deps.IsEnterprise` into bootstrap config.
+- Update OSS `pkg/cmd/grafana/main.go` to pass `ServerDeps` with OSS wire injectors.
+- Ensure `TargetCommand` and `ServerCommand` subcommand structure and `--help` output unchanged.
 
 ### Out of scope
 
@@ -30,23 +46,39 @@ Make `pkg/cmd/grafana-server/commands/cli.go` and `target.go` thin wrappers arou
 
 ## Implementation tasks
 
-1. **Update `cli.go`**
+1. **Add `deps.go`** with `ServerDeps` and update command constructors to accept it.
+
+2. **Update `cli.go`**
    ```go
-   func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
+   func RunServer(opts standalone.BuildInfo, deps ServerDeps, cli *cli.Context) error {
        return bootstrap.RunServer(cli.Context, bootstrap.RunServerConfig{
-           BuildInfo: opts,
+           BuildInfo:    opts,
+           Initialize:   deps.Initialize,
+           IsEnterprise: deps.IsEnterprise,
            // map flags from flags.go
        })
    }
    ```
 
-2. **Update `target.go`** similarly for `bootstrap.RunTarget`.
+3. **Update `target.go`** similarly for `bootstrap.RunTarget` with `deps.ModuleInitialize`.
 
-3. **Delete dead code** from commands package after delegation (duplicate signal handling, config loading, etc.).
+4. **Update OSS `main.go`**
+   ```go
+   import bootstrapwire "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 
-4. **Expand bootstrap tests** to cover integration with `server.Initialize` using a test hook if needed — or rely on existing `pkg/server` tests.
+   deps := commands.ServerDeps{
+       Initialize:       bootstrapwire.Initialize,
+       ModuleInitialize: bootstrapwire.InitializeModuleServer,
+       IsEnterprise:     extensions.IsEnterprise,
+   }
+   commands.ServerCommand(buildInfo, deps)
+   ```
 
-5. **Manual smoke test** — confirm profiling, tracing, and config override flags still work:
+5. **Delete dead code** from commands package after delegation (duplicate signal handling, config loading, etc.).
+
+6. **Expand bootstrap tests** to cover integration with `bootstrap/wire.Initialize` using a test hook if needed — or rely on existing `pkg/server/bootstrap/wire` tests.
+
+7. **Manual smoke test** — confirm profiling, tracing, and config override flags still work:
    ```bash
    make run-go -- -h
    ./bin/grafana server -profile -profile-addr=127.0.0.1 -profile-port=6000
@@ -54,9 +86,11 @@ Make `pkg/cmd/grafana-server/commands/cli.go` and `target.go` thin wrappers arou
 
 ## Files likely touched
 
+- `pkg/cmd/grafana-server/commands/deps.go` (new)
 - `pkg/cmd/grafana-server/commands/cli.go`
 - `pkg/cmd/grafana-server/commands/target.go`
 - `pkg/cmd/grafana-server/commands/buildinfo.go` (may shrink or delete)
+- `pkg/cmd/grafana/main.go`
 - `pkg/server/bootstrap/*.go` (adjustments from Step 02)
 
 ## Acceptance criteria
@@ -103,4 +137,4 @@ Restore `cli.go` / `target.go` inline implementations; keep bootstrap package un
 
 ## LLM prompt seed
 
-> Implement Step 03 of `docs/design/ge-standalone/step-03-delegate-cli-to-bootstrap.md`. Delegate `RunServer` and `RunTargetServer` to `pkg/server/bootstrap`. Remove duplicated logic from commands. No behavior changes. Verify OSS and enterprise overlay builds and runs.
+> Implement Step 03 of `docs/design/ge-standalone/step-03-delegate-cli-to-bootstrap.md`. Delegate `RunServer` and `RunTargetServer` to `pkg/server/bootstrap`. Add injectable `ServerDeps` to commands; remove hardcoded wire and extensions imports from commands. Update OSS main to pass OSS wire injectors. No behavior changes. Verify OSS and enterprise overlay builds and runs.

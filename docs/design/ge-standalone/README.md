@@ -8,6 +8,48 @@ This directory contains step-by-step implementation specifications for migrating
 
 **Approach:** Option A (OSS bootstrap library) + Option D (stub-first GE module). Option B (OSS edition registry) and Option C (service-only binaries) are explicitly out of scope.
 
+## Wire package layout
+
+OSS and GE each own **injectors** and **edition bindings**; the **core provider sets** live in OSS under bootstrap and are imported by GE.
+
+```
+OSS (grafana/grafana):
+  pkg/server/bootstrap/        startup orchestration (RunServer, RunTarget) — GE import boundary
+  pkg/server/bootstrap/wire/   core wire.NewSets + OSS injectors + wire_gen.go
+  pkg/server/wireext/         OSS edition bindings only (outside bootstrap — GE never imports)
+
+GE (grafana/grafana-enterprise):
+  pkg/wire/                    enterprise injectors + wire_gen.go
+  pkg/wireext/                 enterprise edition bindings
+  cmd/grafana-enterprise/      main entry
+```
+
+**Why `wireext` is outside `bootstrap`:** OSS edition bindings are not part of the GE import surface. GE imports `bootstrap` + `bootstrap/wire`; it owns enterprise bindings in `pkg/wireext`.
+
+**Composition rules:**
+
+- OSS injectors (`bootstrap/wire`): `wire.Build(wire.Server, wireext.Set)`
+- GE injectors: `wire.Build(osswire.Server, gewireext.Set)` — import `github.com/grafana/grafana/pkg/server/bootstrap/wire`
+- `bootstrap` root accepts `ServerInitializer` via `RunServerConfig` (no hardcoded wire)
+- **`commands`** (OSS `pkg/cmd/grafana-server/commands`) owns shared server CLI flags and subcommands; GE imports it and passes injectors via `ServerDeps`
+
+## Shared server CLI (Option A)
+
+GE reuses OSS commands — no duplicate flags, no separate Go module, no `bootstrap/cli` sub-package.
+
+```
+OSS pkg/cmd/grafana-server/commands/
+  flags.go          -config, -homepath, profiling, version, …
+  deps.go           ServerDeps { Initialize, ModuleInitialize, IsEnterprise }
+  server.go         ServerCommand(buildInfo, deps) → bootstrap.RunServer
+
+OSS main:  ServerDeps{ bootstrapwire.Initialize, bootstrapwire.InitializeModuleServer, extensions.IsEnterprise }
+GE main:   ServerDeps{ gewire.Initialize, gewire.InitializeModuleServer, true }
+           (stub injectors in Step 06; real wire in Step 08)
+```
+
+Each edition's `main` still owns top-level app assembly (`grafana cli`, apiserver, operators blank imports).
+
 ## Notes for public repository
 
 This directory is committed to the public `grafana/grafana` repository. A pre-commit review should confirm:
@@ -35,12 +77,12 @@ This directory is committed to the public `grafana/grafana` repository. A pre-co
 
 ```mermaid
 graph TD
-    S01[Step 01: Export wire sets]
+    S01[Step 01: Extract bootstrap/wire + wireext]
     S02[Step 02: Bootstrap skeleton]
-    S03[Step 03: Delegate CLI to bootstrap]
+    S03[Step 03: CLI → bootstrap + ServerDeps]
     S04[Step 04: Clean extensions imports]
     S05[Step 05: Formalize bootstrap API]
-    S06[Step 06: GE module scaffold]
+    S06[Step 06: GE scaffold + shared CLI]
     S07[Step 07: GE wire injectors]
     S08[Step 08: GE wire generation]
     S09[Step 09: GE server binary parity]
@@ -179,15 +221,15 @@ Each step README ends with sections the implementing PR should fill in:
 
 | Step | Title | Repo | Depends on |
 |------|-------|------|------------|
-| [01](step-01-export-wire-sets.md) | Export shared wire sets | OSS | — |
+| [01](step-01-extract-wire-packages.md) | Extract bootstrap/wire and OSS wireext packages | OSS | — |
 | [02](step-02-bootstrap-package-skeleton.md) | Bootstrap package skeleton | OSS | 01 |
-| [03](step-03-delegate-cli-to-bootstrap.md) | Delegate CLI to bootstrap | OSS | 02 |
+| [03](step-03-delegate-cli-to-bootstrap.md) | Delegate CLI to bootstrap + injectable ServerDeps | OSS | 02 |
 | [04](step-04-clean-extensions-imports.md) | Clean extensions side-effect imports | OSS | 03 |
-| [05](step-05-formalize-bootstrap-api.md) | Formalize bootstrap public API | OSS | 04 |
-| [06](step-06-ge-module-scaffold.md) | GE module scaffold + health binary | GE | 05 |
-| [07](step-07-ge-wire-injectors.md) | GE wire injectors | GE | 05, 06 |
+| [05](step-05-formalize-bootstrap-api.md) | Formalize bootstrap, wire, and commands API | OSS | 04 |
+| [06](step-06-ge-module-scaffold.md) | GE module scaffold + shared server CLI | GE | 05 |
+| [07](step-07-ge-wire-injectors.md) | GE wire injectors and wireext | GE | 05, 06 |
 | [08](step-08-ge-wire-generation.md) | GE wire generation + first server build | GE | 07 |
-| [09](step-09-ge-server-binary-parity.md) | GE single-binary CLI parity | GE | 08 |
+| [09](step-09-ge-server-binary-parity.md) | GE top-level CLI parity | GE | 08 |
 | [10](step-10-dual-build-ci-matrix.md) | Dual-build CI matrix (includes integration + E2E in all paths) | OSS + GE | 09 |
 | [11](step-11-ge-apiserver-entrypoint.md) | GE apiserver entrypoint | GE | 08 |
 | [12](step-12-oss-remove-apiserver-hook.md) | OSS remove apiserver CLI hook | OSS | 09, 11 |

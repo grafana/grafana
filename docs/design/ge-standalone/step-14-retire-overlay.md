@@ -31,7 +31,7 @@ End the dual-repo file overlay. Grafana Enterprise builds and releases from its 
 - Remove `pkg/server/wireexts_enterprise.go` and `enterprise_wire_gen.go` from OSS.
 - Remove `gen-enterprise-go`, `test-enterprise-go` from OSS Makefile (or redirect to "clone GE").
 - Remove `local/Makefile` symlink install from GE `install.sh` or repurpose for GE-only targets.
-- Remove `InitializeAPIServerFactory` and enterprise wire injectors from OSS `wire.go` if still present.
+- Remove `InitializeAPIServerFactory` and enterprise wire injectors from OSS `pkg/server/bootstrap/wire` if still present.
 - Clean OSS references to overlaid paths in CI.
 
 **GE ownership:**

@@ -33,7 +33,7 @@ Expose `grafana-enterprise apiserver` using the enterprise APIServer factory (`e
 
 ## Implementation tasks
 
-1. **Port `wireExtsStandaloneAPIServerSet`** to GE `pkg/wire/edition.go`:
+1. **Port `wireExtsStandaloneAPIServerSet`** to GE `pkg/wireext/enterprise.go` (or a dedicated `apiserver.go` in the same package):
    ```go
    var wireExtsStandaloneAPIServerSet = wire.NewSet(
        extapiserver.ProvideAPIFactory,
@@ -60,7 +60,7 @@ Expose `grafana-enterprise apiserver` using the enterprise APIServer factory (`e
 
 ## Files likely touched (GE)
 
-- `pkg/wire/wire.go`, `edition.go`, `wire_gen.go`
+- `pkg/wire/inject.go`, `pkg/wireext/enterprise.go`, `pkg/wire/wire_gen.go`
 - `cmd/grafana-enterprise/main.go`
 - `pkg/apiserver/cli.go` (if moved from extensions path)
 

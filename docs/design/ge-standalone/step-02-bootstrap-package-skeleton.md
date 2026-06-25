@@ -9,7 +9,9 @@
 
 ## Goal
 
-Create `pkg/server/bootstrap` containing server startup logic extracted from the CLI commands, but **do not** switch `pkg/cmd/grafana-server/commands` to use it yet. Both old and new code paths can coexist briefly; this PR only adds the package.
+Create `pkg/server/bootstrap` containing server startup logic extracted from the CLI commands, but **do not** switch `pkg/cmd/grafana-server/commands` to use it yet. Both old and new code paths can coexist briefly; this PR only adds the startup orchestration to the bootstrap package root.
+
+Step 01 established `pkg/server/bootstrap/wire/` (core graph) and `pkg/server/wireext/` (OSS edition bindings). This step adds `RunServer`, `RunTarget`, and helpers alongside the existing `bootstrap/wire` sub-package.
 
 ## Scope
 
@@ -57,11 +59,20 @@ Create `pkg/server/bootstrap` containing server startup logic extracted from the
        ExtraArgs   []string
    }
 
+   type ServerInitializer func(context.Context, *setting.Cfg, server.Options, api.ServerOptions) (*server.Server, error)
+   type ModuleServerInitializer func(*setting.Cfg, server.Options, api.ServerOptions) (*server.ModuleServer, error)
+
+   type RunServerConfig struct {
+       // ...
+       Initialize ServerInitializer // required; OSS CLI passes bootstrap/wire.Initialize in Step 03
+   }
+
    func RunServer(ctx context.Context, cfg RunServerConfig) error
    func RunTarget(ctx context.Context, cfg RunTargetConfig) error
    ```
 
-   - Internally call existing `server.Initialize`, `server.InitializeModuleServer`, `(*Server).Run`, etc.
+   - Call `cfg.Initialize` / `cfg.ModuleInitialize` — **do not** hardcode `bootstrap/wire.Initialize` inside bootstrap root (GE will supply its own injectors later).
+   - Internally call `(*Server).Run`, signal handling, etc. after initialization.
    - Call `commands.SetBuildInfo` or move `SetBuildInfo` logic into bootstrap (prefer moving to avoid import cycle: bootstrap should not import `commands`).
 
 3. **Resolve import cycles**

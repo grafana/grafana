@@ -1,4 +1,4 @@
-# Step 09: GE single-binary CLI parity
+# Step 09: GE top-level CLI parity
 
 | Field | Value |
 |-------|-------|
@@ -9,38 +9,48 @@
 
 ## Goal
 
-Expand `grafana-enterprise` binary to match the enterprise capabilities of OSS `grafana` CLI: `server`, `server target`, `cli` passthrough (or documented subset), version/buildinfo flags, and packaging metadata.
+Expand `grafana-enterprise` **top-level** CLI to match OSS enterprise `grafana` binary capabilities beyond `server` / `server target` (already shared via OSS `commands` since Steps 06–08): `cli` passthrough, operators registration, version/buildinfo ldflags, and packaging metadata.
+
+**Note:** Server subcommands and flags are **not** reimplemented here — they come from `github.com/grafana/grafana/pkg/cmd/grafana-server/commands`.
 
 ## Scope
 
 ### In scope
 
-- Structure GE `main` like OSS `pkg/cmd/grafana/main.go`:
-  - `grafana-enterprise server` → `bootstrap.RunServer` + GE `Initialize`
-  - `grafana-enterprise server target` → `bootstrap.RunTarget` + GE `InitializeModuleServer`
+- Structure GE `main` like OSS `pkg/cmd/grafana/main.go` for **edition-specific** subcommands:
+  - `grafana-enterprise server` / `server target` — already via `commands.ServerCommand(buildInfo, deps)` (Step 06/08)
+  - `grafana-enterprise cli` — import OSS `pkg/cmd/grafana-cli/commands` passthrough (or documented subset)
   - Link flags: `version`, `commit`, `enterpriseCommit`, `buildBranch`, `buildstamp`
-- Port or share `pkg/cmd/grafana-server/commands/flags.go` behavior — duplicate flag definitions in GE (no OSS import of commands package if it creates cycles) or extract shared flags to OSS `pkg/server/bootstrap/flags` (**small OSS PR** if needed).
 - Register GE operators init (today's `pkg/operators/enterprise_register.go`) in GE main via blank import.
+- Ensure `ServerDeps` uses real GE wire injectors (from Step 08).
 - Document dev workflow:
   ```bash
   # Option A: continue OSS overlay + make run
   # Option B: GE binary pointing at OSS homepath
   ./bin/grafana-enterprise server -homepath=../grafana
   ```
+- Extend `scripts/compare-cli-help.sh` to cover any intentional top-level differences.
 
 ### Out of scope
 
 - `grafana apiserver` subcommand (Step 11).
+- Duplicating or forking `pkg/cmd/grafana-server/commands` flags (shared OSS import).
 - Bundling frontend assets differently than OSS.
 - Removing OSS overlay.
 
 ## Implementation tasks
 
-1. **CLI framework** — use `urfave/cli/v2` matching OSS.
+1. **Top-level app assembly** — mirror OSS `MainApp()` pattern:
+   ```go
+   app.Commands = []*cli.Command{
+       gcli.CLICommand(version),                    // optional passthrough
+       commands.ServerCommand(buildInfo, deps),     // shared from OSS
+   }
+   _ "github.com/grafana/grafana-enterprise/pkg/operators"
+   ```
 
-2. **Module target support**
-   - GE `InitializeModuleServer` injector in `pkg/wire/`.
-   - `bootstrap.RunTarget` with GE initializer.
+2. **Module target verification**
+   - Confirm `grafana-enterprise server target -target=<module>` works for at least one enterprise module (`authz-server` or `storage-server`).
 
 3. **Operators registration**
    - Move `enterprise_register.go` to GE module path.
@@ -53,21 +63,22 @@ Expand `grafana-enterprise` binary to match the enterprise capabilities of OSS `
 5. **Parity test script** `scripts/compare-cli-help.sh`:
    ```bash
    diff <(./bin/grafana server --help) <(./bin/grafana-enterprise server --help) || true
+   diff <(./bin/grafana --help) <(./bin/grafana-enterprise --help) || true  # document diffs
    ```
-   Document intentional differences.
 
 ## Files likely touched (GE)
 
 - `cmd/grafana-enterprise/main.go`
-- `pkg/cmd/server/flags.go` (new, mirrored from OSS)
-- `pkg/wire/wire.go` (add module server injector if missing)
+- `pkg/wire/inject.go` (module server injector if not done in Step 08)
 - `pkg/operators/enterprise_register.go` (path update)
+- `scripts/compare-cli-help.sh`
 - `Makefile`
 
 ## Acceptance criteria
 
 - [ ] `grafana-enterprise server` runs enterprise Grafana equivalent to OSS overlay `make run-go`.
-- [ ] `grafana-enterprise server target -target=<module>` works for at least one enterprise module (`authz-server` or `storage-server`).
+- [ ] `grafana-enterprise server target -target=<module>` works for at least one enterprise module.
+- [ ] `grafana-enterprise server --help` still matches OSS (regression from Step 06).
 - [ ] Version output includes enterprise commit when set via ldflags.
 - [ ] OSS overlay workflow still passes all regression tests.
 - [ ] `make test-enterprise-go` (OSS tree) passes.
@@ -81,6 +92,7 @@ Expand `grafana-enterprise` binary to match the enterprise capabilities of OSS `
 ```bash
 cd ../grafana-enterprise
 make build
+./bin/grafana-enterprise server --help
 ./bin/grafana-enterprise server -homepath=../grafana &
 sleep 20 && curl -sf http://localhost:3000/api/health && kill %1
 
@@ -112,8 +124,8 @@ yarn e2e:playwright --grep @acceptance
 
 ## Rollback
 
-Revert GE CLI expansion; keep Step 08 minimal server-only main.
+Revert GE top-level CLI expansion; keep Step 08 server-only main with OSS commands.
 
 ## LLM prompt seed
 
-> Implement Step 09 per `docs/design/ge-standalone/step-09-ge-server-binary-parity.md` in grafana-enterprise. Full CLI parity with OSS enterprise grafana for server and server target. Register operators. Verify against OSS overlay regression tests, integration tests, and acceptance E2E.
+> Implement Step 09 per `docs/design/ge-standalone/step-09-ge-server-binary-parity.md` in grafana-enterprise. Add top-level CLI parity (cli passthrough, operators). Do NOT duplicate server flags — keep OSS commands import. Verify against OSS overlay regression tests, integration tests, and acceptance E2E.

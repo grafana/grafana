@@ -9,17 +9,26 @@
 
 ## Goal
 
-Make Grafana Enterprise the **canonical owner** of enterprise Wire generation. OSS `make gen-go` only generates OSS `wire_gen.go`. Enterprise `enterprise_wire_gen.go` is produced in GE and copied into OSS at dev/build time via existing scripts.
+Make Grafana Enterprise the **canonical owner** of enterprise Wire generation. OSS `make gen-go` only generates OSS `pkg/server/bootstrap/wire/wire_gen.go`. Enterprise `enterprise_wire_gen.go` is produced in GE `pkg/wire/wire_gen.go` and copied into OSS at dev/build time via existing scripts.
+
+## Wire generation ownership (after this step)
+
+| Artifact | Generated in | Consumed by |
+|----------|--------------|-------------|
+| OSS server graph | OSS `pkg/server/bootstrap/wire/wire_gen.go` | OSS CLI, overlay build |
+| Enterprise server graph | GE `pkg/wire/wire_gen.go` | GE binary, copied → OSS `enterprise_wire_gen.go` |
+| OSS edition bindings | OSS `pkg/server/wireext/` (source) | OSS injectors only |
+| Enterprise edition bindings | GE `pkg/wireext/` (source) | GE injectors; copied → OSS `wireexts_enterprise.go` during transition |
 
 ## Scope
 
 ### In scope
 
 **GE repo:**
-- `make gen-wire` is the single source of truth for enterprise wire output.
+- `make gen-wire` is the single source of truth for enterprise wire output (`./pkg/wire`).
 - CI fails if `pkg/wire/wire_gen.go` is stale.
 - `build.sh` and `enterprise-to-oss.sh` copy:
-  - `pkg/wire/edition.go` → OSS `pkg/server/wireexts_enterprise.go`
+  - `pkg/wireext/enterprise.go` → OSS `pkg/server/wireexts_enterprise.go`
   - `pkg/wire/wire_gen.go` → OSS `pkg/server/enterprise_wire_gen.go`
 
 **OSS repo:**
@@ -41,7 +50,7 @@ Make Grafana Enterprise the **canonical owner** of enterprise Wire generation. O
 ## Implementation tasks
 
 1. **OSS Makefile change**
-   - `gen-go` depends only on OSS wire generation.
+   - `gen-go` depends only on OSS wire generation (`./pkg/server/bootstrap/wire`).
    - Add `check-enterprise-wire` target verifying `enterprise_wire_gen.go` exists and matches GE output hash (optional).
 
 2. **GE Makefile**
@@ -118,4 +127,4 @@ Restore OSS `gen-enterprise-go` wire invocation; revert Makefile.
 
 ## LLM prompt seed
 
-> Implement Step 13 per `docs/design/ge-standalone/step-13-wire-gen-ownership-in-ge.md`. Move enterprise wire generation to GE make gen-wire; OSS gen-go OSS-only. Update sync scripts and Makefile. Verify dual-build CI and all tests pass.
+> Implement Step 13 per `docs/design/ge-standalone/step-13-wire-gen-ownership-in-ge.md`. Move enterprise wire generation to GE `make gen-wire` (output in `pkg/wire/wire_gen.go`); OSS `gen-go` generates only `pkg/server/bootstrap/wire/wire_gen.go`. Update sync scripts and Makefile. Verify dual-build CI and all tests pass.

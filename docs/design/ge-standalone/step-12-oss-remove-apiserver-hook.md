@@ -32,7 +32,7 @@ Remove enterprise-specific CLI registration from OSS `main.go`. Enterprise users
 ### Out of scope
 
 - Removing `wireExtsStandaloneAPIServerSet` from overlaid `wireexts_enterprise.go` (Step 13).
-- Removing `InitializeAPIServerFactory` from OSS `wire.go` (optional cleanup in Step 13).
+- Removing `InitializeAPIServerFactory` from OSS `pkg/server/bootstrap/wire` (optional cleanup in Step 13).
 
 ## Implementation tasks
 

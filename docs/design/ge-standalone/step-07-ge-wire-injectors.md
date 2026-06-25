@@ -1,4 +1,4 @@
-# Step 07: GE wire injectors
+# Step 07: GE wire injectors and wireext
 
 | Field | Value |
 |-------|-------|
@@ -9,30 +9,54 @@
 
 ## Goal
 
-Move enterprise Wire **injector definitions** and **edition wire sets** from the overlaid `src/pkg/wire/server.go` into GE-owned packages, importing OSS `wiresets` instead of duplicating shared sets.
+Move enterprise Wire **injector definitions** and **edition bindings** from the overlaid `src/pkg/wire/server.go` into GE-owned packages, importing OSS `pkg/server/bootstrap/wire` for core sets only.
 
-After this step, GE owns the canonical source of `wireExtsBasicSet` and related sets; overlay continues copying the output to OSS until Step 13.
+**GE never imports `github.com/grafana/grafana/pkg/server/wireext`.** GE composes `osswire.Server + gewireext.Set`.
+
+After this step, GE owns the canonical source of enterprise edition bindings; overlay continues copying outputs to OSS until Step 13.
+
+## Target GE layout (after this step)
+
+```
+grafana-enterprise/
+  pkg/wire/
+    inject.go           //go:build wireinject && enterprise — Initialize*, etc.
+    wireinject.go       # build tag file if needed
+  pkg/wireext/
+    enterprise.go       # wireExtsBasicSet, wireExtsSet, module/CLI variants
+  cmd/grafana-enterprise/
+    main.go             # (Step 08 wires this up)
+```
+
+**Composition pattern (GE):**
+
+```go
+// pkg/wire/inject.go
+import (
+    osswire "github.com/grafana/grafana/pkg/server/bootstrap/wire"
+    "github.com/grafana/grafana-enterprise/pkg/wireext"
+)
+
+func Initialize(...) (*server.Server, error) {
+    wire.Build(osswire.Server, wireext.Set)
+    return &server.Server{}, nil
+}
+```
 
 ## Scope
 
 ### In scope
 
-- Create GE package structure:
-  ```
-  grafana-enterprise/
-    pkg/wire/
-      wire.go              // injectors: Initialize, InitializeModuleServer, etc.
-      edition.go           // wireExtsBasicSet, wireExtsSet, wireExtsModuleServerSet, ...
-      wireinject.go        // build tag: wireinject && enterprise
-  ```
+- Create GE packages `pkg/wire/` and `pkg/wireext/` as above.
 - Port content from `src/pkg/wire/server.go` (today's `wireexts_enterprise.go` source):
-  - Change imports from `github.com/grafana/grafana/pkg/extensions/...` to `github.com/grafana/grafana-enterprise/pkg/...` **only if** enterprise packages have moved — see Import paths below.
-  - Compose OSS shared sets: `wiresets.Server`, `wiresets.CLI`, etc.
+  - Edition bindings → `pkg/wireext/enterprise.go`
+  - Injectors → `pkg/wire/inject.go`
+  - Compose OSS core: `osswire.Server`, `osswire.CLI`, etc. — **not** OSS `wireext`
 - Copy enterprise implementation packages from `src/pkg/extensions/` → `pkg/` incrementally **or** keep `pkg/extensions/` path under GE module temporarily:
-  - **Recommended for this step:** keep import paths as `github.com/grafana/grafana/pkg/extensions/...` inside GE wire files until Step 09 rename — minimizes diff size. GE module code can live under `src/pkg/extensions` with module path hack **or** use replace in overlay only.
+  - **Recommended for this step:** keep import paths as `github.com/grafana/grafana/pkg/extensions/...` inside GE wire files until Step 09 rename — minimizes diff size.
   - **Cleaner approach:** move to `github.com/grafana/grafana-enterprise/pkg/...` in GE repo and update wire imports in same PR (large but one-time).
 
-- Update `enterprise-to-oss.sh` source path if wire file location changes (GE repo only).
+- Update `enterprise-to-oss.sh` source paths if wire file locations change (GE repo only).
 
 ### Out of scope
 
@@ -51,15 +75,15 @@ Default recommendation for LLM: **Strategy A** for Step 07 unless human specifie
 
 ## Implementation tasks
 
-1. **Create `pkg/wire/edition.go`** with all `wireExts*` sets from current `src/pkg/wire/server.go`.
+1. **Create `pkg/wireext/enterprise.go`** with all `wireExts*` sets from current `src/pkg/wire/server.go`.
 
-2. **Create `pkg/wire/wire.go`** with injectors mirroring OSS:
+2. **Create `pkg/wire/inject.go`** with injectors mirroring OSS:
    ```go
    //go:build wireinject && enterprise
    // +build wireinject,enterprise
 
    func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
-       wire.Build(wireExtsSet)
+       wire.Build(osswire.Server, wireext.Set)
        return &server.Server{}, nil
    }
    ```
@@ -73,22 +97,23 @@ Default recommendation for LLM: **Strategy A** for Step 07 unless human specifie
      ```
 
 4. **Sync script update** (GE `enterprise-to-oss.sh`):
-   - Copy GE `pkg/wire/edition.go` → OSS `pkg/server/wireexts_enterprise.go` (preserve overlay contract until Step 13).
+   - Copy GE `pkg/wireext/enterprise.go` → OSS `pkg/server/wireexts_enterprise.go` (preserve overlay contract until Step 13).
 
-5. **Do not delete** `src/pkg/wire/server.go` until Step 08 validates generation — mark deprecated or make it re-export from `pkg/wire/`.
+5. **Do not delete** `src/pkg/wire/server.go` until Step 08 validates generation — mark deprecated or make it re-export from `pkg/wire/` + `pkg/wireext/`.
 
 ## Files likely touched (GE repo)
 
-- `pkg/wire/wire.go` (new)
-- `pkg/wire/edition.go` (new)
+- `pkg/wire/inject.go` (new)
+- `pkg/wireext/enterprise.go` (new)
 - `src/pkg/wire/server.go` (deprecated / thin copy)
 - `enterprise-to-oss.sh` (copy paths)
 - `Makefile` (add `gen-wire` stub — generation in Step 08)
 
 ## Acceptance criteria
 
-- [ ] GE `pkg/wire/*.go` compiles with `-tags=wireinject,enterprise` (injector files only).
+- [ ] GE `pkg/wire/*.go` and `pkg/wireext/*.go` compile with `-tags=wireinject,enterprise` (injector files only).
 - [ ] Content parity with previous `src/pkg/wire/server.go` (diff against overlay source).
+- [ ] GE wire files import `pkg/server/bootstrap/wire`, not `pkg/server/wireext`.
 - [ ] OSS overlay sync still produces valid `wireexts_enterprise.go`.
 - [ ] OSS: `make gen-go` + `make build-backend` + enterprise tests pass **after** running overlay copy.
 - [ ] `make test-go-integration-postgres SHARD=1 SHARDS=1` passes.
@@ -99,7 +124,7 @@ Default recommendation for LLM: **Strategy A** for Step 07 unless human specifie
 ### GE repo
 
 ```bash
-go build -tags=wireinject,enterprise ./pkg/wire/...
+go build -tags=wireinject,enterprise ./pkg/wire/... ./pkg/wireext/...
 ```
 
 ### OSS repo (after syncing wire file from GE)
@@ -124,8 +149,8 @@ yarn e2e:playwright --grep @acceptance
 
 ## Rollback
 
-Restore `src/pkg/wire/server.go` as canonical; remove `pkg/wire/`.
+Restore `src/pkg/wire/server.go` as canonical; remove `pkg/wire/` and `pkg/wireext/`.
 
 ## LLM prompt seed
 
-> Implement Step 07 in **grafana-enterprise** per `docs/design/ge-standalone/step-07-ge-wire-injectors.md`. Move enterprise wire sets and injectors to GE `pkg/wire/`, composing OSS `wiresets` from github.com/grafana/grafana. Update enterprise-to-oss.sh copy paths. Use deferred import path rename (Strategy A). Verify OSS overlay still builds after sync.
+> Implement Step 07 in **grafana-enterprise** per `docs/design/ge-standalone/step-07-ge-wire-injectors.md`. Move enterprise edition bindings to GE `pkg/wireext/`, injectors to GE `pkg/wire/`, composing OSS `pkg/server/bootstrap/wire` only (never OSS `wireext`). Update enterprise-to-oss.sh copy paths. Use deferred import path rename (Strategy A). Verify OSS overlay still builds after sync.
