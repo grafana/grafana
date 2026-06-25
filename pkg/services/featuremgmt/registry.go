@@ -3165,7 +3165,7 @@ var (
 		},
 		{
 			Name:         "plugins.appSDKManifest",
-			Description:  "Enables reading and parsing app-sdk manifest files from plugin bundles",
+			Description:  "Enables generating App Platform APIs from app-sdk manifest files in app plugins loaded at server start. A plugin installed at runtime requires a restart for its APIs to appear.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			Expression:   "false",

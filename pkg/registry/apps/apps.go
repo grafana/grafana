@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
-	"github.com/grafana/grafana/pkg/registry/apps/pluginmanifest"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
@@ -50,7 +49,6 @@ func ProvideAppInstallers(
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
-	pluginManifestInstallers pluginmanifest.AppInstallers,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -106,9 +104,9 @@ func ProvideAppInstallers(
 		installers = append(installers, annotationAppInstaller)
 	}
 
-	// pluginManifestInstallers is empty unless FlagPluginsAppSDKManifest is enabled;
-	// the flag is gated in pluginmanifest.ProvideAppInstallers.
-	installers = append(installers, pluginManifestInstallers...)
+	// Plugin-manifest-derived installers are not assembled here: they are built lazily by
+	// the API server at start time (see pluginmanifest.Builder), once the plugin registry is
+	// populated. The flag gate lives in the builder.
 
 	return installers
 }

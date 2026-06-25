@@ -3994,11 +3994,14 @@
     {
       "metadata": {
         "name": "plugins.appSDKManifest",
-        "resourceVersion": "1781525468906",
-        "creationTimestamp": "2026-06-15T12:11:08Z"
+        "resourceVersion": "1782239345326",
+        "creationTimestamp": "2026-06-15T12:11:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-23 18:29:05.326833352 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables reading and parsing app-sdk manifest files from plugin bundles",
+        "description": "Enables generating App Platform APIs from app-sdk manifest files in app plugins loaded at server start. A plugin installed at runtime requires a restart for its APIs to appear.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "hideFromDocs": true,

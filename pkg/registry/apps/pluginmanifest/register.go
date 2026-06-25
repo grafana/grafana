@@ -23,27 +23,48 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
-// AppInstallers is a named type for Wire injection of plugin-manifest-sourced app installers.
-type AppInstallers []appsdkapiserver.AppInstaller
-
 // appSDKManifestFile is the statically-named file, read from the root of an app plugin's
 // bundle, that holds the plugin's app-sdk manifest (an AppManifest custom resource).
 const appSDKManifestFile = "app-sdk-manifest.json"
 
-func ProvideAppInstallers(
+// Builder constructs app installers from the manifests of app plugins in the plugin registry.
+//
+// It is invoked by the API server at start time (rather than eagerly at Wire-injection time)
+// because the set of served API groups is built once and is immutable thereafter: the registry
+// must be fully populated with loaded plugins before the installers are derived. See the module
+// dependency ordering that makes the API server start after the plugin store.
+type Builder struct {
+	features  featuremgmt.FeatureToggles
+	registry  pluginregistry.Service
+	client    plugins.Client
+	pluginCtx *plugincontext.Provider
+}
+
+func ProvideBuilder(
 	features featuremgmt.FeatureToggles,
 	registry pluginregistry.Service,
 	client plugins.Client,
 	pluginCtx *plugincontext.Provider,
-) (AppInstallers, error) {
+) *Builder {
+	return &Builder{
+		features:  features,
+		registry:  registry,
+		client:    client,
+		pluginCtx: pluginCtx,
+	}
+}
+
+// BuildInstallers derives an app installer for every app plugin in the registry that ships an
+// app-sdk manifest. It returns nil when the feature is disabled. It is safe to call after the
+// plugin registry has been populated (i.e. at API server start).
+func (b *Builder) BuildInstallers(ctx context.Context) ([]appsdkapiserver.AppInstaller, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagPluginsAppSDKManifest) {
+	if !b.features.IsEnabledGlobally(featuremgmt.FlagPluginsAppSDKManifest) {
 		return nil, nil
 	}
 
-	ctx := context.Background()
 	var installers []appsdkapiserver.AppInstaller
-	for _, p := range registry.Plugins(ctx) {
+	for _, p := range b.registry.Plugins(ctx) {
 		if p.Type != plugins.TypeApp {
 			continue
 		}
@@ -54,7 +75,7 @@ func ProvideAppInstallers(
 		if !ok {
 			continue
 		}
-		installer, err := newInstallerFromManifest(p.ID, manifest, client, pluginCtx)
+		installer, err := newInstallerFromManifest(p.ID, manifest, b.client, b.pluginCtx)
 		if err != nil {
 			return nil, fmt.Errorf("creating app installer for plugin %s: %w", p.ID, err)
 		}

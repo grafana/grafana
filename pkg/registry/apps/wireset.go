@@ -35,5 +35,5 @@ var WireSet = wire.NewSet(
 	quotas.RegisterAppInstaller,
 	example.RegisterAppInstaller,
 	dashvalidator.RegisterAppInstaller,
-	pluginmanifest.ProvideAppInstallers,
+	pluginmanifest.ProvideBuilder,
 )

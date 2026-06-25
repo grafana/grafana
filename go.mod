@@ -221,7 +221,7 @@ require (
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // @grafana/grafana-catalog
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
-	gopkg.in/yaml.v2 v2.4.0 // @grafana/identity-access-team
+	gopkg.in/yaml.v2 v2.4.0 // indirect; @grafana/identity-access-team
 	k8s.io/api v0.36.1 // @grafana/grafana-app-platform-squad
 	k8s.io/apiextensions-apiserver v0.36.0 // @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.36.1 // @grafana/grafana-app-platform-squad
@@ -718,6 +718,10 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
+
+require github.com/google/safetext v0.0.0-20260330151545-1fb717a317c5
+
+require github.com/pborman/uuid v1.2.1 // indirect
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream

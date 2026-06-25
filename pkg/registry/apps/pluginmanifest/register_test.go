@@ -1,6 +1,7 @@
 package pluginmanifest
 
 import (
+	"context"
 	"io"
 	"io/fs"
 	"strings"
@@ -67,7 +68,7 @@ func manifestFS(manifestJSON string) *pluginfakes.FakePluginFS {
 	return fakeFS
 }
 
-func TestProvideAppInstallers(t *testing.T) {
+func TestBuildInstallers(t *testing.T) {
 	t.Run("returns no installers when feature is disabled", func(t *testing.T) {
 		reg := pluginfakes.NewFakePluginRegistry()
 		// A would-be installer that also panics if its manifest is read, proving the
@@ -82,9 +83,30 @@ func TestProvideAppInstallers(t *testing.T) {
 			FS:       fakeFS,
 		}
 
-		installers, err := ProvideAppInstallers(featuremgmt.WithFeatures(), reg, nil, nil)
+		installers, err := ProvideBuilder(featuremgmt.WithFeatures(), reg, nil, nil).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Empty(t, installers)
+	})
+
+	t.Run("reflects plugins added to the registry after the builder is constructed", func(t *testing.T) {
+		// The builder is constructed at Wire-injection time but invoked at API server start.
+		// Plugins loaded between those points (e.g. under the service-loading path, where the
+		// registry is empty at injection time) must still produce installers.
+		reg := pluginfakes.NewFakePluginRegistry()
+		builder := ProvideBuilder(enabledFeatures(), reg, nil, nil)
+
+		installers, err := builder.BuildInstallers(context.Background())
+		require.NoError(t, err)
+		require.Empty(t, installers)
+
+		reg.Store["test-app"] = &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: "test-app", Type: plugins.TypeApp},
+			FS:       manifestFS(manifestCR("test-app", "testapp.ext.grafana.com", "Thing", "things", false)),
+		}
+
+		installers, err = builder.BuildInstallers(context.Background())
+		require.NoError(t, err)
+		require.Len(t, installers, 1)
 	})
 
 	t.Run("returns no installers when no plugins have manifests", func(t *testing.T) {
@@ -97,7 +119,7 @@ func TestProvideAppInstallers(t *testing.T) {
 			FS: manifestFS(""),
 		}
 
-		installers, err := ProvideAppInstallers(enabledFeatures(), reg, nil, nil)
+		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Empty(t, installers)
 	})
@@ -112,7 +134,7 @@ func TestProvideAppInstallers(t *testing.T) {
 			FS: manifestFS(manifestCR("test-app", "testapp.ext.grafana.com", "Thing", "things", false)),
 		}
 
-		installers, err := ProvideAppInstallers(enabledFeatures(), reg, nil, nil)
+		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Len(t, installers, 1)
 		require.Equal(t, []schema.GroupVersion{{Group: "testapp.ext.grafana.com", Version: "v1"}}, installers[0].GroupVersions())
@@ -128,7 +150,7 @@ func TestProvideAppInstallers(t *testing.T) {
 			FS: manifestFS("not valid json"),
 		}
 
-		installers, err := ProvideAppInstallers(enabledFeatures(), reg, nil, nil)
+		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "test-app")
 		require.Empty(t, installers)
@@ -144,7 +166,7 @@ func TestProvideAppInstallers(t *testing.T) {
 			FS: manifestFS(manifestCR("ds-app", "dsapp.ext.grafana.com", "X", "xs", false)),
 		}
 
-		installers, err := ProvideAppInstallers(enabledFeatures(), reg, nil, nil)
+		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Empty(t, installers)
 	})
@@ -156,7 +178,7 @@ func TestProvideAppInstallers(t *testing.T) {
 			FS:       manifestFS(manifestCR("test-app", "testapp.ext.grafana.com", "Thing", "things", false)),
 		}
 
-		installers, err := ProvideAppInstallers(enabledFeatures(), reg, nil, nil)
+		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Len(t, installers, 1)
 		require.Nil(t, installers[0].AdmissionPlugin())
@@ -169,7 +191,7 @@ func TestProvideAppInstallers(t *testing.T) {
 			FS:       manifestFS(manifestCR("test-app", "testapp.ext.grafana.com", "Thing", "things", true)),
 		}
 
-		installers, err := ProvideAppInstallers(enabledFeatures(), reg, nil, nil)
+		installers, err := ProvideBuilder(enabledFeatures(), reg, nil, nil).BuildInstallers(context.Background())
 		require.NoError(t, err)
 		require.Len(t, installers, 1)
 		require.NotNil(t, installers[0].AdmissionPlugin())
