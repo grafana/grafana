@@ -118,7 +118,7 @@ export enum DashboardInitPhase {
   Completed = 'Completed',
 }
 
-export interface DashboardInitError {
+interface DashboardInitError {
   message: string;
   error: unknown;
 }
