@@ -32,7 +32,6 @@ var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 
 type githubWebhookRepository struct {
 	GithubRepository
-	*repository.WebhookHandler
 	config      *provisioning.Repository
 	owner       string
 	repo        string
@@ -55,7 +54,6 @@ func NewGithubWebhookRepository(
 		replay = newReplayCache(defaultReplayCacheTTL)
 	}
 	cfg := basic.Config()
-	slug := fmt.Sprintf("%s/%s", basic.Owner(), basic.Repo())
 	r := &githubWebhookRepository{
 		GithubRepository: basic,
 		config:           cfg,
@@ -66,14 +64,18 @@ func NewGithubWebhookRepository(
 		secret:           secret,
 		replayCache:      replay,
 	}
-	r.WebhookHandler = repository.NewWebhookHandler(
-		r.processRequest, cfg.Status.Webhook, cfg.GetName(), slug,
-		cfg.Spec.GitHub.Branch, cfg.Spec.Sync.Enabled, incrementalPolicy,
-	)
 	return r
 }
 
-func (r *githubWebhookRepository) processRequest(ctx context.Context, req *http.Request) (repository.WebhookEvent, error) {
+func (r *githubWebhookRepository) Slug() string {
+	return fmt.Sprintf("%s/%s", r.owner, r.repo)
+}
+
+func (r *githubWebhookRepository) Branch() string {
+	return r.config.Spec.GitHub.Branch
+}
+
+func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.Request) (repository.WebhookEvent, error) {
 	if r.secret.IsZero() {
 		return repository.WebhookEvent{}, fmt.Errorf("missing webhook secret")
 	}

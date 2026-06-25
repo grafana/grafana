@@ -700,6 +700,10 @@ func (b *APIBuilder) GetStatusPatcher() *appcontroller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
+func (b *APIBuilder) GetIncrementalPolicy() repository.IncrementalSyncPolicy {
+	return b.incrementalPolicy
+}
+
 func (b *APIBuilder) GetHealthChecker() *controller.RepositoryHealthChecker {
 	return b.healthChecker
 }

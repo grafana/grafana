@@ -159,7 +159,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		// Limit the webhook request body size
 		r.Body = http.MaxBytesReader(w, r.Body, webhookMaxBodySize)
 
-		rsp, err := hooks.Webhook(ctx, r)
+		rsp, err := s.webhook(ctx, r, hooks)
 		if err != nil {
 			span.RecordError(err)
 			responder.Error(err)
@@ -203,6 +203,100 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		responder.Object(rsp.Code, rsp)
 	}), nil
+}
+
+// webhook turns an inbound delivery into a sync/pull-request job response. The
+// repository supplies the normalized event via ProcessRequest; this dispatches
+// it against the configured repository and branch.
+func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, hooks repository.WebhookRepository) (*provisioning.WebhookResponse, error) {
+	if hooks.Config().Status.Webhook == nil {
+		return nil, fmt.Errorf("unexpected webhook request")
+	}
+
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", hooks.Slug(), "ref", hooks.Branch()))
+
+	event, err := hooks.ProcessRequest(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	switch event.Type {
+	case repository.WebhookEventPush:
+		if event.RepoSlug != hooks.Slug() {
+			logging.FromContext(ctx).Warn("webhook push event repository mismatch", "expected", hooks.Slug(), "got", event.RepoSlug)
+			return nil, repository.ErrRepositoryMismatch
+		}
+		if !hooks.Config().Spec.Sync.Enabled {
+			return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
+		}
+		// Skip silently if the event is not for the configured branch, as the
+		// webhook cannot be configured to only publish events for one branch.
+		if event.Branch != hooks.Branch() {
+			return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
+		}
+		return s.pushSyncResponse(event), nil
+	case repository.WebhookEventPullRequest:
+		if event.RepoSlug != hooks.Slug() {
+			logging.FromContext(ctx).Warn("webhook pull request event repository mismatch", "expected", hooks.Slug(), "got", event.RepoSlug)
+			return nil, repository.ErrRepositoryMismatch
+		}
+		if event.Branch != hooks.Branch() {
+			return &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: fmt.Sprintf("ignoring pull request event as %s is not  the configured branch", event.Branch),
+			}, nil
+		}
+		if !watchedPullRequestAction(event.Action) {
+			return &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: fmt.Sprintf("ignore pull request event: %s", event.Action),
+			}, nil
+		}
+		return pullRequestResponse(event), nil
+	case repository.WebhookEventPing:
+		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ping received"}, nil
+	case repository.WebhookEventReplay:
+		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
+	default:
+		return &provisioning.WebhookResponse{Code: http.StatusNotImplemented, Message: event.Message}, nil
+	}
+}
+
+func (s *webhookConnector) pushSyncResponse(event repository.WebhookEvent) *provisioning.WebhookResponse {
+	return &provisioning.WebhookResponse{
+		Code: http.StatusAccepted,
+		Job: &provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull: &provisioning.SyncJobOptions{
+				Incremental: s.core.GetIncrementalPolicy().CanUseIncrementalSync(event.DeletedPaths, event.TotalChanges),
+			},
+		},
+	}
+}
+
+func pullRequestResponse(event repository.WebhookEvent) *provisioning.WebhookResponse {
+	return &provisioning.WebhookResponse{
+		Code:    http.StatusAccepted,
+		Message: fmt.Sprintf("pull request: %s", event.Action),
+		Job: &provisioning.JobSpec{
+			Action: provisioning.JobActionPullRequest,
+			PullRequest: &provisioning.PullRequestJobOptions{
+				URL:  event.PRURL,
+				PR:   event.PRNumber,
+				Ref:  event.SourceRef,
+				Hash: event.Hash,
+			},
+		},
+	}
+}
+
+func watchedPullRequestAction(action repository.PullRequestAction) bool {
+	switch action {
+	case repository.PullRequestActionOpened, repository.PullRequestActionReopened, repository.PullRequestActionUpdated:
+		return true
+	default:
+		return false
+	}
 }
 
 // statusPatcher is the subset of the status patcher API used by updateLastEvent.
