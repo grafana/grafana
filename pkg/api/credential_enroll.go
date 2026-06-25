@@ -1,13 +1,18 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/passkey"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -62,10 +67,16 @@ func (hs *HTTPServer) CredentialEnrollBegin(c *contextmodel.ReqContext) response
 
 	usr, err := hs.userService.Create(c.Req.Context(), &createUserCmd)
 	if err != nil {
-		if errors.Is(err, user.ErrUserAlreadyExists) {
+		if !errors.Is(err, user.ErrUserAlreadyExists) {
+			return response.Error(http.StatusInternalServerError, "Failed to create user", err)
+		}
+		// The email may belong to an abandoned passwordless signup (a user row a previous begin created
+		// before its WebAuthn ceremony finished). Reuse that row if it is provably unusable; otherwise
+		// it is a real account and the email is taken.
+		usr, err = hs.reclaimAbandonedPasswordlessUser(c.Req.Context(), form.Email)
+		if err != nil {
 			return response.Error(http.StatusUnauthorized, "User with same email address already exists", nil)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to create user", err)
 	}
 
 	displayName := form.Name
@@ -101,22 +112,109 @@ func (hs *HTTPServer) CredentialEnrollFinish(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userID, _, err := hs.passkeyService.FinishEnrollment(c.Req.Context(), form.SessionID, form.Name, form.Response)
+	userID, source, err := hs.passkeyService.FinishEnrollment(c.Req.Context(), form.SessionID, form.Name, form.Response)
 	if err != nil {
 		if errors.Is(err, passkey.ErrChallengeExpired) {
 			return response.Error(http.StatusGone, "passkey.challenge-expired", err)
 		}
 		return response.Error(http.StatusBadRequest, "passkey enrollment failed", err)
 	}
-	// Source-specific post-steps (completing the signup/invite TempUser, applying invite org) are
-	// deferred; PW7 wires the invite branch.
 
 	usr, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to load enrolled user", err)
 	}
+
+	resp := util.DynMap{"message": "Signed up", "code": "redirect-to-landing-page"}
+	// A self-service signup must finish the same way a password signup does (see SignUpStep2), so run
+	// the account-completion steps now that the passkey exists. Invite-initiated enrollment is a
+	// separate flow (PW7/PW9) and is not handled here.
+	if source == passkey.EnrollSourceSignup {
+		if rsp := hs.completePasskeySignup(c.Req.Context(), usr, resp); rsp != nil {
+			return rsp
+		}
+	}
+
 	if err := hs.loginUserWithUser(usr, c); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to login user", err)
 	}
-	return response.JSON(http.StatusOK, util.DynMap{"message": "Signed up", "code": "redirect-to-landing-page"})
+	if source == passkey.EnrollSourceSignup {
+		metrics.MApiUserSignUpCompleted.Inc()
+	}
+	return response.JSON(http.StatusOK, resp)
+}
+
+// completePasskeySignup runs the post-account-creation steps that the password signup (SignUpStep2)
+// performs, so a passwordless signup behaves the same: it announces completion and adds the user to any
+// organisation that has a pending invite for their email (switching the response to land them on the
+// org picker). It returns a non-nil response only on failure.
+//
+// One SignUpStep2 step is intentionally omitted: marking the signup TempUser completed. That needs the
+// email verification code, which lives only in the begin request and is not carried to finish; a stale
+// SignUpStarted TempUser row is harmless.
+func (hs *HTTPServer) completePasskeySignup(ctx context.Context, usr *user.User, resp util.DynMap) response.Response {
+	if err := hs.bus.Publish(ctx, &events.SignUpCompleted{
+		Email: usr.Email,
+		Name:  usr.NameOrFallback(),
+	}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to publish event", err)
+	}
+
+	invites, err := hs.tempUserService.GetTempUsersQuery(ctx, &tempuser.GetTempUsersQuery{
+		Email:  usr.Email,
+		Status: tempuser.TmpUserInvitePending,
+	})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query database for invites", err)
+	}
+	for _, invite := range invites {
+		if ok, rsp := hs.applyUserInvite(ctx, usr, invite, false); !ok {
+			return rsp
+		}
+		resp["code"] = "redirect-to-select-org"
+	}
+	return nil
+}
+
+// reclaimAbandonedPasswordlessUser reuses an existing user row for a repeat passwordless signup, but
+// only when that row is provably unusable. CredentialEnrollBegin creates the user before the WebAuthn
+// ceremony runs, so a person who dismisses the OS prompt leaves behind a row with no password and no
+// passkey: it cannot log in by any means and it squats the email. Reclaiming it lets that person try
+// again. We reclaim ONLY when the row has no password, no passkey, and no external-auth (SSO/LDAP)
+// link; any of those marks a real account that must never be handed to a different signer, so we
+// refuse and the caller reports the email as taken.
+//
+// Residual edge: on an instance that links SSO accounts by email, an attacker could reclaim an
+// abandoned row and enrol a passkey before the real owner's first SSO login links to that same row.
+// That is only reachable with open signup and email verification turned off — the configuration the
+// docs already advise against.
+func (hs *HTTPServer) reclaimAbandonedPasswordlessUser(ctx context.Context, loginOrEmail string) (*user.User, error) {
+	usr, err := hs.userService.GetByLoginWithPassword(ctx, &user.GetUserByLoginQuery{LoginOrEmail: loginOrEmail})
+	if err != nil {
+		return nil, err
+	}
+	if usr == nil {
+		return nil, errors.New("user not found")
+	}
+	if usr.Password != "" {
+		return nil, errors.New("refusing to reclaim: user has a password")
+	}
+
+	creds, err := hs.passkeyStore.ListByUser(ctx, usr.ID)
+	if err != nil {
+		return nil, err
+	}
+	if len(creds) > 0 {
+		return nil, errors.New("refusing to reclaim: user already has a passkey")
+	}
+
+	// GetAuthInfo returns user.ErrUserNotFound when the user has no external-auth link. A nil error
+	// means a link exists, and any other error is unexpected — both block the reclaim.
+	if _, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID}); err == nil {
+		return nil, errors.New("refusing to reclaim: user is linked to an external auth provider")
+	} else if !errors.Is(err, user.ErrUserNotFound) {
+		return nil, err
+	}
+
+	return usr, nil
 }

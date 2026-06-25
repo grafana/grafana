@@ -2,6 +2,7 @@ import { type PublicKeyCredentialCreationOptionsJSON, startRegistration } from '
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack } from '@grafana/ui';
@@ -11,7 +12,7 @@ import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
-import { isWebAuthnAbort } from '../Login/passkeyLogin';
+import { isWebAuthnAbort, PASSKEY_HINT_KEY } from '../Login/passkeyLogin';
 import { PasswordField } from '../PasswordField/PasswordField';
 
 interface SignupDTO {
@@ -88,6 +89,10 @@ export const SignupPage = ({ queryParams }: Props) => {
         { sessionID: begin.sessionID, name: t('sign-up.passkey.default-name', 'Passkey'), response },
         { showErrorAlert: false }
       );
+      // Mark this browser as passkey-enrolled so the login page shows the primary "Sign in with a
+      // passkey" label next time, not the "from another device" fallback — same hint the login and
+      // profile-enroll flows write.
+      store.set(PASSKEY_HINT_KEY, true);
       window.location.assign(getConfig().appSubUrl + '/');
     } catch (err) {
       // The user dismissed the OS prompt: let them retry without losing the form.
