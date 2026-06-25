@@ -33,6 +33,12 @@ describe('resourceKinds registry', () => {
       resource: 'playlists',
       itemType: 'Playlist',
     });
+    expect(resourceKindInfos.librarypanel).toMatchObject({
+      group: 'dashboard.grafana.app',
+      kind: 'LibraryPanel',
+      resource: 'librarypanels',
+      itemType: 'LibraryPanel',
+    });
   });
 
   it('sources icons from the search package', () => {
@@ -46,6 +52,7 @@ describe('getKindInfoByResource', () => {
     expect(getKindInfoByResource('dashboards')).toBe(resourceKindInfos.dashboard);
     expect(getKindInfoByResource('folders')).toBe(resourceKindInfos.folder);
     expect(getKindInfoByResource('playlists')).toBe(resourceKindInfos.playlist);
+    expect(getKindInfoByResource('librarypanels')).toBe(resourceKindInfos.librarypanel);
   });
 
   it('returns undefined for unknown or missing resources', () => {
@@ -86,6 +93,12 @@ describe('getKindInfoByGroupKind', () => {
     expect(getKindInfoByGroupKind('folder.grafana.app', 'Folder')).toBe(resourceKindInfos.folder);
   });
 
+  it('disambiguates kinds that share an API group by the kind', () => {
+    // Dashboards and library panels both live in dashboard.grafana.app.
+    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'LibraryPanel')).toBe(resourceKindInfos.librarypanel);
+    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(resourceKindInfos.dashboard);
+  });
+
   it('resolves on whichever identifier is present', () => {
     expect(getKindInfoByGroupKind(undefined, 'Playlist')).toBe(resourceKindInfos.playlist);
     expect(getKindInfoByGroupKind('playlist.grafana.app', undefined)).toBe(resourceKindInfos.playlist);
@@ -111,6 +124,10 @@ describe('getKindInfoByStat', () => {
     // The resource uniquely identifies the kind, so it wins over a group that
     // would otherwise resolve to a different kind.
     expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'folders' })).toBe(resourceKindInfos.folder);
+    // Dashboards and library panels share dashboard.grafana.app; the resource tells them apart.
+    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'librarypanels' })).toBe(
+      resourceKindInfos.librarypanel
+    );
   });
 
   it('falls back to a group-only match when the resource is missing or unknown', () => {
@@ -153,6 +170,13 @@ describe('getRepositoryRoute', () => {
     expect(getRepositoryRoute(resourceKindInfos.playlist, makeRepo('instance'))).toBe('/playlists');
   });
 
+  it('routes library panels to their own collection page regardless of target', () => {
+    // Library panels live in folders but aren't browsable in the dashboards folder
+    // view, so they always resolve to /library-panels.
+    expect(getRepositoryRoute(resourceKindInfos.librarypanel, makeRepo('folder'))).toBe('/library-panels');
+    expect(getRepositoryRoute(resourceKindInfos.librarypanel, makeRepo('instance'))).toBe('/library-panels');
+  });
+
   it('falls back to the collection page when the repository name or spec is missing', () => {
     // No spec → not a folder target → collection page.
     expect(getRepositoryRoute(resourceKindInfos.dashboard, {})).toBe('/dashboards');
@@ -171,6 +195,7 @@ describe('getAvailableResourceKinds', () => {
       resourceKindInfos.folder,
       resourceKindInfos.dashboard,
       resourceKindInfos.playlist,
+      resourceKindInfos.librarypanel,
     ]);
   });
 

@@ -92,11 +92,11 @@ export interface StatusInfo {
 }
 
 // Tree view types for combined Resources/Files view.
-// `Dashboard`/`Playlist` map to a provisioning resource kind (see resourceKinds.ts).
+// `Dashboard`/`Playlist`/`LibraryPanel` map to a provisioning resource kind (see resourceKinds.ts).
 // `Folder` usually does too, but getItemType also infers it from plain directory
 // paths that have no backing resource. `File` is the fallback for plain files
 // that don't map to a known kind.
-export type ItemType = 'Folder' | 'Dashboard' | 'Playlist' | 'File';
+export type ItemType = 'Folder' | 'Dashboard' | 'Playlist' | 'LibraryPanel' | 'File';
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {

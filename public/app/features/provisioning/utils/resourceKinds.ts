@@ -81,6 +81,23 @@ export const resourceKindInfos = {
     listRoute: '/playlists',
     folderScoped: false,
   },
+  librarypanel: {
+    // Library panels share the dashboards API group but are keyed by their own
+    // GroupResource (librarypanels.dashboard.grafana.app).
+    group: DASHBOARD_API_GROUP,
+    kind: 'LibraryPanel',
+    resource: 'librarypanels',
+    itemType: 'LibraryPanel',
+    // getIconForKind doesn't know library panels, so use the library-panel icon directly.
+    icon: 'library-panel',
+    // No deep-link route for a single library panel exists; they're only viewable
+    // from the library panels collection page.
+    listRoute: '/library-panels',
+    // Library panels live inside folders on the backend, but the dashboards folder
+    // browse doesn't list them — they have their own collection page — so for
+    // routing they behave like a non-foldered kind and always resolve to listRoute.
+    folderScoped: false,
+  },
 } satisfies Record<string, ResourceKindInfo>;
 
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
