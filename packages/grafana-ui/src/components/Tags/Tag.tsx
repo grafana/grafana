@@ -71,22 +71,23 @@ const getSkeletonStyles = () => ({
 });
 
 const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let colors;
   if (colorIndex === undefined) {
-    colors = getTagColorsFromName(name);
+    colors = getTagColorsFromName(name, theme.isLight, visualRefreshEnabled);
   } else {
-    colors = getTagColor(colorIndex);
+    colors = getTagColor(colorIndex, theme.isLight, visualRefreshEnabled);
   }
   return {
     wrapper: css({
       appearance: 'none',
       borderStyle: 'none',
-      fontWeight: theme.typography.fontWeightMedium,
+      fontWeight: visualRefreshEnabled ? 'unset' : theme.typography.fontWeightMedium,
       fontSize: theme.typography.size.sm,
       lineHeight: theme.typography.bodySmall.lineHeight,
       verticalAlign: 'baseline',
       backgroundColor: colors.color,
-      color: theme.v1.palette.gray98,
+      color: visualRefreshEnabled ? colors.borderColor : theme.v1.palette.gray98,
       whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',

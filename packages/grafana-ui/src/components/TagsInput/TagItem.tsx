@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getTagColorsFromName } from '../../utils/tags';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -22,20 +22,33 @@ interface Props {
  * Only used internally by TagsInput
  * */
 export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) => {
+  const theme = useTheme2();
+  const isLight = theme.isLight;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
 
   // If configured, use random colors based on name.
   // Otherwise, a default class name will be applied to the tag.
   const tagStyle = useMemo(() => {
     if (autoColors) {
-      const { color, borderColor } = getTagColorsFromName(name);
+      const { color, borderColor } = getTagColorsFromName(name, isLight, visualRefreshEnabled);
       return { backgroundColor: color, borderColor };
     }
     return undefined;
-  }, [name, autoColors]);
+  }, [name, autoColors, isLight, visualRefreshEnabled]);
 
   return (
-    <li className={cx(styles.itemStyle, !tagStyle && styles.defaultTagColor)} style={tagStyle}>
+    <li
+      className={cx(styles.itemStyle, !tagStyle && styles.defaultTagColor)}
+      style={
+        visualRefreshEnabled
+          ? {
+              backgroundColor: tagStyle?.backgroundColor,
+              color: tagStyle?.borderColor,
+            }
+          : tagStyle
+      }
+    >
       <span className={styles.nameStyle}>{name}</span>
       <IconButton
         name="times"
@@ -51,6 +64,7 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
 
 const getStyles = (theme: GrafanaTheme2) => {
   const height = theme.spacing.gridSize * 3;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
   return {
     itemStyle: css({
@@ -59,7 +73,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       height: `${height}px`,
       lineHeight: `${height - 2}px`,
-      borderWidth: '1px',
+      borderWidth: visualRefreshEnabled ? 0 : '1px',
       borderStyle: 'solid',
       borderRadius: theme.shape.radius.default,
       padding: `0 ${theme.spacing(0.5)}`,

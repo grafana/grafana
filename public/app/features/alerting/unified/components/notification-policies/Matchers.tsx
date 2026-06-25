@@ -3,6 +3,7 @@ import { take, takeRight, uniqueId } from 'lodash';
 import { type FC } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
@@ -53,14 +54,15 @@ interface MatcherBadgeProps {
 }
 
 export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   return <div className={styles.matcher(matcher[0]).wrapper}>{matcherFormatter[formatter](matcher)}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
   matcher: (label: string) => {
-    const { color, borderColor } = getTagColorsFromName(label);
+    const { color, borderColor } = getTagColorsFromName(label, theme.isLight, visualRefreshEnabled);
 
     return {
       wrapper: css({

@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { getTagColorsFromName, Icon, useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { getTagColorsFromName, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface Props {
   label: string;
@@ -12,7 +13,9 @@ export interface Props {
 }
 
 export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
-  const { color } = getTagColorsFromName(label);
+  const theme = useTheme2();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const { borderColor, color } = getTagColorsFromName(label, theme.isLight, visualRefreshEnabled);
   const styles = useStyles2(getStyles);
 
   const countLabel = count !== 0 && <span style={{ marginLeft: '3px' }}>{`(${count})`}</span>;
@@ -22,6 +25,7 @@ export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
       className={styles.badge}
       style={{
         backgroundColor: color,
+        color: visualRefreshEnabled ? borderColor : undefined,
       }}
     >
       {removeIcon && <Icon onClick={onClick} name="times" />}
