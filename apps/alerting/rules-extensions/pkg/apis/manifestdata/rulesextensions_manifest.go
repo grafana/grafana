@@ -47,12 +47,6 @@ var appManifestData = app.ManifestData{
 								app.AdmissionOperationUpdate,
 							},
 						},
-						Mutation: &app.MutationCapability{
-							Operations: []app.AdmissionOperation{
-								app.AdmissionOperationCreate,
-								app.AdmissionOperationUpdate,
-							},
-						},
 					},
 					Schema: &versionSchemaPrometheusRuleFilev0alpha1,
 				},

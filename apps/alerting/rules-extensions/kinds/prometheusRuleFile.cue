@@ -35,11 +35,5 @@ prometheusRuleFilev0alpha1: prometheusRuleFileKind & {
 			"UPDATE",
 		]
 	}
-	mutation: {
-		operations: [
-			"CREATE",
-			"UPDATE",
-		]
-	}
 	selectableFields: []
 }

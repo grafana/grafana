@@ -288,7 +288,16 @@ const operatorStateID = "rules-extensions.alerting.grafana.app"
 // updateStatus rewrites the file's status subresource with the supplied desired inventory
 // and records a successful evaluation under OperatorStates. It uses resource.UpdateObject
 // so the SDK handles ResourceVersion conflicts by re-fetching and re-applying our mutator.
+//
+// It skips the write entirely when the inventory already matches and the last recorded
+// operator state is a clean success. Writing status bumps the file's ResourceVersion, which
+// the informer delivers back as another Update event; if we re-stamped status on every pass
+// (the operator state's LastEvaluation tracks the ResourceVersion, so it always differs) the
+// reconciler would spin in a tight self-triggered loop.
 func (r *Reconciler) updateStatus(ctx context.Context, file *model.PrometheusRuleFile, fileFolder string, folders, alertRules, recordingRules []string) error {
+	if statusUpToDate(file, fileFolder, folders, alertRules, recordingRules) {
+		return nil
+	}
 	_, err := resource.UpdateObject(ctx, r.files, file.GetStaticMetadata().Identifier(), func(obj *model.PrometheusRuleFile, _ bool) (*model.PrometheusRuleFile, error) {
 		obj.Status.ManagedFileFolder = fileFolder
 		obj.Status.ManagedFolders = folders
@@ -298,6 +307,40 @@ func (r *Reconciler) updateStatus(ctx context.Context, file *model.PrometheusRul
 		return obj, nil
 	}, resource.UpdateOptions{Subresource: "status"})
 	return err
+}
+
+// statusUpToDate reports whether the file's recorded status already reflects the desired
+// inventory and a clean prior success. When true, updateStatus skips the write so the
+// reconciler doesn't re-trigger itself via the status-bump informer event. The operator
+// state's LastEvaluation (which tracks ResourceVersion) is deliberately ignored here — it is
+// the field that would otherwise force a write on every pass.
+func statusUpToDate(file *model.PrometheusRuleFile, fileFolder string, folders, alertRules, recordingRules []string) bool {
+	s := file.Status
+	if s.ManagedFileFolder != fileFolder ||
+		!equalStringSlices(s.ManagedFolders, folders) ||
+		!equalStringSlices(s.ManagedAlertRules, alertRules) ||
+		!equalStringSlices(s.ManagedRecordingRules, recordingRules) {
+		return false
+	}
+	state, ok := s.OperatorStates[operatorStateID]
+	if !ok || state.State != model.PrometheusRuleFileStatusOperatorStateStateSuccess {
+		return false
+	}
+	// A prior failure leaves a descriptive message; treat that as not-up-to-date so the next
+	// successful reconcile clears it.
+	return state.DescriptiveState == nil || *state.DescriptiveState == ""
+}
+
+func equalStringSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // writeFailureOperatorState records that this reconcile failed. It does NOT touch the
@@ -595,8 +638,13 @@ func childFolderName(fileName, groupName string) string {
 	return truncate(fmt.Sprintf("%s%s-%s", model.ChildNamePrefix, shortHash(fileName), shortHash(groupName)), 253)
 }
 
+// childRuleName produces a deterministic name for an AlertRule / RecordingRule. The name
+// doubles as the rule's UID in legacy alerting storage, which rejects UIDs longer than 40
+// characters — so we hash the full identity tuple (file, group, rule index, rule name) into
+// a single short hash rather than concatenating per-component hashes. idx is included so two
+// rules sharing an alert/record name within the same group still resolve to distinct names.
 func childRuleName(fileName, groupName, ruleName string, idx int) string {
-	return truncate(fmt.Sprintf("%s%s-%s-%d-%s", model.ChildNamePrefix, shortHash(fileName), shortHash(groupName), idx, shortHash(ruleName)), 253)
+	return model.ChildNamePrefix + shortHash(fmt.Sprintf("%s|%s|%d|%s", fileName, groupName, idx, ruleName))
 }
 
 func shortHash(s string) string {

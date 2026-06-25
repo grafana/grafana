@@ -3,6 +3,7 @@ package rulesextensions
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/rules-extensions/pkg/apis/manifestdata"
+	rulesextv0 "github.com/grafana/grafana/apps/alerting/rules-extensions/pkg/apis/rulesextensions/v0alpha1"
 	rulesExtApp "github.com/grafana/grafana/apps/alerting/rules-extensions/pkg/app"
 	rulesExtConfig "github.com/grafana/grafana/apps/alerting/rules-extensions/pkg/app/config"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -18,6 +20,7 @@ import (
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 var (
@@ -38,6 +41,19 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionAllow, "", nil
 		},
 	)
+}
+
+// GetStorageOptions enables folder support for PrometheusRuleFile. The kind lives in the
+// folder tree (every file carries a grafana.app/folder annotation that the validator
+// requires), so the unified storage layer must accept the folder annotation on write —
+// without this it rejects the annotation with "folders are not supported".
+func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
+	if gr.Group == rulesextv0.APIGroup && gr.Resource == rulesextv0.PrometheusRuleFileKind().Plural() {
+		return &apistore.StorageOptions{
+			EnableFolderSupport: true,
+		}
+	}
+	return nil
 }
 
 // RegisterAppInstaller wires the rules-extensions app into Grafana's app registry. It is

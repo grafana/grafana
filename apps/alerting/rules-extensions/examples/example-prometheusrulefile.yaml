@@ -1,0 +1,58 @@
+apiVersion: rules-extensions.alerting.grafana.app/v0alpha1
+kind: PrometheusRuleFile
+metadata:
+  name: example-rules
+  namespace: default
+  annotations:
+    # Required: UID of the parent folder the reconciler nests managed children under.
+    grafana.app/folder: afq3g8fz8vkzkb
+spec:
+  # Optional: pins every generated rule to this datasource. Omit to use the app's
+  # configured DefaultDatasourceUID at reconcile time.
+  datasourceUID: gdev-prometheus
+  groups:
+    - name: example-alerts
+      interval: 1m
+      labels:
+        team: platform
+      rules:
+        - alert: HighRequestLatency
+          expr: job:request_latency_seconds:mean5m{job="api"} > 0.5
+          for: 5m
+          keepFiringFor: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: High request latency on {{ $labels.job }}
+    - name: example-recordings
+      interval: 30s
+      rules:
+        - record: job:request_latency_seconds:mean5m
+          expr: rate(request_latency_seconds_sum[5m]) / rate(request_latency_seconds_count[5m])
+    # A mixed group: recording rules and alerting rules can live side by side in the
+    # same group. They're reconciled into RecordingRule and AlertRule resources
+    # respectively, both nested under this group's folder.
+    - name: example-mixed
+      interval: 1m
+      labels:
+        team: platform
+      rules:
+        # Recording rule: precompute a series the alert below reuses.
+        - record: job:http_errors:rate5m
+          expr: sum by (job) (rate(http_requests_total{code=~"5.."}[5m]))
+        # Alerting rule that fires off the recorded series.
+        - alert: HighErrorRate
+          expr: job:http_errors:rate5m > 10
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: High 5xx error rate on {{ $labels.job }}
+        # Another alert in the same group, straight off a raw query.
+        - alert: InstanceDown
+          expr: up == 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.instance }} is down"
