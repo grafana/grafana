@@ -133,7 +133,7 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser id
 		if err != nil {
 			return model.LibraryElementDTO{}, err
 		}
-		if f.ManagedBy == utils.ManagerKindRepo {
+		if f.ManagedBy == utils.ManagerKindRepo && !identity.IsProvisioningServiceIdentity(signedInUser) {
 			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
 		}
 	}
@@ -613,7 +613,7 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 		if err != nil {
 			return model.LibraryElementDTO{}, err
 		}
-		if f.ManagedBy == utils.ManagerKindRepo {
+		if f.ManagedBy == utils.ManagerKindRepo && !identity.IsProvisioningServiceIdentity(signedInUser) {
 			return model.LibraryElementDTO{}, model.ErrLibraryElementProvisionedFolder
 		}
 
