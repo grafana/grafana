@@ -11,6 +11,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   search?: {
     hide?: boolean;
     filters?: TraceqlFilter[];
+    defaultFilters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
   spanBar?: {

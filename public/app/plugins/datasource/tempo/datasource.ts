@@ -110,6 +110,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   search?: {
     hide?: boolean;
     filters?: TraceqlFilter[];
+    defaultFilters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
   traceQuery?: {
@@ -143,6 +144,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.streamingEnabled = instanceSettings.jsonData.streamingEnabled;
     this.timeRangeForTags = instanceSettings.jsonData.timeRangeForTags;
     this.languageProvider = new TempoLanguageProvider(this);
+
+    // Support defaultFilters as an alias for filters
+    if (this.search?.defaultFilters && !this.search.filters) {
+      this.search = {
+        ...this.search,
+        filters: this.search.defaultFilters
+      };
+    }
 
     if (!this.search?.filters) {
       this.search = {
