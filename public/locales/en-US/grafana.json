@@ -7202,9 +7202,9 @@
         "apply-description": "Change variable query",
         "discard": "Discard",
         "drag-to-resize": "Drag to resize",
+        "preview": "Preview",
         "preview-of-values": "Preview of values ({{ optionsCount }})",
         "refresh-preview": "Refresh preview",
-        "show-preview": "Show preview",
         "tabs": {
           "query": "Query",
           "static-options": "Static options ({{staticOptionsCount}})"

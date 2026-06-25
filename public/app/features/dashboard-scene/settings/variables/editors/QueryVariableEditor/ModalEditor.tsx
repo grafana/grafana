@@ -105,7 +105,7 @@ export function ModalEditor(props: ModalEditorProps) {
                     {isLoading ? (
                       <Spinner inline />
                     ) : (
-                      <Trans i18nKey="dashboard-scene.query-variable-editor.modal.show-preview">Show preview</Trans>
+                      <Trans i18nKey="dashboard-scene.query-variable-editor.modal.preview">Preview</Trans>
                     )}
                   </Button>
                 </div>
