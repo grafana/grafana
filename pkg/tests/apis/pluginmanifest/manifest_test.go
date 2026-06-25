@@ -175,14 +175,29 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	require.Equal(t, "testappwithsdkmanifest.ext.grafana.com/v1", applied.GetAPIVersion())
 }
 
-func setupHelper(t *testing.T) *apis.K8sTestHelper {
+// TestIntegrationPluginManifestServiceLoading verifies the manifest APIs are still served when
+// plugins are loaded via the service-loading path (FlagPluginStoreServiceLoading), where the
+// plugin registry is populated during service startup rather than at Wire-injection time. This
+// path previously produced no installers because they were derived eagerly at injection time,
+// before any plugin had loaded.
+func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupHelper(t, featuremgmt.FlagPluginStoreServiceLoading)
+
+	disco, err := helper.GetGroupVersionInfoJSON("testappwithsdkmanifest.ext.grafana.com")
+	require.NoError(t, err)
+	require.Contains(t, disco, `"resource": "things"`)
+}
+
+func setupHelper(t *testing.T, extraFeatureToggles ...string) *apis.K8sTestHelper {
 	t.Helper()
 
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
-		EnableFeatureToggles: []string{
+		EnableFeatureToggles: append([]string{
 			featuremgmt.FlagPluginsAppSDKManifest,
-		},
+		}, extraFeatureToggles...),
 	})
 
 	_, thisFile, _, ok := runtime.Caller(0)
