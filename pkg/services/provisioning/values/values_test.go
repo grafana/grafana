@@ -304,16 +304,22 @@ func TestValues(t *testing.T) {
                    bare: https://$ANNOTATION_REGION.$ANNOTATION_CLUSTER.example.com
                    template: "{{ $labels.instance }}"
                    escaped: "$${ANNOTATION_REGION}"
+                   literal_pid: "echo $$"
+                   literal_currency: "$$5"
+                   mixed: "cost $$5 in ${ANNOTATION_REGION}"
                `
 				unmarshalingTest(t, doc, d)
 
 				got, err := d.Val.ValueWithBracedVars()
 				require.NoError(t, err)
 				require.Equal(t, map[string]string{
-					"braced":   "https://us-west-2.prod.example.com",
-					"bare":     "https://$ANNOTATION_REGION.$ANNOTATION_CLUSTER.example.com",
-					"template": "{{ $labels.instance }}",
-					"escaped":  "${ANNOTATION_REGION}",
+					"braced":           "https://us-west-2.prod.example.com",
+					"bare":             "https://$ANNOTATION_REGION.$ANNOTATION_CLUSTER.example.com",
+					"template":         "{{ $labels.instance }}",
+					"escaped":          "${ANNOTATION_REGION}",
+					"literal_pid":      "echo $$",
+					"literal_currency": "$$5",
+					"mixed":            "cost $$5 in us-west-2",
 				}, got)
 			})
 		})
