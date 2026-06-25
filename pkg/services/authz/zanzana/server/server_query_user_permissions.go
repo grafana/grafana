@@ -181,7 +181,7 @@ func (s *Server) readGrantTuples(ctx context.Context, store *zanzana.StoreInfo, 
 }
 
 func (s *Server) readTuples(ctx context.Context, store *zanzana.StoreInfo, filter *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error) {
-	pageSize := int32(s.cfg.ReadPageSize)
+	pageSize := s.cfg.ReadPageSize
 	if pageSize <= 0 {
 		pageSize = 100
 	}
