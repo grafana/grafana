@@ -293,6 +293,29 @@ func TestValues(t *testing.T) {
 					"four":  "true",
 				})
 			})
+
+			t.Run("Should expand braced vars without expanding bare vars", func(t *testing.T) {
+				t.Setenv("ANNOTATION_REGION", "us-west-2")
+				t.Setenv("ANNOTATION_CLUSTER", "prod")
+
+				doc := `
+                 val:
+                   braced: https://${ANNOTATION_REGION}.${ANNOTATION_CLUSTER}.example.com
+                   bare: https://$ANNOTATION_REGION.$ANNOTATION_CLUSTER.example.com
+                   template: "{{ $labels.instance }}"
+                   escaped: "$${ANNOTATION_REGION}"
+               `
+				unmarshalingTest(t, doc, d)
+
+				got, err := d.Val.ValueWithBracedVars()
+				require.NoError(t, err)
+				require.Equal(t, map[string]string{
+					"braced":   "https://us-west-2.prod.example.com",
+					"bare":     "https://$ANNOTATION_REGION.$ANNOTATION_CLUSTER.example.com",
+					"template": "{{ $labels.instance }}",
+					"escaped":  "${ANNOTATION_REGION}",
+				}, got)
+			})
 		})
 	})
 }

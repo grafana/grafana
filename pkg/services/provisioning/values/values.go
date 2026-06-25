@@ -189,6 +189,20 @@ func (val *StringMapValue) Value() map[string]string {
 	return val.value
 }
 
+// ValueWithBracedVars returns the raw map with braced setting expanders applied.
+// Unlike Value, it does not expand bare $NAME environment variables.
+func (val *StringMapValue) ValueWithBracedVars() (map[string]string, error) {
+	interpolated := make(map[string]string, len(val.Raw))
+	for key, raw := range val.Raw {
+		expanded, err := interpolateValueWithBracedVars(raw)
+		if err != nil {
+			return nil, err
+		}
+		interpolated[key] = expanded
+	}
+	return interpolated, nil
+}
+
 // JSONSliceValue represents a slice value in a YAML
 // config that can be overridden by environment variables
 
@@ -324,6 +338,19 @@ func interpolateValue(val string) (string, string, error) {
 		interpolated[i] = os.ExpandEnv(v)
 	}
 	return strings.Join(interpolated, "$"), val, nil
+}
+
+func interpolateValueWithBracedVars(val string) (string, error) {
+	parts := strings.Split(val, "$$")
+	interpolated := make([]string, len(parts))
+	for i, v := range parts {
+		expanded, err := setting.ExpandVar(v)
+		if err != nil {
+			return val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
+		}
+		interpolated[i] = expanded
+	}
+	return strings.Join(interpolated, "$"), nil
 }
 
 type interpolated struct {

@@ -150,7 +150,10 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		noDataState = models.NoData
 	}
 	alertRule.NoDataState = noDataState
-	alertRule.Annotations = rule.Annotations.Raw
+	alertRule.Annotations, err = rule.Annotations.ValueWithBracedVars()
+	if err != nil {
+		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse annotations: %w", alertRule.Title, err)
+	}
 	alertRule.Labels = rule.Labels.Value()
 	for _, queryV1 := range rule.Data {
 		query, err := queryV1.mapToModel()
