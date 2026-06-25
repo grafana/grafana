@@ -52,14 +52,21 @@ func githubHealthCheckMocks() []ghmock.MockBackendOption {
 }
 
 // webhookCreationMocks returns ghmock handlers backing a single immutable
-// webhook, served by the create, list, and get-by-id endpoints — mirroring real
-// GitHub. get-by-id must return the same URL and events the reconciler expects
-// so its OnUpdate path is a no-op. If get-by-id is left unmocked it 404s, which
-// the reconciler reads as ErrFileNotFound and so "recreates" the webhook on
-// every reconcile, rotating the webhook secret each time and racing any
-// concurrent job that decrypts it (yielding intermittent "decrypt webhookSecret:
-// not found"). The hook is built once and only read, so no synchronization is
-// needed.
+// webhook, served by the create, list, get-by-id, and delete endpoints —
+// mirroring real GitHub. The hook is built once and only read, so no
+// synchronization is needed.
+//
+// get-by-id must return the same URL and events the reconciler expects so its
+// OnUpdate path is a no-op. If get-by-id is left unmocked it 404s, which the
+// reconciler reads as ErrFileNotFound and so "recreates" the webhook on every
+// reconcile, rotating the webhook secret each time and racing any concurrent job
+// that decrypts it (yielding intermittent "decrypt webhookSecret: not found").
+//
+// delete must also be registered: once get-by-id registers the
+// /repos/.../hooks/{id} path, a DELETE to that same path (from the deletion
+// finalizer's OnDelete) would otherwise match the path but not the method and
+// return 405, which is not tolerated like the unmatched-route 404 — leaving the
+// repository's finalizer stuck and CleanupAllResources timing out.
 func webhookCreationMocks(hookID int64, webhookURL string) []ghmock.MockBackendOption {
 	hook := &github.Hook{
 		ID:     github.Ptr(hookID),
@@ -77,6 +84,12 @@ func webhookCreationMocks(hookID int64, webhookURL string) []ghmock.MockBackendO
 		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, encode([]*github.Hook{hook})),
 		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, encode(hook)),
 		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepoByHookId, encode(hook)),
+		ghmock.WithRequestMatchHandler(
+			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusNoContent)
+			}),
+		),
 	}
 }
 
