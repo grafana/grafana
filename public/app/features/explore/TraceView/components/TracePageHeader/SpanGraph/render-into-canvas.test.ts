@@ -170,28 +170,29 @@ describe('renderIntoCanvas()', () => {
   });
 
   describe('summary spans', () => {
-    it('draws summary spans taller than normal spans (fixed elevated weight)', () => {
+    it('draws a summary as a block proportional to its span_count (shape preservation)', () => {
       const items = [
         { valueWidth: 100, valueOffset: 0, serviceName: 'svc-normal' },
-        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-summary', isSummary: true },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-summary', isSummary: true, spanCount: 10 },
       ];
       const canvas = new Canvas();
       renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
       // index 0 is the background fill; 1 = normal span, 2 = summary span
       const [, normalRect, summaryRect] = canvas.contexts[0].fillRectAccumulator;
-      expect(summaryRect.height).toBeGreaterThan(normalRect.height);
+      // the summary fills ~span_count times a normal span's vertical footprint,
+      // restoring the density the collapsed spans would have occupied
+      expect(Math.round(summaryRect.height / normalRect.height)).toBe(10);
     });
 
-    it('gives every summary span the same height regardless of order', () => {
+    it('scales summary height with span_count (larger count is taller)', () => {
       const items = [
-        { valueWidth: 100, valueOffset: 0, serviceName: 'a', isSummary: true },
-        { valueWidth: 100, valueOffset: 0, serviceName: 'b' },
-        { valueWidth: 100, valueOffset: 0, serviceName: 'c', isSummary: true },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'a', isSummary: true, spanCount: 5 },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'b', isSummary: true, spanCount: 20 },
       ];
       const canvas = new Canvas();
       renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
-      const [, first, , third] = canvas.contexts[0].fillRectAccumulator;
-      expect(first.height).toBe(third.height);
+      const [, small, large] = canvas.contexts[0].fillRectAccumulator;
+      expect(large.height).toBeGreaterThan(small.height);
     });
 
     it('fills summary spans with a gradient and normal spans with a solid color', () => {

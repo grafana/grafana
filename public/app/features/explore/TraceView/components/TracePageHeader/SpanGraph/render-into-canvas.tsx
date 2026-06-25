@@ -19,14 +19,14 @@ export const MAX_TOTAL_HEIGHT = 200;
 export const MIN_ITEM_WIDTH = 10;
 export const MIN_TOTAL_HEIGHT = 60;
 export const MAX_ITEM_HEIGHT = 6;
-// Summary spans carry a fixed elevated vertical weight so pruning (N spans -> 1
-// summary) does not collapse the minimap's density shape. Fixed, NOT proportional
-// to span_count, to avoid wild density swings between summaries. Tunable / pending
-// design (Figma "Overview - shape preservation"). See grafana-adaptivetraces-app#1031.
-const SUMMARY_WEIGHT = 3;
-const MAX_SUMMARY_ITEM_HEIGHT = MAX_ITEM_HEIGHT * SUMMARY_WEIGHT;
 
-type SpanGraphItem = { valueWidth: number; valueOffset: number; serviceName: string; isSummary?: boolean };
+type SpanGraphItem = {
+  valueWidth: number;
+  valueOffset: number;
+  serviceName: string;
+  isSummary?: boolean;
+  spanCount?: number;
+};
 
 // Light-to-dark gradient within the service hue, matching the waterfall summary
 // bar (which uses CSS color-mix; canvas has no color-mix so we mix in JS).
@@ -45,7 +45,13 @@ export default function renderIntoCanvas(
   bgColor: string
 ) {
   const colorCache: Map<string, [number, number, number]> = new Map();
-  const weightOf = (item: SpanGraphItem) => (item.isSummary ? SUMMARY_WEIGHT : 1);
+  // A summary span weighs as much as the spans it represents (span_count), so the
+  // pruned trace keeps the unpruned density shape: total weight equals the original
+  // span count, and the summary occupies the vertical extent its spans would have.
+  // Fixed weight would only signal "a summary is here" and flatten that shape, which
+  // is what #1031's "shape preservation" mockup explicitly restores. A normal span
+  // weighs 1; a summary with no span_count falls back to 1.
+  const weightOf = (item: SpanGraphItem) => (item.isSummary ? Math.max(item.spanCount ?? 0, 1) : 1);
   const totalWeight = items.reduce((sum, item) => sum + weightOf(item), 0);
   const cHeight = totalWeight < MIN_TOTAL_HEIGHT ? MIN_TOTAL_HEIGHT : Math.min(totalWeight, MAX_TOTAL_HEIGHT);
   const cWidth = window.innerWidth * 2;
@@ -53,9 +59,8 @@ export default function renderIntoCanvas(
   canvas.width = cWidth;
   // eslint-disable-next-line no-param-reassign
   canvas.height = cHeight;
-  // Pixels per unit of weight. A normal span occupies one unit; a summary span
-  // occupies SUMMARY_WEIGHT units (taller bar + larger vertical step). With no
-  // summary spans, weight === index and this matches the previous layout exactly.
+  // Pixels per unit of weight. With no summary spans, weight === index and this
+  // matches the previous layout exactly.
   const step = cHeight / totalWeight;
 
   const ctx = canvas.getContext('2d', { alpha: false });
@@ -70,9 +75,12 @@ export default function renderIntoCanvas(
       if (width < MIN_ITEM_WIDTH) {
         width = MIN_ITEM_WIDTH;
       }
-      const weight = isSummary ? SUMMARY_WEIGHT : 1;
-      const maxHeight = isSummary ? MAX_SUMMARY_ITEM_HEIGHT : MAX_ITEM_HEIGHT;
-      const itemHeight = Math.min(maxHeight, Math.max(MIN_ITEM_HEIGHT, step * weight));
+      const weight = weightOf(items[i]);
+      // Summary fills its whole proportional slot (the vertical extent its spans
+      // would have occupied); normal spans keep the clamped thin-bar height.
+      const itemHeight = isSummary
+        ? Math.max(MIN_ITEM_HEIGHT, step * weight)
+        : Math.min(MAX_ITEM_HEIGHT, Math.max(MIN_ITEM_HEIGHT, step * weight));
       const y = step * cumulativeWeight;
 
       let rgb = colorCache.get(serviceName);
