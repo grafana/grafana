@@ -38,8 +38,8 @@ describe('renderIntoCanvas()', () => {
   const basicItem = { valueWidth: 100, valueOffset: 50, serviceName: 'some-name' };
 
   class CanvasContext {
-    fillStyle: undefined;
-    fillRectAccumulator: Array<{ fillStyle: undefined; height: number; width: number; x: number; y: number }> = [];
+    fillStyle: unknown;
+    fillRectAccumulator: Array<{ fillStyle: unknown; height: number; width: number; x: number; y: number }> = [];
 
     constructor() {
       this.fillStyle = undefined;
@@ -55,6 +55,13 @@ describe('renderIntoCanvas()', () => {
         x,
         y,
       });
+    }
+
+    // Minimal CanvasGradient stub: records its color stops so tests can assert
+    // a gradient (vs a solid rgba string) was used for summary spans.
+    createLinearGradient() {
+      const stops: Array<{ offset: number; color: string }> = [];
+      return { __isGradient: true, stops, addColorStop: (offset: number, color: string) => stops.push({ offset, color }) };
     }
   }
 
@@ -155,6 +162,48 @@ describe('renderIntoCanvas()', () => {
       expect(canvas.getContext.mock.calls).toEqual([['2d', { alpha: false }]]);
       expect(canvas.contexts.length).toBe(1);
       expect(canvas.contexts[0].fillRectAccumulator).toEqual(expectedDrawings);
+    });
+  });
+
+  describe('summary spans', () => {
+    it('draws summary spans taller than normal spans (fixed elevated weight)', () => {
+      const items = [
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-normal' },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-summary', isSummary: true },
+      ];
+      const canvas = new Canvas();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
+      // index 0 is the background fill; 1 = normal span, 2 = summary span
+      const [, normalRect, summaryRect] = canvas.contexts[0].fillRectAccumulator;
+      expect(summaryRect.height).toBeGreaterThan(normalRect.height);
+    });
+
+    it('gives every summary span the same height regardless of order', () => {
+      const items = [
+        { valueWidth: 100, valueOffset: 0, serviceName: 'a', isSummary: true },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'b' },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'c', isSummary: true },
+      ];
+      const canvas = new Canvas();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
+      const [, first, , third] = canvas.contexts[0].fillRectAccumulator;
+      expect(first.height).toBe(third.height);
+    });
+
+    it('fills summary spans with a gradient and normal spans with a solid color', () => {
+      const items = [
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-normal' },
+        { valueWidth: 100, valueOffset: 0, serviceName: 'svc-summary', isSummary: true },
+      ];
+      const canvas = new Canvas();
+      renderIntoCanvas(canvas as unknown as HTMLCanvasElement, items, 4000, getColorFactory(), BG_COLOR);
+      const [, normalRect, summaryRect] = canvas.contexts[0].fillRectAccumulator;
+      expect(typeof normalRect.fillStyle).toBe('string');
+      // gradient object with light tint -> base -> dark shade stops
+      expect(summaryRect.fillStyle).toMatchObject({
+        __isGradient: true,
+        stops: [{ offset: 0 }, { offset: 0.38 }, { offset: 1 }],
+      });
     });
   });
 
