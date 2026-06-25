@@ -5,15 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
@@ -600,100 +605,28 @@ func TestAzureMonitorParseResponseGrafanaSqlMultiResource(t *testing.T) {
 	avg2 := 5.0
 
 	azData := types.AzureMonitorResponse{
-		Value: []struct {
-			ID   string `json:"id"`
-			Type string `json:"type"`
-			Name struct {
-				Value          string `json:"value"`
-				LocalizedValue string `json:"localizedValue"`
-			} `json:"name"`
-			Unit       string `json:"unit"`
-			Timeseries []struct {
-				Metadatavalues []struct {
-					Name struct {
-						Value          string `json:"value"`
-						LocalizedValue string `json:"localizedValue"`
-					} `json:"name"`
-					Value string `json:"value"`
-				} `json:"metadatavalues"`
-				Data []struct {
-					TimeStamp time.Time `json:"timeStamp"`
-					Average   *float64  `json:"average,omitempty"`
-					Total     *float64  `json:"total,omitempty"`
-					Count     *float64  `json:"count,omitempty"`
-					Maximum   *float64  `json:"maximum,omitempty"`
-					Minimum   *float64  `json:"minimum,omitempty"`
-				} `json:"data"`
-			} `json:"timeseries"`
-		}{
+		Value: []types.AzureMetricValue{
 			{
-				Name: struct {
-					Value          string `json:"value"`
-					LocalizedValue string `json:"localizedValue"`
-				}{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
+				Name: types.AzureMetricName{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
 				Unit: "Percent",
-				Timeseries: []struct {
-					Metadatavalues []struct {
-						Name struct {
-							Value          string `json:"value"`
-							LocalizedValue string `json:"localizedValue"`
-						} `json:"name"`
-						Value string `json:"value"`
-					} `json:"metadatavalues"`
-					Data []struct {
-						TimeStamp time.Time `json:"timeStamp"`
-						Average   *float64  `json:"average,omitempty"`
-						Total     *float64  `json:"total,omitempty"`
-						Count     *float64  `json:"count,omitempty"`
-						Maximum   *float64  `json:"maximum,omitempty"`
-						Minimum   *float64  `json:"minimum,omitempty"`
-					} `json:"data"`
-				}{
+				Timeseries: []types.AzureMetricTimeseries{
 					{
-						Metadatavalues: []struct {
-							Name struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							} `json:"name"`
-							Value string `json:"value"`
-						}{
-							{Name: struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							}{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
-								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a"},
+						Metadatavalues: []types.AzureMetricMetadataValue{
+							{
+								Name:  types.AzureMetricName{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-a",
+							},
 						},
-						Data: []struct {
-							TimeStamp time.Time `json:"timeStamp"`
-							Average   *float64  `json:"average,omitempty"`
-							Total     *float64  `json:"total,omitempty"`
-							Count     *float64  `json:"count,omitempty"`
-							Maximum   *float64  `json:"maximum,omitempty"`
-							Minimum   *float64  `json:"minimum,omitempty"`
-						}{{TimeStamp: ts, Average: &avg1}},
+						Data: []types.AzureMetricTimeseriesData{{TimeStamp: ts, Average: &avg1}},
 					},
 					{
-						Metadatavalues: []struct {
-							Name struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							} `json:"name"`
-							Value string `json:"value"`
-						}{
-							{Name: struct {
-								Value          string `json:"value"`
-								LocalizedValue string `json:"localizedValue"`
-							}{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
-								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b"},
+						Metadatavalues: []types.AzureMetricMetadataValue{
+							{
+								Name:  types.AzureMetricName{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+								Value: "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Compute/virtualMachines/vm-b",
+							},
 						},
-						Data: []struct {
-							TimeStamp time.Time `json:"timeStamp"`
-							Average   *float64  `json:"average,omitempty"`
-							Total     *float64  `json:"total,omitempty"`
-							Count     *float64  `json:"count,omitempty"`
-							Maximum   *float64  `json:"maximum,omitempty"`
-							Minimum   *float64  `json:"minimum,omitempty"`
-						}{{TimeStamp: ts, Average: &avg2}},
+						Data: []types.AzureMetricTimeseriesData{{TimeStamp: ts, Average: &avg2}},
 					},
 				},
 			},
@@ -905,4 +838,313 @@ func TestExtractResourceNameFromMetricsURL(t *testing.T) {
 		expected := ""
 		require.Equal(t, expected, extractResourceNameFromMetricsURL((url)))
 	})
+}
+
+func TestBuildQueriesForBatch(t *testing.T) {
+	ds := &AzureMonitorDatasource{}
+	dsInfo := types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{SubscriptionId: "default-sub"},
+	}
+
+	makeBackendQuery := func(sub, region string, resources []dataquery.AzureMonitorResource) backend.DataQuery {
+		model := dataquery.AzureMonitorQuery{
+			Subscription: &sub,
+			AzureMonitor: &dataquery.AzureMetricQuery{
+				MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
+				MetricName:      strPtr("Percentage CPU"),
+				Aggregation:     strPtr("Average"),
+				TimeGrain:       strPtr("PT1M"),
+				Region:          &region,
+				Resources:       resources,
+			},
+		}
+		raw, _ := json.Marshal(model)
+		return backend.DataQuery{RefID: "A", JSON: raw, TimeRange: backend.TimeRange{From: time.Now(), To: time.Now().Add(time.Hour)}}
+	}
+
+	t.Run("single resource produces one query", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		assert.Len(t, queries, 1)
+	})
+
+	t.Run("multiple resources with same subscription and region produce one query", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		assert.Len(t, queries, 1)
+		assert.Len(t, queries[0].Resources, 2)
+	})
+
+	t.Run("resources across different subscriptions produce separate queries", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "sub1", queries[0].Subscription)
+		assert.Equal(t, "sub2", queries[1].Subscription)
+	})
+
+	t.Run("resources across different regions produce separate queries", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "eastus", queries[0].Params.Get("region"))
+		assert.Equal(t, "westus", queries[1].Params.Get("region"))
+	})
+
+	t.Run("resources grouped by subscription and region preserve all resources", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm3"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		// sub1/eastus group has 2 resources, sub2/westus has 1
+		assert.Len(t, queries[0].Resources, 2)
+		assert.Len(t, queries[1].Resources, 1)
+	})
+
+	t.Run("resources without explicit subscription fall back to query-level subscription", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "sub1", queries[0].Subscription)
+		assert.Equal(t, "sub2", queries[1].Subscription)
+	})
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
+// newSubscriptionTestServer returns an httptest.Server that responds to
+// subscription detail requests with a fixed display name, counting every
+// request received.
+func newSubscriptionTestServer(t *testing.T, displayName string) (*httptest.Server, *atomic.Int64) {
+	t.Helper()
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprintf(w, `{"displayName":%q}`, displayName)
+	}))
+	t.Cleanup(srv.Close)
+	return srv, &hits
+}
+
+func TestRetrieveSubscriptionDetails_CachesAcrossCalls(t *testing.T) {
+	srv, hits := newSubscriptionTestServer(t, "My Subscription")
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	for i := 0; i < 5; i++ {
+		name, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+		require.NoError(t, err)
+		require.Equal(t, "My Subscription", name)
+	}
+	require.Equal(t, int64(1), hits.Load(), "subscription detail fetch should hit upstream once across repeated calls")
+}
+
+func TestRetrieveSubscriptionDetails_CoalescesConcurrentCalls(t *testing.T) {
+	// Block the server until all goroutines are in flight, to guarantee that
+	// they race through the cache miss and into the singleflight group
+	// simultaneously.
+	release := make(chan struct{})
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		<-release
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{"displayName":"My Subscription"}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+
+	const goroutines = 32
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			name, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+			require.NoError(t, err)
+			require.Equal(t, "My Subscription", name)
+		}()
+	}
+
+	// Give the goroutines a moment to enqueue on the flight group, then
+	// release the server handler.
+	time.Sleep(50 * time.Millisecond)
+	close(release)
+	wg.Wait()
+
+	require.Equal(t, int64(1), hits.Load(), "concurrent callers should share a single upstream fetch")
+}
+
+func TestRetrieveSubscriptionDetails_KeysDisambiguate(t *testing.T) {
+	// Two different datasource IDs and two different subscription IDs against
+	// the same upstream server must each perform their own fetch; they must
+	// not collide in the cache.
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		subID := strings.TrimPrefix(r.URL.Path, "/subscriptions/")
+		resp, _ := json.Marshal(map[string]string{"displayName": "name-for-" + subID})
+		_, _ = w.Write(resp)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+
+	// Same datasource, different subscriptions: two fetches.
+	name, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, "name-for-sub-a", name)
+
+	name, err = ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-b", srv.URL, 1, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, "name-for-sub-b", name)
+
+	// Different datasource, same subscription ID: third fetch (no cross-ds leak).
+	name, err = ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 2, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, "name-for-sub-a", name)
+
+	require.Equal(t, int64(3), hits.Load())
+}
+
+func TestRetrieveSubscriptionDetails_ExpiredEntryRefetches(t *testing.T) {
+	srv, hits := newSubscriptionTestServer(t, "My Subscription")
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	cacheKey := subscriptionCacheKey(1, 1, srv.URL, "sub-a")
+
+	// Prime the cache.
+	_, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), hits.Load())
+
+	// Forcibly expire the entry.
+	ds.subscriptionCache.Store(cacheKey, subscriptionCacheEntry{
+		displayName: "My Subscription",
+		expiresAt:   time.Now().Add(-time.Second),
+	})
+
+	_, err = ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(2), hits.Load(), "expired entry should trigger a refetch")
+}
+
+func TestRetrieveSubscriptionDetails_DoesNotCacheErrors(t *testing.T) {
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+
+	for i := 0; i < 3; i++ {
+		_, err := ds.retrieveSubscriptionDetails(srv.Client(), context.Background(), "sub-a", srv.URL, 1, 1, nil)
+		require.Error(t, err)
+	}
+	require.Equal(t, int64(3), hits.Load(), "failed lookups should retry on the next call rather than caching the failure")
+}
+
+func ctxWithUserLogin(login string) context.Context {
+	return azusercontext.WithCurrentUser(context.Background(), azusercontext.CurrentUserContext{
+		User: &backend.User{Login: login},
+	})
+}
+
+func TestRetrieveSubscriptionDetails_UserScopedAuthDoesNotPersist(t *testing.T) {
+	// In user-scoped auth modes every call must re-validate against Azure,
+	// because a user who has lost access between refreshes should not
+	// continue to see a cached display name.
+	srv, hits := newSubscriptionTestServer(t, "My Subscription")
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	creds := &azcredentials.AadCurrentUserCredentials{}
+	ctx := ctxWithUserLogin("alice")
+
+	for i := 0; i < 3; i++ {
+		_, err := ds.retrieveSubscriptionDetails(srv.Client(), ctx, "sub-a", srv.URL, 1, 1, creds)
+		require.NoError(t, err)
+	}
+	require.Equal(t, int64(3), hits.Load(), "user-scoped auth must not persist cache entries across calls")
+}
+
+func TestRetrieveSubscriptionDetails_UserScopedAuthCoalescesConcurrent(t *testing.T) {
+	// Even without persistent caching, singleflight must coalesce a burst of
+	// concurrent in-flight callers into a single upstream fetch. This keeps
+	// dashboard fan-out cheap while still re-validating on the next refresh.
+	release := make(chan struct{})
+	var hits atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits.Add(1)
+		<-release
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprint(w, `{"displayName":"My Subscription"}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	creds := &azcredentials.AadCurrentUserCredentials{}
+	ctx := ctxWithUserLogin("alice")
+
+	const goroutines = 32
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			_, err := ds.retrieveSubscriptionDetails(srv.Client(), ctx, "sub-a", srv.URL, 1, 1, creds)
+			require.NoError(t, err)
+		}()
+	}
+
+	time.Sleep(50 * time.Millisecond)
+	close(release)
+	wg.Wait()
+
+	require.Equal(t, int64(1), hits.Load(), "concurrent user-scoped callers should still share a single fetch via singleflight")
+}
+
+func TestRetrieveSubscriptionDetails_ServicePrincipalAuthSharesAcrossUsers(t *testing.T) {
+	// With service-principal credentials the datasource issues requests with
+	// a single identity, so user A and user B observing the same subscription
+	// must share a cache entry.
+	srv, hits := newSubscriptionTestServer(t, "My Subscription")
+	ds := &AzureMonitorDatasource{Logger: backend.NewLoggerWith("test", t.Name())}
+	creds := &azcredentials.AzureClientSecretCredentials{}
+
+	_, err := ds.retrieveSubscriptionDetails(srv.Client(), ctxWithUserLogin("alice"), "sub-a", srv.URL, 1, 1, creds)
+	require.NoError(t, err)
+	_, err = ds.retrieveSubscriptionDetails(srv.Client(), ctxWithUserLogin("bob"), "sub-a", srv.URL, 1, 1, creds)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), hits.Load(), "service-principal mode shares cache across users")
 }
