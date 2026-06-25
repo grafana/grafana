@@ -170,11 +170,9 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
 
-	// If no folder is specified in the file (or the canonical "general"
-	// sentinel the apistore now writes for root-parented resources), route the
-	// write to the repository root and stamp the meta folder accordingly so
-	// downstream consumers see the repo's root identifier rather than the
-	// generic Grafana "general".
+	// No folder (or the "general" sentinel the apistore writes for root) means
+	// the repository root: route the write there and stamp the meta folder with
+	// the repo's root id rather than the generic "general".
 	var fid Folder
 	if foldermodel.IsRootFolderUID(folder) {
 		fid = Folder{ID: rootFolder}

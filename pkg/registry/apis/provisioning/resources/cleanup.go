@@ -106,11 +106,9 @@ func SortResourceListForDeletion(list *provisioning.ResourceList) {
 			return false
 		}
 
-		// "Has a parent folder" means the entry sits under another folder, so
-		// it must be deleted before that parent. The legacy empty annotation
-		// and the canonical "general" sentinel both denote root — treat them
-		// as "no parent" so root-parented folders sort to the end and their
-		// children are deleted first.
+		// Both "" and the "general" sentinel denote root (no parent); treat them
+		// alike so root-parented entries sort to the end and their children are
+		// deleted first.
 		hasFolderI := !foldermodel.IsRootFolderUID(list.Items[i].Folder)
 		hasFolderJ := !foldermodel.IsRootFolderUID(list.Items[j].Folder)
 		if hasFolderI != hasFolderJ {

@@ -50,9 +50,8 @@ const (
 )
 
 var (
-	_ storage.Interface = (*Storage)(nil)
-
-	tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/apistore")
+	_      storage.Interface = (*Storage)(nil)
+	tracer                   = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/apistore")
 )
 
 type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
