@@ -5,8 +5,8 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
-import { useNestingRestrictions } from '../../scene/layouts-shared/CanvasGridAddActions';
 import { addNewRowTo } from '../../scene/layouts-shared/addNew';
+import { useNestingRestrictions } from '../../scene/layouts-shared/utils';
 
 import { AddRow } from './AddRow';
 

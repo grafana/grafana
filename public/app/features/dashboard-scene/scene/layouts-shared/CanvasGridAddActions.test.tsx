@@ -15,7 +15,8 @@ import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
-import { CanvasGridAddActions, useNestingRestrictions } from './CanvasGridAddActions';
+import { CanvasGridAddActions } from './CanvasGridAddActions';
+import { useNestingRestrictions } from './utils';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {

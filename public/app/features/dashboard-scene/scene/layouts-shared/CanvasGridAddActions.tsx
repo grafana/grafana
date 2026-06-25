@@ -1,20 +1,19 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
-import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
 import { getLayoutControlsStyles } from './styles';
 import { useClipboardState } from './useClipboardState';
+import { useNestingRestrictions } from './utils';
 
 export interface Props {
   layoutManager: DashboardLayoutManager;
@@ -114,38 +113,6 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
       )}
     </div>
   );
-}
-
-const MAX_NESTING_DEPTH = 3;
-
-export function getNestingRestrictions(layoutManager: DashboardLayoutManager) {
-  if (config.featureToggles.unlimitedLayoutsNesting) {
-    return { disableGrouping: false, disableTabs: false };
-  }
-
-  const layouts: string[] = [];
-  let parent = layoutManager.parent;
-
-  while (parent) {
-    if (isDashboardLayoutManager(parent)) {
-      layouts.push(parent.descriptor.id);
-    }
-
-    if (layouts.length === MAX_NESTING_DEPTH) {
-      break;
-    }
-
-    parent = parent.parent;
-  }
-
-  const disableGrouping = layouts.length >= MAX_NESTING_DEPTH;
-  const disableTabs = disableGrouping || layouts.includes(TabsLayoutManager.descriptor.id);
-
-  return { disableGrouping, disableTabs };
-}
-
-export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
-  return useMemo(() => getNestingRestrictions(layoutManager), [layoutManager]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
