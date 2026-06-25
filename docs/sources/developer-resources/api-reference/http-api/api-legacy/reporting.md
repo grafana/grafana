@@ -108,7 +108,7 @@ Content-Length: 1840
 ### Status Codes
 
 - **200** – OK
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication/).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
 
 ## Get a report
@@ -192,7 +192,7 @@ Content-Length: 940
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
-- **401** - Authentication failed, refer to [Authentication API](/docs/grafana/latest/developers/http_api/auth/).
+- **401** - Authentication failed, refer to [Authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication/).
 - **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -282,7 +282,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 | Field name                     | Data type | Description                                                                                                                                                   |
 | ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| dashboard.uid                  | string    | Dashboard [UID](../dashboard#identifier-id-vs-unique-identifier-uid).                                                                                         |
+| dashboard.uid                  | string    | Dashboard [UID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/).                                                                                         |
 | timeRange.from                 | string    | Dashboard time range from.                                                                                                                                    |
 | timeRange.to                   | string    | Dashboard time range to.                                                                                                                                      |
 | reportVariables.<variableName> | string    | Key-value pairs containing the template variables for this report, in JSON format. If empty, the template variables from the report's dashboard will be used. |
