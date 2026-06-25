@@ -110,7 +110,9 @@ message DeleteRequest {
 message DeleteResponse {}
 
 // Cleanup operation messages
-message CleanupRequest {}
+message CleanupRequest {
+  int64 before_ms = 1;
+}
 
 message CleanupResponse {
   int64 deleted_count = 1;

@@ -10,7 +10,6 @@ import { type RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { type Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { type FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { type AdvancedFilters } from './rule-list/filter/types';
 import { type RulesFilter } from './search/rulesSearchParser';
 import { type RuleFormType } from './types/rule-form';
 
@@ -30,9 +29,6 @@ export const LogMessages = {
   exportNewGrafanaRule: 'exporting new Grafana rule',
   noAlertRuleVersionsFound: 'no alert rule versions found',
 };
-
-export const logDebug = (message: string, contexts?: LogContext) =>
-  getLogger('features.alerting').logDebug(message, contexts);
 
 export const logInfo = (message: string, contexts?: LogContext) =>
   getLogger('features.alerting').logInfo(message, contexts);
@@ -351,10 +347,6 @@ export function trackFolderBulkActionsUnpauseFail() {
   reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
 }
 
-export function trackFilterButtonClick() {
-  reportInteraction('grafana_alerting_filter_button_click');
-}
-
 export function trackAlertRuleFilterEvent(
   payload:
     | { filterMethod: 'search-input'; filter: RulesFilter; filterVariant: 'v1' | 'v2' }
@@ -384,17 +376,6 @@ export function trackRulesSearchInputCleared(prev: string, next: string) {
   }
 }
 
-export function trackFilterButtonApplyClick(payload: AdvancedFilters, pluginsFilterEnabled: boolean) {
-  // Filter out empty/default values before tracking
-  const meaningfulValues = filterMeaningfulValues(payload, { pluginsFilterEnabled });
-
-  reportInteraction('grafana_alerting_rules_filter', {
-    ...meaningfulValues,
-    filter_method: 'filter-component',
-    filter_variant: 'v2',
-  });
-}
-
 function filterMeaningfulValues(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   obj: Record<string, any>,
@@ -418,12 +399,6 @@ function filterMeaningfulValues(
       return false;
     }
     return true;
-  });
-}
-
-export function trackFilterButtonClearClick() {
-  reportInteraction('grafana_alerting_rules_filter_cleared', {
-    filter_method: 'filter-component',
   });
 }
 

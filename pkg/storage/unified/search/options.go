@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 
@@ -38,12 +38,17 @@ const (
 	DefaultSnapshotCleanupGracePeriod = 30 * time.Minute
 )
 
+// NewSearchOptions builds the SearchOptions used by the resource server.
+// snapshotStore is optional: when non-nil it replaces the RemoteIndexStore
+// that would otherwise be built from cfg.IndexSnapshotBucketURL. Used by
+// the SQL wiring layer to inject a KV-backed store.
 func NewSearchOptions(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	docs resource.DocumentBuilderSupplier,
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
+	snapshotStore RemoteIndexStore,
 ) (resource.SearchOptions, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if cfg.EnableSearch || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -76,20 +81,36 @@ func NewSearchOptions(
 			}
 		}
 
-		snapshot, err := buildSnapshotOptions(cfg, minVersion)
+		snapshot, err := buildSnapshotOptions(cfg, minVersion, snapshotStore)
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
 
+		// docs is optional in some tests; only consult it when present so the
+		// hash check is a no-op rather than a nil deref. Real callers always
+		// pass a non-nil supplier.
+		var searchFieldsHashes map[string]string
+		if docs != nil {
+			builders, err := docs.GetDocumentBuilders()
+			if err != nil {
+				return resource.SearchOptions{}, err
+			}
+			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
+		}
+
 		bleve, err := NewBleveBackend(BleveOptions{
-			Root:                     root,
-			FileThreshold:            int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
-			IndexCacheTTL:            cfg.IndexCacheTTL,             // How long to keep the index cache in memory
-			BuildVersion:             cfg.BuildVersion,
-			OwnsIndex:                ownsIndexFn,
-			IndexMinUpdateInterval:   cfg.IndexMinUpdateInterval,
-			SelectableFieldsForKinds: resource.SelectableFields(),
-			Snapshot:                 snapshot,
+			Root:                           root,
+			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
+			IndexCacheTTL:                  cfg.IndexCacheTTL,             // How long to keep the index cache in memory
+			BuildVersion:                   cfg.BuildVersion,
+			OwnsIndex:                      ownsIndexFn,
+			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
+			SelectableFieldsForKinds:       resource.SelectableFields(),
+			SearchFieldsHashesForKinds:     searchFieldsHashes,
+			Snapshot:                       snapshot,
+			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
+			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
+			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 		}, indexMetrics)
 
 		if err != nil {
@@ -119,6 +140,7 @@ func NewSearchOptions(
 			IndexSnapshotLockTTL:            DefaultSnapshotLockTTL,
 			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
 			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
+			SearchFieldsHashesForKinds:      searchFieldsHashes,
 		}, nil
 	}
 	return resource.SearchOptions{
@@ -140,22 +162,55 @@ func snapshotLockHeartbeat(ttl time.Duration) time.Duration {
 	return hb
 }
 
-// buildSnapshotOptions opens the configured object-storage bucket and wraps it
-// as a RemoteIndexStore. Returns a zero SnapshotOptions (Store==nil) when the
-// feature is not enabled, so the backend short-circuits all new paths.
-func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (SnapshotOptions, error) {
-	if !cfg.IndexSnapshotEnabled || cfg.IndexSnapshotBucketURL == "" {
+// buildSnapshotOptions builds a SnapshotOptions from cfg.
+//
+// All non-Store fields (MinDocCount, MaxIndexAge, UploadInterval, etc.)
+// are taken from cfg regardless. injectedStore overrides only the Store
+// field: if non-nil it is used directly; otherwise the function opens
+// the object-storage bucket configured in cfg.IndexSnapshotBucketURL
+// and wraps it as a BucketRemoteIndexStore. Returns a zero
+// SnapshotOptions (Store==nil) when snapshots are disabled, so the
+// backend short-circuits all new paths.
+func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version, injectedStore RemoteIndexStore) (SnapshotOptions, error) {
+	if !cfg.IndexSnapshotEnabled {
 		return SnapshotOptions{}, nil
 	}
 
+	store := injectedStore
+	if store == nil {
+		if cfg.IndexSnapshotBucketURL == "" {
+			return SnapshotOptions{}, nil
+		}
+		var err error
+		store, err = buildBucketSnapshotStore(cfg)
+		if err != nil {
+			return SnapshotOptions{}, err
+		}
+	}
+
+	return SnapshotOptions{
+		Store:              store,
+		MinDocCount:        int64(cfg.IndexSnapshotThreshold),
+		MaxIndexAge:        cfg.IndexSnapshotMaxAge,
+		MinBuildVersion:    minBuildVersion,
+		UploadInterval:     DefaultSnapshotUploadInterval,
+		MinDocChanges:      DefaultSnapshotMinDocChanges,
+		CleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
+		CleanupInterval:    DefaultSnapshotCleanupInterval,
+	}, nil
+}
+
+// buildBucketSnapshotStore opens the configured object-storage bucket
+// and wraps it as a BucketRemoteIndexStore.
+func buildBucketSnapshotStore(cfg *setting.Cfg) (RemoteIndexStore, error) {
 	bucket, err := blob.OpenBucket(context.Background(), cfg.IndexSnapshotBucketURL)
 	if err != nil {
-		return SnapshotOptions{}, fmt.Errorf("opening snapshot bucket %q: %w", cfg.IndexSnapshotBucketURL, err)
+		return nil, fmt.Errorf("opening snapshot bucket %q: %w", cfg.IndexSnapshotBucketURL, err)
 	}
 
 	lockBackend, err := snapshotLockBackendForBucket(bucket, cfg.IndexSnapshotBucketURL)
 	if err != nil {
-		return SnapshotOptions{}, fmt.Errorf("snapshot lock backend options: %w", err)
+		return nil, fmt.Errorf("snapshot lock backend options: %w", err)
 	}
 
 	ownerBase := cfg.InstanceID
@@ -167,7 +222,7 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 	}
 	lockOwnerSuffix, err := ulid.New(ulid.Now(), rand.Reader)
 	if err != nil {
-		return SnapshotOptions{}, fmt.Errorf("creating lock owner suffix: %w", err)
+		return nil, fmt.Errorf("creating lock owner suffix: %w", err)
 	}
 	// Include a per-process ULID suffix to avoid owner collisions across instances
 	// that share the same configured instance_id/instance_name.
@@ -179,22 +234,13 @@ func buildSnapshotOptions(cfg *setting.Cfg, minBuildVersion *semver.Version) (Sn
 		HeartbeatInterval: snapshotLockHeartbeat(lockTTL),
 	}
 
-	return SnapshotOptions{
-		Store: NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
-			Bucket:      bucket,
-			LockBackend: lockBackend,
-			LockOwner:   owner,
-			BuildLock:   lockOpts,
-			CleanupLock: lockOpts,
-		}),
-		MinDocCount:        int64(cfg.IndexSnapshotThreshold),
-		MaxIndexAge:        cfg.IndexSnapshotMaxAge,
-		MinBuildVersion:    minBuildVersion,
-		UploadInterval:     DefaultSnapshotUploadInterval,
-		MinDocChanges:      DefaultSnapshotMinDocChanges,
-		CleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
-		CleanupInterval:    DefaultSnapshotCleanupInterval,
-	}, nil
+	return NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
+		Bucket:      bucket,
+		LockBackend: lockBackend,
+		LockOwner:   owner,
+		BuildLock:   lockOpts,
+		CleanupLock: lockOpts,
+	}), nil
 }
 
 func snapshotLockBackendForBucket(bucket *blob.Bucket, bucketURL string) (lockBackend, error) {

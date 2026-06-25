@@ -40,6 +40,7 @@ func TestIntegrationTeamService(t *testing.T) {
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesTeamsApi,
 					featuremgmt.FlagKubernetesTeamsRedirect,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})
 

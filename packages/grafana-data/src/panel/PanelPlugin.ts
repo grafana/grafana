@@ -37,6 +37,32 @@ export type StandardOptionConfig = {
   hideFromDefaults?: boolean;
 };
 
+/**
+ * Context passed to a panel plugin's screenshot handler. The plugin uses these
+ * fields to render its own image - typically when the default capture path
+ * cannot represent the panel correctly (e.g. canvas / WebGL contexts).
+ *
+ * @alpha
+ */
+export interface PanelScreenshotContext {
+  /** The panel's wrapping DOM element. */
+  element: HTMLElement;
+  /** Output image format. */
+  format: 'png' | 'jpeg' | 'webp';
+}
+
+/**
+ * Screenshot handler that a panel plugin can register via
+ * {@link PanelPlugin.setScreenshotImage}.
+ *
+ * - Return a `Blob` to use as the captured image.
+ * - Return `null` to fall through to the default capture path.
+ * - Throw to fail the capture.
+ *
+ * @alpha
+ */
+export type PanelScreenshotHandler = (ctx: PanelScreenshotContext) => Promise<Blob | null>;
+
 /** @beta */
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   /**
@@ -98,10 +124,37 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 }
 
+/**
+ * Callback used to declare a panel's option editors via {@link PanelPlugin.setPanelOptions}.
+ * Receives a builder and an editor context, and should call builder methods to register editors.
+ *
+ * @typeParam TOptions - The panel options type.
+ */
 export type PanelOptionsSupplier<TOptions> = (
   builder: PanelOptionsEditorBuilder<TOptions>,
   context: StandardEditorContext<TOptions>
 ) => void;
+
+/**
+ * Controls the view panel side pane controls
+ */
+export interface PanelPluginViewOptions {
+  /**
+   * Enable fanout option. Enables splitting a single panel into multiple panels by series or label
+   */
+  fanout?: {
+    enabled: boolean;
+  };
+  /**
+   *  Make some option properties available as quick toggles in the view panel side pane
+   */
+  quickToggles?: PluginViewOptionsQuickToggles;
+}
+
+export interface PluginViewOptionsQuickToggles {
+  optionProperties: string[];
+  fieldConfigProperties: string[];
+}
 
 export class PanelPlugin<
   TOptions = any,
@@ -113,6 +166,7 @@ export class PanelPlugin<
     overrides: [],
   };
 
+  private _viewPanelOptions?: PanelPluginViewOptions;
   private _fieldConfigRegistry?: FieldConfigOptionsRegistry;
   private _initConfigRegistry = () => {
     return new FieldConfigOptionsRegistry();
@@ -128,6 +182,8 @@ export class PanelPlugin<
   shouldMigrate?: (panel: PanelModel) => boolean;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
+  /** @internal - set via {@link setScreenshotImage}, read by the panel screenshot service. */
+  onScreenshot?: PanelScreenshotHandler;
   dataSupport: PanelPluginDataSupport = {
     annotations: false,
     alertStates: false,
@@ -172,6 +228,10 @@ export class PanelPlugin<
       },
       overrides: this._fieldConfigDefaults.overrides,
     };
+  }
+
+  get viewPanelOptions() {
+    return this._viewPanelOptions;
   }
 
   /**
@@ -490,5 +550,48 @@ export class PanelPlugin<
 
   hasPluginId(pluginId: string) {
     return this.meta.id === pluginId;
+  }
+
+  /**
+   * Register a screenshot handler for this panel.
+   *
+   * Used by canvas / WebGL panels (geomap, flamegraph, heatmap, canvas, etc.)
+   * that the default capture path cannot render correctly. The handler
+   * receives the panel's wrapping DOM element plus the requested image format
+   * and returns a `Blob`, `null` (fall through to the default path), or throws
+   * (fail the capture).
+   *
+   * Consumed by `getPanelScreenshotService().capture()` from `@grafana/runtime`.
+   *
+   * @example
+   * ```ts
+   * new PanelPlugin(MyCanvasPanel).setScreenshotImage(async ({ element, format }) => {
+   *   const canvas = element.querySelector<HTMLCanvasElement>('canvas');
+   *   if (!canvas) {
+   *     return null; // fall through to default capture path
+   *   }
+   *   // Re-render synchronously before reading - required for WebGL contexts
+   *   // that don't preserve their drawing buffer.
+   *   myRenderer.renderSync();
+   *   const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+   *   return await new Promise<Blob | null>((resolve) =>
+   *     canvas.toBlob(resolve, mimeType, format === 'png' ? undefined : 0.92)
+   *   );
+   * });
+   * ```
+   *
+   * @alpha
+   */
+  setScreenshotImage(handler: PanelScreenshotHandler) {
+    this.onScreenshot = handler;
+    return this;
+  }
+
+  /**
+   * Set options for the view panel side pane, which can include enabling fanout and adding quick toggles for options and field config defaults.
+   */
+  setViewPanelOptions(options: PanelPluginViewOptions) {
+    this._viewPanelOptions = options;
+    return this;
   }
 }

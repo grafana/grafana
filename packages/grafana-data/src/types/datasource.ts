@@ -456,7 +456,7 @@ abstract class DataSourceApi<
 /**
  * Base options shared across datasource filtering operations.
  */
-export interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
+interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * Context time range. New in v10.3
    */
@@ -815,6 +815,22 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
+}
+
+/**
+ * A lightweight view of a data source used for listing and selection. Carries
+ * identity fields (`uid`, `type`, `apiVersion`) and plugin metadata (`meta`),
+ * but not the per-instance settings (`jsonData`, `url`, secrets, `access`, …)
+ * which are fetched on demand when a data source is actually used.
+ */
+export interface DataSourceInstanceListItem {
+  uid: string;
+  type: string;
+  apiVersion?: string;
+  name: string;
+  meta: DataSourcePluginMeta;
+  readOnly: boolean;
+  isDefault: boolean;
 }
 
 /**

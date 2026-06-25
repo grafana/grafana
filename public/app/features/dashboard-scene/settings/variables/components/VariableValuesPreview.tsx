@@ -4,7 +4,6 @@ import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'reac
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -66,12 +65,19 @@ export const VariableValuesPreview = ({ options, staticOptions }: VariableValues
   const styles = useStyles2(getStyles);
   const properties = useGetPropertiesFromOptions(options, staticOptions);
   const hasOptions = options.length > 0;
-  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && properties.length > 2;
+  const displayMultiPropsPreview = hasOptions && properties.length > 2;
 
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
       <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
+        <Trans
+          i18nKey="dashboard-scene.variable-values-preview.preview-of-values"
+          values={{ count: options.length }}
+          tOptions={{
+            defaultValue_one: 'Preview of values ({{count}})',
+            defaultValue_other: 'Preview of values ({{count}})',
+          }}
+        >
           Preview of values ({'{{count}}'})
         </Trans>
         {hasOptions && displayMultiPropsPreview && (
@@ -124,7 +130,7 @@ function VariableValuesWithPropsPreview({
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
-export function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
+function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
   const [previewLimit, setPreviewLimit] = useState(20);
   const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);

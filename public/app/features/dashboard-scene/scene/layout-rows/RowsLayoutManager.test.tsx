@@ -1,4 +1,5 @@
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { VariableHide } from '@grafana/data';
+import { ConstantVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../DashboardScene';
@@ -42,6 +43,51 @@ function buildRowsLayoutManager(rows: RowItem[] = []) {
 }
 
 describe('RowsLayoutManager', () => {
+  describe('getSlug', () => {
+    it('generates slugs based on row titles', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const row1 = rowsLayoutManager.addNewRow(new RowItem({ title: 'My Row Title' }));
+      const row2 = rowsLayoutManager.addNewRow(new RowItem({ title: 'Another Row!' }));
+
+      expect(row1.getSlug()).toBe('My-Row-Title');
+      expect(row2.getSlug()).toBe('Another-Row!');
+    });
+
+    it('disambiguates slugs when multiple titles are encoded to the same value', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const firstRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'New row 1' }));
+      const secondRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'New row-1' }));
+
+      expect(firstRow.getSlug()).toBe('New-row-1');
+      expect(secondRow.getSlug()).toBe('New-row-1__2');
+    });
+
+    it('keeps clean slugs when there is no slug duplication', () => {
+      const rowsLayoutManager = buildRowsLayoutManager();
+      const firstRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'Row One' }));
+      const secondRow = rowsLayoutManager.addNewRow(new RowItem({ title: 'Row Two' }));
+
+      expect(firstRow.getSlug()).toBe('Row-One');
+      expect(secondRow.getSlug()).toBe('Row-Two');
+    });
+
+    it('keeps slug values stable across different row layout instances', () => {
+      const titles = ['New row 1', 'New row-1', 'Other row'];
+
+      const getSlugsFromFreshLayout = () => {
+        const rows = titles.map((title) => new RowItem({ title }));
+        buildRowsLayoutManager(rows);
+        return rows.map((row) => row.getSlug());
+      };
+
+      const firstRunSlugs = getSlugsFromFreshLayout();
+      const secondRunSlugs = getSlugsFromFreshLayout();
+
+      expect(firstRunSlugs).toEqual(['New-row-1', 'New-row-1__2', 'Other-row']);
+      expect(secondRunSlugs).toEqual(firstRunSlugs);
+    });
+  });
+
   describe('addNewRow', () => {
     beforeEach(() => {
       lastUndo = undefined;
@@ -236,6 +282,38 @@ describe('RowsLayoutManager', () => {
       expect(duplicated.state.rows[0]).not.toBe(rows[0]);
       expect(duplicated.state.rows[1]).not.toBe(rows[1]);
       expect(duplicated.state.rows[2]).not.toBe(rows[2]);
+    });
+
+    it('should clone section constant variables as independent instances with the same name', () => {
+      const constantVar = new ConstantVariable({
+        name: 'env',
+        type: 'constant',
+        value: 'prod',
+        hide: VariableHide.hideVariable,
+      });
+      const originalRow = new RowItem({
+        title: 'Row 1',
+        layout: AutoGridLayoutManager.createEmpty(),
+        $variables: new SceneVariableSet({ variables: [constantVar] }),
+      });
+      buildRowsLayoutManager([originalRow]);
+
+      const duplicatedRow = originalRow.duplicate();
+
+      const originalConstant = originalRow.state.$variables!.state.variables[0] as ConstantVariable;
+      const duplicatedConstant = duplicatedRow.state.$variables!.state.variables[0] as ConstantVariable;
+
+      expect(duplicatedConstant).not.toBe(originalConstant);
+      expect(duplicatedConstant.state.key).not.toBe(originalConstant.state.key);
+      expect(originalConstant.state.name).toBe('env');
+      expect(duplicatedConstant.state.name).toBe('env');
+      expect(originalConstant.state.value).toBe('prod');
+      expect(duplicatedConstant.state.value).toBe('prod');
+
+      duplicatedConstant.setState({ value: 'staging' });
+
+      expect(originalConstant.state.value).toBe('prod');
+      expect(duplicatedConstant.state.value).toBe('staging');
     });
 
     describe('when rows contain panels', () => {

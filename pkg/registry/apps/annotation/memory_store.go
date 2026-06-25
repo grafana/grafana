@@ -83,6 +83,12 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 			continue
 		}
 
+		if opts.LegacyID > 0 {
+			if GetLegacyID(anno) != opts.LegacyID {
+				continue
+			}
+		}
+
 		result = append(result, *anno.DeepCopy())
 
 		if opts.Limit > 0 && int64(len(result)) >= opts.Limit {

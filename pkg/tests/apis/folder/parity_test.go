@@ -82,9 +82,8 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 			t.Skip("validateOnUpdate misses the escalation check; un-skip when fix lands")
 			assertMoveParity(t, f, f.rbacEditorOnA, "parityA1", "parityB", http.StatusForbidden)
 		})
-		t.Run("k6 source folder is rejected (KNOWN GAP)", func(t *testing.T) {
-			t.Skip("only legacy blocks K6 source; un-skip when fix lands")
-			assertMoveParity(t, f, f.helper.Org1.Admin, accesscontrol.K6FolderUID, "parityA", http.StatusBadRequest)
+		t.Run("k6 source folder is rejected", func(t *testing.T) {
+			assertK6SourceMoveParity(t, f, "parityA", http.StatusBadRequest)
 		})
 	})
 
@@ -158,6 +157,7 @@ func newParityFixture(t *testing.T) *parityFixture {
 	for i := 1; i <= 5; i++ {
 		create(fmt.Sprintf("parityB%d", i), "parityB")
 	}
+	create(accesscontrol.K6FolderUID, "")
 
 	rbacEditorOnA := helper.CreateUser(
 		"parity-elevated-A", apis.Org1,
@@ -329,13 +329,16 @@ func assertNumericIDLabelParity(t *testing.T, f *parityFixture, uid string) {
 	)
 }
 
-// assertMoveParity verifies legacy and k8s return the same HTTP status when
-// the same user attempts the same move. The fixture is restored after every
-// successful attempt so both APIs see the same starting state.
+// assertMoveParity verifies legacy and k8s return the same HTTP status for
+// the same move. On success it restores the original parent so the next
+// assertion starts from the same state.
 func assertMoveParity(t *testing.T, f *parityFixture, user apis.User, uid, newParent string, expectStatus int) {
 	t.Helper()
 
-	original := lookupParent(t, f, user, uid)
+	var original string
+	if expectStatus == http.StatusOK {
+		original = lookupParent(t, f, user, uid)
+	}
 
 	legacyStatus := legacyMove(t, f, user, uid, newParent)
 	if legacyStatus != expectStatus {
@@ -354,6 +357,46 @@ func assertMoveParity(t *testing.T, f *parityFixture, user apis.User, uid, newPa
 	if k8sStatus == http.StatusOK {
 		restoreParent(t, f, f.helper.Org1.Admin, uid, original)
 	}
+}
+
+// assertK6SourceMoveParity drives both APIs through the admin service-account
+// token because k6-app is hidden from non-service-account identities.
+func assertK6SourceMoveParity(t *testing.T, f *parityFixture, newParent string, expectStatus int) {
+	t.Helper()
+
+	saToken := f.helper.Org1.AdminServiceAccountToken
+	require.NotEmpty(t, saToken)
+
+	body, err := json.Marshal(map[string]string{"parentUid": newParent})
+	require.NoError(t, err)
+	rsp := apis.DoRequest(f.helper, apis.RequestParams{
+		Method:  http.MethodPost,
+		Path:    fmt.Sprintf("/api/folders/%s/move", accesscontrol.K6FolderUID),
+		Body:    body,
+		Headers: map[string]string{"Authorization": "Bearer " + saToken},
+	}, &json.RawMessage{})
+	require.NotNil(t, rsp.Response)
+	require.Equal(t, expectStatus, rsp.Response.StatusCode,
+		"legacy move k6-app → %s: body=%s", newParent, string(rsp.Body))
+
+	client := f.helper.GetResourceClient(apis.ResourceClientArgs{
+		ServiceAccountToken: saToken,
+		Namespace:           f.namespace(),
+		GVR:                 gvr,
+	})
+	got, err := client.Resource.Get(context.Background(), accesscontrol.K6FolderUID, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	anns := got.GetAnnotations()
+	if anns == nil {
+		anns = map[string]string{}
+	}
+	anns[utils.AnnoKeyFolder] = newParent
+	got.SetAnnotations(anns)
+
+	_, err = client.Resource.Update(context.Background(), got, metav1.UpdateOptions{})
+	require.Error(t, err)
+	require.Equal(t, expectStatus, statusCodeFromK8sError(err))
 }
 
 func assertChildrenParity(t *testing.T, f *parityFixture, user apis.User, parentUID string, want []string) {
@@ -398,7 +441,9 @@ func k8sMove(t *testing.T, f *parityFixture, user apis.User, uid, newParent stri
 	t.Helper()
 	client := f.helper.GetResourceClient(apis.ResourceClientArgs{User: user, GVR: gvr})
 	got, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-	require.NoError(t, err)
+	if err != nil {
+		return statusCodeFromK8sError(err)
+	}
 
 	anns := got.GetAnnotations()
 	if anns == nil {

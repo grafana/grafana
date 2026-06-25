@@ -88,11 +88,11 @@ type IdentityAccessManagementAPIBuilder struct {
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
-	teamSearch                        *TeamSearchHandler
+	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
-	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
+	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider
 
 	// non-k8s api route
 	display *display.DisplayHandler

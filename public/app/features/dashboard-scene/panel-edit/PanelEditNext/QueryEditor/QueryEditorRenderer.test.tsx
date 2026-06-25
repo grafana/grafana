@@ -23,6 +23,7 @@ import {
   mockQueryOptionsState,
   mockTransformToggles,
   mockTypeConfig,
+  mockUIStateBase,
   renderWithQueryEditorProvider,
 } from './testUtils';
 
@@ -94,9 +95,10 @@ describe('QueryEditorRenderer', () => {
     expect(screen.getByText(/loading datasource/i)).toBeInTheDocument();
   });
 
-  it('shows an error when the datasource fails to load', () => {
+  it('shows an actionable error when the datasource fails to load', () => {
     renderRenderer(queryA, { selectedQueryDsData: null });
     expect(screen.getByText(/failed to load datasource for this query/i)).toBeInTheDocument();
+    expect(screen.getByText(/select a datasource for this query/i)).toBeInTheDocument();
   });
 
   it('renders the query editor for the selected query', () => {
@@ -174,6 +176,9 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            stackedMode: mockUIStateBase.stackedMode,
+            confirmingDeleteActionKey: null,
+            setConfirmingDeleteActionKey: jest.fn(),
           }}
           actions={mockActions}
           typeConfig={mockTypeConfig}
@@ -252,6 +257,9 @@ describe('QueryEditorRenderer', () => {
             toggleQuerySelection: jest.fn(),
             toggleTransformationSelection: jest.fn(),
             clearSelection: jest.fn(),
+            stackedMode: mockUIStateBase.stackedMode,
+            confirmingDeleteActionKey: null,
+            setConfirmingDeleteActionKey: jest.fn(),
           }}
           actions={{ ...mockActions, updateSelectedQuery }}
           typeConfig={mockTypeConfig}

@@ -124,7 +124,7 @@ receivers:
         smarthost: 'smtp.gmail.com:587'
         auth_username: 'grafana@example.com'
         auth_password: 'another-secret-password'`,
-	}, false, false)
+	}, false, false, false)
 	require.NoError(t, err)
 
 	savedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(context.Background(), am.(*alertmanager).Base.TenantID())
@@ -168,28 +168,32 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 		}
 	}
 
+	grafanaTmpl := v1.NewTemplateGroup("", "grafana-template", "{{ define \"grafana.title\" }}Alert{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
 	testCases := []struct {
 		name          string
+		features      featuremgmt.FeatureToggles
 		config        *v1.AMConfigV1
 		expectedError string
 		skipInvalid   bool
 	}{
 		{
-			name: "basic config",
+			name:     "basic config",
+			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
-				TemplateFiles: map[string]string{
-					"grafana-template": "{{ define \"grafana.title\" }}Alert{{ end }}",
+				Templates: map[v1.ResourceUID]v1.TemplateGroup{
+					grafanaTmpl.UID: grafanaTmpl,
 				},
 			},
 			skipInvalid: false,
 		},
 		{
-			name: "with mimir config",
+			name:     "with mimir config",
+			features: featuremgmt.WithFeatures(),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
-				TemplateFiles: map[string]string{
-					"grafana-template": "{{ define \"grafana.title\" }}Grafana Alert{{ end }}",
+				Templates: map[v1.ResourceUID]v1.TemplateGroup{
+					grafanaTmpl.UID: grafanaTmpl,
 				},
 				ExtraConfigs: []v1.ExtraConfiguration{
 					{
@@ -214,7 +218,8 @@ receivers:
 			skipInvalid: false,
 		},
 		{
-			name: "invalid config fails",
+			name:     "invalid config fails",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
 				ExtraConfigs: []v1.ExtraConfiguration{
@@ -227,14 +232,14 @@ receivers:
 					},
 				},
 			},
-			expectedError: "failed to get full alertmanager configuration",
+			expectedError: "invalid extra configuration: identifier is required",
 			skipInvalid:   false,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			moa := NewTestMultiOrgAlertmanager(t)
+			moa := NewTestMultiOrgAlertmanager(t, WithFeatureToggles(tc.features))
 			am, err := moa.AlertmanagerFor(1)
 			require.NoError(t, err)
 			ctx := context.Background()
@@ -244,16 +249,11 @@ receivers:
 			if tc.expectedError != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tc.expectedError)
-			} else {
-				require.NoError(t, err)
-
-				templateDefs := tc.config.GetMergedTemplateDefinitions()
-				expectedTemplateCount := len(tc.config.TemplateFiles)
-				if len(tc.config.ExtraConfigs) > 0 {
-					expectedTemplateCount += len(tc.config.ExtraConfigs[0].TemplateFiles)
-				}
-				require.Len(t, templateDefs, expectedTemplateCount)
+				return
 			}
+			require.NoError(t, err)
+			templateDefs := tc.config.SortedTemplates()
+			require.Len(t, templateDefs, len(tc.config.Templates))
 		})
 	}
 }
@@ -267,9 +267,9 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 			})
 		}
 		return &v1.AMConfigV1{
-			TemplateFiles: map[string]string{
-				"a-template.tmpl": "{{ define \"a\" }}a{{ end }}",
-				"b-template.tmpl": "{{ define \"b\" }}b{{ end }}",
+			Templates: map[v1.ResourceUID]v1.TemplateGroup{
+				v1.TemplateUID(v1.TemplateKindGrafana, "a-template.tmpl"): {Title: "a-template.tmpl", Content: "{{ define \"a\" }}a{{ end }}", Kind: v1.TemplateKindGrafana},
+				v1.TemplateUID(v1.TemplateKindGrafana, "b-template.tmpl"): {Title: "b-template.tmpl", Content: "{{ define \"b\" }}b{{ end }}", Kind: v1.TemplateKindGrafana},
 			},
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
@@ -278,12 +278,6 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				Receivers: postableReceivers,
 			},
 		}
-	}
-
-	matcher := func(name, value string) *labels.Matcher {
-		m, err := labels.NewMatcher(labels.MatchEqual, name, value)
-		require.NoError(t, err)
-		return m
 	}
 
 	toDBConfig := func(t *testing.T, cfg *v1.AMConfigV1) *ngmodels.AlertConfiguration {
@@ -326,7 +320,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.TemplateFiles["new.tmpl"] = "{{ define \"new\" }}b{{ end }}"
+				tmpl := v1.NewTemplateGroup("", "new.tmpl", "{{ define \"new\" }}b{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
+				cfg.Templates[tmpl.UID] = tmpl
 			},
 		},
 		{
@@ -343,7 +338,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		},
 		{
 			name:     "extra config changes affect hash",
-			features: featuremgmt.WithFeatures(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "extra-receiver")
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
@@ -385,20 +380,26 @@ receivers:
 			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-receiver")
-				cfg.ManagedInhibitionRules = v1.ManagedInhibitionRules{
-					"suppress-warning-when-critical": {
-						Name: "suppress-warning-when-critical",
-						InhibitRule: definitions.InhibitRule{
-							SourceMatchers: []*labels.Matcher{matcher("severity", "critical")},
-							TargetMatchers: []*labels.Matcher{matcher("severity", "warning")},
-							Equal:          []string{"alertname", "cluster"},
-						},
+				rule := v1.NewInhibitionRule(
+					"suppress-warning-when-critical",
+					[]v1.Matcher{
+						v1.NewMatcher(v1.MatcherEqual, "severity", "critical"),
 					},
+					[]v1.Matcher{
+						v1.NewMatcher(v1.MatcherEqual, "severity", "warning"),
+					},
+					[]string{"alertname", "cluster"},
+					ngmodels.ProvenanceNone,
+				)
+				cfg.InhibitionRules = map[v1.ResourceUID]v1.InhibitionRule{
+					rule.UID: rule,
 				}
 				return cfg
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.ManagedInhibitionRules["suppress-warning-when-critical"].Equal = []string{"alertname", "cluster", "namespace"}
+				updated := cfg.InhibitionRules[("suppress-warning-when-critical")]
+				updated.Equal = []string{"alertname", "cluster", "namespace"}
+				cfg.InhibitionRules[("suppress-warning-when-critical")] = updated
 			},
 		},
 		{
@@ -426,7 +427,7 @@ receivers:
 		},
 		{
 			name:     "extra config with v0mimir email config",
-			features: featuremgmt.WithFeatures(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "extra-receiver")
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
@@ -481,9 +482,9 @@ receivers:
 				require.NoError(t, err)
 				diff := cmp.Diff(firstApplied, base.AppliedConfig(), cmpopts.IgnoreUnexported(definition.Route{}, labels.Matcher{}))
 				if diff != "" {
-					t.Errorf("Unexpected change in applied config: %v", diff)
+					t.Errorf("Unexpected change in applied config after %d runs: %v", i, diff)
 				}
-				require.Falsef(t, changed, "applyConfig should not return changed=true after first run, diff:\n%s", diff)
+				require.Falsef(t, changed, "applyConfig should not return changed=true after first run, runs: %d, diff:\n%s", i, diff)
 				require.Equal(t, firstHash, am.(*alertmanager).appliedHash)
 			}
 

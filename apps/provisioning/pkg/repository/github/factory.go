@@ -2,7 +2,9 @@ package github
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/google/go-github/v82/github"
 	"golang.org/x/oauth2"
@@ -16,24 +18,70 @@ type Factory struct {
 	// Client allows overriding the client to use in the GH client returned. It exists primarily for testing.
 	// FIXME: we should replace in this way. We should add some options pattern for the factory.
 	Client *http.Client
+
+	// replayCache is the process-wide webhook replay cache. It lives on
+	// the factory so a single instance is shared across every per-request
+	// githubWebhookRepository the factory ultimately produces.
+	replayCache *replayCache
 }
 
 func ProvideFactory() *Factory {
-	return &Factory{}
+	return &Factory{
+		replayCache: newReplayCache(defaultReplayCacheTTL),
+	}
 }
 
-func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue) Client {
-	if r.Client != nil {
-		return NewClient(github.NewClient(r.Client))
+// ClientOptions holds the optional configuration for a GitHub client.
+type ClientOptions struct {
+	customServerURL string
+}
+
+// ClientOption customizes how a GitHub client is created.
+type ClientOption func(*ClientOptions)
+
+// WithCustomServerURL targets a GitHub Enterprise Server instance at the given
+// base URL. An empty url or the default `https://github.com` is ignored, keeping the default github.com client.
+func WithCustomServerURL(serverURL string) ClientOption {
+	return func(o *ClientOptions) {
+		u, err := url.Parse(serverURL)
+		if err != nil {
+			return
+		}
+
+		if u.Host == "" || u.Host == "github.com" {
+			return
+		}
+
+		o.customServerURL = fmt.Sprintf("%s://%s", u.Scheme, u.Host)
+	}
+}
+
+func (r *Factory) New(ctx context.Context, owner, repo string, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error) {
+	var options ClientOptions
+	for _, opt := range opts {
+		opt(&options)
 	}
 
+	if r.Client != nil {
+		return NewClient(github.NewClient(r.Client), owner, repo), nil
+	}
+
+	httpClient := &http.Client{}
 	if !ghToken.IsZero() {
 		tokenSrc := oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: string(ghToken)},
 		)
-		tokenClient := oauth2.NewClient(ctx, tokenSrc)
-		return NewClient(github.NewClient(tokenClient))
+		httpClient = oauth2.NewClient(ctx, tokenSrc)
 	}
 
-	return NewClient(github.NewClient(&http.Client{}))
+	ghClient := github.NewClient(httpClient)
+	if options.customServerURL != "" {
+		enterprise, err := ghClient.WithEnterpriseURLs(options.customServerURL, options.customServerURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to configure GitHub Enterprise URLs for %q: %w", options.customServerURL, err)
+		}
+		ghClient = enterprise
+	}
+
+	return NewClient(ghClient, owner, repo), nil
 }

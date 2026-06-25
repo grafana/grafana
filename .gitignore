@@ -36,6 +36,9 @@ __debug_bin*
 # Swagger intermediate file
 /public/api-spec.json
 
+# Default output of `yarn gen-plugin-schema-types` when run locally without PLUGIN_SCHEMA_TYPES_OUT set
+/plugin-schema.d.ts
+
 # Enterprise devenv
 /devenv/docker/blocks/grafana-enterprise
 /devenv/docker/blocks/saml-enterprise
@@ -91,7 +94,6 @@ example-apiserver/
 /devenv/docker-compose.yaml
 /devenv/docker-compose.override.yaml
 /devenv/.env
-/devenv/docker/blocks/tempo/tempo-data/
 /devenv/docker/ha-test-unified-alerting/logs/webhook/dumps/
 /devenv/docker/ha-test-unified-alerting/logs/webhook/webhook-listener.log
 /devenv/docker/blocks/auth/openldap/certs/

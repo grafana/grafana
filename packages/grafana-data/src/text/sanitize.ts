@@ -79,7 +79,7 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
-export function sanitizeTrustedTypesRSS(unsanitizedString: string): TrustedHTML {
+function sanitizeTrustedTypesRSS(unsanitizedString: string): TrustedHTML {
   return DOMPurify.sanitize(unsanitizedString, {
     RETURN_TRUSTED_TYPE: true,
     ADD_ATTR: ['xmlns:atom', 'version', 'property', 'content'],
@@ -88,7 +88,7 @@ export function sanitizeTrustedTypesRSS(unsanitizedString: string): TrustedHTML 
   });
 }
 
-export function sanitizeTrustedTypes(unsanitizedString: string): TrustedHTML {
+function sanitizeTrustedTypes(unsanitizedString: string): TrustedHTML {
   return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true });
 }
 
@@ -109,7 +109,7 @@ export function sanitizeTextPanelContent(unsanitizedString: string): string {
 }
 
 // Returns sanitized SVG, free from XSS attacks to be used when rendering SVG content.
-export function sanitizeSVGContent(unsanitizedString: string): string {
+function sanitizeSVGContent(unsanitizedString: string): string {
   return DOMPurify.sanitize(unsanitizedString, { USE_PROFILES: { svg: true, svgFilters: true } });
 }
 
@@ -119,12 +119,12 @@ export function sanitizeUrl(url: string): string {
 }
 
 // Returns true if the string contains ANSI color codes.
-export function hasAnsiCodes(input: string): boolean {
+function hasAnsiCodes(input: string): boolean {
   return /\u001b\[\d{1,2}m/.test(input);
 }
 
 // Returns a string with HTML entities escaped.
-export function escapeHtml(str: string): string {
+function escapeHtml(str: string): string {
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

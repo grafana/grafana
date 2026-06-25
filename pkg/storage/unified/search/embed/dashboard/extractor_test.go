@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -304,6 +306,66 @@ func TestExtractor_SQLQueries(t *testing.T) {
 	require.NoError(t, json.Unmarshal(items[0].Metadata, &md))
 	assert.Equal(t, "sql", md["language"])
 	assert.Contains(t, items[0].Content, "SELECT date, SUM(amount) FROM orders")
+}
+
+func TestExtractor_CapsHugePanelContent(t *testing.T) {
+	// A giant query must not produce an item that overflows the provider budget.
+	huge := strings.Repeat("a", 1<<20) // 1 MiB
+	body := map[string]any{
+		"uid":   "huge-dash",
+		"title": "Huge",
+		"panels": []any{
+			map[string]any{
+				"id":         1,
+				"title":      "Big",
+				"datasource": map[string]any{"uid": "pg-1", "type": "postgres"},
+				"targets":    []any{map[string]any{"refId": "A", "rawSql": huge}},
+			},
+		},
+	}
+	value, _ := json.Marshal(body)
+	items, err := New().Extract(context.Background(),
+		&resourcepb.ResourceKey{Name: "huge-dash"}, value, "")
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	assert.LessOrEqual(t, len(items[0].Content), maxItemContentBytes)
+}
+
+func TestExtractor_LongDescriptionKeepsQuery(t *testing.T) {
+	// A verbose panel description must not eat the whole content budget and
+	// crowd out the query text — query-based search still needs to match.
+	body := map[string]any{
+		"uid":   "desc-dash",
+		"title": "Runbooks",
+		"panels": []any{
+			map[string]any{
+				"id":          1,
+				"title":       "Error budget",
+				"description": strings.Repeat("verbose runbook prose. ", 1000), // ~23 KiB
+				"datasource":  map[string]any{"uid": "prom-1", "type": "prometheus"},
+				"targets": []any{
+					map[string]any{"refId": "A", "expr": "sum(rate(http_requests_total{code=~\"5..\"}[5m]))"},
+				},
+			},
+		},
+	}
+	value, _ := json.Marshal(body)
+	items, err := New().Extract(context.Background(),
+		&resourcepb.ResourceKey{Name: "desc-dash"}, value, "")
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	assert.LessOrEqual(t, len(items[0].Content), maxItemContentBytes)
+	assert.Contains(t, items[0].Content, "sum(rate(http_requests_total")
+}
+
+func TestTruncateUTF8_RuneBoundary(t *testing.T) {
+	s := strings.Repeat("é", 10) // 2 bytes per rune
+	// Cap at an odd byte count that lands mid-rune; result must stay valid.
+	got := truncateUTF8(s, 5)
+	assert.LessOrEqual(t, len(got), 5)
+	assert.True(t, utf8.ValidString(got))
+	assert.Equal(t, "éé", got) // backed up to the last whole rune
+	assert.Equal(t, "short", truncateUTF8("short", 100))
 }
 
 func TestExtractor_InvalidJSON(t *testing.T) {

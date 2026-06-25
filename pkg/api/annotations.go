@@ -38,6 +38,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		To:           c.QueryInt64("to"),
 		OrgID:        c.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
+		UserUID:      c.Query("userUID"),
 		AlertID:      c.QueryInt64("alertId"),
 		AlertUID:     c.Query("alertUID"),
 		DashboardID:  c.QueryInt64("dashboardId"),
@@ -158,11 +159,9 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
 
-	startID := item.ID
-
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Annotation added",
-		"id":      startID,
+		"id":      item.ID,
 	})
 }
 
@@ -263,12 +262,12 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
-	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
-	if resp != nil {
+	userID, _ := identity.UserIdentifier(c.GetID())
+
+	if _, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser); resp != nil {
 		return resp
 	}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:    c.GetOrgID(),
 		UserID:   userID,
@@ -277,9 +276,8 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 		EpochEnd: cmd.TimeEnd,
 		Text:     cmd.Text,
 		Tags:     cmd.Tags,
-		Data:     annotation.Data,
 	}
-
+	// Data is omitted unless supplied; the repository preserves the stored value.
 	if cmd.Data != nil {
 		item.Data = cmd.Data
 	}
@@ -315,12 +313,14 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "annotationId is invalid", err)
 	}
 
+	userID, _ := identity.UserIdentifier(c.GetID())
+
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
 	if resp != nil {
 		return resp
 	}
 
-	userID, _ := identity.UserIdentifier(c.GetID())
+	// Start from the stored annotation, then apply the supplied fields.
 	existing := annotations.Item{
 		OrgID:    c.GetOrgID(),
 		UserID:   userID,
@@ -329,31 +329,30 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 		EpochEnd: annotation.TimeEnd,
 		Text:     annotation.Text,
 		Tags:     annotation.Tags,
-		Data:     annotation.Data,
+		PanelID:  annotation.PanelID,
+	}
+	if annotation.DashboardUID != nil {
+		existing.DashboardUID = *annotation.DashboardUID
 	}
 
 	if cmd.Tags != nil {
 		existing.Tags = cmd.Tags
 	}
-
-	if cmd.Text != "" && cmd.Text != existing.Text {
+	if cmd.Text != "" {
 		existing.Text = cmd.Text
 	}
-
-	if cmd.Time > 0 && cmd.Time != existing.Epoch {
+	if cmd.Time > 0 {
 		existing.Epoch = cmd.Time
 	}
-
-	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
+	if cmd.TimeEnd > 0 {
 		existing.EpochEnd = cmd.TimeEnd
 	}
-
 	if cmd.Data != nil {
 		existing.Data = cmd.Data
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 	}
 
 	return response.Success("Annotation patched")
@@ -640,6 +639,10 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	UserID int64 `json:"userId"`
+	// Limit response to annotations created by a specific user, identified by UID.
+	// in:query
+	// required:false
+	UserUID string `json:"userUID"`
 	// Find annotations for a specified alert rule by its ID.
 	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
 	// in:query

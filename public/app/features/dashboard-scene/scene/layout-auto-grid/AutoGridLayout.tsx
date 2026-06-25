@@ -37,7 +37,7 @@ export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOpt
   draggingKey?: string;
 }
 
-export interface AutoGridLayoutOptions {
+interface AutoGridLayoutOptions {
   /**
    * Useful for setting a height on items without specifying how many rows there will be.
    * Defaults to 320px
@@ -120,6 +120,10 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   }
 
   public getDragHooks() {
+    if (!this.isDraggable()) {
+      return {};
+    }
+
     return {
       onDragStart: (evt: ReactPointerEvent, panel: VizPanel) => {
         const gridItem = panel.parent;
