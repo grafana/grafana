@@ -51,7 +51,7 @@ graph TB
         SERVICES["pkg/services/, pkg/api/, apps/, …"]
     end
 
-    subgraph BOOTGRAPH["bootstrap module (in OSS most likely)"]
+    subgraph BOOTGRAPH["bootstrap module (sub-module in OSS)"]
         BOOT["pkg/server/bootstrap/"]
         BOOT_WIRE["pkg/server/bootstrap/wire"]
     end
@@ -66,7 +66,7 @@ graph TB
     MAIN_GE -->|"initializes"| WIRE_GE
     WIRE_GE -->|"imports dependencies"| PKG
     WIRE_GE -->|"imports dependencies"| SERVICES
-    MAIN_GE -->|"composes graph from"| WIRE_GE
+    WIRE_GE -->|"composes graph from"| WIRE_GE_EXT
     WIRE_GE -->|"composes graph from"| BOOT_WIRE
     WIRE_GE -->|"fed to"| BOOT
     MAIN_OSS -->|"initializes"| WIRE_OSS
