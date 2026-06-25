@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { type ScopesContextValue } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
@@ -18,8 +19,9 @@ export interface Props {
 }
 
 export function SingleTopBarActions({ actions, breadcrumbActions, scopes }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { isOpen: isExtensionSidebarOpen, extensionSidebarWidth } = useExtensionSidebarContext();
-  const styles = useStyles2(getStyles, extensionSidebarWidth);
+  const styles = useStyles2(getStyles, extensionSidebarWidth, visualRefreshEnabled);
 
   return (
     <div
@@ -38,12 +40,11 @@ export function SingleTopBarActions({ actions, breadcrumbActions, scopes }: Prop
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, extensionSidebarWidth = 0) => {
+const getStyles = (theme: GrafanaTheme2, extensionSidebarWidth = 0, visualRefreshEnabled = false) => {
   return {
     actionsBar: css({
       alignItems: 'center',
-      backgroundColor: theme.colors.background.primary,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      borderBottom: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       height: getChromeHeaderLevelHeight(),
       padding: theme.spacing(0, 1, 0, 2),

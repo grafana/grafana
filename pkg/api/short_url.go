@@ -23,7 +23,6 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -34,17 +33,10 @@ import (
 func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 	reqSignedIn := middleware.ReqSignedIn
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
-		handler := newShortURLK8sHandler(hs)
-		apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
-		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
-		apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
-	} else {
-		apiRoute.Post("/api/short-urls", reqSignedIn, hs.createShortURL)
-		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, hs.getShortURL)
-		apiRoute.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
-	}
+	handler := newShortURLK8sHandler(hs)
+	apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
+	apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
+	apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
 }
 
 // createShortURL handles requests to create short URLs.
@@ -65,44 +57,6 @@ func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, shortURLDTO)
 }
 
-func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
-	shortURLUID := web.Params(c.Req)[":uid"]
-
-	if !util.IsValidShortUID(shortURLUID) {
-		return
-	}
-
-	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
-	if err != nil {
-		// If we didn't get the URL for whatever reason, we redirect to the
-		// main page, otherwise we get into an endless loops of redirects, as
-		// we would try to redirect again.
-		if shorturls.ErrShortURLNotFound.Is(err) {
-			hs.log.Debug("Not redirecting short URL since not found", "uid", shortURLUID)
-			c.Redirect(hs.Cfg.AppURL, http.StatusPermanentRedirect)
-			return
-		}
-		hs.log.Error("Short URL redirection error", "err", err)
-		c.Redirect(hs.Cfg.AppURL, http.StatusTemporaryRedirect)
-		return
-	}
-
-	// Failure to update LastSeenAt should still allow to redirect
-	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
-		hs.log.Error("Failed to update short URL last seen at", "error", err)
-	}
-
-	// Safety net: validate stored path before redirecting to prevent open redirects
-	if err := shorturls.ValidateRelativePath(shortURL.Path); err != nil {
-		hs.log.Error("Short URL has invalid path, refusing to redirect", "path", shortURL.Path, "err", err)
-		c.Redirect(hs.Cfg.AppURL, http.StatusFound)
-		return
-	}
-
-	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
-	c.Redirect(setting.ToAbsUrl(shortURL.Path), http.StatusFound)
-}
-
 // getShortURL handles requests to get short URLs.
 func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response {
 	shortURLUID := web.Params(c.Req)[":uid"]
@@ -116,6 +70,7 @@ func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response 
 		if shorturls.ErrShortURLNotFound.Is(err) {
 			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
 		}
+		return response.Err(shorturls.ErrShortURLInternal.Errorf("failed to get short URL: %w", err))
 	}
 
 	return response.JSON(http.StatusOK, shortURL)
@@ -156,7 +111,13 @@ func (sk8s *shortURLK8sHandler) getKubernetesShortURLsHandler(c *contextmodel.Re
 		return
 	}
 
-	c.JSON(http.StatusOK, shorturl.UnstructuredToLegacyShortURL(*out))
+	legacyShortURL, err := shorturl.UnstructuredToLegacyShortURL(*out)
+	if err != nil {
+		sk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, legacyShortURL)
 }
 
 func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmodel.ReqContext) {

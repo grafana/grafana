@@ -56,9 +56,10 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	require.Empty(t, listRsp.Items)
 
 	t.Run("editor can mutate variables", func(t *testing.T) {
-		editorVariable := buildVariableObject("editor-region", "editorRegion", "")
+		editorVariable := buildVariableObject("", "editorRegion", "")
 		createdEditorVariable, err := editorVariableClient.Resource.Create(ctx, editorVariable, metav1.CreateOptions{})
 		require.NoError(t, err)
+		require.Equal(t, "editorRegion", createdEditorVariable.GetName())
 
 		err = editorVariableClient.Resource.Delete(ctx, createdEditorVariable.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -70,10 +71,10 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	rootVariable := buildVariableObject("global-region", "region", "")
+	rootVariable := buildVariableObject("", "region", "")
 	createdRootVariable, err := variableClient.Resource.Create(ctx, rootVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
-	require.Equal(t, "global-region", createdRootVariable.GetName())
+	require.Equal(t, "region", createdRootVariable.GetName())
 
 	createdRootVariable.Object["spec"].(map[string]any)["spec"].(map[string]any)["query"] = "us-east-1,us-west-2,eu-west-1"
 	updatedRootVariable, err := variableClient.Resource.Update(ctx, createdRootVariable, metav1.UpdateOptions{})
@@ -99,35 +100,53 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 			{UserID: &editorID, Level: ResourcePermissionLevelView},
 		})
 
-		restrictedFolderVariable := buildVariableObject("folder-editor-denied", "editorDenied", createdFolder2.GetName())
+		restrictedFolderVariable := buildVariableObject("", "editorDenied", createdFolder2.GetName())
 		_, err = editorVariableClient.Resource.Create(ctx, restrictedFolderVariable, metav1.CreateOptions{})
 		require.Error(t, err)
 		require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
 	})
 
-	folderVariable := buildVariableObject("folder-region", "region", createdFolder1.GetName())
+	folderVariable := buildVariableObject("", "region", createdFolder1.GetName())
 	createdFolderVariable, err := variableClient.Resource.Create(ctx, folderVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
-	require.Equal(t, "folder-region", createdFolderVariable.GetName())
+	require.Equal(t, "region--"+createdFolder1.GetName(), createdFolderVariable.GetName())
 	require.Equal(t, createdFolder1.GetName(), createdFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
 
-	duplicateVariable := buildVariableObject("global-region-duplicate", "region", "")
+	duplicateVariable := buildVariableObject("", "region", "")
 	_, err = variableClient.Resource.Create(ctx, duplicateVariable, metav1.CreateOptions{})
 	require.Error(t, err)
+	require.True(t, k8serrors.IsAlreadyExists(err), "expected already exists error, got: %v", err)
 
-	duplicateFolderVariable := buildVariableObject("folder-region-duplicate", "region", createdFolder1.GetName())
+	duplicateFolderVariable := buildVariableObject("", "region", createdFolder1.GetName())
 	_, err = variableClient.Resource.Create(ctx, duplicateFolderVariable, metav1.CreateOptions{})
 	require.Error(t, err)
+	require.True(t, k8serrors.IsAlreadyExists(err), "expected already exists error, got: %v", err)
 
-	folderVariableInDifferentFolder := buildVariableObject("folder-region-folder2", "region", createdFolder2.GetName())
+	folderVariableInDifferentFolder := buildVariableObject("", "region", createdFolder2.GetName())
 	createdFolderVariableInDifferentFolder, err := variableClient.Resource.Create(ctx, folderVariableInDifferentFolder, metav1.CreateOptions{})
 	require.NoError(t, err)
-	require.Equal(t, "folder-region-folder2", createdFolderVariableInDifferentFolder.GetName())
+	require.Equal(t, "region--"+createdFolder2.GetName(), createdFolderVariableInDifferentFolder.GetName())
 
-	serviceVariable := buildVariableObject("global-service", "service", "")
+	serviceVariable := buildVariableObject("", "service", "")
 	createdServiceVariable, err := variableClient.Resource.Create(ctx, serviceVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
-	require.Equal(t, "global-service", createdServiceVariable.GetName())
+	require.Equal(t, "service", createdServiceVariable.GetName())
+
+	t.Run("should allow explicit metadata.name when it matches derived contract", func(t *testing.T) {
+		explicit := buildVariableObject("latency--"+createdFolder1.GetName(), "latency", createdFolder1.GetName())
+		created, err := variableClient.Resource.Create(ctx, explicit, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "latency--"+createdFolder1.GetName(), created.GetName())
+		require.NoError(t, variableClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+	})
+
+	t.Run("should reject explicit metadata.name when it does not match derived contract", func(t *testing.T) {
+		mismatch := buildVariableObject("status5", "status", createdFolder1.GetName())
+		_, err := variableClient.Resource.Create(ctx, mismatch, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
+		require.Contains(t, err.Error(), `expected "status--`+createdFolder1.GetName()+`"`)
+	})
 
 	t.Run("should filter by variable spec name", func(t *testing.T) {
 		list, err := variableClient.Resource.List(ctx, metav1.ListOptions{
@@ -135,16 +154,16 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
-		require.Equal(t, "global-service", list.Items[0].GetName())
+		require.Equal(t, "service", list.Items[0].GetName())
 	})
 
 	t.Run("should filter by multiple field selectors", func(t *testing.T) {
 		list, err := variableClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "metadata.name=global-service,spec.spec.name=service",
+			FieldSelector: "metadata.name=service,spec.spec.name=service",
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
-		require.Equal(t, "global-service", list.Items[0].GetName())
+		require.Equal(t, "service", list.Items[0].GetName())
 	})
 
 	t.Run("should return empty when spec name filter does not match", func(t *testing.T) {
@@ -162,7 +181,7 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
-		require.Equal(t, "folder-region", list.Items[0].GetName())
+		require.Equal(t, "region--"+createdFolder1.GetName(), list.Items[0].GetName())
 	})
 
 	annotations := createdFolderVariable.GetAnnotations()
@@ -170,51 +189,36 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	createdFolderVariable.SetAnnotations(annotations)
 	_, err = variableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
 	require.Error(t, err)
+	require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
 
-	err = variableClient.Resource.Delete(ctx, createdFolderVariableInDifferentFolder.GetName(), metav1.DeleteOptions{})
-	require.NoError(t, err)
-
-	movedFolderVariable, err := variableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
-	require.NoError(t, err)
-	require.Equal(t, createdFolder2.GetName(), movedFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
-
-	t.Run("should reflect folder move in label selector results", func(t *testing.T) {
-		oldFolderList, err := variableClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.spec.name=region",
-			LabelSelector: folderLabelSelectorKey + "=" + createdFolder1.GetName(),
-		})
-		require.NoError(t, err)
-		require.Empty(t, oldFolderList.Items)
-
-		newFolderList, err := variableClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.spec.name=region",
-			LabelSelector: folderLabelSelectorKey + "=" + createdFolder2.GetName(),
-		})
-		require.NoError(t, err)
-		require.Len(t, newFolderList.Items, 1)
-		require.Equal(t, "folder-region", newFolderList.Items[0].GetName())
-	})
-
-	annotations = movedFolderVariable.GetAnnotations()
+	annotations = createdFolderVariable.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = "non-existent-folder"
-	movedFolderVariable.SetAnnotations(annotations)
-	_, err = variableClient.Resource.Update(ctx, movedFolderVariable, metav1.UpdateOptions{})
+	createdFolderVariable.SetAnnotations(annotations)
+	_, err = variableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
 	require.Error(t, err)
+	require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
 
-	invalidFolderVariable := buildVariableObject("service-missing-folder", "service", "missing-folder")
+	updatedRootVariable.Object["spec"].(map[string]any)["spec"].(map[string]any)["name"] = "region_renamed"
+	_, err = variableClient.Resource.Update(ctx, updatedRootVariable, metav1.UpdateOptions{})
+	require.Error(t, err)
+	require.True(t, k8serrors.IsBadRequest(err), "expected bad request, got: %v", err)
+
+	invalidFolderVariable := buildVariableObject("", "service", "missing-folder")
 	_, err = variableClient.Resource.Create(ctx, invalidFolderVariable, metav1.CreateOptions{})
 	require.Error(t, err)
 
-	_, err = viewerVariableClient.Resource.Update(ctx, movedFolderVariable, metav1.UpdateOptions{})
+	_, err = viewerVariableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
 	require.Error(t, err)
-	err = viewerVariableClient.Resource.Delete(ctx, movedFolderVariable.GetName(), metav1.DeleteOptions{})
+	err = viewerVariableClient.Resource.Delete(ctx, createdFolderVariable.GetName(), metav1.DeleteOptions{})
 	require.Error(t, err)
 
-	err = variableClient.Resource.Delete(ctx, "global-region", metav1.DeleteOptions{})
+	err = variableClient.Resource.Delete(ctx, createdRootVariable.GetName(), metav1.DeleteOptions{})
 	require.NoError(t, err)
-	err = variableClient.Resource.Delete(ctx, "folder-region", metav1.DeleteOptions{})
+	err = variableClient.Resource.Delete(ctx, createdFolderVariable.GetName(), metav1.DeleteOptions{})
 	require.NoError(t, err)
-	err = variableClient.Resource.Delete(ctx, "global-service", metav1.DeleteOptions{})
+	err = variableClient.Resource.Delete(ctx, createdFolderVariableInDifferentFolder.GetName(), metav1.DeleteOptions{})
+	require.NoError(t, err)
+	err = variableClient.Resource.Delete(ctx, createdServiceVariable.GetName(), metav1.DeleteOptions{})
 	require.NoError(t, err)
 }
 
@@ -240,14 +244,18 @@ func buildVariableObject(metadataName string, variableName string, folderUID str
 		annotations[utils.AnnoKeyFolder] = folderUID
 	}
 
+	metadata := map[string]any{
+		"annotations": annotations,
+	}
+	if metadataName != "" {
+		metadata["name"] = metadataName
+	}
+
 	return &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": dashv2beta1.VariableResourceInfo.GroupVersion().String(),
 			"kind":       dashv2beta1.VariableResourceInfo.GroupVersionKind().Kind,
-			"metadata": map[string]any{
-				"name":        metadataName,
-				"annotations": annotations,
-			},
+			"metadata":   metadata,
 			"spec": map[string]any{
 				"kind": "CustomVariable",
 				"spec": map[string]any{

@@ -14,9 +14,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
@@ -27,19 +28,17 @@ import (
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.uber.org/atomic"
 	"k8s.io/apimachinery/pkg/selection"
-
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -87,9 +86,38 @@ type BleveOptions struct {
 	// Only given fields are indexed (have mapping).
 	SelectableFieldsForKinds map[string][]string
 
+	// Map "group/resource" -> hash of the SearchFieldDefinition slices
+	// registered for that (group, resource), across every version. The
+	// value is recorded in each new index's IndexBuildInfo so a future run
+	// can detect drift and rebuild. Keys must be lower-case.
+	SearchFieldsHashesForKinds map[string]string
+
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
 	Snapshot SnapshotOptions
+
+	// DiskCleanupInterval is how often the background on-disk cleanup pass runs.
+	// The first run after start is jittered uniformly in [0, DiskCleanupInterval)
+	// so the sweep doesn't run immediately at startup, when the instance is still
+	// busy opening or rebuilding indexes. Zero disables the loop (the goroutine
+	// is not started).
+	DiskCleanupInterval time.Duration
+
+	// DiskCleanupGracePeriod is the minimum age a candidate directory must have
+	// before it is eligible for deletion. Applied as a two-step mtime gate so a
+	// directory that is still being written to (active scorch index, in-flight
+	// snapshot CopyTo) is always preserved. Only consulted when
+	// DiskCleanupInterval > 0.
+	DiskCleanupGracePeriod time.Duration
+
+	// DiskCleanupUnopenedGracePeriod is a longer grace period applied only to
+	// the newest on-disk index of a resource this pod owns but has not opened
+	// in this process. A pod owning a resource it has not been queried for
+	// keeps the most recent on-disk index for this duration, so a later
+	// BuildIndex call can hand it to findPreviousFileBasedIndex and skip a full
+	// rebuild. Older siblings under the same resource still use
+	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
+	DiskCleanupUnopenedGracePeriod time.Duration
 }
 
 // SnapshotOptions configures remote index snapshot handling in BuildIndex and
@@ -147,7 +175,8 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	selectableFields map[string][]string
+	selectableFields   map[string][]string
+	searchFieldsHashes map[string]string
 
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
@@ -228,6 +257,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownsIndexFn:             ownFn,
 		indexMetrics:            indexMetrics,
 		selectableFields:        opts.SelectableFieldsForKinds,
+		searchFieldsHashes:      opts.SearchFieldsHashesForKinds,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -239,6 +269,9 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 
 	be.bgTasksWg.Add(1)
 	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
+
+	be.bgTasksWg.Add(1)
+	go be.writeOpenIndexListPeriodically(ctx)
 
 	if opts.Snapshot.Store != nil {
 		// Initialise snapshot metric label series only on instances where the
@@ -254,6 +287,15 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 			be.bgTasksWg.Add(1)
 			go be.cleanupSnapshotsPeriodically(ctx)
 		}
+	}
+
+	if opts.DiskCleanupInterval > 0 {
+		// Same rationale as InitSnapshotMetrics: only emit the
+		// index_server_disk_cleanup_* series on instances where the feature is
+		// enabled.
+		be.indexMetrics.InitDiskCleanupMetrics()
+		be.bgTasksWg.Add(1)
+		go be.cleanupDiskPeriodically(ctx)
 	}
 
 	if be.indexMetrics != nil {
@@ -398,10 +440,20 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 	if err != nil {
 		return false, fmt.Errorf("reading snapshot mutation count for %v: %w", key, err)
 	}
-	if mutationCount < int64(b.opts.Snapshot.MinDocChanges) {
+	if mutationCount >= int64(b.opts.Snapshot.MinDocChanges) {
+		return true, nil
+	}
+
+	if b.opts.Snapshot.MaxIndexAge <= 0 {
 		return false, nil
 	}
-	return true, nil
+
+	// Refresh stable indexes well before cleanup can age out the remote snapshot.
+	refreshInterval := b.opts.Snapshot.MaxIndexAge / 3
+	if refreshInterval <= 0 {
+		refreshInterval = b.opts.Snapshot.MaxIndexAge
+	}
+	return now.Sub(lastUploadTime) >= refreshInterval, nil
 }
 
 func (b *bleveBackend) setUploadTracking(key resource.NamespacedResource, uploadedAt time.Time) {
@@ -570,7 +622,7 @@ func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath stri
 // newBleveIndex creates a new bleve index with consistent configuration.
 // If path is empty, creates an in-memory index.
 // If path is not empty, creates a file-based index at the specified path.
-func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string) (bleve.Index, error) {
+func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time, buildVersion string, selectableFields []string, searchFieldsHash string) (bleve.Index, error) {
 	kvstore := bleve.Config.DefaultKVStore
 	if path == "" {
 		// use in-memory kvstore
@@ -585,6 +637,7 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 		BuildTime:        buildTime.Unix(),
 		BuildVersion:     buildVersion,
 		SelectableFields: selectableFields,
+		SearchFieldsHash: searchFieldsHash,
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -601,9 +654,10 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime        int64    `json:"build_time"`                  // Unix seconds timestamp of time when the index was built
-	BuildVersion     string   `json:"build_version"`               // Grafana version used when building the index
-	SelectableFields []string `json:"selectable_fields,omitempty"` // List of selectable fields used when index was created.
+	BuildTime        int64    `json:"build_time"`                   // Unix seconds timestamp of time when the index was built
+	BuildVersion     string   `json:"build_version"`                // Grafana version used when building the index
+	SelectableFields []string `json:"selectable_fields,omitempty"`  // List of selectable fields used when index was created.
+	SearchFieldsHash string   `json:"search_fields_hash,omitempty"` // Hash over the SearchFieldDefinition slices registered for (group, resource) at build time, across every version. Empty when no SearchFieldsProvider was in use.
 }
 
 type buildIndexSource int
@@ -620,7 +674,7 @@ func (s buildIndexSource) needsBuild() bool {
 
 // preparedBuildIndex carries the opened index from prepareIndex into the
 // build/cache phase. BuildIndex owns every value returned here: it closes index
-// on failure, removes cleanupDir on failure, and releases coldStartLeaderLock
+// on failure, removes cleanupDir on failure, and releases snapshotBuildLock
 // after the optional leader upload.
 type preparedBuildIndex struct {
 	// index is the opened Bleve index. It may be empty, reused from disk, or
@@ -640,9 +694,11 @@ type preparedBuildIndex struct {
 	// cleanupDir is deleted if BuildIndex returns before storing the index in the
 	// cache. It is set for newly-created file indexes only.
 	cleanupDir string
-	// coldStartLeaderLock is held when this instance won cold-start coordination.
+	// snapshotBuildLock is held when this instance won snapshot build coordination.
 	// BuildIndex must keep it through the build and immediate snapshot upload.
-	coldStartLeaderLock IndexStoreLock
+	snapshotBuildLock IndexStoreLock
+	// snapshotBuildFlow identifies the coordination path that supplied snapshotBuildLock.
+	snapshotBuildFlow string
 }
 
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
@@ -680,7 +736,9 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	selectableFields := b.selectableFields[strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))]
+	sfKey := strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))
+	selectableFields := b.selectableFields[sfKey]
+	searchFieldsHash := b.searchFieldsHashes[sfKey]
 
 	mapper, err := GetBleveMappings(fields, selectableFields)
 	if err != nil {
@@ -698,7 +756,7 @@ func (b *bleveBackend) BuildIndex(
 	resourceDir := b.getResourceDir(key)
 	snapshotEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
 
-	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails)
+	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -717,10 +775,10 @@ func (b *bleveBackend) BuildIndex(
 		}
 	}()
 
-	if prepared.coldStartLeaderLock != nil {
+	if prepared.snapshotBuildLock != nil {
 		defer func() {
-			if releaseErr := prepared.coldStartLeaderLock.Release(); releaseErr != nil {
-				logWithDetails.Warn("Releasing cold-start build lock", "err", releaseErr)
+			if releaseErr := prepared.snapshotBuildLock.Release(); releaseErr != nil {
+				logWithDetails.Warn("Releasing snapshot build lock", "flow", prepared.snapshotBuildFlow, "err", releaseErr)
 			}
 		}()
 	}
@@ -778,8 +836,8 @@ func (b *bleveBackend) BuildIndex(
 		if buildErr != nil {
 			return nil, buildErr
 		}
-		if prepared.coldStartLeaderLock != nil {
-			b.uploadColdStartLeaderSnapshot(ctx, key, idx, prepared.coldStartLeaderLock, logWithDetails)
+		if prepared.snapshotBuildLock != nil {
+			b.uploadSnapshotBuildLeader(ctx, key, idx, prepared.snapshotBuildLock, prepared.snapshotBuildFlow, logWithDetails)
 		}
 	} else {
 		logWithDetails.Info("Skipping index build, using existing index")
@@ -844,6 +902,7 @@ func (b *bleveBackend) prepareIndex(
 	snapshotEnabled bool,
 	mapper mapping.IndexMapping,
 	selectableFields []string,
+	searchFieldsHash string,
 	rebuild bool,
 	lastImportTime time.Time,
 	maxFreshSnapshotAge time.Duration,
@@ -857,25 +916,20 @@ func (b *bleveBackend) prepareIndex(
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
 	if cachedIndex == nil && !rebuild {
-		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, lastImportTime, snapshotEnabled, logger)
+		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, logger)
 	}
 
 	if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
-		// Rebuild path: before paying the cost of a from-scratch rebuild, check
-		// whether the remote index store holds a same-version snapshot fresh enough
-		// to serve as a drop-in replacement. On miss, fall through to rebuild — no
-		// tiered fallback because we already have a working index.
-		idx, name, rv, err := b.tryDownloadFreshSameVersionSnapshot(
-			ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge,
-			snapshotPolicySameVersion, "search.remote_index_snapshot.download_fresh",
-			logger,
-		)
+		// Rebuild path: before paying the cost of a from-scratch rebuild, coordinate
+		// with same-version replicas and accept only a snapshot fresh enough to serve
+		// as a drop-in replacement. There is no tiered fallback here because we
+		// already have a working index.
+		// coordinateRebuild only returns err on ctx cancellation; propagate it directly.
+		idx, name, rv, lock, err := b.coordinateRebuild(ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge, logger)
 		if err != nil {
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return preparedBuildIndex{}, ctxErr
-			}
-			logger.Warn("Failed to download fresh remote snapshot, will rebuild from scratch", "err", err)
-		} else if idx != nil {
+			return preparedBuildIndex{}, err
+		}
+		if idx != nil {
 			return preparedBuildIndex{
 				index:         idx,
 				indexRV:       rv,
@@ -883,10 +937,21 @@ func (b *bleveBackend) prepareIndex(
 				indexStorage:  indexStorageFile,
 				source:        buildIndexSourceDownloadedSnapshot,
 			}, nil
+		} else if lock != nil {
+			prepared, err := b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
+			if err != nil {
+				if releaseErr := lock.Release(); releaseErr != nil {
+					logger.Warn("Releasing rebuild build lock", "err", releaseErr)
+				}
+				return preparedBuildIndex{}, err
+			}
+			prepared.snapshotBuildLock = lock
+			prepared.snapshotBuildFlow = snapshotBuildFlowRebuild
+			return prepared, nil
 		}
 	}
 
-	return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+	return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 }
 
 func (b *bleveBackend) prepareUncachedFileIndex(
@@ -895,6 +960,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	resourceDir string,
 	mapper mapping.IndexMapping,
 	selectableFields []string,
+	searchFieldsHash string,
 	lastImportTime time.Time,
 	snapshotEnabled bool,
 	logger log.Logger,
@@ -914,7 +980,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	}
 
 	if !snapshotEnabled {
-		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
 	idx, name, rv, err = b.tryDownloadRemoteSnapshot(ctx, key, resourceDir, logger)
@@ -933,13 +999,12 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 		}, nil
 	}
 
+	// coordinateColdStartBuild only returns err on ctx cancellation; propagate it directly.
 	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger)
 	if err != nil {
-		if ctxErr := ctx.Err(); ctxErr != nil {
-			return preparedBuildIndex{}, ctxErr
-		}
-		logger.Warn("Cold-start coordination failed, will build alone", "err", err)
-	} else if idx != nil {
+		return preparedBuildIndex{}, err
+	}
+	if idx != nil {
 		return preparedBuildIndex{
 			index:         idx,
 			indexRV:       rv,
@@ -948,18 +1013,19 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 			source:        buildIndexSourceDownloadedSnapshot,
 		}, nil
 	} else if lock != nil {
-		prepared, err := b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+		prepared, err := b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 		if err != nil {
 			if releaseErr := lock.Release(); releaseErr != nil {
 				logger.Warn("Releasing cold-start build lock", "err", releaseErr)
 			}
 			return preparedBuildIndex{}, err
 		}
-		prepared.coldStartLeaderLock = lock
+		prepared.snapshotBuildLock = lock
+		prepared.snapshotBuildFlow = snapshotBuildFlowColdStart
 		return prepared, nil
 	}
 
-	return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, logger)
+	return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 }
 
 func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time.Time, logger log.Logger) (bleve.Index, string, int64, error) {
@@ -991,21 +1057,21 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 	return nil, "", 0, nil
 }
 
-func (b *bleveBackend) createEmptyBuildIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
+func (b *bleveBackend) createEmptyBuildIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, searchFieldsHash string, logger log.Logger) (preparedBuildIndex, error) {
 	if b.opts.FileThreshold <= 0 {
-		return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, logger)
+		return b.createEmptyFileIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
-	return b.createEmptyMemoryIndex(mapper, selectableFields, logger)
+	return b.createEmptyMemoryIndex(mapper, selectableFields, searchFieldsHash, logger)
 }
 
-func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
+func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.IndexMapping, selectableFields []string, searchFieldsHash string, logger log.Logger) (preparedBuildIndex, error) {
 	for {
 		indexDir, fileIndexName, err := b.reserveIndexDir(resourceDir)
 		if err != nil {
 			return preparedBuildIndex{}, err
 		}
 
-		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields)
+		idx, err := newBleveIndex(indexDir, mapper, time.Now(), b.opts.BuildVersion, selectableFields, searchFieldsHash)
 		if errors.Is(err, bleve.ErrorIndexPathExists) {
 			b.unregisterInFlightBuildDir(indexDir)
 			continue
@@ -1026,8 +1092,8 @@ func (b *bleveBackend) createEmptyFileIndex(resourceDir string, mapper mapping.I
 	}
 }
 
-func (b *bleveBackend) createEmptyMemoryIndex(mapper mapping.IndexMapping, selectableFields []string, logger log.Logger) (preparedBuildIndex, error) {
-	idx, err := newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields)
+func (b *bleveBackend) createEmptyMemoryIndex(mapper mapping.IndexMapping, selectableFields []string, searchFieldsHash string, logger log.Logger) (preparedBuildIndex, error) {
+	idx, err := newBleveIndex("", mapper, time.Now(), b.opts.BuildVersion, selectableFields, searchFieldsHash)
 	if err != nil {
 		return preparedBuildIndex{}, fmt.Errorf("error creating new in-memory bleve index: %w", err)
 	}
@@ -1202,34 +1268,38 @@ func (b *bleveBackend) buildIndexFromScratch(idx buildResourceIndex, indexBuildR
 	return nil
 }
 
-func (b *bleveBackend) uploadColdStartLeaderSnapshot(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, lock IndexStoreLock, logger log.Logger) {
+// uploadSnapshotBuildLeader uploads a snapshot immediately after this instance
+// has rebuilt an index while holding the remote build lock. The upload lets
+// other replicas waiting on the same lock download the fresh snapshot instead
+// of rebuilding the same index locally.
+func (b *bleveBackend) uploadSnapshotBuildLeader(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, lock IndexStoreLock, flow string, logger log.Logger) {
 	if checkSnapshotLock(lock) != nil {
 		// Lock lost during the build. Another replica may already be uploading;
 		// skip and let the periodic tick reconcile.
-		logger.Warn("Cold-start leader lock lost during build; skipping immediate upload")
+		logger.Warn("Snapshot build leader lock lost during build; skipping immediate upload", "flow", flow)
 		b.recordSnapshotUploadStatus(snapshotUploadStatusSkipLockLost)
 		return
 	}
 
 	baselineMutations, mErr := idx.getSnapshotMutationCount()
 	if mErr != nil {
-		logger.Warn("Failed to read snapshot mutation baseline for leader upload", "err", mErr)
+		logger.Warn("Failed to read snapshot mutation baseline for leader upload", "flow", flow, "err", mErr)
 	}
 	uploadKey, uploadRV, upErr := b.snapshotCopyAndUpload(ctx, key, idx, lock)
 	if upErr != nil {
-		logger.Warn("Cold-start leader immediate snapshot upload failed", "err", upErr)
+		logger.Warn("Snapshot build leader immediate snapshot upload failed", "flow", flow, "err", upErr)
 		b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 		return
 	}
 
 	if mErr == nil {
 		if subErr := idx.subtractSnapshotMutationCount(baselineMutations); subErr != nil {
-			logger.Warn("Failed to advance snapshot mutation baseline after leader upload", "err", subErr)
+			logger.Warn("Failed to advance snapshot mutation baseline after leader upload", "flow", flow, "err", subErr)
 		}
 	}
 	b.setUploadTracking(key, time.Now())
 	b.recordSnapshotUploadStatus(snapshotUploadStatusSuccess)
-	logger.Info("Cold-start leader uploaded freshly-built snapshot", "snapshot_key", uploadKey.String(), "snapshot_rv", uploadRV)
+	logger.Info("Snapshot build leader uploaded freshly-built snapshot", "flow", flow, "snapshot_key", uploadKey.String(), "snapshot_rv", uploadRV)
 }
 
 func (b *bleveBackend) getResourceDir(key resource.NamespacedResource) string {
@@ -1462,10 +1532,15 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 
 // Stop closes all indexes and stops background tasks.
 func (b *bleveBackend) Stop() {
-	b.closeAllIndexes()
-
 	b.bgTasksCancel()
 	b.bgTasksWg.Wait()
+
+	// Stop the periodic writer before the final write so shutdown writes one stable list.
+	if err := b.WriteOpenIndexStats(time.Now()); err != nil {
+		b.log.Warn("failed to write open index stats during shutdown", "err", err)
+	}
+
+	b.closeAllIndexes()
 }
 
 func (b *bleveBackend) closeAllIndexes() {
@@ -1724,6 +1799,7 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 		BuildTime:        bt,
 		BuildVersion:     bv,
 		SelectableFields: bi.SelectableFields,
+		SearchFieldsHash: bi.SearchFieldsHash,
 	}, nil
 }
 
@@ -2085,6 +2161,32 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
+			// Temporarily expand a root-folder filter so it matches both the
+			// legacy empty sentinel ("") and the canonical "general" UID. This
+			// keeps results consistent whether the index was written before or
+			// after the apistore started stamping "general" on root-parented
+			// resources. Done here so every caller stays agnostic of the
+			// sentinel used on disk.
+			if v.Key == resource.SEARCH_FIELD_FOLDER &&
+				(v.Operator == string(selection.Equals) || v.Operator == string(selection.In)) {
+				expanded := false
+				values := make([]string, 0, len(v.Values)+1)
+				for _, val := range v.Values {
+					if !foldermodel.IsRootFolderUID(val) {
+						values = append(values, val)
+						continue
+					}
+					if !expanded {
+						values = append(values, "", foldermodel.GeneralFolderUID)
+						expanded = true
+					}
+				}
+				if expanded {
+					v.Operator = string(selection.In)
+					v.Values = values
+				}
+			}
+
 			// Fields should already have correct prefix (either "fields." or "selectableFields.")
 			q, err := requirementQuery(v, "")
 			if err != nil {
@@ -2092,6 +2194,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			}
 			queries = append(queries, q)
 		}
+	}
+
+	// Queries shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. Without this
+	// rewrite, 1-char queries fell through to MatchAllQuery and 2-char queries usually returned
+	// nothing. Treat them as a prefix wildcard ("f" → "f*") so search-as-you-type matches by
+	// prefix via the existing wildcard branch. Callers that already passed a wildcard are left
+	// alone.
+	if q := req.Query; q != "" && len(q) < NGRAM_MIN_TOKEN && !strings.Contains(q, "*") {
+		req.Query = q + "*"
 	}
 
 	if len(req.Query) > 1 {
@@ -2150,7 +2261,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 					q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
 					q.SetBoost(float64(field.Boost))
 					q.SetField(field.Name)
-					q.Analyzer = standard.Name               // analyze the text
+					// Match the analyzer used to index each field: the ngram field
+					// must be analyzed with TITLE_ANALYZER, not the standard analyzer
+					// (which splits on punctuation and drops sub-ngram-length fragments).
+					if field.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+						q.Analyzer = TITLE_ANALYZER
+					} else {
+						q.Analyzer = standard.Name
+					}
 					q.Operator = query.MatchQueryOperatorAnd // all terms must match
 					disjoin.AddQuery(q)
 
@@ -2452,14 +2570,8 @@ const (
 	whitespaceCharacters = " \t\r\n"
 )
 
-// termFields are fields where filter values with separators are split and matched token-by-token.
-// This is unrelated to Bleve TermQuery, which is an exact lookup of one indexed token.
-var termFields = []string{
-	resource.SEARCH_FIELD_TITLE,
-}
-
-// exactTermFields fields to use termQuery for filtering without any extra queries
-var exactTermFields = []string{
+// exactTermQueryFields are fields where filters use Bleve TermQuery directly.
+var exactTermQueryFields = []string{
 	resource.SEARCH_FIELD_OWNER_REFERENCES,
 	resource.SEARCH_FIELD_CREATED_BY,
 	// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
@@ -2470,7 +2582,7 @@ var exactTermFields = []string{
 
 // Convert a "requirement" into a bleve query
 func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
-	useExactTermQuery := slices.Contains(exactTermFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
+	useExactTermQuery := slices.Contains(exactTermQueryFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
 	switch selection.Operator(req.Operator) {
 	case selection.DoubleEquals:
 		// DoubleEquals does exact matching via TermQuery (single value only).
@@ -2482,63 +2594,31 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 				key = resource.SEARCH_FIELD_TITLE_PHRASE
 				value = strings.ToLower(value)
 			}
-			return newExactTermsQuery(key, value, prefix), nil
+			return exactFieldTermQuery(key, value, prefix), nil
 		}
 
 	case selection.Equals:
-		if len(req.Values) == 0 {
-			return query.NewMatchAllQuery(), nil
-		}
-
-		if len(req.Values) == 1 && useExactTermQuery {
-			return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
-		}
-
-		if len(req.Values) == 1 {
-			filter := filterValue(req.Key, req.Values[0])
-			return newFilterQuery(req.Key, filter, prefix), nil
-		}
-
-		conjuncts := []query.Query{}
-		for _, v := range req.Values {
-			q := newFilterQuery(req.Key, filterValue(req.Key, v), prefix)
-			conjuncts = append(conjuncts, q)
-		}
-
-		return query.NewConjunctionQuery(conjuncts), nil
+		return allRequirementValuesQuery(req.Values, func(v string) query.Query {
+			if useExactTermQuery {
+				return exactFieldTermQuery(req.Key, v, prefix)
+			}
+			return fieldFilterQuery(req.Key, filterValue(req.Key, v), prefix)
+		}), nil
 
 	case selection.In:
-		if len(req.Values) == 0 {
-			return query.NewMatchAllQuery(), nil
-		}
-
-		if len(req.Values) == 1 {
+		return anyRequirementValueQuery(req.Values, func(v string) query.Query {
 			if useExactTermQuery {
-				return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
+				return exactFieldTermQuery(req.Key, v, prefix)
 			}
-			q := newFilterQuery(req.Key, filterValue(req.Key, req.Values[0]), prefix)
-			return q, nil
-		}
-
-		disjuncts := []query.Query{}
-		for _, v := range req.Values {
-			var q query.Query
-			if useExactTermQuery {
-				q = newExactTermsQuery(req.Key, v, prefix)
-			} else {
-				q = newFilterQuery(req.Key, filterValue(req.Key, v), prefix)
-			}
-			disjuncts = append(disjuncts, q)
-		}
-
-		return query.NewDisjunctionQuery(disjuncts), nil
+			return fieldFilterQuery(req.Key, filterValue(req.Key, v), prefix)
+		}), nil
 
 	case selection.NotIn:
 		boolQuery := bleve.NewBooleanQuery()
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			q := newFilterQuery(req.Key, filterValue(req.Key, value), prefix)
+			q := fieldFilterQuery(req.Key, filterValue(req.Key, value), prefix)
 			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
@@ -2559,6 +2639,38 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+// allRequirementValuesQuery preserves selector semantics where multiple "=" values are combined with AND.
+func allRequirementValuesQuery(values []string, valueQuery func(string) query.Query) query.Query {
+	if len(values) == 0 {
+		return query.NewMatchAllQuery()
+	}
+	if len(values) == 1 {
+		return valueQuery(values[0])
+	}
+
+	queries := make([]query.Query, 0, len(values))
+	for _, v := range values {
+		queries = append(queries, valueQuery(v))
+	}
+	return query.NewConjunctionQuery(queries)
+}
+
+// anyRequirementValueQuery preserves selector semantics where multiple "in" values are combined with OR.
+func anyRequirementValueQuery(values []string, valueQuery func(string) query.Query) query.Query {
+	if len(values) == 0 {
+		return query.NewMatchAllQuery()
+	}
+	if len(values) == 1 {
+		return valueQuery(values[0])
+	}
+
+	queries := make([]query.Query, 0, len(values))
+	for _, v := range values {
+		queries = append(queries, valueQuery(v))
+	}
+	return query.NewDisjunctionQuery(queries)
 }
 
 // addWildcardQueries adds wildcard queries for the given field to the disjunction.
@@ -2583,26 +2695,53 @@ func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field s
 	}
 }
 
-func newFilterQuery(key string, value string, prefix string) query.Query {
-	if key != resource.SEARCH_FIELD_TITLE {
-		return newQuery(key, value, prefix)
+// fieldFilterQuery builds the query for one field-filter value after requirementQuery has handled the selector operator.
+// It applies public field semantics, so a title filter can expand to multiple internal title fields.
+func fieldFilterQuery(key string, value string, prefix string) query.Query {
+	if key == resource.SEARCH_FIELD_TITLE {
+		return titleFieldFilterQuery(value, prefix)
 	}
+	if value == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	if strings.Contains(value, "*") {
+		return fieldWildcardQuery(key, value, prefix)
+	}
+	return fieldMatchQuery(key, value, prefix)
+}
 
+// titleFieldFilterQuery expands the public title filter across the internal title fields.
+func titleFieldFilterQuery(value string, prefix string) query.Query {
 	// Title exact matching and partial matching live in separate index fields,
 	// but the title filter API predates those internal fields.
 	queries := []query.Query{
-		newExactTermsQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value), prefix),
-		newQuery(resource.SEARCH_FIELD_TITLE, value, prefix),
+		exactFieldTermQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value), prefix),
+		titleFieldTokenQuery(value, prefix),
 	}
 	// Only use title_ngram for single-token title filters. Multi-word filters are handled by title_phrase/title;
 	// adding title_ngram can broaden them after removeSmallTerms drops short words, for example "what\"s up" becomes "what".
 	if !strings.ContainsAny(value, whitespaceCharacters) {
-		queries = append(queries, newTitleNgramQuery(value, prefix))
+		queries = append(queries, titleFieldNgramQuery(value, prefix))
 	}
 	return bleve.NewDisjunctionQuery(queries...)
 }
 
-func newTitleNgramQuery(value string, prefix string) query.Query {
+// titleFieldTokenQuery builds the part of title filtering that targets the standard-analyzed title field.
+func titleFieldTokenQuery(value string, prefix string) query.Query {
+	if value == "*" {
+		return bleve.NewMatchAllQuery()
+	}
+	if strings.Contains(value, "*") {
+		return fieldWildcardQuery(resource.SEARCH_FIELD_TITLE, value, prefix)
+	}
+	if delimiter, ok := firstTermSeparator(value); ok {
+		return fieldAllTokensQuery(resource.SEARCH_FIELD_TITLE, strings.Split(value, delimiter), prefix)
+	}
+	return fieldMatchQuery(resource.SEARCH_FIELD_TITLE, value, prefix)
+}
+
+// titleFieldNgramQuery builds the partial-match part of title filtering against title_ngram.
+func titleFieldNgramQuery(value string, prefix string) query.Query {
 	q := bleve.NewMatchQuery(removeSmallTerms(splitTermCharacters(value)))
 	q.SetField(prefix + resource.SEARCH_FIELD_TITLE_NGRAM)
 	q.Analyzer = TITLE_ANALYZER
@@ -2610,6 +2749,7 @@ func newTitleNgramQuery(value string, prefix string) query.Query {
 	return q
 }
 
+// splitTermCharacters normalizes punctuation separators before sending a title filter value through the ngram analyzer.
 func splitTermCharacters(value string) string {
 	for _, c := range TermCharacters {
 		value = strings.ReplaceAll(value, c, " ")
@@ -2617,38 +2757,24 @@ func splitTermCharacters(value string) string {
 	return value
 }
 
-// newQuery will create a query that will match the value or the tokens of the value
-func newQuery(key string, value string, prefix string) query.Query {
-	if value == "*" {
-		return bleve.NewMatchAllQuery()
-	}
-	if strings.Contains(value, "*") {
-		// wildcard query is expensive - should be used with caution
-		q := bleve.NewWildcardQuery(value)
-		q.SetField(prefix + key)
-		return q
-	}
-	delimiter, ok := firstTermSeparator(value)
-	if slices.Contains(termFields, key) && ok {
-		return newTermsQuery(key, value, delimiter, prefix)
-	}
+// fieldWildcardQuery builds a wildcard query against one concrete Bleve field.
+func fieldWildcardQuery(key string, value string, prefix string) query.Query {
+	// wildcard query is expensive - should be used with caution
+	q := bleve.NewWildcardQuery(value)
+	q.SetField(prefix + key)
+	return q
+}
+
+// fieldMatchQuery builds an analyzed match query against one concrete Bleve field.
+func fieldMatchQuery(key string, value string, prefix string) query.Query {
 	q := bleve.NewMatchQuery(value)
 	q.SetField(prefix + key)
 	return q
 }
 
-// newTermsQuery will create a query that will match on term or tokens
-func newTermsQuery(key string, value string, delimiter string, prefix string) query.Query {
-	q := newExactTermsQuery(key, value, prefix)
-
-	tokens := strings.Split(value, delimiter)
-	cq := newMatchAllTokensQuery(tokens, key, prefix)
-	return bleve.NewDisjunctionQuery(q, cq)
-}
-
-// newExactTermsQuery uses Bleve TermQuery for exact token matching.
+// exactFieldTermQuery uses Bleve TermQuery for exact token matching.
 // The input must already match how the field was indexed; TermQuery does not run an analyzer.
-func newExactTermsQuery(key string, value string, prefix string) query.Query {
+func exactFieldTermQuery(key string, value string, prefix string) query.Query {
 	// won't match with ending space
 	value = strings.TrimSuffix(value, " ")
 
@@ -2657,10 +2783,13 @@ func newExactTermsQuery(key string, value string, prefix string) query.Query {
 	return q
 }
 
-// newMatchAllTokensQuery will create a query that will match on all tokens
-func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Query {
+// fieldAllTokensQuery requires every token from a split filter value to match the same concrete Bleve field.
+func fieldAllTokensQuery(key string, tokens []string, prefix string) query.Query {
 	cq := bleve.NewConjunctionQuery()
 	for _, token := range tokens {
+		if token == "" {
+			continue
+		}
 		_, ok := firstTermSeparator(token)
 		if ok {
 			tq := bleve.NewTermQuery(token)
@@ -2668,9 +2797,7 @@ func newMatchAllTokensQuery(tokens []string, key string, prefix string) query.Qu
 			cq.AddQuery(tq)
 			continue
 		}
-		mq := bleve.NewMatchQuery(token)
-		mq.SetField(prefix + key)
-		cq.AddQuery(mq)
+		cq.AddQuery(fieldMatchQuery(key, token, prefix))
 	}
 	return cq
 }

@@ -105,11 +105,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
     }
 
-    if (!opts.calculate && !isHeatmapCells && config.featureToggles.heatmapRowsAxisOptions) {
+    if (!opts.calculate && !isHeatmapCells) {
       builder.addCustomEditor({
         id: 'rowsFrame-yBucketScale',
         path: 'rowsFrame.yBucketScale',
-        name: t('heatmap.name-y-bucket-scale', 'Y bucket scale'),
+        name: t('heatmap.name-y-bucket-scale', 'Y Bucket scale'),
         category,
         editor: YBucketScaleEditor,
         defaultValue: undefined,

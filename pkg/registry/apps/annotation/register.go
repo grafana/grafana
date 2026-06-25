@@ -5,9 +5,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"sync"
 
+	"github.com/bwmarrin/snowflake"
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -107,11 +109,22 @@ func NewAppInstaller(
 		installer.startCleanup(ctx, lifecycleMgr, cfg.RetentionTTL)
 	}
 
+	var sfNode *snowflake.Node
+	if cfg.EnableLegacyID {
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create snowflake node: %w", err)
+		}
+		sfNode = node
+	}
+
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:          instrumentedStore,
 		accessClient:   accessClient,
 		folderResolver: folderResolver,
 		installer:      installer,
+		snowflakeNode:  sfNode,
+		maxScopeCount:  cfg.MaxScopeCount,
 		tracer:         installer.tracer,
 		metrics:        installer.metrics,
 		logger:         logger,
@@ -122,7 +135,7 @@ func NewAppInstaller(
 		// We could consider combining the TagProvider with the Store interface to avoid this type assertion?
 		return nil, fmt.Errorf("store does not implement TagProvider, cannot serve tags API")
 	}
-	tagHandler := newTagsHandler(tagProvider, installer.tracer, installer.metrics, logger)
+	tagHandler := newTagsHandler(tagProvider, accessClient, installer.tracer, installer.metrics, logger)
 
 	// Create the search handler
 	searchHandler := newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger)

@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -14,7 +15,7 @@ import {
   TextBoxVariable,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -64,7 +65,11 @@ function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   if (kioskMode !== undefined) {
     context.chrome.update({ kioskMode: KioskMode.Full });
   }
-  return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>
+    </OpenFeatureProvider>
+  );
 }
 
 describe('DashboardControls', () => {
@@ -72,8 +77,12 @@ describe('DashboardControls', () => {
     setTestFlags({});
   });
 
-  afterEach(() => {
-    setTestFlags({});
+  afterEach(async () => {
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
+    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   describe('Given a standard scene', () => {

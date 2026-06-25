@@ -1,4 +1,6 @@
 {
+    "apiVersion": "iam.grafana.app/v0alpha1",
+    "kind": "TeamBinding",
     "metadata": {
         "name": "with-team-and-user",
         "namespace": "default"

@@ -41,8 +41,21 @@ const defaultSchemaTableLabel = "service_name"
 const schemaTableLabelCacheTTL = 5 * time.Minute
 
 var schemaBaseColumns = []schemas.Column{
-	{Name: "timestamp", Type: schemas.ColumnTypeDatetime},
-	{Name: "line", Type: schemas.ColumnTypeString},
+	{
+		Name:        "timestamp",
+		Type:        schemas.ColumnTypeDatetime,
+		Description: "Sample time for each row (log and metric tabular responses).",
+	},
+	{
+		Name:        "line",
+		Type:        schemas.ColumnTypeString,
+		Description: "Log line text; filled for log queries. Metric (rate/aggregation) tabular frames expose value instead, not line.",
+	},
+	{
+		Name:        "value",
+		Type:        schemas.ColumnTypeFloat64,
+		Description: "Numeric metric sample; filled for Grafana SQL metric queries (rate and/or aggregation). Log tabular frames expose line instead, not value.",
+	},
 }
 
 var labelColumnOperators = []schemas.Operator{
@@ -57,12 +70,20 @@ var labelColumnOperators = []schemas.Operator{
 var lokiTableHints = []schemas.TableHint{
 	{Name: "step", Description: "Override range query step/resolution, e.g. step('30s').", HasValue: true},
 	{Name: "direction", Description: "Log direction: direction('forward') or direction('backward').", HasValue: true},
+	{Name: "rate", Description: "Wrap the stream selector with rate() or bytes_rate() over this window, e.g. rate('5m'). Combines with aggregation when set.", HasValue: true},
+	{Name: "instant", Description: "Use Loki instant query API for metric expressions (requires aggregation or rate hint).", HasValue: false},
 }
 
-// lokiDatasourceCapabilities declares what the SQL engine may push to Loki. Aggregates are
-// not pushed to LogQL here (raw log rows are returned; SQL-layer aggregation applies).
+// lokiDatasourceCapabilities declares what the SQL engine may push to Loki.
 var lokiDatasourceCapabilities = &schemas.DatasourceCapabilities{
 	Limit: true,
+	AggregateFunctions: []schemas.AggregateFunction{
+		schemas.AggregateSum,
+		schemas.AggregateAvg,
+		schemas.AggregateCount,
+		schemas.AggregateMin,
+		schemas.AggregateMax,
+	},
 }
 
 type lokiLabelsAPIResponse struct {
@@ -71,7 +92,8 @@ type lokiLabelsAPIResponse struct {
 }
 
 // SchemaProvider implements schemads handlers for Loki (tables = values of the
-// resolved table label; columns = timestamp, line, and stream labels).
+// resolved table label). Base columns: timestamp, line, value; stream label columns are
+// added per table in Columns (see buildColumnsFromLabels).
 type SchemaProvider struct {
 	httpClient *http.Client
 	url        string
@@ -166,7 +188,7 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 		Errors:       make(map[string]string),
 	}
 	for _, col := range req.Columns {
-		if col == "timestamp" || col == "line" {
+		if col == "timestamp" || col == "line" || col == "value" {
 			continue
 		}
 		vals, err := p.fetchLabelValues(ctx, tblLabel, req.Table, col, req.TimeRange)

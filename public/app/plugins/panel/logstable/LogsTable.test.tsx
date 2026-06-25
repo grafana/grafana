@@ -1,6 +1,8 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import {
   type AbsoluteTimeRange,
@@ -8,15 +10,18 @@ import {
   type EventBus,
   EventBusSrv,
   type FieldConfigSource,
+  FieldType,
   LogSortOrderChangeEvent,
   LogsSortOrder,
   type ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
+import { configureStore } from 'app/store/configureStore';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/fieldSelector/logFields';
 
@@ -24,10 +29,6 @@ import { LogsTable } from './LogsTable';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
-
-jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
-}));
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -75,6 +76,7 @@ const setUp = (
   app = CoreApp.Dashboard,
   panelContext?: Partial<PanelContext>
 ) => {
+  const store = configureStore();
   return render(
     <PanelContextProvider
       value={{
@@ -116,7 +118,14 @@ const setUp = (
         }}
         {...props}
       />
-    </PanelContextProvider>
+    </PanelContextProvider>,
+    {
+      wrapper: ({ children }) => (
+        <Provider store={store}>
+          <OpenFeatureTestProvider>{children}</OpenFeatureTestProvider>
+        </Provider>
+      ),
+    }
   );
 };
 
@@ -368,6 +377,22 @@ describe('LogsTable', () => {
         value: 'info',
         operator: '!=',
       });
+    });
+  });
+
+  describe('Missing time field', () => {
+    it('shows "Data is missing a time field" when frames have rows but no time field', async () => {
+      setUp({
+        data: getPanelData({
+          series: [
+            toDataFrame({
+              fields: [{ name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string, values: ['log 1', 'log 2'] }],
+            }),
+          ],
+        }),
+      });
+
+      expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
     });
   });
 });

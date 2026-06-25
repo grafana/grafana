@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	neturl "net/url"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -155,6 +157,16 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
+	// Reject resource paths that escape the /loki/api/v1/ prefix. neturl.Parse
+	// decodes percent-encoded segments so this catches both raw and encoded "../".
+	parsed, perr := neturl.Parse(lokiURL)
+	if perr != nil {
+		return sender.Send(&backend.CallResourceResponse{Status: http.StatusBadRequest})
+	}
+	if cleaned := path.Clean(parsed.Path); cleaned != "/loki/api/v1" && !strings.HasPrefix(cleaned, "/loki/api/v1/") {
+		return sender.Send(&backend.CallResourceResponse{Status: http.StatusBadRequest})
+	}
+
 	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
 		attribute.String("url", lokiURL),
 	))
@@ -225,7 +237,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger, runInParallel bool, logQLScopes bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	req, schemadsRefIDs, sqlErrs := normalizeGrafanaSQLRequest(ctx, req, dsInfo)
+	req, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(ctx, req, dsInfo)
 	for refID, e := range sqlErrs {
 		result.Responses[refID] = backend.DataResponse{
 			Error:       e,
@@ -280,14 +292,18 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	}
 	plog.Debug("Executed queries", "duration", time.Since(start), "queriesLength", len(queries), "runInParallel", runInParallel)
 
-	if len(schemadsRefIDs) > 0 {
-		for refID, dr := range result.Responses {
-			if _, ok := schemadsRefIDs[refID]; !ok || dr.Error != nil {
-				continue
-			}
-			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
-			result.Responses[refID] = dr
+	for refID, kind := range sqlKinds {
+		dr, ok := result.Responses[refID]
+		if !ok || dr.Error != nil {
+			continue
 		}
+		switch kind {
+		case sqlKindMetric:
+			dr.Frames = flattenMetricsToTabular(dr.Frames, plog)
+		case sqlKindLog:
+			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
+		}
+		result.Responses[refID] = dr
 	}
 
 	return result, err

@@ -129,6 +129,9 @@ module.exports = [
       'public/build-swagger', // swagger build output
       'apps/plugins/plugin/src/generated/meta/v0alpha1',
       'apps/plugins/plugin/src/generated/plugin/v0alpha1',
+      'packages/get-document/index.js',
+      'packages/mapbox-jsonlint-lines-primitives/lib/jsonlint.js',
+      'packages/mapbox-jsonlint-lines-primitives/lib/formatter.js',
     ],
   },
   ...grafanaConfig,
@@ -267,6 +270,23 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/grafana-ui-no-test-utils',
+    files: ['packages/grafana-ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/test-utils'],
+              message: "'@grafana/test-utils' creates a circular dependency with '@grafana/ui'",
+            },
+          ],
+        }),
+      ],
+    },
+  },
+  {
     name: 'grafana/story-rules',
     files: ['packages/grafana-ui/src/**/*.story.tsx'],
     rules: {
@@ -391,6 +411,17 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/i18n-plural-defaults',
+    plugins: {
+      '@grafana/i18n': grafanaI18nPlugin,
+    },
+    files: ['**/*.{ts,tsx,js}'],
+    rules: {
+      '@grafana/i18n/t-plural-defaults': 'error',
+      '@grafana/i18n/trans-plural-defaults': 'error',
+    },
+  },
+  {
     // Sections of codebase that have all translation markup issues fixed
     name: 'grafana/i18n-overrides',
     plugins: {
@@ -481,9 +512,7 @@ module.exports = [
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mssql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,

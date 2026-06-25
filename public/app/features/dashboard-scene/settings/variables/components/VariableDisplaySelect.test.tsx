@@ -92,4 +92,23 @@ describe('VariableDisplaySelect', () => {
 
     expect(onChange).toHaveBeenCalledWith(VariableHide.dontHide);
   });
+
+  it('uses section top placement labels when provided', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <VariableDisplaySelect
+        onChange={onChange}
+        display={VariableHide.dontHide}
+        type="query"
+        topPlacementLabel="Top of row"
+      />
+    );
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Top of row')).toBeInTheDocument();
+    expect(screen.getByText('Top of row, label hidden')).toBeInTheDocument();
+  });
 });

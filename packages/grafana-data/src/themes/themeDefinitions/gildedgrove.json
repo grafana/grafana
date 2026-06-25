@@ -35,8 +35,19 @@
       "name": "secondary",
       "borderTransparent": "rgba(200, 200, 180, 0.25)"
     },
+    "accent": {
+      "main": "#FEAC34",
+      "text": "#FFD783",
+      "border": "#FFD783",
+      "name": "accent",
+      "shade": "rgb(255, 173, 80)",
+      "transparent": "#FEAC3426",
+      "contrastText": "#111614",
+      "borderTransparent": "#FFD78340"
+    },
     "background": {
       "canvas": "#111614",
+      "page": "#171C1A",
       "primary": "#1d2220",
       "secondary": "#27312E",
       "elevated": "#27312E"

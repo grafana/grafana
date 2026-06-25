@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -463,7 +464,7 @@ var validConfig = `{
 				"version": "v1",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 				}
 			}]
 		}]
@@ -490,7 +491,7 @@ var validConfigWithoutAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<some@email.com>"
+					"addresses": "<some@example.com>"
 				}
 			}]
 		},{
@@ -500,7 +501,7 @@ var validConfigWithoutAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<other@email.com>"
+					"addresses": "<other@example.com>"
 				}
 			}]
 		}]
@@ -541,7 +542,7 @@ var validConfigWithAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<some@email.com>"
+					"addresses": "<some@example.com>"
 				}
 			}]
 		},{
@@ -551,7 +552,7 @@ var validConfigWithAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<other@email.com>"
+					"addresses": "<other@example.com>"
 				}
 			}]
 		}]
@@ -605,7 +606,7 @@ func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisi
 // setTemplateProvenance marks a template as provisioned.
 func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.NotificationTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(context.Background(), &v1.TemplateGroup{Title: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 

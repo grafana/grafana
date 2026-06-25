@@ -18,5 +18,6 @@ export const SWEDISH_SWEDEN = 'sv-SE';
 export const TURKISH_TURKEY = 'tr-TR';
 export const CHINESE_TRADITIONAL = 'zh-Hant';
 
+/** @alias */
 export const DEFAULT_LANGUAGE = ENGLISH_US;
 export const PSEUDO_LOCALE = 'pseudo';

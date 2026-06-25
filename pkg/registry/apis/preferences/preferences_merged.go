@@ -39,6 +39,7 @@ func newMerger(cfg *setting.Cfg) *merger {
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
 			WeekStart: &cfg.DateFormats.DefaultWeekStart,
 			Language:  &cfg.DefaultLanguage,
+			HomeURL:   &cfg.HomePage, // [users] home_page
 		},
 	}
 	if home.HasCustomHome(cfg) {

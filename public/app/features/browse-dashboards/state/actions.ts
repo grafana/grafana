@@ -1,19 +1,19 @@
-import { GENERAL_FOLDER_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
-import { listDashboards, listFolders, listTeamFolders } from '../api/services';
+import { listDashboards, listFolders, listStarredFolders, listTeamFolders } from '../api/services';
 import { type DashboardViewItemWithUIItems, type UIDashboardViewItem } from '../types';
-import { addTeamFolderPrefix, removeTeamFolderPrefix } from '../utils/dashboards';
+import { reapplyVirtualFolderPrefix, stripVirtualFolderPrefix } from '../utils/dashboards';
 
 import { findItem } from './utils';
 
-async function listTeamFoldersSafe() {
+async function listSafe(label: string, load: () => Promise<DashboardViewItem[]>): Promise<DashboardViewItem[]> {
   try {
-    return await listTeamFolders();
+    return await load();
   } catch (error) {
-    console.error('Failed to load team folders', error);
+    console.error(`Failed to load ${label}`, error);
     return [];
   }
 }
@@ -75,12 +75,17 @@ export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
   async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
     if (parentUID === TEAM_FOLDERS_UID) {
-      const children = await listTeamFoldersSafe();
+      const children = await listSafe('team folders', listTeamFolders);
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
-    const strippedUID = parentUID ? removeTeamFolderPrefix(parentUID) : parentUID;
-    const uid = strippedUID === GENERAL_FOLDER_UID ? undefined : strippedUID;
+    if (parentUID === STARRED_FOLDERS_UID) {
+      const children = await listSafe('starred folders', listStarredFolders);
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+    }
+
+    const strippedUID = parentUID ? stripVirtualFolderPrefix(parentUID) : parentUID;
+    const uid = isRootFolderUID(strippedUID) ? undefined : strippedUID;
 
     // At the moment this will just clear out all loaded children and refetch the first page.
     // If user has scrolled beyond the first page, then InfiniteLoader will probably trigger
@@ -103,12 +108,11 @@ export const refetchChildren = createAsyncThunk(
       children = children.concat(childDashboards);
     }
 
-    // Propagate prefix to all descendants so they get independent expand/collapse state
-    const isTeamFolderChild = parentUID !== strippedUID;
-    if (isTeamFolderChild) {
+    // Propagate the virtual prefix to all descendants so they get independent expand/collapse state
+    if (parentUID && parentUID !== strippedUID) {
       children = children.map((child) => ({
         ...child,
-        uid: addTeamFolderPrefix(removeTeamFolderPrefix(child.uid)),
+        uid: reapplyVirtualFolderPrefix(parentUID, child.uid),
       }));
     }
 
@@ -133,18 +137,28 @@ export const fetchNextChildrenPage = createAsyncThunk(
       if (collection?.isFullyLoaded) {
         return undefined;
       }
-      const children = await listTeamFoldersSafe();
+      const children = await listSafe('team folders', listTeamFolders);
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+    }
+
+    if (parentUID === STARRED_FOLDERS_UID) {
+      const state = thunkAPI.getState().browseDashboards;
+      const collection = state.childrenByParentUID[parentUID];
+      if (collection?.isFullyLoaded) {
+        return undefined;
+      }
+      const children = await listSafe('starred folders', listStarredFolders);
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
     // TODO: invert prop to `includeKinds`, but also support not loading folders
     const loadDashboards = !excludeKinds.includes('dashboard');
 
-    const strippedUID = parentUID ? removeTeamFolderPrefix(parentUID) : parentUID;
-    const uid = strippedUID === GENERAL_FOLDER_UID ? undefined : strippedUID;
+    const strippedUID = parentUID ? stripVirtualFolderPrefix(parentUID) : parentUID;
+    const uid = isRootFolderUID(strippedUID) ? undefined : strippedUID;
 
     const state = thunkAPI.getState().browseDashboards;
-    const collectionKey = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
+    const collectionKey = isRootFolderUID(parentUID) ? undefined : parentUID;
     const collection = collectionKey ? state.childrenByParentUID[collectionKey] : state.rootItems;
 
     let page = 1;
@@ -194,12 +208,11 @@ export const fetchNextChildrenPage = createAsyncThunk(
       children = children.concat(childDashboards);
     }
 
-    // Propagate prefix to all descendants so they get independent expand/collapse state
-    const isTeamFolderChild = parentUID !== strippedUID;
-    if (isTeamFolderChild) {
+    // Propagate the virtual prefix to all descendants so they get independent expand/collapse state
+    if (parentUID && parentUID !== strippedUID) {
       children = children.map((child) => ({
         ...child,
-        uid: addTeamFolderPrefix(removeTeamFolderPrefix(child.uid)),
+        uid: reapplyVirtualFolderPrefix(parentUID, child.uid),
       }));
     }
 

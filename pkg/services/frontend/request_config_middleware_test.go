@@ -14,11 +14,14 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
@@ -97,6 +100,45 @@ func enableSettingsOverridesAndSourceFilterToggle(t *testing.T) {
 	})
 }
 
+func enableReducedBootDataToggle(t *testing.T) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	flag := memprovider.InMemoryFlag{
+		Key:            featuremgmt.FlagFrontendServiceReducedBootDataAPI,
+		DefaultVariant: "on",
+		Variants:       map[string]any{"on": true, "off": false},
+	}
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagFrontendServiceReducedBootDataAPI: flag,
+	})
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
+// setupTestContextWithUser is like setupTestContext but attaches a SignedInUser,
+// which GetBaseFrontendSettings dereferences when the reduced boot data flag is enabled.
+func setupTestContextWithUser(r *http.Request, namespace string) *http.Request {
+	reqCtx := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: r},
+		SignedInUser: &user.SignedInUser{},
+		Logger:       log.NewNopLogger(),
+	}
+	ctx := ctxkey.Set(r.Context(), reqCtx)
+	if namespace != "" {
+		ctx = request.WithNamespace(ctx, namespace)
+	}
+	return r.WithContext(ctx)
+}
+
 func TestRequestConfigMiddleware(t *testing.T) {
 	t.Run("should store base config in request context", func(t *testing.T) {
 		license := &licensing.OSSLicensingService{}
@@ -108,7 +150,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, nil)
+		middleware := RequestConfigMiddleware(cfg, license, nil, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +184,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, nil)
+		middleware := RequestConfigMiddleware(cfg, license, nil, nil)
 
 		nextCalled := false
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +223,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -233,7 +275,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://base.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -279,7 +321,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://base.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -311,7 +353,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -353,7 +395,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -392,7 +434,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -411,6 +453,44 @@ func TestRequestConfigMiddleware(t *testing.T) {
 
 		// Verify the selector does NOT include a source=us filter (only 2 expressions)
 		require.Len(t, mockSettingsService.capturedSelector.MatchExpressions, 2)
+	})
+
+	t.Run("populates full frontend settings and namespace when reduced boot data flag is enabled", func(t *testing.T) {
+		enableReducedBootDataToggle(t)
+
+		license := &licensing.OSSLicensingService{}
+		cfg := setting.NewCfg()
+		cfg.AppURL = "https://grafana.example.com"
+
+		pluginsCDN := pluginscdn.ProvideService(&config.PluginManagementCfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+		})
+
+		middleware := RequestConfigMiddleware(cfg, license, nil, pluginsCDN)
+
+		var capturedConfig FSRequestConfig
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var err error
+			capturedConfig, err = FSRequestConfigFromContext(r.Context())
+			require.NoError(t, err)
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContextWithUser(req, "stacks-123")
+		recorder := httptest.NewRecorder()
+
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		require.NotNil(t, capturedConfig.FullFrontendSettings)
+		assert.Equal(t, "https://grafana.example.com", capturedConfig.FullFrontendSettings.AppUrl)
+		// Namespace is taken from the request baggage when the flag is enabled.
+		assert.Equal(t, "stacks-123", capturedConfig.FullFrontendSettings.Namespace)
+		// The plugins CDN base URL is sourced from the plugins CDN service.
+		assert.Equal(t, "https://cdn.example.com", capturedConfig.FullFrontendSettings.PluginsCDNBaseURL)
 	})
 }
 

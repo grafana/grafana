@@ -3,11 +3,11 @@ import * as React from 'react';
 import { type PluginMeta } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { updateAppPluginSettings } from '@grafana/runtime/unstable';
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { updatePluginSettings } from '../../api';
 import { usePluginConfig } from '../../hooks/usePluginConfig';
 import { type CatalogPlugin } from '../../types';
 
@@ -75,7 +75,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
 
 const updatePluginSettingsAndReload = async (id: string, data: Partial<PluginMeta>) => {
   try {
-    await updatePluginSettings(id, data);
+    await updateAppPluginSettings(id, data);
 
     // Reloading the page as the plugin meta changes made here wouldn't be propagated throughout the app.
     window.location.reload();
