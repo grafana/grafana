@@ -10605,12 +10605,11 @@
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
       "high-count_other": "{{count}} high",
-      "retry": "Retry",
       "severity-critical": "Critical",
       "severity-high": "High",
       "severity-low": "Low",
       "severity-minor": "Minor",
-      "severity-unknown": "Unknown severity",
+      "severity-unknown": "Unknown",
       "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
@@ -10627,6 +10626,13 @@
         "morning": "Good morning."
       },
       "placeholder": "Welcome to {{edition}}."
+    },
+    "incidents-card": {
+      "declare": "Declare an incident",
+      "empty": "No active incidents.",
+      "error-title": "Could not load active incidents",
+      "title": "Active incidents",
+      "view-all": "View all incidents"
     },
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
@@ -10648,6 +10654,9 @@
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
+    },
+    "summary-card": {
+      "retry": "Retry"
     }
   },
   "import-overview": {
