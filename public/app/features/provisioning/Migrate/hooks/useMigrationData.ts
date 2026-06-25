@@ -2,11 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { useDispatch } from 'app/types/store';
 
-import { type ResourceKindInfo } from '../../utils/resourceKinds';
-
-import { type MigrationSource, type RawMigratable, fetchAllFolders } from './migrationSources';
+import { type ListedResource, type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
 
 /**
  * A single resource that can be migrated, tagged with its kind so the selection
@@ -50,9 +47,9 @@ interface State {
   isError: boolean;
 }
 
-interface SourceResult {
-  source: MigrationSource;
-  raw: RawMigratable[];
+interface KindResult {
+  kind: ResourceKindInfo;
+  raw: ListedResource[];
 }
 
 /** Synthetic folder UID for a non-folder kind. Namespaced so it can't collide
@@ -69,14 +66,13 @@ function syntheticFolderUid(kind: ResourceKindInfo): string {
  * migrate backend only takes unmanaged ones. Folders with nothing to migrate are
  * left out entirely.
  */
-function aggregate(folders: Array<{ uid: string; title: string }>, results: SourceResult[]): FolderRow[] {
+function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[] {
   const folderTitle = new Map(folders.map((folder) => [folder.uid, folder.title]));
   const directByFolder = new Map<string, MigratableResource[]>();
   const rootResources: MigratableResource[] = [];
   const syntheticRows: FolderRow[] = [];
 
-  for (const { source, raw } of results) {
-    const kind = source.kind;
+  for (const { kind, raw } of results) {
     const unmanaged = raw.filter((r) => !r.managed);
 
     if (!kind.folderScoped) {
@@ -138,16 +134,14 @@ function aggregate(folders: Array<{ uid: string; title: string }>, results: Sour
 }
 
 /**
- * Enumerates the unmanaged resources to migrate across every active kind and
- * joins them into the per-folder table. Each kind lists through its own
- * `MigrationSource` (the unified search index for dashboards, the apiserver list
- * for playlists, …), so adding a kind is a registry entry rather than a new hook
- * here. Folders are fetched once to label the rows that folder-scoped kinds nest
- * under. When a dedicated backend roll-up endpoint lands, swap the body to
- * consume it.
+ * Enumerates the unmanaged resources to migrate across the given kinds and joins
+ * them into the per-folder table. Each kind knows how to `list()` itself (see the
+ * resource-kind registry), so this hook is generic — adding a kind is a registry
+ * entry, not a change here. Folders are listed once to label the rows that
+ * folder-scoped kinds nest under. When a dedicated backend roll-up endpoint
+ * lands, swap the body to consume it.
  */
-export function useMigrationData(sources: MigrationSource[]): State & { refetch: () => void } {
-  const dispatch = useDispatch();
+export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: () => void } {
   const [state, setState] = useState<State>({
     data: [],
     isLoading: true,
@@ -155,23 +149,23 @@ export function useMigrationData(sources: MigrationSource[]): State & { refetch:
   });
   const [reloadToken, setReloadToken] = useState(0);
 
-  // Identity-stable dependency: the source list is rebuilt each render, so key
-  // the effect on the kinds it covers rather than the array reference.
-  const sourcesKey = sources.map((source) => `${source.kind.group}/${source.kind.kind}`).join(',');
+  // Identity-stable dependency: the kinds list is rebuilt each render, so key the
+  // effect on the kinds it covers rather than the array reference.
+  const kindsKey = kinds.map((kind) => `${kind.group}/${kind.kind}`).join(',');
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const needsFolders = sources.some((source) => source.kind.folderScoped);
+        const needsFolders = kinds.some((kind) => kind.folderScoped);
         const [folders, rawResults] = await Promise.all([
-          needsFolders ? fetchAllFolders() : Promise.resolve<Array<{ uid: string; title: string }>>([]),
-          Promise.all(sources.map((source) => source.list({ dispatch }))),
+          needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
+          Promise.all(kinds.map((kind) => kind.list())),
         ]);
         if (cancelled) {
           return;
         }
-        const results = sources.map((source, index) => ({ source, raw: rawResults[index] }));
+        const results = kinds.map((kind, index) => ({ kind, raw: rawResults[index] }));
         setState({ data: aggregate(folders, results), isLoading: false, isError: false });
       } catch (err) {
         if (!cancelled) {
@@ -182,9 +176,9 @@ export function useMigrationData(sources: MigrationSource[]): State & { refetch:
     return () => {
       cancelled = true;
     };
-    // sourcesKey captures the meaningful contents of `sources`; dispatch is stable.
+    // kindsKey captures the meaningful contents of `kinds`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourcesKey, reloadToken, dispatch]);
+  }, [kindsKey, reloadToken]);
 
   // Refetch in the background — we don't flip back to the loading state, so a
   // post-migration refresh doesn't unmount the page (and the drawer that

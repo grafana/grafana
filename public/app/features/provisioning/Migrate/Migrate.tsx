@@ -7,12 +7,12 @@ import { useGetFrontendSettingsQuery, useGetResourceStatsQuery } from 'app/api/c
 
 import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 import { useRepositoryList } from '../hooks/useRepositoryList';
+import { getMigratableKinds } from '../utils/resourceKinds';
 
 import { MigrateDrawer } from './MigrateDrawer';
 import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
 import { OverviewStatCards } from './OverviewStatCards';
 import { ResourcesToMigrate } from './ResourcesToMigrate';
-import { activeMigrationSources } from './hooks/migrationSources';
 import { useMigrationData } from './hooks/useMigrationData';
 import { resolveSelection } from './selection';
 import { computeFolderCounts, computeKindTotals } from './stats';
@@ -37,15 +37,14 @@ export function Migrate() {
   // backend's `availableResources` (plus the always-on base) so the page is
   // generic — a newly enabled kind flows through without per-kind wiring here.
   const availableResources = settings?.availableResources;
-  const sources = useMemo(() => activeMigrationSources(availableResources), [availableResources]);
-  const contentKinds = useMemo(() => sources.map((source) => source.kind), [sources]);
+  const contentKinds = useMemo(() => getMigratableKinds(availableResources), [availableResources]);
 
   const {
     data: folders,
     isLoading: isFoldersLoading,
     isError: isFoldersError,
     refetch: refetchFolders,
-  } = useMigrationData(sources);
+  } = useMigrationData(contentKinds);
   const [repos] = useRepositoryList({ watch: true });
   const [drawerScope, setDrawerScope] = useState<DrawerScope | null>(null);
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());

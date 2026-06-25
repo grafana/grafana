@@ -1,21 +1,46 @@
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import {
+  API_GROUP as PLAYLIST_API_GROUP,
+  API_VERSION as PLAYLIST_API_VERSION,
+} from '@grafana/api-clients/rtkq/playlist/v1';
 import { t } from '@grafana/i18n';
+import { getBackendSrv } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { getIconForKind } from 'app/features/search/service/utils';
+import { getAPIBaseURL } from 'app/api/utils';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { getIconForKind, queryResultToViewItem } from 'app/features/search/service/utils';
 
 import { type ItemType } from '../types';
 
+import { isManaged } from './managedResource';
+
 /**
- * Per-kind UI metadata for provisioning resources.
+ * A resource of some kind enumerated from the instance, in the minimal shape the
+ * provisioning UI needs to list and migrate it. Where it lands in the migrate
+ * table is decided from its kind: folder-scoped kinds nest under `parentUid`,
+ * others group under a synthetic per-kind row.
+ */
+export interface ListedResource {
+  uid: string;
+  title: string;
+  /** Immediate parent folder UID; undefined for root or non-folder-scoped kinds. */
+  parentUid?: string;
+  /** Already owned by a manager (Git Sync, Terraform, …) — not a migration target. */
+  managed: boolean;
+}
+
+/**
+ * Per-kind metadata for provisioning resources.
  *
  * This is the single source of truth the UI reads from instead of scattering
  * per-kind knowledge across switch statements (item types, icons, count labels,
- * resource-ref unions). Adding a new provisioning kind should be one entry here
- * plus, if needed, enabling it on the backend so it appears in the settings
- * endpoint's `availableResources`.
+ * resource-ref unions, how to enumerate each kind). Adding a new provisioning
+ * kind should be one entry here plus, if needed, enabling it on the backend so
+ * it appears in the settings endpoint's `availableResources`.
  */
 export interface ResourceKindInfo {
   /** API group, e.g. `dashboard.grafana.app`. */
@@ -45,12 +70,12 @@ export interface ResourceKindInfo {
    */
   folderScoped: boolean;
   /**
-   * Whether the unified search index lists this kind by kind. Dashboards and
-   * folders are indexed and queryable via the searcher; other kinds (playlists)
-   * are not and must be listed through their own API. Consumers that enumerate a
-   * kind pick their data source from this.
+   * Enumerates every resource of this kind on the instance. Each kind owns how it
+   * lists itself — dashboards/folders through the unified search index, playlists
+   * through their apiserver list — so callers iterate kinds generically without
+   * knowing the data source.
    */
-  searchable: boolean;
+  list: () => Promise<ListedResource[]>;
   /**
    * Whether the kind is in the static provisioning base (folder + dashboard),
    * which the backend always supports. Such kinds are acted on regardless of the
@@ -76,7 +101,7 @@ export const resourceKindInfos = {
     getRoute: (name: string) => `/dashboards/f/${name}`,
     listRoute: '/dashboards',
     folderScoped: true,
-    searchable: true,
+    list: () => listViaSearch('folder', true),
     alwaysAvailable: true,
   },
   dashboard: {
@@ -89,7 +114,7 @@ export const resourceKindInfos = {
     getRoute: (name: string) => `/d/${name}`,
     listRoute: '/dashboards',
     folderScoped: true,
-    searchable: true,
+    list: () => listViaSearch('dashboard', true),
     alwaysAvailable: true,
   },
   playlist: {
@@ -107,8 +132,8 @@ export const resourceKindInfos = {
     // Playlists aren't folder-contained — they only have their own collection page.
     listRoute: '/playlists',
     folderScoped: false,
-    // Playlists aren't in the unified search index; they list through their own API.
-    searchable: false,
+    // Playlists aren't in the unified search index; list them through their apiserver.
+    list: () => listViaApiserver(PLAYLIST_API_GROUP, PLAYLIST_API_VERSION, 'playlists'),
     // Gated on availableResources — not part of the static folder+dashboard base.
     alwaysAvailable: false,
   },
@@ -224,4 +249,117 @@ export function isResourceKindAvailable(info: ResourceKindInfo, availableResourc
   return getAvailableResourceKinds(availableResources).some(
     (available) => available.group === info.group && available.kind === info.kind
   );
+}
+
+/**
+ * The kinds offered for migration on this instance: every registered kind except
+ * folders (the container others nest under) that is available — in the static
+ * base (`alwaysAvailable`) or reported by the backend's `availableResources`. The
+ * availability check is strict: a non-base kind only appears once
+ * `availableResources` is populated and confirms it, so a kind the backend ships
+ * disabled never shows up early. Each returned kind knows how to `list()` itself.
+ */
+export function getMigratableKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
+  return allKindInfos.filter(
+    (info) =>
+      info.kind !== resourceKindInfos.folder.kind &&
+      (info.alwaysAvailable || (Boolean(availableResources) && isResourceKindAvailable(info, availableResources)))
+  );
+}
+
+// --- Resource enumeration -------------------------------------------------
+// How each kind lists itself, backing the `list()` methods above. Kept here so
+// the registry stays the single place that knows how to enumerate each kind.
+
+const PAGE_SIZE = 200;
+// How many page requests to have in flight at once, so a large instance doesn't
+// fire hundreds of concurrent requests on load.
+const PAGE_CONCURRENCY = 5;
+// Guardrail so a pathological response can't spin off unbounded requests.
+// Exceeding it throws rather than returning a silently truncated list.
+const MAX_PAGES = 200;
+
+/**
+ * The unified searcher reports a resource's immediate parent folder UID in
+ * `item.location`. Root-level resources come back empty or as the literal
+ * "general" UID; normalize both to undefined.
+ */
+function readImmediateParent(location: string): string | undefined {
+  const trimmed = location.trim();
+  if (!trimmed || trimmed === GENERAL_FOLDER_UID) {
+    return undefined;
+  }
+  return trimmed;
+}
+
+/**
+ * Pages through every item of a search kind via the unified searcher, fetching
+ * the pages after the first in small concurrent batches. Bounded by MAX_PAGES;
+ * fails loudly rather than truncating, since a partial list would drop rows from
+ * the migrate table and its payload.
+ */
+async function fetchAllSearchPages(searchKind: string): Promise<DashboardQueryResult[]> {
+  const searcher = getGrafanaSearcher();
+  const searchPage = (page: number) =>
+    searcher.search({
+      kind: [searchKind],
+      query: '*',
+      from: page * PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+      limit: PAGE_SIZE,
+    });
+
+  const first = await searchPage(0);
+  const items: DashboardQueryResult[] = first.view.toArray();
+  const pageCount = Math.max(1, Math.ceil(first.totalRows / PAGE_SIZE));
+  if (pageCount > MAX_PAGES) {
+    throw new Error(`Too many ${searchKind}s to enumerate (${first.totalRows}); aborting to avoid an incomplete list.`);
+  }
+
+  for (let page = 1; page < pageCount; page += PAGE_CONCURRENCY) {
+    const batch = Array.from({ length: Math.min(PAGE_CONCURRENCY, pageCount - page) }, (_, index) =>
+      searchPage(page + index)
+    );
+    for (const result of await Promise.all(batch)) {
+      items.push(...result.view.toArray());
+    }
+  }
+  return items;
+}
+
+/** Lists a kind the unified search index serves (dashboards, folders). */
+async function listViaSearch(searchKind: string, folderScoped: boolean): Promise<ListedResource[]> {
+  const items = await fetchAllSearchPages(searchKind);
+  return items.map((item) => {
+    const view = queryResultToViewItem(item);
+    return {
+      uid: view.uid,
+      title: view.title,
+      parentUid: folderScoped ? readImmediateParent(item.location) : undefined,
+      managed: Boolean(view.managedBy),
+    };
+  });
+}
+
+interface ApiserverListItem {
+  metadata?: { name?: string; annotations?: Record<string, string> };
+  spec?: { title?: string };
+}
+
+/**
+ * Lists a kind through its apiserver collection — for kinds the unified search
+ * index doesn't serve (e.g. playlists). Read directly (not via an RTK client) so
+ * any kind can be listed from its group/version/resource without a bespoke
+ * client. These kinds are org-scoped, so no parent folder is resolved.
+ */
+async function listViaApiserver(group: string, version: string, resource: string): Promise<ListedResource[]> {
+  const url = `${getAPIBaseURL(group, version)}/${resource}`;
+  const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
+  return (response.items ?? [])
+    .map((item) => ({
+      uid: item.metadata?.name ?? '',
+      title: item.spec?.title || item.metadata?.name || '',
+      managed: isManaged(item),
+    }))
+    .filter((row) => row.uid);
 }
