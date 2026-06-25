@@ -35,7 +35,7 @@ weight: 100
 {{< admonition type="note" >}}
 Available in Grafana 12 and later.
 
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 {{< /admonition >}}
 
 ## Requirements
@@ -253,10 +253,10 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "annotations": {
       "grafana.app/folder": "fef30w4jaxla8b"
     }
-  }
+  },
   "spec": {
     "title": "child-folder"
-  },
+  }
 }
 ```
 
@@ -331,15 +331,17 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-"metadata": {
+{
+  "metadata": {
     "name": "aef30vrzxs3y8d",
     "annotations": {
       "grafana.app/folder": "xkj92m5pqw3vn4"
     }
-  }
+  },
   "spec": {
     "title": "updated title"
-  },
+  }
+}
 ```
 
 JSON Body schema:
