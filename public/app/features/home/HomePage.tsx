@@ -4,12 +4,13 @@ import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Stack, useStyles2 } from '@grafana/ui';
+import { Grid, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
+import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
@@ -58,7 +59,10 @@ export default function HomePage() {
             })}
             <DashboardTabs />
           </HomeSection>
-          <FiringAlertsCard />
+          <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+            <FiringAlertsCard />
+            <IncidentsCard />
+          </Grid>
 
           {renderLimitedComponents({
             props: {},

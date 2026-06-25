@@ -181,7 +181,7 @@ function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceLis
     name: settings.name,
     meta: settings.meta,
     readOnly: settings.readOnly,
-    isDefault: settings.isDefault,
+    isDefault: settings.isDefault ?? false,
   };
 }
 

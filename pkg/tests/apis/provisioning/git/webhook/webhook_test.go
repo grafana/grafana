@@ -172,6 +172,13 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	waitForWebhook(t, helper, repoName, 654)
 	helper.SyncAndWait(t, repoName)
 
+	// Ensure the synced dashboard is queryable before opening the PR. The PR
+	// worker's DryRun does a Get-by-name to populate Existing, which is what
+	// produces the [original] link in the comment; SyncAndWait only waits for
+	// job success, not resource visibility, so without this barrier the Get can
+	// race the sync write and drop the [original] link.
+	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, ctx, "gh-pr-comment-dash", repoName, dashboardPath)
+
 	const branchName = "feature-pr-comment"
 	_, err := local.Git("checkout", "-b", branchName)
 	require.NoError(t, err, "failed to create feature branch")

@@ -967,7 +967,7 @@ describe('instanceSettings', () => {
             name: fixtures.Alpha.name,
             meta: fixtures.Alpha.meta,
             readOnly: fixtures.Alpha.readOnly,
-            isDefault: fixtures.Alpha.isDefault,
+            isDefault: fixtures.Alpha.isDefault ?? false,
           },
         ]);
         expect(getList).toHaveBeenCalledWith({ metrics: true });

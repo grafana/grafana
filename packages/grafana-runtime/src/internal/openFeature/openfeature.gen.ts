@@ -39,6 +39,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Enables custom dashboard templates for enterprise */
+  GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables usage of the new annotations API client */
@@ -55,6 +57,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
+  GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
@@ -255,6 +259,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Enables custom dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.customDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customDashboardTemplates", false, options).value;
+};
+
+/**
  * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
  *
  * **Details:**
@@ -340,6 +355,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.scenesFlickeringFix", true, options).value;
+};
+
+/**
+ * Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker
+ *
+ * **Details:**
+ * - flag key: `grafana.starredFolders`
+ * - default value: `false`
+ */
+export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.starredFolders", false, options).value;
 };
 
 /**

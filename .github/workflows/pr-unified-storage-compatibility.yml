@@ -55,6 +55,10 @@ jobs:
               - '!pkg/storage/unified/apistore/**'
               - '!pkg/storage/unified/federated/**'
               - '!pkg/storage/unified/*.go'
+              # migration test files and fixtures don't ship in the storage/search
+              # server binary, so they can't break cross-version compatibility
+              - '!pkg/storage/unified/migrations/**/*_test.go'
+              - '!pkg/storage/unified/migrations/testcases/**'
 
       - name: Check for exception label
         if: steps.changed-files.outputs.api_layer_any_changed == 'true' && steps.changed-files.outputs.unified_storage_any_changed == 'true'

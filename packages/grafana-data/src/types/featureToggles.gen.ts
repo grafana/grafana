@@ -199,11 +199,6 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Enables k8s short URL API and uses it under the hood when handling legacy /api
-  * @default true
-  */
-  kubernetesShortURLs?: boolean;
-  /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
   */
@@ -563,11 +558,6 @@ export interface FeatureToggles {
   * @default false
   */
   newSavedQueriesExperience?: boolean;
-  /**
-  * Enables the new unconfigured panel experience
-  * @default true
-  */
-  newUnconfiguredPanel?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false

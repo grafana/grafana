@@ -341,8 +341,8 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 		return nil, nil
 	}
 
-	// extra.Build never wraps a repository with spec.webhook.disabled in a GithubWebhookRepository,
-	// so reaching here with the flag set would be a bug. Guard anyway to be safe.
+	// extra.Build may wrap a disabled repository with GithubWebhookRepository when a stale
+	// webhook needs to be cleaned up, but OnCreate should never register a new one.
 	if r.config.Spec.Webhook != nil && r.config.Spec.Webhook.Disabled {
 		logging.FromContext(ctx).Warn("webhook hooks invoked while spec.webhook.disabled is true; skipping")
 		return nil, nil
@@ -379,12 +379,23 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 }
 
 func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
-	if len(r.webhookURL) == 0 {
+	// When disabled, remove any webhook that was registered before this flag was set.
+	if r.config.Spec.Webhook != nil && r.config.Spec.Webhook.Disabled {
+		if r.config.Status.Webhook != nil {
+			ctx, _ = r.logger(ctx, "")
+			if err := r.deleteWebhook(ctx); err != nil {
+				return nil, err
+			}
+			return []map[string]any{{
+				"op":    "replace",
+				"path":  "/status/webhook",
+				"value": nil,
+			}}, nil
+		}
 		return nil, nil
 	}
 
-	// See OnCreate for the reasoning behind this guard.
-	if r.config.Spec.Webhook != nil && r.config.Spec.Webhook.Disabled {
+	if len(r.webhookURL) == 0 {
 		return nil, nil
 	}
 
