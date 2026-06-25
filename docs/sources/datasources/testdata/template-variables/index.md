@@ -77,13 +77,24 @@ If your query string starts with `value`, TestData returns the query string itse
 
 This example walks through creating a query variable that populates a drop-down with simulated region values, then using it in a panel query.
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
-1. Set **Type** to **Query**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
+1. Select **Query** as the variable type.
+1. Enter a **Name** for your variable (for example, `host`).
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
+1. Click **Open query editor** to open the **Annotation Query** dialog box.
 1. Select the **TestData** data source.
 1. Enter `*` in the **Query** field. This populates the variable with the top-level nodes (A through H).
 1. Name the variable `region`.
-1. Click **Apply**.
+1. Click **Close** when you've completed the query setup.
+1. (Optional) Configure **Multi-value** to allow selecting multiple values.
+1. (Optional) Configure **Include All option** to add an "All" option.
+1. (Optional) Turn on the **Allow custom values** switch to allow users to enter custom variable values.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 To use the variable in a panel:
 

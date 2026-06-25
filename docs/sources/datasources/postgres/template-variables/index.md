@@ -35,9 +35,13 @@ The PostgreSQL data source includes a dedicated variable query editor with the f
 
 To create a query variable:
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
 1. Select **Query** as the variable type.
+1. Enter a **Name** for your variable (for example, `host`).
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
+1. Click **Open query editor** to open the **Annotation Query** dialog box.
 1. Select your PostgreSQL data source.
 1. Write a SQL query in the editor. Macros like `$__timeFilter` are supported.
 1. Optionally set **Value Field** and **Text Field** to control which columns map to the variable value and display label.
