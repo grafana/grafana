@@ -83,6 +83,7 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
                         ? SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON
                         : SOURCE_ENTRY_POINTS.DATASOURCE_LIST_BUILD_BUTTON,
                     contentKind: CONTENT_KINDS.SUGGESTED_DASHBOARDS,
+                    contentKinds: [CONTENT_KINDS.SUGGESTED_DASHBOARDS],
                   });
                   openModal();
                 }}

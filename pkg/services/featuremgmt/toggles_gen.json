@@ -2347,8 +2347,8 @@
     {
       "metadata": {
         "name": "grafana.customDashboardTemplates",
-        "resourceVersion": "1782324923384",
-        "creationTimestamp": "2026-06-24T18:15:23Z"
+        "resourceVersion": "1781723429145",
+        "creationTimestamp": "2026-06-17T19:10:29Z"
       },
       "spec": {
         "description": "Enables custom dashboard templates for enterprise",
@@ -2504,7 +2504,8 @@
       "metadata": {
         "name": "grafana.orgDashboardTemplates",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-17T19:10:29Z"
       },
       "spec": {
         "description": "Enables org-defined dashboard templates for enterprise",
