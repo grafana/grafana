@@ -32,6 +32,10 @@ interface FacetValue {
 
 const TOP_N = 10;
 
+// Delay (ms) before facet side-queries fire, so they don't starve Explore's main
+// query (table/topology) on initial load. See the FacetPanel effect.
+const FACET_QUERY_DELAY_MS = 1200;
+
 const VIEW_OPTIONS: Array<{ label: string; value: FlowView }> = [
   { label: 'Table', value: 'table' },
   { label: 'Topology', value: 'topology' },
@@ -193,25 +197,37 @@ function FacetPanel({
       ],
     };
 
-    lastValueFrom(datasource.query(request))
-      .then((res) => {
-        if (cancelled) {
-          return;
-        }
-        setValues(extractFacetValues(res.data ?? [], facet.attr));
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setValues([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
+    // Defer the facet side-queries so they don't starve Explore's main query (the
+    // table/topology result) at mount — without this, ~a dozen concurrent facet
+    // queries win the browser's connection slots and the main query is aborted,
+    // leaving the table/node graph empty on first load (it only appears on refresh,
+    // when the facets don't re-fire).
+    const timer = setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
+      lastValueFrom(datasource.query(request))
+        .then((res) => {
+          if (cancelled) {
+            return;
+          }
+          setValues(extractFacetValues(res.data ?? [], facet.attr));
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setValues([]);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        });
+    }, FACET_QUERY_DELAY_MS);
+
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource, facet, filters, rangeKey]);

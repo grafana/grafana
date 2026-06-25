@@ -35,8 +35,9 @@ describe('FlowQuerySection drill-down', () => {
       <FlowQuerySection datasource={ds} query={baseQuery} onChange={onChange} onRunQuery={onRunQuery} />
     );
 
-    // Facet value appears once the side-query resolves.
-    await waitFor(() => expect(screen.getByText('1.2.3.4')).toBeInTheDocument());
+    // Facet value appears once the (deferred) side-query resolves; allow for
+    // FACET_QUERY_DELAY_MS plus query time.
+    await waitFor(() => expect(screen.getByText('1.2.3.4')).toBeInTheDocument(), { timeout: 2500 });
 
     fireEvent.click(screen.getByText('1.2.3.4'));
 
