@@ -11,7 +11,6 @@ const defaultEntries = ['i18next.config.ts'];
 
 const externalisedDatasources = [
   'azuremonitor',
-  'cloud-monitoring',
   'grafana-postgresql-datasource',
   'grafana-pyroscope-datasource',
   'grafana-testdata-datasource',
@@ -21,7 +20,6 @@ const externalisedDatasources = [
   'loki',
   'mssql',
   'mysql',
-  'tempo',
 ];
 
 const config: KnipConfig = {
