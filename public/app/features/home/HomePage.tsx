@@ -31,11 +31,11 @@ export default function HomePage() {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
 
-  const { components: preComponents } = usePluginComponents({
+  const { components: preComponents, isLoading: preLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepagePre,
   });
 
-  const { components: extraComponents } = usePluginComponents({
+  const { components: extraComponents, isLoading: extraLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageExtra,
   });
 
@@ -49,7 +49,7 @@ export default function HomePage() {
       }}
       layout={PageLayoutType.Home}
     >
-      <Page.Contents>
+      <Page.Contents isLoading={preLoading || extraLoading}>
         <Stack direction="column" gap={2}>
           <HomeSection direction="column" display="flex" gap={2}>
             {renderLimitedComponents({
