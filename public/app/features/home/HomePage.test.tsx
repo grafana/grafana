@@ -89,21 +89,21 @@ describe('HomePage', () => {
     expect(await screen.findByText('Welcome to Grafana Cloud.')).toBeInTheDocument();
   });
 
-  it('renders homepage pre extension components', async () => {
+  it('renders homepage assistant extension components', async () => {
     setPluginComponentsHook(({ extensionPointId }) => ({
       isLoading: false,
       components:
-        extensionPointId === PluginExtensionPoints.HomepagePre
+        extensionPointId === PluginExtensionPoints.HomepageAssistant
           ? [
               createHomepageExtensionComponent(
-                'grafana-setupguide-app',
-                'Homepage pre extension',
-                PluginExtensionPoints.HomepagePre
+                'grafana-assistant-app',
+                'Homepage assistant extension',
+                PluginExtensionPoints.HomepageAssistant
               ),
               createHomepageExtensionComponent(
                 'grafana-untrusted-app',
-                'Untrusted homepage pre extension',
-                PluginExtensionPoints.HomepagePre
+                'Untrusted homepage assistant extension',
+                PluginExtensionPoints.HomepageAssistant
               ),
             ]
           : [],
@@ -111,10 +111,8 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // Once revealed, the trusted pre extension is shown and the untrusted one is filtered out.
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.getByText('Homepage pre extension')).toBeInTheDocument();
-    expect(screen.queryByText('Untrusted homepage pre extension')).not.toBeInTheDocument();
+    expect(await screen.findByText('Homepage assistant extension')).toBeInTheDocument();
+    expect(screen.queryByText('Untrusted homepage assistant extension')).not.toBeInTheDocument();
   });
 
   it('renders homepage extra extension components', async () => {
@@ -214,13 +212,13 @@ describe('HomePage', () => {
         })
     );
     const lazyComponent = createComponentWithMeta(
-      { pluginId: 'grafana-setupguide-app', title: 'Lazy pre', component: LazyExtension },
-      PluginExtensionPoints.HomepagePre
+      { pluginId: 'grafana-assistant-app', title: 'Lazy assistant', component: LazyExtension },
+      PluginExtensionPoints.HomepageAssistant
     );
 
     setPluginComponentsHook(({ extensionPointId }) => ({
       isLoading: false,
-      components: extensionPointId === PluginExtensionPoints.HomepagePre ? [lazyComponent] : [],
+      components: extensionPointId === PluginExtensionPoints.HomepageAssistant ? [lazyComponent] : [],
     }));
 
     render(<HomePage />);
@@ -231,13 +229,13 @@ describe('HomePage', () => {
     expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
 
     await act(async () => {
-      resolveComponent({ default: () => <div>Lazy pre content</div> });
+      resolveComponent({ default: () => <div>Lazy assistant content</div> });
     });
 
     // Reveal waits only for the lazy extension to resolve; the dashboard list loads inside
     // DashboardTabs. The final paint shows the resolved lazy content, built-in tabs, and no skeleton.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-    expect(screen.getByText('Lazy pre content')).toBeInTheDocument();
+    expect(screen.getByText('Lazy assistant content')).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
   });

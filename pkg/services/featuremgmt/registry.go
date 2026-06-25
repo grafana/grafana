@@ -2397,14 +2397,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:        "multiPropsVariables",
-			Description: "Deprecated. Enables support for variables whose values can have multiple properties",
-			Stage:       FeatureStageDeprecated,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "dashboardSectionVariables",
 			Description: "Enables support for section level variables (rows and tabs)",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3162,6 +3154,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "grafana.customizableMegaMenu",
+			Description: "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

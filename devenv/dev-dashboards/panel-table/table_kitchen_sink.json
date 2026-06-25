@@ -2088,6 +2088,107 @@
       ],
       "title": "Multi-frame table",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Long Text"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom.viz",
+                "value": true
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Info"
+            },
+            "properties": [
+              {
+                "id": "custom.tooltip.field",
+                "value": "Long Text"
+              },
+              {
+                "id": "custom.tooltip.placement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk_table"
+        },
+        {
+          "csvContent": "Info,Long Text\ndown,\"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse tempus et augue et lacinia. Interdum et malesuada fames ac ante ipsum primis in faucibus.\"\nup,\"Sed imperdiet eget diam sit amet fringilla. Curabitur quis lacus blandit, mollis diam non, accumsan tortor.\"\nup fast,\"Proin ac libero vulputate ex vulputate pharetra ut vel lacus. Phasellus quis dolor sed leo finibus scelerisque. Ut vel finibus leo, sed viverra ipsum.\"\ndown fast,\"Nullam in pulvinar justo. Nunc dictum arcu ac pellentesque bibendum. Sed in erat turpis. Vestibulum eu orci ac ligula lobortis tempus.\"",
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Tooltip from field",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "Info",
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "A": "Value",
+              "Max A": "Max",
+              "Min A": "Min",
+              "State A": "State",
+              "Time A": "Time"
+            }
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
   "preload": false,
