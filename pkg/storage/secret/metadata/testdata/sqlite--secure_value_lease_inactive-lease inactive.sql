@@ -8,7 +8,7 @@ WHERE "guid" IN (
   SELECT "guid" FROM (
     SELECT
       "guid",
-      ROW_NUMBER() OVER (ORDER BY "created" ASC) AS rn
+      ROW_NUMBER() OVER (ORDER BY "created" ASC, "guid" ASC) AS rn
     FROM "secret_secure_value"
     WHERE
       "active" = FALSE AND

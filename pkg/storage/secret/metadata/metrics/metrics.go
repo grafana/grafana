@@ -34,7 +34,7 @@ type StorageMetrics struct {
 	SecureValueSetExternalIDDuration           *prometheus.HistogramVec
 	SecureValueSetStatusDuration               *prometheus.HistogramVec
 	SecureValueDeleteDuration                  *prometheus.HistogramVec
-	SecureValueAddGCAttemptCount               *prometheus.HistogramVec
+	SecureValueIncGCAttemptCount               *prometheus.HistogramVec
 	SecureValueSetInactiveAllFromGroupDuration *prometheus.HistogramVec
 
 	DecryptDuration *prometheus.HistogramVec
@@ -175,7 +175,7 @@ func newStorageMetrics() *StorageMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{successLabel}),
-		SecureValueAddGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		SecureValueIncGCAttemptCount: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "secure_value_add_to_gc_attempt_count_duration_seconds",
@@ -223,7 +223,7 @@ func NewStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 				m.SecureValueDeleteDuration,
 				m.SecureValueSetInactiveAllFromGroupDuration,
 				m.DecryptDuration,
-				m.SecureValueAddGCAttemptCount,
+				m.SecureValueIncGCAttemptCount,
 			)
 		}
 

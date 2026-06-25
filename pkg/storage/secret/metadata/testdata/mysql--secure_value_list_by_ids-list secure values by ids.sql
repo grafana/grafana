@@ -4,5 +4,11 @@ SELECT
 FROM
   `secret_secure_value`
 WHERE
-  `guid` IN ('1', '2')
-;
+   (`namespace`, `name`, `version`) IN
+  (
+      (
+        'ns1',
+        'n1',
+        2
+      )
+  );

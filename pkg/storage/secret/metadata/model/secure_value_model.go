@@ -1,4 +1,4 @@
-package metadata
+package model
 
 import (
 	"database/sql"
@@ -16,7 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type secureValueDB struct {
+// TODO: move to other package
+type SecureValueDB struct {
 	// Kubernetes Metadata
 	GUID                     string
 	Name                     string
@@ -47,8 +48,8 @@ type secureValueDB struct {
 	GCAttempts int
 }
 
-// toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
-func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
+// ToKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
+func (sv *SecureValueDB) ToKubernetes() (*secretv1beta1.SecureValue, error) {
 	annotations := make(map[string]string, 0)
 	if sv.Annotations != "" {
 		if err := json.Unmarshal([]byte(sv.Annotations), &annotations); err != nil {
@@ -125,9 +126,9 @@ func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 	return resource, nil
 }
 
-// toCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toCreateRow(createdAt, updatedAt int64, keeper string, sv *secretv1beta1.SecureValue, createdBy, updatedBy string) (*secureValueDB, error) {
-	row, err := toRow(keeper, sv, "")
+// ToCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
+func ToCreateRow(createdAt, updatedAt int64, keeper string, sv *secretv1beta1.SecureValue, createdBy, updatedBy string) (*SecureValueDB, error) {
+	row, err := ToRow(keeper, sv, "")
 	if err != nil {
 		return nil, err
 	}
@@ -141,8 +142,8 @@ func toCreateRow(createdAt, updatedAt int64, keeper string, sv *secretv1beta1.Se
 	return row, nil
 }
 
-// toRow maps a Kubernetes resource into a DB row.
-func toRow(keeper string, sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, error) {
+// ToRow maps a Kubernetes resource into a DB row.
+func ToRow(keeper string, sv *secretv1beta1.SecureValue, externalID string) (*SecureValueDB, error) {
 	var annotations string
 	if len(sv.Annotations) > 0 {
 		cleanedAnnotations := xkube.CleanAnnotations(sv.Annotations)
@@ -221,7 +222,7 @@ func toRow(keeper string, sv *secretv1beta1.SecureValue, externalID string) (*se
 		ownerReferenceName = toNullString(&ownerReference.Name)
 	}
 
-	return &secureValueDB{
+	return &SecureValueDB{
 		GUID:                     string(sv.UID),
 		Name:                     sv.Name,
 		Namespace:                sv.Namespace,
@@ -262,8 +263,9 @@ func toNullString(s *string) sql.NullString {
 	}
 }
 
-type versionAndCreated struct {
+type VersionAndCreated struct {
 	CreatedAt int64
 	CreatedBy string
 	Version   int64
+	Active    bool
 }

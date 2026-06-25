@@ -87,8 +87,8 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	}
 
 	version := int64(1)
-	if latest.version > 0 {
-		version = latest.version + 1
+	if latest.Version > 0 {
+		version = latest.Version + 1
 	}
 
 	// Some other concurrent request may have created the version we're trying to create,
@@ -101,20 +101,20 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 		now := s.clock.Now().UTC().Unix()
 
 		createdAt := now
-		if latest.createdAt > 0 {
-			createdAt = latest.createdAt
+		if latest.CreatedAt > 0 {
+			createdAt = latest.CreatedAt
 		}
 		updatedAt := now
 
 		createdBy := actorUID
-		if latest.createdBy != "" {
-			createdBy = latest.createdBy
+		if latest.CreatedBy != "" {
+			createdBy = latest.CreatedBy
 		}
 		updatedBy := actorUID
 
 		row, err := toCreateRow(createdAt, updatedAt, keeper, sv, createdBy, updatedBy)
 		if err != nil {
-			return nil, fmt.Errorf("to create row: %w", err)
+			return nil, err
 		}
 
 		req := createSecureValue{
@@ -156,12 +156,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 
 		return createdSecureValue, nil
 	}
-}
-
-type versionAndCreated struct {
-	createdAt int64
-	createdBy string
-	version   int64
 }
 
 func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreated, error) {
@@ -219,9 +213,9 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Cont
 	}
 
 	return versionAndCreated{
-		createdAt: createdAt,
-		createdBy: createdBy,
-		version:   version,
+		CreatedAt: createdAt,
+		CreatedBy: createdBy,
+		Version:   version,
 	}, nil
 }
 
@@ -536,7 +530,7 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	return nil
 }
 
-func (s *secureValueMetadataStorage) Delete(ctx context.Context, input []contracts.DeleteInput) (err error) {
+func (s *secureValueMetadataStorage) Delete(ctx context.Context, input []contracts.SecureValueIdentifier) (err error) {
 	start := s.clock.Now()
 	inputStr := fmt.Sprintf("%+v", input)
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Delete", trace.WithAttributes(
@@ -757,10 +751,10 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 	return secureValues, nil
 }
 
-func (s *secureValueMetadataStorage) AddGCAttemptCount(ctx context.Context, secureValueIDs []string) (count map[string]int, err error) {
+func (s *secureValueMetadataStorage) IncGCAttemptCount(ctx context.Context, in []contracts.SecureValueIdentifier) (count map[string]int, err error) {
 	start := s.clock.Now()
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.AddGCAttemptCount", trace.WithAttributes(
-		attribute.StringSlice("secureValueIDs", secureValueIDs),
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.IncGCAttemptCount", trace.WithAttributes(
+		attribute.String("input", fmt.Sprintf("%+v", in)),
 	))
 
 	defer span.End()
@@ -769,17 +763,17 @@ func (s *secureValueMetadataStorage) AddGCAttemptCount(ctx context.Context, secu
 		success := err == nil
 
 		if !success {
-			span.SetStatus(codes.Error, "SecureValueMetadataStorage.AddGCAttemptCount failed")
+			span.SetStatus(codes.Error, "SecureValueMetadataStorage.IncGCAttemptCount failed")
 			span.RecordError(err)
 		}
 
-		logging.FromContext(ctx).Info("SecureValueMetadataStorage.AddGCAttemptCount", "secureValueIDs", secureValueIDs, "err", err)
-		s.metrics.SecureValueAddGCAttemptCount.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		logging.FromContext(ctx).Info("SecureValueMetadataStorage.IncGCAttemptCount", "input", in, "err", err)
+		s.metrics.SecureValueIncGCAttemptCount.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	req := addGCAttemptCountSecureValues{
-		SQLTemplate:    sqltemplate.New(s.dialect),
-		SecureValueIDs: secureValueIDs,
+	req := IncGCAttemptCountSecureValues{
+		SQLTemplate:  sqltemplate.New(s.dialect),
+		SecureValues: in,
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueAddGCRetryCount, req)
@@ -794,7 +788,7 @@ func (s *secureValueMetadataStorage) AddGCAttemptCount(ctx context.Context, secu
 	// NOTE: this read may return stale data when concurrent method calls are made.
 	// this is fine since the method is used only by the gc worker at the moment
 	// and it'll work fine with stale data.
-	secureValues, err := s.fetchByIds(ctx, secureValueIDs)
+	secureValues, err := s.fetchByIdentifiers(ctx, in)
 	if err != nil {
 		return nil, fmt.Errorf("fetching secure values by ids: %w", err)
 	}
@@ -809,9 +803,9 @@ func (s *secureValueMetadataStorage) AddGCAttemptCount(ctx context.Context, secu
 	return count, nil
 }
 
-func (s *secureValueMetadataStorage) fetchByIds(ctx context.Context, secureValueIDs []string) (out []secureValueDB, err error) {
+func (s *secureValueMetadataStorage) fetchByIdentifiers(ctx context.Context, secureValues []contracts.SecureValueIdentifier) (out []secureValueDB, err error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.fetchByIds", trace.WithAttributes(
-		attribute.StringSlice("secureValueIDs", secureValueIDs),
+		attribute.String("secureValues", fmt.Sprintf("%+v", secureValues)),
 	))
 
 	defer span.End()
@@ -826,13 +820,13 @@ func (s *secureValueMetadataStorage) fetchByIds(ctx context.Context, secureValue
 	}()
 
 	req := listSecureValuesByIDs{
-		SQLTemplate:    sqltemplate.New(s.dialect),
-		SecureValueIDs: secureValueIDs,
+		SQLTemplate:  sqltemplate.New(s.dialect),
+		SecureValues: secureValues,
 	}
 
-	q, err := sqltemplate.Execute(sqlSecureValueListByIDs, req)
+	q, err := sqltemplate.Execute(sqlSecureValueListByIdentifiers, req)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueListByIDs.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueListByIdentifiers.Name(), err)
 	}
 
 	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)

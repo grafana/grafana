@@ -219,7 +219,7 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 			require.Len(t, values, 1)
 
 			// Pretend something went wrong and increment attempt count
-			_, err = sut.SecureValueMetadataStorage.AddGCAttemptCount(t.Context(), []string{string(values[0].UID)})
+			_, err = sut.SecureValueMetadataStorage.IncGCAttemptCount(t.Context(), []contracts.SecureValueIdentifier{{Name: string(values[0].UID)}})
 			require.NoError(t, err)
 
 			rows, err := sut.Database.QueryContext(t.Context(), "SELECT lease_duration FROM secret_secure_value WHERE guid = ?", values[0].UID)
@@ -346,9 +346,9 @@ func TestPropertyDelete(t *testing.T) {
 					delete := secureValues[i:]
 
 					// Delete some of the secure values
-					deleteInput := make([]contracts.DeleteInput, 0, len(delete))
+					deleteInput := make([]contracts.SecureValueIdentifier, 0, len(delete))
 					for _, sv := range delete {
-						deleteInput = append(deleteInput, contracts.DeleteInput{
+						deleteInput = append(deleteInput, contracts.SecureValueIdentifier{
 							Namespace: xkube.Namespace(sv.Namespace),
 							Name:      sv.Name,
 							Version:   sv.Status.Version,

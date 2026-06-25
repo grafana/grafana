@@ -25,13 +25,15 @@ var (
 	ErrSecureValueAlreadyExists       = errors.New("secure value already exists")
 	ErrReferenceWithSystemKeeper      = errors.New("tried to create secure value using reference with system keeper, references can only be used with 3rd party keepers")
 	ErrSecureValueMissingSecretAndRef = errors.New("secure value spec doesn't have neither a secret or reference")
+	ErrTooManyOwnerReferences         = errors.New("secure values can have at most one owner reference")
 )
 
 type ReadOpts struct {
 	ForUpdate bool
 }
 
-type DeleteInput struct {
+// Minimal set of values that uniquely identifies a secure value
+type SecureValueIdentifier struct {
 	Namespace xkube.Namespace
 	Name      string
 	Version   int64
@@ -45,10 +47,10 @@ type SecureValueMetadataStorage interface {
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
-	Delete(ctx context.Context, input []DeleteInput) error
+	Delete(ctx context.Context, input []SecureValueIdentifier) error
 	SetInactiveAllFromGroup(ctx context.Context, namespace xkube.Namespace, apiGroup string) error
 	LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]secretv1beta1.SecureValue, error)
-	AddGCAttemptCount(ctx context.Context, secureValueIDs []string) (map[string]int, error)
+	IncGCAttemptCount(context.Context, []SecureValueIdentifier) (map[string]int, error)
 }
 
 type SecureValueService interface {

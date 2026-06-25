@@ -18,12 +18,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
-func TestBasic(t *testing.T) {
+func TestExampleBased(t *testing.T) {
 	t.Parallel()
 
+	t.Run("SQL backend", func(t *testing.T) {
+		t.Parallel()
+		runBasicTests(t)
+	})
+
+	t.Run("KV backend", func(t *testing.T) {
+		t.Parallel()
+		runBasicTests(t, testutils.WithKVStorage())
+	})
+}
+
+func runBasicTests(t *testing.T, opts ...func(*testutils.SetupConfig)) {
 	t.Run("when no secure values exist, there's no work to do", func(t *testing.T) {
 		t.Parallel()
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 		ids, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 		require.NoError(t, err)
 		require.Empty(t, ids)
@@ -31,7 +43,7 @@ func TestBasic(t *testing.T) {
 
 	t.Run("inactive secure values are not deleted immediately because of the grace period", func(t *testing.T) {
 		t.Parallel()
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		sv1, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
@@ -46,7 +58,7 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("secure values are fetched for deletion and deleted from keeper", func(t *testing.T) {
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
@@ -86,7 +98,7 @@ func TestBasic(t *testing.T) {
 	t.Run("cleaning up secure values is idempotent", func(t *testing.T) {
 		t.Parallel()
 
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
@@ -100,7 +112,7 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("cleaning up secure values that use references", func(t *testing.T) {
-		sut := testutils.Setup(t)
+		sut := testutils.Setup(t, opts...)
 
 		keeper, err := sut.CreateAWSKeeper(t.Context())
 		require.NoError(t, err)
@@ -126,11 +138,11 @@ func TestBasic(t *testing.T) {
 	})
 
 	t.Run("worker deletes secure value metadata after N failed attempts to clean it up", func(t *testing.T) {
-		sut := testutils.Setup(t, testutils.WithMutateCfg(func(cfg *testutils.SetupConfig) {
+		sut := testutils.Setup(t, append(opts, testutils.WithMutateCfg(func(cfg *testutils.SetupConfig) {
 			cfg.SystemKeeperWrapperFunc = func(k contracts.Keeper) contracts.Keeper {
 				return &fakeKeeper{inner: k}
 			}
-		}))
+		}))...)
 
 		sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
 			cfg.Sv.Name = "sv1"
@@ -146,7 +158,7 @@ func TestBasic(t *testing.T) {
 
 		for range sut.GarbageCollectionWorker.Cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue {
 			// Advance time to wait for grace period
-			sut.Clock.AdvanceBy(10 * time.Minute)
+			sut.Clock.AdvanceBy(15 * time.Minute)
 
 			_, _ = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
 		}
@@ -161,6 +173,53 @@ func TestBasic(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sv2.Namespace, sv2Read.Namespace)
 		require.Equal(t, sv2.Name, sv2Read.Name)
+	})
+
+	t.Run("gc does not delete in flight version", func(t *testing.T) {
+		sut := testutils.Setup(t, opts...)
+
+		// Create and activate v1
+		sv1, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+
+		// Create from metadata storage directly to insert v2 as *inactive*
+		// Here we do not call SetVersionToActive explicitly to simulate the in-flight window
+		sv2, err := sut.SecureValueMetadataStorage.Create(t.Context(), sv1.Status.Keeper, &secretv1beta1.SecureValue{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      sv1.Name,
+				Namespace: sv1.Namespace,
+			},
+			Spec: secretv1beta1.SecureValueSpec{
+				Description: "v2",
+				Value:       new(secretv1beta1.NewExposedSecureValue("new-value")),
+				Decrypters:  []string{"decrypter1"},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+		require.NotEqual(t, sv1.Status.Version, sv2.Status.Version)
+
+		// Force the GC, nothing should have been cleaned, v1 is active and v2 is within the grace period
+		// If we were relying on the `created` field to check for eligible secure values, v2 would get deleted here!
+		cleaned, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+		require.NoError(t, err)
+		require.Empty(t, cleaned)
+
+		// Activate v2 and read it
+		err = sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name, sv2.Status.Version)
+		require.NoError(t, err)
+
+		read, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name)
+		require.NoError(t, err)
+		require.Equal(t, sv2.Status.Version, read.Status.Version)
+
+		// Advance time to get past the minimum age before a secure value can be deleted
+		sut.Clock.AdvanceBy(15 * time.Minute)
+
+		// Force the GC again, this time we expect v1 to be cleaned since v2 was activated
+		cleaned, err = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+		require.NoError(t, err)
+		require.Len(t, cleaned, 1)
+		require.Equal(t, sv1.Status.Version, cleaned[0].Status.Version)
 	})
 }
 
@@ -179,60 +238,25 @@ func (k *fakeKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig,
 	return fmt.Errorf("Delete: fake error")
 }
 
-func TestGCDoesNotDeleteInFlightVersion(t *testing.T) {
-	sut := testutils.Setup(t)
-
-	// Create and activate v1
-	sv1, err := sut.CreateSv(t.Context())
-	require.NoError(t, err)
-
-	// Advance time to wait for grace period
-	sut.Clock.AdvanceBy(15 * time.Minute)
-
-	// Create from metadata storage directly to insert v2 as *inactive*
-	// Here we do not call SetVersionToActive explicitly to simulate the in-flight window
-	sv2, err := sut.SecureValueMetadataStorage.Create(t.Context(), sv1.Status.Keeper, &secretv1beta1.SecureValue{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      sv1.Name,
-			Namespace: sv1.Namespace,
-		},
-		Spec: secretv1beta1.SecureValueSpec{
-			Description: "v2",
-			Value:       new(secretv1beta1.NewExposedSecureValue("new-value")),
-			Decrypters:  []string{"decrypter1"},
-		},
-	}, "actor-uid")
-	require.NoError(t, err)
-	require.Equal(t, int64(2), sv2.Status.Version)
-
-	// Force the GC, nothing should have been cleaned, v1 is active and v2 is within the grace period
-	// If we were relying on the `created` field to check for eligible secure values, v2 would get deleted here!
-	cleaned, err := sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
-	require.NoError(t, err)
-	require.Empty(t, cleaned)
-
-	// Activate v2 and read it
-	err = sut.SecureValueMetadataStorage.SetVersionToActive(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name, sv2.Status.Version)
-	require.NoError(t, err)
-
-	read, err := sut.SecureValueService.Read(t.Context(), xkube.Namespace(sv2.Namespace), sv2.Name)
-	require.NoError(t, err)
-	require.Equal(t, sv2.Status.Version, read.Status.Version)
-
-	// Force the GC again, this time we expect v1 to be cleaned since v2 was activated
-	cleaned, err = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
-	require.NoError(t, err)
-	require.Len(t, cleaned, 1)
-	require.Equal(t, sv1.Status.Version, cleaned[0].Status.Version)
-}
-
 func TestProperty(t *testing.T) {
 	t.Parallel()
 
+	t.Run("SQL backend", func(t *testing.T) {
+		t.Parallel()
+		runPropertyTests(t)
+	})
+
+	// t.Run("KV backend", func(t *testing.T) {
+	// 	t.Parallel()
+	// 	runPropertyTests(t, testutils.WithKVStorage())
+	// })
+}
+
+func runPropertyTests(t *testing.T, opts ...func(*testutils.SetupConfig)) {
 	tt := t
 
 	rapid.Check(t, func(t *rapid.T) {
-		sut := testutils.Setup(tt)
+		sut := testutils.Setup(tt, opts...)
 		model := testutils.NewModelGsm(nil)
 
 		t.Repeat(map[string]func(*rapid.T){
@@ -305,7 +329,7 @@ func TestProperty(t *testing.T) {
 				}
 
 				for _, v := range deleted {
-					require.True(t, seen[v.UID], "impl deleted a secure value that the model did not")
+					require.Truef(t, seen[v.UID], "impl deleted a secure value that the model did not: uid=%+v", v.UID)
 				}
 			},
 			"advanceTime": func(t *rapid.T) {

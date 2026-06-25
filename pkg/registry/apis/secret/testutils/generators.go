@@ -7,6 +7,8 @@ import (
 	"pgregory.net/rapid"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var (
@@ -15,12 +17,29 @@ var (
 	KeeperNameGen      = rapid.SampledFrom([]string{"k1", "k2", "k3", "k4", "k5"})
 	NamespaceGen       = rapid.SampledFrom([]string{"ns1", "ns2", "ns3", "ns4", "ns5"})
 	SecretsToRefGen    = rapid.SampledFrom([]string{"ref1", "ref2", "ref3", "ref4", "ref5"})
+	APIGroupGen        = rapid.SampledFrom([]string{"prometheus.datasource.grafana.app", "k6.datasource.grafana.app"})
+	ownerReferenceGen  = rapid.Custom(func(t *rapid.T) metav1.OwnerReference {
+		owner := common.ObjectReference{
+			APIGroup:   APIGroupGen.Draw(t, "apiGroup"),
+			APIVersion: rapid.SampledFrom([]string{"v0alpha1", "v1beta1"}).Draw(t, "name"),
+			Kind:       rapid.SampledFrom([]string{"DataSource", "Plugin"}).Draw(t, "name"),
+			Name:       rapid.SampledFrom([]string{"n1", "n2", "n3", "n4", "n5"}).Draw(t, "name"),
+			Namespace:  NamespaceGen.Draw(t, "namespace"),
+		}
+
+		return owner.ToOwnerReference()
+	})
 	// Generator for secure values that specify a secret value
 	AnySecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
+		ownerReferences := rapid.SliceOfDistinct(ownerReferenceGen, func(ref metav1.OwnerReference) metav1.OwnerReference {
+			return ref
+		}).Draw(t, "ownerReferences")
+
 		return &secretv1beta1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      SecureValueNameGen.Draw(t, "name"),
-				Namespace: NamespaceGen.Draw(t, "ns"),
+				Name:            SecureValueNameGen.Draw(t, "name"),
+				Namespace:       NamespaceGen.Draw(t, "ns"),
+				OwnerReferences: ownerReferences,
 			},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),

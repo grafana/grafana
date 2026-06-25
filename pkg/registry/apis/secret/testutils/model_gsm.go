@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -80,6 +81,10 @@ func (m *ModelGsm) ReadActiveVersion(namespace, name string) *ModelSecureValue {
 }
 
 func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
+	if len(sv.OwnerReferences) > 1 {
+		return nil, fmt.Errorf("only one owner reference is supported, found %d: %w", len(sv.OwnerReferences), contracts.ErrTooManyOwnerReferences)
+	}
+
 	keeper := m.getActiveKeeper(sv.Namespace)
 
 	if sv.Spec.Ref != nil && keeper.keeperType == secretv1beta1.SystemKeeperType {
@@ -271,9 +276,11 @@ func (m *ModelGsm) Read(namespace, name string) (*secretv1beta1.SecureValue, err
 }
 
 func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL time.Duration, maxBatchSize uint16) ([]*ModelSecureValue, error) {
-	// Match the SQL's ROW_NUMBER() OVER (ORDER BY created ASC)
 	slices.SortStableFunc(m.SecureValues, func(a, b *ModelSecureValue) int {
-		return a.created.Compare(b.created)
+		if c := a.created.Compare(b.created); c != 0 {
+			return c
+		}
+		return strings.Compare(string(a.UID), string(b.UID))
 	})
 
 	out := make([]*ModelSecureValue, 0)

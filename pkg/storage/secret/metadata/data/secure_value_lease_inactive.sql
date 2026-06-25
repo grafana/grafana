@@ -8,7 +8,7 @@ WHERE {{ .Ident "guid" }} IN (
   SELECT {{ .Ident "guid" }} FROM (
     SELECT
       {{ .Ident "guid" }},
-      ROW_NUMBER() OVER (ORDER BY {{ .Ident "created" }} ASC) AS rn
+      ROW_NUMBER() OVER (ORDER BY {{ .Ident "created" }} ASC, {{ .Ident "guid" }} ASC) AS rn
     FROM {{ .Ident "secret_secure_value" }}
     WHERE
       {{ .Ident "active" }} = FALSE AND

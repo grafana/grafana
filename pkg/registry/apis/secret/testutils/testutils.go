@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"slices"
 	"testing"
-	"time"
 
+	"github.com/dgraph-io/badger/v4"
 	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -37,6 +37,7 @@ import (
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type SetupConfig struct {
@@ -44,15 +45,22 @@ type SetupConfig struct {
 	RunSecretsDBMigrations   bool
 	RunDataKeyMigration      bool
 	SystemKeeperWrapperFunc  func(contracts.Keeper) contracts.Keeper
+	StorageType              contracts.StorageBackendType
 }
 
 func defaultSetupCfg() SetupConfig {
-	return SetupConfig{}
+	return SetupConfig{StorageType: contracts.StorageBackendSQL}
 }
 
 func WithMutateCfg(f func(*SetupConfig)) func(*SetupConfig) {
 	return func(cfg *SetupConfig) {
 		f(cfg)
+	}
+}
+
+func WithKVStorage() func(*SetupConfig) {
+	return func(cfg *SetupConfig) {
+		cfg.StorageType = contracts.StorageBackendKV
 	}
 }
 
@@ -73,8 +81,25 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	clock := NewFakeClock()
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
-	require.NoError(t, err)
+	var secureValueMetadataStorage contracts.SecureValueMetadataStorage
+	switch setupCfg.StorageType {
+	case contracts.StorageBackendSQL:
+		s, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
+		require.NoError(t, err)
+		secureValueMetadataStorage = s
+	case contracts.StorageBackendKV:
+		// Create in-memory BadgerDB
+		opts := badger.DefaultOptions("").WithInMemory(true).WithLoggingLevel(badger.ERROR)
+		db, err := badger.Open(opts)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = db.Close()
+		})
+		kvStore := resource.NewBadgerKV(db)
+		secureValueMetadataStorage = metadata.NewkvSecureValueMetadataStorage(kvStore, clock)
+	default:
+		panic(fmt.Sprintf("unhandled storage type: %+v", setupCfg))
+	}
 
 	// Initialize access client + access control
 	accessControl := acimpl.ProvideAccessControl(nil)
@@ -196,6 +221,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	}
 }
 
+// The system under test and all of its dependencies.
+// This type can also contain generic methods to make testing easier (e.g. CreateSv).
 type Sut struct {
 	SecureValueService              contracts.SecureValueService
 	SecureValueMetadataStorage      contracts.SecureValueMetadataStorage
@@ -430,137 +457,4 @@ func CreateX509TestDir(t *testing.T) TestCertPaths {
 		ServerKey:  serverKeyFile.Name(),
 		CA:         caCertFile.Name(),
 	}
-}
-
-type FakeClock struct {
-	Current time.Time
-}
-
-func NewFakeClock() *FakeClock {
-	return &FakeClock{Current: time.Now()}
-}
-
-func (c *FakeClock) Now() time.Time {
-	return c.Current
-}
-
-func (c *FakeClock) AdvanceBy(duration time.Duration) {
-	c.Current = c.Current.Add(duration)
-}
-
-type NoopMigrationExecutor struct {
-}
-
-func (e *NoopMigrationExecutor) Execute(ctx context.Context) (int, error) {
-	return 0, nil
-}
-
-// A mock of AWS secrets manager, used for testing.
-type ModelAWSSecretsManager struct {
-	secrets        map[string]entry
-	alreadyDeleted map[string]bool
-}
-
-type entry struct {
-	exposedValueOrRef string
-	externalID        string
-}
-
-func NewModelSecretsManager() *ModelAWSSecretsManager {
-	return &ModelAWSSecretsManager{
-		secrets:        make(map[string]entry),
-		alreadyDeleted: make(map[string]bool),
-	}
-}
-
-func (m *ModelAWSSecretsManager) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (externalID contracts.ExternalID, err error) {
-	if exposedValueOrRef == "" {
-		return "", fmt.Errorf("failed to satisfy constraint: Member must have length greater than or equal to 1")
-	}
-
-	versionID := buildVersionID(namespace, name, version)
-	if e, ok := m.secrets[versionID]; ok {
-		// Ignore duplicated requests
-		if e.exposedValueOrRef == exposedValueOrRef {
-			return contracts.ExternalID(e.externalID), nil
-		}
-
-		// Tried to create a secret that already exists
-		return "", fmt.Errorf("ResourceExistsException: The operation failed because the secret %+v already exists", versionID)
-	}
-
-	// First time creating the secret
-	entry := entry{
-		exposedValueOrRef: exposedValueOrRef,
-		externalID:        "external-id",
-	}
-	m.secrets[versionID] = entry
-
-	return contracts.ExternalID(entry.externalID), nil
-}
-
-// Used to simulate the creation of secrets in the 3rd party secret store
-func (m *ModelAWSSecretsManager) Create(name, value string) {
-	m.secrets[name] = entry{
-		exposedValueOrRef: value,
-		externalID:        fmt.Sprintf("external_id_%+v", value),
-	}
-}
-
-func (m *ModelAWSSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (exposedValue secretv1beta1.ExposedSecureValue, err error) {
-	versionID := buildVersionID(namespace, name, version)
-
-	if m.deleted(versionID) {
-		return "", fmt.Errorf("InvalidRequestException: You can't perform this operation on the secret because it was marked for deletion")
-	}
-
-	entry, ok := m.secrets[versionID]
-	if !ok {
-		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
-	}
-
-	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
-}
-
-// TODO: this could be namespaced to make it more realistic
-func (m *ModelAWSSecretsManager) RetrieveReference(ctx context.Context, _ secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
-	entry, ok := m.secrets[ref]
-	if !ok {
-		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
-	}
-	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
-}
-
-func (m *ModelAWSSecretsManager) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (err error) {
-	versionID := buildVersionID(namespace, name, version)
-
-	// Deleting a secret that existed at some point is idempotent
-	if m.deleted(versionID) {
-		return nil
-	}
-
-	// If the secret is being deleted for the first time
-	if m.exists(versionID) {
-		m.delete(versionID)
-	}
-
-	return nil
-}
-
-func (m *ModelAWSSecretsManager) deleted(versionID string) bool {
-	return m.alreadyDeleted[versionID]
-}
-
-func (m *ModelAWSSecretsManager) exists(versionID string) bool {
-	_, ok := m.secrets[versionID]
-	return ok
-}
-
-func (m *ModelAWSSecretsManager) delete(versionID string) {
-	m.alreadyDeleted[versionID] = true
-	delete(m.secrets, versionID)
-}
-
-func buildVersionID(namespace xkube.Namespace, name string, version int64) string {
-	return fmt.Sprintf("%s/%s/%d", namespace, name, version)
 }
