@@ -90,7 +90,8 @@
         "pr_notify": true,
         "pr_weekly": true,
         "fr_notify": true,
-        "fr_weekly": true
+        "fr_weekly": true,
+        "agent_review": true
       }
     },
     {
