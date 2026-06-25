@@ -496,16 +496,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
-    // Flow (SIEM)
+    // Flow (SIEM): the tab renders its own results (facets, table, topology) inside the
+    // query-editor component via fire-and-forget queries, because Explore's main query is
+    // reliably canceled on first load for this tab. So the main query is a no-op here.
+    // (handleFlowTableQuery/handleFlowTopologyQuery remain for reuse, e.g. by a future App.)
     if (targets.flow?.length) {
-      const target = this.applyVariables(targets.flow[0], options.scopedVars);
-      const filters = target.flowFilters ?? [];
-
-      if (target.flowView === 'topology') {
-        subQueries.push(this.handleFlowTopologyQuery(options, filters));
-      } else {
-        subQueries.push(this.handleFlowTableQuery(options, filters));
-      }
+      subQueries.push(of({ data: [], state: LoadingState.Done }));
     }
 
     // Service Map

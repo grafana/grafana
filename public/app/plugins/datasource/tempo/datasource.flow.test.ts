@@ -19,16 +19,19 @@ function makeRequest(query: Partial<TempoQuery>): DataQueryRequest<TempoQuery> {
 }
 
 describe('TempoDatasource flow table branch', () => {
-  it('routes a flow table query through handleFlowTableQuery (metrics-grouped, not search)', () => {
+  it('flow main query is a no-op — results render in-component, not via Explore', async () => {
     const ds = createTempoDatasource();
-    const tableSpy = jest.spyOn(ds, 'handleFlowTableQuery').mockReturnValue(of({ data: [] }));
-    const searchSpy = jest.spyOn(ds, 'handleTraceQlQuery').mockReturnValue(of({ data: [] }));
+    const tableSpy = jest.spyOn(ds, 'handleFlowTableQuery');
+    const topoSpy = jest.spyOn(ds, 'handleFlowTopologyQuery');
+    const searchSpy = jest.spyOn(ds, 'handleTraceQlQuery');
 
-    const filters = [{ key: 'direction' as const, values: ['egress'] }];
-    ds.query(makeRequest({ flowView: 'table', flowFilters: filters }));
+    const result = await firstValueFrom(
+      ds.query(makeRequest({ flowView: 'table', flowFilters: [{ key: 'direction', values: ['egress'] }] }))
+    );
 
-    expect(tableSpy).toHaveBeenCalledTimes(1);
-    expect(tableSpy.mock.calls[0][1]).toEqual(filters);
+    expect(result.data).toEqual([]);
+    expect(tableSpy).not.toHaveBeenCalled();
+    expect(topoSpy).not.toHaveBeenCalled();
     expect(searchSpy).not.toHaveBeenCalled();
   });
 

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -8,13 +9,27 @@ import {
   type GrafanaTheme2,
   type TimeRange,
   FieldType,
+  applyFieldOverrides,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { Badge, InlineField, InlineFieldRow, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { Badge, InlineField, InlineFieldRow, RadioButtonGroup, Spinner, Table, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { MetricsQueryType } from './dataquery.gen';
 import { type TempoDatasource } from './datasource';
-import { FLOW_FACETS, type FlowFacetDef, type FlowFacetFilter, type FlowView, composeFacetQuery, composeFilter, unquoteLabel } from './flowQuery';
+import {
+  FLOW_FACETS,
+  type FlowFacetDef,
+  type FlowFacetFilter,
+  type FlowView,
+  composeFacetQuery,
+  composeFilter,
+  composeFlowTableCountQuery,
+  composeFlowTableBytesQuery,
+  composeTopologyCountQuery,
+  composeTopologyBytesQuery,
+  unquoteLabel,
+} from './flowQuery';
+import { extractFlowEdges, flowEdgesToTable, flowSeriesToTable } from './flowTransform';
 import { type TempoQuery } from './types';
 
 interface Props {
@@ -119,8 +134,111 @@ export function FlowQuerySection({ datasource, query, onChange, onRunQuery, rang
           </div>
         </InlineField>
       </InlineFieldRow>
+      <FlowResults datasource={datasource} flowView={flowView} filters={filters} range={range} />
     </div>
   );
+}
+
+// Results (flow table or topology edges-table) are fetched and rendered in-component via
+// the same fire-and-forget datasource.query() the facets use. This avoids Explore's main
+// query, which is reliably canceled on first load (the data only appears after a manual
+// refresh). The node graph can't be embedded from this plugin workspace, so topology is
+// shown as a "top talkers" edges table.
+function FlowResults({
+  datasource,
+  flowView,
+  filters,
+  range,
+}: {
+  datasource: TempoDatasource;
+  flowView: FlowView;
+  filters: FlowFacetFilter[];
+  range?: TimeRange;
+}) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const [frame, setFrame] = useState<DataFrame | null>(null);
+  const [loading, setLoading] = useState(false);
+  const rangeKey = range ? `${String(range.raw.from)}/${String(range.raw.to)}` : 'default';
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const isTopology = flowView === 'topology';
+    const countQuery = isTopology ? composeTopologyCountQuery(filters) : composeFlowTableCountQuery(filters);
+    const bytesQuery = isTopology ? composeTopologyBytesQuery(filters) : composeFlowTableBytesQuery(filters);
+
+    Promise.all([runFlowMetrics(datasource, countQuery, range), runFlowMetrics(datasource, bytesQuery, range)])
+      .then(([countFrames, bytesFrames]) => {
+        if (cancelled) {
+          return;
+        }
+        setFrame(
+          isTopology
+            ? flowEdgesToTable(extractFlowEdges(countFrames, bytesFrames))
+            : flowSeriesToTable(countFrames, bytesFrames)
+        );
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFrame(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datasource, flowView, filters, rangeKey]);
+
+  const prepared = useMemo(
+    () =>
+      frame
+        ? applyFieldOverrides({ data: [frame], fieldConfig: { defaults: {}, overrides: [] }, theme, replaceVariables: (v) => v })[0]
+        : null,
+    [frame, theme]
+  );
+
+  return (
+    <div className={styles.results}>
+      <div className={styles.facetTitle}>
+        {flowView === 'topology' ? 'Topology — top talkers' : 'Flows'} {loading && <Spinner size="sm" />}
+      </div>
+      {prepared && prepared.length > 0 ? (
+        <div className={styles.tableWrap}>
+          <AutoSizer>{({ width, height }) => <Table data={prepared} width={width} height={height} />}</AutoSizer>
+        </div>
+      ) : (
+        !loading && <div className={styles.facetEmpty}>No data</div>
+      )}
+    </div>
+  );
+}
+
+async function runFlowMetrics(
+  datasource: TempoDatasource,
+  queryStr: string,
+  range?: TimeRange
+): Promise<DataFrame[]> {
+  const request: DataQueryRequest<TempoQuery> = {
+    requestId: `flow-result-${queryStr}`,
+    interval: '',
+    intervalMs: 0,
+    range: range ?? getDefaultTimeRange(),
+    scopedVars: {},
+    startTime: 0,
+    timezone: 'browser',
+    app: 'explore',
+    targets: [
+      { refId: 'A', queryType: 'traceql', query: queryStr, metricsQueryType: MetricsQueryType.Instant, filters: [] },
+    ],
+  };
+  const res = await lastValueFrom(datasource.query(request));
+  return res.data ?? [];
 }
 
 function ChipBar({
@@ -301,4 +419,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   facetValueLabel: css({ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }),
   facetEmpty: css({ color: theme.colors.text.secondary, fontStyle: 'italic' }),
+  results: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(0.5), marginTop: theme.spacing(1) }),
+  tableWrap: css({ height: '360px', width: '100%' }),
 });
