@@ -55,7 +55,7 @@ export function useKubernetesWidget(): HomeWidgetCatalogEntry | null {
     description: t('home.widgets.kubernetes.description', 'Overview of clusters monitored by the Kubernetes app'),
     icon: 'kubernetes',
     source: 'curated',
-    defaultSize: { w: 8, h: 6 },
+    defaultSize: { w: 8, h: 7 },
     minSize: { w: 6, h: 4 },
     render: () => <KubernetesOverviewCard />,
   };

@@ -5,7 +5,12 @@ import { createDataFrame, FieldType, type PluginMeta } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
-import { fetchKubernetesOverview, KubernetesOverviewCard } from './KubernetesOverviewCard';
+import {
+  computeHealth,
+  fetchKubernetesOverview,
+  type KubernetesOverview,
+  KubernetesOverviewCard,
+} from './KubernetesOverviewCard';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
@@ -85,18 +90,17 @@ describe('KubernetesOverviewCard', () => {
   });
 
   it('renders the overview counts and CTA, with health signals hidden when those metrics are absent', async () => {
-    query.mockReturnValue(of({ data: frames({ clusters: 4, nodes: 8, namespaces: 6, pods: 247 }) }));
+    query.mockReturnValue(of({ data: frames({ clusters: 4, pods: 247 }) }));
 
     render(<KubernetesOverviewCard />);
 
     expect(await screen.findByText('247')).toBeInTheDocument();
     expect(screen.getByText('pods')).toBeInTheDocument();
     expect(screen.getByText('4 clusters')).toBeInTheDocument();
-    expect(screen.getByText('8 nodes')).toBeInTheDocument();
-    expect(screen.getByText('6 namespaces')).toBeInTheDocument();
 
     // No health metrics in the response -> no badge, no insight rows.
     expect(screen.queryByText('Healthy')).not.toBeInTheDocument();
+    expect(screen.queryByText(/issue/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/not ready/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/pods healthy|pending or failed/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/restarts/i)).not.toBeInTheDocument();
@@ -108,27 +112,90 @@ describe('KubernetesOverviewCard', () => {
   });
 
   it('shows a Healthy badge when no nodes are not-ready', async () => {
-    query.mockReturnValue(of({ data: frames({ clusters: 1, nodes: 3, namespaces: 2, pods: 10, notReadyNodes: 0 }) }));
+    query.mockReturnValue(of({ data: frames({ clusters: 1, pods: 10, notReadyNodes: 0 }) }));
 
     render(<KubernetesOverviewCard />);
 
     expect(await screen.findByText('Healthy')).toBeInTheDocument();
-    expect(screen.queryByText(/not ready/i)).not.toBeInTheDocument();
+    expect(screen.getByText('All nodes ready')).toBeInTheDocument();
+    expect(screen.queryByText(/issue/i)).not.toBeInTheDocument();
   });
 
-  it('shows a not-ready badge when nodes are not-ready', async () => {
-    query.mockReturnValue(of({ data: frames({ clusters: 1, nodes: 3, namespaces: 2, pods: 10, notReadyNodes: 2 }) }));
+  it('aggregates not-ready nodes into the status pill and a detail row', async () => {
+    query.mockReturnValue(of({ data: frames({ clusters: 1, pods: 10, notReadyNodes: 2 }) }));
 
     render(<KubernetesOverviewCard />);
 
-    expect(await screen.findByText('2 nodes not ready')).toBeInTheDocument();
+    expect(await screen.findByText('2 issues')).toBeInTheDocument();
+    expect(screen.getByText('2 nodes not ready')).toBeInTheDocument();
     expect(screen.queryByText('Healthy')).not.toBeInTheDocument();
   });
 
-  it('shows healthy insight rows when unhealthy pods and restarts are zero', async () => {
+  it('renders a red verdict pill when pods are unhealthy', async () => {
     query.mockReturnValue(
-      of({ data: frames({ clusters: 1, nodes: 3, namespaces: 2, pods: 10, unhealthyPods: 0, restarts1h: 0 }) })
+      of({
+        data: frames({
+          clusters: 1,
+          pods: 10,
+          unhealthyPods: 3,
+          notReadyNodes: 0,
+          restarts1h: 0,
+        }),
+      })
     );
+
+    render(<KubernetesOverviewCard />);
+
+    expect(await screen.findByText('3 issues')).toBeInTheDocument();
+    expect(screen.getByText('All nodes ready')).toBeInTheDocument();
+    expect(screen.getByText('3 pods pending or failed')).toBeInTheDocument();
+    expect(screen.getByText('No recent container restarts')).toBeInTheDocument();
+  });
+
+  it('surfaces container restarts in the status pill even when pods and nodes are fine', async () => {
+    query.mockReturnValue(
+      of({
+        data: frames({
+          clusters: 1,
+          pods: 10,
+          unhealthyPods: 0,
+          notReadyNodes: 0,
+          restarts1h: 5,
+        }),
+      })
+    );
+
+    render(<KubernetesOverviewCard />);
+
+    expect(await screen.findByText('5 issues')).toBeInTheDocument();
+    expect(screen.getByText('All nodes ready')).toBeInTheDocument();
+    expect(screen.getByText('All pods healthy')).toBeInTheDocument();
+    expect(screen.getByText('5 container restarts (1h)')).toBeInTheDocument();
+  });
+
+  it('shows a Healthy pill when every health signal is clear', async () => {
+    query.mockReturnValue(
+      of({
+        data: frames({
+          clusters: 1,
+          pods: 10,
+          unhealthyPods: 0,
+          notReadyNodes: 0,
+          restarts1h: 0,
+        }),
+      })
+    );
+
+    render(<KubernetesOverviewCard />);
+
+    expect(await screen.findByText('Healthy')).toBeInTheDocument();
+    expect(screen.getByText('All nodes ready')).toBeInTheDocument();
+    expect(screen.getByText('All pods healthy')).toBeInTheDocument();
+    expect(screen.getByText('No recent container restarts')).toBeInTheDocument();
+  });
+
+  it('shows healthy insight rows when unhealthy pods and restarts are zero', async () => {
+    query.mockReturnValue(of({ data: frames({ clusters: 1, pods: 10, unhealthyPods: 0, restarts1h: 0 }) }));
 
     render(<KubernetesOverviewCard />);
 
@@ -137,9 +204,7 @@ describe('KubernetesOverviewCard', () => {
   });
 
   it('shows warning insight rows when pods are unhealthy and containers restarted', async () => {
-    query.mockReturnValue(
-      of({ data: frames({ clusters: 1, nodes: 3, namespaces: 2, pods: 10, unhealthyPods: 3, restarts1h: 5 }) })
-    );
+    query.mockReturnValue(of({ data: frames({ clusters: 1, pods: 10, unhealthyPods: 3, restarts1h: 5 }) }));
 
     render(<KubernetesOverviewCard />);
 
@@ -159,7 +224,7 @@ describe('KubernetesOverviewCard', () => {
 
   it('shows a retryable error when the query fails, and retry refetches', async () => {
     query.mockReturnValueOnce(throwError(() => new Error('boom')));
-    query.mockReturnValueOnce(of({ data: frames({ clusters: 4, nodes: 8, namespaces: 6, pods: 247 }) }));
+    query.mockReturnValueOnce(of({ data: frames({ clusters: 4, pods: 247 }) }));
 
     const { user } = render(<KubernetesOverviewCard />);
 
@@ -182,7 +247,7 @@ describe('KubernetesOverviewCard', () => {
 
   it('hides the CTA when the user cannot access the plugin page', async () => {
     mockCanAccessPluginPage.mockReturnValue(false);
-    query.mockReturnValue(of({ data: frames({ clusters: 4, nodes: 8, namespaces: 6, pods: 247 }) }));
+    query.mockReturnValue(of({ data: frames({ clusters: 4, pods: 247 }) }));
 
     render(<KubernetesOverviewCard />);
 
@@ -193,12 +258,10 @@ describe('KubernetesOverviewCard', () => {
 
 describe('fetchKubernetesOverview', () => {
   it('returns parsed counts and null health signals when their frames are absent', async () => {
-    query.mockReturnValue(of({ data: frames({ clusters: 4, nodes: 8, namespaces: 6, pods: 247 }) }));
+    query.mockReturnValue(of({ data: frames({ clusters: 4, pods: 247 }) }));
 
     await expect(fetchKubernetesOverview()).resolves.toEqual({
       clusters: 4,
-      nodes: 8,
-      namespaces: 6,
       pods: 247,
       unhealthyPods: null,
       restarts1h: null,
@@ -211,8 +274,6 @@ describe('fetchKubernetesOverview', () => {
       of({
         data: frames({
           clusters: 1,
-          nodes: 1,
-          namespaces: 1,
           pods: 1,
           unhealthyPods: 3,
           restarts1h: 5,
@@ -232,5 +293,57 @@ describe('fetchKubernetesOverview', () => {
     setDataSources([]);
 
     await expect(fetchKubernetesOverview()).rejects.toThrow('No Prometheus datasource configured');
+  });
+});
+
+describe('computeHealth', () => {
+  const overview = (
+    health: Pick<KubernetesOverview, 'unhealthyPods' | 'notReadyNodes' | 'restarts1h'>
+  ): KubernetesOverview => ({ clusters: 1, pods: 1, ...health });
+
+  it('returns null when no health signal is available', () => {
+    expect(computeHealth(overview({ unhealthyPods: null, notReadyNodes: null, restarts1h: null }))).toBeNull();
+  });
+
+  it('is healthy when every signal is zero', () => {
+    expect(computeHealth(overview({ unhealthyPods: 0, notReadyNodes: 0, restarts1h: 0 }))).toEqual({
+      issues: 0,
+      severity: 'healthy',
+    });
+  });
+
+  it('is critical when pods are unhealthy', () => {
+    expect(computeHealth(overview({ unhealthyPods: 3, notReadyNodes: 0, restarts1h: 0 }))).toEqual({
+      issues: 3,
+      severity: 'critical',
+    });
+  });
+
+  it('is critical when nodes are not ready', () => {
+    expect(computeHealth(overview({ unhealthyPods: 0, notReadyNodes: 2, restarts1h: 0 }))).toEqual({
+      issues: 2,
+      severity: 'critical',
+    });
+  });
+
+  it('is a warning when only restarts are elevated', () => {
+    expect(computeHealth(overview({ unhealthyPods: 0, notReadyNodes: 0, restarts1h: 5 }))).toEqual({
+      issues: 5,
+      severity: 'warning',
+    });
+  });
+
+  it('sums all signals and stays critical when resources are bad', () => {
+    expect(computeHealth(overview({ unhealthyPods: 3, notReadyNodes: 2, restarts1h: 5 }))).toEqual({
+      issues: 10,
+      severity: 'critical',
+    });
+  });
+
+  it('treats null signals as zero in a partial metric set', () => {
+    expect(computeHealth(overview({ unhealthyPods: 1, notReadyNodes: null, restarts1h: null }))).toEqual({
+      issues: 1,
+      severity: 'critical',
+    });
   });
 });

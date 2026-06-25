@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useAsyncRetry } from 'react-use';
@@ -11,11 +12,12 @@ import {
   FieldType,
   generateUUID,
   getDefaultTimeRange,
+  type GrafanaTheme2,
   rangeUtil,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Badge, Icon, LinkButton, Stack, Text } from '@grafana/ui';
+import { Badge, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
@@ -25,20 +27,16 @@ export const KUBERNETES_APP_ID = 'grafana-k8s-app';
 
 export interface KubernetesOverview {
   clusters: number;
-  nodes: number;
-  namespaces: number;
   pods: number;
   unhealthyPods: number | null; // null = metric absent (hide the row); 0 = all healthy
   restarts1h: number | null; // null = metric absent (hide the row)
-  notReadyNodes: number | null; // null = metric absent (hide the badge); 0 = all Ready
+  notReadyNodes: number | null; // null = metric absent (hide the row); 0 = all Ready
 }
 
 // refId -> portable kube-state-metrics PromQL. No recording rules: works on any Prometheus scraping
 // kube-state-metrics. `group by (...)` dedupes series across replicas before count().
 const OVERVIEW_QUERIES: Record<string, string> = {
   clusters: 'count(group by (cluster) (kube_node_info))',
-  nodes: 'count(group by (cluster, node) (kube_node_info))',
-  namespaces: 'count(group by (cluster, namespace) (kube_namespace_created))',
   pods: 'count(group by (cluster, namespace, pod) (kube_pod_info))',
   unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
   restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
@@ -57,6 +55,28 @@ function readScalar(frames: DataFrame[], refId: string): number | null {
   const field = frames.find((f) => f.refId === refId)?.fields.find((f) => f.type === FieldType.number);
   const v = field && field.values.length ? field.values[field.values.length - 1] : undefined;
   return typeof v === 'number' && Number.isFinite(v) ? v : null;
+}
+
+export type KubernetesHealthSeverity = 'healthy' | 'warning' | 'critical';
+
+export interface KubernetesHealth {
+  // Total problems = unhealthy pods + not-ready nodes + recent container restarts, over the available signals.
+  issues: number;
+  severity: KubernetesHealthSeverity;
+}
+
+// Collapse the three health signals into one header verdict. Returns null when NONE are available
+// (e.g. Prometheus scrapes only inventory metrics) — the pill is then hidden, since absence is not health.
+export function computeHealth(o: KubernetesOverview): KubernetesHealth | null {
+  if (o.unhealthyPods === null && o.notReadyNodes === null && o.restarts1h === null) {
+    return null;
+  }
+  // Pods pending/failed and not-ready nodes are resources in a bad state (critical); restarts alone are a
+  // softer signal (warning). null signals count as 0 so a partial metric set still yields a verdict.
+  const badResources = (o.unhealthyPods ?? 0) + (o.notReadyNodes ?? 0);
+  const issues = badResources + (o.restarts1h ?? 0);
+  const severity: KubernetesHealthSeverity = issues === 0 ? 'healthy' : badResources > 0 ? 'critical' : 'warning';
+  return { issues, severity };
 }
 
 /**
@@ -97,8 +117,6 @@ export async function fetchKubernetesOverview(): Promise<KubernetesOverview> {
   const frames = result.data ?? [];
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
-    nodes: readScalar(frames, 'nodes') ?? 0,
-    namespaces: readScalar(frames, 'namespaces') ?? 0,
     pods: readScalar(frames, 'pods') ?? 0,
     unhealthyPods: readScalar(frames, 'unhealthyPods'),
     restarts1h: readScalar(frames, 'restarts1h'),
@@ -122,14 +140,23 @@ export function KubernetesOverviewCard() {
   return <KubernetesOverviewCardInner canAccess={canAccess} />;
 }
 
-function InsightRow({ ok, children }: { ok: boolean; children: NonNullable<ReactNode> }) {
+type InsightSeverity = 'success' | 'warning' | 'error';
+
+function InsightRow({ severity, children }: { severity: InsightSeverity; children: NonNullable<ReactNode> }) {
+  const styles = useStyles2(getInsightStyles);
   return (
     <Stack alignItems="center" gap={1}>
-      <Icon name={ok ? 'check-circle' : 'exclamation-triangle'} />
+      <Icon name={severity === 'success' ? 'check-circle' : 'exclamation-triangle'} className={styles[severity]} />
       <Text color="secondary">{children}</Text>
     </Stack>
   );
 }
+
+const getInsightStyles = (theme: GrafanaTheme2) => ({
+  success: css({ color: theme.colors.success.main }),
+  warning: css({ color: theme.colors.warning.main }),
+  error: css({ color: theme.colors.error.main }),
+});
 
 /**
  * Inner component avoids calling hooks conditionally —
@@ -138,16 +165,17 @@ function InsightRow({ ok, children }: { ok: boolean; children: NonNullable<React
 function KubernetesOverviewCardInner({ canAccess }: { canAccess: boolean }) {
   const { value, loading, error, retry } = useAsyncRetry(fetchKubernetesOverview, []);
 
-  const healthBadge =
-    !value || value.notReadyNodes === null ? undefined : value.notReadyNodes === 0 ? (
+  const health = value ? computeHealth(value) : null;
+  const statusPill =
+    health === null ? undefined : health.severity === 'healthy' ? (
       <Badge color="green" text={t('home.kubernetes-card.healthy', 'Healthy')} />
     ) : (
       <Badge
-        color="red"
-        text={t('home.kubernetes-card.nodes-not-ready', '', {
-          count: value.notReadyNodes,
-          defaultValue_one: '{{count}} node not ready',
-          defaultValue_other: '{{count}} nodes not ready',
+        color={health.severity === 'critical' ? 'red' : 'orange'}
+        text={t('home.kubernetes-card.issues', '', {
+          count: health.issues,
+          defaultValue_one: '{{count}} issue',
+          defaultValue_other: '{{count}} issues',
         })}
       />
     );
@@ -155,7 +183,7 @@ function KubernetesOverviewCardInner({ canAccess }: { canAccess: boolean }) {
   return (
     <HomeDataCard
       title={t('home.kubernetes-card.title', 'Kubernetes Monitoring')}
-      headerActions={healthBadge}
+      headerActions={statusPill}
       loading={loading}
       loadingContent={<Skeleton height={96} />}
       error={
@@ -177,10 +205,8 @@ function KubernetesOverviewCardInner({ canAccess }: { canAccess: boolean }) {
         <Stack direction="column" gap={2} grow={1}>
           <Stack direction="column" gap={0}>
             <Stack alignItems="baseline" gap={1}>
-              <Text variant="h1">{value.pods.toLocaleString()}</Text>
-              <Text variant="h5" color="secondary">
-                {t('home.kubernetes-card.pods-unit', 'pods')}
-              </Text>
+              <Text variant="h2">{value.pods.toLocaleString()}</Text>
+              <Text variant="h4">{t('home.kubernetes-card.pods-unit', 'pods')}</Text>
             </Stack>
             <Text color="secondary">
               {t('home.kubernetes-card.clusters', '', {
@@ -192,25 +218,19 @@ function KubernetesOverviewCardInner({ canAccess }: { canAccess: boolean }) {
           </Stack>
 
           <Stack direction="column" gap={0}>
-            <Text color="secondary">
-              {t('home.kubernetes-card.nodes', '', {
-                count: value.nodes,
-                defaultValue_one: '{{count}} node',
-                defaultValue_other: '{{count}} nodes',
-              })}
-            </Text>
-            <Text color="secondary">
-              {t('home.kubernetes-card.namespaces', '', {
-                count: value.namespaces,
-                defaultValue_one: '{{count}} namespace',
-                defaultValue_other: '{{count}} namespaces',
-              })}
-            </Text>
-          </Stack>
-
-          <Stack direction="column" gap={0}>
+            {value.notReadyNodes !== null && (
+              <InsightRow severity={value.notReadyNodes === 0 ? 'success' : 'warning'}>
+                {value.notReadyNodes === 0
+                  ? t('home.kubernetes-card.nodes-ready', 'All nodes ready')
+                  : t('home.kubernetes-card.nodes-not-ready', '', {
+                      count: value.notReadyNodes,
+                      defaultValue_one: '{{count}} node not ready',
+                      defaultValue_other: '{{count}} nodes not ready',
+                    })}
+              </InsightRow>
+            )}
             {value.unhealthyPods !== null && (
-              <InsightRow ok={value.unhealthyPods === 0}>
+              <InsightRow severity={value.unhealthyPods === 0 ? 'success' : 'error'}>
                 {value.unhealthyPods === 0
                   ? t('home.kubernetes-card.pods-healthy', 'All pods healthy')
                   : t('home.kubernetes-card.pods-unhealthy', '', {
@@ -221,7 +241,7 @@ function KubernetesOverviewCardInner({ canAccess }: { canAccess: boolean }) {
               </InsightRow>
             )}
             {value.restarts1h !== null && (
-              <InsightRow ok={value.restarts1h === 0}>
+              <InsightRow severity={value.restarts1h === 0 ? 'success' : 'warning'}>
                 {value.restarts1h === 0
                   ? t('home.kubernetes-card.no-restarts', 'No recent container restarts')
                   : t('home.kubernetes-card.restarts', '', {
