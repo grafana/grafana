@@ -92,7 +92,7 @@ export function ModalEditor(props: ModalEditorProps) {
       </div>
       <div className={styles.content}>
         <div {...containerProps}>
-          <div {...primaryProps} style={{ ...primaryProps.style, minHeight: 0 }}>
+          <div {...primaryProps} style={{ ...primaryProps.style, minHeight: '16px' }}>
             <div className={styles.splitContainer}>
               {!options.length ? (
                 <div className={styles.noOptions}>
@@ -121,7 +121,7 @@ export function ModalEditor(props: ModalEditorProps) {
           >
             <div className={styles.fadeOverlay} />
           </div>
-          <div {...secondaryProps} style={{ ...secondaryProps.style, minHeight: 0 }}>
+          <div {...secondaryProps} style={{ ...secondaryProps.style, minHeight: '16px' }}>
             <div className={styles.splitContainer}>
               <TabsBar>
                 <Tab
