@@ -107,6 +107,13 @@ describe('<SpanBar>', () => {
     expect(screen.getByTestId('SpanBar--bar').className).not.toMatch(/barSummary/);
   });
 
+  it('threads the service color into the summary bar gradient via a CSS variable', () => {
+    const summarySpan = { ...props.span, aggregation: { isSummary: true } };
+    render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    const bar = screen.getByTestId('SpanBar--bar');
+    expect(bar.style.getPropertyValue('--span-summary-color')).toBe(props.color);
+  });
+
   it('labels the bar-side duration stats in a tooltip for summary spans', async () => {
     const summarySpan = {
       ...props.span,

@@ -53,17 +53,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '40%',
       top: '30%',
     }),
-    // Decorative diagonal stripe overlay marking a span as a pruned summary (an
-    // aggregate of many spans), not encoding histogram or timing data. The bar's
-    // solid service color shows through the transparent stripes via background-blend.
+    // Decorative light-to-dark gradient within the service hue marking a span as a
+    // pruned summary (an aggregate of many spans spanning a time window), not a
+    // single operation. It does not encode histogram or timing data. The service
+    // color is threaded in via the `--span-summary-color` custom property set on
+    // the bar; `backgroundColor` (set inline, longhand) is the solid fallback if
+    // color-mix is unsupported.
     barSummary: css({
       label: 'barSummary',
-      backgroundImage: `repeating-linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0.35),
-        rgba(255, 255, 255, 0.35) 3px,
-        transparent 3px,
-        transparent 7px
+      backgroundImage: `linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--span-summary-color), white 30%) 0%,
+        var(--span-summary-color) 38%,
+        color-mix(in srgb, var(--span-summary-color), black 55%) 100%
       )`,
     }),
     rpc: css({
@@ -190,6 +192,16 @@ function SpanBar({
   });
   const styles = useStyles2(getStyles);
 
+  // backgroundColor (longhand, not the `background` shorthand) so it does not reset
+  // the barSummary class's background-image; it also acts as the solid fallback.
+  // The summary gradient reads the color from the --span-summary-color custom prop.
+  const barStyle: React.CSSProperties & Record<string, string | number> = {
+    backgroundColor: color,
+    left: toPercent(viewStart),
+    width: toPercent(viewEnd - viewStart),
+    ...(span.aggregation?.isSummary ? { '--span-summary-color': color } : {}),
+  };
+
   return (
     <div
       className={cx(styles.wrapper, className)}
@@ -205,11 +217,7 @@ function SpanBar({
         aria-label={summaryStats ? shortLabel : normalLabel}
         className={cx(styles.bar, { [styles.barSummary]: span.aggregation?.isSummary })}
         data-testid="SpanBar--bar"
-        style={{
-          background: color,
-          left: toPercent(viewStart),
-          width: toPercent(viewEnd - viewStart),
-        }}
+        style={barStyle}
       >
         {summaryStats ? (
           <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
