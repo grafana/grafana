@@ -522,6 +522,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 				Id:       "notification-config",
 				Url:      s.cfg.AppSubURL + "/alerting/notifications",
 				Icon:     "comment-alt-share",
+				Keywords: []string{"Contact points", "Notification policies", "Templates", "Time intervals"},
 			})
 		}
 	} else {
