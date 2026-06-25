@@ -7214,7 +7214,8 @@
       "spreadsheet": {
         "add-option": "Add new option",
         "drag-to-reorder": "Drag and drop to reorder",
-        "paste-error": "Could not paste clipboard content",
+        "paste-from-clipboard": "Paste from clipboard",
+        "paste-from-clipboard-with-format": "Paste from clipboard ({{format}})",
         "paste-parse-error": "Could not parse clipboard content",
         "remove-option": "Remove {{optionName}}"
       }

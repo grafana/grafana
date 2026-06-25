@@ -6,13 +6,14 @@ import {
   Droppable,
   type DropResult,
 } from '@hello-pangea/dnd';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
-import { Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import {
   type StaticOptionsOrderType,
   type StaticOptionsType,
@@ -21,7 +22,7 @@ import {
 import { useGetPropertiesFromOptions } from '../../../components/VariableValuesPreview';
 
 import { SortSelector } from './SortSelector';
-import { detectClipboardTextFormat, parseClipboardText } from './clipboard';
+import { detectClipboardTextFormat, parseClipboardText, useClipboardProbe } from './clipboard';
 
 type SpreadsheetOption = VariableValueOption & {
   id: string;
@@ -51,6 +52,11 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
     toSpreadsheetOptions(staticOptions ?? [])
   );
 
+  const autoFocusIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    autoFocusIdRef.current = null;
+  });
+
   const emitChange = useCallback(
     (newOptions: SpreadsheetOption[]) => {
       setInternalOptions(newOptions);
@@ -59,36 +65,17 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
     [onStaticOptionsChange]
   );
 
-  const createEmptyOption = useCallback(
-    (): SpreadsheetOption => ({
-      id: uuidv4(),
+  const handleAdd = useCallback(() => {
+    const newId = uuidv4();
+    autoFocusIdRef.current = newId;
+    const newOption: SpreadsheetOption = {
+      id: newId,
       label: '',
       value: '',
       properties: properties.reduce<VariableValueOptionProperties>((acc, p) => ({ ...acc, [p]: '' }), {}),
-    }),
-    [properties]
-  );
-
-  const [draftOption, setDraftOption] = useState<SpreadsheetOption>(createEmptyOption);
-  const focusDraftRef = useRef(false);
-
-  const handleDraftChange = useCallback((key: string, val: string) => {
-    setDraftOption((prev) => {
-      const newProperties = { ...prev.properties, [key]: val };
-      return {
-        ...prev,
-        label: newProperties.text ?? prev.label,
-        value: newProperties.value ?? prev.value,
-        properties: newProperties,
-      };
-    });
-  }, []);
-
-  const handleAdd = useCallback(() => {
-    emitChange([...internalOptions, draftOption]);
-    setDraftOption(createEmptyOption());
-    focusDraftRef.current = true;
-  }, [internalOptions, draftOption, emitChange, createEmptyOption]);
+    };
+    emitChange([...internalOptions, newOption]);
+  }, [internalOptions, emitChange, properties]);
 
   const handleRemove = useCallback(
     (option: SpreadsheetOption) => {
@@ -164,8 +151,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
           break;
         case 'Enter':
           e.preventDefault();
-          // On the draft row (last row), Enter commits the draft
-          if (row === internalOptions.length) {
+          if (row === internalOptions.length - 1) {
             handleAdd();
           } else {
             focusCell(row + 1, col);
@@ -212,37 +198,32 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
       }
 
       emitChange([...internalOptions, ...newOptions]);
-      setDraftOption(createEmptyOption());
     },
-    [properties, emitChange, internalOptions, createEmptyOption]
+    [properties, emitChange, internalOptions]
   );
 
-  const handlePaste = useCallback(
-    async (e: React.ClipboardEvent<HTMLInputElement>) => {
-      const text = e.clipboardData.getData('text/plain').trim();
-      if (text && detectClipboardTextFormat(text)) {
-        e.preventDefault();
-        try {
-          await paste(text);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          alert(
-            `${t('dashboard-scene.query-variable-editor.spreadsheet.paste-error', 'Could not paste clipboard content')}: ${message}`
-          );
-        }
-      }
-    },
-    [paste]
-  );
+  const { clipboardText, clipboardFormat, clearClipboard } = useClipboardProbe();
 
-  const shouldFocusDraft = focusDraftRef.current;
-  focusDraftRef.current = false;
+  const handlePasteFromClipboard = useCallback(async () => {
+    let text: string;
+    try {
+      text = (await navigator.clipboard.readText()).trim();
+    } catch {
+      return;
+    }
+
+    if (!detectClipboardTextFormat(text)) {
+      return;
+    }
+
+    await paste(text);
+    await clearClipboard();
+  }, [paste, clearClipboard]);
 
   return {
     properties,
     rows: internalOptions,
-    draftOption,
-    shouldFocusDraft,
+    autoFocusId: autoFocusIdRef.current,
     gridRef,
     staticOptionsOrder,
     onStaticOptionsOrderChange,
@@ -250,9 +231,10 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
     handleRemove,
     handleReorder,
     handleValueChange,
-    handleDraftChange,
     handleCellKeyDown,
-    handlePaste,
+    handlePasteFromClipboard,
+    canPasteFromClipboard: clipboardText !== null,
+    clipboardFormat,
   };
 }
 
@@ -261,18 +243,18 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
   const {
     properties,
     rows,
-    draftOption,
+    autoFocusId,
+    gridRef,
     staticOptionsOrder,
     onStaticOptionsOrderChange,
     handleAdd,
     handleRemove,
     handleReorder,
     handleValueChange,
-    handleDraftChange,
     handleCellKeyDown,
-    handlePaste,
-    shouldFocusDraft,
-    gridRef,
+    handlePasteFromClipboard,
+    canPasteFromClipboard,
+    clipboardFormat,
   } = useVariableOptionsSpreadsheet(props);
 
   return (
@@ -327,42 +309,64 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
                       onRemove={() => handleRemove(option)}
                       onValueChange={(key, val) => handleValueChange(option, key, val)}
                       onCellKeyDown={handleCellKeyDown}
+                      autoFocusFirst={option.id === autoFocusId}
                     />
                   ))}
                   {droppableProvided.placeholder}
-                  <SpreadsheetRow
-                    option={draftOption}
-                    rowIndex={rows.length}
-                    properties={properties}
-                    onAdd={handleAdd}
-                    onValueChange={(key, val) => handleDraftChange(key, val)}
-                    onCellKeyDown={handleCellKeyDown}
-                    onFirstInputPaste={handlePaste}
-                    autoFocusFirst={shouldFocusDraft}
-                  />
                 </tbody>
               )}
             </Droppable>
           </DragDropContext>
         </table>
+        <div className={styles.addButton}>
+          <Stack direction="row" gap={1}>
+            <Button
+              icon="plus"
+              variant="primary"
+              fill="text"
+              onClick={handleAdd}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton}
+              aria-label={t('dashboard-scene.query-variable-editor.spreadsheet.add-option', 'Add new option')}
+            >
+              <Trans i18nKey="dashboard-scene.query-variable-editor.spreadsheet.add-option">Add new option</Trans>
+            </Button>
+            <Button
+              icon="clipboard-alt"
+              variant="primary"
+              fill="text"
+              disabled={!canPasteFromClipboard}
+              onClick={handlePasteFromClipboard}
+              aria-label={t(
+                'dashboard-scene.query-variable-editor.spreadsheet.paste-from-clipboard',
+                'Paste from clipboard'
+              )}
+            >
+              {clipboardFormat
+                ? t(
+                    'dashboard-scene.query-variable-editor.spreadsheet.paste-from-clipboard-with-format',
+                    'Paste from clipboard ({{format}})',
+                    { format: clipboardFormat.toUpperCase() }
+                  )
+                : t('dashboard-scene.query-variable-editor.spreadsheet.paste-from-clipboard', 'Paste from clipboard')}
+            </Button>
+          </Stack>
+        </div>
       </div>
     </Stack>
   );
 }
 
 interface SpreadsheetRowProps extends Omit<SpreadsheetRowCellsProps, 'dragHandleProps'> {
-  index?: number;
+  index: number;
 }
 
 interface SpreadsheetRowCellsProps {
   option: SpreadsheetOption;
   rowIndex?: number;
   properties: string[];
-  onRemove?: () => void;
-  onAdd?: () => void;
+  onRemove: () => void;
   onValueChange: (key: string, value: string) => void;
   onCellKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => void;
-  onFirstInputPaste?: (e: React.ClipboardEvent<HTMLInputElement>) => void;
   autoFocusFirst?: boolean;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
@@ -372,16 +376,13 @@ function SpreadsheetRowCells({
   rowIndex = 0,
   properties,
   onRemove,
-  onAdd,
   onValueChange,
   onCellKeyDown,
-  onFirstInputPaste,
   autoFocusFirst,
   dragHandleProps,
 }: SpreadsheetRowCellsProps) {
   const styles = useStyles2(getStyles);
 
-  const addTooltip = t('dashboard-scene.query-variable-editor.spreadsheet.add-option', 'Add new option');
   const removeTooltip = t('dashboard-scene.query-variable-editor.spreadsheet.remove-option', 'Remove {{optionName}}', {
     optionName: option.label || option.value,
   });
@@ -389,30 +390,14 @@ function SpreadsheetRowCells({
   return (
     <>
       <td className={styles.actionCell}>
-        {onRemove && (
-          <Tooltip
-            content={t('dashboard-scene.query-variable-editor.spreadsheet.drag-to-reorder', 'Drag and drop to reorder')}
-            placement="top"
-          >
-            <div className={styles.dragHandle} {...dragHandleProps}>
-              <Icon name="draggabledots" />
-            </div>
-          </Tooltip>
-        )}
-        {!onRemove && (
-          <div className={styles.actionsGroup}>
-            {onAdd && (
-              <IconButton
-                name="plus"
-                variant="primary"
-                aria-label={addTooltip}
-                tooltip={addTooltip}
-                tooltipPlacement="top"
-                onClick={onAdd}
-              />
-            )}
+        <Tooltip
+          content={t('dashboard-scene.query-variable-editor.spreadsheet.drag-to-reorder', 'Drag and drop to reorder')}
+          placement="top"
+        >
+          <div className={styles.dragHandle} {...dragHandleProps}>
+            <Icon name="draggabledots" />
           </div>
-        )}
+        </Tooltip>
       </td>
       {properties.map((p, i) => (
         <td key={p} className={styles.cell}>
@@ -425,22 +410,19 @@ function SpreadsheetRowCells({
             data-col={i}
             onChange={(e) => onValueChange?.(p, e.currentTarget.value)}
             onKeyDown={onCellKeyDown ? (e) => onCellKeyDown(e, rowIndex, i) : undefined}
-            onPaste={onFirstInputPaste && i === 0 ? onFirstInputPaste : undefined}
             ref={autoFocusFirst && i === 0 ? (el) => el?.focus() : undefined}
           />
         </td>
       ))}
       <td className={styles.actionCell}>
-        {onRemove && (
-          <IconButton
-            name="trash-alt"
-            variant="destructive"
-            aria-label={removeTooltip}
-            tooltip={removeTooltip}
-            tooltipPlacement="top"
-            onClick={onRemove}
-          />
-        )}
+        <IconButton
+          name="trash-alt"
+          variant="destructive"
+          aria-label={removeTooltip}
+          tooltip={removeTooltip}
+          tooltipPlacement="top"
+          onClick={onRemove}
+        />
       </td>
     </>
   );
@@ -448,16 +430,7 @@ function SpreadsheetRowCells({
 
 function SpreadsheetRow(props: SpreadsheetRowProps) {
   const styles = useStyles2(getStyles);
-  const { option, index, onRemove } = props;
-  const isDraggable = onRemove && index !== undefined;
-
-  if (!isDraggable) {
-    return (
-      <tr className={styles.row}>
-        <SpreadsheetRowCells {...props} />
-      </tr>
-    );
-  }
+  const { option, index } = props;
 
   return (
     <Draggable draggableId={option.id} index={index}>
@@ -543,13 +516,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin: '0 auto',
       },
     }),
-    actionsGroup: css({
-      display: 'flex',
-      flexDirection: 'row',
-      gap: 0,
-      '& > :last-child': css({
-        marginRight: 0,
-      }),
+    addButton: css({
+      marginTop: theme.spacing(1),
     }),
   };
 };

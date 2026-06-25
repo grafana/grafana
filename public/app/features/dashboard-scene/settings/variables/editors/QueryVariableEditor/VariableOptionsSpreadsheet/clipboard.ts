@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from 'react';
 import { firstValueFrom } from 'rxjs';
 
 import { CustomVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
@@ -62,4 +63,34 @@ function parseTsv(text: string, properties: string[]): VariableValueOption[] {
       properties: props,
     };
   });
+}
+
+export function useClipboardProbe() {
+  const [clipboardText, setClipboardText] = useState<string | null>(null);
+
+  const probe = useCallback(async () => {
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      setClipboardText(text && detectClipboardTextFormat(text) ? text : null);
+    } catch {
+      // Permission denied or not supported
+    }
+  }, []);
+
+  useEffect(() => {
+    probe();
+    window.addEventListener('focus', probe);
+    return () => window.removeEventListener('focus', probe);
+  }, [probe]);
+
+  const clearClipboard = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText('');
+    } catch {}
+    setClipboardText(null);
+  }, []);
+
+  const clipboardFormat = clipboardText ? detectClipboardTextFormat(clipboardText) : undefined;
+
+  return { clipboardText, clipboardFormat, clearClipboard };
 }

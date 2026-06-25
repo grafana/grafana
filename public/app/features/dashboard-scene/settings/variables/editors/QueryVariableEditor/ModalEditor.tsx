@@ -46,7 +46,7 @@ export function ModalEditor(props: ModalEditorProps) {
     queryError,
     onStaticOptionsChange,
     onStaticOptionsOrderChange,
-    previewValues,
+    onShowValuesPreview,
     onCloseModal,
     onClickApply,
   } = useModalEditor(props);
@@ -78,7 +78,7 @@ export function ModalEditor(props: ModalEditorProps) {
               variant={isLoading ? 'secondary' : 'primary'}
               fill="outline"
               size="sm"
-              onClick={previewValues}
+              onClick={onShowValuesPreview}
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
             >
               {isLoading ? (
@@ -99,7 +99,7 @@ export function ModalEditor(props: ModalEditorProps) {
                   <Button
                     variant="primary"
                     fill="outline"
-                    onClick={previewValues}
+                    onClick={onShowValuesPreview}
                     data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
                   >
                     {isLoading ? (
@@ -275,7 +275,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
     onStaticOptionsChange,
     onStaticOptionsOrderChange,
     onCloseModal: onClose,
-    previewValues: () => {
+    onShowValuesPreview: () => {
       updateVariable(draftVariable);
     },
     onClickApply,
