@@ -7,6 +7,7 @@ import { IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { DraggableListItem } from './DraggableListItem';
 import { DroppableCategory } from './DroppableCategory';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface DraggableListProps<T extends { state: { key?: string; name: string } }> {
   items: T[];
@@ -43,18 +44,21 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
             </div>
             <div className={styles.itemButtons}>
               <IconButton
+                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(item.state.key ?? item.state.name)}
                 tooltip={t('dashboard-scene.draggable-items-list.edit', 'Edit')}
                 onClick={() => onEditItem(item)}
                 name="pen"
                 variant="secondary"
               />
               <IconButton
+                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(item.state.key ?? item.state.name)}
                 tooltip={t('dashboard-scene.draggable-items-list.duplicate', 'Duplicate')}
                 onClick={() => onDuplicateItem(item)}
                 name="copy"
                 variant="secondary"
               />
               <IconButton
+                data-testid={selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(item.state.key ?? item.state.name)}
                 tooltip={t('dashboard-scene.draggable-items-list.delete', 'Delete')}
                 className={styles.destructiveButton}
                 onClick={() => onDeleteItem(item)}

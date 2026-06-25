@@ -1,8 +1,8 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { OptionsPaneCategory, type OptionsPaneCategoryProps } from './OptionsPaneCategory';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
+import { OptionsPaneCategory, type OptionsPaneCategoryProps } from './OptionsPaneCategory';
 
 const childText = 'Category body content';
 const categoryId = 'test-category';
