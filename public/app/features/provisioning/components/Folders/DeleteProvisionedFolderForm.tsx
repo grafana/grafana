@@ -76,6 +76,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     repository,
     vars: templateVars,
     workflow,
+    value: ref ?? '',
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 

@@ -44,7 +44,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     mode: 'onBlur',
   });
   const { handleSubmit, watch, register, formState } = methods;
-  const [workflow] = watch(['workflow']);
+  const [workflow, ref] = watch(['workflow', 'ref']);
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -66,6 +66,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     repository,
     vars: templateVars,
     workflow,
+    value: ref ?? '',
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 

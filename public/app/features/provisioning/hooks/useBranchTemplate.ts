@@ -10,6 +10,8 @@ interface UseBranchTemplateArgs {
   repository: RepositoryView | undefined;
   vars: BranchTemplateVars;
   workflow: WorkflowOption | undefined;
+  /** Current value of the `ref` field, so the hook can detect a manual edit and stop auto-filling. */
+  value: string;
   /** Must not mark the field dirty, or the auto-fill would read as a user edit. */
   setBranch: (value: string) => void;
 }
@@ -19,7 +21,7 @@ interface UseBranchTemplateArgs {
  * the field is enforced (read-only). The branch name only applies to the branch (pull request)
  * workflow on git repos, so it stays inert for the write workflow.
  */
-export function useBranchTemplate({ repository, vars, workflow, setBranch }: UseBranchTemplateArgs): {
+export function useBranchTemplate({ repository, vars, workflow, value, setBranch }: UseBranchTemplateArgs): {
   locked: boolean;
 } {
   const flagEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
@@ -32,26 +34,38 @@ export function useBranchTemplate({ repository, vars, workflow, setBranch }: Use
   const hasTemplate = Boolean(template?.trim());
 
   const active = flagEnabled && isBranchWorkflow && hasTemplate;
-  // Enforcement requires an actual template: with no template there is nothing to enforce, so the
-  // field stays editable rather than freezing read-only on the auto-generated ref.
-  const locked = active && enforce;
   const rendered = active ? renderBranchName(template, { ...vars, random }) : '';
+  // Enforcement requires an actual template AND a non-empty render: with no template (nothing to
+  // enforce) or a template that sanitises to '' (e.g. an all-punctuation or non-Latin title), the
+  // field stays editable on the auto-generated ref instead of freezing read-only on a non-template
+  // name the user could not fix.
+  const locked = active && enforce && Boolean(rendered);
 
-  // Apply the rendered name whenever it changes — on entering the branch workflow (rendered goes
-  // from '' to the template) and on each template-variable change — without ever permanently
-  // freezing. The field stays editable; a manual edit persists until the next variable change
-  // re-renders the template. `enforce` still makes the field read-only via `locked`.
+  // Fill the rendered name when the branch workflow is first entered, then keep it in sync with the
+  // live template variables — but stop once the user edits the field. We can't gate on react-hook-
+  // form's dirty state: reaching the branch workflow by typing a branch name already marks `ref`
+  // dirty, which would suppress the first fill. Instead we latch as soon as the field value diverges
+  // from the value the hook last wrote itself. `enforce` still makes the field read-only via `locked`.
   const lastApplied = useRef<string | undefined>(undefined);
+  const userEdited = useRef(false);
   useEffect(() => {
     if (!active || !rendered) {
       lastApplied.current = undefined;
+      userEdited.current = false;
+      return;
+    }
+    // Field no longer holds the value we last wrote → the user edited it; freeze from now on.
+    if (lastApplied.current !== undefined && value !== lastApplied.current) {
+      userEdited.current = true;
+    }
+    if (userEdited.current) {
       return;
     }
     if (rendered !== lastApplied.current) {
       lastApplied.current = rendered;
       setBranch(rendered);
     }
-  }, [active, rendered, setBranch]);
+  }, [active, rendered, value, setBranch]);
 
   return { locked };
 }

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 interface UseTemplateAutofillArgs {
   /** Pre-fill is active: feature flag on, domain conditions met, and a template is set.
-   *  Callers that bypass the form when locked (commit) pass `active && !locked`. */
+   *  Callers that bypass the form when locked pass `active && !locked`. */
   active: boolean;
   /** Resolved value to fill. Empty string means "leave the field untouched". */
   rendered: string;
@@ -15,9 +15,9 @@ interface UseTemplateAutofillArgs {
 }
 
 /**
- * Shared pre-fill effect for git-convention template fields (commit message, branch name):
- * writes `rendered` into the field while the user hasn't touched it, re-running as `rendered`
- * tracks live template variables. Frozen once `isDirty`; an empty `rendered` leaves the field as-is.
+ * Pre-fill effect for a template-driven form field: writes `rendered` into the field while the
+ * user hasn't touched it, re-running as `rendered` tracks live template variables. Frozen once
+ * `isDirty`; an empty `rendered` leaves the field as-is.
  */
 export function useTemplateAutofill({ active, rendered, value, isDirty, setValue }: UseTemplateAutofillArgs): void {
   useEffect(() => {

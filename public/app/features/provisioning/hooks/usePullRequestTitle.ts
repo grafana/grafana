@@ -22,6 +22,10 @@ export function usePullRequestTitle({ repository, vars, workflow }: UsePullReque
   // but must still be substituted so a literal {{random}} never leaks into the title.
   const random = useMemo(() => generateBranchToken(), []);
   const template = repository?.pullRequest?.titleTemplate;
+  // repository.pullRequest.enforceTemplate (documented as "the PR title field in Save drawers is
+  // read-only") is intentionally NOT honored here: this hook renders no PR-title input — the title
+  // only pre-fills the provider's PR page — so there is nothing to lock. Wire it up if/when a
+  // PR-title field is added to the Save drawer.
   const active = flagEnabled && workflow === 'branch' && Boolean(template?.trim());
   const prTitle = active ? renderPullRequestTitle(template, { ...vars, random }) : '';
   return { prTitle };

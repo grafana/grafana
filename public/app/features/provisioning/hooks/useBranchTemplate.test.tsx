@@ -44,6 +44,7 @@ function Host({
     repository,
     vars,
     workflow,
+    value: methods.watch('ref') ?? '',
     setBranch: (v) => methods.setValue('ref', v, { shouldDirty: false }),
   });
   // Mirror the shared field's `ref` Controller: a single controlled input whose value lives in the
@@ -132,7 +133,7 @@ describe('useBranchTemplate', () => {
     await waitFor(() => expect(input).toHaveValue('grafana/create-renamed'));
   });
 
-  it('re-applies the template after a manual edit when a variable changes', async () => {
+  it('freezes after a manual edit so a later variable change keeps the user value', async () => {
     const repository = makeRepo({ nameTemplate: TEMPLATE });
     const { rerender, user } = render(<Host repository={repository} vars={dashboardVars} />);
 
@@ -142,10 +143,9 @@ describe('useBranchTemplate', () => {
     await user.type(input, 'x');
     expect(input).toHaveValue('grafana/create-testx');
 
-    // A variable change re-renders the template and re-applies it: the field is never permanently
-    // frozen, so the manual edit is overwritten by the fresh rendered name.
+    // The user has edited the field, so a later variable change must NOT overwrite their value.
     rerender(<Host repository={repository} vars={{ ...dashboardVars, title: 'Renamed' }} />);
-    await waitFor(() => expect(input).toHaveValue('grafana/create-renamed'));
+    expect(input).toHaveValue('grafana/create-testx');
   });
 
   it('keeps a manual edit while the template variables are unchanged', async () => {
@@ -170,6 +170,23 @@ describe('useBranchTemplate', () => {
     await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
     expect(input).toHaveAttribute('readonly');
     expect(screen.getByTestId('locked')).toHaveTextContent('true');
+  });
+
+  it('does not lock when an enforced template renders empty, leaving the field editable', async () => {
+    // An enforced template whose render sanitises away (all-punctuation title) must not freeze the
+    // field read-only on the auto-generated ref — the user needs to be able to set a valid branch.
+    render(
+      <Host
+        repository={makeRepo({ nameTemplate: '{{title}}', enforceTemplate: true })}
+        vars={{ ...dashboardVars, title: '!!!' }}
+        defaultRef="dashboard/2023-abc"
+      />
+    );
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    expect(screen.getByTestId('locked')).toHaveTextContent('false');
+    expect(input).not.toHaveAttribute('readonly');
+    await waitFor(() => expect(input).toHaveValue('dashboard/2023-abc'));
   });
 
   it('does not lock when the flag is off even with enforcement configured', () => {

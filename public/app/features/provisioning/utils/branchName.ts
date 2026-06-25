@@ -18,6 +18,13 @@ export function generateBranchToken(length = 6): string {
   return token;
 }
 
+const DISALLOWED_CHARS = /[^a-z0-9/_-]+/g;
+const SEPARATOR_RUN_WITH_SLASH = /[-/]*\/[-/]*/g;
+const REPEATED_DASHES = /-{2,}/g;
+const LEADING_OR_TRAILING_SEPARATORS = /^[/-]+|[/-]+$/g;
+const TRAILING_SEPARATORS = /[/-]+$/g;
+const MAX_BRANCH_NAME_LENGTH = 100;
+
 /**
  * Sanitises a rendered branch name into a valid git ref: lowercase, only [a-z0-9/_-],
  * disallowed characters (including '.') collapsed to '-', adjacent separators collapsed (a run
@@ -26,15 +33,19 @@ export function generateBranchToken(length = 6): string {
  * utils/git.ts `validateBranchName`.
  */
 export function sanitizeBranchName(name: string): string {
-  let s = name.trim().toLowerCase();
-  s = s.replace(/[^a-z0-9/_-]+/g, '-');
-  // Collapse a run of separators: any run containing a '/' becomes a single '/', otherwise a '-'.
-  s = s.replace(/[-/]*\/[-/]*/g, '/');
-  s = s.replace(/-{2,}/g, '-');
-  s = s.replace(/^[/-]+|[/-]+$/g, '');
-  s = s.slice(0, 100);
-  s = s.replace(/[/-]+$/g, '');
-  return s;
+  return (
+    name
+      .trim()
+      .toLowerCase()
+      .replace(DISALLOWED_CHARS, '-')
+      // A separator run containing a '/' collapses to a single '/'; a dash-only run to a single '-'.
+      .replace(SEPARATOR_RUN_WITH_SLASH, '/')
+      .replace(REPEATED_DASHES, '-')
+      .replace(LEADING_OR_TRAILING_SEPARATORS, '')
+      .slice(0, MAX_BRANCH_NAME_LENGTH)
+      // slice() can cut mid-separator, so trim the tail again.
+      .replace(TRAILING_SEPARATORS, '')
+  );
 }
 
 /**
