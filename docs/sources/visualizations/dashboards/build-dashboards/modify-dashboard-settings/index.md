@@ -43,8 +43,6 @@ aliases:
 The dashboard settings page allows you to:
 
 - Edit general dashboard properties, including time settings
-- Add annotation queries
-- Add dashboard variables
 - Add links
 - View the dashboard JSON model
 
@@ -111,47 +109,19 @@ When you're on the **Dashboards** page, any tags you've entered show up under th
 
 ## Add an annotation query
 
-An annotation query is a query that queries for events. These events can be visualized in graphs across the dashboard as vertical lines along with a small
-icon you can hover over to see the event information.
-
-1. On the **Settings** page, go to the **Annotations** tab.
-1. Click **Add annotation query**.
-1. Enter a name and select a data source.
-1. Complete the rest of the form to build a query and annotation.
-1. Click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**.
-
-The query editor UI changes based on the data source you select. Refer to the [Data source](ref:data-source) documentation for details on how to construct a query.
+Annotations setup has been removed from dashboard settings.
+You can now add and manage annotation queries in the dashboard sidebar.
+For more information, refer to [Add annotation queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries).
 
 ## Add a variable
 
-Variables enable you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
-and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
-the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
-
-For more information about variables, refer to [Variables](ref:variables).
-
-1. On the **Settings** page, go to the **Variables** tab.
-1. Click **+ New variable**.
-1. In the **Select variable type** drop-down, choose an option.
-
-   The variable type you select impacts which fields you populate on the page.
-
-1. In the **General** section, enter the name of the variable.
-
-   This is the name that you'll use later in queries.
-
-1. Set the rest of the variable options.
-1. Click **Save**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**.
+Variables setup has been removed from dashboard settings.
+You can now add and manage variables in the dashboard sidebar.
+For more information, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables).
 
 ## Add a link
 
-Dashboard links enable you to place links to other dashboards and web sites directly below the dashboard header. Links provide for easy navigation to other, related dashboards and content.
+Dashboard links enable you to place links to other dashboards and web sites directly below the dashboard header. Links provide for quick navigation to other, related dashboards and content.
 
 1. On the **Settings** page, click the **Links** tab.
 1. Click **+ New link**.
