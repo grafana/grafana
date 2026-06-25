@@ -27,6 +27,10 @@ title: Dashboard Permissions HTTP API
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+{{< admonition type="note" >}}
+Core dashboard operations (create, read, update, delete, list) have migrated to the new [Dashboard API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/). These permission endpoints don't have an exact equivalent in the new API yet. Refer to the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/) for details.
+{{< /admonition >}}
+
 This API can be used to update/get the permissions for a dashboard.
 
 Permissions with `dashboardId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.
