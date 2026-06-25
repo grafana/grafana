@@ -84,6 +84,10 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return &authzv1.ListResponse{All: true}, nil
 	}
 
+	if !resource.IsGeneric() && common.IsGroupResourceOnlyTypedRelation(resource.Type(), relation) {
+		return &authzv1.ListResponse{}, nil
+	}
+
 	if resource.IsGeneric() {
 		return s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	}

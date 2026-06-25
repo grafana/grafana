@@ -172,6 +172,31 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.Contains(t, res.GetItems(), "1")
 	})
 
+	t.Run("user without teams:create lists teams create as empty", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbCreate,
+			Subject:   "user:1",
+			Group:     teamGroup,
+			Resource:  teamResource,
+		})
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Empty(t, res.GetItems())
+	})
+
+	t.Run("user with group_resource teams:create lists all", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbCreate,
+			Subject:   "user:20",
+			Group:     teamGroup,
+			Resource:  teamResource,
+		})
+		require.NoError(t, err)
+		assert.True(t, res.GetAll())
+	})
+
 	t.Run("user:17 should be able to list all dashboards in folder 4 and all subfolders", func(t *testing.T) {
 		res, err := server.List(newContextWithNamespace(), newList("user:17", dashboardGroup, dashboardResource, ""))
 		require.NoError(t, err)
@@ -357,6 +382,31 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 		assert.Len(t, res.GetFolders(), 0)
 
 		assert.Contains(t, res.GetItems(), "1")
+	})
+
+	t.Run("user without teams:create lists teams create as empty", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbCreate,
+			Subject:   "user:1",
+			Group:     teamGroup,
+			Resource:  teamResource,
+		})
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Empty(t, res.GetItems())
+	})
+
+	t.Run("user with group_resource teams:create lists all", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbCreate,
+			Subject:   "user:20",
+			Group:     teamGroup,
+			Resource:  teamResource,
+		})
+		require.NoError(t, err)
+		assert.True(t, res.GetAll())
 	})
 
 	t.Run("user:17 should be able to list all dashboards in folder 4 and all subfolders", func(t *testing.T) {
