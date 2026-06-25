@@ -84,10 +84,6 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return &authzv1.ListResponse{All: true}, nil
 	}
 
-	if !resource.IsGeneric() && common.IsGroupResourceOnlyTypedRelation(resource.Type(), relation) {
-		return &authzv1.ListResponse{}, nil
-	}
-
 	if resource.IsGeneric() {
 		return s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	}
@@ -100,6 +96,13 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	defer span.End()
 
 	if !resource.IsValidRelation(relation) {
+		return &authzv1.ListResponse{}, nil
+	}
+
+	// Flat typed objects (team, user, service-account) only carry `create` on the
+	// group_resource, never per object, so once the group-level check has failed there
+	// is nothing to list. Folders are the exception, keeping their folder-scoped create.
+	if relation == common.RelationCreate && resource.Type() != common.TypeFolder {
 		return &authzv1.ListResponse{}, nil
 	}
 

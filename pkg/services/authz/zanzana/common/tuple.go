@@ -199,20 +199,6 @@ func IsGroupResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsGroupResource)
 }
 
-// IsGroupResourceOnlyTypedRelation reports relations stored only on group_resource for
-// typed IAM objects (team, user, service-account) that cannot be listed per-instance.
-func IsGroupResourceOnlyTypedRelation(typ, relation string) bool {
-	if relation != RelationCreate {
-		return false
-	}
-	switch typ {
-	case TypeTeam, TypeUser, TypeServiceAccount:
-		return true
-	default:
-		return false
-	}
-}
-
 func IsSubresourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsSubresource)
 }
