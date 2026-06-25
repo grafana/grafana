@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"unicode/utf8"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
@@ -254,5 +255,26 @@ func TestFitEmbedding(t *testing.T) {
 	t.Run("dim of zero rejects any non-empty input", func(t *testing.T) {
 		_, err := fitEmbedding([]float32{1}, 0)
 		require.Error(t, err)
+	})
+}
+
+func TestTruncateRunes(t *testing.T) {
+	t.Run("short string is unchanged", func(t *testing.T) {
+		require.Equal(t, "hello", truncateRunes("hello", 1024))
+	})
+
+	t.Run("truncates and marks with ellipsis, staying within max", func(t *testing.T) {
+		got := truncateRunes("abcdefghij", 6)
+		require.Equal(t, "abc...", got)
+		require.Equal(t, 6, utf8.RuneCountInString(got))
+	})
+
+	t.Run("does not split a multi-byte rune", func(t *testing.T) {
+		// Each "é" / "—" is multi-byte; the kept prefix must stay valid
+		// UTF-8 and the whole result must fit within max runes.
+		got := truncateRunes("é—éxyz", 5)
+		require.Equal(t, "é—...", got)
+		require.True(t, utf8.ValidString(got))
+		require.Equal(t, 5, utf8.RuneCountInString(got))
 	})
 }
