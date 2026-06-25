@@ -739,6 +739,19 @@ export const versionedComponents = {
       },
     },
     ElementEditPane: {
+      List: {
+        ListItem: {
+          editButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit edit button ${itemKey}`,
+          },
+          duplicateButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit duplicate button ${itemKey}`,
+          },
+          deleteButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit delete button ${itemKey}`,
+          },
+        },
+      },
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
       },

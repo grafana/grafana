@@ -2,8 +2,11 @@ import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
@@ -22,6 +25,7 @@ jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     addVariableButtonClicked: jest.fn(),
+    variableActionButtonClicked: jest.fn(),
   },
 }));
 
@@ -59,6 +63,7 @@ function renderVariablesList(
     user,
     elements: {
       dashboardScene,
+      variableSet,
       aboveListItems: () => within(renderResult.getByTestId('variables-list-visible')).getAllByTestId('variable-name'),
       controlsMenuListItems: () =>
         within(renderResult.getByTestId('variables-list-controls-menu')).getAllByTestId('variable-name'),
@@ -76,6 +81,10 @@ function buildTestVariables() {
     snapshotVar1: new SnapshotVariable({ name: 'snapshotVar1' }),
   };
 }
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
 describe('<DashboardVariablesList />', () => {
   test('renders 3 sections (one per variable display type)', () => {
@@ -113,14 +122,42 @@ describe('<DashboardVariablesList />', () => {
   });
 
   describe('User interactions', () => {
-    describe('when a variable name is clicked', () => {
-      test('selects the variable in the pane', async () => {
+    describe('variable list interactions', () => {
+      test('clicking the edit button selects the variable in the pane', async () => {
         const { visibleVar1 } = buildTestVariables();
-        const { user, getByText, elements } = renderVariablesList([visibleVar1]);
+        const { user, getByText, getByTestId, elements } = renderVariablesList([visibleVar1]);
+        const key = visibleVar1.state.key ?? visibleVar1.state.name;
 
-        await user.click(getByText(visibleVar1.state.name));
+        await user.hover(getByText(visibleVar1.state.name));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(key)));
 
         expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleVar1);
+      });
+
+      test('clicking the delete button triggers confirmation modal', async () => {
+        const { visibleVar1 } = buildTestVariables();
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const { user, getByText, getByTestId } = renderVariablesList([visibleVar1]);
+        const key = visibleVar1.state.key ?? visibleVar1.state.name;
+
+        await user.hover(getByText(visibleVar1.state.name));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(key)));
+
+        expect(publishSpy).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+      });
+
+      test('clicking the duplicate button creates a duplicate variable', async () => {
+        const { visibleVar1 } = buildTestVariables();
+        const { user, getByText, getByTestId, elements } = renderVariablesList([visibleVar1]);
+        const key = visibleVar1.state.key ?? visibleVar1.state.name;
+
+        await user.hover(getByText(visibleVar1.state.name));
+        await user.click(
+          getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key))
+        );
+
+        expect(elements.variableSet.state.variables).toHaveLength(2);
+        expect(elements.variableSet.state.variables[1].state.name).toBe('visibleVar1_copy1');
       });
     });
 

@@ -2,7 +2,10 @@ import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
@@ -16,6 +19,7 @@ jest.mock('../add-new/AddFilters', () => ({
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     addFilterButtonClicked: jest.fn(),
+    variableActionButtonClicked: jest.fn(),
   },
 }));
 
@@ -44,6 +48,7 @@ function renderFiltersList(variables: SceneVariable[] = []) {
     user,
     elements: {
       dashboardScene,
+      variableSet,
       aboveListItems: () => within(renderResult.getByTestId('filters-list-visible')).getAllByTestId('filter-name'),
       controlsMenuListItems: () =>
         within(renderResult.getByTestId('filters-list-controls-menu')).getAllByTestId('filter-name'),
@@ -68,6 +73,10 @@ function buildTestFilters() {
     }),
   };
 }
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
 describe('<DashboardFiltersList />', () => {
   test('renders 3 sections (one per filter display type)', () => {
@@ -94,14 +103,42 @@ describe('<DashboardFiltersList />', () => {
   });
 
   describe('User interactions', () => {
-    describe('when a filter name is clicked', () => {
-      test('selects the filter in the pane', async () => {
+    describe('filter list interactions', () => {
+      test('clicking the edit button selects the filter in the pane', async () => {
         const { visibleFilter1 } = buildTestFilters();
-        const { user, getByText, elements } = renderFiltersList([visibleFilter1]);
+        const { user, getByText, getByTestId, elements } = renderFiltersList([visibleFilter1]);
+        const key = visibleFilter1.state.key ?? visibleFilter1.state.name;
 
-        await user.click(getByText(visibleFilter1.state.name));
+        await user.hover(getByText(visibleFilter1.state.name));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(key)));
 
         expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleFilter1);
+      });
+
+      test('clicking the delete button triggers confirmation modal', async () => {
+        const { visibleFilter1 } = buildTestFilters();
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const { user, getByText, getByTestId } = renderFiltersList([visibleFilter1]);
+        const key = visibleFilter1.state.key ?? visibleFilter1.state.name;
+
+        await user.hover(getByText(visibleFilter1.state.name));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(key)));
+
+        expect(publishSpy).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+      });
+
+      test('clicking the duplicate button creates a duplicate filter', async () => {
+        const { visibleFilter1 } = buildTestFilters();
+        const { user, getByText, getByTestId, elements } = renderFiltersList([visibleFilter1]);
+        const key = visibleFilter1.state.key ?? visibleFilter1.state.name;
+
+        await user.hover(getByText(visibleFilter1.state.name));
+        await user.click(
+          getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key))
+        );
+
+        expect(elements.variableSet.state.variables).toHaveLength(2);
+        expect(elements.variableSet.state.variables[1].state.name).toBe('visibleFilter1_copy1');
       });
     });
 
