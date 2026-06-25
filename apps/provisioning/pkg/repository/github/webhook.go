@@ -32,13 +32,12 @@ var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 
 type githubWebhookRepository struct {
 	GithubRepository
-	config      *provisioning.Repository
-	owner       string
-	repo        string
-	gh          Client
-	webhookURL  string
-	secret      common.RawSecureValue
-	replayCache *replayCache
+	config     *provisioning.Repository
+	owner      string
+	repo       string
+	gh         Client
+	webhookURL string
+	secret     common.RawSecureValue
 }
 
 func NewGithubWebhookRepository(
@@ -46,13 +45,7 @@ func NewGithubWebhookRepository(
 	webhookURL string,
 	secret common.RawSecureValue,
 	incrementalPolicy repository.IncrementalSyncPolicy,
-	replay *replayCache,
 ) GithubWebhookRepository {
-	// Defensive: callers should pass the factory-owned cache, but never leave
-	// Webhook with a nil cache to dereference.
-	if replay == nil {
-		replay = newReplayCache(defaultReplayCacheTTL)
-	}
 	cfg := basic.Config()
 	r := &githubWebhookRepository{
 		GithubRepository: basic,
@@ -62,7 +55,6 @@ func NewGithubWebhookRepository(
 		gh:               basic.Client(),
 		webhookURL:       webhookURL,
 		secret:           secret,
-		replayCache:      replay,
 	}
 	return r
 }
@@ -85,25 +77,15 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.
 		return repository.WebhookEvent{}, apierrors.NewUnauthorized("invalid signature")
 	}
 
-	// Replay protection: key on the validated signature, not the
-	// X-GitHub-Delivery header. GitHub computes the HMAC over the request body
-	// only, so the delivery ID is unauthenticated — an attacker replaying a
-	// captured (body, signature) could simply pick a fresh delivery ID and
-	// slip past a delivery-ID cache. The signature, by contrast, is bound to
-	// both the signed body and the repository's unique secret, so it cannot be
-	// forged or collided across repositories.
-	//
-	// Silently drop a request whose signature we have already processed within
-	// the cache TTL — returning a generic 200 avoids confirming to a replay
-	// attacker that the captured payload was a real previously-processed
-	// delivery.
+	// Replay key: the validated signature, not the X-GitHub-Delivery header.
+	// GitHub computes the HMAC over the request body only, so the delivery ID is
+	// unauthenticated — an attacker replaying a captured (body, signature) could
+	// pick a fresh delivery ID and slip past a delivery-ID cache. The signature,
+	// by contrast, is bound to both the signed body and the repository's unique
+	// secret. The dispatcher drops deliveries whose key it has already seen.
 	signature := req.Header.Get(github.SHA256SignatureHeader)
 	if signature == "" {
 		signature = req.Header.Get(github.SHA1SignatureHeader)
-	}
-	if r.replayCache.seenOrAdd(signature) {
-		logging.FromContext(ctx).Debug("dropping replayed webhook delivery", "delivery_id", github.DeliveryID(req))
-		return repository.WebhookEvent{Type: repository.WebhookEventReplay}, nil
 	}
 
 	event, err := github.ParseWebHook(github.WebHookType(req), payload)
@@ -124,6 +106,7 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.
 		}
 		return repository.WebhookEvent{
 			Type:         repository.WebhookEventPush,
+			ReplayKey:    signature,
 			RepoSlug:     event.GetRepo().GetFullName(),
 			Branch:       strings.TrimPrefix(event.GetRef(), "refs/heads/"),
 			DeletedPaths: deletedPaths,
@@ -139,6 +122,7 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.
 		}
 		return repository.WebhookEvent{
 			Type:      repository.WebhookEventPullRequest,
+			ReplayKey: signature,
 			RepoSlug:  event.GetRepo().GetFullName(),
 			Branch:    pr.GetBase().GetRef(),
 			Action:    normalizeGitHubAction(event.GetAction()),
@@ -148,11 +132,12 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *http.
 			Hash:      pr.GetHead().GetSHA(),
 		}, nil
 	case *github.PingEvent:
-		return repository.WebhookEvent{Type: repository.WebhookEventPing}, nil
+		return repository.WebhookEvent{Type: repository.WebhookEventPing, ReplayKey: signature}, nil
 	default:
 		return repository.WebhookEvent{
-			Type:    repository.WebhookEventUnsupported,
-			Message: fmt.Sprintf("unsupported messageType: %s", github.WebHookType(req)),
+			Type:      repository.WebhookEventUnsupported,
+			ReplayKey: signature,
+			Message:   fmt.Sprintf("unsupported messageType: %s", github.WebHookType(req)),
 		}, nil
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -109,10 +108,9 @@ func TestParseWebhooks(t *testing.T) {
 				Webhook: &provisioning.WebhookStatus{},
 			},
 		},
-		owner:       "grafana",
-		repo:        "git-ui-sync-demo",
-		secret:      common.RawSecureValue("webhook-secret"),
-		replayCache: newReplayCache(time.Hour),
+		owner:  "grafana",
+		repo:   "git-ui-sync-demo",
+		secret: common.RawSecureValue("webhook-secret"),
 	}
 
 	for _, tt := range tests {
@@ -125,12 +123,13 @@ func TestParseWebhooks(t *testing.T) {
 			event, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, tt.messageType, "webhook-secret", "", string(payload)))
 			require.NoError(t, err)
 
+			event.ReplayKey = "" // signature keying is covered by TestGitHubRepository_ProcessRequest_ReplayKey
 			require.Equal(t, tt.expected, event)
 		})
 	}
 }
 
-func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
+func TestGitHubRepository_ProcessRequest_ReplayKey(t *testing.T) {
 	pushPayload := `{
 		"ref": "refs/heads/main",
 		"repository": {
@@ -138,7 +137,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		}
 	}`
 	// A byte-different but still valid push payload — produces a different
-	// HMAC signature, so it is a distinct (non-replayed) request.
+	// HMAC signature, so it yields a different replay key.
 	otherPayload := `{
 		"ref": "refs/heads/main",
 		"after": "deadbeef",
@@ -147,9 +146,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		}
 	}`
 
-	const defaultSecret = "webhook-secret"
-
-	newRepo := func(cache *replayCache, secret string) *githubWebhookRepository {
+	newRepo := func(secret string) *githubWebhookRepository {
 		return &githubWebhookRepository{
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
@@ -161,125 +158,38 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 					Webhook: &provisioning.WebhookStatus{},
 				},
 			},
-			owner:       "grafana",
-			repo:        "grafana",
-			secret:      common.RawSecureValue(secret),
-			replayCache: cache,
+			owner:  "grafana",
+			repo:   "grafana",
+			secret: common.RawSecureValue(secret),
 		}
 	}
 
-	t.Run("first delivery is accepted", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+	t.Run("replay key is the validated signature", func(t *testing.T) {
+		gh := newRepo("webhook-secret")
+		req := signedWebhookRequest(t, "push", "webhook-secret", "delivery-1", pushPayload)
 
-		event, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-1", pushPayload))
+		event, err := gh.ProcessRequest(t.Context(), req)
 		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventPush, event.Type)
+		require.NotEmpty(t, event.ReplayKey)
+		require.Equal(t, req.Header.Get("X-Hub-Signature-256"), event.ReplayKey)
 	})
 
-	t.Run("replayed request is silently dropped", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+	t.Run("distinct payloads yield distinct replay keys", func(t *testing.T) {
+		gh := newRepo("webhook-secret")
 
-		// First delivery parses to the normal push event.
-		first, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-dup", pushPayload))
+		a, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "webhook-secret", "delivery-A", pushPayload))
 		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventPush, first.Type)
-
-		// Replaying the same signed request yields a replay event so the
-		// handler can drop it without an attacker telling whether the payload
-		// was previously processed.
-		dup, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-dup", pushPayload))
+		b, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "webhook-secret", "delivery-B", otherPayload))
 		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventReplay, dup.Type)
+		require.NotEqual(t, a.ReplayKey, b.ReplayKey)
 	})
 
-	t.Run("replay with a fresh delivery id is still dropped", func(t *testing.T) {
-		// Regression: the X-GitHub-Delivery header is not covered by the HMAC,
-		// so an attacker can replay a captured (body, signature) under a new
-		// delivery ID. Keying on the signature must still catch it.
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
-
-		_, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-A", pushPayload))
+	t.Run("identical body under distinct secrets yields distinct replay keys", func(t *testing.T) {
+		a, err := newRepo("secret-a").ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "secret-a", "delivery-A", pushPayload))
 		require.NoError(t, err)
-
-		dup, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-B", pushPayload))
+		b, err := newRepo("secret-b").ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "secret-b", "delivery-B", pushPayload))
 		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventReplay, dup.Type, "same signed body under a different delivery id is still a replay")
-	})
-
-	t.Run("distinct payloads are independent", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
-
-		_, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-A", pushPayload))
-		require.NoError(t, err)
-
-		// A different body yields a different signature, so it is processed.
-		event, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-B", otherPayload))
-		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventPush, event.Type)
-	})
-
-	t.Run("identical body under different secrets does not collide", func(t *testing.T) {
-		// The shared cache is consulted by every repository. Two repos with
-		// distinct webhook secrets produce distinct signatures for the same
-		// body, so one repo's delivery must not shadow another's.
-		cache := newReplayCache(time.Hour)
-		repoA := newRepo(cache, "secret-a")
-		repoB := newRepo(cache, "secret-b")
-
-		_, err := repoA.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "secret-a", "delivery-A", pushPayload))
-		require.NoError(t, err)
-
-		event, err := repoB.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", "secret-b", "delivery-B", pushPayload))
-		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventPush, event.Type)
-	})
-
-	t.Run("repositories sharing a cache silently drop cross-instance replays", func(t *testing.T) {
-		// Mirrors production: extras.Build rebuilds a repository per request
-		// but threads the factory's single cache through each instance.
-		cache := newReplayCache(time.Hour)
-		first := newRepo(cache, defaultSecret)
-		second := newRepo(cache, defaultSecret)
-
-		_, err := first.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-1", pushPayload))
-		require.NoError(t, err)
-
-		dup, err := second.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-2", pushPayload))
-		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventReplay, dup.Type)
-	})
-
-	t.Run("expired entry is accepted again", func(t *testing.T) {
-		const ttl = 50 * time.Millisecond
-		gh := newRepo(newReplayCache(ttl), defaultSecret)
-
-		_, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-X", pushPayload))
-		require.NoError(t, err)
-
-		// Once the entry expires, the same signed request is processed again.
-		time.Sleep(ttl + 20*time.Millisecond)
-		event, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-X", pushPayload))
-		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventPush, event.Type)
-	})
-
-	t.Run("invalid signature is rejected before the replay check", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
-
-		req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(pushPayload))
-		req.Header.Set("X-GitHub-Event", "push")
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("X-GitHub-Delivery", "delivery-bad-sig")
-		req.Header.Set("X-Hub-Signature-256", "sha256=deadbeef")
-
-		_, err := gh.ProcessRequest(t.Context(), req)
-		require.Error(t, err)
-
-		// A subsequent valid request must still succeed — a failed signature
-		// must not poison the replay cache.
-		event, err := gh.ProcessRequest(t.Context(), signedWebhookRequest(t, "push", defaultSecret, "delivery-good", pushPayload))
-		require.NoError(t, err)
-		require.Equal(t, repo.WebhookEventPush, event.Type)
+		require.NotEqual(t, a.ReplayKey, b.ReplayKey)
 	})
 }
 
@@ -711,11 +621,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			// Create a GitHub repository with the test config. A fresh cache
 			// per subtest keeps replay state from leaking across cases.
 			r := &githubWebhookRepository{
-				config:      tt.config,
-				owner:       "grafana",
-				repo:        "grafana",
-				secret:      common.RawSecureValue("webhook-secret"),
-				replayCache: newReplayCache(time.Hour),
+				config: tt.config,
+				owner:  "grafana",
+				repo:   "grafana",
+				secret: common.RawSecureValue("webhook-secret"),
 			}
 
 			event, err := r.ProcessRequest(t.Context(), tt.setupRequest())
@@ -733,6 +642,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
+				event.ReplayKey = "" // signature keying is covered by TestGitHubRepository_ProcessRequest_ReplayKey
 				require.Equal(t, tt.expected, event)
 			}
 		})
