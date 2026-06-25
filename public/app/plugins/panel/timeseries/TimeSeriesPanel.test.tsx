@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, type DataFrame, DataFrameType, EventBusSrv, FieldType, type PanelProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
 
