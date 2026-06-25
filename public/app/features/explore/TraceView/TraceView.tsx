@@ -22,7 +22,6 @@ import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesDat
 import { getTemplateSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { type TempoQuery } from '@grafana-plugins/tempo/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -315,7 +314,7 @@ function useFocusSpanLink(options: {
     // If it's the same trace, only update panel state with setFocusedSpanId (no navigation).
     // If it's a different trace, use splitOpenFn to open a new explore panel
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const sameTrace = query?.queryType === 'traceql' && (query as TempoQuery).query === traceId;
+    const sameTrace = query?.queryType === 'traceql' && (query as { query?: string }).query === traceId;
 
     return mapInternalLinkToExplore({
       link,

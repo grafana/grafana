@@ -1,11 +1,13 @@
+import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
@@ -16,6 +18,16 @@ setupMockServer();
 
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+
+  // Deny alerting permission so the FiringAlertsCard renders null
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+  // Stub endpoints the alerts/incidents cards probe so unhandled requests don't fail the test
+  server.use(
+    http.get('/api/user/teams', () => HttpResponse.json([])),
+    http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([])),
+    // IncidentsCard checks the IRM/Incident plugins; report them absent so it renders nothing
+    http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false }))
+  );
 });
 
 const createHomepageExtensionComponent = (
@@ -39,6 +51,7 @@ describe('HomePage', () => {
   afterEach(() => {
     config.buildInfo = { ...originalBuildInfo };
     config.namespace = originalNamespace;
+    jest.restoreAllMocks();
   });
 
   it('renders the greeting', async () => {

@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -12,28 +12,29 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
-import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
+import { getCanPushToConfiguredBranch } from 'app/features/provisioning/components/defaults';
 import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-} from 'app/features/provisioning/components/defaults';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+  RepoViewStatus,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
-import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { type StepStatusInfo } from '../../Wizard/types';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import { type StatusInfo } from '../../types';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
+import { BulkActionJobStatus } from './BulkActionJobStatus';
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
 import {
   type BulkActionFormData,
   type BulkActionProvisionResourceProps,
+  getBulkActionInitialValues,
+  getSelectedResourceCountSummary,
   getTargetFolderPathInRepo,
   isSameFolderPath,
 } from './utils';
@@ -55,9 +56,10 @@ function FormContent({
 }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
-  const [jobError, setJobError] = useState<string | StatusInfo>();
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  // Captured at submit time so the success message matches the workflow the job used.
+  const submittedViaBranchWorkflow = useRef(false);
 
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
@@ -66,8 +68,28 @@ function FormContent({
     handleSubmit,
     setError,
     clearErrors,
-    formState: { errors },
+    watch,
+    setValue,
+    formState: { errors, dirtyFields },
   } = methods;
+
+  const fallbackMessage = t('browse-dashboards.bulk-move-resources-form.default-commit-message', 'Move resources');
+  // Bulk operations span multiple resources, so `resourceKind` is omitted and `title` is a count
+  // summary rather than a single resource name.
+  const templateVars: CommitTemplateVars = {
+    action: 'move',
+    resourceID: '',
+    title: getSelectedResourceCountSummary(selectedItems),
+    ...getCurrentCommitUser(),
+  };
+  const { locked, message } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(dirtyFields.comment),
+    setComment: (value) => setValue('comment', value, { shouldDirty: false }),
+    fallbackMessage,
+  });
 
   // Get target folder data
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
@@ -120,13 +142,11 @@ function FormContent({
       resourceCount: resources.length,
     });
 
-    // Create the move job spec.
-    // TODO(grafana/git-ui-sync-project#1162): MoveJobOptions has no `message`
-    // field on the backend yet — once it gains one, pass
-    // `withSavedByTrailer(<default or data.comment>)` so the
-    // Grafana-saved-by trailer rides through to the resulting git commit.
+    submittedViaBranchWorkflow.current = data.workflow === 'branch';
+
     const jobSpec: MoveJobSpec = {
       action: 'move',
+      message,
       move: {
         ref: data.workflow === 'write' ? undefined : data.ref,
         targetPath: targetFolderPathInRepo,
@@ -150,21 +170,20 @@ function FormContent({
     }
   };
 
-  const onStatusChange = useCallback((statusInfo: StepStatusInfo) => {
-    if (statusInfo.status === 'error' && statusInfo.error) {
-      setJobError(statusInfo.error);
-    }
-  }, []);
-
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
           {hasSubmitted && job ? (
-            <>
-              <ProvisioningAlert error={jobError} />
-              <JobStatus watch={job} jobType="move" onStatusChange={onStatusChange} />
-            </>
+            <BulkActionJobStatus
+              job={job}
+              jobType="move"
+              committedTitle={t(
+                'browse-dashboards.bulk-move-resources-form.success-title',
+                'Resources moved successfully'
+              )}
+              pushedToBranch={submittedViaBranchWorkflow.current}
+            />
           ) : (
             <>
               <MoveActionAvailableTargetWarning />
@@ -201,6 +220,8 @@ function FormContent({
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 hiddenFields={['path']}
+                lockComment={locked}
+                commitMessage={message}
               />
 
               <Stack gap={2}>
@@ -235,31 +256,32 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     resolvedRepoUID.current = selectedItemsRepoUID;
   }
 
-  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
+  const { repository, folder, isReadOnlyRepo, isMissingRepo, isLoading, status } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
 
-  const initialValues = {
-    comment: '',
-    ref: getDefaultRef(repository, 'bulk-move'),
-    workflow: getDefaultWorkflow(repository),
-  };
-
-  if (!repository || isReadOnlyRepo) {
-    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
-  }
+  const initialValues = getBulkActionInitialValues(repository, 'bulk-move');
 
   return (
-    <FormContent
-      selectedItems={selectedItems}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-      folderPath={isRootPage ? '/' : folderPath}
-    />
+    <ProvisionedFormGate
+      isLoading={isLoading}
+      isOrphaned={status === RepoViewStatus.Orphaned}
+      isMissingRepo={isMissingRepo}
+      isReadOnly={isReadOnlyRepo}
+    >
+      {repository && (
+        <FormContent
+          selectedItems={selectedItems}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+          folderPath={isRootPage ? '/' : folderPath}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }

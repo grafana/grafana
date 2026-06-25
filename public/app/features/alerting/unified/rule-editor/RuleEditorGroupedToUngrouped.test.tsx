@@ -38,7 +38,9 @@ describe('RuleEditor - editing a grouped Grafana rule to ungrouped', () => {
     id: 1,
     type: DashboardSearchItemType.DashDB,
     accessControl: {
+      [AccessControlAction.AlertingRuleRead]: true,
       [AccessControlAction.AlertingRuleUpdate]: true,
+      [AccessControlAction.FoldersRead]: true,
     },
   };
 

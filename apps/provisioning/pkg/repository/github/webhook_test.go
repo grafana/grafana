@@ -1171,7 +1171,7 @@ func TestGitHubRepository_CommentPullRequest(t *testing.T) {
 		{
 			name: "successfully comment on pull request",
 			setupMock: func(m *MockClient) {
-				m.On("CreatePullRequestComment", mock.Anything, "grafana", "grafana", 123, "Test comment").
+				m.On("CreatePullRequestComment", mock.Anything, 123, "Test comment").
 					Return(nil)
 			},
 			prNumber:      123,
@@ -1181,7 +1181,7 @@ func TestGitHubRepository_CommentPullRequest(t *testing.T) {
 		{
 			name: "error commenting on pull request",
 			setupMock: func(m *MockClient) {
-				m.On("CreatePullRequestComment", mock.Anything, "grafana", "grafana", 456, "Error comment").
+				m.On("CreatePullRequestComment", mock.Anything, 456, "Error comment").
 					Return(fmt.Errorf("failed to create comment"))
 			},
 			prNumber:      456,
@@ -1239,7 +1239,7 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 		{
 			name: "successfully create webhook",
 			setupMock: func(m *MockClient) {
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(cfg WebhookConfig) bool {
+				m.On("CreateWebhook", mock.Anything, mock.MatchedBy(func(cfg WebhookConfig) bool {
 					return cfg.URL == "https://example.com/webhook" &&
 						cfg.ContentType == "json" &&
 						cfg.Active == true
@@ -1283,7 +1283,7 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 		{
 			name: "error creating webhook",
 			setupMock: func(m *MockClient) {
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("CreateWebhook", mock.Anything, mock.Anything).
 					Return(WebhookConfig{}, fmt.Errorf("failed to create webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1307,6 +1307,22 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
 					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: nil,
+		},
+		{
+			name:      "no webhook when webhookDisabled is true",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
 				},
 			},
 			webhookURL:    "https://example.com/webhook",
@@ -1382,7 +1398,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "successfully update webhook when webhook exists",
 			setupMock: func(m *MockClient) {
 				// Mock getting the existing webhook
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{
 						ID:     123,
 						URL:    "https://example.com/webhook",
@@ -1390,7 +1406,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 					}, nil)
 
 				// Mock editing the webhook
-				m.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
+				m.On("EditWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
 					return hook.ID == 123 && hook.URL == "https://example.com/webhook-updated" &&
 						slices.Equal(hook.Events, subscribedEvents)
 				})).Return(nil)
@@ -1421,11 +1437,11 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "create webhook when it doesn't exist",
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
+				m.On("CreateWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
 					return hook.URL == "https://example.com/webhook" &&
 						hook.ContentType == "json" &&
 						slices.Equal(hook.Events, subscribedEvents) &&
@@ -1471,7 +1487,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 		{
 			name: "error getting webhook",
 			setupMock: func(m *MockClient) {
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{}, fmt.Errorf("failed to get webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1496,7 +1512,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "error editing webhook",
 			setupMock: func(m *MockClient) {
 				// Mock getting the existing webhook
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{
 						ID:     123,
 						URL:    "https://example.com/webhook",
@@ -1504,7 +1520,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 					}, nil)
 
 				// Mock editing the webhook with error
-				m.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("EditWebhook", mock.Anything, mock.Anything).
 					Return(fmt.Errorf("failed to edit webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1529,7 +1545,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "create webhook when webhook status is nil",
 			setupMock: func(m *MockClient) {
 				// Mock creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("CreateWebhook", mock.Anything, mock.Anything).
 					Return(WebhookConfig{
 						ID:          456,
 						URL:         "https://example.com/webhook",
@@ -1561,7 +1577,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "create webhook when webhook ID is zero",
 			setupMock: func(m *MockClient) {
 				// Mock creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("CreateWebhook", mock.Anything, mock.Anything).
 					Return(WebhookConfig{
 						ID:          789,
 						URL:         "https://example.com/webhook",
@@ -1596,7 +1612,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "error when creating webhook fails",
 			setupMock: func(m *MockClient) {
 				// Mock webhook creation failure
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+				m.On("CreateWebhook", mock.Anything, mock.Anything).
 					Return(WebhookConfig{}, fmt.Errorf("failed to create webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1618,11 +1634,11 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "creates webhook when repo.ErrFileNotFound",
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
+				m.On("CreateWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
 					return hook.URL == "https://example.com/webhook" &&
 						hook.ContentType == "json" &&
 						slices.Equal(hook.Events, subscribedEvents) &&
@@ -1659,11 +1675,11 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "error on create when not found",
 			setupMock: func(m *MockClient) {
 				// Mock webhook not found
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 				// Mock error when creating a new webhook
-				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook WebhookConfig) bool {
+				m.On("CreateWebhook", mock.Anything, mock.MatchedBy(func(hook WebhookConfig) bool {
 					return hook.URL == "https://example.com/webhook" &&
 						hook.ContentType == "json" &&
 						slices.Equal(hook.Events, subscribedEvents) &&
@@ -1692,7 +1708,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			name: "no update needed when URL and events match",
 			setupMock: func(m *MockClient) {
 				// Mock getting the existing webhook with matching URL and events
-				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("GetWebhook", mock.Anything, int64(123)).
 					Return(WebhookConfig{
 						ID:     123,
 						URL:    "https://example.com/webhook",
@@ -1726,7 +1742,7 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 		{
 			name: "delete webhook when workflows are removed",
 			setupMock: func(m *MockClient) {
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(nil)
 			},
 			config: &provisioning.Repository{
@@ -1763,6 +1779,51 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 				},
 			},
 			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: nil,
+		},
+		{
+			name: "delete stale webhook when webhookDisabled is true",
+			setupMock: func(m *MockClient) {
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
+					Return(nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:      "",
+			expectedHook:    nil,
+			expectedCleanup: true,
+			expectedError:   nil,
+		},
+		{
+			name:      "no-op when webhookDisabled is true and no existing webhook",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: nil,
+				},
+			},
+			webhookURL:    "",
 			expectedHook:  nil,
 			expectedError: nil,
 		},
@@ -1839,7 +1900,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		{
 			name: "successfully delete webhook",
 			setupMock: func(m *MockClient) {
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(nil)
 			},
 			config: &provisioning.Repository{
@@ -1864,7 +1925,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		{
 			name: "webhook not found during deletion",
 			setupMock: func(m *MockClient) {
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(repo.ErrFileNotFound)
 			},
 			config: &provisioning.Repository{
@@ -1890,7 +1951,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		{
 			name: "unauthorized to delete the webhook",
 			setupMock: func(m *MockClient) {
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(repo.ErrUnauthorized)
 			},
 			config: &provisioning.Repository{
@@ -1954,7 +2015,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			name: "error deleting webhook",
 			setupMock: func(m *MockClient) {
 				// Mock webhook deletion failure
-				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+				m.On("DeleteWebhook", mock.Anything, int64(123)).
 					Return(fmt.Errorf("failed to delete webhook"))
 			},
 			config: &provisioning.Repository{
@@ -2015,9 +2076,9 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 	t.Run("successful rotation returns status and secure patch ops", func(t *testing.T) {
 		mockGH := NewMockClient(t)
-		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+		mockGH.On("GetWebhook", mock.Anything, int64(123)).
 			Return(WebhookConfig{ID: 123, URL: "https://example.com/hook", Events: []string{"push"}}, nil)
-		mockGH.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(cfg WebhookConfig) bool {
+		mockGH.On("EditWebhook", mock.Anything, mock.MatchedBy(func(cfg WebhookConfig) bool {
 			return cfg.ID == 123 && cfg.Secret != ""
 		})).Return(nil)
 
@@ -2048,7 +2109,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("webhook not found on remote clears status and returns error", func(t *testing.T) {
 		mockGH := NewMockClient(t)
-		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+		mockGH.On("GetWebhook", mock.Anything, int64(123)).
 			Return(WebhookConfig{}, repo.ErrFileNotFound)
 
 		r := &githubWebhookRepository{
@@ -2072,7 +2133,7 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("get webhook error returns error", func(t *testing.T) {
 		mockGH := NewMockClient(t)
-		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+		mockGH.On("GetWebhook", mock.Anything, int64(123)).
 			Return(WebhookConfig{}, fmt.Errorf("api error"))
 
 		repo := &githubWebhookRepository{
@@ -2093,9 +2154,9 @@ func TestGitHubRepository_RotateWebhookSecret(t *testing.T) {
 
 	t.Run("edit webhook error returns error", func(t *testing.T) {
 		mockGH := NewMockClient(t)
-		mockGH.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+		mockGH.On("GetWebhook", mock.Anything, int64(123)).
 			Return(WebhookConfig{ID: 123, URL: "https://example.com/hook"}, nil)
-		mockGH.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+		mockGH.On("EditWebhook", mock.Anything, mock.Anything).
 			Return(fmt.Errorf("edit failed"))
 
 		repo := &githubWebhookRepository{

@@ -61,6 +61,7 @@ export default function PageActionBar({
           onChange={sortPicker.onChange}
           value={sortPicker.value}
           getSortOptions={sortPicker.getSortOptions}
+          width={28}
         />
       )}
       {linkButton && <LinkButton {...linkProps}>{linkButton.title}</LinkButton>}

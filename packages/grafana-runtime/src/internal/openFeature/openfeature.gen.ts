@@ -19,8 +19,6 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
-  /** Enables the created by me search filter on the browse dashboards page */
-  CreatedByMeSearchFilter: "createdByMeSearchFilter",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -31,6 +29,8 @@ export const FlagKeys = {
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
+  /** Enables additional experimental color schemes for visualizations. */
+  DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -39,12 +39,16 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Enables custom dashboard templates for enterprise */
+  GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables a new UI for query errors and notices */
+  GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
@@ -53,8 +57,12 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
+  GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables the sidebar pane with new toggles and options in panel view mode */
+  GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -101,6 +109,10 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
+  TableProtoRowParser: "table.protoRowParser",
+  /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
+  UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
 
 /**
@@ -134,17 +146,6 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
-};
-
-/**
- * Enables the created by me search filter on the browse dashboards page
- *
- * **Details:**
- * - flag key: `createdByMeSearchFilter`
- * - default value: `false`
- */
-export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("createdByMeSearchFilter", false, options).value;
 };
 
 /**
@@ -203,6 +204,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
 };
 
 /**
+ * Enables additional experimental color schemes for visualizations.
+ *
+ * **Details:**
+ * - flag key: `dataviz.experimentalColorSchemes`
+ * - default value: `false`
+ */
+export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
  * A/A test for recently viewed dashboards feature
  *
  * **Details:**
@@ -247,6 +259,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Enables custom dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.customDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customDashboardTemplates", false, options).value;
+};
+
+/**
  * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
  *
  * **Details:**
@@ -277,6 +300,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Enables a new UI for query errors and notices
+ *
+ * **Details:**
+ * - flag key: `grafana.newPanelQueryErrorsUI`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
 };
 
 /**
@@ -324,6 +358,17 @@ export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationO
 };
 
 /**
+ * Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker
+ *
+ * **Details:**
+ * - flag key: `grafana.starredFolders`
+ * - default value: `false`
+ */
+export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.starredFolders", false, options).value;
+};
+
+/**
  * Replaces the bundled home dashboard with the unified homepage React page
  *
  * **Details:**
@@ -332,6 +377,17 @@ export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Enables the sidebar pane with new toggles and options in panel view mode
+ *
+ * **Details:**
+ * - flag key: `grafana.viewPanelPane`
+ * - default value: `false`
+ */
+export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.viewPanelPane", false, options).value;
 };
 
 /**
@@ -383,10 +439,10 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  *
  * **Details:**
  * - flag key: `newLogContext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogContext", false, options).value;
+  return useFlag("newLogContext", true, options).value;
 };
 
 /**
@@ -585,5 +641,27 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.
+ *
+ * **Details:**
+ * - flag key: `table.protoRowParser`
+ * - default value: `false`
+ */
+export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.protoRowParser", false, options).value;
+};
+
+/**
+ * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+ *
+ * **Details:**
+ * - flag key: `useKubernetesShortURLsAPI`
+ * - default value: `true`
+ */
+export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useKubernetesShortURLsAPI", true, options).value;
 };
 

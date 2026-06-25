@@ -136,14 +136,15 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 			Namespace: namespace,
 		},
 		Spec: iamv0alpha1.UserSpec{
-			Login:         strings.ToLower(cmd.Login),
-			Email:         strings.ToLower(cmd.Email),
-			Title:         cmd.Name,
-			GrafanaAdmin:  cmd.IsAdmin,
-			Disabled:      cmd.IsDisabled,
-			EmailVerified: cmd.EmailVerified,
-			Provisioned:   cmd.IsProvisioned,
-			Role:          role,
+			Login:            strings.ToLower(cmd.Login),
+			Email:            strings.ToLower(cmd.Email),
+			Title:            cmd.Name,
+			GrafanaAdmin:     cmd.IsAdmin,
+			Disabled:         cmd.IsDisabled,
+			EmailVerified:    cmd.EmailVerified,
+			Provisioned:      cmd.IsProvisioned,
+			Role:             role,
+			ExternalAuthInfo: toExternalAuthInfo(cmd.ExternalAuthInfo),
 		},
 	}
 
@@ -287,8 +288,76 @@ func (s *UserK8sService) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQue
 	return toUser(found, orgID), nil
 }
 
-func (s *UserK8sService) ListByIdOrUID(ctx context.Context, ids []string, intIDs []int64) ([]*user.User, error) {
-	return nil, errors.New("not implemented")
+// ListByIdOrUID resolves users by their k8s UID (resource name) and/or legacy
+// internal ID, deduplicating users matched by both. Users that don't resolve are
+// omitted, matching the legacy "WHERE uid IN (...) OR id IN (...)" semantics.
+func (s *UserK8sService) ListByIdOrUID(ctx context.Context, uids []string, intIDs []int64) ([]*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.listByIdOrUID")
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in ListByIdOrUID", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient(ctx)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	users := make([]*user.User, 0, len(uids)+len(intIDs))
+	seen := make(map[string]struct{}, len(uids)+len(intIDs))
+
+	for _, uid := range uids {
+		if uid == "" {
+			continue
+		}
+		found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: uid})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+			ctxLogger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", uid, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+		if _, ok := seen[found.Name]; ok {
+			continue
+		}
+		seen[found.Name] = struct{}{}
+		users = append(users, toUser(found, orgID))
+	}
+
+	for _, id := range intIDs {
+		found, err := s.getByInternalID(ctx, ctxLogger, client, id, namespace)
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				continue
+			}
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+		if _, ok := seen[found.Name]; ok {
+			continue
+		}
+		seen[found.Name] = struct{}{}
+		users = append(users, toUser(found, orgID))
+	}
+
+	return users, nil
 }
 
 func (s *UserK8sService) GetByLoginWithPassword(_ context.Context, _ *user.GetUserByLoginQuery) (*user.User, error) {
@@ -430,6 +499,9 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	if cmd.OrgRole != nil {
 		existing.Spec.Role = *cmd.OrgRole
 	}
+	if cmd.ExternalAuthInfo != nil {
+		existing.Spec.ExternalAuthInfo = toExternalAuthInfo(cmd.ExternalAuthInfo)
+	}
 
 	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
 	if err != nil {
@@ -480,7 +552,10 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 	// Use a full Update (not UpdateStatus) to avoid a bug in UserClient.UpdateStatus
 	// which constructs a new User with an empty Spec, causing the status subresource
 	// path to persist an empty spec and corrupt the stored user data.
-	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
+	_, err = client.Update(ctx, existing, resource.UpdateOptions{
+		Subresource:     "status",
+		ResourceVersion: existing.ResourceVersion,
+	})
 	if err != nil {
 		ctxLogger.Error("k8s user update status failed", "namespace", namespace, "orgID", cmd.OrgID, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)
@@ -674,11 +749,25 @@ func (s *UserK8sService) GetProfile(ctx context.Context, cmd *user.GetUserProfil
 		return nil, err
 	}
 
-	found, err := s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
+	var found *iamv0alpha1.User
+	if cmd.UID != "" {
+		found, err = client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UID})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil, user.ErrUserNotFound
+			}
+			ctxLogger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", cmd.UID, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+	} else {
+		found, err = s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
 	}
 
 	return toUserProfileDTO(found, orgID), nil
@@ -794,24 +883,68 @@ func toUserProfileDTO(u *iamv0alpha1.User, orgID int64) *user.UserProfileDTO {
 		IsProvisioned:  u.Spec.Provisioned,
 		UpdatedAt:      u.GetUpdateTimestamp(),
 		CreatedAt:      u.CreationTimestamp.Time,
+		AuthModules:    authModules(u.Spec.ExternalAuthInfo),
 	}
 }
 
 func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 	return &user.User{
-		ID:            getUserID(u),
-		UID:           u.Name,
-		OrgID:         orgID,
-		Login:         u.Spec.Login,
-		Email:         u.Spec.Email,
-		Name:          u.Spec.Title,
-		IsAdmin:       u.Spec.GrafanaAdmin,
-		IsDisabled:    u.Spec.Disabled,
-		EmailVerified: u.Spec.EmailVerified,
-		IsProvisioned: u.Spec.Provisioned,
-		OrgRole:       u.Spec.Role,
-		Created:       u.CreationTimestamp.Time,
-		Updated:       u.GetUpdateTimestamp(),
-		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),
+		ID:               getUserID(u),
+		UID:              u.Name,
+		OrgID:            orgID,
+		Login:            u.Spec.Login,
+		Email:            u.Spec.Email,
+		Name:             u.Spec.Title,
+		IsAdmin:          u.Spec.GrafanaAdmin,
+		IsDisabled:       u.Spec.Disabled,
+		EmailVerified:    u.Spec.EmailVerified,
+		IsProvisioned:    u.Spec.Provisioned,
+		OrgRole:          u.Spec.Role,
+		Created:          u.CreationTimestamp.Time,
+		Updated:          u.GetUpdateTimestamp(),
+		LastSeenAt:       time.Unix(u.Status.LastSeenAt, 0),
+		ExternalAuthInfo: fromExternalAuthInfo(u.Spec.ExternalAuthInfo),
 	}
+}
+
+func toExternalAuthInfo(in []user.ExternalAuthInfo) []iamv0alpha1.UserExternalAuthInfo {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]iamv0alpha1.UserExternalAuthInfo, 0, len(in))
+	for _, l := range in {
+		info := iamv0alpha1.UserExternalAuthInfo{Module: l.Module, AuthID: l.AuthID}
+		if l.ExternalUID != "" {
+			externalUID := l.ExternalUID
+			info.ExternalUID = &externalUID
+		}
+		out = append(out, info)
+	}
+	return out
+}
+
+func fromExternalAuthInfo(in []iamv0alpha1.UserExternalAuthInfo) []user.ExternalAuthInfo {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]user.ExternalAuthInfo, 0, len(in))
+	for _, l := range in {
+		info := user.ExternalAuthInfo{Module: l.Module, AuthID: l.AuthID}
+		if l.ExternalUID != nil {
+			info.ExternalUID = *l.ExternalUID
+		}
+		out = append(out, info)
+	}
+	return out
+}
+
+func authModules(in []iamv0alpha1.UserExternalAuthInfo) []string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(in))
+	for _, l := range in {
+		out = append(out, l.Module)
+	}
+	return out
 }

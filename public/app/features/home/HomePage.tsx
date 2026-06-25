@@ -5,14 +5,17 @@ import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { Box, Stack, useStyles2 } from '@grafana/ui';
+import { Grid, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
+import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
+import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
+import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
 
 // Mounts (and runs its effect) only once the surrounding Suspense content has actually
@@ -85,21 +88,18 @@ export default function HomePage() {
                   unmount the whole page */}
               <Suspense fallback={null}>
                 <Stack direction="column" gap={2}>
-                  <Box
-                    backgroundColor="canvas"
-                    borderRadius="default"
-                    padding={4}
-                    direction="column"
-                    display="flex"
-                    gap={2}
-                  >
+                  <HomeSection direction="column" display="flex" gap={2}>
                     {renderLimitedComponents({
                       props: {},
                       components: preComponents,
                       pluginId: SETUPGUIDE_PLUGIN_ID,
                     })}
                     <DashboardTabs extensionComponents={tabComponents} />
-                  </Box>
+                  </HomeSection>
+                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                    <FiringAlertsCard />
+                    <IncidentsCard />
+                  </Grid>
 
                   {renderLimitedComponents({
                     props: {},
@@ -107,9 +107,7 @@ export default function HomePage() {
                     pluginId: SETUPGUIDE_PLUGIN_ID,
                     wrapper: ({ children }) => (
                       <div className={styles.extra}>
-                        <Box backgroundColor="canvas" borderRadius="default" padding={4}>
-                          {children}
-                        </Box>
+                        <HomeSection>{children}</HomeSection>
                       </div>
                     ),
                   })}

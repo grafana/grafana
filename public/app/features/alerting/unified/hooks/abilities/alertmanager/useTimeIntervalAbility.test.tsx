@@ -1,6 +1,5 @@
 import { renderHook } from 'test/test-utils';
 
-import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
@@ -246,7 +245,7 @@ describe('useTimeIntervalAbility', () => {
     it('should deny View and Create and list the expected required permissions', () => {
       // The time interval hooks only check Grafana-AM-specific permissions, so external
       // permissions are never sufficient. The snapshot captures the anyOfPermissions list.
-      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      const amSource = setupMimirAlertmanager();
       grantUserPermissions([
         EXTERNAL_AM_VISIBILITY_PERMISSION,
         AccessControlAction.AlertingNotificationsExternalRead,
@@ -258,7 +257,7 @@ describe('useTimeIntervalAbility', () => {
           view: useTimeIntervalAbility({ action: TimeIntervalAction.View }),
           create: useTimeIntervalAbility({ action: TimeIntervalAction.Create }),
         }),
-        { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
+        { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
       expect(result.current.view.granted).toBe(false);
