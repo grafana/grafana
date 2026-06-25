@@ -11,5 +11,5 @@ This panel does not compute statistics. It maps data fields onto box-plot dimens
 
 Fields are auto-detected by name (`min`, `q1`/`p25`/`25th %`, `median`, `q3`/`p75`/`75th %`, `max`, …), so the
 output of the **Reduce** transformation maps automatically. To build a box plot from raw values, add a
-**Reduce** transformation (calcs: Min, 25th %, Median, 75th %, Max) in *Series to rows* mode, then select this
+**Reduce** transformation (calcs: Min, 25th %, Median, 75th %, Max) in _Series to rows_ mode, then select this
 panel.
