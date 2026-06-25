@@ -10,27 +10,9 @@ import { type DeepSearchPanelResult, searchDashboardVector } from '../api/deepSe
 export const DEEP_SEARCH_FETCH_LIMIT = 50;
 export const MAX_SNIPPETS_PER_DASHBOARD = 3;
 
-/**
- * Which set the score cutoff is computed over. Panels worse (higher distance)
- * than the cutoff are dropped entirely.
- * - 'global': a spread-aware cutoff (see spreadAwareCutoff) over every matched
- *   panel in the response. Weak dashboards disappear if their best panel is past
- *   the cutoff.
- * - 'per-dashboard': each dashboard averages (mean) its own panels, so every
- *   dashboard keeps at least its best panel(s).
- * Flip this to compare the two behaviours.
- */
-export type ScoreCutoffScope = 'global' | 'per-dashboard';
-export const SCORE_CUTOFF_SCOPE: ScoreCutoffScope = 'global';
-
-// Spread-aware global cutoff tuning (scores are cosine distance, 0 = best).
-// The cutoff slides between the best (min) and worst (max) matched score based on
-// the spread: tightly clustered scores keep everything; a wide spread pulls the
-// cutoff toward the best so a long tail of weak matches drops off.
-const SPREAD_KEEP_ALL_AT_OR_BELOW = 0.02; // spread at/under which we keep up to max
-const SPREAD_FULLY_TIGHTENED_AT = 0.25; // spread at/over which the cutoff is tightest
-const TIGHTEST_BAND_FRACTION = 0.1; // tightest cutoff still keeps this fraction of the spread above min
-const MIN_KEPT_PANELS = 3; // never drop below this many panels overall, even at high spread
+// Relative-to-best cutoff for 'global' scope (scores are cosine distance, 0 = best):
+// keep panels whose distance is within this margin of the closest match.
+const RELEVANCE_MARGIN = 0.1;
 
 // Vector search is slower than the keyword search (200ms debounce), so wait
 // longer before firing — the deep column loads independently anyway
@@ -121,41 +103,17 @@ function extractDashboardTitle(content: string, hitTitle: string): string {
   return dashboardSegment ?? hitTitle;
 }
 
-function average(values: number[]): number {
-  if (values.length === 0) {
-    return 0;
-  }
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
 /**
- * Spread-aware cutoff over a set of distance scores (0 = best). The cutoff is
- * `min + fraction * (max - min)`, where `fraction` slides from 1 (keep up to max)
- * when the spread is small to TIGHTEST_BAND_FRACTION when the spread is large —
- * so a tight cluster keeps everything, while a wide spread pulls the cutoff toward
- * the best score. A floor guarantees at least MIN_KEPT_PANELS scores survive.
+ * Relative-to-best cutoff over a set of distance scores (0 = best): the closest
+ * match plus RELEVANCE_MARGIN. Keeps panels comparable to the best result and
+ * drops the long tail, while adapting to query difficulty (a hard query with a
+ * worse best score still keeps a band around it). The best panel always survives.
  */
-function spreadAwareCutoff(scores: number[]): number {
+function relativeToBestCutoff(scores: number[]): number {
   if (scores.length === 0) {
     return 0;
   }
-  const min = Math.min(...scores);
-  const max = Math.max(...scores);
-  const spread = max - min;
-
-  let fraction = 1;
-  if (spread > SPREAD_KEEP_ALL_AT_OR_BELOW) {
-    const t = (spread - SPREAD_KEEP_ALL_AT_OR_BELOW) / (SPREAD_FULLY_TIGHTENED_AT - SPREAD_KEEP_ALL_AT_OR_BELOW);
-    console.log({ t });
-    fraction = Math.max(TIGHTEST_BAND_FRACTION, 1 - t * (1 - TIGHTEST_BAND_FRACTION));
-  }
-  const cutoff = min + fraction * spread;
-
-  // Keep at least MIN_KEPT_PANELS: raise the cutoff to the Nth-best score if the band is too tight
-  const sorted = [...scores].sort((a, b) => a - b);
-  const floorScore = sorted[Math.min(MIN_KEPT_PANELS, sorted.length) - 1];
-  console.log({ spread, fraction, min, max, cutoff, floorScore });
-  return Math.max(cutoff, floorScore);
+  return Math.min(...scores) + RELEVANCE_MARGIN;
 }
 
 /**
@@ -164,21 +122,16 @@ function spreadAwareCutoff(scores: number[]): number {
  * panel hit appears — since the backend returns hits in ascending-distance order
  * and the Map preserves first-insertion order.
  *
- * Panels worse (higher distance) than the cutoff are dropped entirely. In 'global'
- * scope the cutoff is spread-aware over all matched panels (see spreadAwareCutoff);
- * in 'per-dashboard' scope it's the mean of each dashboard's own panels. The best
- * panel always survives (its score can't exceed either cutoff), so in
- * 'per-dashboard' mode every dashboard keeps at least one panel; in 'global' mode a
- * dashboard disappears if its best panel is past the cutoff. Surviving snippets are
- * sorted by score and capped at MAX_SNIPPETS_PER_DASHBOARD; matchedPanelCount counts
- * all survivors.
+ * Panels worse (higher distance) than the cutoff are dropped entirely. The cutoff is
+ * relative-to-best over all matched panels (best + margin). The best panel
+ * always survives (its score can't exceed either cutoff). Dashboard disappears
+ * if its best panel is more than a margin past the overall best. Surviving snippets
+ * are sorted by score and capped at MAX_SNIPPETS_PER_DASHBOARD; matchedPanelCount
+ * counts all survivors.
  */
-export function groupDeepSearchResults(
-  results: DeepSearchPanelResult[],
-  scope: ScoreCutoffScope = SCORE_CUTOFF_SCOPE
-): DeepSearchDashboardResult[] {
+export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSearchDashboardResult[] {
   const matched = results.filter((result) => result.dashboardUid);
-  const globalCutoff = spreadAwareCutoff(matched.map((result) => result.score));
+  const globalCutoff = relativeToBestCutoff(matched.map((result) => result.score));
 
   // Group panels per dashboard, preserving backend (first-appearance) order
   const byDashboard = new Map<string, DeepSearchPanelResult[]>();
@@ -193,8 +146,7 @@ export function groupDeepSearchResults(
 
   const groups: DeepSearchDashboardResult[] = [];
   for (const panels of byDashboard.values()) {
-    const cutoff = scope === 'global' ? globalCutoff : average(panels.map((panel) => panel.score));
-    const kept = panels.filter((panel) => panel.score <= cutoff);
+    const kept = panels.filter((panel) => panel.score <= globalCutoff);
     if (kept.length === 0) {
       continue;
     }
@@ -241,9 +193,11 @@ async function resolveFolderTitles(results: DeepSearchPanelResult[]): Promise<De
 
   let locationInfo: Record<string, { name: string }> = {};
   try {
+    // TODO: this relies on getGrafanaSearcher doing this lookup at instantiation. It loads 10k folders to create this
+    //  map so customers with more folders won't get the full mapping.
     locationInfo = await getGrafanaSearcher().getLocationInfo();
   } catch (error) {
-    // Folder titles are a nice-to-have subtitle; if the lookup fails just omit them
+    // If the lookup fails, just omit them for now.
     return results;
   }
 

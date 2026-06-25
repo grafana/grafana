@@ -94,7 +94,7 @@ describe('groupDeepSearchResults', () => {
     ]);
   });
 
-  it('global scope: low spread keeps panels up to the worst score', () => {
+  it('global scope: keeps panels within the margin of the best match', () => {
     const grouped = groupDeepSearchResults(
       [
         panelResult({ dashboardUid: 'dash-1', content: 'a', score: 0.4 }),
@@ -104,13 +104,13 @@ describe('groupDeepSearchResults', () => {
       'global'
     );
 
-    // spread = 0.5 - 0.4 = 0.1 (at the keep-all threshold) → cutoff = max (0.5), nothing dropped
+    // best = 0.4, cutoff = 0.4 + 0.15 = 0.55 → all three within the margin, nothing dropped
     expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1', 'dash-2']);
     expect(grouped[0].matchedPanelCount).toBe(2);
     expect(grouped[1].matchedPanelCount).toBe(1);
   });
 
-  it('global scope: high spread pulls the cutoff toward the best score, dropping the tail', () => {
+  it('global scope: drops panels (and dashboards) more than a margin past the best', () => {
     const grouped = groupDeepSearchResults(
       [
         panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.2 }),
@@ -122,26 +122,26 @@ describe('groupDeepSearchResults', () => {
       'global'
     );
 
-    // spread = 0.7 (fully tightened) → cutoff ≈ 0.2 + 0.25 * 0.7 = 0.375.
-    // dash-1's 0.2–0.3 cluster survives; the 0.8 / 0.9 tail and its dashboards are dropped.
+    // best = 0.2, cutoff = 0.35 → dash-1's 0.2–0.3 cluster survives; the 0.8 / 0.9 tail
+    // and its dashboards are dropped. The arbitrary worst score (0.9) doesn't move the cutoff.
     expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1']);
     expect(grouped[0].matchedPanelCount).toBe(3);
   });
 
-  it('global scope: the floor keeps at least MIN_KEPT_PANELS even at high spread', () => {
+  it('global scope: the margin adapts to query difficulty (worse best score)', () => {
     const grouped = groupDeepSearchResults(
       [
-        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.1 }),
-        panelResult({ dashboardUid: 'dash-2', content: 'second', score: 0.2 }),
-        panelResult({ dashboardUid: 'dash-3', content: 'third', score: 0.85 }),
-        panelResult({ dashboardUid: 'dash-4', content: 'tail', score: 0.95 }),
+        // A hard query: even the best match is mediocre (0.5), but a band around it is still kept
+        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.5 }),
+        panelResult({ dashboardUid: 'dash-1', content: 'near', score: 0.6 }),
+        panelResult({ dashboardUid: 'dash-2', content: 'far', score: 0.8 }),
       ],
       'global'
     );
 
-    // The cutoff alone would keep only the 0.1 / 0.2 cluster, but the floor raises it to
-    // the 3rd-best score (0.85) so at least three panels survive; only the 0.95 tail drops.
-    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1', 'dash-2', 'dash-3']);
+    // best = 0.5, cutoff = 0.65 → keeps the 0.5 / 0.6 band, drops the 0.8 panel and dash-2
+    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1']);
+    expect(grouped[0].matchedPanelCount).toBe(2);
   });
 
   it('per-dashboard scope: each card keeps only its own better-than-average panels', () => {
