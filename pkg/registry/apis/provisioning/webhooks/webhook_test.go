@@ -141,11 +141,6 @@ func TestWebhookConnector_webhook(t *testing.T) {
 			expected: &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ping received"},
 		},
 		{
-			name:     "replay",
-			event:    repository.WebhookEvent{Type: repository.WebhookEventReplay},
-			expected: &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"},
-		},
-		{
 			name:     "unsupported",
 			event:    repository.WebhookEvent{Type: repository.WebhookEventUnsupported, Message: "unsupported messageType: team"},
 			expected: &provisioning.WebhookResponse{Code: http.StatusNotImplemented, Message: "unsupported messageType: team"},
@@ -163,7 +158,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 			}
 			hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", branch: "main", event: tt.event, err: tt.processErr}
 
-			s := &webhookConnector{core: &provisioningapis.APIBuilder{}}
+			s := &webhookConnector{core: &provisioningapis.APIBuilder{}, replayCache: newReplayCache(time.Hour)}
 			rsp, err := s.webhook(t.Context(), &http.Request{}, hooks)
 
 			if tt.expectedError != nil {
@@ -184,6 +179,36 @@ func TestWebhookConnector_webhook(t *testing.T) {
 			require.Equal(t, tt.expected.Message, rsp.Message)
 			require.Equal(t, tt.expected.Job, rsp.Job)
 		})
+	}
+}
+
+func TestWebhookConnector_webhook_replay(t *testing.T) {
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: true}},
+		Status:     provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{}},
+	}
+	event := repository.WebhookEvent{Type: repository.WebhookEventPush, ReplayKey: "sig", RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1}
+	hooks := stubWebhookRepo{cfg: cfg, slug: "grafana/grafana", branch: "main", event: event}
+
+	s := &webhookConnector{core: &provisioningapis.APIBuilder{}, replayCache: newReplayCache(time.Hour)}
+
+	first, err := s.webhook(t.Context(), &http.Request{}, hooks)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusAccepted, first.Code)
+
+	// Replaying the same key is silently dropped with a generic 200 and no job.
+	dup, err := s.webhook(t.Context(), &http.Request{}, hooks)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, dup.Code)
+	require.Nil(t, dup.Job)
+
+	// An empty replay key is never treated as a duplicate.
+	hooks.event.ReplayKey = ""
+	for i := 0; i < 2; i++ {
+		rsp, err := s.webhook(t.Context(), &http.Request{}, hooks)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusAccepted, rsp.Code)
 	}
 }
 

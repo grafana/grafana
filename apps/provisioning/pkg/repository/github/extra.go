@@ -91,7 +91,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 			logger.Debug("Skipping webhook setup: webhook is disabled")
 			return ghRepo, nil
 		}
-		return NewGithubWebhookRepository(ghRepo, "", "", e.incrementalPolicy, e.factory.replayCache), nil
+		return NewGithubWebhookRepository(ghRepo, "", "", e.incrementalPolicy), nil
 	}
 
 	webhookURL := e.webhookBuilder.WebhookURL(ctx, r)
@@ -105,7 +105,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 	}
 
-	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy, e.factory.replayCache), nil
+	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy), nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
