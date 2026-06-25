@@ -132,7 +132,9 @@ describe('<DashboardLinksList />', () => {
         const { user, getByText, getByTestId, elements } = renderLinksList([visibleLink1]);
 
         await user.hover(getByText(visibleLink1.title));
-        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key)));
+        await user.click(
+          getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key))
+        );
 
         expect(elements.dashboardScene.state.links).toHaveLength(2);
         expect(elements.dashboardScene.state.links?.[1].title).toBe(`${visibleLink1.title} - Copy`);

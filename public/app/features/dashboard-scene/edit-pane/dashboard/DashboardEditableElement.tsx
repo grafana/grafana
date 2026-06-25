@@ -186,7 +186,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
       renderTitle: () => title,
     });
 
-    if (variableCount > 0) {
+    if ($variables instanceof SceneVariableSet && variableCount > 0) {
       category.addItem(
         new OptionsPaneItemDescriptor({
           title: '',
