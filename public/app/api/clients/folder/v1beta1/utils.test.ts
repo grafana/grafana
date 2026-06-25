@@ -37,5 +37,14 @@ describe('getParsedCounts', () => {
       librarypanels: 2,
       alertrules: 2,
     });
+
+    expect(
+      getParsedCounts([
+        { group: 'sql-fallback', resource: 'library_elements', count: 3 }, // FB first
+        { group: 'dashboard.grafana.app', resource: 'librarypanels', count: 0 }, // NF second
+      ])
+    ).toEqual({
+      librarypanels: 3,
+    });
   });
 });

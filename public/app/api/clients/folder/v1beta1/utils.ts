@@ -57,23 +57,14 @@ const normalizeResourceName = (resource: string): string => RESOURCE_NAME_ALIASE
  */
 export const getParsedCounts = (counts: ResourceStats[]): Record<string, number> => {
   const result: Record<string, number> = {};
-  const priorities: Record<string, number> = {};
-
-  // Higher priority wins. A non-zero count outranks a zero one, and within the same
-  // zero/non-zero tier a non-fallback entry outranks an sql-fallback entry.
-  const priorityOf = (count: number, fromFallback: boolean): number => {
-    if (count !== 0) {
-      return fromFallback ? 2 : 3;
-    }
-    return fromFallback ? 0 : 1;
-  };
 
   for (const { resource, count, group } of counts) {
     const name = normalizeResourceName(resource);
-    const priority = priorityOf(count, group === 'sql-fallback');
-    if (!(name in result) || priority > priorities[name]) {
+
+    if (result[name] === undefined) {
       result[name] = count;
-      priorities[name] = priority;
+    } else if ((group !== 'sql-fallback' && count !== 0) || result[name] === 0) {
+      result[name] = count;
     }
   }
 
