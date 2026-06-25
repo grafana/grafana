@@ -387,6 +387,12 @@ func isTransientLockError(err error) bool {
 	if err == nil {
 		return false
 	}
+	// errors.Is is not an option here: these errors reach us through the
+	// client-go dynamic client, so the original typed sqlite3.Error has already
+	// been serialized into a *apierrors.StatusError (a generic 500) by the API
+	// server. The typed sentinel does not survive the HTTP boundary, and the
+	// StatusError code is too broad to distinguish lock contention from other
+	// internal errors, so the message string is the only reliable signal left.
 	msg := err.Error()
 	return strings.Contains(msg, "database is locked") ||
 		strings.Contains(msg, "database table is locked") ||
