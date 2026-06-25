@@ -16630,11 +16630,6 @@
     "static-options": {
       "add-option-button-label": "Add new option"
     },
-    "text-box-variable-editor": {
-      "name-default-value": "Default value",
-      "placeholder-default-value-if-any": "default value, if any",
-      "text-options": "Text options"
-    },
     "transform-usages-to-network": {
       "result": {
         "label": {

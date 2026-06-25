@@ -2608,14 +2608,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/query/QueryVariableEditor.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/query/QueryVariableRefreshSelect.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2636,7 +2628,7 @@
   },
   "public/app/features/variables/query/actions.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/variables/query/operators.ts": {
@@ -2697,10 +2689,10 @@
   },
   "public/app/features/variables/system/adapter.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/variables/types.ts": {
