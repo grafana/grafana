@@ -118,12 +118,11 @@ func TestSchemaProvider_Columns(t *testing.T) {
 	cr, err := p.Columns(context.Background(), &schemas.ColumnsRequest{Tables: []string{"svc-a"}})
 	require.NoError(t, err)
 	cols := cr.Columns["svc-a"]
-	require.GreaterOrEqual(t, len(cols), 5)
+	require.GreaterOrEqual(t, len(cols), 4)
 	require.Equal(t, "timestamp", cols[0].Name)
 	require.Equal(t, "line", cols[1].Name)
-	require.Equal(t, "value", cols[2].Name)
 	var names []string
-	for i := 3; i < len(cols); i++ {
+	for i := 2; i < len(cols); i++ {
 		names = append(names, cols[i].Name)
 	}
 	require.Equal(t, []string{"level", "pod"}, names)
@@ -146,7 +145,7 @@ func TestSchemaProvider_Columns_PerTableErrorFallback(t *testing.T) {
 	require.Greater(t, len(cr.Columns["good"]), len(schemaBaseColumns))
 }
 
-func TestSchemaProvider_ColumnValues_SkipsTimestampLineAndValue(t *testing.T) {
+func TestSchemaProvider_ColumnValues_SkipsTimestampAndLine(t *testing.T) {
 	p := newTestSchemaProvider(t, func(req *http.Request) (int, string, []byte) {
 		if strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "" {
 			return 200, "", []byte(`{"status":"success","data":["service_name"]}`)

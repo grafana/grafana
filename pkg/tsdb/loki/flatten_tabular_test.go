@@ -135,23 +135,3 @@ func TestFlattenLogsToTabular_LabelJSONScalars(t *testing.T) {
 	require.Len(t, out, 1)
 	require.Equal(t, want, out[0])
 }
-
-func TestFlattenMetricsToTabular(t *testing.T) {
-	t1 := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
-	val := 42.0
-	f := &data.Frame{
-		Fields: data.Fields{
-			data.NewField("Time", data.Labels{"env": "prod"}, []time.Time{t1}),
-			data.NewField("Value", data.Labels{"env": "prod"}, []float64{val}),
-		},
-		Meta: &data.FrameMeta{ExecutedQueryString: "Expr: sum(count_over_time..."},
-	}
-
-	out := flattenMetricsToTabular(data.Frames{f}, log.NewNullLogger())
-	require.Len(t, out, 1)
-	frame := out[0]
-	require.Len(t, frame.Fields, 3)
-	require.Equal(t, "timestamp", frame.Fields[0].Name)
-	require.Equal(t, "value", frame.Fields[1].Name)
-	require.Equal(t, "env", frame.Fields[2].Name)
-}
