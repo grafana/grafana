@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -558,17 +559,12 @@ func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identit
 	return MergePermissions(legacy, zPerms)
 }
 
-var teamGVR = schema.GroupVersionResource{
-	Group:    "iam.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "teams",
-}
-
-var userGVR = schema.GroupVersionResource{
-	Group:    "iam.grafana.app",
-	Version:  "v0alpha1",
-	Resource: "users",
-}
+// GVRs are derived from the IAM resource info so the group/version/resource always match what
+// the apiserver serves, instead of hardcoding (which previously drifted to the wrong group).
+var (
+	teamGVR = iamv0.TeamResourceInfo.GroupVersionResource()
+	userGVR = iamv0.UserResourceInfo.GroupVersionResource()
+)
 
 type uidToIDResolver struct {
 	mu             sync.RWMutex
