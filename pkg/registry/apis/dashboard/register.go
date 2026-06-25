@@ -796,6 +796,8 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
 
+	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
+
 	// Library panels live inside folders, so the unified storage backend must accept the
 	// grafana.app/folder annotation. They are keyed by their own GroupResource, so they need
 	// a separate registration from dashboards; without it they default to
