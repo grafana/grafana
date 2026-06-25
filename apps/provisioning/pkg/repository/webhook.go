@@ -1,6 +1,11 @@
 package repository
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+)
 
 // VerifiedWebhookRequest is an inbound webhook request whose signature has been
 // authenticated.
@@ -12,13 +17,13 @@ type VerifiedWebhookRequest struct {
 }
 
 // WebhookEventType classifies a normalized inbound webhook delivery.
-type WebhookEventType int
+type WebhookEventType string
 
 const (
-	WebhookEventUnsupported WebhookEventType = iota
-	WebhookEventPing
-	WebhookEventPush
-	WebhookEventPullRequest
+	WebhookEventUnsupported WebhookEventType = "unsupported"
+	WebhookEventPing        WebhookEventType = "ping"
+	WebhookEventPush        WebhookEventType = "push"
+	WebhookEventPullRequest WebhookEventType = "pull_request"
 )
 
 type PullRequestAction string
@@ -43,4 +48,25 @@ type WebhookEvent struct {
 	SourceRef    string
 	Hash         string
 	Message      string
+}
+
+// ToCtxLogger returns a context whose logger carries the event's populated fields.
+func (e WebhookEvent) ToCtxLogger(ctx context.Context) context.Context {
+	args := []any{"type", e.Type}
+	if e.Action != "" {
+		args = append(args, "action", e.Action)
+	}
+	if e.RepoSlug != "" {
+		args = append(args, "slug", e.RepoSlug)
+	}
+	if e.Branch != "" {
+		args = append(args, "branch", e.Branch)
+	}
+	if e.PRNumber != 0 {
+		args = append(args, "pr", e.PRNumber)
+	}
+	if e.TotalChanges != 0 {
+		args = append(args, "changes", e.TotalChanges)
+	}
+	return logging.Context(ctx, logging.FromContext(ctx).With(args...))
 }
