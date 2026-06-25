@@ -74,10 +74,13 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let colors;
   if (colorIndex === undefined) {
-    colors = getTagColorsFromName(name, theme.isLight, visualRefreshEnabled);
+    colors = getTagColorsFromName(name, visualRefreshEnabled);
   } else {
-    colors = getTagColor(colorIndex, theme.isLight, visualRefreshEnabled);
+    colors = getTagColor(colorIndex, visualRefreshEnabled);
   }
+  const [darkShade, lightShade] = colors;
+  const backgroundColor = theme.isLight ? lightShade : darkShade;
+  const textColor = theme.isLight ? darkShade : lightShade;
   return {
     wrapper: css({
       appearance: 'none',
@@ -86,8 +89,8 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
       fontSize: theme.typography.size.sm,
       lineHeight: theme.typography.bodySmall.lineHeight,
       verticalAlign: 'baseline',
-      backgroundColor: colors.color,
-      color: visualRefreshEnabled ? colors.borderColor : theme.v1.palette.gray98,
+      backgroundColor,
+      color: visualRefreshEnabled ? textColor : theme.v1.palette.gray98,
       whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',

@@ -31,8 +31,10 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
   // Otherwise, a default class name will be applied to the tag.
   const tagStyle = useMemo(() => {
     if (autoColors) {
-      const { color, borderColor } = getTagColorsFromName(name, isLight, visualRefreshEnabled);
-      return { backgroundColor: color, borderColor };
+      const [darkShade, lightShade] = getTagColorsFromName(name, visualRefreshEnabled);
+      const backgroundColor = isLight ? lightShade : darkShade;
+      const borderColor = isLight ? darkShade : lightShade;
+      return { backgroundColor, borderColor };
     }
     return undefined;
   }, [name, autoColors, isLight, visualRefreshEnabled]);
@@ -54,7 +56,7 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
         name="times"
         size="lg"
         disabled={disabled}
-        tooltip={t('grafana-ui.tags-input.remove', 'Remove tag: {{name}}', { name })}
+        aria-label={t('grafana-ui.tags-input.remove', 'Remove tag: {{name}}', { name })}
         onClick={() => onRemove(name)}
         className={styles.buttonStyles}
       />

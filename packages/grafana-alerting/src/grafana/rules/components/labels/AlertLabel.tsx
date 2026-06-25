@@ -75,14 +75,16 @@ function getAccessibleTagColor(name?: string, isLight?: boolean, visualRefreshEn
   }
   const attempts = Array.from({ length: 6 }, (_, i) => name + '-'.repeat(i));
   const readableAttempt = attempts.find((attempt) => {
-    const candidate = getTagColorsFromName(attempt, isLight, visualRefreshEnabled).color;
+    const [darkShade, lightShade] = getTagColorsFromName(attempt, visualRefreshEnabled);
+    const candidate = isLight ? lightShade : darkShade;
     return (
       tinycolor2.isReadable(candidate, '#000', { level: 'AA', size: 'small' }) ||
       tinycolor2.isReadable(candidate, '#fff', { level: 'AA', size: 'small' })
     );
   });
   const chosen = readableAttempt ?? name;
-  return getTagColorsFromName(chosen, isLight, visualRefreshEnabled).color;
+  const [darkShade, lightShade] = getTagColorsFromName(chosen, visualRefreshEnabled);
+  return isLight ? lightShade : darkShade;
 }
 
 function getColorFromProps({

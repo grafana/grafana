@@ -13,9 +13,11 @@ export interface Props {
 }
 
 export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
-  const theme = useTheme2();
+  const { isLight } = useTheme2();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const { borderColor, color } = getTagColorsFromName(label, theme.isLight, visualRefreshEnabled);
+  const [darkShade, lightShade] = getTagColorsFromName(label, visualRefreshEnabled);
+  const backgroundColor = isLight ? lightShade : darkShade;
+  const borderColor = isLight ? darkShade : lightShade;
   const styles = useStyles2(getStyles);
 
   const countLabel = count !== 0 && <span style={{ marginLeft: '3px' }}>{`(${count})`}</span>;
@@ -24,7 +26,7 @@ export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
     <span
       className={styles.badge}
       style={{
-        backgroundColor: color,
+        backgroundColor,
         color: visualRefreshEnabled ? borderColor : undefined,
       }}
     >
