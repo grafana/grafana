@@ -14,7 +14,7 @@ import {
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { useFlagTableProtoRowParser } from '@grafana/runtime/internal';
+import { useFlagTableProtoRowParser, useFlagTableRefactorNested } from '@grafana/runtime/internal';
 import { type MatcherScope } from '@grafana/schema';
 import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
@@ -50,6 +50,7 @@ export function TablePanel(props: Props) {
   }, [data.series]);
 
   const tableProtoParserEnabled = useFlagTableProtoRowParser();
+  const nestedRefactorEnabled = useFlagTableRefactorNested();
   const theme = useTheme2();
   const panelContext = usePanelContext();
   const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
@@ -113,6 +114,7 @@ export function TablePanel(props: Props) {
       disableSanitizeHtml={disableSanitizeHtml}
       disableKeyboardEvents={options.disableKeyboardEvents}
       protoParserEnabled={tableProtoParserEnabled}
+      nestedRefactorEnabled={nestedRefactorEnabled}
     />
   );
 

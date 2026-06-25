@@ -6,22 +6,21 @@ import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo,
 import { Trans } from '@grafana/i18n';
 import { DataGrid, type DataGridHandle, type DataGridProps, type SortColumn } from '@grafana/react-data-grid';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
-import { Pagination } from '../../Pagination/Pagination';
-import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
-import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { type DataLinksActionsTooltipState } from '../cellUtils';
-
-import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
-import { getGridStyles, IS_SAFARI_26 } from './styles';
+import { useStyles2 } from '../../../../themes/ThemeContext';
+import { Pagination } from '../../../Pagination/Pagination';
+import { DataLinksActionsTooltip } from '../../DataLinksActionsTooltip';
+import { TableCellInspector, TableCellInspectorMode } from '../../TableCellInspector';
+import { type DataLinksActionsTooltipState } from '../../cellUtils';
+import { EmptyTablePlaceholder } from '../components/EmptyTablePlaceholder';
+import { getGridStyles, IS_SAFARI_26 } from '../styles';
 import {
   type CellRootRenderer,
   type InspectCellProps,
   type TableNGProps,
   type TableRow,
   type TableSummaryRow,
-} from './types';
-import { rowKeyGetter } from './utils';
+} from '../types';
+import { rowKeyGetter } from '../utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 type OnCellKeyDown = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellKeyDown']>;

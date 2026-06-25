@@ -16,12 +16,12 @@ import {
 import { type RenderRowProps } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { getTextColorForBackground } from '../../../utils/colors';
-import { type PanelContext } from '../../PanelChrome';
+import { getTextColorForBackground } from '../../../../utils/colors';
+import { type PanelContext } from '../../../PanelChrome';
+import { type FilterType, type NestedRowEntry, type TableRow, type TableSummaryRow } from '../types';
+import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from '../utils';
 
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
-import { type FilterType, type NestedRowEntry, type TableRow, type TableSummaryRow } from './types';
-import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows

@@ -147,6 +147,8 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of the proto-based parser
   protoParserEnabled?: boolean;
+  // temporary feature toggle to manage rollout of the refactored nested-table implementation
+  nestedRefactorEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
