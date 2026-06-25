@@ -117,7 +117,12 @@ describe('<SpanBar>', () => {
   it('labels the bar-side duration stats in a tooltip for summary spans', async () => {
     const summarySpan = {
       ...props.span,
-      aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMedianNs: 9_000_000, durationMaxNs: 60_000_000 },
+      aggregation: {
+        isSummary: true,
+        durationMinNs: 4_000_000,
+        durationMedianNs: 9_000_000,
+        durationMaxNs: 60_000_000,
+      },
     };
     render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
     await userEvent.hover(screen.getByText(shortLabel));
@@ -139,8 +144,7 @@ describe('<SpanBar>', () => {
       aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMaxNs: 60_000_000 },
     };
     // The detail is rendered as its own span sibling (not merged into the stats label).
-    const detailSpan = (content: string, el: Element | null) =>
-      el?.tagName === 'SPAN' && content.includes(labelDetail);
+    const detailSpan = (content: string, el: Element | null) => el?.tagName === 'SPAN' && content.includes(labelDetail);
 
     render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
     expect(screen.queryByText(detailSpan)).not.toBeInTheDocument();

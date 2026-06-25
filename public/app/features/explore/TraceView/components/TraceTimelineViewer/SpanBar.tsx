@@ -221,11 +221,21 @@ function SpanBar({
       >
         {summaryStats ? (
           <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
-            {expanded && detailBeforeStats && <span>{labelDetail}{' | '}</span>}
+            {expanded && detailBeforeStats && (
+              <span>
+                {labelDetail}
+                {' | '}
+              </span>
+            )}
             <SummaryDurationStatsTooltip stats={summaryStats}>
               <span>{shortLabel}</span>
             </SummaryDurationStatsTooltip>
-            {expanded && !detailBeforeStats && <span>{' | '}{labelDetail}</span>}
+            {expanded && !detailBeforeStats && (
+              <span>
+                {' | '}
+                {labelDetail}
+              </span>
+            )}
           </div>
         ) : (
           <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">

@@ -17,10 +17,7 @@ import userEvent from '@testing-library/user-event';
 
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 
-import {
-  summaryDefaultsOnly,
-  summaryWithConditionalAttrs,
-} from '../model/pruned-spans.fixture';
+import { summaryDefaultsOnly, summaryWithConditionalAttrs } from '../model/pruned-spans.fixture';
 import transformTraceData from '../model/transform-trace-data';
 import { type SpanLinkDef } from '../types/links';
 import { type TraceResponse, type TraceSpan } from '../types/trace';

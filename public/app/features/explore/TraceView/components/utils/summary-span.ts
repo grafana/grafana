@@ -29,7 +29,10 @@ export function getSummaryDurationStats(aggregation: SpanAggregation): SummaryDu
     { label: t('explore.summary-span.stat-min', 'Min'), value: formatDuration(durationMinNs / 1000) },
   ];
   if (durationMedianNs !== undefined) {
-    stats.push({ label: t('explore.summary-span.stat-median', 'Median'), value: formatDuration(durationMedianNs / 1000) });
+    stats.push({
+      label: t('explore.summary-span.stat-median', 'Median'),
+      value: formatDuration(durationMedianNs / 1000),
+    });
   }
   stats.push({ label: t('explore.summary-span.stat-max', 'Max'), value: formatDuration(durationMaxNs / 1000) });
   return stats;
