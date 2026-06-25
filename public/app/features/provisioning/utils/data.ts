@@ -130,6 +130,11 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
         generateDashboardPreviews: data.generateDashboardPreviews,
       };
       break;
+    case 'githubEnterprise':
+      spec.githubEnterprise = {
+        ...baseConfig,
+        generateDashboardPreviews: data.generateDashboardPreviews,
+      };
       break;
     case 'gitlab':
       spec.gitlab = baseConfig;
@@ -184,7 +189,7 @@ export const deriveSigningKeySecret = (
 };
 
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
-  const remoteConfig = spec.github || spec.gitlab || spec.bitbucket || spec.git;
+  const remoteConfig = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket || spec.git;
   // tokenUser is only available for bitbucket and pure git
   const tokenUser = spec.bitbucket?.tokenUser ?? spec.git?.tokenUser;
 
@@ -196,7 +201,8 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     branchOptions: spec.branch,
     url: remoteConfig?.url || '',
     tokenUser: tokenUser || '',
-    generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
+    generateDashboardPreviews:
+      spec.github?.generateDashboardPreviews || spec.githubEnterprise?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
@@ -211,6 +217,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
 export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
   switch (repository.type) {
     case 'github':
+    case 'githubEnterprise':
     case 'gitlab':
     case 'bitbucket':
     case 'git': {

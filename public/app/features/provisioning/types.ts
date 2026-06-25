@@ -3,6 +3,8 @@ import {
   type BranchOptions,
   type CommitOptions,
   type ConnectionSpec,
+  type GitHubConnectionConfig,
+  type GitHubEnterpriseConnectionConfig,
   type GitHubRepositoryConfig,
   type GitLabRepositoryConfig,
   type GitRepositoryConfig,
@@ -42,15 +44,22 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | R
 // Connection type definition - extracted from API client
 type ConnectionType = ConnectionSpec['type'];
 
-export type ConnectionFormData = {
+// Base fields shared by all connection providers. Provider-specific fields come from
+// the generated config types: appID/installationID from GitHubConnectionConfig, and
+// serverUrl additionally from GitHubEnterpriseConnectionConfig.
+type ConnectionFormDataBase = {
   type: ConnectionType;
   title: string;
   description: string;
-  appID: string;
-  installationID: string;
   privateKey?: string;
   webhookDisabled?: boolean;
 };
+
+export type GitHubConnectionFormData = ConnectionFormDataBase & GitHubConnectionConfig;
+
+export type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase & GitHubEnterpriseConnectionConfig;
+
+export type ConnectionFormData = GitHubConnectionFormData & GitHubEnterpriseConnectionFormData;
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {

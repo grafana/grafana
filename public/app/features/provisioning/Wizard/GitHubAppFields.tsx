@@ -37,16 +37,20 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
 
   const { setStepStatusInfo } = useStepStatus();
 
+  const repoType = watch('repository.type');
+  const isGitHubEnterprise = repoType === 'githubEnterprise';
+
   // GH app form
   const credentialForm = useForm<ConnectionFormData>({
     defaultValues: {
-      type: 'github',
+      type: isGitHubEnterprise ? 'githubEnterprise' : 'github',
       title: '',
       description: '',
       appID: '',
       installationID: '',
       privateKey: '',
       webhookDisabled: false,
+      serverUrl: '',
     },
   });
 
@@ -56,7 +60,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     isLoading,
     connections: githubConnections,
     error: connectionListError,
-  } = useConnectionOptions(true);
+  } = useConnectionOptions(true, repoType);
 
   const hasNoConnections = !isLoading && !connectionListError && githubConnections.length === 0;
 
@@ -79,14 +83,22 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       return;
     }
 
-    const { title, description, appID, installationID, privateKey, webhookDisabled } = credentialForm.getValues();
-    const spec: ConnectionSpec = {
-      type: 'github',
-      title,
-      ...(description && { description }),
-      github: { appID, installationID },
-      ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
-    };
+    const { title, description, appID, installationID, privateKey, webhookDisabled, serverUrl } = credentialForm.getValues();
+    const spec: ConnectionSpec = isGitHubEnterprise
+      ? {
+          type: 'githubEnterprise',
+          title,
+          ...(description && { description }),
+          ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
+          githubEnterprise: { appID, installationID, serverUrl },
+        }
+      : {
+          type: 'github',
+          title,
+          ...(description && { description }),
+          ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
+          github: { appID, installationID },
+        };
 
     const defaultErrorMessage = t(
       'provisioning.wizard.github-app-creation-default-error',
@@ -221,6 +233,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
         <FormProvider {...credentialForm}>
           <GitHubConnectionFields
             required
+            type={repoType}
             onNewConnectionCreation={handleCreateConnection}
             isCreating={connectionRequest.isLoading}
           />

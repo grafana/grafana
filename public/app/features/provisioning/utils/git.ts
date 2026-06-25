@@ -87,6 +87,13 @@ export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
         providerSegments: ['tree'],
         path: spec.github?.path,
       });
+    case 'githubEnterprise':
+      return buildRepoUrl({
+        baseUrl: spec.githubEnterprise?.url,
+        branch: spec.githubEnterprise?.branch,
+        providerSegments: ['tree'],
+        path: spec.githubEnterprise?.path,
+      });
     case 'gitlab':
       return buildRepoUrl({
         baseUrl: spec.gitlab?.url,
@@ -111,7 +118,7 @@ export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
 };
 
 export function getHasTokenInstructions(type: RepoType): type is InstructionAvailability {
-  return type === 'github' || type === 'gitlab' || type === 'bitbucket';
+  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
 }
 
 type GetRepoFileUrlParams = {
@@ -201,6 +208,7 @@ export function getRepoRawFileUrl({
   const cleanPath = stripSlashes(filePath);
 
   switch (repoType) {
+    case 'githubEnterprise':
     case 'github':
       return buildRepoUrl({
         baseUrl: url,
@@ -252,6 +260,7 @@ export function getRepoEditFileUrl({
   const fullPath = pathPrefix ? `${pathPrefix.replace(/\/+$/, '')}/${filePath}` : filePath;
 
   switch (repoType) {
+    case 'githubEnterprise':
     case 'github':
       return buildRepoUrl({
         baseUrl: url,
@@ -301,6 +310,7 @@ export function getRepoNewFileUrl({
   const fullPath = pathPrefix ? `${pathPrefix.replace(/\/+$/, '')}/${filePath}` : filePath;
 
   switch (repoType) {
+    case 'githubEnterprise':
     case 'github': {
       const base = buildRepoUrl({
         baseUrl: url,
@@ -366,6 +376,17 @@ export function getRepoCommitUrl(spec?: RepositorySpec, commit?: string) {
         providerSegments = ['commit'];
         url = buildRepoUrl({
           baseUrl: spec.github.url,
+          branch: undefined,
+          providerSegments,
+          path: commit,
+        });
+      }
+      break;
+    case 'githubEnterprise':
+      if (spec.githubEnterprise?.url) {
+        providerSegments = ['commit'];
+        url = buildRepoUrl({
+          baseUrl: spec.githubEnterprise.url,
           branch: undefined,
           providerSegments,
           path: commit,

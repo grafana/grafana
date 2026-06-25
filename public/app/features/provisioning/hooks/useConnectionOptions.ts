@@ -5,15 +5,21 @@ import { useAsync } from 'react-use';
 import { t } from '@grafana/i18n';
 import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { type RepoType } from '../Wizard/types';
 import { type ExternalRepository } from '../types';
 import { isConnectionReady } from '../utils/connectionStatus';
 import { formatRepoUrl } from '../utils/git';
 
 import { useConnectionList } from './useConnectionList';
 
-export function useConnectionOptions(enabled: boolean) {
+// GitHub App connections are typed by provider: a githubEnterprise repository must
+// use a githubEnterprise connection (which carries the serverUrl), not a github one.
+export function useConnectionOptions(enabled: boolean, connectionType: RepoType = 'github') {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
-  const githubConnections = useMemo(() => connections?.filter((c) => c.spec?.type === 'github') ?? [], [connections]);
+  const githubConnections = useMemo(
+    () => connections?.filter((c) => c.spec?.type === connectionType) ?? [],
+    [connections, connectionType]
+  );
 
   // Only fetch repos for ready connections
   const connectionNames = useMemo(
