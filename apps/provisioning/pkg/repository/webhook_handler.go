@@ -11,14 +11,14 @@ import (
 )
 
 // WebhookEventType classifies a normalized inbound webhook delivery.
-type WebhookEventType int
+type WebhookEventType string
 
 const (
-	WebhookEventUnsupported WebhookEventType = iota
-	WebhookEventPing
-	WebhookEventReplay
-	WebhookEventPush
-	WebhookEventPullRequest
+	WebhookEventUnsupported WebhookEventType = "unsupported"
+	WebhookEventPing        WebhookEventType = "ping"
+	WebhookEventReplay      WebhookEventType = "replay"
+	WebhookEventPush        WebhookEventType = "push"
+	WebhookEventPullRequest WebhookEventType = "pull_request"
 )
 
 type PullRequestAction string
@@ -38,6 +38,7 @@ type ProcessRequestFunc func(ctx context.Context, req *http.Request) (WebhookEve
 type WebhookHandler struct {
 	processReqFunc    ProcessRequestFunc
 	status            *provisioning.WebhookStatus
+	repoType          provisioning.RepositoryType
 	repoName          string
 	repoSlug          string
 	branch            string
@@ -61,10 +62,11 @@ type WebhookEvent struct {
 	Message      string
 }
 
-func NewWebhookHandler(processReqFunc ProcessRequestFunc, status *provisioning.WebhookStatus, repoName, repoSlug, branch string, syncEnabled bool, incrementalPolicy IncrementalSyncPolicy) *WebhookHandler {
+func NewWebhookHandler(processReqFunc ProcessRequestFunc, status *provisioning.WebhookStatus, repoType provisioning.RepositoryType, repoName, repoSlug, branch string, syncEnabled bool, incrementalPolicy IncrementalSyncPolicy) *WebhookHandler {
 	return &WebhookHandler{
 		processReqFunc:    processReqFunc,
 		status:            status,
+		repoType:          repoType,
 		repoName:          repoName,
 		repoSlug:          repoSlug,
 		branch:            branch,
@@ -86,6 +88,17 @@ func (m *WebhookHandler) Webhook(ctx context.Context, req *http.Request) (*provi
 	if err != nil {
 		return nil, err
 	}
+
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With(
+		"provider", m.repoType,
+		"type", event.Type,
+		"action", event.Action,
+		"slug", event.RepoSlug,
+		"branch", event.Branch,
+		"pr", event.PRNumber,
+		"changes", event.TotalChanges,
+	))
+	logging.FromContext(ctx).Debug("webhook event received")
 
 	switch event.Type {
 	case WebhookEventPush:

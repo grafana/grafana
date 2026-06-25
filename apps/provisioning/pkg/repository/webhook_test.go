@@ -988,7 +988,7 @@ func TestWebhookHandler_Webhook(t *testing.T) {
 				return tt.event, tt.processErr
 			}
 
-			h := NewWebhookHandler(processReqFunc, status, "test-repo", "grafana/grafana", "main", !tt.syncDisabled, NewIncrementalSyncPolicy(false, 5))
+			h := NewWebhookHandler(processReqFunc, status, provisioning.GitHubRepositoryType, "test-repo", "grafana/grafana", "main", !tt.syncDisabled, NewIncrementalSyncPolicy(false, 5))
 
 			rsp, err := h.Webhook(t.Context(), &http.Request{})
 

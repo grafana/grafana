@@ -52,7 +52,7 @@ func NewGithubWebhookRepository(
 		replayCache:      replay,
 	}
 	r.WebhookHandler = repository.NewWebhookHandler(
-		r.processRequest, cfg.Status.Webhook, cfg.GetName(), slug,
+		r.processRequest, cfg.Status.Webhook, cfg.Spec.Type, cfg.GetName(), slug,
 		cfg.Spec.GitHub.Branch, cfg.Spec.Sync.Enabled, incrementalPolicy,
 	)
 	r.WebhookManager = repository.NewWebhookManager(basic.Client(), cfg.Status.Webhook, webhookURL, subscribedEvents,
