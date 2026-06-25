@@ -2010,6 +2010,7 @@ export type WebhookStatus = {
   lastRotated?: number;
   subscribedEvents?: string[];
   url?: string;
+  uuid?: string;
 };
 export type RepositoryStatus = {
   /** Conditions represent the latest available observations of the repository's state. */

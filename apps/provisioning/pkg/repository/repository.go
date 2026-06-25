@@ -208,7 +208,7 @@ type WebhookSecretRotator interface {
 // Each provider implements it with its own struct holding the common fields
 // plus any provider-specific ones.
 type WebhookConfig interface {
-	GetID() int64
+	GetID() string
 	GetURL() string
 	GetEvents() []string
 	// GetSecret is empty when fetched from the provider, as it is never returned.
@@ -221,9 +221,9 @@ type WebhookConfig interface {
 //go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
 type WebhookClient interface {
 	CreateWebhook(ctx context.Context, url string, events []string, secret string) (WebhookConfig, error)
-	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
+	GetWebhook(ctx context.Context, webhookID string) (WebhookConfig, error)
 	EditWebhook(ctx context.Context, hook WebhookConfig) error
-	DeleteWebhook(ctx context.Context, webhookID int64) error
+	DeleteWebhook(ctx context.Context, webhookID string) error
 }
 
 type FileAction string

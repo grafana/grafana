@@ -5680,6 +5680,9 @@
           },
           "url": {
             "type": "string"
+          },
+          "uuid": {
+            "type": "string"
           }
         }
       },

@@ -428,7 +428,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             )}
           </>
         )}
-        {(type === 'github' || type === 'gitlab') && (
+        {(type === 'github' || type === 'gitlab' || type === 'bitbucket') && (
           <WebhookSection<RepositoryFormData>
             register={register}
             control={control}

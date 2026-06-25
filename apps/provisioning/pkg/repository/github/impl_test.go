@@ -559,7 +559,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 		mockHandler *http.Client
 		owner       string
 		repository  string
-		webhookID   int64
+		webhookID   string
 		want        repo.WebhookConfig
 		wantErr     error
 	}{
@@ -586,7 +586,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  123,
+			webhookID:  "123",
 			want: &webhookConfig{
 				ID:          123,
 				Events:      []string{"push", "pull_request"},
@@ -619,7 +619,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  456,
+			webhookID:  "456",
 			want: &webhookConfig{
 				ID:          456,
 				Events:      []string{"push"},
@@ -647,7 +647,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  999,
+			webhookID:  "999",
 			wantErr:    repo.ErrFileNotFound,
 		},
 		{
@@ -668,7 +668,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  123,
+			webhookID:  "123",
 			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
@@ -689,7 +689,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  123,
+			webhookID:  "123",
 			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
@@ -733,7 +733,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 		mockHandler *http.Client
 		owner       string
 		repository  string
-		webhookID   int64
+		webhookID   string
 		wantErr     error
 	}{
 		{
@@ -748,7 +748,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  123,
+			webhookID:  "123",
 			wantErr:    nil,
 		},
 		{
@@ -769,7 +769,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  456,
+			webhookID:  "456",
 			wantErr:    repo.ErrFileNotFound,
 		},
 		{
@@ -790,7 +790,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  789,
+			webhookID:  "789",
 			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
@@ -811,7 +811,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  789,
+			webhookID:  "789",
 			wantErr:    repo.ErrUnauthorized,
 		},
 		{
@@ -832,7 +832,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			webhookID:  101,
+			webhookID:  "101",
 			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -324,8 +325,12 @@ func (r *githubClient) CreateWebhook(ctx context.Context, url string, events []s
 	}, nil
 }
 
-func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.WebhookConfig, error) {
-	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, webhookID)
+func (r *githubClient) GetWebhook(ctx context.Context, webhookID string) (repo.WebhookConfig, error) {
+	id, err := strconv.ParseInt(webhookID, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid webhook id %q: %w", webhookID, err)
+	}
+	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, id)
 	if err != nil {
 		return nil, translateGitHubError(err)
 	}
@@ -347,8 +352,12 @@ func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.We
 	}, nil
 }
 
-func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID int64) error {
-	_, err := r.gh.Repositories.DeleteHook(ctx, r.owner, r.repo, webhookID)
+func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID string) error {
+	id, err := strconv.ParseInt(webhookID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid webhook id %q: %w", webhookID, err)
+	}
+	_, err = r.gh.Repositories.DeleteHook(ctx, r.owner, r.repo, id)
 	if err != nil {
 		return translateGitHubError(err)
 	}

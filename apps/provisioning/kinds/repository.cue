@@ -169,7 +169,9 @@ repository: {
 					count:    int
 				}
 				#WebhookStatus: {
-					id?:     int
+					id?: int
+					// TODO: consolidate id and uuid into a single string identifier in the next version.
+					uuid?:   string
 					url?:    string
 					secret?: string
 					encryptedSecret?: [...string]
