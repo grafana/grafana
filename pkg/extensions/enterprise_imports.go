@@ -542,7 +542,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	_ "github.com/grafana/grafana/pkg/tests/apis"
 	_ "github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	_ "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	_ "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	_ "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"

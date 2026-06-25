@@ -18,7 +18,6 @@ func TestNewPlugin(t *testing.T) {
 		ExpectedNotFoundErr bool
 	}{
 		{ID: AzureMonitor},
-		{ID: CloudMonitoring},
 		{ID: CloudWatch},
 		{ID: Grafana, ExpectedNotFoundErr: true},
 		{ID: Graphite},
