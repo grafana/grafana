@@ -6,6 +6,7 @@ import {
   getAvailableResourceKinds,
   getKindInfoByItemType,
   getKindInfoByResource,
+  getKindInfoByStat,
   getKindInfoByStatGroup,
   getRepositoryRoute,
   isResourceKindAvailable,
@@ -75,6 +76,33 @@ describe('getKindInfoByStatGroup', () => {
 
   it('returns undefined for unknown groups', () => {
     expect(getKindInfoByStatGroup('alert.grafana.app')).toBeUndefined();
+  });
+});
+
+describe('getKindInfoByStat', () => {
+  it('resolves by the plural resource name', () => {
+    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'dashboards' })).toBe(
+      resourceKindInfos.dashboard
+    );
+    expect(getKindInfoByStat({ group: 'playlist.grafana.app', resource: 'playlists' })).toBe(
+      resourceKindInfos.playlist
+    );
+  });
+
+  it('prefers the resource over the group when they point at different kinds', () => {
+    // The resource uniquely identifies the kind, so it wins over a group that
+    // would otherwise resolve to a different kind.
+    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'folders' })).toBe(resourceKindInfos.folder);
+  });
+
+  it('falls back to a group-only match when the resource is missing or unknown', () => {
+    expect(getKindInfoByStat({ group: 'folder.grafana.app' })).toBe(resourceKindInfos.folder);
+    expect(getKindInfoByStat({ group: 'folders' })).toBe(resourceKindInfos.folder);
+  });
+
+  it('returns undefined when neither resource nor group is known', () => {
+    expect(getKindInfoByStat({ group: 'alert.grafana.app', resource: 'rules' })).toBeUndefined();
+    expect(getKindInfoByStat({})).toBeUndefined();
   });
 });
 
