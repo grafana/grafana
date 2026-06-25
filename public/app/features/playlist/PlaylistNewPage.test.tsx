@@ -129,12 +129,11 @@ describe('PlaylistNewPage', () => {
       const { postSpy } = getTestContext({ isAvailable: true, repositories });
 
       await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), 'Repo Playlist');
-      // Open the repository combobox and select the repository (the second option, after "Grafana
-      // (no repository)") via the keyboard — the options list is virtualized so the row may not be
-      // queryable in jsdom, but downshift still tracks the highlighted index.
+      // Select the (only) repository. No selection = stored in Grafana (a cleared placeholder, not a
+      // literal row), so ArrowDown highlights the first repo. Options are virtualized in jsdom and
+      // not reliably queryable, but downshift still tracks the highlighted index.
       const combobox = await screen.findByRole('combobox', { name: /repository/i });
       await userEvent.click(combobox);
-      // The options list is virtualized (rows aren't reliably queryable in jsdom), so select via the keyboard.
       await userEvent.keyboard('{ArrowDown}{Enter}');
 
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));

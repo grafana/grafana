@@ -77,7 +77,9 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       [checkFile, repository?.name, watch]
     );
 
-    const shouldValidatePath = isNew && resourceType === 'dashboard';
+    // New resources with an editable path (dashboards, playlists) get a path-exists check so a
+    // duplicate path is caught before submit rather than only by the API.
+    const shouldValidatePath = isNew && (resourceType === 'dashboard' || resourceType === 'playlist');
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
@@ -269,7 +271,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
           />
         )}
 
-        {/* Path — single read-only field for existing resources */}
+        {/* Path — single field (read-only for existing resources, editable + validated when new) */}
         {!hiddenFields?.includes('path') && !showFolderFilename && (
           <Field
             noMargin
@@ -278,8 +280,15 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
               pathText
             )}
+            invalid={!!errors.path}
+            error={errors?.path?.message}
           >
-            <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
+            <Input
+              id="dashboard-path"
+              type="text"
+              {...register('path', shouldValidatePath ? { validate: validatePath } : undefined)}
+              readOnly={!isNew}
+            />
           </Field>
         )}
 

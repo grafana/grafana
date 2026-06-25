@@ -18,7 +18,7 @@ import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
 
 interface Props {
-  onSubmit: (playlist: Playlist) => void;
+  onSubmit: (playlist: Playlist) => void | Promise<void>;
   playlist: Playlist;
   /** Renders a repository selector at the top of the form. */
   showRepositorySelect?: boolean;
@@ -61,19 +61,25 @@ export const PlaylistForm = ({
       : ''
     : selectedRepository; // undefined leaves nothing selected (placeholder)
 
-  const doSubmit = (specUpdates: Playlist['spec']) => {
+  const doSubmit = async (specUpdates: Playlist['spec']) => {
     setSaving(true);
     // Strip UI-only properties (dashboards) from items before submission
     const apiItems = items.map(({ dashboards, ...item }) => item);
-    onSubmit({
-      ...playlist,
-      spec: {
-        ...specUpdates,
-        interval: specUpdates?.interval ?? '5m',
-        title: specUpdates?.title ?? '',
-        items: apiItems,
-      },
-    });
+    try {
+      // The direct-save path navigates away; the provisioned path returns after opening the drawer,
+      // so reset `saving` here or the Save button would keep spinning behind the drawer.
+      await onSubmit({
+        ...playlist,
+        spec: {
+          ...specUpdates,
+          interval: specUpdates?.interval ?? '5m',
+          title: specUpdates?.title ?? '',
+          items: apiItems,
+        },
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -120,7 +126,8 @@ export const PlaylistForm = ({
                 <RepositorySelect
                   repositories={repositories}
                   value={repositoryFieldValue}
-                  onChange={disableRepositorySelect ? () => {} : (onRepositoryChange ?? (() => {}))}
+                  // readOnly already disables the Combobox, so onChange can't fire when locked.
+                  onChange={onRepositoryChange ?? (() => {})}
                   readOnly={disableRepositorySelect}
                 />
               </Box>
