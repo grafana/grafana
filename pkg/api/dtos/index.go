@@ -39,6 +39,7 @@ type IndexViewData struct {
 	// Empty means no auto-login redirect should occur.
 	AutoLoginRedirectURL  string `json:"autoLoginRedirectURL,omitempty"`
 	AssetSriChecksEnabled bool   `json:"-"`
+	NewPreferencesPage    bool   `json:"-"`
 }
 
 type EntryPointAssets struct {

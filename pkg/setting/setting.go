@@ -646,6 +646,7 @@ type Cfg struct {
 	NewsFeedEnabled bool
 
 	// Experimental scope settings
+	ScopesApiEnabled        bool
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
@@ -663,6 +664,12 @@ type Cfg struct {
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
 	// Default: false.
 	MigrationParquetBuffer bool
+	// MigrationChunkedWrites writes each migration chunk in its own transaction,
+	// bounded by migration_chunk_max_bytes. Requires migration_locking=true for HA. Default: false.
+	MigrationChunkedWrites bool
+	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
+	// when MigrationChunkedWrites is enabled. Default: 256 MiB.
+	MigrationChunkMaxBytes int64
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
 	RenameWaitDeadline time.Duration
@@ -684,6 +691,7 @@ type Cfg struct {
 	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
 	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url; requires enable_kv_leases.
 	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial. Used only when index_snapshot_storage_kv is true.
+	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB. Used only when index_snapshot_storage_kv is true.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
 	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
 	IndexSnapshotCleanupGracePeriod            time.Duration // Time a new snapshot must exist before its predecessor in the same Grafana-version group is eligible for cleanup (default: 30m)
@@ -1060,7 +1068,11 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	cfg.AnnotationAppPlatform = loadAnnotationAppPlatformSettings(cfg.Raw)
+	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg.Raw)
+	if err != nil {
+		return err
+	}
+	cfg.AnnotationAppPlatform = annotationAppPlatformSettings
 
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:
@@ -1144,15 +1156,39 @@ type AnnotationAppPlatformSettings struct {
 	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
 	// for new annotations.
 	EnableLegacyID bool
+
+	// MaxScopeCount caps how many scopes may be attached to a single
+	// annotation. 0 means no scopes are allowed. Negative values are
+	// rejected at load time. Default 5.
+	MaxScopeCount int
+
+	// APIMigrationPhase controls legacy API proxy behavior.
+	// Values: "off" (default), "proxy-writes", "proxy-all".
+	APIMigrationPhase string
+
+	// APIServerURL is the URL of the standalone annotation API server.
+	// Empty means proxy is disabled regardless of APIMigrationPhase.
+	APIServerURL string
 }
 
-func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
+func (s AnnotationAppPlatformSettings) ProxyEnabled() bool {
+	return s.APIMigrationPhase == "proxy-writes" || s.APIMigrationPhase == "proxy-all"
+}
+
+func (s AnnotationAppPlatformSettings) ProxyAll() bool {
+	return s.APIMigrationPhase == "proxy-all"
+}
+
+func loadAnnotationAppPlatformSettings(cfg *ini.File) (AnnotationAppPlatformSettings, error) {
 	appPlatformSection := cfg.Section("annotations.app_platform")
-	return AnnotationAppPlatformSettings{
-		Enabled:        appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:   appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:   appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
-		EnableLegacyID: appPlatformSection.Key("enable_legacy_id").MustBool(false),
+	settings := AnnotationAppPlatformSettings{
+		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		MaxScopeCount:     appPlatformSection.Key("max_scope_count").MustInt(5),
+		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString("off"),
+		APIServerURL:      appPlatformSection.Key("api_server_url").MustString(""),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
@@ -1167,6 +1203,12 @@ func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSetti
 		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
 		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
 	}
+
+	if settings.MaxScopeCount < 0 {
+		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_scope_count] must not be negative")
+	}
+
+	return settings, nil
 }
 
 // envNameFromIniName converts an ini-style name (section or key) to the
@@ -1778,6 +1820,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")
+	cfg.ScopesApiEnabled = scopesSection.Key("api_enabled").MustBool(false)
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 

@@ -99,16 +99,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default true
-  */
-  renderAuthJWT?: boolean;
-  /**
-  * Refactor time range variables flow to reduce number of API calls made when query variables are chained
-  * @default false
-  */
-  refactorVariablesTimeRange?: boolean;
-  /**
   * Enable the data source selector within the Frontend Apps section of the Frontend Observability
   * @default false
   */
@@ -164,11 +154,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features in dashboards
-  * @default true
-  */
-  dashgpt?: boolean;
-  /**
   * Enable AI powered features for dashboards to auto-summary changes when saving
   * @default false
   */
@@ -223,11 +208,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesLibraryPanels?: boolean;
-  /**
-  * Enables k8s short URL API and uses it under the hood when handling legacy /api
-  * @default true
-  */
-  kubernetesShortURLs?: boolean;
   /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
@@ -298,11 +278,6 @@ export interface FeatureToggles {
   * @default false
   */
   cloudWatchBatchQueries?: boolean;
-  /**
-  * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
-  * @default false
-  */
-  cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   * @default false
@@ -403,11 +378,6 @@ export interface FeatureToggles {
   * @default true
   */
   feedbackButton?: boolean;
-  /**
-  * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
-  * @default false
-  */
-  panelFilterVariable?: boolean;
   /**
   * Enables generating table data as PDF in reporting
   * @default false
@@ -599,11 +569,6 @@ export interface FeatureToggles {
   */
   newSavedQueriesExperience?: boolean;
   /**
-  * Enables the new unconfigured panel experience
-  * @default true
-  */
-  newUnconfiguredPanel?: boolean;
-  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -719,11 +684,6 @@ export interface FeatureToggles {
   * @default true
   */
   prometheusAzureOverrideAudience?: boolean;
-  /**
-  * Enable grafana dataplane aggregator
-  * @default false
-  */
-  dataplaneAggregator?: boolean;
   /**
   * Allows authenticated API calls in actions
   * @default false
@@ -1105,11 +1065,6 @@ export interface FeatureToggles {
   */
   experimentRecentlyViewedDashboards?: boolean;
   /**
-  * Enables the created by me search filter on the browse dashboards page
-  * @default false
-  */
-  createdByMeSearchFilter?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1139,11 +1094,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingDisableDMAinUI?: boolean;
-  /**
-  * Enables image sharing functionality for dashboards
-  * @default true
-  */
-  sharingDashboardImage?: boolean;
   /**
   * Prefer library panel title over viz panel title.
   * @default false
@@ -1201,7 +1151,7 @@ export interface FeatureToggles {
   favoriteDatasources?: boolean;
   /**
   * New Log Context component
-  * @default false
+  * @default true
   */
   newLogContext?: boolean;
   /**
@@ -1211,7 +1161,7 @@ export interface FeatureToggles {
   newClickhouseConfigPageDesign?: boolean;
   /**
   * Enables team folders functionality
-  * @default false
+  * @default true
   */
   teamFolders?: boolean;
   /**
@@ -1287,7 +1237,7 @@ export interface FeatureToggles {
   vizLegendFacetedFilter?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default false
+  * @default true
   */
   heatmapRowsAxisOptions?: boolean;
   /**
@@ -1295,11 +1245,6 @@ export interface FeatureToggles {
   * @default false
   */
   pieChartGradientColorScheme?: boolean;
-  /**
-  * Restrict PanelChrome contents with overflow: hidden;
-  * @default true
-  */
-  preventPanelChromeOverflow?: boolean;
   /**
   * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
   * @default false
@@ -1351,11 +1296,6 @@ export interface FeatureToggles {
   */
   transformationsEmptyPlaceholder?: boolean;
   /**
-  * Run queries through the data source backend
-  * @default false
-  */
-  opentsdbBackendMigration?: boolean;
-  /**
   * Enable TTL plugin instance manager
   * @default false
   */
@@ -1376,7 +1316,8 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for variables whose values can have multiple properties
+  * Deprecated. Enables support for variables whose values can have multiple properties
+  * @deprecated
   * @default true
   */
   multiPropsVariables?: boolean;
@@ -1507,7 +1448,7 @@ export interface FeatureToggles {
   alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
-  * @default false
+  * @default true
   */
   react19?: boolean;
   /**

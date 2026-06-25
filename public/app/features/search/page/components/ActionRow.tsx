@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { type FormEvent } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
@@ -76,7 +75,6 @@ export const ActionRow = ({
   const styles = useStyles2(getStyles);
 
   const layout = getValidQueryLayout(state);
-  const showCreatedByMeSearchFilter = useBooleanFlagValue('createdByMeSearchFilter', false);
 
   // Disabled folder layout option when query is present
   const disabledOptions = needsListLayout(state) ? [SearchLayout.Folders] : [];
@@ -110,7 +108,7 @@ export const ActionRow = ({
             />
           </div>
         )}
-        {showCreatedByMeSearchFilter && onCreatedByChange && (
+        {onCreatedByChange && (
           <div className={styles.checkboxWrapper}>
             <Checkbox
               label={t('search.actions.created-by-me', 'Created by me')}
@@ -151,6 +149,7 @@ export const ActionRow = ({
           getSortOptions={getSortOptions}
           placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
           isClearable
+          width={28}
         />
       </Stack>
     </Stack>

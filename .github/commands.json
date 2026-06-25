@@ -117,23 +117,7 @@
   },
   {
     "type": "label",
-    "name": "datasource/OpenTSDB",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Loki",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Tempo",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/457"
@@ -945,6 +929,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/792"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/grafana-assistant",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/1145"
     }
   },
   {

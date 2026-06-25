@@ -63,10 +63,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagRefactorVariablesTimeRange
-	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
-	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
-
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
@@ -147,10 +143,6 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
-	// FlagKubernetesShortURLs
-	// Enables k8s short URL API and uses it under the hood when handling legacy /api
-	FlagKubernetesShortURLs = "kubernetesShortURLs"
-
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"
@@ -206,10 +198,6 @@ const (
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
-
-	// FlagCachingOptimizeSerializationMemoryUsage
-	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
-	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
 
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
@@ -363,6 +351,10 @@ const (
 	// Enables org-defined dashboard templates for enterprise
 	FlagGrafanaOrgDashboardTemplates = "grafana.orgDashboardTemplates"
 
+	// FlagGrafanaCustomDashboardTemplates
+	// Enables custom dashboard templates for enterprise
+	FlagGrafanaCustomDashboardTemplates = "grafana.customDashboardTemplates"
+
 	// FlagAlertingNavigationV2
 	// Enables the new Alerting navigation structure with improved menu grouping
 	FlagAlertingNavigationV2 = "alertingNavigationV2"
@@ -418,10 +410,6 @@ const (
 	// FlagPrometheusAzureOverrideAudience
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
-
-	// FlagDataplaneAggregator
-	// Enable grafana dataplane aggregator
-	FlagDataplaneAggregator = "dataplaneAggregator"
 
 	// FlagAppPlatformGrpcClientAuth
 	// Enables the gRPC client to authenticate with the App Platform by using ID & access tokens
@@ -750,10 +738,6 @@ const (
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
-	// FlagOpentsdbBackendMigration
-	// Run queries through the data source backend
-	FlagOpentsdbBackendMigration = "opentsdbBackendMigration"
-
 	// FlagKubernetesAlertingHistorian
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
@@ -934,6 +918,10 @@ const (
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
 
+	// FlagGrafanaNewPreferencesPage
+	// Whether to use the new SharedPreferences functional component
+	FlagGrafanaNewPreferencesPage = "grafana.newPreferencesPage"
+
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
 	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
@@ -981,4 +969,12 @@ const (
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
+
+	// FlagDashboardVectorSearch
+	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
+	FlagDashboardVectorSearch = "dashboard.vectorSearch"
+
+	// FlagSplunkUseLegacyResultsApi
+	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
+	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
 )

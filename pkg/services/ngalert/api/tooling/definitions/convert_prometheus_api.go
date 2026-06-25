@@ -356,6 +356,9 @@ type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
 	// If true, validates the configuration without saving it
 	// in: header
 	DryRun bool `json:"x-grafana-alerting-dry-run"`
+	// If true, immediately promotes the configuration into the main Grafana config, making it editable via regular APIs.
+	// in: header
+	Promote bool `json:"x-grafana-alerting-promote"`
 	// Alertmanager configuration including routing rules, receivers, and template files
 	// in:body
 	Body AlertmanagerUserConfig

@@ -26,6 +26,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionSecure{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
 		ConnectionSpec{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
 		ConnectionStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
+		ConnectionWebhookConfig{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref),
 		DeleteJobOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
 		ErrorDetails{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
 		ExportJobOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
@@ -488,12 +489,18 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 							Ref:         ref(GitlabConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
+					"webhook": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Webhook configuration for this connection",
+							Ref:         ref(ConnectionWebhookConfig{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"title", "type"},
 			},
 		},
 		Dependencies: []string{
-			BitbucketConnectionConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
+			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -568,6 +575,25 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 		},
 		Dependencies: []string{
 			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -715,6 +741,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 									},
 								},
 							},
+						},
+					},
+					"generateNewFolderIDs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. Use this to produce a portable export that creates new folders on a subsequent sync rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
@@ -954,13 +987,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref common.Ref
 							Format:      "",
 						},
 					},
-					"webhookDisabled": {
-						SchemaProps: spec.SchemaProps{
-							Description: "WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 				},
 				Required: []string{"appID", "installationID"},
 			},
@@ -1080,13 +1106,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"webhookDisabled": {
-						SchemaProps: spec.SchemaProps{
-							Description: "WebhookDisabled disables webhook integration for this repository. When true, Grafana will not register or receive webhook events from GitHub and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -1923,6 +1942,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 							},
 						},
 					},
+					"generateNewFolderIDs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -2660,12 +2686,24 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 							Ref:         ref(CommitOptions{}.OpenAPIModelName()),
 						},
 					},
+					"branchOptions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Branch naming options. Mirrors spec.branch. Exposed under `branchOptions` rather than `branch` because the view already uses `branch` for the git target branch name.",
+							Ref:         ref(BranchOptions{}.OpenAPIModelName()),
+						},
+					},
+					"pullRequest": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pull request options. Mirrors the same-named field on the repository spec.",
+							Ref:         ref(PullRequestOptions{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"name", "title", "type", "target", "workflows"},
 			},
 		},
 		Dependencies: []string{
-			CommitOptions{}.OpenAPIModelName()},
+			BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName()},
 	}
 }
 
@@ -3608,6 +3646,13 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref common.ReferenceCal
 						SchemaProps: spec.SchemaProps{
 							Description: "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
