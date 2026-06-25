@@ -314,6 +314,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ADMIN
     {
       path: '/admin',
+      roles: () => ['Admin', 'ServerAdmin'],
       component: () => <NavLandingPage navId="cfg" header={<ConnectionsRedirectNotice />} />,
     },
     {
@@ -325,6 +326,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.LDAPStatusRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
       ),
@@ -338,6 +340,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/settings',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')
       ),
@@ -348,36 +351,42 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgUsersRead, AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage')
       ),
     },
     {
       path: '/admin/users/create',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')
       ),
     },
     {
       path: '/admin/users/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
       ),
     },
     {
       path: '/admin/orgs',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')
       ),
     },
     {
       path: '/admin/orgs/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
       ),
     },
     {
       path: '/admin/stats',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionServerStatsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
