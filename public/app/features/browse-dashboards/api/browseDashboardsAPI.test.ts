@@ -223,7 +223,7 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 5,
         dashboards: 6,
-        library_elements: 7,
+        librarypanels: 7,
         alertrules: 9,
       });
     });
@@ -252,7 +252,7 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 3,
         dashboards: 3,
-        library_elements: 4,
+        librarypanels: 4,
         alertrules: 5,
       });
     });
@@ -272,7 +272,7 @@ describe('browseDashboardsAPI', () => {
       expect(result.data).toEqual({
         folders: 1,
         dashboards: 5,
-        library_elements: 0,
+        librarypanels: 0,
         alertrules: 0,
       });
       expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);

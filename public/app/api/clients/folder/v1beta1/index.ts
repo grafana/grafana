@@ -93,7 +93,7 @@ export const folderAPIv1beta1 = generatedAPI
           const initialCounts: DescendantCount = {
             folders: folderUIDs.length,
             dashboards: dashboardUIDs.length,
-            library_elements: 0,
+            librarypanels: 0,
             alertrules: 0,
           };
 
@@ -113,7 +113,7 @@ export const folderAPIv1beta1 = generatedAPI
               acc.folders += counts.folders ?? 0;
               acc.dashboards += counts.dashboards ?? 0;
               acc.alertrules += counts.alertrules ?? 0;
-              acc.library_elements += counts.library_elements ?? 0;
+              acc.librarypanels += counts.librarypanels ?? 0;
               return acc;
             }, initialCounts);
 

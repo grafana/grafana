@@ -53,6 +53,6 @@ export interface DescendantCountDTO {
   alertrule?: number;
 }
 
-type DescendantResource = 'folders' | 'dashboards' | 'library_elements' | 'alertrules';
+type DescendantResource = 'folders' | 'dashboards' | 'librarypanels' | 'alertrules';
 /** Summary of descendant counts by resource type, with keys matching the App Platform API response */
 export interface DescendantCount extends Record<DescendantResource, number> {}

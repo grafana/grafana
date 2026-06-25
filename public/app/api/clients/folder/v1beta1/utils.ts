@@ -36,27 +36,44 @@ export async function isProvisionedFolderCheck(
   }
 }
 
+// Maps legacy resource names emitted by the `sql-fallback` group onto the unified-storage
+// resource names so both code paths collapse into a single entry. The `sql-fallback` path
+// counts the legacy `library_element` table and reports it as `library_elements`, while
+// unified storage reports the same resource as `librarypanels`.
+const RESOURCE_NAME_ALIASES: Record<string, string> = {
+  library_elements: 'librarypanels',
+};
+
+const normalizeResourceName = (resource: string): string => RESOURCE_NAME_ALIASES[resource] ?? resource;
+
 /**
  * Normalizes a descendant counts response into a `{ resource: count }` map.
  *
  * The API may return two entries for the same resource — one from the resource's own group
- * (e.g. `dashboard.grafana.app`) and one from the `sql-fallback` group. The non-fallback
- * entry wins; the fallback is only kept when no other entry exists for that resource.
+ * (e.g. `dashboard.grafana.app`) and one from the `sql-fallback` group, sometimes under a
+ * different legacy resource name (see `RESOURCE_NAME_ALIASES`). The non-fallback entry is
+ * preferred, but a count of 0 is treated as "no data" and never beats a non-zero count,
+ * even one coming from the fallback group.
  */
 export const getParsedCounts = (counts: ResourceStats[]): Record<string, number> => {
   const result: Record<string, number> = {};
-  const isFromFallback: Record<string, boolean> = {};
+  const priorities: Record<string, number> = {};
+
+  // Higher priority wins. A non-zero count outranks a zero one, and within the same
+  // zero/non-zero tier a non-fallback entry outranks an sql-fallback entry.
+  const priorityOf = (count: number, fromFallback: boolean): number => {
+    if (count !== 0) {
+      return fromFallback ? 2 : 3;
+    }
+    return fromFallback ? 0 : 1;
+  };
 
   for (const { resource, count, group } of counts) {
-    const fromFallback = group === 'sql-fallback';
-    if (
-      // first time we see this resource count
-      !(resource in result) ||
-      // or we have count already, but that count is sql-fallback and now we have non fallback value
-      (isFromFallback[resource] && !fromFallback)
-    ) {
-      result[resource] = count;
-      isFromFallback[resource] = fromFallback;
+    const name = normalizeResourceName(resource);
+    const priority = priorityOf(count, group === 'sql-fallback');
+    if (!(name in result) || priority > priorities[name]) {
+      result[name] = count;
+      priorities[name] = priority;
     }
   }
 
