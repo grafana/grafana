@@ -140,6 +140,7 @@ Query expressions are different for each data source. For more information, refe
 {{< /admonition >}}
 
 1. [Enter general options](#enter-general-options-for-any-variable).
+1. Click **Open variable editor**.
 1. Configure the following options:
 
    | Option              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -157,6 +158,7 @@ Query expressions are different for each data source. For more information, refe
 
 1. Click **Run query** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. Click **Close** to close the query variable editor dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
@@ -184,6 +186,7 @@ Use a _custom_ variable for a value that doesn't change, such as a number or a s
 For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they don't change, you might use them in [chained variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/advanced-variables/#chained-variables) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
 1. [Enter general options](#enter-general-options-for-any-variable).
+1. Click **Open variable editor**.
 1. Configure the following options:
 
    | Option              | Description                                                                                                                                                                                                                                                                                                           |
@@ -196,6 +199,7 @@ For example, if you have server names or region names that never change, then yo
 
 1. Click **Run query** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
+1. Click **Apply** to close the query editor dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to list** to add or edit other variables, or **Back to dashboard** and then **Exit edit**.
