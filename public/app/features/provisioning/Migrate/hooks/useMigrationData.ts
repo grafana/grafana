@@ -161,7 +161,8 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
       try {
         const needsFolders = kinds.some((kind) => kind.folderScoped);
         const [folders, rawResults] = await Promise.all([
-          needsFolders ? resourceKindInfos.folder.list({ dispatch }) : Promise.resolve<ListedResource[]>([]),
+          // Folders list through the searcher and ignore dispatch.
+          needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
           Promise.all(kinds.map((kind) => kind.list({ dispatch }))),
         ]);
         if (cancelled) {

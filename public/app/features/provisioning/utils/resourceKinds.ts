@@ -34,7 +34,7 @@ export interface ListedResource {
 
 /** Dependencies a kind's `list()` may need. `dispatch` lets a kind read through
  * an RTK Query client imperatively. */
-export interface ResourceListDeps {
+interface ResourceListDeps {
   dispatch: AppDispatch;
 }
 

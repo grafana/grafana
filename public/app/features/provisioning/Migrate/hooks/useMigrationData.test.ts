@@ -6,7 +6,6 @@ import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handler
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
-import { dispatch } from 'app/types/store';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 import { getMigratableKinds, resourceKindInfos } from '../../utils/resourceKinds';
@@ -195,7 +194,7 @@ describe('useMigrationData (non-folder kinds)', () => {
     );
 
     // Library panels list via getBackendSrv and ignore dispatch.
-    const result = await resourceKindInfos.librarypanel.list({ dispatch });
+    const result = await resourceKindInfos.librarypanel.list();
     expect(result).toEqual([]);
   });
 
