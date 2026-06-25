@@ -217,12 +217,22 @@ func (s *webhookConnector) webhook(ctx context.Context, req *http.Request, hooks
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	ctx = logging.Context(ctx, logging.FromContext(ctx).With("slug", hooks.Slug(), "ref", hooks.Branch()))
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With("provider", hooks.Config().Spec.Type, "slug", hooks.Slug(), "ref", hooks.Branch()))
 
 	event, err := hooks.ProcessRequest(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx = logging.Context(ctx, logging.FromContext(ctx).With(
+		"type", event.Type,
+		"action", event.Action,
+		"slug", event.RepoSlug,
+		"branch", event.Branch,
+		"pr", event.PRNumber,
+		"changes", event.TotalChanges,
+	))
+	logging.FromContext(ctx).Debug("webhook event received")
 
 	// Silently drop a delivery whose replay key we have already processed within
 	// the cache TTL — returning a generic 200 avoids confirming to a replay
