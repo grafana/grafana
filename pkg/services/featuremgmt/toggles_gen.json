@@ -3555,6 +3555,7 @@
         "name": "multiPropsVariables",
         "resourceVersion": "1781873846528",
         "creationTimestamp": "2025-12-09T17:11:49Z",
+        "deletionTimestamp": "2026-06-25T12:46:20Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-19 12:57:26.528739 +0000 UTC"
         }

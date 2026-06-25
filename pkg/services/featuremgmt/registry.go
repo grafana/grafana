@@ -2397,14 +2397,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:        "multiPropsVariables",
-			Description: "Deprecated. Enables support for variables whose values can have multiple properties",
-			Stage:       FeatureStageDeprecated,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "dashboardSectionVariables",
 			Description: "Enables support for section level variables (rows and tabs)",
 			Stage:       FeatureStageGeneralAvailability,
