@@ -241,5 +241,8 @@ function getWebhookURL(repo: Repository) {
   if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
     return textUtil.sanitizeUrl(`${spec.github.url}/settings/hooks/${status.webhook?.id}`);
   }
+  if (spec?.type === 'gitlab' && status?.webhook?.url && spec.gitlab?.url) {
+    return textUtil.sanitizeUrl(`${spec.gitlab.url}/-/hooks/${status.webhook?.id}/edit`);
+  }
   return undefined;
 }
