@@ -107,8 +107,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   useEffect(() => {
     if (connectionWebhookDisabled) {
       setValue('webhook.disabled', true);
-    } else {
-      setValue('webhook.disabled', false);
     }
   }, [connectionWebhookDisabled, setValue]);
 
@@ -437,6 +435,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             name="webhook.baseUrl"
             disabledName="webhook.disabled"
             connectionWebhookDisabled={connectionWebhookDisabled}
+            disabledError={errors?.webhook?.disabled?.message}
           />
         )}
 

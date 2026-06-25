@@ -37,7 +37,7 @@ export const FinishStep = memo(function FinishStep() {
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
 
-  const [connections] = useConnectionList(isGithub ? {} : skipToken);
+  const [connections] = useConnectionList(isGithub && githubAuthType === 'github-app' ? {} : skipToken);
   const connectionWebhookDisabled = useMemo(() => {
     if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
       return false;
@@ -51,12 +51,10 @@ export const FinishStep = memo(function FinishStep() {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
 
-  // Auto-set webhook disabled when the selected connection requires it, clear when it no longer does
+  // Force webhook disabled when the selected connection requires it
   useEffect(() => {
     if (connectionWebhookDisabled) {
       setValue('repository.webhook.disabled', true);
-    } else {
-      setValue('repository.webhook.disabled', false);
     }
   }, [connectionWebhookDisabled, setValue]);
 
@@ -178,6 +176,7 @@ export const FinishStep = memo(function FinishStep() {
           name="repository.webhook.baseUrl"
           disabledName="repository.webhook.disabled"
           connectionWebhookDisabled={connectionWebhookDisabled}
+          disabledError={errors?.repository?.webhook?.disabled?.message}
         />
       )}
     </Stack>

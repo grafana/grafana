@@ -12,6 +12,7 @@ export interface WebhookSectionProps<T extends FieldValues> {
   name: Path<T>;
   disabledName: Path<T>;
   connectionWebhookDisabled?: boolean;
+  disabledError?: string;
 }
 
 export function WebhookSection<T extends FieldValues>({
@@ -20,6 +21,7 @@ export function WebhookSection<T extends FieldValues>({
   name,
   disabledName,
   connectionWebhookDisabled,
+  disabledError,
 }: WebhookSectionProps<T>) {
   const isPublic = checkPublicAccess();
   const webhookDisabled = Boolean(useWatch({ control, name: disabledName }));
@@ -30,6 +32,8 @@ export function WebhookSection<T extends FieldValues>({
       <Stack direction="column" gap={2}>
         <Field
           noMargin
+          invalid={!!disabledError}
+          error={disabledError}
           description={
             connectionWebhookDisabled
               ? t(
@@ -55,7 +59,6 @@ export function WebhookSection<T extends FieldValues>({
         </Field>
         <Field
           noMargin
-          disabled={urlDisabled}
           label={t('provisioning.webhook-section.label-webhook-url', 'Webhook URL')}
           description={
             <>

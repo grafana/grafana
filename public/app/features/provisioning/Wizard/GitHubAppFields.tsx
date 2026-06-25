@@ -5,12 +5,13 @@ import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-fo
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Checkbox, Combobox, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Combobox, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
+import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
@@ -223,16 +224,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
             onNewConnectionCreation={handleCreateConnection}
             isCreating={connectionRequest.isLoading}
           />
-          <Field noMargin>
-            <Checkbox
-              {...credentialForm.register('webhookDisabled')}
-              label={t('provisioning.connection-form.label-webhook-disabled', 'Disable webhook integration')}
-              description={t(
-                'provisioning.connection-form.description-webhook-disabled',
-                'When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.'
-              )}
-            />
-          </Field>
+          <WebhookDisabledField registration={credentialForm.register('webhookDisabled')} />
         </FormProvider>
       )}
     </Stack>
