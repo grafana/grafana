@@ -7240,6 +7240,14 @@
       "selection-options": "Selection options",
       "static-options-legend": "Static options"
     },
+    "refresh-select": {
+      "options": {
+        "label": {
+          "on-dashboard-load": "On dashboard load",
+          "on-time-range-change": "On time range change"
+        }
+      }
+    },
     "resource-export": {
       "classic-v2-warning": "This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in the classic format and may be lost.",
       "label": {

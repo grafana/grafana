@@ -403,11 +403,6 @@ export function shouldHideControlsMenuOption(variable: SceneVariable): boolean {
   return !dashboardVariable;
 }
 
-const REFRESH_OPTIONS = [
-  { label: 'On dashboard load', value: VariableRefresh.onDashboardLoad },
-  { label: 'On time range change', value: VariableRefresh.onTimeRangeChanged },
-];
-
 function useVariableTypeCategory(variable: SceneVariable) {
   const oldVariableId = useId();
   const refreshId = useId();
@@ -458,9 +453,22 @@ function useVariableTypeCategory(variable: SceneVariable) {
 
 function RefreshSelect({ variable }: { variable: QueryVariable }) {
   const { refresh } = variable.useState();
+  const options = useMemo(
+    () => [
+      {
+        label: t('dashboard-scene.refresh-select.options.label.on-dashboard-load', 'On dashboard load'),
+        value: VariableRefresh.onDashboardLoad,
+      },
+      {
+        label: t('dashboard-scene.refresh-select.options.label.on-time-range-change', 'On time range change'),
+        value: VariableRefresh.onTimeRangeChanged,
+      },
+    ],
+    []
+  );
   return (
     <Combobox
-      options={REFRESH_OPTIONS}
+      options={options}
       value={refresh}
       onChange={(o) => {
         variable.setState({ refresh: o.value });
