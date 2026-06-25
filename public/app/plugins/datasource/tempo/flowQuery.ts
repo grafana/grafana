@@ -113,6 +113,13 @@ export function composeFlowTableBytesQuery(filters: FlowFacetFilter[]): string {
   return `${composeFilter(filters)} | sum_over_time(span.flow.io.bytes) by (${FLOW_TABLE_GROUP_BY})`;
 }
 
+// Destination -> country lookup. Country is 1:1 with destination, so we fetch it
+// separately (2 group-by) and join it onto the flow table — the table's own group-by
+// is already at the 5-value TraceQL limit.
+export function composeFlowCountryMapQuery(filters: FlowFacetFilter[]): string {
+  return `${composeFilter(filters)} | count_over_time() by (span.destination.address, span.destination.geo.country.iso_code)`;
+}
+
 // TraceQL serializes string attribute values in metrics-series labels wrapped in
 // double quotes (e.g. `"egress"`). Strip one surrounding pair so values display
 // cleanly and round-trip correctly back into composeFilter. Numeric/boolean

@@ -1,6 +1,63 @@
 import { type DataFrame, FieldType, NodeGraphDataFrameFieldNames as Fields, toDataFrame } from '@grafana/data';
 
-import { extractFlowEdges, flowEdgesToNodeGraph } from './flowTransform';
+import { extractDestCountry, extractFlowEdges, flowEdgesToNodeGraph, flowSeriesToTable } from './flowTransform';
+
+function tuple5(host: string, proc: string, dest: string, port: string, transport: string, value: number): DataFrame {
+  return toDataFrame({
+    refId: 'A',
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [0] },
+      {
+        name: 'value',
+        type: FieldType.number,
+        values: [value],
+        labels: {
+          'resource.service.name': host,
+          'span.process.executable.name': proc,
+          'span.destination.address': dest,
+          'span.destination.port': port,
+          'span.network.transport': transport,
+        },
+      },
+    ],
+  });
+}
+
+function fields(frame: DataFrame): string[] {
+  return frame.fields.map((f) => f.name);
+}
+
+describe('flowSeriesToTable + extractDestCountry', () => {
+  it('joins a Country column after Destination from the dest->country map', () => {
+    const count = [tuple5('web-1', 'curl', '1.2.3.4', '443', 'tcp', 9)];
+    const bytes = [tuple5('web-1', 'curl', '1.2.3.4', '443', 'tcp', 4096)];
+    const countryFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [0] },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [9],
+          labels: { 'span.destination.address': '"1.2.3.4"', 'span.destination.geo.country.iso_code': '"US"' },
+        },
+      ],
+    });
+
+    const countryByDest = extractDestCountry([countryFrame]);
+    expect(countryByDest.get('1.2.3.4')).toBe('US');
+
+    const frame = flowSeriesToTable(count, bytes, countryByDest);
+    expect(fields(frame)).toEqual(['Host', 'Process', 'Destination', 'Country', 'Port', 'Transport', 'Flows', 'Bytes']);
+    const countryCol = frame.fields.find((f) => f.name === 'Country')!;
+    expect((countryCol.values.toArray ? countryCol.values.toArray() : countryCol.values)[0]).toBe('US');
+  });
+
+  it('omits the Country column when no map is given', () => {
+    const frame = flowSeriesToTable([tuple5('web-1', 'curl', '1.2.3.4', '443', 'tcp', 9)], []);
+    expect(fields(frame)).not.toContain('Country');
+  });
+});
 
 function groupedFrame(host: string, dest: string, value: number): DataFrame {
   return toDataFrame({

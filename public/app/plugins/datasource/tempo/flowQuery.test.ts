@@ -3,6 +3,7 @@ import {
   composeFacetQuery,
   composeFlowTableCountQuery,
   composeFlowTableBytesQuery,
+  composeFlowCountryMapQuery,
   composeTopologyCountQuery,
   composeTopologyBytesQuery,
   FLOW_FACETS,
@@ -81,6 +82,12 @@ describe('flow table queries', () => {
   it('sums io bytes over the 5-tuple', () => {
     expect(composeFlowTableBytesQuery([])).toBe(
       '{ name = "network.flow" } | sum_over_time(span.flow.io.bytes) by (resource.service.name, span.process.executable.name, span.destination.address, span.destination.port, span.network.transport)'
+    );
+  });
+
+  it('maps destination to country', () => {
+    expect(composeFlowCountryMapQuery([])).toBe(
+      '{ name = "network.flow" } | count_over_time() by (span.destination.address, span.destination.geo.country.iso_code)'
     );
   });
 });

@@ -23,11 +23,12 @@ import {
   composeFilter,
   composeFlowTableCountQuery,
   composeFlowTableBytesQuery,
+  composeFlowCountryMapQuery,
   composeTopologyCountQuery,
   composeTopologyBytesQuery,
   unquoteLabel,
 } from './flowQuery';
-import { extractFlowEdges, flowEdgesToTable, flowSeriesToTable } from './flowTransform';
+import { extractDestCountry, extractFlowEdges, flowEdgesToTable, flowSeriesToTable } from './flowTransform';
 import { type TempoQuery } from './types';
 
 interface Props {
@@ -160,6 +161,9 @@ function FlowResults({
   const [frame, setFrame] = useState<DataFrame | null>(null);
   const [loading, setLoading] = useState(false);
   const rangeKey = range ? `${String(range.raw.from)}/${String(range.raw.to)}` : 'default';
+  // Key on filter CONTENT, not object identity, so a re-render with a new-but-equal
+  // filters array doesn't trigger a spurious re-fetch.
+  const filtersKey = JSON.stringify(filters);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,22 +171,26 @@ function FlowResults({
     const isTopology = flowView === 'topology';
     const countQuery = isTopology ? composeTopologyCountQuery(filters) : composeFlowTableCountQuery(filters);
     const bytesQuery = isTopology ? composeTopologyBytesQuery(filters) : composeFlowTableBytesQuery(filters);
+    const queries = [runFlowMetrics(datasource, countQuery, range), runFlowMetrics(datasource, bytesQuery, range)];
+    if (!isTopology) {
+      // Country is 1:1 with destination; fetch the dest->country map and join it on.
+      queries.push(runFlowMetrics(datasource, composeFlowCountryMapQuery(filters), range));
+    }
 
-    Promise.all([runFlowMetrics(datasource, countQuery, range), runFlowMetrics(datasource, bytesQuery, range)])
-      .then(([countFrames, bytesFrames]) => {
+    Promise.all(queries)
+      .then(([countFrames, bytesFrames, countryFrames]) => {
         if (cancelled) {
           return;
         }
         setFrame(
           isTopology
             ? flowEdgesToTable(extractFlowEdges(countFrames, bytesFrames))
-            : flowSeriesToTable(countFrames, bytesFrames)
+            : flowSeriesToTable(countFrames, bytesFrames, extractDestCountry(countryFrames ?? []))
         );
       })
       .catch(() => {
-        if (!cancelled) {
-          setFrame(null);
-        }
+        // Keep the last good frame — a transient/canceled re-fetch shouldn't flicker the
+        // table to empty when data is actually present.
       })
       .finally(() => {
         if (!cancelled) {
@@ -193,7 +201,7 @@ function FlowResults({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasource, flowView, filters, rangeKey]);
+  }, [datasource, flowView, filtersKey, rangeKey]);
 
   // Plain HTML table on purpose: @grafana/ui's Table code-splits into an async chunk that
   // fails to load from this plugin (ChunkLoadError), and a few-column table doesn't need it.
