@@ -63,6 +63,20 @@ type FolderAPIBuilder struct {
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 	permissionsOnCreate bool // cfg.RBAC.PermissionsOnCreation("folder")
 
+	// cascadeDeleteEnabled is the kubernetesFolderCascadeDelete flag captured once at boot in
+	// storageForVersion. Admission (Mutate/Validate) reads this instead of re-evaluating the flag
+	// per request, so the cascade finalizer is only ever stamped when the finalizer storage wrapper
+	// and the cascade watcher -- both boot-time, process-global decisions -- are also active.
+	// Re-evaluating per request would let a runtime or per-tenant flag flip stamp a finalizer that
+	// nothing ever removes, leaving the folder stuck terminating.
+	cascadeDeleteEnabled bool
+
+	// forceDeleteEnabled gates honoring gracePeriodSeconds=0 to bypass the empty-folder check on
+	// delete. It is true when kubernetesFolderForceDelete is on, or implied by cascadeDeleteEnabled
+	// (a non-empty folder can only be cascaded by first bypassing the empty check). Captured at boot
+	// alongside cascadeDeleteEnabled.
+	forceDeleteEnabled bool
+
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
 	// Do not access directly: use `resourcePermissionsClient(ctx)`. In embedded mode this is
@@ -194,7 +208,14 @@ func (b *FolderAPIBuilder) storageForVersion(
 		return err
 	}
 	b.registerPermissionHooks(unified)
-	b.storage = unified
+	b.cascadeDeleteEnabled = kubernetesFolderCascadeDeleteEnabled(context.Background())
+	// Cascade implies force: a non-empty folder can only be cascaded by bypassing the empty check.
+	b.forceDeleteEnabled = b.cascadeDeleteEnabled || kubernetesFolderForceDeleteEnabled(context.Background())
+	// Always wrap in finalizerStorage, even when cascade is disabled: folders created while it was
+	// enabled carry the finalizer durably, and the wrapper is what strips it so they can still be
+	// deleted. The wrapper gates cascade behavior on cascadeDeleteEnabled internally.
+	st := newFinalizerStorage(unified, b.searcher, b.cascadeDeleteEnabled)
+	b.storage = st
 
 	// This is the ST wrapper
 	if b.folderPermissionsSvc != nil {
@@ -203,7 +224,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
 			permissionsOnCreate:  b.permissionsOnCreate,
-			store:                unified,
+			store:                st,
 		}
 	}
 
@@ -451,18 +472,27 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return grafanaauthorizer.NewServiceAuthorizer()
 }
 
-func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	verb := a.GetOperation()
-	if verb == admission.Create || verb == admission.Update {
+func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, oi admission.ObjectInterfaces) error {
+	switch a.GetOperation() {
+	case admission.Create, admission.Update:
 		obj := a.GetObject()
+		if obj == nil {
+			return nil
+		}
 		f, ok := obj.(*foldersv1.Folder)
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
+		if b.cascadeDeleteEnabled {
+			ensureCascadeFinalizerOnObject(f)
+		}
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
+	case admission.Delete:
+		return nil
+	default:
+		return nil
 	}
-	return nil
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
@@ -493,16 +523,25 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
 			return err
 		}
-		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
+		if err := validateTerminatingLabelUnchanged(ctx, f, nil); err != nil {
+			return err
+		}
+		return validateOnCreate(ctx, f, b.storage, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
-		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx))
+		return validateOnDelete(ctx, f, b.searcher, deleteOptions, b.forceDeleteEnabled, b.cascadeDeleteEnabled)
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
+			return err
+		}
+		if err := validateTerminatingLabelUnchanged(ctx, f, old); err != nil {
+			return err
+		}
+		if err := validateCascadeFinalizerPreserved(ctx, f, old); err != nil {
 			return err
 		}
 		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.accessClient, b.maxNestedFolderDepth)

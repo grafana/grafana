@@ -522,6 +522,27 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
+	// When folder cascade-delete is enabled, hand the whole deletion to the folder API server: a
+	// single delete of this folder triggers the finalizer-driven cascade (the API server marks the
+	// subtree terminating and the cascade poller drives it to completion, deleting child folders and
+	// their contained dashboards, library elements and alert rules). forceDeleteRules maps onto the
+	// API server's opt-in -- gracePeriodSeconds=0 bypasses the empty-folder check so a non-empty
+	// folder cascades, while a normal delete still rejects a non-empty folder as before.
+	//
+	// This gates on the boot-time decision (s.cascadeDeleteEnabled), the same one the API server
+	// admission/validation and the poller capture at startup. A per-request read could diverge from
+	// them if the flag is flipped dynamically or per-tenant after boot: this path would send
+	// gracePeriodSeconds=0 while the API server validation (still cascadeDeleteEnabled=false) rejects
+	// the non-empty folder, regressing the legacy ForceDeleteRules path.
+	if s.cascadeDeleteEnabled {
+		opts := metav1.DeleteOptions{}
+		if cmd.ForceDeleteRules {
+			zero := int64(0)
+			opts.GracePeriodSeconds = &zero
+		}
+		return s.k8sclient.Delete(ctx, cmd.UID, cmd.OrgID, opts)
+	}
+
 	descFolders, err := s.unifiedStore.GetDescendants(ctx, cmd.OrgID, cmd.UID)
 	if err != nil {
 		return err

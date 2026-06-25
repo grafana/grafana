@@ -48,6 +48,13 @@ type Service struct {
 	dashboardK8sClient     client.K8sHandler
 	publicDashboardService publicdashboards.ServiceWrapper
 
+	// cascadeDeleteEnabled is the kubernetesFolderCascadeDelete decision captured once at boot, the
+	// same way the folder API server (storageForVersion) and the cascade poller capture it. Delete
+	// reads this instead of re-evaluating the flag per request: a dynamic or per-tenant flip after
+	// startup would otherwise make Delete take the K8s force path while the API server validation
+	// still rejects non-empty folders, regressing the legacy ForceDeleteRules path.
+	cascadeDeleteEnabled bool
+
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
 	tracer   trace.Tracer
@@ -74,6 +81,9 @@ func ProvideService(
 		tracer:                 tracer,
 		publicDashboardService: publicDashboardService,
 		maxNestedFolderDepth:   cfg.MaxNestedFolderDepth,
+		// Capture the cascade-delete decision once, with a background context so it reflects the
+		// global (non per-tenant) value -- matching the folder API server and poller boot-time reads.
+		cascadeDeleteEnabled: cascadeDeleteFlagEnabled(context.Background()),
 	}
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())

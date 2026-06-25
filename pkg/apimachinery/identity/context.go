@@ -166,6 +166,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"dashboards:read",
 	"dashboards:write",
 	"dashboards:create",
+	"dashboards:delete", // ActionDashboardsDelete
 	"datasources:query",
 	"datasources:read",
 	"datasources:delete",
@@ -175,6 +176,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:delete", // ActionLibraryPanelsDelete
 	"playlists:read",        // playlist.ActionPlaylistsRead
 	"playlists:write",       // playlist.ActionPlaylistsWrite
+	"alert.rules:delete",    // ActionAlertingRuleDelete
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
 	"notifications.alerting.grafana.app/configs:get",           // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.

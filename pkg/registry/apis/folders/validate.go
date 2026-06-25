@@ -75,7 +75,90 @@ func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Fo
 	return nil
 }
 
-func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
+// validateTerminatingLabelUnchanged rejects a user attempt to set, change, or remove the terminating
+// label. That label is what the cascade poller selects on, and a folder carrying it has its contained
+// dashboards/library elements/alert rules deleted and the cascade driven to completion. The label is
+// managed exclusively by the cascade machinery, which stamps it via a direct store update that
+// bypasses admission -- so any change to it arriving *through* admission from a non-service identity
+// is a user trying to trigger a cascade by relabeling a live folder (no DELETE involved), which would
+// delete its contents. The service identity is allowed (the poller's drain strips the label).
+func validateTerminatingLabelUnchanged(ctx context.Context, f *folders.Folder, old *folders.Folder) error {
+	if identity.IsServiceIdentity(ctx) {
+		return nil
+	}
+	newVal := f.GetLabels()[TerminatingLabel]
+	oldVal := ""
+	if old != nil {
+		oldVal = old.GetLabels()[TerminatingLabel]
+	}
+	if newVal == oldVal {
+		return nil
+	}
+	gr := schema.GroupResource{
+		Group:    folders.FolderResourceInfo.GroupVersionResource().Group,
+		Resource: folders.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+	return apierrors.NewForbidden(gr, f.Name,
+		fmt.Errorf("the %q label is managed by folder cascade deletion and cannot be set or modified", TerminatingLabel))
+}
+
+// validateCascadeFinalizerPreserved stops an ordinary client from stripping the cascade-delete
+// finalizer off a folder that is already terminating. Without it, a metadata-only PUT that drops the
+// finalizer would let garbage collection remove the folder before the cascade poller has deleted its
+// contained dashboards, alert rules, and library elements -- orphaning them. The poller clears the
+// finalizer legitimately once cleanup is done, but it runs as a service identity (which is exempt
+// here), so that path is the only one allowed to remove it.
+//
+// Only terminating folders are guarded: on a folder that is not terminating, the Mutate admission
+// step re-adds the finalizer, so a user cannot durably strip it there.
+func validateCascadeFinalizerPreserved(ctx context.Context, f *folders.Folder, old *folders.Folder) error {
+	if old == nil || identity.IsServiceIdentity(ctx) {
+		return nil
+	}
+	if !folderIsTerminating(old) || !hasCascadeFinalizer(old.Finalizers) {
+		return nil
+	}
+	if hasCascadeFinalizer(f.Finalizers) {
+		return nil
+	}
+	gr := schema.GroupResource{
+		Group:    folders.FolderResourceInfo.GroupVersionResource().Group,
+		Resource: folders.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+	return apierrors.NewForbidden(gr, f.Name,
+		fmt.Errorf("the %q finalizer is managed by folder cascade deletion and cannot be removed while the folder is terminating", CascadeDeleteFinalizer))
+}
+
+// folderIsTerminating reports whether a folder is being cascade-deleted: it has a deletion timestamp,
+// or carries the terminating label. The label is stamped before the timestamp and is admission-
+// protected, so it only ever reflects a real, in-progress delete -- which is why checking it (not
+// just the timestamp) closes the window between marking and the timestamp being persisted.
+func folderIsTerminating(f *folders.Folder) bool {
+	if ts := f.GetDeletionTimestamp(); ts != nil && !ts.IsZero() {
+		return true
+	}
+	return f.GetLabels()[TerminatingLabel] == TerminatingLabelValue
+}
+
+// rejectChildIntoTerminatingParent refuses to place childName under parentName when the parent is
+// being deleted. Otherwise the cascade could list the parent's children, then this new child is
+// added, and the parent gets finalized and removed while the child was never marked terminating --
+// orphaning a live folder. Mirrors the apiserver refusing to create objects in a terminating
+// namespace. A parent that cannot be fetched is left to the caller's existing parent-resolution.
+func rejectChildIntoTerminatingParent(ctx context.Context, getter rest.Getter, parentName, childName string) error {
+	parentObj, err := getter.Get(ctx, parentName, &metav1.GetOptions{})
+	if err != nil {
+		return nil
+	}
+	parent, ok := parentObj.(*folders.Folder)
+	if !ok || !folderIsTerminating(parent) {
+		return nil
+	}
+	return apierrors.NewForbidden(folders.FolderResourceInfo.GroupVersionResource().GroupResource(), childName,
+		fmt.Errorf("folder %q is being deleted and cannot accept new child folders", parentName))
+}
+
+func validateOnCreate(ctx context.Context, f *folders.Folder, getter rest.Getter, parents parentsGetter, maxDepth int) error {
 	id := f.Name
 
 	if slices.Contains([]string{
@@ -120,15 +203,19 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return folder.ErrAPIFolderCannotBeParentOfItself
 	}
 
-	// note: `parents` will include itself as the last item
-	parents, err := getter(ctx, f)
+	if err := rejectChildIntoTerminatingParent(ctx, getter, parentName, f.Name); err != nil {
+		return err
+	}
+
+	// note: the parent chain will include the folder itself as the last item
+	chain, err := parents(ctx, f)
 	if err != nil {
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 
 	// Can not create a folder that will be too deep.
 	// We need to add +1 as we also have the root folder as part of the parents.
-	if len(parents.Items) > maxDepth+1 {
+	if len(chain.Items) > maxDepth+1 {
 		return folder.ErrMaximumDepthReached.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
 	}
 
@@ -204,6 +291,10 @@ func validateOnUpdate(ctx context.Context,
 	parent, ok := parentObj.(*folders.Folder)
 	if !ok {
 		return fmt.Errorf("expected folder, found %T", parentObj)
+	}
+	if folderIsTerminating(parent) {
+		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupVersionResource().GroupResource(), obj.Name,
+			fmt.Errorf("folder %q is being deleted and cannot accept moved folders", newParent))
 	}
 	info, err := parents(ctx, parent)
 	if err != nil {
@@ -511,39 +602,63 @@ func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
 	deleteOptions *metav1.DeleteOptions,
+	forceDeleteEnabled bool,
 	cascadeDeleteEnabled bool,
 ) error {
-	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
-	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
-	// check; until cascade reconciliation runs, child resources are left orphaned.
-	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
-		logging.FromContext(ctx).Warn(
-			"folder force-delete bypassing empty check; cascade deletion is not yet wired up so sub-folders, dashboards, alert rules, and library elements under this folder will be orphaned. This is a temporary state during the cascade delete rollout.",
-			"folder", f.Name,
-			"namespace", f.Namespace,
-		)
+	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 (same pattern as dashboard delete
+	// validation), gated on force delete being enabled. This only bypasses the empty-folder check.
+	// With cascade delete also enabled, the API server marks the subtree terminating and a poller
+	// deletes the nested folders and their contents; with force delete alone there is no cascade, so
+	// child folders and contained dashboards/alert rules/library elements are left orphaned.
+	if forceDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
+		if !cascadeDeleteEnabled {
+			// Force-only delete orphans the folder's contents. Warn for a user-initiated delete;
+			// service-identity deletes (e.g. a cleanup job) are expected, so keep those at debug.
+			msg := "folder force-delete bypassing empty-folder check without cascade; child folders and contained dashboards, alert rules, and library elements will be orphaned"
+			if identity.IsServiceIdentity(ctx) {
+				logging.FromContext(ctx).Debug(msg, "folder", f.Name, "namespace", f.Namespace)
+			} else {
+				logging.FromContext(ctx).Warn(msg, "folder", f.Name, "namespace", f.Namespace)
+			}
+		}
 		return nil
 	}
 
-	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
+	res, count, err := folderContents(ctx, searcher, f.Namespace, f.Name)
 	if err != nil {
 		return err
 	}
+	if res != "" {
+		return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", count, res)
+	}
+	return nil
+}
+
+// folderContentResourceTypes are the resource kinds whose presence makes a folder non-empty.
+var folderContentResourceTypes = []string{"alertrules", "dashboards", "library_elements", "folders"}
+
+// folderContents reports the first counted resource type the folder still contains (a child folder,
+// dashboard, alert rule, or library element) and its count, or ("", 0) when the folder is empty. It
+// is the shared source of truth for the empty-folder check used by both delete admission and the
+// storage fast-path. The counts come from search stats, so the answer is eventually consistent.
+func folderContents(ctx context.Context, searcher resourcepb.ResourceIndexClient, namespace, name string) (string, int64, error) {
+	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: namespace, Kinds: countedKinds, Folder: []string{name}})
+	if err != nil {
+		return "", 0, err
+	}
 
 	if resp != nil && resp.Error != nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+		return "", 0, fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
 
 	if resp.Stats == nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+		return "", 0, fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
 	}
-
-	allowedResourceTypes := []string{"alertrules", "dashboards", "library_elements", "folders"}
 
 	for _, v := range resp.Stats {
-		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {
-			return folder.ErrFolderNotEmpty.Errorf("folder is not empty, contains %d %s", v.Count, v.Resource)
+		if slices.Contains(folderContentResourceTypes, v.Resource) && v.Count > 0 {
+			return v.Resource, v.Count, nil
 		}
 	}
-	return nil
+	return "", 0, nil
 }

@@ -350,7 +350,7 @@ func TestValidateCreate(t *testing.T) {
 
 			getter := newParentsGetter(mockStorage, maxDepth)
 
-			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
+			err := validateOnCreate(context.Background(), tt.folder, mockStorage, getter, maxDepth)
 
 			if tt.expectedErr == nil {
 				require.NoError(t, err)
@@ -865,12 +865,12 @@ func TestValidateDelete(t *testing.T) {
 	zeroGrace := int64(0)
 
 	tests := []struct {
-		name                 string
-		folder               *folders.Folder
-		searcher             *mockSearchClient
-		deleteOptions        *metav1.DeleteOptions
-		cascadeDeleteEnabled bool
-		expectedErr          string
+		name               string
+		folder             *folders.Folder
+		searcher           *mockSearchClient
+		deleteOptions      *metav1.DeleteOptions
+		forceDeleteEnabled bool
+		expectedErr        string
 	}{{
 		name: "simple delete",
 		folder: &folders.Folder{
@@ -939,8 +939,8 @@ func TestValidateDelete(t *testing.T) {
 				},
 			},
 		},
-		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
-		cascadeDeleteEnabled: true,
+		deleteOptions:      &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		forceDeleteEnabled: true,
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is blocked when feature is disabled",
 		folder: &folders.Folder{
@@ -959,9 +959,9 @@ func TestValidateDelete(t *testing.T) {
 				},
 			},
 		},
-		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
-		cascadeDeleteEnabled: false,
-		expectedErr:          "[folder.not-empty]",
+		deleteOptions:      &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		forceDeleteEnabled: false,
+		expectedErr:        "[folder.not-empty]",
 	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
@@ -1089,7 +1089,8 @@ func TestValidateDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled)
+			// cascadeDeleteEnabled only affects orphan-warning logging, not the bypass decision under test.
+			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.forceDeleteEnabled, false)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -1099,6 +1100,122 @@ func TestValidateDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateTerminatingLabelUnchanged(t *testing.T) {
+	userCtx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+	svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+	withLabel := map[string]string{TerminatingLabel: TerminatingLabelValue}
+	folder := func(labels map[string]string) *folders.Folder {
+		return &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", Labels: labels}}
+	}
+
+	t.Run("user cannot set the label on create", func(t *testing.T) {
+		err := validateTerminatingLabelUnchanged(userCtx, folder(withLabel), nil)
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("user create without the label is allowed", func(t *testing.T) {
+		require.NoError(t, validateTerminatingLabelUnchanged(userCtx, folder(nil), nil))
+	})
+
+	t.Run("user cannot add the label on update", func(t *testing.T) {
+		err := validateTerminatingLabelUnchanged(userCtx, folder(withLabel), folder(nil))
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("user cannot remove the label on update", func(t *testing.T) {
+		err := validateTerminatingLabelUnchanged(userCtx, folder(nil), folder(withLabel))
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("user update leaving the label unchanged is allowed", func(t *testing.T) {
+		require.NoError(t, validateTerminatingLabelUnchanged(userCtx, folder(withLabel), folder(withLabel)))
+	})
+
+	t.Run("service identity may set or strip the label", func(t *testing.T) {
+		require.NoError(t, validateTerminatingLabelUnchanged(svcCtx, folder(withLabel), folder(nil)))
+		require.NoError(t, validateTerminatingLabelUnchanged(svcCtx, folder(nil), folder(withLabel)))
+	})
+}
+
+func TestValidateCascadeFinalizerPreserved(t *testing.T) {
+	userCtx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+	svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+	now := metav1.Now()
+	terminating := func(finalizers []string) *folders.Folder {
+		return &folders.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name:              "f",
+			Labels:            map[string]string{TerminatingLabel: TerminatingLabelValue},
+			DeletionTimestamp: &now,
+			Finalizers:        finalizers,
+		}}
+	}
+	live := func(finalizers []string) *folders.Folder {
+		return &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", Finalizers: finalizers}}
+	}
+	with := []string{CascadeDeleteFinalizer}
+
+	t.Run("user cannot strip the finalizer off a terminating folder", func(t *testing.T) {
+		err := validateCascadeFinalizerPreserved(userCtx, terminating(nil), terminating(with))
+		require.True(t, apierrors.IsForbidden(err), "got: %v", err)
+	})
+
+	t.Run("user update keeping the finalizer is allowed", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(userCtx, terminating(with), terminating(with)))
+	})
+
+	t.Run("service identity may strip the finalizer", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(svcCtx, terminating(nil), terminating(with)))
+	})
+
+	t.Run("stripping on a non-terminating folder is left to Mutate", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(userCtx, live(nil), live(with)))
+	})
+
+	t.Run("nothing to preserve when the old folder had no finalizer", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(userCtx, terminating(nil), terminating(nil)))
+	})
+
+	t.Run("create has no old object", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(userCtx, terminating(nil), nil))
+	})
+}
+
+func TestValidateRejectsChildrenUnderTerminatingParent(t *testing.T) {
+	ctx := context.Background()
+	terminatingParent := &folders.Folder{ObjectMeta: metav1.ObjectMeta{
+		Name:   "parent",
+		Labels: map[string]string{TerminatingLabel: TerminatingLabelValue},
+	}}
+
+	t.Run("create under a terminating parent is forbidden", func(t *testing.T) {
+		store := grafanarest.NewMockStorage(t)
+		store.On("Get", ctx, "parent", &metav1.GetOptions{}).Return(terminatingParent, nil)
+		child := &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{Name: "child", Annotations: map[string]string{"grafana.app/folder": "parent"}},
+			Spec:       folders.FolderSpec{Title: "child"},
+		}
+
+		err := validateOnCreate(ctx, child, store, newParentsGetter(store, 5), 5)
+		require.True(t, apierrors.IsForbidden(err), "got: %v", err)
+	})
+
+	t.Run("move under a terminating parent is forbidden", func(t *testing.T) {
+		store := grafanarest.NewMockStorage(t)
+		store.On("Get", ctx, "parent", &metav1.GetOptions{}).Return(terminatingParent, nil)
+		old := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "child"}, Spec: folders.FolderSpec{Title: "child"}}
+		moved := &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{Name: "child", Annotations: map[string]string{"grafana.app/folder": "parent"}},
+			Spec:       folders.FolderSpec{Title: "child"},
+		}
+
+		// nil accessClient -> checkMoveAccess is a no-op; the terminating-parent check runs before
+		// the searcher-backed depth check, so a nil searcher is fine.
+		err := validateOnUpdate(ctx, moved, old, store, newParentsGetter(store, 5), nil, nil, 5)
+		require.True(t, apierrors.IsForbidden(err), "got: %v", err)
+	})
 }
 
 func TestValidateOwnerReferencesOnManagedFolder(t *testing.T) {

@@ -2573,3 +2573,323 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 		})
 	}
 }
+
+// TestIntegrationFolderCascadeDelete verifies the end-to-end cascade: with the feature flag on,
+// force-deleting a non-empty folder eventually removes the whole folder subtree via the
+// finalizer + cascade watcher.
+func TestIntegrationFolderCascadeDelete(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	// cascadeDeleteFinalizer mirrors folders.CascadeDeleteFinalizer in the API server package
+	// (not imported here to avoid an alias clash with the folder kind package).
+	const cascadeDeleteFinalizer = "folder.grafana.app/cascade-delete"
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagKubernetesFolderCascadeDelete,
+		},
+		// The cascade poller polls; keep it short so the multi-level cascade converges quickly.
+		FolderCascadeDeletePollInterval: time.Second,
+	})
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	ctx := context.Background()
+
+	// Build a small tree:
+	//   root
+	//   ├── child-a
+	//   │    └── grandchild
+	//   └── child-b
+	createFolder := func(t *testing.T, name, parentUID string) {
+		t.Helper()
+		obj := &unstructured.Unstructured{
+			Object: map[string]any{
+				"spec": map[string]any{"title": name},
+			},
+		}
+		obj.SetName(name)
+		if parentUID != "" {
+			obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: parentUID})
+		}
+		_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	const (
+		rootUID       = "cascade-root"
+		childAUID     = "cascade-child-a"
+		childBUID     = "cascade-child-b"
+		grandchildUID = "cascade-grandchild"
+	)
+	all := []string{rootUID, childAUID, childBUID, grandchildUID}
+
+	createFolder(t, rootUID, "")
+	createFolder(t, childAUID, rootUID)
+	createFolder(t, childBUID, rootUID)
+	createFolder(t, grandchildUID, childAUID)
+
+	// Put a dashboard inside a leaf folder so we also exercise content deletion: the cascade must
+	// delete the folder's contained resources (via the folder service registry) before removing the
+	// finalizer, otherwise the dashboard would be orphaned.
+	dashPayload := fmt.Sprintf(`{"dashboard": {"title": "cascade-dash"}, "folderUid": %q}`, childBUID)
+	dashCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/dashboards/db",
+		Body:   []byte(dashPayload),
+	}, &map[string]any{})
+	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode, "dashboard create should succeed: %s", string(dashCreate.Body))
+	dashboardUID, _ := (*dashCreate.Result)["uid"].(string)
+	require.NotEmpty(t, dashboardUID)
+
+	dashboardExists := func() bool {
+		getDash := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodGet,
+			Path:   fmt.Sprintf("/apis/dashboard.grafana.app/v1beta1/namespaces/%s/dashboards/%s", client.Args.Namespace, dashboardUID),
+		}, &map[string]any{})
+		return getDash.Response.StatusCode == http.StatusOK
+	}
+	require.True(t, dashboardExists(), "dashboard should exist before the cascade")
+
+	// Best-effort cleanup if the cascade does not complete.
+	t.Cleanup(func() {
+		zero := int64(0)
+		for _, uid := range all {
+			_ = client.Resource.Delete(ctx, uid, metav1.DeleteOptions{GracePeriodSeconds: &zero})
+		}
+	})
+
+	// Admission should have stamped the cascade finalizer on every folder create.
+	for _, uid := range all {
+		got, err := client.Resource.Get(ctx, uid, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Contains(t, got.GetFinalizers(), cascadeDeleteFinalizer,
+			"cascade finalizer should be stamped on create for %q when the flag is on", uid)
+	}
+
+	// A normal (non-force) delete of a non-empty folder is rejected: cascade is opt-in via
+	// gracePeriodSeconds=0, so without it the empty-folder check still applies.
+	err := client.Resource.Delete(ctx, rootUID, metav1.DeleteOptions{})
+	require.Error(t, err, "non-empty folder delete without gracePeriodSeconds=0 should be rejected")
+	_, err = client.Resource.Get(ctx, rootUID, metav1.GetOptions{})
+	require.NoError(t, err, "root should still exist after the rejected non-force delete")
+
+	// Regression: a rejected delete must NOT have started the cascade. The API server validates
+	// before marking, so the subtree must be untouched. Give the poller a few ticks, then confirm
+	// every folder is still present, not terminating, and the dashboard still exists.
+	const terminatingLabel = "folder.grafana.app/terminating"
+	time.Sleep(3 * time.Second)
+	for _, uid := range all {
+		got, err := client.Resource.Get(ctx, uid, metav1.GetOptions{})
+		require.NoError(t, err, "%q must still exist after a rejected delete", uid)
+		require.Nil(t, got.GetDeletionTimestamp(), "%q must not be terminating after a rejected delete", uid)
+		require.NotContains(t, got.GetLabels(), terminatingLabel, "%q must not be marked terminating after a rejected delete", uid)
+	}
+	require.True(t, dashboardExists(), "dashboard must still exist after a rejected delete")
+
+	// Force-delete the (non-empty) root. This is opt-in via gracePeriodSeconds=0; the finalizer
+	// keeps the folder terminating until the watcher cascades the subtree.
+	zero := int64(0)
+	require.NoError(t, client.Resource.Delete(ctx, rootUID, metav1.DeleteOptions{GracePeriodSeconds: &zero}))
+
+	// The whole subtree should eventually be garbage-collected by the cascade watcher.
+	deadline := time.Now().Add(2 * time.Minute)
+	for {
+		var remaining []string
+		for _, uid := range all {
+			if _, err := client.Resource.Get(ctx, uid, metav1.GetOptions{}); !apierrors.IsNotFound(err) {
+				remaining = append(remaining, uid)
+			}
+		}
+		if len(remaining) == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			require.FailNowf(t, "cascade delete did not complete", "folders still present after 2m: %v", remaining)
+		}
+		time.Sleep(time.Second)
+	}
+
+	// The dashboard contained in child-b must have been deleted as part of the cascade, not orphaned.
+	require.False(t, dashboardExists(), "dashboard in a cascaded folder should have been deleted")
+}
+
+// TestIntegrationFolderEmptyDeleteIsImmediate verifies that, even with cascade delete ON, deleting an
+// empty folder removes it synchronously rather than parking it Terminating until the next poll. That
+// keeps a delete followed by an immediate same-UID recreate working: with the folder gone, the
+// recreate must not conflict with a still-terminating object.
+func TestIntegrationFolderEmptyDeleteIsImmediate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagKubernetesFolderCascadeDelete,
+		},
+		// A long interval ensures the immediate recreate below cannot be rescued by the poller: it must
+		// work because the empty folder was deleted synchronously, not because a poll tick removed it.
+		FolderCascadeDeletePollInterval: time.Minute,
+	})
+
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	ctx := context.Background()
+
+	const uid = "empty-recreate"
+	newFolder := func() *unstructured.Unstructured {
+		obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{"title": "empty-recreate"}}}
+		obj.SetName(uid)
+		return obj
+	}
+
+	_, err := client.Resource.Create(ctx, newFolder(), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// An empty-folder delete is a normal (non-force) delete; admission allows it because the folder is
+	// empty, and the storage fast-path removes it in place.
+	require.NoError(t, client.Resource.Delete(ctx, uid, metav1.DeleteOptions{}))
+
+	// The folder is gone immediately, not stuck Terminating.
+	_, err = client.Resource.Get(ctx, uid, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "empty folder should be deleted synchronously, not terminating; got %v", err)
+
+	// The same-UID recreate succeeds because nothing is terminating.
+	_, err = client.Resource.Create(ctx, newFolder(), metav1.CreateOptions{})
+	require.NoError(t, err, "recreating a just-deleted empty folder must not conflict with a terminating object")
+}
+
+// TestIntegrationFolderDeleteStripsFinalizerWhenCascadeDisabled verifies that with the cascade
+// feature OFF, a folder still carrying the cascade finalizer (e.g. created while the feature was on,
+// before a restart that turned it off) can still be deleted: the storage wrapper strips the now
+// vestigial finalizer instead of leaving the folder stuck Terminating forever.
+func TestIntegrationFolderDeleteStripsFinalizerWhenCascadeDisabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	const cascadeDeleteFinalizer = "folder.grafana.app/cascade-delete"
+
+	// Cascade delete is disabled (no feature toggle).
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	ctx := context.Background()
+
+	// With the flag off, a freshly created folder has no cascade finalizer.
+	obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{"title": "leftover"}}}
+	obj.SetName("leftover-finalizer")
+	created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotContains(t, created.GetFinalizers(), cascadeDeleteFinalizer)
+
+	// Simulate a folder created while the feature was enabled by stamping the finalizer onto it.
+	created.SetFinalizers(append(created.GetFinalizers(), cascadeDeleteFinalizer))
+	_, err = client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Deleting it must strip the vestigial finalizer and actually remove the folder, rather than
+	// leaving it stuck Terminating with nothing to drive the finalizer off.
+	require.NoError(t, client.Resource.Delete(ctx, "leftover-finalizer", metav1.DeleteOptions{}))
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		_, err := client.Resource.Get(ctx, "leftover-finalizer", metav1.GetOptions{})
+		assert.True(c, apierrors.IsNotFound(err), "folder should be deleted, not stuck terminating; got %v", err)
+	}, 10*time.Second, 200*time.Millisecond)
+}
+
+// TestIntegrationFolderForceDeleteWithoutCascade verifies the kubernetesFolderForceDelete feature in
+// isolation (cascade off): force-delete (gracePeriodSeconds=0) bypasses the empty-folder check and
+// deletes the folder *synchronously* -- no finalizer, no poller -- leaving contained resources
+// orphaned. This is the behavior provisioning cleanup relies on.
+func TestIntegrationFolderForceDeleteWithoutCascade(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	const cascadeDeleteFinalizer = "folder.grafana.app/cascade-delete"
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagKubernetesFolderForceDelete, // force only -- NOT cascade
+		},
+	})
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	ctx := context.Background()
+
+	createFolder := func(t *testing.T, name, parentUID string) *unstructured.Unstructured {
+		t.Helper()
+		obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{"title": name}}}
+		obj.SetName(name)
+		if parentUID != "" {
+			obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: parentUID})
+		}
+		created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		// Force delete must not stamp the cascade finalizer (that is cascade-delete's job).
+		require.NotContains(t, created.GetFinalizers(), cascadeDeleteFinalizer)
+		return created
+	}
+
+	const (
+		parentUID = "force-parent"
+		childUID  = "force-child"
+	)
+	createFolder(t, parentUID, "")
+	createFolder(t, childUID, parentUID)
+	t.Cleanup(func() {
+		zero := int64(0)
+		_ = client.Resource.Delete(ctx, childUID, metav1.DeleteOptions{GracePeriodSeconds: &zero})
+		_ = client.Resource.Delete(ctx, parentUID, metav1.DeleteOptions{GracePeriodSeconds: &zero})
+	})
+
+	// A normal (non-force) delete of the non-empty parent is still rejected by the empty-folder check.
+	err := client.Resource.Delete(ctx, parentUID, metav1.DeleteOptions{})
+	require.Error(t, err, "non-force delete of a non-empty folder should be rejected")
+
+	// Force delete bypasses the empty check and removes the folder synchronously.
+	zero := int64(0)
+	require.NoError(t, client.Resource.Delete(ctx, parentUID, metav1.DeleteOptions{GracePeriodSeconds: &zero}))
+
+	// Synchronous: the parent is gone immediately, with no finalizer/poller involved.
+	_, err = client.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "force-deleted folder should be gone immediately, got: %v", err)
+
+	// Force-only does not cascade: the child folder is orphaned, not deleted.
+	_, err = client.Resource.Get(ctx, childUID, metav1.GetOptions{})
+	require.NoError(t, err, "force delete without cascade must not delete child folders")
+}
