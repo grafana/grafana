@@ -10,7 +10,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
-import { DashboardOutline } from './outline/DashboardOutline';
 import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
@@ -21,6 +20,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
   RepeatsUpdatedEvent,
 } from './events';
+import { DashboardOutline } from './outline/DashboardOutline';
 import { getEditableElementFor } from './shared';
 import { type DashboardSidebarPane, type DashboardEditPaneLike, type DashboardEditPaneState } from './types';
 
