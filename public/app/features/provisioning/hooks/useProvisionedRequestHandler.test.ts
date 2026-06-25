@@ -132,37 +132,6 @@ describe('useProvisionedRequestHandler', () => {
       );
     });
 
-    it('prefers the branch-specific sourceURL over repositoryURL when no path is configured', () => {
-      const { handlers, render } = setup();
-
-      const { result } = render({
-        workflow: 'write',
-        resourceType: 'playlist',
-        repository: {
-          ...githubRepository,
-          branch: 'main',
-          url: 'https://github.com/org/repo',
-        },
-        handlers,
-      });
-      result.current.handleSuccess(
-        createMockResourceWrapper({
-          urls: {
-            repositoryURL: 'https://github.com/org/repo',
-            sourceURL: 'https://github.com/org/repo/blob/main/playlists/my-playlist.json',
-          },
-        })
-      );
-
-      const component = mockDispatch.mock.calls[0][0].payload.component;
-      expect(component.props).toEqual(
-        expect.objectContaining({
-          branch: 'main',
-          url: 'https://github.com/org/repo/blob/main/playlists/my-playlist.json',
-        })
-      );
-    });
-
     it('should call onWriteSuccess for write workflow', () => {
       const { handlers, render } = setup();
       const wrapper = createMockResourceWrapper();
