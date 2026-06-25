@@ -56,9 +56,10 @@ function DashboardExtensionTab({
 
 interface Props {
   extensionComponents: Array<ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>>;
+  onInitialLoad?: () => void;
 }
 
-export function DashboardTabs({ extensionComponents }: Props) {
+export function DashboardTabs({ extensionComponents, onInitialLoad }: Props) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState(RECENT_TAB_ID);
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
@@ -137,6 +138,15 @@ export function DashboardTabs({ extensionComponents }: Props) {
       didAutoSwitch.current = true;
     }
   }, [initialLoading, selectableTabs, activeTab]);
+
+  // Tell the host once the initial dashboard fetches have settled (resolved or errored).
+  // It runs in the same effect flush as the auto-switch above, so the host reveals on the
+  // final tab — the Recent→Starred switch never paints as a separate step.
+  useEffect(() => {
+    if (!initialLoading) {
+      onInitialLoad?.();
+    }
+  }, [initialLoading, onInitialLoad]);
 
   const builtInTabs: HomepageTab[] = [
     {

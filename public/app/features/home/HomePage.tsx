@@ -10,7 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
+import { FiringAlertsCard, canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
@@ -21,6 +21,8 @@ import useHomeGreeting from './useHomeGreeting';
 // Mounts (and runs its effect) only once the surrounding Suspense content has actually
 // committed — i.e. after any lazy-loaded extension components have resolved and any
 // extension tabs have registered (sibling effects flush before this one, in tree order).
+// Known limitation: an extension that registers its tab from its own async work (not
+// synchronously in a mount effect) settles after the reveal and still pops in.
 function SettleSentinel({ onSettled }: { onSettled: () => void }) {
   useEffect(onSettled, [onSettled]);
   return null;
@@ -56,11 +58,29 @@ export default function HomePage() {
 
   const isLoadingExtensions = isLoadingPre || isLoadingExtra || isLoadingTabs;
 
-  // The content is revealed only once it has fully committed (see SettleSentinel): until
-  // then it renders hidden behind the skeleton, so lazy-loaded extension components and
-  // extension tab registration never paint as a separate step.
-  const [settled, setSettled] = useState(false);
-  const onSettled = useCallback(() => setSettled(true), []);
+  // Same computation as the rendered extra section below, so showExtra can't drift from it.
+  const extraContent = renderLimitedComponents({
+    props: {},
+    components: extraComponents,
+    pluginId: SETUPGUIDE_PLUGIN_ID,
+    wrapper: ({ children }) => (
+      <div className={styles.extra}>
+        <HomeSection>{children}</HomeSection>
+      </div>
+    ),
+  });
+  const showExtra = extraContent !== null;
+  const showAlertsCard = canViewFiringAlerts();
+
+  // The content is revealed only once it has fully committed (see SettleSentinel) AND the
+  // initial dashboard fetches have settled. Until then it renders hidden behind the skeleton,
+  // so lazy extension components, extension tab registration, and the DashboardTabs auto-switch
+  // never paint as a separate step.
+  const [extensionsSettled, setExtensionsSettled] = useState(false);
+  const [dashboardsSettled, setDashboardsSettled] = useState(false);
+  const onExtensionsSettled = useCallback(() => setExtensionsSettled(true), []);
+  const onDashboardsSettled = useCallback(() => setDashboardsSettled(true), []);
+  const settled = extensionsSettled && dashboardsSettled;
 
   return (
     <Page
@@ -74,12 +94,12 @@ export default function HomePage() {
     >
       <Page.Contents>
         {isLoadingExtensions ? (
-          <HomePageSkeleton />
+          <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />
         ) : (
           <div className={styles.content}>
             {!settled && (
               <div className={styles.skeletonOverlay}>
-                <HomePageSkeleton />
+                <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />
               </div>
             )}
             <div className={cx(!settled && styles.hiddenUntilSettled)}>
@@ -94,25 +114,16 @@ export default function HomePage() {
                       components: preComponents,
                       pluginId: SETUPGUIDE_PLUGIN_ID,
                     })}
-                    <DashboardTabs extensionComponents={tabComponents} />
+                    <DashboardTabs extensionComponents={tabComponents} onInitialLoad={onDashboardsSettled} />
                   </HomeSection>
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     <FiringAlertsCard />
                     <IncidentsCard />
                   </Grid>
 
-                  {renderLimitedComponents({
-                    props: {},
-                    components: extraComponents,
-                    pluginId: SETUPGUIDE_PLUGIN_ID,
-                    wrapper: ({ children }) => (
-                      <div className={styles.extra}>
-                        <HomeSection>{children}</HomeSection>
-                      </div>
-                    ),
-                  })}
+                  {extraContent}
                 </Stack>
-                <SettleSentinel onSettled={onSettled} />
+                <SettleSentinel onSettled={onExtensionsSettled} />
               </Suspense>
             </div>
           </div>
