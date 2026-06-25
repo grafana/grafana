@@ -1508,6 +1508,86 @@ func TestPeriodicBookmarks(t *testing.T) {
 	})
 }
 
+// stubWatchServer is a ResourceStore_WatchServer mock whose Send returns a
+// caller-supplied error. It is used to exercise Watch's error handling without
+// relying on races between the watch context and concrete Send failures.
+type stubWatchServer struct {
+	grpc.ServerStream
+	ctx     context.Context
+	sendErr error
+}
+
+func (s *stubWatchServer) Send(*resourcepb.WatchEvent) error { return s.sendErr }
+func (s *stubWatchServer) Context() context.Context          { return s.ctx }
+func (s *stubWatchServer) SetHeader(metadata.MD) error       { return nil }
+func (s *stubWatchServer) SendHeader(metadata.MD) error      { return nil }
+func (s *stubWatchServer) SetTrailer(metadata.MD)            {}
+func (s *stubWatchServer) SendMsg(any) error                 { return nil }
+func (s *stubWatchServer) RecvMsg(any) error                 { return nil }
+
+// TestWatchContextCancellation pins down how Watch translates errors that
+// surface during context cancellation. The watch loop has an explicit
+// `case <-ctx.Done(): return nil` branch, but `select` is nondeterministic, so
+// when the context is canceled we may instead run a Send/Read that returns
+// the context error. Watch must treat that as a clean shutdown, while still
+// surfacing unrelated errors and context errors that did not originate from
+// our own context.
+func TestWatchContextCancellation(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	watchReq := &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:    watchTestGroup,
+				Resource: watchTestResource,
+			},
+		},
+		// SendInitialEvents forces Watch to call Send during the backfill, so
+		// the configured stub error path is hit deterministically without
+		// having to race with the bookmark ticker or the broadcaster.
+		SendInitialEvents: true,
+	}
+
+	setup := func(t *testing.T) *server {
+		t.Helper()
+		srv := newWatchTestServer(t, watchTestServerOpts{})
+		require.NoError(t, createTestPlaylist(authlib.WithAuthInfo(t.Context(), testUser), srv))
+		return srv
+	}
+
+	t.Run("returns nil when own context is canceled", func(t *testing.T) {
+		srv := setup(t)
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		cancel()
+
+		// Whatever sendErr we configure, Watch should swallow it because the
+		// context error from our own ctx will always be the proximate cause.
+		stub := &stubWatchServer{ctx: ctx, sendErr: context.Canceled}
+		require.NoError(t, srv.Watch(watchReq, stub))
+	})
+
+	t.Run("propagates non-context Send errors", func(t *testing.T) {
+		srv := setup(t)
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+
+		sentinel := errors.New("send failed")
+		stub := &stubWatchServer{ctx: ctx, sendErr: sentinel}
+		err := srv.Watch(watchReq, stub)
+		require.ErrorIs(t, err, sentinel)
+	})
+
+	t.Run("propagates context errors that did not come from our own context", func(t *testing.T) {
+		srv := setup(t)
+		// Own context is alive; a Send returning context.Canceled here must
+		// have come from somewhere else and is a real error to report.
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+
+		stub := &stubWatchServer{ctx: ctx, sendErr: context.Canceled}
+		err := srv.Watch(watchReq, stub)
+		require.ErrorIs(t, err, context.Canceled)
+	})
+}
+
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying
 // cached events for clients that start watching from old RVs. The metric should only be reporting
 // data for events emitted after the Watch is setup.

@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -45,6 +46,31 @@ type DocumentBuilderInfo struct {
 
 	// Complicated builders (eg dashboards!) will be declared dynamically and managed by the ResourceServer
 	Namespaced NamespacedDocumentSupplier
+
+	// SearchFieldsHash is a stable hex hash over the SearchFieldDefinition
+	// slices registered for GroupResource across every version. The hash is
+	// stored in IndexBuildInfo when an index is built and re-checked on
+	// startup so the index is rebuilt automatically when index-affecting
+	// search-field metadata changes.
+	//
+	// Empty when the builder does not use a SearchFieldsProvider.
+	SearchFieldsHash string
+}
+
+// SearchFieldsHashesForBuilders returns a lower-cased "group/resource" map
+// of SearchFieldsHash values collected from the given DocumentBuilderInfo
+// entries. Empty hashes are skipped so consumers can use len(...) == 0 as a
+// shorthand for "no expected hash".
+func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[string]string {
+	out := map[string]string{}
+	for _, b := range builders {
+		if b.SearchFieldsHash == "" {
+			continue
+		}
+		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
+		out[key] = b.SearchFieldsHash
+	}
+	return out
 }
 
 type DocumentBuilderSupplier interface {
@@ -258,12 +284,29 @@ func isFolderResource(key *resourcepb.ResourceKey) bool {
 }
 
 func StandardDocumentBuilder(manifests []app.Manifest) DocumentBuilder {
-	return &standardDocumentBuilder{selectableFields: SelectableFieldsForManifests(manifests)}
+	return StandardDocumentBuilderWithFields(manifests, nil)
+}
+
+// StandardDocumentBuilderWithFields returns the standard document builder
+// wired with a SearchFieldsProvider. When the provider is non-nil, the
+// builder reads SearchFieldDefinitions for the document's group/version/
+// resource and populates IndexableDocument.Fields from their declared Path
+// values. Path-less definitions are ignored (they require a custom builder).
+// Type mismatches are logged and the field is dropped.
+func StandardDocumentBuilderWithFields(manifests []app.Manifest, provider SearchFieldsProvider) DocumentBuilder {
+	return &standardDocumentBuilder{
+		selectableFields: SelectableFieldsForManifests(manifests),
+		provider:         provider,
+		log:              log.New("resource.document-builder"),
+	}
 }
 
 type standardDocumentBuilder struct {
 	// Maps "group/resource" (in lowercase) to list of selectable fields.
 	selectableFields map[string][]string
+	// provider supplies declarative search fields; may be nil.
+	provider SearchFieldsProvider
+	log      log.Logger
 }
 
 func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
@@ -283,7 +326,153 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 	sfKey := strings.ToLower(key.GetGroup() + "/" + key.GetResource())
 	doc.SelectableFields = getSelectableFieldsFromObject(tmp, s.selectableFields[sfKey])
 
+	if s.provider != nil {
+		s.extractDeclaredFields(ctx, tmp, key, doc)
+	}
+
 	return doc, nil
+}
+
+// extractDeclaredFields populates doc.Fields from SearchFieldDefinitions
+// declared via the provider. The lookup is strict on apiVersion: a manifest
+// must declare every served version of a kind if it expects all stored
+// resources to be indexed against the same field set. Cross-version
+// fallback can silently extract an old document with a newer version's path
+// declarations when the schema diverges, so the builder leaves that
+// decision to manifest authors.
+func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *unstructured.Unstructured, key *resourcepb.ResourceKey, doc *IndexableDocument) {
+	gvr := gvrForLookup(tmp, key, s.provider)
+	if gvr.Resource == "" {
+		return
+	}
+	defs := s.provider.Fields(gvr)
+	if len(defs) == 0 {
+		return
+	}
+	for _, def := range defs {
+		if def.CopyFromStandard != StandardFieldUnknown {
+			if v, ok := standardFieldValue(doc, def.CopyFromStandard); ok {
+				if doc.Fields == nil {
+					doc.Fields = make(map[string]any)
+				}
+				doc.Fields[def.Name] = v
+			} else {
+				s.log.Warn("unknown CopyFromStandard target",
+					"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
+					"field", def.Name, "target", def.CopyFromStandard)
+			}
+			continue
+		}
+		if def.Path == "" {
+			continue
+		}
+		raw, err := extractPath(tmp.Object, def.Path)
+		if err != nil {
+			s.log.Warn("declared search field path failed to evaluate",
+				"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
+				"field", def.Name, "path", def.Path, "err", err)
+			continue
+		}
+		if raw == nil {
+			if !def.EmitZeroIfAbsent {
+				continue
+			}
+			if doc.Fields == nil {
+				doc.Fields = make(map[string]any)
+			}
+			doc.Fields[def.Name] = zeroValueForFieldDefinition(def)
+			continue
+		}
+		coerced, ok := coerceToFieldShape(raw, def.Type, def.Array)
+		if !ok {
+			s.log.Warn("declared search field value does not match declared type",
+				"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
+				"field", def.Name, "type", def.Type, "array", def.Array,
+				"value_type", fmt.Sprintf("%T", raw))
+			continue
+		}
+		if doc.Fields == nil {
+			doc.Fields = make(map[string]any)
+		}
+		doc.Fields[def.Name] = coerced
+	}
+}
+
+// standardFieldValue returns the value of a top-level IndexableDocument field
+// referenced by CopyFromStandard. The set of supported targets is closed and
+// matches the StandardField* constants in search_field.go.
+func standardFieldValue(doc *IndexableDocument, target StandardField) (any, bool) {
+	switch target {
+	case StandardFieldCreated:
+		return doc.Created, true
+	case StandardFieldUpdated:
+		return doc.Updated, true
+	case StandardFieldCreatedBy:
+		return doc.CreatedBy, true
+	case StandardFieldUpdatedBy:
+		return doc.UpdatedBy, true
+	case StandardFieldUnknown:
+		return nil, false
+	}
+	return nil, false
+}
+
+// zeroValueForFieldDefinition returns the type-appropriate zero value for a
+// declared field. Used when Path resolves to nil and EmitZeroIfAbsent is set,
+// so the indexed document still carries the field. Returns nil for unknown
+// types so the caller drops the field instead of indexing a typeless value.
+func zeroValueForFieldDefinition(def SearchFieldDefinition) any {
+	if def.Array {
+		return []any{}
+	}
+	switch def.Type {
+	case SearchFieldTypeBoolean:
+		return false
+	case SearchFieldTypeInt64:
+		return int64(0)
+	case SearchFieldTypeDouble:
+		return float64(0)
+	case SearchFieldTypeString, SearchFieldTypeDate:
+		return ""
+	case SearchFieldTypeUnknown:
+		return nil
+	}
+	return nil
+}
+
+// gvrForLookup resolves the GroupVersionResource the provider should be
+// queried with. The lookup is strict on a declared apiVersion: if the
+// document carries one and the manifest does not cover that exact version,
+// no extraction happens. (Falling back across versions could silently
+// extract via a diverged schema, so manifest authors are expected to
+// declare every served version.) Only when the document has no apiVersion
+// at all do we fall back to the provider's PreferredVersion as the only
+// sane guess.
+func gvrForLookup(tmp *unstructured.Unstructured, key *resourcepb.ResourceKey, provider SearchFieldsProvider) schema.GroupVersionResource {
+	group := key.GetGroup()
+	resource := key.GetResource()
+	if version := apiVersionOf(tmp); version != "" {
+		return schema.GroupVersionResource{Group: group, Version: version, Resource: resource}
+	}
+	pref := provider.PreferredVersion(group, resource)
+	if pref == "" {
+		return schema.GroupVersionResource{}
+	}
+	return schema.GroupVersionResource{Group: group, Version: pref, Resource: resource}
+}
+
+func apiVersionOf(tmp *unstructured.Unstructured) string {
+	av := tmp.GetAPIVersion()
+	if av == "" {
+		return ""
+	}
+	// apiVersion is "<group>/<version>" for non-core resources and just
+	// "<version>" for core. The Group is authoritative from the key; we
+	// only need the version segment.
+	if i := strings.IndexByte(av, '/'); i >= 0 {
+		return av[i+1:]
+	}
+	return av
 }
 
 func getSelectableFieldsFromObject(tmp *unstructured.Unstructured, fields []string) map[string]string {
@@ -456,7 +645,12 @@ func StandardSearchFields() SearchableDocumentFields {
 			{
 				Name:        SEARCH_FIELD_CREATED,
 				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "created timestamp", // date?
+				Description: "created timestamp (unix millis)",
+			},
+			{
+				Name:        SEARCH_FIELD_UPDATED,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "updated timestamp (unix millis)",
 			},
 			{
 				Name:        SEARCH_FIELD_CREATED_BY,

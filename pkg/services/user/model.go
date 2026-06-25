@@ -53,6 +53,14 @@ type User struct {
 	LastSeenAt time.Time
 
 	IsProvisioned bool `xorm:"is_provisioned"`
+
+	ExternalAuthInfo []ExternalAuthInfo `xorm:"-" json:"-"`
+}
+
+type ExternalAuthInfo struct {
+	Module      string
+	AuthID      string
+	ExternalUID string
 }
 
 type CreateUserCommand struct {
@@ -71,6 +79,7 @@ type CreateUserCommand struct {
 	DefaultOrgRole   string
 	IsServiceAccount bool
 	IsProvisioned    bool
+	ExternalAuthInfo []ExternalAuthInfo
 }
 
 type GetUserByLoginQuery struct {
@@ -96,10 +105,11 @@ type UpdateUserCommand struct {
 	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
 	// If OrgID is included update current org for user
-	OrgID         *int64      `json:"-"`
-	HelpFlags1    *HelpFlags1 `json:"-"`
-	IsProvisioned *bool       `json:"-"`
-	OrgRole       *string     `json:"-"`
+	OrgID            *int64             `json:"-"`
+	HelpFlags1       *HelpFlags1        `json:"-"`
+	IsProvisioned    *bool              `json:"-"`
+	OrgRole          *string            `json:"-"`
+	ExternalAuthInfo []ExternalAuthInfo `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {
@@ -123,8 +133,9 @@ type SearchUsersQuery struct {
 	SortOpts     []model.SortOption
 	Filters      []Filter
 
-	IsDisabled    *bool
-	IsProvisioned *bool
+	IsDisabled           *bool
+	IsProvisioned        *bool
+	IncludeAccessControl bool
 }
 
 type SearchUserQueryResult struct {
@@ -140,6 +151,8 @@ type UserSearchHitDTO struct {
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
+	Role          string               `json:"role"`
+	AccessControl map[string]bool      `json:"accessControl,omitempty"`
 	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`
@@ -174,6 +187,8 @@ type UserProfileDTO struct {
 	AvatarURL                      string          `json:"avatarUrl"`
 	AccessControl                  map[string]bool `json:"accessControl,omitempty"`
 	IsProvisioned                  bool            `json:"isProvisioned"`
+
+	AuthModules []string `json:"-"`
 }
 
 // implement Conversion interface to define custom field mapping (xorm feature)

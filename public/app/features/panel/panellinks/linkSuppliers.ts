@@ -13,7 +13,6 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 
 import { getLinkSrv } from './link_srv';
@@ -137,25 +136,6 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
 
       return links.map((link: DataLink) => {
         return getLinkSrv().getDataLinkUIModel(link, replace, value);
-      });
-    },
-  };
-};
-
-export const getPanelLinksSupplier = (
-  panel: PanelModel,
-  replaceVariables?: InterpolateFunction
-): LinkModelSupplier<PanelModel> | undefined => {
-  const links = panel.links;
-
-  if (!links || links.length === 0) {
-    return undefined;
-  }
-
-  return {
-    getLinks: () => {
-      return links.map((link) => {
-        return getLinkSrv().getDataLinkUIModel(link, replaceVariables || panel.replaceVariables, panel);
       });
     },
   };

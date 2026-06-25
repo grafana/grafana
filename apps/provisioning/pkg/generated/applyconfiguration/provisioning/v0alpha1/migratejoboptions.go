@@ -18,6 +18,11 @@ type MigrateJobOptionsApplyConfiguration struct {
 	// of those resources.
 	// Currently only unmanaged Dashboards are supported.
 	Resources []ResourceRefApplyConfiguration `json:"resources,omitempty"`
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. The subsequent pull creates new folders rather than
+	// taking over the originals. Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs *bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 // MigrateJobOptionsApplyConfiguration constructs a declarative configuration of the MigrateJobOptions type for use with
@@ -44,5 +49,13 @@ func (b *MigrateJobOptionsApplyConfiguration) WithResources(values ...*ResourceR
 		}
 		b.Resources = append(b.Resources, *values[i])
 	}
+	return b
+}
+
+// WithGenerateNewFolderIDs sets the GenerateNewFolderIDs field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GenerateNewFolderIDs field is set to the value of the last call.
+func (b *MigrateJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value bool) *MigrateJobOptionsApplyConfiguration {
+	b.GenerateNewFolderIDs = &value
 	return b
 }

@@ -2240,4 +2240,89 @@ describe('TableNG', () => {
       expect(screen.queryByText('Down Link 1')).not.toBeInTheDocument();
     });
   });
+
+  describe('protoParserEnabled', () => {
+    it('renders columns and rows using the prototype-getter parser', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          protoParserEnabled
+        />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers.length).toBe(2);
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      expect(cells.length).toBe(6); // 3 rows x 2 columns
+
+      const expectedContent = ['Column A', 'Column B', 'A1', 'A2', 'A3', '1', '2', '3'];
+      expectedContent.forEach((text) => {
+        expect(screen.getByText(text)).toBeInTheDocument();
+      });
+    });
+
+    it('sorts rows correctly when using the prototype-getter parser', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          protoParserEnabled
+        />
+      );
+
+      const columnHeader = container.querySelector('[role="columnheader"]');
+      expect(columnHeader).toBeInTheDocument();
+
+      const sortButton = columnHeader!.querySelector('button') || columnHeader!;
+
+      // Sort descending: first click ascending, second click descending
+      await user.click(sortButton);
+      await user.click(sortButton);
+      expect(columnHeader).toHaveAttribute('aria-sort', 'descending');
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      const firstColumnValues = Array.from(cells)
+        .filter((_, index) => index % 2 === 0)
+        .map((cell) => cell.textContent);
+      expect(firstColumnValues).toEqual(['A3', 'A2', 'A1']);
+    });
+
+    it('renders and expands nested rows using the prototype-getter parser', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame()}
+          width={800}
+          height={600}
+          protoParserEnabled
+        />
+      );
+
+      ['Column A', 'Column B', 'A1', 'A2'].forEach((text) => {
+        expect(screen.getByText(text)).toBeInTheDocument();
+      });
+
+      const initialRowCount = container.querySelectorAll('[role="row"]').length;
+
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+
+      expect(container.querySelectorAll('[role="row"]').length).toBeGreaterThan(initialRowCount);
+
+      ['N1', 'N2'].forEach((text) => {
+        expect(screen.getByText(text)).toBeInTheDocument();
+      });
+
+      // Hidden nested fields should stay hidden under the prototype-getter parser too
+      expect(screen.queryByText('Nested hidden')).not.toBeInTheDocument();
+      expect(screen.queryByText('secret1')).not.toBeInTheDocument();
+    });
+  });
 });

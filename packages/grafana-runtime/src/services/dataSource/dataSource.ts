@@ -1,8 +1,12 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
+import { isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { UserStorage } from '../../utils/userStorage';
-import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
+import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
+import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
+import { getExpressionDataSourceInstance } from './expressionDs';
+import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
@@ -33,33 +37,50 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
-  const settings = await getDataSourceInstanceSettings(ref, scopedVars);
-  if (!settings) {
-    throw new Error(`Datasource ${describeRef(ref)} was not found`);
+  if (isExpressionReference(ref)) {
+    const expressionDs = getExpressionDataSourceInstance();
+    if (!expressionDs) {
+      throw new Error(
+        'Expression datasource has not been initialised. Call setExpressionDataSourceInstance during application boot.'
+      );
+    }
+    return expressionDs;
   }
-
-  // When ref is a template variable, settings.uid is the raw variable string
-  // (e.g. "${datasource}"). Use the resolved uid as the cache key so repeated
-  // calls for the same variable don't create duplicate instances.
-  const cacheUid = settings.rawRef?.uid ?? settings.uid;
-
-  const cached = getCachedPlugin(cacheUid);
-  if (cached) {
-    return cached;
-  }
-
-  const inflight = inflightLoads.get(cacheUid);
-  if (inflight) {
-    return inflight;
-  }
-
-  const promise = loadDataSourceInstance(cacheUid, settings);
-  inflightLoads.set(cacheUid, promise);
 
   try {
-    return await promise;
-  } finally {
-    inflightLoads.delete(cacheUid);
+    const settings = await getDataSourceInstanceSettings(ref, scopedVars);
+    if (!settings) {
+      throw new Error(`Datasource ${describeRef(ref)} was not found`);
+    }
+
+    // When ref is a template variable, settings.uid is the raw variable string
+    // (e.g. "${datasource}"). Use the resolved uid as the cache key so repeated
+    // calls for the same variable don't create duplicate instances.
+    const cacheUid = settings.rawRef?.uid ?? settings.uid;
+
+    const cached = getCachedPlugin(cacheUid);
+    if (cached) {
+      return cached;
+    }
+
+    const inflight = inflightLoads.get(cacheUid);
+    if (inflight) {
+      // `await` (not a bare `return`) so a rejection routes through the catch below to the
+      // fallback. A bare `return` adopts the promise without awaiting, so concurrent callers
+      // would skip the fallback that the first caller (which awaits) gets.
+      return await inflight;
+    }
+
+    const promise = loadDataSourceInstance(cacheUid, settings);
+    inflightLoads.set(cacheUid, promise);
+
+    try {
+      return await promise;
+    } finally {
+      inflightLoads.delete(cacheUid);
+    }
+  } catch (err) {
+    return getDataSourceInstanceFallback(ref, scopedVars, err);
   }
 }
 
@@ -68,7 +89,17 @@ async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInst
     throw new Error('Data source importer has not been set. Call setDataSourcePluginImporter during application boot.');
   }
 
-  const dsPlugin = await importDataSourcePlugin(settings.meta);
+  let dsPlugin;
+  try {
+    dsPlugin = await importDataSourcePlugin(settings.meta);
+  } catch (error) {
+    logDataSourceInstanceError(`Failed to import datasource plugin ${settings.name} (${settings.uid})`, error, {
+      pluginId: settings.meta.id,
+      uid: settings.uid,
+      name: settings.name,
+    });
+    throw error;
+  }
 
   const racedCache = getCachedPlugin(cacheUid);
   if (racedCache) {
@@ -117,14 +148,26 @@ export function registerRuntimeDataSourceInstance(entry: RuntimeDataSourceRegist
   setRuntimePlugin(dataSource.uid, dataSource);
 }
 
-function describeRef(ref: DataSourceRef | string | null | undefined): string {
-  if (ref == null) {
-    return 'default';
+/**
+ * Last resort while the legacy `DataSourceSrv` still exists: the new path failed to resolve
+ * the data source. If the legacy service can resolve it, that's a divergence worth tracking;
+ * otherwise rethrow the original error so a genuine "not found" stays an error and is not
+ * logged. Delete this (and its call site) once `DataSourceSrv` is gone.
+ */
+async function getDataSourceInstanceFallback(
+  ref: DataSourceRef | string | null | undefined,
+  scopedVars: ScopedVars | undefined,
+  originalError: unknown
+): Promise<DataSourceApi> {
+  const srv = getDataSourceSrv();
+  if (srv) {
+    const legacy = await srv.get(ref, scopedVars).catch(() => undefined);
+    if (legacy) {
+      logDataSourceWarning(FALLBACK_TO_LEGACY_INSTANCE_WARNING, { ref: describeRef(ref) });
+      return legacy;
+    }
   }
-  if (typeof ref === 'string') {
-    return ref;
-  }
-  return ref.uid ?? ref.type ?? 'unknown';
+  throw originalError;
 }
 
 /**

@@ -46,9 +46,9 @@ import { Pagination } from '../../Pagination/Pagination';
 import { type PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
+import { type DataLinksActionsTooltipState } from '../cellUtils';
 import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
 import { TableCellDisplayMode } from '../types';
-import { type DataLinksActionsTooltipState } from '../utils';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { EmptyTablePlaceholder } from './components/EmptyTablePlaceholder';
@@ -93,7 +93,8 @@ import {
 import {
   calculateFooterHeight,
   canFieldBeColorized,
-  compileFrameToRecords,
+  compileFrameToRecordsV1,
+  compileFrameToRecordsV2,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -139,6 +140,7 @@ export function TableNG(props: TableNGProps) {
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
+    protoParserEnabled,
     showTypeIcons,
     structureRev,
     timeRange,
@@ -191,8 +193,11 @@ export function TableNG(props: TableNGProps) {
     return getDisplayName(firstNestedField);
   }, [data, hasNestedFrames]);
   const frameToRecords = useMemo(
-    () => compileFrameToRecords(data, nestedFramesFieldName),
-    [data, nestedFramesFieldName]
+    () =>
+      protoParserEnabled
+        ? compileFrameToRecordsV2(data, nestedFramesFieldName)
+        : compileFrameToRecordsV1(data, nestedFramesFieldName),
+    [data, nestedFramesFieldName, protoParserEnabled]
   );
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 

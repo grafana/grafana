@@ -20,8 +20,17 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 	if in == nil {
 		return nil
 	}
+	// Merge legacy TemplateFiles and new ManagedTemplates into the internal model.
+	// ManagedTemplates entries overwrite TemplateFiles entries with the same UID (same name+kind).
+	templates := TemplateFilesToTemplates(in.TemplateFiles, TemplateKindGrafana)
+	if len(in.ManagedTemplates) > 0 {
+		if templates == nil {
+			templates = make(map[ResourceUID]TemplateGroup, len(in.ManagedTemplates))
+		}
+		maps.Copy(templates, ManagedTemplatesToTemplates(in.ManagedTemplates))
+	}
 	return &AMConfigV1{
-		Templates:          TemplateFilesToTemplates(in.TemplateFiles, TemplateKindGrafana),
+		Templates:          templates,
 		InhibitionRules:    InhibitionRulesToModel(in.ManagedInhibitionRules),
 		AlertmanagerConfig: PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
 		ExtraConfigs:       ExtraConfigsToModel(in.ExtraConfigs),
@@ -211,7 +220,7 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 		return nil, nil
 	}
 	dbModel := AMConfigDB{
-		TemplateFiles:      TemplatesToTemplateFiles(in.Templates),
+		ManagedTemplates:   TemplatesToManagedTemplates(in.Templates),
 		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig),
 		ExtraConfigs:       ExtraConfigsToDB(in.ExtraConfigs),
 		ManagedRoutes:      ManagedRoutesToDB(in.ManagedRoutes),

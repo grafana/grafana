@@ -1,6 +1,7 @@
 import {
   type BitbucketRepositoryConfig,
   type BranchOptions,
+  type CommitOptions,
   type ConnectionSpec,
   type GitHubRepositoryConfig,
   type GitLabRepositoryConfig,
@@ -29,6 +30,9 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | R
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
+    signingMethod?: CommitOptions['signingMethod'] | '';
+    commitSigningKey?: string;
+    smimeCertificate?: string;
     // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
     // Spec-level branch naming options (maps to RepositorySpec.branch)
@@ -87,8 +91,12 @@ export interface StatusInfo {
   message?: string | string[];
 }
 
-// Tree view types for combined Resources/Files view
-export type ItemType = 'Folder' | 'File' | 'Dashboard';
+// Tree view types for combined Resources/Files view.
+// `Dashboard`/`Playlist` map to a provisioning resource kind (see resourceKinds.ts).
+// `Folder` usually does too, but getItemType also infers it from plain directory
+// paths that have no backing resource. `File` is the fallback for plain files
+// that don't map to a known kind.
+export type ItemType = 'Folder' | 'Dashboard' | 'Playlist' | 'File';
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {

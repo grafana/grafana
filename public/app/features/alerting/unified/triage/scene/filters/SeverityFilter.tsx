@@ -9,6 +9,7 @@ import { COMBINED_FILTER_LABEL_KEYS } from '../../constants';
 import { type LabelStats } from '../useLabelsBreakdown';
 import { addOrReplaceFilter, removeFilter, useRegexFilterValue } from '../utils';
 
+import { SeverityBars } from './SeverityBars';
 import { SEVERITY_DEFINITIONS, type SeverityLevel, canonicalSeverity, severityFilterRegex } from './severity';
 
 interface SeverityCount {
@@ -83,29 +84,6 @@ export function SeverityFilter({ labels }: SeverityFilterProps) {
   );
 }
 
-interface SeverityBarsProps {
-  level: SeverityLevel;
-}
-
-function SeverityBars({ level }: SeverityBarsProps) {
-  const styles = useStyles2(getStyles);
-  const def = SEVERITY_DEFINITIONS.find((d) => d.level === level);
-  const filled = def?.bars ?? 0;
-  const heights = [4, 7, 10, 13];
-
-  return (
-    <span className={styles.bars} aria-hidden>
-      {Array.from({ length: 4 }, (_, i) => (
-        <span
-          key={i}
-          className={cx(styles.bar, i < filled ? styles[`bar_${level}`] : styles.barEmpty)}
-          style={{ height: heights[i] }}
-        />
-      ))}
-    </span>
-  );
-}
-
 function capitalise(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
@@ -139,30 +117,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     fontVariantNumeric: 'tabular-nums',
-  }),
-  bars: css({
-    display: 'inline-flex',
-    alignItems: 'flex-end',
-    gap: 2,
-    flexShrink: 0,
-  }),
-  bar: css({
-    width: 4,
-    borderRadius: theme.shape.radius.default,
-  }),
-  barEmpty: css({
-    background: theme.colors.border.medium,
-  }),
-  bar_low: css({
-    background: theme.colors.success.text,
-  }),
-  bar_minor: css({
-    background: theme.colors.warning.text,
-  }),
-  bar_major: css({
-    background: theme.colors.warning.main,
-  }),
-  bar_critical: css({
-    background: theme.colors.error.text,
   }),
 });

@@ -2,9 +2,10 @@ import { hash } from 'immutable';
 import { LRUCache } from 'lru-cache';
 
 import { generateUUID } from '@grafana/data';
-import { type LogContext } from '@grafana/faro-web-sdk';
 
 import { getLogger } from '../services/logging/registry';
+
+import { TracedError } from './TracedError';
 
 // 500 is our best guestimate right now. If a session
 // goes past 500 entries, the LRU evicts the oldest one, at worst a refetch,
@@ -70,16 +71,9 @@ function invalidateCacheIfNotReplaced<T>(key: string, cached: Promise<T>): void 
 
 function logError({ error, key }: LogErrorArgs): void {
   try {
-    const err = error instanceof Error ? error : new Error(String(error));
-
-    const context: LogContext = { message: err.message, key };
-    if (err.stack) {
-      context.stack = err.stack;
-    }
-
     getLogger('grafana/runtime.utils.getCachedPromise').logError(
-      new Error(`getCachedPromise: Something failed while resolving a cached promise`, { cause: error }),
-      context
+      new TracedError('getCachedPromise: Something failed while resolving a cached promise', error),
+      { key }
     );
   } catch (error) {
     console.error(error);
@@ -223,7 +217,7 @@ export function serializeArg(value: unknown, baseKey: string): string {
   } catch (error) {
     const key = `uncacheable:${generateUUID()}`;
     getLogger('grafana/runtime.utils.getCachedPromise').logError(
-      new Error(`getCachedPromiseWithArgs: serializeArg failed`, { cause: error }),
+      new TracedError('getCachedPromiseWithArgs: serializeArg failed', error),
       { baseKey, key }
     );
     return key;

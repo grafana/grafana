@@ -39,7 +39,9 @@ var (
 		"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
 		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
 		"elasticsearch":                {ID: "elasticsearch"},
+		"tempo":                        {ID: "tempo"},
 		"zipkin":                       {ID: "zipkin"},
+		"opentsdb":                     {ID: "opentsdb"},
 	}
 )
 

@@ -224,8 +224,6 @@ module.exports = [
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
       '@grafana/define-feature-events': 'error',
-      '@grafana/t-plural-defaults': 'error',
-      '@grafana/trans-plural-defaults': 'error',
       '@grafana/no-plain-links': 'error',
       'react-hooks/exhaustive-deps': [
         'error',
@@ -413,6 +411,17 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/i18n-plural-defaults',
+    plugins: {
+      '@grafana/i18n': grafanaI18nPlugin,
+    },
+    files: ['**/*.{ts,tsx,js}'],
+    rules: {
+      '@grafana/i18n/t-plural-defaults': 'error',
+      '@grafana/i18n/trans-plural-defaults': 'error',
+    },
+  },
+  {
     // Sections of codebase that have all translation markup issues fixed
     name: 'grafana/i18n-overrides',
     plugins: {
@@ -503,9 +512,7 @@ module.exports = [
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mssql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,

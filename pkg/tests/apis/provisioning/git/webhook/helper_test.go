@@ -8,6 +8,7 @@ import (
 
 var env = common.NewSharedGitEnv(
 	common.WithoutProvisioningFolderMetadata,
+	common.WithProvisioningPublicRootURL("https://grafana.example.com"),
 	common.WithRepositoryTypes([]string{"git", "github"}),
 )
 

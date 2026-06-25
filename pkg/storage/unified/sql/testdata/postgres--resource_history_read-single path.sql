@@ -6,6 +6,7 @@ SELECT
     "name",
     "folder",
     "resource_version",
+    "action",
     "value"
     FROM "resource_history"
     WHERE 1 = 1

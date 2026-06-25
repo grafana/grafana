@@ -12458,6 +12458,12 @@
       },
       "UserSearchHitDTO": {
         "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
           "authLabels": {
             "items": {
               "type": "string"
@@ -12498,6 +12504,9 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "role": {
             "type": "string"
           },
           "uid": {
@@ -15251,6 +15260,14 @@
             "schema": {
               "format": "int64",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Limit response to annotations created by a specific user, identified by UID.",
+            "in": "query",
+            "name": "userUID",
+            "schema": {
+              "type": "string"
             }
           },
           {

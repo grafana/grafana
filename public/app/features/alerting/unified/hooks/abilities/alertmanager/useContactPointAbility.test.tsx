@@ -1,6 +1,5 @@
 import { renderHook } from 'test/test-utils';
 
-import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
@@ -317,7 +316,7 @@ describe('useContactPointAbility', () => {
     it('should grant View / Create / Export when external AM permissions are held', () => {
       // The hook now selects EXTERNAL_AM_PERMISSIONS for non-Grafana AMs, so external
       // permissions are correctly recognised and grant the corresponding abilities.
-      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      const amSource = setupMimirAlertmanager();
       grantUserPermissions([
         EXTERNAL_AM_VISIBILITY_PERMISSION,
         AccessControlAction.AlertingNotificationsExternalRead,
@@ -330,7 +329,7 @@ describe('useContactPointAbility', () => {
           create: useContactPointAbility({ action: ContactPointAction.Create }),
           export: useContactPointAbility({ action: ContactPointAction.Export, context: editableEntity }),
         }),
-        { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
+        { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
       expect(result.current.view.granted).toBe(true);
