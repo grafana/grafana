@@ -125,6 +125,18 @@ export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undef
 }
 
 /**
+ * Look up a kind from a job summary row, which carries both the API group
+ * (`dashboard.grafana.app`) and the Kubernetes Kind (`Dashboard`). Matches on
+ * whichever identifiers are present so partially-populated summary rows still resolve.
+ */
+export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
+  if (!group && !kind) {
+    return undefined;
+  }
+  return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
+}
+
+/**
  * Look up a kind from a resource-stat entry (`ResourceCount`), which carries both
  * an API `group` and a plural `resource` name. The plural resource uniquely
  * identifies the kind even when kinds share a group, so we match on it first and

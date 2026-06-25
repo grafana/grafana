@@ -13349,6 +13349,17 @@
         "error-fetching-active-job": "Error fetching active job"
       }
     },
+    "job-summary": {
+      "column-created": "Created",
+      "column-deleted": "Deleted",
+      "column-errors": "Errors",
+      "column-resource": "Resource",
+      "column-total": "Total",
+      "column-unchanged": "Unchanged",
+      "column-updated": "Updated",
+      "column-warnings": "Warnings",
+      "unknown-kind": "Unknown"
+    },
     "local": {
       "path-description": "Local file system path to the repository",
       "path-label": "Repository Path",

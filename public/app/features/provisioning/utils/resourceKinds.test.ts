@@ -4,6 +4,7 @@ import { getIconForKind } from 'app/features/search/service/utils';
 import {
   resourceKindInfos,
   getAvailableResourceKinds,
+  getKindInfoByGroupKind,
   getKindInfoByItemType,
   getKindInfoByResource,
   getKindInfoByStat,
@@ -76,6 +77,23 @@ describe('getKindInfoByStatGroup', () => {
 
   it('returns undefined for unknown groups', () => {
     expect(getKindInfoByStatGroup('alert.grafana.app')).toBeUndefined();
+  });
+});
+
+describe('getKindInfoByGroupKind', () => {
+  it('resolves a job summary row by group and kind', () => {
+    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(resourceKindInfos.dashboard);
+    expect(getKindInfoByGroupKind('folder.grafana.app', 'Folder')).toBe(resourceKindInfos.folder);
+  });
+
+  it('resolves on whichever identifier is present', () => {
+    expect(getKindInfoByGroupKind(undefined, 'Playlist')).toBe(resourceKindInfos.playlist);
+    expect(getKindInfoByGroupKind('playlist.grafana.app', undefined)).toBe(resourceKindInfos.playlist);
+  });
+
+  it('returns undefined when nothing matches or both identifiers are missing', () => {
+    expect(getKindInfoByGroupKind('alert.grafana.app', 'AlertRule')).toBeUndefined();
+    expect(getKindInfoByGroupKind(undefined, undefined)).toBeUndefined();
   });
 });
 
