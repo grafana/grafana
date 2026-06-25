@@ -150,17 +150,6 @@ describe('TimeSeriesPanel', () => {
   });
 
   describe('faceted filter pin-to-sidebar persistence', () => {
-    let originalVizLegendFacetedFilter: boolean | undefined;
-
-    beforeEach(() => {
-      originalVizLegendFacetedFilter = config.featureToggles.vizLegendFacetedFilter;
-      config.featureToggles.vizLegendFacetedFilter = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.vizLegendFacetedFilter = originalVizLegendFacetedFilter;
-    });
-
     it('calls onOptionsChange with facetedFilterPinned: true when "Pin to sidebar" is clicked', async () => {
       const { onOptionsChange, props } = renderPanelWithFacetedFilter();
 
