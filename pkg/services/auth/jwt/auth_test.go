@@ -300,6 +300,50 @@ func TestIntegrationVerifyUsingJWKSetURL(t *testing.T) {
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.Error(t, err)
 	})
+
+	t.Run("verifies a token using a {{kid}} templated URL", func(t *testing.T) {
+		var requestedPaths []string
+		ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestedPaths = append(requestedPaths, r.URL.Path)
+			kid := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), "/jwks.json")
+			jwks := jose.JSONWebKeySet{}
+			for _, k := range jwksPublic.Keys {
+				if k.KeyID == kid {
+					jwks.Keys = append(jwks.Keys, k)
+				}
+			}
+			if err := json.NewEncoder(w).Encode(jwks); err != nil {
+				panic(err)
+			}
+		}))
+		t.Cleanup(ts.Close)
+
+		configure := func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuth.JWKSetURL = ts.URL + "/{{kid}}/jwks.json"
+		}
+		runner := scenarioRunner(func(t *testing.T, sc scenarioContext) {
+			keySet := sc.authJWTSvc.keySet.(*keySetHTTP)
+			keySet.client = ts.Client()
+
+			token := sign(t, &jwKeys[1], jwt.Claims{Subject: subject}, nil)
+			verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+			require.NoError(t, err)
+			assert.Equal(t, verifiedClaims["sub"], subject)
+			require.Contains(t, requestedPaths, "/key-id-01/jwks.json")
+		}, configure)
+		runner(t)
+	})
+
+	t.Run("rejects a token with no kid when URL is templated", func(t *testing.T) {
+		runner := scenarioRunner(func(t *testing.T, sc scenarioContext) {
+			token := sign(t, jwKeys[0].Key, jwt.Claims{Subject: subject}, nil)
+			_, err := sc.authJWTSvc.Verify(sc.ctx, token)
+			require.ErrorIs(t, err, ErrMissingKeyIDForTemplatedURL)
+		}, func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuth.JWKSetURL = "https://example.com/{{kid}}/jwks.json"
+		})
+		runner(t)
+	})
 }
 
 // test that caCert and bearer token files have been read and configured and an error is thrown when the file does not exist or is empty
