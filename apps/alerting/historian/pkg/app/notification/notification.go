@@ -26,7 +26,9 @@ type Notification struct {
 
 func New(cfg config.NotificationConfig, reg prometheus.Registerer, logger logging.Logger, tracer trace.Tracer) *Notification {
 	if !cfg.Enabled {
-		return &Notification{}
+		return &Notification{
+			logger: logger,
+		}
 	}
 	return &Notification{
 		loki:   NewLokiReader(cfg.Loki, reg, logger, tracer),
