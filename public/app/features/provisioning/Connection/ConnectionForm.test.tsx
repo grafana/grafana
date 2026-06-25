@@ -4,6 +4,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -107,6 +108,32 @@ describe('ConnectionForm', () => {
       setup({ data: createMockConnection() });
 
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toHaveValue('configured');
+    });
+  });
+
+  describe('Rendering - file-provisioned (read-only)', () => {
+    const provisionedConnection = () =>
+      createMockConnection({
+        metadata: {
+          name: 'test-connection',
+          annotations: {
+            [AnnoKeyManagerKind]: ManagerKind.FileProvisioning,
+            [AnnoKeyManagerIdentity]: 'file-provisioning',
+          },
+        },
+      });
+
+    it('shows a read-only banner and disables Save', () => {
+      setup({ data: provisionedConnection() });
+
+      expect(screen.getByText(/provisioned from a file/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeDisabled();
+    });
+
+    it('does not render the Delete button', () => {
+      setup({ data: provisionedConnection() });
+
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
   });
 

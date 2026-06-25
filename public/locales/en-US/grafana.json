@@ -13114,6 +13114,7 @@
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
+      "export": "Export",
       "no-connections": "No connections configured",
       "no-results": "No results matching your query",
       "search-placeholder": "Search connections",
@@ -13475,6 +13476,11 @@
       "submit-error": "Failed to create job for orphaned resources",
       "title": "This resource is managed by a repository that no longer exists"
     },
+    "provisioned-from-file-banner": {
+      "body": "Its configuration is managed from a mounted manifest and is read-only here. Edit the manifest file to change it.",
+      "title": "This resource is provisioned from a file"
+    },
+    "provisioned-from-file-tooltip": "This resource is provisioned from a file and is read-only",
     "provisioning-wizard": {
       "on-submit": {
         "error": {
@@ -13539,6 +13545,7 @@
       "view-folder": "View folder"
     },
     "repository-card": {
+      "export": "Export",
       "last-sync": "Last sync: {{date}}",
       "settings": "Settings",
       "view": "View"

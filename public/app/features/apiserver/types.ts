@@ -50,6 +50,8 @@ export enum ManagerKind {
   Terraform = 'terraform',
   Kubectl = 'kubectl',
   Plugin = 'plugin',
+  /** Provisioning resources (Repository/Connection) applied from mounted manifests at startup. */
+  FileProvisioning = 'file-provisioning',
   /** @deprecated shim/migration path for legacy file provisioning */
   ClassicFP = 'classic-file-provisioning',
 }

@@ -44,8 +44,10 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/bootstrap"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -145,6 +147,8 @@ type APIBuilder struct {
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	folderAPIVersion              string
 	webhookSecretRotationInterval time.Duration
+	bootstrapManifestsEnabled     bool
+	bootstrapManifestsPath        string
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -369,6 +373,8 @@ func RegisterAPIService(
 		return nil, err
 	}
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.bootstrapManifestsEnabled = cfg.ProvisioningBootstrapManifestsEnabled
+	builder.bootstrapManifestsPath = cfg.ProvisioningBootstrapManifestsPath
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -928,6 +934,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// if running solely CRUD or not the preferred version, skip controllers/workers setup
 			if b.onlyApiServer || !b.isPreferredVersion {
 				return nil
+			}
+
+			// Apply Repository/Connection manifests mounted on disk (Git Sync bootstrap). Uses the
+			// loopback config so secure values reach admission unredacted. Failures are logged, never fatal.
+			if b.bootstrapManifestsEnabled {
+				bootstrap.Run(postStartHookCtx.Context, config, b.bootstrapManifestsPath, log.New("provisioning.bootstrap"))
 			}
 
 			// Informer with resync interval used for health check and reconciliation

@@ -9,11 +9,13 @@ import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { ProvisionedFromFileBanner } from '../components/ProvisionedFromFileBanner';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
+import { isManagedResourceReadOnly } from '../utils/managedResource';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -26,6 +28,8 @@ const providerOptions = [{ value: 'github', label: 'GitHub' }];
 export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
+  // File-provisioned connections are managed from disk and read-only in the UI.
+  const isProvisioned = data ? isManagedResourceReadOnly(data) : false;
   const privateKey = data?.secure?.privateKey;
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
   const navigate = useNavigate();
@@ -121,6 +125,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
         <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
         <Stack direction="column" gap={2}>
+          {isProvisioned && <ProvisionedFromFileBanner />}
           {submitError && <Alert severity="error" title={submitError} />}
           <Field
             noMargin
@@ -146,12 +151,14 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
 
           <Stack gap={2}>
-            <Button type="submit" disabled={request.isLoading}>
+            <Button type="submit" disabled={request.isLoading || isProvisioned}>
               {request.isLoading
                 ? t('provisioning.connection-form.button-saving', 'Saving...')
                 : t('provisioning.connection-form.button-save', 'Save')}
             </Button>
-            {connectionName && data && <DeleteConnectionButton name={connectionName} connection={data} />}
+            {connectionName && data && !isProvisioned && (
+              <DeleteConnectionButton name={connectionName} connection={data} />
+            )}
           </Stack>
         </Stack>
       </form>

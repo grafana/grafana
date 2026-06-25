@@ -198,7 +198,9 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		// This can fallback to writing the value with a provisioning client
 		return errResourceIsManagedInRepository
 
-	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
+	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP, utils.ManagerKindFileProvisioning: // nolint:staticcheck
+		// File-provisioned resources (legacy and the app-platform provisioning bootstrap) are
+		// reconciled from disk; the UI surfaces them as read-only via the manager AllowsEdits flag.
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 

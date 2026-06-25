@@ -1,11 +1,14 @@
 import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
+import { Button, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { type RepoType } from '../Wizard/types';
+import { ManagedBadge } from '../components/ManagedBadge';
 import { CONNECTIONS_URL } from '../constants';
+import { exportResourceAsJson } from '../utils/export';
+import { getManagerKind, isManagedResourceReadOnly } from '../utils/managedResource';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
@@ -22,6 +25,8 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   const description = spec?.description;
   const url = spec?.url;
   const providerType: RepoType = spec?.type ?? 'github';
+  // File-provisioned connections are managed from disk and read-only in the UI.
+  const isProvisioned = isManagedResourceReadOnly(connection);
   return (
     <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>
@@ -31,6 +36,7 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
         <Stack gap={2} direction="row" alignItems="center">
           <Text variant="h3">{title}</Text>
           <ConnectionStatusBadge status={status} />
+          {isProvisioned && <ManagedBadge managerKind={getManagerKind(connection)} name={title} />}
         </Stack>
       </Card.Heading>
 
@@ -52,6 +58,14 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
           <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
             <Trans i18nKey="provisioning.connections.view">View</Trans>
           </LinkButton>
+          <Button
+            variant="secondary"
+            icon="download-alt"
+            size="md"
+            onClick={() => exportResourceAsJson(connection, 'Connection')}
+          >
+            <Trans i18nKey="provisioning.connections.export">Export</Trans>
+          </Button>
         </Card.Actions>
       )}
     </Card>

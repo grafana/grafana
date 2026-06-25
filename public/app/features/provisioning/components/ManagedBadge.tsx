@@ -35,6 +35,7 @@ export function ManagedBadge({ managerKind, name, isOrphaned = false }: ManagedB
     case ManagerKind.Plugin:
       tooltip = t('provisioning.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id: name });
       break;
+    case ManagerKind.FileProvisioning:
     case ManagerKind.ClassicFP:
       tooltip = t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');
       break;
