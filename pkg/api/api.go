@@ -89,6 +89,11 @@ func (hs *HTTPServer) registerRoutes() {
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaPasskeyAuthn) {
 		r.Post("/api/auth/passkey/login/begin", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.PasskeyLoginBegin))
 		r.Post("/api/auth/passkey/login/finish", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.PasskeyLoginFinish))
+		// begin creates the passwordless user (and possibly its org), so it carries the same user/org
+		// quota gate as password signup (/api/user/signup) — otherwise this path would bypass the
+		// instance's account cap. finish only enrols a credential for the already-created user.
+		r.Post("/api/user/credential-enroll/begin", requestmeta.SetOwner(requestmeta.TeamAuth), quota(user.QuotaTargetSrv), quota(org.QuotaTargetSrv), routing.Wrap(hs.CredentialEnrollBegin))
+		r.Post("/api/user/credential-enroll/finish", requestmeta.SetOwner(requestmeta.TeamAuth), routing.Wrap(hs.CredentialEnrollFinish))
 	}
 
 	r.Get("/login", hs.LoginView)

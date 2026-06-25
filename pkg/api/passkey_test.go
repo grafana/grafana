@@ -32,6 +32,17 @@ type fakePasskeyService struct {
 	beginRegErr    error
 	gotRegUser     passkey.RegisteringUser
 
+	beginEnrollResult *passkey.BeginResult
+	beginEnrollErr    error
+	gotEnrollUser     passkey.RegisteringUser
+	gotEnrollSource   passkey.EnrollSource
+
+	finishEnrollUserID int64
+	finishEnrollSource passkey.EnrollSource
+	finishEnrollErr    error
+	gotFinishSessionID string
+	gotFinishName      string
+
 	finishRegCred *passkey.Credential
 	finishRegErr  error
 }
@@ -47,6 +58,16 @@ func (f *fakePasskeyService) FinishLogin(context.Context, string, []byte) (int64
 func (f *fakePasskeyService) BeginRegistration(_ context.Context, u passkey.RegisteringUser) (*passkey.BeginResult, error) {
 	f.gotRegUser = u
 	return f.beginRegResult, f.beginRegErr
+}
+
+func (f *fakePasskeyService) BeginEnrollment(_ context.Context, u passkey.RegisteringUser, src passkey.EnrollSource) (*passkey.BeginResult, error) {
+	f.gotEnrollUser, f.gotEnrollSource = u, src
+	return f.beginEnrollResult, f.beginEnrollErr
+}
+
+func (f *fakePasskeyService) FinishEnrollment(_ context.Context, sessionID, name string, _ []byte) (int64, passkey.EnrollSource, error) {
+	f.gotFinishSessionID, f.gotFinishName = sessionID, name
+	return f.finishEnrollUserID, f.finishEnrollSource, f.finishEnrollErr
 }
 
 func (f *fakePasskeyService) FinishRegistration(context.Context, string, passkey.RegisteringUser, string, []byte) (*passkey.Credential, error) {

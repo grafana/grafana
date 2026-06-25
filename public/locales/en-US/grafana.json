@@ -10991,7 +10991,8 @@
         "unknown": "Could not sign in with passkey. Please try again."
       },
       "sign-in": "Sign in with a passkey",
-      "signing-in": "Signing in…"
+      "signing-in": "Signing in…",
+      "use-another-device": "Use a passkey from another device"
     },
     "services": {
       "sing-in-with-prefix": "Sign in with {{serviceName}}"
@@ -14799,6 +14800,13 @@
     "confirm-password-label": "Confirm password",
     "email-label": "Email",
     "org-name-label": "Org. name",
+    "passkey": {
+      "default-name": "Passkey",
+      "error-expired": "That took too long. Please try again.",
+      "error-unknown": "Could not create your passkey. Please try again.",
+      "submit-button": "Create your passkey",
+      "unsupported": "This browser does not support passkeys. Use a browser that supports them to sign up."
+    },
     "password-label": "Password",
     "submit-button": "Submit",
     "user-name-label": "Your name",

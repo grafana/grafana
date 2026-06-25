@@ -42,6 +42,14 @@ func (f *fakePasskeyService) BeginRegistration(context.Context, passkey.Register
 	return nil, nil
 }
 
+func (f *fakePasskeyService) BeginEnrollment(context.Context, passkey.RegisteringUser, passkey.EnrollSource) (*passkey.BeginResult, error) {
+	return nil, nil
+}
+
+func (f *fakePasskeyService) FinishEnrollment(context.Context, string, string, []byte) (int64, passkey.EnrollSource, error) {
+	return 0, "", nil
+}
+
 func (f *fakePasskeyService) FinishRegistration(context.Context, string, passkey.RegisteringUser, string, []byte) (*passkey.Credential, error) {
 	return nil, nil
 }

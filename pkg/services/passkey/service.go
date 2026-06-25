@@ -23,6 +23,16 @@ type RegisteringUser struct {
 	DisplayName string
 }
 
+// EnrollSource records which anonymous flow started a passkey enrollment, so the finish step can run
+// the right post-step (complete signup, apply an invite's org membership, finish bootstrap).
+type EnrollSource string
+
+const (
+	EnrollSourceSignup    EnrollSource = "signup"
+	EnrollSourceInvite    EnrollSource = "invite"
+	EnrollSourceBootstrap EnrollSource = "bootstrap"
+)
+
 // BeginResult carries the public-key options the browser hands to navigator.credentials.*, plus the
 // opaque sessionID that ties the begin and finish halves of one ceremony together. Options is raw
 // JSON produced by go-webauthn and passed through to the client untouched.
@@ -45,6 +55,17 @@ type Service interface {
 
 	// BeginRegistration starts enrolling a new passkey for an already-authenticated user.
 	BeginRegistration(ctx context.Context, user RegisteringUser) (*BeginResult, error)
+
+	// BeginEnrollment starts enrolling the first passkey for a user via an anonymous flow (signup,
+	// invite, bootstrap) where there is no session. The pending state carries the user's id and the
+	// source so the anonymous finish can persist the credential and run the right post-step.
+	BeginEnrollment(ctx context.Context, user RegisteringUser, source EnrollSource) (*BeginResult, error)
+
+	// FinishEnrollment verifies the attestation in responseBody against the pending enrollment for
+	// sessionID, persists the credential under name, and returns the enrolled user's id and the source
+	// flow so the caller can run the right post-step. Returns ErrChallengeExpired for an unknown/expired
+	// sessionID.
+	FinishEnrollment(ctx context.Context, sessionID, name string, responseBody []byte) (userID int64, source EnrollSource, err error)
 
 	// FinishRegistration verifies the attestation in responseBody against the stored challenge and
 	// persists the new credential under name. It returns ErrChallengeExpired for an expired sessionID.
