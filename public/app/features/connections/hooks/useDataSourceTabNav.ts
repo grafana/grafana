@@ -2,7 +2,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModel, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDatasourcePluginMeta } from '@grafana/runtime/internal';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useDataSource, useDataSourceMeta, useDataSourceSettings } from 'app/features/datasources/state/hooks';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from 'app/features/datasources/state/navModel';
@@ -19,9 +19,9 @@ export function useDataSourceTabNav(pageName: string, pageIdParam?: string) {
   const pageId = pageIdParam || params.get('page');
 
   const { plugin, loadError, loading } = useDataSourceSettings();
-  const dsi = getDataSourceSrv()?.getInstanceSettings(uid);
-  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
-  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
+  const { value: dataSourcePluginMeta } = useDatasourcePluginMeta(datasource.type);
+  const hasAlertingEnabled = Boolean(dataSourcePluginMeta?.alerting ?? false);
+  const isAlertManagerDatasource = dataSourcePluginMeta?.id === 'alertmanager';
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
 
   const navIndex = useSelector((state) => state.navIndex);
