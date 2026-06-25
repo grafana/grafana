@@ -331,6 +331,33 @@ func TestExtractor_CapsHugePanelContent(t *testing.T) {
 	assert.LessOrEqual(t, len(items[0].Content), maxItemContentBytes)
 }
 
+func TestExtractor_LongDescriptionKeepsQuery(t *testing.T) {
+	// A verbose panel description must not eat the whole content budget and
+	// crowd out the query text — query-based search still needs to match.
+	body := map[string]any{
+		"uid":   "desc-dash",
+		"title": "Runbooks",
+		"panels": []any{
+			map[string]any{
+				"id":          1,
+				"title":       "Error budget",
+				"description": strings.Repeat("verbose runbook prose. ", 1000), // ~23 KiB
+				"datasource":  map[string]any{"uid": "prom-1", "type": "prometheus"},
+				"targets": []any{
+					map[string]any{"refId": "A", "expr": "sum(rate(http_requests_total{code=~\"5..\"}[5m]))"},
+				},
+			},
+		},
+	}
+	value, _ := json.Marshal(body)
+	items, err := New().Extract(context.Background(),
+		&resourcepb.ResourceKey{Name: "desc-dash"}, value, "")
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	assert.LessOrEqual(t, len(items[0].Content), maxItemContentBytes)
+	assert.Contains(t, items[0].Content, "sum(rate(http_requests_total")
+}
+
 func TestTruncateUTF8_RuneBoundary(t *testing.T) {
 	s := strings.Repeat("é", 10) // 2 bytes per rune
 	// Cap at an odd byte count that lands mid-rune; result must stay valid.

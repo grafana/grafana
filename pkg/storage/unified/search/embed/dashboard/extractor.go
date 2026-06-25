@@ -31,6 +31,9 @@ const defaultMaxPanels = 200
 // maxItemContentBytes caps a panel's embeddable text so we keep our token count per batch reasonable
 const maxItemContentBytes = 4 * 1024
 
+// maxDescriptionBytes cap the panel desc at 2Kib to leave room for queries
+const maxDescriptionBytes = 2 * 1024
+
 // Extractor produces one embed.Item per panel.
 type Extractor struct {
 	logger    *slog.Logger
@@ -107,7 +110,7 @@ func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, 
 		parts = append(parts, p.Title)
 	}
 	if p.Description != "" {
-		parts = append(parts, p.Description)
+		parts = append(parts, truncateUTF8(p.Description, maxDescriptionBytes))
 	}
 	breadcrumb := strings.Join(parts, " → ")
 
