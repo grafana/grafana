@@ -23,8 +23,8 @@ export const MAX_ITEM_HEIGHT = 6;
 // summary) does not collapse the minimap's density shape. Fixed, NOT proportional
 // to span_count, to avoid wild density swings between summaries. Tunable / pending
 // design (Figma "Overview - shape preservation"). See grafana-adaptivetraces-app#1031.
-export const SUMMARY_WEIGHT = 3;
-export const MAX_SUMMARY_ITEM_HEIGHT = MAX_ITEM_HEIGHT * SUMMARY_WEIGHT;
+const SUMMARY_WEIGHT = 3;
+const MAX_SUMMARY_ITEM_HEIGHT = MAX_ITEM_HEIGHT * SUMMARY_WEIGHT;
 
 type SpanGraphItem = { valueWidth: number; valueOffset: number; serviceName: string; isSummary?: boolean };
 
@@ -33,7 +33,8 @@ type SpanGraphItem = { valueWidth: number; valueOffset: number; serviceName: str
 const TINT = 0.3; // toward white at the left
 const SHADE = 0.55; // toward black at the right
 const rgba = ([r, g, b]: [number, number, number]) => `rgba(${r},${g},${b},${ITEM_ALPHA})`;
-const tint = ([r, g, b]: [number, number, number]) => rgba([r + (255 - r) * TINT, g + (255 - g) * TINT, b + (255 - b) * TINT]);
+const tint = ([r, g, b]: [number, number, number]) =>
+  rgba([r + (255 - r) * TINT, g + (255 - g) * TINT, b + (255 - b) * TINT]);
 const shade = ([r, g, b]: [number, number, number]) => rgba([r * (1 - SHADE), g * (1 - SHADE), b * (1 - SHADE)]);
 
 export default function renderIntoCanvas(

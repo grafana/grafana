@@ -61,7 +61,11 @@ describe('renderIntoCanvas()', () => {
     // a gradient (vs a solid rgba string) was used for summary spans.
     createLinearGradient() {
       const stops: Array<{ offset: number; color: string }> = [];
-      return { __isGradient: true, stops, addColorStop: (offset: number, color: string) => stops.push({ offset, color }) };
+      return {
+        __isGradient: true,
+        stops,
+        addColorStop: (offset: number, color: string) => stops.push({ offset, color }),
+      };
     }
   }
 
