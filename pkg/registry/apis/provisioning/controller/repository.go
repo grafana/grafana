@@ -373,14 +373,14 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
-	hooks, _ := repo.(repository.Hooks)
-	if hooks == nil {
+	webhookRepo, ok := repo.(repository.WebhookRepository)
+	if !ok {
 		return nil, nil
 	}
 
 	if obj.Status.ObservedGeneration < 1 {
 		logger.Info("handle repository create")
-		patchOperations, err := hooks.OnCreate(ctx)
+		patchOperations, err := webhookOnCreate(ctx, webhookRepo)
 		if err != nil {
 			return nil, fmt.Errorf("error running OnCreate: %w", err)
 		}
@@ -388,7 +388,7 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 	}
 
 	logger.Info("handle repository spec update", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	patchOperations, err := hooks.OnUpdate(ctx)
+	patchOperations, err := webhookOnUpdate(ctx, webhookRepo)
 	if err != nil {
 		return nil, fmt.Errorf("error running OnUpdate: %w", err)
 	}
@@ -730,8 +730,8 @@ func (rc *RepositoryController) process(key string) error {
 	}
 
 	// Rotate webhook secret if due.
-	if rotator, ok := repo.(repository.WebhookSecretRotator); ok && shouldRotateWebhookSecret {
-		rotateOps, err := rotator.RotateWebhookSecret(ctx)
+	if webhookRepo, ok := repo.(repository.WebhookRepository); ok && shouldRotateWebhookSecret {
+		rotateOps, err := rotateWebhookSecret(ctx, webhookRepo)
 		if err != nil {
 			logger.Warn("webhook secret rotation failed", "error", err)
 		}
