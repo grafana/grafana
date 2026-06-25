@@ -11,6 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
+import { RepoIcon } from '../Shared/RepoIcon';
 import { PROVISIONING_URL } from '../constants';
 
 import { RepositoryActions } from './RepositoryActions';
@@ -61,6 +62,12 @@ export default function RepositoryStatusPage() {
         text: data?.spec?.title ?? t('provisioning.repository-status-page.title', 'Repository Status'),
         subTitle: data?.spec?.description,
       }}
+      renderTitle={(title) => (
+        <Stack alignItems="center" gap={1}>
+          <RepoIcon type={data?.spec?.type} />
+          <h1>{title}</h1>
+        </Stack>
+      )}
       actions={data && <RepositoryActions repository={data} />}
     >
       <Page.Contents isLoading={query.isLoading}>
