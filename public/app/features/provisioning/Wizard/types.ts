@@ -56,4 +56,4 @@ export type StepStatusInfo =
 
 export type ConnectionCreationResult = { success: true; connectionName: string } | { success: false; error: string };
 
-export type InstructionAvailability = Extract<RepoType, 'bitbucket' | 'gitlab' | 'github'>;
+export type InstructionAvailability = Extract<RepoType, 'bitbucket' | 'gitlab' | 'github' | 'githubEnterprise'>;

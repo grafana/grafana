@@ -15,11 +15,13 @@ export function RepositoryTokenInput() {
     register,
     control,
     setValue,
+    watch,
     formState: { errors },
     getValues,
   } = useFormContext<WizardFormData>();
 
   const type = getValues('repository.type');
+  const url = watch('repository.url');
   const isGitBased = isGitProvider(type);
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const hasTokenInstructions = getHasTokenInstructions(type);
@@ -30,7 +32,7 @@ export function RepositoryTokenInput() {
 
   return (
     <>
-      {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
+      {hasTokenInstructions && <TokenPermissionsInfo type={type} url={url} />}
       <Field
         noMargin
         label={gitFields.tokenConfig.label}

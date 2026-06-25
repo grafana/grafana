@@ -38,6 +38,19 @@ const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     icon: 'github' as const,
   },
   {
+    type: 'githubEnterprise',
+    label: t('provisioning.repository-types.github-enterprise', 'GitHub Enterprise'),
+    description: t(
+      'provisioning.repository-types.github-enterprise-description',
+      'Connect to GitHub Enterprise Server repositories'
+    ),
+    tooltip: t(
+      'provisioning.repository-types.github-enterprise-tooltip',
+      'Enhanced GitHub integration for self-hosted GitHub Enterprise Server with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
+    ),
+    icon: 'github' as const,
+  },
+  {
     type: 'gitlab',
     label: t('provisioning.repository-types.gitlab', 'GitLab'),
     description: t('provisioning.repository-types.gitlab-description', 'Connect to GitLab repositories'),
@@ -75,7 +88,7 @@ export const getRepositoryTypeConfig = (type: RepoType): RepositoryTypeConfig | 
   return getRepositoryTypeConfigs().find((config) => config.type === type);
 };
 
-const GIT_PROVIDER_TYPES = ['github', 'gitlab', 'bitbucket', 'git'];
+const GIT_PROVIDER_TYPES = ['github', 'githubEnterprise', 'gitlab', 'bitbucket', 'git'];
 
 export const isGitProvider = (type: RepoType) => {
   return GIT_PROVIDER_TYPES.includes(type);

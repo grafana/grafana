@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { isFetchError, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
+import { config, isFetchError, reportInteraction } from '@grafana/runtime';
+import { Alert, Button, Combobox, Field, Input, Stack } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -22,7 +23,12 @@ interface ConnectionFormProps {
   data?: Connection;
 }
 
-const providerOptions = [{ value: 'github', label: 'GitHub' }];
+const providerOptions = [
+  { value: 'github', label: 'GitHub' },
+  ...(config.licenseInfo.edition === GrafanaEdition.Enterprise
+    ? [{ value: 'githubEnterprise', label: 'GitHub Enterprise' }]
+    : []),
+];
 
 export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
@@ -36,10 +42,11 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       type: data?.spec?.type || 'github',
       title: data?.spec?.title || '',
       description: data?.spec?.description || '',
-      appID: data?.spec?.github?.appID || '',
-      installationID: data?.spec?.github?.installationID || '',
+      appID: data?.spec?.github?.appID || data?.spec?.githubEnterprise?.appID || '',
+      installationID: data?.spec?.github?.installationID || data?.spec?.githubEnterprise?.installationID || '',
       privateKey: '',
       webhookDisabled: data?.spec?.webhook?.disabled ?? false,
+      serverUrl: data?.spec?.githubEnterprise?.serverUrl || '',
     },
   });
 
@@ -48,10 +55,13 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     reset,
     register,
     control,
+    watch,
     formState: { isDirty, errors },
     getValues,
     setError,
   } = formMethods;
+
+  const selectedType = watch('type');
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -86,11 +96,21 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
         title: form.title,
         type: form.type,
         ...(form.description && { description: form.description }),
-        github: {
-          appID: form.appID,
-          installationID: form.installationID,
-        },
         ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
+        ...(form.type === 'githubEnterprise'
+          ? {
+              githubEnterprise: {
+                appID: form.appID,
+                installationID: form.installationID,
+                serverUrl: form.serverUrl,
+              },
+            }
+          : {
+              github: {
+                appID: form.appID,
+                installationID: form.installationID,
+              },
+            }),
       };
 
       await submitData(spec, form.privateKey);
@@ -138,7 +158,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
               render={({ field: { ref, onChange, ...field } }) => (
                 <Combobox
                   id="type"
-                  disabled // TODO enable when other providers are supported
+                  disabled={providerOptions.length <= 1}
                   options={providerOptions}
                   onChange={(option) => onChange(option?.value)}
                   {...field}
@@ -147,7 +167,38 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             />
           </Field>
 
-          <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
+          {selectedType === 'githubEnterprise' && (
+            <Field
+              noMargin
+              label={t('provisioning.connection-form.label-server-url', 'Server URL')}
+              description={t(
+                'provisioning.connection-form.description-server-url',
+                'The URL of your GitHub Enterprise Server'
+              )}
+              invalid={!!errors.serverUrl}
+              error={errors.serverUrl?.message}
+              required={!isEdit}
+            >
+              <Input
+                id="serverUrl"
+                {...register('serverUrl', {
+                  required: !isEdit
+                    ? t('provisioning.connection-form.error-required', 'This field is required')
+                    : false,
+                })}
+                placeholder={t(
+                  'provisioning.connection-form.placeholder-server-url',
+                  'https://your-custom-github-enterprise-url.com'
+                )}
+              />
+            </Field>
+          )}
+
+          <GitHubConnectionFields
+            required={!isEdit}
+            privateKeyConfigured={Boolean(privateKey)}
+            type={data?.spec?.type || 'github'}
+          />
 
           <WebhookDisabledField
             registration={register('webhookDisabled')}

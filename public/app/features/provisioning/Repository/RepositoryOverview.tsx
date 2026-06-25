@@ -24,6 +24,7 @@ import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolder
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
+import { isGitHubBased } from '../utils/repositoryTypes';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -238,8 +239,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function getWebhookURL(repo: Repository) {
   const { status, spec } = repo;
-  if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
-    return textUtil.sanitizeUrl(`${spec.github.url}/settings/hooks/${status.webhook?.id}`);
+  const repoUrl = spec?.github?.url ?? spec?.githubEnterprise?.url;
+  if (isGitHubBased(spec?.type) && status?.webhook?.url && repoUrl) {
+    return textUtil.sanitizeUrl(`${repoUrl}/settings/hooks/${status.webhook?.id}`);
   }
   return undefined;
 }
