@@ -1,3 +1,4 @@
+import { isObject } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
@@ -17,5 +18,13 @@ export async function getMostUsedDashboards(maxItems: number) {
     sort: MOST_USED_SORT,
     limit: maxItems,
   });
-  return response.view.toArray();
+  return response.view
+    .toArray()
+    .filter(
+      (item) =>
+        isObject(item.field) &&
+        'views_last_30_days' in item.field &&
+        typeof item.field.views_last_30_days === 'number' &&
+        item.field.views_last_30_days > 0
+    );
 }

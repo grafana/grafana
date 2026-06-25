@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -184,6 +185,14 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
+	// When the allow list is disabled, *.ext.grafana.app groups are additionally
+	// forwarded to the underlying authz client so the new dual-check path runs
+	// for K8s-native CRDs. This mirrors narrowing in
+	// rbac.Service.checkPermission and keeps folder/dashboard/iam flow on the
+	// existing allow-list path.
+	if strings.HasSuffix(group, ".ext.grafana.app") {
+		return true
+	}
 	if _, ok := c.allowlist[group]; ok {
 		if _, ok := c.allowlist[group][resource]; ok {
 			return true

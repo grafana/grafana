@@ -221,6 +221,7 @@ func (r *sqlVectorBackfillJobsCompleteRequest) Validate() error {
 type sqlVectorCollectionGetContentResponse struct {
 	Subresource string
 	Content     string
+	Folder      string
 }
 
 type sqlVectorCollectionGetContentRequest struct {

@@ -196,6 +196,11 @@ func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
+// GitHub || GitHubEnterprise
+func (r RepositoryType) IsGitHub() bool {
+	return r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType
+}
+
 // Branch returns the branch for git-based repositories
 // or an empty string for local repositories
 func (r *Repository) Branch() string {

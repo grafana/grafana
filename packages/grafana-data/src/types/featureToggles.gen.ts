@@ -99,16 +99,6 @@ export interface FeatureToggles {
   */
   disableSSEDataplane?: boolean;
   /**
-  * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default true
-  */
-  renderAuthJWT?: boolean;
-  /**
-  * Refactor time range variables flow to reduce number of API calls made when query variables are chained
-  * @default false
-  */
-  refactorVariablesTimeRange?: boolean;
-  /**
   * Enable the data source selector within the Frontend Apps section of the Frontend Observability
   * @default false
   */
@@ -164,11 +154,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features in dashboards
-  * @default true
-  */
-  dashgpt?: boolean;
-  /**
   * Enable AI powered features for dashboards to auto-summary changes when saving
   * @default false
   */
@@ -213,11 +198,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesLibraryPanels?: boolean;
-  /**
-  * Enables k8s short URL API and uses it under the hood when handling legacy /api
-  * @default true
-  */
-  kubernetesShortURLs?: boolean;
   /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
@@ -388,11 +368,6 @@ export interface FeatureToggles {
   * @default true
   */
   feedbackButton?: boolean;
-  /**
-  * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
-  * @default false
-  */
-  panelFilterVariable?: boolean;
   /**
   * Enables generating table data as PDF in reporting
   * @default false
@@ -584,11 +559,6 @@ export interface FeatureToggles {
   */
   newSavedQueriesExperience?: boolean;
   /**
-  * Enables the new unconfigured panel experience
-  * @default true
-  */
-  newUnconfiguredPanel?: boolean;
-  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -704,11 +674,6 @@ export interface FeatureToggles {
   * @default true
   */
   prometheusAzureOverrideAudience?: boolean;
-  /**
-  * Enable grafana dataplane aggregator
-  * @default false
-  */
-  dataplaneAggregator?: boolean;
   /**
   * Allows authenticated API calls in actions
   * @default false
@@ -1120,11 +1085,6 @@ export interface FeatureToggles {
   */
   alertingDisableDMAinUI?: boolean;
   /**
-  * Enables image sharing functionality for dashboards
-  * @default true
-  */
-  sharingDashboardImage?: boolean;
-  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
@@ -1191,7 +1151,7 @@ export interface FeatureToggles {
   newClickhouseConfigPageDesign?: boolean;
   /**
   * Enables team folders functionality
-  * @default false
+  * @default true
   */
   teamFolders?: boolean;
   /**
@@ -1267,7 +1227,7 @@ export interface FeatureToggles {
   vizLegendFacetedFilter?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default false
+  * @default true
   */
   heatmapRowsAxisOptions?: boolean;
   /**
@@ -1326,11 +1286,6 @@ export interface FeatureToggles {
   */
   transformationsEmptyPlaceholder?: boolean;
   /**
-  * Run queries through the data source backend
-  * @default false
-  */
-  opentsdbBackendMigration?: boolean;
-  /**
   * Enable TTL plugin instance manager
   * @default false
   */
@@ -1351,7 +1306,8 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for variables whose values can have multiple properties
+  * Deprecated. Enables support for variables whose values can have multiple properties
+  * @deprecated
   * @default true
   */
   multiPropsVariables?: boolean;
