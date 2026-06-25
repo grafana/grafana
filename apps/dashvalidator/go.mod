@@ -144,7 +144,7 @@ require (
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // indirect
-	github.com/grafana/otel-profiling-go v0.5.1 // indirect
+	github.com/grafana/otel-profiling-go v0.6.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect

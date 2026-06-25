@@ -22,6 +22,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
+	github.com/grafana/otel-profiling-go v0.6.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
