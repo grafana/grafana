@@ -5421,11 +5421,6 @@
         "not-found": "Not found"
       }
     },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Dashboard init failed"
-      }
-    },
     "dashboard-srv": {
       "message": {
         "edit-dashboard-json": "Edit Dashboard JSON"
