@@ -1,8 +1,8 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { isExpressionReference } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useAlertQueriesStatus } from './useAlertQueriesStatus';
@@ -14,10 +14,10 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceSettings: jest.fn(),
+  useDataSourceInstanceList: jest.fn(),
 }));
 
-const mockGetInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
+const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 const mockIsExpressionReference = jest.mocked(isExpressionReference);
 
 function makeQuery(uid: string): AlertQuery {
@@ -30,77 +30,75 @@ function makeQuery(uid: string): AlertQuery {
   };
 }
 
+function makeListItem(uid: string): DataSourceInstanceListItem {
+  return { uid, name: uid } as DataSourceInstanceListItem;
+}
+
+function mockList(items: DataSourceInstanceListItem[], overrides: Partial<{ isLoading: boolean; error: Error }> = {}) {
+  mockUseDataSourceInstanceList.mockReturnValue({ items, isLoading: false, error: undefined, ...overrides });
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockIsExpressionReference.mockReturnValue(false);
 });
 
 describe('useAlertQueriesStatus', () => {
-  it('starts in a loading state', () => {
-    // Never-resolving promise keeps the hook in loading state without leaking state updates into later tests.
-    mockGetInstanceSettings.mockReturnValue(new Promise<DataSourceInstanceSettings>(() => {}));
-
-    // Stable reference so useAsync doesn't re-fire on re-renders.
-    const queries = [makeQuery('ds-uid')];
-    const { result, unmount } = renderHook(() => useAlertQueriesStatus(queries));
-
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.allDataSourcesAvailable).toBe(false);
-
-    unmount();
-  });
-
-  it('returns allDataSourcesAvailable=true when all datasources are found', async () => {
-    mockGetInstanceSettings.mockResolvedValue({ uid: 'ds-uid', name: 'Test DS' } as DataSourceInstanceSettings);
+  it('reports a loading state while the datasource list loads', () => {
+    mockList([], { isLoading: true });
 
     const queries = [makeQuery('ds-uid')];
     const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.allDataSourcesAvailable).toBe(false);
+  });
+
+  it('returns allDataSourcesAvailable=true when all datasources are in the list', () => {
+    mockList([makeListItem('ds-uid')]);
+
+    const queries = [makeQuery('ds-uid')];
+    const { result } = renderHook(() => useAlertQueriesStatus(queries));
+
+    expect(result.current.isLoading).toBe(false);
     expect(result.current.allDataSourcesAvailable).toBe(true);
     expect(result.current.error).toBeUndefined();
   });
 
-  it('returns allDataSourcesAvailable=false when a datasource is not found', async () => {
-    mockGetInstanceSettings.mockResolvedValue(undefined);
+  it('returns allDataSourcesAvailable=false when a datasource is missing from the list', () => {
+    mockList([makeListItem('some-other-uid')]);
 
     const queries = [makeQuery('missing-uid')];
     const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.allDataSourcesAvailable).toBe(false);
   });
 
-  it('skips expression datasources', async () => {
+  it('skips expression datasources', () => {
     mockIsExpressionReference.mockReturnValue(true);
+    mockList([]);
 
     const queries = [makeQuery('__expr__')];
     const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.allDataSourcesAvailable).toBe(true);
-    expect(mockGetInstanceSettings).not.toHaveBeenCalled();
   });
 
-  it('returns allDataSourcesAvailable=false when at least one datasource of many is missing', async () => {
-    mockGetInstanceSettings
-      .mockResolvedValueOnce({ uid: 'ds-1', name: 'DS 1' } as DataSourceInstanceSettings)
-      .mockResolvedValueOnce(undefined);
+  it('returns allDataSourcesAvailable=false when at least one datasource of many is missing', () => {
+    mockList([makeListItem('ds-1')]);
 
     const queries = [makeQuery('ds-1'), makeQuery('ds-missing')];
     const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.allDataSourcesAvailable).toBe(false);
   });
 
-  it('exposes an error when getInstanceSettings rejects', async () => {
-    mockGetInstanceSettings.mockRejectedValue(new Error('network failure'));
+  it('exposes an error when the datasource list fails to load', () => {
+    mockList([], { error: new Error('network failure') });
 
     const queries = [makeQuery('ds-uid')];
     const { result } = renderHook(() => useAlertQueriesStatus(queries));
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);
     expect(result.current.allDataSourcesAvailable).toBe(false);
   });
