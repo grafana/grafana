@@ -31,14 +31,15 @@ describe('GroupBy', () => {
     render(<GroupBy {...props} onChange={onChange} />);
 
     const groupBy = screen.getByLabelText('Group by');
-    const option = 'metadata.system_labels.cloud_account';
+    const value = 'metadata.system_labels.cloud_account';
+    const label = 'Cloud Account';
 
-    expect(screen.queryByText(option)).not.toBeInTheDocument();
+    expect(screen.queryByText(label)).not.toBeInTheDocument();
     await openMenu(groupBy);
-    expect(screen.getByText(option)).toBeInTheDocument();
+    expect(screen.getByText(label)).toBeInTheDocument();
 
-    await select(groupBy, option, { container: document.body });
-    expect(onChange).toBeCalledWith(expect.objectContaining({ groupBys: expect.arrayContaining([option]) }));
+    await select(groupBy, label, { container: document.body });
+    expect(onChange).toBeCalledWith(expect.objectContaining({ groupBys: expect.arrayContaining([value]) }));
   });
 
   it('can add a custom group by', async () => {
