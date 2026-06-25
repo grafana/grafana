@@ -32,6 +32,7 @@ const dashboardHits = Array.from({ length: 7 }, (_, index) => ({
   resource: 'dashboards',
   name: `dashboard-${index + 1}`,
   title: `Dashboard ${index + 1}`,
+  description: `Dashboard ${index + 1} description`,
   folder: 'abc-123',
   field: {},
 }));
@@ -64,6 +65,13 @@ describe('browse-dashboards services', () => {
       const result = await listDashboards('abc-123', page, PAGE_SIZE);
 
       expect(result.map((item) => item.title)).toEqual(expectedTitles);
+    });
+
+    it('returns dashboard descriptions from search results', async () => {
+      server.use(getCustomSearchHandler(allHits));
+      const result = await listDashboards('abc-123', 1, PAGE_SIZE);
+
+      expect(result[0].description).toBe('Dashboard 1 description');
     });
   });
 

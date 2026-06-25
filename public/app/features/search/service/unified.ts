@@ -41,6 +41,7 @@ export type SearchHit = {
   resource: string; // dashboards | folders
   name: string;
   title: string;
+  description?: string;
   folder: string;
   tags: string[];
 
@@ -426,6 +427,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
 
     return {
       ...hit,
+      description: hit.description ?? '',
       uid: hit.name,
       url: toURL(hit.resource, hit.name, hit.title),
       // Sort tags so we aren't reliant on the backend having done this for us

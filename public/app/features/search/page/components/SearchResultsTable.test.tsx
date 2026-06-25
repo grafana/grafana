@@ -46,6 +46,7 @@ describe('SearchResultsTable', () => {
         { name: 'kind', type: FieldType.string, config: {}, values: [DashboardSearchItemType.DashDB] },
         { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1'] },
         { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1'] },
+        { name: 'description', type: FieldType.string, config: {}, values: ['Shows production service health'] },
         { name: 'panel_type', type: FieldType.string, config: {}, values: [''] },
         { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
         { name: 'tags', type: FieldType.other, config: {}, values: [['foo', 'bar']] },
@@ -104,6 +105,7 @@ describe('SearchResultsTable', () => {
       );
       await screen.findByRole('table');
       expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: 'Tags' })).toBeInTheDocument();
     });
@@ -127,6 +129,7 @@ describe('SearchResultsTable', () => {
 
       expect(rows).toHaveLength(2);
       expect(screen.getByText('My dashboard 1')).toBeInTheDocument();
+      expect(screen.getByText('Shows production service health')).toBeInTheDocument();
       expect(screen.getByText('foo')).toBeInTheDocument();
       expect(screen.getByText('bar')).toBeInTheDocument();
     });

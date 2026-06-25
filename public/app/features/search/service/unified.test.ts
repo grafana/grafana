@@ -92,10 +92,8 @@ describe('Unified Storage Searcher', () => {
     await response.loadMoreItems(1);
 
     expect(response.view.length).toBe(2);
-    // TODO: right now this does not work (see unified.ts#getNextPage() for details) once the frame appending is fixed
-    //  properly these expects should work
-    // expect(response.view.get(0).description).toBe(null);
-    // expect(response.view.get(1).description).toBe('foobar');
+    expect(response.view.get(0).description).toBe('');
+    expect(response.view.get(1).description).toBe('foobar');
   });
 
   it('should filter search results by ownerReference', async () => {

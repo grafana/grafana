@@ -46,6 +46,7 @@ export interface SearchQuery {
 export interface DashboardQueryResult {
   kind: string; // panel, dashboard, folder
   name: string;
+  description?: string;
   uid: string;
   url: string; // link to value (unique)
   panel_type: string;

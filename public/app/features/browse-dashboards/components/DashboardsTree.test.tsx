@@ -42,10 +42,18 @@ describe('browse-dashboards DashboardsTree', () => {
   });
 
   it('renders a dashboard item', () => {
+    const dashboardWithDescription = {
+      ...dashboard,
+      item: {
+        ...dashboard.item,
+        description: 'Shows production service health',
+      },
+    };
+
     render(
       <DashboardsTree
         permissions={mockPermissions}
-        items={[dashboard]}
+        items={[dashboardWithDescription]}
         isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
@@ -58,6 +66,8 @@ describe('browse-dashboards DashboardsTree', () => {
       />
     );
     expect(screen.getByText(dashboard.item.title)).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
+    expect(screen.getByText('Shows production service health')).toBeInTheDocument();
     expect(screen.getByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
     expect(screen.getByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
   });

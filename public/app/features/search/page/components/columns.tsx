@@ -30,6 +30,8 @@ const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
 const DELETED_BY_COLUMN_WIDTH = 200;
+const DESCRIPTION_COLUMN_MAX_WIDTH = 360;
+const DESCRIPTION_COLUMN_MIN_WIDTH = 240;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -147,6 +149,13 @@ export const generateColumns = (
     width,
   });
   availableWidth -= width;
+
+  const descriptionField = access.description;
+  if (descriptionField && hasValue(descriptionField) && availableWidth > 0) {
+    width = Math.min(Math.max(availableWidth * 0.3, DESCRIPTION_COLUMN_MIN_WIDTH), DESCRIPTION_COLUMN_MAX_WIDTH);
+    columns.push(makeDescriptionColumn(response, descriptionField, width, styles));
+    availableWidth -= width;
+  }
 
   const showDeletedRemaining =
     response.view.fields.permanentlyDeleteDate && hasValue(response.view.fields.permanentlyDeleteDate);
@@ -450,6 +459,36 @@ function makeDeletedRemainingColumn(
           <Tooltip content={formatDate(deletedDate, { dateStyle: 'medium', timeStyle: 'short' })}>
             <span>{formatted}</span>
           </Tooltip>
+        </div>
+      );
+    },
+  };
+}
+
+function makeDescriptionColumn(
+  response: QueryResponse,
+  field: Field<string | undefined>,
+  width: number,
+  styles: Record<string, string>
+): TableColumn {
+  return {
+    id: 'column-description',
+    field,
+    Header: t('search.results-table.description-header', 'Description'),
+    width,
+    Cell: (p) => {
+      const description = field.values[p.row.index];
+      const { key, ...cellProps } = p.cellProps;
+
+      return (
+        <div key={key} {...cellProps} className={styles.cell}>
+          {!response.isItemLoaded(p.row.index) ? (
+            <Skeleton width={180} />
+          ) : description ? (
+            <Text variant="body" color="secondary" truncate>
+              {description}
+            </Text>
+          ) : null}
         </div>
       );
     },
