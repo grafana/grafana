@@ -43,22 +43,17 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
           <Trans i18nKey="playlist-page.card.start">Start playlist</Trans>
         </Button>
         {canWritePlaylists() && (
-          <>
-            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
-              <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
-            </LinkButton>
-            <Button
-              disabled={false}
-              onClick={() => setPlaylistToDelete(playlist)}
-              icon="trash-alt"
-              variant="destructive"
-            >
-              <Trans i18nKey="playlist-page.card.delete">Delete playlist</Trans>
-            </Button>
-          </>
+          <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
+            <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
+          </LinkButton>
         )}
         {isManagedByRepository(playlist) && (
           <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} size="md" />
+        )}
+        {canWritePlaylists() && (
+          <Button disabled={false} onClick={() => setPlaylistToDelete(playlist)} icon="trash-alt" variant="destructive">
+            <Trans i18nKey="playlist-page.card.delete">Delete playlist</Trans>
+          </Button>
         )}
       </Card.Actions>
       <Card.SecondaryActions>

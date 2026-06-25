@@ -166,6 +166,7 @@ type UserSearchHitDTO struct {
 
 type GetUserProfileQuery struct {
 	UserID int64
+	UID    string
 }
 
 type UserProfileDTO struct {

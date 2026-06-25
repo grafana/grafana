@@ -24,13 +24,12 @@ declare module "@openfeature/core" {
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
+    | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
-    | "newLogsPanel"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
-    | "newLogContext"
     | "grafana.starredFolders"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
@@ -43,6 +42,7 @@ declare module "@openfeature/core" {
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
+    | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
     | "grafana.newPreferencesPage"
@@ -58,7 +58,8 @@ declare module "@openfeature/core" {
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
     | "table.protoRowParser"
-    | "dataviz.experimentalColorSchemes";
+    | "dataviz.experimentalColorSchemes"
+    | "grafana.customizableMegaMenu";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

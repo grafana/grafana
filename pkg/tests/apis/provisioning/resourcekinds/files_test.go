@@ -21,10 +21,10 @@ import (
 // the existing object's resourceVersion into the update so these operations round-trip cleanly
 // (git-ui-sync-project#1199).
 //
-// The move stays at the repository root on purpose: org-scoped kinds (e.g. playlists) cannot be
-// moved into a subdirectory through this path, because that derives a grafana.app/folder
-// annotation their apiserver forbids. That folder-scoping gap is independent of the
-// resourceVersion round-trip exercised here.
+// This test keeps its writes at the repository root to isolate the resourceVersion round-trip.
+// Subdirectory writes — where folder scoping matters, since org-scoped kinds (e.g. playlists)
+// must not derive a grafana.app/folder annotation their apiserver forbids — are covered by
+// TestIntegrationProvisioning_ResourceKinds_SubdirectoryFolderScope.
 func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 			name := rk.name + "-files"
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:                   repo,
-				SyncTarget:             "instance",
+				SyncTarget:             "folder",
 				Workflows:              []string{"write"},
 				SkipResourceAssertions: true,
 			})
