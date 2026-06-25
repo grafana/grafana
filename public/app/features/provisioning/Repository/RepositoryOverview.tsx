@@ -144,7 +144,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </Text>
                     </div>
                     <div className={styles.valueColumn}>
-                      <Text variant="body">{status?.webhook?.id || status?.webhook?.uuid || 'N/A'}</Text>
+                      <Text variant="body">{status?.webhook?.id || status?.webhook?.uuid?.replace(/[{}]/g, '') || 'N/A'}</Text>
                     </div>
                     <div className={styles.labelColumn}>
                       <Text color="secondary">
