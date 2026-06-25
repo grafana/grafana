@@ -58,7 +58,16 @@ export class GrafanaJavascriptAgentBackend
 
     // If in cross origin iframe, default to writing to instance logging endpoint
     if (options.customEndpoint && !isCrossOriginIframe()) {
-      transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
+      transports.push(
+        new FetchTransport({
+          url: options.customEndpoint,
+          apiKey: options.apiKey,
+          // Gzip-compress request bodies via the browser's CompressionStream, shrinking
+          // telemetry and session replay payloads. Falls back to uncompressed when
+          // CompressionStream is unavailable.
+          requestCompression: true,
+        })
+      );
     }
 
     // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
