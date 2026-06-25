@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/PaesslerAG/jsonpath"
 	"go.opentelemetry.io/otel"
@@ -26,6 +27,9 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/
 // panels is unlikely to be human-authored; the cap saves provider
 // tokens on those outliers without affecting normal dashboards.
 const defaultMaxPanels = 200
+
+// maxItemContentBytes caps a panel's embeddable text so we keep our token count per batch reasonable
+const maxItemContentBytes = 4 * 1024
 
 // Extractor produces one embed.Item per panel.
 type Extractor struct {
@@ -159,10 +163,21 @@ func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, 
 		UID:         uid,
 		Title:       displayTitle(content.DashboardTitle, p.Title, uid),
 		Subresource: subresource(p.PanelID, idx),
-		Content:     strings.Join(sections, "\n"),
+		Content:     truncateUTF8(strings.Join(sections, "\n"), maxItemContentBytes),
 		Metadata:    mdJSON,
 		Folder:      content.FolderUID,
 	}, true
+}
+
+// truncateUTF8 caps s to at most n bytes without splitting a rune.
+func truncateUTF8(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
 
 // subresource is the unique sub-identifier for a panel within its dashboard.
