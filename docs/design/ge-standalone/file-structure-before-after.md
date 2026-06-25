@@ -66,7 +66,7 @@ graph TB
     WIRE_GE -->|"imports dependencies"| PKG
     WIRE_GE -->|"imports dependencies"| SERVICES
     MAIN_OSS -->|"bootstraps server with"| BOOT_WIRE
-    WIRE_OSS -->|"composes graph from"| WIRE_OSS
+    WIRE_OSS -->|"composes graph from"| BOOT_WIRE
     WIRE_OSS -->|"fed to"| BOOT
     WIRE_GE -->|"fed to"| BOOT
     WIRE_OSS -->|"imports dependencies"| SERVICES
