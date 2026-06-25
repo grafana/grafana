@@ -212,6 +212,24 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
+    it('closes the migrate drawer when it is dismissed', async () => {
+      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+
+      const { user } = render(<Migrate />);
+
+      await user.click(await screen.findByRole('checkbox', { name: /select all/i }));
+      const migrateAll = await screen.findByRole('button', { name: /migrate all \(1\)/i });
+      await waitFor(() => expect(migrateAll).toBeEnabled());
+      await user.click(migrateAll);
+
+      const drawerText = /all resources not yet managed by git will be migrated/i;
+      expect(await screen.findByText(drawerText)).toBeInTheDocument();
+
+      // Cancelling dismisses the drawer.
+      await user.click(screen.getByRole('button', { name: /cancel/i }));
+      await waitFor(() => expect(screen.queryByText(drawerText)).not.toBeInTheDocument());
+    });
+
     it('offers a connect action instead of migrate when no write-capable repo is connected', async () => {
       // A PR-only repo can't run a migration, matching the drawer's guard.
       respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
