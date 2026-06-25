@@ -880,11 +880,6 @@ export interface FeatureToggles {
   */
   fetchRulesInCompactMode?: boolean;
   /**
-  * Enables the new logs panel
-  * @default true
-  */
-  newLogsPanel?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
   */
@@ -1139,11 +1134,6 @@ export interface FeatureToggles {
   * @default false
   */
   favoriteDatasources?: boolean;
-  /**
-  * New Log Context component
-  * @default true
-  */
-  newLogContext?: boolean;
   /**
   * Enables new design for the Clickhouse data source configuration page
   * @default true

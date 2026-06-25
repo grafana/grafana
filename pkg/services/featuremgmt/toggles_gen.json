@@ -3391,13 +3391,17 @@
     {
       "metadata": {
         "name": "logsTablePanelNG",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1782158134143",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-22 19:55:34.143374 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the logs tableNG panel to replace existing tableRT",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3642,6 +3646,7 @@
         "name": "newLogContext",
         "resourceVersion": "1781279681608",
         "creationTimestamp": "2025-07-31T22:56:50Z",
+        "deletionTimestamp": "2026-06-23T19:18:29Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-12 15:54:41.608564 +0000 UTC"
         }
@@ -3658,7 +3663,8 @@
       "metadata": {
         "name": "newLogsPanel",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-02-04T17:40:17Z"
+        "creationTimestamp": "2025-02-04T17:40:17Z",
+        "deletionTimestamp": "2026-06-22T16:17:34Z"
       },
       "spec": {
         "description": "Enables the new logs panel",

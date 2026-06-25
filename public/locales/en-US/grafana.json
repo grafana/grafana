@@ -11080,24 +11080,7 @@
       "end-of-range": "End of the selected time range.",
       "load-more": "Scroll to load more",
       "load-newer": "Loading newer logs...",
-      "load-older": "Loading older logs...",
-      "older-logs": "Older logs"
-    },
-    "log-context-buttons": {
-      "center-matched-line": "Center matched line",
-      "label-wrap-lines": "Wrap lines"
-    },
-    "log-details": {
-      "fields": "Fields",
-      "links": "Links",
-      "log-line": "Log line",
-      "no-details": "No details available"
-    },
-    "log-details-body": {
-      "toggle-field-button": {
-        "tooltip-hide-log-line": "Hide log line",
-        "tooltip-show-log-line": "Show log line"
-      }
+      "load-older": "Loading older logs..."
     },
     "log-labels": {
       "collapse": "Collapse labels",
@@ -11199,28 +11182,6 @@
       "next": "Next result",
       "prev": "Previous result"
     },
-    "log-row-context-modal": {
-      "error-loading-log-more-logs": "Error loading more logs.",
-      "no-more-logs-available": "No more logs available.",
-      "open-in-split-view": "Open in split view",
-      "title-log-context": "Log context"
-    },
-    "log-row-menu-cell": {
-      "aria-label-copy-shortlink": "Copy shortlink",
-      "aria-label-pin-line": "Pin line",
-      "aria-label-show-context": "Show context",
-      "aria-label-unpin-line": "Unpin line",
-      "tooltip-copy-shortlink": "Copy shortlink",
-      "tooltip-copy-to-clipboard": "Copy to clipboard",
-      "tooltip-show-context": "Show context",
-      "tooltip-unpin-line": "Unpin line"
-    },
-    "log-row-message": {
-      "ellipsis": "… ",
-      "more": "more",
-      "see-details": "See log details",
-      "tooltip-error": "Error: {{errorMessage}}"
-    },
     "log-rows": {
       "disable-popover": {
         "confirm": "Confirm",
@@ -11245,7 +11206,6 @@
     "logs-controls": {
       "collapse": "Collapse",
       "deduplication": "Deduplication",
-      "disable-prettify-json": "Collapse JSON logs",
       "display-level-all": "All levels",
       "download": "Download logs",
       "download-logs": {
@@ -11259,7 +11219,6 @@
       "font-large": "Set large font",
       "font-small": "Set small font",
       "hide-search": "Close search",
-      "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "label": {
         "collapse": "Expanded",
@@ -11292,14 +11251,12 @@
       },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
-      "prettify-json": "Expand JSON logs",
       "remove-escaping": "Remove escaping",
       "resolution-ms": "ms",
       "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
       "show-search": "Search in logs result",
-      "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "table-wrap-text": {
         "disable": "Disable text wrapping",
@@ -11323,7 +11280,6 @@
         "enable-highlighting": "Enable highlighting",
         "filter-level": "Filter logs result by level"
       },
-      "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {
         "disable": "Disable columns",
         "disabled-label": "Columns not supported",
@@ -11331,16 +11287,9 @@
         "enable": "Enable columns",
         "enabled-text": "Columns disabled",
         "not-supported": "Columns are not supported with line wrapping enabled"
-      },
-      "wrap-lines": "Wrap lines"
-    },
-    "logs-panel": {
-      "render-common-labels": {
-        "common-labels": "Common labels:"
       }
     },
     "name-allow-download": "Display download control",
-    "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
     "name-details-mode": "Log details panel mode",
     "name-details-options": {
@@ -11364,9 +11313,6 @@
       "label-newest-first": "Newest first",
       "label-oldest-first": "Oldest first"
     },
-    "out-of-range-message": {
-      "end-of-the-selected-time-range": "End of the selected time range."
-    },
     "popover-menu": {
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
@@ -11376,24 +11322,6 @@
     },
     "show-log-attributes": "Enable log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
-    "un-themed-log-details": {
-      "aria-label-data-links": "Data links",
-      "aria-label-fields": "Fields",
-      "aria-label-line": "Log line",
-      "aria-label-log-level": "Log level",
-      "aria-label-no-details": "No details"
-    },
-    "un-themed-log-details-row": {
-      "filter-out": "Filter out value",
-      "filter-out-query": "Filter out value in query {{query}}",
-      "title-copy-value-to-clipboard": "Copy value to clipboard",
-      "toggle-field-button": {
-        "tooltip-field-instead-message": "Show this field instead of the message",
-        "tooltip-hide-this-field": "Hide this field"
-      },
-      "tooltip-adhoc-statistics": "Ad-hoc statistics",
-      "tooltip-hide-adhoc-statistics": "Hide ad-hoc statistics"
-    },
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
