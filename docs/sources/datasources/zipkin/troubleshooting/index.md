@@ -225,7 +225,10 @@ These errors relate to using template variables with the Zipkin data source.
 
 **Solutions:**
 
-1. Verify the variable is defined in **Dashboard settings** > **Variables**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Dashboard options** icon to open the sidebar.
+1. Expand the **Variables** section.
+1. Verify the variable is defined.
 1. Check the variable name matches the syntax used in the query. Variable names are case-sensitive.
 1. Ensure the variable has a value selected or entered.
 1. For text box variables, verify the viewer has entered a value.
