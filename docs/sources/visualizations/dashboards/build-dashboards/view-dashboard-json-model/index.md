@@ -49,7 +49,7 @@ There are currently three dashboard JSON schema models:
 
 - [V2 Resource](#v2-resource-model): The current schema, supporting new features such as advanced layouts and conditional rendering. It models all dashboard elements as Kubernetes kinds, following Kubernetes conventions for declaring dashboard components.
 - [V1 Resource](#v1-resource-model): The Classic dashboard schema formatted as a Kubernetes-style resource. Its `spec` property contains the Classic model of the schema. It was the default format for API communication between Grafana v12.2.0 and v13.0.0 and has been used for exporting, importing, and sharing dashboards.
-- [Classic](#classic-model): A non-Kubernetes resource that was the default before Grafana v13.0. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection at [grafana.com/dashboards](https://grafana.com/grafana/dashboards/). Dashboards created using this model can be exported using either this model or V2.
+- [Classic](#classic-model): A non-Kubernetes resource that was the default before Grafana v12.2. It's been widely used for exporting, importing, and sharing dashboards in the Grafana dashboards collection at [grafana.com/dashboards](https://grafana.com/grafana/dashboards/). Dashboards created using this model can be exported using either this model or V2.
 
 {{< admonition type="note" >}}
 [Observability as Code](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/) works with both versions of the JSON model, but it's fully compatible with version 2.
