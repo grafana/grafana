@@ -63,9 +63,9 @@ export default function RepositoryStatusPage() {
         subTitle: data?.spec?.description,
       }}
       renderTitle={(title) => (
-        <Stack alignItems="center" gap={1}>
+        <Stack alignItems="center">
           <RepoIcon type={data?.spec?.type} />
-          <h1>{title}</h1>
+          <Text element="h1">{title}</Text>
         </Stack>
       )}
       actions={data && <RepositoryActions repository={data} />}
