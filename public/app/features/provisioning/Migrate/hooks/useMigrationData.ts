@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { useDispatch } from 'app/types/store';
 
 import { type ListedResource, type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
 
@@ -142,6 +143,7 @@ function aggregate(folders: ListedResource[], results: KindResult[]): FolderRow[
  * lands, swap the body to consume it.
  */
 export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: () => void } {
+  const dispatch = useDispatch();
   const [state, setState] = useState<State>({
     data: [],
     isLoading: true,
@@ -159,8 +161,8 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
       try {
         const needsFolders = kinds.some((kind) => kind.folderScoped);
         const [folders, rawResults] = await Promise.all([
-          needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
-          Promise.all(kinds.map((kind) => kind.list())),
+          needsFolders ? resourceKindInfos.folder.list({ dispatch }) : Promise.resolve<ListedResource[]>([]),
+          Promise.all(kinds.map((kind) => kind.list({ dispatch }))),
         ]);
         if (cancelled) {
           return;
@@ -176,9 +178,9 @@ export function useMigrationData(kinds: ResourceKindInfo[]): State & { refetch: 
     return () => {
       cancelled = true;
     };
-    // kindsKey captures the meaningful contents of `kinds`.
+    // kindsKey captures the meaningful contents of `kinds`; dispatch is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kindsKey, reloadToken]);
+  }, [kindsKey, reloadToken, dispatch]);
 
   // Refetch in the background — we don't flip back to the loading state, so a
   // post-migration refresh doesn't unmount the page (and the drawer that

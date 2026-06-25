@@ -4,12 +4,14 @@ import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playl
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
+import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { getIconForKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { type AppDispatch } from 'app/store/configureStore';
 
 import { type ItemType } from '../types';
 
@@ -28,6 +30,12 @@ export interface ListedResource {
   parentUid?: string;
   /** Already owned by a manager (Git Sync, Terraform, …) — not a migration target. */
   managed: boolean;
+}
+
+/** Dependencies a kind's `list()` may need. `dispatch` lets a kind read through
+ * an RTK Query client imperatively. */
+export interface ResourceListDeps {
+  dispatch: AppDispatch;
 }
 
 /**
@@ -69,10 +77,11 @@ export interface ResourceKindInfo {
   /**
    * Enumerates every resource of this kind on the instance. Each kind owns how it
    * lists itself — dashboards/folders through the unified search index, playlists
-   * through their apiserver list — so callers iterate kinds generically without
-   * knowing the data source.
+   * through their generated apiserver client — so callers iterate kinds
+   * generically without knowing the data source. `dispatch` is provided for kinds
+   * that read through an RTK Query client; kinds that don't simply ignore it.
    */
-  list: () => Promise<ListedResource[]>;
+  list: (deps: ResourceListDeps) => Promise<ListedResource[]>;
   /**
    * Whether the kind is in the static provisioning base (folder + dashboard),
    * which the backend always supports. Such kinds are acted on regardless of the
@@ -130,8 +139,8 @@ export const resourceKindInfos = {
     listRoute: '/playlists',
     folderScoped: false,
     // Playlists aren't in the unified search index; list them through their
-    // apiserver (v1, matching the playlist client).
-    list: () => listViaApiserver(PLAYLIST_API_GROUP, 'v1', 'playlists'),
+    // generated apiserver client (which carries the v1→v0alpha1 fallback).
+    list: ({ dispatch }) => listPlaylists(dispatch),
     // Gated on availableResources — not part of the static folder+dashboard base.
     alwaysAvailable: false,
   },
@@ -360,14 +369,32 @@ interface ApiserverListItem {
  * any kind can be listed from its group/version/resource without a bespoke
  * client. These kinds are org-scoped, so no parent folder is resolved.
  */
-async function listViaApiserver(group: string, version: string, resource: string): Promise<ListedResource[]> {
-  const url = `${getAPIBaseURL(group, version)}/${resource}`;
-  const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
-  return (response.items ?? [])
+/** Maps an apiserver list response into ListedResources: name as uid, spec title
+ * (falling back to the name), manager presence; entries without a name dropped. */
+function toListedResources(items: ApiserverListItem[] | undefined): ListedResource[] {
+  return (items ?? [])
     .map((item) => ({
       uid: item.metadata?.name ?? '',
       title: item.spec?.title || item.metadata?.name || '',
       managed: isManaged(item),
     }))
     .filter((row) => row.uid);
+}
+
+async function listViaApiserver(group: string, version: string, resource: string): Promise<ListedResource[]> {
+  const url = `${getAPIBaseURL(group, version)}/${resource}`;
+  const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
+  return toListedResources(response.items);
+}
+
+/**
+ * Lists playlists through their generated RTK Query client, read imperatively so
+ * the registry's list() stays a plain function. Using the client (rather than a
+ * raw request) keeps the v1→v0alpha1 fallback and the shared base query.
+ */
+async function listPlaylists(dispatch: AppDispatch): Promise<ListedResource[]> {
+  const response = await dispatch(
+    playlistAPIv1.endpoints.listPlaylist.initiate({}, { forceRefetch: true, subscribe: false })
+  ).unwrap();
+  return toListedResources(response.items);
 }
