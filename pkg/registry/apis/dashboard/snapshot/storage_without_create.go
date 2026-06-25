@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -209,9 +210,21 @@ func deleteExternalSnapshotLegacy(externalURL string) error {
 	defer func() { _ = resp.Body.Close() }()
 
 	// Treat 404 as success — the snapshot may have already been deleted
-	// (e.g. double delete, cleanup script).
+	// (e.g. double delete, cleanup script). Modern hosts (Grafana >= 9.0) return 404.
 	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound {
 		return nil
+	}
+
+	// Older hosts (Grafana < 9.0) return 500 with this message when the snapshot is
+	// already gone. Treat it as success too so repeat deletes stay idempotent.
+	if resp.StatusCode == http.StatusInternalServerError {
+		var respJSON map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&respJSON); err != nil {
+			return err
+		}
+		if respJSON["message"] == "Failed to get dashboard snapshot" {
+			return nil
+		}
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {

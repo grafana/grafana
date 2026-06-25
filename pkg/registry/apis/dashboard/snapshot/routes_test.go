@@ -766,6 +766,28 @@ func TestDeleteExternalSnapshotLegacy(t *testing.T) {
 		err := deleteExternalSnapshotLegacy(server.URL + "/api/snapshots-delete/already-gone")
 		require.NoError(t, err)
 	})
+
+	t.Run("treats 500 'Failed to get dashboard snapshot' as success for older hosts", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]any{"message": "Failed to get dashboard snapshot"})
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshotLegacy(server.URL + "/api/snapshots-delete/already-gone")
+		require.NoError(t, err)
+	})
+
+	t.Run("returns error on 500 with a different message", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]any{"message": "some other error"})
+		}))
+		defer server.Close()
+
+		err := deleteExternalSnapshotLegacy(server.URL + "/api/snapshots-delete/k")
+		require.Error(t, err)
+	})
 }
 
 func TestHandleDeleteByKey(t *testing.T) {
