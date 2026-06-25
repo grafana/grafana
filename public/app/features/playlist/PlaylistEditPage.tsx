@@ -78,12 +78,13 @@ export const PlaylistEditPage = () => {
           </div>
         )}
         {data && (
-          // The repository can't be changed after creation, so the selector is locked on edit; the
-          // form derives the displayed value (managing repository, or "no repository") from the playlist.
+          // Only repository-managed playlists show the (read-only) repository field — the repository
+          // can't be changed after creation. Unmanaged playlists are stored in Grafana, so showing an
+          // empty, disabled selector would just be confusing.
           <PlaylistForm
             onSubmit={onSubmit}
             playlist={data}
-            showRepositorySelect={isAvailable}
+            showRepositorySelect={isAvailable && isManagedByRepository(data)}
             repositories={repositories}
             disableRepositorySelect
           />

@@ -5,6 +5,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
 
@@ -21,8 +22,17 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-async function getTestContext(annotations?: Record<string, string>) {
+jest.mock('app/features/provisioning/hooks/useResourceRepositorySelection');
+const mockUseResourceRepositorySelection = useResourceRepositorySelection as jest.MockedFunction<
+  typeof useResourceRepositorySelection
+>;
+
+async function getTestContext(
+  annotations?: Record<string, string>,
+  provisioning: ReturnType<typeof useResourceRepositorySelection> = { isAvailable: false, repositories: [] }
+) {
   jest.clearAllMocks();
+  mockUseResourceRepositorySelection.mockReturnValue(provisioning);
 
   const backendSrvMock = jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
     of(
@@ -125,6 +135,32 @@ describe('PlaylistEditPage', () => {
       expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
       // ...and the playlist replace API is not called.
       expect(backendSrvMock).not.toHaveBeenCalledWith(expect.objectContaining({ method: 'PUT' }));
+    });
+  });
+
+  describe('repository field', () => {
+    const repositories = [
+      { name: 'test-repo', title: 'Test Repository', target: 'instance' as const, type: 'git' as const, workflows: [] },
+    ];
+
+    it('shows the (read-only) repository field for a repository-managed playlist', async () => {
+      await getTestContext(
+        {
+          'grafana.app/managedBy': 'repo',
+          'grafana.app/managerId': 'test-repo',
+          'grafana.app/sourcePath': 'playlists/foo.json',
+        },
+        { isAvailable: true, repositories }
+      );
+
+      expect(await screen.findByText('Repository')).toBeInTheDocument();
+    });
+
+    it('does not show the repository field for an unmanaged playlist stored in Grafana', async () => {
+      await getTestContext(undefined, { isAvailable: true, repositories });
+
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      expect(screen.queryByText('Repository')).not.toBeInTheDocument();
     });
   });
 });
