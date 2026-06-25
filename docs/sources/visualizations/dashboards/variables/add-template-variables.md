@@ -156,7 +156,7 @@ Query expressions are different for each data source. For more information, refe
    | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                           |
    | Include All option  | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                                                                                                                                                                                                                                  |
 
-1. Click **Run query** to test the variable.
+1. Click **Preview** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Close** to close the query variable editor dialog box.
 1. Click **Save** in the top-right corner.
@@ -197,7 +197,7 @@ For example, if you have server names or region names that never change, then yo
    | Allow custom values | Enables users to add custom values to the list. Only applies to CSV custom values. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                         |
    | Include All option  | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                                                                                                                                                                |
 
-1. Click **Run query** to test the variable.
+1. Click **Preview** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
 1. Click **Apply** to close the query editor dialog box.
 1. Click **Save** in the top-right corner.
@@ -251,7 +251,7 @@ _Data source_ variables enable you to quickly change the data source for an enti
    | Allow custom values  | Enables users to add custom values to the list. For more information, refer to [Selection Options](#configure-variable-selection-options).                                         |
    | Include All option   | Enables an option to include all variables. For more information, refer to [Selection Options](#configure-variable-selection-options).                                             |
 
-1. Click **Run query** to test the variable.
+1. Click **Preview** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
@@ -273,7 +273,7 @@ You can use an interval variable as a parameter to group by time (for InfluxDB),
    | Step count   | Select the number of times the current time range is divided to calculate the value, similar to the **Max data points** query option. For example, if the current visible time range is 30 minutes, then the `auto` interval groups the data into 30 one-minute increments. The default value is 30 steps. Only displayed when you select the **Auto option** checkbox. |
    | Min interval | The minimum threshold below which the step count intervals doesn't divide the time. To continue the 30 minute example, if the minimum interval is set to 2m, then Grafana would group the data into 15 two-minute increments. Only displayed when you select the **Auto option** checkbox.                                                                              |
 
-1. Click **Run query** to test the variable.
+1. Click **Preview** to test the variable.
 1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
