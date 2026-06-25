@@ -173,7 +173,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
     const variableCount =
       $variables instanceof SceneVariableSet
         ? config.featureToggles.dashboardUnifiedDrilldownControls
-          ? $variables.state.variables.filter((v) => !sceneUtils.isAdHocVariable(v)).length
+          ? $variables.state.variables.filter((v) => !sceneUtils.isAdHocVariable(v) && !v.UNSAFE_renderAsHidden).length
           : $variables.state.variables.length
         : 0;
 
@@ -186,7 +186,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
       renderTitle: () => title,
     });
 
-    if ($variables instanceof SceneVariableSet && variableCount > 0) {
+    if (variableCount > 0) {
       category.addItem(
         new OptionsPaneItemDescriptor({
           title: '',
