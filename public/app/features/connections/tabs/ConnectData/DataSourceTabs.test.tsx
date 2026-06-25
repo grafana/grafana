@@ -75,6 +75,11 @@ const renderPage = (
   );
 };
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useDatasourcePluginMeta: () => ({ loading: false, value: null }),
+}));
+
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
   return {
