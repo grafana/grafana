@@ -910,7 +910,8 @@
       "metadata": {
         "name": "annotationsClustering",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-25T17:40:25Z"
       },
       "spec": {
         "description": "Enables annotation clustering and switches to refactored annotation code",
