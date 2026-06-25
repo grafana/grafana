@@ -74,7 +74,7 @@
     "@floating-ui/react": "0.27.19",
     "@grafana/data": "13.2.0-pre",
     "@grafana/e2e-selectors": "13.2.0-pre",
-    "@grafana/faro-web-sdk": "^2.7.0",
+    "@grafana/faro-web-sdk": "^2.8.0",
     "@grafana/i18n": "13.2.0-pre",
     "@grafana/react-data-grid": "7.0.0-beta.57",
     "@grafana/schema": "13.2.0-pre",
