@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -58,6 +59,7 @@ func ProvideService(
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
+	restConfigProvider restcfg.RestConfigProvider,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -90,7 +92,7 @@ func ProvideService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagZanzanaMergeUserPermissions) && zanzanaClient != nil {
-		service.zanzanaResolver = NewZanzanaPermissionResolver(zanzanaClient, userService, cfg.IDUseExternalGroupsForGroupsClaim)
+		service.zanzanaResolver = NewZanzanaPermissionResolver(zanzanaClient, userService, restConfigProvider, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
 
 	return service, nil
@@ -168,7 +170,27 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 
-	return s.zanzanaResolver.MergeCurrentUser(ctx, user, permissions, s.log), nil
+	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
+}
+
+func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity.Requester, legacy []accesscontrol.Permission, options accesscontrol.Options) []accesscontrol.Permission {
+	if s.zanzanaResolver == nil {
+		return legacy
+	}
+	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log)
+	}
+
+	zPerms, err := s.getCachedPermissions(ctx, accesscontrol.GetZanzanaUserPermissionCacheKey(user),
+		func(ctx context.Context) ([]accesscontrol.Permission, error) {
+			return s.zanzanaResolver.ResolveCurrentUserPermissions(ctx, user)
+		}, options)
+	if err != nil {
+		s.log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
+		return legacy
+	}
+
+	return MergeUserPermissions(legacy, zPerms)
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -472,6 +494,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	s.cache.ExclusiveDelete(accesscontrol.GetUserDirectPermissionCacheKey(user))
+	s.cache.ExclusiveDelete(accesscontrol.GetZanzanaUserPermissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {

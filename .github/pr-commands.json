@@ -154,15 +154,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/opentsdb/**/*",
-      "pkg/tsdb/opentsdb/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/OpenTSDB"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/parca/**/*"
     ],
     "action": "updateLabel",
@@ -194,15 +185,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/Prometheus"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/tempo/**/*",
-      "pkg/tsdb/tempo/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Tempo"
   },
   {
     "type": "changedfiles",
@@ -425,17 +407,6 @@
     "matches": [
       "public/app/plugins/datasource/cloud-monitoring/**/*",
       "pkg/tsdb/cloud-monitoring/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/opentsdb/**/*",
-      "pkg/tsdb/opentsdb/**/*"
     ],
     "action": "addToProject",
     "addToProject": {

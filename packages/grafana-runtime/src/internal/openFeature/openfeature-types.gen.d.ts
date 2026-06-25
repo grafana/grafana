@@ -18,10 +18,13 @@ declare module "@openfeature/core" {
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "grafana.kubernetesAnnotationsClient"
+    | "grafana.newPanelQueryErrorsUI"
+    | "useKubernetesShortURLsAPI"
     | "stateTimeline.nameAboveBars"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.orgDashboardTemplates"
+    | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"
@@ -29,6 +32,7 @@ declare module "@openfeature/core" {
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
     | "newLogContext"
+    | "grafana.starredFolders"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
     | "globalDashboardVariables"
@@ -53,7 +57,9 @@ declare module "@openfeature/core" {
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
-    | "grafana.visualDesignRefresh";
+    | "grafana.visualDesignRefresh"
+    | "table.protoRowParser"
+    | "dataviz.experimentalColorSchemes";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

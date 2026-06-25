@@ -4,6 +4,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -1202,8 +1203,8 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
-    // Populate the commit comment so the submit handler doesn't fall back to
-    // `dashboard.state.title` (which the mocked scene doesn't expose).
+    // Populate the commit comment so the committed message is deterministic ('Retry save') rather
+    // than the template/default rendered from the form title.
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.type(commentInput, 'Retry save');
 
@@ -1219,5 +1220,35 @@ describe('SaveProvisionedDashboardForm', () => {
     // verbatim as the ProvisioningAlert title.
     expect(await screen.findByText('boom')).toBeInTheDocument();
     expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
+  });
+});
+
+describe('SaveProvisionedDashboardForm commit message template', () => {
+  beforeEach(() => {
+    setTestFlags({ 'provisioning.gitConventions': true });
+  });
+
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('pre-fills Comment from the repository template', async () => {
+    setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+      },
+    });
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(dashboards): create Test Dashboard'));
+    expect(comment).not.toHaveAttribute('readonly');
   });
 });

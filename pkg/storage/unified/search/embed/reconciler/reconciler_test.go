@@ -251,6 +251,156 @@ func TestReconciler_StaleSubresources_AreDeletedBeforeUpsert(t *testing.T) {
 	require.Len(t, vec.upserts, 1)
 }
 
+// threePanelDashboard builds a 3-panel dashboard with distinct per-panel content.
+func threePanelDashboard(panel2Title string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"uid": "dash-1", "title": "Dash",
+		"panels": []any{
+			map[string]any{"id": 1, "title": "CPU", "description": "cpu"},
+			map[string]any{"id": 2, "title": panel2Title, "description": "mem"},
+			map[string]any{"id": 3, "title": "Disk", "description": "disk"},
+		},
+	})
+	return body
+}
+
+// Re-processing with one panel changed re-embeds only that panel.
+func TestReconciler_PartialReembed_OnlyChangedPanel(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, threePanelDashboard("Mem")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1)
+	require.Len(t, vec.upserts[0], 3, "first write embeds all three panels")
+	require.Equal(t, 1, text.calls)
+
+	// Only panel/2's title changes.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, threePanelDashboard("Memory")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 2, "second write happened")
+	require.Len(t, vec.upserts[1], 1, "only the changed panel is re-embedded")
+	assert.Equal(t, "panel/2", vec.upserts[1][0].Subresource)
+	assert.Equal(t, 2, text.calls)
+	assert.Equal(t, []int{1}, text.textSets[1], "embedder called with exactly one text")
+	assert.Empty(t, vec.delsubs, "nothing deleted; every panel is still desired")
+	assert.Equal(t, int64(200), vec.latestRV)
+}
+
+// Re-processing identical content writes nothing but still advances the checkpoint.
+func TestReconciler_PartialReembed_NoChangeSkipsWrite(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1)
+	require.Equal(t, 1, text.calls)
+
+	// Re-process byte-identical content at a higher RV.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, minimalDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "no re-embed when content is unchanged")
+	assert.Equal(t, 1, text.calls, "embedder not called again")
+	assert.Empty(t, vec.delsubs, "nothing deleted")
+	assert.Equal(t, int64(200), vec.latestRV, "cursor still advances on a no-op write")
+}
+
+// dashboardInFolder sets the folder UID via the grafana.app/folder annotation.
+func dashboardInFolder(uid, title, folderUID string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"uid": uid, "title": title,
+		"metadata": map[string]any{
+			"annotations": map[string]any{"grafana.app/folder": folderUID},
+		},
+		"panels": []any{
+			map[string]any{"id": 1, "title": "CPU", "description": "CPU usage"},
+		},
+	})
+	return body
+}
+
+// A folder move doesn't change content but must refresh the authz
+// folder, so it forces a re-embed.
+func TestReconciler_PartialReembed_FolderMoveReembeds(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, dashboardInFolder("dash-1", "Dash", "folder-a")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1)
+	require.Equal(t, "folder-a", vec.upserts[0][0].Folder)
+	require.Equal(t, 1, text.calls)
+
+	// Move to folder-b; panel content is identical.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, dashboardInFolder("dash-1", "Dash", "folder-b")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 2, "folder move re-embeds despite unchanged content")
+	assert.Equal(t, "folder-b", vec.upserts[1][0].Folder, "stored folder refreshed to the new folder")
+	assert.Equal(t, 2, text.calls)
+}
+
+// A panel removed with no other change must delete the stale row without
+// embedding anything (empty changed, non-empty desired).
+func TestReconciler_PartialReembed_DeleteOnly(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, threePanelDashboard("Mem")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts[0], 3)
+	require.Equal(t, 1, text.calls)
+
+	// Drop panel/3 (Disk); panels 1 and 2 are byte-identical.
+	twoPanel, _ := json.Marshal(map[string]any{
+		"uid": "dash-1", "title": "Dash",
+		"panels": []any{
+			map[string]any{"id": 1, "title": "CPU", "description": "cpu"},
+			map[string]any{"id": 2, "title": "Mem", "description": "mem"},
+		},
+	})
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, twoPanel))
+	s.processPending(context.Background())
+
+	assert.Equal(t, 1, text.calls, "no embed; surviving panels unchanged")
+	require.Len(t, vec.delsubs, 1, "the removed panel is deleted")
+	assert.ElementsMatch(t, []string{"panel/3"}, vec.delsubs[0].Subresources)
+	assert.Equal(t, int64(200), vec.latestRV)
+}
+
+// Two panels can map to the same subresource (explicit id N and an
+// id-less panel at positional index N both yield panel/N). A stale row
+// must still be detected and deleted — a per-item match count would
+// double-count the collision and wrongly skip the cleanup.
+func TestReconciler_PartialReembed_SubresourceCollision_DeletesStale(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	collide, _ := json.Marshal(map[string]any{
+		"uid": "dash-1", "title": "Dash",
+		"panels": []any{
+			map[string]any{"id": 1, "title": "X", "description": "d"}, // panel/1
+			map[string]any{"title": "X", "description": "d"},          // no id, idx 1 → panel/1
+		},
+	})
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, collide))
+	s.processPending(context.Background())
+	require.Equal(t, 1, text.calls)
+
+	// A stale subresource that no longer exists in the dashboard.
+	vec.storedSubs[subsKey("ns", testModel, dashRes, "dash-1")]["panel/9"] = "stale"
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, collide))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.delsubs, 1, "stale row deleted despite the subresource collision")
+	assert.ElementsMatch(t, []string{"panel/9"}, vec.delsubs[0].Subresources)
+}
+
 func TestReconciler_MonotonicCheckpoint(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, &fakeStorage{}, vec)
