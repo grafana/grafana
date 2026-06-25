@@ -279,7 +279,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-19,rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
 2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,true
-2025-12-09,multiPropsVariables,deprecated,@grafana/dashboards-squad,false,false,true
 2026-05-22,dashboardSectionVariables,GA,@grafana/dashboards-squad,false,false,true
 2026-05-22,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
