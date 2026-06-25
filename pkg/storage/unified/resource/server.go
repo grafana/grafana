@@ -2331,6 +2331,11 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 // external-call error and continues, so the degradation is alertable instead of
 // log-only.
 func (s *server) degraded(ctx context.Context, operation, reason string, nsr NamespacedResource, err error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		s.log.FromContext(ctx).Debug("skipping degraded report: request context done",
+			"operation", operation, "reason", reason, "ctx_error", ctxErr, "error", err)
+		return
+	}
 	s.log.FromContext(ctx).Error("degraded operation: external dependency failed, guard skipped",
 		"operation", operation, "reason", reason,
 		"namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource,
