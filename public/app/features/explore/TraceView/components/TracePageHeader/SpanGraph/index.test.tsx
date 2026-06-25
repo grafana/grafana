@@ -71,4 +71,9 @@ describe('getItem()', () => {
   it('flags normal spans as not summary', () => {
     expect(getItem(base as unknown as TraceSpan).isSummary).toBe(false);
   });
+
+  it('threads span_count for summary spans (drives proportional minimap weight)', () => {
+    const span = { ...base, aggregation: { isSummary: true, spanCount: 24 } } as unknown as TraceSpan;
+    expect(getItem(span).spanCount).toBe(24);
+  });
 });

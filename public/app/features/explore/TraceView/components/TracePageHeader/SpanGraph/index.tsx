@@ -52,6 +52,10 @@ type SpanItem = {
   valueWidth: number;
   serviceName: string;
   isSummary: boolean;
+  // Number of spans this summary represents; drives its proportional weight in
+  // the minimap so the pruned trace keeps the unpruned density shape. 0 for
+  // normal spans.
+  spanCount: number;
 };
 
 // exported for tests
@@ -61,6 +65,7 @@ export function getItem(span: TraceSpan): SpanItem {
     valueWidth: span.duration,
     serviceName: getServiceColorKey(span.process),
     isSummary: span.aggregation?.isSummary === true,
+    spanCount: span.aggregation?.spanCount ?? 0,
   };
 }
 
