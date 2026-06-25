@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, type IconName, type TimeRange } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, type TimeRange, type TimeZone, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   CustomVariable,
@@ -53,6 +53,7 @@ const PAGE_SIZE = 100;
  */
 interface HistoryEventsListProps {
   timeRange: TimeRange;
+  timeZone: TimeZone;
   valueInLabelFilter: VariableValue;
   valueInStateToFilter: VariableValue;
   valueInStateFromFilter: VariableValue;
@@ -61,6 +62,7 @@ interface HistoryEventsListProps {
 }
 export const HistoryEventsList = ({
   timeRange,
+  timeZone,
   valueInLabelFilter,
   valueInStateToFilter,
   valueInStateFromFilter,
@@ -133,6 +135,7 @@ export const HistoryEventsList = ({
         logRecords={historyRecords}
         addFilter={addFilter}
         timeRange={timeRange}
+        timeZone={timeZone}
         hideAlertRuleColumn={hideAlertRuleColumn}
       />
     </Stack>
@@ -149,9 +152,10 @@ interface HistoryLogEventsProps {
   logRecords: LogRecord[];
   addFilter: (key: string, value: string, type: FilterType) => void;
   timeRange: TimeRange;
+  timeZone: TimeZone;
   hideAlertRuleColumn?: boolean;
 }
-function HistoryLogEvents({ logRecords, addFilter, timeRange, hideAlertRuleColumn }: HistoryLogEventsProps) {
+function HistoryLogEvents({ logRecords, addFilter, timeRange, timeZone, hideAlertRuleColumn }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
@@ -172,6 +176,7 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange, hideAlertRuleColum
               record={record}
               addFilter={addFilter}
               timeRange={timeRange}
+              timeZone={timeZone}
               hideAlertRuleColumn={hideAlertRuleColumn}
             />
           );
@@ -217,9 +222,10 @@ interface EventRowProps {
   record: LogRecord;
   addFilter: (key: string, value: string, type: FilterType) => void;
   timeRange: TimeRange;
+  timeZone: TimeZone;
   hideAlertRuleColumn?: boolean;
 }
-function EventRow({ record, addFilter, timeRange, hideAlertRuleColumn }: EventRowProps) {
+function EventRow({ record, addFilter, timeRange, timeZone, hideAlertRuleColumn }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
   function onLabelClick([value, label]: [string | undefined, string | undefined]) {
@@ -242,7 +248,7 @@ function EventRow({ record, addFilter, timeRange, hideAlertRuleColumn }: EventRo
         />
         <Stack gap={0.5} direction={'row'} alignItems={'center'}>
           <div className={styles.timeCol}>
-            <Timestamp time={record.timestamp} />
+            <Timestamp time={record.timestamp} timeZone={timeZone} />
           </div>
           <div className={styles.transitionCol}>
             <EventTransition previous={record.line.previous} current={record.line.current} addFilter={addFilter} />
@@ -424,18 +430,11 @@ export function EventState({ state, showLabel = false, addFilter, type }: EventS
 
 interface TimestampProps {
   time: number; // epoch timestamp
+  timeZone: TimeZone;
 }
 
-const Timestamp = ({ time }: TimestampProps) => {
-  const dateTime = new Date(time);
-  const formattedDate = dateTime.toLocaleString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
+const Timestamp = ({ time, timeZone }: TimestampProps) => {
+  const formattedDate = dateTimeFormat(time, { format: 'MMMM D [at] HH:mm:ss', timeZone });
 
   return (
     <Text variant="body" weight="light">
@@ -566,7 +565,9 @@ function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryE
   // This make sure the component is re-rendered when the variables change
   const { hideAlertRuleColumn } = model.useState();
 
-  const { value: timeRange } = sceneGraph.getTimeRange(model).useState(); // get time range from scene graph
+  const sceneTimeRange = sceneGraph.getTimeRange(model);
+  const { value: timeRange } = sceneTimeRange.useState(); // get time range from scene graph
+  const timeZone = sceneTimeRange.getTimeZone();
 
   const labelsFiltersVariable = sceneGraph.lookupVariable(LABELS_FILTER, model);
   const stateToFilterVariable = sceneGraph.lookupVariable(STATE_FILTER_TO, model);
@@ -595,6 +596,7 @@ function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryE
     return (
       <HistoryEventsList
         timeRange={timeRange}
+        timeZone={timeZone}
         valueInLabelFilter={labelsFiltersVariable.state.value}
         addFilter={addFilter}
         valueInStateToFilter={stateToFilterVariable.state.value}

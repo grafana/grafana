@@ -28,6 +28,7 @@ describe('HistoryEventsList', () => {
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
         timeRange={getDefaultTimeRange()}
+        timeZone={'browser'}
       />
     );
     await waitFor(() => {
@@ -43,6 +44,7 @@ describe('HistoryEventsList', () => {
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
         timeRange={getDefaultTimeRange()}
+        timeZone={'browser'}
       />
     );
     await waitFor(() => {
@@ -65,6 +67,7 @@ describe('HistoryEventsList', () => {
         valueInStateToFilter={StateFilterValues.normal}
         addFilter={jest.fn()}
         timeRange={getDefaultTimeRange()}
+        timeZone={'browser'}
       />
     );
     await waitFor(() => {
@@ -84,6 +87,7 @@ describe('HistoryEventsList', () => {
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
         timeRange={getDefaultTimeRange()}
+        timeZone={'browser'}
       />
     );
     await waitFor(() => {
@@ -105,6 +109,7 @@ describe('HistoryEventsList', () => {
         valueInStateToFilter={StateFilterValues.all}
         addFilter={jest.fn()}
         timeRange={getDefaultTimeRange()}
+        timeZone={'browser'}
       />
     );
     await waitFor(() => {
@@ -124,6 +129,7 @@ describe('HistoryEventsList', () => {
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
         timeRange={getDefaultTimeRange()}
+        timeZone={'browser'}
       />
     );
     await waitFor(() => {
@@ -143,6 +149,7 @@ describe('HistoryEventsList', () => {
         valueInStateFromFilter={StateFilterValues.all}
         addFilter={jest.fn()}
         timeRange={getDefaultTimeRange()}
+        timeZone={'browser'}
       />
     );
     await waitFor(() => {
@@ -162,6 +169,7 @@ describe('HistoryEventsList', () => {
           valueInStateFromFilter={StateFilterValues.all}
           addFilter={jest.fn()}
           timeRange={getDefaultTimeRange()}
+          timeZone={'browser'}
         />
       );
 
