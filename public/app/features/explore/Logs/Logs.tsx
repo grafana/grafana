@@ -643,6 +643,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   const { dedupedRows, dedupCount } = useMemo(() => dedupRows(logRows, dedupStrategy), [dedupStrategy, logRows]);
 
+  const infiniteScrollAvailable = useMemo(
+    () => !logsQueries?.some((query) => 'direction' in query && query.direction === LokiQueryDirection.Scan),
+    [logsQueries]
+  );
+
   const visibilityChangedRef = useRef(true);
   const onLogOptionsChange = useCallback(
     (option: LogListOptions, value: string | string[] | boolean) => {
@@ -934,7 +939,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   getRowContextQuery={getRowContextQuery}
                   isLabelFilterActive={props.isFilterLabelActive}
                   loading={loading}
-                  loadMore={loadMoreLogs}
+                  loadMore={infiniteScrollAvailable ? loadMoreLogs : undefined}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}
                   logsMeta={logsMeta}
