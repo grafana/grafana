@@ -57,7 +57,6 @@ export default function HomePage() {
   });
 
   const isLoadingExtensions = isLoadingPre || isLoadingExtra || isLoadingTabs;
-
   // Same computation as the rendered extra section below, so showExtra can't drift from it.
   const extraContent = renderLimitedComponents({
     props: {},
@@ -72,15 +71,10 @@ export default function HomePage() {
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();
 
-  // The content is revealed only once it has fully committed (see SettleSentinel) AND the
-  // initial dashboard fetches have settled. Until then it renders hidden behind the skeleton,
-  // so lazy extension components, extension tab registration, and the DashboardTabs auto-switch
-  // never paint as a separate step.
-  const [extensionsSettled, setExtensionsSettled] = useState(false);
-  const [dashboardsSettled, setDashboardsSettled] = useState(false);
-  const onExtensionsSettled = useCallback(() => setExtensionsSettled(true), []);
-  const onDashboardsSettled = useCallback(() => setDashboardsSettled(true), []);
-  const settled = extensionsSettled && dashboardsSettled;
+  // Reveal once the Suspense content commits (lazy extensions). DashboardTabs loads its own
+  // data behind its own skeleton, so reveal no longer waits on dashboard fetches.
+  const [settled, setSettled] = useState(false);
+  const onSettled = useCallback(() => setSettled(true), []);
 
   return (
     <Page
@@ -114,7 +108,7 @@ export default function HomePage() {
                       components: preComponents,
                       pluginId: SETUPGUIDE_PLUGIN_ID,
                     })}
-                    <DashboardTabs extensionComponents={tabComponents} onInitialLoad={onDashboardsSettled} />
+                    <DashboardTabs extensionComponents={tabComponents} />
                   </HomeSection>
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     <FiringAlertsCard />
@@ -123,7 +117,7 @@ export default function HomePage() {
 
                   {extraContent}
                 </Stack>
-                <SettleSentinel onSettled={onExtensionsSettled} />
+                <SettleSentinel onSettled={onSettled} />
               </Suspense>
             </div>
           </div>

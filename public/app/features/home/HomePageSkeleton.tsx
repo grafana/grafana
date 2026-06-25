@@ -3,6 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { Grid, Stack } from '@grafana/ui';
 
+import { DashboardTabsSkeleton } from './DashboardTabs/DashboardTabsSkeleton';
 import { HomeSection } from './HomeSection';
 
 interface Props {
@@ -16,11 +17,7 @@ export function HomePageSkeleton({ showAlertsCard, showExtra }: Props) {
     <div data-testid="home-page-skeleton">
       <Stack direction="column" gap={2}>
         <HomeSection direction="column" display="flex" gap={2}>
-          <Stack direction="row" gap={2}>
-            <Skeleton width={140} height={24} />
-            <Skeleton width={140} height={24} />
-          </Stack>
-          <Skeleton height={256} containerClassName={styles.block} />
+          <DashboardTabsSkeleton />
         </HomeSection>
 
         {showAlertsCard && (

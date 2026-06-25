@@ -69,8 +69,8 @@ describe('HomePage', () => {
   it('renders dashboard tabs and auto-switches to starred', async () => {
     render(<HomePage />);
 
-    // Default mocks have starred dashboards but no recent impressions, so the page reveals
-    // on the auto-switched Starred tab once the dashboard fetches settle.
+    // Default mocks have starred dashboards but no recent impressions, so DashboardTabs
+    // auto-switches to the Starred tab once its fetches settle.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
   });
@@ -111,8 +111,7 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // Reveal waits for the dashboard fetches; once revealed, the trusted pre extension is
-    // shown and the untrusted one is filtered out.
+    // Once revealed, the trusted pre extension is shown and the untrusted one is filtered out.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByText('Homepage pre extension')).toBeInTheDocument();
     expect(screen.queryByText('Untrusted homepage pre extension')).not.toBeInTheDocument();
@@ -145,48 +144,20 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // Reveal waits for the dashboard fetches; once revealed, both trusted extra extensions
-    // are shown and the untrusted one is filtered out.
+    // Once revealed, both trusted extra extensions are shown and the untrusted one is filtered out.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByText('Homepage extra extension 1')).toBeInTheDocument();
     expect(screen.getByText('Homepage extra extension 2')).toBeInTheDocument();
     expect(screen.queryByText('Untrusted homepage extra extension')).not.toBeInTheDocument();
   });
 
-  it('reserves the alerts card slot in the skeleton when the user can view firing alerts', async () => {
+  it('reserves the alerts card slot in the loading skeleton when the user can view firing alerts', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
 
     render(<HomePage />);
 
-    // Permission is known synchronously, so the pre-reveal overlay skeleton reserves the card row.
-    expect(screen.getByTestId('home-page-skeleton-cards')).toBeInTheDocument();
-
-    // settle the dashboard fetches to avoid act() warnings
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-  });
-
-  it('reserves the extra section in the skeleton when extra extension components are present', async () => {
-    setPluginComponentsHook(({ extensionPointId }) => ({
-      isLoading: false,
-      components:
-        extensionPointId === PluginExtensionPoints.HomepageExtra
-          ? [
-              createHomepageExtensionComponent(
-                'grafana-setupguide-app',
-                'Homepage extra extension',
-                PluginExtensionPoints.HomepageExtra
-              ),
-            ]
-          : [],
-    }));
-
-    render(<HomePage />);
-
-    // Extra components resolved to renderable content, so the overlay skeleton reserves the extra slot.
-    expect(screen.getByTestId('home-page-skeleton-extra')).toBeInTheDocument();
-
-    // settle the dashboard fetches to avoid act() warnings
-    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(await screen.findByTestId('home-page-skeleton-cards')).toBeInTheDocument();
   });
 
   it('renders a skeleton instead of the page content while extensions are loading', async () => {
@@ -198,15 +169,10 @@ describe('HomePage', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
-  it('keeps the skeleton up until the dashboard fetches settle, then reveals the auto-switched tab', async () => {
+  it('lands on the auto-switched Starred tab once the dashboard fetches settle', async () => {
     render(<HomePage />);
 
-    // Extensions settle synchronously, but the dashboard fetches are still in flight,
-    // so the overlay skeleton stays up — reveal is gated on dashboard data too.
-    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
-
-    // Once the fetches settle the auto-switch has already run, so the page reveals directly
-    // on Starred with no intermediate Recent→Starred flip after reveal.
+    // dashboards load inside DashboardTabs now; the page does not gate reveal on them
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
   });
@@ -268,8 +234,8 @@ describe('HomePage', () => {
       resolveComponent({ default: () => <div>Lazy pre content</div> });
     });
 
-    // Reveal still waits for the dashboard fetches; the final paint shows the resolved lazy
-    // content, the built-in tabs, and no skeleton.
+    // Reveal waits only for the lazy extension to resolve; the dashboard list loads inside
+    // DashboardTabs. The final paint shows the resolved lazy content, built-in tabs, and no skeleton.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByText('Lazy pre content')).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();

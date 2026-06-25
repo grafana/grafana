@@ -13,6 +13,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { tabChanged } from '../analytics/main';
 
+import { DashboardTabsSkeleton } from './DashboardTabsSkeleton';
 import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
@@ -56,13 +57,13 @@ function DashboardExtensionTab({
 
 interface Props {
   extensionComponents: Array<ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>>;
-  onInitialLoad?: () => void;
 }
 
-export function DashboardTabs({ extensionComponents, onInitialLoad }: Props) {
+export function DashboardTabs({ extensionComponents }: Props) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState(RECENT_TAB_ID);
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const {
     value: recentDashboards,
@@ -139,14 +140,16 @@ export function DashboardTabs({ extensionComponents, onInitialLoad }: Props) {
     }
   }, [initialLoading, selectableTabs, activeTab]);
 
-  // Tell the host once the initial dashboard fetches have settled (resolved or errored).
-  // It runs in the same effect flush as the auto-switch above, so the host reveals on the
-  // final tab — the Recent→Starred switch never paints as a separate step.
+  // Latch once loaded so a later per-source refetch can't flash the skeleton back.
   useEffect(() => {
     if (!initialLoading) {
-      onInitialLoad?.();
+      setInitialLoadDone(true);
     }
-  }, [initialLoading, onInitialLoad]);
+  }, [initialLoading]);
+
+  if (!initialLoadDone) {
+    return <DashboardTabsSkeleton />;
+  }
 
   const builtInTabs: HomepageTab[] = [
     {
