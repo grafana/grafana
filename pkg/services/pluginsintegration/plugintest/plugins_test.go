@@ -202,6 +202,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"annolist":       {},
 		"barchart":       {},
 		"bargauge":       {},
+		"boxplot":        {},
 		"canvas":         {},
 		"dashlist":       {},
 		"debug":          {},

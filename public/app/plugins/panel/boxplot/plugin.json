@@ -1,0 +1,20 @@
+{
+  "type": "panel",
+  "name": "Box plot",
+  "id": "boxplot",
+  "state": "beta",
+  "suggestions": false,
+  "info": {
+    "description": "Box-and-whisker plots drawn from precomputed summary statistics.",
+    "keywords": ["box plot", "boxplot", "box and whisker", "quartile", "median", "distribution", "summary"],
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/boxplot.svg",
+      "large": "img/boxplot.svg"
+    },
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
+  }
+}
