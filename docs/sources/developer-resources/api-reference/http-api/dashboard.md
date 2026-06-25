@@ -57,7 +57,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "metadata": {
@@ -507,7 +507,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "metadata": {
@@ -602,7 +602,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -681,7 +681,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -735,7 +735,7 @@ The `metadata.continue` field contains a token to fetch the next page.
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example subsequent response**:
@@ -814,7 +814,7 @@ See note in the [introduction](#new-dashboard-apis) for an explanation.
 DELETE /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

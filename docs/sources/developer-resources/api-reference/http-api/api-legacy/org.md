@@ -49,7 +49,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/ HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -85,7 +85,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -131,7 +131,7 @@ See note in the [introduction](#organization-api) for an explanation.
 GET /api/org/users/lookup HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -167,7 +167,7 @@ See note in the [introduction](#organization-api) for an explanation.
 PATCH /api/org/users/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "role": "Viewer",
@@ -201,7 +201,7 @@ See note in the [introduction](#organization-api) for an explanation.
 DELETE /api/org/users/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -231,7 +231,7 @@ See note in the [introduction](#organization-api) for an explanation.
 PUT /api/org HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "name":"Main Org."
@@ -267,7 +267,7 @@ See note in the [introduction](#organization-api) for an explanation.
 POST /api/org/users HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "role": "Admin",

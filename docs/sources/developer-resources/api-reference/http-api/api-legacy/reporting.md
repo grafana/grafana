@@ -48,7 +48,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 GET /api/reports HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
@@ -129,7 +129,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 GET /api/reports/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
@@ -215,7 +215,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 POST /api/reports HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
 	"name": "Report 4",
@@ -327,7 +327,7 @@ See [JSON body schema](#config-json-body-schema) for fields description.
 GET /api/reports HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
 	"name": "Updated Report",
@@ -409,7 +409,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 DELETE /api/reports/6 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
@@ -452,7 +452,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 POST /api/reports/email HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "id":"3",
@@ -507,7 +507,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 GET /api/reports/settings HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 ### Example response
@@ -557,7 +557,7 @@ See note in the [introduction](#reporting-api) for an explanation.
 POST /api/reports/settings HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
 	"branding": {
@@ -621,7 +621,7 @@ See [JSON body schema](#config-json-body-schema) for fields description.
 POST /api/reports/test-email HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {{
 	"name": "Report 4",
