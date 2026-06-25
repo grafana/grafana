@@ -13049,6 +13049,7 @@
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
       "description-title": "A human-readable name for this connection",
+      "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
@@ -13060,6 +13061,7 @@
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
       "label-title": "Title",
+      "label-webhook-disabled": "Disable webhook integration",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
@@ -13746,9 +13748,12 @@
       "error-title": "Live updates unavailable"
     },
     "webhook-section": {
+      "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
       "label-webhook": "Webhook options",
+      "label-webhook-disabled": "Disable webhook integration",
       "label-webhook-url": "Webhook URL",
       "placeholder-webhook-url": "https://grafana.example.com"
     },

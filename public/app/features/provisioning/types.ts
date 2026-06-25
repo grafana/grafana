@@ -49,6 +49,7 @@ export type ConnectionFormData = {
   appID: string;
   installationID: string;
   privateKey?: string;
+  webhookDisabled?: boolean;
 };
 
 // Added to DashboardDTO to help editor
