@@ -8,6 +8,7 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { IncidentsCard } from '../AlertsIncidents/IncidentsCard';
+import { KubernetesOverviewCard } from '../AlertsIncidents/KubernetesOverviewCard';
 import { OnCallCard } from '../AlertsIncidents/OnCallCard';
 
 import { useHomeWidgetCatalog } from './useHomeWidgetCatalog';
@@ -49,7 +50,7 @@ describe('useHomeWidgetCatalog', () => {
     const { result } = renderHook(() => useHomeWidgetCatalog());
 
     const ids = result.current.entries.map((e) => e.id);
-    expect(ids).toEqual(expect.arrayContaining(['alerts', 'dashboards', 'quick-links']));
+    expect(ids).toEqual(expect.arrayContaining(['alerts', 'dashboards']));
     expect(result.current.entries.find((e) => e.id === 'dashboards')?.source).toBe('core');
   });
 
@@ -69,6 +70,7 @@ describe('useHomeWidgetCatalog', () => {
     const ids = result.current.entries.map((e) => e.id);
     expect(ids).not.toContain('incidents');
     expect(ids).not.toContain('oncall');
+    expect(ids).not.toContain('kubernetes');
   });
 
   it('includes curated widgets when the IRM plugin is installed', () => {
@@ -102,6 +104,19 @@ describe('useHomeWidgetCatalog', () => {
     const oncall = result.current.entries.find((e) => e.id === 'oncall');
     // The on-call widget surfaces the live OnCallCard, not a CTA link card.
     expect(oncall?.render()).toEqual(<OnCallCard />);
+  });
+
+  it('wires the kubernetes widget to the live KubernetesOverviewCard when the app is installed', () => {
+    // The kubernetes widget gates on the k8s app via usePluginBridge, independent of IRM.
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: true });
+
+    const { result } = renderHook(() => useHomeWidgetCatalog());
+
+    const kubernetes = result.current.entries.find((e) => e.id === 'kubernetes');
+    expect(kubernetes?.source).toBe('curated');
+    expect(kubernetes?.render()).toEqual(<KubernetesOverviewCard />);
+    // IRM-gated widgets stay absent: the k8s app being installed must not surface incidents/oncall.
+    expect(result.current.entries.map((e) => e.id)).toEqual(expect.not.arrayContaining(['incidents', 'oncall']));
   });
 
   it('surfaces open plugin-extension widgets keyed by their stable meta.id', () => {

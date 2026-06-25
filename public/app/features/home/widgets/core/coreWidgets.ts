@@ -6,7 +6,6 @@ import { FiringAlertsCard } from '../../AlertsIncidents/FiringAlertsCard';
 import { type CoreWidgetDef } from '../types';
 
 import { DashboardsWidget } from './DashboardsWidget';
-import { QuickLinksWidget } from './QuickLinksWidget';
 
 /**
  * Built-in widgets available on every instance. A function (not a module-level const) so t() runs
@@ -33,16 +32,6 @@ export function getCoreWidgets(): CoreWidgetDef[] {
       minSize: { w: 12, h: 8 },
       isAvailable: () => true,
       Component: DashboardsWidget,
-    },
-    {
-      id: 'quick-links',
-      title: t('home.widgets.quick-links.title', 'Quick links'),
-      description: t('home.widgets.quick-links.description', 'Jump to common areas of Grafana'),
-      icon: 'link',
-      defaultSize: { w: 12, h: 6 },
-      minSize: { w: 6, h: 4 },
-      isAvailable: () => true,
-      Component: QuickLinksWidget,
     },
   ];
 }

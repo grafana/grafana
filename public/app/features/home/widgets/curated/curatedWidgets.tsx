@@ -1,8 +1,9 @@
 import { t } from '@grafana/i18n';
-import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { useIrmPlugin, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { IncidentsCard } from '../../AlertsIncidents/IncidentsCard';
+import { KubernetesOverviewCard, KUBERNETES_APP_ID } from '../../AlertsIncidents/KubernetesOverviewCard';
 import { OnCallCard } from '../../AlertsIncidents/OnCallCard';
 import { type HomeWidgetCatalogEntry } from '../types';
 
@@ -39,5 +40,23 @@ export function useOnCallWidget(): HomeWidgetCatalogEntry | null {
     defaultSize: { w: 8, h: 6 },
     minSize: { w: 6, h: 4 },
     render: () => <OnCallCard />,
+  };
+}
+
+/** Kubernetes overview — gated on the Kubernetes Monitoring app being installed. */
+export function useKubernetesWidget(): HomeWidgetCatalogEntry | null {
+  const { loading, installed } = usePluginBridge(KUBERNETES_APP_ID);
+  if (loading || !installed) {
+    return null;
+  }
+  return {
+    id: 'kubernetes',
+    title: t('home.widgets.kubernetes.title', 'Kubernetes Monitoring'),
+    description: t('home.widgets.kubernetes.description', 'Overview of clusters monitored by the Kubernetes app'),
+    icon: 'kubernetes',
+    source: 'curated',
+    defaultSize: { w: 8, h: 6 },
+    minSize: { w: 6, h: 4 },
+    render: () => <KubernetesOverviewCard />,
   };
 }

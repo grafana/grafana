@@ -10638,6 +10638,9 @@
       "starred": "Starred",
       "starred-active": "Starred dashboards"
     },
+    "data-card": {
+      "retry": "Retry"
+    },
     "firing-alerts-card": {
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
@@ -10676,6 +10679,28 @@
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
+    "kubernetes-card": {
+      "clusters_one": "{{count}} cluster",
+      "clusters_other": "{{count}} clusters",
+      "empty": "No Kubernetes metrics found.",
+      "error-title": "Could not load Kubernetes data",
+      "healthy": "Healthy",
+      "namespaces_one": "{{count}} namespace",
+      "namespaces_other": "{{count}} namespaces",
+      "no-restarts": "No recent container restarts",
+      "nodes_one": "{{count}} node",
+      "nodes_other": "{{count}} nodes",
+      "nodes-not-ready_one": "{{count}} node not ready",
+      "nodes-not-ready_other": "{{count}} nodes not ready",
+      "open-app": "Open Kubernetes app",
+      "pods-healthy": "All pods healthy",
+      "pods-unhealthy_one": "{{count}} pod pending or failed",
+      "pods-unhealthy_other": "{{count}} pods pending or failed",
+      "pods-unit": "pods",
+      "restarts_one": "{{count}} container restart (1h)",
+      "restarts_other": "{{count}} container restarts (1h)",
+      "title": "Kubernetes Monitoring"
+    },
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
       "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
@@ -10690,7 +10715,7 @@
     },
     "presets": {
       "analytics": {
-        "description": "Dashboards and quick links",
+        "description": "Your dashboards",
         "title": "Business analytics"
       },
       "default": {
@@ -10720,9 +10745,6 @@
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
     },
-    "summary-card": {
-      "retry": "Retry"
-    },
     "widgets": {
       "add": {
         "action": "Add",
@@ -10749,6 +10771,10 @@
         "description": "Incidents currently active in your IRM app",
         "title": "Active incidents"
       },
+      "kubernetes": {
+        "description": "Overview of clusters monitored by the Kubernetes app",
+        "title": "Kubernetes Monitoring"
+      },
       "loading": "Loading your homepage…",
       "oncall": {
         "description": "Who is on call right now",
@@ -10759,14 +10785,6 @@
         "loading": "Loading panel…",
         "unavailable": "This panel is no longer available.",
         "untitled": "Dashboard panel"
-      },
-      "quick-links": {
-        "alerting": "Alerting",
-        "connections": "Connections",
-        "dashboards": "Dashboards",
-        "description": "Jump to common areas of Grafana",
-        "explore": "Explore",
-        "title": "Quick links"
       },
       "toolbar": {
         "add": "Add widget",

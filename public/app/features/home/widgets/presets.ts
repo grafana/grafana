@@ -24,9 +24,9 @@ export function getHomePresets(): HomePreset[] {
     {
       id: 'analytics',
       title: t('home.presets.analytics.title', 'Business analytics'),
-      description: t('home.presets.analytics.description', 'Dashboards and quick links'),
+      description: t('home.presets.analytics.description', 'Your dashboards'),
       icon: 'chart-line',
-      widgetIds: ['dashboards', 'quick-links'],
+      widgetIds: ['dashboards'],
     },
     {
       id: 'default',
