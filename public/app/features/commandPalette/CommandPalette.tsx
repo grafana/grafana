@@ -10,7 +10,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagDashboardVectorSearch } from '@grafana/runtime/internal';
+import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults';
@@ -62,8 +62,12 @@ function CommandPaletteContents() {
   // time.
   const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
+  // Call both hooks unconditionally (rules-of-hooks), then require both: the backend
+  // vector-search endpoint flag and the command-palette flag
+  const dashboardVectorSearchEnabled = useFlagDashboardVectorSearch();
+  const vectorSearchCmdkEnabled = useFlagGrafanaVectorSearchCmdk();
   // TODO: dev-only mock override, remove before merging
-  const deepSearchEnabled = useFlagDashboardVectorSearch() || isDeepSearchMockEnabled();
+  const deepSearchEnabled = (dashboardVectorSearchEnabled && vectorSearchCmdkEnabled) || isDeepSearchMockEnabled();
   const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
     searchQuery,
     show: !currentRootActionId,

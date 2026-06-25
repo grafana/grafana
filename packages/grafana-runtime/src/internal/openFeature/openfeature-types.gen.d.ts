@@ -58,9 +58,10 @@ declare module "@openfeature/core" {
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
+    | "dashboard.vectorSearch"
+    | "grafana.vectorSearchCmdk"
     | "table.protoRowParser"
-    | "dataviz.experimentalColorSchemes"
-    | "dashboard.vectorSearch";
+    | "dataviz.experimentalColorSchemes";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

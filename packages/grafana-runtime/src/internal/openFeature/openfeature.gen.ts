@@ -63,6 +63,8 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables semantic (vector) dashboard search in the command palette */
+  GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
@@ -390,6 +392,17 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Enables semantic (vector) dashboard search in the command palette
+ *
+ * **Details:**
+ * - flag key: `grafana.vectorSearchCmdk`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.vectorSearchCmdk", false, options).value;
 };
 
 /**

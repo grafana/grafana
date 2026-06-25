@@ -3,7 +3,11 @@ import { act, render, screen, userEvent } from 'test/test-utils';
 
 import { useAssistant } from '@grafana/assistant';
 import { setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
-import { setGetObservablePluginLinks, useFlagDashboardVectorSearch } from '@grafana/runtime/internal';
+import {
+  setGetObservablePluginLinks,
+  useFlagDashboardVectorSearch,
+  useFlagGrafanaVectorSearchCmdk,
+} from '@grafana/runtime/internal';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -30,6 +34,7 @@ jest.mock('@grafana/assistant', () => ({
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   useFlagDashboardVectorSearch: jest.fn(),
+  useFlagGrafanaVectorSearchCmdk: jest.fn(),
 }));
 
 jest.mock('kbar', () => ({
@@ -56,9 +61,10 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
-    // Deep search is gated on the dashboardVectorSearch feature toggle; default
-    // it on so most tests exercise the deep column, overridden where needed
+    // Deep search is gated on both vector-search toggles; default them on so most
+    // tests exercise the deep column, overridden where needed
     (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
+    (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(true);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
   });
 
@@ -258,8 +264,11 @@ describe('CommandPalette', () => {
       expect(screen.getByPlaceholderText('Search or jump to...')).toBeInTheDocument();
     });
 
-    it('does not render the deep search column when the feature toggle is disabled', async () => {
-      (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(false);
+    it.each([
+      ['dashboardVectorSearch off', () => (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(false)],
+      ['vectorSearchCmdk off', () => (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false)],
+    ])('does not render the deep search column when %s (both flags required)', async (_label, disableFlag) => {
+      disableFlag();
       let deepSearchCalled = false;
       server.events.on('request:start', ({ request }) => {
         if (request.url.includes('/search/vector')) {

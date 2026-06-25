@@ -94,15 +94,12 @@ describe('groupDeepSearchResults', () => {
     ]);
   });
 
-  it('global scope: keeps panels within the margin of the best match', () => {
-    const grouped = groupDeepSearchResults(
-      [
-        panelResult({ dashboardUid: 'dash-1', content: 'a', score: 0.4 }),
-        panelResult({ dashboardUid: 'dash-1', content: 'b', score: 0.45 }),
-        panelResult({ dashboardUid: 'dash-2', content: 'c', score: 0.5 }),
-      ],
-      'global'
-    );
+  it('keeps panels within the margin of the best match', () => {
+    const grouped = groupDeepSearchResults([
+      panelResult({ dashboardUid: 'dash-1', content: 'a', score: 0.4 }),
+      panelResult({ dashboardUid: 'dash-1', content: 'b', score: 0.45 }),
+      panelResult({ dashboardUid: 'dash-2', content: 'c', score: 0.5 }),
+    ]);
 
     // best = 0.4, cutoff = 0.4 + 0.15 = 0.55 → all three within the margin, nothing dropped
     expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1', 'dash-2']);
@@ -110,17 +107,14 @@ describe('groupDeepSearchResults', () => {
     expect(grouped[1].matchedPanelCount).toBe(1);
   });
 
-  it('global scope: drops panels (and dashboards) more than a margin past the best', () => {
-    const grouped = groupDeepSearchResults(
-      [
-        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.2 }),
-        panelResult({ dashboardUid: 'dash-1', content: 'good', score: 0.25 }),
-        panelResult({ dashboardUid: 'dash-1', content: 'ok', score: 0.3 }),
-        panelResult({ dashboardUid: 'dash-2', content: 'weak', score: 0.8 }),
-        panelResult({ dashboardUid: 'dash-3', content: 'worst', score: 0.9 }),
-      ],
-      'global'
-    );
+  it('drops panels (and dashboards) more than a margin past the best', () => {
+    const grouped = groupDeepSearchResults([
+      panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.2 }),
+      panelResult({ dashboardUid: 'dash-1', content: 'good', score: 0.25 }),
+      panelResult({ dashboardUid: 'dash-1', content: 'ok', score: 0.3 }),
+      panelResult({ dashboardUid: 'dash-2', content: 'weak', score: 0.8 }),
+      panelResult({ dashboardUid: 'dash-3', content: 'worst', score: 0.9 }),
+    ]);
 
     // best = 0.2, cutoff = 0.35 → dash-1's 0.2–0.3 cluster survives; the 0.8 / 0.9 tail
     // and its dashboards are dropped. The arbitrary worst score (0.9) doesn't move the cutoff.
@@ -128,39 +122,17 @@ describe('groupDeepSearchResults', () => {
     expect(grouped[0].matchedPanelCount).toBe(3);
   });
 
-  it('global scope: the margin adapts to query difficulty (worse best score)', () => {
-    const grouped = groupDeepSearchResults(
-      [
-        // A hard query: even the best match is mediocre (0.5), but a band around it is still kept
-        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.5 }),
-        panelResult({ dashboardUid: 'dash-1', content: 'near', score: 0.6 }),
-        panelResult({ dashboardUid: 'dash-2', content: 'far', score: 0.8 }),
-      ],
-      'global'
-    );
+  it('adapts to query difficulty (worse best score still keeps a band around it)', () => {
+    const grouped = groupDeepSearchResults([
+      // A hard query: even the best match is mediocre (0.5), but a band around it is still kept
+      panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.5 }),
+      panelResult({ dashboardUid: 'dash-1', content: 'near', score: 0.6 }),
+      panelResult({ dashboardUid: 'dash-2', content: 'far', score: 0.8 }),
+    ]);
 
     // best = 0.5, cutoff = 0.65 → keeps the 0.5 / 0.6 band, drops the 0.8 panel and dash-2
     expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1']);
     expect(grouped[0].matchedPanelCount).toBe(2);
-  });
-
-  it('per-dashboard scope: each card keeps only its own better-than-average panels', () => {
-    const grouped = groupDeepSearchResults(
-      [
-        panelResult({ dashboardUid: 'dash-1', content: 'best', score: 0.1 }),
-        panelResult({ dashboardUid: 'dash-1', content: 'mid', score: 0.2 }),
-        panelResult({ dashboardUid: 'dash-1', content: 'worst', score: 0.6 }),
-        panelResult({ dashboardUid: 'dash-2', content: 'only', score: 0.5 }),
-      ],
-      'per-dashboard'
-    );
-
-    // dash-1 average = 0.3 → keeps 0.1 and 0.2. dash-2 averages its single panel, so it
-    // survives (unlike global scope) keeping its one panel.
-    expect(grouped.map((g) => g.dashboardUid)).toEqual(['dash-1', 'dash-2']);
-    expect(grouped[0].matchedPanelCount).toBe(2);
-    expect(grouped[0].snippets.map((s) => s.text)).toEqual(['best', 'mid']);
-    expect(grouped[1].matchedPanelCount).toBe(1);
   });
 
   it('strips the redundant folder and dashboard title from snippet breadcrumbs and hoists tags', () => {

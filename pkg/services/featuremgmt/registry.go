@@ -3137,6 +3137,14 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:        "grafana.vectorSearchCmdk",
+			Description: "Enables semantic (vector) dashboard search in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "splunk.useLegacyResultsApi",
 			Description:  "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
 			Stage:        FeatureStageExperimental,

@@ -2565,6 +2565,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.vectorSearchCmdk",
+        "resourceVersion": "1782378994121",
+        "creationTimestamp": "2026-06-25T09:16:34Z"
+      },
+      "spec": {
+        "description": "Enables semantic (vector) dashboard search in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.viewPanelPane",
         "resourceVersion": "1778761195995",
         "creationTimestamp": "2026-05-14T12:19:55Z"
