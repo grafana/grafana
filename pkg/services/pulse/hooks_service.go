@@ -114,10 +114,10 @@ func validateHookFields(rawName string, rawType HookType, rawURL string) (string
 	return name, typ, u, nil
 }
 
-// collectWebhookHookUIDs extracts the UIDs of every webhook mention in
-// a set, deduped and order-preserving. Returns nil when no webhook
+// collectHookMentionUIDs extracts the UIDs of every named hook mention
+// in a set, deduped and order-preserving. Returns nil when no hook
 // mentions are present so the dispatcher can cheaply short-circuit.
-func collectWebhookHookUIDs(mentions []Mention) []string {
+func collectHookMentionUIDs(mentions []Mention) []string {
 	var out []string
 	seen := make(map[string]struct{})
 	for _, m := range mentions {

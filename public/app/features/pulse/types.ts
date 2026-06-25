@@ -59,6 +59,12 @@ export type AuthorKind = 'user' | 'service_account';
 export interface PulseBody {
   root: PulseBodyNode;
   markdown?: string;
+  serviceAuthor?: PulseServiceAuthorDisplay;
+}
+
+export interface PulseServiceAuthorDisplay {
+  name?: string;
+  login?: string;
 }
 
 export interface PulseBodyNode {
@@ -265,11 +271,11 @@ export interface FolderUnreadCountResponse {
 }
 
 /**
- * HookType is the transport a Pulse hook delivers over. v1 ships a
- * single `webhook` type; the union widens (slack, teams, ...) without
- * reshaping stored rows. Mirrors `pkg/services/pulse::HookType`.
+ * HookType is the transport a Pulse hook delivers over. The union
+ * widens without reshaping stored rows. Mirrors
+ * `pkg/services/pulse::HookType`.
  */
-export type HookType = 'webhook';
+export type HookType = 'webhook' | 'mcp' | 'agent';
 
 /**
  * PulseHook is a named, org-scoped outbound integration that fires when

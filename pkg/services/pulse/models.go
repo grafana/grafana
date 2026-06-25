@@ -95,8 +95,17 @@ const (
 // linebreak. The allowlist is enforced in ValidateBody so the AST is
 // also safe to render directly via React data bindings.
 type Body struct {
-	Root     BodyNode `json:"root"`
-	Markdown string   `json:"markdown,omitempty"`
+	Root          BodyNode              `json:"root"`
+	Markdown      string                `json:"markdown,omitempty"`
+	ServiceAuthor *ServiceAuthorDisplay `json:"serviceAuthor,omitempty"`
+}
+
+// ServiceAuthorDisplay is optional read-side display metadata for pulses
+// authored by a synthetic service account. It lets hook replies render as the
+// named hook without needing a user row or a schema migration.
+type ServiceAuthorDisplay struct {
+	Name  string `json:"name,omitempty"`
+	Login string `json:"login,omitempty"`
 }
 
 // BodyNode is a single node in the body AST.
@@ -289,10 +298,12 @@ type AddPulseCommand struct {
 //
 // swagger:model
 type AddAssistantReplyCommand struct {
-	OrgID     int64  `json:"-"`
-	ThreadUID string `json:"-"`
-	ParentUID string `json:"parentUID,omitempty"`
-	Markdown  string `json:"markdown"`
+	OrgID       int64  `json:"-"`
+	ThreadUID   string `json:"-"`
+	ParentUID   string `json:"parentUID,omitempty"`
+	Markdown    string `json:"markdown"`
+	AuthorName  string `json:"-"`
+	AuthorLogin string `json:"-"`
 }
 
 // EditPulseCommand updates the body of an existing pulse. Only the original

@@ -27,6 +27,8 @@ const (
 	// name without a user lookup.
 	AssistantDisplayName = "Grafana Assistant"
 	AssistantLogin       = "grafana-assistant"
+
+	serviceAuthorDisplayMaxRunes = 190
 )
 
 // assistantEnabled reports whether the Grafana Assistant integration is on
@@ -56,7 +58,7 @@ func (s *PulseService) AddAssistantReply(ctx context.Context, cmd AddAssistantRe
 	if markdown == "" {
 		return Pulse{}, ErrEmptyBody
 	}
-	body, err := buildAssistantReplyBody(markdown)
+	body, err := buildAssistantReplyBodyWithAuthor(markdown, cmd.AuthorName, cmd.AuthorLogin)
 	if err != nil {
 		return Pulse{}, err
 	}
@@ -75,6 +77,10 @@ func (s *PulseService) AddAssistantReply(ctx context.Context, cmd AddAssistantRe
 // markdown source). ParseAndValidateBody prefers the markdown field for the
 // text projection, so body_text comes out as the markdown verbatim.
 func buildAssistantReplyBody(markdown string) (json.RawMessage, error) {
+	return buildAssistantReplyBodyWithAuthor(markdown, "", "")
+}
+
+func buildAssistantReplyBodyWithAuthor(markdown, authorName, authorLogin string) (json.RawMessage, error) {
 	body := Body{
 		Root: BodyNode{
 			Type: "root",
@@ -85,5 +91,25 @@ func buildAssistantReplyBody(markdown string) (json.RawMessage, error) {
 		},
 		Markdown: markdown,
 	}
+	if author := normalizeServiceAuthorDisplay(authorName, authorLogin); author != nil {
+		body.ServiceAuthor = author
+	}
 	return json.Marshal(body)
+}
+
+func normalizeServiceAuthorDisplay(name, login string) *ServiceAuthorDisplay {
+	name = truncateServiceAuthorDisplay(strings.TrimSpace(name))
+	login = truncateServiceAuthorDisplay(strings.TrimSpace(login))
+	if name == "" && login == "" {
+		return nil
+	}
+	return &ServiceAuthorDisplay{Name: name, Login: login}
+}
+
+func truncateServiceAuthorDisplay(value string) string {
+	runes := []rune(value)
+	if len(runes) <= serviceAuthorDisplayMaxRunes {
+		return value
+	}
+	return strings.TrimSpace(string(runes[:serviceAuthorDisplayMaxRunes]))
 }

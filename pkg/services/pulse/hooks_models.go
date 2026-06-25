@@ -5,19 +5,21 @@ import (
 	"time"
 )
 
-// HookType is the transport a Pulse hook delivers over. v1 ships a
-// single generic `webhook` type; the column + allowlist exist from day
-// one so future transports (Slack, Microsoft Teams, etc.) can be added
-// without a schema migration — exactly the contact-points pattern.
+// HookType is the transport a Pulse hook delivers over. The column +
+// allowlist exist from day one so future transports (Slack, Microsoft
+// Teams, etc.) can be added without a schema migration — exactly the
+// contact-points pattern.
 type HookType string
 
 const (
 	HookTypeWebhook HookType = "webhook"
+	HookTypeMCP     HookType = "mcp"
+	HookTypeAgent   HookType = "agent"
 )
 
 func (t HookType) Valid() bool {
 	switch t {
-	case HookTypeWebhook:
+	case HookTypeWebhook, HookTypeMCP, HookTypeAgent:
 		return true
 	}
 	return false

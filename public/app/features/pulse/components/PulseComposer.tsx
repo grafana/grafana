@@ -180,15 +180,9 @@ export function PulseComposer({
       setUserLookupError(null);
       return;
     }
-    if (picker.query.trim().length === 0) {
-      // Empty query — match the underlying API behavior (returns nothing)
-      // and treat the picker as idle so the dropdown does not flash a
-      // "no matches" state while the user is still typing the first char.
-      setUserSuggestions([]);
-      setUserLookupState('idle');
-      setUserLookupError(null);
-      return;
-    }
+    // An empty query (bare `@`) lists the first page of org members so
+    // people are immediately discoverable — same cadence as the hook
+    // picker, which also lists on a bare `@`.
     const controller = new AbortController();
     setUserLookupState('loading');
     setUserLookupError(null);
@@ -653,7 +647,12 @@ export function PulseComposer({
                         }}
                       >
                         <strong>{s.label}</strong>
-                        {s.sublabel && <span className={styles.sublabel}>{s.sublabel}</span>}
+                        {s.sublabel &&
+                          (s.mention.kind === 'webhook' ? (
+                            <em className={styles.sublabelHook}>({s.sublabel})</em>
+                          ) : (
+                            <span className={styles.sublabel}>{s.sublabel}</span>
+                          ))}
                       </li>
                     ))
                   : userPickerStatusMessage && (
@@ -867,6 +866,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   sublabel: css({
     color: theme.colors.text.secondary,
     fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  sublabelHook: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontStyle: 'italic',
   }),
   actions: css({
     display: 'flex',

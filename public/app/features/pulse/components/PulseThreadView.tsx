@@ -94,7 +94,14 @@ export function PulseThreadView({
   onThreadDeleted,
 }: Props): ReactNode {
   const styles = useStyles2(getStyles);
-  const { data, isLoading } = useListPulsesQuery({ threadUID: thread.uid });
+  const { data, isLoading } = useListPulsesQuery(
+    { threadUID: thread.uid },
+    {
+      pollingInterval: 3_000,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    }
+  );
   const [addPulse, addPulseState] = useAddPulseMutation();
   const [editPulse] = useEditPulseMutation();
   const [deletePulse] = useDeletePulseMutation();
@@ -585,7 +592,7 @@ function authorDisplayLabel(pulse: Pulse): string {
   if (pulse.authorKind === 'service_account') {
     const label = pulse.authorName || pulse.authorLogin;
     if (label) {
-      return t('pulse.thread.author-bot-named', '{{name}} (automation)', { name: label });
+      return label;
     }
     return t('pulse.thread.author-bot', 'Automation #{{id}}', { id: pulse.authorUserId });
   }

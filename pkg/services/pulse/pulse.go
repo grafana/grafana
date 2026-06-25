@@ -793,10 +793,10 @@ func (s *PulseService) publishEvent(e Event) {
 
 // fanout collects subscriber + mention recipient ids and dispatches them to
 // the notifier. Author is excluded so people don't get pinged for their own
-// pulses. Webhook mentions are dispatched separately (fire-and-forget) after
-// the human notification fanout, keyed off the supplied event action.
+// pulses. Named hook mentions are dispatched separately (fire-and-forget)
+// after the human notification fanout, keyed off the supplied event action.
 func (s *PulseService) fanout(ctx context.Context, action EventAction, thread Thread, pulse Pulse, mentions []Mention) {
-	s.dispatchWebhooks(ctx, action, thread, pulse, mentions)
+	s.dispatchHooks(ctx, action, thread, pulse, mentions)
 	subs, err := s.store.listSubscribers(ctx, thread.OrgID, thread.UID)
 	if err != nil {
 		s.log.Warn("failed to list subscribers", "err", err, "threadUID", thread.UID)

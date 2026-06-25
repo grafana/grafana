@@ -47,14 +47,15 @@ interface SearchUsersOptions {
  */
 export async function searchUsers(query: string, options: SearchUsersOptions = {}): Promise<UserSuggestion[]> {
   const trimmed = query.trim();
-  if (trimmed.length === 0) {
-    return [];
-  }
   const { signal, excludeUserId } = options;
   const url = new URL('/api/pulse/users/search', window.location.origin);
   url.searchParams.set('perpage', excludeUserId ? '11' : '10');
   url.searchParams.set('page', '1');
-  url.searchParams.set('query', trimmed);
+  // An empty query lists the first page of org members so a bare `@`
+  // surfaces people to mention (matching how the hook picker behaves).
+  if (trimmed.length > 0) {
+    url.searchParams.set('query', trimmed);
+  }
 
   const data = await getBackendSrv().get<PulseUserSearchResponse>(url.pathname + url.search, undefined, undefined, {
     showErrorAlert: false,

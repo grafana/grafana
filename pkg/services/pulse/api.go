@@ -3,6 +3,7 @@ package pulse
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -642,10 +643,31 @@ func (s *PulseService) populateAuthorDisplay(ctx context.Context, pulses []Pulse
 func stampAssistantAuthors(pulses []Pulse) {
 	for i := range pulses {
 		if pulses[i].AuthorUserID == AssistantAuthorUserID {
+			author, ok := serviceAuthorDisplayFromBody(pulses[i].BodyJSON)
+			if ok {
+				pulses[i].AuthorName = author.Name
+				pulses[i].AuthorLogin = author.Login
+				continue
+			}
 			pulses[i].AuthorName = AssistantDisplayName
 			pulses[i].AuthorLogin = AssistantLogin
 		}
 	}
+}
+
+func serviceAuthorDisplayFromBody(raw json.RawMessage) (ServiceAuthorDisplay, bool) {
+	if len(raw) == 0 {
+		return ServiceAuthorDisplay{}, false
+	}
+	var body Body
+	if err := json.Unmarshal(raw, &body); err != nil || body.ServiceAuthor == nil {
+		return ServiceAuthorDisplay{}, false
+	}
+	author := ServiceAuthorDisplay{
+		Name:  strings.TrimSpace(body.ServiceAuthor.Name),
+		Login: strings.TrimSpace(body.ServiceAuthor.Login),
+	}
+	return author, author.Name != "" || author.Login != ""
 }
 
 // gravatarAvatarURL returns the relative URL Grafana serves user avatars

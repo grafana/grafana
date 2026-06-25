@@ -41,6 +41,12 @@ type webhookDispatcher struct {
 	cfg    *setting.Cfg
 	log    log.Logger
 	client *http.Client
+	// mcpClient has a longer timeout because remote MCP tool calls can
+	// legitimately take longer than a simple webhook acknowledgement.
+	mcpClient *http.Client
+	// agentClient has a longer timeout because agent-backed hooks may
+	// call an LLM or orchestration service before returning a reply.
+	agentClient *http.Client
 	// wg tracks outstanding async dispatches. Production never waits on
 	// it (fire-and-forget), but tests call wait() to assert delivery.
 	wg sync.WaitGroup
@@ -58,20 +64,26 @@ func newWebhookDispatcher(cfg *setting.Cfg, logger log.Logger) *webhookDispatche
 		client: &http.Client{
 			Timeout: hookDispatchTimeout,
 		},
+		mcpClient: &http.Client{
+			Timeout: mcpDispatchTimeout,
+		},
+		agentClient: &http.Client{
+			Timeout: agentDispatchTimeout,
+		},
 		now: func() time.Time { return time.Now().UTC() },
 	}
 }
 
-// dispatchWebhooks resolves the webhook mentions on a saved pulse to
+// dispatchHooks resolves the named hook mentions on a saved pulse to
 // their hook rows and fires each one asynchronously. It is best-effort
-// by contract: a missing hook, a bad URL, or a non-2xx response never
+// by contract: a missing hook, a bad URL, or a failed response never
 // affects the pulse write that triggered it — failures are counted and
 // logged only.
-func (s *PulseService) dispatchWebhooks(ctx context.Context, action EventAction, thread Thread, pulse Pulse, mentions []Mention) {
+func (s *PulseService) dispatchHooks(ctx context.Context, action EventAction, thread Thread, pulse Pulse, mentions []Mention) {
 	if s.dispatcher == nil || s.hookStore == nil {
 		return
 	}
-	uids := collectWebhookHookUIDs(mentions)
+	uids := collectHookMentionUIDs(mentions)
 	if len(uids) == 0 {
 		return
 	}
@@ -82,7 +94,17 @@ func (s *PulseService) dispatchWebhooks(ctx context.Context, action EventAction,
 	}
 	for _, h := range hooks {
 		payload := buildWebhookPayload(s.dispatcher.cfg, action, thread, pulse, h, s.dispatcher.now())
-		s.dispatcher.dispatch(h, payload)
+		switch h.Type {
+		case HookTypeWebhook:
+			s.dispatcher.dispatch(h, payload)
+		case HookTypeMCP:
+			s.dispatchMCPHook(h, payload)
+		case HookTypeAgent:
+			s.dispatchAgentHook(h, payload)
+		default:
+			hookDispatchTotal.WithLabelValues(string(h.Type), hookResultDropped).Inc()
+			s.log.Warn("unsupported pulse hook type", "hookUID", h.UID, "hookName", h.Name, "hookType", h.Type)
+		}
 	}
 }
 
