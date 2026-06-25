@@ -798,6 +798,21 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
 
+	// Library panels live inside folders, so the unified storage backend must accept the
+	// grafana.app/folder annotation. They are keyed by their own GroupResource, so they need
+	// a separate registration from dashboards; without it they default to
+	// EnableFolderSupport=false and any folder-scoped write (e.g. provisioning syncing a panel
+	// into a managed folder) is rejected with "folders are not supported". The folder is
+	// optional (panels may live at the root), so RequireFolder stays false.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if b.libraryPanelsEnabled {
+		opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
+			Scheme:              opts.Scheme,
+			Index:               b.unified,
+			EnableFolderSupport: true,
+		})
+	}
+
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv0.DashboardResourceInfo,
