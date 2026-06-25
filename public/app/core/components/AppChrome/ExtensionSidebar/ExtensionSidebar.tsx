@@ -7,7 +7,7 @@ import { useTheme2 } from '@grafana/ui';
 
 import { getComponentMetaFromComponentId, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 
-export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = 300;
+export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = Math.max(300, Math.floor(window.innerWidth / 3));
 export const MIN_EXTENSION_SIDEBAR_WIDTH = 100;
 export const MAX_EXTENSION_SIDEBAR_WIDTH = Math.floor(window.innerWidth * (2 / 3));
 
