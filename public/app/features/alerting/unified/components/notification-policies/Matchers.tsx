@@ -63,8 +63,13 @@ export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'defa
 const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
   matcher: (label: string) => {
     const [darkShade, lightShade] = getTagColorsFromName(label, visualRefreshEnabled);
-    const backgroundColor = theme.isLight ? lightShade : darkShade;
-    const borderColor = theme.isLight ? darkShade : lightShade;
+    let backgroundColor = darkShade;
+    let borderColor = lightShade;
+
+    if (visualRefreshEnabled) {
+      backgroundColor = theme.isLight ? lightShade : darkShade;
+      borderColor = theme.isLight ? darkShade : lightShade;
+    }
 
     return {
       wrapper: css({

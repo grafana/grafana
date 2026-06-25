@@ -32,8 +32,12 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
   const tagStyle = useMemo(() => {
     if (autoColors) {
       const [darkShade, lightShade] = getTagColorsFromName(name, visualRefreshEnabled);
-      const backgroundColor = isLight ? lightShade : darkShade;
-      const borderColor = isLight ? darkShade : lightShade;
+      let backgroundColor = darkShade;
+      let borderColor = lightShade;
+      if (visualRefreshEnabled) {
+        backgroundColor = isLight ? lightShade : darkShade;
+        borderColor = isLight ? darkShade : lightShade;
+      }
       return { backgroundColor, borderColor };
     }
     return undefined;

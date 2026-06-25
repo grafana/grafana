@@ -16,8 +16,12 @@ export const TagBadge = ({ count, label, onClick, removeIcon }: Props) => {
   const { isLight } = useTheme2();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const [darkShade, lightShade] = getTagColorsFromName(label, visualRefreshEnabled);
-  const backgroundColor = isLight ? lightShade : darkShade;
-  const borderColor = isLight ? darkShade : lightShade;
+  let backgroundColor = darkShade;
+  let borderColor = lightShade;
+  if (visualRefreshEnabled) {
+    backgroundColor = isLight ? lightShade : darkShade;
+    borderColor = isLight ? darkShade : lightShade;
+  }
   const styles = useStyles2(getStyles);
 
   const countLabel = count !== 0 && <span style={{ marginLeft: '3px' }}>{`(${count})`}</span>;
