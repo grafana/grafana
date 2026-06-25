@@ -16,8 +16,10 @@ on:
 permissions: {}
 
 concurrency:
-  group: notify-pr-handler-${{ github.event.workflow_run.head_branch }}
-  cancel-in-progress: true
+  # Unique per triggering run so each external PR's handler runs to completion
+  # without cancelling others. Branch names are not unique across PRs.
+  group: notify-pr-handler-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
 
 env:
   # community-triage logic version this repo is pinned to (main as of PR #6).
@@ -247,7 +249,14 @@ jobs:
           gh pr view "$PR_NUMBER" --repo "$REPO" --json body --jq '.body // "No description provided."' > pr_description.txt
           PR_TITLE=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json title --jq '.title')
           echo "PR title: $PR_TITLE"
-          printf '%s\n' "pr_title=$PR_TITLE" >> "$GITHUB_OUTPUT"
+          # Emit via a random-delimiter heredoc so titles with special
+          # characters are captured verbatim as a single step output.
+          DELIM="ghaout_$(openssl rand -hex 16)"
+          {
+            printf 'pr_title<<%s\n' "$DELIM"
+            printf '%s\n' "$PR_TITLE"
+            printf '%s\n' "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Load team-specific review rules
         id: team-skills
