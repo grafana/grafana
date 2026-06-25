@@ -60,34 +60,40 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
         queryType: DEFAULT_QUERY_TYPE,
       });
     }
-    // TODO: Remove this automatic check for native histograms once Tempo only supports native histograms https://github.com/grafana/grafana/issues/109708
-    // indentify the service map can use native histograms
-    const timeRange = this.props.range;
-    const nativeHistograms = await this.props.datasource.getNativeHistograms(timeRange);
+    // The native-histogram detection below fires an onChange that mutates the in-flight
+    // query. For the Flow (SIEM) tab that makes Explore abort the query on first load and
+    // never re-run it, so the table/topology stay empty until a manual refresh. The flag
+    // is only consumed by the service map, so skip the whole block for flow queries.
+    // TODO: Remove this automatic check once Tempo only supports native histograms https://github.com/grafana/grafana/issues/109708
+    if (this.props.query.queryType !== 'flow') {
+      // indentify the service map can use native histograms
+      const timeRange = this.props.range;
+      const nativeHistograms = await this.props.datasource.getNativeHistograms(timeRange);
 
-    // Only update if component is still mounted
-    if (!this._isMounted) {
-      return;
-    }
+      // Only update if component is still mounted
+      if (!this._isMounted) {
+        return;
+      }
 
-    this.props.onChange({
-      ...this.props.query,
-      serviceMapUseNativeHistograms: nativeHistograms,
-    });
-    // Migrate to native histograms
-    // this will ensure that on navigating to the query option service map from a url,
-    // the service map will be rendered with the native histograms when
-    // querytype is serviceMap
-    // the serviceMapUseNativeHistograms is undefined
-    // and nativeHistograms is true
-    if (
-      this.props.query.queryType === 'serviceMap' &&
-      this.props.query.serviceMapUseNativeHistograms === undefined &&
-      // switch from tempo with native histograms to tempo without native histograms
-      this.props.query.serviceMapUseNativeHistograms !== nativeHistograms &&
-      nativeHistograms
-    ) {
-      this.props.onRunQuery();
+      this.props.onChange({
+        ...this.props.query,
+        serviceMapUseNativeHistograms: nativeHistograms,
+      });
+      // Migrate to native histograms
+      // this will ensure that on navigating to the query option service map from a url,
+      // the service map will be rendered with the native histograms when
+      // querytype is serviceMap
+      // the serviceMapUseNativeHistograms is undefined
+      // and nativeHistograms is true
+      if (
+        this.props.query.queryType === 'serviceMap' &&
+        this.props.query.serviceMapUseNativeHistograms === undefined &&
+        // switch from tempo with native histograms to tempo without native histograms
+        this.props.query.serviceMapUseNativeHistograms !== nativeHistograms &&
+        nativeHistograms
+      ) {
+        this.props.onRunQuery();
+      }
     }
   }
 
