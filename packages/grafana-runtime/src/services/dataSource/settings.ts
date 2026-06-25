@@ -1,4 +1,5 @@
 import {
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type DataSourceRef,
   type ScopedVars,
@@ -136,18 +137,52 @@ export async function getDataSourceInstanceSettings(
 }
 
 /**
- * Search and filter data source instance settings from the in-memory cache.
+ * Filters for {@link getDataSourceInstanceList} and {@link useDataSourceInstanceList}.
  *
- * @internal
+ * Identical to {@link GetDataSourceListFilters} except the `filter` callback receives a
+ * {@link DataSourceInstanceListItem} instead of the full {@link DataSourceInstanceSettings}.
+ * This reflects the long-term data model: the list API will only expose the slim item shape,
+ * so filter callbacks must not rely on settings-specific fields such as `jsonData` or `url`.
+ *
+ * @public
  */
-export async function getDataSourceInstanceSettingsList(
-  filters?: GetDataSourceListFilters
-): Promise<DataSourceInstanceSettings[]> {
-  const results = applyFilters(filters);
-  if (results.length > 0) {
-    return results;
-  }
-  return getInstanceSettingsListFallback(filters);
+export interface GetDataSourceInstanceListFilters extends Omit<GetDataSourceListFilters, 'filter'> {
+  /** Apply a function to filter the list. Receives a slim {@link DataSourceInstanceListItem}. */
+  filter?: (item: DataSourceInstanceListItem) => boolean;
+}
+
+/**
+ * Search and filter data sources from the in-memory cache, returning a
+ * lightweight view of each match. The heavy per-instance settings are not
+ * included — fetch them on demand via {@link getDataSourceInstanceSettings}.
+ *
+ * @public
+ */
+export async function getDataSourceInstanceList(
+  filters?: GetDataSourceInstanceListFilters
+): Promise<DataSourceInstanceListItem[]> {
+  const { filter: itemFilter, ...settingsFilters } = filters ?? {};
+  // Wrap the slim filter into a settings-compatible callback so applyFilters applies
+  // it with the same semantics as the legacy getList(): checked on base items and on
+  // -- Grafana --, but NOT on -- Mixed -- or -- Dashboard -- (which are appended
+  // unconditionally). Passing it through here avoids a post-map filter pass that would
+  // incorrectly gate those built-ins.
+  const settingsFilter = itemFilter ? (ds: DataSourceInstanceSettings) => itemFilter(toListItem(ds)) : undefined;
+  const filtersWithAdapter = { ...settingsFilters, filter: settingsFilter };
+  const results = applyFilters(filtersWithAdapter);
+  return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
+}
+
+function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+  return {
+    uid: settings.uid,
+    type: settings.type,
+    apiVersion: settings.apiVersion,
+    name: settings.name,
+    meta: settings.meta,
+    readOnly: settings.readOnly,
+    isDefault: settings.isDefault ?? false,
+  };
 }
 
 /**
