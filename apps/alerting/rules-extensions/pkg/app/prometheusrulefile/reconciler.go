@@ -174,6 +174,7 @@ func (r *Reconciler) applyChildren(ctx context.Context, file *model.PrometheusRu
 		}
 
 		for idx, rule := range g.Rules {
+			// TODO: check for recording rule + alert rule and make sequences if needed
 			switch {
 			case rule.Alert != nil && *rule.Alert != "":
 				name := childRuleName(file.GetName(), g.Name, *rule.Alert, idx)
