@@ -6,10 +6,14 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/http"
+	"slices"
+	"sort"
+	"strings"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -30,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -63,6 +68,12 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.createK8sLibraryElement(c)
+		return nil // already handled in the k8s handler
+	}
+
 	cmd := model.CreateLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -123,6 +134,12 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.deleteK8sLibraryElement(c)
+		return nil // already handled in the k8s handler
+	}
+
 	id, err := l.DeleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to delete library element")
@@ -188,6 +205,12 @@ func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.
 // 401: unauthorisedError
 // 500: internalServerError
 func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.getK8sAllLibraryElements(c)
+		return nil // already handled in the k8s handler
+	}
+
 	query := model.SearchLibraryElementsQuery{
 		PerPage:          c.QueryInt("perPage"),
 		Page:             c.QueryInt("page"),
@@ -230,6 +253,12 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 // 412: preconditionFailedError
 // 500: internalServerError
 func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.patchK8sLibraryElement(c)
+		return nil // already handled in the k8s handler
+	}
+
 	cmd := model.PatchLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -290,6 +319,12 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.getK8sLibraryElementConnections(c)
+		return nil // already handled in the k8s handler
+	}
+
 	libraryPanelUID := web.Params(c.Req)[":uid"]
 
 	// make sure the library element exists
@@ -358,6 +393,12 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.getK8sLibraryElementByName(c)
+		return nil // already handled in the k8s handler
+	}
+
 	elements, err := l.getLibraryElementsByName(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":name"])
 	if err != nil {
 		return l.toLibraryElementError(err, "Failed to get library element")
@@ -607,6 +648,305 @@ func (lk8s *libraryElementsK8sHandler) getK8sLibraryElement(c *contextmodel.ReqC
 	c.JSON(http.StatusOK, model.LibraryElementResponse{Result: *dto})
 }
 
+func (lk8s *libraryElementsK8sHandler) getK8sAllLibraryElements(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+	// The apiserver enforces read access per the signed-in user's client, so we do not
+	// re-implement permission filtering here.
+	out, err := client.List(c.Req.Context(), v1.ListOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	searchString := strings.ToLower(c.Query("searchString"))
+	typeFilter := parseCommaSeparated(c.Query("typeFilter"))
+	folderFilterUIDs := parseCommaSeparated(c.Query("folderFilterUIDs"))
+	excludeUID := c.Query("excludeUid")
+
+	elements := make([]model.LibraryElementDTO, 0, len(out.Items))
+	for _, item := range out.Items {
+		dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, item)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+			return
+		}
+
+		if excludeUID != "" && dto.UID == excludeUID {
+			continue
+		}
+		if searchString != "" && !strings.Contains(strings.ToLower(dto.Name), searchString) {
+			continue
+		}
+		if len(typeFilter) > 0 && !slices.Contains(typeFilter, dto.Type) {
+			continue
+		}
+		if len(folderFilterUIDs) > 0 && !slices.Contains(folderFilterUIDs, dto.FolderUID) {
+			continue
+		}
+
+		elements = append(elements, *dto)
+	}
+
+	descending := c.Query("sortDirection") == "alpha-desc"
+	sort.Slice(elements, func(i, j int) bool {
+		if descending {
+			return elements[i].Name > elements[j].Name
+		}
+		return elements[i].Name < elements[j].Name
+	})
+
+	totalCount := int64(len(elements))
+
+	perPage := c.QueryInt("perPage")
+	if perPage <= 0 {
+		perPage = 100
+	}
+	page := c.QueryInt("page")
+	if page <= 0 {
+		page = 1
+	}
+
+	start := (page - 1) * perPage
+	if start > len(elements) {
+		start = len(elements)
+	}
+	end := start + perPage
+	if end > len(elements) {
+		end = len(elements)
+	}
+
+	c.JSON(http.StatusOK, model.LibraryElementSearchResponse{Result: model.LibraryElementSearchResult{
+		TotalCount: totalCount,
+		Elements:   elements[start:end],
+		Page:       page,
+		PerPage:    perPage,
+	}})
+}
+
+func (lk8s *libraryElementsK8sHandler) getK8sLibraryElementByName(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+	out, err := client.List(c.Req.Context(), v1.ListOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	name := web.Params(c.Req)[":name"]
+	elements := make([]model.LibraryElementDTO, 0)
+	for _, item := range out.Items {
+		dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, item)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+			return
+		}
+		if dto.Name == name {
+			elements = append(elements, *dto)
+		}
+	}
+
+	c.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: elements})
+}
+
+func (lk8s *libraryElementsK8sHandler) getK8sLibraryElementConnections(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+	libraryPanelUID := web.Params(c.Req)[":uid"]
+	out, err := client.Get(c.Req.Context(), libraryPanelUID, v1.GetOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+	element, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, *out)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+		return
+	}
+
+	dashboards, err := lk8s.dashboardsService.GetDashboardsByLibraryPanelUID(c.Req.Context(), libraryPanelUID, c.GetOrgID())
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	connections := make([]model.LibraryElementConnectionDTO, 0)
+	for _, dashboard := range dashboards {
+		// Unlike the legacy handler, we do not re-check per-folder view permissions here:
+		// the apiserver Get above already enforced read access on the panel, and the
+		// folder permission check lives on the service (l.requireViewPermissionsOnFolderUID),
+		// which is not reachable from the k8s handler without a circular dependency.
+
+		// connections are not an individual resource and therefore do not have an id
+		// instead, return something that will be consistent and somewhat unique for the connection.
+		hash := fnv.New64a()
+		_, err := fmt.Fprintf(hash, "%d:%s:%d:%d", element.ID, dashboard.UID, c.GetOrgID(), element.Meta.Created.Unix())
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "Failed to generate connection id", err)
+			return
+		}
+		// ensure it is positive and smaller than 9007199254740991, otherwise we will lose prescision
+		// in javascript, which has the safest number as 9007199254740991, compared to 9223372036854775807 in go
+		connectionID := int64(hash.Sum64() & ((1 << 52) - 1))
+
+		connections = append(connections, model.LibraryElementConnectionDTO{
+			ID:            connectionID,
+			Kind:          int64(model.PanelElement),
+			ElementID:     element.ID,
+			ConnectionID:  dashboard.ID, // nolint:staticcheck
+			ConnectionUID: dashboard.UID,
+			// returns the creation information of the library element, not the connection
+			CreatedBy: model.LibraryElementDTOMetaUser{
+				Id:        element.Meta.CreatedBy.Id,
+				Name:      element.Meta.CreatedBy.Name,
+				AvatarUrl: element.Meta.CreatedBy.AvatarUrl,
+			},
+			Created: element.Meta.Created,
+		})
+	}
+
+	c.JSON(http.StatusOK, model.LibraryElementConnectionsResponse{Result: connections})
+}
+
+func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+	cmd := model.CreateLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+
+	spec, err := legacyModelToLibraryPanelSpec(cmd.Name, cmd.Model)
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "conversion error", err)
+		return
+	}
+	obj := &dashboardV0.LibraryPanel{Spec: spec}
+	// The apiserver requires either a name or generateName; the legacy create allowed
+	// an empty UID and generated one, so mirror that here (as the playlist handler does).
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
+	obj.SetName(cmd.UID)
+	if cmd.FolderUID != nil {
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+			return
+		}
+		meta.SetFolder(*cmd.FolderUID)
+	}
+
+	unstructuredObj, err := toUnstructured(obj)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+		return
+	}
+
+	out, err := client.Create(c.Req.Context(), unstructuredObj, v1.CreateOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, *out)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+		return
+	}
+	c.JSON(http.StatusOK, model.LibraryElementResponse{Result: *dto})
+}
+
+func (lk8s *libraryElementsK8sHandler) patchK8sLibraryElement(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+	uid := web.Params(c.Req)[":uid"]
+	cmd := model.PatchLibraryElementCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+
+	existing, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	// Start from the existing object and apply the patch fields that are present.
+	updated := existing.DeepCopy()
+	if len(cmd.Model) > 0 || cmd.Name != "" {
+		// reconstruct the name to use for the spec.Title from the patch (or fall back to existing)
+		name := cmd.Name
+		if name == "" {
+			if meta, mErr := utils.MetaAccessor(existing); mErr == nil {
+				name = meta.FindTitle("")
+			}
+		}
+		spec, err := legacyModelToLibraryPanelSpec(name, cmd.Model)
+		if err != nil {
+			c.JsonApiErr(http.StatusBadRequest, "conversion error", err)
+			return
+		}
+		specMap, err := specToUnstructuredMap(spec)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+			return
+		}
+		updated.Object["spec"] = specMap
+	}
+
+	updated.SetName(uid)
+	updated.SetResourceVersion(existing.GetResourceVersion())
+	if cmd.FolderUID != nil {
+		meta, err := utils.MetaAccessor(updated)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+			return
+		}
+		meta.SetFolder(*cmd.FolderUID)
+	}
+
+	out, err := client.Update(c.Req.Context(), updated, v1.UpdateOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, *out)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+		return
+	}
+	c.JSON(http.StatusOK, model.LibraryElementResponse{Result: *dto})
+}
+
+func (lk8s *libraryElementsK8sHandler) deleteK8sLibraryElement(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+	uid := web.Params(c.Req)[":uid"]
+	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+	// The k8s delete does not return the legacy numeric ID, so it is left as 0.
+	c.JSON(http.StatusOK, model.DeleteLibraryElementResponse{Message: "Library element deleted"})
+}
+
 func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *contextmodel.ReqContext, item unstructured.Unstructured) (*model.LibraryElementDTO, error) {
 	spec, exists := item.Object["spec"].(map[string]interface{})
 	if !exists {
@@ -746,6 +1086,41 @@ func (lk8s *libraryElementsK8sHandler) getClient(c *contextmodel.ReqContext) (dy
 		return nil, false
 	}
 	return dyn.Resource(lk8s.gvr).Namespace(lk8s.namespacer(c.OrgID)), true
+}
+
+// parseCommaSeparated splits a comma separated query value into trimmed, non-empty values.
+func parseCommaSeparated(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	values := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			values = append(values, trimmed)
+		}
+	}
+	return values
+}
+
+// toUnstructured converts a typed LibraryPanel into the unstructured form expected by the
+// dynamic client, preserving metadata (name, folder annotation) set on the object.
+func toUnstructured(obj *dashboardV0.LibraryPanel) (*unstructured.Unstructured, error) {
+	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert library panel to unstructured: %w", err)
+	}
+	return &unstructured.Unstructured{Object: out}, nil
+}
+
+// specToUnstructuredMap converts a LibraryPanelSpec into a map suitable for embedding in an
+// unstructured object's "spec" field.
+func specToUnstructuredMap(spec dashboardV0.LibraryPanelSpec) (map[string]any, error) {
+	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&spec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert library panel spec to unstructured: %w", err)
+	}
+	return out, nil
 }
 
 func (lk8s *libraryElementsK8sHandler) writeError(c *contextmodel.ReqContext, err error) {

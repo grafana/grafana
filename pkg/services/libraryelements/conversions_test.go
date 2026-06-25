@@ -101,3 +101,34 @@ func TestConversionsCommands(t *testing.T) {
 		})
 	}
 }
+
+func TestLegacyModelToLibraryPanelSpec(t *testing.T) {
+	// The legacy model JSON's "title" is the in-dashboard panel title (PanelTitle),
+	// while the supplied name is the library panel name (Title).
+	modelJSON := json.RawMessage(`{
+		"type": "timeseries",
+		"pluginVersion": "1.2.3",
+		"title": "panel title",
+		"description": "descr",
+		"options": {"hello": "options"},
+		"fieldConfig": {"hello": "fieldConfig"},
+		"datasource": {"type": "ttt", "uid": "uid", "apiVersion": "v0alpha1"},
+		"gridPos": {"w": 1, "h": 2, "x": 3, "y": 4},
+		"transparent": true
+	}`)
+
+	spec, err := legacyModelToLibraryPanelSpec("library panel name", modelJSON)
+	require.NoError(t, err)
+
+	require.Equal(t, "library panel name", spec.Title)
+	require.Equal(t, "panel title", spec.PanelTitle)
+	require.Equal(t, "timeseries", spec.Type)
+	require.Equal(t, "1.2.3", spec.PluginVersion)
+	require.Equal(t, "descr", spec.Description)
+	require.True(t, spec.Transparent)
+	require.Equal(t, map[string]any{"hello": "options"}, spec.Options.Object)
+	require.Equal(t, map[string]any{"hello": "fieldConfig"}, spec.FieldConfig.Object)
+	require.NotNil(t, spec.Datasource)
+	require.Equal(t, "ttt", spec.Datasource.Type)
+	require.Equal(t, v0alpha1.GridPos{W: 1, H: 2, X: 3, Y: 4}, spec.GridPos)
+}
