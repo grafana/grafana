@@ -36,6 +36,11 @@ func NewWebhookManager(client WebhookClient, status *provisioning.WebhookStatus,
 	}
 }
 
+// WebhookURL returns the URL this repository is configured to register its webhook at.
+func (m *WebhookManager) WebhookURL() string {
+	return m.webhookURL
+}
+
 func (m *WebhookManager) OnCreate(ctx context.Context) ([]map[string]any, error) {
 	if len(m.webhookURL) == 0 {
 		return nil, nil

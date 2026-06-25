@@ -832,13 +832,29 @@ func (rc *RepositoryController) process(key string) error {
 	return nil
 }
 
+// webhookURLReporter is implemented by repositories that report the webhook URL they are
+// configured to register, letting the controller detect URL drift without a provider call.
+type webhookURLReporter interface {
+	WebhookURL() string
+}
+
 // processHooks handles hook execution with intelligent retry logic
 // Returns hook operations, whether processing should continue, and any error
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
-	webhookMissing := len(obj.Spec.Workflows) > 0 &&
+	webhookExpected := len(obj.Spec.Workflows) > 0
+	webhookMissing := webhookExpected &&
 		(obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0)
 
-	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
+	// Re-run hooks when the registered webhook URL no longer matches the configured one
+	// (e.g. a changed tunnel hostname) so OnUpdate can point it back. This is a local
+	// comparison: it adds no provider API calls unless an actual drift is found.
+	webhookDrifted := webhookExpected && !webhookMissing && obj.Status.Webhook != nil
+	if webhookDrifted {
+		reporter, ok := repo.(webhookURLReporter)
+		webhookDrifted = ok && reporter.WebhookURL() != "" && reporter.WebhookURL() != obj.Status.Webhook.URL
+	}
+
+	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing || webhookDrifted
 
 	// Suppress the hook retry while the hook-failure cooldown is active. If the
 	// spec no longer expects a webhook, the cooldown does not apply: we let the
