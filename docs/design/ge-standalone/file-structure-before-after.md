@@ -57,7 +57,7 @@ graph TB
     subgraph GEM["github.com/grafana/grafana-enterprise (one or more modules)"]
         MAIN_GE["cmd/grafana-enterprise/main.go"]
         WIRE_GE["GE wire graph"]
-        WIRE_GE_EXT["pkg/server/wireexts]
+        WIRE_GE_EXT["pkg/server/wireexts"]
         PKG["pkg/accesscontrol, pkg/apiserver, …"]
     end
 
