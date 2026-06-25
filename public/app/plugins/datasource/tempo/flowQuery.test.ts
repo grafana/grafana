@@ -1,6 +1,8 @@
 import {
   composeFilter,
   composeFacetQuery,
+  composeFlowTableCountQuery,
+  composeFlowTableBytesQuery,
   composeTopologyCountQuery,
   composeTopologyBytesQuery,
   FLOW_FACETS,
@@ -65,6 +67,20 @@ describe('composeFacetQuery', () => {
     const filters: FlowFacetFilter[] = [{ key: 'direction', values: ['egress'] }];
     expect(composeFacetQuery(filters, facet('destination'))).toBe(
       '{ name = "network.flow" && span.flow.direction = "egress" } | count_over_time() by (span.destination.address)'
+    );
+  });
+});
+
+describe('flow table queries', () => {
+  it('groups count over the 5-tuple', () => {
+    expect(composeFlowTableCountQuery([])).toBe(
+      '{ name = "network.flow" } | count_over_time() by (resource.service.name, span.process.executable.name, span.destination.address, span.destination.port, span.network.transport)'
+    );
+  });
+
+  it('sums io bytes over the 5-tuple', () => {
+    expect(composeFlowTableBytesQuery([])).toBe(
+      '{ name = "network.flow" } | sum_over_time(span.flow.io.bytes) by (resource.service.name, span.process.executable.name, span.destination.address, span.destination.port, span.network.transport)'
     );
   });
 });

@@ -6,6 +6,7 @@ export type FlowFacetKey =
   | 'host'
   | 'process'
   | 'destination'
+  | 'country'
   | 'destPort'
   | 'tcpRst'
   | 'tcpSyn'
@@ -31,6 +32,7 @@ export const FLOW_FACETS: FlowFacetDef[] = [
   { key: 'host', label: 'Host', attr: 'resource.service.name', valueType: 'string' },
   { key: 'process', label: 'Process', attr: 'span.process.executable.name', valueType: 'string' },
   { key: 'destination', label: 'Destination', attr: 'span.destination.address', valueType: 'string' },
+  { key: 'country', label: 'Country', attr: 'span.destination.geo.country.iso_code', valueType: 'string' },
   { key: 'destPort', label: 'Dest port', attr: 'span.destination.port', valueType: 'number' },
   { key: 'tcpRst', label: 'TCP RST', attr: 'span.flow.tcp.rst', valueType: 'bool' },
   { key: 'tcpSyn', label: 'TCP SYN', attr: 'span.flow.tcp.syn', valueType: 'bool' },
@@ -89,6 +91,26 @@ export function composeTopologyCountQuery(filters: FlowFacetFilter[]): string {
 
 export function composeTopologyBytesQuery(filters: FlowFacetFilter[]): string {
   return `${composeFilter(filters)} | sum_over_time(span.flow.io.bytes) by (resource.service.name, span.destination.address)`;
+}
+
+// Columns for the aggregated flow table. TraceQL metrics caps `by()` at 5 group
+// values, so this is the 5-tuple we group by; Country stays a facet for now.
+export const FLOW_TABLE_COLUMNS: ReadonlyArray<{ attr: string; label: string }> = [
+  { attr: 'resource.service.name', label: 'Host' },
+  { attr: 'span.process.executable.name', label: 'Process' },
+  { attr: 'span.destination.address', label: 'Destination' },
+  { attr: 'span.destination.port', label: 'Port' },
+  { attr: 'span.network.transport', label: 'Transport' },
+];
+
+const FLOW_TABLE_GROUP_BY = FLOW_TABLE_COLUMNS.map((c) => c.attr).join(', ');
+
+export function composeFlowTableCountQuery(filters: FlowFacetFilter[]): string {
+  return `${composeFilter(filters)} | count_over_time() by (${FLOW_TABLE_GROUP_BY})`;
+}
+
+export function composeFlowTableBytesQuery(filters: FlowFacetFilter[]): string {
+  return `${composeFilter(filters)} | sum_over_time(span.flow.io.bytes) by (${FLOW_TABLE_GROUP_BY})`;
 }
 
 // TraceQL serializes string attribute values in metrics-series labels wrapped in

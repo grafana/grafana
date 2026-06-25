@@ -19,20 +19,58 @@ function makeRequest(query: Partial<TempoQuery>): DataQueryRequest<TempoQuery> {
 }
 
 describe('TempoDatasource flow table branch', () => {
-  it('routes a flow table query through handleTraceQlQuery with the composed filter', () => {
+  it('routes a flow table query through handleFlowTableQuery (metrics-grouped, not search)', () => {
     const ds = createTempoDatasource();
-    const spy = jest
-      .spyOn(ds, 'handleTraceQlQuery')
-      .mockReturnValue(of({ data: [] }));
+    const tableSpy = jest.spyOn(ds, 'handleFlowTableQuery').mockReturnValue(of({ data: [] }));
+    const searchSpy = jest.spyOn(ds, 'handleTraceQlQuery').mockReturnValue(of({ data: [] }));
 
-    ds.query(makeRequest({ flowView: 'table', flowFilters: [{ key: 'direction', values: ['egress'] }] }));
+    const filters = [{ key: 'direction' as const, values: ['egress'] }];
+    ds.query(makeRequest({ flowView: 'table', flowFilters: filters }));
 
-    expect(spy).toHaveBeenCalledTimes(1);
-    const passedTargets = spy.mock.calls[0][1].traceql;
-    expect(passedTargets[0].query).toBe('{ name = "network.flow" && span.flow.direction = "egress" }');
-    expect(passedTargets[0].tableType).toBe('spans');
+    expect(tableSpy).toHaveBeenCalledTimes(1);
+    expect(tableSpy.mock.calls[0][1]).toEqual(filters);
+    expect(searchSpy).not.toHaveBeenCalled();
+  });
+
+  it('handleFlowTableQuery builds a table frame from count + bytes metrics', async () => {
+    const ds = createTempoDatasource();
+    jest
+      .spyOn(ds, 'handleTraceQlMetricsQuery')
+      .mockReturnValueOnce(of({ data: [tupleFrame('web-1', 'curl', '1.2.3.4', '443', 'tcp', 9)] }))
+      .mockReturnValueOnce(of({ data: [tupleFrame('web-1', 'curl', '1.2.3.4', '443', 'tcp', 4096)] }));
+
+    const result = await firstValueFrom(ds.handleFlowTableQuery(makeRequest({ flowView: 'table' }), []));
+
+    expect(result.data).toHaveLength(1);
+    const frame = result.data[0];
+    expect(frame.meta?.preferredVisualisationType).toBe('table');
+    expect(fieldValues(frame, 'Host')).toEqual(['web-1']);
+    expect(fieldValues(frame, 'Destination')).toEqual(['1.2.3.4']);
+    expect(fieldValues(frame, 'Flows')).toEqual([9]);
+    expect(fieldValues(frame, 'Bytes')).toEqual([4096]);
   });
 });
+
+function tupleFrame(host: string, proc: string, dest: string, port: string, transport: string, value: number) {
+  return toDataFrame({
+    refId: 'A',
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [0] },
+      {
+        name: 'value',
+        type: FieldType.number,
+        values: [value],
+        labels: {
+          'resource.service.name': host,
+          'span.process.executable.name': proc,
+          'span.destination.address': dest,
+          'span.destination.port': port,
+          'span.network.transport': transport,
+        },
+      },
+    ],
+  });
+}
 
 function groupedFrame(host: string, dest: string, value: number) {
   return toDataFrame({

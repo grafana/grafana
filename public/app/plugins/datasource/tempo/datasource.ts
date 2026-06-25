@@ -40,8 +40,13 @@ import { type TempoVariableQuery, TempoVariableQueryType } from './VariableQuery
 import { type PrometheusDatasource, type PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { type TagLimitOptions } from './configuration/TagLimitSettings';
 import { MetricsQueryType, SearchTableType, type TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
-import { composeFilter, composeTopologyCountQuery, composeTopologyBytesQuery } from './flowQuery';
-import { extractFlowEdges, flowEdgesToNodeGraph } from './flowTransform';
+import {
+  composeFlowTableCountQuery,
+  composeFlowTableBytesQuery,
+  composeTopologyCountQuery,
+  composeTopologyBytesQuery,
+} from './flowQuery';
+import { extractFlowEdges, flowEdgesToNodeGraph, flowSeriesToTable } from './flowTransform';
 import {
   defaultTableFilter,
   durationMetric,
@@ -499,13 +504,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       if (target.flowView === 'topology') {
         subQueries.push(this.handleFlowTopologyQuery(options, filters));
       } else {
-        const flowTarget: TempoQuery = {
-          ...target,
-          query: composeFilter(filters),
-          queryType: 'traceql',
-          tableType: SearchTableType.Spans,
-        };
-        subQueries.push(this.handleTraceQlQuery(options, { traceql: [flowTarget] }));
+        subQueries.push(this.handleFlowTableQuery(options, filters));
       }
     }
 
@@ -753,6 +752,45 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }),
       catchError((err) =>
         of({ error: { message: `flow topology: ${err?.message ?? String(err)}` }, data: [], state: LoadingState.Error })
+      )
+    );
+  }
+
+  // The flow table is metrics-grouped (count + bytes over the 5-tuple), not a raw
+  // span search — search under-returns this data badly in some deployments, and an
+  // aggregated "top flows" table is the more useful SIEM view.
+  handleFlowTableQuery(
+    options: DataQueryRequest<TempoQuery>,
+    filters: TempoQuery['flowFilters'] = []
+  ): Observable<DataQueryResponse> {
+    const countQuery = composeFlowTableCountQuery(filters ?? []);
+    const bytesQuery = composeFlowTableBytesQuery(filters ?? []);
+
+    const countTarget: TempoQuery = {
+      refId: 'flow-table-count',
+      filters: [],
+      query: countQuery,
+      queryType: 'traceql',
+      metricsQueryType: MetricsQueryType.Instant,
+    };
+    const bytesTarget: TempoQuery = {
+      refId: 'flow-table-bytes',
+      filters: [],
+      query: bytesQuery,
+      queryType: 'traceql',
+      metricsQueryType: MetricsQueryType.Instant,
+    };
+
+    return forkJoin([
+      this.handleTraceQlMetricsQuery(options, [countTarget], countQuery).pipe(last()),
+      this.handleTraceQlMetricsQuery(options, [bytesTarget], bytesQuery).pipe(last()),
+    ]).pipe(
+      map(([countResp, bytesResp]) => ({
+        data: [flowSeriesToTable(countResp.data ?? [], bytesResp.data ?? [])],
+        state: LoadingState.Done,
+      })),
+      catchError((err) =>
+        of({ error: { message: `flow table: ${err?.message ?? String(err)}` }, data: [], state: LoadingState.Error })
       )
     );
   }
