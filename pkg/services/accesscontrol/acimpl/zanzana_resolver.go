@@ -384,7 +384,11 @@ func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, names
 		if strings.HasPrefix(entry.Action, prefix) {
 			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Verb, entry.Action, scope)
 			if err != nil {
-				return nil, err
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return nil, err
+				}
+				zLogger.Warn("failed to list zanzana permissions for action, skipping", "action", entry.Action, "error", err)
+				continue
 			}
 			permissions = append(permissions, perms...)
 		}

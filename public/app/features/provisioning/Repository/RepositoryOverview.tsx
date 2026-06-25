@@ -23,7 +23,7 @@ import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
-import { getKindInfoByStatGroup, getRepositoryRoute } from '../utils/resourceKinds';
+import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -54,7 +54,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'Resource',
         header: 'Resource Type',
         cell: ({ row: { original } }: StatCell<'resource'>) => {
-          const info = getKindInfoByStatGroup(original.group);
+          const info = getKindInfoByStat(original);
           return (
             <Stack direction="row" gap={1} alignItems="center">
               <Icon name={info?.icon ?? 'file-alt'} />
@@ -76,7 +76,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'actions',
         header: '',
         cell: ({ row: { original } }: StatCell) => {
-          const info = getKindInfoByStatGroup(original.group);
+          const info = getKindInfoByStat(original);
           // Unknown kinds have no destination, so no action.
           if (!info) {
             return null;

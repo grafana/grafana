@@ -2359,6 +2359,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.customizableMegaMenu",
+        "resourceVersion": "1782389631454",
+        "creationTimestamp": "2026-06-25T12:13:51Z"
+      },
+      "spec": {
+        "description": "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3542,6 +3556,7 @@
         "name": "multiPropsVariables",
         "resourceVersion": "1781873846528",
         "creationTimestamp": "2025-12-09T17:11:49Z",
+        "deletionTimestamp": "2026-06-25T12:46:20Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-19 12:57:26.528739 +0000 UTC"
         }
