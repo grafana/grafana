@@ -35,9 +35,13 @@ For an introduction to templating and template variables, refer to the [Templati
 
 To create a query variable using TestData:
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
 1. Select **Query** as the variable type.
+1. Enter a **Name** for your variable.
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
+1. Click **Open query editor** to open the **Annotation Query** dialog box.
 1. Select the **TestData** data source.
 1. Enter your query in the **Query** field.
 
