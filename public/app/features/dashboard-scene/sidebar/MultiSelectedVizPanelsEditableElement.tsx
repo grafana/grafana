@@ -12,8 +12,6 @@ import {
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
 
-import { VizPanelEditableElement } from './VizPanelEditableElement';
-
 export class MultiSelectedVizPanelsEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
   public readonly key: string;
@@ -32,7 +30,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
 
   public getPanels(): VizPanel[] {
     return this._panels
-      .map((panel) => (panel instanceof VizPanelEditableElement ? panel.panel : undefined))
+      .map((panel) => ('panel' in panel ? panel.panel : undefined))
       .filter((panel): panel is VizPanel => panel instanceof VizPanel);
   }
 
