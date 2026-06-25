@@ -103,6 +103,11 @@ func ProvideAppInstallers(
 	if cfg.AnnotationAppPlatform.Enabled {
 		installers = append(installers, annotationAppInstaller)
 	}
+
+	// Plugin-manifest-derived installers are not assembled here: they are built lazily by
+	// the API server at start time (see pluginmanifest.Builder), once the plugin registry is
+	// populated. The flag gate lives in the builder.
+
 	return installers
 }
 

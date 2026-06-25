@@ -64,6 +64,7 @@ import (
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	playlistmigration "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	"github.com/grafana/grafana/pkg/registry/apps/pluginmanifest"
 	querycachingmigration "github.com/grafana/grafana/pkg/registry/apps/querycaching"
 	querycachingmigrator "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"
 	shorturlmigration "github.com/grafana/grafana/pkg/registry/apps/shorturl"
@@ -486,6 +487,7 @@ var wireBasicSet = wire.NewSet(
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
+	wire.Bind(new(grafanaapiserver.AppInstallerBuilder), new(*pluginmanifest.Builder)),
 	apiregistry.WireSet,
 	appregistry.WireSet,
 	// Dashboard Kubernetes helpers
