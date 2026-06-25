@@ -66,11 +66,16 @@ func TestHyphenatedTitlePartialMatch(t *testing.T) {
 	index := newTestDashboardsIndex(t, threshold, 2, noop)
 	indexDocumentsWithTitles(t, index, key, map[string]string{
 		"name1": "users-service-managed",
+		"name2": "billing-service-v2",
 	})
 
 	for _, query := range []string{"users-service", "users-service-ma", "users-service-man", "users-service-managed"} {
 		checkSearchQuery(t, index, newTestQuery(query), []string{"name1"})
 	}
+
+	// Precision is preserved: a discriminating suffix shorter than the ngram
+	// minimum must not cross-match a different title.
+	checkSearchQuery(t, index, newTestQuery("billing-service-v2"), []string{"name2"})
 }
 
 func TestCanSearchByTitle(t *testing.T) {
