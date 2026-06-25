@@ -14,8 +14,9 @@ This document describes the repository layout, Go modules, Wire ownership, and b
 graph TB
     subgraph OSS["github.com/grafana/grafana (single module)"]
         MAIN["pkg/cmd/grafana/main.go"]
-        SERVER["pkg/server/"]
+        SERVER["pkg/server/, wire graph"]
         WIRE_OSS["wireexts_oss.go"]
+        WIRE_CORE["wire.go"]
         WIRE_ENT["wireexts_enterprise.go ← copied"]
         EXT_STUB["pkg/extensions/ stub OR overlaid GE code"]
         SERVICES["pkg/services/, pkg/api/, apps/, …"]
@@ -33,6 +34,7 @@ graph TB
     SRC -->|"copied to"| EXT_STUB
     MAIN -->|"initializes"| SERVER
     SERVER -->|"composes graph from"| WIRE_ENT
+    SERVER -->|"composes graph from"| WIRE_CORE
     SERVER -->|"composes graph from"| WIRE_OSS
     WIRE_OSS -->|"imports dependencies"| SERVICES
     WIRE_ENT -->|"imports dependencies"| EXT_STUB
@@ -61,15 +63,17 @@ graph TB
         PKG["pkg/accesscontrol, pkg/apiserver, …"]
     end
 
-    MAIN_GE -->|"bootstraps server with"| BOOT
-    MAIN_GE -->|"composes graph from"| WIRE_GE
+    MAIN_GE -->|"initializes"| WIRE_GE
     WIRE_GE -->|"imports dependencies"| PKG
     WIRE_GE -->|"imports dependencies"| SERVICES
-    MAIN_OSS -->|"bootstraps server with"| BOOT_WIRE
+    MAIN_GE -->|"composes graph from"| WIRE_GE
+    WIRE_GE -->|"composes graph from"| BOOT_WIRE
+    WIRE_GE -->|"fed to"| BOOT
+    MAIN_OSS -->|"initializes"| WIRE_OSS
+    WIRE_OSS -->|"imports dependencies"| SERVICES
     WIRE_OSS -->|"composes graph from"| BOOT_WIRE
     WIRE_OSS -->|"fed to"| BOOT
-    WIRE_GE -->|"fed to"| BOOT
-    WIRE_OSS -->|"imports dependencies"| SERVICES
+
 ```
 
 ---
