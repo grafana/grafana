@@ -244,8 +244,8 @@ function getWebhookURL(repo: Repository) {
   if (spec?.type === 'gitlab' && status?.webhook?.url && spec.gitlab?.url) {
     return textUtil.sanitizeUrl(`${spec.gitlab.url}/-/hooks/${status.webhook?.id}/edit`);
   }
-  if (spec?.type === 'bitbucket' && status?.webhook?.url && spec.bitbucket?.url) {
-    return textUtil.sanitizeUrl(`${spec.bitbucket.url}/admin/webhooks`);
+  if (spec?.type === 'bitbucket' && status?.webhook?.uuid && spec.bitbucket?.url) {
+    return textUtil.sanitizeUrl(`${spec.bitbucket.url}/admin/webhooks/${encodeURIComponent(status.webhook.uuid)}/edit`);
   }
   return undefined;
 }
