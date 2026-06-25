@@ -58,7 +58,7 @@ const TAG_COLORS_LEGACY = [
   ['#3F2B5B', '#655181'],
 ] as const;
 
-export function getTagColorIndexFromName(name = '', visualRefreshEnabled = false): number {
+function getTagColorIndexFromName(name = '', visualRefreshEnabled = false): number {
   const map = visualRefreshEnabled ? TAG_COLORS : TAG_COLORS_LEGACY;
   const hash = djb2(name.toLowerCase());
   return Math.abs(hash % map.length);
