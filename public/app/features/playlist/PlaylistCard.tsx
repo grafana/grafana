@@ -6,6 +6,15 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { SourceLink } from 'app/features/provisioning/components/SourceLink';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isManagedByRepository,
+} from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
@@ -22,22 +31,12 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
   return (
     <Card noMargin>
       <Card.Heading>
-        {playlist.spec?.title}
-        <ModalsController key="button-share">
-          {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
-              icon="share-alt"
-              iconSize="lg"
-              onClick={() => {
-                showModal(ShareModal, {
-                  playlistUid: playlist.metadata?.name ?? '',
-                  onDismiss: hideModal,
-                });
-              }}
-            />
+        <Stack direction="row" gap={1} alignItems="center" wrap>
+          {playlist.spec?.title}
+          {isManaged(playlist) && (
+            <ManagedBadge managerKind={getManagerKind(playlist)} name={getManagerIdentity(playlist)} />
           )}
-        </ModalsController>
+        </Stack>
       </Card.Heading>
       <Card.Actions>
         <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
@@ -58,7 +57,27 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             </Button>
           </>
         )}
+        {isManagedByRepository(playlist) && (
+          <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} size="md" />
+        )}
       </Card.Actions>
+      <Card.SecondaryActions>
+        <ModalsController key="button-share">
+          {({ showModal, hideModal }) => (
+            <DashNavButton
+              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
+              icon="share-alt"
+              iconSize="lg"
+              onClick={() => {
+                showModal(ShareModal, {
+                  playlistUid: playlist.metadata?.name ?? '',
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      </Card.SecondaryActions>
     </Card>
   );
 };

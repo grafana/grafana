@@ -8,24 +8,16 @@ import {
   type DataSourceRulesSourceIdentifier,
   type GrafanaRuleGroupIdentifier,
 } from 'app/types/unified-alerting';
-import {
-  type GrafanaPromRuleDTO,
-  type GrafanaPromRuleGroupDTO,
-  type PromRuleDTO,
-  type PromRuleGroupDTO,
-} from 'app/types/unified-alerting-dto';
+import { type GrafanaPromRuleDTO, type PromRuleDTO, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { type RulePositionHash, createRulePositionHash } from '../rulePositionHash';
 
 import { getDatasourceFilter } from './datasourceFilter';
-import { getGrafanaFilter } from './grafanaFilter';
-import {
-  type FetchGroupsLimitOptions,
-  useGrafanaGroupsGenerator,
-  usePrometheusGroupsGenerator,
-} from './prometheusGroupsGenerator';
+import { type FetchGroupsLimitOptions, usePrometheusGroupsGenerator } from './prometheusGroupsGenerator';
+import { useSearchGrafanaRulesGenerator } from './searchGrafanaRulesGenerator';
+import { useFolderTitleMap } from './useFolderTitleMap';
 
 export type RuleWithOrigin = PromRuleWithOrigin | GrafanaRuleWithOrigin;
 
@@ -38,6 +30,8 @@ export interface GrafanaRuleWithOrigin {
    */
   namespaceName: string;
   origin: 'grafana';
+  /** Group evaluation interval as a Prometheus duration (e.g. "1m"), when known from the search hit. */
+  interval?: string;
 }
 
 export interface PromRuleWithOrigin {
@@ -69,30 +63,20 @@ interface GetIteratorResult {
 
 export function useFilteredRulesIteratorProvider() {
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ limitAlerts: 0 });
+  const searchGrafanaRulesGenerator = useSearchGrafanaRulesGenerator();
+  const folderTitleByUid = useFolderTitleMap();
 
   const getFilteredRulesIterable = (filterState: RulesFilter, options: FetchGroupsLimitOptions): GetIteratorResult => {
     /* this is the abort controller that allows us to stop an AsyncIterable */
     const abortController = new AbortController();
 
-    const { backendFilter, frontendFilter, hasInvalidDataSourceNames } = getGrafanaFilter(filterState);
-
-    // Short-circuit: if all provided data source names are invalid, return empty results (no rules can match).
-    if (hasInvalidDataSourceNames) {
-      return { iterable: empty(), abortController };
-    }
-
+    // Grafana-managed rules are loaded from the k8s `/search` endpoint, which filters
+    // server-side. Definition-only: state/health/policy/plugin filters have no effect.
     const grafanaRulesGenerator: AsyncIterableX<RuleWithOrigin> = from(
-      grafanaGroupsGenerator(options.grafanaManagedLimit, backendFilter)
+      searchGrafanaRulesGenerator(filterState, folderTitleByUid)
     ).pipe(
       withAbort(abortController.signal),
-      concatMap((groups) =>
-        groups
-          .filter((group) => frontendFilter.groupMatches(group))
-          .flatMap((group) => group.rules.map((rule) => ({ group, rule })))
-          .filter(({ rule }) => frontendFilter.ruleMatches(rule))
-          .map(({ group, rule }) => mapGrafanaRuleToRuleWithOrigin(group, rule))
-      ),
+      concatMap((rules) => rules),
       catchError(() => empty())
     );
 
@@ -203,21 +187,5 @@ function mapRuleToRuleWithOrigin(
     },
     origin: 'datasource',
     rulePositionHash: createRulePositionHash(ruleIndex, group.rules.length),
-  };
-}
-
-function mapGrafanaRuleToRuleWithOrigin(
-  group: GrafanaPromRuleGroupDTO,
-  rule: GrafanaPromRuleDTO
-): GrafanaRuleWithOrigin {
-  return {
-    rule,
-    groupIdentifier: {
-      namespace: { uid: group.folderUid },
-      groupName: group.name,
-      groupOrigin: 'grafana',
-    },
-    namespaceName: group.file,
-    origin: 'grafana',
   };
 }

@@ -20,7 +20,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-const defaultLimit = 100
+const (
+	defaultLimit      = 100
+	defaultFacetLimit = 50
+	maxFacetLimit     = 20000
+)
+
+// facetableFields bounds which fields callers may facet on. Faceting is backed
+// by the field's keyword index variant, so only fields indexed that way are
+// allowed; folder is the one the rule list uses to find rule-bearing folders.
+var facetableFields = map[string]bool{
+	fieldFolder: true,
+}
 
 // Handler serves the rule search custom routes. It builds a ResourceSearchRequest
 // from the query string and delegates to a dual-writer-aware search client that
@@ -52,7 +63,7 @@ func (h *Handler) SearchAlertRules(ctx context.Context, w app.CustomRouteRespons
 	return writeJSON(w, &model.GetSearchAlertRulesResponse{
 		TypeMeta:                listTypeMeta,
 		ListMeta:                metav1.ListMeta{Continue: next},
-		GetSearchAlertRulesBody: model.GetSearchAlertRulesBody{Items: parseAlertRuleHits(resp)},
+		GetSearchAlertRulesBody: model.GetSearchAlertRulesBody{Items: parseAlertRuleHits(resp), Facets: parseAlertRuleFacets(resp)},
 	})
 }
 
@@ -64,7 +75,7 @@ func (h *Handler) SearchRecordingRules(ctx context.Context, w app.CustomRouteRes
 	return writeJSON(w, &model.GetSearchRecordingRulesResponse{
 		TypeMeta:                    listTypeMeta,
 		ListMeta:                    metav1.ListMeta{Continue: next},
-		GetSearchRecordingRulesBody: model.GetSearchRecordingRulesBody{Items: parseRecordingRuleHits(resp)},
+		GetSearchRecordingRulesBody: model.GetSearchRecordingRulesBody{Items: parseRecordingRuleHits(resp), Facets: parseRecordingRuleFacets(resp)},
 	})
 }
 
@@ -87,7 +98,7 @@ func (h *Handler) SearchRules(ctx context.Context, w app.CustomRouteResponseWrit
 	return writeJSON(w, &model.GetSearchRulesResponse{
 		TypeMeta:           listTypeMeta,
 		ListMeta:           metav1.ListMeta{Continue: next},
-		GetSearchRulesBody: model.GetSearchRulesBody{Items: parseRuleHits(resp)},
+		GetSearchRulesBody: model.GetSearchRulesBody{Items: parseRuleHits(resp), Facets: parseRuleFacets(resp)},
 	})
 }
 
@@ -183,7 +194,33 @@ func buildSearchRequest(q url.Values, namespace string, primary schema.GroupReso
 		desc := s[0] == '-'
 		req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: trimSortPrefix(s), Desc: desc}}
 	}
+	addFacets(req, q)
 	return req, offset, nil
+}
+
+// addFacets requests term facets for the whitelisted fields named in the query.
+// Unknown fields are silently ignored. Facet terms are ordered by count by the
+// backend, not alphabetically.
+func addFacets(req *resourcepb.ResourceSearchRequest, q url.Values) {
+	fields := nonEmpty(q["facet"])
+	if len(fields) == 0 {
+		return
+	}
+	limit := int64(defaultFacetLimit)
+	if v := q.Get("facetLimit"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
+			limit = min(n, maxFacetLimit)
+		}
+	}
+	for _, field := range fields {
+		if !facetableFields[field] {
+			continue
+		}
+		if req.Facet == nil {
+			req.Facet = make(map[string]*resourcepb.ResourceSearchRequest_Facet)
+		}
+		req.Facet[field] = &resourcepb.ResourceSearchRequest_Facet{Field: field, Limit: limit}
+	}
 }
 
 // rowReader reads cells from a search result table by column name.
@@ -348,6 +385,55 @@ func parseRuleHits(resp *resourcepb.ResourceSearchResponse) []model.GetSearchRul
 		hits = append(hits, hit)
 	}
 	return hits
+}
+
+// The three parse*Facets functions map the backend's term facets into each
+// route's generated facet type. They mirror the parse*Hits trio: the generated
+// types are distinct per route, so the mapping is repeated rather than shared.
+
+func parseAlertRuleFacets(resp *resourcepb.ResourceSearchResponse) map[string]model.GetSearchAlertRulesFacetResult {
+	if len(resp.Facet) == 0 {
+		return nil
+	}
+	out := make(map[string]model.GetSearchAlertRulesFacetResult, len(resp.Facet))
+	for name, f := range resp.Facet {
+		terms := make([]model.GetSearchAlertRulesTermFacet, 0, len(f.Terms))
+		for _, t := range f.Terms {
+			terms = append(terms, model.GetSearchAlertRulesTermFacet{Term: t.Term, Count: t.Count})
+		}
+		out[name] = model.GetSearchAlertRulesFacetResult{Field: f.Field, Total: f.Total, Missing: f.Missing, Terms: terms}
+	}
+	return out
+}
+
+func parseRecordingRuleFacets(resp *resourcepb.ResourceSearchResponse) map[string]model.GetSearchRecordingRulesFacetResult {
+	if len(resp.Facet) == 0 {
+		return nil
+	}
+	out := make(map[string]model.GetSearchRecordingRulesFacetResult, len(resp.Facet))
+	for name, f := range resp.Facet {
+		terms := make([]model.GetSearchRecordingRulesTermFacet, 0, len(f.Terms))
+		for _, t := range f.Terms {
+			terms = append(terms, model.GetSearchRecordingRulesTermFacet{Term: t.Term, Count: t.Count})
+		}
+		out[name] = model.GetSearchRecordingRulesFacetResult{Field: f.Field, Total: f.Total, Missing: f.Missing, Terms: terms}
+	}
+	return out
+}
+
+func parseRuleFacets(resp *resourcepb.ResourceSearchResponse) map[string]model.GetSearchRulesFacetResult {
+	if len(resp.Facet) == 0 {
+		return nil
+	}
+	out := make(map[string]model.GetSearchRulesFacetResult, len(resp.Facet))
+	for name, f := range resp.Facet {
+		terms := make([]model.GetSearchRulesTermFacet, 0, len(f.Terms))
+		for _, t := range f.Terms {
+			terms = append(terms, model.GetSearchRulesTermFacet{Term: t.Term, Count: t.Count})
+		}
+		out[name] = model.GetSearchRulesFacetResult{Field: f.Field, Total: f.Total, Missing: f.Missing, Terms: terms}
+	}
+	return out
 }
 
 func nonEmpty(values []string) []string {

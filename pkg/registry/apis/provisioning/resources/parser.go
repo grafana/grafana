@@ -138,6 +138,11 @@ type ParsedResource struct {
 	// Client that can talk to this resource
 	Client dynamic.ResourceInterface
 
+	// FolderScoped reports whether this resource's kind carries the folder annotation
+	// (i.e. lives in folders). Org-scoped kinds such as playlists are not folder-scoped
+	// and must never have a folder annotation stamped onto them.
+	FolderScoped bool
+
 	// The Existing object (same name)
 	// ?? do we need/want the whole thing??
 	Existing *unstructured.Unstructured
@@ -250,7 +255,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// are contained in folders. Org-scoped resources (those not folder-scoped in the
 	// configured supported set) must not have a folder annotation stamped onto them:
 	// it would be meaningless and possibly dangling.
-	if info.Path != "" && supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
+	parsed.FolderScoped = supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK)
+	if info.Path != "" && parsed.FolderScoped {
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
 	}
 

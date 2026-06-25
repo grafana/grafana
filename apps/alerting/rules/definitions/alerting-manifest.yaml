@@ -557,6 +557,26 @@ spec:
                 items:
                   type: string
                 type: array
+            - description: |-
+                Fields to count distinct terms for (e.g. "folder"). Returned under
+                "facets" keyed by field name. Facet terms are ordered by count, not
+                alphabetically.
+              in: query
+              name: facet
+              schema:
+                description: |-
+                  Fields to count distinct terms for (e.g. "folder"). Returned under
+                  "facets" keyed by field name. Facet terms are ordered by count, not
+                  alphabetically.
+                items:
+                  type: string
+                type: array
+            - description: Max terms returned per facet (default 50, max 1000).
+              in: query
+              name: facetLimit
+              schema:
+                description: Max terms returned per facet (default 50, max 1000).
+                type: integer
             - in: query
               name: folders
               schema:
@@ -638,6 +658,10 @@ spec:
                             recognized schemas to the latest internal value, and may
                             reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                           type: string
+                        facets:
+                          additionalProperties:
+                            $ref: '#/components/schemas/getSearchRulesFacetResult'
+                          type: object
                         items:
                           items:
                             $ref: '#/components/schemas/getSearchRulesRuleHit'
@@ -685,6 +709,26 @@ spec:
                 items:
                   type: string
                 type: array
+            - description: |-
+                Fields to count distinct terms for (e.g. "folder"). Returned under
+                "facets" keyed by field name. Facet terms are ordered by count, not
+                alphabetically.
+              in: query
+              name: facet
+              schema:
+                description: |-
+                  Fields to count distinct terms for (e.g. "folder"). Returned under
+                  "facets" keyed by field name. Facet terms are ordered by count, not
+                  alphabetically.
+                items:
+                  type: string
+                type: array
+            - description: Max terms returned per facet (default 50, max 1000).
+              in: query
+              name: facetLimit
+              schema:
+                description: Max terms returned per facet (default 50, max 1000).
+                type: integer
             - in: query
               name: folders
               schema:
@@ -754,6 +798,10 @@ spec:
                             recognized schemas to the latest internal value, and may
                             reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                           type: string
+                        facets:
+                          additionalProperties:
+                            $ref: '#/components/schemas/getSearchAlertRulesFacetResult'
+                          type: object
                         items:
                           items:
                             $ref: '#/components/schemas/getSearchAlertRulesAlertRuleHit'
@@ -797,6 +845,26 @@ spec:
                 items:
                   type: string
                 type: array
+            - description: |-
+                Fields to count distinct terms for (e.g. "folder"). Returned under
+                "facets" keyed by field name. Facet terms are ordered by count, not
+                alphabetically.
+              in: query
+              name: facet
+              schema:
+                description: |-
+                  Fields to count distinct terms for (e.g. "folder"). Returned under
+                  "facets" keyed by field name. Facet terms are ordered by count, not
+                  alphabetically.
+                items:
+                  type: string
+                type: array
+            - description: Max terms returned per facet (default 50, max 1000).
+              in: query
+              name: facetLimit
+              schema:
+                description: Max terms returned per facet (default 50, max 1000).
+                type: integer
             - in: query
               name: folders
               schema:
@@ -858,6 +926,10 @@ spec:
                             recognized schemas to the latest internal value, and may
                             reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                           type: string
+                        facets:
+                          additionalProperties:
+                            $ref: '#/components/schemas/getSearchRecordingRulesFacetResult'
+                          type: object
                         items:
                           items:
                             $ref: '#/components/schemas/getSearchRecordingRulesRecordingRuleHit'
@@ -937,11 +1009,66 @@ spec:
           - title
           - folder
           type: object
+        getSearchAlertRulesFacetResult:
+          additionalProperties: false
+          description: |-
+            FacetResult is the distinct-term breakdown for one faceted field, e.g. the
+            per-folder rule counts returned for facet=folder.
+          properties:
+            field:
+              type: string
+            missing:
+              type: integer
+            terms:
+              items:
+                $ref: '#/components/schemas/getSearchAlertRulesTermFacet'
+              type: array
+            total:
+              type: integer
+          required:
+          - field
+          - total
+          - missing
+          type: object
         getSearchAlertRulesRuleSearchType:
           enum:
           - alertrule
           - recordingrule
           type: string
+        getSearchAlertRulesTermFacet:
+          additionalProperties: false
+          description: TermFacet is a single faceted term and the number of matching
+            rules.
+          properties:
+            count:
+              type: integer
+            term:
+              type: string
+          required:
+          - term
+          - count
+          type: object
+        getSearchRecordingRulesFacetResult:
+          additionalProperties: false
+          description: |-
+            FacetResult is the distinct-term breakdown for one faceted field, e.g. the
+            per-folder rule counts returned for facet=folder.
+          properties:
+            field:
+              type: string
+            missing:
+              type: integer
+            terms:
+              items:
+                $ref: '#/components/schemas/getSearchRecordingRulesTermFacet'
+              type: array
+            total:
+              type: integer
+          required:
+          - field
+          - total
+          - missing
+          type: object
         getSearchRecordingRulesRecordingRuleHit:
           additionalProperties: false
           properties:
@@ -982,6 +1109,19 @@ spec:
           - alertrule
           - recordingrule
           type: string
+        getSearchRecordingRulesTermFacet:
+          additionalProperties: false
+          description: TermFacet is a single faceted term and the number of matching
+            rules.
+          properties:
+            count:
+              type: integer
+            term:
+              type: string
+          required:
+          - term
+          - count
+          type: object
         getSearchRulesAlertRuleHit:
           additionalProperties: false
           properties:
@@ -1031,6 +1171,27 @@ spec:
           - title
           - folder
           type: object
+        getSearchRulesFacetResult:
+          additionalProperties: false
+          description: |-
+            FacetResult is the distinct-term breakdown for one faceted field, e.g. the
+            per-folder rule counts returned for facet=folder.
+          properties:
+            field:
+              type: string
+            missing:
+              type: integer
+            terms:
+              items:
+                $ref: '#/components/schemas/getSearchRulesTermFacet'
+              type: array
+            total:
+              type: integer
+          required:
+          - field
+          - total
+          - missing
+          type: object
         getSearchRulesRecordingRuleHit:
           additionalProperties: false
           properties:
@@ -1076,4 +1237,17 @@ spec:
           - alertrule
           - recordingrule
           type: string
+        getSearchRulesTermFacet:
+          additionalProperties: false
+          description: TermFacet is a single faceted term and the number of matching
+            rules.
+          properties:
+            count:
+              type: integer
+            term:
+              type: string
+          required:
+          - term
+          - count
+          type: object
     served: true

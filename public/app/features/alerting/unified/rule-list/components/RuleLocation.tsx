@@ -12,12 +12,14 @@ interface RuleLocationProps {
   groupUrl?: string;
   rulesSource?: RulesSourceIdentifier;
   application?: RulesSourceApplication;
+  // When true, render only the namespace (folder), omitting the group segment.
+  hideGroup?: boolean;
 }
 
-export function RuleLocation({ namespace, group, groupUrl, rulesSource, application }: RuleLocationProps) {
+export function RuleLocation({ namespace, group, groupUrl, rulesSource, application, hideGroup }: RuleLocationProps) {
   const isGrafanaApp = application === 'grafana';
   const isDataSourceApp = !!rulesSource && !!application && !isGrafanaApp;
-  const isUngrouped = isUngroupedRuleGroup(group);
+  const isUngrouped = hideGroup || isUngroupedRuleGroup(group);
 
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>

@@ -446,6 +446,82 @@ func Test_GetUserByID(t *testing.T) {
 	}
 }
 
+func Test_GetUserByID_ExternalAuthInfoFromSpec(t *testing.T) {
+	testcases := []struct {
+		name                       string
+		authModules                []string
+		samlEnabled                bool
+		samlSkipOrgRoleSync        bool
+		expectedIsExternallySynced bool
+	}{
+		{
+			name:                       "auth proxy module marks the user external but not externally synced",
+			authModules:                []string{login.AuthProxyAuthModule},
+			expectedIsExternallySynced: false,
+		},
+		{
+			name:                       "SAML module is externally synced when enabled and org roles are synced",
+			authModules:                []string{login.SAMLAuthModule},
+			samlEnabled:                true,
+			samlSkipOrgRoleSync:        false,
+			expectedIsExternallySynced: true,
+		},
+		{
+			name:                       "multiple modules are externally synced if any one is",
+			authModules:                []string{login.AuthProxyAuthModule, login.SAMLAuthModule},
+			samlEnabled:                true,
+			samlSkipOrgRoleSync:        false,
+			expectedIsExternallySynced: true,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			// user_auth returns not-found, so auth flags must come from the Kubernetes
+			// spec.externalAuthInfo modules, not the legacy fallback.
+			authInfoService := &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
+			userService := &usertest.FakeUserService{ExpectedUserProfileDTO: &user.UserProfileDTO{AuthModules: tc.authModules}}
+			authnService := &authntest.FakeService{
+				ExpectedClientConfig: &authntest.FakeSSOClientConfig{
+					ExpectedIsSkipOrgRoleSyncEnabled: tc.samlSkipOrgRoleSync,
+				},
+				EnabledClients: []string{},
+			}
+			if tc.samlEnabled {
+				authnService.EnabledClients = []string{authn.ClientSAML}
+			}
+
+			hs := &HTTPServer{
+				Cfg:             setting.NewCfg(),
+				authInfoService: authInfoService,
+				SocialService:   &socialtest.FakeSocialService{},
+				userService:     userService,
+				authnService:    authnService,
+			}
+
+			sc := setupScenarioContext(t, "/api/users/1")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				sc.context = c
+				return hs.GetUserByID(c)
+			})
+			sc.m.Get("/api/users/:id", sc.defaultHandler)
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			var resp user.UserProfileDTO
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &resp))
+
+			expectedLabels := make([]string, 0, len(tc.authModules))
+			for _, m := range tc.authModules {
+				expectedLabels = append(expectedLabels, login.GetAuthProviderLabel(m))
+			}
+
+			assert.True(t, resp.IsExternal, "user with spec auth modules must be external")
+			assert.Equal(t, expectedLabels, resp.AuthLabels)
+			assert.Equal(t, tc.expectedIsExternallySynced, resp.IsExternallySynced)
+		})
+	}
+}
+
 func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

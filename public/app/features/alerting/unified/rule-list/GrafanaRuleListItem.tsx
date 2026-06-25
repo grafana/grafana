@@ -22,6 +22,10 @@ interface GrafanaRuleListItemProps {
   operation?: 'creating' | 'deleting';
   showLocation?: boolean;
   evalIntervalSeconds?: number;
+  // Option 2: show the group as a chip on the row instead of in the location breadcrumb.
+  groupAsPill?: boolean;
+  // Group evaluation interval (Prometheus duration, e.g. "1m"), surfaced in the row-level chip.
+  interval?: string;
 }
 
 export function GrafanaRuleListItem({
@@ -31,6 +35,8 @@ export function GrafanaRuleListItem({
   operation,
   showLocation = true,
   evalIntervalSeconds,
+  groupAsPill,
+  interval,
 }: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
 
@@ -57,6 +63,8 @@ export function GrafanaRuleListItem({
     querySourceUIDs: rule?.queriedDatasourceUIDs,
     origin: getRulePluginOrigin(rule),
     evalIntervalSeconds,
+    groupAsPill,
+    groupInterval: interval,
   };
 
   if (prometheusRuleType.grafana.alertingRule(rule)) {
