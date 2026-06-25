@@ -222,6 +222,7 @@ export const TimeSeriesPanel = ({
                       }
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
+                      timeZone={timeZone}
                     />
                   );
                 }}

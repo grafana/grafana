@@ -210,6 +210,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     adHocFilters={adHocFilters}
                     hideZeros={options.tooltip.hideZeros}
                     canExecuteActions={userCanExecuteActions}
+                    timeZone={timeZone}
                   />
                 );
               }}
