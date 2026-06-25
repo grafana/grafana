@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type SelectableValue, type GrafanaTheme2, type PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationSearchToObject } from '@grafana/runtime';
+import { config, locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -63,9 +63,23 @@ export default function Browse() {
     history.push({ query: { filterByType: value.value } });
   };
 
+  const onSortByChange = (value: SelectableValue<string>) => {
+    history.push({ query: { sortBy: value.value } });
+  };
+
   const onSearch = (q: string) => {
     history.push({ query: { filterBy, filterByType, q } });
   };
+
+  const sortByOptions: Array<SelectableValue<string>> = [
+    { value: Sorters.nameAsc, label: t('plugins.browse.sort-by-options.name-asc', 'Name (A-Z)') },
+    { value: Sorters.nameDesc, label: t('plugins.browse.sort-by-options.name-desc', 'Name (Z-A)') },
+    { value: Sorters.downloads, label: t('plugins.browse.sort-by-options.downloads', 'Downloads') },
+    { value: Sorters.updated, label: t('plugins.browse.sort-by-options.updated', 'Recently updated') },
+    ...(config.featureToggles.pluginScorecard
+      ? [{ value: Sorters.scorecard, label: t('plugins.browse.sort-by-options.scorecard', 'Scorecard') }]
+      : []),
+  ];
 
   const onUpdateAll = () => {
     setShowUpdateModal(true);
@@ -100,12 +114,12 @@ export default function Browse() {
         <AdvisorRedirectNotice />
         <div className={styles.searchContainer}>
           <HorizontalGroup wrap>
-            <Field label={t('plugins.browse.label-search', 'Search')} htmlFor={searchId}>
+            <Field noMargin label={t('plugins.browse.label-search', 'Search')} htmlFor={searchId}>
               <SearchField id={searchId} value={keyword} onSearch={onSearch} />
             </Field>
             <HorizontalGroup wrap className={styles.actionBar}>
               {/* Filter by type */}
-              <Field label={t('plugins.browse.label-type', 'Type')}>
+              <Field noMargin label={t('plugins.browse.label-type', 'Type')}>
                 <Select
                   aria-label={t('plugins.browse.aria-label-plugin-type-filter', 'Plugin type filter')}
                   value={filterByType}
@@ -120,9 +134,20 @@ export default function Browse() {
                 />
               </Field>
 
+              {/* Sort by */}
+              <Field noMargin label={t('plugins.browse.label-sort', 'Sort')}>
+                <Select
+                  aria-label={t('plugins.browse.aria-label-sort', 'Sort plugins by')}
+                  value={sortBy}
+                  onChange={onSortByChange}
+                  width={18}
+                  options={sortByOptions}
+                />
+              </Field>
+
               {/* Filter by installed / all */}
               {remotePluginsAvailable ? (
-                <Field label={t('plugins.browse.label-state', 'State')}>
+                <Field noMargin label={t('plugins.browse.label-state', 'State')}>
                   <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
                 </Field>
               ) : (
@@ -134,7 +159,7 @@ export default function Browse() {
                   placement="top"
                 >
                   <div>
-                    <Field label={t('plugins.browse.label-state', 'State')}>
+                    <Field noMargin label={t('plugins.browse.label-state', 'State')}>
                       <RadioButtonGroup
                         disabled={true}
                         value={filterBy}

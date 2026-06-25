@@ -178,6 +178,21 @@ export const useFetchPluginInsights = (id: string, version: string | undefined) 
   }, [plugin, version]); // eslint-disable-line
 };
 
+export const useFetchInsightsForPlugins = (plugins: CatalogPlugin[]) => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    for (const plugin of plugins) {
+      if (!plugin.insights) {
+        const version = plugin.installedVersion ?? plugin.latestVersion;
+        if (version) {
+          dispatch(fetchPluginInsights({ id: plugin.id, version }));
+        }
+      }
+    }
+  }, [plugins, dispatch]); // eslint-disable-line
+};
+
 export const useFetchDetailsLazy = () => {
   const dispatch = useDispatch();
 

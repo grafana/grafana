@@ -304,6 +304,15 @@ export enum Sorters {
   updated = 'updated',
   published = 'published',
   downloads = 'downloads',
+  scorecard = 'scorecard',
+}
+
+function pluginScorecardAvgScore(plugin: CatalogPlugin): number {
+  if (!plugin.insights?.insights?.length) {
+    return -1;
+  }
+  const total = plugin.insights.insights.reduce((sum, dim) => sum + dim.scoreValue, 0);
+  return total / plugin.insights.insights.length;
 }
 
 export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
@@ -315,6 +324,7 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
     published: (a: CatalogPlugin, b: CatalogPlugin) =>
       dateTimeParse(b.publishedAt).valueOf() - dateTimeParse(a.publishedAt).valueOf(),
     downloads: (a: CatalogPlugin, b: CatalogPlugin) => b.downloads - a.downloads,
+    scorecard: (a: CatalogPlugin, b: CatalogPlugin) => pluginScorecardAvgScore(b) - pluginScorecardAvgScore(a),
   };
 
   if (sorters[sortBy]) {

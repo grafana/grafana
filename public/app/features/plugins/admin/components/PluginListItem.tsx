@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
@@ -11,6 +11,7 @@ import { type CatalogPlugin, PluginIconName } from '../types';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
+import { PluginScorecard } from './PluginScorecard';
 
 const LOGO_SIZE = '48px';
 
@@ -36,12 +37,19 @@ function PluginListItemComponent({ plugin, pathName }: Props) {
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>
-        <p>
-          <Trans i18nKey="plugins.plugin-list-item.label-author" values={{ author: plugin.orgName }}>
-            By {'{{author}}'}
-          </Trans>
-        </p>
-        <PluginListItemBadges plugin={plugin} />
+        <div className={styles.contentMain}>
+          <p>
+            <Trans i18nKey="plugins.plugin-list-item.label-author" values={{ author: plugin.orgName }}>
+              By {'{{author}}'}
+            </Trans>
+          </p>
+          <PluginListItemBadges plugin={plugin} />
+        </div>
+        {config.featureToggles.pluginScorecard && (
+          <div className={styles.contentScorecard}>
+            <PluginScorecard plugin={plugin} />
+          </div>
+        )}
       </div>
       <div className={styles.pluginType}>
         {plugin.type && (
@@ -126,8 +134,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       objectFit: 'contain',
     }),
     content: css({
-      gridArea: '3 / 1 / 4 / 3',
+      gridArea: '3 / 1 / 4 / 4',
       color: theme.colors.text.secondary,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+    }),
+    contentMain: css({
+      flexGrow: 1,
+      minWidth: 0,
+    }),
+    contentScorecard: css({
+      flexShrink: 0,
+      alignSelf: 'stretch',
+      display: 'flex',
+      alignItems: 'center',
     }),
     name: css({
       gridArea: '1 / 2 / 3 / 3',

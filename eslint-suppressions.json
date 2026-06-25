@@ -2256,9 +2256,6 @@
     }
   },
   "public/app/features/plugins/admin/pages/Browse.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }

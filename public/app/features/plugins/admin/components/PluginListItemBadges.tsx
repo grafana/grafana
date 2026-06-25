@@ -14,8 +14,8 @@ type PluginBadgeType = {
 };
 
 export function PluginListItemBadges({ plugin }: PluginBadgeType) {
-  // Currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall.
   const canUpdate = isPluginUpdatable(plugin);
+
   if (plugin.isEnterprise) {
     return (
       <Stack height="auto" wrap="wrap">
