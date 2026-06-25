@@ -21,13 +21,15 @@ if (window.nonce) {
 window.__grafana_app_bundle_loaded = true;
 
 async function bootstrapWindowData() {
+  // Wait for window.grafanaBootData is ready. The new index.html loads it from
+  // an API call, but the old one just sets an immediately resolving promise.
+  //
+  // Must be first because initPreferences depends on bootdata
+  await window.__grafana_boot_data_promise;
+
   if (window.__grafanaNewPreferencesPage) {
     await initPreferences();
   }
-
-  // Wait for window.grafanaBootData is ready. The new index.html loads it from
-  // an API call, but the old one just sets an immediately resolving promise.
-  await window.__grafana_boot_data_promise;
 
   // Use eager to ensure the app is included in the initial chunk and does not
   // require additional network requests to load.
