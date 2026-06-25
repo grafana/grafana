@@ -31,30 +31,30 @@ the admin of all organizations API only works with basic authentication, see [Ad
 
 ### Current Organization endpoints
 
-| Method | URI | Summary |
-| ------ | --- | ------- |
-| GET | /api/org/ | [Get current Organization](#get-current-organization) |
-| GET | /api/org/users | [Get all users within the current organization](#get-all-users-within-the-current-organization) |
-| GET | /api/org/users/lookup | [Get all users within the current organization (lookup)](#get-all-users-within-the-current-organization-lookup) |
-| PATCH | /api/org/users/:userId | [Updates the given user](#updates-the-given-user) |
-| DELETE | /api/org/users/:userId | [Delete user in current organization](#delete-user-in-current-organization) |
-| PUT | /api/org | [Update current Organization](#update-current-organization) |
-| POST | /api/org/users | [Add a new user to the current organization](#add-a-new-user-to-the-current-organization) |
+| Method | URI                    | Summary                                                                                                         |
+| ------ | ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| GET    | /api/org/              | [Get current Organization](#get-current-organization)                                                           |
+| GET    | /api/org/users         | [Get all users within the current organization](#get-all-users-within-the-current-organization)                 |
+| GET    | /api/org/users/lookup  | [Get all users within the current organization (lookup)](#get-all-users-within-the-current-organization-lookup) |
+| PATCH  | /api/org/users/:userId | [Updates the given user](#updates-the-given-user)                                                               |
+| DELETE | /api/org/users/:userId | [Delete user in current organization](#delete-user-in-current-organization)                                     |
+| PUT    | /api/org               | [Update current Organization](#update-current-organization)                                                     |
+| POST   | /api/org/users         | [Add a new user to the current organization](#add-a-new-user-to-the-current-organization)                       |
 
 ### Admin Organizations endpoints
 
-| Method | URI | Summary |
-| ------ | --- | ------- |
-| GET | /api/orgs/:orgId | [Get Organization by Id](#get-organization-by-id) |
-| GET | /api/orgs/name/:orgName | [Get Organization by Name](#get-organization-by-name) |
-| POST | /api/orgs | [Create Organization](#create-organization) |
-| GET | /api/orgs | [Search all Organizations](#search-all-organizations) |
-| PUT | /api/orgs/:orgId | [Update Organization](#update-organization) |
-| DELETE | /api/orgs/:orgId | [Delete Organization](#delete-organization) |
-| GET | /api/orgs/:orgId/users | [Get Users in Organization](#get-users-in-organization) |
-| POST | /api/orgs/:orgId/users | [Add User in Organization](#add-user-in-organization) |
-| PATCH | /api/orgs/:orgId/users/:userId | [Update Users in Organization](#update-users-in-organization) |
-| DELETE | /api/orgs/:orgId/users/:userId | [Delete User in Organization](#delete-user-in-organization) |
+| Method | URI                            | Summary                                                       |
+| ------ | ------------------------------ | ------------------------------------------------------------- |
+| GET    | /api/orgs/:orgId               | [Get Organization by Id](#get-organization-by-id)             |
+| GET    | /api/orgs/name/:orgName        | [Get Organization by Name](#get-organization-by-name)         |
+| POST   | /api/orgs                      | [Create Organization](#create-organization)                   |
+| GET    | /api/orgs                      | [Search all Organizations](#search-all-organizations)         |
+| PUT    | /api/orgs/:orgId               | [Update Organization](#update-organization)                   |
+| DELETE | /api/orgs/:orgId               | [Delete Organization](#delete-organization)                   |
+| GET    | /api/orgs/:orgId/users         | [Get Users in Organization](#get-users-in-organization)       |
+| POST   | /api/orgs/:orgId/users         | [Add User in Organization](#add-user-in-organization)         |
+| PATCH  | /api/orgs/:orgId/users/:userId | [Update Users in Organization](#update-users-in-organization) |
+| DELETE | /api/orgs/:orgId/users/:userId | [Delete User in Organization](#delete-user-in-organization)   |
 
 ## Current Organization API
 

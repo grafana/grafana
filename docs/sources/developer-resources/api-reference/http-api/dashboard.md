@@ -33,14 +33,14 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 ## Endpoints
 
-| Method | URI | Summary |
-| ------ | --- | ------- |
-| POST | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards | [Create Dashboard](#create-dashboard) |
-| PUT | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid | [Update Dashboard](#update-dashboard) |
-| GET | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid | [Get Dashboard](#get-dashboard) |
-| GET | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto | [Get Dashboard (DTO format)](#get-dashboard) |
-| GET | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards | [List Dashboards](#list-dashboards) |
-| DELETE | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid | [Delete Dashboard](#delete-dashboard) |
+| Method | URI                                                                      | Summary                                      |
+| ------ | ------------------------------------------------------------------------ | -------------------------------------------- |
+| POST   | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards          | [Create Dashboard](#create-dashboard)        |
+| PUT    | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     | [Update Dashboard](#update-dashboard)        |
+| GET    | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     | [Get Dashboard](#get-dashboard)              |
+| GET    | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto | [Get Dashboard (DTO format)](#get-dashboard) |
+| GET    | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards          | [List Dashboards](#list-dashboards)          |
+| DELETE | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     | [Delete Dashboard](#delete-dashboard)        |
 
 ## Create Dashboard
 

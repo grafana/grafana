@@ -282,7 +282,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 | Field name                     | Data type | Description                                                                                                                                                   |
 | ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| dashboard.uid                  | string    | Dashboard [UID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/).                                                                                         |
+| dashboard.uid                  | string    | Dashboard [UID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_versions/).                |
 | timeRange.from                 | string    | Dashboard time range from.                                                                                                                                    |
 | timeRange.to                   | string    | Dashboard time range to.                                                                                                                                      |
 | reportVariables.<variableName> | string    | Key-value pairs containing the template variables for this report, in JSON format. If empty, the template variables from the report's dashboard will be used. |
