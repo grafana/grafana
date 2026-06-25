@@ -209,6 +209,9 @@ func TestRules(t *testing.T) {
 summary: "{{ $labels.instance }}"
 link: "https://${ANNOTATION_REGION}.${ANNOTATION_CLUSTER}.example.com/{{ $labels.instance }}"
 escaped: "$${ANNOTATION_REGION}"
+literal_pid: "echo $$"
+literal_currency: "$$5"
+mixed: "cost $$5 in ${ANNOTATION_REGION}"
 `), &annotations)
 		require.NoError(t, err)
 		rule.Annotations = annotations
@@ -216,9 +219,12 @@ escaped: "$${ANNOTATION_REGION}"
 		ruleMapped, err := rule.mapToModel(1)
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{
-			"summary": "{{ $labels.instance }}",
-			"link":    "https://us-west-2.prod.example.com/{{ $labels.instance }}",
-			"escaped": "${ANNOTATION_REGION}",
+			"summary":          "{{ $labels.instance }}",
+			"link":             "https://us-west-2.prod.example.com/{{ $labels.instance }}",
+			"escaped":          "${ANNOTATION_REGION}",
+			"literal_pid":      "echo $$",
+			"literal_currency": "$$5",
+			"mixed":            "cost $$5 in us-west-2",
 		}, ruleMapped.Annotations)
 	})
 }

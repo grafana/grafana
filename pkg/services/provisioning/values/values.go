@@ -341,16 +341,31 @@ func interpolateValue(val string) (string, string, error) {
 }
 
 func interpolateValueWithBracedVars(val string) (string, error) {
-	parts := strings.Split(val, "$$")
-	interpolated := make([]string, len(parts))
-	for i, v := range parts {
-		expanded, err := setting.ExpandVar(v)
+	matches := setting.GetExpanderRegex().FindAllStringIndex(val, -1)
+	if len(matches) == 0 {
+		return val, nil
+	}
+
+	var interpolated strings.Builder
+	start := 0
+	for _, match := range matches {
+		if match[0] > 0 && val[match[0]-1] == '$' {
+			interpolated.WriteString(val[start : match[0]-1])
+			interpolated.WriteString(val[match[0]:match[1]])
+			start = match[1]
+			continue
+		}
+
+		interpolated.WriteString(val[start:match[0]])
+		expanded, err := setting.ExpandVar(val[match[0]:match[1]])
 		if err != nil {
 			return val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
 		}
-		interpolated[i] = expanded
+		interpolated.WriteString(expanded)
+		start = match[1]
 	}
-	return strings.Join(interpolated, "$"), nil
+	interpolated.WriteString(val[start:])
+	return interpolated.String(), nil
 }
 
 type interpolated struct {
