@@ -825,13 +825,26 @@ func TestListPermissions_TeamActions(t *testing.T) {
 }
 
 // TestListPermissions_UserActions verifies user actions produce legacy id-based scopes.
-// Without a scope resolver (nil in unit tests), items fall back to users:uid:<name>.
+// Most user actions are scoped to the global.users kind; users.permissions:read is the org-level
+// exception scoped to the users kind. Without a scope resolver (nil in unit tests), items fall
+// back to the Zanzana resource scope users:uid:<name>.
 func TestListPermissions_UserActions(t *testing.T) {
-	t.Run("All=true produces users:id:* wildcard", func(t *testing.T) {
-		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "users:read", "")
+	// Server-level actions are scoped to global.users.
+	for _, action := range []string{"users:read", "users:write", "users:delete", "users.permissions:write"} {
+		t.Run(action+" All=true produces global.users:id:* wildcard", func(t *testing.T) {
+			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
+			require.NoError(t, err)
+			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "global.users:id:*"},
+			}, perms)
+		})
+	}
+
+	t.Run("users.permissions:read is the org-level exception scoped to users:id:*", func(t *testing.T) {
+		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "users.permissions:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
-			{Action: "users:read", Scope: "users:id:*"},
+			{Action: "users.permissions:read", Scope: "users:id:*"},
 		}, perms)
 	})
 
@@ -840,14 +853,6 @@ func TestListPermissions_UserActions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
 			{Action: "users:read", Scope: "users:uid:user-abc"},
-		}, perms)
-	})
-
-	t.Run("users.permissions actions use same scope format", func(t *testing.T) {
-		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "users.permissions:read", "")
-		require.NoError(t, err)
-		require.Equal(t, []ac.Permission{
-			{Action: "users.permissions:read", Scope: "users:id:*"},
 		}, perms)
 	})
 }

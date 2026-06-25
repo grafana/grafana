@@ -269,13 +269,25 @@ func teamWildcardScope() string {
 	return ac.Scope("teams", "id", "*")
 }
 
-// isUserRBACAction matches user-management actions whose scopes need UID→ID translation.
+// isUserRBACAction matches user-management actions.
 func isUserRBACAction(action string) bool {
 	return strings.HasPrefix(action, "users:") || strings.HasPrefix(action, "users.")
 }
 
-// resolveUserScope translates a user UID to the legacy users:id:<numericID> scope.
-func (r *ZanzanaPermissionResolver) resolveUserScope(ctx context.Context, namespace, userUID string) (string, error) {
+// userScopeKind returns the legacy RBAC scope kind for a user-management action.
+// Most user actions are server-level and scoped to global.users (users:read/write/delete and
+// users.permissions:write all grant global.users:* in the fixed roles). users.permissions:read is
+// the exception: it gates org-level permission listing (fixed:org.users:reader) and is scoped to
+// the org-level users kind.
+func userScopeKind(action string) string {
+	if action == ac.ActionUsersPermissionsRead {
+		return "users"
+	}
+	return "global.users"
+}
+
+// resolveUserScope translates a user UID to the legacy <kind>:id:<numericID> scope for the action.
+func (r *ZanzanaPermissionResolver) resolveUserScope(ctx context.Context, namespace, action, userUID string) (string, error) {
 	if r.scopeResolver == nil {
 		return "", errors.New("scope resolver not initialized")
 	}
@@ -287,12 +299,12 @@ func (r *ZanzanaPermissionResolver) resolveUserScope(ctx context.Context, namesp
 	if err != nil {
 		return "", err
 	}
-	return ac.Scope("users", "id", fmt.Sprintf("%d", id)), nil
+	return ac.Scope(userScopeKind(action), "id", fmt.Sprintf("%d", id)), nil
 }
 
-// userWildcardScope returns the legacy wildcard scope for users (users:id:*).
-func userWildcardScope() string {
-	return ac.Scope("users", "id", "*")
+// userWildcardScope returns the legacy wildcard scope for a user action (<kind>:id:*).
+func userWildcardScope(action string) string {
+	return ac.Scope(userScopeKind(action), "id", "*")
 }
 
 // listPermissions lists permissions for a subject on a given group/resource
@@ -366,7 +378,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		} else if isUserRBACAction(action) {
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  userWildcardScope(),
+				Scope:  userWildcardScope(action),
 			})
 		} else {
 			appendIfMatches(ac.Permission{
@@ -391,7 +403,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 				itemScope = resolved
 			}
 		case isUserRBACAction(action):
-			resolved, err := r.resolveUserScope(ctx, namespace, item)
+			resolved, err := r.resolveUserScope(ctx, namespace, action, item)
 			if err != nil {
 				zLogger.Warn("failed to resolve user UID to ID, using uid scope", "uid", item, "error", err)
 				itemScope = resourceScope(resource, item)
