@@ -48,7 +48,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     reset,
     register,
     control,
-    formState: { isDirty },
+    formState: { isDirty, errors },
     getValues,
     setError,
   } = formMethods;
@@ -149,7 +149,11 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
           <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
 
-          <WebhookDisabledField registration={register('webhookDisabled')} />
+          <WebhookDisabledField
+            registration={register('webhookDisabled')}
+            invalid={!!errors.webhookDisabled}
+            error={errors.webhookDisabled?.message}
+          />
 
           <Stack gap={2}>
             <Button type="submit" disabled={request.isLoading}>

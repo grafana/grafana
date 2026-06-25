@@ -5,11 +5,13 @@ import { Checkbox, Field } from '@grafana/ui';
 
 interface Props {
   registration: UseFormRegisterReturn;
+  invalid?: boolean;
+  error?: string;
 }
 
-export function WebhookDisabledField({ registration }: Props) {
+export function WebhookDisabledField({ registration, invalid, error }: Props) {
   return (
-    <Field noMargin>
+    <Field noMargin invalid={invalid} error={error}>
       <Checkbox
         {...registration}
         label={t('provisioning.connection-form.label-webhook-disabled', 'Disable webhook integration')}

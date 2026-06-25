@@ -224,7 +224,11 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
             onNewConnectionCreation={handleCreateConnection}
             isCreating={connectionRequest.isLoading}
           />
-          <WebhookDisabledField registration={credentialForm.register('webhookDisabled')} />
+          <WebhookDisabledField
+            registration={credentialForm.register('webhookDisabled')}
+            invalid={!!credentialForm.formState.errors.webhookDisabled}
+            error={credentialForm.formState.errors.webhookDisabled?.message}
+          />
         </FormProvider>
       )}
     </Stack>
