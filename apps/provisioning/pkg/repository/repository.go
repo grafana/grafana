@@ -180,7 +180,12 @@ type RepositoryWithURLs interface {
 type WebhookRepository interface {
 	Repository
 
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
+	// Slug and Branch are the repository and branch the webhook is configured
+	// for; the dispatcher uses them to reject or skip events for anything else.
+	Slug() string
+	Branch() string
+
+	ProcessRequest(ctx context.Context, req *http.Request) (WebhookEvent, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted
