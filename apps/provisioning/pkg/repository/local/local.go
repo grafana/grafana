@@ -148,6 +148,27 @@ func (r *localRepository) validateRequest(ref string) error {
 	return nil
 }
 
+// resolvePath joins the repository root with a relative path and ensures the
+// result stays within the root. It blocks path traversal (e.g. "../") that can
+// be introduced by unsanitized resource or folder titles during export.
+func (r *localRepository) resolvePath(p string) (string, error) {
+	// Normalize OS-specific separators and collapse the path first, so a
+	// Windows-style traversal like "..\..\etc" is resolved here instead of
+	// surviving the join and being interpreted by the filesystem. safepath.Clean
+	// drops the trailing slash, so restore the directory marker that Create and
+	// Write rely on to choose between MkdirAll and WriteFile.
+	clean := safepath.Clean(p)
+	if clean != "" && safepath.IsDir(p) {
+		clean += "/"
+	}
+
+	full := safepath.Join(r.path, clean)
+	if !safepath.InDir(safepath.EnsureTrailingSlash(full), safepath.EnsureTrailingSlash(r.path)) {
+		return "", apierrors.NewBadRequest(fmt.Sprintf("the path '%s' escapes the repository root", p))
+	}
+	return full, nil
+}
+
 // ReadResource implements provisioning.Repository.
 func (r *localRepository) Read(ctx context.Context, filePath string, ref string) (*repository.FileInfo, error) {
 	if err := r.validateRequest(ref); err != nil {
@@ -274,8 +295,11 @@ func (r *localRepository) Create(ctx context.Context, filepath string, ref strin
 		return err
 	}
 
-	fpath := safepath.Join(r.path, filepath)
-	_, err := os.Stat(fpath)
+	fpath, err := r.resolvePath(filepath)
+	if err != nil {
+		return err
+	}
+	_, err = os.Stat(fpath)
 	if !errors.Is(err, os.ErrNotExist) {
 		if err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("failed to check if file exists: %w", err))
@@ -307,7 +331,10 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 		return err
 	}
 
-	path = safepath.Join(r.path, path)
+	path, err := r.resolvePath(path)
+	if err != nil {
+		return err
+	}
 	if safepath.IsDir(path) {
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
@@ -328,7 +355,10 @@ func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []b
 		return err
 	}
 
-	fpath = safepath.Join(r.path, fpath)
+	fpath, err := r.resolvePath(fpath)
+	if err != nil {
+		return err
+	}
 	if safepath.IsDir(fpath) {
 		return os.MkdirAll(fpath, 0700)
 	}
@@ -345,9 +375,11 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 		return err
 	}
 
-	fullPath := safepath.Join(r.path, path)
+	fullPath, err := r.resolvePath(path)
+	if err != nil {
+		return err
+	}
 
-	var err error
 	if safepath.IsDir(path) {
 		// if it is a folder, delete all of its contents
 		err = os.RemoveAll(fullPath)
@@ -369,8 +401,14 @@ func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comme
 		return err
 	}
 
-	oldFullPath := safepath.Join(r.path, oldPath)
-	newFullPath := safepath.Join(r.path, newPath)
+	oldFullPath, err := r.resolvePath(oldPath)
+	if err != nil {
+		return err
+	}
+	newFullPath, err := r.resolvePath(newPath)
+	if err != nil {
+		return err
+	}
 
 	// Check if source exists
 	sourceInfo, err := os.Stat(oldFullPath)
