@@ -239,6 +239,19 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
+    it('offers a connect action on the resource-list-error fallback when no write repo is connected', async () => {
+      // PR-only repo can't run a migration, so the error fallback surfaces the
+      // connect action instead of the migrate-everything button.
+      respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+      server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+
+      render(<Migrate />);
+
+      expect(await screen.findByText(/could not load the list of resources/i)).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /configure/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /migrate everything/i })).not.toBeInTheDocument();
+    });
+
     it('lists unmanaged folders in the Resources to migrate table', async () => {
       respondWithSearch([
         folderHit('team-a', 'Team A'),

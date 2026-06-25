@@ -9,6 +9,7 @@ import {
   getKindInfoByResource,
   getKindInfoByStat,
   getKindInfoByStatGroup,
+  getMigratableKinds,
   getRepositoryRoute,
   isResourceKindAvailable,
 } from './resourceKinds';
@@ -44,6 +45,13 @@ describe('resourceKinds registry', () => {
   it('sources icons from the search package', () => {
     expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
     expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
+  });
+
+  it('every kind exposes a translated plural label and a list function', () => {
+    for (const info of Object.values(resourceKindInfos)) {
+      expect(info.pluralLabel()).toBeTruthy();
+      expect(typeof info.list).toBe('function');
+    }
   });
 });
 
@@ -225,5 +233,26 @@ describe('getAvailableResourceKinds', () => {
     const equivalent = { ...resourceKindInfos.dashboard };
 
     expect(isResourceKindAvailable(equivalent, available)).toBe(true);
+  });
+});
+
+describe('getMigratableKinds', () => {
+  it('returns only the always-available base (dashboards) when availableResources is unset', () => {
+    // Folders are excluded (the container others nest under); playlists and
+    // library panels are gated and not in the static base.
+    expect(getMigratableKinds(undefined).map((k) => k.kind)).toEqual(['Dashboard']);
+  });
+
+  it('adds a kind once the backend reports it available', () => {
+    const kinds = getMigratableKinds([
+      { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+      { group: 'playlist.grafana.app', kind: 'Playlist' },
+    ]);
+    expect(kinds.map((k) => k.kind).sort()).toEqual(['Dashboard', 'Playlist']);
+  });
+
+  it('never includes folders, even when available', () => {
+    const kinds = getMigratableKinds([{ group: 'folder.grafana.app', kind: 'Folder' }]);
+    expect(kinds.some((k) => k.kind === 'Folder')).toBe(false);
   });
 });

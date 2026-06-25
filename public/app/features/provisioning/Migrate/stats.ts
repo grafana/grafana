@@ -8,7 +8,7 @@ import { type ResourceKindInfo, resourceKindInfos } from '../utils/resourceKinds
 const FOLDER_GROUPS: string[] = [FOLDER_BUCKET, 'folders'];
 
 /** Total and managed counts for a single resource type, shown in a KPI card. */
-export interface MigrationTotals {
+interface MigrationTotals {
   instanceTotal: number;
   managed: number;
 }

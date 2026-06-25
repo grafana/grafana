@@ -1,9 +1,6 @@
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import {
-  API_GROUP as PLAYLIST_API_GROUP,
-  API_VERSION as PLAYLIST_API_VERSION,
-} from '@grafana/api-clients/rtkq/playlist/v1';
+import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
@@ -101,7 +98,7 @@ export const resourceKindInfos = {
     getRoute: (name: string) => `/dashboards/f/${name}`,
     listRoute: '/dashboards',
     folderScoped: true,
-    list: () => listViaSearch('folder', true),
+    list: () => listViaSearch('folder'),
     alwaysAvailable: true,
   },
   dashboard: {
@@ -114,7 +111,7 @@ export const resourceKindInfos = {
     getRoute: (name: string) => `/d/${name}`,
     listRoute: '/dashboards',
     folderScoped: true,
-    list: () => listViaSearch('dashboard', true),
+    list: () => listViaSearch('dashboard'),
     alwaysAvailable: true,
   },
   playlist: {
@@ -132,8 +129,9 @@ export const resourceKindInfos = {
     // Playlists aren't folder-contained — they only have their own collection page.
     listRoute: '/playlists',
     folderScoped: false,
-    // Playlists aren't in the unified search index; list them through their apiserver.
-    list: () => listViaApiserver(PLAYLIST_API_GROUP, PLAYLIST_API_VERSION, 'playlists'),
+    // Playlists aren't in the unified search index; list them through their
+    // apiserver (v1, matching the playlist client).
+    list: () => listViaApiserver(PLAYLIST_API_GROUP, 'v1', 'playlists'),
     // Gated on availableResources — not part of the static folder+dashboard base.
     alwaysAvailable: false,
   },
@@ -144,6 +142,7 @@ export const resourceKindInfos = {
     kind: 'LibraryPanel',
     resource: 'librarypanels',
     itemType: 'LibraryPanel',
+    pluralLabel: () => t('provisioning.resource-kind.library-panels', 'Library panels'),
     // getIconForKind doesn't know library panels, so use the library-panel icon directly.
     icon: 'library-panel',
     // No deep-link route for a single library panel exists; they're only viewable
@@ -153,6 +152,12 @@ export const resourceKindInfos = {
     // browse doesn't list them — they have their own collection page — so for
     // routing they behave like a non-foldered kind and always resolve to listRoute.
     folderScoped: false,
+    // Library panels aren't in the unified search index; list them through their
+    // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
+    // default — they ship disabled and aren't in the static base — so this only
+    // runs once the backend reports the kind as available.
+    list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
+    alwaysAvailable: false,
   },
 } satisfies Record<string, ResourceKindInfo>;
 
@@ -327,15 +332,18 @@ async function fetchAllSearchPages(searchKind: string): Promise<DashboardQueryRe
   return items;
 }
 
-/** Lists a kind the unified search index serves (dashboards, folders). */
-async function listViaSearch(searchKind: string, folderScoped: boolean): Promise<ListedResource[]> {
+/**
+ * Lists a kind the unified search index serves (dashboards, folders). The search
+ * index only serves folder-scoped kinds, so the parent folder is always read.
+ */
+async function listViaSearch(searchKind: string): Promise<ListedResource[]> {
   const items = await fetchAllSearchPages(searchKind);
   return items.map((item) => {
     const view = queryResultToViewItem(item);
     return {
       uid: view.uid,
       title: view.title,
-      parentUid: folderScoped ? readImmediateParent(item.location) : undefined,
+      parentUid: readImmediateParent(item.location),
       managed: Boolean(view.managedBy),
     };
   });

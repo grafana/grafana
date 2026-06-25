@@ -8,7 +8,7 @@ import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
-import { getMigratableKinds } from '../../utils/resourceKinds';
+import { getMigratableKinds, resourceKindInfos } from '../../utils/resourceKinds';
 
 import { useMigrationData } from './useMigrationData';
 
@@ -117,6 +117,32 @@ describe('useMigrationData (folder-scoped kinds)', () => {
 
     await waitFor(() => expect(result.current.data).toHaveLength(2));
   });
+
+  it('pages through results that span more than one page', async () => {
+    // 201 dashboards forces a second page (PAGE_SIZE is 200), exercising the
+    // totalRows-driven batched fetch.
+    mockSearch([folder('f'), ...Array.from({ length: 201 }, (_, index) => dashboard(`d${index}`, 'f'))]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.find((f) => f.uid === 'f')?.resourceCount).toBe(201);
+  });
+
+  it('fails loudly instead of truncating when results exceed the page cap', async () => {
+    // Report far more rows than the searcher can page through; it should error
+    // rather than return a silently truncated list.
+    server.use(
+      http.get(searchRoute, () =>
+        HttpResponse.json({ totalHits: 999999, hits: [{ resource: 'folders', name: 'f', title: 'f', folder: '' }] })
+      )
+    );
+
+    const { result } = renderHook(() => useMigrationData(dashboardKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(true);
+  });
 });
 
 describe('useMigrationData (non-folder kinds)', () => {
@@ -138,6 +164,37 @@ describe('useMigrationData (non-folder kinds)', () => {
     // p3 is already managed, so only p1 and p2 are migration candidates.
     expect(row.directResources.map((r) => r.uid)).toEqual(['p1', 'p2']);
     expect(row.directResources.every((r) => r.kind.kind === 'Playlist')).toBe(true);
+  });
+
+  it('falls back to the name when a playlist has no title, and drops entries without a name', async () => {
+    mockSearch([]);
+    // p1 has no title (falls back to its name); the bare entry has no
+    // metadata/spec at all (dropped).
+    server.use(
+      http.get(PLAYLISTS_ROUTE, () =>
+        HttpResponse.json({ items: [{ metadata: { name: 'p1' }, spec: { title: '' } }, {}], metadata: {} })
+      )
+    );
+
+    const { result } = renderHook(() => useMigrationData(dashboardAndPlaylistKinds), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const row = result.current.data[0];
+    expect(row.directResources.map((r) => ({ uid: r.uid, title: r.title }))).toEqual([{ uid: 'p1', title: 'p1' }]);
+  });
+
+  it('lists library panels through their apiserver, tolerating an empty response', async () => {
+    // Library panels are gated out of the migrate flow by default, but the kind
+    // still knows how to list itself through its apiserver collection. A response
+    // without an items array yields an empty list rather than throwing.
+    server.use(
+      http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/librarypanels', () =>
+        HttpResponse.json({ metadata: {} })
+      )
+    );
+
+    const result = await resourceKindInfos.librarypanel.list();
+    expect(result).toEqual([]);
   });
 
   it('enumerates folder-scoped and non-folder kinds together', async () => {
