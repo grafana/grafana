@@ -90,6 +90,7 @@ require (
 	github.com/golang/snappy v1.0.0 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.7.0 // @grafana/grafana-backend-group
 	github.com/google/go-github/v82 v82.0.0 // @grafana/grafana-git-ui-sync-team
+	github.com/google/safetext v0.0.0-20260330151545-1fb717a317c5 // @grafana/grafana-app-platform-squad
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.22.0 // @grafana/grafana-backend-group
@@ -718,6 +719,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.0 // indirect
 )
+
+require github.com/pborman/uuid v1.2.1 // indirect
 
 replace (
 	// Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
