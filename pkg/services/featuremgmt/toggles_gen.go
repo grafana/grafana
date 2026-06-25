@@ -930,14 +930,6 @@ const (
 	// Route any calls to legacy correlations endpoints to call through to app platform
 	FlagGrafanaCorrelationsSkipLegacy = "grafana.correlationsSkipLegacy"
 
-	// FlagGrafanaMeticulousAIRecorder
-	// Enable Meticulous AI session recorder for automated UI test generation
-	FlagGrafanaMeticulousAIRecorder = "grafana.meticulousAIRecorder"
-
-	// FlagGrafanaMeticulousAIRecorderHighVolume
-	// When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.
-	FlagGrafanaMeticulousAIRecorderHighVolume = "grafana.meticulousAIRecorderHighVolume"
-
 	// FlagGrafanaMeticulousAIMode
 	// Controls the Meticulous AI session recorder. One of "off", "on-prod-env" (recorder enabled, production-environment behaviour), or "on-dev-env" (recorder enabled, high-volume/development behaviour).
 	FlagGrafanaMeticulousAIMode = "grafana.meticulousAIMode"
