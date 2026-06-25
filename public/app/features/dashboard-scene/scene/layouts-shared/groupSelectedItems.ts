@@ -32,7 +32,7 @@ export interface GroupingResult {
   reason?: string;
 }
 
-export function getSelectionKind(items: SceneObject[]): SelectionKind | undefined {
+function getSelectionKind(items: SceneObject[]): SelectionKind | undefined {
   const first = items[0];
 
   if (first instanceof RowItem) {
