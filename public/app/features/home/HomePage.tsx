@@ -1,5 +1,5 @@
-import { css, cx } from '@emotion/css';
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { css } from '@emotion/css';
+import { Suspense } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -17,16 +17,6 @@ import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
-
-// Mounts (and runs its effect) only once the surrounding Suspense content has actually
-// committed — i.e. after any lazy-loaded extension components have resolved and any
-// extension tabs have registered (sibling effects flush before this one, in tree order).
-// Known limitation: an extension that registers its tab from its own async work (not
-// synchronously in a mount effect) settles after the reveal and still pops in.
-function SettleSentinel({ onSettled }: { onSettled: () => void }) {
-  useEffect(onSettled, [onSettled]);
-  return null;
-}
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -71,11 +61,6 @@ export default function HomePage() {
   const showExtra = extraContent !== null;
   const showAlertsCard = canViewFiringAlerts();
 
-  // Reveal once the Suspense content commits (lazy extensions). DashboardTabs loads its own
-  // data behind its own skeleton, so reveal no longer waits on dashboard fetches.
-  const [settled, setSettled] = useState(false);
-  const onSettled = useCallback(() => setSettled(true), []);
-
   return (
     <Page
       navId="home"
@@ -90,37 +75,24 @@ export default function HomePage() {
         {isLoadingExtensions ? (
           <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />
         ) : (
-          <div className={styles.content}>
-            {!settled && (
-              <div className={styles.skeletonOverlay}>
-                <HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />
-              </div>
-            )}
-            <div className={cx(!settled && styles.hiddenUntilSettled)}>
-              {/* Local boundary: lazy-loaded extension components suspend here (keeping the
-                  skeleton up) instead of bubbling to the route-level Suspense, which would
-                  unmount the whole page */}
-              <Suspense fallback={null}>
-                <Stack direction="column" gap={2}>
-                  <HomeSection direction="column" display="flex" gap={2}>
-                    {renderLimitedComponents({
-                      props: {},
-                      components: preComponents,
-                      pluginId: SETUPGUIDE_PLUGIN_ID,
-                    })}
-                    <DashboardTabs extensionComponents={tabComponents} />
-                  </HomeSection>
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                    <FiringAlertsCard />
-                    <IncidentsCard />
-                  </Grid>
+          <Suspense fallback={<HomePageSkeleton showAlertsCard={showAlertsCard} showExtra={showExtra} />}>
+            <Stack direction="column" gap={2}>
+              <HomeSection direction="column" display="flex" gap={2}>
+                {renderLimitedComponents({
+                  props: {},
+                  components: preComponents,
+                  pluginId: SETUPGUIDE_PLUGIN_ID,
+                })}
+                <DashboardTabs extensionComponents={tabComponents} />
+              </HomeSection>
+              <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                <FiringAlertsCard />
+                <IncidentsCard />
+              </Grid>
 
-                  {extraContent}
-                </Stack>
-                <SettleSentinel onSettled={onSettled} />
-              </Suspense>
-            </div>
-          </div>
+              {extraContent}
+            </Stack>
+          </Suspense>
         )}
       </Page.Contents>
     </Page>
@@ -128,18 +100,6 @@ export default function HomePage() {
 }
 
 const getStyles = () => ({
-  content: css({
-    position: 'relative',
-  }),
-  skeletonOverlay: css({
-    position: 'absolute',
-    inset: 0,
-  }),
-  // visibility (not display) keeps layout, so contents measure real dimensions
-  // during the settle commit
-  hiddenUntilSettled: css({
-    visibility: 'hidden',
-  }),
   extra: css({
     display: 'contents',
 

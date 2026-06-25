@@ -197,8 +197,8 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // Reveal waits for the dashboard fetches; once revealed, the extension tab and the
-    // built-in tabs appear together in the same paint — no later pop-in.
+    // The extension tab registers from inside DashboardTabs and shows alongside the
+    // built-in tabs once the tab list settles.
     expect(await screen.findByRole('tab', { name: 'Plugin tab' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
@@ -225,8 +225,8 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // While the lazy extension is pending, the page chrome stays mounted and the
-    // skeleton stays visible — the suspension must not bubble to the route level
+    // While the lazy extension is pending, the local Suspense fallback shows the skeleton
+    // and the greeting stays — the suspension must not bubble to the route-level spinner.
     expect(screen.getByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
     expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
 
