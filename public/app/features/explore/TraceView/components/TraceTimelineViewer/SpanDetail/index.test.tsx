@@ -287,6 +287,68 @@ describe('<SpanDetail>', () => {
     });
   });
 
+  describe('summary spans', () => {
+    const summarySpan = {
+      ...span,
+      aggregation: {
+        isSummary: true,
+        isPreservedOutlier: false,
+        spanCount: 3,
+        durationMinNs: 30_010_000,
+        durationMedianNs: 168_450_000,
+        durationMaxNs: 262_010_000,
+      },
+    };
+    const summaryProps = { ...props, span: summarySpan };
+
+    beforeEach(() => {
+      jest.mocked(formatDuration).mockImplementation((duration: number) => `${duration}us`);
+    });
+
+    it('labels the span as a summary in the header', () => {
+      render(<SpanDetail {...(summaryProps as unknown as SpanDetailProps)} />);
+      expect(screen.getByText('(summary)')).toBeInTheDocument();
+    });
+
+    it('shows the aggregated span count', () => {
+      render(<SpanDetail {...(summaryProps as unknown as SpanDetailProps)} />);
+      expect(screen.getByLabelText('3 aggregated spans')).toBeInTheDocument();
+    });
+
+    it('shows min, median and max in the duration overview item', () => {
+      render(<SpanDetail {...(summaryProps as unknown as SpanDetailProps)} />);
+      expect(screen.getByText(/\(min\).*\(median\).*\(max\)/)).toBeInTheDocument();
+    });
+
+    it('omits median from the duration stats when it is not present', () => {
+      const { durationMedianNs, ...noMedian } = summarySpan.aggregation;
+      render(
+        <SpanDetail
+          {...({ ...summaryProps, span: { ...summarySpan, aggregation: noMedian } } as unknown as SpanDetailProps)}
+        />
+      );
+      expect(screen.getByText(/\(min\).*\(max\)/)).toBeInTheDocument();
+      expect(screen.queryByText(/\(median\)/)).not.toBeInTheDocument();
+    });
+
+    it('adds an End Time overview item', () => {
+      render(<SpanDetail {...(summaryProps as unknown as SpanDetailProps)} />);
+      expect(screen.getByText('End Time:')).toBeInTheDocument();
+    });
+
+    it('annotates resource attributes as inherited from the slowest span', () => {
+      render(<SpanDetail {...(summaryProps as unknown as SpanDetailProps)} />);
+      expect(screen.getByText('(inherited from slowest span)')).toBeInTheDocument();
+    });
+
+    it('does not show summary affordances for non-summary spans', () => {
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+      expect(screen.queryByText('(summary)')).not.toBeInTheDocument();
+      expect(screen.queryByText('End Time:')).not.toBeInTheDocument();
+      expect(screen.queryByText('(inherited from slowest span)')).not.toBeInTheDocument();
+    });
+  });
+
   it('should load plugin links for resource attributes', () => {
     const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
     setPluginLinksHook(usePluginLinksMock);
