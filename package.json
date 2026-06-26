@@ -266,7 +266,7 @@
     "@formatjs/intl-durationformat": "^0.7.0",
     "@grafana/alerting": "workspace:*",
     "@grafana/api-clients": "workspace:*",
-    "@grafana/assistant": "0.1.24",
+    "@grafana/assistant": "0.1.25",
     "@grafana/aws-sdk": "^0.10.1",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",

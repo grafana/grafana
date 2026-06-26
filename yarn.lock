@@ -2301,6 +2301,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/assistant@npm:0.1.25":
+  version: 0.1.25
+  resolution: "@grafana/assistant@npm:0.1.25"
+  peerDependencies:
+    "@emotion/css": ">=11.0.0"
+    "@grafana/data": ">=12.1.0"
+    "@grafana/runtime": ">=12.1.0"
+    "@grafana/scenes": ">=5.41.0"
+    "@grafana/schema": ">=12.1.0"
+    "@grafana/ui": ">=12.1.0"
+    react: ">=18.0.0"
+    rxjs: ">=7.0.0"
+  checksum: 10/371819f22bb0bdd73df42ea9d9f44428c6b292c832d255d8a689b131c09f97115121279e942125d4d04a5283f1e64f3a6fd085216c9963d0ccd7a40baba75d4d
+  languageName: node
+  linkType: hard
+
 "@grafana/async-query-data@npm:0.4.2":
   version: 0.4.2
   resolution: "@grafana/async-query-data@npm:0.4.2"
@@ -18539,7 +18555,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
-    "@grafana/assistant": "npm:0.1.24"
+    "@grafana/assistant": "npm:0.1.25"
     "@grafana/aws-sdk": "npm:^0.10.1"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
