@@ -188,7 +188,7 @@ The **Filters** option supports variable interpolation. For example, you can set
 
 | Option | Description |
 | ------ | ----------- |
-| Filters | Add ad hoc filters that set the initial span filter state. Use **Text search** for text queries, `duration` for duration filters, or span attributes such as `service.name` and `span.name`. |
+| Filters | Add free-form filters that set the initial span filter state. Use **Text search** for text queries, `duration` for duration filters, or span attributes such as `service.name` and `span.name`. |
 | Show matches only | Toggle the switch on to display only spans that match the defined filter criteria. This helps simplify trace interpretation. |
 | Select critical path | Toggle the switch on to highlight spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency. |
 
