@@ -25,9 +25,7 @@ weight: 500
 
 In the **Variables** section of the sidebar, you can [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) variables and [manage](#manage-variables) existing variables. You can also [inspect](#inspect-variables) variables to identify any dependencies between them.
 
-<!--TODO: Add a screenshot here -->
-
-<!--whether a variable is being referenced (or used) in other variables or dashboard.-->
+{{< figure src="screenshot-manage-variables-v13.2.png" max-width="300px" alt="Variables section of the dashboard options in the sidebar" >}}
 
 ## Manage variables
 
@@ -41,6 +39,7 @@ You can take the following actions in the **Variables** section of the sidebar:
 
 ## Inspect variables
 
-In addition to [managing variables](#manage-variables), the **Variables** section lets you quickly identify whether variables have any dependencies. To check, click **Show dependencies** at the bottom of the list, which opens the dependencies diagram:
+In addition to [managing variables](#manage-variables), the **Variables** section lets you quickly identify whether variables have any dependencies.
+To check, click **Show dependencies** at the bottom of the list, which opens the dependencies diagram:
 
-![Dependency map showing relationships between dashboard variables](/static/img/docs/variables-templates/dependancy-map-7-4.png)
+{{< figure src="screenshot-variable-dependencies-v13.2.png" max-width="300px" alt="ependency map showing relationships between dashboard variables" >}}
