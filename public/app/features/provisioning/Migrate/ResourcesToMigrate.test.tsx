@@ -1,5 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
+import { resourceKindInfos } from '../utils/resourceKinds';
+
 import { ResourcesToMigrate } from './ResourcesToMigrate';
 import { type FolderRow } from './hooks/useFolderMigrationData';
 
@@ -7,23 +9,11 @@ const folders: FolderRow[] = [
   {
     uid: 'team-a',
     title: 'Team A',
-    dashboardCount: 2,
-    directDashboards: [
-      { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-      { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
+    resourceCount: 2,
+    directResources: [
+      { uid: 'd1', title: 'Dashboard One', kind: resourceKindInfos.dashboard },
+      { uid: 'd2', title: 'Dashboard Two', kind: resourceKindInfos.dashboard },
     ],
-    allDashboards: [
-      { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-      { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
-    ],
-  },
-  {
-    uid: 'managed',
-    title: 'Managed Folder',
-    managedBy: 'repo',
-    dashboardCount: 3,
-    directDashboards: [],
-    allDashboards: [],
   },
 ];
 
@@ -31,9 +21,9 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
   const props = {
     folders,
     selectedFolderUids: new Set<string>(),
-    selectedDashboardUids: new Set<string>(),
+    selectedResourceKeys: new Set<string>(),
     onToggleFolder: jest.fn(),
-    onToggleDashboard: jest.fn(),
+    onToggleResource: jest.fn(),
     selectedCount: 0,
     allSelected: false,
     onSetFoldersSelected: jest.fn(),
@@ -47,12 +37,11 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
 }
 
 describe('ResourcesToMigrate', () => {
-  it('lists unmanaged folders and hides managed ones', () => {
+  it('lists the folders it is given', () => {
     setup();
 
     expect(screen.getByText('Resources to migrate')).toBeInTheDocument();
     expect(screen.getByText('Team A')).toBeInTheDocument();
-    expect(screen.queryByText('Managed Folder')).not.toBeInTheDocument();
     expect(screen.getByText('Showing 1 of 1 folder')).toBeInTheDocument();
   });
 
@@ -79,12 +68,10 @@ describe('ResourcesToMigrate', () => {
 
     await user.click(screen.getByRole('checkbox', { name: /select all/i }));
 
-    // Only the single migratable folder shown is selected — not the managed one.
     expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['team-a'], true);
   });
 
   it('disables the migrate button when the selection cannot be submitted', () => {
-    // e.g. nothing selected, or only empty folders that resolve to no resources.
     setup({ selectedCount: 0, submitDisabled: true });
 
     expect(screen.getByRole('button', { name: /migrate selected \(0\)/i })).toBeDisabled();
@@ -126,10 +113,56 @@ describe('ResourcesToMigrate', () => {
     expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
-  it('renders the all-managed empty state when there are no unmanaged folders', () => {
-    setup({ folders: [folders[1]] });
+  it('renders the all-managed empty state when there are no folders to migrate', () => {
+    setup({ folders: [] });
 
-    expect(screen.getByText('All folders are already managed.')).toBeInTheDocument();
+    expect(screen.getByText('All supported resources are already managed by Git.')).toBeInTheDocument();
+  });
+
+  describe('folder-less kinds grouped under a synthetic folder', () => {
+    // Playlists aren't folder-scoped; the caller groups them under a synthetic
+    // "Playlists" folder, which the table renders like any other folder.
+    const withPlaylists: FolderRow[] = [
+      ...folders,
+      {
+        uid: '__playlists__',
+        title: 'Playlists',
+        resourceCount: 2,
+        directResources: [
+          { uid: 'p1', title: 'Morning rotation', kind: resourceKindInfos.playlist },
+          { uid: 'p2', title: 'Ops wall', kind: resourceKindInfos.playlist },
+        ],
+      },
+    ];
+
+    it('renders the synthetic folder and reveals its resources when expanded', async () => {
+      const { user } = setup({ folders: withPlaylists });
+
+      expect(screen.getByText('Playlists')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /expand playlists/i }));
+      expect(screen.getByText('Morning rotation')).toBeInTheDocument();
+      expect(screen.getByText('Ops wall')).toBeInTheDocument();
+    });
+
+    it('toggles an individual resource inside the synthetic folder', async () => {
+      const { props, user } = setup({ folders: withPlaylists });
+
+      await user.click(screen.getByRole('button', { name: /expand playlists/i }));
+      await user.click(screen.getByRole('checkbox', { name: 'Morning rotation' }));
+
+      // Selection is keyed by group/kind/name, not the bare uid.
+      expect(props.onToggleResource).toHaveBeenCalledWith('playlist.grafana.app/Playlist/p1');
+    });
+
+    it('select-all spans every visible folder, synthetic included', async () => {
+      const { props, user } = setup({ folders: withPlaylists });
+
+      await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+      // Order follows the default count-desc sort; the two folders tie on count
+      // (2 each), so they fall back to title order ("Playlists" before "Team A").
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['__playlists__', 'team-a'], true);
+    });
   });
 
   describe('search, sort and expansion', () => {
@@ -137,28 +170,23 @@ describe('ResourcesToMigrate', () => {
       {
         uid: 'alpha',
         title: 'Alpha',
-        dashboardCount: 2,
-        directDashboards: [
-          { uid: 'a1', title: 'Alpha One', url: '/d/a1' },
-          { uid: 'a2', title: 'Alpha Two', url: '/d/a2' },
-        ],
-        allDashboards: [
-          { uid: 'a1', title: 'Alpha One', url: '/d/a1' },
-          { uid: 'a2', title: 'Alpha Two', url: '/d/a2' },
+        resourceCount: 2,
+        directResources: [
+          { uid: 'a1', title: 'Alpha One', kind: resourceKindInfos.dashboard },
+          { uid: 'a2', title: 'Alpha Two', kind: resourceKindInfos.dashboard },
         ],
       },
       {
         uid: 'beta',
         title: 'Beta',
-        dashboardCount: 5,
-        directDashboards: [{ uid: 'b1', title: 'Beta One', url: '/d/b1' }],
-        allDashboards: [{ uid: 'b1', title: 'Beta One', url: '/d/b1' }],
+        resourceCount: 5,
+        directResources: [{ uid: 'b1', title: 'Beta One', kind: resourceKindInfos.dashboard }],
       },
     ];
 
     const folderTitleOrder = () => screen.getAllByText(/^(Alpha|Beta)$/).map((el) => el.textContent);
 
-    it('filters by folder title and by dashboard title', async () => {
+    it('filters by folder title and by resource title', async () => {
       const { user } = setup({ folders: twoFolders });
       const input = screen.getByPlaceholderText(/search folders and resources/i);
 
@@ -172,11 +200,38 @@ describe('ResourcesToMigrate', () => {
       expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     });
 
-    it('defaults to most-dashboards-first ordering', () => {
+    it('defaults to most-resources-first ordering', () => {
       setup({ folders: twoFolders });
 
       // Default sort key is count-desc: Beta (5) before Alpha (2).
       expect(folderTitleOrder()).toEqual(['Beta', 'Alpha']);
+    });
+
+    it('collapses an expanded folder', async () => {
+      const { user } = setup();
+
+      await user.click(screen.getByRole('button', { name: /expand team a/i }));
+      expect(screen.getByText('Dashboard One')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /collapse team a/i }));
+      expect(screen.queryByText('Dashboard One')).not.toBeInTheDocument();
+    });
+
+    it('re-sorts when the sort control changes', async () => {
+      const { user } = setup({ folders: twoFolders });
+
+      // Default count-desc puts Beta (5) before Alpha (2); switching to A–Z flips it.
+      expect(folderTitleOrder()).toEqual(['Beta', 'Alpha']);
+
+      // The sort control is the only combobox in this panel. Navigate to the
+      // "Fewest resources" option (count-asc) with the keyboard — the menu is
+      // virtualized, so keyboard selection is more reliable than clicking.
+      const sort = screen.getByRole('combobox');
+      await user.click(sort);
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      // count-asc puts Alpha (2) before Beta (5), flipping the default order.
+      expect(folderTitleOrder()).toEqual(['Alpha', 'Beta']);
     });
 
     it('marks select-all indeterminate when only some visible folders are selected', () => {
@@ -197,41 +252,7 @@ describe('ResourcesToMigrate', () => {
       expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['alpha'], true);
     });
 
-    it('hints to migrate the folder when its dashboards live only in subfolders', async () => {
-      const subfoldersOnly: FolderRow = {
-        uid: 'parent',
-        title: 'Parent',
-        dashboardCount: 3,
-        directDashboards: [],
-        allDashboards: [{ uid: 'c1', title: 'C1', url: '/d/c1' }],
-      };
-      const { user } = setup({ folders: [subfoldersOnly] });
-
-      await user.click(screen.getByRole('button', { name: /expand parent/i }));
-
-      expect(screen.getByText(/in subfolders/i)).toBeInTheDocument();
-    });
-
-    it('hints how many more resources are nested when a folder has both direct and nested ones', async () => {
-      const mixed: FolderRow = {
-        uid: 'mixed',
-        title: 'Mixed',
-        dashboardCount: 5, // 2 direct + 3 nested
-        directDashboards: [
-          { uid: 'd1', title: 'Direct One', url: '/d/d1' },
-          { uid: 'd2', title: 'Direct Two', url: '/d/d2' },
-        ],
-        allDashboards: [{ uid: 'd1', title: 'Direct One', url: '/d/d1' }],
-      };
-      const { user } = setup({ folders: [mixed] });
-
-      await user.click(screen.getByRole('button', { name: /expand mixed/i }));
-
-      expect(screen.getByText('Direct One')).toBeInTheDocument();
-      expect(screen.getByText(/3 more in subfolders/i)).toBeInTheDocument();
-    });
-
-    it('locks a folder’s dashboards as checked when the folder itself is selected', async () => {
+    it('locks a folder’s resources as checked when the folder itself is selected', async () => {
       const { user } = setup({ selectedFolderUids: new Set(['team-a']) });
 
       await user.click(screen.getByRole('button', { name: /expand team a/i }));

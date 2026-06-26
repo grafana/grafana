@@ -2,7 +2,12 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type CommitTemplateVars, getSingleResourceCommitMessage, renderCommitMessage } from '../utils/commitMessage';
+import {
+  type CommitTemplateVars,
+  getBulkResourceCommitMessage,
+  getSingleResourceCommitMessage,
+  renderCommitMessage,
+} from '../utils/commitMessage';
 
 import { useTemplateAutofill } from './useTemplateAutofill';
 
@@ -13,6 +18,8 @@ interface UseCommitMessageTemplateArgs {
   isCommentDirty: boolean;
   /** Must not mark the field dirty, or the auto-fill would read as a user edit. */
   setComment: (value: string) => void;
+  /** Fallback message used when no template is configured. */
+  fallbackMessage?: string;
 }
 
 /**
@@ -30,6 +37,7 @@ export function useCommitMessageTemplate({
   comment,
   isCommentDirty,
   setComment,
+  fallbackMessage,
 }: UseCommitMessageTemplateArgs): { locked: boolean; message: string } {
   const flagEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   const template = repository?.commit?.singleResourceMessageTemplate;
@@ -38,11 +46,16 @@ export function useCommitMessageTemplate({
   // Enforcement activates the field even without a template.
   const active = flagEnabled && (Boolean(template?.trim()) || enforce);
   const locked = flagEnabled && enforce;
-  const rendered = active ? renderCommitMessage(template, vars) : '';
+  const rendered = active ? renderCommitMessage(template, vars, fallbackMessage) : '';
 
   // Enforced repos commit the template, not the field, so drop the comment when locked. Computed
-  // unconditionally: callers commit this regardless of the flag.
-  const message = getSingleResourceCommitMessage({ comment: locked ? '' : comment, repository, ...vars });
+  // unconditionally: callers commit this regardless of the flag. Bulk callers (those that pass a
+  // `fallbackMessage`) resolve via the bulk path so the no-template default stays multi-resource.
+  const resolvedComment = locked ? '' : comment;
+  const message =
+    fallbackMessage === undefined
+      ? getSingleResourceCommitMessage({ comment: resolvedComment, repository, ...vars })
+      : getBulkResourceCommitMessage({ comment: resolvedComment, repository, fallbackMessage, ...vars });
 
   // Pre-fill only the editable field; enforced repos render `message` read-only instead. The
   // template tracks live `vars` and the repo usually resolves after the form mounts, so a static

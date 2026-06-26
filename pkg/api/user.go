@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -47,7 +49,7 @@ func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
 	}
 
-	return hs.getUserUserProfile(c, userID)
+	return hs.getUserUserProfile(c, userID, c.UserUID)
 }
 
 // swagger:route GET /users/{user_id} users getUserByID
@@ -65,27 +67,35 @@ func (hs *HTTPServer) GetUserByID(c *contextmodel.ReqContext) response.Response 
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	return hs.getUserUserProfile(c, id)
+	return hs.getUserUserProfile(c, id, "")
 }
 
-func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int64) response.Response {
-	query := user.GetUserProfileQuery{UserID: userID}
+func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int64, uid string) response.Response {
+	query := user.GetUserProfileQuery{UserID: userID, UID: uid}
 
 	userProfile, err := hs.userService.GetProfile(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
+		if k8serrors.IsForbidden(err) {
+			return response.Error(http.StatusForbidden, "Access denied to user", err)
+		}
 		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
-	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
 	userProfile.AuthLabels = []string{}
-	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authLabel := login.GetAuthProviderLabel(authInfo.AuthModule)
-		userProfile.AuthLabels = append(userProfile.AuthLabels, authLabel)
+	if len(userProfile.AuthModules) > 0 {
 		userProfile.IsExternal = true
-
+		for _, authModule := range userProfile.AuthModules {
+			userProfile.AuthLabels = append(userProfile.AuthLabels, login.GetAuthProviderLabel(authModule))
+			userProfile.IsExternallySynced = userProfile.IsExternallySynced || hs.isExternallySynced(hs.Cfg, authModule)
+			userProfile.IsGrafanaAdminExternallySynced = userProfile.IsGrafanaAdminExternallySynced || hs.isGrafanaAdminExternallySynced(hs.Cfg, authModule)
+		}
+	} else if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil {
+		// Legacy fallback: extract auth info from the user_auth table.
+		userProfile.AuthLabels = append(userProfile.AuthLabels, login.GetAuthProviderLabel(authInfo.AuthModule))
+		userProfile.IsExternal = true
 		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule)
 		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule)
 	}
@@ -112,6 +122,9 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
+		}
+		if k8serrors.IsForbidden(err) {
+			return response.Error(http.StatusForbidden, "Access denied to user", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}

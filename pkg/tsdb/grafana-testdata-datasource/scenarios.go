@@ -81,10 +81,9 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
-		ID:          kinds.TestDataQueryTypeFlakyQuery,
-		Name:        "Flaky Query",
-		StringInput: "5s",
-		handler:     s.handleFlakyQueryScenario,
+		ID:      kinds.TestDataQueryTypeFlakyQuery,
+		Name:    "Flaky Query",
+		handler: s.handleFlakyQueryScenario,
 	})
 
 	s.registerScenario(&Scenario{
@@ -486,9 +485,8 @@ func (s *Service) handleFlakyQueryScenario(ctx context.Context, req *backend.Que
 			continue
 		}
 
-		stringInput := model.StringInput
-		parsedInterval, _ := time.ParseDuration(stringInput)
-		time.Sleep(parsedInterval)
+		baseDelay, _ := time.ParseDuration(model.QueryDelay)
+		time.Sleep(flakyQueryDelay(baseDelay, model.QueryDelayVariability))
 
 		if shouldError {
 			status := backend.Status(model.ErrorStatusCode)
@@ -509,6 +507,24 @@ func (s *Service) handleFlakyQueryScenario(ctx context.Context, req *backend.Que
 	}
 
 	return resp, nil
+}
+
+// flakyQueryDelay applies a symmetric jitter to base, where variability is a
+// percentage (0-100). A variability of 100 yields a uniform delay in [0, 2*base].
+// The result is clamped to a non-negative duration.
+func flakyQueryDelay(base time.Duration, variability float64) time.Duration {
+	if base <= 0 {
+		return 0
+	}
+
+	v := variability / 100
+	factor := 1 + (rand.Float64()*2-1)*v
+	delay := time.Duration(float64(base) * factor)
+	if delay < 0 {
+		return 0
+	}
+
+	return delay
 }
 
 func (s *Service) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

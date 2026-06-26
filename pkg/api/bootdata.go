@@ -137,46 +137,14 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		return nil, err
 	}
 
-	apps := make(map[string]*plugins.AppDTO, 0)
-	for _, ap := range availablePlugins[plugins.TypeApp] {
-		apps[ap.Plugin.ID] = hs.newAppDTO(
-			c.Req.Context(),
-			ap.Plugin,
-			ap.Settings,
-		)
-	}
+	apps := hs.getFSApps(c, availablePlugins[plugins.TypeApp])
 
 	dataSources, err := hs.getFSDataSources(c, availablePlugins)
 	if err != nil {
 		return nil, err
 	}
 
-	panels := make(map[string]plugins.PanelDTO)
-	for _, ap := range availablePlugins[plugins.TypePanel] {
-		panel := ap.Plugin
-		if panel.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
-			continue
-		}
-
-		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			Suggestions:     panel.Suggestions,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			Angular:         panel.Angular,
-			LoadingStrategy: panel.LoadingStrategy,
-			Translations:    panel.Translations,
-		}
-	}
+	panels := hs.getFSPanels(c, availablePlugins[plugins.TypePanel])
 
 	frontendSettings.Apps = apps
 	frontendSettings.Datasources = dataSources
@@ -415,6 +383,56 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 	}
 
 	return dataSources, nil
+}
+
+func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels map[string]*availablePluginDTO) map[string]plugins.PanelDTO {
+	c, span := hs.injectSpan(c, "api.getFSPanels")
+	defer span.End()
+
+	panels := make(map[string]plugins.PanelDTO)
+	for _, ap := range availablePanels {
+		panel := ap.Plugin
+		if panel.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
+			continue
+		}
+
+		panels[panel.ID] = plugins.PanelDTO{
+			ID:              panel.ID,
+			Name:            panel.Name,
+			AliasIDs:        panel.AliasIDs,
+			Info:            panel.Info,
+			Module:          panel.Module,
+			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
+			BaseURL:         panel.BaseURL,
+			SkipDataQuery:   panel.SkipDataQuery,
+			Suggestions:     panel.Suggestions,
+			HideFromList:    panel.HideFromList,
+			ReleaseState:    string(panel.State),
+			Signature:       string(panel.Signature),
+			Sort:            getPanelSort(panel.ID),
+			Angular:         panel.Angular,
+			LoadingStrategy: panel.LoadingStrategy,
+			Translations:    panel.Translations,
+		}
+	}
+
+	return panels
+}
+
+func (hs *HTTPServer) getFSApps(c *contextmodel.ReqContext, availableApps map[string]*availablePluginDTO) map[string]*plugins.AppDTO {
+	c, span := hs.injectSpan(c, "api.getFSApps")
+	defer span.End()
+
+	apps := make(map[string]*plugins.AppDTO, 0)
+	for _, ap := range availableApps {
+		apps[ap.Plugin.ID] = hs.newAppDTO(
+			c.Req.Context(),
+			ap.Plugin,
+			ap.Settings,
+		)
+	}
+
+	return apps
 }
 
 func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {

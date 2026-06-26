@@ -7,6 +7,12 @@ type ResourceBranchUrlOptions = {
   repoType?: string;
   action?: ResourceAction;
   prTitle?: string;
+  /** Target branch the change was pushed to, for the PR banner's branch display. */
+  ref?: string;
+  /** Repository's configured (default) branch, for the PR banner's branch display. */
+  configuredBranch?: string;
+  /** Repository base URL, for the PR banner's branch links (read back as `repo_url`). */
+  repoUrl?: string;
 };
 
 export function buildResourceBranchRedirectUrl({
@@ -16,6 +22,9 @@ export function buildResourceBranchRedirectUrl({
   repoType,
   action,
   prTitle,
+  ref,
+  configuredBranch,
+  repoUrl,
 }: ResourceBranchUrlOptions): string {
   const params = new URLSearchParams();
 
@@ -33,6 +42,18 @@ export function buildResourceBranchRedirectUrl({
 
   if (prTitle) {
     params.set('pr_title', prTitle);
+  }
+
+  if (ref) {
+    params.set('ref', ref);
+  }
+
+  if (configuredBranch) {
+    params.set('repo_branch', configuredBranch);
+  }
+
+  if (repoUrl) {
+    params.set('repo_url', repoUrl);
   }
 
   const queryString = params.toString();

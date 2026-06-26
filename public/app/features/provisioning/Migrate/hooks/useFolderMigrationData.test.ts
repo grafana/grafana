@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
@@ -19,15 +19,8 @@ function mockSearch(hits: DashboardHit[]) {
   server.use(getCustomSearchHandler(hits));
 }
 
-function folder(name: string, parent = '', managedBy?: ManagerKind): DashboardHit {
-  return {
-    resource: 'folders',
-    name,
-    title: name,
-    folder: parent,
-    field: {},
-    ...(managedBy ? { managedBy: { kind: managedBy } } : {}),
-  };
+function folder(name: string, parent = ''): DashboardHit {
+  return { resource: 'folders', name, title: name, folder: parent, field: {} };
 }
 
 function dashboard(name: string, parent = '', managedBy?: ManagerKind): DashboardHit {
@@ -42,31 +35,48 @@ function dashboard(name: string, parent = '', managedBy?: ManagerKind): Dashboar
 }
 
 describe('useFolderMigrationData', () => {
-  it('builds folder rows with recursive dashboard counts', async () => {
-    // d2 lives in `child`; the hook walks the folder→parent map so `parent`'s
-    // recursive count picks it up even though the searcher only reports the
-    // immediate parent.
+  it('lists each folder with the unmanaged dashboards directly inside it (not recursively)', async () => {
+    // d1 is directly in `parent`; d2 is in the nested `child`. Migration isn't
+    // recursive, so `parent` covers only d1 and `child` gets its own row for d2.
     mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const parent = result.current.data.find((f) => f.uid === 'parent');
-    expect(parent?.dashboardCount).toBe(2);
-    expect(parent?.directDashboards).toHaveLength(1);
-    expect(parent?.allDashboards).toHaveLength(2);
+    expect(parent?.resourceCount).toBe(1);
+    expect(parent?.directResources.map((d) => d.uid)).toEqual(['d1']);
 
     const child = result.current.data.find((f) => f.uid === 'child');
-    expect(child?.dashboardCount).toBe(1);
+    expect(child?.resourceCount).toBe(1);
+    expect(child?.directResources.map((d) => d.uid)).toEqual(['d2']);
+  });
+
+  it('hides folders with no unmanaged dashboards directly inside them', async () => {
+    // `empty` has nothing; `only-subfolders` holds a child folder but no direct
+    // dashboards. Neither has anything to migrate, so neither appears.
+    mockSearch([
+      folder('empty'),
+      folder('only-subfolders'),
+      folder('child', 'only-subfolders'),
+      folder('has-dashboards'),
+      dashboard('d1', 'has-dashboards'),
+    ]);
+
+    const { result } = renderHook(() => useFolderMigrationData());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.map((f) => f.uid)).toEqual(['has-dashboards']);
   });
 
   it('rolls root-level dashboards into a synthetic General row', async () => {
     mockSearch([
       folder('a'),
-      // Root dashboards: the searcher reports either the literal "general" UID
-      // or an empty folder.
+      // Root dashboards: the searcher reports the literal "general" UID, an empty
+      // folder, or no folder field at all.
       dashboard('r1', 'general'),
       dashboard('r2', ''),
+      { resource: 'dashboards', name: 'r3', title: 'r3', field: {} },
       dashboard('a1', 'a'),
     ]);
 
@@ -74,93 +84,68 @@ describe('useFolderMigrationData', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const general = result.current.data.find((f) => f.uid === 'general');
-    expect(general).toBeDefined();
-    expect(general?.dashboardCount).toBe(2);
-    const a = result.current.data.find((f) => f.uid === 'a');
-    expect(a?.dashboardCount).toBe(1);
+    expect(general?.resourceCount).toBe(3);
+    expect(result.current.data.find((f) => f.uid === 'a')?.resourceCount).toBe(1);
   });
 
-  it('orders unmanaged folders first, then by dashboard count desc', async () => {
-    mockSearch([
-      folder('managed-big', '', ManagerKind.Repo),
-      folder('unmanaged-small'),
-      folder('unmanaged-big'),
-      dashboard('d1', 'managed-big'),
-      dashboard('d2', 'managed-big'),
-      dashboard('d3', 'managed-big'),
-      dashboard('d4', 'unmanaged-small'),
-      dashboard('d5', 'unmanaged-big'),
-      dashboard('d6', 'unmanaged-big'),
-    ]);
+  it('falls back to the folder UID as the title when the folder is missing from the list', async () => {
+    // A dashboard whose parent folder didn't come back from the folder search
+    // still gets a row; with no folder title to use, the title falls back to
+    // the UID. (The searcher routes unknown parents to a "shared with me" UID.)
+    mockSearch([dashboard('d1', 'ghost')]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    const order = result.current.data.map((f) => f.uid);
-    expect(order.indexOf('unmanaged-big')).toBeLessThan(order.indexOf('unmanaged-small'));
-    expect(order.indexOf('unmanaged-small')).toBeLessThan(order.indexOf('managed-big'));
+    expect(result.current.data).toHaveLength(1);
+    const row = result.current.data[0];
+    expect(row.resourceCount).toBe(1);
+    expect(row.title).toBe(row.uid);
   });
 
-  it('marks the synthetic General row as managed when every root dashboard agrees', async () => {
-    mockSearch([dashboard('r1', '', ManagerKind.Repo), dashboard('r2', '', ManagerKind.Repo)]);
-
-    const { result } = renderHook(() => useFolderMigrationData());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    const general = result.current.data.find((f) => f.uid === 'general');
-    expect(general?.managedBy).toBe(ManagerKind.Repo);
-  });
-
-  it('leaves the General row unmanaged when only some root dashboards are managed', async () => {
-    mockSearch([dashboard('r1', '', ManagerKind.Repo), dashboard('r2', '')]);
-
-    const { result } = renderHook(() => useFolderMigrationData());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    const general = result.current.data.find((f) => f.uid === 'general');
-    expect(general?.managedBy).toBeUndefined();
-  });
-
-  it('omits the General row when root dashboards are all managed by different tools', async () => {
-    // Nothing unmanaged at the root and no single agreeing manager, so there's
-    // nothing to migrate — don't surface a bogus unmanaged-looking target.
-    mockSearch([dashboard('r1', '', ManagerKind.Repo), dashboard('r2', '', ManagerKind.Terraform)]);
-
-    const { result } = renderHook(() => useFolderMigrationData());
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(result.current.data.find((f) => f.uid === 'general')).toBeUndefined();
-  });
-
-  it('excludes already-managed dashboards from a folder’s migratable counts and lists', async () => {
-    // The parent is unmanaged but two descendants are already managed; cascading
-    // the folder would otherwise push managed dashboards into the migrate job.
+  it('excludes already-managed dashboards', async () => {
+    // `parent` has one unmanaged and one managed dashboard; only the unmanaged
+    // one counts. `managed-only` has nothing migratable, so it doesn't appear.
     mockSearch([
       folder('parent'),
-      folder('managed-sub', 'parent'),
+      folder('managed-only'),
       dashboard('d1', 'parent'),
       dashboard('m1', 'parent', ManagerKind.Repo),
-      dashboard('m2', 'managed-sub', ManagerKind.Repo),
+      dashboard('m2', 'managed-only', ManagerKind.Repo),
     ]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
+    expect(result.current.data.map((f) => f.uid)).toEqual(['parent']);
     const parent = result.current.data.find((f) => f.uid === 'parent');
-    expect(parent?.dashboardCount).toBe(1);
-    expect(parent?.directDashboards.map((d) => d.uid)).toEqual(['d1']);
-    expect(parent?.allDashboards.map((d) => d.uid)).toEqual(['d1']);
+    expect(parent?.directResources.map((d) => d.uid)).toEqual(['d1']);
+  });
+
+  it('orders folders by dashboard count descending, then title', async () => {
+    mockSearch([
+      folder('small'),
+      folder('big'),
+      dashboard('d1', 'small'),
+      dashboard('d2', 'big'),
+      dashboard('d3', 'big'),
+    ]);
+
+    const { result } = renderHook(() => useFolderMigrationData());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.map((f) => f.uid)).toEqual(['big', 'small']);
   });
 
   it('pages through results that span more than one page', async () => {
-    // 201 folders forces a second page (PAGE_SIZE is 200), exercising the
+    // 201 dashboards forces a second page (PAGE_SIZE is 200), exercising the
     // totalRows-driven parallel fetch.
-    mockSearch(Array.from({ length: 201 }, (_, index) => folder(`f${index}`)));
+    mockSearch([folder('f'), ...Array.from({ length: 201 }, (_, index) => dashboard(`d${index}`, 'f'))]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.data).toHaveLength(201);
+    expect(result.current.data.find((f) => f.uid === 'f')?.resourceCount).toBe(201);
   });
 
   it('fails loudly instead of truncating when results exceed the page cap', async () => {
@@ -176,6 +161,20 @@ describe('useFolderMigrationData', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.isError).toBe(true);
+  });
+
+  it('reloads the data when refetch is called', async () => {
+    mockSearch([folder('a'), dashboard('d1', 'a')]);
+
+    const { result } = renderHook(() => useFolderMigrationData());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.data).toHaveLength(1);
+
+    // A second dashboard appears in a new folder; refetch picks it up.
+    mockSearch([folder('a'), dashboard('d1', 'a'), folder('b'), dashboard('d2', 'b')]);
+    act(() => result.current.refetch());
+
+    await waitFor(() => expect(result.current.data).toHaveLength(2));
   });
 
   it('sets isError when the search request fails', async () => {
