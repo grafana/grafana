@@ -10,9 +10,11 @@ import { addPanelCommand } from './addPanel';
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
+import { applySpecCommand } from './applySpec';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
+import { getSpecCommand } from './getSpec';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
 import { listVariablesCommand } from './listVariables';
@@ -61,6 +63,9 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   listPanelsCommand,
   getDashboardInfoCommand,
   updateDashboardSettingsCommand,
+  // [SKETCH] Full-spec read/write surface (proposed core addition).
+  getSpecCommand,
+  applySpecCommand,
 ];
 
 /** Lookup command by name (case-insensitive). */
