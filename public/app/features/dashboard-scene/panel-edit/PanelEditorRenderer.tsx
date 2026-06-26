@@ -4,25 +4,29 @@ import { useEffect, useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { UnlinkModal } from '../scene/UnlinkModal';
-import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
+import { LibraryPanelEditModals } from './LibraryPanelEditModals';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { type PanelEditor } from './PanelEditor';
-import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
 
+// v1 panel editor. PanelEditNext/PanelEditorRendererNext.tsx is the v2 version and renders the same
+// PanelEditor scene, so anything the user can see here (modals, panes, toolbar actions) needs to
+// exist there too until we drop v1.
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
   const isScrollingLayout = useScrollReflowLimit();
@@ -81,12 +85,12 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 }
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const dashboard = getDashboardSceneFor(model);
-  const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView } = model.useState();
+  const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();
-  const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   const isScrollingLayout = useScrollReflowLimit();
 
@@ -118,21 +122,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         <div {...primaryProps}>
           <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
         </div>
-        {showLibraryPanelSaveModal && libraryPanel && (
-          <SaveLibraryVizPanelModal
-            libraryPanel={libraryPanel}
-            onDismiss={model.onDismissLibraryPanelSaveModal}
-            onConfirm={model.onConfirmSaveLibraryPanel}
-            onDiscard={model.onDiscard}
-          ></SaveLibraryVizPanelModal>
-        )}
-        {showLibraryPanelUnlinkModal && libraryPanel && (
-          <UnlinkModal
-            onDismiss={model.onDismissUnlinkLibraryPanelModal}
-            onConfirm={model.onConfirmUnlinkLibraryPanel}
-            isOpen
-          />
-        )}
+        <LibraryPanelEditModals model={model} />
         {dataPane && (
           <>
             <div {...splitterProps} />
@@ -163,7 +153,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
   const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
   return {
     pageContainer: css({
@@ -218,14 +208,19 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       minHeight: 0,
     }),
-    optionsPane: css({
-      flexDirection: 'column',
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
-      marginTop: theme.spacing(2),
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      borderTopLeftRadius: theme.shape.radius.default,
-    }),
+    optionsPane: css(
+      {
+        flexDirection: 'column',
+        borderLeft: `1px solid ${theme.colors.border.weak}`,
+        background: theme.colors.background.primary,
+        marginTop: theme.spacing(2),
+        borderTop: `1px solid ${theme.colors.border.weak}`,
+        borderTopLeftRadius: theme.shape.radius.lg,
+      },
+      visualRefreshEnabled && {
+        borderBottomRightRadius: theme.shape.radius.lg,
+      }
+    ),
     expandOptionsWrapper: css({
       display: 'flex',
       flexDirection: 'column',

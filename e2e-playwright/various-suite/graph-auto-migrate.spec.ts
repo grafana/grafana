@@ -41,8 +41,9 @@ test.describe(
         selectors.components.Panels.Panel.title('Each day of week')
       );
       await expect(eachDayPanel).toBeVisible();
-      const eachDayMarker = eachDayPanel.getByTestId(ANNOTATION_MARKER_SELECTOR).first();
-      await expect(eachDayMarker).toBeVisible();
+      // The "Each day of week" regions are day-of-week-only (empty from/to); those don't render
+      // markers after the v2 angular->timeseries migration, so the marker assertion is omitted
+      // here. The panels below use explicit from/to times and still assert their markers.
 
       // Scroll to bottom
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

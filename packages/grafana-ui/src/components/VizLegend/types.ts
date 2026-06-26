@@ -2,7 +2,7 @@ import type * as React from 'react';
 import type { JSX, ReactNode } from 'react';
 
 import { type DataFrameFieldIndex, type DisplayValue } from '@grafana/data';
-import { type LegendDisplayMode, type LegendPlacement, type LineStyle } from '@grafana/schema';
+import { type LegendOverflow, type LegendDisplayMode, type LegendPlacement, type LineStyle } from '@grafana/schema';
 
 import type { PanelContext } from '../PanelChrome';
 
@@ -43,6 +43,7 @@ interface VizLegendTableSortProps {
   sortBy?: string;
   sortDesc?: boolean;
   isSortable?: boolean;
+  overflow?: LegendOverflow;
 }
 
 export interface VizLegendListProps<T> extends VizLegendBaseProps<T>, VizLegendHandlersProps<T> {}

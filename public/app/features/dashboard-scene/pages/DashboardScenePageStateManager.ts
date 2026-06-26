@@ -40,6 +40,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { transformTemplateToSaveModelSchemaV2 } from 'app/features/dashboard-scene/utils/dashboardTemplateEnvelope';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard-scene/utils/tracking';
 import { interpolateV1Dashboard } from 'app/features/manage-dashboards/import/utils/inputs';
@@ -94,7 +95,7 @@ export const DASHBOARD_CACHE_TTL = 500;
 const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 
 /** Only used by cache in loading home in DashboardPageProxy and initDashboard (Old arch), can remove this after old dashboard arch is gone */
-export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
+const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
 interface DashboardCacheEntry<T> {
   dashboard: T;
@@ -114,7 +115,7 @@ export interface LoadDashboardOptions {
   defaultLinks?: DashboardLink[];
 }
 
-export type HomeDashboardDTO = DashboardDTO & {
+type HomeDashboardDTO = DashboardDTO & {
   dashboard: DashboardDataDTO | DashboardV2Spec;
 };
 
@@ -124,7 +125,7 @@ export type HomeDashboardDTO = DashboardDTO & {
  * Kubernetes-style dashboard resource returned verbatim from the backend when
  * `default_home_dashboard_path` points at a `dashboard.grafana.app/*` file.
  */
-export type HomeDashboardFetchResult =
+type HomeDashboardFetchResult =
   | HomeDashboardDTO
   | DashboardWithAccessInfo<DashboardV2Spec>
   | DashboardWithAccessInfo<DashboardDataDTO>;
@@ -1016,7 +1017,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
-        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
         options.route === DashboardRoutes.Template
       ) {
         const editMode = !!options.editTemplate;
@@ -1105,7 +1106,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         }
         case DashboardRoutes.Template: {
           if (
-            getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false) &&
+            getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
             dashboardTemplateUid
           ) {
             rsp = await this.loadDashboardTemplate(dashboardTemplateUid, { editMode: !!editTemplate });
@@ -1161,13 +1162,18 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     dashboardTemplateUid: string,
     { editMode }: { editMode: boolean }
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
       throw new Error('Custom dashboard templates are not enabled');
     }
 
     const response = await getDashboardTemplateExtension().loadTemplate(dashboardTemplateUid);
 
     const resourceVersion = response.metadata?.resourceVersion;
+
+    CustomDashboardTemplateInteractions.loaded({
+      templateUid: dashboardTemplateUid,
+      mode: editMode ? 'edit' : 'use',
+    });
 
     if (editMode) {
       // Edit-template flow: mark the scene as editing an org template so downstream UI can hide
@@ -1259,7 +1265,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
-export function shouldForceV2API(): boolean {
+function shouldForceV2API(): boolean {
   return Boolean(config.featureToggles.dashboardNewLayouts);
 }
 
@@ -1415,7 +1421,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     if (options.route === DashboardRoutes.Template) {
       if (
         options.dashboardTemplateUid &&
-        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)
       ) {
         this.setActiveManager('v2');
       } else {

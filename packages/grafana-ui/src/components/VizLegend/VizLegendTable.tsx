@@ -4,6 +4,7 @@ import { useMemo, type JSX } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { type LegendPlacement } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';
@@ -33,8 +34,10 @@ export const VizLegendTable = <T extends unknown>({
   isSortable,
   limit = 0,
   filterAction,
+  placement,
+  overflow,
 }: VizLegendTableProps<T>): JSX.Element => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, placement);
   const header: Record<string, string> = {
     [nameSortKey]: '',
   };
@@ -94,77 +97,78 @@ export const VizLegendTable = <T extends unknown>({
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
         hasMixedAxes={hasMixedAxes}
+        overflow={overflow}
       />
     );
   }
 
   return (
-    <table className={clsx(styles.table, className)}>
-      <thead>
-        <tr>
-          {Object.keys(header).map((columnTitle) => (
-            <th
-              title={header[columnTitle]}
-              key={columnTitle}
-              className={clsx(
-                styles.header,
-                isSortable ? styles.headerSortable : 'sr-only',
-                sortKey === columnTitle ? styles.withIcon : null
-              )}
-              onClick={() => {
-                if (isSortable) {
-                  onToggleSort?.(columnTitle);
-                }
-              }}
-            >
-              {columnTitle === nameSortKey && filterAction && (
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
-                  {filterAction}
-                </span>
-              )}
-              {columnTitle}
-              {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>{limitedItems.map(itemRenderer!)}</tbody>
-      {curLimit > 0 && items.length > curLimit && (
-        <tfoot>
+    <>
+      <table
+        className={clsx(styles.grid, className)}
+        style={{
+          gridTemplateColumns: `min-content minmax(55px, auto) ${'min-content '.repeat(Object.keys(header).length - 1)}`,
+        }}
+      >
+        <thead className={styles.header}>
           <tr>
-            <td colSpan={100} style={{ textAlign: 'right' }}>
-              <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)}>
-                <Trans i18nKey={'legend.container.show-all-series'}>...show all {{ total: items.length }} items</Trans>
-              </Button>
-            </td>
+            <th>
+              <span className="sr-only">
+                <Trans i18nKey={'legend.container.series-color-and-icon'}>Series color</Trans>
+              </span>
+            </th>
+            {Object.keys(header).map((columnTitle, i) => (
+              <th
+                {...(sortKey === columnTitle ? { 'aria-sort': sortDesc ? 'descending' : 'ascending' } : null)}
+                title={header[columnTitle]}
+                key={columnTitle}
+                className={clsx({
+                  [styles.headerSortable]: isSortable,
+                  [styles.calcHeader]: i > 0,
+                  [styles.withIcon]: sortKey === columnTitle,
+                  'sr-only': !isSortable,
+                })}
+                onClick={() => {
+                  if (isSortable) {
+                    onToggleSort?.(columnTitle);
+                  }
+                }}
+              >
+                {columnTitle === nameSortKey && filterAction && (
+                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                  <span className={styles.filterAction} onClick={(e) => e.stopPropagation()}>
+                    {filterAction}
+                  </span>
+                )}
+                {columnTitle}
+                {sortKey === columnTitle && <Icon size="xs" name={sortDesc ? 'angle-down' : 'angle-up'} />}
+              </th>
+            ))}
           </tr>
-        </tfoot>
+        </thead>
+        <tbody>{limitedItems.map(itemRenderer!)}</tbody>
+      </table>
+      {curLimit > 0 && items.length > curLimit && (
+        <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)} className={styles.showAll}>
+          <Trans i18nKey={'legend.container.show-all-series'} className={styles.showAll}>
+            ...show all {{ total: items.length }} items
+          </Trans>
+        </Button>
       )}
-    </table>
+    </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  table: css({
-    width: '100%',
-    'th:first-child': {
-      width: '100%',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    },
-  }),
+const getStyles = (theme: GrafanaTheme2, placement: LegendPlacement = 'bottom') => ({
   header: css({
     position: 'sticky',
     top: 0,
     backgroundColor: theme.colors.background.primary,
-    zIndex: 1,
+
     color: theme.colors.primary.text,
-    fontWeight: theme.typography.fontWeightMedium,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    padding: theme.spacing(0.25, 1, 0.25, 1),
-    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  calcHeader: css({
     textAlign: 'right',
-    whiteSpace: 'nowrap',
   }),
   withIcon: css({
     paddingRight: '4px',
@@ -178,5 +182,49 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(0.5),
     display: 'inline-flex',
     verticalAlign: 'middle',
+  }),
+  showAll: css({
+    justifyContent: 'right',
+  }),
+
+  grid: css({
+    display: 'grid',
+    width: '100%',
+
+    // non-layout
+    fontSize: theme.typography.bodySmall.fontSize,
+    textAlign: 'right',
+    whiteSpace: 'nowrap',
+
+    'tbody,thead,tfoot,tr': {
+      display: 'grid',
+      gridColumn: '1 / -1',
+      gridTemplateColumns: 'subgrid',
+    },
+
+    tr: {
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    },
+
+    'th,td': {
+      display: 'block',
+      alignContent: 'center',
+      whiteSpace: 'nowrap',
+
+      // non-layout
+      padding: theme.spacing(0.25, 1),
+
+      // series color/icon column
+      '&:nth-child(1)': {
+        paddingLeft: theme.spacing(1),
+      },
+
+      // series name column
+      '&:nth-child(2)': {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: placement === 'right' ? 600 : undefined,
+      },
+    },
   }),
 });

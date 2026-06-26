@@ -31,6 +31,7 @@ export function VizLegend<T>({
   isSortable,
   limit,
   filterAction,
+  overflow,
 }: VizLegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
@@ -122,6 +123,7 @@ export function VizLegend<T>({
           isSortable={isSortable}
           limit={limit}
           filterAction={filterAction}
+          overflow={overflow}
         />
       );
     case LegendDisplayMode.List:

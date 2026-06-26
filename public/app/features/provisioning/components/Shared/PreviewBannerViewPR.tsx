@@ -5,6 +5,7 @@ import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
+import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
 
@@ -46,10 +47,13 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
 export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
-  const { repoType, action } = usePullRequestParam();
+  const { repoType, action, prTitle } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
-  const linkUrl = prURL || branchInfo?.repoBaseUrl || repoUrl;
+  // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
+  // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
+  const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
+  const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
 
   const actionText =
     action === 'delete'

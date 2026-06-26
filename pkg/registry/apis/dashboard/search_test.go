@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -10,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -41,6 +44,119 @@ func TestSearch(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
+	})
+}
+
+func TestVectorSearch(t *testing.T) {
+	newHandler := func(client *MockClient) SearchHandler {
+		return SearchHandler{
+			log:      log.New("test", "test"),
+			client:   client,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch),
+		}
+	}
+
+	doRequest := func(handler SearchHandler, rawQuery string) *httptest.ResponseRecorder {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search/vector?"+rawQuery, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoVectorSearch(rr, req)
+		return rr
+	}
+
+	t.Run("calls VectorSearch and maps results to hits", func(t *testing.T) {
+		mockClient := &MockClient{
+			VectorSearchResponse: &resourcepb.VectorSearchResponse{
+				Results: []*resourcepb.VectorSearchResult{
+					{Name: "d1", Title: "CPU usage", Folder: "f1", Score: 0.12, Subresource: "panel/3", Content: "CPU usage\nTags: infra"},
+					{Name: "d2", Title: "Memory usage", Folder: "f2", Score: 0.34, Subresource: "panel/1", Content: "Memory usage"},
+					{Name: "d3", Title: "Disk I/O", Folder: "f1", Score: 0.51, Subresource: "panel/7", Content: "Disk I/O"},
+				},
+			},
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu&folder=f1&limit=10")
+
+		require.NotNil(t, mockClient.LastVectorSearchRequest)
+		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "lexical search should not be called")
+		assert.Equal(t, "cpu", mockClient.LastVectorSearchRequest.Query)
+		assert.Equal(t, int64(10), mockClient.LastVectorSearchRequest.Limit)
+		require.Len(t, mockClient.LastVectorSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastVectorSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{"f1"}, mockClient.LastVectorSearchRequest.Filters[0].Values)
+
+		resp := rr.Result()
+		defer func() { require.NoError(t, resp.Body.Close()) }()
+		p := &v0alpha1.SearchResults{}
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(p))
+		require.Len(t, p.Hits, 3)
+		assert.Equal(t, int64(3), p.TotalHits)
+
+		assert.Equal(t, []string{"d1", "d2", "d3"}, []string{p.Hits[0].Name, p.Hits[1].Name, p.Hits[2].Name})
+		assert.Equal(t, []float64{0.12, 0.34, 0.51}, []float64{p.Hits[0].Score, p.Hits[1].Score, p.Hits[2].Score})
+		assert.Equal(t, 0.12, p.MaxScore)
+
+		assert.Equal(t, "CPU usage", p.Hits[0].Title)
+		assert.Equal(t, "f1", p.Hits[0].Folder)
+		assert.Equal(t, "dashboards", p.Hits[0].Resource)
+
+		require.NotNil(t, p.Hits[0].Field)
+		assert.Equal(t, "panel/3", p.Hits[0].Field.Object["subresource"])
+		assert.Equal(t, "CPU usage\nTags: infra", p.Hits[0].Field.Object["snippet"])
+		assert.Equal(t, 0.12, p.Hits[0].Field.Object["score"])
+	})
+
+	t.Run("returns 501 and does not fall back when vector search is unimplemented", func(t *testing.T) {
+		mockClient := &MockClient{
+			VectorSearchErr: status.Error(codes.Unimplemented, "vector search not configured"),
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu")
+
+		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "must not fall back to lexical search")
+		assert.Equal(t, http.StatusNotImplemented, rr.Result().StatusCode)
+	})
+
+	t.Run("normalizes the general root folder to the legacy empty UID", func(t *testing.T) {
+		mockClient := &MockClient{VectorSearchResponse: &resourcepb.VectorSearchResponse{}}
+		doRequest(newHandler(mockClient), "query=cpu&folder="+folder.GeneralFolderUID)
+
+		require.NotNil(t, mockClient.LastVectorSearchRequest)
+		require.Len(t, mockClient.LastVectorSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastVectorSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{""}, mockClient.LastVectorSearchRequest.Filters[0].Values)
+	})
+
+	t.Run("maps gRPC status codes to HTTP statuses instead of 500", func(t *testing.T) {
+		cases := map[codes.Code]int{
+			codes.ResourceExhausted: http.StatusTooManyRequests,
+			codes.Unavailable:       http.StatusServiceUnavailable,
+		}
+		for code, wantStatus := range cases {
+			mockClient := &MockClient{VectorSearchErr: status.Error(code, "boom")}
+			rr := doRequest(newHandler(mockClient), "query=cpu")
+			assert.Equal(t, wantStatus, rr.Result().StatusCode, "grpc code %s", code)
+		}
+	})
+
+	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
+		hasVectorRoute := func(features featuremgmt.FeatureToggles) bool {
+			h := SearchHandler{features: features}
+			for _, route := range h.GetAPIRoutes(nil).Namespace {
+				if route.Path == "search/vector" {
+					return true
+				}
+			}
+			return false
+		}
+
+		assert.False(t, hasVectorRoute(featuremgmt.WithFeatures()), "route should be absent when toggle off")
+		assert.True(t, hasVectorRoute(featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch)), "route should be present when toggle on")
 	})
 }
 
@@ -552,6 +668,90 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
 	})
+
+	t.Run("should treat the canonical 'general' folder as root", func(t *testing.T) {
+		// dashboardSearchRequest: one dashboard parented to root via the canonical
+		// "general" sentinel, and one parented to a private folder.
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinroot", Resource: "dashboard"},
+						Cells: [][]byte{[]byte(folder.GeneralFolderUID)}, // root reported as "general"
+					},
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest: user has access to no parent folders.
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		// final dashboardSearchRequest: only the dashboard whose parent folder the
+		// user cannot access is shared; the root dashboard is excluded.
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+		}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, 3, mockClient.CallCount)
+		// the root ("general") dashboard contributes no parent folder to look up
+		secondCall := mockClient.MockCalls[1]
+		assert.Equal(t, []string{"privatefolder"}, secondCall.Options.Fields[0].Values)
+		// and the root dashboard is not treated as shared
+		thirdCall := mockClient.MockCalls[2]
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[1].Values)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+	})
 }
 
 func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
@@ -852,7 +1052,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
-		"root folder should be converted to empty string": {
+		"canonical root folder is collapsed to the legacy empty sentinel": {
 			queryString: "folder=general",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{
@@ -1058,6 +1258,17 @@ type MockClient struct {
 	MockResponses []*resourcepb.ResourceSearchResponse
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
+
+	LastVectorSearchRequest *resourcepb.VectorSearchRequest
+	VectorSearchResponse    *resourcepb.VectorSearchResponse
+	VectorSearchErr         error
+	VectorSearchCallCount   int
+}
+
+func (m *MockClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	m.LastVectorSearchRequest = in
+	m.VectorSearchCallCount++
+	return m.VectorSearchResponse, m.VectorSearchErr
 }
 
 type MockResult struct {

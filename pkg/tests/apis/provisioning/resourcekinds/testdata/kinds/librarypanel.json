@@ -1,0 +1,18 @@
+{
+  "folderScoped": true,
+  "featureFlags": ["grafanaAPIServerWithExperimentalAPIs"],
+  "manifest": {
+    "apiVersion": "dashboard.grafana.app/v0alpha1",
+    "kind": "LibraryPanel",
+    "metadata": {
+      "name": "placeholder"
+    },
+    "spec": {
+      "title": "placeholder",
+      "type": "text",
+      "description": "provisioned library panel",
+      "options": {},
+      "fieldConfig": {}
+    }
+  }
+}

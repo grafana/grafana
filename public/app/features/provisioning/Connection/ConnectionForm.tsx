@@ -10,6 +10,7 @@ import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
+import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
@@ -38,14 +39,16 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       appID: data?.spec?.github?.appID || '',
       installationID: data?.spec?.github?.installationID || '',
       privateKey: '',
+      webhookDisabled: data?.spec?.webhook?.disabled ?? false,
     },
   });
 
   const {
     handleSubmit,
     reset,
+    register,
     control,
-    formState: { isDirty },
+    formState: { isDirty, errors },
     getValues,
     setError,
   } = formMethods;
@@ -87,6 +90,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           appID: form.appID,
           installationID: form.installationID,
         },
+        ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
       };
 
       await submitData(spec, form.privateKey);
@@ -144,6 +148,12 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           </Field>
 
           <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
+
+          <WebhookDisabledField
+            registration={register('webhookDisabled')}
+            invalid={!!errors.webhookDisabled}
+            error={errors.webhookDisabled?.message}
+          />
 
           <Stack gap={2}>
             <Button type="submit" disabled={request.isLoading}>

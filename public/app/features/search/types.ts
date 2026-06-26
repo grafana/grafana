@@ -1,5 +1,3 @@
-import { type WithAccessControlMetadata } from '@grafana/data';
-
 import { type ManagerKind } from '../apiserver/types';
 
 import { type QueryResponse } from './service/types';
@@ -8,28 +6,6 @@ export enum DashboardSearchItemType {
   DashDB = 'dash-db',
   DashHome = 'dash-home',
   DashFolder = 'dash-folder',
-}
-
-/**
- * @deprecated Use DashboardSearchItem and use UIDs instead of IDs
- * DTO type for search API result items, but with deprecated IDs
- * This type was previously also used heavily for views, so contains lots of
- * extraneous properties
- */
-export interface DashboardSearchHit extends WithAccessControlMetadata {
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  id?: number;
-  tags: string[];
-  title: string;
-  type: DashboardSearchItemType;
-  uid: string;
-  url: string;
-  sortMeta?: number;
-  sortMetaName?: string;
-  isDeleted?: boolean;
-  permanentlyDeleteDate?: string;
 }
 
 /**

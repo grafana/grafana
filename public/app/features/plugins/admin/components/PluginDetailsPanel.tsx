@@ -283,6 +283,6 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return { pluginVersionDetails: css({ wordBreak: 'break-word' }) };
 };
