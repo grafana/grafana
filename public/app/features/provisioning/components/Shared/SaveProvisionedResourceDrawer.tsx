@@ -281,6 +281,14 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
   // the registry descriptor, so callers don't pass the kind separately.
   const kind = getKindInfoByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
   if (!kind) {
+    // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
+    // new kind wired into a page before its registry entry exists. Warn in dev so it's a visible signal
+    // rather than a silent no-op where the user clicks save/delete and nothing happens.
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        `SaveProvisionedResourceDrawer: no registered provisioning kind for "${props.resource.apiVersion}"/"${props.resource.kind}"; the drawer will not render.`
+      );
+    }
     return null;
   }
   return <ResourceDrawerContent {...props} kind={kind} />;
