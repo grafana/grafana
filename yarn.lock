@@ -3037,7 +3037,7 @@ __metadata:
     react-highlight-words: "npm:^0.21.0"
     react-hook-form: "npm:^7.49.2"
     react-inlinesvg: "npm:^4.3.0"
-    react-loading-skeleton: "npm:3.5.0"
+    react-loading-skeleton: "npm:^3.5.0"
     react-router-dom: "npm:5.3.4"
     react-router-dom-v5-compat: "npm:^6.26.1"
     react-select: "npm:5.10.2"
@@ -27657,7 +27657,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-loading-skeleton@npm:3.5.0":
+"react-loading-skeleton@npm:3.5.0, react-loading-skeleton@npm:^3.5.0":
   version: 3.5.0
   resolution: "react-loading-skeleton@npm:3.5.0"
   peerDependencies:
