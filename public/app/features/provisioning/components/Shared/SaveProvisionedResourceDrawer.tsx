@@ -57,18 +57,14 @@ function getNewResourcePath(title: string, kindKey: string): string {
   return `${slugifyForFilename(title) || kindKey}.json`;
 }
 
-export interface SaveProvisionedResourceDrawerProps {
+interface BaseDrawerProps {
   /**
    * The resource to commit (`create`/`update`) or remove (`delete`). It carries everything the drawer
    * needs: its `apiVersion`+`kind` resolve the {@link ResourceKindInfo} (title, routes, invalidation),
    * its `spec` becomes the committed file (and `spec.title` the title), and for an existing resource
-   * its `metadata.annotations` resolve the repository (a new one's are synthesised from `repositoryName`).
+   * its `metadata.annotations` resolve the repository.
    */
   resource: ProvisionedResource;
-  /** Commit action: `create` writes a new file, `update` replaces it, `delete` removes it. */
-  action: ProvisionedResourceAction;
-  /** Repository to commit a new resource to. Required for `create` (a new resource has no manager annotations yet); ignored otherwise. */
-  repositoryName?: string;
   /** Notification shown on a successful write to the configured branch. */
   successMessage?: string;
   /** Message shown when the repository can't be edited from the UI. */
@@ -89,6 +85,14 @@ export interface SaveProvisionedResourceDrawerProps {
     repoUrl?: string;
   }) => void;
 }
+
+/**
+ * `action` + `repositoryName` are a discriminated union: `create` requires a `repositoryName` (a new
+ * resource has no manager annotations yet, so they're synthesised for the chosen repository), while
+ * `update`/`delete` resolve the repository from the existing resource's annotations and take none.
+ */
+export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
+  ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
 
 interface FormProps {
   kind: ResourceKindInfo;
@@ -265,9 +269,7 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
   return <ResourceDrawerContent {...props} kind={kind} />;
 }
 
-interface ResourceDrawerContentProps extends SaveProvisionedResourceDrawerProps {
-  kind: ResourceKindInfo;
-}
+type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kind: ResourceKindInfo };
 
 function ResourceDrawerContent({
   kind,
@@ -286,9 +288,11 @@ function ResourceDrawerContent({
   // Title for the commit message, drawer subtitle and (for a new resource) the file slug.
   const title = resource.spec?.title ?? '';
 
-  // A new resource has no k8s name yet; generate one once for the lifetime of the drawer.
+  // A new resource needs a name; generate one once for the lifetime of the drawer as a fallback.
   const generatedName = useMemo(() => generateResourceName(), []);
-  const resourceName = isNew ? generatedName : (resource.metadata?.name ?? '');
+  // Prefer the resource's own name when it has one; only fall back to a generated name for a new
+  // resource that doesn't (the provisioning write requires a name in the committed file).
+  const resourceName = resource.metadata?.name || (isNew ? generatedName : '');
 
   // A new resource has no manager annotations yet, so synthesise them for the chosen repository: the
   // drawer resolves the managing repository and the initial file path from these. An existing

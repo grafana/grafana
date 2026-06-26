@@ -94,13 +94,19 @@ function requireCapturedRequest(req: CapturedRequest | null): CapturedRequest {
   return req as CapturedRequest;
 }
 
-function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}) {
-  const defaultProps: SaveProvisionedResourceDrawerProps = {
-    resource: mockPlaylist,
-    action: 'update',
-    onDismiss: jest.fn(),
-  };
-  return render(<SaveProvisionedResourceDrawer {...defaultProps} {...props} />);
+// Overrides for the common (non-create) cases. `create` requires `repositoryName` (discriminated
+// union), so those tests render the drawer directly rather than via this update/delete-shaped helper.
+type DrawerOverrides = {
+  resource?: SaveProvisionedResourceDrawerProps['resource'];
+  action?: 'update' | 'delete';
+  onWriteSuccess?: () => void;
+  onBranchSuccess?: SaveProvisionedResourceDrawerProps['onBranchSuccess'];
+};
+
+function setup(props: DrawerOverrides = {}) {
+  return render(
+    <SaveProvisionedResourceDrawer resource={mockPlaylist} action="update" onDismiss={jest.fn()} {...props} />
+  );
 }
 
 describe('SaveProvisionedResourceDrawer', () => {
@@ -237,11 +243,14 @@ describe('SaveProvisionedResourceDrawer', () => {
         })
       );
 
-      const { user } = setup({
-        action: 'create',
-        resource: newPlaylist,
-        repositoryName: 'test-repo',
-      });
+      const { user } = render(
+        <SaveProvisionedResourceDrawer
+          resource={newPlaylist}
+          action="create"
+          repositoryName="test-repo"
+          onDismiss={jest.fn()}
+        />
+      );
 
       await user.click(await screen.findByRole('button', { name: /^save$/i }));
 
@@ -263,11 +272,14 @@ describe('SaveProvisionedResourceDrawer', () => {
         })
       );
 
-      const { user } = setup({
-        action: 'create',
-        resource: newPlaylist,
-        repositoryName: 'test-repo',
-      });
+      const { user } = render(
+        <SaveProvisionedResourceDrawer
+          resource={newPlaylist}
+          action="create"
+          repositoryName="test-repo"
+          onDismiss={jest.fn()}
+        />
+      );
 
       // The path field is editable for new resources; the edited value must be the committed path.
       const pathInput = await screen.findByDisplayValue('my-new-playlist.json');
