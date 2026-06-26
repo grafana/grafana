@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -269,6 +270,44 @@ func teamWildcardScope() string {
 	return ac.Scope("teams", "id", "*")
 }
 
+// isUserRBACAction matches user-management actions.
+func isUserRBACAction(action string) bool {
+	return strings.HasPrefix(action, "users:") || strings.HasPrefix(action, "users.")
+}
+
+// userScopeKind returns the legacy RBAC scope kind for a user-management action.
+// Most user actions are server-level and scoped to global.users (users:read/write/delete and
+// users.permissions:write all grant global.users:* in the fixed roles). users.permissions:read is
+// the exception: it gates org-level permission listing (fixed:org.users:reader) and is scoped to
+// the org-level users kind.
+func userScopeKind(action string) string {
+	if action == ac.ActionUsersPermissionsRead {
+		return "users"
+	}
+	return "global.users"
+}
+
+// resolveUserScope translates a user UID to the legacy <kind>:id:<numericID> scope for the action.
+func (r *ZanzanaPermissionResolver) resolveUserScope(ctx context.Context, namespace, action, userUID string) (string, error) {
+	if r.scopeResolver == nil {
+		return "", errors.New("scope resolver not initialized")
+	}
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse namespace: %w", err)
+	}
+	id, err := r.scopeResolver.GetUserIDByUID(ctx, nsInfo, userUID)
+	if err != nil {
+		return "", err
+	}
+	return ac.Scope(userScopeKind(action), "id", fmt.Sprintf("%d", id)), nil
+}
+
+// userWildcardScope returns the legacy wildcard scope for a user action (<kind>:id:*).
+func userWildcardScope(action string) string {
+	return ac.Scope(userScopeKind(action), "id", "*")
+}
+
 // listPermissions lists permissions for a subject on a given group/resource
 func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, verb, action, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
@@ -337,6 +376,11 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 				Action: action,
 				Scope:  teamWildcardScope(),
 			})
+		} else if isUserRBACAction(action) {
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  userWildcardScope(action),
+			})
 		} else {
 			appendIfMatches(ac.Permission{
 				Action: action,
@@ -346,10 +390,12 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	}
 
 	// Items are objects of the listed resource type, scoped by that resource.
-	// Team actions need UID→ID translation so scopes match legacy RBAC (teams:id:<n>).
+	// Team and user actions need UID→ID translation so scopes match legacy RBAC
+	// (teams:id:<n> / users:id:<n>).
 	for _, item := range resp.Items {
 		var itemScope string
-		if isTeamRBACAction(action) {
+		switch {
+		case isTeamRBACAction(action):
 			resolved, err := r.resolveTeamScope(ctx, namespace, item)
 			if err != nil {
 				zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", item, "error", err)
@@ -357,7 +403,15 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			} else {
 				itemScope = resolved
 			}
-		} else {
+		case isUserRBACAction(action):
+			resolved, err := r.resolveUserScope(ctx, namespace, action, item)
+			if err != nil {
+				zLogger.Warn("failed to resolve user UID to ID, using uid scope", "uid", item, "error", err)
+				itemScope = resourceScope(resource, item)
+			} else {
+				itemScope = resolved
+			}
+		default:
 			itemScope = resourceScope(resource, item)
 		}
 		appendIfMatches(ac.Permission{
@@ -509,11 +563,12 @@ func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identit
 	return MergePermissions(legacy, zPerms)
 }
 
-var teamGVR = schema.GroupVersionResource{
-	Group:    "iam.grafana.com",
-	Version:  "v0alpha1",
-	Resource: "teams",
-}
+// GVRs are derived from the IAM resource info so the group/version/resource always match what
+// the apiserver serves, instead of hardcoding (which previously drifted to the wrong group).
+var (
+	teamGVR = iamv0.TeamResourceInfo.GroupVersionResource()
+	userGVR = iamv0.UserResourceInfo.GroupVersionResource()
+)
 
 type uidToIDResolver struct {
 	mu             sync.RWMutex
@@ -579,4 +634,8 @@ func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.Namespac
 
 func (r *uidToIDResolver) GetTeamIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
 	return r.getObjectID(ctx, nsInfo, teamGVR, uid)
+}
+
+func (r *uidToIDResolver) GetUserIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
+	return r.getObjectID(ctx, nsInfo, userGVR, uid)
 }

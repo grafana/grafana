@@ -209,6 +209,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	_ "github.com/grafana/grafana/pkg/plugins/config"
+	_ "github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	_ "github.com/grafana/grafana/pkg/plugins/log"
 	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	_ "github.com/grafana/grafana/pkg/plugins/manager/client"

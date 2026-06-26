@@ -5773,11 +5773,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Extensions"
-      }
-    },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
       "description-obfuscate-data": "Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.",
@@ -6436,7 +6431,11 @@
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
+      "edit-template-button": "Edit",
+      "edit-template-button-label": "Edit template: {{title}}",
       "no-preview": "No preview available ",
+      "use-template-button": "Use template",
+      "use-template-button-label": "Use template: {{title}}",
       "view-dashboard-button": "View dashboard",
       "view-dashboard-button-label": "View dashboard: {{title}}",
       "view-template-button": "View template",
@@ -6467,7 +6466,13 @@
       "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
     },
     "create-from-scratch": "Create a dashboard from scratch instead",
+    "custom-dashboard-template-filters": {
+      "creator-placeholder": "Filter by created by",
+      "search-placeholder": "Search",
+      "sort-placeholder": "Sort"
+    },
     "dashboard-card": {
+      "created-by-label": "Created by:",
       "details": {
         "datasource": "Datasource",
         "dependencies": "Dependencies",
@@ -6477,6 +6482,9 @@
         "view-on-grafana-com": "View on Grafana.com"
       },
       "no-description": "No description available"
+    },
+    "grafana-dashboard-template-modal": {
+      "no-results-found": "No template dashboards found"
     },
     "merged-description": "Browse and select from data-source provided or community dashboards",
     "merged-empty-no-dashboards": "No dashboards are available for this datasource.",
@@ -6493,7 +6501,10 @@
     "suggested-error-description": "Failed to load suggested dashboard.",
     "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
-      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "description": "Get started with Grafana templates. Connect your data to power them with real metrics.",
+      "description-custom": "Get started with templates. Connect your data to power them with real metrics.",
+      "tab-custom": "Custom templates",
+      "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
     }
   },
@@ -6792,6 +6803,18 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard controls"
+    },
+    "dashboard-template-edit-banner": {
+      "body": "Edits made will update this template. <2>If you wish to use this template to create a dashboard, click here</2>",
+      "title": "You are editing {{ templateName }}"
+    },
+    "dashboard-template-saved-banner": {
+      "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
+      "title": "Template created"
+    },
+    "dashboard-template-use-banner": {
+      "body": "Save this dashboard and edit it for your use case",
+      "title": "You are using {{ templateName }} template in a new dashboard"
     },
     "data-source-variable-form": {
       "data-source-options": "Data source options",
@@ -7667,6 +7690,13 @@
     },
     "permissions": {
       "title": "Permissions"
+    },
+    "template": {
+      "title": "Template",
+      "unavailable-body": "This dashboard is not being edited as a template, so template settings cannot be shown.",
+      "unavailable-oss-body": "Editing dashboard template settings requires Grafana Enterprise.",
+      "unavailable-oss-title": "Available in Grafana Enterprise",
+      "unavailable-title": "Template metadata unavailable"
     },
     "time-picker": {
       "hide-time-picker": "Hide time picker",
@@ -10891,9 +10921,6 @@
     }
   },
   "library-panels": {
-    "add-library-panel-modal": {
-      "title-create-library-panel": "Create library panel"
-    },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
     },
@@ -12291,7 +12318,6 @@
     "header-menu": {
       "copy": "Copy",
       "copy-styles": "Copy styles",
-      "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
@@ -13014,6 +13040,7 @@
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
       "description-title": "A human-readable name for this connection",
+      "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
@@ -13025,6 +13052,7 @@
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
       "label-title": "Title",
+      "label-webhook-disabled": "Disable webhook integration",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
@@ -13711,9 +13739,12 @@
       "error-title": "Live updates unavailable"
     },
     "webhook-section": {
+      "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
       "label-webhook": "Webhook options",
+      "label-webhook-disabled": "Disable webhook integration",
       "label-webhook-url": "Webhook URL",
       "placeholder-webhook-url": "https://grafana.example.com"
     },
