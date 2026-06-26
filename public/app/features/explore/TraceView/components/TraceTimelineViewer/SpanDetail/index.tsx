@@ -363,7 +363,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     ? partitionAggregationTags(tags)
     : { aggregationTags: [], otherTags: tags };
   const durationValue = summaryDurationStats
-    ? summaryDurationStats.map((stat) => `${stat.value} (${stat.label.toLowerCase()})`).join(' | ')
+    ? summaryDurationStats.map((stat) => `${stat.value} (${stat.label.toLocaleLowerCase()})`).join(' | ')
     : formatDuration(duration);
 
   let overviewItems = [
