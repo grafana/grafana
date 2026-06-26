@@ -3045,7 +3045,7 @@ __metadata:
     react-table: "npm:^7.8.0"
     react-transition-group: "npm:^4.4.5"
     react-use: "npm:^17.6.1"
-    react-window: "npm:1.8.11"
+    react-window: "npm:^1.8.11"
     remark-gfm: "npm:^4.0.1"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.60.1"
@@ -28097,7 +28097,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-window@npm:1.8.11":
+"react-window@npm:1.8.11, react-window@npm:^1.8.11":
   version: 1.8.11
   resolution: "react-window@npm:1.8.11"
   dependencies:
