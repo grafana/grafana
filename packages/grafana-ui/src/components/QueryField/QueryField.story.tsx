@@ -1,5 +1,5 @@
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { useId, useState } from 'react';
+import { useId } from 'react';
 
 import { type TypeaheadInput, type TypeaheadOutput } from '../../types/completion';
 import { Field } from '../Forms/Field';
@@ -73,19 +73,13 @@ const METRICS = [
 // and the portal is created and torn down cleanly when the field mounts/unmounts.
 export const WithSuggestions: StoryFn<typeof QueryField> = (args: Omit<QueryFieldProps, 'theme'>) => {
   const id = useId();
-  const [show, setShow] = useState(false);
 
   return (
-    <>
-      <button onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'} QueryField</button>
-      {!show && (
-        <Field
-          label={<Label id={id}>Type to see suggestions (e.g. &quot;ra&quot;, &quot;http&quot;, &quot;go&quot;)</Label>}
-        >
-          <QueryField {...args} aria-labelledby={id} />
-        </Field>
-      )}
-    </>
+    <Field
+      label={<Label id={id}>Type to see suggestions (e.g. &quot;ra&quot;, &quot;http&quot;, &quot;go&quot;)</Label>}
+    >
+      <QueryField {...args} aria-labelledby={id} />
+    </Field>
   );
 };
 
