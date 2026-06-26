@@ -3004,7 +3004,7 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.6"
     "@uiw/codemirror-theme-vscode": "npm:^4.25.9"
     "@uiw/react-codemirror": "npm:^4.25.9"
-    calculate-size: "npm:1.1.1"
+    calculate-size: "npm:^1.1.1"
     chance: "npm:^1.1.13"
     classnames: "npm:2.5.1"
     clsx: "npm:^2.1.1"
@@ -12966,7 +12966,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"calculate-size@npm:1.1.1":
+"calculate-size@npm:^1.1.1":
   version: 1.1.1
   resolution: "calculate-size@npm:1.1.1"
   checksum: 10/8f1bfad7a98f49c9d2dca2191a48fa4d3fe0815397f95eed44cd151d67ded5829e0232259fa0d33ca5fc371a87ffcf530085790a06637e02445e8dab0a6b28c9
