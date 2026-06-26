@@ -12390,6 +12390,7 @@
         "try-again-button": "Try again"
       },
       "or-divider": "OR",
+      "refreshing": "Refreshing suggestions",
       "run-query-hint": "Run a query to start seeing suggested visualizations",
       "start-without-data-description": "Add panels that don't require a query",
       "start-without-data-title": "Start without data",

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useAsyncRetry } from 'react-use';
+import { useAsyncRetry, useMeasure } from 'react-use';
 
 import {
   type GrafanaTheme2,
@@ -12,7 +12,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
-import { Alert, Button, EmptySearchResult, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, EmptySearchResult, Icon, LoadingBar, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
@@ -68,6 +68,7 @@ const useSuggestions = (data: PanelData | undefined, searchQuery: string | undef
 
 export function VisualizationSuggestions({ onChange, data, panel, searchQuery, isNewPanel }: Props) {
   const styles = useStyles2(getStyles);
+  const [containerRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
   const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
 
@@ -167,7 +168,11 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggestions, firstCardHash, isUnconfiguredPanel]);
 
-  if (loading || !data) {
+  // Only show the full-screen spinner on the first load. On subsequent refetches
+  // (e.g. panel auto-refresh) we keep the existing grid mounted so the user's
+  // scroll position is preserved while suggestions recompute in place.
+  const isInitialLoading = (loading && !result) || !data;
+  if (isInitialLoading) {
     return (
       <div className={styles.loadingContainer}>
         <Spinner size="xxl" />
@@ -200,7 +205,15 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
   }
 
   return (
-    <>
+    <div ref={containerRef} className={styles.suggestionsContainer}>
+      {loading && (
+        <div className={styles.loadingBar}>
+          <LoadingBar
+            width={containerWidth || 200}
+            ariaLabel={t('panel.visualization-suggestions.refreshing', 'Refreshing suggestions')}
+          />
+        </div>
+      )}
       {hasLoadingErrors && (
         <Alert severity="warning" title={''}>
           <div className={styles.alertContent}>
@@ -223,7 +236,7 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
         getItemKey={(item) => item.hash}
         selectedKey={firstCardHash ?? undefined}
       />
-    </>
+    </div>
   );
 }
 
@@ -294,6 +307,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       width: '100%',
       marginTop: theme.spacing(6),
+    }),
+    suggestionsContainer: css({
+      position: 'relative',
+    }),
+    // Overlay the loading bar at the top so an in-place refresh doesn't shift
+    // layout or reset the user's scroll position.
+    loadingBar: css({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1,
     }),
     alertContent: css({
       display: 'flex',

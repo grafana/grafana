@@ -200,6 +200,79 @@ describe('VisualizationSuggestions', () => {
     });
   });
 
+  it('should keep the existing grid mounted while refetching after a structure change', async () => {
+    const initialData: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    const { rerender } = render(
+      <VisualizationSuggestions
+        onChange={jest.fn()}
+        data={initialData}
+        panel={undefined}
+        searchQuery=""
+        isNewPanel={false}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('suggestion-card-test-hash')).toBeInTheDocument();
+    });
+
+    const callCountBeforeChange = mockGetAllSuggestions.mock.calls.length;
+
+    // Keep the next fetch pending so the component stays in the loading state.
+    mockGetAllSuggestions.mockReturnValueOnce(new Promise(() => {}));
+
+    const structureChangedData: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+            { name: 'newField', type: FieldType.string, values: ['a', 'b', 'c'] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 2,
+    };
+
+    rerender(
+      <VisualizationSuggestions
+        onChange={jest.fn()}
+        data={structureChangedData}
+        panel={undefined}
+        searchQuery=""
+        isNewPanel={false}
+      />
+    );
+
+    // Wait for the refetch to actually fire (consuming the pending mock) so the
+    // component is in its in-place loading state.
+    await waitFor(() => {
+      expect(mockGetAllSuggestions.mock.calls.length).toBeGreaterThan(callCountBeforeChange);
+    });
+
+    // The loading bar appears to signal the in-place refresh...
+    expect(screen.getByLabelText('Refreshing suggestions')).toBeInTheDocument();
+
+    // ...and the previously rendered grid stays mounted instead of being
+    // replaced by a full-screen spinner (which would reset scroll position).
+    expect(screen.getByTestId('suggestion-card-test-hash')).toBeInTheDocument();
+  });
+
   it('should call onChange for new panels (unconfigured)', async () => {
     const mockOnChange = jest.fn();
     const unconfiguredPanel = { type: UNCONFIGURED_PANEL_PLUGIN_ID } as PanelModel;
