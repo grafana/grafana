@@ -2447,7 +2447,8 @@
       "metadata": {
         "name": "grafana.meticulousAIRecorder",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-25T15:12:55Z"
       },
       "spec": {
         "description": "Enable Meticulous AI session recorder for automated UI test generation",
@@ -2461,7 +2462,8 @@
       "metadata": {
         "name": "grafana.meticulousAIRecorderHighVolume",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-25T15:12:55Z"
       },
       "spec": {
         "description": "When true, increases the volume of data transferred before abandoning sessions for Meticulous AI session recorder.",
