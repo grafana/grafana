@@ -89,7 +89,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration)"
-          go test -run='^$' "${PACKAGES[@]}"
+          go test -vet=off -run='^$' "${PACKAGES[@]}"
 
   compile-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -136,7 +136,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration)"
-          go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
 
   #### OSS
   sqlite:
@@ -179,7 +179,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -vet=off -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql:
     # Run this workflow only for PRs from forks
@@ -188,12 +188,10 @@ jobs:
     strategy:
       matrix:
         shard: [
-           1/24,  2/24,  3/24,  4/24,
-           5/24,  6/24,  7/24,  8/24,
-           9/24, 10/24, 11/24, 12/24,
-          13/24, 14/24, 15/24, 16/24,
-          17/24, 18/24, 19/24, 20/24,
-          21/24, 22/24, 23/24, 24/24,
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
         ]
       fail-fast: false
 
@@ -212,7 +210,7 @@ jobs:
           MYSQL_DATABASE: grafana_tests
           MYSQL_USER: grafana
           MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3 --tmpfs /var/lib/mysql
         ports:
           - 3306:3306
     steps:
@@ -240,7 +238,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -249,12 +247,10 @@ jobs:
     strategy:
       matrix:
         shard: [
-           1/24,  2/24,  3/24,  4/24,
-           5/24,  6/24,  7/24,  8/24,
-           9/24, 10/24, 11/24, 12/24,
-          13/24, 14/24, 15/24, 16/24,
-          17/24, 18/24, 19/24, 20/24,
-          21/24, 22/24, 23/24, 24/24,
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
         ]
       fail-fast: false
 
@@ -294,7 +290,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -308,12 +304,10 @@ jobs:
     strategy:
       matrix:
         shard: [
-           1/24,  2/24,  3/24,  4/24,
-           5/24,  6/24,  7/24,  8/24,
-           9/24, 10/24, 11/24, 12/24,
-          13/24, 14/24, 15/24, 16/24,
-          17/24, 18/24, 19/24, 20/24,
-          21/24, 22/24, 23/24, 24/24,
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
         ]
       fail-fast: false
 
@@ -357,7 +351,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -366,12 +360,10 @@ jobs:
     strategy:
       matrix:
         shard: [
-           1/24,  2/24,  3/24,  4/24,
-           5/24,  6/24,  7/24,  8/24,
-           9/24, 10/24, 11/24, 12/24,
-          13/24, 14/24, 15/24, 16/24,
-          17/24, 18/24, 19/24, 20/24,
-          21/24, 22/24, 23/24, 24/24,
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
         ]
       fail-fast: false
 
@@ -391,7 +383,7 @@ jobs:
           MYSQL_DATABASE: grafana_tests
           MYSQL_USER: grafana
           MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3 --tmpfs /var/lib/mysql
         ports:
           - 3306:3306
     steps:
@@ -430,7 +422,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -439,12 +431,10 @@ jobs:
     strategy:
       matrix:
         shard: [
-           1/24,  2/24,  3/24,  4/24,
-           5/24,  6/24,  7/24,  8/24,
-           9/24, 10/24, 11/24, 12/24,
-          13/24, 14/24, 15/24, 16/24,
-          17/24, 18/24, 19/24, 20/24,
-          21/24, 22/24, 23/24, 24/24,
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
         ]
       fail-fast: false
 
@@ -496,7 +486,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
