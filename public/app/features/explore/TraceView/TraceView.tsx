@@ -94,6 +94,7 @@ export function TraceView(props: Props) {
     detailReferencesToggle,
     detailReferenceItemToggle,
     detailTagsToggle,
+    detailSummaryAttributesToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
   } = useDetailState(props.dataFrames[0]);
@@ -233,6 +234,7 @@ export function TraceView(props: Props) {
             detailReferenceItemToggle={detailReferenceItemToggle}
             detailProcessToggle={detailProcessToggle}
             detailTagsToggle={detailTagsToggle}
+            detailSummaryAttributesToggle={detailSummaryAttributesToggle}
             detailToggle={toggleDetail}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}

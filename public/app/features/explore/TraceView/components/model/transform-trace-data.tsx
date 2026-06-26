@@ -36,7 +36,7 @@ function asTagArray(tags: unknown): TraceKeyValuePair[] {
   return Array.isArray(tags) ? tags : [];
 }
 
-const AGGREGATION_PREFIX = 'aggregation.';
+export const AGGREGATION_PREFIX = 'aggregation.';
 
 /**
  * Detect a pruned (summary / preserved-outlier) span from its `aggregation.*` tags and
