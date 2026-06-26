@@ -3042,7 +3042,7 @@ __metadata:
     react-router-dom-v5-compat: "npm:^6.26.1"
     react-select: "npm:^5.10.2"
     react-select-event: "npm:^5.1.0"
-    react-table: "npm:7.8.0"
+    react-table: "npm:^7.8.0"
     react-transition-group: "npm:4.4.5"
     react-use: "npm:17.6.1"
     react-window: "npm:1.8.11"
@@ -27960,7 +27960,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-table@npm:7.8.0":
+"react-table@npm:7.8.0, react-table@npm:^7.8.0":
   version: 7.8.0
   resolution: "react-table@npm:7.8.0"
   peerDependencies:
