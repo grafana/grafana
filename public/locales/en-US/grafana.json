@@ -8661,6 +8661,7 @@
       "label-resource-attributes": "Resource attributes",
       "label-span-attributes": "Span attributes",
       "label-stack-trace": "Stack trace",
+      "label-summary-attributes": "Summary attributes",
       "label-warnings": "Warnings",
       "overview-items": {
         "label": {

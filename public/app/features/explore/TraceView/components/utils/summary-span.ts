@@ -1,8 +1,31 @@
+import { type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
+import { AGGREGATION_PREFIX } from '../constants/aggregation';
 import { type SpanAggregation } from '../types/trace';
 
 import { formatDuration } from './date';
+
+/**
+ * Split a span's tags into the raw `aggregation.*` tags written by span pruning and
+ * everything else, preserving original order within each group. Lets SpanDetail keep
+ * `aggregation.*` tags out of the regular attribute list and present them separately.
+ */
+export function partitionAggregationTags(tags: TraceKeyValuePair[]): {
+  aggregationTags: TraceKeyValuePair[];
+  otherTags: TraceKeyValuePair[];
+} {
+  const aggregationTags: TraceKeyValuePair[] = [];
+  const otherTags: TraceKeyValuePair[] = [];
+  for (const tag of tags) {
+    if (typeof tag.key === 'string' && tag.key.startsWith(AGGREGATION_PREFIX)) {
+      aggregationTags.push(tag);
+    } else {
+      otherTags.push(tag);
+    }
+  }
+  return { aggregationTags, otherTags };
+}
 
 export interface SummaryDurationStat {
   label: string;
