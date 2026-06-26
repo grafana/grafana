@@ -18,6 +18,9 @@ import { useNavCustomization } from './hooks';
 
 export const MENU_WIDTH = '300px';
 
+// id on the unpinned-items list so the collapse toggle can reference it via aria-controls.
+const UNPINNED_ITEMS_ID = 'megamenu-unpinned-items';
+
 export interface Props extends DOMAttributes {
   onClose: () => void;
 }
@@ -35,14 +38,14 @@ export const MegaMenu = memo(
       isLoading,
       navItems,
       homeItem,
-      otherItems,
+      unpinnedItems,
       pinnedNavItems,
       activeItem,
       isPinned,
       onPinItem,
-      othersCollapsible,
-      showOtherItems,
-      setOthersExpanded,
+      unpinnedCollapsible,
+      showUnpinnedItems,
+      setUnpinnedExpanded,
     } = useNavCustomization();
 
     const handleDockedMenu = () => {
@@ -79,10 +82,16 @@ export const MegaMenu = memo(
                 {pinnedNavItems.map((link) => renderNavItem(link, `pinned-${link.id ?? link.url}`, true))}
               </ul>
             </li>
-            {showOtherItems && <li className={styles.divider} aria-hidden="true" />}
+            {showUnpinnedItems && <li className={styles.divider} aria-hidden="true" />}
           </>
         )}
-        {showOtherItems && otherItems.map((link) => renderNavItem(link))}
+        {showUnpinnedItems && (
+          <li>
+            <ul id={UNPINNED_ITEMS_ID} className={styles.pinnedList}>
+              {unpinnedItems.map((link) => renderNavItem(link))}
+            </ul>
+          </li>
+        )}
       </>
     );
 
@@ -110,16 +119,17 @@ export const MegaMenu = memo(
               </>
             </ScrollContainer>
           </div>
-          {othersCollapsible && (
+          {unpinnedCollapsible && (
             <button
               type="button"
-              className={styles.othersToggle}
-              onClick={() => setOthersExpanded(!showOtherItems)}
-              aria-expanded={showOtherItems}
+              className={styles.unpinnedToggle}
+              onClick={() => setUnpinnedExpanded(!showUnpinnedItems)}
+              aria-expanded={showUnpinnedItems}
+              aria-controls={UNPINNED_ITEMS_ID}
             >
-              <Icon name={showOtherItems ? 'angle-up' : 'angle-down'} size="lg" />
+              <Icon name={showUnpinnedItems ? 'angle-up' : 'angle-down'} size="lg" />
               <Text color="secondary">
-                {showOtherItems
+                {showUnpinnedItems
                   ? t('navigation.megamenu.hide-unpinned-items', 'Hide unpinned items')
                   : t('navigation.megamenu.show-unpinned-items', 'Show unpinned items')}
               </Text>
@@ -169,7 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
     }),
     // Pinned to the bottom of the menu as a footer, with a divider separating it from the list.
-    othersToggle: css({
+    unpinnedToggle: css({
       alignItems: 'center',
       background: 'none',
       border: 'none',

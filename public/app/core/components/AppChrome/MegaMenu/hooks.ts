@@ -10,9 +10,11 @@ import {
 } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
 import { type NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -65,15 +67,19 @@ export const useNavCustomization = () => {
   const [patchPreferences] = usePatchUserPreferencesMutation();
   const [patchPreferencesK8s] = useUpdatePreferencesMutation();
   const { pinnedItems, isLoading: pinnedLoading } = usePinnedItems();
+  const notifyApp = useAppNotification();
 
   // Persist the bookmark urls via the app-platform preferences API when the new-preferences flag is
-  // on, otherwise the legacy endpoint. TODO drop the legacy branch once newPrefsEnabled is rolled out.
+  // on, otherwise the legacy endpoint.
+  // TODO drop the legacy branch once newPrefsEnabled is fully rolled out.
   const persistBookmarkUrls = useCallback(
     (bookmarkUrls: string[], onSuccess?: () => void) => {
       const onResult = (result: { error?: unknown }) => {
-        if (!result.error) {
-          onSuccess?.();
+        if (result.error) {
+          notifyApp.error(t('navigation.megamenu.pin-error', 'Failed to update pinned menu items'));
+          return;
         }
+        onSuccess?.();
       };
       if (newPrefsEnabled) {
         patchPreferencesK8s({
@@ -84,7 +90,7 @@ export const useNavCustomization = () => {
         patchPreferences({ patchPrefsCmd: { navbar: { bookmarkUrls } } }).then(onResult);
       }
     },
-    [newPrefsEnabled, patchPreferences, patchPreferencesK8s]
+    [newPrefsEnabled, patchPreferences, patchPreferencesK8s, notifyApp]
   );
 
   const canCustomise = useBooleanFlagValue('grafana.customizableMegaMenu', false) && contextSrv.isSignedIn;
@@ -106,14 +112,17 @@ export const useNavCustomization = () => {
 
   // The non-pinned items collapse below the pinned block; reset that on the last unpin so re-pinning
   // later starts expanded rather than behind a stale collapse.
-  const [othersExpanded, setOthersExpanded] = useLocalStorage('grafana.navigation.megamenu.others-expanded', true);
+  const [unpinnedExpanded, setUnpinnedExpanded] = useLocalStorage(
+    'grafana.navigation.megamenu.unpinned-expanded',
+    true
+  );
   const hadPinnedItems = useRef(pinnedUrls.length > 0);
   useEffect(() => {
     if (hadPinnedItems.current && pinnedUrls.length === 0) {
-      setOthersExpanded(true);
+      setUnpinnedExpanded(true);
     }
     hadPinnedItems.current = pinnedUrls.length > 0;
-  }, [pinnedUrls.length, setOthersExpanded]);
+  }, [pinnedUrls.length, setUnpinnedExpanded]);
 
   // Base tree without the items the mega menu never lists directly. When customisation is on, the
   // dedicated Bookmarks section is also dropped — pinned items are re-presented at the top.
@@ -152,11 +161,11 @@ export const useNavCustomization = () => {
   }
 
   const homeItem = navItems.find((item) => item.id === 'home');
-  const otherItems = navItems.filter((item) => item.id !== 'home');
+  const unpinnedItems = navItems.filter((item) => item.id !== 'home');
 
   // The non-pinned items become collapsible once something is pinned.
-  const othersCollapsible = canCustomise && pinnedNavItems.length > 0;
-  const showOtherItems = !othersCollapsible || (othersExpanded ?? true);
+  const unpinnedCollapsible = canCustomise && pinnedNavItems.length > 0;
+  const showUnpinnedItems = !unpinnedCollapsible || (unpinnedExpanded ?? true);
 
   // Resolve the active item across the pinned rows and the rest in one search. A pinned section is
   // moved out of `navItems`, so searching `navItems` alone would fail to find it and walk up the
@@ -206,13 +215,13 @@ export const useNavCustomization = () => {
     isLoading,
     navItems,
     homeItem,
-    otherItems,
+    unpinnedItems,
     pinnedNavItems,
     activeItem,
     isPinned,
     onPinItem,
-    othersCollapsible,
-    showOtherItems,
-    setOthersExpanded,
+    unpinnedCollapsible,
+    showUnpinnedItems,
+    setUnpinnedExpanded,
   };
 };

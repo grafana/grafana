@@ -182,7 +182,9 @@ export function getPinnableLeafUrls(item: NavModelItem): string[] {
 
 /**
  * Expand a stored (canonical) pin set into the flat set of effective leaf urls — a stored section
- * url becomes all its pinnable leaves. Unknown/stale urls are kept as-is so they aren't lost.
+ * url becomes all its pinnable leaves. A stored url that no longer resolves to a nav item (e.g. the
+ * page was removed, a plugin uninstalled, or it's hidden by the current permissions/flags) is kept
+ * as-is so the pin isn't silently dropped, and re-resolves if the item comes back.
  */
 export function expandPinnedUrls(storedUrls: string[], items: NavModelItem[]): Set<string> {
   const leaves = new Set<string>();

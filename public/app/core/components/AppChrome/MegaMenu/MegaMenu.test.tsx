@@ -383,8 +383,15 @@ describe('MegaMenu', () => {
         // Expanded by default — other items are visible
         expect(await screen.findByRole('link', { name: 'Alerting' })).toBeInTheDocument();
 
+        // The toggle is wired to the unpinned list for a11y (aria-controls + aria-expanded)
+        const toggle = screen.getByRole('button', { name: 'Hide unpinned items' });
+        const controlledId = toggle.getAttribute('aria-controls');
+        expect(controlledId).toBeTruthy();
+        expect(toggle).toHaveAttribute('aria-expanded', 'true');
+        expect(document.getElementById(controlledId!)).toContainElement(screen.getByRole('link', { name: 'Alerting' }));
+
         // Collapse: the non-pinned items disappear but the pinned ones remain
-        await user.click(screen.getByRole('button', { name: 'Hide unpinned items' }));
+        await user.click(toggle);
         expect(screen.queryByRole('link', { name: 'Alerting' })).not.toBeInTheDocument();
         expect(
           within(screen.getByRole('list', { name: 'Pinned' })).getByRole('link', { name: 'Playlists' })

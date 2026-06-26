@@ -4,7 +4,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
+import { Icon, IconButton, Link, Stack, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
@@ -70,8 +70,8 @@ export function MegaMenuItemText({
       >
         {linkContent}
       </LinkComponent>
-      <div className={styles.actions}>
-        {showPin && contextSrv.isSignedIn && url && url !== '/bookmarks' && (
+      {showPin && contextSrv.isSignedIn && url && url !== '/bookmarks' && (
+        <Stack alignItems="center" gap={0} shrink={0}>
           <IconButton
             // No "unpin" icon exists, so the pinned/unpinned distinction is carried by the
             // tooltip and aria-pressed. iconType is a no-op for the custom gf- icon.
@@ -82,8 +82,8 @@ export function MegaMenuItemText({
             aria-pressed={isPinned}
             tooltip={pinTooltip}
           />
-        )}
-      </div>
+        </Stack>
+      )}
     </div>
   );
 }
@@ -105,11 +105,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
         visibility: 'visible',
       },
     },
-  }),
-  actions: css({
-    display: 'flex',
-    alignItems: 'center',
-    flexShrink: 0,
   }),
   wrapperActive: css({
     backgroundColor: theme.colors.action.selected,

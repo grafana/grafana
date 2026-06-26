@@ -12069,6 +12069,7 @@
       "hide-unpinned-items": "Hide unpinned items",
       "list-label": "Navigation",
       "open": "Main menu",
+      "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned",
       "show-unpinned-items": "Show unpinned items",
       "undock": "Undock menu"
