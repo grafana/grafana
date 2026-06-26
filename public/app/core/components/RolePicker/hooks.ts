@@ -19,6 +19,9 @@ export const useRoleOptions = (organizationId: number) => {
   return [{ roleOptions: value }, setOrgId] as const;
 };
 
+/**
+ * @lintignore Used by enterprise extensions that are excluded from Knip.
+ */
 export const useMultiOrgRoleOptions = (organizationIds: number[]) => {
   const orgIdsKey = Array.from(new Set(organizationIds))
     .sort((a, b) => a - b)
