@@ -21,6 +21,7 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "stateTimeline.nameAboveBars"
+    | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"

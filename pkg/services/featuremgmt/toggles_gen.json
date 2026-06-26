@@ -2636,6 +2636,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.secretsReferenceValueUI",
+        "resourceVersion": "1782512869856",
+        "creationTimestamp": "2026-06-26T22:27:49Z"
+      },
+      "spec": {
+        "description": "Enable referencing an existing secret in an active keeper when creating a secure value",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.starredFolders",
         "resourceVersion": "1781683112920",
         "creationTimestamp": "2026-06-17T07:58:32Z"
@@ -4942,6 +4956,21 @@
         "description": "Enable the secrets management app platform UI",
         "stage": "preview",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "secretsReferenceValueUI",
+        "resourceVersion": "1782488602777",
+        "creationTimestamp": "2026-06-26T15:43:22Z",
+        "deletionTimestamp": "2026-06-26T22:27:49Z"
+      },
+      "spec": {
+        "description": "Enable referencing an existing secret in an active keeper when creating a secure value",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
