@@ -154,4 +154,29 @@ describe('<SpanBar>', () => {
     expect(screen.getByText(shortLabel)).toBeInTheDocument();
     expect(screen.getByText(detailSpan)).toBeInTheDocument();
   });
+
+  // detailBeforeStats = viewStart > 1 - viewEnd, mirroring SpanBarRow's longLabel
+  // ordering: detail before the stats when the bar sits near the right edge,
+  // after them otherwise. Both cases exercise the flip so the duplicated
+  // condition cannot drift unnoticed.
+  const summaryStatsSpan = {
+    ...props.span,
+    aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMaxNs: 60_000_000 },
+  };
+
+  it('orders the detail before the stats when the bar sits near the right edge', async () => {
+    // viewStart (0.9) > 1 - viewEnd (0) -> detail before stats
+    render(<SpanBar {...({ ...props, viewStart: 0.9, viewEnd: 1, span: summaryStatsSpan } as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    const text = screen.getByTestId('SpanBar--label').textContent ?? '';
+    expect(text.indexOf(labelDetail)).toBeLessThan(text.indexOf(shortLabel));
+  });
+
+  it('orders the detail after the stats when the bar sits near the left edge', async () => {
+    // viewStart (0) <= 1 - viewEnd (0.8) -> detail after stats
+    render(<SpanBar {...({ ...props, viewStart: 0, viewEnd: 0.2, span: summaryStatsSpan } as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    const text = screen.getByTestId('SpanBar--label').textContent ?? '';
+    expect(text.indexOf(labelDetail)).toBeGreaterThan(text.indexOf(shortLabel));
+  });
 });

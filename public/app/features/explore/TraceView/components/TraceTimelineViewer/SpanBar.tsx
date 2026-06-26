@@ -179,8 +179,10 @@ function SpanBar({
   // a fixed stats label and reveal the service::operation detail as a sibling,
   // so the stats stay permanently visible. The detail goes before the stats
   // when the label sits left of the bar (bar near the right edge), after it
-  // otherwise, matching the long-label order used elsewhere.
+  // otherwise.
   const normalLabel = expanded ? longLabel : shortLabel;
+  // Mirrors the `viewStart > 1 - viewEnd` test that orders longLabel in
+  // SpanBarRow; keep the two in sync so detail/stats order matches longLabel.
   const detailBeforeStats = viewStart > 1 - viewEnd;
 
   // group logs based on timestamps
