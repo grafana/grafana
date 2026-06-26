@@ -121,10 +121,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/azuremonitor'),
     }),
     withAuth({
-      name: 'cloudmonitoring',
-      testDir: path.join(pluginDirRoot, '/cloudmonitoring'),
-    }),
-    withAuth({
       name: 'graphite',
       testDir: path.join(pluginDirRoot, '/graphite'),
     }),

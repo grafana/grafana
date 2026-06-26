@@ -1105,14 +1105,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.orgDashboardTemplates",
-			Description: "Enables org-defined dashboard templates for enterprise",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{Go: true, React: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "grafana.customDashboardTemplates",
 			Description: "Enables custom dashboard templates for enterprise",
 			Stage:       FeatureStageExperimental,
@@ -1630,14 +1622,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "newLogsPanel",
-			Description: "Enables the new logs panel",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "true",
-		},
-		{
 			Name:         "alertingJiraIntegration",
 			Description:  "Enables the new Jira integration for contact points in cloud alert managers.",
 			Stage:        FeatureStageExperimental,
@@ -2088,14 +2072,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newLogContext",
-			Description: "New Log Context component",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityLogsSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",
-		},
-		{
 			Name:        "newClickhouseConfigPageDesign",
 			Description: "Enables new design for the Clickhouse data source configuration page",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2397,14 +2373,6 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:        "multiPropsVariables",
-			Description: "Deprecated. Enables support for variables whose values can have multiple properties",
-			Stage:       FeatureStageDeprecated,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "dashboardSectionVariables",
 			Description: "Enables support for section level variables (rows and tabs)",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2659,15 +2627,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "frontendServiceUseSettingsService",
-			Description:  "Enables the frontend service to fetch tenant-specific settings overrides from the settings service",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "frontendService.settingsSourceFilter",
 			Description:  "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
 			Stage:        FeatureStageExperimental,
@@ -2795,7 +2754,7 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:         "plugins.useMTPluginSettings",

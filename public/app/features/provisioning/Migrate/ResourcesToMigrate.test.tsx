@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { resourceKindInfos } from '../utils/resourceKinds';
 
 import { ResourcesToMigrate } from './ResourcesToMigrate';
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow } from './hooks/useMigrationData';
 
 const folders: FolderRow[] = [
   {

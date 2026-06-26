@@ -9,8 +9,10 @@ import {
   getKindInfoByResource,
   getKindInfoByStat,
   getKindInfoByStatGroup,
+  getMigratableKinds,
   getRepositoryRoute,
   isResourceKindAvailable,
+  readImmediateParent,
 } from './resourceKinds';
 
 describe('resourceKinds registry', () => {
@@ -33,11 +35,24 @@ describe('resourceKinds registry', () => {
       resource: 'playlists',
       itemType: 'Playlist',
     });
+    expect(resourceKindInfos.librarypanel).toMatchObject({
+      group: 'dashboard.grafana.app',
+      kind: 'LibraryPanel',
+      resource: 'librarypanels',
+      itemType: 'LibraryPanel',
+    });
   });
 
   it('sources icons from the search package', () => {
     expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
     expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
+  });
+
+  it('every kind exposes a translated plural label and a list function', () => {
+    for (const info of Object.values(resourceKindInfos)) {
+      expect(info.pluralLabel()).toBeTruthy();
+      expect(typeof info.list).toBe('function');
+    }
   });
 });
 
@@ -46,6 +61,7 @@ describe('getKindInfoByResource', () => {
     expect(getKindInfoByResource('dashboards')).toBe(resourceKindInfos.dashboard);
     expect(getKindInfoByResource('folders')).toBe(resourceKindInfos.folder);
     expect(getKindInfoByResource('playlists')).toBe(resourceKindInfos.playlist);
+    expect(getKindInfoByResource('librarypanels')).toBe(resourceKindInfos.librarypanel);
   });
 
   it('returns undefined for unknown or missing resources', () => {
@@ -86,6 +102,12 @@ describe('getKindInfoByGroupKind', () => {
     expect(getKindInfoByGroupKind('folder.grafana.app', 'Folder')).toBe(resourceKindInfos.folder);
   });
 
+  it('disambiguates kinds that share an API group by the kind', () => {
+    // Dashboards and library panels both live in dashboard.grafana.app.
+    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'LibraryPanel')).toBe(resourceKindInfos.librarypanel);
+    expect(getKindInfoByGroupKind('dashboard.grafana.app', 'Dashboard')).toBe(resourceKindInfos.dashboard);
+  });
+
   it('resolves on whichever identifier is present', () => {
     expect(getKindInfoByGroupKind(undefined, 'Playlist')).toBe(resourceKindInfos.playlist);
     expect(getKindInfoByGroupKind('playlist.grafana.app', undefined)).toBe(resourceKindInfos.playlist);
@@ -111,6 +133,10 @@ describe('getKindInfoByStat', () => {
     // The resource uniquely identifies the kind, so it wins over a group that
     // would otherwise resolve to a different kind.
     expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'folders' })).toBe(resourceKindInfos.folder);
+    // Dashboards and library panels share dashboard.grafana.app; the resource tells them apart.
+    expect(getKindInfoByStat({ group: 'dashboard.grafana.app', resource: 'librarypanels' })).toBe(
+      resourceKindInfos.librarypanel
+    );
   });
 
   it('falls back to a group-only match when the resource is missing or unknown', () => {
@@ -153,6 +179,13 @@ describe('getRepositoryRoute', () => {
     expect(getRepositoryRoute(resourceKindInfos.playlist, makeRepo('instance'))).toBe('/playlists');
   });
 
+  it('routes library panels to their own collection page regardless of target', () => {
+    // Library panels live in folders but aren't browsable in the dashboards folder
+    // view, so they always resolve to /library-panels.
+    expect(getRepositoryRoute(resourceKindInfos.librarypanel, makeRepo('folder'))).toBe('/library-panels');
+    expect(getRepositoryRoute(resourceKindInfos.librarypanel, makeRepo('instance'))).toBe('/library-panels');
+  });
+
   it('falls back to the collection page when the repository name or spec is missing', () => {
     // No spec → not a folder target → collection page.
     expect(getRepositoryRoute(resourceKindInfos.dashboard, {})).toBe('/dashboards');
@@ -171,6 +204,7 @@ describe('getAvailableResourceKinds', () => {
       resourceKindInfos.folder,
       resourceKindInfos.dashboard,
       resourceKindInfos.playlist,
+      resourceKindInfos.librarypanel,
     ]);
   });
 
@@ -200,5 +234,57 @@ describe('getAvailableResourceKinds', () => {
     const equivalent = { ...resourceKindInfos.dashboard };
 
     expect(isResourceKindAvailable(equivalent, available)).toBe(true);
+  });
+});
+
+describe('readImmediateParent', () => {
+  it('treats a missing location as root (no parent)', () => {
+    // DashboardQueryResult.location is optional — a folderless dashboard yields
+    // undefined, which must not throw.
+    expect(readImmediateParent(undefined)).toBeUndefined();
+  });
+
+  it('treats empty and the literal "general" UID as root', () => {
+    expect(readImmediateParent('')).toBeUndefined();
+    expect(readImmediateParent('   ')).toBeUndefined();
+    expect(readImmediateParent('general')).toBeUndefined();
+  });
+
+  it('returns the trimmed parent folder UID otherwise', () => {
+    expect(readImmediateParent(' team-a ')).toBe('team-a');
+  });
+});
+
+describe('getMigratableKinds', () => {
+  it('returns only the always-available base (dashboards) when availableResources is unset', () => {
+    // Folders are excluded (the container others nest under); playlists and
+    // library panels are gated and not in the static base.
+    expect(getMigratableKinds(undefined).map((k) => k.kind)).toEqual(['Dashboard']);
+  });
+
+  it('adds a kind once the backend reports it available', () => {
+    const kinds = getMigratableKinds([
+      { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+      { group: 'playlist.grafana.app', kind: 'Playlist' },
+    ]);
+    expect(kinds.map((k) => k.kind).sort()).toEqual(['Dashboard', 'Playlist']);
+  });
+
+  it('never includes folders, even when available', () => {
+    const kinds = getMigratableKinds([{ group: 'folder.grafana.app', kind: 'Folder' }]);
+    expect(kinds.some((k) => k.kind === 'Folder')).toBe(false);
+  });
+
+  it('honors the backend set once loaded — even dashboards are dropped when disabled or omitted', () => {
+    // Once availableResources is populated it is authoritative for every kind,
+    // including the otherwise always-available base, so an overridden
+    // [provisioning] resources config that disables or omits dashboards excludes
+    // them from the migrate UI.
+    expect(
+      getMigratableKinds([{ group: 'dashboard.grafana.app', kind: 'Dashboard', disabled: true }]).map((k) => k.kind)
+    ).toEqual([]);
+    expect(getMigratableKinds([{ group: 'playlist.grafana.app', kind: 'Playlist' }]).map((k) => k.kind)).toEqual([
+      'Playlist',
+    ]);
   });
 });

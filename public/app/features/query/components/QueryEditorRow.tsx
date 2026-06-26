@@ -14,6 +14,7 @@ import {
   LoadingState,
   type PanelData,
   type QueryResultMetaNotice,
+  type ScopedVars,
   type TimeRange,
   getDataSourceRef,
   PluginExtensionPoints,
@@ -75,6 +76,10 @@ export interface Props<TQuery extends DataQuery> {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  /**
+   * Required to resolve section-scoped (row/tab) datasource variables
+   */
+  scopedVars?: ScopedVars;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -115,7 +120,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
    */
   getInterpolatedDataSourceUID(): string | undefined {
     if (this.props.query.datasource) {
-      const instanceSettings = this.dataSourceSrv.getInstanceSettings(this.props.query.datasource);
+      const instanceSettings = this.dataSourceSrv.getInstanceSettings(
+        this.props.query.datasource,
+        this.props.scopedVars
+      );
       return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
     }
 
