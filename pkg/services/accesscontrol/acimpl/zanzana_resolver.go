@@ -577,6 +577,11 @@ var (
 // the bound just caps memory and tolerates the rare deleted-then-absent UID.
 const uidToIDCacheTTL = 1 * time.Hour
 
+// Bounds the detached singleflight fetch. The fetch runs on a context decoupled from any single
+// caller (see getObjectID), so without this a hung apiserver Get would block the flight—and every
+// follower waiting on it—indefinitely.
+const uidToIDFetchTimeout = 10 * time.Second
+
 type uidToIDResolver struct {
 	mu             sync.RWMutex
 	clients        map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface
@@ -635,13 +640,18 @@ func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.Namespac
 		return v.(int64), nil
 	}
 
-	v, err, _ := r.sf.Do(key, func() (any, error) {
+	ch := r.sf.DoChan(key, func() (any, error) {
 		// Re-check under the flight: a concurrent resolution may have populated the cache
 		// while we were waiting for the singleflight slot.
 		if v, ok := r.cache.Get(key); ok {
 			return v.(int64), nil
 		}
-		id, err := r.fetchObjectID(ctx, nsInfo, gvr, name)
+		// Detach from the caller's context so one caller cancelling (request timeout, client
+		// disconnect) does not fail the shared fetch for every other caller on this flight.
+		// A bounded timeout still prevents a hung Get from blocking the flight forever.
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), uidToIDFetchTimeout)
+		defer cancel()
+		id, err := r.fetchObjectID(fetchCtx, nsInfo, gvr, name)
 		if err != nil {
 			return 0, err
 		}
@@ -649,10 +659,18 @@ func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.Namespac
 		r.cache.Set(key, id, uidToIDCacheTTL)
 		return id, nil
 	})
-	if err != nil {
-		return 0, err
+
+	// Wait on this caller's own context so a cancelled caller returns promptly while the
+	// shared fetch continues for everyone else.
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	case res := <-ch:
+		if res.Err != nil {
+			return 0, res.Err
+		}
+		return res.Val.(int64), nil
 	}
-	return v.(int64), nil
 }
 
 func (r *uidToIDResolver) fetchObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {

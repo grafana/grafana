@@ -137,6 +137,40 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 		require.Equal(t, int64(3), atomic.LoadInt64(getCount), "each distinct key resolves exactly once")
 	})
 
+	t.Run("a caller cancelling does not fail the others sharing the flight", func(t *testing.T) {
+		r, getCount := newCountingResolver(t, 100*time.Millisecond, iamObject(userGVR.GroupVersion().WithKind("User"), ns.Value, "user-uid", 7))
+
+		const survivors = 5
+		var wg sync.WaitGroup
+
+		// One caller cancels mid-flight; it must observe its own cancellation.
+		cancelCtx, cancel := context.WithCancel(context.Background())
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, err := r.GetUserIDByUID(cancelCtx, ns, "user-uid")
+			require.ErrorIs(t, err, context.Canceled)
+		}()
+
+		// The rest share the same flight and must still resolve successfully.
+		wg.Add(survivors)
+		for i := 0; i < survivors; i++ {
+			go func() {
+				defer wg.Done()
+				id, err := r.GetUserIDByUID(context.Background(), ns, "user-uid")
+				require.NoError(t, err)
+				require.Equal(t, int64(7), id)
+			}()
+		}
+
+		// Cancel well before the 100ms Get completes so the cancelled caller is still in flight.
+		time.Sleep(20 * time.Millisecond)
+		cancel()
+		wg.Wait()
+
+		require.Equal(t, int64(1), atomic.LoadInt64(getCount), "the shared fetch should run once despite one caller cancelling")
+	})
+
 	t.Run("failed resolves are not cached", func(t *testing.T) {
 		// No objects: every Get is a not-found error, so nothing should be cached.
 		r, getCount := newCountingResolver(t, 0)
