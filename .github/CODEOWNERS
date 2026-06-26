@@ -886,7 +886,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/grafana-catalog
 /public/app/core/navigation/ @grafana/grafana-frontend-navigation
-/public/app/core/profiler.ts @grafana/dashboards-squad
 /public/app/core/journeys/ @grafana/dashboards-squad
 /scripts/cuj-new.ts @grafana/dashboards-squad
 /scripts/cuj-smoke.ts @grafana/dashboards-squad
