@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -76,6 +78,9 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
+		if k8serrors.IsForbidden(err) {
+			return response.Error(http.StatusForbidden, "Access denied to user", err)
+		}
 		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
@@ -117,6 +122,9 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
+		}
+		if k8serrors.IsForbidden(err) {
+			return response.Error(http.StatusForbidden, "Access denied to user", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
