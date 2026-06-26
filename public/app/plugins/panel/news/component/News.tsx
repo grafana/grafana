@@ -3,6 +3,7 @@ import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { type DataFrameView, type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 
@@ -17,7 +18,8 @@ interface NewsItemProps {
 
 function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
   const titleId = useId();
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const useWideLayout = width > 600;
   const newsItem = data.get(index);
 
@@ -79,7 +81,7 @@ const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'width' | 'showImage'>
 
 export const News = attachSkeleton(NewsComponent, NewsSkeleton);
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
   container: css({
     height: '100%',
   }),
@@ -90,7 +92,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(0.5),
     marginRight: theme.spacing(1),
     borderBottom: `2px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.primary,
+    background: visualRefreshEnabled ? theme.components.panel.contentBackground : theme.colors.background.primary,
     flexDirection: 'column',
     flexShrink: 0,
   }),

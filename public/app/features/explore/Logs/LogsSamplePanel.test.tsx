@@ -14,26 +14,42 @@ import { type DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';
 
-const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
-
-const setBooleanFlags = (flags: Record<string, boolean>) => {
-  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
-    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
-  });
-};
-
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
-}));
-
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+    getDataSourceSrv: () => ({
+      get: () => Promise.resolve(null),
+    }),
   };
 });
+
+jest.mock('re-resizable', () => {
+  const React = require('react');
+  return {
+    Resizable: ({ children, size }: { children: React.ReactNode; size?: { width?: number; height?: number } }) =>
+      React.createElement(
+        'div',
+        {
+          'data-testid': 'resizable-mock',
+          style: {
+            width: size?.width ?? 220,
+            minWidth: 220,
+            flexShrink: 0,
+            height: size?.height ?? 400,
+            position: 'relative',
+          },
+        },
+        children
+      ),
+  };
+});
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (_flag: string, defaultValue: boolean) => defaultValue,
+}));
 
 const createProps = (propOverrides?: Partial<ComponentProps<typeof LogsSamplePanel>>) => {
   const props = {
@@ -52,6 +68,7 @@ const createProps = (propOverrides?: Partial<ComponentProps<typeof LogsSamplePan
 
 const emptyDataFrame = createDataFrame({ fields: [] });
 const sampleDataFrame = createDataFrame({
+  refId: 'A',
   meta: {
     custom: { frameType: 'LabeledTimeValues' },
   },
@@ -77,6 +94,7 @@ const sampleDataFrame = createDataFrame({
   ],
 });
 const sampleDataFrame2 = createDataFrame({
+  refId: 'B',
   meta: {
     custom: { frameType: 'LabeledTimeValues' },
   },
@@ -103,8 +121,12 @@ const sampleDataFrame2 = createDataFrame({
 });
 
 describe('LogsSamplePanel', () => {
-  beforeEach(() => {
-    setBooleanFlags({ newLogsPanel: false });
+  beforeAll(() => {
+    global.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   });
 
   it('shows empty panel if no data', () => {
@@ -129,50 +151,46 @@ describe('LogsSamplePanel', () => {
     expect(screen.getByText('No logs sample data.')).toBeInTheDocument();
   });
 
-  it('shows logs sample data', () => {
+  it('shows logs sample data', async () => {
     render(
       <LogsSamplePanel {...createProps({ queryResponse: { data: [sampleDataFrame], state: LoadingState.Done } })} />
     );
-    expect(screen.getByText('2022-02-22 04:28:11.352')).toBeInTheDocument();
+    expect(await screen.findByText('2022-02-22 04:28:11.352')).toBeInTheDocument();
     expect(screen.getByText('line1')).toBeInTheDocument();
     expect(screen.getByText('2022-02-22 09:42:50.991')).toBeInTheDocument();
     expect(screen.getByText('line2')).toBeInTheDocument();
   });
 
-  it('shows logs sample data with multiple frames', () => {
+  it('shows logs sample data with multiple frames', async () => {
     render(
       <LogsSamplePanel
         {...createProps({ queryResponse: { data: [sampleDataFrame, sampleDataFrame2], state: LoadingState.Done } })}
       />
     );
-    expect(screen.getByText('2022-02-22 04:28:11.352')).toBeInTheDocument();
+    expect(await screen.findByText('2022-02-22 04:28:11.352')).toBeInTheDocument();
     expect(screen.getByText('line1')).toBeInTheDocument();
     expect(screen.getByText('2022-02-22 09:42:50.991')).toBeInTheDocument();
-    expect(screen.getByText('line2')).toBeInTheDocument();
+    expect(await screen.findByText('line2')).toBeInTheDocument();
 
-    expect(screen.getByText('2023-02-22 04:28:11.352')).toBeInTheDocument();
-    expect(screen.getByText('line3')).toBeInTheDocument();
-    expect(screen.getByText('2023-02-22 09:42:50.991')).toBeInTheDocument();
-    expect(screen.getByText('line4')).toBeInTheDocument();
+    expect(await screen.findByText('line3')).toBeInTheDocument();
+    expect(await screen.findByText('line4')).toBeInTheDocument();
   });
 
-  it('shows logs sample data with multiple frames and first frame empty', () => {
+  it('shows logs sample data with multiple frames and first frame empty', async () => {
     render(
       <LogsSamplePanel
         {...createProps({ queryResponse: { data: [emptyDataFrame, sampleDataFrame2], state: LoadingState.Done } })}
       />
     );
-    expect(screen.getByText('2023-02-22 04:28:11.352')).toBeInTheDocument();
-    expect(screen.getByText('line3')).toBeInTheDocument();
-    expect(screen.getByText('2023-02-22 09:42:50.991')).toBeInTheDocument();
-    expect(screen.getByText('line4')).toBeInTheDocument();
+    expect(await screen.findByText('line3')).toBeInTheDocument();
+    expect(await screen.findByText('line4')).toBeInTheDocument();
   });
 
   it('shows log details', async () => {
     render(
       <LogsSamplePanel {...createProps({ queryResponse: { data: [sampleDataFrame], state: LoadingState.Done } })} />
     );
-    const line = screen.getByText('line1');
+    const line = await screen.findByText('line1');
     expect(screen.queryByText('foo')).not.toBeInTheDocument();
     await userEvent.click(line);
     expect(await screen.findByText('Fields')).toBeInTheDocument();
