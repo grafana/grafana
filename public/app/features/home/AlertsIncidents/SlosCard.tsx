@@ -2,67 +2,115 @@ import Skeleton from 'react-loading-skeleton';
 import { useAsyncRetry } from 'react-use';
 
 import { t, Trans } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
+import { sloApi, type Slo } from 'app/features/alerting/unified/api/sloApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HomeDataCard } from './HomeDataCard';
-import { InsightRow } from './overviewShared';
+import { InsightRow, runInstantQueriesForDataSourceUids } from './overviewShared';
 
-interface SloStatus {
-  availabilityPercent?: number;
-  errorBudgetRemainingPercent?: number;
-  burning?: boolean;
-}
-
-interface SloEntry {
-  status?: SloStatus;
-}
+const SLO_OVERVIEW_QUERIES: Record<string, string> = {
+  aboveTarget1d: `count(
+  (
+    sum by (grafana_slo_uuid) (sum_over_time((grafana_slo_success_rate_5m < +Inf)[1d:5m]))
+    / sum by (grafana_slo_uuid) (sum_over_time((grafana_slo_total_rate_5m < +Inf)[1d:5m]))
+    or avg by (grafana_slo_uuid) (grafana_slo_sli_1d)
+  )
+  > on(grafana_slo_uuid) max by (grafana_slo_uuid) (grafana_slo_objective)
+) OR on() vector(0)`,
+  recording: 'count(count by (grafana_slo_uuid)(grafana_slo_sli_5m)) OR on() vector(0)',
+  sliSeries: 'count({__name__=~"grafana_slo_.*", grafana_slo_uuid!=""}) OR on() vector(0)',
+};
 
 export interface SlosOverview {
-  availability: number;
-  errorBudgetPct: number;
-  atRisk: number;
-  total: number;
+  defined: number;
+  aboveTarget1d: number;
+  recording: number;
+  sliSeries: number;
 }
 
-/**
- * Resolve worst-case availability / error-budget and the at-risk count across the org's SLOs from the
- * grafana-slo-app plugin's resource API.
- *
- * UNVERIFIED — confirm against a live grafana-slo-app: the plugin is not installed in this env, so the
- * resource path `/api/plugins/grafana-slo-app/resources/v1/slo` and the
- * `status.{availabilityPercent,errorBudgetRemainingPercent,burning}` fields are best-known shapes. On a
- * live instance, confirm the path and remap only the three derived numbers — the card UI stays the same.
- */
-export async function fetchSlos(): Promise<SlosOverview> {
-  const res = await getBackendSrv().get<{ slos?: SloEntry[]; data?: SloEntry[] }>(
-    '/api/plugins/grafana-slo-app/resources/v1/slo'
+function getDefaultPrometheusDatasourceUid(): string {
+  const list = getDataSourceSrv().getList({ type: 'prometheus' });
+  const ds = list.find((d) => d.isDefault) ?? list[0];
+  if (!ds) {
+    throw new Error('No prometheus datasource configured');
+  }
+  return ds.uid;
+}
+
+export function getSloDatasourceUids(slos: Slo[]): string[] {
+  const explicitUids = slos.flatMap((slo) => (slo.destinationDatasource?.uid ? [slo.destinationDatasource.uid] : []));
+  const hasSloWithoutDatasource = slos.some((slo) => !slo.destinationDatasource?.uid);
+  return Array.from(
+    new Set(hasSloWithoutDatasource ? [...explicitUids, getDefaultPrometheusDatasourceUid()] : explicitUids)
   );
-  const slos = res?.slos ?? res?.data ?? [];
-  const statuses = slos.map((s) => s.status).filter((s): s is SloStatus => s != null);
-  const availability = statuses.length ? Math.min(...statuses.map((s) => s.availabilityPercent ?? 100)) : 100;
-  const errorBudgetPct = statuses.length ? Math.min(...statuses.map((s) => s.errorBudgetRemainingPercent ?? 100)) : 100;
-  const atRisk = statuses.filter((s) => s.burning).length;
-  return { availability, errorBudgetPct, atRisk, total: slos.length };
+}
+
+export async function fetchSloOverview(slos: Slo[]): Promise<SlosOverview> {
+  if (slos.length === 0) {
+    return { defined: 0, aboveTarget1d: 0, recording: 0, sliSeries: 0 };
+  }
+
+  const datasourceUids = getSloDatasourceUids(slos);
+  const metrics = await runInstantQueriesForDataSourceUids(datasourceUids, SLO_OVERVIEW_QUERIES);
+
+  return {
+    defined: slos.length,
+    aboveTarget1d: metrics.aboveTarget1d ?? 0,
+    recording: metrics.recording ?? 0,
+    sliSeries: metrics.sliSeries ?? 0,
+  };
 }
 
 export function SlosCard() {
-  const { value, loading, error, retry } = useAsyncRetry(fetchSlos, []);
+  const {
+    data,
+    isLoading: slosLoading,
+    error: slosError,
+    refetch,
+  } = sloApi.endpoints.getSlos.useQuery(undefined, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  });
+  const slos = data?.slos;
+  const {
+    value,
+    loading: overviewLoading,
+    error: overviewError,
+    retry,
+  } = useAsyncRetry(async () => {
+    if (!slos) {
+      return null;
+    }
 
-  const statusPill = !value ? undefined : value.atRisk === 0 ? (
-    <Badge color="green" text={t('home.slos-card.healthy', 'Healthy')} />
-  ) : (
-    <Badge
-      color="orange"
-      text={t('home.slos-card.at-risk-badge', '', {
-        count: value.atRisk,
-        defaultValue_one: '{{count}} at risk',
-        defaultValue_other: '{{count}} at risk',
-      })}
-    />
-  );
+    return fetchSloOverview(slos);
+  }, [slos]);
+
+  const loading = slosLoading || (!!slos && overviewLoading);
+  const error = slosError || overviewError;
+  const retryAll = () => {
+    refetch();
+    retry();
+  };
+
+  const belowTarget = value ? Math.max(value.defined - value.aboveTarget1d, 0) : 0;
+
+  const statusPill =
+    !value || value.defined === 0 ? undefined : belowTarget === 0 ? (
+      <Badge color="green" text={t('home.slos-card.healthy', 'Healthy')} />
+    ) : (
+      <Badge
+        color="orange"
+        text={t('home.slos-card.below-target-badge', '', {
+          count: belowTarget,
+          defaultValue_one: '{{count}} below target',
+          defaultValue_other: '{{count}} below target',
+        })}
+      />
+    );
 
   return (
     <HomeDataCard
@@ -70,8 +118,8 @@ export function SlosCard() {
       headerActions={statusPill}
       loading={loading}
       loadingContent={<Skeleton height={96} />}
-      error={error ? { title: t('home.slos-card.error-title', 'Could not load SLOs'), onRetry: retry } : undefined}
-      isEmpty={!!value && value.total === 0}
+      error={error ? { title: t('home.slos-card.error-title', 'Could not load SLOs'), onRetry: retryAll } : undefined}
+      isEmpty={!!value && value.defined === 0}
       emptyMessage={t('home.slos-card.empty', 'No SLOs defined.')}
       footer={
         <LinkButton
@@ -87,21 +135,25 @@ export function SlosCard() {
       {value && (
         <Stack direction="column" gap={2} grow={1}>
           <Stack direction="column" gap={0}>
-            <Text variant="h2">{`${value.availability.toFixed(2)}%`}</Text>
-            <Text color="secondary">{t('home.slos-card.window', '30-day availability')}</Text>
+            <Text variant="h2">{value.defined.toLocaleString()}</Text>
+            <Text color="secondary">{t('home.slos-card.defined', 'SLOs defined')}</Text>
           </Stack>
 
           <Stack direction="column" gap={0}>
-            <InsightRow severity={value.errorBudgetPct > 0 ? 'success' : 'error'}>
-              {t('home.slos-card.budget', 'Error budget {{pct}}% remaining', { pct: value.errorBudgetPct.toFixed(0) })}
+            <InsightRow severity={belowTarget === 0 ? 'success' : 'warning'}>
+              {t('home.slos-card.above-target', '{{value}} above target (1 day)', {
+                value: value.aboveTarget1d.toLocaleString(),
+              })}
             </InsightRow>
-            <InsightRow severity={value.atRisk === 0 ? 'success' : 'warning'}>
-              {value.atRisk === 0
-                ? t('home.slos-card.all-ok', 'All SLOs healthy')
-                : t('home.slos-card.at-risk-row', '{{atRisk}} of {{total}} SLOs at risk', {
-                    atRisk: value.atRisk,
-                    total: value.total,
-                  })}
+            <InsightRow severity={value.recording >= value.defined ? 'success' : 'warning'}>
+              {t('home.slos-card.recording', '{{value}} SLOs recording', {
+                value: value.recording.toLocaleString(),
+              })}
+            </InsightRow>
+            <InsightRow severity={value.sliSeries > 0 ? 'success' : 'warning'}>
+              {t('home.slos-card.sli-series', '{{value}} recorded SLI series', {
+                value: value.sliSeries.toLocaleString(),
+              })}
             </InsightRow>
           </Stack>
         </Stack>

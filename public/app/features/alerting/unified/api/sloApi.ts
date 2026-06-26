@@ -19,7 +19,30 @@ interface SloAlerting {
   slowBurn?: SloAlertingMetadata;
 }
 
+interface SloObjective {
+  value: number;
+  window: string;
+}
+
+interface SloDatasourceRef {
+  uid?: string;
+  type?: string;
+}
+
+interface SloReadOnlyStatus {
+  type: 'error' | 'creating' | 'created' | 'updated' | 'updating' | 'deleting' | 'unknown';
+  message?: string;
+}
+
+interface SloReadOnly {
+  status?: SloReadOnlyStatus;
+}
+
 export interface Slo {
+  uuid: string;
+  objectives: SloObjective[];
+  destinationDatasource?: SloDatasourceRef;
+  readOnly?: SloReadOnly;
   alerting?: SloAlerting;
 }
 
