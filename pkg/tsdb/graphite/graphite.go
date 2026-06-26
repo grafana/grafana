@@ -61,14 +61,10 @@ func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer
 	return s
 }
 
-// Configure applies operator-tunable safety caps. Callers that have access
-// to *setting.Cfg (the OSS wire layer) populate the Config and call this
-// after ProvideService; callers that don't (standalone, external builds,
-// the enterprise wire which doesn't import pkg/setting) skip it and the
-// service uses its built-in defaults. ProvideService's signature is
-// intentionally left unchanged so wire graphs in repos that don't track
-// this feature continue to build without modification. Returns s for
-// fluent chaining.
+// Configure applies the operator-tunable safety caps and returns s for fluent
+// use after ProvideService. Any field left zero falls back to the built-in
+// default, so standalone and external plugin builds (which have no
+// [tsdb.graphite] config to pass) can skip it entirely.
 func (s *Service) Configure(cfg Config) *Service {
 	s.renderResponseMaxBytes = cfg.RenderResponseMaxBytes
 	s.resourceResponseMaxBytes = cfg.ResourceResponseMaxBytes

@@ -215,12 +215,10 @@ func otelTracer() trace.Tracer {
 	return otel.GetTracerProvider().Tracer("grafana")
 }
 
-// provideGraphiteService constructs the Graphite data source service and
-// applies the operator-tunable [tsdb.graphite] safety caps. graphite
-// itself cannot import pkg/setting (depguard rule for core plugins) and
-// its ProvideService signature is intentionally left unchanged so wire
-// graphs in repos that don't track this feature continue to build; the
-// Cfg -> Config mapping lives here in the OSS wire layer.
+// provideGraphiteService maps the operator-configured [tsdb.graphite] caps
+// from *setting.Cfg into graphite.Config. The graphite package cannot import
+// pkg/setting (depguard), so this mapping lives in the wiring layer rather
+// than in graphite.ProvideService.
 func provideGraphiteService(httpClientProvider *sdkhttpclient.Provider, tracer trace.Tracer, cfg *setting.Cfg) *graphite.Service {
 	return graphite.ProvideService(httpClientProvider, tracer).Configure(graphite.Config{
 		RenderResponseMaxBytes:   cfg.GraphiteRenderResponseMaxBytes,
