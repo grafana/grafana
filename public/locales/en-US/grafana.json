@@ -13606,6 +13606,7 @@
     "resource-kind": {
       "dashboards": "Dashboards",
       "folders": "Folders",
+      "library-panels": "Library panels",
       "playlists": "Playlists"
     },
     "resource-tree": {
