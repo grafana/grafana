@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -17,6 +19,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
@@ -570,16 +573,27 @@ var (
 	userGVR = iamv0.UserResourceInfo.GroupVersionResource()
 )
 
+// UID→internal-ID mappings are immutable for an object's lifetime, so a long TTL is safe;
+// the bound just caps memory and tolerates the rare deleted-then-absent UID.
+const uidToIDCacheTTL = 1 * time.Hour
+
 type uidToIDResolver struct {
 	mu             sync.RWMutex
 	clients        map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface
 	configProvider restcfg.RestConfigProvider
+	// cache stores resolved UID→internal-ID mappings; sf collapses concurrent resolutions
+	// of the same key into a single apiserver Get. Both teams and users resolve through here,
+	// and the same UIDs recur across every action during a permission merge, so this removes
+	// the bulk of the redundant apiserver lookups.
+	cache *localcache.CacheService
+	sf    singleflight.Group
 }
 
 func newUIDToIDResolver(configProvider restcfg.RestConfigProvider) *uidToIDResolver {
 	return &uidToIDResolver{
 		clients:        make(map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface),
 		configProvider: configProvider,
+		cache:          localcache.New(uidToIDCacheTTL, 10*time.Minute),
 	}
 }
 
@@ -614,6 +628,34 @@ func (r *uidToIDResolver) getDynamicClient(ctx context.Context, nsInfo types.Nam
 }
 
 func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
+	// Key by resource type so team/user UIDs can't collide, and by namespace so orgs/stacks
+	// stay isolated.
+	key := gvr.Resource + "/" + nsInfo.Value + "/" + name
+	if v, ok := r.cache.Get(key); ok {
+		return v.(int64), nil
+	}
+
+	v, err, _ := r.sf.Do(key, func() (any, error) {
+		// Re-check under the flight: a concurrent resolution may have populated the cache
+		// while we were waiting for the singleflight slot.
+		if v, ok := r.cache.Get(key); ok {
+			return v.(int64), nil
+		}
+		id, err := r.fetchObjectID(ctx, nsInfo, gvr, name)
+		if err != nil {
+			return 0, err
+		}
+		// Only cache successful lookups so a not-found UID resolves correctly once created.
+		r.cache.Set(key, id, uidToIDCacheTTL)
+		return id, nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return v.(int64), nil
+}
+
+func (r *uidToIDResolver) fetchObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
 	cli, err := r.getDynamicClient(ctx, nsInfo, gvr)
 	if err != nil {
 		return 0, err
