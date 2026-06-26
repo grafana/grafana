@@ -102,7 +102,7 @@
     "hoist-non-react-statics": "^3.3.2",
     "immutable": "^5.1.5",
     "is-hotkey": "^0.2.0",
-    "jquery": "3.7.1",
+    "jquery": "^3.7.1",
     "lodash": "^4.17.23",
     "micro-memoize": "^4.1.2",
     "monaco-editor": "0.34.1",
