@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Modal, useStyles2 } from '@grafana/ui';
 import { type DashboardInput, type DataSourceInput, type DashboardJson } from 'app/features/manage-dashboards/types';
 import { type PluginDashboard } from 'app/types/plugins';
@@ -56,16 +56,8 @@ export const SuggestedDashboardsModal = ({
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
   const styles = useStyles2(getStyles);
 
-  // Get datasource info for modal title
-  const datasourceInfo = useMemo(() => {
-    if (!datasourceUid) {
-      return { type: '' };
-    }
-    const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
-    return {
-      type: ds?.type || '',
-    };
-  }, [datasourceUid]);
+  const { settings: datasource } = useDataSourceInstanceSettings(datasourceUid);
+  const datasourceType = datasource?.type || '';
 
   // Update state when initialMappingContext changes or modal opens/closes
   useEffect(() => {
@@ -101,11 +93,11 @@ export const SuggestedDashboardsModal = ({
           ? t('dashboard-library.modal.title-mapping-with-name', 'Configure datasources for {{dashboardName}}', {
               dashboardName: mappingContext.dashboardName,
             })
-          : datasourceInfo.type
+          : datasourceType
             ? t(
                 'dashboard-library.modal.title-with-datasource',
                 'Suggested dashboards for your {{datasourceType}} datasource',
-                { datasourceType: datasourceInfo.type }
+                { datasourceType }
               )
             : t('dashboard-library.modal.title', 'Suggested dashboards')
       }
@@ -123,7 +115,7 @@ export const SuggestedDashboardsModal = ({
             lastPageItemCount={lastPageItemCount}
             onLastPageItemCount={onLastPageItemCount}
             datasourceUid={datasourceUid}
-            datasourceType={datasourceInfo.type}
+            datasourceType={datasourceType}
             isDashboardsLoading={isDashboardsLoading}
             onShowMapping={handleShowMapping}
             onDismiss={onDismiss}
@@ -143,7 +135,7 @@ export const SuggestedDashboardsModal = ({
             dashboardName={mappingContext.dashboardName}
             libraryItemId={String(mappingContext.dashboardJson.gnetId || '')}
             contentKind={mappingContext.contentKind}
-            datasourceTypes={[datasourceInfo.type]}
+            datasourceTypes={[datasourceType]}
           />
         </div>
       )}

@@ -1,7 +1,8 @@
 import { screen, act } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DashboardJson, InputType } from 'app/features/manage-dashboards/types';
 
 import { type MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
@@ -23,6 +24,16 @@ jest.mock('./CommunityDashboardMappingForm', () => ({
   ),
 }));
 
+// Mock the async settings hook so it returns synchronously. The real hook uses
+// `useAsync` under the hood and would trigger React `act(...)` warnings in tests that
+// assert immediately after `render(...)`.
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn(() => ({ isLoading: false, settings: undefined })),
+}));
+
+const mockUseDataSourceInstanceSettings = jest.mocked(useDataSourceInstanceSettings);
+
 describe('SuggestedDashboardsModal', () => {
   const defaultProps = {
     isOpen: true,
@@ -36,6 +47,7 @@ describe('SuggestedDashboardsModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedOnShowMapping = null;
+    mockUseDataSourceInstanceSettings.mockReturnValue({ isLoading: false, settings: undefined });
   });
 
   it('should render when isOpen is true', () => {
@@ -104,12 +116,10 @@ describe('SuggestedDashboardsModal', () => {
     });
 
     it('should show datasource-specific title when datasourceUid is provided', () => {
-      setDataSourceSrv({
-        getInstanceSettings: () =>
-          ({ uid: 'prom-uid', name: 'Prometheus', type: 'prometheus' }) as ReturnType<
-            DataSourceSrv['getInstanceSettings']
-          >,
-      } as DataSourceSrv);
+      mockUseDataSourceInstanceSettings.mockReturnValue({
+        isLoading: false,
+        settings: { uid: 'prom-uid', name: 'Prometheus', type: 'prometheus' } as DataSourceInstanceSettings,
+      });
 
       render(<SuggestedDashboardsModal {...defaultProps} datasourceUid="prom-uid" />);
 

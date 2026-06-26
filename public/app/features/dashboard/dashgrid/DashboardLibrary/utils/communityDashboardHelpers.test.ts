@@ -200,7 +200,7 @@ describe('communityDashboardHelpers', () => {
 
       mockFetchCommunityDashboard.mockResolvedValue({ json: dashboardJson });
 
-      mockTryAutoMapDatasources.mockReturnValue(
+      mockTryAutoMapDatasources.mockResolvedValue(
         options?.autoMapResult ?? {
           allMapped: true,
           mappings: [],
@@ -671,7 +671,7 @@ describe('communityDashboardHelpers', () => {
       });
 
       mockFetchCommunityDashboard.mockResolvedValue({ json: dashboardJson });
-      mockTryAutoMapDatasources.mockReturnValue({
+      mockTryAutoMapDatasources.mockResolvedValue({
         allMapped: true,
         mappings: [{ name: 'DS_PROMETHEUS', type: 'datasource', value: 'prom-uid', pluginId: 'prometheus' }],
         unmappedDsInputs: [],
@@ -705,7 +705,7 @@ describe('communityDashboardHelpers', () => {
       });
 
       mockFetchCommunityDashboard.mockResolvedValue({ json: dashboardJson });
-      mockTryAutoMapDatasources.mockReturnValue({
+      mockTryAutoMapDatasources.mockResolvedValue({
         allMapped: false,
         mappings: [],
         unmappedDsInputs: [
@@ -730,7 +730,7 @@ describe('communityDashboardHelpers', () => {
       const dashboardJson = createMockDashboardJson({ __inputs: undefined });
 
       mockFetchCommunityDashboard.mockResolvedValue({ json: dashboardJson });
-      mockTryAutoMapDatasources.mockReturnValue({
+      mockTryAutoMapDatasources.mockResolvedValue({
         allMapped: true,
         mappings: [],
         unmappedDsInputs: [],

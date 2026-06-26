@@ -2,7 +2,9 @@ import { http, HttpResponse } from 'msw';
 import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -32,17 +34,28 @@ const mockNewLoaded = jest.spyOn(NewTemplateDashboardInteractions, 'loaded').moc
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const mockGetList = jest
-  .fn()
-  .mockReturnValue([{ name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' }]);
+// `useDataSourceInstanceList` is async under the hood (`useAsync`). The internal fallback
+// to `getDataSourceSrv().getList()` doesn't see jest.mock for `@grafana/runtime` because
+// the runtime package imports it via relative paths inside its own package — bypassing the
+// mock. Mocking the hook directly returns data synchronously and avoids needing to manage
+// React `act(...)` for the microtask flush.
+const defaultTestDataSource = {
+  name: 'Test Data Source',
+  uid: 'test-data-source-uid',
+  type: 'grafana-testdata-datasource',
+} as DataSourceInstanceListItem;
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
+}));
+
+const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
-    getDataSourceSrv: () => ({
-      getList: mockGetList,
-    }),
     locationService: {
       ...actual.locationService,
       push: jest.fn(),
@@ -65,9 +78,7 @@ describe('TemplateDashboardModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     config.featureToggles.dashboardTemplates = true;
-    mockGetList.mockReturnValue([
-      { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-    ]);
+    mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [defaultTestDataSource] });
     // Default: no custom templates tab registered (matches the real default before the
     // enterprise extension registers itself). Individual describes override this.
     mockGetDashboardTemplatesTab.mockReturnValue(null);
@@ -106,7 +117,7 @@ describe('TemplateDashboardModal', () => {
     });
 
     it('should not show TemplateDashboard modal when query param is present but test data source is not available', async () => {
-      mockGetList.mockReturnValueOnce([]);
+      mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
       render(<TemplateDashboardModal />, {
         historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
       });
