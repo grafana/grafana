@@ -10731,9 +10731,9 @@
       "loading": "Loading most used dashboards..."
     },
     "oncall-card": {
-      "empty": "No one is on call right now.",
-      "error-title": "Could not load on-call schedules",
-      "title": "On call now",
+      "empty": "No upcoming shifts found.",
+      "error-title": "Could not load on-call shifts",
+      "title": "On-call shifts",
       "view-schedules": "View schedules"
     },
     "presets": {

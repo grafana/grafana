@@ -52,6 +52,39 @@ export interface OnCallSchedule {
   on_call_now: OnCallNowUser[];
 }
 
+export interface OnCallCurrentUserEventsParams {
+  pluginId: string;
+  date: string;
+  days: string;
+  user_tz: string;
+}
+
+interface OnCallScheduleEventShift {
+  id?: string;
+  pk?: string;
+  name?: string;
+  type?: number;
+}
+
+interface OnCallScheduleEvent {
+  start?: string;
+  end?: string;
+  is_empty?: boolean;
+  is_gap?: boolean;
+  shift?: OnCallScheduleEventShift | null;
+}
+
+interface OnCallCurrentUserEventsSchedule {
+  id: string;
+  name: string;
+  events: OnCallScheduleEvent[];
+}
+
+export interface OnCallCurrentUserEventsResponse {
+  is_oncall: boolean;
+  schedules: OnCallCurrentUserEventsSchedule[];
+}
+
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], { pluginId: string }>({
@@ -110,6 +143,14 @@ export const onCallApi = alertingApi.injectEndpoints({
         showErrorAlert: false,
       }),
       transformResponse: (response: OnCallPaginatedResult<OnCallSchedule>) => response.results ?? [],
+    }),
+    getCurrentUserOnCallEvents: build.query<OnCallCurrentUserEventsResponse, OnCallCurrentUserEventsParams>({
+      query: ({ pluginId, ...params }) => ({
+        url: getProxyApiUrl('/schedules/current_user_events/', pluginId),
+        params,
+        method: 'GET',
+        showErrorAlert: false,
+      }),
     }),
   }),
 });
