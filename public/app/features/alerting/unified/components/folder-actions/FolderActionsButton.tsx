@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
+import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
@@ -24,9 +25,15 @@ import { DeleteModal } from './DeleteModal';
 import { PauseUnpauseActionMenuItem } from './PauseUnpauseActionMenuItem';
 interface Props {
   folderUID: string;
+  /**
+   * When provided, the button uses this folder data directly instead of fetching it. Lets callers
+   * that already have the folder (e.g. a folder list backed by the k8s API) avoid one
+   * `/api/folders/{uid}` request per rendered row.
+   */
+  folder?: Pick<FolderDTO, 'uid' | 'title'>;
 }
 
-export const FolderActionsButton = ({ folderUID }: Props) => {
+export const FolderActionsButton = ({ folderUID, folder: folderProp }: Props) => {
   // state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
@@ -42,7 +49,9 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   const [deleteGrafanaRulesFromFolder, deleteState] =
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
 
-  const { folder } = useFolder(folderUID);
+  // Skip the fetch entirely when the caller already supplied the folder.
+  const { folder: fetchedFolder } = useFolder(folderProp ? undefined : folderUID);
+  const folder = folderProp ?? fetchedFolder;
   const folderName = folder?.title || 'unknown folder';
   const viewComponent = listView2Enabled ? 'list' : 'grouped';
 

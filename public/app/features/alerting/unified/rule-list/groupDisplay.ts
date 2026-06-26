@@ -26,7 +26,8 @@ export function useGroupDisplayParams(): GroupDisplayParams {
   const [params] = useURLSearchParams();
 
   const rawMode = params.get('groupDisplay');
-  const mode: GroupDisplayMode = rawMode === 'rows' || rawMode === 'pill' || rawMode === 'merged' ? rawMode : 'flat';
+  const mode: GroupDisplayMode =
+    rawMode === 'rows' || rawMode === 'pill' || rawMode === 'merged' || rawMode === 'flat' ? rawMode : 'pill';
 
   const rowStyle: GroupRowStyle = params.get('groupRowStyle') === 'inline' ? 'inline' : 'collapsible';
 

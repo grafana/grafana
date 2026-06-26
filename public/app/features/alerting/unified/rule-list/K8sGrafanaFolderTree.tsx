@@ -60,10 +60,18 @@ export function K8sGrafanaFolderTree({
       uid={GrafanaRulesSourceSymbol}
       isLoading={isLoading}
       error={error}
+      stickyHeader
     >
       <div role="tree">
         {model.rows.map((row) => (
-          <FolderTreeRow key={row.key} row={row} onToggle={model.toggleFolder} onLoadMore={model.loadMoreRules} />
+          <FolderTreeRow
+            key={row.key}
+            row={row}
+            onToggle={model.toggleFolder}
+            onToggleGroup={model.toggleGroup}
+            onLoadMore={model.loadMoreRules}
+            onLoadMoreChildren={model.loadMoreChildren}
+          />
         ))}
         {hasNoFolders && !hasFilters && <GrafanaNoRulesCTA />}
         {hasNoFolders && hasFilters && <NoRulesFound />}

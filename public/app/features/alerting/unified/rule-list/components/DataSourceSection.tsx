@@ -15,6 +15,9 @@ import { isAdmin, stringifyErrorLike } from '../../utils/misc';
 import { DataSourceIcon } from './DataSourceIcon';
 import { LoadingIndicator } from './RuleGroup';
 
+/** Height of the section header when pinned; consumers offset their own sticky rows by this. */
+export const STICKY_SECTION_HEADER_HEIGHT = 48;
+
 export interface DataSourceSectionProps extends PropsWithChildren {
   uid: RulesSourceIdentifier['uid'];
   name: string;
@@ -23,6 +26,8 @@ export interface DataSourceSectionProps extends PropsWithChildren {
   isLoading?: boolean;
   description?: ReactNode;
   error?: unknown;
+  /** Pin the section header to the top of the scroll container while its content scrolls. */
+  stickyHeader?: boolean;
 }
 
 export const DataSourceSection = ({
@@ -34,9 +39,10 @@ export const DataSourceSection = ({
   error,
   isLoading = false,
   description = null,
+  stickyHeader = false,
 }: DataSourceSectionProps) => {
   const [isCollapsed, toggleCollapsed] = useToggle(false);
-  const styles = useStyles2((theme) => getStyles(theme, isCollapsed));
+  const styles = useStyles2((theme) => getStyles(theme, stickyHeader));
 
   const configureLink = (() => {
     if (uid === GrafanaRulesSourceSymbol) {
@@ -107,7 +113,7 @@ export const DataSourceSection = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, isCollapsed = false) => ({
+const getStyles = (theme: GrafanaTheme2, stickyHeader = false) => ({
   itemsWrapper: css({
     position: 'relative',
   }),
@@ -115,5 +121,14 @@ const getStyles = (theme: GrafanaTheme2, isCollapsed = false) => ({
     background: theme.colors.background.secondary,
     padding: theme.spacing(1, 1.5),
     borderRadius: theme.shape.radius.default,
+    ...(stickyHeader && {
+      position: 'sticky',
+      top: 0,
+      // Above the folder headers (which stack from z-index 100 downward) so it stays on top.
+      zIndex: 101,
+      display: 'flex',
+      alignItems: 'center',
+      height: STICKY_SECTION_HEADER_HEIGHT,
+    }),
   }),
 });

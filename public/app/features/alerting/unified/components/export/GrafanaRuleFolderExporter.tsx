@@ -11,7 +11,7 @@ import { GrafanaExportDrawer } from './GrafanaExportDrawer';
 import { type ExportFormats, allGrafanaExportProviders } from './providers';
 
 interface GrafanaRuleFolderExporterProps {
-  folder: FolderDTO;
+  folder: Pick<FolderDTO, 'uid' | 'title'>;
   onClose: () => void;
 }
 
@@ -34,7 +34,7 @@ export function GrafanaRuleFolderExporter({ folder, onClose }: GrafanaRuleFolder
 }
 
 interface GrafanaRuleFolderExportPreviewProps {
-  folder: FolderDTO;
+  folder: Pick<FolderDTO, 'uid' | 'title'>;
   exportFormat: ExportFormats;
   onClose: () => void;
 }
