@@ -233,13 +233,13 @@ After deciding on these options, you can chose to configure a verified account w
 
 ### Advanced commit options
 
-Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
+Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys. For more details on how to create your keys for Git authentication, refer to the official documentation at [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification).
 
 Follow the UI wizard to set up any of these options, and refer to the example below for more details.
 
 #### Pre-requirements
 
-In order to implement signed commits, make sure that you set up a specific verification account in your Git provider. You'll need the account's signing key, name and email to set up verification.
+In order to implement signed commits, make sure that you set up a specific verification account in your Git provider. You'll need your account's signing key, name and email to set up verification.
 
 {{< admonition type="note" >}}
 
@@ -254,9 +254,9 @@ To enforce signed commits using an SSH key follow these steps:
 1. Open the **Commit options (advanced)** menu.
 1. Under **Commit signing**, select **SSH**.
 1. Fill in the following fields:
-   - The signing key for the account to verify.
-   - The signer name to be displayed in your Git provider.
-   - The signer's e-mail address, which must match the one in the signing key.
+   - The **private key** for the account to verify.
+   - The signer's **name** to be displayed in your Git provider.
+   - The signer's **e-mail address**, which must match the one in the signing key.
 1. Click **Save**.
 
 After completing the key configuration, any commits your users make to the provisioned folder will appear as **Verified**.
