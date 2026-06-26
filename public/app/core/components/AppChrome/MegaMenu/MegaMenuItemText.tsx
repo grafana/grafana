@@ -17,7 +17,7 @@ export interface Props {
   isPinned?: boolean;
   /** Whether to render the bookmark/pin control at all (default true) */
   showPin?: boolean;
-  /** Customisation is enabled — when off, keep the legacy "Bookmark" tooltip wording */
+  /** Customisation is enabled — switches the control to the pin icon and "Pin"/"Unpin" wording; off keeps the legacy bookmark icon and wording */
   canCustomise?: boolean;
   itemName: string;
 }
@@ -38,6 +38,14 @@ export function MegaMenuItemText({
 
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
+
+  // Flag on: pin/unpin wording. Flag off: the legacy "Bookmark" wording.
+  let pinTooltip = t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName });
+  if (canCustomise) {
+    pinTooltip = isPinned
+      ? t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName })
+      : t('navigation.item.pin.tooltip', 'Pin {{itemName}}', { itemName });
+  }
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -65,16 +73,14 @@ export function MegaMenuItemText({
       <div className={styles.actions}>
         {showPin && contextSrv.isSignedIn && url && url !== '/bookmarks' && (
           <IconButton
-            name="bookmark"
+            // No "unpin" icon exists, so the pinned/unpinned distinction is carried by the
+            // tooltip and aria-pressed. iconType is a no-op for the custom gf- icon.
+            name={canCustomise ? 'gf-pin' : 'bookmark'}
             className={'pin-icon'}
             iconType={isPinned ? 'solid' : 'default'}
             onClick={() => onPin(url)}
             aria-pressed={isPinned}
-            tooltip={
-              canCustomise && isPinned
-                ? t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', { itemName })
-                : t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })
-            }
+            tooltip={pinTooltip}
           />
         )}
       </div>

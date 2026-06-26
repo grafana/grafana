@@ -195,7 +195,7 @@ describe('MegaMenu', () => {
         // The pin control in the normal nav is hover-only (visibility:hidden), so select it by label
         const pinButton = screen
           .getAllByRole('button', { hidden: true })
-          .find((button) => button.getAttribute('aria-label') === 'Bookmark Dashboards');
+          .find((button) => button.getAttribute('aria-label') === 'Pin Dashboards');
         await user.click(pinButton!);
 
         // The section is pinned by its own url (not by enumerating children)
@@ -315,16 +315,16 @@ describe('MegaMenu', () => {
         expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current', 'page');
       });
 
-      it('does not offer a bookmark control on Home', async () => {
+      it('does not offer a pin control on Home', async () => {
         renderMegaMenu();
 
         await screen.findByRole('link', { name: 'Home' });
         const labels = screen
           .getAllByRole('button', { hidden: true })
           .map((button) => button.getAttribute('aria-label'));
-        expect(labels).not.toContain('Bookmark Home');
+        expect(labels).not.toContain('Pin Home');
         // sanity: a regular item still offers it
-        expect(labels).toContain('Bookmark Explore');
+        expect(labels).toContain('Pin Explore');
       });
 
       it('does not offer a pin control on individual starred items, only the Starred section', async () => {
@@ -337,9 +337,9 @@ describe('MegaMenu', () => {
           .getAllByRole('button', { hidden: true })
           .map((button) => button.getAttribute('aria-label'));
         // The starred dashboard cannot be pinned
-        expect(pinButtons).not.toContain(`Bookmark ${STARRED_DASHBOARD.name}`);
+        expect(pinButtons).not.toContain(`Pin ${STARRED_DASHBOARD.name}`);
         // ...but the Starred section itself can
-        expect(pinButtons).toContain('Bookmark Starred');
+        expect(pinButtons).toContain('Pin Starred');
       });
 
       it('keeps the collapsible Bookmarks section when the flag is off', async () => {
@@ -414,7 +414,7 @@ describe('MegaMenu', () => {
         // Re-pin — the menu must not still be collapsed
         const rePin = screen
           .getAllByRole('button', { hidden: true })
-          .find((button) => button.getAttribute('aria-label') === 'Bookmark Explore');
+          .find((button) => button.getAttribute('aria-label') === 'Pin Explore');
         await user.click(rePin!);
 
         expect(await screen.findByRole('list', { name: 'Pinned' })).toBeInTheDocument();

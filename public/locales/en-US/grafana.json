@@ -12052,6 +12052,9 @@
       "bookmark": {
         "tooltip": "Bookmark {{itemName}}"
       },
+      "pin": {
+        "tooltip": "Pin {{itemName}}"
+      },
       "unpin": {
         "tooltip": "Unpin {{itemName}}"
       }
