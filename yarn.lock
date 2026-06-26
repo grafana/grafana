@@ -3055,7 +3055,7 @@ __metadata:
     rollup-plugin-svg-import: "npm:3.0.0"
     rxjs: "npm:^7.8.2"
     sass-loader: "npm:16.0.5"
-    slate: "npm:0.47.9"
+    slate: "npm:^0.47.9"
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
     storybook: "npm:10.3.6"
@@ -29759,7 +29759,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate@npm:0.47.9":
+"slate@npm:0.47.9, slate@npm:^0.47.9":
   version: 0.47.9
   resolution: "slate@npm:0.47.9"
   dependencies:
