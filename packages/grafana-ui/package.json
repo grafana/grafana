@@ -105,7 +105,7 @@
     "jquery": "^3.7.1",
     "lodash": "^4.17.23",
     "micro-memoize": "^4.1.2",
-    "monaco-editor": "0.34.1",
+    "monaco-editor": "^0.34.1",
     "ol": "10.7.0",
     "prismjs": "1.30.0",
     "react-calendar": "^6.0.0",
