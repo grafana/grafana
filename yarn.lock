@@ -2987,15 +2987,15 @@ __metadata:
     "@types/hoist-non-react-statics": "npm:3.3.7"
     "@types/is-hotkey": "npm:0.1.10"
     "@types/jest": "npm:29.5.14"
-    "@types/jquery": "npm:3.5.33"
-    "@types/lodash": "npm:4.17.20"
+    "@types/jquery": "npm:^3.5.33"
+    "@types/lodash": "npm:^4.17.20"
     "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:24.10.1"
     "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     "@types/react-highlight-words": "npm:0.20.0"
-    "@types/react-table": "npm:7.7.20"
+    "@types/react-table": "npm:^7.7.20"
     "@types/react-transition-group": "npm:4.4.12"
     "@types/react-window": "npm:1.8.8"
     "@types/slate": "npm:0.47.11"
@@ -9980,7 +9980,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jquery@npm:3.5.33":
+"@types/jquery@npm:3.5.33, @types/jquery@npm:^3.5.33":
   version: 3.5.33
   resolution: "@types/jquery@npm:3.5.33"
   dependencies:
@@ -10060,7 +10060,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:*, @types/lodash@npm:^4, @types/lodash@npm:^4.14.172, @types/lodash@npm:^4.17.7":
+"@types/lodash@npm:*, @types/lodash@npm:^4, @types/lodash@npm:^4.14.172, @types/lodash@npm:^4.17.20, @types/lodash@npm:^4.17.7":
   version: 4.17.24
   resolution: "@types/lodash@npm:4.17.24"
   checksum: 10/0f2082565f60f9787eefc046edc38458054512be5a8b3584ef0bad5fd9e85d0ab55ec5a1fbfae1ed6ba015cf1f9e837d5fb4da1f99fc60b8f74b2a46146fb00f
