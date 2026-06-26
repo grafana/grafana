@@ -303,6 +303,26 @@ const getFolderListHandler = () =>
     return HttpResponse.json(response);
   });
 
+const getFolderChildrenHandler = () =>
+  http.get<{ folderUid: string; namespace: string }>(`${FOLDER_BY_NAME}/children`, ({ params }) => {
+    const { folderUid, namespace } = params;
+    // `general` is the root sentinel: list top-level folders (no parent).
+    const parentUid = folderUid === 'general' ? undefined : folderUid;
+
+    const children = mockTree
+      .filter(({ item }) => item.kind === 'folder' && item.parentUID === parentUid)
+      .map(({ item }, index) => folderToAppPlatform(item, index + 1, namespace));
+
+    const response: FolderList = {
+      kind: 'FolderList',
+      apiVersion: 'folder.grafana.app/v1beta1',
+      metadata: {},
+      items: children,
+    };
+
+    return HttpResponse.json(response);
+  });
+
 export const customCreateFolderHandler = (resolver: HttpResponseResolver) => http.post(FOLDERS, resolver);
 
 const customFolderCountsHandler = (resolver: HttpResponseResolver) =>
@@ -331,4 +351,5 @@ export default [
   replaceFolderHandler(),
   updateFolderHandler(),
   folderCountsHandler(),
+  getFolderChildrenHandler(),
 ];

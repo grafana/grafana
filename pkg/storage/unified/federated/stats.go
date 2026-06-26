@@ -43,7 +43,7 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 
 	rsp := &resourcepb.ResourceStatsResponse{}
 	err = helper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		fn := func(table, folderCol, g, r string, existCheck bool) error {
+		fn := func(table, folderCol, g, r, extraWhere string, existCheck bool) error {
 			// if existCheck is true, do not error out if the table does not exist
 			if existCheck {
 				exists, err := sess.IsTableExist(helper.Table(table))
@@ -57,6 +57,9 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 			tableName := helper.Table(table)
 			countChunk := func(chunk []string) (int64, error) {
 				where, args := buildFolderWhere(folderCol, info.OrgID, chunk)
+				if extraWhere != "" {
+					where += " AND " + extraWhere
+				}
 				return sess.Table(tableName).Where(where, args...).Count()
 			}
 
@@ -87,14 +90,24 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// Indicate that this came from the SQL tables
 		group := "sql-fallback"
 
-		// Legacy alert rule table
-		err = fn("alert_rule", "namespace_uid", group, "alertrules", false)
+		// Alert rules and recording rules share the legacy alert_rule table; a non-empty
+		// `record` column marks a recording rule. Split them so the counts match the
+		// unified-storage path, where alertrules and recordingrules are distinct resources.
+		const alertRuleWhere = "(record IS NULL OR record = '')"
+		const recordingRuleWhere = "(record IS NOT NULL AND record <> '')"
+
+		err = fn("alert_rule", "namespace_uid", group, "alertrules", alertRuleWhere, false)
+		if err != nil {
+			return err
+		}
+
+		err = fn("alert_rule", "namespace_uid", group, "recordingrules", recordingRuleWhere, false)
 		if err != nil {
 			return err
 		}
 
 		// Legacy library_elements table
-		err = fn("library_element", "folder_uid", group, "library_elements", false)
+		err = fn("library_element", "folder_uid", group, "library_elements", "", false)
 		if err != nil {
 			return err
 		}

@@ -7,7 +7,7 @@ import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
-import { K8sPaginatedGrafanaLoader } from './K8sPaginatedGrafanaLoader';
+import { K8sGrafanaFolderTree } from './K8sGrafanaFolderTree';
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { DataSourceErrorBoundary } from './components/DataSourceErrorBoundary';
@@ -33,7 +33,7 @@ export function GroupedView({ groupFilter, namespaceFilter, ruleFilter }: Groupe
   return (
     <Stack direction="column" gap={1} role="list">
       <DataSourceErrorBoundary rulesSourceIdentifier={GrafanaRulesSource}>
-        <K8sPaginatedGrafanaLoader
+        <K8sGrafanaFolderTree
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           ruleFilter={ruleFilter}

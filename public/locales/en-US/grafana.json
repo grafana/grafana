@@ -1915,6 +1915,33 @@
       "recommended": "Recommended",
       "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
     },
+    "k8s-folder": {
+      "alerting-count_one": "{{count}} alerting",
+      "alerting-count_other": "{{count}} alerting",
+      "collapse": "Collapse folder",
+      "empty": "No rules or subfolders",
+      "error": "Failed to load rules for this folder",
+      "expand": "Expand folder",
+      "load-more": "Load more",
+      "loaded-count_one": "{{count}} loaded",
+      "loaded-count_other": "{{count}} loaded",
+      "loading": "Loading rules…",
+      "loading-short": "Loading…",
+      "recording-count_one": "{{count}} recording",
+      "recording-count_other": "{{count}} recording"
+    },
+    "k8s-rule-row": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "labels_one": "{{count}} label",
+      "labels_other": "{{count}} labels",
+      "more": "More",
+      "provisioned": "Provisioned",
+      "recording": "",
+      "recording-glyph": "Recording rule",
+      "silence": "Silence notifications"
+    },
     "key-value-map-input": {
       "name": "Name",
       "value": "Value"

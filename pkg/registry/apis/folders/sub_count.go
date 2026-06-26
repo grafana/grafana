@@ -23,6 +23,7 @@ var countedKinds = []string{
 	"dashboard.grafana.app/dashboards",
 	"dashboard.grafana.app/librarypanels",
 	"rules.alerting.grafana.app/alertrules",
+	"rules.alerting.grafana.app/recordingrules",
 }
 
 type subCountREST struct {

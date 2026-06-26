@@ -95,6 +95,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			},
 			{
 				"group": "sql-fallback",
+				"resource": "recordingrules"
+			},
+			{
+				"group": "sql-fallback",
 				"resource": "library_elements"
 			}
 		]`, string(jj))
@@ -116,6 +120,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 				"group": "sql-fallback",
 				"resource": "alertrules",
 				"count": 1
+			},
+			{
+				"group": "sql-fallback",
+				"resource": "recordingrules"
 			},
 			{
 				"group": "sql-fallback",
@@ -144,6 +152,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 				"group": "sql-fallback",
 				"resource": "alertrules",
 				"count": 1
+			},
+			{
+				"group": "sql-fallback",
+				"resource": "recordingrules"
 			},
 			{
 				"group": "sql-fallback",
