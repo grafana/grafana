@@ -1,21 +1,35 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import {
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type ScopedVars,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
+import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
 
 import { useSelectedQueryDatasource } from './useSelectedQueryDatasource';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
   config: {
     defaultDatasource: 'default-datasource-uid',
   },
 }));
 
-const mockGetDataSourceSrv = getDataSourceSrv as jest.MockedFunction<typeof getDataSourceSrv>;
+// useQueryDatasource resolves datasources through the async unstable APIs.
+const mockGetDataSourceInstance = jest.fn();
+const mockGetDataSourceInstanceSettings = jest.fn();
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
+    mockGetDataSourceInstance(ref, scopedVars),
+  getDataSourceInstanceSettings: (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
+    mockGetDataSourceInstanceSettings(ref, scopedVars),
+}));
 
 // Mock datasources - using Partial to only define properties we need in tests
 const mockTestDataDatasource: Partial<DataSourceApi<DataQuery, DataSourceJsonData>> = {
@@ -83,43 +97,41 @@ const mockPrometheusSettings: DataSourceInstanceSettings = {
   readOnly: false,
 };
 
-/**
- * Helper to create a mock DataSourceSrv with default behavior.
- * Can be overridden for specific test cases.
- */
-function createMockDataSourceSrv(overrides?: Partial<ReturnType<typeof getDataSourceSrv>>) {
-  const mockDataSourceSrv: Partial<ReturnType<typeof getDataSourceSrv>> = {
-    get: jest.fn().mockImplementation((ref: unknown) => {
-      const uid = typeof ref === 'string' ? ref : (ref as { uid?: string })?.uid;
-      if (uid === 'testdata-uid') {
-        return Promise.resolve(mockTestDataDatasource as DataSourceApi);
-      }
-      if (uid === 'prometheus-uid') {
-        return Promise.resolve(mockPrometheusDatasource as DataSourceApi);
-      }
-      return Promise.reject(new Error('Unknown datasource'));
-    }),
-    getInstanceSettings: jest.fn().mockImplementation((ref: unknown) => {
-      const uid = typeof ref === 'string' ? ref : (ref as { uid?: string })?.uid;
-      if (uid === 'testdata-uid') {
-        return mockTestDataSettings;
-      }
-      if (uid === 'prometheus-uid') {
-        return mockPrometheusSettings;
-      }
-      return undefined;
-    }),
-    ...overrides,
-  };
+const refUid = (ref?: DataSourceRef | string | null) => (typeof ref === 'string' ? ref : ref?.uid);
 
-  return mockDataSourceSrv as ReturnType<typeof getDataSourceSrv>;
+/**
+ * Configures the async datasource APIs with the default test datasources (TestData + Prometheus).
+ * Individual tests can re-configure the mocks for their own scenarios.
+ */
+function setupDatasourceMocks() {
+  mockGetDataSourceInstance.mockImplementation((ref?: DataSourceRef | string | null) => {
+    switch (refUid(ref)) {
+      case 'testdata-uid':
+        return Promise.resolve(mockTestDataDatasource);
+      case 'prometheus-uid':
+        return Promise.resolve(mockPrometheusDatasource);
+      default:
+        return Promise.reject(new Error('Unknown datasource'));
+    }
+  });
+
+  mockGetDataSourceInstanceSettings.mockImplementation((ref?: DataSourceRef | string | null) => {
+    switch (refUid(ref)) {
+      case 'testdata-uid':
+        return Promise.resolve(mockTestDataSettings);
+      case 'prometheus-uid':
+        return Promise.resolve(mockPrometheusSettings);
+      default:
+        return Promise.resolve(undefined);
+    }
+  });
 }
 
 describe('useSelectedQueryDatasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     config.defaultDatasource = 'testdata-uid';
-    mockGetDataSourceSrv.mockReturnValue(createMockDataSourceSrv());
+    setupDatasourceMocks();
   });
 
   describe('datasource resolution', () => {
@@ -327,32 +339,25 @@ describe('useSelectedQueryDatasource', () => {
     // The panel the hook forwards as scene scope; its contents are irrelevant to this wiring.
     const panel = new VizPanel({ key: 'panel-1' });
 
-    /** Resolves the variable only when the lookup receives the panel scene scope (`__sceneObject`). */
-    function createSectionScopedDataSourceSrv() {
-      const resolvableWithSceneScope = (ref: unknown, scopedVars: unknown) => {
-        const uid = typeof ref === 'string' ? ref : (ref as { uid?: string })?.uid;
-        const hasSceneScope = Boolean((scopedVars as { __sceneObject?: unknown } | undefined)?.__sceneObject);
-        return uid === '${metrics_source}' && hasSceneScope;
-      };
+    /** Configures the async APIs to resolve the variable only when the panel scene scope (`__sceneObject`) is present. */
+    function setupSectionScopedDatasourceMocks() {
+      const resolvableWithSceneScope = (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
+        refUid(ref) === '${metrics_source}' && Boolean(scopedVars?.__sceneObject);
 
-      return createMockDataSourceSrv({
-        get: jest.fn().mockImplementation((ref: unknown, scopedVars: unknown) => {
-          if (resolvableWithSceneScope(ref, scopedVars)) {
-            return Promise.resolve(mockPrometheusDatasource as DataSourceApi);
-          }
-          return Promise.reject(new Error('Unknown datasource'));
-        }),
-        getInstanceSettings: jest.fn().mockImplementation((ref: unknown, scopedVars: unknown) => {
-          if (resolvableWithSceneScope(ref, scopedVars)) {
-            return mockPrometheusSettings;
-          }
-          return undefined;
-        }),
-      });
+      mockGetDataSourceInstance.mockImplementation((ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
+        resolvableWithSceneScope(ref, scopedVars)
+          ? Promise.resolve(mockPrometheusDatasource)
+          : Promise.reject(new Error('Unknown datasource'))
+      );
+
+      mockGetDataSourceInstanceSettings.mockImplementation(
+        (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) =>
+          Promise.resolve(resolvableWithSceneScope(ref, scopedVars) ? mockPrometheusSettings : undefined)
+      );
     }
 
     it('resolves a section-scoped datasource variable when the panel scene scope is provided', async () => {
-      mockGetDataSourceSrv.mockReturnValue(createSectionScopedDataSourceSrv());
+      setupSectionScopedDatasourceMocks();
       const query: DataQuery = { refId: 'A', datasource: variableDatasourceRef };
 
       const { result } = renderHook(() => useSelectedQueryDatasource(query, mockTestDataSettings, panel));
@@ -364,7 +369,7 @@ describe('useSelectedQueryDatasource', () => {
     });
 
     it('fails to resolve a section-scoped datasource variable without the panel scene scope (regression guard)', async () => {
-      mockGetDataSourceSrv.mockReturnValue(createSectionScopedDataSourceSrv());
+      setupSectionScopedDatasourceMocks();
       const query: DataQuery = { refId: 'A', datasource: variableDatasourceRef };
 
       // No panel → no scene scope → the variable can't be interpolated (the original failure).
