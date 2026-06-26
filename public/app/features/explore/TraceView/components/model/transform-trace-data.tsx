@@ -17,6 +17,7 @@ import { isEqual as _isEqual } from 'lodash';
 // @ts-ignore
 import { type TraceKeyValuePair } from '@grafana/data';
 
+import { AGGREGATION_PREFIX } from '../constants/aggregation';
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
 import {
   type TraceResponse,
@@ -35,8 +36,6 @@ import { getTraceName } from './trace-viewer';
 function asTagArray(tags: unknown): TraceKeyValuePair[] {
   return Array.isArray(tags) ? tags : [];
 }
-
-export const AGGREGATION_PREFIX = 'aggregation.';
 
 /**
  * Detect a pruned (summary / preserved-outlier) span from its `aggregation.*` tags and

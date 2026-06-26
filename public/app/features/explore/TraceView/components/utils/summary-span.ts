@@ -1,7 +1,7 @@
 import { type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { AGGREGATION_PREFIX } from '../model/transform-trace-data';
+import { AGGREGATION_PREFIX } from '../constants/aggregation';
 import { type SpanAggregation } from '../types/trace';
 
 import { formatDuration } from './date';

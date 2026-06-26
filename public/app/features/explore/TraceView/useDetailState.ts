@@ -116,8 +116,12 @@ function makeDetailSubsectionToggle(
       detailState = old.toggleReferences();
     } else if (subSection === 'stackTraces') {
       detailState = old.toggleStackTraces();
-    } else {
+    } else if (subSection === 'logs') {
       detailState = old.toggleLogs();
+    } else {
+      // Exhaustive: every subsection is handled above. Bail rather than fall through to a
+      // default toggle if a new subsection is added without its own branch.
+      return;
     }
     const newDetailStates = new Map(detailStates);
     newDetailStates.set(spanID, detailState);
