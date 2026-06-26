@@ -226,7 +226,11 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
   }
 
   componentWillUnmount() {
-    document.body.removeChild(this.node);
+    try {
+      this.node.remove();
+    } catch (err) {
+      console.error('Failed to remove typeahead portal node from DOM', err);
+    }
   }
 
   render() {
