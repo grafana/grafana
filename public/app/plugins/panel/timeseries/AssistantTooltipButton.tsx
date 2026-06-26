@@ -1,9 +1,23 @@
+import { useMemo } from 'react';
+
 import { useAssistant } from '@grafana/assistant';
-import { type DataFrame, type InterpolateFunction } from '@grafana/data';
+import { type DataFrame, type InterpolateFunction, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 
-import { type AssistantTooltipContext, buildDatapointAssistantContext } from './buildAssistantContext';
+import {
+  type AssistantTooltipContext,
+  buildDatapointAssistantContext,
+  buildDatapointContextData,
+} from './buildAssistantContext';
+import { emitDatapointContextToParent, getDatapointEmbedTarget } from './emitDatapointContext';
+
+// Active conversation id the assistant app stores (same origin); passed so the open chat continues.
+const ACTIVE_ASSISTANT_CHAT_ID_KEY = 'grafana-assistant-active-chat-id';
+
+function getActiveAssistantChatId(): string | undefined {
+  return store.get(ACTIVE_ASSISTANT_CHAT_ID_KEY) ?? undefined;
+}
 
 interface AssistantTooltipButtonProps {
   /** uPlot-aligned frame (field 0 is the x/time field). */
@@ -18,8 +32,8 @@ interface AssistantTooltipButtonProps {
 }
 
 /**
- * "Ask Assistant" button for a hovered data point. Hidden when the assistant plugin isn't installed.
- * Opens the assistant with the point, series and panel as context pills, without auto-sending.
+ * "Ask Assistant" button for a hovered data point. Sends the point/series/panel context to the in-app
+ * assistant, or to the embedding window. Hidden if neither exists.
  */
 export function AssistantTooltipButton({
   series,
@@ -29,29 +43,33 @@ export function AssistantTooltipButton({
   context,
 }: AssistantTooltipButtonProps) {
   const { isAvailable, openAssistant } = useAssistant();
+  const embedTarget = useMemo(() => getDatapointEmbedTarget(), []);
 
-  if (!isAvailable) {
+  const canOpenAssistant = isAvailable && openAssistant != null;
+  if (!canOpenAssistant && embedTarget == null) {
     return null;
   }
 
+  const args = { alignedFrame: series, seriesIdx, dataIdxs, replaceVariables, ...context };
+
   const handleClick = () => {
-    const items = buildDatapointAssistantContext({
-      alignedFrame: series,
-      seriesIdx,
-      dataIdxs,
-      replaceVariables,
-      ...context,
-    });
-
-    if (items.length === 0) {
-      return;
+    // An explicit embed opt-in (host set the target param) wins over the in-app assistant.
+    if (embedTarget != null) {
+      const items = buildDatapointContextData(args);
+      if (items.length > 0) {
+        emitDatapointContextToParent(items, embedTarget);
+      }
+    } else if (canOpenAssistant) {
+      const items = buildDatapointAssistantContext(args);
+      if (items.length > 0) {
+        openAssistant?.({
+          origin: 'grafana/panel-tooltip',
+          context: items,
+          autoSend: false,
+          chatId: getActiveAssistantChatId(),
+        });
+      }
     }
-
-    openAssistant?.({
-      origin: 'grafana/panel-tooltip',
-      context: items,
-      autoSend: false,
-    });
   };
 
   return (

@@ -6,14 +6,22 @@ import { createDataFrame, dateTime, FieldType, type TimeRange } from '@grafana/d
 
 import { AssistantTooltipButton } from './AssistantTooltipButton';
 import { type AssistantTooltipContext } from './buildAssistantContext';
+import { emitDatapointContextToParent, getDatapointEmbedTarget } from './emitDatapointContext';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(),
   createAssistantContextItem: jest.fn((type, params) => ({ type, params })),
 }));
 
+jest.mock('./emitDatapointContext', () => ({
+  getDatapointEmbedTarget: jest.fn(),
+  emitDatapointContextToParent: jest.fn(),
+}));
+
 const mockUseAssistant = useAssistant as jest.MockedFunction<typeof useAssistant>;
 const mockCreateContextItem = createAssistantContextItem as jest.MockedFunction<typeof createAssistantContextItem>;
+const mockGetEmbedTarget = getDatapointEmbedTarget as jest.MockedFunction<typeof getDatapointEmbedTarget>;
+const mockEmitToParent = emitDatapointContextToParent as jest.MockedFunction<typeof emitDatapointContextToParent>;
 
 function makeSeries() {
   const frame = createDataFrame({
@@ -54,9 +62,11 @@ function makeContext(): AssistantTooltipContext {
 describe('AssistantTooltipButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetEmbedTarget.mockReturnValue(null);
+    window.localStorage.clear();
   });
 
-  it('renders nothing when the assistant is unavailable', () => {
+  it('renders nothing when the assistant is unavailable and not embedded', () => {
     mockUseAssistant.mockReturnValue({
       isLoading: false,
       isAvailable: false,
@@ -137,8 +147,71 @@ describe('AssistantTooltipButton', () => {
       expect.objectContaining({
         origin: 'grafana/panel-tooltip',
         autoSend: false,
+        chatId: undefined,
         context: expect.arrayContaining([expect.anything(), expect.anything(), expect.anything()]),
       })
     );
+  });
+
+  it('continues the active assistant conversation when one is open', async () => {
+    const openAssistant = jest.fn();
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+      openAssistant,
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
+    window.localStorage.setItem('grafana-assistant-active-chat-id', 'chat-123');
+
+    render(
+      <AssistantTooltipButton
+        series={makeSeries()}
+        seriesIdx={1}
+        dataIdxs={[1, 1]}
+        replaceVariables={(s) => s}
+        context={makeContext()}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /ask assistant/i }));
+
+    expect(openAssistant).toHaveBeenCalledWith(expect.objectContaining({ chatId: 'chat-123', autoSend: false }));
+  });
+
+  it('posts the context to the embedding host (over the assistant) when embedded', async () => {
+    const openAssistant = jest.fn();
+    // Assistant is available, but the embed opt-in must take precedence.
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+      openAssistant,
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
+    mockGetEmbedTarget.mockReturnValue('https://host.example');
+
+    render(
+      <AssistantTooltipButton
+        series={makeSeries()}
+        seriesIdx={1}
+        dataIdxs={[1, 1]}
+        replaceVariables={(s) => s}
+        context={makeContext()}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /ask assistant/i }));
+
+    expect(openAssistant).not.toHaveBeenCalled();
+    expect(mockCreateContextItem).not.toHaveBeenCalled();
+    expect(mockEmitToParent).toHaveBeenCalledTimes(1);
+    const [items, targetOrigin] = mockEmitToParent.mock.calls[0];
+    expect(targetOrigin).toBe('https://host.example');
+    expect(items.map((i) => (i.data as { kind: string }).kind)).toEqual([
+      'timeseries-datapoint',
+      'timeseries-series',
+      'dashboard-panel',
+    ]);
   });
 });

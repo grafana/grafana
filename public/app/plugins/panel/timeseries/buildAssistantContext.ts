@@ -5,6 +5,7 @@ import {
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
+  type IconName,
   type InterpolateFunction,
   reduceField,
   ReducerID,
@@ -47,6 +48,13 @@ interface BuildArgs extends AssistantTooltipContext {
   seriesIdx: number;
   dataIdxs: Array<number | null>;
   replaceVariables: InterpolateFunction;
+}
+
+/** A serializable context item - consumed both by the assistant SDK and the embed postMessage sink. */
+export interface DatapointContextItem {
+  title: string;
+  icon: IconName;
+  data: Record<string, unknown>;
 }
 
 function findField(frame: DataFrame, name: string): Field | undefined {
@@ -145,8 +153,8 @@ function matchExemplars(frames: DataFrame[], xVal: number, windowMs: number) {
   return matches;
 }
 
-/** Builds the point, series and panel context pills for a hovered data point. */
-export function buildDatapointAssistantContext({
+/** Builds the point, series and panel context */
+export function buildDatapointContextData({
   alignedFrame,
   seriesIdx,
   dataIdxs,
@@ -156,7 +164,7 @@ export function buildDatapointAssistantContext({
   panelTitle,
   timeRange,
   replaceVariables,
-}: BuildArgs): ChatContextItem[] {
+}: BuildArgs): DatapointContextItem[] {
   const xField = alignedFrame.fields[0];
   const field = alignedFrame.fields[seriesIdx];
   const xIdx = dataIdxs[0];
@@ -203,7 +211,7 @@ export function buildDatapointAssistantContext({
   const dashboardUid = resolveMacro(replaceVariables, '${__dashboard.uid}');
   const dashboardTitle = resolveMacro(replaceVariables, '${__dashboard.title}');
 
-  const pointItem = createAssistantContextItem('structured', {
+  const pointItem: DatapointContextItem = {
     title: `Point: ${displayValue} @ ${xDisp}`,
     icon: 'crosshair',
     data: {
@@ -217,9 +225,9 @@ export function buildDatapointAssistantContext({
       ...(matchedAnnotations.length > 0 ? { annotations: matchedAnnotations } : {}),
       ...(matchedExemplars.length > 0 ? { exemplars: matchedExemplars } : {}),
     },
-  });
+  };
 
-  const seriesItem = createAssistantContextItem('structured', {
+  const seriesItem: DatapointContextItem = {
     title: `Series: ${seriesName}`,
     icon: 'chart-line',
     data: {
@@ -231,9 +239,9 @@ export function buildDatapointAssistantContext({
       query,
       stats,
     },
-  });
+  };
 
-  const panelItem = createAssistantContextItem('structured', {
+  const panelItem: DatapointContextItem = {
     title: `Panel: ${panelTitle}`,
     icon: 'apps',
     data: {
@@ -244,7 +252,14 @@ export function buildDatapointAssistantContext({
       dashboardTitle,
       timeRange: { from: timeRange.from.toISOString(), to: timeRange.to.toISOString() },
     },
-  });
+  };
 
   return [pointItem, seriesItem, panelItem];
+}
+
+/** Wraps the datapoint context as assistant SDK context items. */
+export function buildDatapointAssistantContext(args: BuildArgs): ChatContextItem[] {
+  return buildDatapointContextData(args).map((item) =>
+    createAssistantContextItem('structured', { title: item.title, icon: item.icon, data: item.data })
+  );
 }
