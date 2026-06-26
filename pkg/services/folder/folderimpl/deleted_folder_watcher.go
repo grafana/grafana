@@ -13,7 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
+	claims "github.com/grafana/authlib/types"
+
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -24,18 +27,12 @@ import (
 // reconnectDelay is how long to wait before re-establishing a dropped watch.
 const reconnectDelay = 30 * time.Second
 
-// DeletedFolderWatcher establishes a k8s watch on folder.grafana.app folders
-// and logs deletions. It is intentionally minimal: it only reacts to delete
-// events and it is fine to miss events (e.g. across a reconnect), so it keeps
-// no cache and tracks no resource version.
-//
-// Watches are scoped to the namespaces that exist in this Grafana database (one
-// per org, deduplicated) rather than cluster-wide, because a single stack hosts
-// multiple orgs in one database. The org list is read once at startup; creating
-// a new org requires a restart to start watching its namespace.
+// DeletedFolderWatcher watches folder.grafana.app folders per org namespace and,
+// when one is deleted, removes the resources it contained. Org list is read once.
 type DeletedFolderWatcher struct {
 	restConfigProvider apiserver.RestConfigProvider
 	orgService         org.Service
+	folderService      *Service
 	namespaceMapper    request.NamespaceMapper
 	features           featuremgmt.FeatureToggles
 	log                *slog.Logger
@@ -45,11 +42,13 @@ func ProvideDeletedFolderWatcher(
 	cfg *setting.Cfg,
 	restConfigProvider apiserver.RestConfigProvider,
 	orgService org.Service,
+	folderService *Service,
 	features featuremgmt.FeatureToggles,
 ) *DeletedFolderWatcher {
 	return &DeletedFolderWatcher{
 		restConfigProvider: restConfigProvider,
 		orgService:         orgService,
+		folderService:      folderService,
 		namespaceMapper:    request.GetNamespaceMapper(cfg),
 		features:           features,
 		log:                slog.Default().With("logger", "deleted-folder-watcher"),
@@ -80,9 +79,8 @@ func (w *DeletedFolderWatcher) Run(ctx context.Context) error {
 	return nil
 }
 
-// namespaces returns the distinct namespaces for the orgs in this database. In
-// cloud all orgs map to a single stack namespace; on-prem each org maps to its
-// own, hence the dedup.
+// namespaces returns the distinct namespaces for the orgs in this database
+// (cloud collapses all orgs to one stack namespace, hence the dedup).
 func (w *DeletedFolderWatcher) namespaces(ctx context.Context) ([]string, error) {
 	orgs, err := w.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
@@ -105,8 +103,14 @@ func (w *DeletedFolderWatcher) namespaces(ctx context.Context) ([]string, error)
 // runNamespace keeps a watch open for a single namespace, reconnecting after a
 // delay until the context is cancelled.
 func (w *DeletedFolderWatcher) runNamespace(ctx context.Context, namespace string) {
+	ns, err := claims.ParseNamespace(namespace)
+	if err != nil {
+		w.log.Error("failed to parse namespace; skipping", "namespace", namespace, "error", err)
+		return
+	}
+
 	for {
-		w.watchNamespace(ctx, namespace)
+		w.watchNamespace(ctx, namespace, ns.OrgID)
 		if err := ctx.Err(); err != nil {
 			return
 		}
@@ -119,7 +123,7 @@ func (w *DeletedFolderWatcher) runNamespace(ctx context.Context, namespace strin
 	}
 }
 
-func (w *DeletedFolderWatcher) watchNamespace(ctx context.Context, namespace string) {
+func (w *DeletedFolderWatcher) watchNamespace(ctx context.Context, namespace string, orgID int64) {
 	cfg, err := w.restConfigProvider.GetRestConfig(ctx)
 	if err != nil {
 		w.log.Error("failed to get rest config", "namespace", namespace, "error", err)
@@ -146,7 +150,7 @@ func (w *DeletedFolderWatcher) watchNamespace(ctx context.Context, namespace str
 	for ev := range wt.ResultChan() {
 		switch ev.Type {
 		case watch.Deleted:
-			w.onDeleted(ev.Object)
+			w.onDeleted(ctx, orgID, ev.Object)
 		case watch.Error:
 			w.log.Error("error during folder watch", "namespace", namespace)
 			return
@@ -154,12 +158,20 @@ func (w *DeletedFolderWatcher) watchNamespace(ctx context.Context, namespace str
 	}
 }
 
-func (w *DeletedFolderWatcher) onDeleted(obj any) {
-	folder, ok := obj.(*unstructured.Unstructured)
+// onDeleted deletes the resources contained in a folder that was just deleted.
+func (w *DeletedFolderWatcher) onDeleted(ctx context.Context, orgID int64, obj any) {
+	deleted, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		w.log.Warn("received delete event with unexpected object type", "type", obj)
 		return
 	}
 
-	w.log.Info("folder deleted", "name", folder.GetName(), "namespace", folder.GetNamespace())
+	uid := deleted.GetName()
+	w.log.Info("folder deleted, removing its contents", "uid", uid, "orgID", orgID)
+
+	// Background reconciliation has no signed-in user, so act as the service.
+	ctx, requester := identity.WithServiceIdentity(ctx, orgID)
+	if err := w.folderService.deleteChildrenInFolder(ctx, orgID, []string{uid}, requester); err != nil {
+		w.log.Error("failed to delete contents of deleted folder", "uid", uid, "orgID", orgID, "error", err)
+	}
 }
