@@ -182,13 +182,12 @@ You should now see a list of matching traces in the table visualization. While s
 
 The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 
-The **Filters** option supports variable interpolation. For example, you can set a filter value to `$var`, and the visualization replaces it with the value for the dashboard variable named `$var`.
 
 <!-- prettier-ignore-start -->
 
 | Option | Description |
 | ------ | ----------- |
-| Filters | Add free-form filters that set the initial span filter state. Use **Text search** for text queries, `duration` for duration filters, or span attributes such as `service.name` and `span.name`. |
+| Filters | <p>Add free-form filters that set the initial span filter state. Use **Text search** for text queries, `duration` for duration filters, or span attributes such as `service.name` and `span.name`.</p><p>Supports variable interpolation. For example, you can set a filter value to `$var`, and the visualization replaces it with the value for the dashboard variable named `$var`.</p> |
 | Show matches only | Toggle the switch on to display only spans that match the defined filter criteria. This helps simplify trace interpretation. |
 | Select critical path | Toggle the switch on to highlight spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency. |
 
