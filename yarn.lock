@@ -3002,8 +3002,8 @@ __metadata:
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
     "@types/tinycolor2": "npm:1.4.6"
-    "@uiw/codemirror-theme-vscode": "npm:4.25.9"
-    "@uiw/react-codemirror": "npm:4.25.9"
+    "@uiw/codemirror-theme-vscode": "npm:^4.25.9"
+    "@uiw/react-codemirror": "npm:^4.25.9"
     calculate-size: "npm:1.1.1"
     chance: "npm:^1.1.13"
     classnames: "npm:2.5.1"
@@ -10985,7 +10985,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/codemirror-theme-vscode@npm:4.25.9":
+"@uiw/codemirror-theme-vscode@npm:^4.25.9":
   version: 4.25.9
   resolution: "@uiw/codemirror-theme-vscode@npm:4.25.9"
   dependencies:
@@ -11009,7 +11009,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/react-codemirror@npm:4.25.9":
+"@uiw/react-codemirror@npm:^4.25.9":
   version: 4.25.9
   resolution: "@uiw/react-codemirror@npm:4.25.9"
   dependencies:
