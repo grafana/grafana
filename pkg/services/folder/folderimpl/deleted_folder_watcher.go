@@ -56,7 +56,7 @@ func ProvideDeletedFolderWatcher(
 }
 
 func (w *DeletedFolderWatcher) IsDisabled() bool {
-	return !w.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolderCascadeDelete)
+	return !w.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolderCascadeDelete) //nolint:staticcheck
 }
 
 // Run watches every org namespace until the context is cancelled. The org list
@@ -154,6 +154,8 @@ func (w *DeletedFolderWatcher) watchNamespace(ctx context.Context, namespace str
 		case watch.Error:
 			w.log.Error("error during folder watch", "namespace", namespace)
 			return
+		case watch.Added, watch.Modified, watch.Bookmark:
+			// Not interested in non-delete events.
 		}
 	}
 }
