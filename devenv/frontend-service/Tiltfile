@@ -30,7 +30,7 @@ local_resource(
 
 local_resource(
   'yarn start',
-  cmd='rm -rf public/build/assets-manifest.json',
+  cmd='rm -rf public/build/assets-manifest-react19.json',
   serve_cmd='yarn start:noLint',
   resource_deps=['yarn install'],
 
@@ -39,7 +39,7 @@ local_resource(
   readiness_probe=probe(
     initial_delay_secs=10,
     period_secs=1,
-    exec=exec_action(["bash", "-c", "stat public/build/assets-manifest.json"]),
+    exec=exec_action(["bash", "-c", "stat public/build/assets-manifest-react19.json"]),
   ),
   allow_parallel=True,
   labels=["local"]
@@ -150,7 +150,7 @@ docker_build('grafana-fs-dev',
     'public/views',
     'public/dashboards',
     'public/app/plugins',
-    'public/build/assets-manifest.json',
+    'public/build/assets-manifest-react19.json',
     'public/build/boot.js',
     'public/gazetteer',
     'public/maps',
@@ -166,7 +166,7 @@ docker_build('grafana-fs-dev',
     sync('../../public/views', '/grafana/public/views'),
     sync('../../public/dashboards', '/grafana/public/dashboards'),
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
-    sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    sync('../../public/build/assets-manifest-react19.json', '/grafana/public/build/assets-manifest-react19.json'),
     sync('../../public/build/boot.js', '/grafana/public/build/boot.js'),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild

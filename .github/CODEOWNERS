@@ -156,7 +156,6 @@
 /pkg/models/ @grafana/grafana-backend-group
 /pkg/server/ @grafana/grafana-backend-group
 /pkg/apiserver @grafana/grafana-app-platform-squad
-/pkg/aggregator @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/apimachinery/identity/ @grafana/identity-squad
 /pkg/apimachinery/errutil/ @grafana/grafana-backend-group
@@ -215,7 +214,6 @@
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
-/pkg/tsdb/opentsdb/ @grafana/data-sources-plugins
 /pkg/util/ @grafana/grafana-backend-group
 /pkg/web/ @grafana/grafana-backend-group
 
@@ -269,7 +267,6 @@
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 /devenv/dev-dashboards/datasource-elasticsearch/ @grafana/data-sources-plugins
-/devenv/dev-dashboards/datasource-opentsdb/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-mssql/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-loki/ @grafana/grafana-catalog
@@ -317,7 +314,6 @@
 /devenv/docker/blocks/mysql_exporter/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_opendata/ @grafana/data-sources-plugins
 /devenv/docker/blocks/mysql_tests/ @grafana/data-sources-plugins
-/devenv/docker/blocks/opentsdb/ @grafana/data-sources-plugins
 /devenv/docker/blocks/pgvector/ @grafana/grafana-search-and-storage
 /devenv/docker/blocks/postgres/ @grafana/data-sources-plugins
 /devenv/docker/blocks/postgres_tests/ @grafana/data-sources-plugins
@@ -1144,7 +1140,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/opentsdb/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/data-sources-plugins

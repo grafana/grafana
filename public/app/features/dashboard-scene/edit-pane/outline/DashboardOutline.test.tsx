@@ -23,6 +23,7 @@ import { DashboardOutline } from './DashboardOutline';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     outlineItemClicked: jest.fn(),
   },
 }));

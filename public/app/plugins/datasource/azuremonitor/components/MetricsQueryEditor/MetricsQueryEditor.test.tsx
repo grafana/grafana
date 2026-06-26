@@ -7,8 +7,9 @@ import createMockPanelData from '../../mocks/panelData';
 import createMockQuery from '../../mocks/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
+import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 
-import MetricsQueryEditor from './MetricsQueryEditor';
+import MetricsQueryEditor, { getSelectionNotice, isResourceRowDisabled } from './MetricsQueryEditor';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -444,5 +445,58 @@ describe('MetricsQueryEditor', () => {
         }),
       })
     );
+  });
+});
+
+const makeRow = (subscription: string, region: string, namespace: string, name: string): ResourceRow => ({
+  id: name,
+  uri: `/subscriptions/${subscription}/resourceGroups/rg/providers/${namespace}/${name}`,
+  name,
+  type: ResourceRowType.Resource,
+  typeLabel: namespace,
+  location: region,
+});
+
+const vmEastA = makeRow('sub-a', 'eastus', 'Microsoft.Compute/virtualMachines', 'vm-a');
+const vmWestB = makeRow('sub-b', 'westus', 'Microsoft.Compute/virtualMachines', 'vm-b');
+const storageEastA = makeRow('sub-a', 'eastus', 'Microsoft.Storage/storageAccounts', 'sa-a');
+
+describe('isResourceRowDisabled', () => {
+  it('never disables a row when nothing is selected', () => {
+    expect(isResourceRowDisabled(vmWestB, [], true)).toBe(false);
+    expect(isResourceRowDisabled(vmWestB, [], false)).toBe(false);
+  });
+
+  describe('batch API enabled', () => {
+    it('allows the same namespace across subscriptions and regions', () => {
+      expect(isResourceRowDisabled(vmWestB, [vmEastA], true)).toBe(false);
+    });
+
+    it('disables a different namespace', () => {
+      expect(isResourceRowDisabled(storageEastA, [vmEastA], true)).toBe(true);
+    });
+  });
+
+  describe('batch API disabled', () => {
+    it('allows the same subscription, region, and compatible namespace', () => {
+      const vmEastA2 = makeRow('sub-a', 'eastus', 'Microsoft.Compute/virtualMachines', 'vm-a2');
+      expect(isResourceRowDisabled(vmEastA2, [vmEastA], false)).toBe(false);
+    });
+
+    it('disables a row in a different subscription or region', () => {
+      expect(isResourceRowDisabled(vmWestB, [vmEastA], false)).toBe(true);
+    });
+  });
+});
+
+describe('getSelectionNotice', () => {
+  const selected: ResourceRowGroup = [vmEastA];
+
+  it('mentions cross-subscription/region selection when the batch API is enabled', () => {
+    expect(getSelectionNotice(selected, true)).toContain('across subscriptions and regions');
+  });
+
+  it('mentions same-location selection when the batch API is disabled', () => {
+    expect(getSelectionNotice(selected, false)).toContain('same resource type and location');
   });
 });

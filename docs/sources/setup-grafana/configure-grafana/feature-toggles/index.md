@@ -75,7 +75,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
 | `vizLegendFacetedFilter`                     | Enable faceted labels filter for series visibility in the legend                                                                                              | Yes                |
 | `heatmapRowsAxisOptions`                     | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                                                                        | Yes                |
-| `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
@@ -86,37 +85,36 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 [Public preview](https://grafana.com/docs/release-life-cycle/#public-preview) features are supported by our Support teams, but might be limited to enablement, configuration, and some troubleshooting.
 
-| Feature toggle name               | Description                                                                                            |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `panelTitleSearch`                | Search for dashboards using panel title                                                                |
-| `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
-| `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
-| `provisioning.readmes`            | Render the README.md of a Git Sync provisioned folder inline below its dashboards list                 |
-| `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
-| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
-| `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
-| `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
-| `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
-| `timeComparison`                  | Enables time comparison option in supported panels                                                     |
-| `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                          |
-| `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
-| `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
-| `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
-| `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                         |
-| `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
-| `groupToNestedTableV2`            | Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation         |
-| `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
-| `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
-| `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                                       |
-| `teamFolders`                     | Enables team folders functionality                                                                     |
-| `interactiveLearning`             | Enables the interactive learning app                                                                   |
-| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
-| `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
-| `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
-| `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |
-| `queryEditorNext`                 | Enables next generation query editor experience                                                        |
-| `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                           |
-| `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
+| Feature toggle name               | Description                                                                                    |
+| --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `panelTitleSearch`                | Search for dashboards using panel title                                                        |
+| `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability |
+| `provisioning.readmes`            | Render the README.md of a Git Sync provisioned folder inline below its dashboards list         |
+| `externalServiceAccounts`         | Automatic service account and token setup for plugins                                          |
+| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                    |
+| `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                      |
+| `pdfTables`                       | Enables generating table data as PDF in reporting                                              |
+| `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                             |
+| `timeComparison`                  | Enables time comparison option in supported panels                                             |
+| `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                  |
+| `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                 |
+| `queryLibrary`                    | Enables Saved queries (query library) feature                                                  |
+| `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                         |
+| `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                 |
+| `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                             |
+| `groupToNestedTableV2`            | Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation |
+| `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
+| `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
+| `alertingListViewV2PreviewToggle` | Enables the alerting list view v2 preview toggle                                               |
+| `teamFolders`                     | Enables team folders functionality                                                             |
+| `interactiveLearning`             | Enables the interactive learning app                                                           |
+| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)               |
+| `panelTimeSettings`               | Enables a new panel time settings drawer                                                       |
+| `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                           |
+| `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                             |
+| `queryEditorNext`                 | Enables next generation query editor experience                                                |
+| `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                   |
+| `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session          |
 
 ## Development feature toggles
 
