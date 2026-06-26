@@ -289,6 +289,23 @@ describe('fetchKubernetesOverview', () => {
     });
   });
 
+  it('uses a lookback for kube-state gauges so seeded samples survive instant query staleness', async () => {
+    query.mockReturnValue(of({ data: frames({ clusters: 1, pods: 10, unhealthyPods: 0, notReadyNodes: 0 }) }));
+
+    await fetchKubernetesOverview();
+
+    const request = query.mock.calls[0][0];
+    const targetsByRefId = Object.fromEntries(
+      request.targets.map((target: { refId: string; expr: string }) => [target.refId, target.expr])
+    );
+
+    expect(targetsByRefId.clusters).toContain('last_over_time(kube_node_info[24h])');
+    expect(targetsByRefId.pods).toContain('last_over_time(kube_pod_info[24h])');
+    expect(targetsByRefId.unhealthyPods).toContain('last_over_time(kube_pod_status_phase');
+    expect(targetsByRefId.notReadyNodes).toContain('last_over_time(kube_node_status_condition');
+    expect(targetsByRefId.restarts1h).toBe('sum(increase(kube_pod_container_status_restarts_total[1h]))');
+  });
+
   it('throws when no Prometheus datasource is configured', async () => {
     setDataSources([]);
 

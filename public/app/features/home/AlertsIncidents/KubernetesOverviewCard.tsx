@@ -19,14 +19,18 @@ export interface KubernetesOverview {
   notReadyNodes: number | null; // null = metric absent (hide the row); 0 = all Ready
 }
 
+const KUBE_STATE_LOOKBACK = '24h';
+
 // refId -> portable kube-state-metrics PromQL. No recording rules: works on any Prometheus scraping
-// kube-state-metrics. `group by (...)` dedupes series across replicas before count().
+// kube-state-metrics. Use a lookback for gauge-style kube-state metrics so seeded/demo samples that
+// are not continuously scraped still render after Prometheus's instant-query lookback expires.
+// `group by (...)` dedupes series across replicas before count().
 const OVERVIEW_QUERIES: Record<string, string> = {
-  clusters: 'count(group by (cluster) (kube_node_info))',
-  pods: 'count(group by (cluster, namespace, pod) (kube_pod_info))',
-  unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
+  clusters: `count(group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}])))`,
+  pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info[${KUBE_STATE_LOOKBACK}])))`,
+  unhealthyPods: `sum(last_over_time(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"}[${KUBE_STATE_LOOKBACK}]))`,
   restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
-  notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status="false"})',
+  notReadyNodes: `sum(last_over_time(kube_node_status_condition{condition="Ready",status="false"}[${KUBE_STATE_LOOKBACK}]))`,
 };
 
 type KubernetesHealthSeverity = 'healthy' | 'warning' | 'critical';
