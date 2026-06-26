@@ -6436,7 +6436,11 @@
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
+      "edit-template-button": "Edit",
+      "edit-template-button-label": "Edit template: {{title}}",
       "no-preview": "No preview available ",
+      "use-template-button": "Use template",
+      "use-template-button-label": "Use template: {{title}}",
       "view-dashboard-button": "View dashboard",
       "view-dashboard-button-label": "View dashboard: {{title}}",
       "view-template-button": "View template",
@@ -6467,7 +6471,13 @@
       "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
     },
     "create-from-scratch": "Create a dashboard from scratch instead",
+    "custom-dashboard-template-filters": {
+      "creator-placeholder": "Filter by created by",
+      "search-placeholder": "Search",
+      "sort-placeholder": "Sort"
+    },
     "dashboard-card": {
+      "created-by-label": "Created by:",
       "details": {
         "datasource": "Datasource",
         "dependencies": "Dependencies",
@@ -6477,6 +6487,9 @@
         "view-on-grafana-com": "View on Grafana.com"
       },
       "no-description": "No description available"
+    },
+    "grafana-dashboard-template-modal": {
+      "no-results-found": "No template dashboards found"
     },
     "merged-description": "Browse and select from data-source provided or community dashboards",
     "merged-empty-no-dashboards": "No dashboards are available for this datasource.",
@@ -6493,7 +6506,10 @@
     "suggested-error-description": "Failed to load suggested dashboard.",
     "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
-      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "description": "Get started with Grafana templates. Connect your data to power them with real metrics.",
+      "description-custom": "Get started with templates. Connect your data to power them with real metrics.",
+      "tab-custom": "Custom templates",
+      "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
     }
   },
@@ -6792,6 +6808,18 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard controls"
+    },
+    "dashboard-template-edit-banner": {
+      "body": "Edits made will update this template. <2>If you wish to use this template to create a dashboard, click here</2>",
+      "title": "You are editing {{ templateName }}"
+    },
+    "dashboard-template-saved-banner": {
+      "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
+      "title": "Template created"
+    },
+    "dashboard-template-use-banner": {
+      "body": "Save this dashboard and edit it for your use case",
+      "title": "You are using {{ templateName }} template in a new dashboard"
     },
     "data-source-variable-form": {
       "data-source-options": "Data source options",
@@ -7667,6 +7695,13 @@
     },
     "permissions": {
       "title": "Permissions"
+    },
+    "template": {
+      "title": "Template",
+      "unavailable-body": "This dashboard is not being edited as a template, so template settings cannot be shown.",
+      "unavailable-oss-body": "Editing dashboard template settings requires Grafana Enterprise.",
+      "unavailable-oss-title": "Available in Grafana Enterprise",
+      "unavailable-title": "Template metadata unavailable"
     },
     "time-picker": {
       "hide-time-picker": "Hide time picker",
@@ -11080,24 +11115,7 @@
       "end-of-range": "End of the selected time range.",
       "load-more": "Scroll to load more",
       "load-newer": "Loading newer logs...",
-      "load-older": "Loading older logs...",
-      "older-logs": "Older logs"
-    },
-    "log-context-buttons": {
-      "center-matched-line": "Center matched line",
-      "label-wrap-lines": "Wrap lines"
-    },
-    "log-details": {
-      "fields": "Fields",
-      "links": "Links",
-      "log-line": "Log line",
-      "no-details": "No details available"
-    },
-    "log-details-body": {
-      "toggle-field-button": {
-        "tooltip-hide-log-line": "Hide log line",
-        "tooltip-show-log-line": "Show log line"
-      }
+      "load-older": "Loading older logs..."
     },
     "log-labels": {
       "collapse": "Collapse labels",
@@ -11199,28 +11217,6 @@
       "next": "Next result",
       "prev": "Previous result"
     },
-    "log-row-context-modal": {
-      "error-loading-log-more-logs": "Error loading more logs.",
-      "no-more-logs-available": "No more logs available.",
-      "open-in-split-view": "Open in split view",
-      "title-log-context": "Log context"
-    },
-    "log-row-menu-cell": {
-      "aria-label-copy-shortlink": "Copy shortlink",
-      "aria-label-pin-line": "Pin line",
-      "aria-label-show-context": "Show context",
-      "aria-label-unpin-line": "Unpin line",
-      "tooltip-copy-shortlink": "Copy shortlink",
-      "tooltip-copy-to-clipboard": "Copy to clipboard",
-      "tooltip-show-context": "Show context",
-      "tooltip-unpin-line": "Unpin line"
-    },
-    "log-row-message": {
-      "ellipsis": "… ",
-      "more": "more",
-      "see-details": "See log details",
-      "tooltip-error": "Error: {{errorMessage}}"
-    },
     "log-rows": {
       "disable-popover": {
         "confirm": "Confirm",
@@ -11245,7 +11241,6 @@
     "logs-controls": {
       "collapse": "Collapse",
       "deduplication": "Deduplication",
-      "disable-prettify-json": "Collapse JSON logs",
       "display-level-all": "All levels",
       "download": "Download logs",
       "download-logs": {
@@ -11259,7 +11254,6 @@
       "font-large": "Set large font",
       "font-small": "Set small font",
       "hide-search": "Close search",
-      "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "label": {
         "collapse": "Expanded",
@@ -11292,14 +11286,12 @@
       },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
-      "prettify-json": "Expand JSON logs",
       "remove-escaping": "Remove escaping",
       "resolution-ms": "ms",
       "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
       "show-search": "Search in logs result",
-      "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "table-wrap-text": {
         "disable": "Disable text wrapping",
@@ -11323,7 +11315,6 @@
         "enable-highlighting": "Enable highlighting",
         "filter-level": "Filter logs result by level"
       },
-      "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {
         "disable": "Disable columns",
         "disabled-label": "Columns not supported",
@@ -11331,16 +11322,9 @@
         "enable": "Enable columns",
         "enabled-text": "Columns disabled",
         "not-supported": "Columns are not supported with line wrapping enabled"
-      },
-      "wrap-lines": "Wrap lines"
-    },
-    "logs-panel": {
-      "render-common-labels": {
-        "common-labels": "Common labels:"
       }
     },
     "name-allow-download": "Display download control",
-    "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
     "name-details-mode": "Log details panel mode",
     "name-details-options": {
@@ -11364,9 +11348,6 @@
       "label-newest-first": "Newest first",
       "label-oldest-first": "Oldest first"
     },
-    "out-of-range-message": {
-      "end-of-the-selected-time-range": "End of the selected time range."
-    },
     "popover-menu": {
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
@@ -11376,24 +11357,6 @@
     },
     "show-log-attributes": "Enable log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
-    "un-themed-log-details": {
-      "aria-label-data-links": "Data links",
-      "aria-label-fields": "Fields",
-      "aria-label-line": "Log line",
-      "aria-label-log-level": "Log level",
-      "aria-label-no-details": "No details"
-    },
-    "un-themed-log-details-row": {
-      "filter-out": "Filter out value",
-      "filter-out-query": "Filter out value in query {{query}}",
-      "title-copy-value-to-clipboard": "Copy value to clipboard",
-      "toggle-field-button": {
-        "tooltip-field-instead-message": "Show this field instead of the message",
-        "tooltip-hide-this-field": "Hide this field"
-      },
-      "tooltip-adhoc-statistics": "Ad-hoc statistics",
-      "tooltip-hide-adhoc-statistics": "Hide ad-hoc statistics"
-    },
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
@@ -12535,6 +12498,9 @@
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
+    "save-provisioned": {
+      "drawer-title": "Save provisioned playlist"
+    },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
   },
@@ -12551,6 +12517,9 @@
     "delete-modal": {
       "body": "Are you sure you want to delete {{name}} playlist?",
       "confirm-text": "Delete"
+    },
+    "delete-provisioned": {
+      "drawer-title": "Delete provisioned playlist"
     },
     "empty": {
       "button": "Create playlist",
@@ -13080,6 +13049,7 @@
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
       "description-title": "A human-readable name for this connection",
+      "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
@@ -13091,6 +13061,7 @@
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
       "label-title": "Title",
+      "label-webhook-disabled": "Disable webhook integration",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
@@ -13349,6 +13320,17 @@
         "error-fetching-active-job": "Error fetching active job"
       }
     },
+    "job-summary": {
+      "column-created": "Created",
+      "column-deleted": "Deleted",
+      "column-errors": "Errors",
+      "column-resource": "Resource",
+      "column-total": "Total",
+      "column-unchanged": "Unchanged",
+      "column-updated": "Updated",
+      "column-warnings": "Warnings",
+      "unknown-kind": "Unknown"
+    },
     "local": {
       "path-description": "Local file system path to the repository",
       "path-label": "Repository Path",
@@ -13582,6 +13564,11 @@
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
     },
+    "repository-select": {
+      "description": "Pick a repository to store this resource in version control and sync it from there, or leave it empty to keep it in Grafana. This can't be changed after the resource is created.",
+      "label": "Repository",
+      "placeholder": "Select a repository"
+    },
     "repository-status": {
       "error": "Failed to load repository"
     },
@@ -13655,6 +13642,8 @@
     },
     "save-resource": {
       "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
       "button-save": "Save",
       "button-saving": "Saving...",
       "error-saving": "Failed to save changes",
@@ -13759,9 +13748,12 @@
       "error-title": "Live updates unavailable"
     },
     "webhook-section": {
+      "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
       "label-webhook": "Webhook options",
+      "label-webhook-disabled": "Disable webhook integration",
       "label-webhook-url": "Webhook URL",
       "placeholder-webhook-url": "https://grafana.example.com"
     },

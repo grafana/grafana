@@ -2347,13 +2347,27 @@
     {
       "metadata": {
         "name": "grafana.customDashboardTemplates",
-        "resourceVersion": "1782324923384",
-        "creationTimestamp": "2026-06-24T18:15:23Z"
+        "resourceVersion": "1781723429145",
+        "creationTimestamp": "2026-06-17T19:10:29Z"
       },
       "spec": {
         "description": "Enables custom dashboard templates for enterprise",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.customizableMegaMenu",
+        "resourceVersion": "1782389631454",
+        "creationTimestamp": "2026-06-25T12:13:51Z"
+      },
+      "spec": {
+        "description": "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2490,7 +2504,8 @@
       "metadata": {
         "name": "grafana.orgDashboardTemplates",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-17T19:10:29Z"
       },
       "spec": {
         "description": "Enables org-defined dashboard templates for enterprise",
@@ -3377,13 +3392,17 @@
     {
       "metadata": {
         "name": "logsTablePanelNG",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1782158134143",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-22 19:55:34.143374 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the logs tableNG panel to replace existing tableRT",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
+        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3541,6 +3560,7 @@
         "name": "multiPropsVariables",
         "resourceVersion": "1781873846528",
         "creationTimestamp": "2025-12-09T17:11:49Z",
+        "deletionTimestamp": "2026-06-25T12:46:20Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-19 12:57:26.528739 +0000 UTC"
         }
@@ -3627,6 +3647,7 @@
         "name": "newLogContext",
         "resourceVersion": "1781279681608",
         "creationTimestamp": "2025-07-31T22:56:50Z",
+        "deletionTimestamp": "2026-06-23T19:18:29Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-12 15:54:41.608564 +0000 UTC"
         }
@@ -3643,7 +3664,8 @@
       "metadata": {
         "name": "newLogsPanel",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-02-04T17:40:17Z"
+        "creationTimestamp": "2025-02-04T17:40:17Z",
+        "deletionTimestamp": "2026-06-22T16:17:34Z"
       },
       "spec": {
         "description": "Enables the new logs panel",

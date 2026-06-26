@@ -30,7 +30,7 @@ func TestIntegrationProvisioning_ResourceKinds_Sync(t *testing.T) {
 			repo := rk.name + "-sync-repo"
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:                   repo,
-				SyncTarget:             "instance",
+				SyncTarget:             "folder",
 				SkipResourceAssertions: true,
 			})
 
