@@ -4,9 +4,10 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
+import { useDispatch } from 'app/types/store';
 
-import { type Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist/v1';
-import { SaveProvisionedPlaylistDrawer } from '../provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
+import { type Playlist, playlistAPIv1, useCreatePlaylistMutation } from '../../api/clients/playlist/v1';
+import { SaveProvisionedResourceDrawer } from '../provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from '../provisioning/hooks/useResourceRepositorySelection';
 import { resourceKindInfos } from '../provisioning/utils/resourceKinds';
 
@@ -17,6 +18,7 @@ export const PlaylistNewPage = () => {
   const [playlist] = useState<Playlist>(getDefaultPlaylist());
   const [createPlaylist] = useCreatePlaylistMutation();
   const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
+  const dispatch = useDispatch();
   // No selection = save to Grafana; a repository name routes the save through the provisioning drawer.
   const [selectedRepository, setSelectedRepository] = useState<string | undefined>(undefined);
   // Holds the playlist while the provisioning save drawer is open.
@@ -51,10 +53,13 @@ export const PlaylistNewPage = () => {
         />
       </Page.Contents>
       {provisionedPlaylist && selectedRepository && (
-        <SaveProvisionedPlaylistDrawer
-          playlist={provisionedPlaylist}
+        <SaveProvisionedResourceDrawer
+          kind={resourceKindInfos.playlist}
+          resource={provisionedPlaylist}
+          action="create"
+          title={provisionedPlaylist.spec?.title ?? ''}
           repositoryName={selectedRepository}
-          isNew
+          invalidate={() => dispatch(playlistAPIv1.util.invalidateTags(['Playlist']))}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}

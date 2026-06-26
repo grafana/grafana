@@ -1,18 +1,16 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
-import { type ManagedResource } from '../../utils/managedResource';
+import { resourceKindInfos } from '../../utils/resourceKinds';
 
-import {
-  SaveProvisionedResourceDrawer,
-  type SaveProvisionedResourceDrawerProps,
-} from './SaveProvisionedResourceDrawer';
+import { SaveProvisionedResourceDrawer, type SaveProvisionedResourceDrawerProps } from './SaveProvisionedResourceDrawer';
 
 setupProvisioningMswServer();
 
@@ -27,22 +25,43 @@ jest.mock('../../hooks/useLastBranch', () => ({
   }),
 }));
 
+jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('../../hooks/useGetResourceRepositoryView'),
+  useGetResourceRepositoryView: jest.fn(),
+}));
+
+const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
     ...actual,
-    useNavigate: () => jest.fn(),
+    useNavigate: () => mockNavigate,
   };
 });
 
-const mockResource: ManagedResource = {
+const mockPlaylist: Playlist = {
+  apiVersion: 'playlist.grafana.app/v0alpha1',
+  kind: 'Playlist',
   metadata: {
+    name: 'playlist-uid',
     annotations: {
       'grafana.app/managedBy': 'repo',
       'grafana.app/managerId': 'test-repo',
-      'grafana.app/sourcePath': 'resources/thing.json',
+      'grafana.app/sourcePath': 'playlists/test-playlist.json',
     },
   },
+  spec: {
+    title: 'Test Playlist',
+    interval: '5m',
+    items: [{ type: 'dashboard_by_uid', value: 'abc' }],
+  },
+};
+
+const newPlaylist: Playlist = {
+  apiVersion: 'playlist.grafana.app/v1',
+  kind: 'Playlist',
+  metadata: { name: '' },
+  spec: { title: 'My New Playlist', interval: '5m', items: [{ type: 'dashboard_by_uid', value: 'xyz' }] },
 };
 
 const mockRepository: RepositoryView = {
@@ -54,190 +73,249 @@ const mockRepository: RepositoryView = {
   workflows: ['write', 'branch'],
 };
 
-const mockBody = { apiVersion: 'v1', kind: 'Thing', metadata: { name: 'thing-uid' }, spec: { title: 'Test Thing' } };
+function mockRepoView(overrides = {}) {
+  (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
+    repository: mockRepository,
+    isLoading: false,
+    isReadOnlyRepo: false,
+    isMissingRepo: false,
+    isInstanceManaged: true,
+    status: 'ready',
+    ...overrides,
+  });
+}
 
-function mockRepositories(repositories: RepositoryView[]) {
-  server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ items: repositories })));
+type CapturedRequest = { url: URL; body?: unknown; method?: string };
+
+function requireCapturedRequest(req: CapturedRequest | null): CapturedRequest {
+  expect(req).not.toBeNull();
+  return req as CapturedRequest;
 }
 
 function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}) {
   const defaultProps: SaveProvisionedResourceDrawerProps = {
-    resource: mockResource,
-    resourceType: 'dashboard',
-    resourceName: 'thing-uid',
-    title: 'Test Thing',
-    drawerTitle: 'Save provisioned thing',
-    body: mockBody,
+    kind: resourceKindInfos.playlist,
+    resource: mockPlaylist,
+    action: 'update',
+    title: mockPlaylist.spec?.title ?? '',
+    invalidate: jest.fn(),
     onDismiss: jest.fn(),
   };
   return render(<SaveProvisionedResourceDrawer {...defaultProps} {...props} />);
 }
 
-function requireCapturedRequest(req: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
-  expect(req).not.toBeNull();
-  return req as { url: URL; body: unknown };
-}
-
 describe('SaveProvisionedResourceDrawer', () => {
-  let capturedRequest: { url: URL; body: unknown } | null = null;
-  let originalProvisioning: boolean | undefined;
+  let capturedRequest: CapturedRequest | null = null;
 
   beforeEach(() => {
     capturedRequest = null;
-    originalProvisioning = config.featureToggles.provisioning;
-    config.featureToggles.provisioning = true;
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockRepositories([mockRepository]);
+    mockRepoView();
   });
 
-  afterEach(() => {
-    config.featureToggles.provisioning = originalProvisioning;
-  });
+  describe('update', () => {
+    it('renders the drawer header, shared fields and save/cancel buttons', async () => {
+      setup();
 
-  it('renders the drawer header, shared fields and generic save/cancel buttons', async () => {
-    setup();
-
-    expect(await screen.findByRole('heading', { name: /save provisioned thing/i })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /^save$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
-  });
-
-  it('commits the provided body for the write workflow with a resource typed message', async () => {
-    server.use(
-      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-        const url = new URL(request.url);
-        capturedRequest = { url, body: await request.json() };
-        return HttpResponse.json({ resource: { upsert: {} } });
-      })
-    );
-
-    const { user } = setup();
-
-    await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(capturedRequest).not.toBeNull();
+      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     });
 
-    const req = requireCapturedRequest(capturedRequest);
-    expect(req.url.pathname).toContain('/repositories/test-repo/files/resources/thing.json');
-    expect(req.url.searchParams.get('ref')).toBeNull();
-    expect(req.url.searchParams.get('message')).toBe('Save dashboard: Test Thing');
-    expect(req.body).toEqual(mockBody);
-  });
+    it('commits the resource body for the write workflow and navigates to the list', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({ ref: 'main', path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+        })
+      );
 
-  it('respects a custom commit action', async () => {
-    server.use(
-      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-        const url = new URL(request.url);
-        capturedRequest = { url, body: await request.json() };
-        return HttpResponse.json({ resource: { upsert: {} } });
-      })
-    );
+      const { user } = setup();
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
 
-    const { user } = setup({ action: 'create' });
-
-    await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(capturedRequest).not.toBeNull();
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      const req = requireCapturedRequest(capturedRequest);
+      expect(req.url.pathname).toContain('/repositories/test-repo/files/playlists/test-playlist.json');
+      // Write workflow commits to the configured branch (no ref query param).
+      expect(req.url.searchParams.get('ref')).toBeNull();
+      expect(req.url.searchParams.get('message')).toBe('Save playlist: Test Playlist');
+      // The drawer builds the committed file from the resource (apiVersion/kind/metadata/spec).
+      expect(req.body).toEqual({
+        apiVersion: 'playlist.grafana.app/v0alpha1',
+        kind: 'Playlist',
+        metadata: { name: 'playlist-uid' },
+        spec: { title: 'Test Playlist', interval: '5m', items: [{ type: 'dashboard_by_uid', value: 'abc' }] },
+      });
+      // Default post-commit navigation goes to the kind's list route.
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/playlists'));
     });
 
-    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('message')).toBe(
-      'Create dashboard: Test Thing'
-    );
-  });
+    it('runs a caller-supplied onWriteSuccess instead of the default navigation', async () => {
+      const onWriteSuccess = jest.fn();
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({ ref: 'main', path: 'playlists/test-playlist.json', resource: { upsert: {} } })
+        )
+      );
 
-  it('sends the ref and runs the branch-success handler for the branch workflow', async () => {
-    const onBranchSuccess = jest.fn();
-    // workflows[0] === 'branch' makes the branch (PR) workflow the default.
-    mockRepositories([{ ...mockRepository, workflows: ['branch'] }]);
-    server.use(
-      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-        capturedRequest = { url: new URL(request.url), body: await request.json() };
-        return HttpResponse.json({
-          ref: 'feature-branch',
-          path: 'resources/thing.json',
-          urls: { newPullRequestURL: 'https://example.com/pr/1' },
-          resource: { upsert: {} },
-        });
-      })
-    );
+      const { user } = setup({ onWriteSuccess });
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
 
-    const { user } = setup({ onBranchSuccess });
-
-    await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(capturedRequest).not.toBeNull();
+      await waitFor(() => expect(onWriteSuccess).toHaveBeenCalled());
     });
-    // Branch workflow commits to a branch, so the ref is sent (unlike the write workflow).
-    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
-    await waitFor(() => {
-      expect(onBranchSuccess).toHaveBeenCalled();
+
+    it('sends the ref and runs onBranchSuccess for the branch workflow', async () => {
+      const onBranchSuccess = jest.fn();
+      // workflows[0] === 'branch' makes the branch (PR) workflow the default.
+      mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({
+            ref: 'feature-branch',
+            path: 'playlists/test-playlist.json',
+            urls: { newPullRequestURL: 'https://example.com/pr/1' },
+            resource: { upsert: {} },
+          });
+        })
+      );
+
+      const { user } = setup({ onBranchSuccess });
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
+      await waitFor(() => expect(onBranchSuccess).toHaveBeenCalled());
     });
-  });
 
-  it('calls onWriteSuccess after committing to the configured branch', async () => {
-    const onWriteSuccess = jest.fn();
-    server.use(
-      http.put(`${BASE}/repositories/:name/files/*`, () =>
-        HttpResponse.json({ ref: 'main', path: 'resources/thing.json', resource: { upsert: {} } })
-      )
-    );
+    it('shows an error alert when the commit fails', async () => {
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ message: 'Boom' }, { status: 500 }))
+      );
 
-    const { user } = setup({ onWriteSuccess });
+      const { user } = setup();
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
 
-    await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-    await waitFor(() => {
-      expect(onWriteSuccess).toHaveBeenCalled();
+      await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     });
-  });
 
-  it('shows an error alert when the commit fails', async () => {
-    server.use(
-      http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ message: 'Boom' }, { status: 500 }))
-    );
+    it('shows an error when the resource has no source path to commit to', async () => {
+      const { user } = setup({
+        resource: {
+          ...mockPlaylist,
+          metadata: { annotations: { 'grafana.app/managedBy': 'repo', 'grafana.app/managerId': 'test-repo' } },
+        },
+      });
 
-    const { user } = setup();
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
 
-    await user.click(await screen.findByRole('button', { name: /^save$/i }));
+      await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    });
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+    it('shows the read-only banner when the repository cannot be edited', () => {
+      mockRepoView({ isReadOnlyRepo: true });
+      setup();
+
+      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the missing-repository banner when no repository resolves', () => {
+      mockRepoView({ repository: undefined, isMissingRepo: true });
+      setup();
+
+      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
     });
   });
 
-  it('shows an error when the resource has no source path to commit to', async () => {
-    const { user } = setup({
-      resource: {
-        metadata: { annotations: { 'grafana.app/managedBy': 'repo', 'grafana.app/managerId': 'test-repo' } },
-      },
+  describe('create', () => {
+    it('POSTs a new file at a generated path with a generated resource name', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
+
+      const { user } = setup({
+        action: 'create',
+        resource: newPlaylist,
+        title: 'My New Playlist',
+        repositoryName: 'test-repo',
+      });
+
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      const req = requireCapturedRequest(capturedRequest);
+      // Path is derived from the title (slugified).
+      expect(req.url.pathname).toContain('/repositories/test-repo/files/my-new-playlist.json');
+      expect(req.url.searchParams.get('message')).toBe('Create playlist: My New Playlist');
+      // A new resource with no name gets a generated k8s-safe name in the committed file.
+      const body = req.body as { metadata?: { name?: string } };
+      expect(body.metadata?.name).toMatch(/^[a-z0-9]{12}$/);
     });
 
-    await user.click(await screen.findByRole('button', { name: /^save$/i }));
+    it('commits to the path the user edits in the drawer', async () => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
 
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      const { user } = setup({
+        action: 'create',
+        resource: newPlaylist,
+        title: 'My New Playlist',
+        repositoryName: 'test-repo',
+      });
+
+      // The path field is editable for new resources; the edited value must be the committed path.
+      const pathInput = await screen.findByDisplayValue('my-new-playlist.json');
+      await user.clear(pathInput);
+      await user.type(pathInput, 'custom/folder/my-file.json');
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      expect(requireCapturedRequest(capturedRequest).url.pathname).toContain(
+        '/repositories/test-repo/files/custom/folder/my-file.json'
+      );
     });
   });
 
-  it('shows the read-only banner when the repository cannot be edited', async () => {
-    mockRepositories([{ ...mockRepository, workflows: [] }]);
-    setup();
+  describe('delete', () => {
+    it('renders the delete drawer with a Delete button', async () => {
+      setup({ action: 'delete' });
 
-    expect(await screen.findByText('This repository is read only')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
-  });
+      expect(await screen.findByRole('heading', { name: /delete provisioned playlist/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
+    });
 
-  it('shows the missing-repository banner when no repository resolves', async () => {
-    mockRepositories([]);
-    setup();
+    it('commits the deletion via the delete-file API', async () => {
+      server.use(
+        http.delete(`${BASE}/repositories/:name/files/*`, ({ request }) => {
+          capturedRequest = { url: new URL(request.url), method: request.method };
+          return HttpResponse.json({ resource: { upsert: {} } });
+        })
+      );
 
-    expect(await screen.findByText('Repository not found')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+      const { user } = setup({ action: 'delete' });
+      await user.click(await screen.findByRole('button', { name: /^delete$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      const req = requireCapturedRequest(capturedRequest);
+      expect(req.method).toBe('DELETE');
+      expect(req.url.pathname).toContain('/repositories/test-repo/files/playlists/test-playlist.json');
+      expect(req.url.searchParams.get('message')).toBe('Delete playlist: Test Playlist');
+    });
+
+    it('shows the read-only banner when the repository cannot be edited', () => {
+      mockRepoView({ isReadOnlyRepo: true });
+      setup({ action: 'delete' });
+
+      expect(screen.queryByRole('button', { name: /^delete$/i })).not.toBeInTheDocument();
+    });
   });
 });

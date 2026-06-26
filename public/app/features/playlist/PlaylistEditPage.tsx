@@ -7,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { SaveProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/SaveProvisionedPlaylistDrawer';
+import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { SourceLink } from 'app/features/provisioning/components/SourceLink';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
@@ -18,8 +18,9 @@ import {
   isManagedByRepository,
 } from 'app/features/provisioning/utils/managedResource';
 import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
+import { useDispatch } from 'app/types/store';
 
-import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
+import { type Playlist, playlistAPIv1, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
 import { PlaylistForm } from './PlaylistForm';
 
@@ -32,6 +33,7 @@ export const PlaylistEditPage = () => {
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
   const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
+  const dispatch = useDispatch();
   // Holds the edited playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
@@ -91,8 +93,12 @@ export const PlaylistEditPage = () => {
         )}
       </Page.Contents>
       {provisionedPlaylist && (
-        <SaveProvisionedPlaylistDrawer
-          playlist={provisionedPlaylist}
+        <SaveProvisionedResourceDrawer
+          kind={resourceKindInfos.playlist}
+          resource={provisionedPlaylist}
+          action="update"
+          title={provisionedPlaylist.spec?.title ?? ''}
+          invalidate={() => dispatch(playlistAPIv1.util.invalidateTags(['Playlist']))}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}

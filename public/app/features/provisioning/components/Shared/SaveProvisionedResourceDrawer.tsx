@@ -1,3 +1,4 @@
+import { customAlphabet } from 'nanoid';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -5,54 +6,87 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { useProvisionedResourceDrawerHandlers } from '../../hooks/useProvisionedResourceDrawerHandlers';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { type CommitAction, type CommitResourceKind, type CommitTemplateVars } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
+import { type ResourceBranchAction } from '../../utils/redirect';
+import { type ResourceKindInfo } from '../../utils/resourceKinds';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
+import { slugifyForFilename } from '../utils/path';
 
 import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
+/** Commit action handled by this drawer. */
+type ProvisionedResourceAction = 'create' | 'update' | 'delete';
+
+/**
+ * A k8s-style resource committed via provisioning: `apiVersion`/`kind`/`spec` become the committed
+ * file and `metadata` carries the name plus, for existing resources, the manager annotations that
+ * resolve the repository. Any generated client's resource (Playlist, LibraryPanel, ...) fits this.
+ */
+export type ProvisionedResource = ManagedResource & {
+  apiVersion?: string;
+  kind?: string;
+  metadata?: { name?: string };
+  spec?: unknown;
+};
+
+// New resources need a stable k8s name in the committed file (the provisioning write validates the
+// resource has one). Generate an RFC 1123-safe UID.
+const generateResourceName = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
+
+/** Builds the repository file path for a new resource from its title, falling back to the kind key. */
+function getNewResourcePath(title: string, kindKey: string): string {
+  return `${slugifyForFilename(title) || kindKey}.json`;
+}
+
 export interface SaveProvisionedResourceDrawerProps {
-  /** Any k8s-style resource exposing `metadata.annotations`; resolves the managing repository and source path. */
-  resource: ManagedResource;
-  /** Resource type used for the shared fields, request handling and commit message. */
-  resourceType: CommitResourceKind;
-  /** Stable resource identifier (metadata.name) recorded in the commit message. */
-  resourceName: string;
-  /** Human-readable title used in the commit message and as the drawer subtitle. */
-  title: string;
-  /** The file content committed to the repository. Not required when `action` is `delete`. */
-  body?: Record<string, unknown>;
-  /** Header shown at the top of the drawer (e.g. "Save provisioned playlist"). */
-  drawerTitle: string;
-  /** Commit action recorded in the commit message. Defaults to `update`. `delete` removes the file. */
-  action?: CommitAction;
   /**
-   * Whether this commits a brand-new file to the repository (create) rather than replacing an
-   * existing one (update). When true the path field becomes editable and the create mutation is
-   * used. The managing repository and initial path are still resolved from the resource's
-   * annotations, so callers creating a new resource must synthesise them for the chosen repository.
+   * Registry descriptor for the kind — the only kind parameter needed. Its `key` is the resource
+   * type (commit message, branch prefix, telemetry, shared fields), its `displayName` the title noun,
+   * its `listRoute` the post-commit navigation target.
    */
-  isNew?: boolean;
-  /** Prefix for generated branch names. Defaults to the `resourceType`. */
-  branchPrefix?: string;
+  kind: ResourceKindInfo;
+  /**
+   * The resource to commit (`create`/`update`) or remove (`delete`). Its `apiVersion`/`kind`/`spec`
+   * form the committed file; for an existing resource its `metadata.annotations` resolve the
+   * repository, and for a new one they're synthesised from `repositoryName`.
+   */
+  resource: ProvisionedResource;
+  /** Commit action: `create` writes a new file, `update` replaces it, `delete` removes it. */
+  action: ProvisionedResourceAction;
+  /** Human-readable title for the commit message, drawer subtitle, and (for a new resource) the file slug. */
+  title: string;
+  /** Repository to commit a new resource to. Required for `create` (a new resource has no manager annotations yet); ignored otherwise. */
+  repositoryName?: string;
+  /** Invalidates the kind's list cache after a successful commit so the change shows up there. */
+  invalidate?: () => void;
   /** Notification shown on a successful write to the configured branch. */
   successMessage?: string;
   /** Message shown when the repository can't be edited from the UI. */
   readOnlyMessage?: string;
+  /** Prefix for generated branch names. Defaults to the kind's key. */
+  branchPrefix?: string;
   onDismiss?: () => void;
-  /** Called after a successful write to the configured branch (e.g. navigate / invalidate caches). */
+  /** Override the default post-commit (configured-branch) navigation to the kind's list page. */
   onWriteSuccess?: () => void;
-  /** Called after a successful push to a non-configured branch (PR workflow). */
+  /** Override the default post-push (PR workflow) navigation to the kind's list page. */
   onBranchSuccess?: (data: {
     ref: string;
     urls?: Record<string, string>;
@@ -64,19 +98,31 @@ export interface SaveProvisionedResourceDrawerProps {
   }) => void;
 }
 
-interface FormProps extends SaveProvisionedResourceDrawerProps {
+interface FormProps {
+  kind: ResourceKindInfo;
+  resourceName: string;
+  title: string;
+  body?: Record<string, unknown>;
+  action: ProvisionedResourceAction;
+  isNew: boolean;
+  invalidate?: () => void;
+  successMessage?: string;
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
+  onDismiss?: () => void;
+  onWriteSuccess?: () => void;
+  onBranchSuccess?: SaveProvisionedResourceDrawerProps['onBranchSuccess'];
 }
 
 function FormContent({
-  resourceType,
+  kind,
   resourceName,
   title,
   body,
-  action = 'update',
-  isNew = false,
+  action,
+  isNew,
+  invalidate,
   successMessage,
   initialValues,
   repository,
@@ -86,6 +132,8 @@ function FormContent({
   onBranchSuccess,
 }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
+  // The kind's stable key is the UI-facing resource type for the commit message, telemetry and fields.
+  const resourceType = kind.key;
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -96,6 +144,13 @@ function FormContent({
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
   const { handleSubmit, watch, formState } = methods;
   const [workflow] = watch(['workflow']);
+
+  // Default the success handlers to the kind's list navigation (invalidate + navigate); a caller can
+  // override either. `create`/`update`/`delete` differ only by the PR-banner action param.
+  const { goToList, makeOnBranchSuccess } = useProvisionedResourceDrawerHandlers(kind, invalidate ?? (() => {}));
+  const branchAction: ResourceBranchAction = isDelete ? 'delete' : isNew ? 'create' : 'update';
+  const writeSuccess = onWriteSuccess ?? goToList;
+  const branchSuccess = onBranchSuccess ?? makeOnBranchSuccess(branchAction);
 
   const templateVars: CommitTemplateVars = {
     action,
@@ -123,11 +178,10 @@ function FormContent({
     successMessage,
     handlers: {
       onDismiss,
-      onWriteSuccess: () => onWriteSuccess?.(),
-      // Branch (PR) workflow: forward to the caller so it can navigate and surface the PR banner on
-      // the destination page (like dashboards), passing the repo info for the banner copy/branches.
+      onWriteSuccess: () => writeSuccess(),
+      // Branch (PR) workflow: pass the repo info so the destination page can render the PR banner.
       onBranchSuccess: ({ ref, urls }) =>
-        onBranchSuccess?.({
+        branchSuccess({
           ref,
           urls,
           repoType: repository?.type,
@@ -204,24 +258,70 @@ function FormContent({
 }
 
 /**
- * Drawer for committing a repository-managed resource to git, reusable across the provisioned
- * resource kinds in {@link CommitResourceKind}.
- *
- * Owns the complete drawer (header + branch/path/comment fields + replace-file mutation + request
- * handling): callers supply the resource type, the file `body` to commit, a `drawerTitle`, and
- * success handlers (navigation / cache invalidation). The managing repository and source path are
- * resolved from the resource's annotations. New resource kinds can reuse it once they're added to
- * `CommitResourceKind` (and the shared fields / request handler, which key off the same type).
+ * Drawer for committing a repository-managed resource to git — usable directly from a resource's
+ * pages (no per-kind wrapper). Pass the kind's {@link ResourceKindInfo}, the resource and the action,
+ * and the drawer derives everything else: the new resource's name, file path and synthesised manager
+ * annotations, the committed file body (`apiVersion`/`kind`/`metadata`/`spec`), the title, the commit
+ * message and the post-commit navigation. `delete` commits no body. New kinds reuse it as-is.
  */
-export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
-  const { resource, resourceType, title, drawerTitle, readOnlyMessage, onDismiss } = props;
-  const branchPrefix = props.branchPrefix ?? resourceType;
+export function SaveProvisionedResourceDrawer({
+  kind,
+  resource,
+  action,
+  title,
+  repositoryName,
+  invalidate,
+  successMessage,
+  readOnlyMessage,
+  branchPrefix,
+  onDismiss,
+  onWriteSuccess,
+  onBranchSuccess,
+}: SaveProvisionedResourceDrawerProps) {
+  const isNew = action === 'create';
+  const isDelete = action === 'delete';
 
+  // A new resource has no k8s name yet; generate one once for the lifetime of the drawer.
+  const generatedName = useMemo(() => generateResourceName(), []);
+  const resourceName = isNew ? generatedName : (resource.metadata?.name ?? '');
+
+  // A new resource has no manager annotations yet, so synthesise them for the chosen repository: the
+  // drawer resolves the managing repository and the initial file path from these. An existing
+  // repository-managed resource already carries them.
+  const managedResource: ManagedResource = isNew
+    ? {
+        metadata: {
+          annotations: {
+            [AnnoKeyManagerKind]: ManagerKind.Repo,
+            [AnnoKeyManagerIdentity]: repositoryName ?? '',
+            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key),
+          },
+        },
+      }
+    : resource;
+
+  // Delete removes the file, so it commits no body; create/update commit the standard resource shape.
+  const body = isDelete
+    ? undefined
+    : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
+
+  // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
+  const prefix = branchPrefix ?? kind.key;
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
-    name: getManagerIdentity(resource),
+    name: getManagerIdentity(managedResource),
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
-  const sourcePath = getSourcePath(resource);
+  const sourcePath = getSourcePath(managedResource);
+
+  // Title derives from a shared template plus the kind's display noun, so a new kind reuses these two
+  // translations instead of adding its own "Save/Delete provisioned <kind>" strings.
+  const drawerTitle = isDelete
+    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
+        resource: kind.displayName,
+      })
+    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', {
+        resource: kind.displayName,
+      });
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
     if (!repository || isLoading) {
@@ -230,12 +330,12 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
     return {
       title: title || '',
       comment: '',
-      ref: getDefaultRef(repository, branchPrefix),
+      ref: getDefaultRef(repository, prefix),
       repo: repository.name || '',
       path: sourcePath || '',
       workflow: getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, sourcePath, branchPrefix]);
+  }, [repository, isLoading, title, sourcePath, prefix]);
 
   return (
     <Drawer
@@ -261,10 +361,20 @@ export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDraw
       >
         {initialValues && (
           <FormContent
-            {...props}
+            kind={kind}
+            resourceName={resourceName}
+            title={title}
+            body={body}
+            action={action}
+            isNew={isNew}
+            invalidate={invalidate}
+            successMessage={successMessage}
             initialValues={initialValues}
             repository={repository}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
+            onDismiss={onDismiss}
+            onWriteSuccess={onWriteSuccess}
+            onBranchSuccess={onBranchSuccess}
           />
         )}
       </ProvisionedFormGate>

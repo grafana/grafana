@@ -12463,9 +12463,6 @@
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
-    "save-provisioned": {
-      "drawer-title": "Save provisioned playlist"
-    },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
   },
@@ -12482,9 +12479,6 @@
     "delete-modal": {
       "body": "Are you sure you want to delete {{name}} playlist?",
       "confirm-text": "Delete"
-    },
-    "delete-provisioned": {
-      "drawer-title": "Delete provisioned playlist"
     },
     "empty": {
       "button": "Create playlist",
@@ -13609,6 +13603,8 @@
       "button-deleting": "Deleting...",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "drawer-title-delete": "Delete provisioned {{resource}}",
+      "drawer-title-save": "Save provisioned {{resource}}",
       "error-saving": "Failed to save changes",
       "missing-info": "Missing required fields for saving",
       "read-only-message": "To edit this resource, please update it in your repository directly."

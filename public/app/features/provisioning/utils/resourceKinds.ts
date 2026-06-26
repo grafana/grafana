@@ -5,7 +5,24 @@ import { type IconName } from '@grafana/ui';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
 
-import { type ItemType } from '../types';
+/**
+ * Tree-view labels for the provisioning *resource* kinds — the single source of truth for them.
+ * Each {@link resourceKindInfos} entry's `itemType` is checked against this union (so a typo is a
+ * compile error), and the full tree {@link ItemType} (these labels plus the `File` fallback) is
+ * assembled from it in `../types`. Adding a kind means adding its label here next to its registry
+ * entry — but no edit to `../types`.
+ */
+export type ResourceItemType = 'Folder' | 'Dashboard' | 'Playlist' | 'LibraryPanel';
+
+/**
+ * Stable per-kind key identifying a provisioning resource kind across the UI: the commit-message
+ * noun, branch-name prefix, telemetry, the shared edit-form fields, and each registry entry's own
+ * `key` all use this. The registry below is declared `satisfies Record<ResourceKindKey,
+ * ResourceKindInfo>`, so this union and {@link resourceKindInfos} stay mutually exhaustive — adding a
+ * kind needs a member here and a matching entry, or it won't compile. (Explicit rather than `keyof
+ * typeof resourceKindInfos` because entries reference it via `key`, which `keyof` would make circular.)
+ */
+export type ResourceKindKey = 'folder' | 'dashboard' | 'playlist' | 'librarypanel';
 
 /**
  * Per-kind UI metadata for provisioning resources.
@@ -17,14 +34,27 @@ import { type ItemType } from '../types';
  * endpoint's `availableResources`.
  */
 export interface ResourceKindInfo {
+  /**
+   * Stable lowercase identifier — the same value as this entry's key in {@link resourceKindInfos}
+   * (e.g. `dashboard`). It's the UI-facing resource type for commit messages, branch prefixes,
+   * telemetry and the shared edit-form fields, so passing a descriptor carries its own type. A test
+   * asserts each entry's `key` matches its registry key.
+   */
+  key: ResourceKindKey;
+  /** Human-readable singular noun for this kind, shown in UI copy such as drawer titles. */
+  displayName: string;
   /** API group, e.g. `dashboard.grafana.app`. */
   group: string;
   /** Kubernetes Kind, e.g. `Dashboard`. */
   kind: string;
   /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
   resource: string;
-  /** Label shown for this kind in the combined files/resources tree. */
-  itemType: ItemType;
+  /**
+   * Label shown for this kind in the combined files/resources tree. Constrained to
+   * {@link ResourceItemType} so a wrong label is a compile error; the full tree {@link ItemType}
+   * (in `../types`) is `ResourceItemType | 'File'`, so adding a kind needs no edit to that file.
+   */
+  itemType: ResourceItemType;
   /** Icon shown for this kind in the resource tree. Sourced from the search package's getIconForKind. */
   icon: IconName;
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
@@ -47,6 +77,8 @@ export interface ResourceKindInfo {
  */
 export const resourceKindInfos = {
   folder: {
+    key: 'folder',
+    displayName: 'folder',
     group: FOLDER_API_GROUP,
     kind: 'Folder',
     resource: 'folders',
@@ -57,6 +89,8 @@ export const resourceKindInfos = {
     folderScoped: true,
   },
   dashboard: {
+    key: 'dashboard',
+    displayName: 'dashboard',
     group: DASHBOARD_API_GROUP,
     kind: 'Dashboard',
     resource: 'dashboards',
@@ -67,6 +101,8 @@ export const resourceKindInfos = {
     folderScoped: true,
   },
   playlist: {
+    key: 'playlist',
+    displayName: 'playlist',
     group: PLAYLIST_API_GROUP,
     kind: 'Playlist',
     resource: 'playlists',
@@ -82,6 +118,8 @@ export const resourceKindInfos = {
     folderScoped: false,
   },
   librarypanel: {
+    key: 'librarypanel',
+    displayName: 'library panel',
     // Library panels share the dashboards API group but are keyed by their own
     // GroupResource (librarypanels.dashboard.grafana.app).
     group: DASHBOARD_API_GROUP,
@@ -98,7 +136,7 @@ export const resourceKindInfos = {
     // routing they behave like a non-foldered kind and always resolve to listRoute.
     folderScoped: false,
   },
-} satisfies Record<string, ResourceKindInfo>;
+} satisfies Record<ResourceKindKey, ResourceKindInfo>;
 
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
@@ -124,8 +162,12 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
   return allKindInfos.find((info) => info.resource === resource);
 }
 
-/** Look up a kind by its tree item type. */
-export function getKindInfoByItemType(itemType: ItemType): ResourceKindInfo | undefined {
+/**
+ * Look up a kind by its tree item type. Accepts any string (tree items can be the `File` fallback,
+ * which has no backing kind and resolves to `undefined`) so callers don't depend on the `ItemType`
+ * union and create an import cycle with `../types`.
+ */
+export function getKindInfoByItemType(itemType: string): ResourceKindInfo | undefined {
   return allKindInfos.find((info) => info.itemType === itemType);
 }
 

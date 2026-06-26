@@ -5,12 +5,14 @@ import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { DeleteProvisionedPlaylistDrawer } from 'app/features/provisioning/components/Playlists/DeleteProvisionedPlaylistDrawer';
 import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
+import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
+import { useDispatch } from 'app/types/store';
 
-import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
+import { type Playlist, playlistAPIv1, useDeletePlaylistMutation, useListPlaylistQuery } from '../../api/clients/playlist/v1';
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
@@ -19,6 +21,7 @@ import { canWritePlaylists, searchPlaylists } from './utils';
 export const PlaylistPage = () => {
   const { data, isLoading } = useListPlaylistQuery({});
   const [deletePlaylist] = useDeletePlaylistMutation();
+  const dispatch = useDispatch();
   // Set after a repository-managed playlist is committed to a new branch; surfaces the PR banner.
   const { newPrURL, repoURL } = usePullRequestParam();
   const [urlParams] = useUrlParams();
@@ -99,7 +102,14 @@ export const PlaylistPage = () => {
             {playlistToDelete &&
               (isManagedByRepository(playlistToDelete) ? (
                 // Repository-managed playlists are removed by committing the deletion to git.
-                <DeleteProvisionedPlaylistDrawer playlist={playlistToDelete} onDismiss={onDismissDelete} />
+                <SaveProvisionedResourceDrawer
+                  kind={resourceKindInfos.playlist}
+                  resource={playlistToDelete}
+                  action="delete"
+                  title={playlistToDelete.spec?.title ?? ''}
+                  invalidate={() => dispatch(playlistAPIv1.util.invalidateTags(['Playlist']))}
+                  onDismiss={onDismissDelete}
+                />
               ) : (
                 <ConfirmModal
                   title={playlistToDelete.spec?.title ?? ''}

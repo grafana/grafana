@@ -45,6 +45,15 @@ describe('resourceKinds registry', () => {
     expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
     expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
   });
+
+  it('gives each entry a `key` equal to its registry key', () => {
+    // The type only requires `key` to be some ResourceKindKey; this guards against an entry pointing
+    // at the wrong key (e.g. the playlist entry carrying `key: 'dashboard'`), which would silently
+    // mislabel commit messages and telemetry.
+    for (const [key, info] of Object.entries(resourceKindInfos)) {
+      expect(info.key).toBe(key);
+    }
+  });
 });
 
 describe('getKindInfoByResource', () => {

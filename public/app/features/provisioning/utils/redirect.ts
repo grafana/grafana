@@ -1,11 +1,11 @@
-type ResourceAction = 'create' | 'delete' | 'update';
+export type ResourceBranchAction = 'create' | 'delete' | 'update';
 
 type ResourceBranchUrlOptions = {
   baseUrl?: string;
   paramName?: string;
   paramValue?: string;
   repoType?: string;
-  action?: ResourceAction;
+  action?: ResourceBranchAction;
   /** Target branch the change was pushed to, for the PR banner's branch display. */
   ref?: string;
   /** Repository's configured (default) branch, for the PR banner's branch display. */
