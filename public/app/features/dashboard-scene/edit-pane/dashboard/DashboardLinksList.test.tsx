@@ -1,16 +1,16 @@
 import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { createDefaultLink, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardLinksList, partitionLinksByPlacement } from './DashboardLinksList';
-import { selectors } from '@grafana/e2e-selectors';
-import { appEvents } from 'app/core/app_events';
-import { ShowConfirmModalEvent } from 'app/types/events';
 
 jest.mock('../../settings/links/LinkAddEditableElement', () => ({
   ...jest.requireActual('../../settings/links/LinkAddEditableElement'),
