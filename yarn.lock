@@ -3036,7 +3036,7 @@ __metadata:
     react-element-to-jsx-string: "npm:^17.0.1"
     react-highlight-words: "npm:^0.21.0"
     react-hook-form: "npm:^7.49.2"
-    react-inlinesvg: "npm:4.3.0"
+    react-inlinesvg: "npm:^4.3.0"
     react-loading-skeleton: "npm:3.5.0"
     react-router-dom: "npm:5.3.4"
     react-router-dom-v5-compat: "npm:^6.26.1"
@@ -27602,7 +27602,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-inlinesvg@npm:4.3.0":
+"react-inlinesvg@npm:4.3.0, react-inlinesvg@npm:^4.3.0":
   version: 4.3.0
   resolution: "react-inlinesvg@npm:4.3.0"
   dependencies:
