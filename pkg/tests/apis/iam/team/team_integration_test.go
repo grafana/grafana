@@ -49,6 +49,7 @@ func TestIntegrationTeams(t *testing.T) {
 
 			if mode < 3 {
 				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
+				doTeamDeleteCascadesLegacyMembersTest(t, helper)
 			}
 		})
 	}
@@ -282,6 +283,70 @@ func doTeamCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		// Cleanup
 		_, err = env.SQLStore.GetSqlxSession().Exec(ctx, "DELETE FROM team WHERE uid IN (?, ?)", "t000000001", "t000000002")
 		require.NoError(t, err)
+	})
+}
+
+// doTeamDeleteCascadesLegacyMembersTest guards F12: deleting a team must clean
+// up its legacy team_member rows. Only meaningful when legacy storage is
+// written (dual-write mode < 3), so the caller gates on mode.
+func doTeamDeleteCascadesLegacyMembersTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("delete team cascades legacy team_member rows", func(t *testing.T) {
+		ctx := context.Background()
+		env := helper.GetEnv()
+
+		teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrTeams,
+		})
+
+		editorUID := helper.Org1.Editor.Identity.GetIdentifier()
+		viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
+
+		created, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": "team-del-cascade-"},
+			"spec": map[string]interface{}{
+				"title":       "Team del cascade",
+				"email":       "del-cascade@example.com",
+				"provisioned": false,
+				"externalUID": "",
+				"members": []map[string]interface{}{
+					{"kind": "User", "name": editorUID, "permission": "member", "external": false},
+					{"kind": "User", "name": viewerUID, "permission": "admin", "external": false},
+				},
+			},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		teamUID := created.GetName()
+
+		// Resolve the team's legacy int64 id before deletion. Orphaned
+		// team_member rows keep this team_id even though the team row is gone,
+		// so we must capture it now and count by id rather than joining back
+		// to the team table.
+		var teamID int64
+		rows, err := env.SQLStore.GetSqlxSession().Query(ctx, "SELECT id FROM team WHERE uid = ?", teamUID)
+		require.NoError(t, err)
+		require.True(t, rows.Next())
+		require.NoError(t, rows.Scan(&teamID))
+		require.NoError(t, rows.Close())
+
+		countMembers := func() int {
+			var n int
+			r, err := env.SQLStore.GetSqlxSession().Query(ctx, "SELECT COUNT(*) FROM team_member WHERE team_id = ?", teamID)
+			require.NoError(t, err)
+			require.True(t, r.Next())
+			require.NoError(t, r.Scan(&n))
+			require.NoError(t, r.Close())
+			return n
+		}
+
+		require.Equal(t, 2, countMembers(), "expected legacy team_member rows to exist before delete")
+
+		require.NoError(t, teamClient.Resource.Delete(ctx, teamUID, metav1.DeleteOptions{}))
+
+		require.Equal(t, 0, countMembers(), "team_member rows must be cleaned up after team delete (F12)")
 	})
 }
 
