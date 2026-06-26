@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type RefObject } from 'react';
 
 import { createTheme, type DataFrame, type Field, FieldType, toDataFrame } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
@@ -18,15 +19,6 @@ const TestRenderer: TableCellRenderer = ({ value }) => <div data-testid="tooltip
 
 function makeField(values: unknown[] = ['hello']): Field {
   return { name: 'Status', type: FieldType.string, values, config: {} };
-}
-
-function makeTooltipField(dynamicHeight = false): Field {
-  return {
-    name: 'Status',
-    type: FieldType.string,
-    values: ['hello'],
-    config: { custom: { cellOptions: { dynamicHeight } } },
-  };
 }
 
 function makeData(values: unknown[] = ['hello']): DataFrame {
@@ -45,7 +37,6 @@ function makeProps(overrides: Partial<TableCellTooltipProps> = {}): Omit<TableCe
     classes: defaultClasses,
     data: makeData(),
     field: makeField(),
-    tooltipField: makeTooltipField(),
     getActions: () => [],
     getTextColorForBackground: () => '#000',
     gridRef: makeGridRef(),
@@ -282,6 +273,17 @@ describe('TableCellTooltip', () => {
       });
       await user.click(screen.getByRole('button', { name: CARET_LABEL }));
       expect(screen.getByText('row-one')).toBeInTheDocument();
+    });
+
+    // The tooltip is a free-floating overlay that should size to its content, so the
+    // popover container must never be constrained to a fixed height (which would clip
+    // content taller than the originating cell's row height).
+    it('does not apply a fixed height to the popover wrapper', async () => {
+      const user = userEvent.setup();
+      renderInRdgCell({ height: 32 });
+      await user.click(screen.getByRole('button', { name: CARET_LABEL }));
+      const wrapper = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper);
+      expect(wrapper).not.toHaveStyle({ height: '32px' });
     });
 
     it('the Popover is not rendered when there is no .rdg-cell ancestor', async () => {

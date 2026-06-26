@@ -73,6 +73,7 @@ var (
 
 	iamGroup      = iamv0.TeamResourceInfo.GroupResource().Group
 	teamsResource = iamv0.TeamResourceInfo.GroupResource().Resource
+	usersResource = iamv0.UserResourceInfo.GroupResource().Resource
 )
 
 var resourceTranslations = map[string]resourceTranslation{
@@ -132,6 +133,19 @@ var resourceTranslations = map[string]resourceTranslation{
 			"teams:delete":            newMapping(RelationDelete, ""),
 			"teams.permissions:read":  newMapping(RelationGetPermissions, ""),
 			"teams.permissions:write": newMapping(RelationSetPermissions, ""),
+		},
+	},
+	KindUsers: {
+		typ:      TypeUser,
+		group:    iamGroup,      // "iam.grafana.app"
+		resource: usersResource, // "users"
+		mapping: map[string]actionMapping{
+			"users:read":              newMapping(RelationGet, ""),
+			"users:write":             newMapping(RelationUpdate, ""),
+			"users:create":            newUnscopedMapping(RelationCreate),
+			"users:delete":            newMapping(RelationDelete, ""),
+			"users.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"users.permissions:write": newMapping(RelationSetPermissions, ""),
 		},
 	},
 }

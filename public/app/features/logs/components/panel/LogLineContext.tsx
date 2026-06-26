@@ -34,8 +34,8 @@ import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
-import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
+import { ScrollDirection } from '../infiniteScrollUtils';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { type LogLineMenuCustomItem } from './LogLineMenu';
@@ -322,7 +322,7 @@ export const LogLineContext = memo(
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
       : true;
 
-    // @todo: Remove when the LogRows are deprecated
+    // @todo: Remove when legacy LogRows are fully deleted
     const logListModel = useMemo(
       () =>
         log instanceof LogListModel

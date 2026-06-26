@@ -14,7 +14,8 @@
 
 import { css, cx } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import useMeasure from 'react-use/lib/useMeasure';
 
 import {
   type CoreApp,
@@ -397,7 +398,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
-  const mainContainerRef = useRef<HTMLDivElement>(null);
+  const [mainContainerRef, { width: mainContainerWidth }] = useMeasure<HTMLDivElement>();
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -610,7 +611,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
       </div>
       <div className={styles.content}>
-        <CardsContainer listOfContentCards={listOfContentCards} mainContainerRef={mainContainerRef} />
+        <CardsContainer listOfContentCards={listOfContentCards} containerWidth={mainContainerWidth} />
 
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
@@ -649,20 +650,19 @@ export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
 
 const CardsContainer = ({
   listOfContentCards,
-  mainContainerRef,
+  containerWidth,
 }: {
   listOfContentCards: React.ReactNode[];
-  mainContainerRef?: React.RefObject<HTMLDivElement | null>;
+  containerWidth: number;
 }) => {
   const styles = useStyles2(getStyles);
 
-  const useTwoColumns =
-    mainContainerRef && mainContainerRef.current && mainContainerRef.current.getBoundingClientRect().width > 1000;
+  const useTwoColumns = containerWidth > 1000;
 
   if (useTwoColumns) {
     return (
       <>
-        <div className={css({ float: 'left', width: '50%' })}>
+        <div data-testid="span-detail-cards-column" className={css({ float: 'left', width: '50%' })}>
           {listOfContentCards.map((card, index) =>
             index % 2 === 0 ? (
               <div className={styles.card} key={index}>
@@ -672,7 +672,7 @@ const CardsContainer = ({
           )}
         </div>
 
-        <div className={css({ float: 'right', width: '50%' })}>
+        <div data-testid="span-detail-cards-column" className={css({ float: 'right', width: '50%' })}>
           {listOfContentCards.map((card, index) =>
             index % 2 === 1 ? (
               <div className={styles.card} key={index}>
@@ -686,7 +686,7 @@ const CardsContainer = ({
   }
 
   return (
-    <div className={css({ clear: 'both', width: '100%' })}>
+    <div data-testid="span-detail-cards-column" className={css({ clear: 'both', width: '100%' })}>
       {listOfContentCards.map((card, index) => (
         <div className={styles.card} key={index}>
           {card}
