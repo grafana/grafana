@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 
-import { type RepoType } from '../../Wizard/types';
+import { type ConnectionType } from '../../Wizard/types';
 import { type ConnectionFormData } from '../../types';
 import { validateNoHiddenCharacters } from '../../utils/validators';
 
@@ -16,8 +16,7 @@ export interface GitHubConnectionFieldsProps {
   onNewConnectionCreation?: () => void;
   /** Whether the connection is currently being created */
   isCreating?: boolean;
-  /** Connection provider type; the GitHub Enterprise Server URL field is rendered for githubEnterprise. */
-  type: RepoType;
+  type: ConnectionType;
 }
 
 export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
@@ -77,7 +76,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
             label={t('provisioning.github-enterprise.server-url-label', 'Custom server URL')}
             description={t(
               'provisioning.github-enterprise.server-url-description',
-              'The custom server URL where your Github Enterprise Server is hosted.'
+              'The custom server URL where your Github Enterprise is hosted.'
             )}
             invalid={!!errors.serverUrl}
             error={errors.serverUrl?.message}

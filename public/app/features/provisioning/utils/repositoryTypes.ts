@@ -96,7 +96,7 @@ export const isGitProvider = (type: RepoType) => {
 
 // GitHub and GitHub Enterprise share the same auth flow (GitHub App or PAT),
 // connection handling, and deep-link URL structure.
-export const isGitHubBased = (type?: RepoType) => {
+export const isGitHubBased = (type?: RepoType): type is 'github' | 'githubEnterprise' => {
   return type === 'github' || type === 'githubEnterprise';
 };
 

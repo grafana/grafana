@@ -173,7 +173,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
               label={t('provisioning.connection-form.label-server-url', 'Server URL')}
               description={t(
                 'provisioning.connection-form.description-server-url',
-                'The URL of your GitHub Enterprise Server'
+                'The URL of your GitHub Enterprise'
               )}
               invalid={!!errors.serverUrl}
               error={errors.serverUrl?.message}
@@ -188,7 +188,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
                 })}
                 placeholder={t(
                   'provisioning.connection-form.placeholder-server-url',
-                  'https://your-custom-github-enterprise-url.com'
+                  'https://your-custom-github-enterprise-url.com or <slug>.ghe.com'
                 )}
               />
             </Field>
