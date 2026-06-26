@@ -3106,6 +3106,11 @@
       "title-search-help": "Search help",
       "view-as": "View as"
     },
+    "rules-view-mode-selector": {
+      "grouped": "Grouped",
+      "list": "List",
+      "state": "State"
+    },
     "rules-filter-sidebar": {
       "clear-filters": "Clear filters"
     },
