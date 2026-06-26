@@ -14,7 +14,6 @@ import {
   FieldType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type MatcherScope } from '@grafana/schema';
 import {
   fieldMatchersUI,
@@ -32,10 +31,7 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
 
-const ALLOWED_SCOPES: MatcherScope[] = ['series'];
-if (config.featureToggles.nestedFramesFieldOverrides) {
-  ALLOWED_SCOPES.push('nested');
-}
+const ALLOWED_SCOPES: MatcherScope[] = ['series', 'nested'];
 
 function getFramesForMatcherScope(data: DataFrame[], scope?: MatcherScope): DataFrame[] {
   if (scope !== 'nested') {
