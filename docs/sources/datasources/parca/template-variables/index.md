@@ -60,8 +60,8 @@ Create a custom variable to switch between services in your profiling dashboard.
 1. Select **Custom** as the variable type.
 1. Enter a **Name**, for example `service`.
 1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
-1. Click **Open variable editor**.
-1. In the **Custom options** field, enter comma-separated values, for example `frontend, backend, api-gateway`.
+1. Click **Open variable editor** to open the **Custom options** dialog box.
+1. Enter comma-separated values, for example `frontend, backend, api-gateway`.
 1. Click **Apply**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.

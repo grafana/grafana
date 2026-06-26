@@ -44,7 +44,7 @@ To add a Prometheus annotation to your dashboard:
 1. Select an option in the **Show annotation controls in** drop-down list to control where on the dashboard the annotation is displayed.
 1. Select an option in the **Show in** drop-down list to control the panels in which the annotation is displayed.
 1. Click **Open query editor** to open the **Annotation Query** dialog box.
-1. Select your **InfluxDB** data source from the **Data source** drop-down list.
+1. Select your **Prometheus** data source from the **Data source** drop-down list.
 1. Enter a PromQL expression in the query field.
 1. Set the **Min step** to control annotation density (a larger step means fewer annotations).
 1. Configure the field mappings to control what appears in the annotation tooltip.

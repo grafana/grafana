@@ -395,6 +395,7 @@ The following errors occur when using InfluxDB annotations on dashboards.
 1. Click the **Dashboard options** icon to open the sidebar.
 1. Expand the **Annotations** section.
 1. Select the InfluxDB annotation.
+1. Click **Open query editor** to open the **Annotation Query** dialog box.
 1. Enter a valid query in the **InfluxQL Query** field. The query must include `WHERE $timeFilter`. For example:
 
    ```sql

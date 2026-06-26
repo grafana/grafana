@@ -41,7 +41,7 @@ To create a query variable using TestData:
 1. Select **Query** as the variable type.
 1. Enter a **Name** for your variable.
 1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
-1. Click **Open query editor** to open the **Annotation Query** dialog box.
+1. Click **Open variable editor** to open the **Query Variable** dialog box.
 1. Select the **TestData** data source.
 1. Enter your query in the **Query** field.
 
@@ -87,13 +87,13 @@ This example walks through creating a query variable that populates a drop-down 
 1. Select **Query** as the variable type.
 1. Enter a **Name** for your variable (for example, `host`).
 1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
-1. Click **Open query editor** to open the **Annotation Query** dialog box.
+1. Click **Open variable editor** to open the **Query Variable** dialog box.
 1. Select the **TestData** data source.
 1. Enter `*` in the **Query** field. This populates the variable with the top-level nodes (A through H).
 1. Name the variable `region`.
 1. Click **Close** when you've completed the query setup.
 1. (Optional) Configure **Multi-value** to allow selecting multiple values.
-1. (Optional) Configure **Include All option** to add an "All" option.
+1. (Optional) Configure **Include All value** to add an "All" option.
 1. (Optional) Turn on the **Allow custom values** switch to allow users to enter custom variable values.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.

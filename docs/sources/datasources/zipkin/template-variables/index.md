@@ -66,7 +66,7 @@ To create a custom variable:
 1. Select **Custom** as the variable type.
 1. Set the **Name** to `traceId`.
 1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
-1. Click **Open variable editor**.
+1. Click **Open variable editor** to open the **Custom options** dialog box.
 1. Enter trace IDs in the **Values separated by comma** field:
 
    ```
