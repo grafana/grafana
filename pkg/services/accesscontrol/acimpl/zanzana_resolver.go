@@ -655,8 +655,12 @@ func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.Namespac
 		if err != nil {
 			return 0, err
 		}
-		// Only cache successful lookups so a not-found UID resolves correctly once created.
-		r.cache.Set(key, id, uidToIDCacheTTL)
+		// Only cache successful lookups, and skip id == 0: that is the sentinel returned when the
+		// deprecated internal-ID label is missing/unparseable (e.g. a dual-write window), so caching
+		// it would pin a bogus value for the full TTL instead of re-resolving once it's populated.
+		if id != 0 {
+			r.cache.Set(key, id, uidToIDCacheTTL)
+		}
 		return id, nil
 	})
 

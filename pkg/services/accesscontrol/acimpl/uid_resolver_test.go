@@ -182,4 +182,18 @@ func TestUIDToIDResolver_Caching(t *testing.T) {
 
 		require.Equal(t, int64(2), atomic.LoadInt64(getCount), "errors must not be cached")
 	})
+
+	t.Run("a zero internal ID is not cached", func(t *testing.T) {
+		// The object resolves but carries no usable internal ID (sentinel 0), so it must be
+		// re-resolved every time rather than pinning 0 for the TTL.
+		r, getCount := newCountingResolver(t, 0, iamObject(teamGVR.GroupVersion().WithKind("Team"), ns.Value, "team-uid", 0))
+
+		for i := 0; i < 3; i++ {
+			id, err := r.GetTeamIDByUID(context.Background(), ns, "team-uid")
+			require.NoError(t, err)
+			require.Equal(t, int64(0), id)
+		}
+
+		require.Equal(t, int64(3), atomic.LoadInt64(getCount), "a zero id must not be cached")
+	})
 }
