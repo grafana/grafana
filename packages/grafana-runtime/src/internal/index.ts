@@ -64,8 +64,6 @@ export {
   getCacheKeyFromPromise,
 } from '../utils/getCachedPromise';
 export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from '../services/JourneyTracker';
-export { defineFeatureEvents } from './analyticsFramework/main';
-export type { EventProperty, Event } from './analyticsFramework/types';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
