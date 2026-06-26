@@ -1,6 +1,7 @@
-import { PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 
+import { type HomepageTabExtensionProps } from '../DashboardTabs/types';
 import { HomeSection } from '../HomeSection';
 
 import { getCoreWidgets } from './core/coreWidgets';
@@ -19,13 +20,21 @@ export interface UseHomeWidgetCatalogResult {
   isLoading: boolean;
 }
 
+interface UseHomeWidgetCatalogOptions {
+  assistantComponents?: Array<ComponentTypeWithExtensionMeta<{}>>;
+  tabComponents?: Array<ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>>;
+}
+
 /**
  * Merges the three widget sources into one catalog: core built-ins (availability-filtered),
  * core-authored curated widgets (each present only when its backing plugin is installed), and the
  * open `grafana/homepage/widget/v1` plugin extension point. Entries are fully resolved and translated.
  */
-export function useHomeWidgetCatalog(): UseHomeWidgetCatalogResult {
-  const core = getCoreWidgets()
+export function useHomeWidgetCatalog({
+  assistantComponents,
+  tabComponents,
+}: UseHomeWidgetCatalogOptions = {}): UseHomeWidgetCatalogResult {
+  const core = getCoreWidgets({ assistantComponents, tabComponents })
     .filter((def) => def.isAvailable())
     .map((def): HomeWidgetCatalogEntry => {
       const { Component } = def;

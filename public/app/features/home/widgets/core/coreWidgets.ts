@@ -1,17 +1,29 @@
+import { createElement, type ComponentProps } from 'react';
+
+import { type ComponentTypeWithExtensionMeta } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { FiringAlertsCard } from '../../AlertsIncidents/FiringAlertsCard';
+import { type HomepageTabExtensionProps } from '../../DashboardTabs/types';
 import { type CoreWidgetDef } from '../types';
 
 import { DashboardsWidget } from './DashboardsWidget';
+
+interface CoreWidgetOptions {
+  assistantComponents?: Array<ComponentTypeWithExtensionMeta<{}>>;
+  tabComponents?: Array<ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>>;
+}
 
 /**
  * Built-in widgets available on every instance. A function (not a module-level const) so t() runs
  * after i18n init — the same reason DashboardTabs builds its tab labels inside the component.
  */
-export function getCoreWidgets(): CoreWidgetDef[] {
+export function getCoreWidgets({
+  assistantComponents = [],
+  tabComponents = [],
+}: CoreWidgetOptions = {}): CoreWidgetDef[] {
   return [
     {
       id: 'alerts',
@@ -31,7 +43,10 @@ export function getCoreWidgets(): CoreWidgetDef[] {
       defaultSize: { w: 24, h: 10 },
       minSize: { w: 12, h: 8 },
       isAvailable: () => true,
-      Component: DashboardsWidget,
+      Component: function DashboardsWidgetWithExtensions() {
+        const props: ComponentProps<typeof DashboardsWidget> = { assistantComponents, tabComponents };
+        return createElement(DashboardsWidget, props);
+      },
     },
   ];
 }

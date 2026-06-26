@@ -1,16 +1,18 @@
-import { PluginExtensionPoints } from '@grafana/data';
-import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { type ComponentTypeWithExtensionMeta } from '@grafana/data';
+import { renderLimitedComponents } from '@grafana/runtime';
 import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
 
 import { DashboardTabs } from '../../DashboardTabs/DashboardTabs';
+import { type HomepageTabExtensionProps } from '../../DashboardTabs/types';
 import { HomeSection } from '../../HomeSection';
 
-/** Core widget: the existing dashboards tabs wrapped in a homepage card. */
-export function DashboardsWidget() {
-  const { components: assistantComponents } = usePluginComponents({
-    extensionPointId: PluginExtensionPoints.HomepageAssistant,
-  });
+interface Props {
+  assistantComponents?: Array<ComponentTypeWithExtensionMeta<{}>>;
+  tabComponents?: Array<ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>>;
+}
 
+/** Core widget: the existing dashboards tabs wrapped in a homepage card. */
+export function DashboardsWidget({ assistantComponents = [], tabComponents = [] }: Props) {
   return (
     <HomeSection height="100%" display="flex" direction="column" gap={2}>
       {renderLimitedComponents({
@@ -19,7 +21,7 @@ export function DashboardsWidget() {
         components: assistantComponents,
         pluginId: ASSISTANT_PLUGIN_ID,
       })}
-      <DashboardTabs />
+      <DashboardTabs extensionComponents={tabComponents} />
     </HomeSection>
   );
 }

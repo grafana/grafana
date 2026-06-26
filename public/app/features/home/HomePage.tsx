@@ -49,7 +49,7 @@ export default function HomePage() {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
 
-  const { isLoading: isLoadingAssistant } = usePluginComponents({
+  const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageAssistant,
   });
 
@@ -57,11 +57,11 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageExtra,
   });
 
-  const { isLoading: isLoadingTabs } = usePluginComponents<HomepageTabExtensionProps>({
+  const { components: tabComponents, isLoading: isLoadingTabs } = usePluginComponents<HomepageTabExtensionProps>({
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const { entries, isLoading: catalogLoading } = useHomeWidgetCatalog();
+  const { entries, isLoading: catalogLoading } = useHomeWidgetCatalog({ assistantComponents, tabComponents });
   const { layout, isLoading: layoutLoading, addWidget, removeWidget, setPositions, applyPreset } = useWidgetLayout();
 
   const [editing, setEditing] = useState(false);
