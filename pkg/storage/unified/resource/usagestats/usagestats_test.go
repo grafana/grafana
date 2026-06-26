@@ -182,6 +182,42 @@ func TestStoreFoldIntoOverflow(t *testing.T) {
 	})
 }
 
+func TestStoreFoldIntoOverflowChunking(t *testing.T) {
+	forEachBackend(t, func(t *testing.T, store *Store) {
+		ctx := context.Background()
+		o := newTestObject("dash-a")
+
+		// More expiring days than MaxBatchOps so the fold (deletes + the
+		// overflow put) spans multiple batches.
+		n := kv.MaxBatchOps*2 + 3
+		expired := make(map[string]map[string]int64, n)
+		var want int64
+		for i := 0; i < n; i++ {
+			day := fmt.Sprintf("2026-01-%03d", i)
+			require.NoError(t, store.IncrementDaily(ctx, o, day, map[string]int64{"views": int64(i + 1)}))
+			expired[day] = map[string]int64{"views": int64(i + 1)}
+			want += int64(i + 1)
+		}
+		// A current bucket that must be left untouched.
+		require.NoError(t, store.IncrementDaily(ctx, o, "2026-06-23", map[string]int64{"views": 9}))
+
+		require.NoError(t, store.FoldIntoOverflow(ctx, o, expired))
+
+		daily, err := store.ReadDailyForObject(ctx, o)
+		require.NoError(t, err)
+
+		// Overflow accumulated every expired value.
+		require.Equal(t, want, daily[overflowBucket]["views"])
+		// All expired buckets were deleted.
+		for day := range expired {
+			_, ok := daily[day]
+			require.False(t, ok)
+		}
+		// The current bucket is untouched.
+		require.Equal(t, int64(9), daily["2026-06-23"]["views"])
+	})
+}
+
 func TestStoreReadDailyIsolatesObjects(t *testing.T) {
 	forEachBackend(t, func(t *testing.T, store *Store) {
 		ctx := context.Background()

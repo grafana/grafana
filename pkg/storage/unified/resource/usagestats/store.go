@@ -112,10 +112,14 @@ func (s *Store) FoldIntoOverflow(ctx context.Context, o objectRef, expired map[s
 		}
 		ops = append(ops, kv.BatchOp{Mode: kv.BatchOpPut, Key: key, Value: encodeInt64(cur + delta)})
 	}
-	if len(ops) > kv.MaxBatchOps {
-		return fmt.Errorf("too many fold operations in one batch: %d", len(ops))
+	for start := 0; start < len(ops); start += kv.MaxBatchOps {
+		end := min(start+kv.MaxBatchOps, len(ops))
+		if err := s.kv.Batch(ctx, dailySection, ops[start:end]); err != nil {
+			return err
+		}
 	}
-	return s.kv.Batch(ctx, dailySection, ops)
+	return nil
+}
 }
 
 func (s *Store) WriteAggregates(ctx context.Context, o objectRef, fields map[string]int64) error {
