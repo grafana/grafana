@@ -2962,10 +2962,10 @@ __metadata:
     "@hello-pangea/dnd": "npm:^18.0.1"
     "@monaco-editor/react": "npm:^4.7.0"
     "@popperjs/core": "npm:^2.11.8"
-    "@rc-component/cascader": "npm:1.9.0"
-    "@rc-component/drawer": "npm:1.3.0"
-    "@rc-component/slider": "npm:1.0.1"
-    "@rc-component/tooltip": "npm:1.4.0"
+    "@rc-component/cascader": "npm:^1.9.0"
+    "@rc-component/drawer": "npm:^1.3.0"
+    "@rc-component/slider": "npm:^1.0.1"
+    "@rc-component/tooltip": "npm:^1.4.0"
     "@react-aria/dialog": "npm:3.5.31"
     "@react-aria/focus": "npm:3.21.2"
     "@react-aria/overlays": "npm:3.30.0"
@@ -6555,7 +6555,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/cascader@npm:1.9.0":
+"@rc-component/cascader@npm:^1.9.0":
   version: 1.9.0
   resolution: "@rc-component/cascader@npm:1.9.0"
   dependencies:
@@ -6570,7 +6570,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/drawer@npm:1.3.0":
+"@rc-component/drawer@npm:^1.3.0":
   version: 1.3.0
   resolution: "@rc-component/drawer@npm:1.3.0"
   dependencies:
@@ -6654,7 +6654,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/slider@npm:1.0.1":
+"@rc-component/slider@npm:^1.0.1":
   version: 1.0.1
   resolution: "@rc-component/slider@npm:1.0.1"
   dependencies:
@@ -6667,7 +6667,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/tooltip@npm:1.4.0":
+"@rc-component/tooltip@npm:^1.4.0":
   version: 1.4.0
   resolution: "@rc-component/tooltip@npm:1.4.0"
   dependencies:
