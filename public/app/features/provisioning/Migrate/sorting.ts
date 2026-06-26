@@ -1,18 +1,18 @@
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow } from './hooks/useMigrationData';
 
 export type SortKey = 'count-desc' | 'count-asc' | 'title-asc' | 'title-desc';
 
 export function compareFolders(a: FolderRow, b: FolderRow, key: SortKey): number {
   switch (key) {
     case 'count-desc':
-      if (b.dashboardCount !== a.dashboardCount) {
-        return b.dashboardCount - a.dashboardCount;
+      if (b.resourceCount !== a.resourceCount) {
+        return b.resourceCount - a.resourceCount;
       }
       // eslint-disable-next-line @grafana/no-locale-compare
       return a.title.localeCompare(b.title);
     case 'count-asc':
-      if (a.dashboardCount !== b.dashboardCount) {
-        return a.dashboardCount - b.dashboardCount;
+      if (a.resourceCount !== b.resourceCount) {
+        return a.resourceCount - b.resourceCount;
       }
       // eslint-disable-next-line @grafana/no-locale-compare
       return a.title.localeCompare(b.title);

@@ -6,7 +6,7 @@ This guide helps you get started developing Grafana.
 
 Make sure you have the following dependencies installed before setting up your developer environment:
 
-- [Git](https://git-scm.com/)
+- [Git](https://git-scm.com/) (The Grafana organization requires signed commits. See the [Github docs](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) on how to set this up, if it is not already.)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
 - [GCC](https://gcc.gnu.org/) (optional, not recommended; enables CGO for smaller, dynamically linked binaries)
@@ -111,14 +111,12 @@ After `yarn start` has built the assets, it will continue to do so whenever any 
 If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
 
 - azuremonitor
-- cloud-monitoring
 - grafana-postgresql-datasource
 - grafana-pyroscope-datasource
 - grafana-testdata-datasource
 - jaeger
 - mysql
 - parca
-- tempo
 - loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
@@ -127,7 +125,7 @@ To build and watch all these plugins you can run the following command. Note thi
 yarn plugin:build:dev
 ```
 
-If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/jaeger`.
 
 ```
 yarn workspace <name_of_plugin> dev

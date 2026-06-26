@@ -28,6 +28,9 @@ func TestConversionsCommands(t *testing.T) {
 			input: &v0alpha1.LibraryPanel{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "uid",
+					// generation mirrors the legacy library element version and must flow
+					// into the patch command's Version for optimistic concurrency.
+					Generation: 3,
 					Annotations: map[string]string{
 						utils.AnnoKeyFolder: "aaa",
 					},
@@ -76,7 +79,7 @@ func TestConversionsCommands(t *testing.T) {
 				UID:       "uid",
 				Name:      "title",
 				Kind:      1,
-				Version:   0,
+				Version:   3,
 				Model:     json.RawMessage(`{"type":"timeseries","pluginVersion":"1.2.3","title":"title","panelTitle":"panel title","description":"descr","options":{"hello":"options"},"fieldConfig":{"hello":"fieldConfig"},"datasource":{"type":"ttt","uid":"uid","apiVersion":"v0alpha1"},"gridPos":{"w":1,"h":2,"x":3,"y":4},"transparent":true,"links":[{"link1":"hello"}]}`),
 			},
 		},

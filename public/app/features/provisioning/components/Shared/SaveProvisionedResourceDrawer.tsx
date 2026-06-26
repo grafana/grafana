@@ -4,14 +4,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
-import { type RepositoryView, useReplaceRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
-import { useDispatch } from 'app/types/store';
+import { type RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { PushSuccessMessage } from '../../hooks/PushSuccessMessage';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useCreateOrUpdateRepositoryFile } from '../../hooks/useCreateOrUpdateRepositoryFile';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
@@ -33,12 +30,20 @@ export interface SaveProvisionedResourceDrawerProps {
   resourceName: string;
   /** Human-readable title used in the commit message and as the drawer subtitle. */
   title: string;
-  /** The file content committed to the repository. */
-  body: Record<string, unknown>;
+  /** The file content committed to the repository. Not required when `action` is `delete`. */
+  body?: Record<string, unknown>;
   /** Header shown at the top of the drawer (e.g. "Save provisioned playlist"). */
   drawerTitle: string;
-  /** Commit action recorded in the commit message. Defaults to `update`. */
+  /** Commit action recorded in the commit message. Defaults to `update`. `delete` removes the file. */
   action?: CommitAction;
+  /**
+   * Whether this commits a brand-new file to the repository (create) rather than replacing an
+   * existing one (update). When true the path field becomes editable and the create mutation is
+   * used. The managing repository and initial path are still resolved from the resource's
+   * annotations, so callers creating a new resource must synthesise them for the chosen repository.
+   */
+  isNew?: boolean;
+  /** Prefix for generated branch names. Defaults to the `resourceType`. */
   branchPrefix?: string;
   /** Notification shown on a successful write to the configured branch. */
   successMessage?: string;
@@ -48,7 +53,15 @@ export interface SaveProvisionedResourceDrawerProps {
   /** Called after a successful write to the configured branch (e.g. navigate / invalidate caches). */
   onWriteSuccess?: () => void;
   /** Called after a successful push to a non-configured branch (PR workflow). */
-  onBranchSuccess?: (data: { ref: string; urls?: Record<string, string> }) => void;
+  onBranchSuccess?: (data: {
+    ref: string;
+    urls?: Record<string, string>;
+    repoType?: string;
+    /** The repository's configured (default) branch, for the PR banner's branch display. */
+    configuredBranch?: string;
+    /** The repository's base URL, for the PR banner's branch links. */
+    repoUrl?: string;
+  }) => void;
 }
 
 interface FormProps extends SaveProvisionedResourceDrawerProps {
@@ -63,6 +76,7 @@ function FormContent({
   title,
   body,
   action = 'update',
+  isNew = false,
   successMessage,
   initialValues,
   repository,
@@ -71,9 +85,13 @@ function FormContent({
   onWriteSuccess,
   onBranchSuccess,
 }: FormProps) {
-  const dispatch = useDispatch();
   const [error, setError] = useState<string | undefined>(undefined);
-  const [replaceFile, request] = useReplaceRepositoryFilesWithPathMutation();
+  const isDelete = action === 'delete';
+  // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
+  // original path: passing it selects update, omitting it selects create.
+  const [saveFile, saveRequest] = useCreateOrUpdateRepositoryFile(isNew ? undefined : initialValues.path);
+  const [deleteFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
+  const request = isDelete ? deleteRequest : saveRequest;
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
   const { handleSubmit, watch, formState } = methods;
@@ -98,16 +116,6 @@ function FormContent({
     setError(getProvisionedRequestError(err, t('provisioning.save-resource.error-saving', 'Failed to save changes')));
   };
 
-  const handleBranchSuccess = ({ ref, urls }: { ref: string; urls?: Record<string, string> }) => {
-    // The request handler suppresses its own notification for the branch workflow (it expects a
-    // preview page). Resources without a preview page surface the branch/PR link here instead.
-    const linkUrl = urls?.newPullRequestURL ?? repository?.url;
-    dispatch(
-      notifyApp(createSuccessNotification('', '', undefined, <PushSuccessMessage branch={ref} url={linkUrl} />))
-    );
-    onBranchSuccess?.({ ref, urls });
-  };
-
   const { handleSuccess } = useProvisionedRequestHandler({
     workflow,
     resourceType,
@@ -116,14 +124,24 @@ function FormContent({
     handlers: {
       onDismiss,
       onWriteSuccess: () => onWriteSuccess?.(),
-      onBranchSuccess: ({ ref, urls }) => handleBranchSuccess({ ref, urls }),
+      // Branch (PR) workflow: forward to the caller so it can navigate and surface the PR banner on
+      // the destination page (like dashboards), passing the repo info for the banner copy/branches.
+      onBranchSuccess: ({ ref, urls }) =>
+        onBranchSuccess?.({
+          ref,
+          urls,
+          repoType: repository?.type,
+          configuredBranch: repository?.branch,
+          repoUrl: repository?.url,
+        }),
     },
   });
 
-  const doSave = async ({ ref, workflow }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, workflow, path }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
-    const path = initialValues.path;
+    // Use the submitted path: for new resources the path field is editable, so the user may have
+    // changed it from the initial slug. For existing resources the field is read-only (== initial).
 
     if (!repoName || !path) {
       showError(t('provisioning.save-resource.missing-info', 'Missing required fields for saving'));
@@ -141,7 +159,9 @@ function FormContent({
     });
 
     try {
-      const data = await replaceFile({ name: repoName, path, ref: branchRef, message, body }).unwrap();
+      const data = isDelete
+        ? await deleteFile({ name: repoName, path, ref: branchRef, message }).unwrap()
+        : await saveFile({ name: repoName, path, ref: branchRef, message, body: body ?? {} }).unwrap();
       handleSuccess(data, { workflow, selectedBranch: ref });
     } catch (err) {
       showError(err);
@@ -154,7 +174,7 @@ function FormContent({
         <Stack direction="column" gap={2}>
           <ResourceEditFormSharedFields
             resourceType={resourceType}
-            isNew={false}
+            isNew={isNew}
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             lockComment={locked}
@@ -167,10 +187,14 @@ function FormContent({
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
               {t('provisioning.save-resource.button-cancel', 'Cancel')}
             </Button>
-            <Button type="submit" disabled={request.isLoading}>
-              {request.isLoading
-                ? t('provisioning.save-resource.button-saving', 'Saving...')
-                : t('provisioning.save-resource.button-save', 'Save')}
+            <Button type="submit" variant={isDelete ? 'destructive' : 'primary'} disabled={request.isLoading}>
+              {isDelete
+                ? request.isLoading
+                  ? t('provisioning.save-resource.button-deleting', 'Deleting...')
+                  : t('provisioning.save-resource.button-delete', 'Delete')
+                : request.isLoading
+                  ? t('provisioning.save-resource.button-saving', 'Saving...')
+                  : t('provisioning.save-resource.button-save', 'Save')}
             </Button>
           </Stack>
         </Stack>
@@ -190,7 +214,8 @@ function FormContent({
  * `CommitResourceKind` (and the shared fields / request handler, which key off the same type).
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
-  const { resource, title, drawerTitle, branchPrefix = 'resource', readOnlyMessage, onDismiss } = props;
+  const { resource, resourceType, title, drawerTitle, readOnlyMessage, onDismiss } = props;
+  const branchPrefix = props.branchPrefix ?? resourceType;
 
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(resource),

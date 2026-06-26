@@ -3,8 +3,11 @@ import { test, expect } from '@grafana/plugin-e2e';
 const PAGE_UNDER_TEST = 'WVpf2jp7z/repeating-a-panel-horizontally';
 
 test.use({
+  // The dashboard is dashboard.grafana.app/v2 after the gdev migration, so it must render
+  // through the new layout engine. The prior FORCE_V2_DASHBOARDS_API gating left it on the
+  // legacy path by default, where variable-driven repeating doesn't work on a v2 dashboard.
   featureToggles: {
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
   },
 });
 

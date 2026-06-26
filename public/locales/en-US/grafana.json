@@ -3115,6 +3115,17 @@
       "text-provisioned": "Provisioned",
       "ungrouped": "Ungrouped"
     },
+    "rules-view-mode-selector": {
+      "legacy-view-options": {
+        "grouped": "Grouped",
+        "list": "List",
+        "state": "State"
+      },
+      "view-options": {
+        "grouped": "Grouped",
+        "list": "List"
+      }
+    },
     "saved-searches": {
       "actions-aria-label": "Actions",
       "button-label": "Saved searches",
@@ -4021,6 +4032,8 @@
       "tls-client-key-label": "TLS client key",
       "tls-skip-verify-description": "If enabled, the client accepts any certificate presented by the server and any host \nname in that certificate. You should only use this for testing, because this mode leaves \nSSL/TLS susceptible to man-in-the-middle attacks.",
       "tls-skip-verify-label": "TLS skip verify",
+      "token-exchange-timeout-description": "The timeout in seconds for the OAuth token exchange request. Defaults to 15 seconds if not set or set to 0.",
+      "token-exchange-timeout-label": "Token exchange timeout (seconds)",
       "token-url-description": "The token endpoint of your OAuth2 provider.",
       "token-url-required": "This field is required and must be a valid URL.",
       "use-pkce-description": "If enabled, Grafana will use <2>Proof Key for Code Exchange (PKCE)</2> with the OAuth2 Authorization Code Grant.",
@@ -4265,6 +4278,8 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-actions": {
+      "commit-title-resource-count_one": "{{count}} resource",
+      "commit-title-resource-count_other": "{{count}} resources",
       "error-generic": "Unexpected error happened when creating job"
     },
     "bulk-delete-resources-form": {
@@ -4372,6 +4387,7 @@
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
+      "starred-folders": "Starred folders",
       "team-folders": "Team folders",
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
@@ -4460,6 +4476,7 @@
       "view-folder": "View folder"
     },
     "shared-with-me": "Shared with me",
+    "starred-folders": "Starred folders",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
       "label": {
@@ -5767,11 +5784,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Extensions"
-      }
-    },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
       "description-obfuscate-data": "Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.",
@@ -5887,13 +5899,10 @@
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
       "configure-button": "Edit visualization",
-      "configure-button-menu": "Toggle menu",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
-      "menu-open-panel-editor": "Configure",
       "menu-use-library-panel": "Use library panel",
       "menu-use-saved-query": "Use saved query",
-      "missing-config": "Missing panel configuration",
       "no-visualization": "No visualization configured",
       "saved-query-apply-error": "Failed to apply saved query",
       "saved-query-apply-error-detail": "An error occurred while applying the saved query. Please try again.",
@@ -6433,7 +6442,11 @@
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
+      "edit-template-button": "Edit",
+      "edit-template-button-label": "Edit template: {{title}}",
       "no-preview": "No preview available ",
+      "use-template-button": "Use template",
+      "use-template-button-label": "Use template: {{title}}",
       "view-dashboard-button": "View dashboard",
       "view-dashboard-button-label": "View dashboard: {{title}}",
       "view-template-button": "View template",
@@ -6464,7 +6477,13 @@
       "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
     },
     "create-from-scratch": "Create a dashboard from scratch instead",
+    "custom-dashboard-template-filters": {
+      "creator-placeholder": "Filter by created by",
+      "search-placeholder": "Search",
+      "sort-placeholder": "Sort"
+    },
     "dashboard-card": {
+      "created-by-label": "Created by:",
       "details": {
         "datasource": "Datasource",
         "dependencies": "Dependencies",
@@ -6474,6 +6493,9 @@
         "view-on-grafana-com": "View on Grafana.com"
       },
       "no-description": "No description available"
+    },
+    "grafana-dashboard-template-modal": {
+      "no-results-found": "No template dashboards found"
     },
     "merged-description": "Browse and select from data-source provided or community dashboards",
     "merged-empty-no-dashboards": "No dashboards are available for this datasource.",
@@ -6490,7 +6512,10 @@
     "suggested-error-description": "Failed to load suggested dashboard.",
     "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
-      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "description": "Get started with Grafana templates. Connect your data to power them with real metrics.",
+      "description-custom": "Get started with templates. Connect your data to power them with real metrics.",
+      "tab-custom": "Custom templates",
+      "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
     }
   },
@@ -6789,6 +6814,18 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard controls"
+    },
+    "dashboard-template-edit-banner": {
+      "body": "Edits made will update this template. <2>If you wish to use this template to create a dashboard, click here</2>",
+      "title": "You are editing {{ templateName }}"
+    },
+    "dashboard-template-saved-banner": {
+      "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
+      "title": "Template created"
+    },
+    "dashboard-template-use-banner": {
+      "body": "Save this dashboard and edit it for your use case",
+      "title": "You are using {{ templateName }} template in a new dashboard"
     },
     "data-source-variable-form": {
       "data-source-options": "Data source options",
@@ -7664,6 +7701,13 @@
     },
     "permissions": {
       "title": "Permissions"
+    },
+    "template": {
+      "title": "Template",
+      "unavailable-body": "This dashboard is not being edited as a template, so template settings cannot be shown.",
+      "unavailable-oss-body": "Editing dashboard template settings requires Grafana Enterprise.",
+      "unavailable-oss-title": "Available in Grafana Enterprise",
+      "unavailable-title": "Template metadata unavailable"
     },
     "time-picker": {
       "hide-time-picker": "Hide time picker",
@@ -10609,12 +10653,11 @@
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
       "high-count_other": "{{count}} high",
-      "retry": "Retry",
       "severity-critical": "Critical",
       "severity-high": "High",
       "severity-low": "Low",
       "severity-minor": "Minor",
-      "severity-unknown": "Unknown severity",
+      "severity-unknown": "Unknown",
       "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
@@ -10631,6 +10674,13 @@
         "morning": "Good morning."
       },
       "placeholder": "Welcome to {{edition}}."
+    },
+    "incidents-card": {
+      "declare": "Declare an incident",
+      "empty": "No active incidents.",
+      "error-title": "Could not load active incidents",
+      "title": "Active incidents",
+      "view-all": "View all incidents"
     },
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
@@ -10652,6 +10702,9 @@
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
+    },
+    "summary-card": {
+      "retry": "Retry"
     }
   },
   "import-overview": {
@@ -10886,9 +10939,6 @@
     }
   },
   "library-panels": {
-    "add-library-panel-modal": {
-      "title-create-library-panel": "Create library panel"
-    },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
     },
@@ -11075,24 +11125,7 @@
       "end-of-range": "End of the selected time range.",
       "load-more": "Scroll to load more",
       "load-newer": "Loading newer logs...",
-      "load-older": "Loading older logs...",
-      "older-logs": "Older logs"
-    },
-    "log-context-buttons": {
-      "center-matched-line": "Center matched line",
-      "label-wrap-lines": "Wrap lines"
-    },
-    "log-details": {
-      "fields": "Fields",
-      "links": "Links",
-      "log-line": "Log line",
-      "no-details": "No details available"
-    },
-    "log-details-body": {
-      "toggle-field-button": {
-        "tooltip-hide-log-line": "Hide log line",
-        "tooltip-show-log-line": "Show log line"
-      }
+      "load-older": "Loading older logs..."
     },
     "log-labels": {
       "collapse": "Collapse labels",
@@ -11194,28 +11227,6 @@
       "next": "Next result",
       "prev": "Previous result"
     },
-    "log-row-context-modal": {
-      "error-loading-log-more-logs": "Error loading more logs.",
-      "no-more-logs-available": "No more logs available.",
-      "open-in-split-view": "Open in split view",
-      "title-log-context": "Log context"
-    },
-    "log-row-menu-cell": {
-      "aria-label-copy-shortlink": "Copy shortlink",
-      "aria-label-pin-line": "Pin line",
-      "aria-label-show-context": "Show context",
-      "aria-label-unpin-line": "Unpin line",
-      "tooltip-copy-shortlink": "Copy shortlink",
-      "tooltip-copy-to-clipboard": "Copy to clipboard",
-      "tooltip-show-context": "Show context",
-      "tooltip-unpin-line": "Unpin line"
-    },
-    "log-row-message": {
-      "ellipsis": "… ",
-      "more": "more",
-      "see-details": "See log details",
-      "tooltip-error": "Error: {{errorMessage}}"
-    },
     "log-rows": {
       "disable-popover": {
         "confirm": "Confirm",
@@ -11240,7 +11251,6 @@
     "logs-controls": {
       "collapse": "Collapse",
       "deduplication": "Deduplication",
-      "disable-prettify-json": "Collapse JSON logs",
       "display-level-all": "All levels",
       "download": "Download logs",
       "download-logs": {
@@ -11254,7 +11264,6 @@
       "font-large": "Set large font",
       "font-small": "Set small font",
       "hide-search": "Close search",
-      "hide-timestamps": "Hide timestamps",
       "hide-unique-labels": "Hide unique labels",
       "label": {
         "collapse": "Expanded",
@@ -11287,14 +11296,12 @@
       },
       "newest-first": "Sorted by newest logs first - Click to show oldest first",
       "oldest-first": "Sorted by oldest logs first - Click to show newest first",
-      "prettify-json": "Expand JSON logs",
       "remove-escaping": "Remove escaping",
       "resolution-ms": "ms",
       "resolution-ns": "ns",
       "scroll-bottom": "Scroll to bottom",
       "scroll-top": "Scroll to top",
       "show-search": "Search in logs result",
-      "show-timestamps": "Show timestamps",
       "show-unique-labels": "Show unique labels",
       "table-wrap-text": {
         "disable": "Disable text wrapping",
@@ -11318,7 +11325,6 @@
         "enable-highlighting": "Enable highlighting",
         "filter-level": "Filter logs result by level"
       },
-      "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {
         "disable": "Disable columns",
         "disabled-label": "Columns not supported",
@@ -11326,16 +11332,9 @@
         "enable": "Enable columns",
         "enabled-text": "Columns disabled",
         "not-supported": "Columns are not supported with line wrapping enabled"
-      },
-      "wrap-lines": "Wrap lines"
-    },
-    "logs-panel": {
-      "render-common-labels": {
-        "common-labels": "Common labels:"
       }
     },
     "name-allow-download": "Display download control",
-    "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
     "name-details-mode": "Log details panel mode",
     "name-details-options": {
@@ -11359,9 +11358,6 @@
       "label-newest-first": "Newest first",
       "label-oldest-first": "Oldest first"
     },
-    "out-of-range-message": {
-      "end-of-the-selected-time-range": "End of the selected time range."
-    },
     "popover-menu": {
       "copy": "Copy selection",
       "disable-menu": "Disable menu",
@@ -11371,24 +11367,6 @@
     },
     "show-log-attributes": "Enable log attributes for OTel logs",
     "timestamp-format": "Timestamp resolution",
-    "un-themed-log-details": {
-      "aria-label-data-links": "Data links",
-      "aria-label-fields": "Fields",
-      "aria-label-line": "Log line",
-      "aria-label-log-level": "Log level",
-      "aria-label-no-details": "No details"
-    },
-    "un-themed-log-details-row": {
-      "filter-out": "Filter out value",
-      "filter-out-query": "Filter out value in query {{query}}",
-      "title-copy-value-to-clipboard": "Copy value to clipboard",
-      "toggle-field-button": {
-        "tooltip-field-instead-message": "Show this field instead of the message",
-        "tooltip-hide-this-field": "Hide this field"
-      },
-      "tooltip-adhoc-statistics": "Ad-hoc statistics",
-      "tooltip-hide-adhoc-statistics": "Hide ad-hoc statistics"
-    },
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that field",
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
@@ -12358,7 +12336,6 @@
     "header-menu": {
       "copy": "Copy",
       "copy-styles": "Copy styles",
-      "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
@@ -12530,6 +12507,9 @@
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
+    "save-provisioned": {
+      "drawer-title": "Save provisioned playlist"
+    },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
   },
@@ -12546,6 +12526,9 @@
     "delete-modal": {
       "body": "Are you sure you want to delete {{name}} playlist?",
       "confirm-text": "Delete"
+    },
+    "delete-provisioned": {
+      "drawer-title": "Delete provisioned playlist"
     },
     "empty": {
       "button": "Create playlist",
@@ -12888,6 +12871,7 @@
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
+      "description-branch-enforced": "The branch name is set by the repository's branch naming template and can't be changed",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
       "description-filename": "File name for the dashboard (.json or .yaml)",
@@ -12990,6 +12974,7 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
+      "bulk-resource-kind": "resource",
       "create-default": "Create {{resourceKind}}: {{title}}",
       "delete-default": "Delete {{resourceKind}}: {{title}}",
       "move-default": "Move {{resourceKind}}: {{title}}",
@@ -13074,6 +13059,7 @@
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
       "description-title": "A human-readable name for this connection",
+      "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
@@ -13085,6 +13071,7 @@
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
       "label-title": "Title",
+      "label-webhook-disabled": "Disable webhook integration",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
@@ -13343,6 +13330,17 @@
         "error-fetching-active-job": "Error fetching active job"
       }
     },
+    "job-summary": {
+      "column-created": "Created",
+      "column-deleted": "Deleted",
+      "column-errors": "Errors",
+      "column-resource": "Resource",
+      "column-total": "Total",
+      "column-unchanged": "Unchanged",
+      "column-updated": "Updated",
+      "column-warnings": "Warnings",
+      "unknown-kind": "Unknown"
+    },
     "local": {
       "path-description": "Local file system path to the repository",
       "path-label": "Repository Path",
@@ -13363,7 +13361,7 @@
       "truncated": "Message truncated"
     },
     "migrate": {
-      "dashboards": "Dashboards",
+      "all-resources": "All resources",
       "drawer-cancel": "Cancel",
       "drawer-description": "All resources not yet managed by Git will be migrated into the selected repository. This is a one-time operation.",
       "drawer-description-selective_one": "{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.",
@@ -13385,6 +13383,8 @@
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
+      "partial-error-body": "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
+      "partial-error-title": "Some resource types could not be loaded",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
       "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
@@ -13401,7 +13401,7 @@
       "resources-sort-count-desc": "Most resources",
       "resources-sort-title-asc": "Name (A–Z)",
       "resources-sort-title-desc": "Name (Z–A)",
-      "resources-to-migrate-all-managed": "All dashboards are already managed by Git.",
+      "resources-to-migrate-all-managed": "All supported resources are already managed by Git.",
       "resources-to-migrate-empty": "No folders or resources match the current search.",
       "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
       "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",
@@ -13411,7 +13411,7 @@
       "resources-to-migrate-migrate-selected_one": "Migrate selected ({{count}})",
       "resources-to-migrate-migrate-selected_other": "Migrate selected ({{count}})",
       "resources-to-migrate-search": "Search folders and resources",
-      "resources-to-migrate-subtitle": "Pick whole folders, or individual dashboards within them. Selecting a folder migrates only the resources directly inside it — anything in subfolders migrates through its own folder."
+      "resources-to-migrate-subtitle": "Pick whole folders, or individual resources within them. Selecting a folder migrates only the resources directly inside it — anything in subfolders migrates through its own folder."
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
@@ -13573,6 +13573,11 @@
       "webhook-last-event": "Last Event:",
       "webhook-url": "View Webhook"
     },
+    "repository-select": {
+      "description": "Pick a repository to store this resource in version control and sync it from there, or leave it empty to keep it in Grafana. This can't be changed after the resource is created.",
+      "label": "Repository",
+      "placeholder": "Select a repository"
+    },
     "repository-status": {
       "error": "Failed to load repository"
     },
@@ -13612,6 +13617,12 @@
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
+    "resource-kind": {
+      "dashboards": "Dashboards",
+      "folders": "Folders",
+      "library-panels": "Library panels",
+      "playlists": "Playlists"
+    },
     "resource-tree": {
       "header-hash": "Hash",
       "header-status": "Status",
@@ -13646,6 +13657,8 @@
     },
     "save-resource": {
       "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
       "button-save": "Save",
       "button-saving": "Saving...",
       "error-saving": "Failed to save changes",
@@ -13750,9 +13763,12 @@
       "error-title": "Live updates unavailable"
     },
     "webhook-section": {
+      "description-webhook-disabled": "When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-forced": "Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.",
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
       "label-webhook": "Webhook options",
+      "label-webhook-disabled": "Disable webhook integration",
       "label-webhook-url": "Webhook URL",
       "placeholder-webhook-url": "https://grafana.example.com"
     },
@@ -14865,6 +14881,14 @@
       "more-info": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "external-badge": "External",
+    "load-error": {
+      "retry": "Retry",
+      "title": "Failed to load snapshots"
+    },
+    "load-more": {
+      "label": "Show more snapshots",
+      "loading": "Loading more snapshots…"
+    },
     "name-column-header": "Name",
     "share": {
       "cancel-button": "Cancel",
@@ -16612,11 +16636,6 @@
     },
     "static-options": {
       "add-option-button-label": "Add new option"
-    },
-    "text-box-variable-editor": {
-      "name-default-value": "Default value",
-      "placeholder-default-value-if-any": "default value, if any",
-      "text-options": "Text options"
     },
     "transform-usages-to-network": {
       "result": {

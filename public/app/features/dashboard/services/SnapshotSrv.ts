@@ -1,6 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
+import { type ListMeta } from 'app/features/apiserver/types';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { getAPINamespace } from '../../../api/utils';
@@ -12,6 +13,15 @@ export interface Snapshot {
   external: boolean;
   externalUrl?: string;
   url?: string;
+}
+
+export interface SnapshotListPage {
+  items: Snapshot[];
+  continueToken?: string;
+}
+
+export interface SnapshotListOptions {
+  continue?: string;
 }
 
 export interface SnapshotSharingOptions {
@@ -36,7 +46,7 @@ export interface SnapshotCreateResponse {
 
 export interface DashboardSnapshotSrv {
   create: (cmd: SnapshotCreateCommand) => Promise<SnapshotCreateResponse>;
-  getSnapshots: () => Promise<Snapshot[]>;
+  getSnapshots: (opts?: SnapshotListOptions) => Promise<SnapshotListPage>;
   getSharingOptions: () => Promise<SnapshotSharingOptions>;
   deleteSnapshot: (key: string) => Promise<void>;
   getSnapshot: (key: string) => Promise<DashboardDTO>;
@@ -44,7 +54,10 @@ export interface DashboardSnapshotSrv {
 
 const legacyDashboardSnapshotSrv: DashboardSnapshotSrv = {
   create: (cmd: SnapshotCreateCommand) => getBackendSrv().post<SnapshotCreateResponse>('/api/snapshots', cmd),
-  getSnapshots: () => getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots'),
+  getSnapshots: async () => {
+    const items = await getBackendSrv().get<Snapshot[]>('/api/dashboard/snapshots');
+    return { items, continueToken: undefined };
+  },
   getSharingOptions: () => getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options'),
   deleteSnapshot: (key: string) => getBackendSrv().delete('/api/snapshots/' + key),
   getSnapshot: async (key: string) => {
@@ -79,6 +92,7 @@ interface K8sSnapshotResource {
 
 interface DashboardSnapshotList {
   items: K8sSnapshotResource[];
+  metadata?: ListMeta;
 }
 
 // Response from the /dashboard subresource - returns a Dashboard with raw dashboard data in spec
@@ -103,16 +117,15 @@ class K8sAPI implements DashboardSnapshotSrv {
     return getBackendSrv().post<SnapshotCreateResponse>(this.url + '/create', cmd);
   }
 
-  async getSnapshots(): Promise<Snapshot[]> {
-    const result = await getBackendSrv().get<DashboardSnapshotList>(this.url);
-    return result.items.map((r) => {
-      return {
-        key: r.metadata.name,
-        name: r.spec.title,
-        external: r.spec.external,
-        externalUrl: r.spec.externalUrl,
-      };
-    });
+  async getSnapshots(opts?: SnapshotListOptions): Promise<SnapshotListPage> {
+    const result = await getBackendSrv().get<DashboardSnapshotList>(this.url, { continue: opts?.continue });
+    const items = result.items.map((r) => ({
+      key: r.metadata.name,
+      name: r.spec.title,
+      external: r.spec.external,
+      externalUrl: r.spec.externalUrl,
+    }));
+    return { items, continueToken: result.metadata?.continue };
   }
 
   deleteSnapshot(uid: string) {
