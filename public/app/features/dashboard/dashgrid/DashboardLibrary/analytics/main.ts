@@ -7,6 +7,7 @@ import {
   type CompatibilityCheckTriggeredProperties,
   type CreateFromScratchClickedProperties,
   type EntryPointClickedProperties,
+  type FiltersAppliedProperties,
   type ItemClickedProperties,
   type LoadedProperties,
   type MappingFormCompletedProperties,
@@ -48,6 +49,8 @@ export const NewDashboardLibraryInteractions = {
   compatibilityCheckCompleted: newDashboardLibraryInteraction<CompatibilityCheckCompletedProperties>(
     'compatibility_check_completed'
   ),
+  /** Fired when the user changes a filter (tags / creators / sort) in a library view. */
+  filtersApplied: newDashboardLibraryInteraction<FiltersAppliedProperties>('filters_applied'),
 };
 
 /**

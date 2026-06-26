@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -13,10 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -267,6 +271,82 @@ func TestMetrics(t *testing.T) {
 		assert.Len(t, stats, 2, stats)
 		assert.Equal(t, int64(1), stats["stats.user.role_none.count"])
 		assert.Equal(t, 1, stats["stats.password_policy.count"])
+	})
+}
+
+func TestService_NoLegacyFallback(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	k8sErr := errors.New("k8s boom")
+	legacyUser := &user.User{ID: 1, Login: "from-legacy"}
+
+	t.Run("GetByID", func(t *testing.T) {
+		t.Run("k8s hit is returned without consulting legacy", func(t *testing.T) {
+			s := newWrapperServiceForTest(
+				&usertest.FakeUserService{ExpectedUser: &user.User{ID: 2, Login: "from-k8s"}},
+				&usertest.FakeUserService{ExpectedUser: legacyUser},
+			)
+			got, err := s.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 5})
+			require.NoError(t, err)
+			require.Equal(t, "from-k8s", got.Login)
+		})
+
+		t.Run("k8s error is surfaced, no fallback to legacy", func(t *testing.T) {
+			s := newWrapperServiceForTest(
+				&usertest.FakeUserService{ExpectedError: k8sErr},
+				&usertest.FakeUserService{ExpectedUser: legacyUser},
+			)
+			got, err := s.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 5})
+			require.ErrorIs(t, err, k8sErr)
+			require.Nil(t, got)
+		})
+	})
+
+	t.Run("GetByUID", func(t *testing.T) {
+		t.Run("k8s hit is returned without consulting legacy", func(t *testing.T) {
+			s := newWrapperServiceForTest(
+				&usertest.FakeUserService{ExpectedUser: &user.User{ID: 2, Login: "from-k8s"}},
+				&usertest.FakeUserService{ExpectedUser: legacyUser},
+			)
+			got, err := s.GetByUID(context.Background(), &user.GetUserByUIDQuery{UID: "uid"})
+			require.NoError(t, err)
+			require.Equal(t, "from-k8s", got.Login)
+		})
+
+		t.Run("k8s error is surfaced, no fallback to legacy", func(t *testing.T) {
+			s := newWrapperServiceForTest(
+				&usertest.FakeUserService{ExpectedError: k8sErr},
+				&usertest.FakeUserService{ExpectedUser: legacyUser},
+			)
+			got, err := s.GetByUID(context.Background(), &user.GetUserByUIDQuery{UID: "uid"})
+			require.ErrorIs(t, err, k8sErr)
+			require.Nil(t, got)
+		})
+	})
+}
+
+func newWrapperServiceForTest(k8sService, legacyService user.Service) *Service {
+	return &Service{
+		legacyService:     legacyService,
+		k8sService:        k8sService,
+		openFeatureClient: openfeature.NewDefaultClient(),
+		logger:            log.New("test"),
+		tracer:            tracing.InitializeTracerForTest(),
+		cfg:               setting.NewCfg(),
+	}
+}
+
+func enableK8sUsersRedirect(t *testing.T) {
+	t.Helper()
+	flag, err := setting.ParseFlag(featuremgmt.FlagKubernetesUsersRedirect, "true")
+	require.NoError(t, err)
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesUsersRedirect: flag,
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(nil))
 	})
 }
 

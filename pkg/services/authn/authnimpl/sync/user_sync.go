@@ -853,7 +853,6 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
 	id.OrgID = usr.OrgID
 	id.OrgName = usr.OrgName
 	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
-	id.HelpFlags1 = usr.HelpFlags1
 	id.TeamIDs = usr.TeamIDs // nolint:staticcheck
 	id.Groups = usr.TeamUIDs
 	id.LastSeenAt = usr.LastSeenAt

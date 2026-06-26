@@ -796,10 +796,10 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	// We only add this getting started panel for Admins who have not dismissed it,
-	// and if a custom default home dashboard hasn't been configured
+	// We only add this getting started panel for Admins,
+	// and if a custom default home dashboard hasn't been configured.
+	// Dismissal state is tracked client-side via UserStorage.
 	if !c.HasUserRole(org.RoleAdmin) ||
-		c.HasHelpFlag(user.HelpFlagGettingStartedPanelDismissed) ||
 		hs.Cfg.DefaultHomeDashboardPath != "" {
 		return
 	}

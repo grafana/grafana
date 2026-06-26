@@ -4,7 +4,7 @@ const DASHBOARD_UID = 'yBCC3aKGk';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
   },
 });
 

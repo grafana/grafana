@@ -53,8 +53,6 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
-  /** Enables org-defined dashboard templates for enterprise */
-  GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
@@ -333,17 +331,6 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
-};
-
-/**
- * Enables org-defined dashboard templates for enterprise
- *
- * **Details:**
- * - flag key: `grafana.orgDashboardTemplates`
- * - default value: `false`
- */
-export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.orgDashboardTemplates", false, options).value;
 };
 
 /**

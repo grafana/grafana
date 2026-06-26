@@ -301,10 +301,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))
-			userRoute.Put("/helpflags/:id", routing.Wrap(hs.SetHelpFlag))
-			// For dev purpose
-			userRoute.Get("/helpflags/clear", routing.Wrap(hs.ClearHelpFlags))
-
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
 			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))

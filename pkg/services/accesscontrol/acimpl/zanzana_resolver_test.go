@@ -370,11 +370,11 @@ func TestSearchPermissionsForIdentity_UnsupportedAction_ReturnsEmpty(t *testing.
 		42,
 		"user-uid",
 		false,
-		ac.SearchOptions{Action: "users:read"},
+		ac.SearchOptions{Action: "datasources:read"},
 	)
 	require.NoError(t, err)
 
-	// users:read is not in the Zanzana translation table, so no List call
+	// datasources:read is not in the Zanzana translation table, so no List call
 	// should be made and the result should be empty.
 	require.Empty(t, result)
 	require.Empty(t, fake.listCalls, "should not call Zanzana List for untranslatable actions")
@@ -858,6 +858,39 @@ func TestListPermissions_TeamActions(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
 			{Action: "teams.permissions:read", Scope: "teams:id:*"},
+		}, perms)
+	})
+}
+
+// TestListPermissions_UserActions verifies user actions produce legacy id-based scopes.
+// Most user actions are scoped to the global.users kind; users.permissions:read is the org-level
+// exception scoped to the users kind. Without a scope resolver (nil in unit tests), items fall
+// back to the Zanzana resource scope users:uid:<name>.
+func TestListPermissions_UserActions(t *testing.T) {
+	// Server-level actions are scoped to global.users.
+	for _, action := range []string{"users:read", "users:write", "users:delete", "users.permissions:write"} {
+		t.Run(action+" All=true produces global.users:id:* wildcard", func(t *testing.T) {
+			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
+			require.NoError(t, err)
+			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "global.users:id:*"},
+			}, perms)
+		})
+	}
+
+	t.Run("users.permissions:read is the org-level exception scoped to users:id:*", func(t *testing.T) {
+		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "users.permissions:read", "")
+		require.NoError(t, err)
+		require.Equal(t, []ac.Permission{
+			{Action: "users.permissions:read", Scope: "users:id:*"},
+		}, perms)
+	})
+
+	t.Run("items fall back to uid scope when scope resolver is nil", func(t *testing.T) {
+		perms, err := zanzanaResolve(&authzv1.ListResponse{Items: []string{"user-abc"}}, "users:read", "")
+		require.NoError(t, err)
+		require.Equal(t, []ac.Permission{
+			{Action: "users:read", Scope: "users:uid:user-abc"},
 		}, perms)
 	})
 }
