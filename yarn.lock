@@ -3017,7 +3017,7 @@ __metadata:
     fs-extra: "npm:^11.2.0"
     hoist-non-react-statics: "npm:^3.3.2"
     immutable: "npm:^5.1.5"
-    is-hotkey: "npm:0.2.0"
+    is-hotkey: "npm:^0.2.0"
     jquery: "npm:3.7.1"
     lodash: "npm:^4.17.23"
     micro-memoize: "npm:^4.1.2"
@@ -19951,7 +19951,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-hotkey@npm:0.2.0":
+"is-hotkey@npm:^0.2.0":
   version: 0.2.0
   resolution: "is-hotkey@npm:0.2.0"
   checksum: 10/d3d42026e70ea796fb9af8345e511de4b90eed55765eb67db8695f83e60bac8566ace16b191c08c7f6fab36c9318133a9f1c19eb9e5f8ce528d8a433e4b41190
