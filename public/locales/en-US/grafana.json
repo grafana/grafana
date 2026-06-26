@@ -5295,6 +5295,9 @@
         "min-width-error": "A number between 50 and 2000 is required"
       }
     },
+    "auto-grid-item": {
+      "resize-disabled-tooltip": "Panels cannot be resized in auto layout"
+    },
     "canvas-actions": {
       "add": {
         "paste": {

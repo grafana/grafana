@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { LazyLoader, sceneGraph, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -53,6 +54,21 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
 
+          const resizeDisabledLabel = t(
+            'dashboard.auto-grid-item.resize-disabled-tooltip',
+            'Panels cannot be resized in auto layout'
+          );
+          const resizeDisabledHint = isEditing ? (
+            <Tooltip content={resizeDisabledLabel} placement="top">
+              <Icon
+                name="expand-arrows"
+                size="sm"
+                className={styles.resizeDisabledHint}
+                aria-label={resizeDisabledLabel}
+              />
+            </Tooltip>
+          ) : null;
+
           return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
               {...(addDndContainer
@@ -77,6 +93,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                   >
                     <item.Component model={item} />
                     {conditionalRenderingOverlay}
+                    {resizeDisabledHint}
                   </LazyLoader>
                 ) : (
                   <div
@@ -90,6 +107,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                   >
                     <item.Component model={item} />
                     {conditionalRenderingOverlay}
+                    {resizeDisabledHint}
                   </div>
                 )
               }
@@ -170,5 +188,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   hidden: css({
     display: 'none',
+  }),
+  resizeDisabledHint: css({
+    position: 'absolute',
+    bottom: theme.spacing(0.5),
+    right: theme.spacing(0.5),
+    color: theme.colors.text.secondary,
+    cursor: 'not-allowed',
+    zIndex: 1,
   }),
 });
