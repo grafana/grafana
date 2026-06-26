@@ -172,6 +172,79 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.Contains(t, res.GetItems(), "1")
 	})
 
+	// Typed `create` listing. user / service-account have no per-object `create`, so listing
+	// them must return empty rather than issue an invalid ListObjects that OpenFGA rejects.
+	newCreateList := func(subject, group, resource string) *authzv1.ListRequest {
+		return &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbCreate,
+			Subject:   subject,
+			Group:     group,
+			Resource:  resource,
+		}
+	}
+
+	t.Run("user:1 listing users with create returns empty, not error", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:1", userGroup, userResource))
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Empty(t, res.GetItems())
+	})
+
+	t.Run("user:1 listing service-accounts with create returns empty, not error", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:1", serviceAccountGroup, serviceAccountResource))
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Empty(t, res.GetItems())
+	})
+
+	t.Run("user:20 with group_resource users:create lists all", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:20", userGroup, userResource))
+		require.NoError(t, err)
+		assert.True(t, res.GetAll())
+	})
+
+	t.Run("user:21 (team admin) listing teams with create returns the admined team", func(t *testing.T) {
+		// teams keep a per-object `create`, so this lists the admined team rather than empty.
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:21", teamGroup, teamResource))
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Contains(t, res.GetItems(), "admin-team")
+	})
+
+	t.Run("user:1 listing teams with create returns empty, not error", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:1", teamGroup, teamResource))
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Empty(t, res.GetItems())
+	})
+
+	t.Run("user:22 listing user subresource create returns the granted user", func(t *testing.T) {
+		// user / service-account have no base `create`, but subresource create must still list:
+		// the base-relation guard must not block the subresource branch.
+		req := newCreateList("user:22", userGroup, userResource)
+		req.Subresource = statusSubresource
+		res, err := server.List(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.Contains(t, res.GetItems(), "1")
+	})
+
+	t.Run("listing user subresource get_permissions is empty, not error", func(t *testing.T) {
+		// user has no subresource get_permissions in the model (folder-only); the subresource
+		// branch must be skipped rather than issue an undefined can_resource_get_permissions.
+		req := &authzv1.ListRequest{
+			Namespace:   namespace,
+			Verb:        utils.VerbGetPermissions,
+			Subject:     "user:1",
+			Group:       userGroup,
+			Resource:    userResource,
+			Subresource: statusSubresource,
+		}
+		res, err := server.List(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.Empty(t, res.GetItems())
+	})
+
 	t.Run("user:17 should be able to list all dashboards in folder 4 and all subfolders", func(t *testing.T) {
 		res, err := server.List(newContextWithNamespace(), newList("user:17", dashboardGroup, dashboardResource, ""))
 		require.NoError(t, err)
@@ -357,6 +430,79 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 		assert.Len(t, res.GetFolders(), 0)
 
 		assert.Contains(t, res.GetItems(), "1")
+	})
+
+	// Typed `create` listing. user / service-account have no per-object `create`, so listing
+	// them must return empty rather than issue an invalid ListObjects that OpenFGA rejects.
+	newCreateList := func(subject, group, resource string) *authzv1.ListRequest {
+		return &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbCreate,
+			Subject:   subject,
+			Group:     group,
+			Resource:  resource,
+		}
+	}
+
+	t.Run("user:1 listing users with create returns empty, not error", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:1", userGroup, userResource))
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Empty(t, res.GetItems())
+	})
+
+	t.Run("user:1 listing service-accounts with create returns empty, not error", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:1", serviceAccountGroup, serviceAccountResource))
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Empty(t, res.GetItems())
+	})
+
+	t.Run("user:20 with group_resource users:create lists all", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:20", userGroup, userResource))
+		require.NoError(t, err)
+		assert.True(t, res.GetAll())
+	})
+
+	t.Run("user:21 (team admin) listing teams with create returns the admined team", func(t *testing.T) {
+		// teams keep a per-object `create`, so this lists the admined team rather than empty.
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:21", teamGroup, teamResource))
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Contains(t, res.GetItems(), "admin-team")
+	})
+
+	t.Run("user:1 listing teams with create returns empty, not error", func(t *testing.T) {
+		res, err := server.List(newContextWithNamespace(), newCreateList("user:1", teamGroup, teamResource))
+		require.NoError(t, err)
+		assert.False(t, res.GetAll())
+		assert.Empty(t, res.GetItems())
+	})
+
+	t.Run("user:22 listing user subresource create returns the granted user", func(t *testing.T) {
+		// user / service-account have no base `create`, but subresource create must still list:
+		// the base-relation guard must not block the subresource branch.
+		req := newCreateList("user:22", userGroup, userResource)
+		req.Subresource = statusSubresource
+		res, err := server.List(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.Contains(t, res.GetItems(), "1")
+	})
+
+	t.Run("listing user subresource get_permissions is empty, not error", func(t *testing.T) {
+		// user has no subresource get_permissions in the model (folder-only); the subresource
+		// branch must be skipped rather than issue an undefined can_resource_get_permissions.
+		req := &authzv1.ListRequest{
+			Namespace:   namespace,
+			Verb:        utils.VerbGetPermissions,
+			Subject:     "user:1",
+			Group:       userGroup,
+			Resource:    userResource,
+			Subresource: statusSubresource,
+		}
+		res, err := server.List(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.Empty(t, res.GetItems())
 	})
 
 	t.Run("user:17 should be able to list all dashboards in folder 4 and all subfolders", func(t *testing.T) {
