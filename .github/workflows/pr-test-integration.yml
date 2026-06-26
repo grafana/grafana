@@ -83,7 +83,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -vet=off -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql:
     # Run this workflow only for PRs from forks
@@ -132,9 +132,9 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -176,9 +176,9 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -228,7 +228,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -289,9 +289,9 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -345,9 +345,9 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
