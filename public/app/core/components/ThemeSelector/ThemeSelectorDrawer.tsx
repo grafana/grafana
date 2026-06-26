@@ -23,6 +23,7 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
       toTheme: theme.id,
       preferenceType: 'theme_drawer',
     });
+    // changeTheme persists via the legacy or k8s preferences API depending on the newPreferencesPage flag.
     changeTheme(theme.id, false);
   };
 

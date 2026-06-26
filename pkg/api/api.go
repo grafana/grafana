@@ -34,6 +34,7 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -609,6 +610,8 @@ func middlewareUserUIDResolver(userService user.Service, paramName string) web.H
 		} else {
 			if errors.Is(err, user.ErrUserNotFound) {
 				c.JsonApiErr(http.StatusNotFound, "User not found", nil)
+			} else if k8serrors.IsForbidden(err) {
+				c.JsonApiErr(http.StatusForbidden, "Access denied to user", err)
 			} else {
 				c.JsonApiErr(http.StatusInternalServerError, "Failed to resolve user", err)
 			}

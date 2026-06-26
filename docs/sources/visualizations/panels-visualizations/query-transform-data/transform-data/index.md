@@ -748,8 +748,6 @@ After choosing the field by which you want to group your data, you can add vario
 
 #### Display options
 
-> **Note:** Display options are in public preview. To try out the new editor for this transformation, enable the `groupToNestedTableV2` feature toggle. To try out nested field overrides, enable `nestedFramesFieldOverrides`.
-
 | Option                            | Description                                                                                                                |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default                                                    |

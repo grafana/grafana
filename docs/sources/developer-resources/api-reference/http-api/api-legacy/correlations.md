@@ -38,7 +38,7 @@ Creates a correlation between two data sources - the source data source identifi
 POST /api/datasources/uid/uyBf2637k/correlations HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 {
 	"targetUID": "PDDA8E780A17E7EF1",
 	"label": "My Label",
@@ -100,7 +100,7 @@ Deletes a correlation.
 DELETE /api/datasources/uid/uyBf2637k/correlations/J6gn7d31L HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -133,7 +133,7 @@ Updates a correlation.
 POST /api/datasources/uid/uyBf2637k/correlations/J6gn7d31L HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 {
 	"label": "My Label",
 	"description": "Logs to Traces",
@@ -187,7 +187,7 @@ Gets a single correlation.
 ```http
 GET /api/datasources/uid/uyBf2637k/correlations/J6gn7d31L HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -228,7 +228,7 @@ Get all correlations originating from the data source identified by the given `s
 ```http
 GET /api/datasources/uid/uyBf2637k/correlations HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**
@@ -290,7 +290,7 @@ Query parameters:
 ```http
 GET /api/datasources/correlations HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example response:**

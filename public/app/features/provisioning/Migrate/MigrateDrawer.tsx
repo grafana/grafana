@@ -1,11 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Text } from '@grafana/ui';
-import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Text } from '@grafana/ui';
+import { type Repository, type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
-import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 import { GitSyncLimitationsAlert } from '../Shared/GitSyncLimitationsAlert';
 import { useSyncJob } from '../Wizard/hooks/useSyncJob';
 import { type StepStatusInfo } from '../Wizard/types';
@@ -15,15 +14,37 @@ interface MigrateDrawerProps {
   onDismiss: () => void;
   /** Called once the migration job finishes successfully, so callers can refresh derived state. */
   onMigrated?: () => void;
+  /**
+   * Whether to scope the migration to `resources` (selective) or migrate every
+   * unmanaged resource ("migrate everything"). Tracked explicitly rather than
+   * inferred from `resources.length`, so a selection that happens to resolve to
+   * no dashboard refs is never silently treated as a migrate-everything.
+   */
+  selective: boolean;
+  /** Resource refs to migrate in selective mode. The folders that contain them come along. */
+  resources?: ResourceRef[];
+  /** Counts behind `resources`, used for the selective-mode summary copy. */
+  selection?: { folders: number; resources: number };
 }
 
 /**
- * Drawer for the "migrate everything" flow, mirroring how other provisioning
- * jobs run in a drawer. The user selects the target repository here, confirms,
- * and then the migration job's progress and result are shown in the same
- * drawer via the shared JobStatus view.
+ * Drawer for running a migration, mirroring how other provisioning jobs run in
+ * a drawer. The user selects the target repository here, confirms, and then the
+ * migration job's progress and result are shown in the same drawer via the
+ * shared JobStatus view.
+ *
+ * Two modes: "migrate everything" (no `resources`) exports every unmanaged
+ * dashboard and folder; selective (with `resources`) exports only the picked
+ * dashboards.
  */
-export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerProps) {
+export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resources, selection }: MigrateDrawerProps) {
+  const isSelective = selective;
+  // In selective mode there must be at least one dashboard ref to send.
+  // Otherwise `startJob(true, { resources: [] })` collapses to migrate-everything
+  // server-side, which would contradict the user's selection — so guard against
+  // it here in the drawer too, not just in the caller.
+  const hasResourcesToMigrate = !isSelective || (resources?.length ?? 0) > 0;
+
   const repoOptions = useMemo<Array<ComboboxOption<string>>>(
     () =>
       repos
@@ -45,11 +66,18 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
   const { job, startJob, isLoading } = useSyncJob({ repoName: selectedRepo ?? '' });
   const migratedRef = useRef(false);
 
+  // Migration writes directly to the repository's configured branch (the
+  // `write` workflow). A repository that only opens pull requests (`branch`
+  // workflow) can't run a migration, so block it and explain why.
+  const selectedRepoObj = repos.find((repo) => repo.metadata?.name === selectedRepo);
+  const canPushToConfiguredBranch = selectedRepoObj?.spec?.workflows?.includes('write') ?? false;
+  const blockedByWorkflow = Boolean(selectedRepo) && !canPushToConfiguredBranch;
+
   const startMigration = async () => {
-    if (!selectedRepo) {
+    if (!selectedRepo || !hasResourcesToMigrate) {
       return;
     }
-    await startJob(true);
+    await startJob(true, isSelective ? { resources } : undefined);
   };
 
   // Start a fresh job and let it replace the current one once created. We avoid
@@ -83,18 +111,31 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
   return (
     <Drawer title={title} onClose={onDismiss}>
       <Stack direction="column" gap={2}>
-        <Text color="secondary">
-          <Trans i18nKey="provisioning.migrate.drawer-description">
-            All dashboards and folders will be migrated into the selected repository. This is a one-time operation.
-          </Trans>
-        </Text>
+        {isSelective ? (
+          <Text color="secondary">
+            {t('provisioning.migrate.drawer-description-selective', '', {
+              count: selection?.resources ?? resources?.length ?? 0,
+              defaultValue_one:
+                '{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.',
+              defaultValue_other:
+                '{{count}} selected resources (and the folders that contain them) will be migrated into the selected repository. This is a one-time operation.',
+            })}
+          </Text>
+        ) : (
+          <Text color="secondary">
+            <Trans i18nKey="provisioning.migrate.drawer-description">
+              All resources not yet managed by Git will be migrated into the selected repository. This is a one-time
+              operation.
+            </Trans>
+          </Text>
+        )}
 
         <Field
           noMargin
           label={t('provisioning.migrate.repo-label', 'Target repository')}
           description={t(
             'provisioning.migrate.repo-description',
-            'The repository your dashboards and folders will be migrated into.'
+            'The repository your resources will be migrated into.'
           )}
         >
           <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
@@ -108,17 +149,22 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
                 onChange={(option) => setSelectedRepo(option.value)}
               />
             )}
-            <ConnectRepositoryButton items={repos} />
           </Stack>
         </Field>
 
-        <Text color="secondary" variant="bodySmall">
-          <Trans i18nKey="provisioning.migrate.selective-coming-soon">
-            Migrating only selected dashboards and folders is coming soon.
-          </Trans>
-        </Text>
+        {blockedByWorkflow && (
+          <Alert
+            severity="error"
+            title={t('provisioning.migrate.repo-no-push-title', 'This repository can’t be used for migration')}
+          >
+            <Trans i18nKey="provisioning.migrate.repo-no-push-body">
+              Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow
+              that. Choose a repository that can push to its configured branch, or update this repository’s workflow.
+            </Trans>
+          </Alert>
+        )}
 
-        <GitSyncLimitationsAlert syncTarget="instance" />
+        <GitSyncLimitationsAlert syncTarget={selectedRepoObj?.spec?.sync?.target} />
 
         <Stack direction="row" gap={2}>
           <Button variant="secondary" fill="outline" onClick={onDismiss}>
@@ -126,15 +172,26 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
           </Button>
           <Button
             variant="primary"
-            disabled={!selectedRepo || isLoading}
+            disabled={!selectedRepo || isLoading || blockedByWorkflow || !hasResourcesToMigrate}
             onClick={startMigration}
             tooltip={
               !selectedRepo
                 ? t('provisioning.migrate.migrate-button-disabled-tooltip', 'Select a target repository first')
-                : undefined
+                : blockedByWorkflow
+                  ? t(
+                      'provisioning.migrate.migrate-button-blocked-tooltip',
+                      'This repository can’t push to its configured branch'
+                    )
+                  : !hasResourcesToMigrate
+                    ? t('provisioning.migrate.migrate-button-empty-tooltip', 'Select at least one resource to migrate')
+                    : undefined
             }
           >
-            <Trans i18nKey="provisioning.migrate.migrate-button">Migrate everything</Trans>
+            {isSelective ? (
+              <Trans i18nKey="provisioning.migrate.migrate-button-selected">Migrate selected</Trans>
+            ) : (
+              <Trans i18nKey="provisioning.migrate.migrate-button">Migrate everything</Trans>
+            )}
           </Button>
         </Stack>
       </Stack>

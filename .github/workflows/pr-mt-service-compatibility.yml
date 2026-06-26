@@ -50,7 +50,6 @@ jobs:
               - '!public/openapi3.json'
               # decoupled plugins are deployed via backend
               - '!public/app/plugins/datasource/azuremonitor/**'
-              - '!public/app/plugins/datasource/cloud-monitoring/**'
               - '!public/app/plugins/datasource/grafana-postgresql-datasource/**'
               - '!public/app/plugins/datasource/grafana-pyroscope-datasource/**'
               - '!public/app/plugins/datasource/grafana-testdata-datasource/**'
@@ -60,9 +59,7 @@ jobs:
               - '!public/app/plugins/datasource/loki/**'
               - '!public/app/plugins/datasource/mssql/**'
               - '!public/app/plugins/datasource/mysql/**'
-              - '!public/app/plugins/datasource/opentsdb/**'
               - '!public/app/plugins/datasource/parca/**'
-              - '!public/app/plugins/datasource/tempo/**'
             backend_strict:
               - 'pkg/**'
               - 'go.mod'
@@ -81,7 +78,6 @@ jobs:
               - '!pkg/services/featuremgmt/toggles_gen.json'
               # decoupled plugins are deployed via backend
               - 'public/app/plugins/datasource/azuremonitor/**'
-              - 'public/app/plugins/datasource/cloud-monitoring/**'
               - 'public/app/plugins/datasource/grafana-postgresql-datasource/**'
               - 'public/app/plugins/datasource/grafana-pyroscope-datasource/**'
               - 'public/app/plugins/datasource/grafana-testdata-datasource/**'
@@ -91,9 +87,7 @@ jobs:
               - 'public/app/plugins/datasource/loki/**'
               - 'public/app/plugins/datasource/mssql/**'
               - 'public/app/plugins/datasource/mysql/**'
-              - 'public/app/plugins/datasource/opentsdb/**'
               - 'public/app/plugins/datasource/parca/**'
-              - 'public/app/plugins/datasource/tempo/**'
 
       - name: Check for exception label
         if: steps.changed-files.outputs.frontend_strict_any_changed == 'true' && steps.changed-files.outputs.backend_strict_any_changed == 'true'

@@ -10,6 +10,7 @@ import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
+import { getRepositoryRoute, resourceKindInfos } from '../utils/resourceKinds';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -27,11 +28,22 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const repoConfig = repoType ? getRepositoryTypeConfig(repoType) : undefined;
   const providerIcon = repoConfig?.icon || 'external-link-alt';
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
+  // The repository's resources are contained in a folder named after it.
+  const isFolderContained = repository.spec?.sync.target === 'folder';
 
   return (
     <Stack wrap="wrap" alignItems="center">
       {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <StatusBadge repo={repository} displayOnly />
+      {isFolderContained && (
+        <LinkButton
+          variant="secondary"
+          icon="folder-open"
+          href={getRepositoryRoute(resourceKindInfos.folder, repository)}
+        >
+          <Trans i18nKey="provisioning.repository-actions.view-folder">View folder</Trans>
+        </LinkButton>
+      )}
       {repoHref && (
         <Button variant="secondary" icon={providerIcon} onClick={() => window.open(repoHref, '_blank')}>
           <Trans i18nKey="provisioning.repository-actions.source-code">Source code</Trans>

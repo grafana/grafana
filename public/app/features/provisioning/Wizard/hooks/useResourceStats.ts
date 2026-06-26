@@ -13,6 +13,8 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
+import { getKindInfoByStat } from '../../utils/resourceKinds';
+
 export type UseResourceStatsOptions = {
   isHealthy?: boolean; // true only when healthy AND reconciled
   healthStatusNotReady?: boolean; // true when waiting for reconciliation
@@ -24,9 +26,9 @@ function getManagedCount(managed?: ManagerStats[]) {
   // Loop through each managed repository
   managed?.forEach((manager) => {
     if (manager.kind === ManagerKind.Repo) {
-      // Loop through stats inside each manager and sum up the counts
+      // Loop through stats inside each manager and sum up the counts for known kinds
       manager.stats.forEach((stat) => {
-        if (stat.group === 'folder.grafana.app' || stat.group === 'dashboard.grafana.app') {
+        if (getKindInfoByStat(stat)) {
           totalCount += stat.count;
         }
       });
@@ -37,69 +39,24 @@ function getManagedCount(managed?: ManagerStats[]) {
 }
 
 function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
-  let counts: string[] = [];
   let resourceCount = 0;
 
-  stats?.forEach((stat) => {
-    switch (stat.group) {
-      case 'folders':
-      case 'folder.grafana.app':
-        resourceCount += stat.count;
-        counts.push(
-          t('provisioning.bootstrap-step.folders-count', '', {
-            count: stat.count,
-            defaultValue_one: '{{count}} folder',
-            defaultValue_other: '{{count}} folder',
-          })
-        );
-        break;
-      case 'dashboard.grafana.app':
-        resourceCount += stat.count;
-        counts.push(
-          t('provisioning.bootstrap-step.dashboards-count', '', {
-            count: stat.count,
-            defaultValue_one: '{{count}} dashboard',
-            defaultValue_other: '{{count}} dashboard',
-          })
-        );
-        break;
+  const addStat = (stat: ResourceCount) => {
+    // Only count kinds the UI knows about (folders, dashboards, ...).
+    if (getKindInfoByStat(stat)) {
+      resourceCount += stat.count;
     }
-  });
+  };
+
+  stats?.forEach(addStat);
 
   managed?.forEach((manager) => {
     if (manager.kind !== ManagerKind.Repo) {
-      manager.stats.forEach((stat) => {
-        switch (stat.group) {
-          case 'folders':
-          case 'folder.grafana.app':
-            resourceCount += stat.count;
-            counts.push(
-              t('provisioning.bootstrap-step.folders-count', '', {
-                count: stat.count,
-                defaultValue_one: '{{count}} folder',
-                defaultValue_other: '{{count}} folder',
-              })
-            );
-            break;
-          case 'dashboard.grafana.app':
-            resourceCount += stat.count;
-            counts.push(
-              t('provisioning.bootstrap-step.dashboards-count', '', {
-                count: stat.count,
-                defaultValue_one: '{{count}} dashboard',
-                defaultValue_other: '{{count}} dashboard',
-              })
-            );
-            break;
-        }
-      });
+      manager.stats.forEach(addStat);
     }
   });
 
-  return {
-    counts,
-    resourceCount,
-  };
+  return resourceCount;
 }
 
 /**
@@ -115,12 +72,11 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
     return isSupportedFile(path);
   }).length;
 
-  const { counts, resourceCount } = getResourceCount(stats?.instance);
+  const resourceCount = getResourceCount(stats?.instance);
 
   return {
     fileCount,
     resourceCount,
-    resourceCountString: counts.join(',\n'),
   };
 }
 
@@ -145,7 +101,7 @@ export function useResourceStats(
 
   const isLoading = resourceStatsQuery.isFetching || filesQuery.isFetching || Boolean(healthStatusNotReady);
 
-  const { resourceCount, resourceCountString, fileCount } = useMemo(
+  const { resourceCount, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),
     [filesQuery.data, resourceStatsQuery.data]
   );
@@ -155,8 +111,7 @@ export function useResourceStats(
       // managed does not exist in response when first time connecting to a repo
       managedCount: getManagedCount(resourceStatsQuery.data?.managed),
       // "unmanaged" means unmanaged by git sync. it may still be managed by other means, like terraform, plugins, file provisioning, etc.
-      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed)
-        .resourceCount,
+      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed),
     };
   }, [resourceStatsQuery.data]);
 
@@ -169,12 +124,18 @@ export function useResourceStats(
 
   // Format display strings
   const resourceCountDisplay =
-    resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty');
+    resourceCount > 0
+      ? t('provisioning.bootstrap-step.resources-count', '', {
+          count: resourceCount,
+          defaultValue_one: '{{count}} resource',
+          defaultValue_other: '{{count}} resources',
+        })
+      : t('provisioning.bootstrap-step.empty', 'Empty');
   const fileCountDisplay =
     fileCount > 0
       ? t('provisioning.bootstrap-step.files-count', '', {
           count: fileCount,
-          defaultValue_one: '{{count}} files',
+          defaultValue_one: '{{count}} file',
           defaultValue_other: '{{count}} files',
         })
       : t('provisioning.bootstrap-step.empty', 'Empty');

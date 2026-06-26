@@ -4,8 +4,8 @@ go 1.26.4
 
 require (
 	github.com/go-jose/go-jose/v4 v4.1.4
-	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v3 v3.0.4
 	k8s.io/apimachinery v0.36.1
@@ -55,8 +55,8 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/grpc v1.81.1 // indirect
