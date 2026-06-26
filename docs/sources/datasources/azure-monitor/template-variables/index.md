@@ -49,7 +49,7 @@ To create a template variable for Azure Monitor:
 1. Select **Query** as the variable type.
 1. Enter a **Name** for your variable (e.g., `subscription`, `resourceGroup`, `resource`).
 1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
-1. Click **Open query editor** to open the **Annotation Query** dialog box.
+1. Click **Open variable editor** to open the **Query Variable** dialog box.
 1. In the **Data source** drop-down list, select your Azure Monitor data source.
 1. In the **Query Type** drop-down list, select the appropriate query type (see [Available query types](#available-query-types)).
 1. Configure any additional fields required by the selected query type.
