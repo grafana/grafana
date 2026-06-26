@@ -340,6 +340,9 @@ func interpolateValue(val string) (string, string, error) {
 	return strings.Join(interpolated, "$"), val, nil
 }
 
+// interpolateValueWithBracedVars expands only braced setting expanders, such as
+// ${VAR} and $__env{VAR}. Escaped forms like $${VAR} are preserved as literal
+// ${VAR}, and bare $NAME values are left untouched.
 func interpolateValueWithBracedVars(val string) (string, error) {
 	matches := setting.GetExpanderRegex().FindAllStringIndex(val, -1)
 	if len(matches) == 0 {
@@ -350,6 +353,8 @@ func interpolateValueWithBracedVars(val string) (string, error) {
 	start := 0
 	for _, match := range matches {
 		if match[0] > 0 && val[match[0]-1] == '$' {
+			// Treat the preceding "$$" as an escape for the whole braced
+			// expander, so "$$${VAR}" is preserved as "${VAR}".
 			interpolated.WriteString(val[start : match[0]-1])
 			interpolated.WriteString(val[match[0]:match[1]])
 			start = match[1]
