@@ -53,10 +53,96 @@ jobs:
         with:
           self: .github/workflows/pr-test-integration.yml
 
+  #### Compile (once) — populates a shared Go build cache that the sharded test
+  #### jobs restore, so they skip recompiling the integration test suite.
+  #### Only one variant runs per event: OSS for fork PRs, Enterprise otherwise.
+  compile-oss:
+    # Run this workflow only for PRs from forks
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    name: Compile OSS integration tests
+    runs-on: ubuntu-x64-2xlarge
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          # We manage GOCACHE ourselves below so it can be shared with the shards.
+          cache-build: 'false'
+      - name: Resolve GOCACHE path
+        run: echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Restore/Save Go build cache
+        uses: actions/cache@v5 # zizmor: ignore[cache-poisoning] key is scoped to the immutable commit SHA
+        with:
+          path: ${{ env.GOCACHE }}
+          key: gocache-int-oss-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            gocache-int-oss-${{ runner.os }}-
+      - name: Compile all integration test binaries
+        env:
+          CGO_ENABLED: 0
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration)"
+          go test -run='^$' "${PACKAGES[@]}"
+
+  compile-enterprise:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    name: Compile Enterprise integration tests
+    runs-on: ubuntu-x64-2xlarge
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-ci-bot
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+      # Enterprise must be cloned before setup-go so that enterprise
+      # modules are visible when the Go cache key is computed.
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          # We manage GOCACHE ourselves below so it can be shared with the shards.
+          cache-build: 'false'
+      - name: Resolve GOCACHE path
+        run: echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Restore/Save Go build cache
+        uses: actions/cache@v5 # zizmor: ignore[cache-poisoning] key is scoped to the immutable commit SHA
+        with:
+          path: ${{ env.GOCACHE }}
+          key: gocache-int-enterprise-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            gocache-int-enterprise-${{ runner.os }}-
+      - name: Compile all integration test binaries
+        env:
+          CGO_ENABLED: 0
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration)"
+          go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+
   #### OSS
   sqlite:
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    needs: compile-oss
     strategy:
       matrix:
         # We don't need more than this since it has to wait for the other tests.
@@ -76,6 +162,16 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          # GOCACHE is restored from the shared cache populated by compile-oss.
+          cache-build: 'false'
+      - name: Resolve GOCACHE path
+        run: echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Restore Go build cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.GOCACHE }}
+          key: gocache-int-oss-${{ runner.os }}-${{ github.sha }}
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -88,6 +184,7 @@ jobs:
   mysql:
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    needs: compile-oss
     strategy:
       matrix:
         shard: [
@@ -123,6 +220,16 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          # GOCACHE is restored from the shared cache populated by compile-oss.
+          cache-build: 'false'
+      - name: Resolve GOCACHE path
+        run: echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Restore Go build cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.GOCACHE }}
+          key: gocache-int-oss-${{ runner.os }}-${{ github.sha }}
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -131,14 +238,12 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
-          echo "Running tests now"
           CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres:
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+    needs: compile-oss
     strategy:
       matrix:
         shard: [
@@ -167,6 +272,16 @@ jobs:
           make devenv sources=postgres_tests
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          # GOCACHE is restored from the shared cache populated by compile-oss.
+          cache-build: 'false'
+      - name: Resolve GOCACHE path
+        run: echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Restore Go build cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.GOCACHE }}
+          key: gocache-int-oss-${{ runner.os }}-${{ github.sha }}
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
@@ -175,9 +290,6 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
-          echo "Running tests now"
           CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
@@ -188,6 +300,7 @@ jobs:
   sqlite-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    needs: compile-enterprise
     strategy:
       matrix:
         shard: [
@@ -221,6 +334,16 @@ jobs:
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          # GOCACHE is restored from the shared cache populated by compile-enterprise.
+          cache-build: 'false'
+      - name: Resolve GOCACHE path
+        run: echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Restore Go build cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.GOCACHE }}
+          key: gocache-int-enterprise-${{ runner.os }}-${{ github.sha }}
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -233,6 +356,7 @@ jobs:
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    needs: compile-enterprise
     strategy:
       matrix:
         shard: [
@@ -280,6 +404,16 @@ jobs:
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          # GOCACHE is restored from the shared cache populated by compile-enterprise.
+          cache-build: 'false'
+      - name: Resolve GOCACHE path
+        run: echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Restore Go build cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.GOCACHE }}
+          key: gocache-int-enterprise-${{ runner.os }}-${{ github.sha }}
       - name: Setup MySQL devenv
         run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
       - name: Run tests
@@ -288,14 +422,12 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
-          echo "Running tests now"
           CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    needs: compile-enterprise
     strategy:
       matrix:
         shard: [
@@ -336,6 +468,16 @@ jobs:
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          # GOCACHE is restored from the shared cache populated by compile-enterprise.
+          cache-build: 'false'
+      - name: Resolve GOCACHE path
+        run: echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+      - name: Restore Go build cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.GOCACHE }}
+          key: gocache-int-enterprise-${{ runner.os }}-${{ github.sha }}
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
@@ -344,9 +486,6 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
-          echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
-          echo "Running tests now"
           CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
