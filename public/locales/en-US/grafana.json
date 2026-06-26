@@ -3115,6 +3115,17 @@
       "text-provisioned": "Provisioned",
       "ungrouped": "Ungrouped"
     },
+    "rules-view-mode-selector": {
+      "legacy-view-options": {
+        "grouped": "Grouped",
+        "list": "List",
+        "state": "State"
+      },
+      "view-options": {
+        "grouped": "Grouped",
+        "list": "List"
+      }
+    },
     "saved-searches": {
       "actions-aria-label": "Actions",
       "button-label": "Saved searches",
