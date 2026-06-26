@@ -3030,7 +3030,7 @@ __metadata:
     react: "npm:18.3.1"
     react-calendar: "npm:^6.0.0"
     react-colorful: "npm:^5.6.1"
-    react-custom-scrollbars-2: "npm:4.5.0"
+    react-custom-scrollbars-2: "npm:^4.5.0"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.8"
     react-element-to-jsx-string: "npm:^17.0.1"
@@ -27305,7 +27305,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-custom-scrollbars-2@npm:4.5.0":
+"react-custom-scrollbars-2@npm:^4.5.0":
   version: 4.5.0
   resolution: "react-custom-scrollbars-2@npm:4.5.0"
   dependencies:
