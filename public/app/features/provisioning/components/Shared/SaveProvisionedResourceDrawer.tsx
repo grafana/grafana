@@ -24,7 +24,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
-import { getKindInfoByGroupKind, getResourceKindLabel, type ResourceKindInfo } from '../../utils/resourceKinds';
+import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
@@ -320,7 +320,7 @@ function ResourceDrawerContent({
 
   // Title combines a shared translated template with the kind's translated noun (interpolated, so
   // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
-  const resourceLabel = getResourceKindLabel(kind.key);
+  const resourceLabel = kind.getLabel();
   const drawerTitle = isDelete
     ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
         resource: resourceLabel,
