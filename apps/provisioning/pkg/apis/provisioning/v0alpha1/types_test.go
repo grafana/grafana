@@ -137,3 +137,95 @@ func TestRepositoryType_IsGit(t *testing.T) {
 		})
 	}
 }
+
+func TestRepository_SetBranch(t *testing.T) {
+	t.Run("writes the provider-specific spec field and round-trips through Branch()", func(t *testing.T) {
+		tests := []struct {
+			name string
+			repo v0alpha1.Repository
+			// field returns the branch from the provider config the test set up, so we can assert
+			// SetBranch wrote the correct field (not just that Branch() happens to agree).
+			field func(r *v0alpha1.Repository) string
+		}{
+			{
+				name: "github",
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
+					Type:   v0alpha1.GitHubRepositoryType,
+					GitHub: &v0alpha1.GitHubRepositoryConfig{},
+				}},
+				field: func(r *v0alpha1.Repository) string { return r.Spec.GitHub.Branch },
+			},
+			{
+				name: "githubEnterprise",
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
+					Type:             v0alpha1.GitHubEnterpriseRepositoryType,
+					GitHubEnterprise: &v0alpha1.GitHubEnterpriseRepositoryConfig{},
+				}},
+				field: func(r *v0alpha1.Repository) string { return r.Spec.GitHubEnterprise.Branch },
+			},
+			{
+				name: "git",
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitRepositoryType,
+					Git:  &v0alpha1.GitRepositoryConfig{},
+				}},
+				field: func(r *v0alpha1.Repository) string { return r.Spec.Git.Branch },
+			},
+			{
+				name: "gitlab",
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
+					Type:   v0alpha1.GitLabRepositoryType,
+					GitLab: &v0alpha1.GitLabRepositoryConfig{},
+				}},
+				field: func(r *v0alpha1.Repository) string { return r.Spec.GitLab.Branch },
+			},
+			{
+				name: "bitbucket",
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{
+					Type:      v0alpha1.BitbucketRepositoryType,
+					Bitbucket: &v0alpha1.BitbucketRepositoryConfig{},
+				}},
+				field: func(r *v0alpha1.Repository) string { return r.Spec.Bitbucket.Branch },
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				repo := tt.repo
+				repo.SetBranch("feature")
+				assert.Equal(t, "feature", tt.field(&repo), "should write the provider-specific spec field")
+				assert.Equal(t, "feature", repo.Branch(), "Branch() should reflect the value written by SetBranch")
+			})
+		}
+	})
+
+	t.Run("is a no-op and does not panic when the provider config is absent", func(t *testing.T) {
+		// Regression: SetBranch previously assumed Spec.GitHub and panicked for types whose config
+		// lives elsewhere (e.g. GitHub Enterprise) or is nil.
+		tests := []struct {
+			name string
+			repo v0alpha1.Repository
+		}{
+			{
+				name: "github type with nil GitHub config",
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.GitHubRepositoryType}},
+			},
+			{
+				name: "githubEnterprise type with nil GitHubEnterprise config",
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.GitHubEnterpriseRepositoryType}},
+			},
+			{
+				name: "local (non-git) type",
+				repo: v0alpha1.Repository{Spec: v0alpha1.RepositorySpec{Type: v0alpha1.LocalRepositoryType}},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				repo := tt.repo
+				assert.NotPanics(t, func() { repo.SetBranch("feature") })
+				assert.Equal(t, "", repo.Branch())
+			})
+		}
+	})
+}

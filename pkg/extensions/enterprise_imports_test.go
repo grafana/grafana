@@ -7,6 +7,7 @@ package extensions
 
 import (
 	_ "github.com/alicebob/miniredis/v2"
+	_ "github.com/google/go-github/v82/github"
 	_ "github.com/grafana/authlib/authz/proto/v1"
 	_ "github.com/grafana/dataplane/examples"
 	_ "github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
@@ -40,6 +41,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/team/teamtest"
 	_ "github.com/grafana/grafana/pkg/services/user/usertest"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/lease"
+	_ "github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	_ "github.com/grafana/grafana/pkg/storage/unified/testing"
 	_ "github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -47,6 +49,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tests/testsuite"
 	_ "github.com/grafana/grafana/pkg/util/testutil"
 	_ "github.com/grafana/grafana/pkg/web/webtest"
+	_ "github.com/migueleliasweb/go-github-mock/src/mock"
 	_ "github.com/open-feature/go-sdk/openfeature/testing"
 	_ "github.com/openfga/openfga/pkg/server/test"
 	_ "github.com/openfga/openfga/pkg/storage/test"

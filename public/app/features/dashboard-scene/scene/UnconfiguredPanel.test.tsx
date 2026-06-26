@@ -132,14 +132,12 @@ beforeEach(() => {
     subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
   });
 
-  config.featureToggles.newUnconfiguredPanel = true;
   contextSrv.isSignedIn = true;
 });
 
 afterEach(() => {
   deactivateScene?.();
   deactivateScene = undefined;
-  config.featureToggles.newUnconfiguredPanel = false;
   contextSrv.isSignedIn = false;
 });
 

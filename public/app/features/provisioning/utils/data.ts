@@ -109,7 +109,9 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     spec.pullRequest = pullRequest;
   }
 
-  if (data.webhook?.baseUrl) {
+  if (data.webhook?.disabled) {
+    spec.webhook = { disabled: true };
+  } else if (data.webhook?.baseUrl) {
     spec.webhook = { baseUrl: data.webhook.baseUrl };
   }
 

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { capitalize } from 'lodash';
 import { type MouseEvent, useCallback, useMemo } from 'react';
 
@@ -50,7 +49,6 @@ const FILTER_LEVELS: LogLevel[] = [
 ];
 
 export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisationType = 'logs' }: Props) => {
-  const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
   const {
     app,
     allowDownload,
@@ -62,20 +60,15 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     forceEscape,
     hasUnescapedContent,
     logOptionsStorageKey,
-    prettifyJSON,
     setControlsExpanded,
     setDedupStrategy,
     setFilterLevels,
     setFontSize,
     setForceEscape,
-    setPrettifyJSON,
-    setShowTime,
     setShowUniqueLabels,
     setSortOrder,
     setSyntaxHighlighting,
     setUnwrappedColumns,
-    setWrapLogMessage,
-    showTime,
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
@@ -139,13 +132,6 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     setFontSize(newSize);
   }, [fontSize, setFontSize]);
 
-  const onShowTimestampsClick = useCallback(() => {
-    reportInteraction('logs_log_list_controls_show_time_clicked', {
-      show_time: !showTime,
-    });
-    setShowTime(!showTime);
-  }, [setShowTime, showTime]);
-
   const onShowUniqueLabelsClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_show_unique_labels_clicked', {
       show_unique_labels: showUniqueLabels,
@@ -159,13 +145,6 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     });
     setSortOrder(sortOrder === LogsSortOrder.Ascending ? LogsSortOrder.Descending : LogsSortOrder.Ascending);
   }, [setSortOrder, sortOrder]);
-
-  const onSetPrettifyJSONClick = useCallback(() => {
-    reportInteraction('logs_log_list_controls_prettify_json_clicked', {
-      state: !prettifyJSON,
-    });
-    setPrettifyJSON(!prettifyJSON);
-  }, [prettifyJSON, setPrettifyJSON]);
 
   const onSyntaxHightlightingClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_syntax_clicked', {
@@ -183,17 +162,6 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
       setUnwrappedColumns(!unwrappedColumns);
     },
     [setUnwrappedColumns, unwrappedColumns]
-  );
-
-  const onWrapLogMessageClick = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      reportInteraction('logs_log_list_controls_wrap_clicked', {
-        state: !wrapLogMessage,
-      });
-      setWrapLogMessage(!wrapLogMessage);
-    },
-    [setWrapLogMessage, wrapLogMessage]
   );
 
   const deduplicationMenu = useMemo(
@@ -330,25 +298,23 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
           {visualisationType === 'logs' && (
             <>
               <div className={styles.divider} />
-              {newLogsPanelEnabled && (
-                <LogListControlsOption
-                  expanded={controlsExpanded}
-                  name={'search'}
-                  className={searchVisible ? styles.controlButtonActive : styles.controlButton}
-                  onClick={searchVisible ? hideSearch : showSearch}
-                  label={
-                    searchVisible
-                      ? t('logs.logs-controls.labels.hide-search', 'Close search')
-                      : t('logs.logs-controls.labels.show-search', 'Search logs')
-                  }
-                  tooltip={
-                    searchVisible
-                      ? t('logs.logs-controls.hide-search', 'Close search')
-                      : t('logs.logs-controls.show-search', 'Search in logs result')
-                  }
-                  size="lg"
-                />
-              )}
+              <LogListControlsOption
+                expanded={controlsExpanded}
+                name={'search'}
+                className={searchVisible ? styles.controlButtonActive : styles.controlButton}
+                onClick={searchVisible ? hideSearch : showSearch}
+                label={
+                  searchVisible
+                    ? t('logs.logs-controls.labels.hide-search', 'Close search')
+                    : t('logs.logs-controls.labels.show-search', 'Search logs')
+                }
+                tooltip={
+                  searchVisible
+                    ? t('logs.logs-controls.hide-search', 'Close search')
+                    : t('logs.logs-controls.show-search', 'Search in logs result')
+                }
+                size="lg"
+              />
               <Dropdown overlay={deduplicationMenu} placement="auto-end">
                 <LogListControlsOption
                   expanded={controlsExpanded}
@@ -373,23 +339,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                 />
               </Dropdown>
               <div className={styles.divider} />
-              {newLogsPanelEnabled ? (
-                <TimestampResolutionButton expanded={controlsExpanded} />
-              ) : (
-                <LogListControlsOption
-                  expanded={controlsExpanded}
-                  name="clock-nine"
-                  aria-pressed={showTime}
-                  className={showTime ? styles.controlButtonActive : styles.controlButton}
-                  onClick={onShowTimestampsClick}
-                  tooltip={
-                    showTime
-                      ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-                      : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-                  }
-                  size="lg"
-                />
-              )}
+              <TimestampResolutionButton expanded={controlsExpanded} />
               {/* When this is used in a Plugin context, app is unknown */}
               {showUniqueLabels !== undefined && app !== CoreApp.Unknown && (
                 <LogListControlsOption
@@ -406,66 +356,33 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               )}
-              {newLogsPanelEnabled ? (
-                <WrapLogMessageButton expanded={controlsExpanded} />
-              ) : (
-                <LogListControlsOption
-                  expanded={controlsExpanded}
-                  name="wrap-text"
-                  className={wrapLogMessage ? styles.controlButtonActive : styles.controlButton}
-                  aria-pressed={wrapLogMessage}
-                  onClick={onWrapLogMessageClick}
-                  tooltip={
-                    wrapLogMessage
-                      ? t('logs.logs-controls.unwrap-lines', 'Unwrap lines')
-                      : t('logs.logs-controls.wrap-lines', 'Wrap lines')
-                  }
-                  size="lg"
-                />
-              )}
-              {newLogsPanelEnabled && (
-                <LogListControlsOption
-                  expanded={controlsExpanded}
-                  disabled={wrapLogMessage}
-                  name="columns"
-                  aria-pressed={unwrappedColumns}
-                  className={unwrappedColumns ? styles.controlButtonActive : styles.controlButton}
-                  onClick={onSetUnwrappedColumnsClick}
-                  label={
-                    wrapLogMessage
-                      ? t('logs.logs-controls.unwrapped-columns.disabled-label', 'Columns not supported')
-                      : unwrappedColumns
-                        ? t('logs.logs-controls.unwrapped-columns.disabled-text', 'Columns enabled')
-                        : t('logs.logs-controls.unwrapped-columns.enabled-text', 'Columns disabled')
-                  }
-                  tooltip={
-                    wrapLogMessage
-                      ? t(
-                          'logs.logs-controls.unwrapped-columns.not-supported',
-                          'Columns are not supported with line wrapping enabled'
-                        )
-                      : unwrappedColumns
-                        ? t('logs.logs-controls.unwrapped-columns.disable', 'Disable columns')
-                        : t('logs.logs-controls.unwrapped-columns.enable', 'Enable columns')
-                  }
-                  size="lg"
-                />
-              )}
-              {prettifyJSON !== undefined && !newLogsPanelEnabled && (
-                <LogListControlsOption
-                  expanded={controlsExpanded}
-                  name="brackets-curly"
-                  aria-pressed={prettifyJSON}
-                  className={prettifyJSON ? styles.controlButtonActive : styles.controlButton}
-                  onClick={onSetPrettifyJSONClick}
-                  tooltip={
-                    prettifyJSON
-                      ? t('logs.logs-controls.disable-prettify-json', 'Collapse JSON logs')
-                      : t('logs.logs-controls.prettify-json', 'Expand JSON logs')
-                  }
-                  size="lg"
-                />
-              )}
+              <WrapLogMessageButton expanded={controlsExpanded} />
+              <LogListControlsOption
+                expanded={controlsExpanded}
+                disabled={wrapLogMessage}
+                name="columns"
+                aria-pressed={unwrappedColumns}
+                className={unwrappedColumns ? styles.controlButtonActive : styles.controlButton}
+                onClick={onSetUnwrappedColumnsClick}
+                label={
+                  wrapLogMessage
+                    ? t('logs.logs-controls.unwrapped-columns.disabled-label', 'Columns not supported')
+                    : unwrappedColumns
+                      ? t('logs.logs-controls.unwrapped-columns.disabled-text', 'Columns enabled')
+                      : t('logs.logs-controls.unwrapped-columns.enabled-text', 'Columns disabled')
+                }
+                tooltip={
+                  wrapLogMessage
+                    ? t(
+                        'logs.logs-controls.unwrapped-columns.not-supported',
+                        'Columns are not supported with line wrapping enabled'
+                      )
+                    : unwrappedColumns
+                      ? t('logs.logs-controls.unwrapped-columns.disable', 'Disable columns')
+                      : t('logs.logs-controls.unwrapped-columns.enable', 'Enable columns')
+                }
+                size="lg"
+              />
               {syntaxHighlighting !== undefined && (
                 <LogListControlsOption
                   expanded={controlsExpanded}
@@ -486,26 +403,24 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               )}
-              {newLogsPanelEnabled && (
-                <LogListControlsOption
-                  expanded={controlsExpanded}
-                  name="text-fields"
-                  className={fontSize === 'small' ? styles.controlButtonActive : styles.controlButton}
-                  aria-pressed={Boolean(fontSize)}
-                  onClick={onFontSizeClick}
-                  label={
-                    fontSize === 'default'
-                      ? t('logs.logs-controls.labels.font-large', 'Large font')
-                      : t('logs.logs-controls.labels.font-small', 'Small font')
-                  }
-                  tooltip={
-                    fontSize === 'default'
-                      ? t('logs.logs-controls.font-small', 'Set small font')
-                      : t('logs.logs-controls.font-large', 'Set large font')
-                  }
-                  size="lg"
-                />
-              )}
+              <LogListControlsOption
+                expanded={controlsExpanded}
+                name="text-fields"
+                className={fontSize === 'small' ? styles.controlButtonActive : styles.controlButton}
+                aria-pressed={Boolean(fontSize)}
+                onClick={onFontSizeClick}
+                label={
+                  fontSize === 'default'
+                    ? t('logs.logs-controls.labels.font-large', 'Large font')
+                    : t('logs.logs-controls.labels.font-small', 'Small font')
+                }
+                tooltip={
+                  fontSize === 'default'
+                    ? t('logs.logs-controls.font-small', 'Set small font')
+                    : t('logs.logs-controls.font-large', 'Set large font')
+                }
+                size="lg"
+              />
               {hasUnescapedContent && (
                 <LogListControlsOption
                   expanded={controlsExpanded}
@@ -549,25 +464,23 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
         </>
       ) : (
         <>
-          {newLogsPanelEnabled && (
-            <LogListControlsOption
-              expanded={controlsExpanded}
-              name={'search'}
-              className={searchVisible ? styles.controlButtonActive : styles.controlButton}
-              onClick={searchVisible ? hideSearch : showSearch}
-              label={
-                searchVisible
-                  ? t('logs.logs-controls.labels.hide-search', 'Close search')
-                  : t('logs.logs-controls.labels.show-search', 'Search logs')
-              }
-              tooltip={
-                searchVisible
-                  ? t('logs.logs-controls.hide-search', 'Close search')
-                  : t('logs.logs-controls.show-search', 'Search in logs result')
-              }
-              size="lg"
-            />
-          )}
+          <LogListControlsOption
+            expanded={controlsExpanded}
+            name={'search'}
+            className={searchVisible ? styles.controlButtonActive : styles.controlButton}
+            onClick={searchVisible ? hideSearch : showSearch}
+            label={
+              searchVisible
+                ? t('logs.logs-controls.labels.hide-search', 'Close search')
+                : t('logs.logs-controls.labels.show-search', 'Search logs')
+            }
+            tooltip={
+              searchVisible
+                ? t('logs.logs-controls.hide-search', 'Close search')
+                : t('logs.logs-controls.show-search', 'Search in logs result')
+            }
+            size="lg"
+          />
           <Dropdown overlay={filterLevelsMenu} placement="auto-end">
             <LogListControlsOption
               expanded={controlsExpanded}
