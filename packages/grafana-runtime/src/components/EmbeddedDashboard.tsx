@@ -1,5 +1,6 @@
-import type { TimeRange } from '@grafana/data';
 import type * as React from 'react';
+
+import type { TimeRange } from '@grafana/data';
 
 export interface EmbeddedDashboardProps {
   uid?: string;
