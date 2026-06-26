@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/instancechecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -38,6 +39,7 @@ type Service struct {
 	ssoSettingsSvc        ssosettings.Service
 	GrafanaVersion        string
 	cfg                   *setting.Cfg
+	kvStore               kvstore.KVStore
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
@@ -45,7 +47,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
 	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service, cfg *setting.Cfg,
-	pluginErrorResolver plugins.ErrorResolver,
+	pluginErrorResolver plugins.ErrorResolver, kvStore kvstore.KVStore,
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
@@ -61,6 +63,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		ssoSettingsSvc:        ssoSettingsSvc,
 		GrafanaVersion:        cfg.BuildVersion,
 		cfg:                   cfg,
+		kvStore:               kvStore,
 	}
 }
 
@@ -82,6 +85,7 @@ func (s *Service) Checks() []checks.Check {
 			s.updateChecker,
 			s.pluginErrorResolver,
 			s.GrafanaVersion,
+			s.kvStore,
 		),
 		authchecks.New(s.ssoSettingsSvc),
 		configchecks.New(s.cfg),

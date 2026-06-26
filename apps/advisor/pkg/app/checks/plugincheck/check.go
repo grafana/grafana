@@ -5,6 +5,7 @@ import (
 	sysruntime "runtime"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -21,6 +22,7 @@ func New(
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginErrorResolver plugins.ErrorResolver,
 	grafanaVersion string,
+	kvStore kvstore.KVStore,
 ) checks.Check {
 	return &check{
 		PluginStore:         pluginStore,
@@ -28,6 +30,7 @@ func New(
 		GrafanaVersion:      grafanaVersion,
 		updateChecker:       updateChecker,
 		pluginErrorResolver: pluginErrorResolver,
+		kvStore:             kvStore,
 	}
 }
 
@@ -38,6 +41,7 @@ type check struct {
 	pluginErrorResolver plugins.ErrorResolver
 	GrafanaVersion      string
 	pluginIndex         map[string]repo.PluginInfo
+	kvStore             kvstore.KVStore
 }
 
 func (c *check) ID() string {
@@ -133,5 +137,6 @@ func (c *check) Steps() []checks.Step {
 			pluginIndex: c.pluginIndex,
 		},
 		&twinmakerSceneViewerStep{},
+		newScorecardStep(c.kvStore),
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
@@ -197,7 +198,7 @@ func TestRun(t *testing.T) {
 			provisionedPlugins := &mockProvisionedPlugins{provisioned: tt.pluginProvisioned}
 			updateChecker := pluginchecker.ProvideService(managedPlugins, provisionedPlugins, pluginPreinstall)
 			pluginErrorResolver := &mockPluginErrorResolver{pluginErrors: tt.pluginErrors}
-			check := New(pluginStore, pluginRepo, updateChecker, pluginErrorResolver, "12.0.0")
+			check := New(pluginStore, pluginRepo, updateChecker, pluginErrorResolver, "12.0.0", &kvstore.FakeKVStore{})
 
 			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
