@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { type IconName } from '@grafana/data';
 
 /** Where a catalog entry originates: core built-in, core-authored curated (plugin-gated), or open plugin extension. */
-export type WidgetSource = 'core' | 'curated' | 'plugin' | 'panel';
+type WidgetSource = 'core' | 'curated' | 'plugin' | 'panel';
 
 /** A widget that can be placed on the grid. Already-translated, fully resolved (availability decided upstream). */
 export interface HomeWidgetCatalogEntry {

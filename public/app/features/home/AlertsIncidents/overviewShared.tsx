@@ -19,7 +19,7 @@ import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 // Datasources carry expr/instant/range on each target; model them on top of DataQuery so the
 // request is fully typed without importing a plugin's query type.
-export interface InstantQueryTarget extends DataQuery {
+interface InstantQueryTarget extends DataQuery {
   expr: string;
   instant: boolean;
   range: boolean;

@@ -29,7 +29,7 @@ const OVERVIEW_QUERIES: Record<string, string> = {
   notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status="false"})',
 };
 
-export type KubernetesHealthSeverity = 'healthy' | 'warning' | 'critical';
+type KubernetesHealthSeverity = 'healthy' | 'warning' | 'critical';
 
 export interface KubernetesHealth {
   // Total problems = unhealthy pods + not-ready nodes + recent container restarts, over the available signals.

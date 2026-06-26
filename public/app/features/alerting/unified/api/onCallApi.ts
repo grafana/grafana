@@ -41,7 +41,7 @@ export function getProxyApiUrl(path: string, pluginId: string) {
   return `/api/plugins/${pluginId}/resources${path}`;
 }
 
-export interface OnCallNowUser {
+interface OnCallNowUser {
   pk: string;
   username: string;
 }

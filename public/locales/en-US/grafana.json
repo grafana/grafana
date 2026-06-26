@@ -10700,7 +10700,6 @@
       "declare": "Declare an incident",
       "empty": "No active incidents.",
       "error-title": "Could not load active incidents",
-      "retry": "Retry",
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
@@ -10764,17 +10763,17 @@
       "loading": "Loading recently viewed dashboards..."
     },
     "slos-card": {
-      "all-ok": "All SLOs healthy",
-      "at-risk-badge_one": "{{count}} at risk",
-      "at-risk-badge_other": "{{count}} at risk",
-      "at-risk-row": "{{atRisk}} of {{total}} SLOs at risk",
-      "budget": "Error budget {{pct}}% remaining",
+      "above-target": "{{value}} above target (1 day)",
+      "below-target-badge_one": "{{count}} below target",
+      "below-target-badge_other": "{{count}} below target",
+      "defined": "SLOs defined",
       "empty": "No SLOs defined.",
       "error-title": "Could not load SLOs",
       "healthy": "Healthy",
       "open": "Open SLOs",
-      "title": "SLOs",
-      "window": "30-day availability"
+      "recording": "{{value}} SLOs recording",
+      "sli-series": "{{value}} recorded SLI series",
+      "title": "SLOs"
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
