@@ -1,0 +1,7 @@
+  eslint-sidecar:
+    build:
+      context: ./docker/blocks/eslint_sidecar
+    ports:
+      - "8089:8080"
+    environment:
+      GITHUB_AUTH_TOKEN: ${GITHUB_AUTH_TOKEN}
