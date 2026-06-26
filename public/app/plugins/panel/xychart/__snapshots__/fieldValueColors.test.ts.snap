@@ -208,6 +208,21 @@ exports[`fieldValueColors (golden baseline) continuous gradient (needs min/max) 
 }
 `;
 
+exports[`fieldValueColors (golden baseline) mapping layered over multi-step thresholds 1`] = `
+{
+  "colors": [
+    "#b877d9ff",
+    "#73bf69ff",
+    "#f2495cff",
+  ],
+  "palette": [
+    "#b877d9ff",
+    "#73bf69ff",
+    "#f2495cff",
+  ],
+}
+`;
+
 exports[`fieldValueColors (golden baseline) no color branch taken yields the empty defaults (getAll -> [], getOne -> -1) 1`] = `
 {
   "colors": [],
@@ -222,6 +237,77 @@ exports[`fieldValueColors (golden baseline) single-step absolute thresholds (eve
     "#73bf69ff",
   ],
   "palette": [
+    "#73bf69ff",
+  ],
+}
+`;
+
+exports[`fieldValueColors (golden baseline) unmatched mapping falls through to the threshold color 1`] = `
+{
+  "colors": [
+    "#73bf69ff",
+    "#73bf69ff",
+  ],
+  "palette": [
+    "#73bf69ff",
+  ],
+}
+`;
+
+exports[`fieldValueColors (golden baseline) value mapping layered over a continuous gradient 1`] = `
+{
+  "colors": [
+    "#73bf69ff",
+    "#b877d9ff",
+    "#f2495cff",
+  ],
+  "palette": [
+    "#b877d9ff",
+    "#73bf69ff",
+    "#7cc165ff",
+    "#84c361ff",
+    "#8dc55dff",
+    "#95c659ff",
+    "#9ec855ff",
+    "#a6c952ff",
+    "#aeca4eff",
+    "#b5cb4bff",
+    "#bdcb48ff",
+    "#c4cb45ff",
+    "#caca43ff",
+    "#d0c941ff",
+    "#d6c73fff",
+    "#dbc53eff",
+    "#e0c23dff",
+    "#e4be3dff",
+    "#e8b93dff",
+    "#ebb43dff",
+    "#edae3eff",
+    "#efa83fff",
+    "#f1a141ff",
+    "#f29a43ff",
+    "#f39245ff",
+    "#f38a47ff",
+    "#f4814aff",
+    "#f4784dff",
+    "#f46f4fff",
+    "#f36652ff",
+    "#f35c56ff",
+    "#f35359ff",
+    "#f2495cff",
+  ],
+}
+`;
+
+exports[`fieldValueColors (golden baseline) value mapping layered over thresholds (matched -> mapping, else threshold) 1`] = `
+{
+  "colors": [
+    "#73bf69ff",
+    "#b877d9ff",
+    "#73bf69ff",
+  ],
+  "palette": [
+    "#b877d9ff",
     "#73bf69ff",
   ],
 }
