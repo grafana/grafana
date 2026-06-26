@@ -86,18 +86,10 @@ func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*use
 	))
 	defer span.End()
 
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		result, err := s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
-		if err == nil {
-			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return result, nil
-		}
-		ctxLogger.Warn("k8s GetByID failed, falling back to legacy", "userID", cmd.ID, "err", err)
+		return s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
 	}
 
-	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByID(ctx, cmd)
 }
 
@@ -107,18 +99,10 @@ func (s *Service) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*u
 	))
 	defer span.End()
 
-	ctxLogger := s.logger.FromContext(ctx)
-
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		result, err := s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
-		if err == nil {
-			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return result, nil
-		}
-		ctxLogger.Warn("k8s GetByUID failed, falling back to legacy", "userUID", cmd.UID, "err", err)
+		return s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
 	}
 
-	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.GetByUID(ctx, cmd)
 }
 
