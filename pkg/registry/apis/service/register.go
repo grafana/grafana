@@ -27,7 +27,7 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 	return &ServiceAPIBuilder{}
 }
 
-func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *ServiceAPIBuilder {
+func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *ServiceAPIBuilder {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) && !cfg.EnableKubernetesAggregator {
 		return nil // skip registration unless opting into aggregator mode
