@@ -23,10 +23,12 @@ var (
 )
 
 func (b *backend) SupportsSignedURLs() bool {
+	b.logCall("SupportsSignedURLs")
 	return false
 }
 
 func (b *backend) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	b.logCall("PutResourceBlob")
 	ctx, span := tracer.Start(ctx, "sql.backend.PutResourceBlob")
 	defer span.End()
 
@@ -83,6 +85,7 @@ func (b *backend) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRe
 }
 
 func (b *backend) GetResourceBlob(ctx context.Context, key *resourcepb.ResourceKey, info *utils.BlobInfo, mustProxy bool) (*resourcepb.GetBlobResponse, error) {
+	b.logCall("GetResourceBlob")
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceBlob")
 	defer span.End()
 
