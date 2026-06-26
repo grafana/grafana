@@ -120,7 +120,6 @@ func (s *Store) FoldIntoOverflow(ctx context.Context, o objectRef, expired map[s
 	}
 	return nil
 }
-}
 
 func (s *Store) WriteAggregates(ctx context.Context, o objectRef, fields map[string]int64) error {
 	ops := make([]kv.BatchOp, 0, len(fields))
