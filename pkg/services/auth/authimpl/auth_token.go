@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
@@ -198,6 +199,9 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 	// Current incoming token is the previous auth token in the DB and the auth_token_seen is true
 	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {
+		origAuthTokenSeen := model.AuthTokenSeen
+		origRotatedAt := model.RotatedAt
+
 		model.AuthTokenSeen = false
 		model.RotatedAt = getTime().Add(-usertoken.UrgentRotateTime).Unix()
 
@@ -217,6 +221,12 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 		if affectedRows == 0 {
 			ctxLogger.Debug("Prev seen token unchanged", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
+
+			graceEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthTokenRotationGracePeriod, false, openfeature.TransactionContext(ctx))
+			if graceEnabled {
+				model.AuthTokenSeen = origAuthTokenSeen
+				model.RotatedAt = origRotatedAt
+			}
 		} else {
 			ctxLogger.Debug("Prev seen token", "tokenID", model.Id, "userID", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "authToken", model.AuthToken)
 		}
