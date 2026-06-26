@@ -160,8 +160,6 @@ Set how values are represented in the visualization. Choose from:
 - **Lines** - Add a line between values. When you select this option, the [Line style](#line-style) and **Line width** options are also displayed.
 - **Both** - Display both points and lines.
 
-The **Show** option and point and line styling options, including **Point size**, **Min point size**, **Max point size**, **Point shape**, **Point stroke width**, **Fill opacity**, **Line style**, and **Line width**, are field options. Configure them in field defaults or overrides.
-
 #### Line style
 
 Set the style of the lines that connect points. To change the color, use the standard [Color scheme](ref:color-scheme) field option.
@@ -203,7 +201,6 @@ You can customize the following standard options:
 
 - **Field min/max** - Enable **Field min/max** to have Grafana calculate the min or max of each field individually, based on the minimum or maximum value of the field.
 - **Color scheme** - Set single or multiple colors for your entire visualization. To learn more about color schemes, refer to [Configure standard options](ref:configure-standard-options).
-- **Actions** - Configure actions on fields.
 
 ### Data links and actions
 
