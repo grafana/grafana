@@ -121,6 +121,29 @@ func TestReadDashboard(t *testing.T) {
 	}
 }
 
+// TestReadV2PanelType ensures the panel type is read from the stable v2 envelope,
+// where the plugin id lives in vizConfig.group (kind is the literal "VizConfig"),
+// while still falling back to vizConfig.kind for older v2alpha1 dashboards. A
+// malformed stable panel (kind "VizConfig", no group) must never index as "VizConfig".
+func TestReadV2PanelType(t *testing.T) {
+	json := `{"metadata":{"name":"x"},"spec":{"title":"t","elements":{` +
+		`"p1":{"kind":"Panel","spec":{"id":1,"vizConfig":{"kind":"VizConfig","group":"timeseries","spec":{}}}},` +
+		`"p2":{"kind":"Panel","spec":{"id":2,"vizConfig":{"kind":"text","spec":{}}}},` +
+		`"p3":{"kind":"Panel","spec":{"id":3,"vizConfig":{"kind":"VizConfig","spec":{}}}}}}}`
+
+	dash, err := ReadDashboard(strings.NewReader(json), dsLookupForTests())
+	require.NoError(t, err)
+	require.Len(t, dash.Panels, 3)
+
+	types := map[string]bool{}
+	for _, p := range dash.Panels {
+		types[p.Type] = true
+	}
+	assert.True(t, types["timeseries"], "stable v2 panel should index its vizConfig.group, not %q", "VizConfig")
+	assert.True(t, types["text"], "v2alpha1 panel should fall back to vizConfig.kind")
+	assert.False(t, types["VizConfig"], "panel type must never be the literal VizConfig")
+}
+
 // TestReadDashboardRecursionLimits ensures that maliciously deep nesting of `spec` or
 // `panels` is bounded so the parser cannot be driven into unbounded recursion.
 func TestReadDashboardRecursionLimits(t *testing.T) {

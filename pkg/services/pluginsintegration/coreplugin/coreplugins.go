@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
@@ -32,27 +31,24 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
 
 const (
-	CloudWatch      = "cloudwatch"
-	CloudMonitoring = "stackdriver"
-	AzureMonitor    = "grafana-azure-monitor-datasource"
-	Graphite        = "graphite"
-	InfluxDB        = "influxdb"
-	Loki            = "loki"
-	Prometheus      = "prometheus"
-	Tempo           = "tempo"
-	TestData        = "grafana-testdata-datasource"
-	TestDataAlias   = "testdata"
-	PostgreSQL      = "grafana-postgresql-datasource"
-	MySQL           = "mysql"
-	MSSQL           = "mssql"
-	Grafana         = "grafana"
-	Pyroscope       = "grafana-pyroscope-datasource"
-	Parca           = "parca"
-	Jaeger          = "jaeger"
+	CloudWatch    = "cloudwatch"
+	AzureMonitor  = "grafana-azure-monitor-datasource"
+	Graphite      = "graphite"
+	InfluxDB      = "influxdb"
+	Loki          = "loki"
+	Prometheus    = "prometheus"
+	TestData      = "grafana-testdata-datasource"
+	TestDataAlias = "testdata"
+	PostgreSQL    = "grafana-postgresql-datasource"
+	MySQL         = "mysql"
+	MSSQL         = "mssql"
+	Grafana       = "grafana"
+	Pyroscope     = "grafana-pyroscope-datasource"
+	Parca         = "parca"
+	Jaeger        = "jaeger"
 )
 
 func init() {
@@ -92,30 +88,28 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 	return provider.New(coreRegistry.BackendFactoryProvider(), provider.DefaultProvider)
 }
 
-func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
+func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service,
 	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service,
-	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
+	pr *prometheus.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
 	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, jaeger *jaeger.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
-		CloudWatch:      asBackendPlugin(cw),
-		CloudMonitoring: asBackendPlugin(cm),
-		AzureMonitor:    asBackendPlugin(am),
-		Graphite:        asBackendPlugin(grap),
-		InfluxDB:        asBackendPlugin(idb),
-		Loki:            asBackendPlugin(lk),
-		Prometheus:      asBackendPlugin(pr),
-		Tempo:           asBackendPlugin(t),
-		TestData:        asBackendPlugin(td),
-		PostgreSQL:      asBackendPlugin(pg),
-		MySQL:           asBackendPlugin(my),
-		MSSQL:           asBackendPlugin(ms),
-		Grafana:         asBackendPlugin(graf),
-		Pyroscope:       asBackendPlugin(pyroscope),
-		Parca:           asBackendPlugin(parca),
-		Jaeger:          asBackendPlugin(jaeger),
+		CloudWatch:   asBackendPlugin(cw),
+		AzureMonitor: asBackendPlugin(am),
+		Graphite:     asBackendPlugin(grap),
+		InfluxDB:     asBackendPlugin(idb),
+		Loki:         asBackendPlugin(lk),
+		Prometheus:   asBackendPlugin(pr),
+		TestData:     asBackendPlugin(td),
+		PostgreSQL:   asBackendPlugin(pg),
+		MySQL:        asBackendPlugin(my),
+		MSSQL:        asBackendPlugin(ms),
+		Grafana:      asBackendPlugin(graf),
+		Pyroscope:    asBackendPlugin(pyroscope),
+		Parca:        asBackendPlugin(parca),
+		Jaeger:       asBackendPlugin(jaeger),
 	})
 }
 
@@ -217,8 +211,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = testdatasource.ProvideService()
 	case CloudWatch:
 		svc = cloudwatch.ProvideService()
-	case CloudMonitoring:
-		svc = cloudmonitoring.ProvideService(httpClientProvider)
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Graphite:
@@ -229,8 +221,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = loki.ProvideService(httpClientProvider, tracer)
 	case Prometheus:
 		svc = prometheus.ProvideService(httpClientProvider)
-	case Tempo:
-		svc = tempo.ProvideService(httpClientProvider, tracer)
 	case PostgreSQL:
 		svc = postgres.ProvideService()
 	case MySQL:

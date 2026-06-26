@@ -3,7 +3,7 @@ import * as z from 'zod';
 import { createBreakpoints } from './breakpoints';
 import { createColors, ThemeColorsInputSchema } from './createColors';
 import { createComponents } from './createComponents';
-import { createShadows } from './createShadows';
+import { createShadows, ThemeShadowsInputSchema } from './createShadows';
 import { createShape, ThemeShapeInputSchema } from './createShape';
 import { createSpacing, ThemeSpacingOptionsSchema } from './createSpacing';
 import { createTransitions } from './createTransitions';
@@ -18,6 +18,7 @@ export const NewThemeOptionsSchema = z.object({
   id: z.string(),
   colors: ThemeColorsInputSchema.optional(),
   spacing: ThemeSpacingOptionsSchema.optional(),
+  shadows: ThemeShadowsInputSchema.optional(),
   shape: ThemeShapeInputSchema.optional(),
   typography: ThemeTypographyInputSchema.optional(),
   visualization: ThemeVisualizationColorsInputSchema.optional(),
@@ -36,20 +37,22 @@ export function createTheme(
     name,
     colors: colorsInput = {},
     spacing: spacingInput = {},
+    shadows: shadowsInput = {},
     shape: shapeInput = {},
     typography: typographyInput = {},
     visualization: visualizationInput = {},
   } = options;
 
   const colors = createColors(colorsInput);
-  const breakpoints = createBreakpoints();
-  const spacing = createSpacing(spacingInput);
   const shape = createShape(shapeInput);
+  const spacing = createSpacing(spacingInput);
   const typography = createTypography(colors, typographyInput);
-  const shadows = createShadows(colors);
+  const shadows = createShadows(colors, shadowsInput);
+  const visualization = createVisualizationColors(colors, visualizationInput);
+
+  const breakpoints = createBreakpoints();
   const transitions = createTransitions();
   const components = createComponents(colors, shadows);
-  const visualization = createVisualizationColors(colors, visualizationInput);
 
   const theme = {
     name: name ?? (colors.mode === 'dark' ? 'Dark' : 'Light'),

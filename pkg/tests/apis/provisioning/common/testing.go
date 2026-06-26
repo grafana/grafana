@@ -377,17 +377,23 @@ func (h *ProvisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Conte
 	job = h.AwaitJob(t, ctx, job)
 	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
 	lastState := MustNestedString(job.Object, "status", "state")
+	// A worker that returns an error records it in status.message, not
+	// status.errors, so surface it explicitly — otherwise a failed job only
+	// reports state=error with no reason.
+	lastMessage := MustNestedString(job.Object, "status", "message")
 
 	repo := job.GetLabels()[jobs.LabelRepository]
 
 	// Debug state if job failed
 	if len(lastErrors) > 0 || lastState != string(provisioning.JobStateSuccess) {
+		t.Logf("job '%s' did not succeed: state=%q message=%q errors=%v",
+			job.GetName(), lastState, lastMessage, lastErrors)
 		h.DebugState(t, repo, fmt.Sprintf("JOB FAILED: %s", job.GetName()))
 	}
 
 	require.Empty(t, lastErrors, "historic job '%s' has errors: %v", job.GetName(), lastErrors)
 	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
-		"historic job '%s' was not successful", job.GetName())
+		"historic job '%s' was not successful (message: %q)", job.GetName(), lastMessage)
 }
 
 func (h *ProvisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job *unstructured.Unstructured) *unstructured.Unstructured {
@@ -802,6 +808,7 @@ type TestRepo struct {
 	TokenUser                 string
 	WebhookSecret             string
 	WebhookBaseURL            string
+	WebhookDisabled           bool
 	GenerateName              string
 	GenerateDashboardPreviews bool
 
@@ -859,6 +866,8 @@ type GitHubRepositorySpec struct {
 	Token                     string
 	TokenUser                 string
 	WebhookSecret             string
+	WebhookBaseURL            string
+	WebhookDisabled           bool
 	GenerateDashboardPreviews bool
 	Workflows                 []string
 	WorkflowsJSON             string
@@ -1320,6 +1329,12 @@ func WithoutProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
 func WithRepositoryTypes(types []string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningRepositoryTypes = types
+	}
+}
+
+func WithProvisioningPublicRootURL(url string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningPublicRootURL = url
 	}
 }
 
@@ -2858,11 +2873,26 @@ type GitTestHelper struct {
 	*ProvisioningTestHelper
 	gitServer       *gittest.Server
 	exportRepoInfos map[string]*exportRepoInfo
+	githubUserOnce  sync.Once
+	githubUser      *gittest.User
+	githubUserErr   error
 }
 
 // GitServer returns the underlying gittest.Server.
 func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
+}
+
+func (h *GitTestHelper) githubTransportUser(t *testing.T) *gittest.User {
+	t.Helper()
+
+	h.githubUserOnce.Do(func() {
+		h.githubUser, h.githubUserErr = h.gitServer.CreateUser(context.Background(), gittest.WithUsername("git"))
+	})
+	require.NoError(t, h.githubUserErr, "failed to create github transport user")
+	require.NotNil(t, h.githubUser, "github transport user should be created")
+
+	return h.githubUser
 }
 
 // SharedGitEnv lazily starts and reuses one GitTestHelper across tests.
@@ -3031,9 +3061,6 @@ func (h *GitTestHelper) CreateSyncEnabledGitRepo(t *testing.T, repoName string, 
 }
 
 // CreateGithubRepo creates a github-type repository backed by the gittest server.
-// The repo will NOT become healthy (git auth uses default "git" user which doesn't
-// exist on gittest), but webhooks are created before the health check runs, so
-// Status.Webhook will be populated if the GitHub API mock is configured.
 // workflows is optional; defaults to ["write"].
 // webhookBaseURL is optional; pass it to enable webhook creation on the repo.
 func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
@@ -3042,10 +3069,23 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 		extraValues["WebhookBaseURL"] = webhookBaseURL
 	}
 	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
-		waitForReady:      false,
+		waitForReady:      true,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
+		user:              h.githubTransportUser(t),
 		workflows:         workflows,
+	})
+}
+
+func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady: true,
+		initialFiles: initialFiles,
+		templateVariables: map[string]any{
+			"WebhookDisabled": true,
+		},
+		user:      h.githubTransportUser(t),
+		workflows: workflows,
 	})
 }
 
@@ -3064,6 +3104,7 @@ type createRepoOpts struct {
 	exportRepo        bool
 	initialFiles      map[string][]byte
 	templateVariables map[string]any
+	user              *gittest.User
 	workflows         []string
 }
 
@@ -3078,8 +3119,12 @@ func (h *GitTestHelper) createRepo(
 
 	ctx := context.Background()
 
-	user, err := h.gitServer.CreateUser(ctx)
-	require.NoError(t, err, "failed to create user")
+	user := opts.user
+	if user == nil {
+		var err error
+		user, err = h.gitServer.CreateUser(ctx)
+		require.NoError(t, err, "failed to create user")
+	}
 
 	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
 	require.NoError(t, err, "failed to create remote repository")

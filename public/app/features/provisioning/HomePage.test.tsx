@@ -37,11 +37,20 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
     isError: false,
     error: undefined,
   })),
+  // Migrate reads availableResources to gate optional kinds (e.g. playlists);
+  // no settings means those kinds stay off here.
+  useGetFrontendSettingsQuery: jest.fn(() => ({ data: undefined })),
 }));
-// The Migrate tab also builds a folder list from the unified searcher; return
+// The Migrate tab also enumerates resources from the unified searcher; return
 // an already-resolved empty list so its render is synchronous here.
-jest.mock('./Migrate/hooks/useFolderMigrationData', () => ({
-  useFolderMigrationData: jest.fn(() => ({ data: [], isLoading: false, isError: false })),
+jest.mock('./Migrate/hooks/useMigrationData', () => ({
+  useMigrationData: jest.fn(() => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    failedKinds: [],
+    refetch: jest.fn(),
+  })),
 }));
 
 // Page resolves navId against the nav index; seed the provisioning node so it

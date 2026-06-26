@@ -1,16 +1,18 @@
 import { render, screen } from 'test/test-utils';
 
+import { resourceKindInfos } from '../utils/resourceKinds';
+
 import { ResourcesToMigrate } from './ResourcesToMigrate';
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow } from './hooks/useMigrationData';
 
 const folders: FolderRow[] = [
   {
     uid: 'team-a',
     title: 'Team A',
-    dashboardCount: 2,
-    directDashboards: [
-      { uid: 'd1', title: 'Dashboard One' },
-      { uid: 'd2', title: 'Dashboard Two' },
+    resourceCount: 2,
+    directResources: [
+      { uid: 'd1', title: 'Dashboard One', kind: resourceKindInfos.dashboard },
+      { uid: 'd2', title: 'Dashboard Two', kind: resourceKindInfos.dashboard },
     ],
   },
 ];
@@ -19,9 +21,9 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
   const props = {
     folders,
     selectedFolderUids: new Set<string>(),
-    selectedDashboardUids: new Set<string>(),
+    selectedResourceKeys: new Set<string>(),
     onToggleFolder: jest.fn(),
-    onToggleDashboard: jest.fn(),
+    onToggleResource: jest.fn(),
     selectedCount: 0,
     allSelected: false,
     onSetFoldersSelected: jest.fn(),
@@ -43,7 +45,7 @@ describe('ResourcesToMigrate', () => {
     expect(screen.getByText('Showing 1 of 1 folder')).toBeInTheDocument();
   });
 
-  it('expands a folder to reveal its dashboards', async () => {
+  it('expands a folder to reveal its resources', async () => {
     const { user } = setup();
 
     expect(screen.queryByText('Dashboard One')).not.toBeInTheDocument();
@@ -114,7 +116,53 @@ describe('ResourcesToMigrate', () => {
   it('renders the all-managed empty state when there are no folders to migrate', () => {
     setup({ folders: [] });
 
-    expect(screen.getByText('All dashboards are already managed by Git.')).toBeInTheDocument();
+    expect(screen.getByText('All supported resources are already managed by Git.')).toBeInTheDocument();
+  });
+
+  describe('folder-less kinds grouped under a synthetic folder', () => {
+    // Playlists aren't folder-scoped; the caller groups them under a synthetic
+    // "Playlists" folder, which the table renders like any other folder.
+    const withPlaylists: FolderRow[] = [
+      ...folders,
+      {
+        uid: '__playlists__',
+        title: 'Playlists',
+        resourceCount: 2,
+        directResources: [
+          { uid: 'p1', title: 'Morning rotation', kind: resourceKindInfos.playlist },
+          { uid: 'p2', title: 'Ops wall', kind: resourceKindInfos.playlist },
+        ],
+      },
+    ];
+
+    it('renders the synthetic folder and reveals its resources when expanded', async () => {
+      const { user } = setup({ folders: withPlaylists });
+
+      expect(screen.getByText('Playlists')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /expand playlists/i }));
+      expect(screen.getByText('Morning rotation')).toBeInTheDocument();
+      expect(screen.getByText('Ops wall')).toBeInTheDocument();
+    });
+
+    it('toggles an individual resource inside the synthetic folder', async () => {
+      const { props, user } = setup({ folders: withPlaylists });
+
+      await user.click(screen.getByRole('button', { name: /expand playlists/i }));
+      await user.click(screen.getByRole('checkbox', { name: 'Morning rotation' }));
+
+      // Selection is keyed by group/kind/name, not the bare uid.
+      expect(props.onToggleResource).toHaveBeenCalledWith('playlist.grafana.app/Playlist/p1');
+    });
+
+    it('select-all spans every visible folder, synthetic included', async () => {
+      const { props, user } = setup({ folders: withPlaylists });
+
+      await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+      // Order follows the default count-desc sort; the two folders tie on count
+      // (2 each), so they fall back to title order ("Playlists" before "Team A").
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['__playlists__', 'team-a'], true);
+    });
   });
 
   describe('search, sort and expansion', () => {
@@ -122,23 +170,23 @@ describe('ResourcesToMigrate', () => {
       {
         uid: 'alpha',
         title: 'Alpha',
-        dashboardCount: 2,
-        directDashboards: [
-          { uid: 'a1', title: 'Alpha One' },
-          { uid: 'a2', title: 'Alpha Two' },
+        resourceCount: 2,
+        directResources: [
+          { uid: 'a1', title: 'Alpha One', kind: resourceKindInfos.dashboard },
+          { uid: 'a2', title: 'Alpha Two', kind: resourceKindInfos.dashboard },
         ],
       },
       {
         uid: 'beta',
         title: 'Beta',
-        dashboardCount: 5,
-        directDashboards: [{ uid: 'b1', title: 'Beta One' }],
+        resourceCount: 5,
+        directResources: [{ uid: 'b1', title: 'Beta One', kind: resourceKindInfos.dashboard }],
       },
     ];
 
     const folderTitleOrder = () => screen.getAllByText(/^(Alpha|Beta)$/).map((el) => el.textContent);
 
-    it('filters by folder title and by dashboard title', async () => {
+    it('filters by folder title and by resource title', async () => {
       const { user } = setup({ folders: twoFolders });
       const input = screen.getByPlaceholderText(/search folders and resources/i);
 
@@ -152,7 +200,7 @@ describe('ResourcesToMigrate', () => {
       expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     });
 
-    it('defaults to most-dashboards-first ordering', () => {
+    it('defaults to most-resources-first ordering', () => {
       setup({ folders: twoFolders });
 
       // Default sort key is count-desc: Beta (5) before Alpha (2).
@@ -204,7 +252,7 @@ describe('ResourcesToMigrate', () => {
       expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['alpha'], true);
     });
 
-    it('locks a folder’s dashboards as checked when the folder itself is selected', async () => {
+    it('locks a folder’s resources as checked when the folder itself is selected', async () => {
       const { user } = setup({ selectedFolderUids: new Set(['team-a']) });
 
       await user.click(screen.getByRole('button', { name: /expand team a/i }));
