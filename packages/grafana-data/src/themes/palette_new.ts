@@ -7,6 +7,7 @@ export const palette = {
   // Warm grey scale for light mode structural colours
   neutral50: '#fafafa',
   neutral100: '#f5f5f4',
+  neutral150: '#f0f0ef',
   neutral200: '#ebebea',
   neutral300: '#dddcdb',
   neutral400: '#b0afae',
