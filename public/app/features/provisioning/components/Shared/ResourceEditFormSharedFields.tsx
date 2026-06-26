@@ -34,6 +34,8 @@ interface DashboardEditFormSharedFieldsProps {
   lockComment?: boolean;
   /** The resolved, read-only commit message to display when `lockComment` is true. */
   commitMessage?: string;
+  /** When true, the branch field renders read-only (template enforcement). */
+  lockBranch?: boolean;
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
@@ -47,6 +49,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     allowPathEdit,
     lockComment = false,
     commitMessage,
+    lockBranch = false,
   }) => {
     const {
       control,
@@ -131,20 +134,25 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         {repository?.type && isGitProvider(repository.type) && !readOnly && (
           <>
             <Field
-              disabled={canOnlyPushToConfiguredBranch}
+              disabled={canOnlyPushToConfiguredBranch || lockBranch}
               htmlFor="provisioned-ref"
               noMargin
               label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
               description={
-                canOnlyPushToConfiguredBranch
+                lockBranch
                   ? t(
-                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-restricted',
-                      'This repository is restricted to the configured branch only'
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-enforced',
+                      "The branch name is set by the repository's branch naming template and can't be changed"
                     )
-                  : t(
-                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch',
-                      'Select an existing branch or enter a new branch name to create a branch'
-                    )
+                  : canOnlyPushToConfiguredBranch
+                    ? t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-restricted',
+                        'This repository is restricted to the configured branch only'
+                      )
+                    : t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch',
+                        'Select an existing branch or enter a new branch name to create a branch'
+                      )
               }
               invalid={Boolean(errors.ref || branchError)}
               error={
@@ -166,7 +174,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                 }}
                 render={({ field: { ref, onChange, ...field } }) => (
                   <>
-                    {canOnlyPushToConfiguredBranch ? (
+                    {canOnlyPushToConfiguredBranch || lockBranch ? (
                       // If only allow to push to configured branch, show a read-only input with that branch
                       <Input {...field} id="provisioned-ref" readOnly />
                     ) : (

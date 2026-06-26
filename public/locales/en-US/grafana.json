@@ -3115,6 +3115,17 @@
       "text-provisioned": "Provisioned",
       "ungrouped": "Ungrouped"
     },
+    "rules-view-mode-selector": {
+      "legacy-view-options": {
+        "grouped": "Grouped",
+        "list": "List",
+        "state": "State"
+      },
+      "view-options": {
+        "grouped": "Grouped",
+        "list": "List"
+      }
+    },
     "saved-searches": {
       "actions-aria-label": "Actions",
       "button-label": "Saved searches",
@@ -5771,11 +5782,6 @@
         "repeat-options": "Repeat options",
         "title": "Title",
         "transparent-background": "Transparent background"
-      }
-    },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Extensions"
       }
     },
     "help-wizard": {
@@ -10926,9 +10932,6 @@
     }
   },
   "library-panels": {
-    "add-library-panel-modal": {
-      "title-create-library-panel": "Create library panel"
-    },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
     },
@@ -12326,7 +12329,6 @@
     "header-menu": {
       "copy": "Copy",
       "copy-styles": "Copy styles",
-      "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
@@ -12862,6 +12864,7 @@
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
+      "description-branch-enforced": "The branch name is set by the repository's branch naming template and can't be changed",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
       "description-filename": "File name for the dashboard (.json or .yaml)",
@@ -13352,7 +13355,6 @@
     },
     "migrate": {
       "all-resources": "All resources",
-      "dashboards": "Dashboards",
       "drawer-cancel": "Cancel",
       "drawer-description": "All resources not yet managed by Git will be migrated into the selected repository. This is a one-time operation.",
       "drawer-description-selective_one": "{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.",
@@ -13374,8 +13376,8 @@
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
-      "playlists": "Playlists",
-      "playlists-folder-title": "Playlists",
+      "partial-error-body": "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
+      "partial-error-title": "Some resource types could not be loaded",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
       "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
@@ -13607,6 +13609,12 @@
       "pure-git": "Pure Git",
       "pure-git-description": "Connect to any Git repository",
       "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
+    },
+    "resource-kind": {
+      "dashboards": "Dashboards",
+      "folders": "Folders",
+      "library-panels": "Library panels",
+      "playlists": "Playlists"
     },
     "resource-tree": {
       "header-hash": "Hash",

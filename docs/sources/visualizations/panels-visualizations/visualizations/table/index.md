@@ -209,12 +209,6 @@ This option is only available when you're editing the panel.
 
 ## Nested tables
 
-{{< admonition type="note" >}}
-The nested table overrides feature is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-To use this feature, enable the `nestedFramesFieldOverrides` feature toggle in your Grafana configuration file or contact Support.
-{{< /admonition >}}
-
 A table can display sub-tables inside expandable rows. You can add these nested tables using the [Group to nested tables transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables), which groups rows by one or more fields, and can summarize nested row data by applying calculations.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-collapsed-v13.1.png" max-width="650px" alt="Table with all rows collapsed" >}}
@@ -615,12 +609,6 @@ The following image shows the "Info" field with the styling from the "Style" fie
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Apply overrides to nested table fields
-
-{{< admonition type="note" >}}
-The nested table overrides feature is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-To use this feature, enable the `nestedFramesFieldOverrides` feature toggle in your Grafana configuration file or contact Support.
-{{< /admonition >}}
 
 By default, field overrides apply only to columns in the parent table.
 To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
