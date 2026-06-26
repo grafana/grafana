@@ -2959,7 +2959,7 @@ __metadata:
     "@grafana/react-data-grid": "npm:7.0.0-beta.57"
     "@grafana/schema": "npm:13.2.0-pre"
     "@grafana/test-utils": "workspace:*"
-    "@hello-pangea/dnd": "npm:18.0.1"
+    "@hello-pangea/dnd": "npm:^18.0.1"
     "@monaco-editor/react": "npm:4.7.0"
     "@popperjs/core": "npm:2.11.8"
     "@rc-component/cascader": "npm:1.9.0"
@@ -3151,7 +3151,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@hello-pangea/dnd@npm:18.0.1":
+"@hello-pangea/dnd@npm:18.0.1, @hello-pangea/dnd@npm:^18.0.1":
   version: 18.0.1
   resolution: "@hello-pangea/dnd@npm:18.0.1"
   dependencies:

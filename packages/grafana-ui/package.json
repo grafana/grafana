@@ -78,7 +78,7 @@
     "@grafana/i18n": "13.2.0-pre",
     "@grafana/react-data-grid": "7.0.0-beta.57",
     "@grafana/schema": "13.2.0-pre",
-    "@hello-pangea/dnd": "18.0.1",
+    "@hello-pangea/dnd": "^18.0.1",
     "@monaco-editor/react": "4.7.0",
     "@popperjs/core": "2.11.8",
     "@rc-component/cascader": "1.9.0",
