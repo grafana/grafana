@@ -1,27 +1,13 @@
-import { css } from '@emotion/css';
-import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useAsyncRetry } from 'react-use';
-import { from, lastValueFrom } from 'rxjs';
 
-import {
-  CoreApp,
-  type DataFrame,
-  type DataQuery,
-  type DataQueryRequest,
-  FieldType,
-  generateUUID,
-  getDefaultTimeRange,
-  type GrafanaTheme2,
-  rangeUtil,
-} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { Badge, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import { HomeDataCard } from './HomeDataCard';
+import { InsightRow, readScalar, runInstantQueries } from './overviewShared';
 
 export const KUBERNETES_APP_ID = 'grafana-k8s-app';
 
@@ -42,20 +28,6 @@ const OVERVIEW_QUERIES: Record<string, string> = {
   restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
   notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status="false"})',
 };
-
-// Prometheus carries expr/instant/range on each target; model them on top of DataQuery so the
-// request is fully typed without importing the plugin's PromQuery type.
-interface InstantQueryTarget extends DataQuery {
-  expr: string;
-  instant: boolean;
-  range: boolean;
-}
-
-function readScalar(frames: DataFrame[], refId: string): number | null {
-  const field = frames.find((f) => f.refId === refId)?.fields.find((f) => f.type === FieldType.number);
-  const v = field && field.values.length ? field.values[field.values.length - 1] : undefined;
-  return typeof v === 'number' && Number.isFinite(v) ? v : null;
-}
 
 export type KubernetesHealthSeverity = 'healthy' | 'warning' | 'critical';
 
@@ -85,36 +57,7 @@ export function computeHealth(o: KubernetesOverview): KubernetesHealth | null {
  * Prometheus datasource, else the first — throwing (handled as a retryable error) when none.
  */
 export async function fetchKubernetesOverview(): Promise<KubernetesOverview> {
-  const proms = getDataSourceSrv().getList({ type: 'prometheus' });
-  const settings = proms.find((d) => d.isDefault) ?? proms[0];
-  if (!settings) {
-    throw new Error('No Prometheus datasource configured');
-  }
-  const ds = await getDataSourceSrv().get(settings.uid);
-  const range = getDefaultTimeRange();
-  const intervalInfo = rangeUtil.calculateInterval(range, 1);
-  // Prometheus reads expr/instant/range off each target at runtime; the local InstantQueryTarget
-  // type carries them so the request is fully typed (same field set as Loki's makeRequest()).
-  const targets: InstantQueryTarget[] = Object.entries(OVERVIEW_QUERIES).map(([refId, expr]) => ({
-    refId,
-    expr,
-    instant: true,
-    range: false,
-  }));
-  const request: DataQueryRequest<InstantQueryTarget> = {
-    requestId: `k8s-overview-${generateUUID()}`,
-    interval: intervalInfo.interval,
-    intervalMs: intervalInfo.intervalMs,
-    range,
-    scopedVars: {},
-    timezone: 'UTC',
-    app: CoreApp.Unknown,
-    startTime: Date.now(),
-    targets,
-  };
-
-  const result = await lastValueFrom(from(ds.query(request)));
-  const frames = result.data ?? [];
+  const frames = await runInstantQueries('prometheus', OVERVIEW_QUERIES);
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
     pods: readScalar(frames, 'pods') ?? 0,
@@ -139,24 +82,6 @@ export function KubernetesOverviewCard() {
 
   return <KubernetesOverviewCardInner canAccess={canAccess} />;
 }
-
-type InsightSeverity = 'success' | 'warning' | 'error';
-
-function InsightRow({ severity, children }: { severity: InsightSeverity; children: NonNullable<ReactNode> }) {
-  const styles = useStyles2(getInsightStyles);
-  return (
-    <Stack alignItems="center" gap={1}>
-      <Icon name={severity === 'success' ? 'check-circle' : 'exclamation-triangle'} className={styles[severity]} />
-      <Text color="secondary">{children}</Text>
-    </Stack>
-  );
-}
-
-const getInsightStyles = (theme: GrafanaTheme2) => ({
-  success: css({ color: theme.colors.success.main }),
-  warning: css({ color: theme.colors.warning.main }),
-  error: css({ color: theme.colors.error.main }),
-});
 
 /**
  * Inner component avoids calling hooks conditionally —

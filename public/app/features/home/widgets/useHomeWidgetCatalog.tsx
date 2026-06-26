@@ -4,7 +4,14 @@ import { usePluginComponents } from '@grafana/runtime';
 import { HomeSection } from '../HomeSection';
 
 import { getCoreWidgets } from './core/coreWidgets';
-import { useIncidentsWidget, useKubernetesWidget, useOnCallWidget } from './curated/curatedWidgets';
+import {
+  useHostedLogsWidget,
+  useHostedMetricsWidget,
+  useIncidentsWidget,
+  useKubernetesWidget,
+  useOnCallWidget,
+  useSlosWidget,
+} from './curated/curatedWidgets';
 import { type HomeWidgetCatalogEntry } from './types';
 
 export interface UseHomeWidgetCatalogResult {
@@ -37,6 +44,9 @@ export function useHomeWidgetCatalog(): UseHomeWidgetCatalogResult {
   const incidents = useIncidentsWidget();
   const oncall = useOnCallWidget();
   const kubernetes = useKubernetesWidget();
+  const hostedMetrics = useHostedMetricsWidget();
+  const hostedLogs = useHostedLogsWidget();
+  const slos = useSlosWidget();
 
   const { components, isLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageWidget,
@@ -61,7 +71,7 @@ export function useHomeWidgetCatalog(): UseHomeWidgetCatalogResult {
     })
   );
 
-  const entries = [...core, incidents, oncall, kubernetes, ...plugin].filter(
+  const entries = [...core, incidents, oncall, kubernetes, hostedMetrics, hostedLogs, slos, ...plugin].filter(
     (entry): entry is HomeWidgetCatalogEntry => entry !== null
   );
 

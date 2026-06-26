@@ -1,15 +1,18 @@
 import { renderHook } from '@testing-library/react';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
-import { setPluginComponentsHook } from '@grafana/runtime';
+import { getDataSourceSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useIrmPlugin, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
+import { HostedLogsCard } from '../AlertsIncidents/HostedLogsCard';
+import { HostedMetricsCard } from '../AlertsIncidents/HostedMetricsCard';
 import { IncidentsCard } from '../AlertsIncidents/IncidentsCard';
 import { KubernetesOverviewCard } from '../AlertsIncidents/KubernetesOverviewCard';
 import { OnCallCard } from '../AlertsIncidents/OnCallCard';
+import { SlosCard } from '../AlertsIncidents/SlosCard';
 
 import { useHomeWidgetCatalog } from './useHomeWidgetCatalog';
 
@@ -23,8 +26,14 @@ jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   usePluginBridge: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(),
+}));
+
 const mockUseIrmPlugin = jest.mocked(useIrmPlugin);
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
+const mockGetDataSourceSrv = jest.mocked(getDataSourceSrv);
 
 function setPluginWidgets(components: Array<ComponentTypeWithExtensionMeta<{}>>) {
   setPluginComponentsHook(({ extensionPointId }) => ({
@@ -33,12 +42,21 @@ function setPluginWidgets(components: Array<ComponentTypeWithExtensionMeta<{}>>)
   }));
 }
 
+// getList is the only DataSourceSrv method the gate hooks touch; filter by the requested `type` so
+// a single list can model "only Prometheus present", "only Loki present", etc.
+function setDataSources(list: Array<{ uid: string; type: string }> = []) {
+  mockGetDataSourceSrv.mockReturnValue({
+    getList: (filter?: { type?: string }) => (filter?.type ? list.filter((d) => d.type === filter.type) : list),
+  } as unknown as ReturnType<typeof getDataSourceSrv>);
+}
+
 beforeEach(() => {
   setPluginWidgets([]);
   // Default: no curated plugin installed, alerting permission granted.
   mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Irm, loading: false, installed: false });
   mockUsePluginBridge.mockReturnValue({ loading: false, installed: false });
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  setDataSources([]);
 });
 
 afterEach(() => {
@@ -137,5 +155,47 @@ describe('useHomeWidgetCatalog', () => {
     expect(entry?.id).toBe(pluginWidget.meta.id);
     expect(entry?.title).toBe('My plugin widget');
     expect(entry?.description).toBe('Provided by a plugin');
+  });
+
+  it('includes the hosted-metrics widget when a Prometheus datasource is configured', () => {
+    setDataSources([{ uid: 'prom', type: 'prometheus' }]);
+
+    const { result } = renderHook(() => useHomeWidgetCatalog());
+
+    const metrics = result.current.entries.find((e) => e.id === 'hosted-metrics');
+    expect(metrics?.source).toBe('curated');
+    expect(metrics?.render()).toEqual(<HostedMetricsCard />);
+    // The Loki-gated logs widget stays absent when only Prometheus is present.
+    expect(result.current.entries.map((e) => e.id)).not.toContain('hosted-logs');
+  });
+
+  it('includes the hosted-logs widget when a Loki datasource is configured', () => {
+    setDataSources([{ uid: 'loki', type: 'loki' }]);
+
+    const { result } = renderHook(() => useHomeWidgetCatalog());
+
+    const logs = result.current.entries.find((e) => e.id === 'hosted-logs');
+    expect(logs?.source).toBe('curated');
+    expect(logs?.render()).toEqual(<HostedLogsCard />);
+    expect(result.current.entries.map((e) => e.id)).not.toContain('hosted-metrics');
+  });
+
+  it('includes the slos widget when the SLO app is installed', () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: true });
+
+    const { result } = renderHook(() => useHomeWidgetCatalog());
+
+    const slos = result.current.entries.find((e) => e.id === 'slos');
+    expect(slos?.source).toBe('curated');
+    expect(slos?.render()).toEqual(<SlosCard />);
+  });
+
+  it('omits the datasource- and slo-gated widgets when their sources are absent', () => {
+    const { result } = renderHook(() => useHomeWidgetCatalog());
+
+    const ids = result.current.entries.map((e) => e.id);
+    expect(ids).not.toContain('hosted-metrics');
+    expect(ids).not.toContain('hosted-logs');
+    expect(ids).not.toContain('slos');
   });
 });

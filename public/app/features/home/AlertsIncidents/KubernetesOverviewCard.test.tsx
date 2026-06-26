@@ -292,7 +292,7 @@ describe('fetchKubernetesOverview', () => {
   it('throws when no Prometheus datasource is configured', async () => {
     setDataSources([]);
 
-    await expect(fetchKubernetesOverview()).rejects.toThrow('No Prometheus datasource configured');
+    await expect(fetchKubernetesOverview()).rejects.toThrow('No prometheus datasource configured');
   });
 });
 

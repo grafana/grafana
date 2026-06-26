@@ -10671,6 +10671,31 @@
       },
       "placeholder": "Welcome to {{edition}}."
     },
+    "hosted-logs-card": {
+      "error-title": "Could not load logs",
+      "healthy": "Healthy",
+      "idle": "No recent ingest",
+      "ingested": "{{bytes}} ingested (7d)",
+      "open": "Open Explore",
+      "sources_one": "{{count}} source connected",
+      "sources_other": "{{count}} sources connected",
+      "title": "Hosted Logs",
+      "window": "ingested · 7d"
+    },
+    "hosted-metrics-card": {
+      "error-title": "Could not load metrics",
+      "healthy": "Healthy",
+      "ingest": "{{rate}}/s ingested",
+      "ingesting": "Ingesting {{rate}}/s",
+      "open": "Open metrics",
+      "series-unit": "series",
+      "targets-down_one": "{{count}} target down",
+      "targets-down_other": "{{count}} targets down",
+      "targets-some-down": "{{up}} of {{total}} targets up",
+      "targets-up_one": "All {{count}} target up",
+      "targets-up_other": "All {{count}} targets up",
+      "title": "Hosted Metrics"
+    },
     "incidents-card": {
       "declare": "Declare an incident",
       "empty": "No active incidents.",
@@ -10738,6 +10763,19 @@
       "error-title": "Could not load recently viewed dashboards",
       "loading": "Loading recently viewed dashboards..."
     },
+    "slos-card": {
+      "all-ok": "All SLOs healthy",
+      "at-risk-badge_one": "{{count}} at risk",
+      "at-risk-badge_other": "{{count}} at risk",
+      "at-risk-row": "{{atRisk}} of {{total}} SLOs at risk",
+      "budget": "Error budget {{pct}}% remaining",
+      "empty": "No SLOs defined.",
+      "error-title": "Could not load SLOs",
+      "healthy": "Healthy",
+      "open": "Open SLOs",
+      "title": "SLOs",
+      "window": "30-day availability"
+    },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
@@ -10766,6 +10804,14 @@
       "frame": {
         "remove": "Remove widget"
       },
+      "hosted-logs": {
+        "description": "Ingestion and sources from your Loki",
+        "title": "Hosted Logs"
+      },
+      "hosted-metrics": {
+        "description": "Active series and ingest from your Prometheus",
+        "title": "Hosted Metrics"
+      },
       "incidents": {
         "description": "Incidents currently active in your IRM app",
         "title": "Active incidents"
@@ -10784,6 +10830,10 @@
         "loading": "Loading panel…",
         "unavailable": "This panel is no longer available.",
         "untitled": "Dashboard panel"
+      },
+      "slos": {
+        "description": "Availability and error budget",
+        "title": "SLOs"
       },
       "toolbar": {
         "add": "Add widget",
