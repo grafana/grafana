@@ -75,6 +75,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
@@ -195,7 +196,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
@@ -209,7 +209,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
 
 func otelTracer() trace.Tracer {
@@ -260,7 +259,6 @@ var wireBasicSet = wire.NewSet(
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	cloudwatch.ProvideService,
-	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,
 	postgres.ProvideService,
 	mysql.ProvideService,
@@ -318,7 +316,6 @@ var wireBasicSet = wire.NewSet(
 	socialimpl.ProvideService,
 	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
-	tempo.ProvideService,
 	loki.ProvideService,
 	graphite.ProvideService,
 	prometheus.ProvideService,
@@ -391,6 +388,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboards.ProvideApi,
 	starApi.ProvideApi,
 	prefapi.ProvideK8sHandler,
+	annotationsapi.ProvideMigrationProxy,
 	starApi.ProvideK8sClients,
 	userimpl.ProvideService,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),

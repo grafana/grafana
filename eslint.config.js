@@ -500,7 +500,6 @@ module.exports = [
     name: 'grafana/decoupled-plugins-overrides',
     files: [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}',
       'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
@@ -513,7 +512,6 @@ module.exports = [
       'public/app/plugins/datasource/mssql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,

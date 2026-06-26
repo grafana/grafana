@@ -9,7 +9,6 @@ replace (
 
 	github.com/grafana/grafana/apps/advisor => ../advisor
 	github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
-	github.com/grafana/grafana/apps/alerting/historian => ../alerting/historian
 	github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
 	github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
 	github.com/grafana/grafana/apps/annotation => ../annotation
@@ -32,7 +31,6 @@ replace (
 	github.com/grafana/grafana/apps/shorturl => ../shorturl
 
 	// Packages
-	github.com/grafana/grafana/pkg/aggregator => ../../pkg/aggregator
 	github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 	github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
@@ -127,7 +125,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/dgraph-io/badger/v4 v4.9.1 // indirect
+	github.com/dgraph-io/badger/v4 v4.9.2 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
 	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
 	github.com/dlmiddlecote/sqlstats v1.0.2 // indirect
@@ -196,16 +194,16 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.16 // indirect
 	github.com/googleapis/gax-go/v2 v2.22.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20260616104851-587c401ed754 // indirect
-	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // indirect
-	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a // indirect
+	github.com/grafana/alerting v0.0.0-20260624092630-e3cde2289ada // indirect
+	github.com/grafana/alerting/apps/historian v0.0.0-20260624092630-e3cde2289ada // indirect
+	github.com/grafana/authlib v0.0.0-20260621220415-f6aaf60e82b2 // indirect
+	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3 // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.4 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.292.1 // indirect
 	github.com/grafana/grafana/apps/advisor v0.0.0 // indirect
-	github.com/grafana/grafana/apps/alerting/historian v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // indirect
 	github.com/grafana/grafana/apps/annotation v0.0.0 // indirect
