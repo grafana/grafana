@@ -2,7 +2,6 @@ package userimpl
 
 import (
 	"context"
-	"errors"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
@@ -90,12 +89,12 @@ func (s *Service) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery) (*use
 	ctxLogger := s.logger.FromContext(ctx)
 
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		usr, err := s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
-		if err == nil || !errors.Is(err, user.ErrUserNotFound) {
+		result, err := s.k8sService.GetByID(s.k8sCtxWithIdentity(ctx), cmd)
+		if err == nil {
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return usr, err
+			return result, nil
 		}
-		ctxLogger.Debug("user not found in unified storage, falling back to legacy", "method", "GetByID", "userID", cmd.ID)
+		ctxLogger.Warn("k8s GetByID failed, falling back to legacy", "userID", cmd.ID, "err", err)
 	}
 
 	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
@@ -111,12 +110,12 @@ func (s *Service) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*u
 	ctxLogger := s.logger.FromContext(ctx)
 
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		usr, err := s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
-		if err == nil || !errors.Is(err, user.ErrUserNotFound) {
+		result, err := s.k8sService.GetByUID(s.k8sCtxWithIdentity(ctx), cmd)
+		if err == nil {
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return usr, err
+			return result, nil
 		}
-		ctxLogger.Debug("user not found in unified storage, falling back to legacy", "method", "GetByUID", "userUID", cmd.UID)
+		ctxLogger.Warn("k8s GetByUID failed, falling back to legacy", "userUID", cmd.UID, "err", err)
 	}
 
 	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
@@ -183,12 +182,12 @@ func (s *Service) GetSignedInUser(ctx context.Context, cmd *user.GetSignedInUser
 			k8sCmd.OrgID = s.cfg.DefaultOrgID()
 		}
 
-		usr, err := s.k8sService.GetSignedInUser(s.k8sCtxWithIdentity(ctx), &k8sCmd)
-		if err == nil || !errors.Is(err, user.ErrUserNotFound) {
+		result, err := s.k8sService.GetSignedInUser(s.k8sCtxWithIdentity(ctx), &k8sCmd)
+		if err == nil {
 			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
-			return usr, err
+			return result, nil
 		}
-		ctxLogger.Debug("user not found in unified storage, falling back to legacy", "method", "GetSignedInUser", "userID", cmd.UserID)
+		ctxLogger.Warn("k8s GetSignedInUser failed, falling back to legacy", "userID", cmd.UserID, "err", err)
 	}
 
 	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
