@@ -37,7 +37,6 @@ export function useHomeWidgetCatalog({
   const core = getCoreWidgets({ assistantComponents, tabComponents })
     .filter((def) => def.isAvailable())
     .map((def): HomeWidgetCatalogEntry => {
-      const { Component } = def;
       return {
         id: def.id,
         title: def.title,
@@ -46,7 +45,7 @@ export function useHomeWidgetCatalog({
         source: 'core',
         defaultSize: def.defaultSize,
         minSize: def.minSize,
-        render: () => <Component />,
+        render: def.render,
       };
     });
 

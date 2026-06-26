@@ -1,4 +1,4 @@
-import { type ComponentType, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { type IconName } from '@grafana/data';
@@ -139,6 +139,6 @@ export interface CoreWidgetDef {
   minSize: { w: number; h: number };
   /** Synchronous availability gate (permission / config). */
   isAvailable: () => boolean;
-  /** Zero-prop component that renders its own HomeSection card. */
-  Component: ComponentType;
+  /** Renders its own HomeSection card. */
+  render: () => ReactNode;
 }

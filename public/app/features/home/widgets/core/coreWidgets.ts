@@ -1,4 +1,4 @@
-import { createElement, type ComponentProps } from 'react';
+import { createElement } from 'react';
 
 import { type ComponentTypeWithExtensionMeta } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -33,7 +33,7 @@ export function getCoreWidgets({
       defaultSize: { w: 12, h: 8 },
       minSize: { w: 8, h: 6 },
       isAvailable: () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead),
-      Component: FiringAlertsCard,
+      render: () => createElement(FiringAlertsCard),
     },
     {
       id: 'dashboards',
@@ -43,10 +43,7 @@ export function getCoreWidgets({
       defaultSize: { w: 24, h: 10 },
       minSize: { w: 12, h: 8 },
       isAvailable: () => true,
-      Component: function DashboardsWidgetWithExtensions() {
-        const props: ComponentProps<typeof DashboardsWidget> = { assistantComponents, tabComponents };
-        return createElement(DashboardsWidget, props);
-      },
+      render: () => createElement(DashboardsWidget, { assistantComponents, tabComponents }),
     },
   ];
 }

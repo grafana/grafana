@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
-import { act, render, screen, within } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type UserStorage } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -148,6 +148,39 @@ describe('HomePage', () => {
     // Firing alerts is addable; the already-placed Dashboards widget is filtered out of the drawer.
     expect(within(drawer).getByText('Firing alerts')).toBeInTheDocument();
     expect(within(drawer).queryByText('Dashboards')).not.toBeInTheDocument();
+  });
+
+  it('keeps the dashboards widget mounted when adding and removing other widgets', async () => {
+    storedLayout = JSON.stringify({ version: 1, items: [{ id: 'dashboards', x: 0, y: 0, w: 24, h: 10 }] });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    const { user } = render(<HomePage />);
+
+    await screen.findByRole('tab', { name: /starred/i, selected: true });
+    expect(screen.queryByTestId('dashboard-tabs-skeleton')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /customize/i }));
+    await user.click(screen.getByRole('button', { name: /add widget/i }));
+
+    const drawer = await screen.findByRole('dialog');
+    await user.click(within(drawer).getByRole('button', { name: /^add$/i }));
+    await waitFor(() =>
+      expect(setItemMock).toHaveBeenLastCalledWith('widget-layout', expect.stringContaining('"alerts"'))
+    );
+    await user.click(within(drawer).getByRole('button', { name: /close/i }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    expect(screen.getByText('Firing alerts')).toBeInTheDocument();
+    expect(screen.queryByTestId('dashboard-tabs-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+
+    const removeButtons = screen.getAllByRole('button', { name: /remove widget/i });
+    expect(removeButtons).toHaveLength(2);
+    await user.click(removeButtons[removeButtons.length - 1]);
+
+    await waitFor(() => expect(screen.queryByText('Firing alerts')).not.toBeInTheDocument());
+    expect(screen.queryByTestId('dashboard-tabs-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
   });
 
   it('shows the persona chooser on first run and seeds a layout when a persona is chosen', async () => {
