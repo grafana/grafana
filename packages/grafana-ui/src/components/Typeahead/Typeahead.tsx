@@ -218,19 +218,18 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
 
   constructor(props: React.PropsWithChildren<PortalProps>) {
     super(props);
-    const { index = 0, origin = 'query', style } = props;
+    const { index = 0, origin = 'query' } = props;
     this.node = document.createElement('div');
-    this.node.setAttribute('style', style);
     this.node.classList.add(`slate-typeahead-${origin}-${index}`);
+  }
+
+  componentDidMount() {
+    this.node.setAttribute('style', this.props.style);
     document.body.appendChild(this.node);
   }
 
   componentWillUnmount() {
-    try {
-      this.node.remove();
-    } catch (err) {
-      console.error('Failed to remove typeahead portal node from DOM', err);
-    }
+    this.node.remove();
   }
 
   render() {
