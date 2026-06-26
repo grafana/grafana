@@ -5773,11 +5773,6 @@
         "transparent-background": "Transparent background"
       }
     },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Extensions"
-      }
-    },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
       "description-obfuscate-data": "Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.",
@@ -10926,9 +10921,6 @@
     }
   },
   "library-panels": {
-    "add-library-panel-modal": {
-      "title-create-library-panel": "Create library panel"
-    },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
     },
@@ -12326,7 +12318,6 @@
     "header-menu": {
       "copy": "Copy",
       "copy-styles": "Copy styles",
-      "create-library-panel": "Create library panel",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
