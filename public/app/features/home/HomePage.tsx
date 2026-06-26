@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
@@ -17,8 +17,10 @@ import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
 import { AddWidgetDrawer } from './widgets/AddWidgetDrawer';
 import { PersonaPicker } from './widgets/PersonaPicker';
+import { WidgetFrame } from './widgets/WidgetFrame';
 import { WidgetGrid } from './widgets/WidgetGrid';
 import { usePanelWidgetEntries } from './widgets/panel/usePanelWidgetEntries';
+import { type WidgetLayoutItem } from './widgets/types';
 import { useHomeWidgetCatalog } from './widgets/useHomeWidgetCatalog';
 import { useWidgetLayout } from './widgets/useWidgetLayout';
 
@@ -33,6 +35,19 @@ const getEdition = () => {
 
   return t('home.home-page.edition.open-source', 'Grafana');
 };
+
+function normalizeGridItems(items: WidgetLayoutItem[]): WidgetLayoutItem[] {
+  if (items.length === 0) {
+    return items;
+  }
+
+  const minY = Math.min(...items.map((item) => item.y));
+  return minY > 0 ? items.map((item) => ({ ...item, y: item.y - minY })) : items;
+}
+
+function getGridItemHeight(rows: number): number {
+  return rows * GRID_CELL_HEIGHT + Math.max(0, rows - 1) * GRID_CELL_VMARGIN;
+}
 
 export default function HomePage() {
   const styles = useStyles2(getStyles);
@@ -61,15 +76,23 @@ export default function HomePage() {
   const panelEntries = usePanelWidgetEntries(items);
   const allEntries = [...entries, ...panelEntries];
   const loading = catalogLoading || layoutLoading || isLoadingAssistant || isLoadingExtra || isLoadingTabs;
+  const dashboardEntry = allEntries.find((entry) => entry.id === 'dashboards');
+  const fixedDashboardItem = dashboardEntry ? items.find((item) => item.id === dashboardEntry.id) : undefined;
+  const gridItems = normalizeGridItems(
+    fixedDashboardItem ? items.filter((item) => item.id !== fixedDashboardItem.id) : items
+  );
   // First run (no saved widgets) shows the persona chooser; "Start blank" enters edit mode with an empty grid.
   const showPersona = !loading && items.length === 0 && !editing;
+  const onGridChange = (nextItems: WidgetLayoutItem[]) => {
+    setPositions(fixedDashboardItem ? [fixedDashboardItem, ...nextItems] : nextItems);
+  };
 
   const extraContent = renderLimitedComponents({
     props: {},
     components: extraComponents,
     pluginId: SETUPGUIDE_PLUGIN_ID,
     wrapper: ({ children }) => (
-      <div className={styles.extra}>
+      <div className={styles.gridAlignedSection}>
         <HomeSection>{children}</HomeSection>
       </div>
     ),
@@ -118,13 +141,29 @@ export default function HomePage() {
                       </Button>
                     )}
                   </Stack>
-                  <WidgetGrid
-                    items={items}
-                    catalog={allEntries}
-                    editing={editing}
-                    onChange={setPositions}
-                    onRemove={removeWidget}
-                  />
+
+                  {fixedDashboardItem && dashboardEntry && (
+                    <div className={styles.gridAlignedSection} style={{ height: getGridItemHeight(fixedDashboardItem.h) }}>
+                      <WidgetFrame
+                        id={fixedDashboardItem.id}
+                        editing={editing}
+                        onRemove={removeWidget}
+                        showDragHandle={false}
+                      >
+                        {dashboardEntry.render()}
+                      </WidgetFrame>
+                    </div>
+                  )}
+
+                  {gridItems.length > 0 && (
+                    <WidgetGrid
+                      items={gridItems}
+                      catalog={allEntries}
+                      editing={editing}
+                      onChange={onGridChange}
+                      onRemove={removeWidget}
+                    />
+                  )}
                 </Stack>
               )}
 
@@ -147,8 +186,8 @@ export default function HomePage() {
 }
 
 const getStyles = () => ({
-  extra: css({
-    display: 'contents',
+  gridAlignedSection: css({
+    paddingInline: GRID_CELL_VMARGIN,
 
     '> div': {
       '&:empty': {
