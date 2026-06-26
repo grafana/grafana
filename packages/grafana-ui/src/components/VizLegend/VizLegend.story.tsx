@@ -53,12 +53,7 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
   return (
     <p style={{ marginBottom: '32px' }}>
       <h3 style={{ marginBottom: '32px' }}>{name}</h3>
-      <VizLegend
-        displayMode={displayMode}
-        items={items}
-        placement={placement}
-        overflow={overflow}
-      />
+      <VizLegend displayMode={displayMode} items={items} placement={placement} overflow={overflow} />
     </p>
   );
 };
