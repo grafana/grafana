@@ -943,15 +943,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "groupByVariable",
-			Description:  "Enable groupBy variable support in scenes dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "kubernetesAggregator",
 			Description:     "Enable grafana's embedded kube-aggregator",
 			Stage:           FeatureStageExperimental,
@@ -968,6 +959,15 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "groupByVariable",
+			Description:  "Enable groupBy variable support in scenes dashboards",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:            "scopeFilters",
@@ -1285,6 +1285,7 @@ var (
 			Expression:  "true", // Enabled by default for now
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
+
 		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
