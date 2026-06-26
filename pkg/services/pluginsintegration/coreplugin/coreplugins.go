@@ -46,7 +46,7 @@ const (
 	MSSQL         = "mssql"
 	Grafana       = "grafana"
 	Pyroscope     = "grafana-pyroscope-datasource"
-	Jaeger          = "jaeger"
+	Jaeger        = "jaeger"
 )
 
 func init() {
@@ -106,7 +106,7 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		MSSQL:        asBackendPlugin(ms),
 		Grafana:      asBackendPlugin(graf),
 		Pyroscope:    asBackendPlugin(pyroscope),
-		Jaeger:          asBackendPlugin(jaeger),
+		Jaeger:       asBackendPlugin(jaeger),
 	})
 }
 
