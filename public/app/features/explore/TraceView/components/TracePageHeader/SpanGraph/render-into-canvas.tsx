@@ -46,11 +46,11 @@ export default function renderIntoCanvas(
 ) {
   const colorCache: Map<string, [number, number, number]> = new Map();
   // A summary span weighs as much as the spans it represents (span_count), so the
-  // pruned trace keeps the unpruned density shape: total weight equals the original
-  // span count, and the summary occupies the vertical extent its spans would have.
-  // Fixed weight would only signal "a summary is here" and flatten that shape, which
-  // is what #1031's "shape preservation" mockup explicitly restores. A normal span
-  // weighs 1; a summary with no span_count falls back to 1.
+  // aggregated region keeps its vertical density extent instead of collapsing to one
+  // thin bar: total weight equals the original span count, and the summary occupies
+  // the vertical extent its spans would have. A fixed weight would only signal "a
+  // summary is here" and flatten that extent. A normal span weighs 1; a summary with
+  // no span_count falls back to 1.
   const weightOf = (item: SpanGraphItem) => (item.isSummary ? Math.max(item.spanCount ?? 0, 1) : 1);
   const totalWeight = items.reduce((sum, item) => sum + weightOf(item), 0);
   const cHeight = totalWeight < MIN_TOTAL_HEIGHT ? MIN_TOTAL_HEIGHT : Math.min(totalWeight, MAX_TOTAL_HEIGHT);
