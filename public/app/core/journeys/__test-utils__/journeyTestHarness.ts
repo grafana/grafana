@@ -23,7 +23,7 @@ export function simulateInteraction(name: string, properties: Record<string, unk
   }
 }
 
-export function createMockStepHandle(): jest.Mocked<StepHandle> {
+function createMockStepHandle(): jest.Mocked<StepHandle> {
   return { end: jest.fn() };
 }
 

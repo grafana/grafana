@@ -21,7 +21,7 @@ export function jitter(n: number): number {
   return Math.random() * n;
 }
 
-export function pickTypingPattern(): TypingPattern {
+function pickTypingPattern(): TypingPattern {
   const r = Math.random();
   if (r < 0.3) {
     return 'burst';
@@ -35,7 +35,7 @@ export function pickTypingPattern(): TypingPattern {
   return 'hunting';
 }
 
-export function pickActivationStyle(): ActivationStyle {
+function pickActivationStyle(): ActivationStyle {
   const r = Math.random();
   if (r < 0.4) {
     return 'mouse';
