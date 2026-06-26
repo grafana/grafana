@@ -92,7 +92,7 @@ preinstall_sync = elasticsearch
 
 ## Additional resources
 
-Once you have configured the Elasticsearch data source, you can:
+After you have configured the Elasticsearch data source, you can:
 
 - Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run ad hoc queries against your Elasticsearch data.
 - Configure and use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/) for dynamic dashboards.
