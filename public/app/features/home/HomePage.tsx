@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { GRID_CELL_VMARGIN, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { canViewFiringAlerts } from './AlertsIncidents/FiringAlertsCard';
@@ -43,10 +43,6 @@ function normalizeGridItems(items: WidgetLayoutItem[]): WidgetLayoutItem[] {
 
   const minY = Math.min(...items.map((item) => item.y));
   return minY > 0 ? items.map((item) => ({ ...item, y: item.y - minY })) : items;
-}
-
-function getGridItemHeight(rows: number): number {
-  return rows * GRID_CELL_HEIGHT + Math.max(0, rows - 1) * GRID_CELL_VMARGIN;
 }
 
 export default function HomePage() {
@@ -143,7 +139,7 @@ export default function HomePage() {
                   </Stack>
 
                   {fixedDashboardItem && dashboardEntry && (
-                    <div className={styles.gridAlignedSection} style={{ height: getGridItemHeight(fixedDashboardItem.h) }}>
+                    <div className={styles.gridAlignedSection}>
                       <WidgetFrame
                         id={fixedDashboardItem.id}
                         editing={editing}
