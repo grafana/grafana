@@ -9,6 +9,7 @@ import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carou
 
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
+import { PluginScorecardTab } from '../components/PluginScorecardTab';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { type CatalogPlugin, type Permission, PluginTabIds, type Screenshots } from '../types';
@@ -71,6 +72,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
 
   if (pageId === PluginTabIds.CHANGELOG && plugin?.details?.changelog) {
     return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
+  }
+
+  if (pageId === PluginTabIds.SCORECARD && config.featureToggles.pluginScorecard) {
+    return <PluginScorecardTab plugin={plugin} />;
   }
 
   if (pageId === PluginTabIds.SCREENSHOTS && plugin?.details?.screenshots?.length) {

@@ -79,9 +79,10 @@ type State = 'idle' | 'loading' | 'loaded' | 'nodata' | 'core';
 
 type Props = {
   plugin: CatalogPlugin;
+  showTooltip?: boolean;
 };
 
-export function PluginScorecard({ plugin }: Props): React.ReactElement | null {
+export function PluginScorecard({ plugin, showTooltip = true }: Props): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const dispatch = useDispatch();
@@ -90,13 +91,8 @@ export function PluginScorecard({ plugin }: Props): React.ReactElement | null {
   const insights: CatalogPluginInsights | undefined = plugin.insights;
 
   useEffect(() => {
-    if (plugin.isCore) {
-      setState('core');
-      hasFetched.current = true;
-      return;
-    }
     if (insights) {
-      setState(hasValidData(insights) ? 'loaded' : 'nodata');
+      setState(hasValidData(insights) ? 'loaded' : plugin.isCore ? 'core' : 'nodata');
       return;
     }
     if (hasFetched.current) {
@@ -104,23 +100,26 @@ export function PluginScorecard({ plugin }: Props): React.ReactElement | null {
     }
     const version = plugin.installedVersion ?? plugin.latestVersion;
     if (!version) {
-      setState('nodata');
+      setState(plugin.isCore ? 'core' : 'nodata');
       hasFetched.current = true;
       return;
     }
     hasFetched.current = true;
     setState('loading');
-    dispatch(fetchPluginInsights({ id: plugin.id, version })).then(() => {
-      // insights will update via Redux — the effect above will fire
+    dispatch(fetchPluginInsights({ id: plugin.id, version })).then((action: { type?: string }) => {
+      if (fetchPluginInsights.rejected.match(action)) {
+        setState(plugin.isCore ? 'core' : 'nodata');
+      }
+      // on success: insights update via Redux triggers the second effect
     });
-  }, [plugin.id]); // eslint-disable-line
+  }, [plugin.id, plugin.isCore]); // eslint-disable-line
 
   useEffect(() => {
     if (!insights) {
       return;
     }
-    setState(hasValidData(insights) ? 'loaded' : 'nodata');
-  }, [insights]);
+    setState(hasValidData(insights) ? 'loaded' : plugin.isCore ? 'core' : 'nodata');
+  }, [insights, plugin.isCore]);
 
   const trackColor = theme.colors.border.medium;
 
@@ -165,7 +164,7 @@ export function PluginScorecard({ plugin }: Props): React.ReactElement | null {
           ))}
         </svg>
       </div>
-    );
+    ); // end badge
   }
 
   if (state === 'nodata') {
@@ -290,110 +289,133 @@ export function PluginScorecard({ plugin }: Props): React.ReactElement | null {
   const scoreX = CX + CX * 0.5;
   const scoreY = CY + CY * 0.5;
 
-  return (
-    <Tooltip
-      content={
-        <div className={styles.tooltip}>
-          <div className={styles.tooltipHeader}>
-            <span className={styles.tooltipOverallLabel}>
-              {t('plugins.plugin-scorecard.tooltip-scorecard', 'Scorecard')}
-            </span>
+  const tooltipContent = (
+    <div className={styles.tooltip}>
+      <div className={styles.tooltipHeader}>
+        <span className={styles.tooltipOverallLabel}>
+          {t('plugins.plugin-scorecard.tooltip-scorecard', 'Scorecard')}
+        </span>
+        <span className={styles.tooltipRight}>
+          <span className={styles.tooltipTotal} style={{ color: totalColor }}>
+            {total}
+          </span>
+          <span className={styles.tooltipTotalLabel}>{t('plugins.plugin-scorecard.out-of', '/ 100')}</span>
+        </span>
+      </div>
+      <div className={styles.tooltipDivider} />
+      {RINGS.map(({ key }) => {
+        const level = levelMap[key] ?? '';
+        const count = countMap[key] ?? 0;
+        const dotColor = scoreColor(level, theme);
+        return (
+          <div key={key} className={styles.tooltipRow}>
+            <span className={styles.tooltipDot} style={{ background: dotColor }} />
+            <span className={styles.tooltipLabel}>{key}</span>
             <span className={styles.tooltipRight}>
-              <span className={styles.tooltipTotal} style={{ color: totalColor }}>
-                {total}
-              </span>
-              <span className={styles.tooltipTotalLabel}>{t('plugins.plugin-scorecard.out-of', '/ 100')}</span>
+              {count > 1 && <span className={styles.tooltipBadge}>⚠ {count}</span>}
+              <span className={styles.tooltipScore}>{level || '—'}</span>
             </span>
           </div>
-          <div className={styles.tooltipDivider} />
+        );
+      })}
+    </div>
+  );
+
+  const badge = (
+    <div aria-label={t('plugins.plugin-scorecard.aria-label', 'Plugin scorecard')}>
+      <svg width={SIZE} height={SIZE}>
+        <defs>
+          <filter id="arc-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="text-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        {RINGS.map(({ key, r }) => {
+          const score = scoreMap[key] ?? 0;
+          const level = levelMap[key] ?? '';
+          const fillColor = scoreColor(level, theme);
+          const totalLen = arcLength(r, ARC_SWEEP);
+          const fillLen = (score / 100) * totalLen;
+          return (
+            <g key={key}>
+              <path
+                d={arcPath(CX, CY, r, ARC_START, ARC_SWEEP)}
+                fill="none"
+                stroke={trackColor}
+                strokeWidth={STROKE}
+                strokeLinecap="round"
+              />
+              <path
+                d={arcPath(CX, CY, r, ARC_START, ARC_SWEEP)}
+                fill="none"
+                stroke={fillColor}
+                strokeWidth={STROKE}
+                strokeLinecap="round"
+                strokeDasharray={`${fillLen} ${totalLen}`}
+                filter="url(#arc-glow)"
+              />
+            </g>
+          );
+        })}
+        <text
+          x={scoreX}
+          y={scoreY + SIZE * 0.06}
+          textAnchor="middle"
+          dominantBaseline="auto"
+          fontSize={SCORE_FONT_SIZE}
+          fontWeight="bold"
+          fill={totalColor}
+          filter="url(#text-glow)"
+        >
+          {total}
+        </text>
+        <text
+          x={scoreX}
+          y={scoreY + SIZE * 0.14}
+          textAnchor="middle"
+          dominantBaseline="hanging"
+          fontSize={UNIT_FONT_SIZE}
+          fill={theme.colors.text.disabled}
+        >
+          {t('plugins.plugin-scorecard.out-of', '/ 100')}
+        </text>
+      </svg>
+    </div>
+  );
+
+  if (!showTooltip) {
+    return (
+      <div className={styles.legendWrap}>
+        {badge}
+        <div className={styles.legendItems}>
           {RINGS.map(({ key }) => {
             const level = levelMap[key] ?? '';
-            const count = countMap[key] ?? 0;
             const dotColor = scoreColor(level, theme);
             return (
-              <div key={key} className={styles.tooltipRow}>
+              <div key={key} className={styles.legendRow}>
                 <span className={styles.tooltipDot} style={{ background: dotColor }} />
-                <span className={styles.tooltipLabel}>{key}</span>
-                <span className={styles.tooltipRight}>
-                  {count > 1 && <span className={styles.tooltipBadge}>⚠ {count}</span>}
-                  <span className={styles.tooltipScore}>{level || '—'}</span>
-                </span>
+                <span className={styles.legendLabel}>{key}</span>
               </div>
             );
           })}
         </div>
-      }
-      placement="top"
-    >
-      <div aria-label={t('plugins.plugin-scorecard.aria-label', 'Plugin scorecard')}>
-        <svg width={SIZE} height={SIZE}>
-          <defs>
-            <filter id="arc-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id="text-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-          {RINGS.map(({ key, r }) => {
-            const score = scoreMap[key] ?? 0;
-            const level = levelMap[key] ?? '';
-            const fillColor = scoreColor(level, theme);
-            const totalLen = arcLength(r, ARC_SWEEP);
-            const fillLen = (score / 100) * totalLen;
-            return (
-              <g key={key}>
-                <path
-                  d={arcPath(CX, CY, r, ARC_START, ARC_SWEEP)}
-                  fill="none"
-                  stroke={trackColor}
-                  strokeWidth={STROKE}
-                  strokeLinecap="round"
-                />
-                <path
-                  d={arcPath(CX, CY, r, ARC_START, ARC_SWEEP)}
-                  fill="none"
-                  stroke={fillColor}
-                  strokeWidth={STROKE}
-                  strokeLinecap="round"
-                  strokeDasharray={`${fillLen} ${totalLen}`}
-                  filter="url(#arc-glow)"
-                />
-              </g>
-            );
-          })}
-          <text
-            x={scoreX}
-            y={scoreY + SIZE * 0.06}
-            textAnchor="middle"
-            dominantBaseline="auto"
-            fontSize={SCORE_FONT_SIZE}
-            fontWeight="bold"
-            fill={totalColor}
-            filter="url(#text-glow)"
-          >
-            {total}
-          </text>
-          <text
-            x={scoreX}
-            y={scoreY + SIZE * 0.14}
-            textAnchor="middle"
-            dominantBaseline="hanging"
-            fontSize={UNIT_FONT_SIZE}
-            fill={theme.colors.text.disabled}
-          >
-            {t('plugins.plugin-scorecard.out-of', '/ 100')}
-          </text>
-        </svg>
       </div>
+    );
+  }
+
+  return (
+    <Tooltip content={tooltipContent} placement="top">
+      {badge}
     </Tooltip>
   );
 }
@@ -475,5 +497,26 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.size.xs,
     lineHeight: 1,
     padding: `${theme.spacing(0.25)} ${theme.spacing(0.5)}`,
+  }),
+  legendWrap: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1.5),
+  }),
+  legendItems: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+  }),
+  legendRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+  }),
+  legendLabel: css({
+    textTransform: 'capitalize',
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.sm,
   }),
 });

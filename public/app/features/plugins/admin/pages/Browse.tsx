@@ -34,7 +34,8 @@ export default function Browse() {
   const keyword = locationSearch.q?.toString() || '';
   const filterBy = locationSearch.filterBy?.toString() || 'all';
   const filterByType = (locationSearch.filterByType as PluginType | 'all') || 'all';
-  const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
+  const sortBy =
+    (locationSearch.sortBy as Sorters) || (config.featureToggles.pluginScorecard ? Sorters.scorecard : Sorters.nameAsc);
   const { isLoading, error, plugins } = useGetAll(
     {
       keyword,

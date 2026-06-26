@@ -334,7 +334,7 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   };
 
   if (sorters[sortBy]) {
-    return plugins.sort(sorters[sortBy]);
+    return [...plugins].sort(sorters[sortBy]);
   }
 
   return plugins;

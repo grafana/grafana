@@ -20,9 +20,9 @@ import {
 } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
 
-import { type CatalogPlugin } from '../types';
+import { type CatalogPlugin, PluginTabIds } from '../types';
 
-import { PluginInsights } from './PluginInsights';
+import { PluginScorecard } from './PluginScorecard';
 
 type Props = { pluginExtentionsInfo: PageInfoItem[]; plugin: CatalogPlugin; width?: string };
 
@@ -71,11 +71,17 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   return (
     <>
       <Stack direction="column" gap={3} shrink={0} grow={0} width={width} data-testid="plugin-details-panel">
-        {config.featureToggles.pluginScorecard && plugin.insights && plugin.insights?.insights?.length > 0 && (
-          <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
-            <PluginInsights pluginInsights={plugin.insights} />
-          </Box>
-        )}
+        {config.featureToggles.pluginScorecard &&
+          !(plugin.isCore && !plugin.insights?.insights?.some((d) => d.scoreValue > 0)) && (
+            <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
+              <Stack direction="column" alignItems="center" gap={1}>
+                <PluginScorecard plugin={plugin} showTooltip={false} />
+                <TextLink href={`?page=${PluginTabIds.SCORECARD}`}>
+                  <Trans i18nKey="plugins.details.labels.viewScorecard">View full Scorecard</Trans>
+                </TextLink>
+              </Stack>
+            </Box>
+          )}
         <Box borderRadius="lg" padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             {pluginExtentionsInfo.map((infoItem, index) => {

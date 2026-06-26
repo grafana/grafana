@@ -64,6 +64,17 @@ export const usePluginDetailsTabs = (
       });
     }
 
+    const hasScorecardData = plugin?.insights?.insights?.some((d) => d.scoreValue > 0);
+    if (config.featureToggles.pluginScorecard && isPublished && (!plugin?.isCore || hasScorecardData)) {
+      navModelChildren.push({
+        text: PluginTabLabels.SCORECARD,
+        id: PluginTabIds.SCORECARD,
+        icon: 'shield',
+        url: `${pathname}?page=${PluginTabIds.SCORECARD}`,
+        active: PluginTabIds.SCORECARD === currentPageId,
+      });
+    }
+
     if (isPublished && plugin?.details?.screenshots?.length) {
       navModelChildren.push({
         text: PluginTabLabels.SCREENSHOTS,

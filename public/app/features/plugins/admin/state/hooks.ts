@@ -34,7 +34,7 @@ export const useGetAll = (filters: PluginFilters, sortBy: Sorters = Sorters.name
   // As the locally installed plugins load quicker than the remote ones, we only show a loading state until these are being loaded
   // (In case the remote ones are not loaded within a reasonable timeout, we will merge those with the locally installed plugins once they are loaded)
   const { isLoading, error } = useLocalFetchStatus();
-  const sortedPlugins = sortPlugins(plugins, sortBy);
+  const sortedPlugins = useMemo(() => sortPlugins(plugins, sortBy), [plugins, sortBy]);
 
   return {
     isLoading,
