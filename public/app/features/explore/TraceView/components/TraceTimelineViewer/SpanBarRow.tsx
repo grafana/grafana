@@ -336,7 +336,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       fontSize: '0.85em',
       fontWeight: 500,
       lineHeight: 1.4,
-      marginRight: '0.25rem',
+      marginInline: '0.25rem',
       padding: '0 6px',
       verticalAlign: 'middle',
     }),
