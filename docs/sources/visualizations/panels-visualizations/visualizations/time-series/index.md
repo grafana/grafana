@@ -54,7 +54,7 @@ Time series visualizations are the default way to show the variations of a set o
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-time-series-v12.0.png" max-width="750px" alt="Time series visualization" >}}
 
 {{< admonition type="note" >}}
-When you open a dashboard with a legacy Graph visualization, Grafana migrates it automatically to Time series or another supported visualization based on the old panel settings.
+When you open a dashboard with a legacy Graph visualization, Grafana migrates it automatically to time series or another supported visualization based on the old panel settings.
 {{< /admonition >}}
 
 A time series visualization displays an x-y graph with time progression on the x-axis and the magnitude of the values on the y-axis. This visualization is ideal for displaying large numbers of timed data points that would be hard to track in a table or list.
@@ -198,7 +198,8 @@ Toggle the **Series visibility** switch on to add the control next to or above t
 This lets you narrow the visible series by name or by label.
 Use the series visibility filter when a panel renders many series and you want to focus on a subset without editing the query.
 
-After you've toggled the switch on, click the **Series visibility** icon to open a tooltip with one or two sections depending on your dataset:
+After you've toggled the switch on, click the **Series visibility** icon to open a tooltip.
+Depending on your dataset, you can filter:
 
 - **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
 - **By labels**: Lists each label key with its values. Select label values to filter series that match.

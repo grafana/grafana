@@ -609,3 +609,21 @@ The following image shows the "Info" field with the styling from the "Style" fie
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+#### Apply overrides to nested table fields
+
+{{< admonition type="note" >}}
+The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+
+To use these features, enable the `groupToNestedTableV2` and `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
+{{< /admonition >}}
+
+By default, field overrides apply only to columns in the parent table.
+To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
+
+All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-w-overrides-v13.1.png" max-width="650px" alt="Nested table with a threshold override applied to a column inside an expanded sub-table" >}}
+
