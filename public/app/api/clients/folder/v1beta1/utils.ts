@@ -62,8 +62,11 @@ export const getParsedCounts = (counts: ResourceStats[]): Record<string, number>
     const name = normalizeResourceName(resource);
 
     if (result[name] === undefined) {
+      // By default, we just take the first value we see for given resource
       result[name] = count;
     } else if ((group !== 'sql-fallback' && count !== 0) || result[name] === 0) {
+      // non-sql-fallback values that are not 0 will override the sql-fallback values.
+      // Existing 0 values will get overridden by anything. 0 value is treated as a missing value.
       result[name] = count;
     }
   }
