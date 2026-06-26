@@ -3107,9 +3107,15 @@
       "view-as": "View as"
     },
     "rules-view-mode-selector": {
-      "grouped": "Grouped",
-      "list": "List",
-      "state": "State"
+      "legacy-view-options": {
+        "grouped": "Grouped",
+        "list": "List",
+        "state": "State"
+      },
+      "view-options": {
+        "grouped": "Grouped",
+        "list": "List"
+      }
     },
     "rules-filter-sidebar": {
       "clear-filters": "Clear filters"

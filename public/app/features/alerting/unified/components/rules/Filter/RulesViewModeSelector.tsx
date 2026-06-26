@@ -28,8 +28,8 @@ interface RulesViewModeSelectorV2Props {
 function RulesViewModeSelectorV2({ viewMode, onViewModeChange }: RulesViewModeSelectorV2Props) {
   const viewOptions = useMemo(
     (): Array<SelectableValue<SupportedView>> => [
-      { icon: 'folder', value: 'grouped', label: t('alerting.rules-view-mode-selector.grouped', 'Grouped') },
-      { icon: 'list-ul', value: 'list', label: t('alerting.rules-view-mode-selector.list', 'List') },
+      { icon: 'folder', value: 'grouped', label: t('alerting.rules-view-mode-selector.view-options.grouped', 'Grouped') },
+      { icon: 'list-ul', value: 'list', label: t('alerting.rules-view-mode-selector.view-options.list', 'List') },
     ],
     []
   );
@@ -78,9 +78,9 @@ export function useListViewMode() {
 function RulesViewModeSelectorV1() {
   const legacyViewOptions = useMemo(
     (): Array<SelectableValue<LegacySupportedView>> => [
-      { label: t('alerting.rules-view-mode-selector.grouped', 'Grouped'), value: 'grouped' },
-      { label: t('alerting.rules-view-mode-selector.list', 'List'), value: 'list' },
-      { label: t('alerting.rules-view-mode-selector.state', 'State'), value: 'state' },
+      { label: t('alerting.rules-view-mode-selector.legacy-view-options.grouped', 'Grouped'), value: 'grouped' },
+      { label: t('alerting.rules-view-mode-selector.legacy-view-options.list', 'List'), value: 'list' },
+      { label: t('alerting.rules-view-mode-selector.legacy-view-options.state', 'State'), value: 'state' },
     ],
     []
   );
