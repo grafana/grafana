@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -699,6 +700,89 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			assert.Len(t, revokedTokens, 1)
 
 			getTime = time.Now
+		})
+	})
+
+	t.Run("LookupToken with a recently rotated previous token", func(t *testing.T) {
+		// setup creates a token, rotates it (so the initial token becomes the previous
+		// token) and marks the new current token as seen, all within UrgentRotateTime of
+		// the rotation. On return getTime sits at the moment of rotation.
+		setup := func(t *testing.T, c *testContext) (prevUnhashed string, id, rotatedAt int64) {
+			t.Helper()
+			getTime = func() time.Time { return now }
+			initial, err := c.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
+				User:      usr,
+				ClientIP:  net.ParseIP("192.168.10.11"),
+				UserAgent: "agent",
+			})
+			require.NoError(t, err)
+
+			// Advance past SkipRotationTime so RotateToken actually rotates instead of skipping
+			getTime = func() time.Time { return now.Add(SkipRotationTime + time.Second) }
+			current, err := c.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: initial.UnhashedToken})
+			require.NoError(t, err)
+
+			// Mark the new token as seen
+			_, err = c.tokenService.LookupToken(context.Background(), current.UnhashedToken)
+			require.NoError(t, err)
+
+			return initial.UnhashedToken, current.Id, now.Add(SkipRotationTime + time.Second).Unix()
+		}
+
+		t.Run("is not flagged for rotation when grace period is enabled", func(t *testing.T) {
+			c := createTestContext(t)
+			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
+			rotationInterval := time.Duration(c.cfg.TokenRotationIntervalMinutes) * time.Minute
+			prevUnhashed, id, rotatedAt := setup(t, c)
+
+			got, err := c.tokenService.LookupToken(context.Background(), prevUnhashed)
+			require.NoError(t, err)
+
+			// Evaluated less than UrgentRotateTime time after the rotation, the token must not need rotation.
+			evalAt := time.Unix(rotatedAt, 0).Add(usertoken.UrgentRotateTime / 2)
+			assert.False(t, got.NeedsRotationAt(evalAt, rotationInterval), "token within grace period must not need rotation")
+			assert.True(t, got.AuthTokenSeen)
+			assert.Equal(t, rotatedAt, got.RotatedAt)
+
+			model, err := c.getAuthTokenByID(id)
+			require.NoError(t, err)
+			assert.True(t, model.AuthTokenSeen)
+			assert.Equal(t, rotatedAt, model.RotatedAt)
+		})
+
+		t.Run("is flagged for urgent rotation when grace period is disabled", func(t *testing.T) {
+			c := createTestContext(t)
+			rotationInterval := time.Duration(c.cfg.TokenRotationIntervalMinutes) * time.Minute
+			prevUnhashed, id, rotatedAt := setup(t, c)
+
+			got, err := c.tokenService.LookupToken(context.Background(), prevUnhashed)
+			require.NoError(t, err)
+
+			// Legacy behaviour: the returned token is backdated and unseen, so it needs
+			// urgent rotation, even though the DB record was never changed.
+			evalAt := time.Unix(rotatedAt, 0).Add(usertoken.UrgentRotateTime / 2)
+			assert.True(t, got.NeedsRotationAt(evalAt, rotationInterval), "legacy behaviour flags the token for urgent rotation")
+			assert.False(t, got.AuthTokenSeen)
+			assert.Less(t, got.RotatedAt, rotatedAt)
+
+			model, err := c.getAuthTokenByID(id)
+			require.NoError(t, err)
+			assert.True(t, model.AuthTokenSeen)
+			assert.Equal(t, rotatedAt, model.RotatedAt)
+		})
+
+		t.Run("still triggers re-rotation past the grace period when enabled", func(t *testing.T) {
+			c := createTestContext(t)
+			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
+			rotationInterval := time.Duration(c.cfg.TokenRotationIntervalMinutes) * time.Minute
+			prevUnhashed, _, rotatedAt := setup(t, c)
+
+			getTime = func() time.Time { return time.Unix(rotatedAt, 0).Add(2 * usertoken.UrgentRotateTime) }
+			got, err := c.tokenService.LookupToken(context.Background(), prevUnhashed)
+			require.NoError(t, err)
+
+			assert.False(t, got.AuthTokenSeen)
+			assert.True(t, got.NeedsRotationAt(getTime().Add(time.Second), rotationInterval))
 		})
 	})
 
