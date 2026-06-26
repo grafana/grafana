@@ -107,11 +107,6 @@ function useSubscribeToEmbeddedUrlState(onStateChange: ((state: string) => void)
   }, [model, onStateChange]);
 }
 
-/**
- * Drives the embedded dashboard's time range from a controlled `timeRange` prop.
- * `onTimeRangeChange` handles the raw -> string conversion and re-evaluation internally,
- * mirroring what the dashboard's own time picker does, so this never remounts the scene.
- */
 function useControlledTimeRange(timeRange: TimeRange | undefined, model: DashboardScene, isActive: boolean) {
   useEffect(() => {
     if (!isActive || !timeRange) {
@@ -122,11 +117,6 @@ function useControlledTimeRange(timeRange: TimeRange | undefined, model: Dashboa
   }, [timeRange, model, isActive]);
 }
 
-/**
- * Triggers a data refresh whenever `refreshToken` changes, re-running queries and
- * re-evaluating relative time ranges. The initial token value is ignored so we don't
- * double-run queries on mount.
- */
 function useControlledRefresh(refreshToken: string | number | undefined, model: DashboardScene, isActive: boolean) {
   const lastToken = useRef(refreshToken);
 
