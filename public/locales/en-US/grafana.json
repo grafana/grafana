@@ -10737,17 +10737,22 @@
       "view-schedules": "View schedules"
     },
     "presets": {
-      "analytics": {
-        "description": "Your dashboards",
-        "title": "Business analytics"
+      "dashboards": {
+        "description": "Your recent, most-used and starred dashboards",
+        "title": "Dashboards"
       },
-      "default": {
-        "description": "Dashboards and firing alerts",
-        "title": "Default"
+      "incident-response": {
+        "description": "Active incidents, on-call shifts, SLOs and alerts",
+        "title": "Incident response"
       },
-      "sre": {
-        "description": "Alerts, incidents, on-call and dashboards",
-        "title": "SRE"
+      "included-widgets": "Includes {{widgets}}",
+      "infrastructure-monitoring": {
+        "description": "Kubernetes, hosted metrics, logs, alerts and dashboards",
+        "title": "Infrastructure monitoring"
+      },
+      "service-reliability": {
+        "description": "SLOs, alerts, telemetry and dashboards",
+        "title": "Service reliability"
       },
       "start-blank": "Start blank",
       "subtitle": "Choose a starting point for your homepage. You can customize it later.",
@@ -10819,7 +10824,6 @@
         "description": "Overview of clusters monitored by the Kubernetes app",
         "title": "Kubernetes Monitoring"
       },
-      "loading": "Loading your homepage…",
       "oncall": {
         "description": "Who is on call right now",
         "title": "On-call shifts"

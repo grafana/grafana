@@ -93,18 +93,6 @@ export function SummaryCardAge({ date }: { date: Date | number }) {
   );
 }
 
-/** Right-aligned secondary text cell (e.g. a schedule name), shared with SummaryCardAge's column. */
-export function SummaryCardMeta({ children }: { children: string }) {
-  const styles = useStyles2(getStyles);
-  return (
-    <span className={styles.age}>
-      <Text color="secondary" variant="bodySmall" truncate>
-        {children}
-      </Text>
-    </span>
-  );
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',

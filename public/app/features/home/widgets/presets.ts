@@ -15,25 +15,35 @@ export interface HomePreset {
 export function getHomePresets(): HomePreset[] {
   return [
     {
-      id: 'sre',
-      title: t('home.presets.sre.title', 'SRE'),
-      description: t('home.presets.sre.description', 'Alerts, incidents, on-call and dashboards'),
+      id: 'incident-response',
+      title: t('home.presets.incident-response.title', 'Incident response'),
+      description: t('home.presets.incident-response.description', 'Active incidents, on-call shifts, SLOs and alerts'),
       icon: 'bell',
-      widgetIds: ['alerts', 'incidents', 'oncall', 'dashboards'],
+      widgetIds: ['alerts', 'incidents', 'oncall', 'slos', 'dashboards'],
     },
     {
-      id: 'analytics',
-      title: t('home.presets.analytics.title', 'Business analytics'),
-      description: t('home.presets.analytics.description', 'Your dashboards'),
-      icon: 'chart-line',
-      widgetIds: ['dashboards'],
+      id: 'infrastructure-monitoring',
+      title: t('home.presets.infrastructure-monitoring.title', 'Infrastructure monitoring'),
+      description: t(
+        'home.presets.infrastructure-monitoring.description',
+        'Kubernetes, hosted metrics, logs, alerts and dashboards'
+      ),
+      icon: 'kubernetes',
+      widgetIds: ['kubernetes', 'hosted-metrics', 'hosted-logs', 'alerts', 'dashboards'],
     },
     {
-      id: 'default',
-      title: t('home.presets.default.title', 'Default'),
-      description: t('home.presets.default.description', 'Dashboards and firing alerts'),
+      id: 'service-reliability',
+      title: t('home.presets.service-reliability.title', 'Service reliability'),
+      description: t('home.presets.service-reliability.description', 'SLOs, alerts, telemetry and dashboards'),
+      icon: 'heart-rate',
+      widgetIds: ['slos', 'alerts', 'hosted-metrics', 'hosted-logs', 'dashboards'],
+    },
+    {
+      id: 'dashboards',
+      title: t('home.presets.dashboards.title', 'Dashboards'),
+      description: t('home.presets.dashboards.description', 'Your recent, most-used and starred dashboards'),
       icon: 'apps',
-      widgetIds: ['dashboards', 'alerts'],
+      widgetIds: ['dashboards'],
     },
   ];
 }

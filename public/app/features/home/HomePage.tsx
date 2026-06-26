@@ -113,6 +113,7 @@ export default function HomePage() {
             <Stack direction="column" gap={2}>
               {showPersona ? (
                 <PersonaPicker
+                  catalog={entries}
                   onApply={(widgetIds) => applyPreset(widgetIds, entries)}
                   onStartBlank={() => {
                     setEditing(true);
