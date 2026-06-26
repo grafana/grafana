@@ -69,13 +69,17 @@ function overallScore(insights: CatalogPluginInsights): number {
   return Math.round(dims.reduce((sum, d) => sum + d.scoreValue, 0) / dims.length);
 }
 
+function scorecardConditionReason(insights: CatalogPluginInsights): string | undefined {
+  return insights.conditions?.find((c) => c.type === 'Ready')?.reason;
+}
+
 function hasValidData(insights: CatalogPluginInsights): boolean {
   return Boolean(
     insights.insights?.some((d) => typeof d.scoreValue === 'number' && !isNaN(d.scoreValue) && d.scoreValue > 0)
   );
 }
 
-type State = 'idle' | 'loading' | 'loaded' | 'nodata' | 'core';
+type State = 'unknown' | 'fetching' | 'scanned' | 'unavailable' | 'corePlugin' | 'scanning';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -87,12 +91,19 @@ export function PluginScorecard({ plugin, showTooltip = true }: Props): React.Re
   const theme = useTheme2();
   const dispatch = useDispatch();
   const hasFetched = useRef(false);
-  const [state, setState] = useState<State>('idle');
+  const [state, setState] = useState<State>('unknown');
   const insights: CatalogPluginInsights | undefined = plugin.insights;
 
   useEffect(() => {
     if (insights) {
-      setState(hasValidData(insights) ? 'loaded' : plugin.isCore ? 'core' : 'nodata');
+      const reason = scorecardConditionReason(insights);
+      if (reason === 'ScorecardScanning') {
+        setState('scanning');
+      } else if (reason === 'ScorecardUnavailable') {
+        setState(plugin.isCore ? 'corePlugin' : 'unavailable');
+      } else {
+        setState(hasValidData(insights) ? 'scanned' : plugin.isCore ? 'corePlugin' : 'unavailable');
+      }
       return;
     }
     if (hasFetched.current) {
@@ -100,15 +111,15 @@ export function PluginScorecard({ plugin, showTooltip = true }: Props): React.Re
     }
     const version = plugin.installedVersion ?? plugin.latestVersion;
     if (!version) {
-      setState(plugin.isCore ? 'core' : 'nodata');
+      setState(plugin.isCore ? 'corePlugin' : 'unavailable');
       hasFetched.current = true;
       return;
     }
     hasFetched.current = true;
-    setState('loading');
+    setState('fetching');
     dispatch(fetchPluginInsights({ id: plugin.id, version })).then((action: { type?: string }) => {
       if (fetchPluginInsights.rejected.match(action)) {
-        setState(plugin.isCore ? 'core' : 'nodata');
+        setState(plugin.isCore ? 'corePlugin' : 'unavailable');
       }
       // on success: insights update via Redux triggers the second effect
     });
@@ -118,12 +129,40 @@ export function PluginScorecard({ plugin, showTooltip = true }: Props): React.Re
     if (!insights) {
       return;
     }
-    setState(hasValidData(insights) ? 'loaded' : plugin.isCore ? 'core' : 'nodata');
+    const reason = scorecardConditionReason(insights);
+    if (reason === 'ScorecardScanning') {
+      setState('scanning');
+    } else if (reason === 'ScorecardUnavailable') {
+      setState(plugin.isCore ? 'corePlugin' : 'unavailable');
+    } else if (reason === 'ScorecardScanned' && !hasValidData(insights)) {
+      // Scan completed server-side but our local Redux state has a stale empty response.
+      // Reset hasFetched so the next effect run triggers a fresh fetch.
+      hasFetched.current = false;
+      setState('unknown');
+    } else {
+      setState(hasValidData(insights) ? 'scanned' : plugin.isCore ? 'corePlugin' : 'unavailable');
+    }
   }, [insights, plugin.isCore]);
+
+  // Poll every 30s while scanning — backend scan takes 60-90s.
+  // Stops automatically when insights arrive with Ready=True condition.
+  useEffect(() => {
+    if (state !== 'scanning') {
+      return;
+    }
+    const version = (plugin.installedVersion || plugin.latestVersion || '').trim();
+    if (!version) {
+      return;
+    }
+    const id = setTimeout(() => {
+      dispatch(fetchPluginInsights({ id: plugin.id, version }));
+    }, 5000);
+    return () => clearTimeout(id);
+  }, [state, plugin.id, plugin.installedVersion, plugin.latestVersion, dispatch]); // eslint-disable-line
 
   const trackColor = theme.colors.border.medium;
 
-  if (state === 'loading') {
+  if (state === 'fetching' || state === 'scanning') {
     return (
       <div
         className={styles.loading}
@@ -167,7 +206,7 @@ export function PluginScorecard({ plugin, showTooltip = true }: Props): React.Re
     ); // end badge
   }
 
-  if (state === 'nodata') {
+  if (state === 'unavailable') {
     // Gradient runs from arc start (6 o'clock = bottom) to arc end (3 o'clock = right)
     const gradStart = { x: CX + 0, y: CY + RINGS[0].r }; // 90° = bottom
     const gradEnd = { x: CX + RINGS[0].r, y: CY + 0 }; // 0° = right
@@ -218,7 +257,7 @@ export function PluginScorecard({ plugin, showTooltip = true }: Props): React.Re
     );
   }
 
-  if (state === 'core') {
+  if (state === 'corePlugin') {
     const scoreX = CX + CX * 0.5;
     const scoreY = CY + CY * 0.5;
     const logoSize = SIZE * 0.38;
@@ -270,7 +309,7 @@ export function PluginScorecard({ plugin, showTooltip = true }: Props): React.Re
     );
   }
 
-  if (state !== 'loaded' || !insights) {
+  if (state !== 'scanned' || !insights) {
     return null;
   }
 

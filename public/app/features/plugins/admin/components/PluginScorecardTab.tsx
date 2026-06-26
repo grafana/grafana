@@ -48,7 +48,19 @@ export function PluginScorecardTab({ plugin }: Props): React.ReactElement {
   const theme = useTheme2();
   const insights = plugin.insights;
 
-  if (!insights?.insights?.length) {
+  const readyCondition = insights?.conditions?.find((c) => c.type === 'Ready');
+
+  if (readyCondition?.reason === 'ScorecardScanning') {
+    return (
+      <Alert severity="info" title={t('plugins.scorecard-tab.scanning-title', 'Scorecard scan in progress')}>
+        <Trans i18nKey="plugins.scorecard-tab.scanning-body">
+          A security scan is running for this plugin. Refresh the page in a minute to see the results.
+        </Trans>
+      </Alert>
+    );
+  }
+
+  if (!insights?.insights?.length || readyCondition?.reason === 'ScorecardUnavailable') {
     return (
       <Alert severity="warning" title={t('plugins.scorecard-tab.no-data-title', 'No scorecard data available')}>
         <Trans i18nKey="plugins.scorecard-tab.no-data-body">

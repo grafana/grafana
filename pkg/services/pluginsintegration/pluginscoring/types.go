@@ -20,14 +20,50 @@ const (
 	noInfoURL  = "https://nvd.nist.gov/vuln/categories#cweIdEntry-NVD-CWE-noinfo"
 )
 
+// ScorecardConditionType identifies the type of scorecard condition (KRM metav1.Condition-compatible).
+type ScorecardConditionType = string
+
+const (
+	ScorecardConditionReady ScorecardConditionType = "Ready"
+)
+
+// ScorecardConditionStatus follows the k8s metav1.Condition status values.
+type ScorecardConditionStatus = string
+
+const (
+	ScorecardConditionTrue    ScorecardConditionStatus = "True"
+	ScorecardConditionFalse   ScorecardConditionStatus = "False"
+	ScorecardConditionUnknown ScorecardConditionStatus = "Unknown"
+)
+
+// ScorecardConditionReason is a CamelCase reason for the condition state (KRM convention).
+type ScorecardConditionReason = string
+
+const (
+	ScorecardReasonScanning    ScorecardConditionReason = "ScorecardScanning"
+	ScorecardReasonScanned     ScorecardConditionReason = "ScorecardScanned"
+	ScorecardReasonUnavailable ScorecardConditionReason = "ScorecardUnavailable"
+)
+
+// ScorecardCondition follows the Kubernetes metav1.Condition schema (KRM convention).
+type ScorecardCondition struct {
+	Type               ScorecardConditionType   `json:"type"`
+	Status             ScorecardConditionStatus `json:"status"`
+	Reason             ScorecardConditionReason `json:"reason"`
+	LastTransitionTime string                   `json:"lastTransitionTime"`
+}
+
 // CatalogPluginInsights mirrors the existing frontend CatalogPluginInsights type,
 // allowing our scorecard data to be rendered by the existing PluginInsights component
 // without any frontend changes.
+// The conditions field follows the KRM conditions convention, allowing clients to
+// determine scorecard availability without polling.
 type CatalogPluginInsights struct {
-	ID       int               `json:"id"`
-	Name     string            `json:"name"`
-	Version  string            `json:"version"`
-	Insights []InsightCategory `json:"insights"`
+	ID         int                  `json:"id"`
+	Name       string               `json:"name"`
+	Version    string               `json:"version"`
+	Insights   []InsightCategory    `json:"insights"`
+	Conditions []ScorecardCondition `json:"conditions,omitempty"`
 }
 
 // InsightCategory mirrors the frontend InsightCategory type.
@@ -95,9 +131,48 @@ var scorecardChecks = map[string]checkMapping{
 	"Maintained": {cwe: "CWE-1104", displayName: "Maintained", dimension: DimensionCommunity},
 }
 
+// ScorecardReadyCondition builds a KRM-style Ready condition for a plugin scorecard response.
+func ScorecardReadyCondition(status ScorecardConditionStatus, reason ScorecardConditionReason) ScorecardCondition {
+	return ScorecardCondition{
+		Type:               ScorecardConditionReady,
+		Status:             status,
+		Reason:             reason,
+		LastTransitionTime: time.Now().UTC().Format(time.RFC3339),
+	}
+}
+
+// PendingInsights returns a CatalogPluginInsights with a ScorecardScanning condition.
+// Clients should re-fetch after a short delay (scan in progress).
+func PendingInsights(pluginID, version string) CatalogPluginInsights {
+	return CatalogPluginInsights{
+		Name:     pluginID,
+		Version:  version,
+		Insights: []InsightCategory{},
+		Conditions: []ScorecardCondition{
+			ScorecardReadyCondition(ScorecardConditionFalse, ScorecardReasonScanning),
+		},
+	}
+}
+
+// UnavailableInsights returns a CatalogPluginInsights with a ScorecardUnavailable condition.
+func UnavailableInsights(pluginID, version string) CatalogPluginInsights {
+	return CatalogPluginInsights{
+		Name:     pluginID,
+		Version:  version,
+		Insights: []InsightCategory{},
+		Conditions: []ScorecardCondition{
+			ScorecardReadyCondition(ScorecardConditionFalse, ScorecardReasonUnavailable),
+		},
+	}
+}
+
 // FromScorecard maps a raw ScorecardResult into the CatalogPluginInsights shape
 // so the existing PluginInsights frontend component can render it without changes.
+// Returns UnavailableInsights if the result has no checks (empty/invalid scan).
 func FromScorecard(pluginID, version string, r *ScorecardResult) CatalogPluginInsights {
+	if len(r.Checks) == 0 {
+		return UnavailableInsights(pluginID, version)
+	}
 	items := map[string][]InsightItem{
 		DimensionSafety:    {},
 		DimensionQuality:   {},
@@ -139,6 +214,9 @@ func FromScorecard(pluginID, version string, r *ScorecardResult) CatalogPluginIn
 		Name:     pluginID,
 		Version:  version,
 		Insights: categories,
+		Conditions: []ScorecardCondition{
+			ScorecardReadyCondition(ScorecardConditionTrue, ScorecardReasonScanned),
+		},
 	}
 }
 

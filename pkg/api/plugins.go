@@ -627,6 +627,7 @@ func (hs *HTTPServer) GetPluginSecurityInsights(c *contextmodel.ReqContext) resp
 		}
 	}
 
+	// Fallback to GCOM proxy only if scorecard service is not configured.
 	proxyPath := fmt.Sprintf("plugins/%s/versions/%s/insights", pluginID, version)
 	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion, hs.Cfg.GrafanaComAPIURL, hs.Cfg.GrafanaComProxyAPIToken)
 	proxy.Transport = grafanaComProxyTransport

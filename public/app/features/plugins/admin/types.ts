@@ -119,11 +119,20 @@ interface InsightCategory {
   scoreLevel: ScoreLevel;
 }
 
+// ScorecardCondition follows the Kubernetes metav1.Condition schema (KRM convention).
+export interface ScorecardCondition {
+  type: string;
+  status: 'True' | 'False' | 'Unknown';
+  reason: string;
+  lastTransitionTime: string;
+}
+
 export interface CatalogPluginInsights {
   id: number;
   name: string;
   version: string;
   insights: InsightCategory[];
+  conditions?: ScorecardCondition[];
 }
 
 interface CatalogPluginInfo {

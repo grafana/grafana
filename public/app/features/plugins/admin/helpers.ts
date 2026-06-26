@@ -308,17 +308,24 @@ export enum Sorters {
 }
 
 function pluginScorecardSortKey(plugin: CatalogPlugin): number {
-  // Core plugins first (tier 2), scored plugins by score descending (tier 1), unscored last (tier 0)
+  // Tier 3: core plugins always first
   if (plugin.isCore) {
     return 2000;
   }
+  // Tier 2: scored plugins, by score descending (0–100)
   const dims = plugin.insights?.insights?.filter(
     (d) => typeof d.scoreValue === 'number' && !isNaN(d.scoreValue) && d.scoreValue > 0
   );
-  if (!dims?.length) {
+  if (dims?.length) {
+    return dims.reduce((sum, d) => sum + d.scoreValue, 0) / dims.length;
+  }
+  // Tier 1: scanning/loading — grouped before unavailable, will resolve soon
+  const reason = plugin.insights?.conditions?.find((c) => c.type === 'Ready')?.reason;
+  if (!plugin.insights || reason === 'ScorecardScanning') {
     return -1;
   }
-  return dims.reduce((sum, d) => sum + d.scoreValue, 0) / dims.length;
+  // Tier 0: unavailable/N/A — always last
+  return -2;
 }
 
 export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
