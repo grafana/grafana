@@ -1,19 +1,15 @@
-import { useEffect, useState, type JSX } from 'react';
-import { type ConnectedProps, connect } from 'react-redux';
+import { useEffect, useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type NavModelItem, getTimeZone } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { getTimeZone, NavModelItem } from '@grafana/data';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type ApiKey } from 'app/types/apiKeys';
-import { type ServiceAccountDTO } from 'app/types/serviceaccount';
-import { type StoreState } from 'app/types/store';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
-import { CreateTokenModal, type ServiceAccountToken } from './components/CreateTokenModal';
+import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import { ServiceAccountProfile } from './components/ServiceAccountProfile';
 import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTable';
 import { fetchACOptions } from './state/actions';
@@ -86,10 +82,7 @@ export const ServiceAccountPageUnconnected = ({
   const pageNav: NavModelItem = {
     text: serviceAccount.name,
     img: serviceAccount.avatarUrl,
-    subTitle: t(
-      'serviceaccounts.service-account-page-unconnected.page-nav.subTitle.manage-settings-individual-service-account',
-      'Manage settings for an individual service account.'
-    ),
+    subTitle: 'Manage settings for an individual service account.',
   };
 
   useEffect(() => {
@@ -150,9 +143,7 @@ export const ServiceAccountPageUnconnected = ({
                 onClick={showDeleteServiceAccountModal(true)}
                 disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsDelete)}
               >
-                <Trans i18nKey="serviceaccounts.service-account-page-unconnected.delete-service-account">
-                  Delete service account
-                </Trans>
+                Delete service account
               </Button>
               {serviceAccount.isDisabled ? (
                 <Button
@@ -161,9 +152,7 @@ export const ServiceAccountPageUnconnected = ({
                   onClick={handleServiceAccountEnable}
                   disabled={!ableToWrite}
                 >
-                  <Trans i18nKey="serviceaccounts.service-account-page-unconnected.enable-service-account">
-                    Enable service account
-                  </Trans>
+                  Enable service account
                 </Button>
               ) : (
                 <Button
@@ -172,9 +161,7 @@ export const ServiceAccountPageUnconnected = ({
                   onClick={showDisableServiceAccountModal(true)}
                   disabled={!ableToWrite}
                 >
-                  <Trans i18nKey="serviceaccounts.service-account-page-unconnected.disable-service-account">
-                    Disable service account
-                  </Trans>
+                  Disable service account
                 </Button>
               )}
             </Stack>
@@ -185,10 +172,7 @@ export const ServiceAccountPageUnconnected = ({
                 disabled={true}
                 name="lock"
                 size="md"
-                tooltip={t(
-                  'serviceaccounts.service-account-page-unconnected.tooltip-managed-service-account-cannot-modified',
-                  'This is a managed service account and cannot be modified'
-                )}
+                tooltip={`This is a managed service account and cannot be modified.`}
               />
             </Stack>
           )}
@@ -196,19 +180,10 @@ export const ServiceAccountPageUnconnected = ({
             <ServiceAccountProfile serviceAccount={serviceAccount} timeZone={timezone} onChange={onProfileChange} />
           )}
           <Stack justifyContent="space-between" height="auto">
-            <h3>
-              <Trans i18nKey="serviceaccounts.service-account-page-unconnected.tokens">Tokens</Trans>
-            </h3>
+            <h3>Tokens</h3>
             {!serviceAccount.isExternal && (
-              <Button
-                onClick={() => setIsTokenModalOpen(true)}
-                disabled={tokenActionsDisabled}
-                key="add-service-account-token"
-                icon="plus"
-              >
-                <Trans i18nKey="serviceaccounts.service-account-page-unconnected.add-service-account-token">
-                  Add service account token
-                </Trans>
+              <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
+                Add service account token
               </Button>
             )}
           </Stack>
@@ -227,35 +202,17 @@ export const ServiceAccountPageUnconnected = ({
 
         <ConfirmModal
           isOpen={isDeleteModalOpen}
-          title={t(
-            'serviceaccounts.service-account-page-unconnected.title-delete-service-account',
-            'Delete service account'
-          )}
-          body={t(
-            'serviceaccounts.service-account-page-unconnected.body-delete-service-account',
-            'Are you sure you want to delete this service account?'
-          )}
-          confirmText={t(
-            'serviceaccounts.service-account-page-unconnected.confirmText-delete-service-account',
-            'Delete service account'
-          )}
+          title="Delete service account"
+          body="Are you sure you want to delete this service account?"
+          confirmText="Delete service account"
           onConfirm={handleServiceAccountDelete}
           onDismiss={showDeleteServiceAccountModal(false)}
         />
         <ConfirmModal
           isOpen={isDisableModalOpen}
-          title={t(
-            'serviceaccounts.service-account-page-unconnected.title-disable-service-account',
-            'Disable service account'
-          )}
-          body={t(
-            'serviceaccounts.service-account-page-unconnected.body-disable-service-account',
-            'Are you sure you want to disable this service account?'
-          )}
-          confirmText={t(
-            'serviceaccounts.service-account-page-unconnected.confirmText-disable-service-account',
-            'Disable service account'
-          )}
+          title="Disable service account"
+          body="Are you sure you want to disable this service account?"
+          confirmText="Disable service account"
           onConfirm={handleServiceAccountDisable}
           onDismiss={showDisableServiceAccountModal(false)}
         />

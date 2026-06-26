@@ -1,16 +1,11 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { Label, RadioButtonGroup, Tag, useStyles2 } from '@grafana/ui';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-export type InstanceStateFilter =
-  | GrafanaAlertState
-  | PromAlertingRuleState.Pending
-  | PromAlertingRuleState.Firing
-  | PromAlertingRuleState.Recovering;
+export type InstanceStateFilter = GrafanaAlertState | PromAlertingRuleState.Pending | PromAlertingRuleState.Firing;
 
 interface Props {
   className?: string;
@@ -54,9 +49,7 @@ export const AlertInstanceStateFilter = ({
 
   return (
     <div className={className} data-testid="alert-instance-state-filter">
-      <Label>
-        <Trans i18nKey="alerting.alert-instance-state-filter.state">State</Trans>
-      </Label>
+      <Label>State</Label>
       <RadioButtonGroup
         options={stateOptions}
         value={stateFilter}

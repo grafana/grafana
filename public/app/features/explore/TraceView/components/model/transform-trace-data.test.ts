@@ -12,27 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type TraceKeyValuePair } from '@grafana/data';
+import { TraceResponse } from '../types';
 
-import { type Trace, type TraceResponse } from '../types/trace';
-
-import {
-  mixedTrace,
-  summaryAsObservedInOps,
-  summaryDefaultsOnly,
-  summaryNoOptionalAttrs,
-  summaryWithConditionalAttrs,
-  summaryWithPreservedOutliers,
-} from './pruned-spans.fixture';
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
-
-function spanById(trace: Trace, spanID: string) {
-  const span = trace.spans.find((s) => s.spanID === spanID);
-  if (!span) {
-    throw new Error(`span ${spanID} not found in transformed trace`);
-  }
-  return span;
-}
 
 describe('orderTags()', () => {
   it('correctly orders tags', () => {
@@ -54,12 +36,6 @@ describe('orderTags()', () => {
       { key: 'b.ip', value: '8.8.4.4' },
     ]);
   });
-
-  it('treats non-array tags as empty', () => {
-    expect(orderTags('not-an-array' as unknown as TraceKeyValuePair[])).toEqual([]);
-    expect(orderTags(undefined as unknown as TraceKeyValuePair[])).toEqual([]);
-    expect(orderTags({ key: 'k' } as unknown as TraceKeyValuePair[])).toEqual([]);
-  });
 });
 
 describe('deduplicateTags()', () => {
@@ -77,13 +53,6 @@ describe('deduplicateTags()', () => {
       { key: 'a.ip', value: '8.8.8.8' },
     ]);
     expect(tagsInfo.warnings).toEqual(['Duplicate tag "b.ip:8.8.4.4"']);
-  });
-
-  it('returns empty result for non-array tags', () => {
-    expect(deduplicateTags('x' as unknown as TraceKeyValuePair[])).toEqual({
-      dedupedTags: [],
-      warnings: [],
-    });
   });
 });
 
@@ -192,179 +161,5 @@ describe('transformTraceData()', () => {
     } as unknown as TraceResponse;
 
     expect(transformTraceData(traceData)!.traceName).toEqual(`${serviceName}: ${rootOperationName}`);
-  });
-});
-
-describe('transformTraceData() pruned span detection', () => {
-  it('detects a summary span and extracts its default aggregation values', () => {
-    const trace = transformTraceData(structuredClone(summaryDefaultsOnly))!;
-    const summary = spanById(trace, 'summ00000000a101');
-
-    expect(summary.aggregation).toEqual({
-      isSummary: true,
-      isPreservedOutlier: false,
-      spanCount: 8,
-      durationMinNs: 4_000_000,
-      durationMaxNs: 60_000_000,
-      durationAvgNs: 17_375_000,
-    });
-    // median is conditional and absent here
-    expect(summary.aggregation?.durationMedianNs).toBeUndefined();
-  });
-
-  it('leaves normal spans untouched (aggregation undefined)', () => {
-    const trace = transformTraceData(structuredClone(summaryDefaultsOnly))!;
-    expect(spanById(trace, 'root00000000a101').aggregation).toBeUndefined();
-  });
-
-  it('extracts the conditional median when present', () => {
-    const trace = transformTraceData(structuredClone(summaryWithConditionalAttrs))!;
-    expect(spanById(trace, 'summ00000000b201').aggregation?.durationMedianNs).toBe(9_000_000);
-  });
-
-  it('detects a summary span carrying only default attributes', () => {
-    const trace = transformTraceData(structuredClone(summaryNoOptionalAttrs))!;
-    const summary = spanById(trace, 'summ00000000c301');
-
-    expect(summary.aggregation?.isSummary).toBe(true);
-    expect(summary.aggregation?.spanCount).toBe(2);
-    expect(summary.aggregation?.durationMedianNs).toBeUndefined();
-  });
-
-  it('detects preserved outlier spans and links them back to the summary', () => {
-    const trace = transformTraceData(structuredClone(summaryWithPreservedOutliers))!;
-
-    expect(spanById(trace, 'summ00000000d401').aggregation?.isSummary).toBe(true);
-
-    for (const outlierID of ['outl00000000d401', 'outl00000000d402']) {
-      const outlier = spanById(trace, outlierID);
-      expect(outlier.aggregation).toEqual({
-        isSummary: false,
-        isPreservedOutlier: true,
-        summarySpanId: 'summ00000000d401',
-      });
-    }
-  });
-
-  it('detects summary and outlier spans in a mixed trace while leaving normal spans unaffected', () => {
-    const trace = transformTraceData(structuredClone(mixedTrace))!;
-
-    expect(spanById(trace, 'norm00000000e501').aggregation).toBeUndefined();
-    expect(spanById(trace, 'norm00000000e502').aggregation).toBeUndefined();
-    expect(spanById(trace, 'summ00000000e501').aggregation?.isSummary).toBe(true);
-    expect(spanById(trace, 'summ00000000e501').aggregation?.spanCount).toBe(5);
-
-    const outlier = spanById(trace, 'outl00000000e501');
-    expect(outlier.aggregation?.isPreservedOutlier).toBe(true);
-    expect(outlier.aggregation?.summarySpanId).toBe('summ00000000e501');
-  });
-
-  it('extracts aggregation values from a real-data-derived summary span', () => {
-    const trace = transformTraceData(structuredClone(summaryAsObservedInOps))!;
-    const summary = spanById(trace, 'a1aggsamplerpub1');
-
-    expect(summary.aggregation).toEqual({
-      isSummary: true,
-      isPreservedOutlier: false,
-      spanCount: 5,
-      durationMinNs: 164304113,
-      durationMaxNs: 215615080,
-      durationAvgNs: 195028772,
-      durationMedianNs: 215118016,
-    });
-  });
-
-  // Contract lock for the strict-boolean detection decision: is_summary is matched on the real
-  // boolean `true` (PutBool from the processor), never the string 'true'. Detection gates the
-  // entire feature, so if a data source ever surfaces the flag as a string this MUST fail loudly
-  // here rather than silently no-op. See transform-trace-data.tsx extractSpanAggregation.
-  it('does not detect a summary span when is_summary is the string "true" (strict boolean match)', () => {
-    const fixture = structuredClone(summaryDefaultsOnly);
-    const summarySpan = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!;
-    const flag = summarySpan.tags!.find((t) => t.key === 'aggregation.is_summary')!;
-    flag.value = 'true';
-
-    const trace = transformTraceData(fixture)!;
-    expect(spanById(trace, 'summ00000000a101').aggregation).toBeUndefined();
-  });
-
-  // Characterization lock for the defensive numeric coercion. span_count / duration_*_ns are
-  // int64 (PutInt) and reach here as JS numbers on the Tempo path, but the tag value type is
-  // `any` and transformTraceData is data-source-agnostic, so extractSpanAggregation coerces via
-  // Number(). A numeric string must still yield a number. See transform-trace-data.tsx.
-  it('coerces numeric-string aggregation values to numbers', () => {
-    const fixture = structuredClone(summaryDefaultsOnly);
-    const tags = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!.tags!;
-    tags.find((t) => t.key === 'aggregation.span_count')!.value = '8';
-    tags.find((t) => t.key === 'aggregation.duration_min_ns')!.value = '4000000';
-
-    const agg = spanById(transformTraceData(fixture)!, 'summ00000000a101').aggregation!;
-    expect(agg.spanCount).toBe(8);
-    expect(agg.durationMinNs).toBe(4_000_000);
-  });
-
-  // The Number.isNaN guard drops a non-numeric value rather than writing NaN into a number field.
-  // The span is still detected as a summary (is_summary is unaffected) and sibling numeric values
-  // are still extracted.
-  it('drops a non-numeric aggregation value instead of storing NaN', () => {
-    const fixture = structuredClone(summaryDefaultsOnly);
-    const tags = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!.tags!;
-    tags.find((t) => t.key === 'aggregation.span_count')!.value = 'not-a-number';
-
-    const agg = spanById(transformTraceData(fixture)!, 'summ00000000a101').aggregation!;
-    expect(agg.isSummary).toBe(true);
-    expect(agg.spanCount).toBeUndefined();
-    expect(agg.durationMinNs).toBe(4_000_000);
-  });
-
-  // Number() coerces null/boolean/empty-string to a misleading 0 or 1, which a bare NaN check
-  // would let through; the type guard must reject these. (Copilot review, 2026-06-11)
-  it.each([
-    ['null', null],
-    ['boolean false', false],
-    ['boolean true', true],
-    ['empty string', ''],
-  ])('drops a %s span_count instead of coercing it to 0/1', (_label, bad) => {
-    const fixture = structuredClone(summaryDefaultsOnly);
-    const tags = fixture.spans.find((s) => s.spanID === 'summ00000000a101')!.tags!;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tags.find((t) => t.key === 'aggregation.span_count')!.value = bad as any;
-
-    const agg = spanById(transformTraceData(fixture)!, 'summ00000000a101').aggregation!;
-    expect(agg.isSummary).toBe(true);
-    expect(agg.spanCount).toBeUndefined();
-  });
-
-  // summary_span_id is emitted as a string by the processor, but the tag value type is `any`.
-  // String(value) on a non-string (e.g. null) would store a misleading "null"/"false" id, so a
-  // non-string or empty value must be dropped, not coerced.
-  it.each([
-    ['null', null],
-    ['undefined', undefined],
-    ['boolean false', false],
-    ['number', 0],
-    ['empty string', ''],
-  ])('drops a %s summary_span_id instead of coercing it to a string', (_label, bad) => {
-    const fixture = structuredClone(summaryWithPreservedOutliers);
-    const tags = fixture.spans.find((s) => s.spanID === 'outl00000000d401')!.tags!;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tags.find((t) => t.key === 'aggregation.summary_span_id')!.value = bad as any;
-
-    const agg = spanById(transformTraceData(fixture)!, 'outl00000000d401').aggregation!;
-    expect(agg.isPreservedOutlier).toBe(true);
-    expect(agg.summarySpanId).toBeUndefined();
-  });
-
-  // Regression lock for the shared-fixture contract: transformTraceData mutates its input,
-  // so callers must clone. This proves repeated transforms are stable AND the singleton is
-  // never touched - if a future edit drops a structuredClone, the snapshot assertion fails.
-  it('is stable across repeated transforms and never mutates the shared fixture singleton', () => {
-    const before = JSON.stringify(summaryDefaultsOnly);
-
-    const first = transformTraceData(structuredClone(summaryDefaultsOnly))!;
-    const second = transformTraceData(structuredClone(summaryDefaultsOnly))!;
-
-    expect(spanById(second, 'summ00000000a101').aggregation).toEqual(spanById(first, 'summ00000000a101').aggregation);
-    expect(JSON.stringify(summaryDefaultsOnly)).toBe(before);
   });
 });

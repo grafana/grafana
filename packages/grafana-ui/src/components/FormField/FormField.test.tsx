@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { FormField, type Props } from './FormField';
+import { FormField, Props } from './FormField';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {

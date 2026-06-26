@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
-import { type ErrorBoundaryApi } from './ErrorBoundary';
+import { ErrorBoundaryApi } from './ErrorBoundary';
 
 export interface Props extends ErrorBoundaryApi {
   title: string;

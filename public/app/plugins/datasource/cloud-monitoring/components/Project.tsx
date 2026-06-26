@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/plugin-ui';
+import { SelectableValue } from '@grafana/data';
+import { EditorField } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
-import type CloudMonitoringDatasource from '../datasource';
+import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
   refId: string;

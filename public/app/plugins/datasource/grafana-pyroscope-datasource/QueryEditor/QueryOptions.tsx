@@ -1,12 +1,10 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { CoreApp, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { useStyles2, RadioButtonGroup, MultiSelect, Input, InlineSwitch } from '@grafana/ui';
+import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
 
-import type { HeatmapQueryType } from '../dataquery.gen';
-import { type Query } from '../types';
+import { Query } from '../types';
 
 import { EditorField } from './EditorField';
 import { QueryOptionGroup } from './QueryOptionGroup';
@@ -49,20 +47,11 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   if (query.groupBy?.length) {
     collapsedInfo.push(`Group by: ${query.groupBy.join(', ')}`);
   }
-  if (query.limit) {
-    collapsedInfo.push(`Limit: ${query.limit}`);
-  }
   if (query.spanSelector?.length) {
     collapsedInfo.push(`Span ID: ${query.spanSelector.join(', ')}`);
   }
   if (query.maxNodes) {
     collapsedInfo.push(`Max nodes: ${query.maxNodes}`);
-  }
-  if (query.includeExemplars) {
-    collapsedInfo.push(`With exemplars`);
-  }
-  if (query.includeHeatmap) {
-    collapsedInfo.push(`Heatmap: ${query.heatmapType || 'individual'}`);
   }
 
   return (
@@ -97,26 +86,6 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
-          <EditorField
-            label={'Limit'}
-            tooltip={
-              <>
-                When &quot;Group by&quot; is set, limits the maximum number of series to return. Does not apply to
-                profile query.
-              </>
-            }
-          >
-            <Input
-              value={query.limit || ''}
-              type="number"
-              placeholder="0"
-              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-                let newValue = parseInt(event.currentTarget.value, 10);
-                newValue = isNaN(newValue) ? 0 : newValue;
-                onQueryChange({ ...query, limit: newValue });
-              }}
-            />
-          </EditorField>
           <EditorField label={'Span ID'} tooltip={<>Sets the span ID from which to search for profiles.</>}>
             <Input
               value={query.spanSelector || ['']}
@@ -142,48 +111,6 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               }}
             />
           </EditorField>
-          <EditorField label={'Annotations'} tooltip={<>Include profiling annotations in the time series.</>}>
-            <InlineSwitch
-              value={query.annotations || false}
-              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-                onQueryChange({ ...query, annotations: event.currentTarget.checked });
-              }}
-            />
-          </EditorField>
-          {config.featureToggles.profilesExemplars && (
-            <EditorField label={'Exemplars'} tooltip={<>Include profile exemplars in the time series.</>}>
-              <InlineSwitch
-                value={query.includeExemplars || false}
-                onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-                  onQueryChange({ ...query, includeExemplars: event.currentTarget.checked });
-                }}
-              />
-            </EditorField>
-          )}
-          {config.featureToggles.profilesHeatmap && (
-            <>
-              <EditorField label={'Heatmap'} tooltip={<>Include heatmap visualization of profile data over time.</>}>
-                <InlineSwitch
-                  value={query.includeHeatmap || false}
-                  onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-                    onQueryChange({ ...query, includeHeatmap: event.currentTarget.checked });
-                  }}
-                />
-              </EditorField>
-              {query.includeHeatmap && (
-                <EditorField label={'Heatmap Type'} tooltip={<>Select the type of heatmap aggregation.</>}>
-                  <RadioButtonGroup
-                    options={[
-                      { value: 'individual', label: 'Individual', description: 'Show individual profile samples' },
-                      { value: 'span', label: 'Span', description: 'Aggregate by span duration' },
-                    ]}
-                    value={query.heatmapType || 'individual'}
-                    onChange={(value: HeatmapQueryType) => onQueryChange({ ...query, heatmapType: value })}
-                  />
-                </EditorField>
-              )}
-            </>
-          )}
         </div>
       </QueryOptionGroup>
     </Stack>

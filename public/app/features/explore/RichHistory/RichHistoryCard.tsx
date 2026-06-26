@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import * as React from 'react';
-import { connect, type ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2, type DataSourceApi } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
+import { Trans, t } from 'app/core/internationalization';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -18,8 +18,7 @@ import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/feat
 import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { type RichHistoryQuery } from 'app/types/explore';
-import icnDatasourceSvg from 'img/icn-datasource.svg';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import ExploreRunQueryButton from '../ExploreRunQueryButton';
 
@@ -198,6 +197,7 @@ export function RichHistoryCard(props: Props) {
             'Are you sure you want to permanently delete your starred query?'
           ),
           yesText: t('explore.rich-history-card.confirm-delete', 'Delete'),
+          icon: 'trash-alt',
           onConfirm: () => performDelete(queryHistoryItem.id),
         })
       );
@@ -345,9 +345,7 @@ export function RichHistoryCard(props: Props) {
           )}
           {activeUpdateComment && updateComment}
         </div>
-        {!activeUpdateComment && (
-          <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} comment={queryHistoryItem.comment} />
-        )}
+        {!activeUpdateComment && <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} />}
         {!activeUpdateComment && (
           <div className={styles.runButton}>
             <ExploreRunQueryButton queries={queryHistoryItem.queries} rootDatasourceUid={cardRootDatasource?.uid} />
@@ -421,7 +419,7 @@ function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | '
   return (
     <div className={styles}>
       <img
-        src={dsApi?.meta.info.logos.small || icnDatasourceSvg}
+        src={dsApi?.meta.info.logos.small || 'public/img/icn-datasource.svg'}
         alt={dsApi?.type || t('explore.rich-history-card.datasource-not-exist', 'Data source does not exist anymore')}
         aria-label={t('explore.rich-history-card.datasource-icon-label', 'Data source icon')}
       />

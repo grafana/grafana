@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
 func TestProcessManager_Start(t *testing.T) {
@@ -62,7 +62,7 @@ func TestProcessManager_Start(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				t.Parallel()
 
-				bp := pluginfakes.NewFakeBackendPlugin(tc.managed)
+				bp := fakes.NewFakeBackendPlugin(tc.managed)
 				p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
 					plugin.Backend = tc.backend
 					plugin.Error = tc.Error
@@ -85,7 +85,7 @@ func TestProcessManager_Start(t *testing.T) {
 	t.Run("Won't stop the plugin if the context is cancelled", func(t *testing.T) {
 		t.Parallel()
 
-		bp := pluginfakes.NewFakeBackendPlugin(true)
+		bp := fakes.NewFakeBackendPlugin(true)
 		p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
 			plugin.Backend = true
 		})
@@ -113,7 +113,7 @@ func TestProcessManager_Stop(t *testing.T) {
 
 		pluginID := "test-datasource"
 
-		bp := pluginfakes.NewFakeBackendPlugin(true)
+		bp := fakes.NewFakeBackendPlugin(true)
 		p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
 			plugin.ID = pluginID
 			plugin.Backend = true
@@ -134,7 +134,7 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 
 	t.Run("When plugin process is killed, the process is restarted", func(t *testing.T) {
 		t.Parallel()
-		bp := pluginfakes.NewFakeBackendPlugin(true)
+		bp := fakes.NewFakeBackendPlugin(true)
 		p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
 			plugin.Backend = true
 		})
@@ -149,8 +149,10 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 		wgKill.Add(1)
 		go func() {
 			bp.Kill() // manually kill process
-			for bp.Exited() {
-
+			for {
+				if !bp.Exited() {
+					break
+				}
 			}
 			wgKill.Done()
 		}()

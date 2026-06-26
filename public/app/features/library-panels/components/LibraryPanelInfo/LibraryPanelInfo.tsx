@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type DateTimeInput, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { DateTimeInput, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { type PanelModelWithLibraryPanel } from '../../types';
+import { PanelModelWithLibraryPanel } from '../../types';
 
 interface Props {
   panel: PanelModelWithLibraryPanel;
@@ -22,41 +21,21 @@ export const LibraryPanelInformation = ({ panel, formatDate }: Props) => {
   return (
     <div className={styles.info}>
       <div className={styles.libraryPanelInfo}>
-        <Trans
-          i18nKey="library-panels.library-panel-info.usage-count"
-          count={meta.connectedDashboards}
-          tOptions={{
-            defaultValue_one: 'Used on {{count}} dashboards',
-            defaultValue_other: 'Used on {{count}} dashboards',
-          }}
-        >
-          Used on {'{{count}}'} dashboards
-        </Trans>
+        {`Used on ${meta.connectedDashboards} `}
+        {meta.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}
       </div>
       <div className={styles.libraryPanelInfo}>
-        <Trans
-          i18nKey="library-panels.library-panel-info.last-edited"
-          values={{ timeAgo: formatDate?.(meta.updated, 'L') ?? meta.updated }}
-          components={{
-            person: (
-              <>
-                {meta.updatedBy.avatarUrl && (
-                  <img
-                    width="22"
-                    height="22"
-                    className={styles.userAvatar}
-                    src={meta.updatedBy.avatarUrl}
-                    alt={`Avatar for ${meta.updatedBy.name}`}
-                  />
-                )}
-                {meta.updatedBy.name}
-              </>
-            ),
-          }}
-        >
-          Last edited on {'{{timeAgo}}'} by
-          {'<person />'}
-        </Trans>
+        Last edited on {formatDate?.(meta.updated, 'L') ?? meta.updated} by
+        {meta.updatedBy.avatarUrl && (
+          <img
+            width="22"
+            height="22"
+            className={styles.userAvatar}
+            src={meta.updatedBy.avatarUrl}
+            alt={`Avatar for ${meta.updatedBy.name}`}
+          />
+        )}
+        {meta.updatedBy.name}
       </div>
     </div>
   );

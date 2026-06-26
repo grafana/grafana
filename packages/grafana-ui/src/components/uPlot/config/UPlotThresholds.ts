@@ -1,8 +1,8 @@
 import tinycolor from 'tinycolor2';
-import type uPlot from 'uplot';
+import uPlot from 'uplot';
 
-import { type GrafanaTheme2, type Threshold, type ThresholdsConfig, ThresholdsMode } from '@grafana/data';
-import { type GraphThresholdsStyleConfig, GraphThresholdsStyleMode, ScaleOrientation } from '@grafana/schema';
+import { GrafanaTheme2, Threshold, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
+import { GraphThresholdsStyleConfig, GraphThresholdsStyleMode } from '@grafana/schema';
 
 import { getGradientRange, scaleGradient } from './gradientFills';
 
@@ -58,13 +58,10 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
         color.setAlpha(0.7);
       }
 
-      const isHorizontal = u.scales.x!.ori === ScaleOrientation.Horizontal;
-      const scaleVal = u.valToPos(step.value, yScaleKey, true);
-
-      let x0 = Math.round(isHorizontal ? u.bbox.left : scaleVal);
-      let y0 = Math.round(isHorizontal ? scaleVal : u.bbox.top);
-      let x1 = Math.round(isHorizontal ? u.bbox.left + u.bbox.width : scaleVal);
-      let y1 = Math.round(isHorizontal ? scaleVal : u.bbox.top + u.bbox.height);
+      let x0 = Math.round(u.bbox.left);
+      let y0 = Math.round(u.valToPos(step.value, yScaleKey, true));
+      let x1 = Math.round(u.bbox.left + u.bbox.width);
+      let y1 = Math.round(u.valToPos(step.value, yScaleKey, true));
 
       ctx.beginPath();
       ctx.moveTo(x0, y0);

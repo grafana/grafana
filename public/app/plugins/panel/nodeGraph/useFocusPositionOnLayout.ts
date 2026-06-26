@@ -1,7 +1,7 @@
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { type Config } from './layout';
-import { type NodeDatum } from './types';
+import { Config } from './layout';
+import { NodeDatum } from './types';
 
 export function useFocusPositionOnLayout(config: Config, nodes: NodeDatum[], focusedNodeId: string | undefined) {
   const prevLayoutGrid = usePrevious(config.gridLayout);

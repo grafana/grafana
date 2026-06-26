@@ -1,6 +1,6 @@
 import { groupBy } from 'lodash';
 
-import { type DataFrame, DataFrameType, type Field, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 
 export function makeTableFrames(instantMetricFrames: DataFrame[]): DataFrame[] {
   // first we remove frames that have no refId
@@ -70,7 +70,7 @@ function makeTableFrame(instantMetricFrames: DataFrame[], refId: string): DataFr
   return {
     fields: [tableTimeField, ...labelFields, tableValueField],
     refId,
-    meta: { type: DataFrameType.NumericLong },
+    meta: { preferredVisualisationType: 'table' },
     length: tableTimeField.values.length,
   };
 }

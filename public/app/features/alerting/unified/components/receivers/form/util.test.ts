@@ -1,7 +1,7 @@
-import { type ChannelValues, type ReceiverFormValues } from '../../../types/receiver-form';
+import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 
 import { matchesOnlyOneTemplate } from './fields/utils';
-import { type DeprecatedAuthHTTPConfig, type HTTPAuthConfig, normalizeFormValues } from './util';
+import { DeprecatedAuthHTTPConfig, HTTPAuthConfig, normalizeFormValues } from './util';
 
 describe('normalizeFormValues', () => {
   it('should leave the older config alone', () => {
@@ -49,6 +49,7 @@ function createContactPoint(httpConfig: DeprecatedAuthHTTPConfig | HTTPAuthConfi
       {
         __id: '',
         type: '',
+        secureSettings: {},
         secureFields: {},
         settings: {
           http_config: {

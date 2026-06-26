@@ -33,7 +33,7 @@ func (c *Caller) SetupHandlers() error {
 }
 
 type NodeManagedChannelsRequest struct {
-	NS string `json:"ns"`
+	OrgID int64 `json:"orgId"`
 }
 
 type NodeManagedChannelsResponse struct {
@@ -72,7 +72,7 @@ func (c *Caller) handleManagedStreams(data []byte) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	channels, err := c.managedStreamRunner.GetManagedChannels(req.NS)
+	channels, err := c.managedStreamRunner.GetManagedChannels(req.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +81,8 @@ func (c *Caller) handleManagedStreams(data []byte) (any, error) {
 	}, nil
 }
 
-func (c *Caller) CallManagedStreams(ns string) ([]*managedstream.ManagedChannel, error) {
-	req := NodeManagedChannelsRequest{NS: ns}
+func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChannel, error) {
+	req := NodeManagedChannelsRequest{OrgID: orgID}
 	jsonData, err := json.Marshal(req)
 	if err != nil {
 		return nil, err

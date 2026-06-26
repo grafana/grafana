@@ -1,30 +1,30 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { type FormEvent, useCallback, useRef, useState } from 'react';
+import { FormEvent, useCallback, useRef, useState } from 'react';
 
-import { type RelativeTimeRange, type GrafanaTheme2, type TimeOption } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
-import { getPositioningMiddleware } from '../../../utils/floating';
-import { Button } from '../../Button/Button';
+import { useStyles2 } from '../../../themes';
+import { Trans, t } from '../../../utils/i18n';
+import { Button } from '../../Button';
+import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { getInputStyles, Input } from '../../Input/Input';
-import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
+import { Tooltip } from '../../Tooltip/Tooltip';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
-import { getQuickOptions } from '../options';
+import { quickOptions } from '../options';
 
 import {
   isRangeValid,
   isRelativeFormat,
   mapOptionToRelativeTimeRange,
   mapRelativeTimeRangeToOption,
-  type RangeValidation,
+  RangeValidation,
 } from './utils';
 
 /**
@@ -40,8 +40,9 @@ type InputState = {
   validation: RangeValidation;
 };
 
+const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
+
 /**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-relativetimerangepicker--docs
  * @internal
  */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
@@ -57,16 +58,21 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     ref
   );
   const { dialogProps } = useDialog({}, ref);
-  const validOptions = getQuickOptions().filter((o) => isRelativeFormat(o.from));
-  const placement = 'bottom-start';
 
   // the order of middleware is important!
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = getPositioningMiddleware(placement);
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
 
   const { context, refs, floatingStyles } = useFloating({
     open: isOpen,
-    placement,
+    placement: 'bottom-start',
     onOpenChange: setIsOpen,
     middleware,
     whileElementsMounted: autoUpdate,
@@ -151,27 +157,27 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
             <div ref={ref} {...overlayProps} {...dialogProps}>
               <div className={styles.content} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
                 <div className={styles.body}>
-                  <div className={styles.leftSide}>
-                    <ScrollContainer showScrollIndicators>
-                      <TimeRangeList
-                        title={t('time-picker.time-range.example-title', 'Example time ranges')}
-                        options={validOptions}
-                        onChange={onChangeTimeOption}
-                        value={timeOption}
-                      />
-                    </ScrollContainer>
-                  </div>
+                  <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
+                    <TimeRangeList
+                      title={t('time-picker.time-range.example-title', 'Example time ranges')}
+                      options={validOptions}
+                      onChange={onChangeTimeOption}
+                      value={timeOption}
+                    />
+                  </CustomScrollbar>
                   <div className={styles.rightSide}>
                     <div className={styles.title}>
                       <TimePickerTitle>
-                        <Trans i18nKey="time-picker.time-range.specify">Specify time range</Trans>
+                        <Tooltip content={<TooltipContent />} placement="bottom" theme="info">
+                          <div>
+                            <Trans i18nKey="time-picker.time-range.specify">
+                              Specify time range <Icon name="info-circle" />
+                            </Trans>
+                          </div>
+                        </Tooltip>
                       </TimePickerTitle>
                     </div>
-                    <Field
-                      label={t('time-picker.time-range.from-label', 'From')}
-                      invalid={!from.validation.isValid}
-                      error={from.validation.errorMessage}
-                    >
+                    <Field label="From" invalid={!from.validation.isValid} error={from.validation.errorMessage}>
                       <Input
                         onClick={(event) => event.stopPropagation()}
                         onBlur={() => setFrom({ ...from, validation: isRangeValid(from.value) })}
@@ -179,11 +185,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                         value={from.value}
                       />
                     </Field>
-                    <Field
-                      label={t('time-picker.time-range.to-label', 'To')}
-                      invalid={!to.validation.isValid}
-                      error={to.validation.errorMessage}
-                    >
+                    <Field label="To" invalid={!to.validation.isValid} error={to.validation.errorMessage}>
                       <Input
                         onClick={(event) => event.stopPropagation()}
                         onBlur={() => setTo({ ...to, validation: isRangeValid(to.value) })}
@@ -191,10 +193,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                         value={to.value}
                       />
                     </Field>
-                    <Button
-                      aria-label={t('time-picker.time-range.submit-button-label', 'TimePicker submit button')}
-                      onClick={onApply}
-                    >
+                    <Button aria-label="TimePicker submit button" onClick={onApply}>
                       <Trans i18nKey="time-picker.time-range.apply">Apply time range</Trans>
                     </Button>
                   </div>
@@ -207,6 +206,48 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     </div>
   );
 }
+
+const TooltipContent = () => {
+  const styles = useStyles2(toolTipStyles);
+  return (
+    <>
+      <div className={styles.supported}>
+        <Trans i18nKey="time-picker.time-range.supported-formats">
+          Supported formats: <code className={styles.tooltip}>now-[digit]s/m/h/d/w</code>
+        </Trans>
+      </div>
+      <div>
+        <Trans i18nKey="time-picker.time-range.example">
+          Example: to select a time range from 10 minutes ago to now
+        </Trans>
+      </div>
+      <code className={styles.tooltip}>
+        <Trans i18nKey="time-picker.time-range.example-details">From: now-10m To: now</Trans>
+      </code>
+      <div className={styles.link}>
+        <Trans i18nKey="time-picker.time-range.more-info">
+          For more information see{' '}
+          <a href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/">
+            docs <Icon name="external-link-alt" />
+          </a>
+          .
+        </Trans>
+      </div>
+    </>
+  );
+};
+
+const toolTipStyles = (theme: GrafanaTheme2) => ({
+  supported: css({
+    marginBottom: theme.spacing(1),
+  }),
+  tooltip: css({
+    margin: 0,
+  }),
+  link: css({
+    marginTop: theme.spacing(1),
+  }),
+});
 
 const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme2) => {
   const inputStyles = getInputStyles({ theme, invalid: false });

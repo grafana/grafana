@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { type DataSourceApi, type SelectableValue } from '@grafana/data';
+import { DataSourceApi, SelectableValue } from '@grafana/data';
 import {
-  type QueryBuilderLabelFilter,
-  type QueryBuilderOperationParamEditorProps,
-  type QueryBuilderOperationParamValue,
-  type VisualQuery,
-  type VisualQueryModeller,
-} from '@grafana/plugin-ui';
+  QueryBuilderLabelFilter,
+  QueryBuilderOperationParamEditorProps,
+  QueryBuilderOperationParamValue,
+  VisualQuery,
+  VisualQueryModeller,
+} from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
 import { getOperationParamId } from '../operationUtils';

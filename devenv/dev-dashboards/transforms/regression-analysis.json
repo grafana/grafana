@@ -24,7 +24,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -38,7 +39,6 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -70,7 +70,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -96,16 +96,15 @@
           "showLegend": true
         },
         "tooltip": {
-          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -130,7 +129,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -144,7 +144,6 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -176,7 +175,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -202,16 +201,15 @@
           "showLegend": true
         },
         "tooltip": {
-          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk"
@@ -235,7 +233,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -249,7 +248,6 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -281,7 +279,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -307,17 +305,17 @@
           "showLegend": true
         },
         "tooltip": {
-          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "10.3.0-pre",
       "targets": [
         {
           "csvContent": "time, val\n2023-11-20 12:09:00, 1\n2023-11-20 12:09:02, 2\n2023-11-20 12:09:03, 3\n2023-11-20 12:09:04, 4\n2023-11-20 12:09:05, 5\n2023-11-20 12:09:06, 6\n2023-11-20 12:09:07, 2\n2023-11-20 12:09:08, 3\n2023-11-20 12:09:09, 4\n2023-11-20 12:09:10, 1\n2023-11-20 12:09:11, 2\n2023-11-20 12:09:12, 3\n2023-11-20 12:09:13, 4",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -330,7 +328,6 @@
           "options": {
             "conversions": [
               {
-                "dateFormat": "YYYY-MM-DD hh:mm:ss",
                 "destinationType": "time",
                 "targetField": "time"
               }
@@ -362,7 +359,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -376,7 +374,6 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -408,7 +405,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -434,17 +431,16 @@
           "showLegend": true
         },
         "tooltip": {
-          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "csvContent": "time, val\n2023-11-20 12:09:00, 1\n2023-11-20 12:09:02, 2\n2023-11-20 12:09:03, 3\n2023-11-20 12:09:04, 4\n2023-11-20 12:09:05, null\n2023-11-20 12:09:06, 6\n2023-11-20 12:09:07, 2\n2023-11-20 12:09:08, null\n2023-11-20 12:09:09, 4\n2023-11-20 12:09:10, 1\n2023-11-20 12:09:11, 2\n2023-11-20 12:09:12, 3\n2023-11-20 12:09:13, 4",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -457,7 +453,6 @@
           "options": {
             "conversions": [
               {
-                "dateFormat": "YYYY-MM-DD hh:mm:ss",
                 "destinationType": "time",
                 "targetField": "time"
               }
@@ -490,7 +485,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -503,17 +499,14 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 50,
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "pointShape": "circle",
             "pointSize": {
               "fixed": 5
             },
-            "pointStrokeWidth": 1,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -525,7 +518,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -569,47 +562,28 @@
       },
       "id": 3,
       "options": {
+        "dims": {
+          "frame": 0
+        },
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
-        "mapping": "auto",
-        "series": [
-          {
-            "frame": {
-              "matcher": {
-                "id": "byIndex",
-                "options": 0
-              }
-            },
-            "x": {
-              "matcher": {
-                "id": "byType",
-                "options": "number"
-              }
-            },
-            "y": {
-              "matcher": {
-                "id": "byType",
-                "options": "number"
-              }
-            }
-          }
-        ],
+        "series": [],
+        "seriesMapping": "auto",
         "tooltip": {
-          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "csvContent": "x,y\n1,4\n2,1\n3,2\n4,-2\n5,6\n3,2\n1,7\n3,9\n6,3\n5,-3\n2,-2\n7,15",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -666,7 +640,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -679,7 +654,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -702,22 +677,17 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
-        "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
-        "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.1.0-pre",
-      "targets": [
-        {
-          "refId": "A"
-        }
-      ],
+      "pluginVersion": "10.3.0-pre",
       "title": "stat panel",
       "transformations": [
         {
@@ -743,7 +713,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -757,7 +728,6 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
-            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -788,8 +758,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -840,17 +809,17 @@
           "showLegend": true
         },
         "tooltip": {
-          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "10.3.0-pre",
       "targets": [
         {
           "csvContent": "x, val\n6,2\n8,1\n10,5\n15,1\n22,10\n",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -894,7 +863,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -907,17 +877,14 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 50,
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "pointShape": "circle",
             "pointSize": {
               "fixed": 5
             },
-            "pointStrokeWidth": 1,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -928,8 +895,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": 0
+                "color": "green"
               },
               {
                 "color": "red",
@@ -973,46 +939,42 @@
       },
       "id": 8,
       "options": {
+        "dims": {
+          "exclude": [],
+          "frame": 0,
+          "x": "foo"
+        },
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
-        "mapping": "auto",
         "series": [
           {
-            "frame": {
-              "matcher": {
-                "id": "byIndex",
-                "options": 0
-              }
+            "pointColor": {},
+            "pointSize": {
+              "field": "baz",
+              "fixed": 50.5,
+              "max": 100,
+              "min": 1
             },
-            "x": {
-              "matcher": {
-                "id": "byName",
-                "options": "foo"
-              }
-            },
-            "y": {
-              "matcher": {
-                "id": "byType",
-                "options": "number"
-              }
-            }
+            "x": "foo",
+            "y": "foo"
           }
         ],
+        "seriesMapping": "auto",
         "tooltip": {
-          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "10.3.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "usa",
@@ -1052,10 +1014,12 @@
       "type": "xychart"
     }
   ],
-  "preload": false,
   "refresh": "",
-  "schemaVersion": 41,
-  "tags": ["gdev", "transform"],
+  "schemaVersion": 39,
+  "tags": [
+    "gdev",
+    "transform"
+  ],
   "templating": {
     "list": []
   },
@@ -1067,5 +1031,6 @@
   "timezone": "",
   "title": "Transforms - Regression analysis",
   "uid": "d2d2bb99-42e4-44b8-b93e-3ad1aae31c6b",
-  "version": 1
+  "version": 39,
+  "weekStart": ""
 }

@@ -1,25 +1,23 @@
 import { isString } from 'lodash';
-import { from, type Observable, of, type OperatorFunction } from 'rxjs';
+import { Observable, of, OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
-  type AnnotationEvent,
+  AnnotationEvent,
   AnnotationEventFieldSource,
-  type AnnotationEventMappings,
-  type AnnotationQuery,
-  type AnnotationSupport,
-  type DataFrame,
-  type DataSourceApi,
-  type DataTransformContext,
-  type Field,
-  DataTransformerID,
+  AnnotationEventMappings,
+  AnnotationQuery,
+  AnnotationSupport,
+  DataFrame,
+  DataSourceApi,
+  DataTransformContext,
+  Field,
   FieldType,
   getFieldDisplayName,
-  type KeyValue,
-  standardTransformersRegistry,
+  KeyValue,
+  standardTransformers,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config } from 'app/core/config';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -57,7 +55,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
  * Flatten all frames into a single frame with mergeTransformer.
  */
 
-function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
+export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
   return (source) =>
     source.pipe(
       mergeMap((data) => {
@@ -73,13 +71,9 @@ function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | u
           interpolate: (v: string) => v,
         };
 
-        return from(standardTransformersRegistry.get(DataTransformerID.merge).transformation()).pipe(
-          mergeMap((t) =>
-            of(data).pipe(
-              t.operator({}, ctx),
-              map((d) => d[0])
-            )
-          )
+        return of(data).pipe(
+          standardTransformers.mergeTransformer.operator({}, ctx),
+          map((d) => d[0])
         );
       })
     );
@@ -103,50 +97,28 @@ export interface AnnotationFieldInfo {
 }
 
 // These fields get added to the standard UI
-export const getAnnotationEventNames: () => AnnotationFieldInfo[] = () => [
+export const annotationEventNames: AnnotationFieldInfo[] = [
   {
     key: 'time',
     field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.time),
-    placeholder: t(
-      'annotations.get-annotation-event-names.placeholder.time-or-the-first-field',
-      '{{defaultField}}, or the first time field',
-      { defaultField: 'time' }
-    ),
+    placeholder: 'time, or the first time field',
   },
-  {
-    key: 'timeEnd',
-    // label: 'end time',
-    help: t(
-      'annotations.get-annotation-event-names.help.annotation-treated-as-range',
-      'When this field is defined, the annotation will be treated as a range'
-    ),
-  },
+  { key: 'timeEnd', label: 'end time', help: 'When this field is defined, the annotation will be treated as a range' },
   {
     key: 'title',
   },
   {
     key: 'text',
     field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.string),
-    placeholder: t(
-      'annotations.get-annotation-event-names.placeholder.text-or-the-first-field',
-      '{{defaultField}}, or the first text field',
-      { defaultField: 'text' }
-    ),
+    placeholder: 'text, or the first text field',
   },
-  {
-    key: 'tags',
-    split: ',',
-    help: t(
-      'annotations.get-annotation-event-names.help.results-split-on-comma',
-      'The results will be split on comma (,)'
-    ),
-  },
+  { key: 'tags', split: ',', help: 'The results will be split on comma (,)' },
   {
     key: 'id',
   },
 ];
 
-const publicDashboardEventNames: AnnotationFieldInfo[] = [
+export const publicDashboardEventNames: AnnotationFieldInfo[] = [
   {
     key: 'color',
   },
@@ -162,7 +134,7 @@ const publicDashboardEventNames: AnnotationFieldInfo[] = [
 // pipeline, but include fields that should not be exposed generally
 const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
   ...(config.publicDashboardAccessToken ? publicDashboardEventNames : []),
-  ...getAnnotationEventNames(),
+  ...annotationEventNames,
   { key: 'userId' },
   { key: 'login' },
   { key: 'email' },
@@ -281,6 +253,7 @@ export function getAnnotationsFromData(
 // polluting public API.
 
 const legacyRunner = [
+  'prometheus',
   'loki',
   'elasticsearch',
   'grafana-opensearch-datasource', // external

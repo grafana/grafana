@@ -4,19 +4,17 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, useStyles2, Tooltip } from '@grafana/ui';
 
-import { type RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
-import { type RuleFormValues } from '../../types/rule-form';
-import { EXTERNAL_URL_PROMETHEUS_ALERTING_RULES } from '../../utils/docs';
+import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
+import { RuleFormValues } from '../../types/rule-form';
 import {
   alertingRulerRuleToRuleForm,
   formValuesToRulerRuleDTO,
   recordingRulerRuleToRuleForm,
 } from '../../utils/rule-form';
-import { rulerRuleType } from '../../utils/rules';
+import { isAlertingRulerRule, isRecordingRulerRule } from '../../utils/rules';
 
 interface Props {
   onClose: () => void;
@@ -41,7 +39,7 @@ export const RuleInspector = ({ onClose }: Props) => {
 
   return (
     <Drawer
-      title={t('alerting.rule-inspector.title-inspect-alert-rule', 'Inspect Alert rule')}
+      title="Inspect Alert rule"
       subtitle={
         <div className={styles.subtitle}>
           <RuleInspectorTabs tabs={cloudRulesTabs} setActiveTab={setActiveTab} activeTab={activeTab} />
@@ -101,7 +99,7 @@ const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
     <>
       <div className={styles.applyButton}>
         <Button type="button" onClick={onApply}>
-          <Trans i18nKey="alerting.inspector-yaml-tab.apply">Apply</Trans>
+          Apply
         </Button>
         <Tooltip content={<YamlContentInfo />} theme="info" placement="left-start" interactive={true}>
           <Icon name="exclamation-triangle" size="xl" />
@@ -133,28 +131,30 @@ const InspectorYamlTab = ({ onSubmit }: YamlTabProps) => {
 function YamlContentInfo() {
   return (
     <div>
-      <Trans i18nKey="alerting.yaml-content-info.body">
-        The YAML content in the editor only contains alert rule configuration <br />
-        To configure Prometheus, you need to provide the rest of the{' '}
-        <TextLink href={EXTERNAL_URL_PROMETHEUS_ALERTING_RULES} external>
-          configuration file content.
-        </TextLink>
-      </Trans>
+      The YAML content in the editor only contains alert rule configuration <br />
+      To configure Prometheus, you need to provide the rest of the{' '}
+      <a
+        href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/"
+        target="_blank"
+        rel="noreferrer"
+      >
+        configuration file content.
+      </a>
     </div>
   );
 }
 
 function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormValues> {
-  if (rulerRuleType.dataSource.alertingRule(rulerRule)) {
+  if (isAlertingRulerRule(rulerRule)) {
     return alertingRulerRuleToRuleForm(rulerRule);
-  } else if (rulerRuleType.dataSource.recordingRule(rulerRule)) {
+  } else if (isRecordingRulerRule(rulerRule)) {
     return recordingRulerRuleToRuleForm(rulerRule);
   }
 
   return {};
 }
 
-const yamlTabStyle = (theme: GrafanaTheme2) => ({
+export const yamlTabStyle = (theme: GrafanaTheme2) => ({
   content: css({
     flexGrow: 1,
     height: '100%',
@@ -171,7 +171,7 @@ const yamlTabStyle = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const drawerStyles = () => ({
+export const drawerStyles = () => ({
   subtitle: css({
     display: 'flex',
     alignItems: 'center',

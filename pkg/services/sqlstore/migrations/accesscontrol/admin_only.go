@@ -3,7 +3,7 @@ package accesscontrol
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"

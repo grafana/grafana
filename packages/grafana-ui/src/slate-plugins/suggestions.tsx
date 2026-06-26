@@ -1,19 +1,22 @@
 import { debounce, sortBy } from 'lodash';
-import { type Editor, type Plugin as SlatePlugin } from 'slate-react';
+import { Editor, Plugin as SlatePlugin } from 'slate-react';
+
+import { BootData } from '@grafana/data';
 
 import { Typeahead } from '../components/Typeahead/Typeahead';
-import {
-  type CompletionItem,
-  type SuggestionsState,
-  type TypeaheadInput,
-  type TypeaheadOutput,
-} from '../types/completion';
-import { SearchFunctionType, SearchFunctionMap } from '../utils/searchFunctions';
-import { makeFragment } from '../utils/slate';
+import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types';
+import { makeFragment, SearchFunctionType } from '../utils';
+import { SearchFunctionMap } from '../utils/searchFunctions';
 
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 
-const TYPEAHEAD_DEBOUNCE = 250;
+export const TYPEAHEAD_DEBOUNCE = 250;
+
+declare global {
+  interface Window {
+    grafanaBootData?: BootData;
+  }
+}
 
 // Commands added to the editor by this plugin.
 interface SuggestionsPluginCommands {

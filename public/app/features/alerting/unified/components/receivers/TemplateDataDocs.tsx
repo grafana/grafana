@@ -1,10 +1,8 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import type { JSX } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Stack, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Stack } from '@grafana/ui';
 
 import { PopupCard } from '../HoverCard';
 
@@ -13,7 +11,7 @@ import {
   GlobalTemplateData,
   KeyValueCodeSnippet,
   KeyValueTemplateFunctions,
-  type TemplateDataItem,
+  TemplateDataItem,
 } from './TemplateData';
 
 export function TemplateDataDocs() {
@@ -22,18 +20,9 @@ export function TemplateDataDocs() {
   const AlertTemplateDataTable = (
     <TemplateDataTable
       caption={
-        <>
-          <Text variant="h4" element="h4" color="primary">
-            <Trans i18nKey="alerting.template-data-docs.alert-template-data-table.alert-template-data">
-              Alert template data
-            </Trans>
-          </Text>
-          <Text variant="bodySmall">
-            <Trans i18nKey="alerting.template-data-docs.alert-template-data-table.only-in-alert">
-              Available only when in the context of an Alert (e.g. inside .Alerts loop)
-            </Trans>
-          </Text>
-        </>
+        <h4 className={styles.header}>
+          Alert template data <span>Available only when in the context of an Alert (e.g. inside .Alerts loop)</span>
+        </h4>
       }
       dataItems={AlertTemplateData}
     />
@@ -42,42 +31,35 @@ export function TemplateDataDocs() {
   return (
     <Stack gap={2}>
       <TemplateDataTable
-        caption={
-          <>
-            <Text variant="h4" element="h4" color="primary">
-              <Trans i18nKey="alerting.template-data-docs.notification-template-data">Notification template data</Trans>
-            </Text>
-            <Text variant="bodySmall">
-              <Trans i18nKey="alerting.template-data-docs.available-context-notification">
-                Available in the context of a notification.
-              </Trans>
-            </Text>
-          </>
-        }
+        caption={<h4 className={styles.header}>Template Data</h4>}
         dataItems={GlobalTemplateData}
-        typeRenderer={(type) => {
-          if (type === '[]Alert') {
-            return (
-              <PopupCard content={AlertTemplateDataTable}>
-                <div className={styles.interactiveType}>{type}</div>
-              </PopupCard>
-            );
-          }
-          if (type === 'KeyValue') {
-            return (
-              <PopupCard content={<KeyValueTemplateDataTable />}>
-                <div className={styles.interactiveType}>{type}</div>
-              </PopupCard>
-            );
-          }
-          return type;
-        }}
+        typeRenderer={(type) =>
+          type === '[]Alert' ? (
+            <PopupCard content={AlertTemplateDataTable}>
+              <div className={styles.interactiveType}>{type}</div>
+            </PopupCard>
+          ) : type === 'KeyValue' ? (
+            <PopupCard content={<KeyValueTemplateDataTable />}>
+              <div className={styles.interactiveType}>{type}</div>
+            </PopupCard>
+          ) : (
+            type
+          )
+        }
       />
     </Stack>
   );
 }
 
-const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
+export const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    color: theme.colors.text.primary,
+
+    span: {
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    },
+  }),
   interactiveType: css({
     color: theme.colors.text.link,
   }),
@@ -97,15 +79,9 @@ export function TemplateDataTable({ dataItems, caption, typeRenderer }: Template
       {caption && <caption>{caption}</caption>}
       <thead>
         <tr>
-          <th>
-            <Trans i18nKey="alerting.template-data-table.name">Name</Trans>
-          </th>
-          <th>
-            <Trans i18nKey="alerting.template-data-table.type">Type</Trans>
-          </th>
-          <th>
-            <Trans i18nKey="alerting.template-data-table.notes">Notes</Trans>
-          </th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Notes</th>
         </tr>
       </thead>
       <tbody>
@@ -126,30 +102,18 @@ function KeyValueTemplateDataTable() {
 
   return (
     <div>
-      <Trans i18nKey="alerting.key-value-template-data-table.description">
-        KeyValue is a set of key/value string pairs that represent labels and annotations.
-      </Trans>
+      KeyValue is a set of key/value string pairs that represent labels and annotations.
       <pre>
         <code>{KeyValueCodeSnippet}</code>
       </pre>
       <table className={tableStyles.table}>
-        <caption>
-          <Trans i18nKey="alerting.key-value-template-data-table.keyvalue-methods">Key-value methods</Trans>
-        </caption>
+        <caption>Key-value methods</caption>
         <thead>
           <tr>
-            <th>
-              <Trans i18nKey="alerting.key-value-template-data-table.name">Name</Trans>
-            </th>
-            <th>
-              <Trans i18nKey="alerting.key-value-template-data-table.arguments">Arguments</Trans>
-            </th>
-            <th>
-              <Trans i18nKey="alerting.key-value-template-data-table.returns">Returns</Trans>
-            </th>
-            <th>
-              <Trans i18nKey="alerting.key-value-template-data-table.notes">Notes</Trans>
-            </th>
+            <th>Name</th>
+            <th>Arguments</th>
+            <th>Returns</th>
+            <th>Notes</th>
           </tr>
         </thead>
         <tbody>
@@ -167,7 +131,7 @@ function KeyValueTemplateDataTable() {
   );
 }
 
-const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
+export const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
   table: css({
     borderCollapse: 'collapse',
     width: '100%',

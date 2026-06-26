@@ -1,12 +1,11 @@
 import { useCallback } from 'react';
 
-import { type SelectableValue, toOption } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
+import { SelectableValue, toOption } from '@grafana/data';
+import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
-import { type QueryEditorGroupByExpression } from '../../expressions';
-import { type SQLExpression } from '../../types';
+import { QueryEditorGroupByExpression } from '../../expressions';
+import { SQLExpression } from '../../types';
 import { setGroupByField } from '../../utils/sql.utils';
 
 interface GroupByRowProps {
@@ -47,20 +46,12 @@ function makeRenderColumn({ options }: { options?: Array<SelectableValue<string>
       <InputGroup>
         <Select
           value={item.property?.name ? toOption(item.property.name) : null}
-          aria-label={t('grafana-sql.components.make-render-column.render-column.aria-label-group-by', 'Group by')}
+          aria-label="Group by"
           options={options}
           menuShouldPortal
           onChange={({ value }) => value && onChangeItem(setGroupByField(value))}
         />
-        <AccessoryButton
-          aria-label={t(
-            'grafana-sql.components.make-render-column.render-column.title-remove-group-by-column',
-            'Remove group by column'
-          )}
-          icon="times"
-          variant="secondary"
-          onClick={onDeleteItem}
-        />
+        <AccessoryButton title="Remove group by column" icon="times" variant="secondary" onClick={onDeleteItem} />
       </InputGroup>
     );
   };

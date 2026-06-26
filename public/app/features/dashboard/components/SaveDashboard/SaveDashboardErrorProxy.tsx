@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { type FetchError } from '@grafana/runtime';
-import { type Dashboard } from '@grafana/schema';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config, FetchError } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
-import { type DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state/DashboardModel';
 
 import { SaveDashboardAsButton } from './SaveDashboardButton';
-import { type SaveDashboardModalProps } from './types';
+import { SaveDashboardModalProps } from './types';
 import { useDashboardSave } from './useDashboardSave';
 
 interface SaveDashboardErrorProxyProps {
@@ -31,23 +31,19 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-
+  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
   return (
     <>
       {error.data && error.data.status === 'version-mismatch' && (
         <ConfirmModal
           isOpen={true}
-          title={t('dashboard.save-dashboard-error-proxy.title-version-mismatch', 'Conflict')}
+          title="Conflict"
           body={
             <div>
-              <Trans i18nKey="dashboard.save-dashboard-error-proxy.body-version-mismatch">
-                Someone else has updated this dashboard
-                <br />
-                <small>Would you still like to save this dashboard?</small>
-              </Trans>
+              Someone else has updated this dashboard <br /> <small>Would you still like to save this dashboard?</small>
             </div>
           }
-          confirmText={t('dashboard.save-dashboard-error-proxy.confirmText-save-and-overwrite', 'Save and overwrite')}
+          confirmText="Save and overwrite"
           onConfirm={async () => {
             await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
             onDismiss();
@@ -56,23 +52,44 @@ export const SaveDashboardErrorProxy = ({
         />
       )}
       {error.data && error.data.status === 'name-exists' && (
-        <Modal
-          isOpen={true}
-          title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')}
-          onDismiss={onDismiss}
-        >
-          <p>
-            <Trans i18nKey="save-dashboards.name-exists.message-info">
-              A dashboard with the same name in the selected folder already exists, including recently deleted
-              dashboards.
-            </Trans>
-          </p>
-          <p>
-            <Trans i18nKey="save-dashboards.name-exists.message-suggestion">
-              Please choose a different name or folder.
-            </Trans>
-          </p>
-        </Modal>
+        <>
+          {isRestoreDashboardsEnabled ? (
+            <Modal
+              isOpen={true}
+              title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')}
+              onDismiss={onDismiss}
+            >
+              <p>
+                <Trans i18nKey="save-dashboards.name-exists.message-info">
+                  A dashboard with the same name in the selected folder already exists, including recently deleted
+                  dashboards.
+                </Trans>
+              </p>
+              <p>
+                <Trans i18nKey="save-dashboards.name-exists.message-suggestion">
+                  Please choose a different name or folder.
+                </Trans>
+              </p>
+            </Modal>
+          ) : (
+            <ConfirmModal
+              isOpen={true}
+              title="Conflict"
+              body={
+                <div>
+                  A dashboard with the same name in selected folder already exists. <br />
+                  <small>Would you still like to save this dashboard?</small>
+                </div>
+              }
+              confirmText="Save and overwrite"
+              onConfirm={async () => {
+                await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
+                onDismiss();
+              }}
+              onDismiss={onDismiss}
+            />
+          )}
+        </>
       )}
       {error.data && error.data.status === 'plugin-dashboard' && (
         <ConfirmPluginDashboardSaveModal
@@ -89,28 +106,20 @@ export const SaveDashboardErrorProxy = ({
 
 const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboardModalProps) => {
   const { onDashboardSave } = useDashboardSave();
-
   const styles = useStyles2(getConfirmPluginDashboardSaveModalStyles);
 
   return (
-    <Modal
-      className={styles.modal}
-      title={t('dashboard.confirm-plugin-dashboard-save-modal.title-plugin-dashboard', 'Plugin dashboard')}
-      isOpen={true}
-      onDismiss={onDismiss}
-    >
+    <Modal className={styles.modal} title="Plugin dashboard" icon="copy" isOpen={true} onDismiss={onDismiss}>
       <div className={styles.modalText}>
-        <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.body-plugin-dashboard">
-          Your changes will be lost when you update the plugin.
-          <br />
-          <small>
-            Use <strong>Save As</strong> to create custom version.
-          </small>
-        </Trans>
+        Your changes will be lost when you update the plugin.
+        <br />
+        <small>
+          Use <strong>Save As</strong> to create custom version.
+        </small>
       </div>
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss} fill="outline">
-          <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.cancel">Cancel</Trans>
+          Cancel
         </Button>
         <SaveDashboardAsButton onClick={onDismiss} dashboard={dashboard} onSaveSuccess={onDismiss} />
         <Button
@@ -120,7 +129,7 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
             onDismiss();
           }}
         >
-          <Trans i18nKey="dashboard.confirm-plugin-dashboard-save-modal.overwrite">Overwrite</Trans>
+          Overwrite
         </Button>
       </Modal.ButtonRow>
     </Modal>

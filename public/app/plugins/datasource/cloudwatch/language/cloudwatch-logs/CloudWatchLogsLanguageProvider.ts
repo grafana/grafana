@@ -1,20 +1,13 @@
-import Prism, { type Grammar } from 'prismjs';
+import Prism, { Grammar } from 'prismjs';
 import { lastValueFrom } from 'rxjs';
 
-import { type AbsoluteTimeRange, type HistoryItem, LanguageProvider } from '@grafana/data';
-import { type BackendDataSourceResponse, type FetchResponse, type TemplateSrv, getTemplateSrv } from '@grafana/runtime';
-import {
-  type CompletionItemGroup,
-  SearchFunctionType,
-  type Token,
-  type TypeaheadInput,
-  type TypeaheadOutput,
-} from '@grafana/ui';
+import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
+import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-import { type LogGroup } from '../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../datasource';
-import { type CloudWatchQuery } from '../../types';
-import { fetchLogGroupFields } from '../utils';
+import { CloudWatchDatasource } from '../../datasource';
+import { CloudWatchQuery, LogGroup } from '../../types';
+import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../../utils/templateVariableUtils';
 
 import syntax, {
   AGGREGATION_FUNCTIONS_STATS,
@@ -27,7 +20,7 @@ import syntax, {
   STRING_FUNCTIONS,
 } from './syntax';
 
-type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
+export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
 type TypeaheadContext = {
   history?: CloudWatchHistoryItem[];
@@ -42,11 +35,13 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
   datasource: CloudWatchDatasource;
   templateSrv: TemplateSrv;
 
-  constructor(datasource: CloudWatchDatasource, templateSrv?: TemplateSrv) {
+  constructor(datasource: CloudWatchDatasource, templateSrv?: TemplateSrv, initialValues?: any) {
     super();
 
     this.datasource = datasource;
     this.templateSrv = templateSrv ?? getTemplateSrv();
+
+    Object.assign(this, initialValues);
   }
 
   // Strip syntax chars
@@ -95,17 +90,15 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
     const { value } = input;
 
     // Get tokens
-    const tokens: Token[] = value?.data.get('tokens');
+    const tokens = value?.data.get('tokens');
 
     if (!tokens || !tokens.length) {
       return { suggestions: [] };
     }
 
-    const curToken = tokens.filter(
-      (token) =>
-        token.offsets &&
-        token.offsets.start <= value!.selection?.start?.offset &&
-        token.offsets.end >= value!.selection?.start?.offset
+    const curToken: Token = tokens.filter(
+      (token: any) =>
+        token.offsets.start <= value!.selection?.start?.offset && token.offsets.end >= value!.selection?.start?.offset
     )[0];
 
     const isFirstToken = !curToken.prev;
@@ -137,6 +130,24 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
       suggestions: [],
     };
   }
+
+  private fetchFields = async (logGroups: LogGroup[], region: string): Promise<string[]> => {
+    const interpolatedLogGroups = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      this.templateSrv,
+      logGroups.map((lg) => lg.name),
+      {},
+      'text'
+    );
+    const results = await Promise.all(
+      interpolatedLogGroups.map((logGroupName) =>
+        this.datasource.resources
+          .getLogGroupFields({ logGroupName, region })
+          .then((fields) => fields.filter((f) => f).map((f) => f.value.name ?? ''))
+      )
+    );
+
+    return results.flat();
+  };
 
   private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput> => {
     const suggs = await this.getFieldCompletionItems(context?.logGroups, context?.region || 'default');
@@ -301,7 +312,7 @@ export class CloudWatchLogsLanguageProvider extends LanguageProvider {
       return { suggestions: [] };
     }
 
-    const fields = await fetchLogGroupFields(logGroups, region, this.templateSrv, this.datasource.resources);
+    const fields = await this.fetchFields(logGroups, region);
     return {
       suggestions: [
         {

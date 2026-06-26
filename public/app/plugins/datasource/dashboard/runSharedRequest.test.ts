@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { type DataSourceApi, DataTopic, LoadingState, type PanelData } from '@grafana/data';
+import { DataSourceApi, DataTopic, LoadingState, PanelData } from '@grafana/data';
 import { getDashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { isSharedDashboardQuery, runSharedRequest } from './runSharedRequest';

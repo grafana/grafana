@@ -8,19 +8,17 @@ import { SeriesVisibilityChangeMode, usePanelContext } from '../PanelChrome';
 
 import { VizLegendList } from './VizLegendList';
 import { VizLegendTable } from './VizLegendTable';
-import { type LegendProps, SeriesVisibilityChangeBehavior, type VizLegendItem } from './types';
+import { LegendProps, SeriesVisibilityChangeBehavior, VizLegendItem } from './types';
 import { mapMouseEventToMode } from './utils';
 
 /**
  * @public
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-vizlegend--docs
  */
 export function VizLegend<T>({
   items,
   thresholdItems,
   mappingItems,
-  displayMode = LegendDisplayMode.List,
+  displayMode,
   sortBy: sortKey,
   seriesVisibilityChangeBehavior = SeriesVisibilityChangeBehavior.Isolate,
   sortDesc,
@@ -31,9 +29,6 @@ export function VizLegend<T>({
   itemRenderer,
   readonly,
   isSortable,
-  limit,
-  filterAction,
-  overflow,
 }: LegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
@@ -102,12 +97,10 @@ export function VizLegend<T>({
           itemRenderer={itemRenderer}
           readonly={readonly}
           items={items}
-          limit={limit}
-          filterAction={filterAction}
         />
       );
     },
-    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly, limit, filterAction]
+    [className, placement, onMouseOver, onMouseOut, onLegendLabelClick, itemRenderer, readonly]
   );
 
   switch (displayMode) {
@@ -126,9 +119,6 @@ export function VizLegend<T>({
           itemRenderer={itemRenderer}
           readonly={readonly}
           isSortable={isSortable}
-          limit={limit}
-          filterAction={filterAction}
-          overflow={overflow}
         />
       );
     case LegendDisplayMode.List:

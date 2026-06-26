@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -21,7 +22,7 @@ import (
 var updateGoldenFiles = false
 
 // These tests require a real postgres database:
-// - make devenv sources=postgres_tests
+// - make devenv sources=potgres_tests
 // - either set the env variable GRAFANA_TEST_DB = postgres
 //   - or set `forceRun := true` below
 //
@@ -29,10 +30,12 @@ var updateGoldenFiles = false
 // Use the docker/blocks/postgres_tests/docker-compose.yaml to spin up a
 // preconfigured Postgres server suitable for running these tests.
 func TestIntegrationPostgresSnapshots(t *testing.T) {
-	skipIntegrationTestInShortMode(t)
-
 	// the logic in this function is copied from postgres_tests.go
 	shouldRunTest := func() bool {
+		if testing.Short() {
+			return false
+		}
+
 		testDbName, present := os.LookupEnv("GRAFANA_TEST_DB")
 
 		if present && testDbName == "postgres" {
@@ -125,8 +128,6 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "table", name: "types_char"},
 		{format: "table", name: "types_datetime"},
 		{format: "table", name: "types_other"},
-		{format: "table", name: "types_enum"},
-		{format: "table", name: "types_jsonb"},
 		{format: "table", name: "timestamp_convert_bigint"},
 		{format: "table", name: "timestamp_convert_integer"},
 		{format: "table", name: "timestamp_convert_real"},
@@ -148,11 +149,10 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			}
 
 			jsonData := sqleng.JsonData{
-				MaxOpenConns:        10,
+				MaxOpenConns:        0,
 				MaxIdleConns:        2,
 				ConnMaxLifetime:     14400,
 				Timescaledb:         false,
-				Mode:                "disable",
 				ConfigurationMethod: "file-path",
 			}
 
@@ -165,24 +165,28 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 			cnnstr := getCnnStr()
 
-			p, handler, err := newPostgres(t.Context(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
-			require.NoError(t, err)
+			db, handler, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
-			t.Cleanup(func() {
-				p.Close()
-			})
+			t.Cleanup((func() {
+				_, err := db.Exec("DROP TABLE tbl")
+				require.NoError(t, err)
+				err = db.Close()
+				require.NoError(t, err)
+			}))
+
+			require.NoError(t, err)
 
 			sqlFilePath := filepath.Join("testdata", test.format, test.name+".sql")
 			goldenFileName := filepath.Join(test.format, test.name+".golden")
 
 			rawSQL, sql := readSqlFile(sqlFilePath)
 
-			_, err = p.Exec(t.Context(), sql)
+			_, err = db.Exec(sql)
 			require.NoError(t, err)
 
 			query := makeQuery(rawSQL, test.format)
 
-			result, err := handler.QueryData(t.Context(), &query)
+			result, err := handler.QueryData(context.Background(), &query)
 			require.Len(t, result.Responses, 1)
 			response, found := result.Responses["A"]
 			require.True(t, found)

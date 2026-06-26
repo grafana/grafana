@@ -1,18 +1,16 @@
 import { css } from '@emotion/css';
-import { type ComponentType, useEffect } from 'react';
-import { connect, type ConnectedProps } from 'react-redux';
+import { ComponentType, useEffect } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type StoreState } from 'app/types/store';
-import { type UserFilter } from 'app/types/user';
+import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 
-import { EnterpriseAuthFeaturesCard } from './EnterpriseAuthFeaturesCard';
+import { AccessControlAction, StoreState, UserFilter } from '../../types';
+
 import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
@@ -77,31 +75,15 @@ const UserListAdminPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
-<<<<<<< HEAD
             placeholder="Найдите пользователя по логину, электронной почте или имени.."
-=======
-            placeholder={t(
-              'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
-              'Search user by login, email, or name.'
-            )}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             autoFocus={true}
             value={query}
             onChange={changeQuery}
-            escapeRegex={false}
           />
           <RadioButtonGroup
             options={[
-<<<<<<< HEAD
               { label: 'Все пользователи', value: false },
               { label: 'Активные в течение последних 30 дней', value: true },
-=======
-              { label: t('admin.user-list-admin-page-un-connected.label.all-users', 'All users'), value: false },
-              {
-                label: t('admin.user-list-admin-page-un-connected.label.active-last-days', 'Active last 30 days'),
-                value: true,
-              },
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             ]}
             onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
             value={filters.find((f) => f.name === 'activeLast30Days')?.value}
@@ -112,7 +94,7 @@ const UserListAdminPageUnConnected = ({
           ))}
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
-              <Trans i18nKey="admin.users-list.create-button">New user</Trans>
+              New user
             </LinkButton>
           )}
         </div>
@@ -129,12 +111,19 @@ const UserListAdminPageUnConnected = ({
           fetchData={changeSort}
         />
       )}
-      <EnterpriseAuthFeaturesCard page="users" />
     </Page.Contents>
   );
 };
 
 export const UserListAdminPageContent = connector(UserListAdminPageUnConnected);
+
+export function UserListAdminPage() {
+  return (
+    <Page navId="global-users">
+      <UserListAdminPageContent />
+    </Page>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -168,3 +157,5 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+export default UserListAdminPage;

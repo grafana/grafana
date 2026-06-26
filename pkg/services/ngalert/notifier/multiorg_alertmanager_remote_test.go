@@ -22,7 +22,6 @@ import (
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,24 +51,36 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	})
 
 	// Create the factory function for the MOA using the forked Alertmanager in remote secondary mode.
-	remoteAMCfg := remote.AlertmanagerConfig{
-		OrgID:             1,
-		URL:               testsrv.URL,
-		TenantID:          tenantID,
-		BasicAuthPassword: password,
-		DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
-	}
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	override := remote.NewRemoteSecondaryFactory(remoteAMCfg,
-		kvStore,
-		configStore,
-		10*time.Second,
-		notifier.NewCrypto(secretsService, configStore, log.NewNopLogger()),
-		m.GetRemoteAlertmanagerMetrics(),
-		tracing.InitializeTracerForTest(),
-		false,
-		featuremgmt.WithFeatures(),
-	)
+	override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+			// Create internal Alertmanager.
+			internalAM, err := factoryFn(ctx, orgID)
+			require.NoError(t, err)
+
+			// Create remote Alertmanager.
+			externalAMCfg := remote.AlertmanagerConfig{
+				OrgID:             1,
+				URL:               testsrv.URL,
+				TenantID:          tenantID,
+				BasicAuthPassword: password,
+				DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
+			}
+			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+			remoteAM, err := remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvStore), secretsService.Decrypt, remote.NoopAutogenFn, m, tracing.InitializeTracerForTest())
+			require.NoError(t, err)
+
+			// Use both Alertmanager implementations in the forked Alertmanager.
+			cfg := remote.RemoteSecondaryConfig{
+				Logger: nopLogger,
+				OrgID:  orgID,
+				Store:  configStore,
+				// Note that we're setting a sync interval of 10 seconds.
+				SyncInterval: 10 * time.Second,
+			}
+			return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
+		}
+	})
 
 	cfg := &setting.Cfg{
 		DataPath: t.TempDir(),
@@ -88,21 +99,16 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		ngfakes.NewFakeReceiverPermissionsService(),
-		ngfakes.NewFakeRoutePermissionsService(),
 		nopLogger,
 		secretsService,
 		featuremgmt.WithFeatures(),
-		nil,
-		false,
-		// Sync deps are nil — this test does not enable the sync feature flag.
-		notifier.NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), nopLogger, nil, nil, nil),
-		notifier.WithAlertmanagerOverride(override),
+		override,
 	)
 	require.NoError(t, err)
 
 	// It should send config and state on startup.
 	var lastConfig *remoteClient.UserGrafanaConfig
-	var lastState *remoteClient.UserState
+	var lastState *remoteClient.UserGrafanaState
 	{
 		// We should start with no config and no state in the external Alertmanager.
 		require.Empty(t, fakeAM.config)
@@ -131,15 +137,15 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		require.Equal(t, fakeAM.config, lastConfig)
 		require.Equal(t, fakeAM.state, lastState)
 
-		// Syncing after the sync interval elapses should update the config, not the state.
+		// Syncing after the sync interval elapses should update both config and state.
 		require.Eventually(t, func() bool {
 			require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
-			return fakeAM.config != lastConfig && fakeAM.state == lastState
+			return fakeAM.config != lastConfig && fakeAM.state != lastState
 		}, 15*time.Second, 300*time.Millisecond)
-		lastConfig = fakeAM.config
+		lastConfig, lastState = fakeAM.config, fakeAM.state
 	}
 
-	// It should send state on shutdown.
+	// It should send config and state on shutdown.
 	{
 		// Let's change the configuration and state again.
 		require.NoError(t, configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
@@ -148,12 +154,13 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			OrgID:                     1,
 			LastApplied:               time.Now().Unix(),
 		}))
+		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "lwEKhgEKAWESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8ClwEKhgEKAWISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8C"))
+		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "OAopCgZncm91cEESEgoJcmVjZWl2ZXJBEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAVOAopCgZncm91cEISEgoJcmVjZWl2ZXJCEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAV"))
 
-		// State should be updated when shutting the Alertmanager down.
+		// Both state and config should be updated when shutting the Alertmanager down.
 		moa.StopAndWait()
-		require.Eventually(t, func() bool {
-			return fakeAM.state != lastState
-		}, 15*time.Second, 300*time.Millisecond)
+		require.NotEqual(t, fakeAM.config, lastConfig)
+		require.NotEqual(t, fakeAM.state, lastState)
 	}
 }
 
@@ -168,7 +175,7 @@ func newFakeRemoteAlertmanager(t *testing.T, user, pass string) *fakeRemoteAlert
 type fakeRemoteAlertmanager struct {
 	t        *testing.T
 	config   *remoteClient.UserGrafanaConfig
-	state    *remoteClient.UserState
+	state    *remoteClient.UserGrafanaState
 	username string
 	password string
 }
@@ -234,7 +241,7 @@ func (f *fakeRemoteAlertmanager) getConfig(w http.ResponseWriter) {
 }
 
 func (f *fakeRemoteAlertmanager) postState(w http.ResponseWriter, r *http.Request) {
-	var state remoteClient.UserState
+	var state remoteClient.UserGrafanaState
 	require.NoError(f.t, json.NewDecoder(r.Body).Decode(&state))
 
 	f.state = &state
@@ -265,7 +272,7 @@ var validConfig = `{
 				"name": "email receiver",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@example.com>"
+					"addresses": "<example@email.com>"
 				}
 			}]
 		}]

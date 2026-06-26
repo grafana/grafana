@@ -1,4 +1,4 @@
-import { type CanvasElementOptions } from './element';
+import { CanvasElementOptions } from './element';
 
 export interface CanvasFrameOptions extends CanvasElementOptions {
   type: 'frame';

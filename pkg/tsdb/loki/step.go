@@ -1,11 +1,9 @@
 package loki
 
 import (
-	"fmt"
 	"math"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 )
 
@@ -35,7 +33,7 @@ func calculateStep(interval time.Duration, timeRange time.Duration, resolution i
 
 	step, err := gtime.ParseIntervalStringToTimeDuration(*queryStep)
 	if err != nil {
-		return step, backend.DownstreamError(fmt.Errorf("failed to parse query step: %w", err))
+		return step, err
 	}
 
 	return time.Duration(step.Nanoseconds() * resolution), nil

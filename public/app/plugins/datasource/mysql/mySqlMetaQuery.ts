@@ -18,7 +18,7 @@ export function buildColumnQuery(table: string, dbName?: string) {
   return query;
 }
 
-function buildTableConstraint(table: string, dbName?: string) {
+export function buildTableConstraint(table: string, dbName?: string) {
   let query = '';
 
   // check for schema qualified table
@@ -35,6 +35,6 @@ function buildTableConstraint(table: string, dbName?: string) {
   }
 }
 
-function quoteIdentAsLiteral(value: string) {
+export function quoteIdentAsLiteral(value: string) {
   return quoteLiteral(unquoteIdentifier(value));
 }

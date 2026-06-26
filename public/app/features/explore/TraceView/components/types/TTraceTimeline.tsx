@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type DetailState from '../TraceTimelineViewer/SpanDetail/DetailState';
+import DetailState from '../TraceTimelineViewer/SpanDetail/DetailState';
 
-import type TNil from './TNil';
+import TNil from './TNil';
 
 type TTraceTimeline = {
   childrenHiddenIDs: Set<string>;

@@ -1,3 +1,4 @@
+import { isNumber } from 'lodash';
 import uPlot from 'uplot';
 
 import {
@@ -454,7 +455,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
         const t = indexByName.get(dispName);
         const b = indexByName.get(fillBelowDispName);
-        if (typeof b === 'number' && typeof t === 'number') {
+        if (isNumber(b) && isNumber(t)) {
           builder.addBand({
             series: [t, b],
             fill: undefined, // using null will have the band use fill options from `t`
@@ -609,7 +610,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   return builder;
 };
 
-function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
+export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
   const originNames = new Map<string, number>();
   frame.fields.forEach((field, i) => {
     const origin = field.state?.origin;

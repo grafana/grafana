@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
 import { Button, Field, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import {
@@ -9,11 +8,12 @@ import {
   strongPasswordValidationRegister,
 } from 'app/core/components/ValidationLabels/ValidationLabels';
 import config from 'app/core/config';
-import { type UserDTO } from 'app/types/user';
+import { t, Trans } from 'app/core/internationalization';
+import { UserDTO } from 'app/types';
 
 import { PasswordField } from '../../core/components/PasswordField/PasswordField';
 
-import { type ChangePasswordFields } from './types';
+import { ChangePasswordFields } from './types';
 
 export interface Props {
   user: UserDTO;

@@ -1,15 +1,16 @@
-import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
-import { type Dashboard } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Button } from '@grafana/ui';
+import * as React from 'react';
 
-import { type Diffs } from '../settings/version-history/utils';
+import { selectors } from '@grafana/e2e-selectors';
+import { config, isFetchError } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
+import { Alert, Box, Button, Stack } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
+
+import { Diffs } from '../settings/version-history/utils';
 
 export interface DashboardChangeInfo {
-  changedSaveModel: Dashboard | DashboardV2Spec;
-  initialSaveModel: Dashboard | DashboardV2Spec;
+  changedSaveModel: Dashboard;
+  initialSaveModel: Dashboard;
   diffs: Diffs;
   diffCount: number;
   hasChanges: boolean;
@@ -18,7 +19,6 @@ export interface DashboardChangeInfo {
   hasRefreshChange: boolean;
   isNew?: boolean;
   hasFolderChanges?: boolean;
-  hasMigratedToV2?: boolean;
 }
 
 export function isVersionMismatchError(error?: Error) {
@@ -33,8 +33,14 @@ export function isPluginDashboardError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
 }
 
-export function NameAlreadyExistsError() {
-  return (
+export interface NameAlreadyExistsErrorProps {
+  cancelButton: React.ReactNode;
+  saveButton: (overwrite: boolean) => React.ReactNode;
+}
+
+export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlreadyExistsErrorProps) {
+  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
+  return isRestoreDashboardsEnabled ? (
     <Alert title={t('save-dashboards.name-exists.title', 'Dashboard name already exists')} severity="error">
       <p>
         <Trans i18nKey="save-dashboards.name-exists.message-info">
@@ -46,6 +52,18 @@ export function NameAlreadyExistsError() {
           Please choose a different name or folder.
         </Trans>
       </p>
+    </Alert>
+  ) : (
+    <Alert title="Name already exists" severity="error">
+      <p>
+        A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
+      </p>
+      <Box paddingTop={2}>
+        <Stack alignItems="center">
+          {cancelButton}
+          {saveButton(true)}
+        </Stack>
+      </Box>
     </Alert>
   );
 }
@@ -66,15 +84,7 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
       variant={overwrite ? 'destructive' : 'primary'}
       data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
     >
-<<<<<<< HEAD
       {isLoading ? 'Сохранение...' : overwrite ? 'Сохранить и перезаписать' : 'Сохранть'}
-=======
-      {isLoading
-        ? t('dashboard-scene.save-button.saving', 'Saving...')
-        : overwrite
-          ? t('dashboard-scene.save-button.save-and-overwrite', 'Save and overwrite')
-          : t('dashboard-scene.save-button.save', 'Save')}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
     </Button>
   );
 }

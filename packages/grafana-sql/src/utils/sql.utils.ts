@@ -1,14 +1,11 @@
-import { type SelectableValue, toOption } from '@grafana/data';
-
 import {
   QueryEditorExpressionType,
-  type QueryEditorFunctionExpression,
-  type QueryEditorFunctionParameterExpression,
-  type QueryEditorGroupByExpression,
-  type QueryEditorPropertyExpression,
+  QueryEditorFunctionExpression,
+  QueryEditorGroupByExpression,
+  QueryEditorPropertyExpression,
   QueryEditorPropertyType,
 } from '../expressions';
-import { type SQLExpression } from '../types';
+import { SQLExpression } from '../types';
 
 export function createSelectClause(sqlColumns: NonNullable<SQLExpression['columns']>): string {
   const columns = sqlColumns.map((c) => {
@@ -69,19 +66,4 @@ export function createFunctionField(functionName?: string): QueryEditorFunctionE
     name: functionName,
     parameters: [],
   };
-}
-
-/**
- * Retrieves the column value from a QueryEditorFunctionParameterExpression object.
- *
- * @param column - The QueryEditorFunctionParameterExpression object representing the column.
- * @returns The column value as a SelectableValue<string> or null if the column is undefined or null.
- */
-export function getColumnValue(
-  column?: QueryEditorFunctionParameterExpression | QueryEditorFunctionExpression
-): SelectableValue<string> | null {
-  if (column?.name) {
-    return toOption(column.name);
-  }
-  return null;
 }

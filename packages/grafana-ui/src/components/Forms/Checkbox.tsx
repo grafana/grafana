@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { type HTMLProps, useCallback } from 'react';
+import { HTMLProps, useCallback } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
-import { useFieldContext } from './FieldContext';
 import { getLabelStyles } from './Label';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
@@ -19,30 +18,15 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   value?: boolean;
   /** htmlValue allows to specify the input "value" attribute */
   htmlValue?: string | number;
-  /** Sets the checkbox into a "mixed" state */
+  /** Sets the checkbox into a "mixed" state. This is only a visual change and does not affect the value. */
   indeterminate?: boolean;
   /** Show an invalid state around the input */
   invalid?: boolean;
 }
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-checkbox--docs
- */
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   (
-    {
-      label,
-      description,
-      value,
-      htmlValue,
-      onChange,
-      disabled: disabledProp,
-      className,
-      indeterminate,
-      invalid: invalidProp,
-      id: idProp,
-      ...inputProps
-    },
+    { label, description, value, htmlValue, onChange, disabled, className, indeterminate, invalid, ...inputProps },
     ref
   ) => {
     const handleOnChange = useCallback(
@@ -53,11 +37,9 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       },
       [onChange]
     );
-    const fieldContext = useFieldContext();
-    const id = idProp ?? fieldContext.id;
-    const invalid = invalidProp ?? fieldContext.invalid;
-    const disabled = disabledProp ?? fieldContext.disabled;
     const styles = useStyles2(getCheckboxStyles, invalid);
+
+    const ariaChecked = indeterminate ? 'mixed' : undefined;
 
     return (
       <label className={cx(styles.wrapper, className)}>
@@ -69,23 +51,9 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             disabled={disabled}
             onChange={handleOnChange}
             value={htmlValue}
-            aria-invalid={!!invalid}
-            id={id}
+            aria-checked={ariaChecked}
             {...inputProps}
-            ref={(element) => {
-              if (element && indeterminate) {
-                element.indeterminate = true;
-              }
-
-              // we have to manually assign the ref since we need to modify the indeterminate property
-              if (ref) {
-                if (typeof ref === 'function') {
-                  ref(element);
-                } else {
-                  ref.current = element;
-                }
-              }
-            }}
+            ref={ref}
           />
           <span className={styles.checkmark} />
         </div>
@@ -96,7 +64,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   }
 );
 
-const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
+export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = 2;
   const labelPadding = 1;
@@ -134,22 +102,22 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
        * for angular components styling
        * */
       '&:checked + span': {
-        background: theme.colors.accent.main,
-        border: `1px solid ${getBorderColor(theme.colors.accent.main)}`,
+        background: theme.colors.primary.main,
+        border: `1px solid ${getBorderColor(theme.colors.primary.main)}`,
 
         '&:hover': {
-          background: theme.colors.accent.shade,
+          background: theme.colors.primary.shade,
         },
 
         '&:after': {
           content: '""',
           position: 'absolute',
           zIndex: 2,
-          left: theme.spacing(0.5),
+          left: '4px',
           top: 0,
-          width: theme.spacing(0.75),
-          height: theme.spacing(1.5),
-          border: `solid ${theme.colors.accent.contrastText}`,
+          width: '6px',
+          height: '12px',
+          border: `solid ${theme.colors.primary.contrastText}`,
           borderWidth: '0 3px 3px 0',
           transform: 'rotate(45deg)',
         },
@@ -171,12 +139,12 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
     }),
 
     inputIndeterminate: css({
-      '&:indeterminate + span': {
-        border: `1px solid ${getBorderColor(theme.colors.accent.main)}`,
-        background: theme.colors.accent.main,
+      "&[aria-checked='mixed'] + span": {
+        border: `1px solid ${getBorderColor(theme.colors.primary.main)}`,
+        background: theme.colors.primary.main,
 
         '&:hover': {
-          background: theme.colors.accent.shade,
+          background: theme.colors.primary.shade,
         },
 
         '&:after': {
@@ -187,8 +155,8 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
           right: '2px',
           top: 'calc(50% - 1.5px)',
           height: '3px',
-          border: `1.5px solid ${theme.colors.accent.contrastText}`,
-          backgroundColor: theme.colors.accent.contrastText,
+          border: `1.5px solid ${theme.colors.primary.contrastText}`,
+          backgroundColor: theme.colors.primary.contrastText,
           width: 'auto',
           transform: 'none',
         },
@@ -215,7 +183,7 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       display: 'inline-block',
       width: theme.spacing(checkboxSize),
       height: theme.spacing(checkboxSize),
-      borderRadius: theme.shape.radius.sm,
+      borderRadius: theme.shape.radius.default,
       background: theme.components.input.background,
       border: `1px solid ${getBorderColor(theme.components.input.borderColor)}`,
 
@@ -244,8 +212,6 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
         gridRowStart: 2,
         lineHeight: theme.typography.bodySmall.lineHeight,
         marginTop: 0 /* The margin effectively comes from the top: -2px on the label above it */,
-        // Enable interacting with description when checkbox is disabled
-        zIndex: 1,
       })
     ),
   };

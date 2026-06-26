@@ -1,18 +1,24 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { config } from '@grafana/runtime';
+import { ConfirmModal, useStyles2 } from '@grafana/ui/src';
+import { t } from 'app/core/internationalization';
 
 const Body = () => {
   const styles = useStyles2(getStyles);
 
   return (
     <p className={styles.description}>
-      {t(
-        'shared-dashboard.delete-modal.revoke-body-text',
-        'Are you sure you want to revoke this access? The dashboard can no longer be shared.'
-      )}
+      {config.featureToggles.newDashboardSharingComponent
+        ? t(
+            'shared-dashboard.delete-modal.revoke-body-text',
+            'Are you sure you want to revoke this access? The dashboard can no longer be shared.'
+          )
+        : t(
+            'public-dashboard.delete-modal.revoke-body-text',
+            'Are you sure you want to revoke this URL? The dashboard will no longer be public.'
+          )}
     </p>
   );
 };
@@ -24,7 +30,9 @@ export const DeletePublicDashboardModal = ({
   onConfirm: () => void;
   onDismiss: () => void;
 }) => {
-  const translatedRevocationModalText = t('shared-dashboard.delete-modal.revoke-title', 'Revoke access');
+  const translatedRevocationModalText = config.featureToggles.newDashboardSharingComponent
+    ? t('shared-dashboard.delete-modal.revoke-title', 'Revoke access')
+    : t('public-dashboard.delete-modal.revoke-title', 'Revoke public URL');
   return (
     <ConfirmModal
       isOpen
@@ -32,6 +40,7 @@ export const DeletePublicDashboardModal = ({
       onConfirm={onConfirm}
       onDismiss={onDismiss}
       title={translatedRevocationModalText}
+      icon="trash-alt"
       confirmText={translatedRevocationModalText}
     />
   );

@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -50,7 +49,7 @@ func (m *TracingMiddleware) traceWrap(
 	ctx, span := m.tracer.Start(ctx, "PluginClient."+string(endpoint), trace.WithAttributes(
 		// Attach some plugin context information to span
 		attribute.String("plugin_id", pluginContext.PluginID),
-		attribute.Int64("org_id", pluginContext.OrgID), // nolint:staticcheck
+		attribute.Int64("org_id", pluginContext.OrgID),
 	))
 
 	if settings := pluginContext.DataSourceInstanceSettings; settings != nil {

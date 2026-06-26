@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { dateTime, type GrafanaTheme2, type LogRowModel, renderMarkdown, type SelectableValue } from '@grafana/data';
-import { RawQuery } from '@grafana/plugin-ui';
+import { dateTime, GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
+import { RawQuery } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
@@ -22,14 +22,14 @@ import {
 } from '@grafana/ui';
 
 import {
-  type LogContextProvider,
+  LogContextProvider,
   LOKI_LOG_CONTEXT_PRESERVED_LABELS,
-  type PreservedLabels,
+  PreservedLabels,
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
 import { lokiGrammar } from '../syntax';
-import { type ContextFilter, type LokiQuery } from '../types';
+import { ContextFilter, LokiQuery } from '../types';
 
 export interface LokiContextUiProps {
   logContextProvider: LogContextProvider;
@@ -126,7 +126,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
     window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true'
   );
 
-  const timerHandle = useRef<number | undefined>(undefined);
+  const timerHandle = useRef<number>();
   const previousInitialized = useRef<boolean>(false);
   const previousContextFilters = useRef<ContextFilter[]>([]);
 
@@ -191,18 +191,14 @@ export function LokiContextUi(props: LokiContextUiProps) {
     }, 1500);
 
     return () => {
-      if (timerHandle.current) {
-        clearTimeout(timerHandle.current);
-      }
+      clearTimeout(timerHandle.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextFilters, initialized]);
 
   useEffect(() => {
     return () => {
-      if (timerHandle.current) {
-        clearTimeout(timerHandle.current);
-      }
+      clearTimeout(timerHandle.current);
       onClose();
     };
   }, [onClose]);
@@ -273,33 +269,35 @@ export function LokiContextUi(props: LokiContextUiProps) {
           elevated={true}
         ></Alert>
       )}
-      <div className={styles.iconButton}>
-        <Button
-          tooltip="Revert to initial log context query"
-          data-testid="revert-button"
-          icon="history-alt"
-          variant="secondary"
-          disabled={isInitialState}
-          onClick={(e) => {
-            reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
-              logRowUid: row.uid,
-            });
-            setContextFilters((contextFilters) => {
-              return contextFilters.map((contextFilter) => ({
-                ...contextFilter,
-                // For revert to initial query we need to enable all labels and disable all parsed labels
-                enabled: !contextFilter.nonIndexed,
-              }));
-            });
-            // We are removing the preserved labels from local storage so we can preselect the labels in the UI
-            window.localStorage.removeItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
-            window.localStorage.removeItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
-            setIncludePipelineOperations(false);
-          }}
-        />
-      </div>
+      <Tooltip content={'Revert to initial log context query.'}>
+        <div className={styles.iconButton}>
+          <Button
+            data-testid="revert-button"
+            icon="history-alt"
+            variant="secondary"
+            disabled={isInitialState}
+            onClick={(e) => {
+              reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
+                logRowUid: row.uid,
+              });
+              setContextFilters((contextFilters) => {
+                return contextFilters.map((contextFilter) => ({
+                  ...contextFilter,
+                  // For revert to initial query we need to enable all labels and disable all parsed labels
+                  enabled: !contextFilter.nonIndexed,
+                }));
+              });
+              // We are removing the preserved labels from local storage so we can preselect the labels in the UI
+              window.localStorage.removeItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+              window.localStorage.removeItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
+              setIncludePipelineOperations(false);
+            }}
+          />
+        </div>
+      </Tooltip>
 
       <Collapse
+        collapsible={true}
         isOpen={isOpen}
         onToggle={() => {
           window.localStorage.setItem(IS_LOKI_LOG_CONTEXT_UI_OPEN, (!isOpen).toString());
@@ -335,7 +333,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
           >
             Widen the search
           </Label>
-          <MultiSelect<string>
+          <MultiSelect
             isLoading={loading}
             options={realLabels.map(contextFilterToSelectFilter)}
             value={realLabelsEnabled.map(contextFilterToSelectFilter)}
@@ -376,7 +374,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               >
                 Refine the search
               </Label>
-              <MultiSelect<string>
+              <MultiSelect
                 isLoading={loading}
                 options={parsedLabels.map(contextFilterToSelectFilter)}
                 value={parsedLabelsEnabled.map(contextFilterToSelectFilter)}

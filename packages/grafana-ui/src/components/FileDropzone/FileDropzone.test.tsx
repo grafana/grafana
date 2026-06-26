@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 
 import { FileDropzone } from './FileDropzone';
 import { REMOVE_FILE } from './FileListItem';
@@ -54,14 +53,13 @@ describe('The FileDropzone component', () => {
   });
 
   it('should handle file removal from the list', async () => {
-    const user = userEvent.setup();
     render(<FileDropzone />);
 
     dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData(files));
 
     expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(3);
 
-    await user.click(screen.getAllByLabelText(REMOVE_FILE)[0]);
+    fireEvent.click(screen.getAllByLabelText(REMOVE_FILE)[0]);
 
     expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(2);
   });
@@ -121,7 +119,7 @@ describe('The FileDropzone component', () => {
     );
     render(component);
 
-    expect(screen.getByText('Custom dropzone text')).toBeInTheDocument();
+    screen.getByText('Custom dropzone text');
   });
 
   it('should handle file list overwrite when fileListRenderer is passed', async () => {

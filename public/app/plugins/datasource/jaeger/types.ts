@@ -1,12 +1,16 @@
-import { type TraceKeyValuePair, type TraceLog } from '@grafana/data';
-import { type DataQuery } from '@grafana/schema';
+import { DataQuery, TraceKeyValuePair, TraceLog } from '@grafana/data';
+
+export type TraceLink = {
+  url: string;
+  text: string;
+};
 
 export type TraceProcess = {
   serviceName: string;
   tags: TraceKeyValuePair[];
 };
 
-type TraceSpanReference = {
+export type TraceSpanReference = {
   refType: 'CHILD_OF' | 'FOLLOWS_FROM';
   spanID: string;
   traceID: string;
@@ -56,4 +60,13 @@ export type JaegerResponse = {
   limit: number;
   offset: number;
   errors?: string[] | null;
+};
+
+/**
+ * Type definition for service dependencies as returned by the Jaeger dependencies API.
+ */
+export type JaegerServiceDependency = {
+  parent: string;
+  child: string;
+  callCount: number;
 };

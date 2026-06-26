@@ -3,13 +3,11 @@ import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useAsyncFn } from 'react-use';
 
-import { type NavModelItem, type OrgRole } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { NavModelItem } from '@grafana/data';
 import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type OrgUser } from 'app/types/user';
+import { contextSrv } from 'app/core/core';
+import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
 
 import { OrgUsersTable } from './Users/OrgUsersTable';
 import { getOrg, getOrgUsers, getUsersRoles, removeOrgUser, updateOrgName, updateOrgUserRole } from './api';
@@ -57,14 +55,9 @@ const AdminEditOrgPage = () => {
   };
 
   const renderMissingPermissionMessage = () => (
-    <Alert
-      severity="info"
-      title={t('admin.admin-edit-org-page.render-missing-permission-message.title-access-denied', 'Access denied')}
-    >
-      <Trans i18nKey="admin.edit-org.access-denied">
-        You do not have permission to see users in this organization. To update this organization, contact your server
-        administrator.
-      </Trans>
+    <Alert severity="info" title="Access denied">
+      You do not have permission to see users in this organization. To update this organization, contact your server
+      administrator.
     </Alert>
   );
 
@@ -85,27 +78,17 @@ const AdminEditOrgPage = () => {
   const pageNav: NavModelItem = {
     text: orgState?.value?.name ?? '',
     icon: 'shield',
-    subTitle: t(
-      'admin.admin-edit-org-page.page-nav.subTitle.manage-settings-roles-organization',
-      'Manage settings and user roles for an organization.'
-    ),
+    subTitle: 'Manage settings and user roles for an organization.',
   };
 
   return (
     <Page navId="global-orgs" pageNav={pageNav} subTitle="Manage settings for this specific org.">
       <Page.Contents>
         <>
-          <Legend>
-            <Trans i18nKey="admin.edit-org.heading">Edit Organization</Trans>
-          </Legend>
+          <Legend>Edit organization</Legend>
           {orgState.value && (
             <form onSubmit={handleSubmit(onUpdateOrgName)} style={{ maxWidth: '600px' }}>
-              <Field
-                label={t('admin.admin-edit-org-page.label-name', 'Name')}
-                invalid={!!errors.orgName}
-                error="Name is required"
-                disabled={!canWriteOrg}
-              >
+              <Field label="Name" invalid={!!errors.orgName} error="Name is required" disabled={!canWriteOrg}>
                 <Input
                   {...register('orgName', { required: true })}
                   id="org-name-input"
@@ -113,15 +96,13 @@ const AdminEditOrgPage = () => {
                 />
               </Field>
               <Button type="submit" disabled={!canWriteOrg}>
-                <Trans i18nKey="admin.edit-org.update-button">Update</Trans>
+                Update
               </Button>
             </form>
           )}
 
           <div style={{ marginTop: '20px' }}>
-            <Legend>
-              <Trans i18nKey="admin.edit-org.users-heading">Organization users</Trans>
-            </Legend>
+            <Legend>Organization users</Legend>
             {!canReadUsers && renderMissingPermissionMessage()}
             {canReadUsers && !!users.length && (
               <OrgUsersTable

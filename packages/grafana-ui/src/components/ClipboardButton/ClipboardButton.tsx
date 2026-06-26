@@ -2,30 +2,25 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { Button, type ButtonProps } from '../Button/Button';
+import { Trans } from '../../../src/utils/i18n';
+import { useStyles2 } from '../../themes';
+import { Button, ButtonProps } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { InlineToast } from '../InlineToast/InlineToast';
 
-export type Props = ButtonProps & {
+export interface Props extends ButtonProps {
   /** A function that returns text to be copied */
   getText(): string;
   /** Callback when the text has been successfully copied */
   onClipboardCopy?(copiedText: string): void;
   /** Callback when there was an error copying the text */
   onClipboardError?(copiedText: string, error: unknown): void;
-};
+}
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
-/**
- * A control for allowing the user to copy text to their clipboard. Uses native APIs on modern browsers, falling back to the old `document.execCommand('copy')` API on other browsers. The text to be copied should be provided via `getText` prop.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-clipboardbutton--docs
- */
 export function ClipboardButton({
   onClipboardCopy,
   onClipboardError,
@@ -65,12 +60,11 @@ export function ClipboardButton({
     }
   }, [getText, onClipboardCopy, onClipboardError]);
 
-  const copiedText = t('clipboard-button.inline-toast.success', 'Copied');
   return (
     <>
       {showCopySuccess && (
         <InlineToast placement="top" referenceElement={buttonRef.current}>
-          {copiedText}
+          <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
         </InlineToast>
       )}
 
@@ -78,6 +72,7 @@ export function ClipboardButton({
         onClick={copyTextCallback}
         icon={icon}
         variant={showCopySuccess ? 'success' : variant}
+        aria-label={showCopySuccess ? 'Copied' : undefined}
         {...buttonProps}
         className={cx(styles.button, showCopySuccess && styles.successButton, buttonProps.className)}
         ref={buttonRef}

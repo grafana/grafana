@@ -1,6 +1,6 @@
-import { escapeStringForRegex, stringStartsAsRegEx, stringToJsRegex } from '../../text/string';
-import { type DataFrame } from '../../types/dataFrame';
-import { type FrameMatcherInfo } from '../../types/transformations';
+import { stringToJsRegex } from '../../text/string';
+import { DataFrame } from '../../types/dataFrame';
+import { FrameMatcherInfo } from '../../types/transformations';
 
 import { FrameMatcherID } from './ids';
 
@@ -12,26 +12,9 @@ const refIdMatcher: FrameMatcherInfo<string> = {
   defaultOptions: 'A',
 
   get: (pattern: string) => {
-    let regex: RegExp | null = null;
-
-    if (stringStartsAsRegEx(pattern)) {
-      try {
-        regex = stringToJsRegex(pattern);
-      } catch (error) {
-        if (error instanceof Error) {
-          console.warn(error.message);
-        }
-      }
-    }
-    // old format that was simply unescaped pipe-joined strings -> regexp
-    else if (pattern.includes('|')) {
-      // convert A|B -> /^(?:A|B)$/, regexp-escaping all chars between pipes
-      const escapedUnion = pattern.split('|').map(escapeStringForRegex).join('|');
-      regex = new RegExp(`^(?:${escapedUnion})$`);
-    }
-
+    const regex = stringToJsRegex(pattern);
     return (frame: DataFrame) => {
-      return regex?.test(frame.refId || '') ?? frame.refId === pattern;
+      return regex.test(frame.refId || '');
     };
   },
 

@@ -3,11 +3,10 @@ import { useEffect } from 'react';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { importDashboard, removeDashboard } from 'app/features/dashboard/state/actions';
 import { loadPluginDashboards } from 'app/features/plugins/admin/state/actions';
-import { type PluginDashboard } from 'app/types/plugins';
-import { type StoreState, useDispatch, useSelector } from 'app/types/store';
+import { PluginDashboard, StoreState, useDispatch, useSelector } from 'app/types';
 
 import DashboardTable from '../components/DashboardsTable';
-import { useInitDataSourceSettings } from '../state/hooks';
+import { useInitDataSourceSettings } from '../state';
 
 export type Props = {
   // The UID of the data source

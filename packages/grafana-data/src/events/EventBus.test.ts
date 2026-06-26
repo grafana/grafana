@@ -1,7 +1,7 @@
 import { EventBusSrv } from './EventBus';
 import { DataHoverEvent } from './common';
 import { eventFactory } from './eventFactory';
-import { type BusEvent, BusEventWithPayload } from './types';
+import { BusEvent, BusEventWithPayload } from './types';
 
 interface LoginEventPayload {
   logins: number;
@@ -91,10 +91,8 @@ describe('EventBus', () => {
     it('Supports legacy events', () => {
       const bus = new EventBusSrv();
       const events: LegacyEventPayload[] = [];
-      const handler = (event?: LegacyEventPayload) => {
-        if (event) {
-          events.push(event);
-        }
+      const handler = (event: LegacyEventPayload) => {
+        events.push(event);
       };
 
       bus.on(legacyEvent, handler);
@@ -113,9 +111,7 @@ describe('EventBus', () => {
       const newEvents: AlertSuccessEvent[] = [];
 
       bus.on(legacyEvent, (event) => {
-        if (event) {
-          legacyEvents.push(event);
-        }
+        legacyEvents.push(event);
       });
 
       bus.subscribe(AlertSuccessEvent, (event) => {

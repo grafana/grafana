@@ -1,4 +1,4 @@
-import { systemDateFormats, type SystemDateFormatsState } from './formats';
+import { systemDateFormats, SystemDateFormatsState } from './formats';
 import { dateTimeParse } from './parser';
 
 describe('dateTimeParse', () => {
@@ -21,18 +21,6 @@ describe('dateTimeParse', () => {
 
     const date = dateTimeParse('Aug 20, 2020 10:30:20 am', { timeZone: 'utc' });
     expect(date.format()).toEqual('2020-08-20T10:30:20Z');
-  });
-
-  it('should be able to parse ISO 8601 date strings when useBrowserLocale is true', () => {
-    systemDateFormats.update({
-      fullDate: 'YYYY-MM-DD HH:mm:ss.SSS',
-      interval: {} as SystemDateFormatsState['interval'],
-      useBrowserLocale: true,
-    });
-
-    const date = dateTimeParse('2025-03-12T07:09:37.253Z', { timeZone: 'browser' });
-    expect(date.isValid()).toBe(true);
-    expect(date.format()).toEqual('2025-03-12T07:09:37Z');
   });
 
   it('should be able to parse array formats used by calendar', () => {

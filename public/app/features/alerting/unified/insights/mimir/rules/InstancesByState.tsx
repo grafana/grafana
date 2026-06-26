@@ -1,8 +1,8 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES, overrideToFixedColor } from '../../../home/Insights';
-import { InsightsMenuButton } from '../../InsightsMenuButton';
+import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getInstancesByStateScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -26,7 +26,7 @@ export function getInstancesByStateScene(datasource: DataSourceRef, panelTitle: 
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setOverrides((b) => b.matchFieldsWithName('firing').overrideColor(overrideToFixedColor('firing')))
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

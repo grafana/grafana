@@ -1,8 +1,8 @@
 import { startCase } from 'lodash';
 import { useCallback } from 'react';
 
-import { type FieldConfigEditorBuilder, type StandardEditorProps } from '@grafana/data';
-import { type HideableFieldConfig, type HideSeriesConfig } from '@grafana/schema';
+import { FieldConfigEditorBuilder, StandardEditorProps } from '@grafana/data';
+import { HideableFieldConfig, HideSeriesConfig } from '@grafana/schema';
 
 import { FilterPill } from '../../components/FilterPill/FilterPill';
 import { Stack } from '../../components/Layout/Stack/Stack';
@@ -33,6 +33,9 @@ const SeriesConfigEditor = ({ value, onChange }: StandardEditorProps<HideSeriesC
   );
 };
 
+/**
+ * @alpha
+ */
 export function addHideFrom(builder: FieldConfigEditorBuilder<HideableFieldConfig>) {
   builder.addCustomEditor({
     id: 'hideFrom',

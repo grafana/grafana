@@ -1,22 +1,20 @@
-import type React from 'react';
-import { type Store } from 'redux';
+import { Store } from 'redux';
 
-import { type PanelMenuItem, type PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
+import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { AngularComponent, usePluginLinks } from '@grafana/runtime';
 import config from 'app/core/config';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
-import { AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types';
 
-import { PanelModel } from '../state/PanelModel';
+import { PanelModel } from '../state';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { getPanelMenu } from './getPanelMenu';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
-    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasAccessToExplore: () => true,
     hasPermission: jest.fn(),
   },
@@ -187,7 +185,7 @@ describe('getPanelMenu()', () => {
 
       const menuItems = getPanelMenu(dashboard, panel, extensions);
       const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
-      const menuItem = extensionsSubMenu?.find((i) => i.text === 'Declare incident when...');
+      const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
 
       menuItem?.onClick?.({} as React.MouseEvent);
       expect(expectedOnClick).toHaveBeenCalledTimes(1);
@@ -197,14 +195,6 @@ describe('getPanelMenu()', () => {
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
       const extensions: PluginExtensionLink[] = [
-        {
-          id: '0',
-          pluginId: '...',
-          type: PluginExtensionTypes.link,
-          title: 'Placeholder',
-          path: '/p',
-          description: '',
-        },
         {
           id: '1',
           pluginId: '...',
@@ -237,14 +227,6 @@ describe('getPanelMenu()', () => {
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
       const extensions: PluginExtensionLink[] = [
-        {
-          id: '0',
-          pluginId: '...',
-          type: PluginExtensionTypes.link,
-          title: 'Placeholder',
-          path: '/p',
-          description: '',
-        },
         {
           id: '1',
           pluginId: '...',
@@ -318,339 +300,19 @@ describe('getPanelMenu()', () => {
         ])
       );
     });
-
-    it('should add root category items to the main menu', () => {
-      const panel = new PanelModel({});
-      const dashboard = createDashboardModelFixture({});
-      const extensions: PluginExtensionLink[] = [
-        {
-          id: '1',
-          pluginId: '...',
-          type: PluginExtensionTypes.link,
-          title: 'Root Action',
-          description: 'Action at root level',
-          path: '/path',
-          category: '${root}',
-        },
-      ];
-      const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-      // Should be in main menu, not under Extensions
-      expect(menuItems).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: 'Root Action',
-            href: '/path',
-          }),
-        ])
-      );
-
-      // Extensions submenu should not exist if only root items
-      expect(menuItems.find((i) => i.text === 'Extensions')).toBeUndefined();
-    });
-
-    it('should still group non-root category items in Extensions submenu', () => {
-      const panel = new PanelModel({});
-      const dashboard = createDashboardModelFixture({});
-      const extensions: PluginExtensionLink[] = [
-        {
-          id: '1',
-          pluginId: '...',
-          type: PluginExtensionTypes.link,
-          title: 'Root Action',
-          path: '/path-root',
-          category: '${root}',
-          description: 'desc',
-        },
-        {
-          id: '0',
-          pluginId: '...',
-          type: PluginExtensionTypes.link,
-          title: 'Placeholder',
-          path: '/p',
-          description: '',
-        },
-        {
-          id: '2',
-          pluginId: '...',
-          type: PluginExtensionTypes.link,
-          title: 'Other Action',
-          path: '/path-other',
-          category: 'Other',
-          description: 'desc',
-        },
-      ];
-      const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-      // Root action in main menu
-      expect(menuItems).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: 'Root Action',
-          }),
-        ])
-      );
-
-      // Other action in Extensions submenu
-      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
-      expect(extensionsSubMenu).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: 'Other',
-            subMenu: expect.arrayContaining([
-              expect.objectContaining({
-                text: 'Other Action',
-              }),
-            ]),
-          }),
-        ])
-      );
-    });
-
-    describe('group property', () => {
-      it('should place extension with group.name ${root} as root-level item', () => {
-        const panel = new PanelModel({});
-        const dashboard = createDashboardModelFixture({});
-        const extensions: PluginExtensionLink[] = [
-          {
-            id: '1',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Root Action',
-            description: 'desc',
-            path: '/path',
-            group: { name: '${root}' },
-          },
-        ];
-        const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-        expect(menuItems).toEqual(
-          expect.arrayContaining([expect.objectContaining({ text: 'Root Action', href: '/path' })])
-        );
-        expect(menuItems.find((i) => i.text === 'Extensions')).toBeUndefined();
-      });
-
-      it('should ignore group.icon for ${root} (single item, no submenu)', () => {
-        const panel = new PanelModel({});
-        const dashboard = createDashboardModelFixture({});
-        const extensions: PluginExtensionLink[] = [
-          {
-            id: '1',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Root Action',
-            description: 'desc',
-            path: '/path',
-            group: { name: '${root}', icon: 'info' },
-          },
-        ];
-        const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-        const rootItem = menuItems.find((i) => i.text === 'Root Action');
-        expect(rootItem).toBeDefined();
-        expect(menuItems).toEqual(expect.arrayContaining([expect.objectContaining({ text: 'Root Action' })]));
-      });
-
-      it('should create root-level submenu for group.name ${root}/Testing', () => {
-        const panel = new PanelModel({});
-        const dashboard = createDashboardModelFixture({});
-        const extensions: PluginExtensionLink[] = [
-          {
-            id: '1',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Testing Action',
-            description: 'desc',
-            path: '/path',
-            group: { name: '${root}/Testing', icon: 'info' },
-          },
-        ];
-        const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-        const testingSubmenu = menuItems.find((i) => i.text === 'Testing');
-        expect(testingSubmenu).toBeDefined();
-        expect(testingSubmenu?.type).toBe('submenu');
-        expect(testingSubmenu?.iconClassName).toBe('info');
-        expect(testingSubmenu?.subMenu).toEqual(
-          expect.arrayContaining([expect.objectContaining({ text: 'Testing Action', href: '/path' })])
-        );
-      });
-
-      it('should place extension in existing root-level submenu for group.name ${root}/Testing', () => {
-        const panel = new PanelModel({});
-        const dashboard = createDashboardModelFixture({});
-        const extensions: PluginExtensionLink[] = [
-          {
-            id: '1',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Testing Action',
-            description: 'desc',
-            path: '/path',
-            group: { name: '${root}/Testing', icon: 'info' },
-          },
-          {
-            id: '2',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Testing Action 2',
-            description: 'desc 2',
-            path: '/path2',
-            group: { name: '${root}/Testing', icon: 'info' },
-          },
-        ];
-        const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-        const testingSubmenu = menuItems.find((i) => i.text === 'Testing');
-        expect(testingSubmenu).toBeDefined();
-        expect(testingSubmenu?.type).toBe('submenu');
-        expect(testingSubmenu?.iconClassName).toBe('info');
-        expect(testingSubmenu?.subMenu).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({ text: 'Testing Action', href: '/path' }),
-            expect.objectContaining({ text: 'Testing Action 2', href: '/path2' }),
-          ])
-        );
-        expect(testingSubmenu?.subMenu).toHaveLength(2);
-      });
-
-      it('should create submenu for group.name Testing (below-extensions)', () => {
-        const panel = new PanelModel({});
-        const dashboard = createDashboardModelFixture({});
-        const extensions: PluginExtensionLink[] = [
-          {
-            id: '0',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Placeholder',
-            path: '/p',
-            description: '',
-          },
-          {
-            id: '1',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Declare incident',
-            description: 'desc',
-            path: '/path',
-            group: { name: 'Testing', icon: 'info' },
-          },
-        ];
-        const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-        const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
-        const testingSubmenu = extensionsSubMenu?.find((i) => i.text === 'Testing');
-        expect(testingSubmenu).toBeDefined();
-        expect(testingSubmenu?.type).toBe('submenu');
-        expect(testingSubmenu?.iconClassName).toBe('info');
-        expect(testingSubmenu?.subMenu).toEqual(
-          expect.arrayContaining([expect.objectContaining({ text: 'Declare incident', href: '/path' })])
-        );
-      });
-
-      it('should put extension with reserved group.name (e.g. Inspect) in Extensions submenu', () => {
-        const panel = new PanelModel({});
-        const dashboard = createDashboardModelFixture({});
-        const extensions: PluginExtensionLink[] = [
-          {
-            id: '0',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Placeholder',
-            path: '/p',
-            description: '',
-          },
-          {
-            id: '1',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Fake Inspect',
-            description: 'desc',
-            path: '/path',
-            group: { name: 'Inspect' },
-          },
-        ];
-        const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-        const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
-        expect(extensionsSubMenu).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              text: 'Inspect',
-              subMenu: expect.arrayContaining([expect.objectContaining({ text: 'Fake Inspect', href: '/path' })]),
-            }),
-          ])
-        );
-      });
-
-      it('should order: root items → root submenus → Extensions → below-Extensions submenus → More...', () => {
-        const panel = new PanelModel({});
-        const dashboard = createDashboardModelFixture({});
-        const extensions: PluginExtensionLink[] = [
-          {
-            id: 'root',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Root Item',
-            path: '/root',
-            group: { name: '${root}' },
-            description: 'd',
-          },
-          {
-            id: 'rootsub',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'In Root Submenu',
-            path: '/rootsub',
-            group: { name: '${root}/MySubmenu' },
-            description: 'd',
-          },
-          {
-            id: 'plain',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'In Extensions',
-            path: '/plain',
-            description: 'd',
-          },
-          {
-            id: 'below',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Below Extensions Item',
-            path: '/below',
-            group: { name: 'BelowGroup' },
-            description: 'd',
-          },
-        ];
-        const menuItems = getPanelMenu(dashboard, panel, extensions);
-
-        const rootIdx = menuItems.findIndex((i) => i.text === 'Root Item');
-        const mySubmenuIdx = menuItems.findIndex((i) => i.text === 'MySubmenu');
-        const extIdx = menuItems.findIndex((i) => i.text === 'Extensions');
-        const moreIdx = menuItems.findIndex((i) => i.text === 'More...');
-
-        expect(rootIdx).toBeGreaterThanOrEqual(0);
-        expect(mySubmenuIdx).toBeGreaterThan(rootIdx);
-        expect(extIdx).toBeGreaterThan(mySubmenuIdx);
-        expect(moreIdx).toBeGreaterThan(extIdx);
-
-        // BelowGroup is inside Extensions submenu, not at root
-        const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
-        expect(extensionsSubMenu).toEqual(
-          expect.arrayContaining([expect.objectContaining({ text: 'BelowGroup', type: 'submenu' })])
-        );
-      });
-    });
   });
 
   describe('when panel is in view mode', () => {
     it('should return the correct panel menu items', () => {
+      const getExtendedMenu = () => [{ text: 'Toggle legend', shortcut: 'p l', click: jest.fn() }];
+      const ctrl = { getExtendedMenu };
+      const scope = { $$childHead: { ctrl } };
+      const angularComponent = { getScope: () => scope } as AngularComponent;
       const panel = new PanelModel({ isViewing: true });
       const dashboard = createDashboardModelFixture({});
       const extensions: PluginExtensionLink[] = [];
 
-      const menuItems = getPanelMenu(dashboard, panel, extensions);
+      const menuItems = getPanelMenu(dashboard, panel, extensions, angularComponent);
       expect(menuItems).toMatchInlineSnapshot(`
         [
           {
@@ -689,15 +351,29 @@ describe('getPanelMenu()', () => {
             "text": "Inspect",
             "type": "submenu",
           },
+          {
+            "iconClassName": "cube",
+            "subMenu": [
+              {
+                "href": undefined,
+                "onClick": [Function],
+                "shortcut": "p l",
+                "text": "Toggle legend",
+              },
+            ],
+            "text": "More...",
+            "type": "submenu",
+          },
         ]
       `);
     });
   });
 
   describe('onNavigateToExplore', () => {
+    const testSubUrl = '/testSubUrl';
     const testUrl = '/testUrl';
     const windowOpen = jest.fn();
-    let event: React.MouseEvent<Element, MouseEvent>;
+    let event: any;
     let explore: PanelMenuItem;
     let navigateSpy: jest.SpyInstance;
 
@@ -713,7 +389,7 @@ describe('getPanelMenu()', () => {
       event = {
         ctrlKey: true,
         preventDefault: jest.fn(),
-      } as unknown as React.MouseEvent<Element, MouseEvent>;
+      };
 
       setStore({ dispatch: jest.fn() } as unknown as Store);
     });
@@ -728,16 +404,15 @@ describe('getPanelMenu()', () => {
       expect(windowOpen).toHaveBeenLastCalledWith(testUrl);
     });
 
-    it('should navigate to url without subUrl even if appSubUrl is set', () => {
-      const exploreUrl = '/explore?param1=a&param2=b';
-      config.appSubUrl = 'grafana';
+    it('should navigate to url with subUrl', () => {
+      config.appSubUrl = testSubUrl;
       explore.onClick!(event);
 
       const openInNewWindow = navigateSpy.mock.calls[0][1].openInNewWindow;
 
-      openInNewWindow(`${exploreUrl}`);
-      // When opening in a new window, onNavigateToExplore should not include the subUrl, as getExploreUrl already handles it.
-      expect(windowOpen).toHaveBeenLastCalledWith(`${exploreUrl}`);
+      openInNewWindow(testUrl);
+
+      expect(windowOpen).toHaveBeenLastCalledWith(`${testSubUrl}${testUrl}`);
     });
   });
 

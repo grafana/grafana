@@ -1,41 +1,53 @@
-import json from '@rollup/plugin-json';
+import resolve from '@rollup/plugin-node-resolve';
 import { createRequire } from 'node:module';
-import copy from 'rollup-plugin-copy';
-
-import { entryPoint, plugins, esmOutput, cjsOutput } from '../rollup.config.parts';
+import path from 'path';
+import dts from 'rollup-plugin-dts';
+import esbuild from 'rollup-plugin-esbuild';
+import { nodeExternals } from 'rollup-plugin-node-externals';
 
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
 
-const grafanaDataPlugins = [
-  ...plugins,
-  copy({
-    targets: [
-      {
-        src: 'src/themes/schema.generated.json',
-        dest: 'dist/esm/',
-      },
-      {
-        src: 'src/themes/themeDefinitions/*.json',
-        dest: 'dist/esm/',
-      },
-    ],
-    flatten: false,
-  }),
-  json(),
-];
+const legacyOutputDefaults = {
+  esModule: true,
+  interop: 'compat',
+};
 
 export default [
   {
-    input: entryPoint,
-    plugins: grafanaDataPlugins,
-    output: [cjsOutput(pkg, 'grafana-data'), esmOutput(pkg, 'grafana-data')],
-    treeshake: false,
+    input: 'src/index.ts',
+    plugins: [
+      nodeExternals({ deps: true, packagePath: './package.json' }),
+      resolve(),
+      esbuild({
+        target: 'es2018',
+        tsconfig: 'tsconfig.build.json',
+      }),
+    ],
+    output: [
+      {
+        format: 'cjs',
+        sourcemap: true,
+        dir: path.dirname(pkg.publishConfig.main),
+        ...legacyOutputDefaults,
+      },
+      {
+        format: 'esm',
+        sourcemap: true,
+        dir: path.dirname(pkg.publishConfig.module),
+        preserveModules: true,
+        // @ts-expect-error (TS cannot assure that `process.env.PROJECT_CWD` is a string)
+        preserveModulesRoot: path.join(process.env.PROJECT_CWD, `packages/grafana-data/src`),
+        ...legacyOutputDefaults,
+      },
+    ],
   },
   {
-    input: 'src/unstable.ts',
-    plugins: grafanaDataPlugins,
-    output: [cjsOutput(pkg, 'grafana-data'), esmOutput(pkg, 'grafana-data')],
-    treeshake: false,
+    input: './compiled/index.d.ts',
+    plugins: [dts()],
+    output: {
+      file: pkg.publishConfig.types,
+      format: 'es',
+    },
   },
 ];

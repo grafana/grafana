@@ -5,13 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegrationStarQueryInQueryHistory(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "When users tries to star query in query history that does not exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.starHandler(sc.reqContext)

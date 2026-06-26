@@ -1,4 +1,4 @@
-import { type IconName } from '@grafana/ui';
+import { IconName } from '@grafana/ui';
 
 interface TextBreadcrumb {
   text: string;

@@ -14,9 +14,9 @@
 
 import { render, screen } from '@testing-library/react';
 
-import { type LinkModel } from '@grafana/data';
+import { LinkModel } from '@grafana/data';
 
-import { type TraceSpanReference } from '../types/trace';
+import { TraceSpanReference } from '../types/trace';
 
 import ReferenceLink from './ReferenceLink';
 

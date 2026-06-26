@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { type FormEvent } from 'react';
+import { FormEvent } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
-import { type ClassicCondition, type ReducerType } from '../types';
+import { ClassicCondition, ReducerType } from '../types';
 
 interface Props {
   condition: ClassicCondition;
@@ -70,19 +69,14 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
   });
 
   const isRange =
-    condition.evaluator.type === EvalFunction.IsWithinRange ||
-    condition.evaluator.type === EvalFunction.IsOutsideRange ||
-    condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
-    condition.evaluator.type === EvalFunction.IsWithinRangeIncluded;
+    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
 
   return (
     <Stack>
       <div style={{ flex: 1 }}>
         <InlineFieldRow>
           {index === 0 ? (
-            <div className={cx(styles.button, buttonWidth)}>
-              <Trans i18nKey="expressions.condition.when">WHEN</Trans>
-            </div>
+            <div className={cx(styles.button, buttonWidth)}>WHEN</div>
           ) : (
             <ButtonSelect
               className={cx(styles.buttonSelectText, buttonWidth)}
@@ -95,11 +89,9 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
             options={reducerFunctions}
             onChange={onReducerFunctionChange}
             width={20}
-            value={reducerFunctions.find((rf) => rf.value === condition.reducer?.type)}
+            value={reducerFunctions.find((rf) => rf.value === condition.reducer.type)}
           />
-          <div className={styles.button}>
-            <Trans i18nKey="expressions.condition.of">OF</Trans>
-          </div>
+          <div className={styles.button}>OF</div>
           <Select
             onChange={onRefIdChange}
             options={refIds}
@@ -122,9 +114,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
                 onChange={(event) => onEvaluateValueChange(event, 0)}
                 value={condition.evaluator.params[0]}
               />
-              <div className={styles.button}>
-                <Trans i18nKey="expressions.condition.to">TO</Trans>
-              </div>
+              <div className={styles.button}>TO</div>
               <Input
                 type="number"
                 width={10}

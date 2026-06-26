@@ -14,7 +14,7 @@
   "queryOptions": {
     "maxDataPoints": true
   },
-  "executable": "gpx_loki",
+
   "info": {
     "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
     "author": {
@@ -33,74 +33,7 @@
       {
         "name": "GitHub Project",
         "url": "https://github.com/grafana/loki"
-      },
-      {
-        "name": "Raise issue",
-        "url": "https://github.com/grafana/grafana/issues/new"
-      },
-      {
-        "name": "Documentation",
-        "url": "https://grafana.com/docs/grafana/latest/datasources/loki/"
       }
-    ],
-    "version": "%VERSION%"
-  },
-  "routes": [
-    { "method": "GET", "path": "/api/v1/query", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/query_range", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "POST", "path": "/api/v1/query_range", "reqRole": "Viewer", "reqAction": "datasources:query" },
-
-    { "method": "GET", "path": "/api/v1/labels", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/label", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/series", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "POST", "path": "/api/v1/series", "reqRole": "Viewer", "reqAction": "datasources:query" },
-
-    { "method": "GET", "path": "/api/v1/index/stats", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/index/volume", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/index/volume_range", "reqRole": "Viewer", "reqAction": "datasources:query" },
-
-    { "method": "GET", "path": "/api/v1/patterns", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/tail", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/status/buildinfo", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "GET", "path": "/api/v1/format_query", "reqRole": "Viewer", "reqAction": "datasources:query" },
-    { "method": "POST", "path": "/api/v1/format_query", "reqRole": "Viewer", "reqAction": "datasources:query" },
-
-    { "method": "GET", "path": "/api/v1/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
-    { "method": "POST", "path": "/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
-    { "method": "DELETE", "path": "/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
-
-    {
-      "method": "GET",
-      "path": "/prometheus/api/v1/rules",
-      "reqRole": "Viewer",
-      "reqAction": "alert.rules.external:read"
-    },
-    {
-      "method": "GET",
-      "path": "/prometheus/api/v1/alerts",
-      "reqRole": "Viewer",
-      "reqAction": "alert.rules.external:read"
-    },
-
-    { "method": "GET", "path": "/loki/api/v1/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
-    { "method": "POST", "path": "/loki/api/v1/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
-    {
-      "method": "DELETE",
-      "path": "/loki/api/v1/rules",
-      "reqRole": "Editor",
-      "reqAction": "alert.rules.external:write"
-    },
-
-    { "method": "GET", "path": "/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
-    { "method": "POST", "path": "/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
-    { "method": "DELETE", "path": "/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
-
-    { "method": "GET", "path": "/api/prom/rules", "reqRole": "Viewer", "reqAction": "alert.rules.external:read" },
-    { "method": "POST", "path": "/api/prom/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" },
-    { "method": "DELETE", "path": "/api/prom/rules", "reqRole": "Editor", "reqAction": "alert.rules.external:write" }
-  ],
-  "dependencies": {
-    "grafanaDependency": ">=12.3.0",
-    "plugins": []
+    ]
   }
 }

@@ -167,7 +167,7 @@ func (s *Manager) stopStream(sr streamRequest, cancelFn func()) {
 	delete(s.streams, sr.Channel)
 	if sr.PluginContext.DataSourceInstanceSettings != nil {
 		dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
-		dsKey := datasourceKey(sr.PluginContext.OrgID, dsUID) // nolint:staticcheck
+		dsKey := datasourceKey(sr.PluginContext.OrgID, dsUID)
 		delete(s.datasourceStreams[dsKey], sr.Channel)
 	}
 	cancelFn()
@@ -198,7 +198,7 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 				}
 				if pCtx.DataSourceInstanceSettings.Updated != sr.PluginContext.DataSourceInstanceSettings.Updated {
 					logger.Debug("Datasource changed, re-establish stream", "channel", sr.Channel, "path", sr.Path)
-					err := s.HandleDatasourceUpdate(pCtx.OrgID, dsUID) // nolint:staticcheck
+					err := s.HandleDatasourceUpdate(pCtx.OrgID, dsUID)
 					if err != nil {
 						logger.Error("Error re-establishing stream", "channel", sr.Channel, "path", sr.Path, "error", err)
 						continue
@@ -244,8 +244,6 @@ func getDelay(numErrors int) time.Duration {
 
 // run stream until context canceled or stream finished without an error.
 func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamRequest) {
-	ctx = identity.WithRequester(ctx, sr.user)
-
 	defer func() { s.stopStream(sr, cancelFn) }()
 	var numFastErrors int
 	var delay time.Duration
@@ -351,7 +349,7 @@ func (s *Manager) registerStream(ctx context.Context, sr submitRequest) {
 	}
 	if sr.streamRequest.PluginContext.DataSourceInstanceSettings != nil {
 		dsUID := sr.streamRequest.PluginContext.DataSourceInstanceSettings.UID
-		dsKey := datasourceKey(sr.streamRequest.PluginContext.OrgID, dsUID) // nolint:staticcheck
+		dsKey := datasourceKey(sr.streamRequest.PluginContext.OrgID, dsUID)
 		if _, ok := s.datasourceStreams[dsKey]; !ok {
 			s.datasourceStreams[dsKey] = map[string]struct{}{}
 		}

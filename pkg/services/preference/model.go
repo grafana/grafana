@@ -7,26 +7,39 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var ErrPrefNotFound = errors.New("preference not found")
+var ErrUnknownCookieType = errutil.BadRequest(
+	"preferences.unknownCookieType",
+	errutil.WithPublicMessage("Got an unknown cookie preference type. Expected a set containing one or more of 'functional', 'performance', or 'analytics'}"),
+)
 
 type Preference struct {
-	ID      int64   `xorm:"pk autoincr 'id'" db:"id"`
-	OrgID   int64   `xorm:"org_id" db:"org_id"`
-	UserID  int64   `xorm:"user_id" db:"user_id"`
-	TeamID  int64   `xorm:"team_id" db:"team_id"`
-	Teams   []int64 `xorm:"extends"`
-	Version int     `db:"version"`
-	// Deprecated: Use HomeDashboardUID instead
-	HomeDashboardID  int64               `xorm:"home_dashboard_id" db:"home_dashboard_id"`
-	HomeDashboardUID string              `xorm:"home_dashboard_uid" db:"home_dashboard_uid"`
-	Timezone         string              `db:"timezone"`
-	WeekStart        *string             `db:"week_start"`
-	Theme            string              `db:"theme"`
-	Created          time.Time           `db:"created"`
-	Updated          time.Time           `db:"updated"`
-	JSONData         *PreferenceJSONData `xorm:"json_data" db:"json_data"`
+	ID              int64               `xorm:"pk autoincr 'id'" db:"id"`
+	OrgID           int64               `xorm:"org_id" db:"org_id"`
+	UserID          int64               `xorm:"user_id" db:"user_id"`
+	TeamID          int64               `xorm:"team_id" db:"team_id"`
+	Teams           []int64             `xorm:"extends"`
+	Version         int                 `db:"version"`
+	HomeDashboardID int64               `xorm:"home_dashboard_id" db:"home_dashboard_id"`
+	Timezone        string              `db:"timezone"`
+	WeekStart       *string             `db:"week_start"`
+	Theme           string              `db:"theme"`
+	Created         time.Time           `db:"created"`
+	Updated         time.Time           `db:"updated"`
+	JSONData        *PreferenceJSONData `xorm:"json_data" db:"json_data"`
+}
+
+func (p Preference) Cookies(typ string) bool {
+	if p.JSONData == nil || p.JSONData.CookiePreferences == nil {
+		return false
+	}
+
+	_, ok := p.JSONData.CookiePreferences[typ]
+	return ok
 }
 
 type GetPreferenceWithDefaultsQuery struct {
@@ -46,43 +59,38 @@ type SavePreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	// Deprecated: Use HomeDashboardUID instead
-	HomeDashboardID  int64                   `json:"homeDashboardId,omitempty"`
-	HomeDashboardUID *string                 `json:"homeDashboardUID,omitempty"`
-	Timezone         string                  `json:"timezone,omitempty"`
-	WeekStart        string                  `json:"weekStart,omitempty"`
-	Theme            string                  `json:"theme,omitempty"`
-	Language         string                  `json:"language,omitempty"`
-	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
-	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
+	HomeDashboardID   int64                   `json:"homeDashboardId,omitempty"`
+	HomeDashboardUID  *string                 `json:"homeDashboardUID,omitempty"`
+	Timezone          string                  `json:"timezone,omitempty"`
+	WeekStart         string                  `json:"weekStart,omitempty"`
+	Theme             string                  `json:"theme,omitempty"`
+	Language          string                  `json:"language,omitempty"`
+	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
+	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
 }
 
-// One (and only one) of the values must be non-zero
-type DeleteCommand struct {
-	OrgID  int64
-	UserID int64
-	TeamID int64
-}
 type PatchPreferenceCommand struct {
 	UserID int64
 	OrgID  int64
 	TeamID int64
 
-	// Deprecated: Use HomeDashboardUID instead
-	HomeDashboardID  *int64                  `json:"homeDashboardId,omitempty"`
-	HomeDashboardUID *string                 `json:"homeDashboardUID,omitempty"`
-	Timezone         *string                 `json:"timezone,omitempty"`
-	WeekStart        *string                 `json:"weekStart,omitempty"`
-	Theme            *string                 `json:"theme,omitempty"`
-	Language         *string                 `json:"language,omitempty"`
-	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
-	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
+	HomeDashboardID   *int64                  `json:"homeDashboardId,omitempty"`
+	HomeDashboardUID  *string                 `json:"homeDashboardUID,omitempty"`
+	Timezone          *string                 `json:"timezone,omitempty"`
+	WeekStart         *string                 `json:"weekStart,omitempty"`
+	Theme             *string                 `json:"theme,omitempty"`
+	Language          *string                 `json:"language,omitempty"`
+	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
+	Navbar            *NavbarPreference       `json:"navbar,omitempty"`
 }
 
 type PreferenceJSONData struct {
-	Language     string                 `json:"language"`
-	QueryHistory QueryHistoryPreference `json:"queryHistory"`
-	Navbar       NavbarPreference       `json:"navbar"`
+	Language          string                 `json:"language"`
+	QueryHistory      QueryHistoryPreference `json:"queryHistory"`
+	CookiePreferences map[string]struct{}    `json:"cookiePreferences"`
+	Navbar            NavbarPreference       `json:"navbar"`
 }
 
 type QueryHistoryPreference struct {
@@ -129,3 +137,7 @@ func (j *PreferenceJSONData) ToDB() ([]byte, error) {
 }
 
 func (p Preference) TableName() string { return "preferences" }
+
+// swagger:model
+// Enum: analytics,performance,functional
+type CookieType string

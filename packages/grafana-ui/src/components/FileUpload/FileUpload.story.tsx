@@ -1,10 +1,11 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { FileUpload } from './FileUpload';
+import { FileUpload } from '@grafana/ui';
+
 import mdx from './FileUpload.mdx';
 
 const meta: Meta<typeof FileUpload> = {
-  title: 'Inputs/FileUpload',
+  title: 'Forms/FileUpload',
   component: FileUpload,
   parameters: {
     docs: {

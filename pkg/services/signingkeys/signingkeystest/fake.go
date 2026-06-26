@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto"
 
-	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v3"
 )
 
 type FakeSigningKeysService struct {

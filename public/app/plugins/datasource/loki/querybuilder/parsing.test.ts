@@ -1,5 +1,5 @@
 import { buildVisualQueryFromString } from './parsing';
-import { LokiOperationId, type LokiVisualQuery } from './types';
+import { LokiOperationId, LokiVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   it('creates no errors for empty query', () => {
@@ -629,27 +629,6 @@ describe('buildVisualQueryFromString', () => {
           { id: LokiOperationId.CountOverTime, params: ['5m'] },
           { id: LokiOperationId.Sum, params: [] },
           { id: LokiOperationId.TopK, params: [10] },
-        ],
-      })
-    );
-  });
-
-  it('parses metrics query with vector aggregation with variable', () => {
-    expect(
-      buildVisualQueryFromString('topk($variable, sum by(unit) (count_over_time({app="frontend"}[$__auto])))')
-    ).toEqual(
-      noErrors({
-        labels: [
-          {
-            op: '=',
-            value: 'frontend',
-            label: 'app',
-          },
-        ],
-        operations: [
-          { id: LokiOperationId.CountOverTime, params: ['$__auto'] },
-          { id: LokiOperationId.SumBy, params: ['unit'] },
-          { id: LokiOperationId.TopK, params: ['$variable'] },
         ],
       })
     );

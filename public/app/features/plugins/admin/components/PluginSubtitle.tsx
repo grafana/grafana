@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import { Fragment, type JSX } from 'react';
+import { Fragment } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 
-import { InstallControlsWarning } from '../components/InstallControls/InstallControlsWarning';
+import { InstallControlsWarning } from '../components/InstallControls';
 import { getLatestCompatibleVersion, hasInstallControlWarning } from '../helpers';
 import { useInstallStatus, useIsRemotePluginsAvailable } from '../state/hooks';
-import { type CatalogPlugin, PluginStatus } from '../types';
+import { CatalogPlugin, PluginStatus } from '../types';
 
 interface Props {
   plugin?: CatalogPlugin;
@@ -45,6 +46,18 @@ export const PluginSubtitle = ({ plugin }: Props) => {
       <Stack direction="row" justifyContent="space-between">
         <div>
           {plugin?.description && <div>{plugin?.description}</div>}
+          {!config.featureToggles.pluginsDetailsRightPanel && !!plugin?.details?.links?.length && (
+            <span>
+              {plugin.details.links.map((link, index) => (
+                <Fragment key={index}>
+                  {index > 0 && ' | '}
+                  <a href={link.url} className="external-link">
+                    {link.name}
+                  </a>
+                </Fragment>
+              ))}
+            </span>
+          )}
           {hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion) && (
             <InstallControlsWarning
               plugin={plugin}
@@ -61,6 +74,12 @@ export const PluginSubtitle = ({ plugin }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return { subtitle: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) }) };
+export const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    subtitle: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    }),
+  };
 };

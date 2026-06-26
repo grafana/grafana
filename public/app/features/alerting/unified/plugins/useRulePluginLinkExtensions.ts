@@ -1,8 +1,8 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 
-import { type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { type Rule, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRulePluginOrigin } from '../utils/rules';
@@ -15,32 +15,30 @@ interface BaseRuleExtensionContext {
   labels: Record<string, string>;
 }
 
-interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
+export interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
   annotations: Record<string, string>;
 }
 
-interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
+export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
-export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2) {
-  // This ref provides a stable reference to an empty array, which is used to avoid re-renders when the rule is undefined.
-  const emptyResponse = useRef<PluginExtensionLink[]>([]);
-
-  const ruleExtensionPoint = useRuleExtensionPoint(rule, groupIdentifier);
+export function useRulePluginLinkExtension(rule: CombinedRule) {
+  const ruleExtensionPoint = useRuleExtensionPoint(rule);
   const { links } = usePluginLinks(ruleExtensionPoint);
 
-  if (!rule) {
-    return emptyResponse.current;
-  }
-
   const ruleOrigin = getRulePluginOrigin(rule);
-  const ruleType = rule.type;
+  const ruleType = rule.promRule?.type;
   if (!ruleOrigin || !ruleType) {
-    return emptyResponse.current;
+    return [];
   }
 
   const { pluginId } = ruleOrigin;
 
   return links.filter((link) => link.pluginId === pluginId);
+}
+
+export interface PluginRuleExtensionParam {
+  pluginId: string;
+  rule: CombinedRule;
 }
 
 interface AlertingRuleExtensionPoint {
@@ -59,15 +57,9 @@ interface EmptyExtensionPoint {
 
 type RuleExtensionPoint = AlertingRuleExtensionPoint | RecordingRuleExtensionPoint | EmptyExtensionPoint;
 
-function useRuleExtensionPoint(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2): RuleExtensionPoint {
-  return useMemo<RuleExtensionPoint>(() => {
-    if (!rule) {
-      return { extensionPointId: '' };
-    }
-
-    const ruleType = rule.type;
-    const { namespace, groupName } = groupIdentifier;
-    const namespaceIdentifier = 'uid' in namespace ? namespace.uid : namespace.name;
+function useRuleExtensionPoint(rule: CombinedRule): RuleExtensionPoint {
+  return useMemo(() => {
+    const ruleType = rule.promRule?.type;
 
     switch (ruleType) {
       case PromRuleType.Alerting:
@@ -75,11 +67,11 @@ function useRuleExtensionPoint(rule: Rule | undefined, groupIdentifier: RuleGrou
           extensionPointId: PluginExtensionPoints.AlertingAlertingRuleAction,
           context: {
             name: rule.name,
-            namespace: namespaceIdentifier,
-            group: groupName,
+            namespace: rule.namespace.name,
+            group: rule.group.name,
             expression: rule.query,
-            labels: rule.labels ?? {},
-            annotations: rule.annotations ?? {},
+            labels: rule.labels,
+            annotations: rule.annotations,
           },
         };
       case PromRuleType.Recording:
@@ -87,14 +79,14 @@ function useRuleExtensionPoint(rule: Rule | undefined, groupIdentifier: RuleGrou
           extensionPointId: PluginExtensionPoints.AlertingRecordingRuleAction,
           context: {
             name: rule.name,
-            namespace: namespaceIdentifier,
-            group: groupName,
+            namespace: rule.namespace.name,
+            group: rule.group.name,
             expression: rule.query,
-            labels: rule.labels ?? {},
+            labels: rule.labels,
           },
         };
       default:
         return { extensionPointId: '' };
     }
-  }, [groupIdentifier, rule]);
+  }, [rule]);
 }

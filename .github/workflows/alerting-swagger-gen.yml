@@ -6,25 +6,22 @@ on:
 jobs:
   gen-swagger:
     name: Alerting Swagger spec generation cron job
-    runs-on: ubuntu-arm64
-    permissions:
-      contents: read
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          persist-credentials: false
-      - name: Setup Go
-        uses: ./.github/actions/setup-go
+      - name: Set go version
+        uses: actions/setup-go@v4
         with:
-          cache-build: 'false'
+          go-version-file: go.mod
       - name: Build swagger
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
       - name: Open Pull Request
-        uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update alerting swagger spec"
@@ -37,3 +34,4 @@ jobs:
           labels: 'area/alerting,type/docs,no-changelog'
           team-reviewers: 'grafana/alerting-backend'
           draft: false
+

@@ -1,17 +1,10 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { dateTimeFormat } from '@grafana/data';
 
 import { DatePickerWithInput } from './DatePickerWithInput';
 
 describe('DatePickerWithInput', () => {
-  let user: ReturnType<typeof userEvent.setup>;
-
-  beforeEach(() => {
-    user = userEvent.setup({ applyAccept: false });
-  });
-
   it('renders date input', () => {
     render(<DatePickerWithInput onChange={jest.fn()} value={new Date(1400000000000)} />);
 
@@ -31,42 +24,43 @@ describe('DatePickerWithInput', () => {
   });
 
   describe('input is clicked', () => {
-    it('renders input', async () => {
+    it('renders input', () => {
       render(<DatePickerWithInput onChange={jest.fn()} />);
-      await user.click(screen.getByPlaceholderText('Date'));
+
+      fireEvent.click(screen.getByPlaceholderText('Date'));
 
       expect(screen.getByPlaceholderText('Date')).toBeInTheDocument();
     });
 
-    it('renders calendar', async () => {
+    it('renders calendar', () => {
       render(<DatePickerWithInput onChange={jest.fn()} />);
 
-      await user.click(screen.getByPlaceholderText('Date'));
+      fireEvent.click(screen.getByPlaceholderText('Date'));
 
-      expect(screen.getByTestId('date-picker')).toBeInTheDocument();
+      expect(screen.queryByTestId('date-picker')).toBeInTheDocument();
     });
   });
 
-  it('calls onChange after date is selected', async () => {
+  it('calls onChange after date is selected', () => {
     const onChange = jest.fn();
     render(<DatePickerWithInput onChange={onChange} />);
 
     // open calendar and select a date
-    await user.click(screen.getByPlaceholderText('Date'));
-    await user.click(screen.getByText('14'));
+    fireEvent.click(screen.getByPlaceholderText('Date'));
+    fireEvent.click(screen.getByText('14'));
 
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('closes calendar after outside wrapper is clicked', async () => {
+  it('closes calendar after outside wrapper is clicked', () => {
     render(<DatePickerWithInput onChange={jest.fn()} />);
 
     // open calendar and click outside
-    await user.click(screen.getByPlaceholderText('Date'));
+    fireEvent.click(screen.getByPlaceholderText('Date'));
 
     expect(screen.getByTestId('date-picker')).toBeInTheDocument();
 
-    await user.click(document.body);
+    fireEvent.click(document);
 
     expect(screen.queryByTestId('date-picker')).not.toBeInTheDocument();
   });

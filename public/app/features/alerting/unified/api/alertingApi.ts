@@ -1,14 +1,14 @@
-import { type BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
-import { isBoolean, omit } from 'lodash';
+import { BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
+import { omit } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
-import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { appEvents } from 'app/core/app_events';
+import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 
 import { logMeasurement } from '../Analytics';
 
-type ExtendedBackendSrvRequest = BackendSrvRequest & {
+export type ExtendedBackendSrvRequest = BackendSrvRequest & {
   /**
    * Data to send with a request. Maps to the `data` property on a `BackendSrvRequest`
    *
@@ -18,7 +18,7 @@ type ExtendedBackendSrvRequest = BackendSrvRequest & {
   body?: BackendSrvRequest['data'];
 };
 
-type NotificationOptions = {
+export type NotificationOptions = {
   /**
    * Custom success message to show after completion of the request.
    *
@@ -54,7 +54,7 @@ export type AlertingApiExtraOptions = {
   hideErrorMessage?: boolean;
 };
 
-const backendSrvBaseQuery =
+export const backendSrvBaseQuery =
   (): BaseQueryFn<BaseQueryFnArgs> =>
   async ({ body, notificationOptions = {}, ...requestOptions }, api, extraOptions?: AlertingApiExtraOptions) => {
     const { errorMessage, showErrorAlert, successMessage, showSuccessAlert } = notificationOptions;
@@ -64,8 +64,6 @@ const backendSrvBaseQuery =
       const modifiedRequestOptions: BackendSrvRequest = {
         ...requestOptions,
         ...(body && { data: body }),
-        ...(isBoolean(showSuccessAlert) && { showSuccessAlert }),
-        ...(isBoolean(showErrorAlert) && { showErrorAlert }),
         ...(successMessage && { showSuccessAlert: false }),
         ...((errorMessage || hideErrorMessage) && { showErrorAlert: false }),
       };
@@ -122,15 +120,12 @@ export const alertingApi = createApi({
     'GrafanaLabels',
     'CombinedAlertRule',
     'GrafanaRulerRule',
-    'GrafanaRulerRuleVersion',
     'GrafanaSlo',
     'RuleGroup',
     'RuleNamespace',
     'ContactPoint',
     'ContactPointsStatus',
     'Receiver',
-    'DeletedRules',
-    'GrafanaPrometheusGroups',
   ],
   endpoints: () => ({}),
 });

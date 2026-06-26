@@ -27,7 +27,6 @@ func extractEvalString(frame *data.Frame) (s string) {
 			sb.WriteString(fmt.Sprintf("var='%s%v' ", frame.RefID, i))
 			sb.WriteString(fmt.Sprintf("metric='%s' ", m.Metric))
 			sb.WriteString(fmt.Sprintf("labels={%s} ", m.Labels))
-			sb.WriteString("type='classic_conditions' ")
 
 			valString := "null"
 			if m.Value != nil {
@@ -54,9 +53,6 @@ func extractEvalString(frame *data.Frame) (s string) {
 			sb.WriteString("[ ")
 			sb.WriteString(fmt.Sprintf("var='%s' ", capture.Var))
 			sb.WriteString(fmt.Sprintf("labels={%s} ", capture.Labels))
-			if capture.Type != "" {
-				sb.WriteString(fmt.Sprintf("type='%s' ", capture.Type))
-			}
 			valString := "null"
 			if capture.Value != nil {
 				valString = fmt.Sprintf("%v", *capture.Value)
@@ -96,7 +92,6 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 				Var:    frame.RefID,
 				Labels: match.Labels,
 				Value:  match.Value,
-				Type:   "classic_conditions",
 			}
 		}
 		return v

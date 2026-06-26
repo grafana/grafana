@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { type FormEvent, useState, type KeyboardEvent, useRef, useEffect } from 'react';
+import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Icon, Input, IconButton, FieldValidationMessage, useStyles2, Stack } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, Input, IconButton, HorizontalGroup, FieldValidationMessage, useStyles2 } from '@grafana/ui';
 
 type EnumMappingRowProps = {
   transformIndex: number;
@@ -89,11 +88,7 @@ const EnumMappingRow = ({
         <tr key={index} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
             <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon
-                name="draggabledots"
-                size="lg"
-                title={t('transformers.enum-mapping-row.drag-handle-label', 'Reorder enum mapping row')}
-              />
+              <Icon name="draggabledots" size="lg" />
             </div>
           </td>
           {isEditing ? (
@@ -112,22 +107,19 @@ const EnumMappingRow = ({
             // TODO fix accessibility issue here
             // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
             <td onClick={onEnumValueClick} className={styles.clickableTableCell}>
-              {value && value !== '' ? value : t('transformers.enum-mapping-row.click-to-edit', 'Click to edit')}
+              {value && value !== '' ? value : 'Click to edit'}
             </td>
           )}
           <td className={styles.textAlignCenter}>
-            <Stack gap={1}>
+            <HorizontalGroup spacing="sm">
               <IconButton
                 name="trash-alt"
                 onClick={onRemoveButtonClick}
                 data-testid="remove-enum-row"
-                aria-label={t(
-                  'transformers.enum-mapping-row.remove-enum-row-aria-label-delete-enum-row',
-                  'Delete enum row'
-                )}
-                tooltip={t('transformers.enum-mapping-row.remove-enum-row-tooltip-delete', 'Delete')}
+                aria-label="Delete enum row"
+                tooltip="Delete"
               />
-            </Stack>
+            </HorizontalGroup>
           </td>
         </tr>
       )}

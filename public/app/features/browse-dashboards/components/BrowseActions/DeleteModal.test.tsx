@@ -2,21 +2,11 @@ import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
-import { backendSrv } from 'app/core/services/backend_srv';
-
-import { DeleteModal, type Props } from './DeleteModal';
+import { DeleteModal, Props } from './DeleteModal';
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
 }
-
-const [_, { folderA }] = getFolderFixtures();
-
-setBackendSrv(backendSrv);
-setupMockServer();
 
 describe('browse-dashboards DeleteModal', () => {
   const mockOnDismiss = jest.fn();
@@ -83,25 +73,5 @@ describe('browse-dashboards DeleteModal', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
     expect(mockOnDismiss).toHaveBeenCalled();
-  });
-
-  it('warns that the selected folder contains other resources', async () => {
-    render(
-      <DeleteModal
-        {...defaultProps}
-        selectedItems={{
-          $all: false,
-          folder: {
-            [folderA.item.uid]: true,
-          },
-          dashboard: {},
-          panel: {},
-        }}
-      />
-    );
-
-    expect(
-      await screen.findByRole('alert', { name: /contains other resources that will be deleted/i })
-    ).toBeInTheDocument();
   });
 });

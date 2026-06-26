@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 )
 
 var (
@@ -305,8 +305,7 @@ func (db *mysql) TableCheckSql(tableName string) (string, []any) {
 func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
 	args := []any{db.DbName, tableName}
 	s := "SELECT `COLUMN_NAME`, `IS_NULLABLE`, `COLUMN_DEFAULT`, `COLUMN_TYPE`," +
-		" `COLUMN_KEY`, `EXTRA`,`COLUMN_COMMENT` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
-		" WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? ORDER BY ORDINAL_POSITION ASC"
+		" `COLUMN_KEY`, `EXTRA`,`COLUMN_COMMENT` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
 	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
@@ -382,9 +381,6 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		if colType == "DOUBLE UNSIGNED" {
 			colType = "DOUBLE"
 		}
-		if colType == "BIGINT UNSIGNED" {
-			colType = "BIGINT"
-		}
 		col.Length = len1
 		col.Length2 = len2
 		if _, ok := core.SqlTypes[colType]; ok {
@@ -446,7 +442,7 @@ func (db *mysql) GetTables() ([]*core.Table, error) {
 
 func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	args := []any{db.DbName, tableName}
-	s := "SELECT `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? ORDER BY `INDEX_NAME`, `SEQ_IN_INDEX`"
+	s := "SELECT `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
 	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)

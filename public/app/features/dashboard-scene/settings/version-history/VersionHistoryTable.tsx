@@ -1,12 +1,10 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import * as React from 'react';
-import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
-import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+
+import { DecoratedRevisionModel } from '../VersionsEditView';
 
 import { RevertDashboardModal } from './RevertDashboardModal';
 
@@ -15,36 +13,21 @@ type VersionsTableProps = {
   canCompare: boolean;
   onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
   onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
-  isLoadingUserDisplayNames?: boolean;
 };
 
-export const VersionHistoryTable = ({
-  versions,
-  canCompare,
-  onCheck,
-  onRestore,
-  isLoadingUserDisplayNames,
-}: VersionsTableProps) => {
+export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }: VersionsTableProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.margin}>
-      <table className={cx('filter-table', styles.table)}>
+      <table className="filter-table">
         <thead>
           <tr>
             <th className="width-4"></th>
-            <th className="width-4">
-              <Trans i18nKey="dashboard-scene.version-history-table.version">Version</Trans>
-            </th>
-            <th className="width-14">
-              <Trans i18nKey="dashboard-scene.version-history-table.date">Date</Trans>
-            </th>
-            <th className="width-10">
-              <Trans i18nKey="dashboard-scene.version-history-table.updated-by">Updated by</Trans>
-            </th>
-            <th>
-              <Trans i18nKey="dashboard-scene.version-history-table.notes">Notes</Trans>
-            </th>
+            <th className="width-4">Version</th>
+            <th className="width-14">Date</th>
+            <th className="width-10">Updated by</th>
+            <th>Notes</th>
             <th></th>
           </tr>
         </thead>
@@ -53,11 +36,7 @@ export const VersionHistoryTable = ({
             <tr key={version.id}>
               <td>
                 <Checkbox
-                  aria-label={t(
-                    'dashboard-scene.version-history-table.aria-label-toggle-selection',
-                    'Toggle selection of version {{version}}',
-                    { version: version.version }
-                  )}
+                  aria-label={`Toggle selection of version ${version.version}`}
                   className={css({
                     display: 'inline',
                   })}
@@ -68,11 +47,11 @@ export const VersionHistoryTable = ({
               </td>
               <td>{version.version}</td>
               <td>{version.createdDateString}</td>
-              <td>{isLoadingUserDisplayNames ? <Skeleton width={100} /> : version.createdBy}</td>
+              <td>{version.createdBy}</td>
               <td>{version.message}</td>
               <td className="text-right">
                 {idx === 0 ? (
-                  <Tag name={t('dashboard-scene.version-history-table.name-latest', 'Latest')} colorIndex={17} />
+                  <Tag name="Latest" colorIndex={17} />
                 ) : (
                   <ModalsController>
                     {({ showModal, hideModal }) => (
@@ -86,15 +65,9 @@ export const VersionHistoryTable = ({
                             hideModal,
                             onRestore,
                           });
-                          DashboardInteractions.versionRestoreClicked({
-                            version: version.version,
-                            index: idx,
-                            confirm: false,
-                            version_date: new Date(version.created),
-                          });
                         }}
                       >
-                        <Trans i18nKey="dashboard-scene.version-history-table.restore">Restore</Trans>
+                        Restore
                       </Button>
                     )}
                   </ModalsController>
@@ -112,11 +85,6 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     margin: css({
       marginBottom: theme.spacing(4),
-    }),
-    table: css({
-      td: {
-        whiteSpace: 'normal !important',
-      },
     }),
   };
 }

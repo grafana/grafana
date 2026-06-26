@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { type CloudWatchMetricsQuery } from '../dataquery.gen';
+import { CloudWatchMetricsQuery } from '../types';
 
 import { migrateMetricQuery } from './metricQueryMigrations';
 
@@ -11,15 +11,15 @@ const useMigratedMetricsQuery = (
   query: CloudWatchMetricsQuery,
   onChangeQuery: (newQuery: CloudWatchMetricsQuery) => void
 ) => {
-  const migratedQuery = useMemo(() => migrateMetricQuery(query), [query]);
+  const migratedQUery = useMemo(() => migrateMetricQuery(query), [query]);
 
   useEffect(() => {
-    if (migratedQuery !== query) {
-      onChangeQuery(migratedQuery);
+    if (migratedQUery !== query) {
+      onChangeQuery(migratedQUery);
     }
-  }, [migratedQuery, query, onChangeQuery]);
+  }, [migratedQUery, query, onChangeQuery]);
 
-  return migratedQuery;
+  return migratedQUery;
 };
 
 export default useMigratedMetricsQuery;

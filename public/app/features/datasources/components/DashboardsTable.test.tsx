@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type PluginDashboard } from 'app/types/plugins';
+import { PluginDashboard } from 'app/types';
 
-import DashboardsTable, { type Props } from './DashboardsTable';
+import DashboardsTable, { Props } from './DashboardsTable';
 
 const props: Props = {
   dashboards: [],

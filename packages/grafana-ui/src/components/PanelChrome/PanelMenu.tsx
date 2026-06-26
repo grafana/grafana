@@ -1,12 +1,11 @@
 import { cx } from '@emotion/css';
-import { type ReactElement, useCallback } from 'react';
+import { ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 
-import { Button } from '../Button/Button';
 import { Dropdown } from '../Dropdown/Dropdown';
-import { type TooltipPlacement } from '../Tooltip/types';
+import { ToolbarButton } from '../ToolbarButton';
+import { TooltipPlacement } from '../Tooltip';
 
 interface PanelMenuProps {
   menu: ReactElement | (() => ReactElement);
@@ -38,19 +37,14 @@ export function PanelMenu({
     [onOpenMenu]
   );
 
-  const overlay = () => {
-    const menuContent = typeof menu === 'function' ? menu() : menu;
-    return <div className={dragClassCancel}>{menuContent}</div>;
-  };
-
   return (
-    <Dropdown overlay={overlay} placement={placement} offset={offset} onVisibleChange={handleVisibility}>
-      <Button
-        aria-label={t('grafana-ui.panel-menu.label', 'Menu for panel {{ title }}', { title: title ?? 'Untitled' })}
-        title={t('grafana-ui.panel-menu.title', 'Menu')}
+    <Dropdown overlay={menu} placement={placement} offset={offset} onVisibleChange={handleVisibility}>
+      <ToolbarButton
+        aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+        title="Меню"
         icon="ellipsis-v"
-        variant="secondary"
-        size="sm"
+        iconSize="md"
+        narrow
         data-testid={testId}
         className={cx(menuButtonClass, dragClassCancel)}
       />

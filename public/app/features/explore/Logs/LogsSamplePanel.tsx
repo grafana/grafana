@@ -1,31 +1,25 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useRef, type JSX } from 'react';
 
 import {
-  CoreApp,
-  type DataQueryResponse,
-  type DataSourceApi,
-  type GrafanaTheme2,
+  DataQueryResponse,
+  DataSourceApi,
+  GrafanaTheme2,
   hasSupplementaryQuerySupport,
   LoadingState,
   LogsDedupStrategy,
-  type SplitOpen,
-  store,
+  SplitOpen,
   SupplementaryQueryType,
-  type TimeRange,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { LogList } from 'app/features/logs/components/panel/LogList';
+import store from 'app/core/store';
 
 import { LogRows } from '../../logs/components/LogRows';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
-import { SETTING_KEY_ROOT, SETTINGS_KEYS } from './utils/logs';
+import { SETTINGS_KEYS } from './utils/logs';
 
 type Props = {
   queryResponse: DataQueryResponse | undefined;
@@ -35,17 +29,12 @@ type Props = {
   datasourceInstance: DataSourceApi | null | undefined;
   splitOpen: SplitOpen;
   setLogsSampleEnabled: (enabled: boolean) => void;
-  timeRange: TimeRange;
 };
 
 export function LogsSamplePanel(props: Props) {
   const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, queries, splitOpen } = props;
-  const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
 
-  const styles = useStyles2(getStyles, newLogsPanelEnabled);
-
-  const logsContainerRef = useRef<HTMLDivElement | null>(null);
-
+  const styles = useStyles2(getStyles);
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
     reportInteraction('grafana_explore_logs_sample_toggle_clicked', {
@@ -80,9 +69,7 @@ export function LogsSamplePanel(props: Props) {
 
     return (
       <Button size="sm" className={styles.logSamplesButton} onClick={onSplitOpen}>
-        <Trans i18nKey="explore.logs-sample-panel.open-in-split-view-button.open-logs-in-split-view">
-          Open logs in split view
-        </Trans>
+        Open logs in split view
       </Button>
     );
   };
@@ -93,82 +80,53 @@ export function LogsSamplePanel(props: Props) {
     LogsSamplePanelContent = null;
   } else if (queryResponse.error !== undefined) {
     LogsSamplePanelContent = (
-      <SupplementaryResultError
-        error={queryResponse.error}
-        title={t('explore.logs-sample-panel.title-failed-sample-query', 'Failed to load logs sample for this query')}
-      />
+      <SupplementaryResultError error={queryResponse.error} title="Failed to load logs sample for this query" />
     );
   } else if (queryResponse.state === LoadingState.Loading) {
-    LogsSamplePanelContent = (
-      <span>
-        <Trans i18nKey="explore.logs-sample-panel.logs-sample-is-loading">Logs sample is loading...</Trans>
-      </span>
-    );
+    LogsSamplePanelContent = <span>Logs sample is loading...</span>;
   } else if (queryResponse.data.length === 0 || queryResponse.data.every((frame) => frame.length === 0)) {
-    LogsSamplePanelContent = (
-      <span>
-        <Trans i18nKey="explore.logs-sample-panel.no-logs-sample-data">No logs sample data.</Trans>
-      </span>
-    );
+    LogsSamplePanelContent = <span>No logs sample data.</span>;
   } else {
     const logs = dataFrameToLogsModel(queryResponse.data);
-    LogsSamplePanelContent =
-      newLogsPanelEnabled && logsContainerRef.current ? (
-        <LogList
-          app={CoreApp.Explore}
-          containerElement={logsContainerRef.current}
-          enableLogDetails
-          dedupStrategy={LogsDedupStrategy.none}
-          displayedFields={[]}
-          logOptionsStorageKey={SETTING_KEY_ROOT}
-          logs={logs.rows}
-          showControls
-          showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-          sortOrder={store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending}
-          timeRange={props.timeRange}
-          timeZone={timeZone}
-          wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-        />
-      ) : (
-        <LogRows
-          logRows={logs.rows}
-          dedupStrategy={LogsDedupStrategy.none}
-          showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-          showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-          wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-          prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-          timeZone={timeZone}
-          enableLogDetails
-          scrollElement={null}
-          timeRange={props.timeRange}
-        />
-      );
+    LogsSamplePanelContent = (
+      <>
+        <OpenInSplitViewButton />
+        <div className={styles.logContainer}>
+          <LogRows
+            logRows={logs.rows}
+            dedupStrategy={LogsDedupStrategy.none}
+            showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+            showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+            wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+            prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+            timeZone={timeZone}
+            enableLogDetails={true}
+          />
+        </div>
+      </>
+    );
   }
 
   return queryResponse?.state !== LoadingState.NotStarted ? (
     <Collapse
       label={
         <div>
-          <Trans i18nKey="explore.logs-sample-panel.label">Logs sample</Trans>
-          <Tooltip
-            content={t('explore.logs-sample-panel.tooltip', 'Show log lines that contributed to visualized metrics')}
-          >
+          Logs sample
+          <Tooltip content="Show log lines that contributed to visualized metrics">
             <Icon name="info-circle" className={styles.infoTooltip} />
           </Tooltip>
         </div>
       }
       isOpen={enabled}
+      collapsible={true}
       onToggle={onToggleLogsSampleCollapse}
     >
-      <OpenInSplitViewButton />
-      <div className={styles.logContainer} ref={logsContainerRef}>
-        {LogsSamplePanelContent}
-      </div>
+      {LogsSamplePanelContent}
     </Collapse>
   ) : null;
 }
 
-const getStyles = (theme: GrafanaTheme2, newLogsPanelEnabled: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     logSamplesButton: css({
       position: 'absolute',
@@ -176,7 +134,7 @@ const getStyles = (theme: GrafanaTheme2, newLogsPanelEnabled: boolean) => {
       right: theme.spacing(1),
     }),
     logContainer: css({
-      overflow: newLogsPanelEnabled ? 'visible' : 'scroll',
+      overflow: 'scroll',
     }),
     infoTooltip: css({
       marginLeft: theme.spacing(1),

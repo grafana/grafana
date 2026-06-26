@@ -1,35 +1,34 @@
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
-import { useEffectOnce } from 'react-use';
 
-import { CoreApp, type QueryEditorProps } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
+import { CoreApp, QueryEditorProps } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Alert, Button, CodeEditor, Space } from '@grafana/ui';
 
-import { AzureQueryType } from '../../dataquery.gen';
-import type AzureMonitorDatasource from '../../datasource';
+import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { type AzureMonitorQuery } from '../../types/query';
 import {
-  type AzureMonitorDataSourceJsonData,
-  type AzureMonitorErrorish,
-  type AzureMonitorOption,
-} from '../../types/types';
+  AzureDataSourceJsonData,
+  AzureMonitorErrorish,
+  AzureMonitorOption,
+  AzureMonitorQuery,
+  AzureQueryType,
+} from '../../types';
 import useLastError from '../../utils/useLastError';
-import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
+import ArgQueryEditor from '../ArgQueryEditor';
+import LogsQueryEditor from '../LogsQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
-import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
-import TracesQueryEditor from '../TracesQueryEditor/TracesQueryEditor';
+import TracesQueryEditor from '../TracesQueryEditor';
 
 import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';
 
-type AzureMonitorQueryEditorProps = QueryEditorProps<
+export type AzureMonitorQueryEditorProps = QueryEditorProps<
   AzureMonitorDatasource,
   AzureMonitorQuery,
-  AzureMonitorDataSourceJsonData
+  AzureDataSourceJsonData
 >;
 
 const QueryEditor = ({
@@ -44,7 +43,6 @@ const QueryEditor = ({
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
   const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
-  const [defaultSubscriptionId, setDefaultSubscriptionId] = useState('');
 
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
@@ -54,15 +52,7 @@ const QueryEditor = ({
     [onChange, onRunQuery]
   );
 
-  useEffectOnce(() => {
-    if (baseQuery.queryType === AzureQueryType.TraceExemplar) {
-      datasource.azureLogAnalyticsDatasource.getDefaultOrFirstSubscription().then((subscription) => {
-        setDefaultSubscriptionId(subscription || '');
-      });
-    }
-  });
-
-  const query = usePreparedQuery(baseQuery, onQueryChange, defaultSubscriptionId);
+  const query = usePreparedQuery(baseQuery, onQueryChange);
 
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
   const basicLogsEnabled =
@@ -97,14 +87,26 @@ const QueryEditor = ({
         onClose={() => setAzureLogsCheatSheetModalOpen(false)}
         onChange={(a) => onChange({ ...a, queryType: AzureQueryType.LogAnalytics })}
       />
-      <QueryHeader
-        query={query}
-        onQueryChange={onQueryChange}
-        setAzureLogsCheatSheetModalOpen={setAzureLogsCheatSheetModalOpen}
-        onRunQuery={baseOnRunQuery}
-        data={data}
-        app={app}
-      />
+      <div className={css({ display: 'flex', alignItems: 'center' })}>
+        <QueryHeader query={query} onQueryChange={onQueryChange} />
+        {query.queryType === AzureQueryType.LogAnalytics && (
+          <Button
+            aria-label="Azure logs kick start your query button"
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setAzureLogsCheatSheetModalOpen((prevValue) => !prevValue);
+
+              reportInteraction('grafana_azure_logs_query_patterns_opened', {
+                version: 'v2',
+                editorMode: query.azureLogAnalytics,
+              });
+            }}
+          >
+            Kick start your query
+          </Button>
+        )}
+      </div>
       <EditorForQueryType
         data={data}
         subscriptionId={subscriptionId}
@@ -112,21 +114,15 @@ const QueryEditor = ({
         query={query}
         datasource={datasource}
         onChange={onQueryChange}
-        onQueryChange={onChange}
         variableOptionGroup={variableOptionGroup}
         setError={setError}
         range={range}
       />
+
       {errorMessage && (
         <>
           <Space v={2} />
-          <Alert
-            severity="error"
-            title={t(
-              'components.query-editor.alert-error-occurred',
-              'An error occurred while requesting metadata from Azure Monitor'
-            )}
-          >
+          <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
             {errorMessage instanceof Error ? errorMessage.message : errorMessage}
           </Alert>
         </>
@@ -140,8 +136,6 @@ interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'on
   basicLogsEnabled: boolean;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
-  // Used to update the query without running it
-  onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }
 
 const EditorForQueryType = ({
@@ -153,7 +147,6 @@ const EditorForQueryType = ({
   variableOptionGroup,
   onChange,
   setError,
-  onQueryChange,
   range,
 }: EditorForQueryTypeProps) => {
   switch (query.queryType) {
@@ -181,7 +174,6 @@ const EditorForQueryType = ({
           variableOptionGroup={variableOptionGroup}
           setError={setError}
           timeRange={range}
-          onQueryChange={onQueryChange}
         />
       );
 
@@ -214,19 +206,18 @@ const EditorForQueryType = ({
     default:
       const type = query.queryType as unknown;
       return (
-        <Alert title={t('components.editor-for-query-type.title-unknown-query-type', 'Unknown query type')}>
+        <Alert title="Unknown query type">
           {(type === 'Application Insights' || type === 'Insights Analytics') && (
             <>
-              <Trans i18nKey="components.editor-for-query-type.body-unknown-query-type">
-                {{ type }} was deprecated in Grafana 9. See the{' '}
-                <TextLink
-                  href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#application-insights-and-insights-analytics-removed"
-                  external
-                >
-                  deprecation notice
-                </TextLink>{' '}
-                to get more information about how to migrate your queries. This is the current query definition:
-              </Trans>
+              {type} was deprecated in Grafana 9. See the{' '}
+              <a
+                href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#application-insights-and-insights-analytics-removed"
+                target="_blank"
+                rel="noreferrer"
+              >
+                deprecation notice
+              </a>{' '}
+              to get more information about how to migrate your queries. This is the current query definition:
               <CodeEditor height="200px" readOnly language="json" value={JSON.stringify(query, null, 4)} />
             </>
           )}
@@ -237,21 +228,19 @@ const EditorForQueryType = ({
 
 const UserAuthAlert = () => {
   return (
-    <Alert
-      title={t('components.user-auth-alert.title-unsupported-auth', 'Unsupported authentication provider')}
-      data-testid={selectors.components.queryEditor.userAuthAlert}
-    >
-      <Trans i18nKey="components.user-auth-alert.body-unsupported-auth">
+    <Alert title="Unsupported authentication provider" data-testid={selectors.components.queryEditor.userAuthAlert}>
+      <>
         Usage of this data source requires you to be authenticated via Azure Entra (formerly Azure Active Directory).
         Please review the{' '}
-        <TextLink
+        <a
           href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-current-user-authentication"
-          external
+          target="_blank"
+          rel="noreferrer"
         >
           documentation
-        </TextLink>{' '}
+        </a>{' '}
         for more information.
-      </Trans>
+      </>
     </Alert>
   );
 };
@@ -259,23 +248,21 @@ const UserAuthAlert = () => {
 const UserAuthFallbackAlert = () => {
   return (
     <Alert
-      title={t(
-        'components.user-auth-fallback-alert.title-no-fallback-credentials',
-        'No fallback credentials available'
-      )}
+      title="No fallback credentials available"
       data-testid={selectors.components.queryEditor.userAuthFallbackAlert}
     >
-      <Trans i18nKey="components.user-auth-fallback-alert.body-no-fallback-credentials">
+      <>
         Data source backend features (such as alerting) require service credentials to function. This data source is
         configured without service credential fallback, or the fallback functionality is disabled. Please review the{' '}
-        <TextLink
+        <a
           href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-current-user-authentication"
-          external
+          target="_blank"
+          rel="noreferrer"
         >
           documentation
-        </TextLink>{' '}
+        </a>{' '}
         for more information.
-      </Trans>
+      </>
     </Alert>
   );
 };

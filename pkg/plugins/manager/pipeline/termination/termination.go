@@ -3,14 +3,9 @@ package termination
 import (
 	"context"
 
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/tracing"
 )
 
 // Terminator is responsible for the Termination stage of the plugin loader pipeline.
@@ -25,7 +20,6 @@ type Terminate struct {
 	cfg            *config.PluginManagementCfg
 	terminateSteps []TerminateFunc
 	log            log.Logger
-	tracer         trace.Tracer
 }
 
 type Opts struct {
@@ -42,20 +36,14 @@ func New(cfg *config.PluginManagementCfg, opts Opts) (*Terminate, error) {
 		cfg:            cfg,
 		terminateSteps: opts.TerminateFuncs,
 		log:            log.New("plugins.termination"),
-		tracer:         otel.Tracer("github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"),
 	}, nil
 }
 
 // Terminate will execute the Terminate steps of the Termination stage.
 func (t *Terminate) Terminate(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	ctx, span := t.tracer.Start(ctx, "termination.Terminate", trace.WithAttributes(
-		attribute.String("grafana.plugin.id", p.ID),
-	))
-	defer span.End()
-
 	for _, terminate := range t.terminateSteps {
 		if err := terminate(ctx, p); err != nil {
-			return nil, tracing.Error(span, err)
+			return nil, err
 		}
 	}
 	return p, nil

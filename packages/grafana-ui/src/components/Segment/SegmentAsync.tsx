@@ -1,19 +1,19 @@
 import { cx } from '@emotion/css';
-import { type HTMLProps } from 'react';
+import { isObject } from 'lodash';
+import { HTMLProps } from 'react';
 import * as React from 'react';
 import { useAsyncFn } from 'react-use';
-import { type AsyncState } from 'react-use/lib/useAsync';
+import { AsyncState } from 'react-use/lib/useAsync';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { InlineLabel } from '../Forms/InlineLabel';
-import { getLabelFromValue } from '../Select/utils';
 
 import { SegmentSelect } from './SegmentSelect';
 import { getSegmentStyles } from './styles';
-import { type SegmentProps } from './types';
+import { SegmentProps } from './types';
 import { useExpandableLabel } from './useExpandableLabel';
 
 export interface SegmentAsyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
@@ -29,9 +29,6 @@ export interface SegmentAsyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLD
   inputMinWidth?: number;
 }
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-segmentasync--docs
- */
 export function SegmentAsync<T>({
   value,
   onChange,
@@ -56,7 +53,8 @@ export function SegmentAsync<T>({
   const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
-    const label = getLabelFromValue(value);
+    const label = isObject(value) ? value.label : value;
+    const labelAsString = label != null ? String(label) : undefined;
 
     return (
       <Label
@@ -74,7 +72,7 @@ export function SegmentAsync<T>({
                 className
               )}
             >
-              {label || placeholder}
+              {labelAsString || placeholder}
             </InlineLabel>
           )
         }
@@ -85,7 +83,7 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && typeof value !== 'object' ? { value } : value}
+      value={value && !isObject(value) ? { value } : value}
       placeholder={inputPlaceholder}
       options={state.value ?? []}
       loadOptions={reloadOptionsOnChange ? fetchOptions : undefined}

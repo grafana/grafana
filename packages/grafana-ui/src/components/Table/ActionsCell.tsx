@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { ActionButton } from '../Actions/ActionButton';
 
-import { type TableCellProps } from './types';
+import { TableCellProps } from './types';
 
 export const ActionsCell = (props: TableCellProps) => {
   const { cellProps, tableStyles, actions } = props;

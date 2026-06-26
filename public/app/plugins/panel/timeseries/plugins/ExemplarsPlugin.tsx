@@ -1,14 +1,15 @@
-import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
-import type uPlot from 'uplot';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import uPlot from 'uplot';
 
 import {
-  type DataFrame,
-  type Labels,
+  DataFrame,
+  DataFrameFieldIndex,
+  Labels,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
-  type TimeZone,
+  TimeZone,
 } from '@grafana/data';
-import { FIXED_UNIT, EventsCanvas, type UPlotConfigBuilder } from '@grafana/ui';
+import { FIXED_UNIT, EventsCanvas, UPlotConfigBuilder } from '@grafana/ui';
 
 import { ExemplarMarker } from './ExemplarMarker';
 
@@ -17,21 +18,12 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   visibleSeries?: VisibleExemplarLabels;
-  maxHeight?: number;
-  maxWidth?: number;
 }
 
-export const ExemplarsPlugin = ({
-  exemplars,
-  timeZone,
-  config,
-  visibleSeries,
-  maxHeight,
-  maxWidth,
-}: ExemplarsPluginProps) => {
-  const plotInstance = useRef<uPlot | undefined>(undefined);
+export const ExemplarsPlugin = ({ exemplars, timeZone, config, visibleSeries }: ExemplarsPluginProps) => {
+  const plotInstance = useRef<uPlot>();
 
-  const [lockedExemplarRowIndex, setLockedExemplarRowIndex] = useState<number | undefined>();
+  const [lockedExemplarFieldIndex, setLockedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -39,7 +31,7 @@ export const ExemplarsPlugin = ({
     });
   }, [config]);
 
-  const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, rowIndex: number) => {
+  const mapExemplarToXYCoords = useCallback((dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
     const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
     const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 
@@ -54,7 +46,7 @@ export const ExemplarsPlugin = ({
     const yMin = plotInstance.current.scales[yScale].min;
     const yMax = plotInstance.current.scales[yScale].max;
 
-    let y = value.values[rowIndex];
+    let y = value.values[dataFrameFieldIndex.fieldIndex];
     // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
     if (yMin != null && y < yMin) {
       y = yMin;
@@ -65,17 +57,18 @@ export const ExemplarsPlugin = ({
     }
 
     return {
-      x: plotInstance.current.valToPos(time.values[rowIndex], 'x'),
+      x: plotInstance.current.valToPos(time.values[dataFrameFieldIndex.fieldIndex], 'x'),
       y: plotInstance.current.valToPos(y, yScale),
     };
   }, []);
 
   const renderMarker = useCallback(
-    (dataFrame: DataFrame, rowIndex: number): ReactNode => {
-      const showMarker = visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, rowIndex) : true;
+    (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+      const showMarker =
+        visibleSeries !== undefined ? showExemplarMarker(visibleSeries, dataFrame, dataFrameFieldIndex) : true;
 
       const markerColor =
-        visibleSeries !== undefined ? getExemplarColor(dataFrame, rowIndex, visibleSeries) : undefined;
+        visibleSeries !== undefined ? getExemplarColor(dataFrame, dataFrameFieldIndex, visibleSeries) : undefined;
 
       if (!showMarker) {
         return <></>;
@@ -83,20 +76,17 @@ export const ExemplarsPlugin = ({
 
       return (
         <ExemplarMarker
-          setClickedRowIndex={setLockedExemplarRowIndex}
-          clickedRowIndex={lockedExemplarRowIndex}
+          setClickedExemplarFieldIndex={setLockedExemplarFieldIndex}
+          clickedExemplarFieldIndex={lockedExemplarFieldIndex}
           timeZone={timeZone}
           dataFrame={dataFrame}
-          frameIndex={0}
-          rowIndex={rowIndex}
+          dataFrameFieldIndex={dataFrameFieldIndex}
           config={config}
           exemplarColor={markerColor}
-          maxHeight={maxHeight}
-          maxWidth={maxWidth}
         />
       );
     },
-    [visibleSeries, lockedExemplarRowIndex, timeZone, config, maxHeight, maxWidth]
+    [config, timeZone, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex]
   );
 
   return (
@@ -146,7 +136,11 @@ interface LabelWithExemplarUIData {
 /**
  * Get color of active series in legend
  */
-const getExemplarColor = (dataFrame: DataFrame, rowIndex: number, visibleLabels: VisibleExemplarLabels) => {
+const getExemplarColor = (
+  dataFrame: DataFrame,
+  dataFrameFieldIndex: DataFrameFieldIndex,
+  visibleLabels: VisibleExemplarLabels
+) => {
   let exemplarColor;
   visibleLabels.labels.some((visibleLabel) => {
     const labelKeys = Object.keys(visibleLabel.labels);
@@ -155,7 +149,7 @@ const getExemplarColor = (dataFrame: DataFrame, rowIndex: number, visibleLabels:
     });
     if (fields.length) {
       const hasMatch = fields.every((field, index, fields) => {
-        const value = field.values[rowIndex];
+        const value = field.values[dataFrameFieldIndex.fieldIndex];
         return visibleLabel.labels[field.name] === value;
       });
 
@@ -172,7 +166,11 @@ const getExemplarColor = (dataFrame: DataFrame, rowIndex: number, visibleLabels:
 /**
  * Determine if the current exemplar marker is filtered by what series are selected in the legend UI
  */
-const showExemplarMarker = (visibleSeries: VisibleExemplarLabels, dataFrame: DataFrame, rowIndex: number) => {
+const showExemplarMarker = (
+  visibleSeries: VisibleExemplarLabels,
+  dataFrame: DataFrame,
+  dataFrameFieldIndex: DataFrameFieldIndex
+) => {
   let showMarker = false;
   // If all series are visible, don't filter any exemplars
   if (visibleSeries.labels.length === visibleSeries.totalSeriesCount) {
@@ -196,7 +194,7 @@ const showExemplarMarker = (visibleSeries: VisibleExemplarLabels, dataFrame: Dat
           showMarker = visibleSeries.labels.some((series) => {
             return Object.keys(series.labels).every((label) => {
               const value = series.labels[label];
-              return fields.find((field) => field.values[rowIndex] === value);
+              return fields.find((field) => field.values[dataFrameFieldIndex.fieldIndex] === value);
             });
           });
         }

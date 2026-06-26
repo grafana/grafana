@@ -1,19 +1,17 @@
 import { css } from '@emotion/css';
-import { type Meta } from '@storybook/react-webpack5';
-import { type ChangeEvent, useState } from 'react';
+import { Meta } from '@storybook/react';
+import { ChangeEvent, useState } from 'react';
 
-import { toIconName, type IconName } from '@grafana/data';
+import { toIconName, IconName } from '@grafana/data';
+import { Input, Field, Icon } from '@grafana/ui';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-import { getAvailableIcons } from '../../types/icon';
-import { Field } from '../Forms/Field';
-import { Input } from '../Input/Input';
+import { useTheme2 } from '../../themes';
+import { getAvailableIcons } from '../../types';
 
-import { Icon } from './Icon';
 import mdx from './Icon.mdx';
 
 const meta: Meta<typeof Icon> = {
-  title: 'Iconography/Icon',
+  title: 'Docs overview/Icon',
   component: Icon,
   parameters: {
     options: {

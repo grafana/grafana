@@ -1,29 +1,23 @@
-import { type PanelOptionsEditorBuilder } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type OptionsWithTextFormatting } from '@grafana/schema';
+import { PanelOptionsEditorBuilder } from '@grafana/data';
+import { OptionsWithTextFormatting } from '@grafana/schema';
 
 /**
  * Adds common text control options to a visualization options
  * @param builder
+ * @param withTitle
  * @public
  */
 export function addTextSizeOptions<T extends OptionsWithTextFormatting>(
   builder: PanelOptionsEditorBuilder<T>,
-  options: { withValue?: boolean; withTitle?: boolean; withPercentChange?: boolean } = { withTitle: true }
+  withTitle = true
 ) {
-  // if called from old plugins when parameter was withTitle boolean
-  if (typeof options === 'boolean') {
-    options = { withTitle: options };
-  }
-
-  const category = [t('grafana-ui.builder.text.category-text-size', 'Text size')];
-  if (options.withTitle) {
+  if (withTitle) {
     builder.addNumberInput({
       path: 'text.titleSize',
-      category,
-      name: t('grafana-ui.builder.text.name-title', 'Title'),
+      category: ['Text size'],
+      name: 'Title',
       settings: {
-        placeholder: t('grafana-ui.builder.text.placeholder-title', 'Auto'),
+        placeholder: 'Auto',
         integer: false,
         min: 1,
         max: 200,
@@ -32,33 +26,16 @@ export function addTextSizeOptions<T extends OptionsWithTextFormatting>(
     });
   }
 
-  if (options.withValue !== false) {
-    builder.addNumberInput({
-      path: 'text.valueSize',
-      category,
-      name: t('grafana-ui.builder.text.name-value', 'Value'),
-      settings: {
-        placeholder: t('grafana-ui.builder.text.placeholder-value', 'Auto'),
-        integer: false,
-        min: 1,
-        max: 200,
-      },
-      defaultValue: undefined,
-    });
-  }
-
-  if (options.withPercentChange) {
-    builder.addNumberInput({
-      path: 'text.percentSize',
-      category,
-      name: t('grafana-ui.builder.text.name-percent-change', 'Percent change'),
-      settings: {
-        placeholder: t('grafana-ui.builder.text.placeholder-percent-change', 'Auto'),
-        integer: false,
-        min: 1,
-        max: 200,
-      },
-      defaultValue: undefined,
-    });
-  }
+  builder.addNumberInput({
+    path: 'text.valueSize',
+    category: ['Text size'],
+    name: 'Value',
+    settings: {
+      placeholder: 'Auto',
+      integer: false,
+      min: 1,
+      max: 200,
+    },
+    defaultValue: undefined,
+  });
 }

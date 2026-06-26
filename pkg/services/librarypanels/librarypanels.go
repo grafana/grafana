@@ -41,6 +41,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 
 // Service is a service for operating on library panels.
 type Service interface {
+	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error
 	ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error
 }
 
@@ -61,8 +62,58 @@ type LibraryPanelService struct {
 
 var _ Service = (*LibraryPanelService)(nil)
 
+// ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
+func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error {
+	panels := dash.Data.Get("panels").MustArray()
+	libraryPanels := make(map[string]string)
+	err := connectLibraryPanelsRecursively(c, panels, libraryPanels)
+	if err != nil {
+		return err
+	}
+
+	elementUIDs := make([]string, 0, len(libraryPanels))
+	for libraryPanel := range libraryPanels {
+		elementUIDs = append(elementUIDs, libraryPanel)
+	}
+
+	return lps.LibraryElementService.ConnectElementsToDashboard(c, signedInUser, elementUIDs, dash.ID)
+}
+
 func isLibraryPanelOrRow(panel *simplejson.Json, panelType string) bool {
 	return panel.Interface() != nil || panelType == "row"
+}
+
+func connectLibraryPanelsRecursively(c context.Context, panels []any, libraryPanels map[string]string) error {
+	for _, panel := range panels {
+		panelAsJSON := simplejson.NewFromAny(panel)
+		libraryPanel := panelAsJSON.Get("libraryPanel")
+		panelType := panelAsJSON.Get("type").MustString()
+		if !isLibraryPanelOrRow(libraryPanel, panelType) {
+			continue
+		}
+
+		// we have a row
+		if panelType == "row" {
+			rowPanels := panelAsJSON.Get("panels").MustArray()
+			err := connectLibraryPanelsRecursively(c, rowPanels, libraryPanels)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		// we have a library panel
+		UID := libraryPanel.Get("uid").MustString()
+		if len(UID) == 0 {
+			return errLibraryPanelHeaderUIDMissing
+		}
+		_, exists := libraryPanels[UID]
+		if !exists {
+			libraryPanels[UID] = UID
+		}
+	}
+
+	return nil
 }
 
 // ImportLibraryPanelsForDashboard loops through all panels in dashboard JSON and creates any missing library panels in the database.
@@ -144,16 +195,19 @@ func (lps LibraryPanelService) CountInFolders(ctx context.Context, orgID int64, 
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
-
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
-		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element WHERE org_id = ? AND folder_uid IN (%s) AND kind = ?`, strings.Repeat("?,", len(folderUIDs)-1)+"?")
-
+		// the sequential IDs for the respective entries of dashboard and folder tables are different,
+		// so we need to get the folder ID from the dashboard table
+		// TODO: In the future, we should consider adding a folder UID column to the library_element table
+		// and use that instead of the folder ID.
+		s := fmt.Sprintf(`SELECT COUNT(*) FROM library_element
+			WHERE org_id = ? AND folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN (%s)) AND kind = ?`, strings.Repeat("?,", len(folderUIDs)-1)+"?")
 		args := make([]interface{}, 0, len(folderUIDs)+2)
-		args = append(args, orgID)
-		for _, uid := range folderUIDs {
-			args = append(args, uid)
+		args = append(args, orgID, orgID)
+		for _, folderUID := range folderUIDs {
+			args = append(args, folderUID)
 		}
 		args = append(args, int64(model.PanelElement))
 		_, err := sess.SQL(s, args...).Get(&count)

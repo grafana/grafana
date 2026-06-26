@@ -1,11 +1,11 @@
 import { getConnectedDashboards as apiGetConnectedDashboards } from '../../state/api';
-import { type DispatchResult, type LibraryElementDTO } from '../../types';
+import { DispatchResult, LibraryElementDTO } from '../../types';
 
 import { searchCompleted } from './reducer';
 
 export function getConnectedDashboards(libraryPanel: LibraryElementDTO): DispatchResult {
   return async function (dispatch) {
     const dashboards = await apiGetConnectedDashboards(libraryPanel.uid);
-    dispatch(searchCompleted({ dashboards: dashboards || [] }));
+    dispatch(searchCompleted({ dashboards }));
   };
 }

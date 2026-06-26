@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import { type ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { setDataSourceSrv } from '@grafana/runtime';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
 import { QueryEditorField } from './QueryEditorField';
 
@@ -25,7 +25,7 @@ const renderWithContext = (
   children: ReactNode,
   getHandler: (name: string) => Promise<MockDataSourceApi> = defaultGetHandler
 ) => {
-  const dsServer = setupDataSources();
+  const dsServer = new MockDataSourceSrv({});
   dsServer.get = getHandler;
 
   setDataSourceSrv(dsServer);

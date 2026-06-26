@@ -1,18 +1,10 @@
-import {
-  type DataQueryResponse,
-  type DataFrame,
-  isDataFrame,
-  FieldType,
-  type QueryResultMeta,
-  type DataQueryError,
-} from '@grafana/data';
+import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta, DataQueryError } from '@grafana/data';
 
-import { LokiQueryType } from './dataquery.gen';
 import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
 import { getExpressionFromExecutedQuery, getHighlighterExpressionsFromQuery } from './queryUtils';
 import { dataFrameHasLokiError } from './responseUtils';
-import { type DerivedFieldConfig, type LokiQuery } from './types';
+import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);

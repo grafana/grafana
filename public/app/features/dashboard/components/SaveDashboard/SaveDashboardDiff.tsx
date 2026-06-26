@@ -1,12 +1,11 @@
-import { type ReactElement } from 'react';
+import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
-import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Spinner, Stack } from '@grafana/ui';
-import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
-import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
+import { Box, Spinner, Stack } from '@grafana/ui';
+import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
+import { DiffViewer } from '../../../dashboard-scene/settings/version-history/DiffViewer';
 
 interface SaveDashboardDiffProps {
   oldValue?: unknown;
@@ -17,7 +16,6 @@ interface SaveDashboardDiffProps {
   hasFolderChanges?: boolean;
   oldFolder?: string;
   newFolder?: string;
-  hasMigratedToV2?: boolean;
 }
 
 export const SaveDashboardDiff = ({
@@ -27,7 +25,6 @@ export const SaveDashboardDiff = ({
   hasFolderChanges,
   oldFolder,
   newFolder,
-  hasMigratedToV2,
 }: SaveDashboardDiffProps) => {
   const loader = useAsync(async () => {
     const oldJSON = JSON.stringify(oldValue ?? {}, null, 2);
@@ -56,7 +53,7 @@ export const SaveDashboardDiff = ({
       diffs,
       count,
       showDiffs: count < 15, // overwhelming if too many changes
-      jsonView: <LazyDiffViewer oldValue={oldJSON} newValue={newJSON} />,
+      jsonView: <DiffViewer oldValue={oldJSON} newValue={newJSON} />,
     };
   }, [diff, oldValue, newValue]);
 
@@ -64,17 +61,6 @@ export const SaveDashboardDiff = ({
 
   return (
     <Stack direction="column" gap={1}>
-      {hasMigratedToV2 && (
-        <Box paddingTop={1}>
-          <Alert
-            title={t(
-              'dashboard.save-dashboard-diff.title-because-dashboard-migrated-grafana-format',
-              'The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format'
-            )}
-            severity="info"
-          />
-        </Box>
-      )}
       {hasFolderChanges && (
         <DiffGroup
           diffs={[
@@ -88,35 +74,21 @@ export const SaveDashboardDiff = ({
             },
           ]}
           key={'folder'}
-          title={t('dashboard.save-dashboard-diff.title-folder', 'folder')}
+          title={'folder'}
         />
       )}
       {(!value || !oldValue) && <Spinner />}
       {value && value.count >= 1 ? (
         <>
-          {!hasMigratedToV2 && value && value.schemaChange && value.schemaChange}
+          {value && value.schemaChange && value.schemaChange}
           {value && value.showDiffs && value.diffs}
           <Box paddingTop={1}>
-<<<<<<< HEAD
             <h4>Полное различие в формате JSON</h4>
-=======
-            <h4>
-              <Trans i18nKey="dashboard.save-dashboard-diff.full-json-diff">Full JSON diff</Trans>
-            </h4>
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             {value.jsonView}
           </Box>
         </>
       ) : (
-<<<<<<< HEAD
         <Box paddingTop={1}>Никаких изменений в JSON дашборда</Box>
-=======
-        <Box paddingTop={1}>
-          <Trans i18nKey="dashboard.save-dashboard-diff.no-changes-in-the-dashboard-json">
-            No changes in the dashboard JSON
-          </Trans>
-        </Box>
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
       )}
     </Stack>
   );

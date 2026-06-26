@@ -9,18 +9,13 @@ labels:
     - enterprise
 menuTitle: Provisioning RBAC with Terraform
 title: Provisioning RBAC with Terraform
-weight: 310
+weight: 60
 refs:
   api-rbac-create-and-manage-custom-roles:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#create-and-manage-custom-roles
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/#create-and-manage-custom-roles
-  org-http-api-update-user:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/org/#updates-the-given-user
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/org/#updates-the-given-user
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
@@ -50,11 +45,11 @@ refs:
 
 # Provisioning RBAC with Terraform
 
-{{< admonition type="note" >}}
+{{% admonition type="note" %}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{< /admonition >}}
+{{% /admonition %}}
 
-You can create, change or remove [Custom roles](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) and create or remove [role assignments](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment), by using [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+You can create, change or remove [Custom roles](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) and create or remove [basic and custom role assignments](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment), by using [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
 ## Before you begin
 
@@ -98,58 +93,6 @@ provider "grafana" {
 }
 ```
 
-## Provision basic roles
-
-Basic roles (`None`, `Viewer`, `Editor`, `Admin`, and `Grafana Admin`) correspond to a user's or service account's organization role. A basic role's permissions are derived from the organization role, so you manage basic roles by setting the organization role rather than by creating an RBAC role assignment. The `grafana_role_assignment` resource only assigns fixed and custom roles.
-
-{{< admonition type="note" >}}
-Assigning a basic role such as `basic_admin` with `grafana_role_assignment` fails with the error `this endpoint cannot be used to assign basic, managed or external services roles`.
-{{< /admonition >}}
-
-### Set the organization role for a service account
-
-Set the `role` attribute on the [`grafana_service_account`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/service_account) resource:
-
-```terraform
-resource "grafana_service_account" "admin_sa" {
-  name = "terraform_admin_sa"
-  role = "Admin"
-}
-```
-
-### Set the organization role for users
-
-How you set a user's organization role depends on your Grafana deployment.
-
-**Self-managed Grafana:** use the [`grafana_organization`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/organization) resource to manage members by organization role. This resource uses Grafana's admin API, so it requires basic authentication and manages organization membership authoritatively.
-
-```terraform
-resource "grafana_organization" "org" {
-  name    = "my_org"
-  admins  = ["admin@example.com"]
-  editors = ["editor@example.com"]
-  viewers = ["viewer@example.com"]
-}
-```
-
-**Grafana Cloud:** the `grafana_organization` resource isn't supported, and no Terraform resource currently sets an individual user's organization role. Manage organization roles with the `PATCH /api/org/users/{user_id}` [Organization HTTP API](ref:org-http-api-update-user) endpoint, or through SCIM provisioning or SAML or OIDC role mapping.
-
-### Assign a fixed or custom role to a team
-
-Use fixed or custom roles to grant permissions to teams:
-
-```terraform
-resource "grafana_team" "writers_team" {
-  name = "terraform_writers_team"
-}
-
-# Assign a fixed role to a team
-resource "grafana_role_assignment" "writers_team_fixed_role" {
-  role_uid = "fixed:dashboards:writer"
-  teams    = [grafana_team.writers_team.id]
-}
-```
-
 ## Provision custom roles
 
 The following example shows how to provision a custom role with some permissions.
@@ -162,7 +105,7 @@ resource "grafana_role" "my_new_role" {
   description = "My test role"
   version = 1
   uid = "newroleuid"
-  global = false
+  global = true
 
   permissions {
     action = "org.users:add"

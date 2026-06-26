@@ -1,12 +1,12 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { FeatureState } from '@grafana/data';
+import { FeatureBadge } from '@grafana/ui';
 
-import { FeatureBadge } from './FeatureBadge';
 import mdx from './FeatureBadge.mdx';
 
 const meta: Meta<typeof FeatureBadge> = {
-  title: 'Information/FeatureBadge',
+  title: 'Data Display/FeatureBadge',
   component: FeatureBadge,
   parameters: {
     docs: { page: mdx },

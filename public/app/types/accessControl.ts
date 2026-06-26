@@ -1,5 +1,3 @@
-import { type RoleDto } from 'app/api/clients/legacy';
-
 /**
  * UserPermission is a map storing permissions in a form of
  * {
@@ -79,9 +77,6 @@ export enum AccessControlAction {
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
   DashboardsPublicWrite = 'dashboards.public:write',
-  SnapshotsCreate = 'snapshots:create',
-  SnapshotsDelete = 'snapshots:delete',
-  SnapshotsRead = 'snapshots:read',
 
   FoldersRead = 'folders:read',
   FoldersWrite = 'folders:write',
@@ -89,9 +84,6 @@ export enum AccessControlAction {
   FoldersCreate = 'folders:create',
   FoldersPermissionsRead = 'folders.permissions:read',
   FoldersPermissionsWrite = 'folders.permissions:write',
-
-  PlaylistsRead = 'playlists:read',
-  PlaylistsWrite = 'playlists:write',
 
   // Support bundle actions
   ActionSupportBundlesCreate = 'support.bundles:create',
@@ -134,11 +126,6 @@ export enum AccessControlAction {
   AlertingProvisioningReadSecrets = 'alert.provisioning.secrets:read',
   AlertingProvisioningRead = 'alert.provisioning:read',
   AlertingProvisioningWrite = 'alert.provisioning:write',
-  AlertingRulesProvisioningRead = 'alert.rules.provisioning:read',
-  AlertingRulesProvisioningWrite = 'alert.rules.provisioning:write',
-  AlertingNotificationsProvisioningRead = 'alert.notifications.provisioning:read',
-  AlertingNotificationsProvisioningWrite = 'alert.notifications.provisioning:write',
-  AlertingProvisioningSetStatus = 'alert.provisioning.provenance:write',
 
   // Alerting receivers actions
   AlertingReceiversPermissionsRead = 'receivers.permissions:read',
@@ -146,36 +133,10 @@ export enum AccessControlAction {
   AlertingReceiversCreate = 'alert.notifications.receivers:create',
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
-  AlertingReceiversDelete = 'alert.notifications.receivers:delete',
-  /** @deprecated Use AlertingReceiversTestCreate instead */
-  AlertingReceiversTest = 'alert.notifications.receivers:test',
-  AlertingReceiversTestCreate = 'alert.notifications.receivers.test:create',
-  AlertingReceiversUpdateProtected = 'alert.notifications.receivers.protected:write',
 
-  // Legacy Alerting routes actions
-  AlertingRoutesRead = 'alert.notifications.routes:read',
-  AlertingRoutesWrite = 'alert.notifications.routes:write',
-
-  // Alerting managed routes actions (new, scoped per-resource)
-  ActionAlertingManagedRoutesRead = 'notifications.alerting.grafana.app/routingtrees:get',
-  ActionAlertingManagedRoutesWrite = 'notifications.alerting.grafana.app/routingtrees:update',
-  ActionAlertingManagedRoutesCreate = 'notifications.alerting.grafana.app/routingtrees:create',
-  ActionAlertingManagedRoutesDelete = 'notifications.alerting.grafana.app/routingtrees:delete',
-
-  // Alerting time intervals actions
-  AlertingTimeIntervalsRead = 'alert.notifications.time-intervals:read',
-  AlertingTimeIntervalsWrite = 'alert.notifications.time-intervals:write',
-  AlertingTimeIntervalsDelete = 'alert.notifications.time-intervals:delete',
-
-  // Alerting templates actions
-  AlertingTemplatesRead = 'alert.notifications.templates:read',
-  AlertingTemplatesWrite = 'alert.notifications.templates:write',
-  AlertingTemplatesDelete = 'alert.notifications.templates:delete',
-  AlertingNotificationsTemplatesTest = 'alert.notifications.templates.test:write',
-
-  // Alerting enrichments actions
-  AlertingEnrichmentsRead = 'alert.enrichments:read',
-  AlertingEnrichmentsWrite = 'alert.enrichments:write',
+  ActionAPIKeysRead = 'apikeys:read',
+  ActionAPIKeysCreate = 'apikeys:create',
+  ActionAPIKeysDelete = 'apikeys:delete',
 
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',
@@ -187,15 +148,17 @@ export enum AccessControlAction {
   // GroupSync
   GroupSyncMappingsRead = 'groupsync.mappings:read',
   GroupSyncMappingsWrite = 'groupsync.mappings:write',
-
-  // Migration Assistant
-  MigrationAssistantMigrate = 'migrationassistant:migrate',
-
-  // Saved Queries
-  QueriesRead = 'queries:read',
-  QueriesWrite = 'queries:write',
 }
 
-export interface Role extends RoleDto {
-  filteredDisplayName: string; // name to be shown in filtered role list
+export interface Role {
+  uid: string;
+  name: string;
+  displayName: string;
+  description: string;
+  group: string;
+  global: boolean;
+  delegatable?: boolean;
+  version: number;
+  created: string;
+  updated: string;
 }

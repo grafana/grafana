@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
 import {
   Box,
@@ -22,8 +21,8 @@ import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
 
 import { FieldRenderer } from './FieldRenderer';
-import { getSectionFields } from './fields';
-import { type SSOProvider, type SSOProviderDTO } from './types';
+import { sectionFields } from './fields';
+import { SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 
 const appEvents = getAppEvents();
@@ -42,23 +41,19 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     reset,
     watch,
     setValue,
-    getValues,
     unregister,
     formState: { errors, dirtyFields, isSubmitted },
   } = useForm({ defaultValues: dataToDTO(config), mode: 'onSubmit', reValidateMode: 'onChange' });
   const [isSaving, setIsSaving] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
-  const sections = useMemo(() => getSectionFields()[provider], [provider]);
+  const sections = sectionFields[provider];
   const [resetConfig, setResetConfig] = useState(false);
 
   const additionalActionsMenu = (
     <Menu>
       <Menu.Item
-        label={t(
-          'auth-config.provider-config-form.additional-actions-menu.label-reset-to-default-values',
-          'Reset to default values'
-        )}
+        label="Reset to default values"
         icon="history-alt"
         onClick={() => {
           setResetConfig(true);
@@ -167,12 +162,8 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             reset();
           }}
         />
-        <Field label={t('auth-config.provider-config-form.label-enabled', 'Enabled')} hidden={true}>
-          <Switch
-            {...register('enabled')}
-            id="enabled"
-            label={t('auth-config.provider-config-form.enabled-label-enabled', 'Enabled')}
-          />
+        <Field label="Enabled" hidden={true}>
+          <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
         </Field>
         <Stack gap={2} direction={'column'}>
           {sections
@@ -190,7 +181,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                           control={control}
                           errors={errors}
                           setValue={setValue}
-                          getValues={getValues}
                           register={register}
                           watch={watch}
                           unregister={unregister}
@@ -211,28 +201,20 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
               onClick={() => onSaveAttempt(true)}
               variant={isEnabled ? 'secondary' : undefined}
             >
-              {isSaving
-                ? isEnabled
-                  ? t('auth-config.provider-config-form.disabling', 'Disabling...')
-                  : t('auth-config.provider-config-form.saving', 'Saving...')
-                : isEnabled
-                  ? t('auth-config.provider-config-form.disable', 'Disable')
-                  : t('auth-config.provider-config-form.save-and-enable', 'Save and enable')}
+              {isSaving ? (isEnabled ? 'Disabling...' : 'Saving...') : isEnabled ? 'Disable' : 'Save and enable'}
             </Button>
 
             <Button type={'submit'} disabled={isSaving} variant={'secondary'} onClick={() => onSaveAttempt(false)}>
-              {isSaving
-                ? t('auth-config.provider-config-form.saving', 'Saving...')
-                : t('auth-config.provider-config-form.save', 'Save')}
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
             <LinkButton href={'/admin/authentication'} variant={'secondary'}>
-              <Trans i18nKey="auth-config.provider-config-form.discard">Discard</Trans>
+              Discard
             </LinkButton>
 
             <Dropdown overlay={additionalActionsMenu} placement="bottom-start">
               <IconButton
-                tooltip={t('auth-config.provider-config-form.tooltip-more-actions', 'More actions')}
-                title={t('auth-config.provider-config-form.title-more-actions', 'More actions')}
+                tooltip="More actions"
+                title="More actions"
                 tooltipPlacement="top"
                 size="md"
                 variant="secondary"
@@ -246,23 +228,18 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
       {resetConfig && (
         <ConfirmModal
           isOpen
-          title={t('auth-config.provider-config-form.title-reset', 'Reset')}
+          icon="trash-alt"
+          title="Reset"
           body={
             <Stack direction={'column'} gap={3}>
-              <span>
-                <Trans i18nKey="auth-config.provider-config-form.reset-configuration">
-                  Are you sure you want to reset this configuration?
-                </Trans>
-              </span>
+              <span>Are you sure you want to reset this configuration?</span>
               <small>
-                <Trans i18nKey="auth-config.provider-config-form.reset-configuration-description">
-                  After resetting these settings Grafana will use the provider configuration from the system (config
-                  file/environment variables) if any.
-                </Trans>
+                After resetting these settings Grafana will use the provider configuration from the system (config
+                file/environment variables) if any.
               </small>
             </Stack>
           }
-          confirmText={t('auth-config.provider-config-form.confirmText-reset', 'Reset')}
+          confirmText="Reset"
           onDismiss={() => setResetConfig(false)}
           onConfirm={async () => {
             await onResetConfig();

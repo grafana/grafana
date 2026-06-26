@@ -1,9 +1,24 @@
+import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 
-import { type BackendSrvRequest } from '@grafana/runtime';
+import { BackendSrvRequest } from '@grafana/runtime';
 
-import { FetchQueue, type FetchQueueUpdate, FetchStatus } from './FetchQueue';
-import { subscribeTester } from './mocks/subscribeTester';
+import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
+
+type SubscribeTesterArgs<T> = {
+  observable: Observable<T>;
+  expectCallback: (data: T) => void;
+  doneCallback: jest.DoneCallback;
+};
+
+export const subscribeTester = <T>({ observable, expectCallback, doneCallback }: SubscribeTesterArgs<T>) => {
+  observable.subscribe({
+    next: (data) => expectCallback(data),
+    complete: () => {
+      doneCallback();
+    },
+  });
+};
 
 describe('FetchQueue', () => {
   describe('add', () => {

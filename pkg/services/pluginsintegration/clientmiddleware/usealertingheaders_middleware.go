@@ -27,7 +27,6 @@ var alertHeaders = []string{
 	"X-Rule-Source",
 	"X-Rule-Type",
 	"X-Rule-Version",
-	"X-Rule-Origin",
 	ngalertmodels.FromAlertHeaderName,
 }
 

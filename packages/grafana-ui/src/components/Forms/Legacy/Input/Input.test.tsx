@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ValidationEvents } from '../../../../types/input';
-import { EventsWithValidation } from '../../../../utils/validate';
+import { ValidationEvents } from '../../../../types';
+import { EventsWithValidation } from '../../../../utils';
 
 import { Input } from './Input';
 
@@ -30,7 +30,7 @@ describe('Input', () => {
     await userEvent.type(inputEl, 'abcde');
     // blur the field
     await userEvent.click(document.body);
-    expect(await screen.findByText(TEST_ERROR_MESSAGE)).toBeInTheDocument();
+    await screen.findByText(TEST_ERROR_MESSAGE);
   });
 
   it('should validate without error onBlur', async () => {

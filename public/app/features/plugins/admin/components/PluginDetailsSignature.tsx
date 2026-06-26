@@ -2,10 +2,9 @@ import * as React from 'react';
 
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { Alert, TextLink } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 
-import { type CatalogPlugin } from '../types';
+import { CatalogPlugin } from '../types';
 
 type Props = {
   className?: string;
@@ -26,23 +25,24 @@ export function PluginDetailsSignature({ className, plugin }: Props): React.Reac
   return (
     <Alert
       severity="warning"
-      title={t('plugins.plugin-details-signature.title-invalid-plugin-signature', 'Invalid plugin signature')}
+      title="Invalid plugin signature"
       data-testid={selectors.pages.PluginPage.signatureInfo}
       className={className}
     >
       <p>
-        <Trans i18nKey="plugins.plugin-details-signature.body-invalid-plugin-signature">
-          Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
-          is part of our security measures to ensure plugins are safe and trustworthy. Grafana Labs can’t guarantee the
-          integrity of this unsigned plugin. Ask the plugin author to request it to be signed.
-        </Trans>
+        Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
+        is part of our security measures to ensure plugins are safe and trustworthy. Grafana Labs can’t guarantee the
+        integrity of this unsigned plugin. Ask the plugin author to request it to be signed.
       </p>
 
-      <TextLink href="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/" external>
-        <Trans i18nKey="plugins.plugin-details-signature.read-more-about-plugins-signing">
-          Read more about plugins signing.
-        </Trans>
-      </TextLink>
+      <a
+        href="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
+        className="external-link"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Read more about plugins signing.
+      </a>
     </Alert>
   );
 }

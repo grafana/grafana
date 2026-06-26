@@ -1,4 +1,4 @@
-import { type monacoTypes, type Monaco } from '@grafana/ui';
+import { monacoTypes, Monaco } from '@grafana/ui';
 
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
@@ -127,14 +127,14 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   }
 }
 
-type CompletionType = 'LABEL_NAME' | 'LABEL_VALUE';
+export type CompletionType = 'LABEL_NAME' | 'LABEL_VALUE';
 type Completion = {
   type: CompletionType;
   label: string;
   insertText: string;
 };
 
-type Label = {
+export type Label = {
   name: string;
   value: string;
 };

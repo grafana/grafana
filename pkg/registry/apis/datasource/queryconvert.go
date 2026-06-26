@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
-	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -43,7 +42,7 @@ func registerQueryConvert(client pluginClientConversion, contextProvider PluginC
 }
 
 func (r *queryConvertREST) New() runtime.Object {
-	return &dsV0.QueryDataRequest{}
+	return &query.QueryDataRequest{}
 }
 
 func (r *queryConvertREST) Destroy() {}
@@ -64,7 +63,7 @@ func (r *queryConvertREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
-func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *http.Request) (*dsV0.QueryDataRequest, error) {
+func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *http.Request) (*query.QueryDataRequest, error) {
 	dqr := data.QueryDataRequest{}
 	err := web.Bind(req, &dqr)
 	if err != nil {
@@ -81,7 +80,7 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 		return nil, err
 	}
 
-	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 	raw, err := json.Marshal(dqr)
 	if err != nil {
 		return nil, fmt.Errorf("marshal: %w", err)
@@ -104,7 +103,7 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 		return nil, err
 	}
 
-	qr := &dsV0.QueryDataRequest{}
+	qr := &query.QueryDataRequest{}
 	for _, obj := range convertResponse.Objects {
 		if obj.ContentType != "application/json" {
 			return nil, fmt.Errorf("unexpected content type: %s", obj.ContentType)

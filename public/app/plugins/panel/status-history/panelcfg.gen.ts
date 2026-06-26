@@ -8,19 +8,13 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-// Generated from public/app/plugins/panel/status-history/panelcfg.cue file.
-
 import * as ui from '@grafana/schema';
 
-export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {
+export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**
    * Controls the column width
    */
   colWidth?: number;
-  /**
-   * Enables pagination when > 0
-   */
-  perPage?: number;
   /**
    * Set the height of the rows
    */
@@ -33,12 +27,11 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
 
 export const defaultOptions: Partial<Options> = {
   colWidth: 0.9,
-  perPage: 20,
   rowHeight: 0.9,
   showValue: ui.VisibilityMode.Auto,
 };
 
-export interface FieldConfig extends ui.AxisConfig, ui.HideableFieldConfig {
+export interface FieldConfig extends ui.HideableFieldConfig {
   fillOpacity?: number;
   lineWidth?: number;
 }

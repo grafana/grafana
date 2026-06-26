@@ -1,6 +1,6 @@
-import { type AnnotationQuery, type AnnotationSupport } from '@grafana/data';
+import { AnnotationQuery, AnnotationSupport } from '@grafana/data';
 
-import { type InfluxQuery, type InfluxQueryTag } from './types';
+import { InfluxQuery, InfluxQueryTag } from './types';
 
 type LegacyAnnotation = {
   query?: string;

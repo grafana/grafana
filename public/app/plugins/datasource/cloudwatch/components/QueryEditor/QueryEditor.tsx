@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useState, type JSX } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { type QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 
-import { type CloudWatchDatasource } from '../../datasource';
+import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
-import useMigratedQuery from '../../migrations/useMigratedQuery';
-import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
+import { CloudWatchJsonData, CloudWatchQuery } from '../../types';
 
 import LogsQueryEditor from './LogsQueryEditor/LogsQueryEditor';
 import { MetricsQueryEditor } from './MetricsQueryEditor/MetricsQueryEditor';
@@ -15,7 +14,6 @@ export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, Clou
 
 export const QueryEditor = (props: Props) => {
   const { query, onChange, data } = props;
-  const migratedQuery = useMigratedQuery(query, props.onChange);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [extraHeaderElementLeft, setExtraHeaderElementLeft] = useState<JSX.Element>();
   const [extraHeaderElementRight, setExtraHeaderElementRight] = useState<JSX.Element>();
@@ -41,24 +39,17 @@ export const QueryEditor = (props: Props) => {
         dataIsStale={dataIsStale}
       />
 
-      {isCloudWatchMetricsQuery(migratedQuery) && (
+      {isCloudWatchMetricsQuery(query) && (
         <MetricsQueryEditor
           {...props}
-          query={migratedQuery}
+          query={query}
           onRunQuery={() => {}}
           onChange={onChangeInternal}
           extraHeaderElementLeft={setExtraHeaderElementLeft}
           extraHeaderElementRight={setExtraHeaderElementRight}
         />
       )}
-      {isCloudWatchLogsQuery(migratedQuery) && (
-        <LogsQueryEditor
-          {...props}
-          query={migratedQuery}
-          onChange={onChangeInternal}
-          extraHeaderElementLeft={setExtraHeaderElementLeft}
-        />
-      )}
+      {isCloudWatchLogsQuery(query) && <LogsQueryEditor {...props} query={query} onChange={onChangeInternal} />}
     </>
   );
 };

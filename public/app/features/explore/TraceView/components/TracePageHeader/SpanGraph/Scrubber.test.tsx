@@ -13,9 +13,8 @@
 // limitations under the License.
 
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import type { JSX } from 'react';
 
-import Scrubber, { type ScrubberProps } from './Scrubber';
+import Scrubber, { ScrubberProps } from './Scrubber';
 
 describe('<Scrubber>', () => {
   const defaultProps = {

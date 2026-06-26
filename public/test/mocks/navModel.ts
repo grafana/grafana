@@ -1,4 +1,4 @@
-import { type NavIndex } from '@grafana/data';
+import { NavIndex } from '@grafana/data';
 
 export const mockNavModel: NavIndex = {
   home: {

@@ -1,6 +1,6 @@
 import { isArray, isString } from 'lodash';
 
-import { type AdHocVariableFilter, type UrlQueryValue } from '@grafana/data';
+import { AdHocVariableFilter, UrlQueryValue } from '@grafana/data';
 
 export const toUrl = (filters: AdHocVariableFilter[]): string[] => {
   return filters.map((filter) => toArray(filter).map(escapeDelimiter).join('|'));
@@ -36,7 +36,7 @@ function toArray(filter: AdHocVariableFilter): string[] {
   return [filter.key, filter.operator, filter.value];
 }
 
-export function toFilter(value: string | number | boolean | undefined | null): AdHocVariableFilter | null {
+function toFilter(value: string | number | boolean | undefined | null): AdHocVariableFilter | null {
   if (!isString(value) || value.length === 0) {
     return null;
   }

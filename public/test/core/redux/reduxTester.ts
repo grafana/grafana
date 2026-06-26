@@ -1,9 +1,9 @@
-import { type AnyAction, configureStore, type EnhancedStore, type Reducer, type Tuple } from '@reduxjs/toolkit';
-import { type Middleware, type Store, type StoreEnhancer, type UnknownAction } from 'redux';
-import { thunk, type ThunkDispatch, type ThunkMiddleware } from 'redux-thunk';
+import { AnyAction, configureStore, EnhancedStore, Reducer, Tuple } from '@reduxjs/toolkit';
+import { Middleware, Store, StoreEnhancer, UnknownAction } from 'redux';
+import { thunk, ThunkDispatch, ThunkMiddleware } from 'redux-thunk';
 
 import { setStore } from '../../../app/store/store';
-import { type StoreState } from '../../../app/types/store';
+import { StoreState } from '../../../app/types';
 
 export interface ReduxTesterGiven<State> {
   givenRootReducer: (rootReducer: Reducer<State, UnknownAction, Partial<NoInfer<State>>>) => ReduxTesterWhen<State>;

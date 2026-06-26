@@ -1,34 +1,26 @@
-import { createAction, createAsyncThunk, type Update } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
 import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
-import { type PanelPlugin, type PluginError } from '@grafana/data';
+import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { refetchPanelPluginMetas } from '@grafana/runtime/internal';
+import configCore from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-import { type StoreState, type ThunkResult } from 'app/types/store';
+import { StoreState, ThunkResult } from 'app/types';
 
-import { clearPluginInfoInCache } from '../../loader/pluginInfoCache';
+import { invalidatePluginInCache } from '../../loader/cache';
 import {
   getRemotePlugins,
   getPluginErrors,
   getLocalPlugins,
   getPluginDetails,
-  getPluginInsights,
   installPlugin,
   uninstallPlugin,
   getInstancePlugins,
   getProvisionedPlugins,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
-import { mapLocalToCatalog, mergeLocalsAndRemotes } from '../helpers';
-import {
-  type CatalogPlugin,
-  type RemotePlugin,
-  type LocalPlugin,
-  type InstancePlugin,
-  type ProvisionedPlugin,
-  PluginStatus,
-} from '../types';
+import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
+import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin } from '../types';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -36,8 +28,14 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
     thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchLocal/pending` });
     thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/pending` });
 
-    const instance$ = config.pluginAdminExternalManageEnabled ? from(getInstancePlugins()) : of(undefined);
-    const provisioned$ = config.pluginAdminExternalManageEnabled ? from(getProvisionedPlugins()) : of(undefined);
+    const instance$ =
+      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+        ? from(getInstancePlugins())
+        : of(undefined);
+    const provisioned$ =
+      config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+        ? from(getProvisionedPlugins())
+        : of(undefined);
     const TIMEOUT = 500;
     const pluginErrors$ = from(getPluginErrors());
     const local$ = from(getLocalPlugins());
@@ -173,23 +171,23 @@ export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, stri
   }
 );
 
-export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string>, { id: string; version?: string }>(
-  `${STATE_PREFIX}/fetchPluginInsights`,
-  async ({ id, version }, thunkApi) => {
-    try {
-      const insights = await getPluginInsights(id, version);
-
-      return {
-        id,
-        changes: { insights },
-      };
-    } catch (e) {
-      return thunkApi.rejectWithValue('Unknown error.');
-    }
-  }
-);
-
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
+
+// 1. gets remote equivalents from the store (if there are any)
+// 2. merges the remote equivalents with the local plugins
+// 3. updates the store with the updated CatalogPlugin objects
+export const addLocalPlugins = createAction<LocalPlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
+
+// 1. gets local equivalents from the store (if there are any)
+// 2. merges the local equivalents with the remote plugins
+// 3. updates the store with the updated CatalogPlugin objects
+export const addRemotePlugins = createAction<RemotePlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
+
+// 1. merges the local and remote plugins
+// 2. updates the store with the CatalogPlugin objects
+export const addLocalAndRemotePlugins = createAction<{ local: LocalPlugin[]; remote: RemotePlugin[] }>(
+  `${STATE_PREFIX}/addLocalPlugins`
+);
 
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk<
@@ -197,24 +195,18 @@ export const install = createAsyncThunk<
   {
     id: string;
     version?: string;
-    installType?: PluginStatus;
+    isUpdating?: boolean;
   }
->(`${STATE_PREFIX}/install`, async ({ id, version, installType = PluginStatus.INSTALL }, thunkApi) => {
-  const changes: Partial<CatalogPlugin> = { isInstalled: true, installedVersion: version };
-
-  if (installType === PluginStatus.UPDATE) {
-    changes.hasUpdate = false;
-  }
-  if (installType === PluginStatus.DOWNGRADE) {
-    changes.hasUpdate = true;
-  }
-
+>(`${STATE_PREFIX}/install`, async ({ id, version, isUpdating = false }, thunkApi) => {
+  const changes = isUpdating
+    ? { isInstalled: true, installedVersion: version, hasUpdate: false }
+    : { isInstalled: true, installedVersion: version };
   try {
-    await installPlugin(id, version);
-    await refetchPanelPluginMetas();
+    await installPlugin(id);
+    await updatePanels();
 
-    if (installType !== PluginStatus.INSTALL) {
-      clearPluginInfoInCache(id);
+    if (isUpdating) {
+      invalidatePluginInCache(id);
     }
 
     return { id, changes };
@@ -237,9 +229,9 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
   async (id, thunkApi) => {
     try {
       await uninstallPlugin(id);
-      await refetchPanelPluginMetas();
+      await updatePanels();
 
-      clearPluginInfoInCache(id);
+      invalidatePluginInCache(id);
 
       return {
         id,
@@ -273,8 +265,7 @@ export const panelPluginLoaded = createAction<PanelPlugin>(`${STATE_PREFIX}/pane
 // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
 export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> => {
   return async (dispatch, getStore) => {
-    const state = getStore();
-    let plugin = state.plugins.panels[id];
+    let plugin = getStore().plugins.panels[id];
 
     if (!plugin) {
       plugin = await importPanelPlugin(id);

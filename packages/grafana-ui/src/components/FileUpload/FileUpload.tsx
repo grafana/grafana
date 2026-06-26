@@ -1,16 +1,16 @@
 import { css, cx } from '@emotion/css';
-import { type FormEvent, useCallback, useId, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
 import * as React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
-import { type ComponentSize } from '../../types/size';
+import { ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';
-import { getButtonStyles } from '../Button/Button';
+import { getButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {
@@ -26,11 +26,6 @@ export interface Props {
   showFileName?: boolean;
 }
 
-/**
- * A button-styled input that triggers file upload popup. Button text and accepted file extensions can be customized via `label` and `accepted` props respectively.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-fileupload--docs
- */
 export const FileUpload = ({
   onFileUpload,
   className,
@@ -41,7 +36,7 @@ export const FileUpload = ({
 }: React.PropsWithChildren<Props>) => {
   const style = useStyles2(getStyles(size));
   const [fileName, setFileName] = useState('');
-  const id = useId();
+  const id = uuidv4();
 
   const onChange = useCallback(
     (event: FormEvent<HTMLInputElement>) => {
@@ -72,7 +67,7 @@ export const FileUpload = ({
 
       {showFileName && fileName && (
         <span
-          aria-label={t('grafana-ui.file-upload.file-name', 'File name')}
+          aria-label="File name"
           className={style.fileName}
           data-testid={selectors.components.FileUpload.fileNameSpan}
         >

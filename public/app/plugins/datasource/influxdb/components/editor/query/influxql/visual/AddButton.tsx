@@ -1,6 +1,4 @@
-import type { JSX } from 'react';
-
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
 import { unwrap } from '../utils/unwrap';
 

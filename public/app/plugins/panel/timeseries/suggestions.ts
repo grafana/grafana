@@ -1,150 +1,224 @@
-import { defaultsDeep } from 'lodash';
-
 import {
-  DataFrameType,
+  FieldColorModeId,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestion,
   DataTransformerID,
-  FieldType,
-  type PanelPluginVisualizationSuggestion,
-  type VisualizationSuggestion,
-  VisualizationSuggestionScore,
-  type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { GraphDrawStyle, type GraphFieldConfig, GraphGradientMode, StackingMode } from '@grafana/schema';
+import {
+  GraphDrawStyle,
+  GraphFieldConfig,
+  GraphGradientMode,
+  LegendDisplayMode,
+  LineInterpolation,
+  StackingMode,
+} from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
+import { SuggestionName } from 'app/types/suggestions';
 
-import { type Options } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
-const MAX_BARS = 100;
+export class TimeSeriesSuggestionsSupplier {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
 
-const MAX_PREVIEW_SERIES = 8;
-const MAX_PREVIEW_BAR_ROWS = 30;
-
-export const TIMESERIES_CARD_OPTIONS: VisualizationSuggestion<Options, GraphFieldConfig>['cardOptions'] = {
-  maxSeries: MAX_PREVIEW_SERIES,
-  previewModifier: (s) => {
-    s.options!.disableKeyboardEvents = true;
-    s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
-    if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-      s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
+    if (!dataSummary.hasTimeField || !dataSummary.hasNumberField || dataSummary.rowCountTotal < 2) {
+      return;
     }
-  },
-};
 
-const withDefaults = (
-  suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
-): VisualizationSuggestion<Options, GraphFieldConfig> =>
-  defaultsDeep(suggestion, {
-    fieldConfig: {
-      defaults: {
-        custom: {},
+    const list = builder.getListAppender<Options, GraphFieldConfig>({
+      name: SuggestionName.LineChart,
+      pluginId: 'timeseries',
+      options: {
+        legend: {
+          calcs: [],
+          displayMode: LegendDisplayMode.Hidden,
+          placement: 'right',
+          showLegend: false,
+        },
       },
-      overrides: [],
-    },
-    cardOptions: TIMESERIES_CARD_OPTIONS,
-  } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
-
-const areaChart = (name: string, stacking?: StackingMode) => ({
-  name,
-  fieldConfig: {
-    defaults: {
-      custom: {
-        fillOpacity: 25,
-        ...(stacking ? { stacking: { mode: stacking, group: 'A' } } : {}),
+      fieldConfig: {
+        defaults: {
+          custom: {},
+        },
+        overrides: [],
       },
-    },
-    overrides: [],
-  },
-});
-
-const barChart = (name: string, stacking?: StackingMode) => ({
-  name,
-  fieldConfig: {
-    defaults: {
-      custom: {
-        drawStyle: GraphDrawStyle.Bars,
-        fillOpacity: 100,
-        lineWidth: 1,
-        gradientMode: GraphGradientMode.Hue,
-        ...(stacking ? { stacking: { mode: stacking, group: 'A' } } : {}),
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
+            s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
+          }
+        },
       },
-    },
-    overrides: [],
-  },
-  cardOptions: {
-    maxRows: MAX_PREVIEW_BAR_ROWS,
-  },
-});
+    });
 
-// TODO: all "gradient color scheme" suggestions have been removed. they will be re-added as part of the "styles" feature.
+    const maxBarsCount = 100;
 
-export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (
-  dataSummary
-) => {
-  if (
-    !dataSummary.hasFieldType(FieldType.time) ||
-    !dataSummary.hasFieldType(FieldType.number) ||
-    dataSummary.rowCountTotal < 2
-  ) {
-    return;
-  }
+    list.append({
+      name: SuggestionName.LineChart,
+    });
 
-  // don't suggest timeseries for instant queries
-  if (dataSummary.isInstant) {
-    return;
-  }
+    if (dataSummary.rowCountMax < 200) {
+      list.append({
+        name: SuggestionName.LineChartSmooth,
+        fieldConfig: {
+          defaults: {
+            custom: {
+              lineInterpolation: LineInterpolation.Smooth,
+            },
+          },
+          overrides: [],
+        },
+      });
+    }
 
-  const score: VisualizationSuggestionScore =
-    dataSummary.hasDataFrameType(DataFrameType.TimeSeriesLong) ||
-    dataSummary.hasDataFrameType(DataFrameType.TimeSeriesWide) ||
-    dataSummary.hasDataFrameType(DataFrameType.TimeSeriesMulti)
-      ? VisualizationSuggestionScore.Good
-      : VisualizationSuggestionScore.OK;
+    // Single series suggestions
+    if (dataSummary.numberFieldCount === 1) {
+      list.append({
+        name: SuggestionName.AreaChart,
+        fieldConfig: {
+          defaults: {
+            custom: {
+              fillOpacity: 25,
+            },
+          },
+          overrides: [],
+        },
+      });
 
-  const suggestions: Array<VisualizationSuggestion<Options, GraphFieldConfig>> = [
-    {
-      name: t('timeseries.suggestions.line', 'Line chart'),
-    },
-  ];
+      list.append({
+        name: SuggestionName.LineChartGradientColorScheme,
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: FieldColorModeId.ContinuousGrYlRd,
+            },
+            custom: {
+              gradientMode: GraphGradientMode.Scheme,
+              lineInterpolation: LineInterpolation.Smooth,
+              lineWidth: 3,
+              fillOpacity: 20,
+            },
+          },
+          overrides: [],
+        },
+      });
 
-  // Single-series suggestions
-  if (dataSummary.fieldCountByType(FieldType.number) === 1) {
-    suggestions.push(areaChart(t('timeseries.suggestions.area', 'Area chart')));
+      if (dataSummary.rowCountMax < maxBarsCount) {
+        list.append({
+          name: SuggestionName.BarChart,
+          fieldConfig: {
+            defaults: {
+              custom: {
+                drawStyle: GraphDrawStyle.Bars,
+                fillOpacity: 100,
+                lineWidth: 1,
+                gradientMode: GraphGradientMode.Hue,
+              },
+            },
+            overrides: [],
+          },
+        });
 
-    if (dataSummary.rowCountMax < MAX_BARS) {
-      suggestions.push(barChart(t('timeseries.suggestions.bar', 'Bar chart')));
+        list.append({
+          name: SuggestionName.BarChartGradientColorScheme,
+          fieldConfig: {
+            defaults: {
+              color: {
+                mode: FieldColorModeId.ContinuousGrYlRd,
+              },
+              custom: {
+                drawStyle: GraphDrawStyle.Bars,
+                fillOpacity: 90,
+                lineWidth: 1,
+                gradientMode: GraphGradientMode.Scheme,
+              },
+            },
+            overrides: [],
+          },
+        });
+      }
+
+      return;
+    }
+
+    // Multiple series suggestions
+
+    list.append({
+      name: SuggestionName.AreaChartStacked,
+      fieldConfig: {
+        defaults: {
+          custom: {
+            fillOpacity: 25,
+            stacking: {
+              mode: StackingMode.Normal,
+              group: 'A',
+            },
+          },
+        },
+        overrides: [],
+      },
+    });
+
+    list.append({
+      name: SuggestionName.AreaChartStackedPercent,
+      fieldConfig: {
+        defaults: {
+          custom: {
+            fillOpacity: 25,
+            stacking: {
+              mode: StackingMode.Percent,
+              group: 'A',
+            },
+          },
+        },
+        overrides: [],
+      },
+    });
+
+    if (dataSummary.rowCountTotal / dataSummary.numberFieldCount < maxBarsCount) {
+      list.append({
+        name: SuggestionName.BarChartStacked,
+        fieldConfig: {
+          defaults: {
+            custom: {
+              drawStyle: GraphDrawStyle.Bars,
+              fillOpacity: 100,
+              lineWidth: 1,
+              gradientMode: GraphGradientMode.Hue,
+              stacking: {
+                mode: StackingMode.Normal,
+                group: 'A',
+              },
+            },
+          },
+          overrides: [],
+        },
+      });
+
+      list.append({
+        name: SuggestionName.BarChartStackedPercent,
+        fieldConfig: {
+          defaults: {
+            custom: {
+              drawStyle: GraphDrawStyle.Bars,
+              fillOpacity: 100,
+              lineWidth: 1,
+              gradientMode: GraphGradientMode.Hue,
+              stacking: {
+                mode: StackingMode.Percent,
+                group: 'A',
+              },
+            },
+          },
+          overrides: [],
+        },
+      });
     }
   }
-  // Multiple series suggestions
-  else {
-    suggestions.push(
-      areaChart(t('timeseries.suggestions.area-stacked', 'Area chart - stacked'), StackingMode.Normal),
-      areaChart(
-        t('timeseries.suggestions.area-stacked-percentage', 'Area chart - stacked by percentage'),
-        StackingMode.Percent
-      )
-    );
-
-    if (dataSummary.rowCountTotal / dataSummary.fieldCountByType(FieldType.number) < MAX_BARS) {
-      suggestions.push(
-        barChart(t('timeseries.suggestions.bar-stacked', 'Bar chart - stacked'), StackingMode.Normal),
-        barChart(
-          t('timeseries.suggestions.bar-stacked-percent', 'Bar chart - stacked by percentage'),
-          StackingMode.Percent
-        )
-      );
-    }
-  }
-
-  return suggestions.map((s) => {
-    s.score = score;
-    return withDefaults(s);
-  });
-};
+}
 
 // This will try to get a suggestion that will add a long to wide conversion
-export function getPrepareTimeseriesSuggestion(panelId: number): PanelPluginVisualizationSuggestion | undefined {
+export function getPrepareTimeseriesSuggestion(panelId: number): VisualizationSuggestion | undefined {
   const panel = getDashboardSrv().getCurrent()?.getPanelById(panelId);
   if (panel) {
     const transformations = panel.transformations ? [...panel.transformations] : [];
@@ -157,7 +231,6 @@ export function getPrepareTimeseriesSuggestion(panelId: number): PanelPluginVisu
 
     return {
       name: 'Transform to wide time series format',
-      hash: 'timeseries-transform-prepare-wide',
       pluginId: 'timeseries',
       transformations,
     };

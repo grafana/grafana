@@ -11,18 +11,6 @@ export class ArrayVector<T = unknown> extends Array<T> {
     return this;
   }
 
-  get(index: number): T {
-    return this[index];
-  }
-
-  set(index: number): T {
-    return this[index];
-  }
-
-  add(v: T): number {
-    return this.push(v);
-  }
-
   set buffer(values: T[]) {
     this.length = 0;
 

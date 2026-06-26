@@ -1,14 +1,6 @@
 import saveAs from 'file-saver';
 
-import {
-  dataFrameFromJSON,
-  type DataFrameJSON,
-  dateTimeFormat,
-  FieldType,
-  type LogRowModel,
-  LogsMetaKind,
-} from '@grafana/data';
-import { createLogRow } from 'app/features/logs/components/mocks/logRow';
+import { dataFrameFromJSON, DataFrameJSON, dateTimeFormat, FieldType, LogRowModel, LogsMetaKind } from '@grafana/data';
 
 import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt } from './download';
 
@@ -33,51 +25,37 @@ describe('inspector download', () => {
         ],
       },
       data: {
-        values: [[100], ['Åäö中文العربية'], [1]],
+        values: [[100], ['a'], [1]],
       },
     };
 
-    it.each([[dataFrameFromJSON(json), 'test', '"time","name","value"\r\n100,Åäö中文العربية,1']])(
+    it.each([[dataFrameFromJSON(json), 'test', '"time","name","value"\r\n100,a,1']])(
       'should, when logsModel is %s and title is %s, resolve in %s',
       async (dataFrame, title, expected) => {
         downloadDataFrameAsCsv(dataFrame, title);
-        const call = jest.mocked(saveAs).mock.calls[0];
+        const call = (saveAs as unknown as jest.Mock).mock.calls[0];
         const blob = call[0];
         const filename = call[1];
-        const text = typeof blob === 'string' ? blob : await blob.text();
+        const text = await blob.text();
 
         // By default the BOM character should not be included
-        expect(blob instanceof Blob ? await getBomType(blob) : undefined).toBeUndefined();
+        expect(await hasBOM(blob)).toBe(false);
         expect(text).toEqual(expected);
         expect(filename).toEqual(`${title}-data-${dateTimeFormat(1400000000000)}.csv`);
       }
     );
 
-    it('should use \t as the delimiter and the file should be utf16le if excelCompatibilityMode is true', async () => {
-      downloadDataFrameAsCsv(dataFrameFromJSON(json), 'test', undefined, undefined, true);
+    it('should include the BOM character when useExcelHeader is true', async () => {
+      downloadDataFrameAsCsv(dataFrameFromJSON(json), 'test', { useExcelHeader: true });
 
-      const call = jest.mocked(saveAs).mock.calls[0];
+      const call = (saveAs as unknown as jest.Mock).mock.calls[0];
       const blob = call[0];
       const filename = call[1];
-      const text = typeof blob === 'string' ? blob : await blob.text();
+      const text = await blob.text();
 
-      if (blob instanceof Blob) {
-        expect(await getBomType(blob)).toBe('utf-16le');
-        expect(blob.type).toBe('text/csv;charset=utf-16le');
-      }
-      expect(text).toEqual('"time"\t"name"\t"value"\r\n100\tÅäö中文العربية\t1');
+      expect(await hasBOM(blob)).toBe(true);
+      expect(text).toEqual('sep=,\r\n"time","name","value"\r\n100,a,1');
       expect(filename).toEqual(`test-data-${dateTimeFormat(1400000000000)}.csv`);
-      expect.assertions(4);
-    });
-
-    it('end with a new line if asked', async () => {
-      downloadDataFrameAsCsv(dataFrameFromJSON(json), 'test', undefined, undefined, false, true);
-
-      const call = jest.mocked(saveAs).mock.calls[0];
-      const blob = call[0];
-      const text = typeof blob === 'string' ? blob : await blob.text();
-
-      expect(text).toEqual('"time","name","value"\r\n100,Åäö中文العربية,1\r\n');
     });
   });
 
@@ -88,10 +66,10 @@ describe('inspector download', () => {
       [{ foo: 'bar' }, 'test', '{"foo":"bar"}'],
     ])('should, when logsModel is %s and title is %s, resolve in %s', async (logsModel, title, expected) => {
       downloadAsJson(logsModel, title);
-      const call = jest.mocked(saveAs).mock.calls[0];
+      const call = (saveAs as unknown as jest.Mock).mock.calls[0];
       const blob = call[0];
       const filename = call[1];
-      const text = typeof blob === 'string' ? blob : await blob.text();
+      const text = await blob.text();
 
       expect(text).toEqual(expected);
       expect(filename).toEqual(`${title}-${dateTimeFormat(1400000000000)}.json`);
@@ -100,7 +78,7 @@ describe('inspector download', () => {
 
   describe('downloadLogsModelAsTxt', () => {
     it.each([
-      [{ meta: [], rows: [] }, 'test', ''],
+      [{ meta: [], rows: [] }, 'test', '\n\n'],
       [
         { meta: [{ label: 'testLabel', value: 'testValue', kind: LogsMetaKind.String }], rows: [] },
         'test',
@@ -127,72 +105,33 @@ describe('inspector download', () => {
           rows: [{ timeEpochMs: 100, entry: 'testEntry' } as unknown as LogRowModel],
         },
         'test',
-        `testLabel: 1\nsecondTestLabel: 2\n\n\n100\t1970-01-01T00:00:00.100Z\ttestEntry\n`,
+        `testLabel: 1\nsecondTestLabel: 2\n\n\n100\ttestEntry\n`,
       ],
     ])('should, when logsModel is %s and title is %s, resolve in %s', async (logsModel, title, expected) => {
       downloadLogsModelAsTxt(logsModel, title);
-      const call = jest.mocked(saveAs).mock.calls[0];
+      const call = (saveAs as unknown as jest.Mock).mock.calls[0];
       const blob = call[0];
       const filename = call[1];
-      const text = typeof blob === 'string' ? blob : blob.size === 0 ? '' : await blob.text();
+      const text = await blob.text();
 
       expect(text).toEqual(expected);
       expect(filename).toEqual(`${title}-logs-${dateTimeFormat(1400000000000)}.txt`);
     });
-
-    it('should, when title is empty, resolve in %s', async () => {
-      downloadLogsModelAsTxt({ meta: [], rows: [] });
-      const call = jest.mocked(saveAs).mock.calls[0];
-      const filename = call[1];
-      expect(filename).toEqual(`Logs-${dateTimeFormat(1400000000000)}.txt`);
-    });
-
-    it('should, when title is empty, resolve in %s', async () => {
-      downloadLogsModelAsTxt({ meta: [], rows: [] });
-      const call = jest.mocked(saveAs).mock.calls[0];
-      const filename = call[1];
-      expect(filename).toEqual(`Logs-${dateTimeFormat(1400000000000)}.txt`);
-    });
-
-    it('should should download selected fields', async () => {
-      const logsModel = {
-        meta: [],
-        rows: [
-          createLogRow({ timeEpochMs: 100, entry: 'testEntry', labels: { label: 'value', otherLabel: 'other value' } }),
-        ],
-      };
-      downloadLogsModelAsTxt(logsModel, undefined, ['label', 'otherLabel']);
-      const call = jest.mocked(saveAs).mock.calls[0];
-      const blob = call[0];
-      const text = typeof blob === 'string' ? blob : await blob.text();
-
-      expect(text).toContain('value other value');
-    });
   });
 });
 
-async function getBomType(blob: Blob): Promise<'utf-8' | 'utf-16le' | undefined> {
+async function hasBOM(blob: Blob) {
   const reader = new FileReader();
-  return new Promise((resolve, reject) => {
+  return new Promise<boolean>((resolve, reject) => {
     reader.onload = (event: ProgressEvent<FileReader>) => {
       if (event.target?.result instanceof ArrayBuffer) {
         const arr = new Uint8Array(event.target.result);
-        // UTF-8: EF BB BF
-        if (arr.length >= 3 && arr[0] === 0xef && arr[1] === 0xbb && arr[2] === 0xbf) {
-          resolve('utf-8');
-          return;
-        }
-        // UTF-16 LE: FF FE
-        if (arr.length >= 2 && arr[0] === 0xff && arr[1] === 0xfe) {
-          resolve('utf-16le');
-          return;
-        }
-        resolve(undefined);
+        resolve(arr[0] === 0xef && arr[1] === 0xbb && arr[2] === 0xbf); // Check for UTF-8 BOM
       } else {
         reject(new Error('Unexpected FileReader result type'));
       }
     };
     reader.onerror = reject;
-    reader.readAsArrayBuffer(blob.slice(0, 3)); // Read first 3 bytes (covers UTF-8 and UTF-16LE)
+    reader.readAsArrayBuffer(blob.slice(0, 3)); // Read only the first 3 bytes
   });
 }

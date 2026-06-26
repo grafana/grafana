@@ -6,7 +6,7 @@ import (
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -15,7 +15,7 @@ const (
 	GlobalOrgID = int64(0)
 )
 
-var _ identity.Requester = (*SignedInUser)(nil)
+var _ identity.Requester = &SignedInUser{}
 
 type SignedInUser struct {
 	UserID        int64  `xorm:"user_id"`
@@ -30,8 +30,8 @@ type SignedInUser struct {
 	// AuthID will be set if user signed in using external method
 	AuthID string
 	// AuthenticatedBy be set if user signed in using external method
-	AuthenticatedBy string
-	Namespace       string
+	AuthenticatedBy            string
+	AllowedKubernetesNamespace string
 
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -40,17 +40,10 @@ type SignedInUser struct {
 	IsDisabled       bool
 	HelpFlags1       HelpFlags1
 	LastSeenAt       time.Time
-	// Deprecated: use TeamUIDs instead
-	TeamIDs  []int64
-	TeamUIDs []string
-	// ExternalGroups holds groups asserted by the external IdP (SAML/OIDC/LDAP).
-	ExternalGroups []string `json:"-" xorm:"-"`
+	Teams            []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 
-	// AccessToken is the access token that went into authenticating this identity. Empty for legacy auth and in-process identities.
-	AccessToken       string                                       `json:"-" xorm:"-"`
-	AccessTokenClaims *authnlib.Claims[authnlib.AccessTokenClaims] `json:"-" xorm:"-"`
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken       string                                   `json:"-" xorm:"-"`
 	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
@@ -59,20 +52,21 @@ type SignedInUser struct {
 	FallbackType claims.IdentityType
 }
 
-func (u *SignedInUser) GetID() string {
-	ns, id := u.getTypeAndID()
-	return claims.NewTypeID(ns, id)
+// Access implements claims.AuthInfo.
+func (u *SignedInUser) GetAccess() claims.AccessClaims {
+	return &identity.IDClaimsWrapper{Source: u}
 }
 
-func (u *SignedInUser) GetInternalID() (int64, error) {
-	return identity.IntIdentifier(u.GetID())
+// Identity implements claims.AuthInfo.
+func (u *SignedInUser) GetIdentity() claims.IdentityClaims {
+	if u.IDTokenClaims != nil {
+		return authnlib.NewIdentityClaims(*u.IDTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: u}
 }
 
-func (u *SignedInUser) GetUID() string {
-	return claims.NewTypeID(u.GetIdentityType(), u.GetIdentifier())
-}
-
-func (u *SignedInUser) GetIdentifier() string {
+// GetRawIdentifier implements Requester.
+func (u *SignedInUser) GetRawIdentifier() string {
 	if u.UserUID == "" {
 		// nolint:staticcheck
 		id, _ := u.GetInternalID()
@@ -81,10 +75,12 @@ func (u *SignedInUser) GetIdentifier() string {
 	return u.UserUID
 }
 
-func (u *SignedInUser) GetRawIdentifier() string {
-	return u.GetIdentifier()
+// GetInternalID implements Requester.
+func (u *SignedInUser) GetInternalID() (int64, error) {
+	return identity.IntIdentifier(u.GetID())
 }
 
+// GetIdentityType implements Requester.
 func (u *SignedInUser) GetIdentityType() claims.IdentityType {
 	switch {
 	case u.ApiKeyID != 0:
@@ -101,38 +97,17 @@ func (u *SignedInUser) GetIdentityType() claims.IdentityType {
 	return u.FallbackType
 }
 
+// IsIdentityType implements Requester.
 func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(u.GetIdentityType(), expected...)
 }
 
+// GetName implements identity.Requester.
 func (u *SignedInUser) GetName() string {
-	// kubernetesAggregator feature flag which allows Cloud Apps to become available
-	// in single tenant Grafana requires that GetName() returns something and not an empty string
-	// the logic below ensures that something is returned
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
+	return u.Name
 }
 
-func (u *SignedInUser) GetNamespace() string {
-	return u.Namespace
-}
-
-func (u *SignedInUser) GetSubject() string {
-	return u.GetID()
-}
-
-func (u *SignedInUser) GetAudience() []string {
-	if u.AccessTokenClaims != nil {
-		return u.AccessTokenClaims.Audience
-	}
-	return []string{}
-}
-
+// GetExtra implements Requester.
 func (u *SignedInUser) GetExtra() map[string][]string {
 	extra := map[string][]string{}
 	if u.IDToken != "" {
@@ -144,38 +119,27 @@ func (u *SignedInUser) GetExtra() map[string][]string {
 	return extra
 }
 
+// GetGroups implements Requester.
 func (u *SignedInUser) GetGroups() []string {
-	return u.TeamUIDs
-}
-
-func (u *SignedInUser) GetExternalGroups() []string {
-	return u.ExternalGroups
-}
-
-func (u *SignedInUser) GetTokenPermissions() []string {
-	if u.AccessTokenClaims != nil {
-		return u.AccessTokenClaims.Rest.Permissions
+	groups := []string{}
+	for _, t := range u.Teams {
+		groups = append(groups, strconv.FormatInt(t, 10))
 	}
-	return []string{}
-}
-
-func (u *SignedInUser) GetTokenDelegatedPermissions() []string {
-	if u.AccessTokenClaims != nil {
-		return u.AccessTokenClaims.Rest.DelegatedPermissions
-	}
-	return []string{}
-}
-
-func (u *SignedInUser) GetEmail() string {
-	return u.Email
-}
-
-func (u *SignedInUser) GetEmailVerified() bool {
-	return u.EmailVerified
+	return groups
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 	return u.UserID > 0 && time.Since(u.LastSeenAt) > time.Minute*5
+}
+
+func (u *SignedInUser) NameOrFallback() string {
+	if u.Name != "" {
+		return u.Name
+	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 func (u *SignedInUser) HasRole(role identity.RoleType) bool {
@@ -209,6 +173,10 @@ func (u *SignedInUser) HasUniqueId() bool {
 	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
 }
 
+func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
+	return u.AllowedKubernetesNamespace
+}
+
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
@@ -227,6 +195,7 @@ func (u *SignedInUser) GetCacheKey() string {
 	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), typ, id)
 }
 
+// GetIsGrafanaAdmin returns true if the user is a server admin
 func (u *SignedInUser) GetIsGrafanaAdmin() bool {
 	return u.IsGrafanaAdmin
 }
@@ -234,11 +203,6 @@ func (u *SignedInUser) GetIsGrafanaAdmin() bool {
 // GetLogin returns the login of the active entity
 // Can be empty if the user is anonymous
 func (u *SignedInUser) GetLogin() string {
-	return u.Login
-}
-
-// GetUsername implements identity.Requester.
-func (u *SignedInUser) GetUsername() string {
 	return u.Login
 }
 
@@ -282,12 +246,18 @@ func (u *SignedInUser) GetGlobalPermissions() map[string][]string {
 // DEPRECATED: GetTeams returns the teams the entity is a member of
 // Retrieve the teams from the team service instead of using this method.
 func (u *SignedInUser) GetTeams() []int64 {
-	return u.TeamIDs
+	return u.Teams
 }
 
 // GetOrgRole returns the role of the active entity in the active organization
 func (u *SignedInUser) GetOrgRole() identity.RoleType {
 	return u.OrgRole
+}
+
+// GetID returns namespaced id for the entity
+func (u *SignedInUser) GetID() string {
+	ns, id := u.getTypeAndID()
+	return identity.NewTypedIDString(ns, id)
 }
 
 func (u *SignedInUser) getTypeAndID() (claims.IdentityType, string) {
@@ -305,6 +275,10 @@ func (u *SignedInUser) getTypeAndID() (claims.IdentityType, string) {
 	}
 
 	return u.FallbackType, strconv.FormatInt(u.UserID, 10)
+}
+
+func (u *SignedInUser) GetUID() string {
+	return fmt.Sprintf("%s:%s", u.GetIdentityType(), u.GetRawIdentifier())
 }
 
 func (u *SignedInUser) GetAuthID() string {
@@ -329,11 +303,22 @@ func (u *SignedInUser) IsNil() bool {
 	return u == nil
 }
 
-func (u *SignedInUser) GetIDToken() string {
-	return u.IDToken
+// GetEmail returns the email of the active entity
+// Can be empty.
+func (u *SignedInUser) GetEmail() string {
+	return u.Email
 }
 
-// GetAccessToken implements identity.Requester. Returns the access token used to authenticate; empty for legacy auth and in-process identities.
-func (u *SignedInUser) GetAccessToken() string {
-	return u.AccessToken
+func (u *SignedInUser) IsEmailVerified() bool {
+	return u.EmailVerified
+}
+
+// GetDisplayName returns the display name of the active entity
+// The display name is the name if it is set, otherwise the login or email
+func (u *SignedInUser) GetDisplayName() string {
+	return u.NameOrFallback()
+}
+
+func (u *SignedInUser) GetIDToken() string {
+	return u.IDToken
 }

@@ -3,17 +3,16 @@ import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { Button, type ButtonVariant } from '../Button/Button';
+import { useStyles2 } from '../../themes';
+import { Button, ButtonVariant } from '../Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
-import { type JustifyContent } from '../Layout/types';
-import { type ResponsiveProp } from '../Layout/utils/responsiveness';
+import { JustifyContent } from '../Layout/types';
+import { ResponsiveProp } from '../Layout/utils/responsiveness';
 
 export interface ConfirmContentProps {
   /** Modal content */
@@ -91,18 +90,9 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
-  const stopPropagation = (callback: (event: React.FormEvent) => void) => {
-    return (event: React.FormEvent) => {
-      event.stopPropagation();
-      callback(event);
-    };
-  };
 
-  const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
-    confirmPromptText,
-  });
   return (
-    <form onSubmit={stopPropagation(handleSubmit(onConfirmClick))}>
+    <form onSubmit={handleSubmit(onConfirmClick)}>
       <div className={styles.text}>
         {body}
         {description ? <div className={styles.description}>{description}</div> : null}
@@ -110,11 +100,7 @@ export const ConfirmContent = ({
           <div className={styles.confirmationInput}>
             <Stack alignItems="flex-start">
               <Field disabled={disabled}>
-                <Input
-                  placeholder={placeholder}
-                  onChange={onConfirmationTextChange}
-                  data-testid={selectors.pages.ConfirmModal.input}
-                />
+                <Input placeholder={`Type "${confirmPromptText}" to confirm`} onChange={onConfirmationTextChange} />
               </Field>
             </Stack>
           </div>

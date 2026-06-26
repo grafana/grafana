@@ -1,8 +1,8 @@
-import { type MetadataInspectorProps } from '@grafana/data';
+import { MetadataInspectorProps } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
-import { type TestDataDataQuery } from './dataquery';
-import { type TestDataDataSource } from './datasource';
+import { TestDataDataQuery } from './dataquery';
+import { TestDataDataSource } from './datasource';
 
 export type Props = MetadataInspectorProps<TestDataDataSource, TestDataDataQuery>;
 

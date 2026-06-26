@@ -1,15 +1,11 @@
 import deepEqual from 'fast-deep-equal';
 
-import { type CloudWatchMetricsQuery } from '../dataquery.gen';
-
-import { migrateCloudWatchQuery } from './dashboardMigrations';
+import { CloudWatchMetricsQuery } from '../types';
 
 // Call this function to migrate queries from within the plugin.
 export function migrateMetricQuery(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
-  const newQuery = { ...query };
-  migrateCloudWatchQuery(newQuery);
   //add metric query migrations here
-  const migratedQuery = migrateAliasPatterns(newQuery);
+  const migratedQuery = migrateAliasPatterns(query);
   return deepEqual(migratedQuery, query) ? query : migratedQuery;
 }
 

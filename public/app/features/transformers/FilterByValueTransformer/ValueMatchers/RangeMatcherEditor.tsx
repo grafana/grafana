@@ -1,26 +1,58 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { ValueMatcherID, type RangeValueMatcherOptions } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { InlineLabel } from '@grafana/ui';
+import { ValueMatcherID, RangeValueMatcherOptions, VariableOrigin } from '@grafana/data';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
+import { InlineLabel, Input } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
-import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
+import { numberOrVariableValidator } from '../../utils';
 
-import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatcherUIRegistryItem } from './types';
+import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
+import { convertToType } from './utils';
 
 type PropNames = 'from' | 'to';
 
-export function rangeMatcherEditor<T = string | number>(
+export function rangeMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<RangeValueMatcherOptions<T>>> {
-  return function RangeMatcherEditor({ options, onChange }) {
+  return function RangeMatcherEditor({ options, onChange, field }) {
     const { validator } = config;
     const [isInvalid, setInvalid] = useState({
       from: !validator(options.from),
       to: !validator(options.to),
     });
+
+    const templateSrv = getTemplateSrv();
+    const variables = templateSrv.getVariables().map((v) => {
+      return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
+    });
+
+    const onChangeValue = useCallback(
+      (event: React.FormEvent<HTMLInputElement>, prop: PropNames) => {
+        setInvalid({
+          ...isInvalid,
+          [prop]: !validator(event.currentTarget.value),
+        });
+      },
+      [setInvalid, validator, isInvalid]
+    );
+
+    const onChangeOptions = useCallback(
+      (event: React.FocusEvent<HTMLInputElement>, prop: PropNames) => {
+        if (isInvalid[prop]) {
+          return;
+        }
+
+        const { value } = event.currentTarget;
+
+        onChange({
+          ...options,
+          [prop]: convertToType(value, field),
+        });
+      },
+      [options, onChange, isInvalid, field]
+    );
 
     const onChangeOptionsSuggestions = useCallback(
       (value: string, prop: PropNames) => {
@@ -42,29 +74,45 @@ export function rangeMatcherEditor<T = string | number>(
       },
       [options, onChange, isInvalid, setInvalid, validator]
     );
-
-    const suggestions = getVariableSuggestions();
-
+    if (cfg.featureToggles.transformationsVariableSupport) {
+      return (
+        <>
+          <SuggestionsInput
+            value={String(options.from)}
+            invalid={isInvalid.from}
+            error={'Value needs to be an integer or a variable'}
+            placeholder="From"
+            onChange={(val) => onChangeOptionsSuggestions(val, 'from')}
+            suggestions={variables}
+          />
+          <InlineLabel>and</InlineLabel>
+          <SuggestionsInput
+            invalid={isInvalid.to}
+            error={'Value needs to be an integer or a variable'}
+            value={String(options.to)}
+            placeholder="To"
+            suggestions={variables}
+            onChange={(val) => onChangeOptionsSuggestions(val, 'to')}
+          />
+        </>
+      );
+    }
     return (
       <>
-        <SuggestionsInput
-          value={String(options.from)}
-          invalid={isInvalid.from}
-          error={'Value needs to be a number or a variable'}
-          placeholder={t('transformers.range-matcher-editor.placeholder-from', 'From')}
-          onChange={(val) => onChangeOptionsSuggestions(val, 'from')}
-          suggestions={suggestions}
+        <Input
+          invalid={isInvalid['from']}
+          defaultValue={String(options.from)}
+          placeholder="From"
+          onChange={(event) => onChangeValue(event, 'from')}
+          onBlur={(event) => onChangeOptions(event, 'from')}
         />
-        <InlineLabel>
-          <Trans i18nKey="transformers.range-matcher-editor.and">and</Trans>
-        </InlineLabel>
-        <SuggestionsInput
-          invalid={isInvalid.to}
-          error={'Value needs to be a number or a variable'}
-          value={String(options.to)}
-          placeholder={t('transformers.range-matcher-editor.placeholder-to', 'To')}
-          suggestions={suggestions}
-          onChange={(val) => onChangeOptionsSuggestions(val, 'to')}
+        <InlineLabel>and</InlineLabel>
+        <Input
+          invalid={isInvalid['to']}
+          defaultValue={String(options.to)}
+          placeholder="To"
+          onChange={(event) => onChangeValue(event, 'to')}
+          onBlur={(event) => onChangeOptions(event, 'to')}
         />
       </>
     );

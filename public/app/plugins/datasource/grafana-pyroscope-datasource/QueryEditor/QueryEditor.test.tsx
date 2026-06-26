@@ -1,96 +1,25 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, PluginType } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { setPluginExtensionsHook } from '@grafana/runtime';
 
 import { PyroscopeDataSource } from '../datasource';
-import { mockFetchPyroscopeDatasourceSettings } from '../mocks';
-import { type ProfileTypeMessage } from '../types';
+import { mockFetchPyroscopeDatasourceSettings } from '../datasource.test';
+import { ProfileTypeMessage } from '../types';
 
-import { type Props, QueryEditor } from './QueryEditor';
-
-describe('createSelector (UTF-8 label names)', () => {
-  beforeEach(() => {
-    mockFetchPyroscopeDatasourceSettings();
-  });
-
-  it('should include UTF-8 label name in the selector sent to getLabelNames', async () => {
-    const ds = setupDs();
-    render(
-      <QueryEditor
-        query={{
-          queryType: 'both',
-          labelSelector: '{"k8s.namespace"="prod"}',
-          profileTypeId: 'process_cpu:cpu',
-          refId: 'A',
-          maxNodes: 1000,
-          groupBy: [],
-          includeExemplars: false,
-          includeHeatmap: false,
-          heatmapType: 'individual',
-        }}
-        datasource={ds}
-        onChange={jest.fn()}
-        onRunQuery={() => {}}
-        app={CoreApp.Explore}
-      />
-    );
-
-    await waitFor(() => {
-      expect(ds.getLabelNames).toHaveBeenCalledWith(
-        expect.stringContaining('"k8s.namespace"="prod"'),
-        expect.any(Number),
-        expect.any(Number)
-      );
-    });
-  });
-
-  it('should include both UTF-8 and regular label names in the selector sent to getLabelNames', async () => {
-    const ds = setupDs();
-    render(
-      <QueryEditor
-        query={{
-          queryType: 'both',
-          labelSelector: '{"k8s.namespace"="prod",foo="bar"}',
-          profileTypeId: 'process_cpu:cpu',
-          refId: 'A',
-          maxNodes: 1000,
-          groupBy: [],
-          includeExemplars: false,
-          includeHeatmap: false,
-          heatmapType: 'individual',
-        }}
-        datasource={ds}
-        onChange={jest.fn()}
-        onRunQuery={() => {}}
-        app={CoreApp.Explore}
-      />
-    );
-
-    await waitFor(() => {
-      expect(ds.getLabelNames).toHaveBeenCalledWith(
-        expect.stringMatching(/\"k8s\.namespace\"="prod".*foo="bar"|foo="bar".*\"k8s\.namespace\"="prod"/),
-        expect.any(Number),
-        expect.any(Number)
-      );
-    });
-  });
-});
+import { Props, QueryEditor } from './QueryEditor';
 
 describe('QueryEditor', () => {
   beforeEach(() => {
+    setPluginExtensionsHook(() => ({ extensions: [], isLoading: false })); // No extensions
     mockFetchPyroscopeDatasourceSettings();
   });
 
   it('should render without error', async () => {
     setup();
 
-    // wait for CodeEditor
-    expect(await screen.findByTestId(selectors.components.CodeEditor.container)).toBeDefined();
-    await waitFor(() => {
-      expect(screen.getByDisplayValue('process_cpu-cpu')).toBeDefined();
-    });
+    expect(await screen.findByDisplayValue('process_cpu-cpu')).toBeDefined();
   });
 
   it('should render without error if empty profileTypes', async () => {
@@ -106,9 +35,6 @@ describe('QueryEditor', () => {
           refId: 'A',
           maxNodes: 1000,
           groupBy: [],
-          includeExemplars: false,
-          includeHeatmap: false,
-          heatmapType: 'individual',
         },
       },
     });
@@ -147,6 +73,7 @@ function setupDs() {
     uid: 'test',
     type: PluginType.datasource,
     access: 'proxy',
+    id: 1,
     jsonData: {},
     meta: {
       name: '',
@@ -199,10 +126,6 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         refId: 'A',
         maxNodes: 1000,
         groupBy: [],
-        limit: 42,
-        includeExemplars: false,
-        includeHeatmap: false,
-        heatmapType: 'individual',
       }}
       datasource={setupDs()}
       onChange={onChange}

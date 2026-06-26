@@ -1,12 +1,11 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
-import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   CoreApp,
   createTheme,
-  type DataSourceApi,
+  DataSourceApi,
   EventBusSrv,
   LoadingState,
   PluginExtensionTypes,
@@ -14,12 +13,10 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { usePluginLinks } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
-import { Explore, type Props } from './Explore';
-import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
+import { Explore, Props } from './Explore';
 import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
@@ -106,39 +103,28 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
-  exploreActiveDS: {
-    exploreToDS: [],
-    dsToExplore: [],
-  },
-  changeDatasource: jest.fn(),
-  compact: false,
-  changeCompactMode: jest.fn(),
-  queryLibraryRef: undefined,
-  queriesChangedIndexAtRun: 0,
 };
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      savedQueriesRBAC: false,
-    },
-  },
-  getDataSourceSrv: () => ({
-    get: () => Promise.resolve({}),
-    getList: () => [],
-    getInstanceSettings: () => {},
-  }),
-  usePluginLinks: jest.fn(() => ({ links: [] })),
-}));
 
-jest.mock('app/core/services/context_srv', () => ({
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () => Promise.resolve({}),
+      getList: () => [],
+      getInstanceSettings: () => {},
+    }),
+  };
+});
+
+jest.mock('app/core/core', () => ({
   contextSrv: {
-    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasPermission: () => true,
-    isSignedIn: true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
 
 // for the AutoSizer component to have a width
@@ -167,11 +153,9 @@ const setup = (overrideProps?: Partial<Props>) => {
 
   return render(
     <TestProvider store={store}>
-      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <ContentOutlineContextProvider>
-          <Explore {...exploreProps} />
-        </ContentOutlineContextProvider>
-      </OpenFeatureProvider>
+      <ContentOutlineContextProvider>
+        <Explore {...exploreProps} />
+      </ContentOutlineContextProvider>
     </TestProvider>
   );
 };
@@ -196,7 +180,7 @@ describe('Explore', () => {
   });
 
   it('should render toolbar extension point if extensions is available', async () => {
-    usePluginLinksMock.mockReturnValue({
+    usePluginLinksMock.mockReturnValueOnce({
       links: [
         {
           id: '1',
@@ -253,61 +237,6 @@ describe('Explore', () => {
       const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();
-    });
-  });
-
-  describe('Saved Queries Integration', () => {
-    it('should enable add query buttons when queryLibraryRef is undefined', async () => {
-      setup({ queryLibraryRef: undefined });
-
-      // Wait for the Explore component to render
-      await screen.findByTestId(selectors.components.DataSourcePicker.container);
-
-      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
-      expect(addQueryButton).toBeEnabled();
-    });
-
-    it('should disable add query buttons when queryLibraryRef is set (editing from library)', async () => {
-      setup({ queryLibraryRef: 'library-query-123' });
-
-      // Wait for the Explore component to render
-      await screen.findByTestId(selectors.components.DataSourcePicker.container);
-
-      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
-      expect(addQueryButton).toBeDisabled();
-    });
-
-    it('should disable both add query and add from library buttons when editing from library', async () => {
-      const store = configureStore({
-        explore: {
-          ...initialExploreState,
-          panes: {
-            left: makeExplorePaneState(),
-          },
-        },
-      });
-      const exploreProps = { ...dummyProps, queryLibraryRef: 'library-query-123' };
-
-      render(
-        <TestProvider store={store}>
-          <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-            <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
-              <ContentOutlineContextProvider>
-                <Explore {...exploreProps} />
-              </ContentOutlineContextProvider>
-            </QueryLibraryContextProviderMock>
-          </OpenFeatureProvider>
-        </TestProvider>
-      );
-
-      // Wait for the Explore component to render
-      await screen.findByTestId(selectors.components.DataSourcePicker.container);
-
-      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
-      const addFromLibraryButton = screen.getByRole('button', { name: /Add from saved queries/i });
-
-      expect(addQueryButton).toBeDisabled();
-      expect(addFromLibraryButton).toBeDisabled();
     });
   });
 });

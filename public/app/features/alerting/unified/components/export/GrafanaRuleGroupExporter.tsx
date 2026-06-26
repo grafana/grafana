@@ -1,13 +1,12 @@
 import { useState } from 'react';
 
-import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { type ExportFormats, allGrafanaExportProviders } from './providers';
+import { allGrafanaExportProviders, ExportFormats } from './providers';
 
 interface GrafanaRuleGroupExporterProps {
   folderUid: string;
@@ -20,7 +19,7 @@ export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: Graf
 
   return (
     <GrafanaExportDrawer
-      title={t('alerting.grafana-rule-group-exporter.title-drawer', 'Export {{groupName}} rules', { groupName })}
+      title={`Export ${groupName} rules`}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
@@ -56,7 +55,7 @@ function GrafanaRuleGroupExportPreview({
   });
 
   if (isFetching) {
-    return <LoadingPlaceholder text={t('alerting.grafana-rule-group-export-preview.text-loading', 'Loading....')} />;
+    return <LoadingPlaceholder text="Loading...." />;
   }
 
   return (

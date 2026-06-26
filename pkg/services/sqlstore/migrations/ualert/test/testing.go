@@ -1,11 +1,12 @@
 package test
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -27,7 +28,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			t.Logf("failed to close xorm engine: %v", err)
+			fmt.Printf("failed to close xorm engine: %v", err)
 		}
 	})
 

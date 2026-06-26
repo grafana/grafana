@@ -10,6 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type dummyPluginManager struct{}
+
+func (d *dummyPluginManager) Renderer(_ context.Context) (Plugin, bool) {
+	return nil, false
+}
+
 var dummyRendererUrl = "http://dummyurl.com"
 var testCapabilitySemverConstraint = "> 1.0.0"
 var testCapabilityName = CapabilityName("TestCap")
@@ -18,8 +24,9 @@ var testCapabilityNameInvalidSemver = CapabilityName("TestCapInvalidSemver")
 func TestCapabilities(t *testing.T) {
 	cfg := setting.NewCfg()
 	rs := &RenderingService{
-		Cfg: cfg,
-		log: log.New("test-capabilities-rendering-service"),
+		Cfg:                   cfg,
+		RendererPluginManager: &dummyPluginManager{},
+		log:                   log.New("test-capabilities-rendering-service"),
 		capabilities: []Capability{
 			{name: testCapabilityName, semverConstraint: testCapabilitySemverConstraint},
 			{name: testCapabilityNameInvalidSemver, semverConstraint: "asfasf"},
@@ -114,7 +121,7 @@ func TestCapabilities(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rs.Cfg.RendererServerUrl = tt.rendererUrl
+			rs.Cfg.RendererUrl = tt.rendererUrl
 			rs.version = tt.rendererVersion
 			res, err := rs.HasCapability(context.Background(), tt.capabilityName)
 

@@ -58,9 +58,4 @@ describe('formatDuration', () => {
     const input = 0;
     expect(formatDuration(input)).toBe('0μs');
   });
-
-  it('skips secondary units that are a whole multiple of the primary unit', () => {
-    const input = 299898037.75;
-    expect(formatDuration(input)).toBe('5m');
-  });
 });

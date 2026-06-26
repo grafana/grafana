@@ -5,7 +5,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { reportInteraction } from '@grafana/runtime';
 
-import { ReturnToPrevious, type ReturnToPreviousProps } from './ReturnToPrevious';
+import { ReturnToPrevious, ReturnToPreviousProps } from './ReturnToPrevious';
 
 const mockReturnToPreviousProps: ReturnToPreviousProps = {
   title: 'Dashboards Page',

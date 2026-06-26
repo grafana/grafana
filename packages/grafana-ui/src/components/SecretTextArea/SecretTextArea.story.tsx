@@ -1,12 +1,10 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
-import { useState, type ChangeEvent } from 'react';
-
-import { Field } from '../Forms/Field';
+import { StoryFn, Meta } from '@storybook/react';
+import { useState, ChangeEvent } from 'react';
 
 import { SecretTextArea } from './SecretTextArea';
 
 const meta: Meta<typeof SecretTextArea> = {
-  title: 'Inputs/SecretTextArea',
+  title: 'Forms/SecretTextArea',
   component: SecretTextArea,
   parameters: {
     controls: {
@@ -39,17 +37,15 @@ const Template: StoryFn<typeof SecretTextArea> = (args) => {
   const [secret, setSecret] = useState('');
 
   return (
-    <Field label="My secret">
-      <SecretTextArea
-        rows={args.rows}
-        cols={args.cols}
-        value={secret}
-        isConfigured={args.isConfigured}
-        placeholder={args.placeholder}
-        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setSecret(event.target.value.trim())}
-        onReset={() => setSecret('')}
-      />
-    </Field>
+    <SecretTextArea
+      rows={args.rows}
+      cols={args.cols}
+      value={secret}
+      isConfigured={args.isConfigured}
+      placeholder={args.placeholder}
+      onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setSecret(event.target.value.trim())}
+      onReset={() => setSecret('')}
+    />
   );
 };
 

@@ -2,18 +2,14 @@ import { lastValueFrom } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
 
-import {
-  type DataQueryRequest,
-  type DataSourceInstanceSettings,
-  type DataSourceRef,
-  LoadingState,
-} from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, LoadingState } from '@grafana/data';
+import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { CustomVariable, SceneFlexLayout, SceneVariableSet } from '@grafana/scenes';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
-import { MixedDatasource, MIXED_DATASOURCE_NAME } from './MixedDataSource';
+import { MIXED_DATASOURCE_NAME } from './MixedDataSource';
+import { MixedDatasource } from './module';
 
 const defaultDS = new MockObservableDataSourceApi('DefaultDS', [{ data: ['DDD'] }]);
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
@@ -38,7 +34,6 @@ describe('MixedDatasource', () => {
       getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
       getList: jest.fn(),
       reload: jest.fn(),
-      registerRuntimeDataSource: jest.fn(),
     });
     setTemplateSrv(new TemplateSrv());
   });

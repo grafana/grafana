@@ -1,14 +1,8 @@
-import { type Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import {
-  type AlertStateInfo,
-  type AnnotationEvent,
-  type AnnotationQuery,
-  type DataSourceApi,
-  type TimeRange,
-} from '@grafana/data';
+import { AlertStateInfo, AnnotationEvent, AnnotationQuery, DataSourceApi, TimeRange } from '@grafana/data';
 
-import { type DashboardModel } from '../../../dashboard/state/DashboardModel';
+import { DashboardModel } from '../../../dashboard/state';
 
 export interface DashboardQueryRunnerOptions {
   dashboard: DashboardModel;

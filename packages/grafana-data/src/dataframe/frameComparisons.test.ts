@@ -1,4 +1,4 @@
-import { type DataFrame, FieldType } from '../types/dataFrame';
+import { DataFrame, FieldType } from '../types/dataFrame';
 
 import { compareDataFrameStructures, compareArrayValues } from './frameComparisons';
 import { toDataFrame } from './processDataFrame';

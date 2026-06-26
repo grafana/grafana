@@ -1,5 +1,5 @@
 import { standardTransformersRegistry } from '../../transformations/standardTransformersRegistry';
-import { type DataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo } from '../../types/transformations';
 
 export const mockTransformationsRegistry = (transformers: DataTransformerInfo[]) => {
   standardTransformersRegistry.setInit(() => {
@@ -8,11 +8,9 @@ export const mockTransformationsRegistry = (transformers: DataTransformerInfo[])
         id: t.id,
         aliasIds: t.aliasIds,
         name: t.name,
-        transformation: () => Promise.resolve(t),
+        transformation: t,
         description: t.description,
         editor: () => null,
-        imageDark: `build/img/${t.id}-dark.abc123.svg`,
-        imageLight: `build/img/${t.id}-light.abc123.svg`,
       };
     });
   });

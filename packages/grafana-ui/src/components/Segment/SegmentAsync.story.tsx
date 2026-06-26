@@ -1,19 +1,17 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { action } from '@storybook/addon-actions';
+import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
-import { type AsyncState } from 'react-use/lib/useAsync';
-import { action } from 'storybook/actions';
+import { AsyncState } from 'react-use/lib/useAsync';
 
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
+import { SegmentAsync, Icon, SegmentSection } from '@grafana/ui';
 
-import { Icon } from '../Icon/Icon';
-
-import { SegmentAsync, type SegmentAsyncProps } from './SegmentAsync';
-import { SegmentSection } from './SegmentSection';
+import { SegmentAsyncProps } from './SegmentAsync';
 
 const AddButton = (
   <span className="gf-form-label query-part">
-    <Icon aria-label="Add" name="plus" />
+    <Icon name="plus" />
   </span>
 );
 
@@ -61,7 +59,7 @@ export const ArrayOptions = () => {
 };
 
 const meta: Meta<typeof SegmentAsync> = {
-  title: 'Inputs/SegmentAsync',
+  title: 'Data Source/Segment/SegmentAsync',
   component: SegmentAsync,
 };
 

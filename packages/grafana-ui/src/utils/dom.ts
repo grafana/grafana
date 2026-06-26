@@ -15,13 +15,11 @@ if (typeof window !== 'undefined' && 'Element' in window && !Element.prototype.c
   };
 }
 
-export function getPreviousCousin(node: HTMLElement, selector: string) {
-  let sibling = node.parentElement?.previousSibling;
+export function getPreviousCousin(node: any, selector: string) {
+  let sibling = node.parentElement.previousSibling;
   let el;
   while (sibling) {
-    if (sibling instanceof HTMLElement) {
-      el = sibling.querySelector(selector);
-    }
+    el = sibling.querySelector(selector);
     if (el) {
       return el;
     }
@@ -30,7 +28,7 @@ export function getPreviousCousin(node: HTMLElement, selector: string) {
   return undefined;
 }
 
-export function getNextCharacter(global?: typeof globalThis) {
+export function getNextCharacter(global?: any) {
   const selection = (global || window).getSelection();
   if (!selection || !selection.anchorNode) {
     return null;

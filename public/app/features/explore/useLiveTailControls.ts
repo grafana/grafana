@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import type * as React from 'react';
+import * as React from 'react';
 
 import { RefreshPicker } from '@grafana/ui';
-import { useDispatch } from 'app/types/store';
+import { useDispatch } from 'app/types';
 
 import { setPausedStateAction, runQueries, clearLogs } from './state/query';
 import { changeRefreshInterval } from './state/time';
@@ -10,7 +10,7 @@ import { changeRefreshInterval } from './state/time';
 /**
  * Hook that gives you all the functions needed to control the live tailing.
  */
-function useLiveTailControls(exploreId: string) {
+export function useLiveTailControls(exploreId: string) {
   const dispatch = useDispatch();
 
   const pause = useCallback(() => {

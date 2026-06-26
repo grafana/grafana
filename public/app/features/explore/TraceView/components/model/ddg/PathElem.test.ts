@@ -14,7 +14,7 @@
 
 import PathElem from './PathElem';
 import { simplePath } from './sample-paths.test.resources';
-import { type TDdgOperation, type TDdgPath, type TDdgService } from './types';
+import { TDdgOperation, TDdgPath, TDdgService } from './types';
 
 describe('PathElem', () => {
   const getPath = () => {

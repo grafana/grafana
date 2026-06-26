@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { rangeUtil } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 
 export enum InputPrefix {
@@ -58,7 +57,7 @@ export const NullsThresholdInput = ({ value, onChange, inputPrefix, isTime }: Pr
   return (
     <Input
       autoFocus={false}
-      placeholder={t('timeseries.nulls-threshold-input.placeholder-never', 'Never')}
+      placeholder="never"
       width={10}
       defaultValue={defaultValue}
       onKeyDown={handleEnterKey}

@@ -2,11 +2,11 @@ import { cx, css } from '@emotion/css';
 import { forwardRef } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 
 type TitleItemProps = {
   className?: string;
@@ -39,13 +39,7 @@ export const TitleItem = forwardRef<TitleItemElement, TitleItemProps>(
       );
     } else if (onClick) {
       return (
-        <Button
-          ref={ref}
-          className={cx(styles.buttonItem, className)}
-          variant="secondary"
-          fill="text"
-          onClick={onClick}
-        >
+        <Button ref={ref} className={cx(styles.item, className)} variant="secondary" fill="text" onClick={onClick}>
           {children}
         </Button>
       );
@@ -65,10 +59,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   const item = css({
     color: `${theme.colors.text.secondary}`,
     label: 'panel-header-item',
+    cursor: 'auto',
     border: 'none',
     borderRadius: `${theme.shape.radius.default}`,
     padding: `${theme.spacing(0, 1)}`,
-    height: `${theme.spacing(theme.components.height.md)}`,
+    height: `${theme.spacing(theme.components.panel.headerHeight)}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -81,7 +76,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     '&:hover ': {
       boxShadow: `${theme.shadows.z1}`,
-      background: theme.colors.secondary.shade,
+      background: `${theme.colors.background.secondary}`,
       color: `${theme.colors.text.primary}`,
     },
   });
@@ -89,6 +84,5 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     item,
     linkItem: cx(item, css({ cursor: 'pointer' })),
-    buttonItem: cx(item, css({ cursor: 'pointer' })),
   };
 };

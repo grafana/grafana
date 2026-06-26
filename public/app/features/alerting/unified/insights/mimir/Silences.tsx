@@ -1,12 +1,12 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
-import { InsightsMenuButton } from '../InsightsMenuButton';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getSilencesScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `sum by (state) (grafanacloud_instance_alertmanager_silences{stack_id="${INSTANCE_ID}"})`
+    ? `sum by (state) (grafanacloud_instance_alertmanager_silences{id="${INSTANCE_ID}"})`
     : `sum by (state) (grafanacloud_instance_alertmanager_silences)`;
 
   const query = new SceneQueryRunner({
@@ -29,7 +29,7 @@ export function getSilencesScene(datasource: DataSourceRef, panelTitle: string) 
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

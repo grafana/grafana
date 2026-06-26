@@ -1,13 +1,14 @@
-import { type AnyAction } from '@reduxjs/toolkit';
-import { type Action, type Dispatch } from 'redux';
+import { AnyAction } from '@reduxjs/toolkit';
+import { Action, Dispatch } from 'redux';
 
-import { type DataQuery, type TimeRange } from '@grafana/data';
-import { type TemplateSrv } from '@grafana/runtime';
+import { DataQuery, TimeRange } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 
-import { type GraphiteDatasource } from '../datasource';
-import { type FuncDefs } from '../gfunc';
-import GraphiteQuery, { type GraphiteTarget } from '../graphite_query';
-import { type GraphiteSegment } from '../types';
+import { TemplateSrv } from '../../../../features/templating/template_srv';
+import { GraphiteDatasource } from '../datasource';
+import { FuncDefs } from '../gfunc';
+import GraphiteQuery, { GraphiteTarget } from '../graphite_query';
+import { GraphiteSegment } from '../types';
 
 import { actions } from './actions';
 import {
@@ -56,7 +57,7 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     state = {
       ...state,
       ...deps,
-      queryModel: new GraphiteQuery(deps.datasource, deps.target, state.templateSrv),
+      queryModel: new GraphiteQuery(deps.datasource, deps.target, getTemplateSrv()),
       supportsTags: deps.datasource.supportsTags,
       paused: false,
       removeTagValue: '-- remove tag --',

@@ -1,12 +1,12 @@
 import { cloneDeep } from 'lodash';
 
 import {
-  type BaseVariableModel,
-  type ConstantVariableModel,
+  BaseVariableModel,
+  ConstantVariableModel,
   LoadingState,
-  type QueryVariableModel,
-  type VariableOption,
-  type VariableType,
+  QueryVariableModel,
+  VariableOption,
+  VariableType,
 } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -35,7 +35,7 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import { initialVariablesState, type KeyedVariableIdentifier, type VariablesState } from './types';
+import { initialVariablesState, KeyedVariableIdentifier, VariablesState } from './types';
 
 variableAdapters.setInit(() => [createQueryVariableAdapter(), createConstantVariableAdapter()]);
 

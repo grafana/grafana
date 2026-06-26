@@ -1,10 +1,10 @@
 import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
-import { byRole } from 'testing-library-selector';
+import { byRole, byTestId } from 'testing-library-selector';
 
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AccessControlAction } from 'app/types/accessControl';
+import { selectors } from '@grafana/e2e-selectors';
+import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -14,9 +14,8 @@ import AlertmanagerConfig from './AlertmanagerConfig';
 import {
   EXTERNAL_VANILLA_ALERTMANAGER_UID,
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
-  mockDataSources,
   setupVanillaAlertmanagerServer,
-} from './mocks/server';
+} from './__mocks__/server';
 
 const renderConfiguration = (
   alertManagerSourceName: string,
@@ -38,11 +37,8 @@ const ui = {
   resetConfirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
   cancelButton: byRole('button', { name: /Cancel/ }),
-};
-
-const waitForEditableConfig = async () => {
-  await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
-  expect(ui.resetButton.get()).toBeEnabled();
+  configInput: byTestId(selectors.components.CodeEditor.container),
+  readOnlyConfig: byTestId('readonly-config'),
 };
 
 describe('Alerting Settings', () => {
@@ -52,11 +48,20 @@ describe('Alerting Settings', () => {
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
-  it('should not be able to reset alertmanager config', async () => {
+  it('should be able to reset alertmanager config', async () => {
     const onReset = jest.fn();
     renderConfiguration('grafana', { onReset });
 
-    expect(ui.resetButton.query()).not.toBeInTheDocument();
+    await userEvent.click(await ui.resetButton.find());
+
+    await waitFor(() => {
+      expect(ui.resetConfirmButton.query()).toBeInTheDocument();
+    });
+
+    await userEvent.click(ui.resetConfirmButton.get());
+
+    await waitFor(() => expect(onReset).toHaveBeenCalled());
+    expect(onReset).toHaveBeenLastCalledWith('grafana');
   });
 
   it('should be able to cancel', async () => {
@@ -73,7 +78,6 @@ describe('vanilla Alertmanager', () => {
 
   beforeEach(() => {
     setupVanillaAlertmanagerServer(server);
-    setupDataSources(...Object.values(mockDataSources));
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
@@ -95,23 +99,5 @@ describe('vanilla Alertmanager', () => {
     expect(ui.cancelButton.get()).toBeInTheDocument();
     expect(ui.saveButton.get()).toBeInTheDocument();
     expect(ui.resetButton.get()).toBeInTheDocument();
-    await waitForEditableConfig();
-  });
-
-  it('should be able to reset non-Grafana alertmanager config', async () => {
-    const onReset = jest.fn();
-    renderConfiguration(PROVISIONED_MIMIR_ALERTMANAGER_UID, { onReset });
-
-    expect(ui.cancelButton.get()).toBeInTheDocument();
-    expect(ui.saveButton.get()).toBeInTheDocument();
-    expect(ui.resetButton.get()).toBeInTheDocument();
-    await waitForEditableConfig();
-
-    await userEvent.click(ui.resetButton.get());
-
-    await userEvent.click(ui.resetConfirmButton.get());
-
-    await waitFor(() => expect(onReset).toHaveBeenCalled());
-    expect(onReset).toHaveBeenLastCalledWith(PROVISIONED_MIMIR_ALERTMANAGER_UID);
   });
 });

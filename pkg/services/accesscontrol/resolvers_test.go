@@ -16,16 +16,15 @@ func TestResolvers_AttributeScope(t *testing.T) {
 	calls := 0
 	fakeDataSourceResolver := accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
 		calls++
-		switch initialScope {
-		case "datasources:name:testds":
+		if initialScope == "datasources:name:testds" {
 			return []string{accesscontrol.Scope("datasources", "id", "1")}, nil
-		case "datasources:name:testds2":
+		} else if initialScope == "datasources:name:testds2" {
 			return []string{accesscontrol.Scope("datasources", "id", "2")}, nil
-		case "datasources:name:test:ds4":
+		} else if initialScope == "datasources:name:test:ds4" {
 			return []string{accesscontrol.Scope("datasources", "id", "4")}, nil
-		case "datasources:name:testds5*":
+		} else if initialScope == "datasources:name:testds5*" {
 			return []string{accesscontrol.Scope("datasources", "id", "5")}, nil
-		default:
+		} else {
 			return nil, datasources.ErrDataSourceNotFound
 		}
 	})

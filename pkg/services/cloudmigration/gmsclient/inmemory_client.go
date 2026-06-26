@@ -4,34 +4,56 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
+	"math/rand"
+
+	cryptoRand "crypto/rand"
 
 	"github.com/google/uuid"
-
-	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"golang.org/x/crypto/nacl/box"
 )
 
 // NewInMemoryClient returns an implementation of Client that returns canned responses
 func NewInMemoryClient() Client {
-	return &memoryClientImpl{
-		mx:           &sync.Mutex{},
-		snapshotInfo: make(map[string]cloudmigration.SnapshotState),
-	}
+	return &memoryClientImpl{}
 }
 
 type memoryClientImpl struct {
-	mx           *sync.Mutex
-	snapshotInfo map[string]cloudmigration.SnapshotState // snapshotUID -> state
+	snapshot *cloudmigration.StartSnapshotResponse
 }
 
 func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.CloudMigrationSession) error {
 	return nil
 }
 
-func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.CloudMigrationSession, _ cloudmigration.EncryptionAlgo) (*cloudmigration.StartSnapshotResponse, error) {
-	// TODO: when we support another algorithm, use the function parameter to switch
-	keys, err := crypto.NewNacl().GenerateKeys()
+func (c *memoryClientImpl) MigrateData(
+	ctx context.Context,
+	cm cloudmigration.CloudMigrationSession,
+	request cloudmigration.MigrateDataRequest,
+) (*cloudmigration.MigrateDataResponse, error) {
+	result := cloudmigration.MigrateDataResponse{
+		Items: make([]cloudmigration.CloudMigrationResource, len(request.Items)),
+	}
+
+	for i, v := range request.Items {
+		result.Items[i] = cloudmigration.CloudMigrationResource{
+			Type:   v.Type,
+			RefID:  v.RefID,
+			Status: cloudmigration.ItemStatusOK,
+		}
+	}
+
+	// simulate flakiness on one random item
+	i := rand.Intn(len(result.Items))
+	failedItem := result.Items[i]
+	failedItem.Status, failedItem.Error = cloudmigration.ItemStatusError, "simulated random error"
+	result.Items[i] = failedItem
+
+	return &result, nil
+}
+
+func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
+	publicKey, _, err := box.GenerateKey(cryptoRand.Reader)
 	if err != nil {
 		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
@@ -52,53 +74,45 @@ func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.
 		return nil, fmt.Errorf("marshalling metadata: %w", err)
 	}
 
-	c.mx.Lock()
-	c.snapshotInfo[snapshotUid] = cloudmigration.SnapshotStateInitialized
-	c.mx.Unlock()
-
-	return &cloudmigration.StartSnapshotResponse{
-		GMSPublicKey:         keys.Public,
+	c.snapshot = &cloudmigration.StartSnapshotResponse{
+		EncryptionKey:        publicKey[:],
 		SnapshotID:           snapshotUid,
 		MaxItemsPerPartition: 10,
 		Algo:                 "nacl",
 		Metadata:             metadataBuffer,
-	}, nil
+	}
+
+	return c.snapshot, nil
 }
 
 func (c *memoryClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot, offset int) (*cloudmigration.GetSnapshotStatusResponse, error) {
-	c.mx.Lock()
-	snapshotInfo := c.snapshotInfo[snapshot.UID]
-	c.mx.Unlock()
-
-	resources := make([]cloudmigration.CloudMigrationResource, 0, len(snapshot.Resources))
-	for _, resource := range snapshot.Resources {
-		if snapshotInfo == cloudmigration.SnapshotStateFinished {
-			resources = append(resources, cloudmigration.CloudMigrationResource{
-				Type:   resource.Type,
-				RefID:  resource.RefID,
-				Status: cloudmigration.ItemStatusOK,
-			})
-		} else {
-			resources = append(resources, cloudmigration.CloudMigrationResource{
-				Type:  resource.Type,
-				RefID: resource.RefID,
-			})
-		}
-	}
-
 	gmsResp := &cloudmigration.GetSnapshotStatusResponse{
-		State:   snapshotInfo,
-		Results: resources,
+		State: cloudmigration.SnapshotStateFinished,
+		Results: []cloudmigration.CloudMigrationResource{
+			{
+				Type:   cloudmigration.DashboardDataType,
+				RefID:  "dash1",
+				Status: cloudmigration.ItemStatusOK,
+			},
+			{
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "ds1",
+				Status: cloudmigration.ItemStatusError,
+				Error:  "fake error",
+			},
+			{
+				Type:   cloudmigration.FolderDataType,
+				RefID:  "folder1",
+				Status: cloudmigration.ItemStatusOK,
+			},
+			{
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "ds2",
+				Status: cloudmigration.ItemStatusWarning,
+				Error:  "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
+			},
+		},
 	}
-
-	c.mx.Lock()
-	// Next call, transition to the next state.
-	if c.snapshotInfo[snapshot.UID] == cloudmigration.SnapshotStateInitialized {
-		c.snapshotInfo[snapshot.UID] = cloudmigration.SnapshotStateProcessing
-	} else {
-		c.snapshotInfo[snapshot.UID] = cloudmigration.SnapshotStateFinished
-	}
-	c.mx.Unlock()
 
 	return gmsResp, nil
 }

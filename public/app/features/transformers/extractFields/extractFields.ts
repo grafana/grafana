@@ -2,26 +2,25 @@ import { isString, get } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import {
-  type DataFrame,
+  DataFrame,
   DataTransformerID,
-  type Field,
+  Field,
   FieldType,
   getFieldTypeFromValue,
   getUniqueFieldName,
-  type SynchronousDataTransformerInfo,
+  SynchronousDataTransformerInfo,
 } from '@grafana/data';
-import { findField } from 'app/features/dimensions/utils';
+import { config } from '@grafana/runtime';
+import { findField } from 'app/features/dimensions';
 
 import { fieldExtractors } from './fieldExtractors';
-import { type ExtractFieldsOptions, FieldExtractorID, type JSONPath } from './types';
+import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
 
 export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFieldsOptions> = {
   id: DataTransformerID.extractFields,
   name: 'Extract fields',
   description: 'Parse fields from the contends of another',
-  defaultOptions: {
-    delimiter: ',',
-  },
+  defaultOptions: {},
 
   operator: (options, ctx) => (source) =>
     source.pipe(map((data) => extractFieldsTransformer.transformer(options, ctx)(data))),
@@ -52,15 +51,14 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
 
   const count = frame.length;
   const names: string[] = []; // keep order
-  const values = new Map<string, unknown[]>();
-  const parse = ext.getParser(options);
+  const values = new Map<string, any[]>();
 
   for (let i = 0; i < count; i++) {
     let obj = source.values[i];
 
     if (isString(obj)) {
       try {
-        obj = parse(obj);
+        obj = ext.parse(obj);
       } catch {
         obj = {}; // empty
       }
@@ -98,17 +96,15 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
 
   const fields = names.map((name) => {
     const buffer = values.get(name);
-    // this should never happen, but let's be safe
-    if (!buffer) {
-      throw new Error(`Could not find field with name: ${name}`);
-    }
-    const field: Field = {
+    const field = {
       name,
       values: buffer,
       type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
       config: {},
-    };
-    field.name = getUniqueFieldName(field, frame);
+    } as Field;
+    if (config.featureToggles.extractFieldsNameDeduplication) {
+      field.name = getUniqueFieldName(field, frame);
+    }
     return field;
   });
 

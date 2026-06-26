@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ FileStore = (*FileStoreManager)(nil)
@@ -86,7 +87,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 		return nil, errors.New("plugin dashboard file not found")
 	}
 
-	cleanPath, err := plugins.CleanRelativePath(includedFile.Path)
+	cleanPath, err := util.CleanRelativePath(includedFile.Path)
 	if err != nil {
 		// CleanRelativePath should clean and make the path relative so this is not expected to fail
 		return nil, err

@@ -1,9 +1,9 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { type DataSourceApi } from '@grafana/data';
+import { DataSourceApi } from '@grafana/data';
 
-import { type VariablePayload } from '../state/types';
-import { type VariableQueryEditorType } from '../types';
+import { VariablePayload } from '../state/types';
+import { VariableQueryEditorType } from '../types';
 
 export interface AdHocVariableEditorState {
   infoText?: string;
@@ -65,7 +65,7 @@ const variableEditorReducerSlice = createSlice({
     },
     addVariableEditorError: (
       state: VariableEditorState,
-      action: PayloadAction<{ errorProp: string; errorText: string }>
+      action: PayloadAction<{ errorProp: string; errorText: any }>
     ) => {
       state.errors[action.payload.errorProp] = action.payload.errorText;
       state.isValid = Object.keys(state.errors).length === 0;

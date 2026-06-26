@@ -1,40 +1,34 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
-import { type ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
-  type DataSourceApi,
-  type DataSourceInstanceSettings,
-  type GrafanaTheme2,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  GrafanaTheme2,
   LoadingState,
-  type PanelData,
-  type RelativeTimeRange,
-  type ThresholdsConfig,
-  getDefaultRelativeTimeRange,
-  rangeUtil,
+  PanelData,
+  RelativeTimeRange,
+  ThresholdsConfig,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
-import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { DataQuery } from '@grafana/schema';
+import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { type RuleFormValues } from '../../types/rule-form';
-import { DOCS_URL_DATA_SOURCE_ALERTING } from '../../utils/docs';
+import { RuleFormValues } from '../../types/rule-form';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
-import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQueryExtensionPoint';
 
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
-const DEFAULT_MAX_DATA_POINTS = 43200;
-const DEFAULT_MIN_INTERVAL = '1s';
+export const DEFAULT_MAX_DATA_POINTS = 43200;
+export const DEFAULT_MIN_INTERVAL = '1s';
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
@@ -56,6 +50,7 @@ interface Props {
   index: number;
   thresholds: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
+  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -76,6 +71,7 @@ export const QueryWrapper = ({
   queries,
   thresholds,
   thresholdsType,
+  onChangeThreshold,
   condition,
   onSetCondition,
   onChangeQueryOptions,
@@ -85,8 +81,7 @@ export const QueryWrapper = ({
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
   const { getValues } = useFormContext<RuleFormValues>();
-  const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  const isAdvancedMode = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') !== true : true;
+  const isAdvancedMode = getValues('editorSettings.simplifiedQueryEditor') !== true;
 
   const queryWithDefaults = {
     ...defaults,
@@ -103,18 +98,7 @@ export const QueryWrapper = ({
     // It's unclear as to why this happens, but we need better visibility on why this happens,
     // so we log when it does, and make the query model datasource UID match the datasource UID
     // We already elsewhere work under the assumption that the datasource settings are fetched from the datasourceUid property
-
-    // This check is necessary for some few cases where the datasource might be an string instead of an object
-    // see: https://github.com/grafana/grafana/issues/96040 for more context
-    if (typeof queryWithDefaults.datasource === 'object' && Boolean(queryWithDefaults.datasource)) {
-      queryWithDefaults.datasource.uid = query.datasourceUid;
-    } else {
-      // if the datasource is a string, we need to convert it to an object, and populate the fields from the query model
-      queryWithDefaults.datasource = {};
-      queryWithDefaults.datasource.uid = query.datasourceUid;
-      queryWithDefaults.datasource.type = query.model.datasource?.type;
-      queryWithDefaults.datasource.apiVersion = query.model.datasource?.apiVersion;
-    }
+    queryWithDefaults.datasource.uid = query.datasourceUid;
   }
 
   function SelectingDataSourceTooltip() {
@@ -123,13 +107,21 @@ export const QueryWrapper = ({
       <div className={styles.dsTooltip}>
         <Tooltip
           content={
-            <Trans i18nKey="alerting.selecting-data-source-tooltip.tooltip-content">
+            <>
               Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon
               for more information.
-            </Trans>
+            </>
           }
         >
-          <Icon name="info-circle" onClick={() => window.open(DOCS_URL_DATA_SOURCE_ALERTING, '_blank')} />
+          <Icon
+            name="info-circle"
+            onClick={() =>
+              window.open(
+                ' https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/',
+                '_blank'
+              )
+            }
+          />
         </Tooltip>
       </div>
     );
@@ -161,7 +153,6 @@ export const QueryWrapper = ({
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
-        <AlertingRuleQueryExtensionPoint query={Object.assign({}, query.model)} extensionsToShow="queryless" />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
           query={query}
@@ -183,12 +174,12 @@ export const QueryWrapper = ({
   // ⚠️ the query editors want the entire array of queries passed as "DataQuery" NOT "AlertQuery"
   // TypeScript isn't complaining here because the interfaces just happen to be compatible
   const editorQueries = cloneDeep(queries.map((query) => query.model));
-  const range = rangeUtil.relativeToTimeRange(query.relativeTimeRange ?? getDefaultRelativeTimeRange());
 
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
         <QueryEditorRow<AlertDataQuery>
+          alerting
           hideRefId={!isAdvancedMode}
           hideActionButtons={!isAdvancedMode}
           collapsable={false}
@@ -205,7 +196,6 @@ export const QueryWrapper = ({
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
           queries={editorQueries}
-          range={range}
           renderHeaderExtras={() => (
             <HeaderExtras query={query} index={index} error={error} isAdvancedMode={isAdvancedMode} />
           )}
@@ -248,11 +238,8 @@ export function MaxDataPointsOption({
   return (
     <InlineField
       labelWidth={24}
-      label={t('alerting.max-data-points-option.label-max-data-points', 'Max data points')}
-      tooltip={t(
-        'alerting.max-data-points-option.tooltip-max-data-points',
-        'The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer.'
-      )}
+      label="Max data points"
+      tooltip="The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
     >
       <Input
         type="number"
@@ -287,13 +274,13 @@ export function MinIntervalOption({
 
   return (
     <InlineField
-      label={t('alerting.min-interval-option.label-interval', 'Interval')}
+      label="Interval"
       labelWidth={24}
       tooltip={
-        <Trans i18nKey="alerting.min-interval-option.tooltip-interval">
+        <>
           Interval sent to the data source. Recommended to be set to write frequency, for example <code>1m</code> if
           your data is written every minute.
-        </Trans>
+        </>
       }
     >
       <Input

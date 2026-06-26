@@ -1,19 +1,18 @@
 import { map } from 'rxjs/operators';
 
 import {
-  type SynchronousDataTransformerInfo,
-  type DataFrame,
+  SynchronousDataTransformerInfo,
+  DataFrame,
   DataFrameType,
   FieldType,
   DataTransformerID,
   outerJoinDataFrames,
   fieldMatchers,
   FieldMatcherID,
-  type Field,
+  Field,
   MutableDataFrame,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type Labels } from 'app/types/unified-alerting-dto';
+import { Labels } from 'app/types/unified-alerting-dto';
 
 import { partitionByValues } from '../partitionByValues/partitionByValues';
 
@@ -210,7 +209,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
     }
 
     type TimeWideRowIndex = {
-      time: number;
+      time: any;
       wideRowIndex: number;
     };
     const sortedTimeRowIndices: TimeWideRowIndex[] = [];
@@ -255,7 +254,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
       const { time, wideRowIndex } = timeWideRowIndex;
 
       for (const labelKeys of sortedUniqueLabelKeys) {
-        const rowValues: Record<string, unknown> = {};
+        const rowValues: Record<string, any> = {};
 
         for (const name of uniqueFactorNamesWithWideIndices) {
           rowValues[name] = frame.fields[uniqueFactorNamesToWideIndex[name]].values[wideRowIndex];
@@ -300,17 +299,14 @@ export function longToMultiTimeSeries(frame: DataFrame): DataFrame[] {
   });
 }
 
-export const getPrepareTimeSeriesTransformer: () => SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = () => ({
+export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
-  name: t('transformers.prepare-time-series.name.prepare-time-series', 'Prepare time series'),
-  description: t(
-    'transformers.prepare-time-series.description.stretch-data-frames',
-    'Stretch data frames from the wide format into the long format.'
-  ),
+  name: 'Prepare time series',
+  description: `Will stretch data frames from the wide format into the long format. This is really helpful to be able to keep backwards compatibility for panels not supporting the new wide format.`,
   defaultOptions: {},
 
   operator: (options, ctx) => (source) =>
-    source.pipe(map((data) => getPrepareTimeSeriesTransformer().transformer(options, ctx)(data))),
+    source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: PrepareTimeSeriesOptions) => {
     const format = options?.format ?? timeSeriesFormat.TimeSeriesWide;
@@ -353,4 +349,4 @@ export const getPrepareTimeSeriesTransformer: () => SynchronousDataTransformerIn
       return [];
     };
   },
-});
+};

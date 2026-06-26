@@ -1,22 +1,20 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { Trans, t } from 'app/core/internationalization';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { LogMessages, logInfo } from '../../Analytics';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
-import { flattenGrafanaManagedRules, mergeUngroupedGrafanaRules } from '../../hooks/useCombinedRuleNamespaces';
+import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
-import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
@@ -43,8 +41,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const hasResult = !!prom.result || !!ruler.result;
 
   const wantsListView = queryParams.view === 'list';
-  const ungroupedMerged = useMemo(() => mergeUngroupedGrafanaRules(namespaces), [namespaces]);
-  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(ungroupedMerged) : ungroupedMerged;
+  const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);
 
@@ -59,8 +56,8 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const hasGrafanaAlerts = namespaces.length > 0;
-  const { canCreateGrafanaRules } = useRulesAccess();
-  const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
+
+  const grafanaRecordingRulesEnabled = config.featureToggles.grafanaManagedRecordingRules;
 
   return (
     <section className={styles.wrapper}>
@@ -80,16 +77,10 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
           <Stack direction="row" alignItems="center" justifyContent="flex-end">
             {hasGrafanaAlerts && canExportRules && (
               <Button
-                aria-label={t(
-                  'alerting.grafana-rules.export-all-grafana-rules-aria-label-export-all-grafana-rules',
-                  'export all grafana rules'
-                )}
+                aria-label="export all grafana rules"
                 data-testid="export-all-grafana-rules"
                 icon="download-alt"
-                tooltip={t(
-                  'alerting.grafana-rules.export-all-grafana-rules-tooltip-export-all-grafanamanaged-rules',
-                  'Export all Grafana-managed rules'
-                )}
+                tooltip="Export all Grafana-managed rules"
                 onClick={toggleShowExportDrawer}
                 variant="secondary"
               >
@@ -99,14 +90,11 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
             {grafanaRecordingRulesEnabled && (
               <LinkButton
                 href={createRelativeUrl('/alerting/new/grafana-recording', {
-                  returnTo: '/alerting/list' + window.location.search,
+                  returnTo: '/alerting/list' + location.search,
                 })}
                 icon="plus"
                 variant="secondary"
-                tooltip={t(
-                  'alerting.grafana-rules.tooltip-create-new-grafanamanaged-recording-rule',
-                  'Create new Grafana-managed recording rule'
-                )}
+                tooltip="Create new Grafana-managed recording rule"
                 onClick={() => logInfo(LogMessages.grafanaRecording)}
               >
                 <Trans i18nKey="alerting.list-view.section.grafanaManaged.new-recording-rule">New recording rule</Trans>
@@ -125,11 +113,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
           viewMode={wantsListView ? 'list' : 'grouped'}
         />
       ))}
-      {hasResult && namespacesFormat?.length === 0 && (
-        <p>
-          <Trans i18nKey="alerting.grafana-rules.no-rules-found">No rules found.</Trans>
-        </p>
-      )}
+      {hasResult && namespacesFormat?.length === 0 && <p>No rules found.</p>}
       {!hasResult && loading && <Spinner size="xl" className={styles.spinner} />}
       <Pagination
         className={styles.pagination}

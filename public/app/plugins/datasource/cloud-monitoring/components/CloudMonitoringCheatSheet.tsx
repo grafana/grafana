@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { PureComponent } from 'react';
 
-import { type QueryEditorHelpProps } from '@grafana/data';
+import { QueryEditorHelpProps } from '@grafana/data';
 
-import { type CloudMonitoringQuery } from '../types/query';
+import { CloudMonitoringQuery } from '../types/query';
 
-const CloudMonitoringCheatSheet = memo(
-  ({ query, datasource, onClickExample }: QueryEditorHelpProps<CloudMonitoringQuery>) => {
+export default class CloudMonitoringCheatSheet extends PureComponent<
+  QueryEditorHelpProps<CloudMonitoringQuery>,
+  { userExamples: string[] }
+> {
+  render() {
     return (
       <div>
         <h2>Cloud Monitoring alias patterns</h2>
@@ -72,8 +75,4 @@ const CloudMonitoringCheatSheet = memo(
       </div>
     );
   }
-);
-
-CloudMonitoringCheatSheet.displayName = 'CloudMonitoringCheatSheet';
-
-export default CloudMonitoringCheatSheet;
+}

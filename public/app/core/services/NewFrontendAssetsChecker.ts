@@ -1,4 +1,4 @@
-import { type Location } from 'history';
+import { Location } from 'history';
 import { isEqual } from 'lodash';
 
 import { getBackendSrv, getGrafanaLiveSrv, locationService, reportInteraction } from '@grafana/runtime';

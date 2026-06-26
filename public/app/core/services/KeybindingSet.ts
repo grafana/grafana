@@ -24,12 +24,9 @@ export class KeybindingSet {
         evt.returnValue = false;
         item.onTrigger();
       },
-      item.type ?? 'keydown'
+      'keydown'
     );
-    this._binds.push({
-      ...item,
-      type: item.type ?? 'keydown',
-    });
+    this._binds.push(item);
   }
 
   removeAll() {

@@ -1,15 +1,14 @@
-//nolint:staticcheck // SA1019: Legacy envelope encryption migrator; intentionally uses deprecated secrets manager types.
 package migrator
 
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 )
@@ -20,7 +19,7 @@ func (s simpleSecret) Rollback(
 	encryptionSrv encryption.Internal,
 	sqlStore db.DB,
 	secretKey string,
-) bool {
+) (anyFailure bool) {
 	var rows []struct {
 		Id     int
 		Secret []byte
@@ -29,11 +28,10 @@ func (s simpleSecret) Rollback(
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
 	}); err != nil {
-		logger.Warn("Could not find any secret to roll back", "table", s.tableName, "error", err)
-		return false
+		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
+		return true
 	}
 
-	anyFailure := false
 	for _, row := range rows {
 		if len(row.Secret) == 0 {
 			continue
@@ -72,7 +70,7 @@ func (s simpleSecret) Rollback(
 		logger.Info(fmt.Sprintf("Column %s from %s has been rolled back successfully", s.columnName, s.tableName))
 	}
 
-	return !anyFailure
+	return anyFailure
 }
 
 func (s b64Secret) Rollback(
@@ -81,7 +79,7 @@ func (s b64Secret) Rollback(
 	encryptionSrv encryption.Internal,
 	sqlStore db.DB,
 	secretKey string,
-) bool {
+) (anyFailure bool) {
 	var rows []struct {
 		Id     int
 		Secret string
@@ -91,10 +89,9 @@ func (s b64Secret) Rollback(
 		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
 	}); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
-		return false
+		return true
 	}
 
-	anyFailure := false
 	for _, row := range rows {
 		if len(row.Secret) == 0 {
 			continue
@@ -147,7 +144,7 @@ func (s b64Secret) Rollback(
 		logger.Info(fmt.Sprintf("Column %s from %s has been rolled back successfully", s.columnName, s.tableName))
 	}
 
-	return !anyFailure
+	return anyFailure
 }
 
 func (s jsonSecret) Rollback(
@@ -156,7 +153,7 @@ func (s jsonSecret) Rollback(
 	encryptionSrv encryption.Internal,
 	sqlStore db.DB,
 	secretKey string,
-) bool {
+) (anyFailure bool) {
 	var rows []struct {
 		Id             int
 		SecureJsonData map[string][]byte
@@ -165,11 +162,10 @@ func (s jsonSecret) Rollback(
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows)
 	}); err != nil {
-		logger.Warn("Could not find any secret to roll back", "table", s.tableName, "error", err)
-		return false
+		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
+		return true
 	}
 
-	anyFailure := false
 	for _, row := range rows {
 		if len(row.SecureJsonData) == 0 {
 			continue
@@ -212,7 +208,7 @@ func (s jsonSecret) Rollback(
 		logger.Info(fmt.Sprintf("Secure json data secrets from %s have been rolled back successfully", s.tableName))
 	}
 
-	return !anyFailure
+	return anyFailure
 }
 
 func (s alertingSecret) Rollback(
@@ -221,7 +217,7 @@ func (s alertingSecret) Rollback(
 	encryptionSrv encryption.Internal,
 	sqlStore db.DB,
 	secretKey string,
-) bool {
+) (anyFailure bool) {
 	var results []struct {
 		Id                        int
 		AlertmanagerConfiguration string
@@ -231,16 +227,17 @@ func (s alertingSecret) Rollback(
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(selectSQL).Find(&results)
 	}); err != nil {
-		logger.Warn("Could not find any alert_configuration secret to roll back", "error", err)
-		return false
+		logger.Warn("Could not find any alert_configuration secret to roll back")
+		return true
 	}
 
-	anyFailure := false
 	for _, result := range results {
+		result := result
+
 		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			postableUserConfig, err := notifier.Load([]byte(result.AlertmanagerConfiguration))
 			if err != nil {
-				logger.Warn("Could not load configuration while rolling it back", "id", result.Id, "error", err)
+				logger.Warn("Could not load configuration (alert_configuration with id: %d) while rolling it back", result.Id, err)
 				return err
 			}
 
@@ -249,19 +246,19 @@ func (s alertingSecret) Rollback(
 					for k, v := range gmr.SecureSettings {
 						decoded, err := base64.StdEncoding.DecodeString(v)
 						if err != nil {
-							logger.Warn("Could not decode base64-encoded secret", "id", result.Id, "key", k, "error", err)
+							logger.Warn("Could not decode base64-encoded secret (alert_configuration with id: %d, key)", k, result.Id, err)
 							return err
 						}
 
 						decrypted, err := secretsSrv.Decrypt(ctx, decoded)
 						if err != nil {
-							logger.Warn("Could not decrypt secret", "id", result.Id, "key", k, "error", err)
+							logger.Warn("Could not decrypt secret (alert_configuration with id: %d, key)", k, result.Id, err)
 							return err
 						}
 
 						reencrypted, err := encryptionSrv.Encrypt(ctx, decrypted, secretKey)
 						if err != nil {
-							logger.Warn("Could not re-encrypt secret", "id", result.Id, "key", k, "error", err)
+							logger.Warn("Could not re-encrypt secret (alert_configuration with id: %d, key)", k, result.Id, err)
 							return err
 						}
 
@@ -270,15 +267,15 @@ func (s alertingSecret) Rollback(
 				}
 			}
 
-			marshalled, err := legacy_storage.SerializeAlertmanagerConfig(*postableUserConfig)
+			marshalled, err := json.Marshal(postableUserConfig)
 			if err != nil {
-				logger.Warn("Could not marshal configuration while rolling it back", "id", result.Id, "error", err)
+				logger.Warn("Could not marshal configuration (alert_configuration with id: %d) while rolling it back", result.Id, err)
 				return err
 			}
 
 			result.AlertmanagerConfiguration = string(marshalled)
 			if _, err := sess.Table("alert_configuration").Where("id = ?", result.Id).Update(&result); err != nil {
-				logger.Warn("Could not update secret while rolling it back", "id", result.Id, "error", err)
+				logger.Warn("Could not update secret (alert_configuration with id: %d) while rolling it back", result.Id, err)
 				return err
 			}
 
@@ -296,7 +293,7 @@ func (s alertingSecret) Rollback(
 		logger.Info("Alerting configuration secrets have been rolled back successfully")
 	}
 
-	return !anyFailure
+	return anyFailure
 }
 
 func (s ssoSettingsSecret) Rollback(
@@ -305,18 +302,18 @@ func (s ssoSettingsSecret) Rollback(
 	encryptionSrv encryption.Internal,
 	sqlStore db.DB,
 	secretKey string,
-) bool {
+) (anyFailure bool) {
 	results := make([]*models.SSOSettings, 0)
 
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Find(&results)
 	})
+
 	if err != nil {
-		logger.Warn("Failed to fetch SSO settings to roll back", "error", err)
-		return false
+		logger.Warn("Failed to fetch SSO settings to roll back")
+		return true
 	}
 
-	anyFailure := false
 	for _, result := range results {
 		err := sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 			result.Settings, err = s.reEncryptSecretsInMap(ctx, result.Settings, secretsSrv, encryptionSrv, secretKey)
@@ -348,5 +345,5 @@ func (s ssoSettingsSecret) Rollback(
 		logger.Info("SSO settings secrets have been rolled back successfully")
 	}
 
-	return !anyFailure
+	return anyFailure
 }

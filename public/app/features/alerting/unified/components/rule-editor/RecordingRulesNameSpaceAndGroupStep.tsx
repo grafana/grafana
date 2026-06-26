@@ -1,8 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 
-import { t } from '@grafana/i18n';
-
-import { type RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -19,14 +17,8 @@ export function RecordingRulesNameSpaceAndGroupStep() {
   return (
     <RuleEditorSection
       stepNo={3}
-      title={t(
-        'alerting.recording-rules-name-space-and-group-step.title-add-namespace-and-group',
-        'Add namespace and group'
-      )}
-      description={t(
-        'alerting.recording-rules-name-space-and-group-step.description-select-namespace-group-recording',
-        'Select the Namespace and Group for your recording rule.'
-      )}
+      title={'Add namespace and group'}
+      description="Select the Namespace and Group for your recording rule."
     >
       <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
     </RuleEditorSection>

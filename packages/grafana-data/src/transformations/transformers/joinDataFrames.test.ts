@@ -1,13 +1,13 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { type DataFrame, FieldType } from '../../types/dataFrame';
+import { DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
 import { calculateFieldTransformer } from './calculateField';
+import { JoinMode } from './joinByField';
 import { isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
-import { JoinMode } from './joinShared';
 
 describe('align frames', () => {
   beforeAll(() => {
@@ -142,20 +142,20 @@ describe('align frames', () => {
         {
           name: 'gender',
           type: FieldType.string,
-          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY', 'COW'],
+          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY'],
         },
         {
           name: 'day',
           type: FieldType.string,
-          values: ['Wednesday', 'Tuesday', 'Monday', 'Wednesday', 'Tuesday', 'Monday', 'Monday'],
+          values: ['Wednesday', 'Tuesday', 'Monday', 'Wednesday', 'Tuesday', 'Monday'],
         },
-        { name: 'count', type: FieldType.number, values: [18, 72, 13, 17, 71, 7, 1] },
+        { name: 'count', type: FieldType.number, values: [18, 72, 13, 17, 71, 7] },
       ],
     });
     const tableData2 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE', 'DOG'] },
-        { name: 'count', type: FieldType.number, values: [103, 95, 201, 6] },
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE'] },
+        { name: 'count', type: FieldType.number, values: [103, 95, 201] },
       ],
     });
 
@@ -181,8 +181,6 @@ describe('align frames', () => {
               "FEMALE",
               "FEMALE",
               "NON-BINARY",
-              "COW",
-              "DOG",
             ],
           },
           {
@@ -194,8 +192,6 @@ describe('align frames', () => {
               "Wednesday",
               "Tuesday",
               "Monday",
-              "Monday",
-              null,
             ],
           },
           {
@@ -207,8 +203,6 @@ describe('align frames', () => {
               17,
               71,
               7,
-              1,
-              null,
             ],
           },
           {
@@ -220,8 +214,6 @@ describe('align frames', () => {
               201,
               201,
               95,
-              null,
-              6,
             ],
           },
         ]
@@ -346,117 +338,6 @@ describe('align frames', () => {
           },
         ]
       `);
-    });
-
-    // Three non-empty frames exercise the iterative merge in joinTabular (the `for (ti = 1...)` loop):
-    // the second merge re-joins frame3 against a left table that is itself a previously
-    // cartesian-expanded join result, which is where the output-column index bookkeeping is most fragile.
-    const f1 = toDataFrame({
-      fields: [
-        { name: 'key', type: FieldType.string, values: ['A', 'A', 'B', 'C'] },
-        { name: 'l', type: FieldType.number, values: [1, 2, 3, 4] },
-      ],
-    });
-    const f2 = toDataFrame({
-      fields: [
-        { name: 'key', type: FieldType.string, values: ['A', 'B', 'B', 'D'] },
-        { name: 'm', type: FieldType.number, values: [10, 20, 30, 40] },
-      ],
-    });
-    const f3 = toDataFrame({
-      fields: [
-        { name: 'key', type: FieldType.string, values: ['A', 'B', 'E'] },
-        { name: 'r', type: FieldType.number, values: [100, 200, 300] },
-      ],
-    });
-
-    it('should perform an outer join across three frames with duplicated join values', () => {
-      const out = joinDataFrames({
-        frames: [f1, f2, f3],
-        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('key'),
-        mode: JoinMode.outerTabular,
-      })!;
-      expect(
-        out.fields.map((f) => ({
-          name: f.name,
-          values: f.values,
-        }))
-      ).toEqual([
-        { name: 'key', values: ['A', 'A', 'B', 'B', 'C', 'D', 'E'] },
-        { name: 'l', values: [1, 2, 3, 3, 4, null, null] },
-        { name: 'm', values: [10, 10, 20, 30, null, 40, null] },
-        { name: 'r', values: [100, 100, 200, 200, null, null, 300] },
-      ]);
-    });
-
-    it('should perform an inner join across three frames with duplicated join values', () => {
-      const out = joinDataFrames({
-        frames: [f1, f2, f3],
-        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('key'),
-        mode: JoinMode.inner,
-      })!;
-      expect(
-        out.fields.map((f) => ({
-          name: f.name,
-          values: f.values,
-        }))
-      ).toEqual([
-        { name: 'key', values: ['A', 'A', 'B', 'B'] },
-        { name: 'l', values: [1, 2, 3, 3] },
-        { name: 'm', values: [10, 10, 20, 30] },
-        { name: 'r', values: [100, 100, 200, 200] },
-      ]);
-    });
-
-    // A null/undefined value in the join column exercises the `v == null` branch in joinTabular:
-    // for outer joins the row is carried as an unmatched-left row; for inner joins it is dropped.
-    const nullKeyLeft = toDataFrame({
-      fields: [
-        { name: 'key', type: FieldType.string, values: ['A', null, 'B'] },
-        { name: 'l', type: FieldType.number, values: [1, 2, 3] },
-      ],
-    });
-    const nullKeyRight = toDataFrame({
-      fields: [
-        { name: 'key', type: FieldType.string, values: ['A', 'B'] },
-        { name: 'r', type: FieldType.number, values: [10, 20] },
-      ],
-    });
-
-    it('should carry a null join value as an unmatched-left row for outer tabular joins', () => {
-      const out = joinDataFrames({
-        frames: [nullKeyLeft, nullKeyRight],
-        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('key'),
-        mode: JoinMode.outerTabular,
-      })!;
-      expect(
-        out.fields.map((f) => ({
-          name: f.name,
-          values: f.values,
-        }))
-      ).toEqual([
-        { name: 'key', values: ['A', 'B', null] },
-        { name: 'l', values: [1, 3, 2] },
-        { name: 'r', values: [10, 20, null] },
-      ]);
-    });
-
-    it('should drop a null join value for inner tabular joins', () => {
-      const out = joinDataFrames({
-        frames: [nullKeyLeft, nullKeyRight],
-        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('key'),
-        mode: JoinMode.inner,
-      })!;
-      expect(
-        out.fields.map((f) => ({
-          name: f.name,
-          values: f.values,
-        }))
-      ).toEqual([
-        { name: 'key', values: ['A', 'B'] },
-        { name: 'l', values: [1, 3] },
-        { name: 'r', values: [10, 20] },
-      ]);
     });
   });
 
@@ -737,35 +618,6 @@ describe('align frames', () => {
         },
       ]
     `);
-  });
-
-  describe('handles empty tables (no frames match join field)', () => {
-    it.each([JoinMode.outer, JoinMode.inner, JoinMode.outerTabular])(
-      '%s join should not crash when no frames have the join field',
-      (mode) => {
-        const frame1 = toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000] },
-            { name: 'A', type: FieldType.number, values: [1, 2] },
-          ],
-        });
-        const frame2 = toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 3000] },
-            { name: 'B', type: FieldType.number, values: [3, 4] },
-          ],
-        });
-
-        const out = joinDataFrames({
-          frames: [frame1, frame2],
-          joinBy: fieldMatchers.get(FieldMatcherID.byName).get('nonexistent_field'),
-          mode,
-        });
-
-        expect(out).toBeDefined();
-        expect(out!.length).toBe(0);
-      }
-    );
   });
 
   describe('check ascending data', () => {

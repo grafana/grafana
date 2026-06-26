@@ -1,17 +1,25 @@
+import { isString } from 'lodash';
 import { useMemo } from 'react';
+import { useObservable } from 'react-use';
 
-import { type PluginExtensionLink, usePluginContext } from '@grafana/data';
-import { type UsePluginLinksOptions, type UsePluginLinksResult } from '@grafana/runtime';
-
-import { useAddedLinksRegistrySlice } from './registry/useRegistrySlice';
-import { useLoadAppPlugins } from './useLoadAppPlugins';
+import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@grafana/data';
 import {
-  addedLinkToExtensionLink,
-  getExtensionPointPluginDependencies,
+  UsePluginLinksOptions,
+  UsePluginLinksResult,
+} from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
+
+import { useAddedLinksRegistry } from './ExtensionRegistriesContext';
+import { log } from './logs/log';
+import {
+  generateExtensionId,
+  getLinkExtensionOnClick,
   getLinkExtensionOverrides,
+  getLinkExtensionPathWithTracking,
   getReadOnlyProxy,
+  isExtensionPointMetaInfoMissing,
+  isGrafanaDevMode,
 } from './utils';
-import { validateExtensionPoint } from './validateExtensionPoint';
+import { isExtensionPointIdValid } from './validators';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginLinks({
@@ -19,20 +27,42 @@ export function usePluginLinks({
   extensionPointId,
   context,
 }: UsePluginLinksOptions): UsePluginLinksResult {
-  const registryItems = useAddedLinksRegistrySlice(extensionPointId);
+  const registry = useAddedLinksRegistry();
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(extensionPointId, getExtensionPointPluginDependencies);
+  const registryState = useObservable(registry.asObservable());
 
   return useMemo(() => {
-    const { result, pointLog } = validateExtensionPoint({
+    // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
+    const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
+    const pluginId = pluginContext?.meta.id ?? '';
+    const pointLog = log.child({
+      pluginId,
       extensionPointId,
-      pluginContext,
-      isLoadingAppPlugins,
     });
 
-    if (result) {
+    if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
+      pointLog.warning(
+        `Extension point usePluginLinks("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
+      );
       return {
-        isLoading: result.isLoading,
+        isLoading: false,
+        links: [],
+      };
+    }
+
+    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, pointLog)) {
+      pointLog.warning(
+        `Invalid extension point. Reason: The extension point is not declared in the "plugin.json" file. ExtensionPointId: "${extensionPointId}"`
+      );
+      return {
+        isLoading: false,
+        links: [],
+      };
+    }
+
+    if (!registryState || !registryState[extensionPointId]) {
+      return {
+        isLoading: false,
         links: [],
       };
     }
@@ -41,19 +71,10 @@ export function usePluginLinks({
     const extensions: PluginExtensionLink[] = [];
     const extensionsByPlugin: Record<string, number> = {};
 
-    for (const addedLink of registryItems ?? []) {
+    for (const addedLink of registryState[extensionPointId] ?? []) {
       const { pluginId } = addedLink;
-      const linkLog = pointLog.child({
-        path: addedLink.path ?? '',
-        title: addedLink.title,
-        description: addedLink.description ?? '',
-        onClick: typeof addedLink.onClick,
-        openInNewTab: addedLink.openInNewTab ? 'true' : 'false',
-      });
-
       // Only limit if the `limitPerPlugin` is set
       if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
-        linkLog.debug(`Skipping link extension from plugin "${pluginId}". Reason: Limit reached.`);
         continue;
       }
 
@@ -61,6 +82,12 @@ export function usePluginLinks({
         extensionsByPlugin[pluginId] = 0;
       }
 
+      const linkLog = pointLog.child({
+        path: addedLink.path ?? '',
+        title: addedLink.title,
+        description: addedLink.description,
+        onClick: typeof addedLink.onClick,
+      });
       // Run the configure() function with the current context, and apply the ovverides
       const overrides = getLinkExtensionOverrides(pluginId, addedLink, linkLog, frozenContext);
 
@@ -69,14 +96,21 @@ export function usePluginLinks({
         continue;
       }
 
-      const extension = addedLinkToExtensionLink(
-        pluginId,
-        extensionPointId,
-        addedLink,
-        overrides,
-        linkLog,
-        frozenContext
-      );
+      const path = overrides?.path || addedLink.path;
+      const extension: PluginExtensionLink = {
+        id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
+        type: PluginExtensionTypes.link,
+        pluginId: pluginId,
+        onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
+
+        // Configurable properties
+        icon: overrides?.icon || addedLink.icon,
+        title: overrides?.title || addedLink.title,
+        description: overrides?.description || addedLink.description,
+        path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
+        category: overrides?.category || addedLink.category,
+      };
+
       extensions.push(extension);
       extensionsByPlugin[pluginId] += 1;
     }
@@ -85,5 +119,5 @@ export function usePluginLinks({
       isLoading: false,
       links: extensions,
     };
-  }, [context, extensionPointId, limitPerPlugin, registryItems, pluginContext, isLoadingAppPlugins]);
+  }, [context, extensionPointId, limitPerPlugin, registryState, pluginContext]);
 }

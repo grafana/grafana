@@ -1,19 +1,19 @@
-import type OpenLayersMap from 'ol/Map';
-import { type Point } from 'ol/geom';
+import Map from 'ol/Map';
+import { Point } from 'ol/geom';
 import * as layer from 'ol/layer';
 
 import {
-  type EventBus,
+  EventBus,
   FieldType,
   getFieldColorModeForField,
-  type GrafanaTheme2,
-  type MapLayerOptions,
-  type MapLayerRegistryItem,
-  type PanelData,
+  GrafanaTheme2,
+  MapLayerOptions,
+  MapLayerRegistryItem,
+  PanelData,
 } from '@grafana/data';
-import { type ScaleDimensionConfig } from '@grafana/schema';
-import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
-import { getScaledDimension } from 'app/features/dimensions/scale';
+import { ScaleDimensionConfig } from '@grafana/schema';
+import { getScaledDimension } from 'app/features/dimensions';
+import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -46,11 +46,9 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
   /**
    * Function that configures transformation and returns a transformer
-   * @param map
    * @param options
-   * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<HeatmapConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<HeatmapConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
     const location = await getLocationMatchers(options.location);

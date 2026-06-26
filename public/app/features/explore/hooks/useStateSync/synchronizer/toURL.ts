@@ -1,18 +1,18 @@
-import { type Action } from '@reduxjs/toolkit';
+import { Action } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
-import { type MutableRefObject } from 'react';
+import { MutableRefObject } from 'react';
 
-import { type UrlQueryMap } from '@grafana/data';
-import { type LocationService } from '@grafana/runtime';
+import { UrlQueryMap } from '@grafana/data';
+import { LocationService } from '@grafana/runtime';
 import { changeDatasource } from 'app/features/explore/state/datasource';
-import { changeCompactModeAction, changePanelsStateAction } from 'app/features/explore/state/explorePane';
+import { changePanelsStateAction } from 'app/features/explore/state/explorePane';
 import { splitClose, splitOpen } from 'app/features/explore/state/main';
 import { runQueries } from 'app/features/explore/state/query';
 import { changeRangeAction } from 'app/features/explore/state/time';
-import { type ExploreState } from 'app/types/explore';
+import { ExploreState } from 'app/types';
 
-import { getUrlStateFromPaneState } from '../external.utils';
-import { type InitState } from '../internal.utils';
+import { getUrlStateFromPaneState } from '../index';
+import { InitState } from '../internal.utils';
 
 /*
 We want to update the URL when:
@@ -21,7 +21,6 @@ We want to update the URL when:
  - range is changed
  - panel state is updated
  - a datasource change has completed.
- - compact mode changes
 
 Note: Changing datasource causes a bunch of actions to be dispatched, we want to update the URL
 only when the change set has completed. This is done by checking if the changeDatasource.pending action
@@ -38,7 +37,6 @@ export function syncToURLPredicate(paused: MutableRefObject<boolean>, action: Ac
       changeRangeAction.type,
       changePanelsStateAction.type,
       changeDatasource.fulfilled.type,
-      changeCompactModeAction.type,
     ].includes(action.type) && !paused.current
   );
 }

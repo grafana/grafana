@@ -2,12 +2,13 @@ package definitions
 
 import (
 	"fmt"
+	tmplhtml "html/template"
 	"regexp"
 	"strings"
+	tmpltext "text/template"
 
-	"github.com/grafana/alerting/definition"
-	"github.com/grafana/alerting/notify"
-	"go.yaml.in/yaml/v3"
+	"github.com/prometheus/alertmanager/template"
+	"gopkg.in/yaml.v3"
 )
 
 func (t *NotificationTemplate) Validate() error {
@@ -32,19 +33,23 @@ func (t *NotificationTemplate) Validate() error {
 		content = fmt.Sprintf("{{ define \"%s\" }}\n%s\n{{ end }}", t.Name, content)
 	}
 	t.Template = content
-	if t.Kind == "" {
-		t.Kind = definition.GrafanaTemplateKind
+
+	// Validate template contents. We try to stick as close to what will actually happen when the templates are parsed
+	// by the alertmanager as possible. That means parsing with both the text and html parsers and making sure we set
+	// the template name and options.
+	ttext := tmpltext.New(t.Name).Option("missingkey=zero")
+	ttext.Funcs(tmpltext.FuncMap(template.DefaultFuncs))
+	if _, err := ttext.Parse(t.Template); err != nil {
+		return fmt.Errorf("invalid template: %w", err)
 	}
-	postable := definition.PostableApiTemplate{
-		Name:    t.Name,
-		Content: t.Template,
-		Kind:    t.Kind,
+
+	thtml := tmplhtml.New(t.Name).Option("missingkey=zero")
+	thtml.Funcs(tmplhtml.FuncMap(template.DefaultFuncs))
+	if _, err := thtml.Parse(t.Template); err != nil {
+		return fmt.Errorf("invalid template: %w", err)
 	}
-	if err := postable.Validate(); err != nil {
-		return err
-	}
-	def := notify.PostableAPITemplateToTemplateDefinition(postable)
-	return def.Validate()
+
+	return nil
 }
 
 func (mt *MuteTimeInterval) Validate() error {

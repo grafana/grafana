@@ -1,5 +1,5 @@
 import { createAction } from '@reduxjs/toolkit';
-import { type AnyAction } from 'redux';
+import { AnyAction } from 'redux';
 
 import { reducerTester } from './reducerTester';
 

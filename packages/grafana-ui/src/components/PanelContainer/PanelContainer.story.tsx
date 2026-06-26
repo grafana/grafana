@@ -1,10 +1,10 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { PanelContainer } from './PanelContainer';
 import mdx from './PanelContainer.mdx';
 
 const meta: Meta<typeof PanelContainer> = {
-  title: 'Layout/Deprecated/PanelContainer',
+  title: 'General/PanelContainer',
   component: PanelContainer,
   parameters: {
     docs: {

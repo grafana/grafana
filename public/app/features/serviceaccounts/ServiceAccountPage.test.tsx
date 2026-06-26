@@ -2,15 +2,12 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { OrgRole } from '@grafana/data';
-import { type ApiKey } from 'app/types/apiKeys';
-import { type ServiceAccountDTO } from 'app/types/serviceaccount';
+import { ApiKey, OrgRole, ServiceAccountDTO } from 'app/types';
 
-import { ServiceAccountPageUnconnected, type Props } from './ServiceAccountPage';
+import { ServiceAccountPageUnconnected, Props } from './ServiceAccountPage';
 
-jest.mock('app/core/services/context_srv', () => ({
+jest.mock('app/core/core', () => ({
   contextSrv: {
-    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     licensedAccessControlEnabled: () => false,
     hasPermission: () => true,
     hasPermissionInMetadata: () => false,

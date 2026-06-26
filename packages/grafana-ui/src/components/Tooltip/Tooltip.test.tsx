@@ -1,8 +1,6 @@
 ﻿import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type MutableRefObject } from 'react';
-
-import { TextLink } from '../Link/TextLink';
+import { MutableRefObject } from 'react';
 
 import { Tooltip } from './Tooltip';
 
@@ -10,9 +8,9 @@ describe('Tooltip', () => {
   it('renders correctly', () => {
     render(
       <Tooltip placement="auto" content="Tooltip text">
-        <TextLink external href="http://www.grafana.com">
+        <a className="test-class" href="http://www.grafana.com">
           Link with tooltip
-        </TextLink>
+        </a>
       </Tooltip>
     );
     expect(screen.getByText('Link with tooltip')).toBeInTheDocument();

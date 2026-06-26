@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { t } from '@grafana/i18n';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 
 function getStyles() {
   return {
@@ -36,13 +35,13 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
 
   return (
     <div className={styles.wrapper}>
-      <Stack direction="column" gap={1}>
-        <Stack gap={0.5}>
+      <VerticalGroup spacing="sm">
+        <HorizontalGroup spacing="xs">
           <Button
             icon={'plus-circle'}
             onClick={onPlus}
             size={'md'}
-            aria-label={t('nodeGraph.view-controls.title-zoom-in', 'Zoom in')}
+            title={'Zoom in'}
             variant="secondary"
             disabled={disableZoomIn}
           />
@@ -50,18 +49,34 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
             icon={'minus-circle'}
             onClick={onMinus}
             size={'md'}
-            aria-label={t('nodeGraph.view-controls.title-zoom-out', 'Zoom out')}
+            title={'Zoom out'}
             variant="secondary"
             disabled={disableZoomOut}
           />
-        </Stack>
-      </Stack>
+        </HorizontalGroup>
+        <HorizontalGroup spacing="xs">
+          <Button
+            icon={'code-branch'}
+            onClick={() => onConfigChange({ ...config, gridLayout: false })}
+            size={'md'}
+            title={'Default layout'}
+            variant="secondary"
+            disabled={!config.gridLayout}
+          />
+          <Button
+            icon={'apps'}
+            onClick={() => onConfigChange({ ...config, gridLayout: true })}
+            size={'md'}
+            title={'Grid layout'}
+            variant="secondary"
+            disabled={config.gridLayout}
+          />
+        </HorizontalGroup>
+      </VerticalGroup>
 
       {allowConfiguration && (
         <Button size={'xs'} fill="text" onClick={() => setShowConfig((showConfig) => !showConfig)}>
-          {showConfig
-            ? t('nodeGraph.view-controls.hide-config', 'Hide config')
-            : t('nodeGraph.view-controls.show-config', 'Show config')}
+          {showConfig ? 'Hide config' : 'Show config'}
         </Button>
       )}
 

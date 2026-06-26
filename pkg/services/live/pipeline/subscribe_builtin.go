@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
@@ -29,8 +30,8 @@ func (s *BuiltinSubscriber) Type() string {
 }
 
 func (s *BuiltinSubscriber) Subscribe(ctx context.Context, vars Vars, data []byte) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	u, err := identity.GetRequester(ctx)
-	if err != nil {
+	u, ok := livecontext.GetContextSignedUser(ctx)
+	if !ok {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 	}
 	handler, _, err := s.channelHandlerGetter.GetChannelHandler(ctx, u, vars.Channel)

@@ -1,17 +1,24 @@
 import { debounce } from 'lodash';
 import { useState, useEffect } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { TabbedContainer, type TabConfig } from '@grafana/ui';
-import { createDatasourcesList } from 'app/core/utils/richHistory';
-import { SortOrder, type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
-import { type RichHistoryQuery } from 'app/types/explore';
-import { useSelector } from 'app/types/store';
+import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+import {
+  SortOrder,
+  RichHistorySearchFilters,
+  RichHistorySettings,
+  createDatasourcesList,
+} from 'app/core/utils/richHistory';
+import { QUERY_LIBRARY_GET_LIMIT, queryLibraryApi } from 'app/features/query-library/api/factory';
+import { useSelector } from 'app/types';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
-import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
+import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
+import { i18n } from '../QueriesDrawer/utils';
+import { QueryLibrary } from '../QueryLibrary/QueryLibrary';
 import { selectExploreDSMaps } from '../state/selectors';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
@@ -46,6 +53,8 @@ export function RichHistory(props: RichHistoryProps) {
   const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
   const [loading, setLoading] = useState(false);
+
+  const { queryLibraryAvailable } = useQueriesDrawerContext();
 
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
@@ -88,8 +97,17 @@ export function RichHistory(props: RichHistoryProps) {
     .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
     .filter((name): name is string => !!name);
 
+  const queryTemplatesCount = useSelector(queryLibraryApi.endpoints.allQueryTemplates.select()).data?.length || 0;
+
+  const QueryLibraryTab: TabConfig = {
+    label: `${i18n.queryLibrary} (${queryTemplatesCount}/${QUERY_LIBRARY_GET_LIMIT})`,
+    value: Tabs.QueryLibrary,
+    content: <QueryLibrary activeDatasources={activeDatasources} />,
+    icon: 'book',
+  };
+
   const QueriesTab: TabConfig = {
-    label: t('explore.rich-history.query-history', 'Query history'),
+    label: i18n.queryHistory,
     value: Tabs.RichHistory,
     content: (
       <RichHistoryQueriesTab
@@ -144,7 +162,7 @@ export function RichHistory(props: RichHistoryProps) {
     icon: 'sliders-v-alt',
   };
 
-  let tabs = [QueriesTab, StarredTab, SettingsTab];
+  let tabs = (queryLibraryAvailable ? [QueryLibraryTab] : []).concat([QueriesTab, StarredTab, SettingsTab]);
   return (
     <TabbedContainer
       tabs={tabs}

@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
+	"mime"
 	"reflect"
 	"strconv"
 	"strings"
@@ -13,28 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
-
-// LabelKeyGetHistory is used to select object history for an given resource
-const LabelKeyGetHistory = "grafana.app/get-history"
-
-// LabelKeyGetTrash is used to list objects that have been (soft) deleted
-const LabelKeyGetTrash = "grafana.app/get-trash"
-
-// AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
-const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
-
-// AnnoKeyGrantPermissions allows users to explicitly grant themself permissions when creating
-// resoures in the "root" folder.  This annotation is not saved and invalud for update.
-const AnnoKeyGrantPermissions = "grafana.app/grant-permissions"
-
-// AnnoGrantPermissionsDefault is the value that should be sent with AnnoKeyGrantPermissions
-const AnnoGrantPermissionsDefault = "default"
-
-// DeletedGeneration is set on Resources that have been (soft) deleted
-const DeletedGeneration = int64(-999)
 
 // Annotation keys
 
@@ -42,36 +23,43 @@ const AnnoKeyCreatedBy = "grafana.app/createdBy"
 const AnnoKeyUpdatedTimestamp = "grafana.app/updatedTimestamp"
 const AnnoKeyUpdatedBy = "grafana.app/updatedBy"
 const AnnoKeyFolder = "grafana.app/folder"
+const AnnoKeySlug = "grafana.app/slug"
 const AnnoKeyBlob = "grafana.app/blob"
 const AnnoKeyMessage = "grafana.app/message"
 
 // Identify where values came from
 
-const oldAnnoKeyRepoName = "grafana.app/repoName"
-const oldAnnoKeyRepoPath = "grafana.app/repoPath"
-const oldAnnoKeyRepoHash = "grafana.app/repoHash"
-const oldAnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
+const AnnoKeyOriginName = "grafana.app/originName"
+const AnnoKeyOriginPath = "grafana.app/originPath"
+const AnnoKeyOriginHash = "grafana.app/originHash"
+const AnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
 
-// Annotations used to store manager properties
+// #TODO revisit keeping these folder-specific annotations once we have complete support for mode 1
 
-const AnnoKeyManagerKind = "grafana.app/managedBy"
-const AnnoKeyManagerIdentity = "grafana.app/managerId"
-const AnnoKeyManagerAllowsEdits = "grafana.app/managerAllowsEdits"
-const AnnoKeyManagerSuspended = "grafana.app/managerSuspended"
+const AnnoKeyFullPath = "grafana.app/fullPath"
+const AnnoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
 
-// Annotations used to store source properties
+// ResourceOriginInfo is saved in annotations.  This is used to identify where the resource came from
+// This object can model the same data as our existing provisioning table or a more general git sync
+type ResourceOriginInfo struct {
+	// Name of the origin/provisioning source
+	Name string `json:"name,omitempty"`
 
-const AnnoKeySourcePath = "grafana.app/sourcePath"
-const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
-const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
+	// The path within the named origin above (external_id in the existing dashboard provisioing)
+	Path string `json:"path,omitempty"`
 
-// LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
-// Deprecated: will be removed in grafana 13
-const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
+	// Verification/identification hash (check_sum in existing dashboard provisioning)
+	Hash string `json:"hash,omitempty"`
+
+	// Origin modification timestamp when the resource was saved
+	// This will be before the resource updated time
+	Timestamp *time.Time `json:"time,omitempty"`
+
+	// Avoid extending
+	_ any `json:"-"`
+}
 
 // Accessor functions for k8s objects
-//
-//go:generate mockery --name GrafanaMetaAccessor --structname MockGrafanaMetaAccessor --inpackage --filename meta_mock.go --with-expecter
 type GrafanaMetaAccessor interface {
 	metav1.Object
 
@@ -95,16 +83,19 @@ type GrafanaMetaAccessor interface {
 	GetMessage() string
 	SetMessage(msg string)
 	SetAnnotation(key string, val string)
-	GetAnnotation(key string) string
+
+	GetSlug() string
+	SetSlug(v string)
 
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
 
-	// Deprecated: This should only be used to support legacy /api endpoints that need to return internal IDs. Those endpoints should be marked as deprecated and once they are removed, this will be too
-	GetDeprecatedInternalID() int64
-
-	// Deprecated: This should only be used to support legacy /api endpoints that need to return internal IDs. Those endpoints should be marked as deprecated and once they are removed, this will be too
-	SetDeprecatedInternalID(id int64)
+	GetOriginInfo() (*ResourceOriginInfo, error)
+	SetOriginInfo(info *ResourceOriginInfo)
+	GetOriginName() string
+	GetOriginPath() string
+	GetOriginHash() string
+	GetOriginTimestamp() (*time.Time, error)
 
 	GetSpec() (any, error)
 	SetSpec(any) error
@@ -115,6 +106,18 @@ type GrafanaMetaAccessor interface {
 	// NOTE the type must match the existing value, or an error will be thrown
 	SetStatus(any) error
 
+	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
+	GetFullPath() string
+
+	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
+	SetFullPath(path string)
+
+	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
+	GetFullPathUIDs() string
+
+	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
+	SetFullPathUIDs(path string)
+
 	// Find a title in the object
 	// This will reflect the object and try to get:
 	//  * spec.title
@@ -122,29 +125,6 @@ type GrafanaMetaAccessor interface {
 	//  * title
 	// and return an empty string if nothing was found
 	FindTitle(defaultTitle string) string
-
-	// GetManagerProperties returns the identity of the tool,
-	// which is responsible for managing the resource.
-	//
-	// If the identity is not known, the second return value will be false.
-	GetManagerProperties() (ManagerProperties, bool)
-
-	// SetManagerProperties sets the identity of the tool,
-	// which is responsible for managing the resource.
-	SetManagerProperties(ManagerProperties)
-
-	// GetSourceProperties returns the source properties of the resource.
-	GetSourceProperties() (SourceProperties, bool)
-
-	// SetSourceProperties sets the source properties of the resource.
-	SetSourceProperties(SourceProperties)
-
-	// GetSecureValues reads the "secure" property on a resource
-	GetSecureValues() (common.InlineSecureValues, error)
-
-	// SetSourceProperties sets the source properties of the resource.
-	// For write commands, this may include inline secrets; read will only have references
-	SetSecureValues(common.InlineSecureValues) error
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -160,18 +140,14 @@ type grafanaMetaAccessor struct {
 // required fields are missing. Fields that are not required return the default
 // value and are a no-op if set.
 func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
-	if raw == nil {
-		return nil, fmt.Errorf("unable to read metadata from nil object")
-	}
-
 	obj, err := meta.Accessor(raw)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read metadata from: %T, %s", raw, err)
+		return nil, err
 	}
 
 	// reflection to find title and other non object properties
 	r := reflect.ValueOf(raw)
-	if r.Kind() == reflect.Pointer || r.Kind() == reflect.Interface {
+	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
 		r = r.Elem()
 	}
 	return &grafanaMetaAccessor{raw, obj, r}, nil
@@ -199,7 +175,6 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 	if val == "" {
 		if anno != nil {
 			delete(anno, key)
-			anno = nilIfEmpty(anno)
 		}
 	} else {
 		if anno == nil {
@@ -210,12 +185,8 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 	m.obj.SetAnnotations(anno)
 }
 
-func (m *grafanaMetaAccessor) GetAnnotation(key string) string {
-	anno := m.obj.GetAnnotations()
-	if anno == nil {
-		return ""
-	}
-	return anno[key]
+func (m *grafanaMetaAccessor) get(key string) string {
+	return m.obj.GetAnnotations()[key]
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) {
@@ -249,7 +220,7 @@ func (m *grafanaMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 }
 
 func (m *grafanaMetaAccessor) GetCreatedBy() string {
-	return m.GetAnnotation(AnnoKeyCreatedBy)
+	return m.get(AnnoKeyCreatedBy)
 }
 
 func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
@@ -257,7 +228,7 @@ func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedBy() string {
-	return m.GetAnnotation(AnnoKeyUpdatedBy)
+	return m.get(AnnoKeyUpdatedBy)
 }
 
 func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
@@ -265,19 +236,18 @@ func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
 }
 
 func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
-	return ParseBlobInfo(m.GetAnnotation(AnnoKeyBlob))
+	return ParseBlobInfo(m.get(AnnoKeyBlob))
 }
 
 func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
 	if info == nil {
 		m.SetAnnotation(AnnoKeyBlob, "") // delete
-	} else {
-		m.SetAnnotation(AnnoKeyBlob, info.String())
 	}
+	m.SetAnnotation(AnnoKeyBlob, info.String())
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {
-	return m.GetAnnotation(AnnoKeyFolder)
+	return m.get(AnnoKeyFolder)
 }
 
 func (m *grafanaMetaAccessor) SetFolder(uid string) {
@@ -285,49 +255,85 @@ func (m *grafanaMetaAccessor) SetFolder(uid string) {
 }
 
 func (m *grafanaMetaAccessor) GetMessage() string {
-	return m.GetAnnotation(AnnoKeyMessage)
+	return m.get(AnnoKeyMessage)
 }
 
 func (m *grafanaMetaAccessor) SetMessage(uid string) {
 	m.SetAnnotation(AnnoKeyMessage, uid)
 }
 
-// This will be removed in Grafana 13. Do not add any new usage of it.
-func (m *grafanaMetaAccessor) GetDeprecatedInternalID() int64 {
-	labels := m.obj.GetLabels()
-	if labels == nil {
-		return 0
-	}
-
-	if internalID, ok := labels[LabelKeyDeprecatedInternalID]; ok {
-		id, err := strconv.ParseInt(internalID, 10, 64)
-		if err == nil {
-			return id
-		}
-	}
-
-	return 0
+func (m *grafanaMetaAccessor) GetSlug() string {
+	return m.get(AnnoKeySlug)
 }
 
-// This will be removed in Grafana 13. Do not add any new usage of it.
-func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
-	labels := m.obj.GetLabels()
+func (m *grafanaMetaAccessor) SetSlug(v string) {
+	m.SetAnnotation(AnnoKeySlug, v)
+}
 
-	// disallow setting it to 0
-	if id == 0 {
-		if labels != nil {
-			delete(labels, LabelKeyDeprecatedInternalID)
-			m.obj.SetLabels(nilIfEmpty(labels))
+func (m *grafanaMetaAccessor) SetOriginInfo(info *ResourceOriginInfo) {
+	anno := m.obj.GetAnnotations()
+	if anno == nil {
+		if info == nil {
+			return
 		}
-		return
+		anno = make(map[string]string, 0)
 	}
 
-	if labels == nil {
-		labels = make(map[string]string)
+	delete(anno, AnnoKeyOriginName)
+	delete(anno, AnnoKeyOriginPath)
+	delete(anno, AnnoKeyOriginHash)
+	delete(anno, AnnoKeyOriginTimestamp)
+	if info != nil && info.Name != "" {
+		anno[AnnoKeyOriginName] = info.Name
+		if info.Path != "" {
+			anno[AnnoKeyOriginPath] = info.Path
+		}
+		if info.Hash != "" {
+			anno[AnnoKeyOriginHash] = info.Hash
+		}
+		if info.Timestamp != nil {
+			anno[AnnoKeyOriginTimestamp] = info.Timestamp.UTC().Format(time.RFC3339)
+		}
 	}
+	m.obj.SetAnnotations(anno)
+}
 
-	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
-	m.obj.SetLabels(labels)
+func (m *grafanaMetaAccessor) GetOriginInfo() (*ResourceOriginInfo, error) {
+	v, ok := m.obj.GetAnnotations()[AnnoKeyOriginName]
+	if !ok {
+		return nil, nil
+	}
+	t, err := m.GetOriginTimestamp()
+	return &ResourceOriginInfo{
+		Name:      v,
+		Path:      m.GetOriginPath(),
+		Hash:      m.GetOriginHash(),
+		Timestamp: t,
+	}, err
+}
+
+func (m *grafanaMetaAccessor) GetOriginName() string {
+	return m.get(AnnoKeyOriginName)
+}
+
+func (m *grafanaMetaAccessor) GetOriginPath() string {
+	return m.get(AnnoKeyOriginPath)
+}
+
+func (m *grafanaMetaAccessor) GetOriginHash() string {
+	return m.get(AnnoKeyOriginHash)
+}
+
+func (m *grafanaMetaAccessor) GetOriginTimestamp() (*time.Time, error) {
+	v, ok := m.obj.GetAnnotations()[AnnoKeyOriginTimestamp]
+	if !ok || v == "" {
+		return nil, nil
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return nil, fmt.Errorf("invalid origin timestamp: %s", err.Error())
+	}
+	return &t, nil
 }
 
 // GetAnnotations implements GrafanaMetaAccessor.
@@ -609,6 +615,22 @@ func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
 	return
 }
 
+func (m *grafanaMetaAccessor) GetFullPath() string {
+	return m.get(AnnoKeyFullPath)
+}
+
+func (m *grafanaMetaAccessor) SetFullPath(path string) {
+	m.SetAnnotation(AnnoKeyFullPath, path)
+}
+
+func (m *grafanaMetaAccessor) GetFullPathUIDs() string {
+	return m.get(AnnoKeyFullPathUIDs)
+}
+
+func (m *grafanaMetaAccessor) SetFullPathUIDs(path string) {
+	m.SetAnnotation(AnnoKeyFullPathUIDs, path)
+}
+
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	// look for Spec.Title or Spec.Name
 	spec := m.r.FieldByName("Spec")
@@ -621,34 +643,6 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		if name.IsValid() && name.Kind() == reflect.String {
 			return name.String()
 		}
-
-		// Unstructured uses Object subtype
-		object := spec.FieldByName("Object")
-		if object.IsValid() && object.Kind() == reflect.Map {
-			key := reflect.ValueOf("title")
-			value := object.MapIndex(key)
-			if value.IsValid() {
-				if value.CanInterface() {
-					v := value.Interface()
-					t, ok := v.(string)
-					if ok {
-						return t
-					}
-				}
-			}
-		}
-	}
-
-	obj, ok := m.obj.(*unstructured.Unstructured)
-	if ok {
-		title, ok, _ := unstructured.NestedString(obj.Object, "spec", "title")
-		if ok && title != "" {
-			return title
-		}
-		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "name")
-		if ok && title != "" {
-			return title
-		}
 	}
 
 	title := m.r.FieldByName("Title")
@@ -658,317 +652,81 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 	return defaultTitle
 }
 
-func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
-	res := ManagerProperties{
-		Identity:    "",
-		Kind:        ManagerKindUnknown,
-		AllowsEdits: false,
-		Suspended:   false,
-	}
-
-	annot := m.obj.GetAnnotations()
-
-	id, ok := annot[AnnoKeyManagerIdentity]
-	if !ok || id == "" {
-		// Temporarily support the repo name annotation
-		repo := annot[oldAnnoKeyRepoName]
-		if repo != "" {
-			return ManagerProperties{
-				Kind:     ManagerKindRepo,
-				Identity: repo,
-			}, true
-		}
-
-		// If the identity is not set, we should ignore the other annotations and return the default values.
-		//
-		// This is to prevent inadvertently marking resources as managed,
-		// since that can potentially block updates from other sources.
-		return res, false
-	}
-	res.Identity = id
-
-	if v, ok := annot[AnnoKeyManagerKind]; ok {
-		res.Kind = ParseManagerKindString(v)
-	}
-
-	if v, ok := annot[AnnoKeyManagerAllowsEdits]; ok {
-		res.AllowsEdits = v == "true"
-	}
-
-	if v, ok := annot[AnnoKeyManagerSuspended]; ok {
-		res.Suspended = v == "true"
-	}
-
-	return res, true
+type BlobInfo struct {
+	UID      string `json:"uid"`
+	Size     int64  `json:"size,omitempty"`
+	Hash     string `json:"hash,omitempty"`
+	MimeType string `json:"mime,omitempty"`
+	Charset  string `json:"charset,omitempty"` // content type = mime+charset
 }
 
-func (m *grafanaMetaAccessor) SetManagerProperties(v ManagerProperties) {
-	annot := m.obj.GetAnnotations()
-	if annot == nil {
-		annot = make(map[string]string, 4)
-	}
+// Content type is mime + charset
+func (b *BlobInfo) SetContentType(v string) {
+	var params map[string]string
+	var err error
 
-	if v.Identity != "" {
-		annot[AnnoKeyManagerIdentity] = v.Identity
-	} else {
-		delete(annot, AnnoKeyManagerIdentity)
-	}
-
-	if string(v.Kind) != "" {
-		annot[AnnoKeyManagerKind] = string(v.Kind)
-	} else {
-		delete(annot, AnnoKeyManagerKind)
-	}
-
-	if v.AllowsEdits {
-		annot[AnnoKeyManagerAllowsEdits] = strconv.FormatBool(v.AllowsEdits)
-	} else {
-		delete(annot, AnnoKeyManagerAllowsEdits)
-	}
-	if v.Suspended {
-		annot[AnnoKeyManagerSuspended] = strconv.FormatBool(v.Suspended)
-	} else {
-		delete(annot, AnnoKeyManagerSuspended)
-	}
-
-	// Clean up old annotation access
-	delete(annot, oldAnnoKeyRepoName)
-
-	m.obj.SetAnnotations(annot)
-}
-
-func (m *grafanaMetaAccessor) GetSourceProperties() (SourceProperties, bool) {
-	var (
-		res   SourceProperties
-		found bool
-	)
-
-	annot := m.obj.GetAnnotations()
-	if annot == nil {
-		return res, false
-	}
-
-	if path, ok := annot[AnnoKeySourcePath]; ok && path != "" {
-		res.Path = path
-		found = true
-	} else if path, ok := annot[oldAnnoKeyRepoPath]; ok && path != "" {
-		res.Path = path
-		found = true
-	}
-
-	if hash, ok := annot[AnnoKeySourceChecksum]; ok && hash != "" {
-		res.Checksum = hash
-		found = true
-	} else if hash, ok := annot[oldAnnoKeyRepoHash]; ok && hash != "" {
-		res.Checksum = hash
-		found = true
-	}
-
-	t, ok := annot[AnnoKeySourceTimestamp]
-	if !ok {
-		t, ok = annot[oldAnnoKeyRepoTimestamp]
-	}
-	if ok && t != "" {
-		var err error
-		res.TimestampMillis, err = strconv.ParseInt(t, 10, 64)
-		if err != nil {
-			found = true
-		}
-	}
-
-	return res, found
-}
-
-func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
-	annot := m.obj.GetAnnotations()
-	if annot == nil {
-		annot = make(map[string]string, 3)
-	}
-
-	if v.Path != "" {
-		annot[AnnoKeySourcePath] = v.Path
-	} else {
-		delete(annot, AnnoKeySourcePath)
-	}
-
-	if v.Checksum != "" {
-		annot[AnnoKeySourceChecksum] = v.Checksum
-	} else {
-		delete(annot, AnnoKeySourceChecksum)
-	}
-
-	if v.TimestampMillis > 0 {
-		annot[AnnoKeySourceTimestamp] = strconv.FormatInt(v.TimestampMillis, 10)
-	} else {
-		delete(annot, AnnoKeySourceTimestamp)
-	}
-
-	m.obj.SetAnnotations(annot)
-}
-
-// GetSecureValues implements GrafanaMetaAccessor.
-func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("error reading secure values")
-		}
-	}()
-
-	var property any // may be map or struct
-
-	f := m.r.FieldByName("Secure")
-	if f.IsValid() {
-		property = f.Interface()
-	} else {
-		// Unstructured
-		u, ok := m.raw.(*unstructured.Unstructured)
-		if ok {
-			property = u.Object["secure"]
-		}
-	}
-
-	// Not found (and no error)
-	if property == nil {
-		return nil, nil
-	}
-
-	// Try directly casting the property
-	vals, ok := property.(common.InlineSecureValues)
-	if ok {
-		return vals, nil
-	}
-
-	// Generic map
-	u, ok := property.(map[string]any)
-	if ok {
-		vals = make(common.InlineSecureValues, len(u))
-		for k, v := range u {
-			inline, ok := v.(common.InlineSecureValue)
-			if !ok {
-				sv, ok := v.(map[string]any)
-				if !ok {
-					return nil, fmt.Errorf("unsupported nested secure value: %t", v)
-				}
-				inline.Name, _, _ = unstructured.NestedString(sv, "name")
-				inline.Remove, _, _ = unstructured.NestedBool(sv, "remove")
-				create, _, _ := unstructured.NestedString(sv, "create")
-				if create != "" {
-					inline.Create = common.NewSecretValue(create)
-
-					if rawDesc, _, _ := unstructured.NestedFieldNoCopy(sv, "description"); rawDesc != nil {
-						if desc, ok := rawDesc.(*string); ok && desc != nil && *desc != "" {
-							inline.Description = desc
-						}
-					}
-				}
-			}
-			vals[k] = inline
-		}
-		return vals, nil
-	}
-
-	if f.Kind() == reflect.Struct {
-		num := f.NumField()
-		vals = make(common.InlineSecureValues, num)
-		for i := range num {
-			val := f.Field(i)
-			if val.IsValid() && val.CanInterface() {
-				property = val.Interface()
-				inline, ok := property.(common.InlineSecureValue)
-				if !ok {
-					return nil, fmt.Errorf("secure property must be InlineSecureValue (found: %T)", property)
-				}
-
-				if inline.IsZero() {
-					continue // nothing
-				}
-
-				vals[getJSONFieldName(f, i)] = inline
-				continue
-			}
-			return nil, fmt.Errorf("value not an interface")
-		}
-		return vals, nil
-	}
-
-	return nil, fmt.Errorf("secure value saved in unsupported type: %T", property)
-}
-
-// SetSecureValues implements GrafanaMetaAccessor.
-func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Printf("ERR: %v", r)
-			err = fmt.Errorf("error writing secure values")
-		}
-	}()
-
-	f := m.r.FieldByName("Secure")
-	if f.IsValid() && f.CanSet() {
-		if f.Kind() == reflect.Struct {
-			keys := make(map[string]bool, len(vals))
-			for k := range vals {
-				keys[k] = true
-			}
-			for i := 0; i < f.NumField(); i++ {
-				val := f.Field(i)
-				if val.IsValid() && val.CanInterface() && val.CanSet() {
-					k := getJSONFieldName(f, i)
-					sv := vals[k]
-					val.Set(reflect.ValueOf(sv))
-					delete(keys, k)
-				} else {
-					return fmt.Errorf("invalid secure value: %v", val)
-				}
-			}
-			if len(keys) > 0 {
-				return fmt.Errorf("invalid secure value key: %v", keys)
-			}
-			return
-		}
-
-		// It should be a generic map
-		f.Set(reflect.ValueOf(vals))
+	b.Charset = ""
+	b.MimeType, params, err = mime.ParseMediaType(v)
+	if err != nil {
 		return
 	}
-
-	// Unstructured object
-	u, ok := m.raw.(*unstructured.Unstructured)
-	if ok {
-		u.Object["secure"] = vals
-		return
-	}
-
-	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
+	b.Charset = params["charset"]
 }
 
-// nilIfEmpty returns nil for an empty map so the field is dropped from the
-// serialized object rather than written as an empty {}.
-func nilIfEmpty(m map[string]string) map[string]string {
-	if len(m) == 0 {
+// Content type is mime + charset
+func (b *BlobInfo) ContentType() string {
+	sb := bytes.NewBufferString(b.MimeType)
+	if b.Charset != "" {
+		sb.WriteString("; charset=")
+		sb.WriteString(b.Charset)
+	}
+	return sb.String()
+}
+
+func (b *BlobInfo) String() string {
+	sb := bytes.NewBufferString(b.UID)
+	if b.Size > 0 {
+		sb.WriteString(fmt.Sprintf("; size=%d", b.Size))
+	}
+	if b.Hash != "" {
+		sb.WriteString("; hash=")
+		sb.WriteString(b.Hash)
+	}
+	if b.MimeType != "" {
+		sb.WriteString("; mime=")
+		sb.WriteString(b.MimeType)
+	}
+	if b.Charset != "" {
+		sb.WriteString("; charset=")
+		sb.WriteString(b.Charset)
+	}
+	return sb.String()
+}
+
+func ParseBlobInfo(v string) *BlobInfo {
+	if v == "" {
 		return nil
 	}
-	return m
-}
-
-func getJSONFieldName(f reflect.Value, idx int) string {
-	field := f.Type().Field(idx)
-	fname := field.Tag.Get("json")
-	if fname == "" {
-		return field.Name
+	info := &BlobInfo{}
+	for i, part := range strings.Split(v, ";") {
+		if i == 0 {
+			info.UID = part
+			continue
+		}
+		kv := strings.Split(strings.TrimSpace(part), "=")
+		if len(kv) == 2 {
+			val := kv[1]
+			switch kv[0] {
+			case "size":
+				info.Size, _ = strconv.ParseInt(val, 10, 64)
+			case "hash":
+				info.Hash = val
+			case "mime":
+				info.MimeType = val
+			case "charset":
+				info.Charset = val
+			}
+		}
 	}
-	fname, _ = strings.CutSuffix(fname, ",omitempty")
-	return fname
-}
-
-func ToObjectReference(obj GrafanaMetaAccessor) common.ObjectReference {
-	gvk := obj.GetGroupVersionKind()
-	return common.ObjectReference{
-		APIGroup:   gvk.Group,
-		APIVersion: gvk.Version,
-		Kind:       gvk.Kind,
-		Namespace:  obj.GetNamespace(),
-		Name:       obj.GetName(),
-		UID:        obj.GetUID(),
-	}
+	return info
 }

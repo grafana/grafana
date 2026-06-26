@@ -1,19 +1,16 @@
-import { type ReplaySubject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 
-import { type AppPluginConfig, type PluginExtensionAddedComponentConfig } from '@grafana/data';
+import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
-import * as errors from '../errors';
-import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
-import { isAddedComponentMetaInfoMissing } from '../validators';
+import { isAddedComponentMetaInfoMissing, isGrafanaDevMode, wrapWithPluginContext } from '../utils';
+import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint } from '../validators';
 
-import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
-
-const logPrefix = 'Could not register component extension. Reason:';
+import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
 export type AddedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description?: string;
+  description: string;
   component: React.ComponentType<Props>;
 };
 
@@ -22,13 +19,12 @@ export class AddedComponentsRegistry extends Registry<
   PluginExtensionAddedComponentConfig
 > {
   constructor(
-    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedComponentRegistryItem[]>>;
       initialState?: RegistryType<AddedComponentRegistryItem[]>;
     } = {}
   ) {
-    super(apps, options);
+    super(options);
   }
 
   mapToRegistry(
@@ -45,14 +41,21 @@ export class AddedComponentsRegistry extends Registry<
       });
 
       if (!config.title) {
-        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
+        configLog.error(`Could not register added component. Reason: Title is missing.`);
+        continue;
+      }
+
+      if (!config.description) {
+        configLog.error(
+          `Could not register added component with title '${config.title}'. Reason: Description is missing.`
+        );
         continue;
       }
 
       if (
         pluginId !== 'grafana' &&
         isGrafanaDevMode() &&
-        isAddedComponentMetaInfoMissing(pluginId, config, configLog, this.apps)
+        isAddedComponentMetaInfoMissing(pluginId, config, configLog)
       ) {
         continue;
       }
@@ -61,23 +64,26 @@ export class AddedComponentsRegistry extends Registry<
       for (const extensionPointId of extensionPointIds) {
         const pointIdLog = configLog.child({ extensionPointId });
 
+        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
+          pointIdLog.warning(
+            `Added component "${config.title}": it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
+          );
+        }
+
         const result = {
           pluginId,
-          component: wrapWithPluginContext({
-            pluginId,
-            extensionTitle: config.title,
-            Component: config.component,
-            log: pointIdLog,
-          }),
+          component: wrapWithPluginContext(pluginId, config.component, pointIdLog),
           description: config.description,
           title: config.title,
         };
 
-        pointIdLog.debug('Added component extension successfully registered');
+        pointIdLog.debug(`Added component from '${pluginId}' to '${extensionPointId}'`);
 
-        // Creating a new array instead of pushing to get a new reference
-        const slice = registry[extensionPointId] ?? [];
-        registry[extensionPointId] = slice.concat(result);
+        if (!(extensionPointId in registry)) {
+          registry[extensionPointId] = [result];
+        } else {
+          registry[extensionPointId].push(result);
+        }
       }
     }
 
@@ -86,7 +92,7 @@ export class AddedComponentsRegistry extends Registry<
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new AddedComponentsRegistry(this.apps, {
+    return new AddedComponentsRegistry({
       registrySubject: this.registrySubject,
     });
   }

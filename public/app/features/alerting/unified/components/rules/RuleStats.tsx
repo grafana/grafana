@@ -1,19 +1,16 @@
-import { isUndefined, omitBy } from 'lodash';
+import { isUndefined, omitBy, pick, sum } from 'lodash';
 import pluralize from 'pluralize';
 import * as React from 'react';
 import { Fragment, useDeferredValue, useMemo } from 'react';
 
-import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import {
-  type AlertGroupTotals,
+  AlertGroupTotals,
   AlertInstanceTotalState,
-  type CombinedRuleGroup,
-  type CombinedRuleNamespace,
+  CombinedRuleGroup,
+  CombinedRuleNamespace,
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-
-import { totalFromStats } from '../../utils/ruleStats';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -25,7 +22,6 @@ const emptyStats: Required<AlertGroupTotals> = {
   alerting: 0,
   [PromAlertingRuleState.Pending]: 0,
   [PromAlertingRuleState.Inactive]: 0,
-  [PromAlertingRuleState.Recovering]: 0,
   paused: 0,
   error: 0,
   nodata: 0,
@@ -82,6 +78,15 @@ function statsFromNamespaces(namespaces: CombinedRuleNamespace[]): AlertGroupTot
   return stats;
 }
 
+export function totalFromStats(stats: AlertGroupTotals): number {
+  // countable stats will pick only the states that indicate a single rule – health indicators like "error" and "nodata" should
+  // not be counted because they are already counted by their state
+  const countableStats = pick(stats, ['alerting', 'pending', 'inactive', 'recording']);
+  const total = sum(Object.values(countableStats));
+
+  return total;
+}
+
 export const RuleGroupStats = ({ group }: RuleGroupStatsProps) => {
   const stats = group.totals;
   const evaluationInterval = group?.interval;
@@ -112,98 +117,41 @@ export function getComponentsFromStats(
   const statsComponents: React.ReactNode[] = [];
 
   if (stats[AlertInstanceTotalState.Alerting]) {
-    statsComponents.push(
-      <Badge
-        color="red"
-        key="firing"
-        text={t('alerting.rule-stats.firing', '{{alertingStats}} firing', {
-          alertingStats: stats[AlertInstanceTotalState.Alerting],
-        })}
-      />
-    );
+    statsComponents.push(<Badge color="red" key="firing" text={`${stats[AlertInstanceTotalState.Alerting]} firing`} />);
   }
 
   if (stats.error) {
-    statsComponents.push(
-      <Badge
-        color="red"
-        key="errors"
-        text={t('alerting.rule-stats.error', '', {
-          count: stats.error,
-          defaultValue_one: '{{count}} errors',
-          defaultValue_other: '{{count}} errors',
-        })}
-      />
-    );
+    statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} ${pluralize('error', stats.error)}`} />);
   }
 
   if (stats.nodata) {
-    statsComponents.push(
-      <Badge
-        color="blue"
-        key="nodata"
-        text={t('alerting.rule-stats.nodata', '{{nodataStats}} no data', { nodataStats: stats.nodata })}
-      />
-    );
+    statsComponents.push(<Badge color="blue" key="nodata" text={`${stats.nodata} no data`} />);
   }
 
   if (stats[AlertInstanceTotalState.Pending]) {
-    const pendingStats = stats[AlertInstanceTotalState.Pending];
     statsComponents.push(
-      <Badge
-        color={'orange'}
-        key="pending"
-        text={t('alerting.rule-stats.pending', `{{pendingStats}} pending`, { pendingStats })}
-      />
-    );
-  }
-
-  if (stats[AlertInstanceTotalState.Recovering]) {
-    const recoveringStats = stats[AlertInstanceTotalState.Recovering];
-    statsComponents.push(
-      <Badge
-        color={'orange'}
-        key="recovering"
-        text={t('alerting.rule-stats.recovering', `{{recoveringStats}} recovering`, { recoveringStats })}
-      />
+      <Badge color={'orange'} key="pending" text={`${stats[AlertInstanceTotalState.Pending]} pending`} />
     );
   }
 
   if (stats[AlertInstanceTotalState.Normal] && stats.paused) {
-    const normalStats = stats[AlertInstanceTotalState.Normal];
-    const pausedStats = stats.paused;
     statsComponents.push(
       <Badge
         color="green"
         key="paused"
-        text={t('alerting.rule-stats.paused', `{{normalStats}} normal ({{pausedStats}} paused)`, {
-          normalStats,
-          pausedStats,
-        })}
+        text={`${stats[AlertInstanceTotalState.Normal]} normal (${stats.paused} paused)`}
       />
     );
   }
 
   if (stats[AlertInstanceTotalState.Normal] && !stats.paused) {
-    const normalStats = stats[AlertInstanceTotalState.Normal];
     statsComponents.push(
-      <Badge
-        color="green"
-        key="inactive"
-        text={t('alerting.rule-stats.inactive', `{{normalStats}} normal`, { normalStats })}
-      />
+      <Badge color="green" key="inactive" text={`${stats[AlertInstanceTotalState.Normal]} normal`} />
     );
   }
 
   if (stats.recording) {
-    const recordingStats = stats.recording;
-    statsComponents.push(
-      <Badge
-        color="purple"
-        key="recording"
-        text={t('alerting.rule-stats.recording', `{{recordingStats}} recording`, { recordingStats })}
-      />
-    );
+    statsComponents.push(<Badge color="purple" key="recording" text={`${stats.recording} recording`} />);
   }
 
   return statsComponents;

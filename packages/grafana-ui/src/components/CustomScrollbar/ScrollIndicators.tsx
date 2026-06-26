@@ -2,9 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
 export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
   const [showScrollTopIndicator, setShowTopScrollIndicator] = useState(false);

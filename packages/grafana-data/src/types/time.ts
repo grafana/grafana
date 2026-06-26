@@ -1,11 +1,11 @@
 import {
-  type TimeZone as SchemaTimeZone,
-  type TimeZoneBrowser as SchemaTimeZoneBrowser,
-  type TimeZoneUtc as SchemaTimeZoneUtc,
+  TimeZone as SchemaTimeZone,
+  TimeZoneBrowser as SchemaTimeZoneBrowser,
+  TimeZoneUtc as SchemaTimeZoneUtc,
   defaultTimeZone,
 } from '@grafana/schema';
 
-import { dateTime, type DateTime } from '../datetime/moment_wrapper';
+import { dateTime, DateTime } from '../datetime/moment_wrapper';
 
 export interface RawTimeRange {
   from: DateTime | string;
@@ -76,7 +76,7 @@ export function getDefaultTimeRange(): TimeRange {
 }
 
 /**
- * Returns the default relative time range.
+ * Returns the default realtive time range.
  *
  * @public
  */

@@ -1,10 +1,9 @@
-import { type AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor/AnnotationQueryEditor';
-import { type CloudWatchAnnotationQuery } from './dataquery.gen';
 import { DEFAULT_ANNOTATIONS_QUERY } from './defaultQueries';
 import { isCloudWatchAnnotation } from './guards';
-import { type CloudWatchQuery, type LegacyAnnotationQuery } from './types';
+import { CloudWatchAnnotationQuery, CloudWatchQuery, LegacyAnnotationQuery } from './types';
 
 export const CloudWatchAnnotationSupport = {
   // converts legacy angular style queries to new format. Also sets the same default values as in the deprecated angular directive
@@ -39,9 +38,18 @@ export const CloudWatchAnnotationSupport = {
       return undefined;
     }
 
-    const { prefixMatching, actionPrefix, alarmNamePrefix, statistic, namespace, metricName } = anno.target;
+    const {
+      prefixMatching,
+      actionPrefix,
+      alarmNamePrefix,
+      statistic,
+      namespace,
+      metricName,
+      dimensions = {},
+    } = anno.target;
     const validPrefixMatchingQuery = !!prefixMatching && !!actionPrefix && !!alarmNamePrefix;
-    const validMetricStatQuery = !prefixMatching && !!namespace && !!metricName && !!statistic;
+    const validMetricStatQuery =
+      !prefixMatching && !!namespace && !!metricName && !!statistic && !!Object.values(dimensions).length;
 
     if (validPrefixMatchingQuery || validMetricStatQuery) {
       return anno.target;

@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type FieldConfigOptionsRegistry, type GrafanaTheme2, type ConfigOverrideRule } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Button, Stack, Icon, useStyles2 } from '@grafana/ui';
-import { type FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
+import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
+import { HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { FieldMatcherUIRegistryItem } from '@grafana/ui/src/components/MatchersUI/types';
 
 interface Props {
   isExpanded: boolean;
@@ -22,24 +21,16 @@ export const OverrideCategoryTitle = ({
   onOverrideRemove,
 }: Props) => {
   const styles = useStyles2(getStyles);
-
   const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
   const propertyNames = properties.map((p) => p?.name).join(', ');
   const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
 
   return (
     <div>
-      <Stack justifyContent="space-between">
+      <HorizontalGroup justify="space-between">
         <div>{overrideName}</div>
-        <Button
-          variant="secondary"
-          fill="text"
-          icon="trash-alt"
-          onClick={onOverrideRemove}
-          tooltip={t('dashboard.override-category-title.tooltip-remove-override', 'Remove override')}
-          aria-label={t('dashboard.override-category-title.aria-label-remove-override', 'Remove override')}
-        />
-      </Stack>
+        <IconButton name="trash-alt" onClick={onOverrideRemove} tooltip="Remove override" />
+      </HorizontalGroup>
       {!isExpanded && (
         <div className={styles.overrideDetails}>
           <div className={styles.options} title={matcherOptions}>

@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
 
-import { type SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
+import { SelectableValue, toOption } from '@grafana/data';
+import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
+import { CloudWatchDatasource } from '../../../../datasource';
 import {
-  type CloudWatchMetricsQuery,
   QueryEditorExpressionType,
-  type QueryEditorGroupByExpression,
+  QueryEditorGroupByExpression,
   QueryEditorPropertyType,
-} from '../../../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../../../datasource';
+} from '../../../../expressions';
 import { useDimensionKeys, useIsMonitoringAccount } from '../../../../hooks';
+import { CloudWatchMetricsQuery } from '../../../../types';
 
 import {
   getFlattenedGroupBys,
@@ -41,7 +41,9 @@ const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
   const options = useMemo(
     // Exclude options we've already selected
     () => {
-      const isCrossAccountEnabled = config.featureToggles.cloudWatchCrossAccountQuerying;
+      const isCrossAccountEnabled =
+        config.featureToggles.cloudWatchCrossAccountQuerying &&
+        config.featureToggles.cloudwatchMetricInsightsCrossAccount;
 
       const baseOptionsWithAccountId =
         isCrossAccountEnabled && isMonitoringAccount

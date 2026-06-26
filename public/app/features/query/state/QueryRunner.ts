@@ -1,18 +1,18 @@
 import { cloneDeep } from 'lodash';
-import { from, type Observable, ReplaySubject, type Unsubscribable } from 'rxjs';
+import { from, Observable, ReplaySubject, Unsubscribable } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 import {
   CoreApp,
-  type DataQueryRequest,
-  type DataSourceApi,
-  type PanelData,
+  DataQueryRequest,
+  DataSourceApi,
+  PanelData,
   rangeUtil,
-  type ScopedVars,
-  type QueryRunnerOptions,
-  type QueryRunner as QueryRunnerSrv,
+  ScopedVars,
+  QueryRunnerOptions,
+  QueryRunner as QueryRunnerSrv,
   LoadingState,
-  type DataSourceRef,
+  DataSourceRef,
   preProcessPanelData,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';

@@ -1,10 +1,10 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { type Settings } from 'app/types/settings';
+import { Settings } from 'app/types';
 
-import { type SettingsError, type AuthProviderStatus, type AuthConfigState, type SSOProvider } from '../types';
+import { SettingsError, AuthProviderStatus, AuthConfigState, SSOProvider } from '../types';
 
-const initialState: AuthConfigState = {
+export const initialState: AuthConfigState = {
   settings: {},
   providerStatuses: {},
   isLoading: false,
@@ -52,12 +52,12 @@ export const {
   loadingEnd,
   setError,
   resetError,
-
+  setWarning,
   resetWarning,
   providersLoaded,
 } = authConfigSlice.actions;
 
-const authConfigReducer = authConfigSlice.reducer;
+export const authConfigReducer = authConfigSlice.reducer;
 
 export default {
   authConfig: authConfigReducer,

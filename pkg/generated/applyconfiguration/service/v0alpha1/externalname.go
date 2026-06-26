@@ -29,13 +29,11 @@ func ExternalName(name, namespace string) *ExternalNameApplyConfiguration {
 	return b
 }
 
-func (b ExternalNameApplyConfiguration) IsApplyConfiguration() {}
-
 // WithKind sets the Kind field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Kind field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithKind(value string) *ExternalNameApplyConfiguration {
-	b.TypeMetaApplyConfiguration.Kind = &value
+	b.Kind = &value
 	return b
 }
 
@@ -43,7 +41,7 @@ func (b *ExternalNameApplyConfiguration) WithKind(value string) *ExternalNameApp
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the APIVersion field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithAPIVersion(value string) *ExternalNameApplyConfiguration {
-	b.TypeMetaApplyConfiguration.APIVersion = &value
+	b.APIVersion = &value
 	return b
 }
 
@@ -52,7 +50,7 @@ func (b *ExternalNameApplyConfiguration) WithAPIVersion(value string) *ExternalN
 // If called multiple times, the Name field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithName(value string) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.Name = &value
+	b.Name = &value
 	return b
 }
 
@@ -61,7 +59,7 @@ func (b *ExternalNameApplyConfiguration) WithName(value string) *ExternalNameApp
 // If called multiple times, the GenerateName field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithGenerateName(value string) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.GenerateName = &value
+	b.GenerateName = &value
 	return b
 }
 
@@ -70,7 +68,7 @@ func (b *ExternalNameApplyConfiguration) WithGenerateName(value string) *Externa
 // If called multiple times, the Namespace field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithNamespace(value string) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.Namespace = &value
+	b.Namespace = &value
 	return b
 }
 
@@ -79,7 +77,7 @@ func (b *ExternalNameApplyConfiguration) WithNamespace(value string) *ExternalNa
 // If called multiple times, the UID field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithUID(value types.UID) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.UID = &value
+	b.UID = &value
 	return b
 }
 
@@ -88,7 +86,7 @@ func (b *ExternalNameApplyConfiguration) WithUID(value types.UID) *ExternalNameA
 // If called multiple times, the ResourceVersion field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithResourceVersion(value string) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.ResourceVersion = &value
+	b.ResourceVersion = &value
 	return b
 }
 
@@ -97,7 +95,7 @@ func (b *ExternalNameApplyConfiguration) WithResourceVersion(value string) *Exte
 // If called multiple times, the Generation field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithGeneration(value int64) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.Generation = &value
+	b.Generation = &value
 	return b
 }
 
@@ -106,7 +104,7 @@ func (b *ExternalNameApplyConfiguration) WithGeneration(value int64) *ExternalNa
 // If called multiple times, the CreationTimestamp field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithCreationTimestamp(value metav1.Time) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.CreationTimestamp = &value
+	b.CreationTimestamp = &value
 	return b
 }
 
@@ -115,7 +113,7 @@ func (b *ExternalNameApplyConfiguration) WithCreationTimestamp(value metav1.Time
 // If called multiple times, the DeletionTimestamp field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithDeletionTimestamp(value metav1.Time) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.DeletionTimestamp = &value
+	b.DeletionTimestamp = &value
 	return b
 }
 
@@ -124,7 +122,7 @@ func (b *ExternalNameApplyConfiguration) WithDeletionTimestamp(value metav1.Time
 // If called multiple times, the DeletionGracePeriodSeconds field is set to the value of the last call.
 func (b *ExternalNameApplyConfiguration) WithDeletionGracePeriodSeconds(value int64) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	b.ObjectMetaApplyConfiguration.DeletionGracePeriodSeconds = &value
+	b.DeletionGracePeriodSeconds = &value
 	return b
 }
 
@@ -134,11 +132,11 @@ func (b *ExternalNameApplyConfiguration) WithDeletionGracePeriodSeconds(value in
 // overwriting an existing map entries in Labels field with the same key.
 func (b *ExternalNameApplyConfiguration) WithLabels(entries map[string]string) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	if b.ObjectMetaApplyConfiguration.Labels == nil && len(entries) > 0 {
-		b.ObjectMetaApplyConfiguration.Labels = make(map[string]string, len(entries))
+	if b.Labels == nil && len(entries) > 0 {
+		b.Labels = make(map[string]string, len(entries))
 	}
 	for k, v := range entries {
-		b.ObjectMetaApplyConfiguration.Labels[k] = v
+		b.Labels[k] = v
 	}
 	return b
 }
@@ -149,11 +147,11 @@ func (b *ExternalNameApplyConfiguration) WithLabels(entries map[string]string) *
 // overwriting an existing map entries in Annotations field with the same key.
 func (b *ExternalNameApplyConfiguration) WithAnnotations(entries map[string]string) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
-	if b.ObjectMetaApplyConfiguration.Annotations == nil && len(entries) > 0 {
-		b.ObjectMetaApplyConfiguration.Annotations = make(map[string]string, len(entries))
+	if b.Annotations == nil && len(entries) > 0 {
+		b.Annotations = make(map[string]string, len(entries))
 	}
 	for k, v := range entries {
-		b.ObjectMetaApplyConfiguration.Annotations[k] = v
+		b.Annotations[k] = v
 	}
 	return b
 }
@@ -167,7 +165,7 @@ func (b *ExternalNameApplyConfiguration) WithOwnerReferences(values ...*v1.Owner
 		if values[i] == nil {
 			panic("nil value passed to WithOwnerReferences")
 		}
-		b.ObjectMetaApplyConfiguration.OwnerReferences = append(b.ObjectMetaApplyConfiguration.OwnerReferences, *values[i])
+		b.OwnerReferences = append(b.OwnerReferences, *values[i])
 	}
 	return b
 }
@@ -178,7 +176,7 @@ func (b *ExternalNameApplyConfiguration) WithOwnerReferences(values ...*v1.Owner
 func (b *ExternalNameApplyConfiguration) WithFinalizers(values ...string) *ExternalNameApplyConfiguration {
 	b.ensureObjectMetaApplyConfigurationExists()
 	for i := range values {
-		b.ObjectMetaApplyConfiguration.Finalizers = append(b.ObjectMetaApplyConfiguration.Finalizers, values[i])
+		b.Finalizers = append(b.Finalizers, values[i])
 	}
 	return b
 }
@@ -197,24 +195,8 @@ func (b *ExternalNameApplyConfiguration) WithSpec(value *ExternalNameSpecApplyCo
 	return b
 }
 
-// GetKind retrieves the value of the Kind field in the declarative configuration.
-func (b *ExternalNameApplyConfiguration) GetKind() *string {
-	return b.TypeMetaApplyConfiguration.Kind
-}
-
-// GetAPIVersion retrieves the value of the APIVersion field in the declarative configuration.
-func (b *ExternalNameApplyConfiguration) GetAPIVersion() *string {
-	return b.TypeMetaApplyConfiguration.APIVersion
-}
-
 // GetName retrieves the value of the Name field in the declarative configuration.
 func (b *ExternalNameApplyConfiguration) GetName() *string {
 	b.ensureObjectMetaApplyConfigurationExists()
-	return b.ObjectMetaApplyConfiguration.Name
-}
-
-// GetNamespace retrieves the value of the Namespace field in the declarative configuration.
-func (b *ExternalNameApplyConfiguration) GetNamespace() *string {
-	b.ensureObjectMetaApplyConfigurationExists()
-	return b.ObjectMetaApplyConfiguration.Namespace
+	return b.Name
 }

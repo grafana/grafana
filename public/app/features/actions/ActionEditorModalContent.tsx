@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { type Action, ActionType, type DataFrame, type VariableSuggestion } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Button, Modal } from '@grafana/ui';
+import { Action, DataFrame, VariableSuggestion } from '@grafana/data';
+import { Button } from '@grafana/ui/src/components/Button';
+import { Modal } from '@grafana/ui/src/components/Modal/Modal';
 
 import { ActionEditor } from './ActionEditor';
 
@@ -13,7 +13,6 @@ interface ActionEditorModalContentProps {
   onSave: (index: number, action: Action) => void;
   onCancel: (index: number) => void;
   getSuggestions: () => VariableSuggestion[];
-  showOneClick: boolean;
 }
 
 export const ActionEditorModalContent = ({
@@ -22,14 +21,8 @@ export const ActionEditorModalContent = ({
   onSave,
   onCancel,
   getSuggestions,
-  showOneClick,
 }: ActionEditorModalContentProps) => {
   const [dirtyAction, setDirtyAction] = useState(action);
-
-  const isSaveButtonDisabled =
-    dirtyAction.title.trim() === '' ||
-    !dirtyAction[dirtyAction.type]?.url?.trim() ||
-    (dirtyAction.type === ActionType.Infinity && !dirtyAction[ActionType.Infinity]?.datasourceUid);
 
   return (
     <>
@@ -40,19 +33,18 @@ export const ActionEditorModalContent = ({
           setDirtyAction(action);
         }}
         suggestions={getSuggestions()}
-        showOneClick={showOneClick}
       />
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={() => onCancel(index)} fill="outline">
-          <Trans i18nKey="action-editor.modal.cancel-button">Cancel</Trans>
+          Cancel
         </Button>
         <Button
           onClick={() => {
             onSave(index, dirtyAction);
           }}
-          disabled={isSaveButtonDisabled}
+          disabled={dirtyAction.title.trim() === '' || dirtyAction.fetch.url.trim() === ''}
         >
-          <Trans i18nKey="action-editor.modal.save-button">Save</Trans>
+          Save
         </Button>
       </Modal.ButtonRow>
     </>

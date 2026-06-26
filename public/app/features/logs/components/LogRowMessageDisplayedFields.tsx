@@ -1,19 +1,17 @@
 import { css } from '@emotion/css';
-import { memo, type ReactNode, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
-import { type LogRowModel } from '@grafana/data';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
 
 import { LogRowMenuCell } from './LogRowMenuCell';
-import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
-import { type LogRowStyles } from './getLogRowStyles';
+import { LogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 
 export interface Props {
   row: LogRowModel;
   detectedFields: string[];
   wrapLogMessage: boolean;
-  getFieldLinks?: GetFieldLinksFn;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   styles: LogRowStyles;
   showContextToggle?: (row: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
@@ -23,25 +21,10 @@ export interface Props {
   pinned?: boolean;
   mouseIsOver: boolean;
   onBlur: () => void;
-  logRowMenuIconsBefore?: ReactNode[];
-  logRowMenuIconsAfter?: ReactNode[];
-  preview?: boolean;
 }
 
 export const LogRowMessageDisplayedFields = memo((props: Props) => {
-  const {
-    row,
-    detectedFields,
-    getFieldLinks,
-    wrapLogMessage,
-    styles,
-    mouseIsOver,
-    pinned,
-    logRowMenuIconsBefore,
-    logRowMenuIconsAfter,
-    preview,
-    ...rest
-  } = props;
+  const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, mouseIsOver, pinned, ...rest } = props;
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
   const fields = useMemo(() => getAllFields(row, getFieldLinks), [getFieldLinks, row]);
   // only single key/value rows are filterable, so we only need the first field key for filtering
@@ -49,38 +32,23 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
     let line = '';
     for (let i = 0; i < detectedFields.length; i++) {
       const parsedKey = detectedFields[i];
-
-      if (parsedKey === LOG_LINE_BODY_FIELD_NAME) {
-        line += ` ${row.entry}`;
-      }
-
       const field = fields.find((field) => {
-        return field.keys[0] === parsedKey;
+        const { keys } = field;
+        return keys[0] === parsedKey;
       });
 
-      if (field != null) {
+      if (field) {
         line += ` ${parsedKey}=${field.values}`;
       }
 
-      if (row.labels[parsedKey] != null && row.labels[parsedKey] != null) {
+      if (row.labels[parsedKey] !== undefined && row.labels[parsedKey] !== null) {
         line += ` ${parsedKey}=${row.labels[parsedKey]}`;
       }
     }
     return line.trimStart();
-  }, [detectedFields, fields, row.entry, row.labels]);
+  }, [detectedFields, fields, row.labels]);
 
-  const shouldShowMenu = mouseIsOver || pinned;
-
-  if (preview) {
-    return (
-      <>
-        <td>
-          <div>{line}</div>
-        </td>
-        <td></td>
-      </>
-    );
-  }
+  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
 
   return (
     <>
@@ -95,8 +63,6 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
             styles={styles}
             pinned={pinned}
             mouseIsOver={mouseIsOver}
-            addonBefore={logRowMenuIconsBefore}
-            addonAfter={logRowMenuIconsAfter}
             {...rest}
           />
         )}

@@ -3,43 +3,29 @@ import * as React from 'react';
 import { Provider } from 'react-redux';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
-import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type FolderDTO } from 'app/types/folders';
+import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
 
-import { setupMswServer } from '../mockApi';
-import { mockDataSource, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
-import { setupDataSources } from '../testSetup/datasources';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule, mockUnifiedAlertingStore } from '../mocks';
 
 import { useFolder } from './useFolder';
 import { useIsRuleEditable } from './useIsRuleEditable';
+import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 jest.mock('./useFolder');
 
 const mocks = {
   useFolder: jest.mocked(useFolder),
+  useUnifiedAlertingSelector: jest.mocked(useUnifiedAlertingSelector),
 };
-
-setupMswServer();
-
-const dataSources = {
-  mimir: mockDataSource({ uid: MIMIR_DATASOURCE_UID, name: 'Mimir' }),
-};
-
-setupDataSources(dataSources.mimir);
 
 describe('useIsRuleEditable', () => {
   describe('RBAC enabled', () => {
     describe('Grafana rules', () => {
       // When RBAC is enabled we require appropriate alerting permissions in the folder scope
-      it('Should allow editing when the user has alert rule update, read, and folder read permissions', async () => {
+      it('Should allow editing when the user has the alert rule update permission in the folder', async () => {
         mockUseFolder({
           accessControl: {
-            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
-            [AccessControlAction.FoldersRead]: true,
           },
         });
 
@@ -51,91 +37,19 @@ describe('useIsRuleEditable', () => {
         expect(result.current.isEditable).toBe(true);
       });
 
-      it('Should allow deleting when the user has alert rule delete, read, and folder read permissions', async () => {
+      it('Should allow deleting when the user has the alert rule delete permission', async () => {
         mockUseFolder({
           accessControl: {
-            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleDelete]: true,
-            [AccessControlAction.FoldersRead]: true,
           },
         });
 
         const wrapper = getProviderWrapper();
 
-        const { result } = renderHook(() => useIsRuleEditable(GRAFANA_RULES_SOURCE_NAME, mockRulerGrafanaRule()), {
-          wrapper,
-        });
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isRemovable).toBe(true);
-      });
-
-      it('Should forbid editing when the user has write permission but is missing alert.rules:read', async () => {
-        mockUseFolder({
-          accessControl: {
-            [AccessControlAction.AlertingRuleUpdate]: true,
-            [AccessControlAction.FoldersRead]: true,
-            // alert.rules:read deliberately absent — this is the reported bug scenario
-          },
-        });
-
-        const wrapper = getProviderWrapper();
-
-        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
-
-        await waitFor(() => expect(result.current.loading).toBe(false));
-        expect(result.current.isEditable).toBe(false);
-      });
-
-      it('Should forbid editing when the user has write and rule read permissions but is missing folders:read', async () => {
-        mockUseFolder({
-          accessControl: {
-            [AccessControlAction.AlertingRuleRead]: true,
-            [AccessControlAction.AlertingRuleUpdate]: true,
-            // folders:read deliberately absent
-          },
-        });
-
-        const wrapper = getProviderWrapper();
-
-        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
-
-        await waitFor(() => expect(result.current.loading).toBe(false));
-        expect(result.current.isEditable).toBe(false);
-      });
-
-      it('Should forbid deleting when the user has delete permission but is missing alert.rules:read', async () => {
-        mockUseFolder({
-          accessControl: {
-            [AccessControlAction.AlertingRuleDelete]: true,
-            [AccessControlAction.FoldersRead]: true,
-            // alert.rules:read deliberately absent
-          },
-        });
-
-        const wrapper = getProviderWrapper();
-
-        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
-
-        await waitFor(() => expect(result.current.loading).toBe(false));
-        expect(result.current.isRemovable).toBe(false);
-      });
-
-      it('Should forbid deleting when the user has delete and rule read permissions but is missing folders:read', async () => {
-        mockUseFolder({
-          accessControl: {
-            [AccessControlAction.AlertingRuleRead]: true,
-            [AccessControlAction.AlertingRuleDelete]: true,
-            // folders:read deliberately absent
-          },
-        });
-
-        const wrapper = getProviderWrapper();
-
-        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
-
-        await waitFor(() => expect(result.current.loading).toBe(false));
-        expect(result.current.isRemovable).toBe(false);
       });
 
       it('Should forbid editing when the user has no alert rule update permission', async () => {
@@ -164,10 +78,8 @@ describe('useIsRuleEditable', () => {
         mockUseFolder({
           canSave: false,
           accessControl: {
-            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
             [AccessControlAction.AlertingRuleDelete]: true,
-            [AccessControlAction.FoldersRead]: true,
           },
         });
 
@@ -191,9 +103,7 @@ describe('useIsRuleEditable', () => {
         mockPermissions([AccessControlAction.AlertingRuleExternalWrite]);
         const wrapper = getProviderWrapper();
 
-        const { result } = renderHook(() => useIsRuleEditable(dataSources.mimir.name, mockRulerAlertingRule()), {
-          wrapper,
-        });
+        const { result } = renderHook(() => useIsRuleEditable('cortex', mockRulerAlertingRule()), { wrapper });
 
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(true);
@@ -204,9 +114,7 @@ describe('useIsRuleEditable', () => {
         mockPermissions([]);
         const wrapper = getProviderWrapper();
 
-        const { result } = renderHook(() => useIsRuleEditable(dataSources.mimir.name, mockRulerAlertingRule()), {
-          wrapper,
-        });
+        const { result } = renderHook(() => useIsRuleEditable('cortex', mockRulerAlertingRule()), { wrapper });
 
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(false);
@@ -227,7 +135,31 @@ function mockPermissions(grantedPermissions: AccessControlAction[]) {
 }
 
 function getProviderWrapper() {
-  const store = configureStore();
+  const dataSources = getMockedDataSources();
+  const store = mockUnifiedAlertingStore({ dataSources });
   const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
   return wrapper;
+}
+
+function getMockedDataSources(): StoreState['unifiedAlerting']['dataSources'] {
+  return {
+    grafana: {
+      loading: false,
+      dispatched: false,
+      result: {
+        id: 'grafana',
+        name: 'grafana',
+        rulerConfig: { dataSourceName: 'grafana', apiVersion: 'legacy' },
+      },
+    },
+    cortex: {
+      loading: false,
+      dispatched: false,
+      result: {
+        id: 'cortex',
+        name: 'Cortex',
+        rulerConfig: { dataSourceName: 'cortex', apiVersion: 'legacy' },
+      },
+    },
+  };
 }

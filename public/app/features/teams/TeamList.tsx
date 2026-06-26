@@ -1,88 +1,71 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { type SortingRule } from 'react-table';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Avatar,
-  type CellProps,
-  type Column,
+  CellProps,
+  Column,
+  DeleteButton,
   EmptyState,
   FilterInput,
-  IconButton,
   InlineField,
   InteractiveTable,
   LinkButton,
-  LoadingPlaceholder,
   Pagination,
   Stack,
-  Tag,
   TextLink,
   useStyles2,
 } from '@grafana/ui';
-import { useLazySearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { useAppNotification } from 'app/core/copy/appNotification';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type Role, AccessControlAction } from 'app/types/accessControl';
-import { type TeamWithRoles } from 'app/types/teams';
+import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
-import { appEvents } from '../../core/app_events';
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
-import { ShowModalReactEvent } from '../../types/events';
-import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';
 
-import { TeamDeleteModal } from './TeamDeleteModal';
-import { useDeleteTeam, useGetTeams } from './hooks';
+import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 
-type Cell<T extends keyof TeamWithRoles = keyof TeamWithRoles> = CellProps<TeamWithRoles, TeamWithRoles[T]>;
+type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
+export interface OwnProps {}
 
 export interface State {
   roleOptions: Role[];
 }
 
 // this is dummy data to pass to the table while the real data is loading
-const skeletonData: TeamWithRoles[] = new Array(3).fill(null).map((_, index) => ({
+const skeletonData: Team[] = new Array(3).fill(null).map((_, index) => ({
   id: index,
   uid: '',
   memberCount: 0,
   name: '',
   orgId: 0,
-  isProvisioned: false,
+  permission: 0,
 }));
 
-const TeamList = () => {
-  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
-  const displayRolePicker = shouldDisplayRolePicker();
-  const pageSize = 20;
-
+export const TeamList = ({
+  teams,
+  query,
+  noTeams,
+  hasFetched,
+  loadTeams,
+  deleteTeam,
+  changeQuery,
+  totalPages,
+  page,
+  rolesLoading,
+  changePage,
+  changeSort,
+}: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const styles = useStyles2(getStyles);
-  const [query, setQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<string>();
-  const { data: teamData, isLoading } = useGetTeams({ query, pageSize, page, sort });
-  const [deleteTeam] = useDeleteTeam();
-  const [triggerFoldersQuery] = useLazySearchDashboardsAndFoldersQuery();
-  const notifyApp = useAppNotification();
-  const foldersQueryRef = useRef<ReturnType<typeof triggerFoldersQuery> | null>(null);
 
-  const teams = teamData?.teams || [];
-  const totalPages = Math.ceil((teamData?.totalCount || 0) / pageSize) || 0;
-  const noTeams = teams?.length === 0;
-  const changeSort = useCallback(
-    (sort: SortingRule<unknown>) => {
-      setSort(`${sort.id}-${sort.desc ? 'desc' : 'asc'}`);
-    },
-    [setSort]
-  );
-  const changePage = (page: number) => {
-    setPage(page);
-  };
+  useEffect(() => {
+    loadTeams(true);
+  }, [loadTeams]);
 
   useEffect(() => {
     if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
@@ -90,22 +73,17 @@ const TeamList = () => {
     }
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (foldersQueryRef.current) {
-        foldersQueryRef.current.abort();
-      }
-    };
-  }, []);
+  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
+  const displayRolePicker = shouldDisplayRolePicker();
 
-  const columns: Array<Column<TeamWithRoles>> = useMemo(
+  const columns: Array<Column<Team>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
         header: '',
         disableGrow: true,
         cell: ({ cell: { value } }: Cell<'avatarUrl'>) => {
-          if (isLoading) {
+          if (!hasFetched) {
             return <Skeleton containerClassName={styles.blockSkeleton} width={24} height={24} circle />;
           }
 
@@ -116,7 +94,7 @@ const TeamList = () => {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value }, row: { original } }: Cell<'name'>) => {
-          if (isLoading) {
+          if (!hasFetched) {
             return <Skeleton width={100} />;
           }
 
@@ -126,12 +104,7 @@ const TeamList = () => {
           }
 
           return (
-            <TextLink
-              color="primary"
-              inline={false}
-              href={`/org/teams/edit/${original.uid}`}
-              title={t('teams.team-list.columns.title-edit-team', 'Edit team')}
-            >
+            <TextLink color="primary" inline={false} href={`/org/teams/edit/${original.uid}`} title="Edit team">
               {value}
             </TextLink>
           );
@@ -142,7 +115,7 @@ const TeamList = () => {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => {
-          if (isLoading) {
+          if (!hasFetched) {
             return <Skeleton width={60} />;
           }
           return value;
@@ -154,19 +127,20 @@ const TeamList = () => {
         header: 'Members',
         disableGrow: true,
         cell: ({ cell: { value } }: Cell<'memberCount'>) => {
-          if (isLoading) {
+          if (!hasFetched) {
             return <Skeleton width={40} />;
           }
           return value;
         },
+        sortType: 'number',
       },
       ...(displayRolePicker
         ? [
             {
               id: 'role',
               header: 'Role',
-              cell: ({ row: { original } }: Cell<'memberCount'>) => {
-                if (isLoading) {
+              cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
+                if (!hasFetched) {
                   return <Skeleton width={320} height={32} containerClassName={styles.blockSkeleton} />;
                 }
                 const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(
@@ -178,7 +152,7 @@ const TeamList = () => {
                     <TeamRolePicker
                       teamId={original.id}
                       roles={original.roles || []}
-                      isLoading={isLoading}
+                      isLoading={rolesLoading}
                       roleOptions={roleOptions}
                       width={40}
                     />
@@ -189,21 +163,11 @@ const TeamList = () => {
           ]
         : []),
       {
-        id: 'isProvisioned',
-        header: '',
-        cell: ({ cell: { value } }: Cell<'isProvisioned'>) => {
-          if (isLoading) {
-            return <Skeleton width={240} />;
-          }
-          return !!value && <Tag colorIndex={14} name={'Provisioned'} />;
-        },
-      },
-      {
         id: 'actions',
         header: '',
         disableGrow: true,
         cell: ({ row: { original } }: Cell) => {
-          if (isLoading) {
+          if (!hasFetched) {
             return (
               <Stack direction="row" justifyContent="flex-end" alignItems="center">
                 <Skeleton containerClassName={styles.blockSkeleton} width={16} height={16} />
@@ -214,91 +178,30 @@ const TeamList = () => {
 
           const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
           const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
-
-          const showDeleteModal = async () => {
-            let ownedFolders: DashboardHit[] = [];
-            if (config.featureToggles.teamFolders) {
-              foldersQueryRef.current = triggerFoldersQuery({
-                type: 'folder',
-                ownerReference: [`iam.grafana.app/Team/${original.uid}`],
-                limit: 1,
-              });
-
-              const { data: foldersData, isError, error } = await foldersQueryRef.current;
-
-              const isAbortError = error && typeof error === 'object' && 'name' in error && error.name === 'AbortError';
-
-              if (isError && !isAbortError) {
-                notifyApp.error(
-                  t(
-                    'teams.team-list.failed-to-check-folders',
-                    'Failed to check if the team owns folders. Please try again.'
-                  )
-                );
-                console.error(error);
-                return;
-              }
-
-              if (isAbortError) {
-                return;
-              }
-
-              if (foldersData?.hits) {
-                ownedFolders = foldersData.hits;
-              }
-            }
-
-            reportInteraction('grafana_teams_list_delete_button_clicked', {
-              ownedFolder: ownedFolders && ownedFolders.length > 0,
-            });
-            appEvents.publish(
-              new ShowModalReactEvent({
-                component: TeamDeleteModal,
-                props: {
-                  onConfirm: async () => {
-                    reportInteraction('grafana_teams_list_delete_modal_confirm_clicked');
-                    await deleteTeam({ uid: original.uid });
-                  },
-                  teamName: original.name,
-                  ownedFolder: ownedFolders && ownedFolders.length > 0,
-                },
-              })
-            );
-          };
           return (
             <Stack direction="row" justifyContent="flex-end" gap={2}>
               {canReadTeam && (
-                <a href={`org/teams/edit/${original.uid}`} style={{ display: 'inline-flex' }}>
-                  <IconButton
-                    name="pen"
-                    size="md"
-                    variant="secondary"
-                    aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
-                      teamName: original.name,
-                    })}
-                    tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
-                  />
-                </a>
+                <LinkButton
+                  href={`org/teams/edit/${original.uid}`}
+                  aria-label={`Edit team ${original.name}`}
+                  icon="pen"
+                  size="sm"
+                  variant="secondary"
+                  tooltip={'Edit team'}
+                />
               )}
-              <IconButton
-                onClick={showDeleteModal}
-                variant="destructive"
+              <DeleteButton
+                aria-label={`Delete team ${original.name}`}
+                size="sm"
                 disabled={!canDelete}
-                name="times"
-                size="md"
-                tooltip={t('teams.team-list.columns.tooltip-delete-button', 'Delete {{teamName}}', {
-                  teamName: original.name,
-                })}
-                aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {
-                  teamName: original.name,
-                })}
+                onConfirm={() => deleteTeam(original.uid)}
               />
             </Stack>
           );
         },
       },
     ],
-    [displayRolePicker, isLoading, styles.blockSkeleton, roleOptions, deleteTeam, triggerFoldersQuery, notifyApp]
+    [displayRolePicker, hasFetched, rolesLoading, roleOptions, deleteTeam, styles]
   );
 
   return (
@@ -307,13 +210,13 @@ const TeamList = () => {
       actions={
         !noTeams ? (
           <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-            <Trans i18nKey="teams.team-list.new-team">New Team</Trans>
+            New Team
           </LinkButton>
         ) : undefined
       }
     >
       <Page.Contents>
-        {!isLoading && !query && teams.length === 0 ? (
+        {noTeams ? (
           <EmptyState
             variant="call-to-action"
             button={
@@ -334,29 +237,18 @@ const TeamList = () => {
           <>
             <div className="page-action-bar">
               <InlineField grow>
-                <FilterInput
-                  placeholder={t('teams.team-list.placeholder-search-teams', 'Search teams')}
-                  value={query}
-                  onChange={setQuery}
-                />
+                <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
               </InlineField>
             </div>
-            {!isLoading && teams.length === 0 && (
+            {hasFetched && teams.length === 0 ? (
               <EmptyState variant="not-found" message={t('teams.empty-state.message', 'No teams found')} />
-            )}
-            {isLoading && <LoadingPlaceholder text={t('teams.team-list.loading-teams', 'Loading teams...')} />}
-            {!isLoading && teams.length > 0 && (
+            ) : (
               <Stack direction={'column'} gap={2}>
                 <InteractiveTable
                   columns={columns}
-                  data={isLoading ? skeletonData : teams}
-                  getRowId={(team) => String(team.uid)}
-                  fetchData={({ sortBy }) => {
-                    const sortingRule = sortBy.at(0);
-                    if (sortingRule) {
-                      return changeSort(sortingRule);
-                    }
-                  }}
+                  data={hasFetched ? teams : skeletonData}
+                  getRowId={(team) => String(team.id)}
+                  fetchData={changeSort}
                 />
                 <Stack justifyContent="flex-end">
                   <Pagination
@@ -370,7 +262,6 @@ const TeamList = () => {
             )}
           </>
         )}
-        {!query && <EnterpriseAuthFeaturesCard page="teams" />}
       </Page.Contents>
     </Page>
   );
@@ -384,9 +275,32 @@ function shouldDisplayRolePicker(): boolean {
   );
 }
 
-export default TeamList;
+function mapStateToProps(state: StoreState) {
+  return {
+    teams: state.teams.teams,
+    query: state.teams.query,
+    perPage: state.teams.perPage,
+    page: state.teams.page,
+    noTeams: state.teams.noTeams,
+    totalPages: state.teams.totalPages,
+    hasFetched: state.teams.hasFetched,
+    rolesLoading: state.teams.rolesLoading,
+  };
+}
 
-const getStyles = () => ({
+const mapDispatchToProps = {
+  loadTeams,
+  deleteTeam,
+  changePage,
+  changeQuery,
+  changeSort,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+export default connector(TeamList);
+
+const getStyles = (theme: GrafanaTheme2) => ({
   blockSkeleton: css({
     lineHeight: 1,
     // needed for things to align properly in the table

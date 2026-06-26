@@ -1,14 +1,4 @@
-import type { Configuration } from 'webpack';
-import { merge } from 'webpack-merge';
+import config from '@grafana/plugin-configs/webpack.config';
 
-import grafanaConfig, { type Env } from '@grafana/plugin-configs/webpack.config.ts';
-
-const config = async (env: Env): Promise<Configuration> => {
-  const baseConfig = await grafanaConfig(env, import.meta.dirname);
-
-  return merge(baseConfig, {
-    externals: ['i18next'],
-  });
-};
-
+// eslint-disable-next-line no-barrel-files/no-barrel-files
 export default config;

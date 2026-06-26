@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type TDdgOperation, type TDdgPath } from './types';
+import { TDdgOperation, TDdgPath } from './types';
 
 export default class PathElem {
   memberIdx: number;

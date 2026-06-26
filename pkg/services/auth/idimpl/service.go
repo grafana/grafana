@@ -4,19 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
-	"strconv"
 	"time"
 
-	"github.com/cespare/xxhash/v2"
-	jose "github.com/go-jose/go-jose/v4"
-	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/sync/singleflight"
-
+	"github.com/go-jose/go-jose/v3/jwt"
 	authnlib "github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/claims"
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -37,18 +31,18 @@ var _ auth.IDService = (*Service)(nil)
 
 func ProvideService(
 	cfg *setting.Cfg, signer auth.IDSigner,
-	cache remotecache.CacheStorage, authnService authn.Service,
-	reg prometheus.Registerer, tracer trace.Tracer,
+	cache remotecache.CacheStorage,
+	authnService authn.Service,
+	reg prometheus.Registerer,
 ) *Service {
 	s := &Service{
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
 		metrics:  newMetrics(reg),
-		nsMapper: request.GetNamespaceMapper(cfg),
-		tracer:   tracer,
+		nsMapper: request.GetTemporarySingularNamespaceMapper(cfg), // TODO replace with the plural one
 	}
 
-	authnService.RegisterPostAuthHook(s.SyncIDToken, 140)
+	authnService.RegisterPostAuthHook(s.hook, 140)
 
 	return s
 }
@@ -60,19 +54,15 @@ type Service struct {
 	cache    remotecache.CacheStorage
 	si       singleflight.Group
 	metrics  *metrics
-	tracer   trace.Tracer
 	nsMapper request.NamespaceMapper
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, *authnlib.Claims[authnlib.IDTokenClaims], error) {
-	ctx, span := s.tracer.Start(ctx, "user.sync.SignIdentity")
-	defer span.End()
-
 	defer func(t time.Time) {
 		s.metrics.tokenSigningDurationHistogram.Observe(time.Since(t).Seconds())
 	}(time.Now())
 
-	cacheKey := s.getCacheKey(id)
+	cacheKey := prefixCacheKey(id.GetCacheKey())
 
 	type resultType struct {
 		token    string
@@ -96,7 +86,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		now := time.Now()
 		idClaims := &auth.IDClaims{
-			Claims: jwt.Claims{
+			Claims: &jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
 				Subject:  id.GetID(),
@@ -112,15 +102,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		if id.IsIdentityType(claims.TypeUser) {
 			idClaims.Rest.Email = id.GetEmail()
-			idClaims.Rest.EmailVerified = id.GetEmailVerified()
+			idClaims.Rest.EmailVerified = id.IsEmailVerified()
 			idClaims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			idClaims.Rest.Username = id.GetLogin()
-			idClaims.Rest.DisplayName = id.GetName()
-			idClaims.Rest.Groups = s.resolveGroupsClaim(id)
-		}
-
-		if id.GetOrgRole().IsValid() {
-			idClaims.Rest.Role = string(id.GetOrgRole())
+			idClaims.Rest.DisplayName = id.GetDisplayName()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, idClaims)
@@ -150,25 +135,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 }
 
 func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
-	ctx, span := s.tracer.Start(ctx, "user.sync.RemoveIDToken")
-	defer span.End()
-
-	return s.cache.Delete(ctx, s.getCacheKey(id))
+	return s.cache.Delete(ctx, prefixCacheKey(id.GetCacheKey()))
 }
 
-// resolveGroupsClaim returns the groups to embed in the ID token's claims.
-func (s *Service) resolveGroupsClaim(id identity.Requester) []string {
-	if s.cfg.IDUseExternalGroupsForGroupsClaim {
-		// Use IdP/proxy-supplied groups; external group names are expected to match team UIDs (metadata.name).
-		return id.GetExternalGroups()
-	}
-	// Fall back to Grafana-stored team memberships.
-	return id.GetGroups()
-}
-
-func (s *Service) SyncIDToken(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	ctx, span := s.tracer.Start(ctx, "user.sync.SyncIDToken")
-	defer span.End()
+func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	// FIXME(kalleep): we should probably lazy load this
 	token, idClaims, err := s.SignIdentity(ctx, identity)
 	if err != nil {
@@ -185,7 +155,7 @@ func (s *Service) SyncIDToken(ctx context.Context, identity *authn.Identity, _ *
 }
 
 func (s *Service) extractTokenClaims(token string) (*authnlib.Claims[authnlib.IDTokenClaims], error) {
-	parsed, err := jwt.ParseSigned(token, []jose.SignatureAlgorithm{jose.ES256})
+	parsed, err := jwt.ParseSigned(token)
 	if err != nil {
 		s.metrics.failedTokenSigningCounter.Inc()
 		return nil, err
@@ -206,23 +176,10 @@ func getAudience(orgID int64) jwt.Audience {
 	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
 }
 
-func (s *Service) getCacheKey(ident identity.Requester) string {
-	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + hashGroups(s.resolveGroupsClaim(ident))
+func prefixCacheKey(key string) string {
+	return fmt.Sprintf("%s-%s", cachePrefix, key)
 }
 
 func shouldLogErr(err error) bool {
 	return !errors.Is(err, context.Canceled)
-}
-
-func hashGroups(groups []string) string {
-	sorted := make([]string, len(groups))
-	copy(sorted, groups)
-	sort.Strings(sorted)
-
-	h := xxhash.New()
-	for _, g := range sorted {
-		_, _ = h.WriteString(g)
-		_, _ = h.Write([]byte{0})
-	}
-	return strconv.FormatUint(h.Sum64(), 16)
 }

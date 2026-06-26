@@ -1,36 +1,35 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, useFloating } from '@floating-ui/react';
+import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { type FormEvent, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import Calendar from 'react-calendar';
 import { useMedia } from 'react-use';
 
 import {
   dateTimeFormat,
-  type DateTime,
+  DateTime,
   dateTime,
-  type GrafanaTheme2,
+  GrafanaTheme2,
   isDateTime,
   dateTimeForTimeZone,
   getTimeZone,
-  type TimeZone,
+  TimeZone,
 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
-import { getPositioningMiddleware } from '../../../utils/floating';
+import { useStyles2, useTheme2 } from '../../../themes';
+import { Trans } from '../../../utils/i18n';
 import { Button } from '../../Button/Button';
 import { InlineField } from '../../Forms/InlineField';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
 import { Stack } from '../../Layout/Stack/Stack';
 import { getModalStyles } from '../../Modal/getModalStyles';
-import { getPortalContainer, Portal } from '../../Portal/Portal';
-import { TimeOfDayPicker } from '../TimeOfDayPicker';
+import { Portal } from '../../Portal/Portal';
+import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
@@ -60,11 +59,6 @@ export interface Props {
   timeZone?: TimeZone;
 }
 
-/**
- * A component for selecting a date *and* time.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-datetimepicker--docs
- */
 export const DateTimePicker = ({
   date,
   maxDate,
@@ -86,7 +80,10 @@ export const DateTimePicker = ({
       onClose: () => setOpen(false),
       isDismissable: true,
       isOpen,
-      shouldCloseOnInteractOutside: (element) => !getPortalContainer().contains(element),
+      shouldCloseOnInteractOutside: (element) => {
+        const popupElement = document.getElementsByClassName(POPUP_CLASS_NAME)[0];
+        return !(popupElement && popupElement.contains(element));
+      },
     },
     ref
   );
@@ -95,16 +92,22 @@ export const DateTimePicker = ({
   const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
-  const placement = 'bottom-start';
   const styles = useStyles2(getStyles);
 
   // the order of middleware is important!
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = getPositioningMiddleware(placement);
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
 
   const { refs, floatingStyles } = useFloating({
     open: isOpen,
-    placement,
+    placement: 'bottom-start',
     onOpenChange: setOpen,
     middleware,
     whileElementsMounted: autoUpdate,
@@ -250,14 +253,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       onChange();
     }, [onChange]);
 
-    const icon = (
-      <Button
-        aria-label={t('grafana-ui.date-time-picker.calendar-icon-label', 'Time picker')}
-        icon="calendar-alt"
-        variant="secondary"
-        onClick={onOpen}
-      />
-    );
+    const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
     return (
       <InlineField label={label} invalid={!!(internalDate.value && internalDate.invalid)} className={styles.field}>
         <Input
@@ -266,7 +262,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           value={internalDate.value}
           onBlur={onBlur}
           data-testid={Components.DateTimePicker.input}
-          placeholder={t('grafana-ui.date-time-picker.select-placeholder', 'Select date/time')}
+          placeholder="Select date/time"
           ref={ref}
           suffix={
             clearable &&
@@ -347,9 +343,9 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           prev2Label={null}
           value={reactCalendarDate}
           nextLabel={<Icon name="angle-right" />}
-          nextAriaLabel={t('grafana-ui.date-time-picker.next-label', 'Next month')}
+          nextAriaLabel="Next month"
           prevLabel={<Icon name="angle-left" />}
-          prevAriaLabel={t('grafana-ui.date-time-picker.previous-label', 'Previous month')}
+          prevAriaLabel="Previous month"
           onChange={onChangeDate}
           locale="en"
           className={calendarStyles.body}
@@ -363,6 +359,8 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
             onChange={onChangeTime}
             value={timeOfDayDateTime}
             disabledHours={disabledHours}
+            disabledMinutes={disabledMinutes}
+            disabledSeconds={disabledSeconds}
           />
         </div>
         <Stack>

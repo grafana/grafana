@@ -1,13 +1,13 @@
-import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { type AppNotification, AppNotificationSeverity, type AppNotificationsState } from 'app/types/appNotifications';
+import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/';
 
 const MAX_STORED_NOTIFICATIONS = 25;
-const STORAGE_KEY = 'notifications';
-const NEW_NOTIFS_KEY = `${STORAGE_KEY}/lastRead`;
+export const STORAGE_KEY = 'notifications';
+export const NEW_NOTIFS_KEY = `${STORAGE_KEY}/lastRead`;
 type StoredNotification = Omit<AppNotification, 'component'>;
 
-const initialState: AppNotificationsState = {
+export const initialState: AppNotificationsState = {
   byId: deserializeNotifications(),
   lastRead: Number.parseInt(window.localStorage.getItem(NEW_NOTIFS_KEY) ?? `${Date.now()}`, 10),
 };
@@ -60,8 +60,10 @@ export const appNotificationsReducer = appNotificationsSlice.reducer;
 // Selectors
 
 export const selectLastReadTimestamp = (state: AppNotificationsState) => state.lastRead;
-const selectById = (state: AppNotificationsState) => state.byId;
-const selectAll = createSelector(selectById, (byId) => Object.values(byId).sort((a, b) => b.timestamp - a.timestamp));
+export const selectById = (state: AppNotificationsState) => state.byId;
+export const selectAll = createSelector(selectById, (byId) =>
+  Object.values(byId).sort((a, b) => b.timestamp - a.timestamp)
+);
 export const selectWarningsAndErrors = createSelector(selectAll, (all) => all.filter(isAtLeastWarning));
 export const selectVisible = createSelector(selectById, (byId) => Object.values(byId).filter((n) => n.showing));
 
@@ -81,7 +83,7 @@ function isStoredNotification(obj: unknown): obj is StoredNotification {
 
 // (De)serialization
 
-function deserializeNotifications(): Record<string, StoredNotification> {
+export function deserializeNotifications(): Record<string, StoredNotification> {
   const storedNotifsRaw = window.localStorage.getItem(STORAGE_KEY);
   if (!storedNotifsRaw) {
     return {};

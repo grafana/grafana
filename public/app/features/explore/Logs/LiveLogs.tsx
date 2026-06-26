@@ -3,10 +3,9 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { type LogRowModel, dateTimeFormat, type GrafanaTheme2, LogsSortOrder } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { type TimeZone } from '@grafana/schema';
-import { Button, type Themeable2, withTheme2 } from '@grafana/ui';
+import { LogRowModel, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
+import { Button, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from '../../logs/components/LogMessageAnsi';
 import { getLogRowStyles } from '../../logs/components/getLogRowStyles';
@@ -170,23 +169,18 @@ class LiveLogs extends PureComponent<Props, State> {
             onClick={isPaused ? onResume : onPause}
             className={styles.button}
           >
-            {isPaused ? t('explore.live-logs.resume', 'Resume') : t('explore.live-logs.pause', 'Pause')}
+            {isPaused ? 'Resume' : 'Pause'}
           </Button>
           <Button icon="trash-alt" variant="secondary" onClick={onClear} className={styles.button}>
-            <Trans i18nKey="explore.live-logs.clear-logs">Clear logs</Trans>
+            Clear logs
           </Button>
           <Button icon="square-shape" variant="secondary" onClick={this.props.stopLive} className={styles.button}>
-            <Trans i18nKey="explore.live-logs.exit-live-mode">Exit live mode</Trans>
+            Exit live mode
           </Button>
           {isPaused ||
             (this.rowsToRender().length > 0 && (
               <span>
-                <Trans
-                  i18nKey="explore.live-logs.last-line-received"
-                  components={{ elapsedTime: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> }}
-                >
-                  Last line received: {'<elapsedTime />'} ago
-                </Trans>
+                Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
               </span>
             ))}
         </div>

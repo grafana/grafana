@@ -17,6 +17,8 @@
 
   telegraf:
     image: telegraf:latest
+    links:
+      - influxdb
     depends_on:
       - influxdb
     volumes:

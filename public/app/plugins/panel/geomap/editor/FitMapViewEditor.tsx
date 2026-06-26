@@ -1,12 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
-import { type SelectableValue, type StandardEditorContext } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue, StandardEditorContext } from '@grafana/data';
 import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { type Options, type MapViewConfig } from '../panelcfg.gen';
-import { type GeomapInstanceState } from '../types';
+import { GeomapInstanceState, Options, MapViewConfig } from '../types';
 
 type Props = {
   labelWidth: number;
@@ -55,12 +53,8 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
 
   const allLayersEditorFragment = (
     <InlineFieldRow>
-      <InlineField
-        label={t('geomap.fit-map-view-editor.all-layers-editor-fragment.label-layer', 'Layer')}
-        labelWidth={labelWidth}
-        grow={true}
-      >
-        <Select options={layers} onChange={onSelectLayer} placeholder={layers[0]?.label} value={value.layer} />
+      <InlineField label="Layer" labelWidth={labelWidth} grow={true}>
+        <Select options={layers} onChange={onSelectLayer} placeholder={layers[0]?.label} />
       </InlineField>
     </InlineFieldRow>
   );
@@ -72,13 +66,10 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
   const lastOnlyEditorFragment = (
     <InlineFieldRow>
       <InlineField
-        label={t('geomap.fit-map-view-editor.last-only-editor-fragment.label-padding', 'Padding')}
+        label="Padding"
         labelWidth={labelWidth}
         grow={true}
-        tooltip={t(
-          'geomap.fit-map-view-editor.last-only-editor-fragment.tooltip-padding-relative-percent-beyond-extent',
-          'Sets padding in relative percent beyond data extent'
-        )}
+        tooltip="sets padding in relative percent beyond data extent"
       >
         <NumberInput value={value?.padding ?? 5} min={0} step={1} onChange={onChangePadding} />
       </InlineField>
@@ -111,7 +102,7 @@ export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={t('geomap.fit-map-view-editor.label-data', 'Data')} labelWidth={labelWidth} grow={true}>
+        <InlineField label="Data" labelWidth={labelWidth} grow={true}>
           <RadioButtonGroup
             value={currentDataScope}
             options={DataScopeOptions}

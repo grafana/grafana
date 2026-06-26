@@ -1,26 +1,30 @@
-import { type PanelProps } from '@grafana/data';
+import { Component } from 'react';
+
+import { PanelProps } from '@grafana/data';
 
 import { CursorView } from './CursorView';
 import { EventBusLoggerPanel } from './EventBusLogger';
 import { RenderInfoViewer } from './RenderInfoViewer';
 import { StateView } from './StateView';
-import { type Options, DebugMode } from './panelcfg.gen';
+import { Options, DebugMode } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
 
-export function DebugPanel(props: Props) {
-  const { options } = props;
+export class DebugPanel extends Component<Props> {
+  render() {
+    const { options } = this.props;
 
-  switch (options.mode) {
-    case DebugMode.Events:
-      return <EventBusLoggerPanel eventBus={props.eventBus} />;
-    case DebugMode.Cursor:
-      return <CursorView eventBus={props.eventBus} />;
-    case DebugMode.State:
-      return <StateView {...props} />;
-    case DebugMode.ThrowError:
-      throw new Error('I failed you and for that i am deeply sorry');
-    default:
-      return <RenderInfoViewer {...props} />;
+    switch (options.mode) {
+      case DebugMode.Events:
+        return <EventBusLoggerPanel eventBus={this.props.eventBus} />;
+      case DebugMode.Cursor:
+        return <CursorView eventBus={this.props.eventBus} />;
+      case DebugMode.State:
+        return <StateView {...this.props} />;
+      case DebugMode.ThrowError:
+        throw new Error('I failed you and for that i am deeply sorry');
+      default:
+        return <RenderInfoViewer {...this.props} />;
+    }
   }
 }

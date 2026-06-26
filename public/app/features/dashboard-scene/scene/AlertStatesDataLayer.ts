@@ -1,27 +1,27 @@
-import { from, map, type Observable, type Unsubscribable } from 'rxjs';
+import { from, map, Observable, Unsubscribable } from 'rxjs';
 
-import { AlertState, type AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
+import { AlertState, AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneDataLayerBase,
-  type SceneDataLayerProvider,
-  type SceneDataLayerProviderState,
+  SceneDataLayerProvider,
+  SceneDataLayerProviderState,
   sceneGraph,
-  type SceneTimeRangeLike,
+  SceneTimeRangeLike,
 } from '@grafana/scenes';
+import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/core';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
+import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type RuleNamespace } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { AccessControlAction } from 'app/types';
+import { RuleNamespace } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -62,7 +62,7 @@ export class AlertStatesDataLayer
 
   private async runWithTimeRange(timeRange: SceneTimeRangeLike) {
     const dashboard = getDashboardSceneFor(this);
-    const { uid } = dashboard.state;
+    const { uid, id } = dashboard.state;
 
     if (this.querySub) {
       this.querySub.unsubscribe();
@@ -73,13 +73,10 @@ export class AlertStatesDataLayer
     }
     const fetchData: () => Promise<RuleNamespace[]> = async () => {
       const promRules = await dispatch(
-        alertRuleApi.endpoints.prometheusRuleNamespaces.initiate(
-          {
-            ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-            dashboardUid: uid,
-          },
-          { forceRefetch: true }
-        )
+        alertRuleApi.endpoints.prometheusRuleNamespaces.initiate({
+          ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+          dashboardUid: uid,
+        })
       );
       if (promRules.error) {
         throw new Error(`Unexpected alert rules response.`);
@@ -96,7 +93,7 @@ export class AlertStatesDataLayer
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
         groups.forEach((group) =>
           group.rules.forEach((rule) => {
-            if (prometheusRuleType.alertingRule(rule) && rule.annotations?.[Annotation.panelID]) {
+            if (isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
               this.hasAlertRules = true;
               const panelId = Number(rule.annotations[Annotation.panelID]);
               const state = promAlertStateToAlertState(rule.state);
@@ -108,7 +105,7 @@ export class AlertStatesDataLayer
                   state,
                   id: Object.keys(panelIdToAlertState).length,
                   panelId,
-                  dashboardUID: uid,
+                  dashboardId: id!,
                 };
               } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
                 panelIdToAlertState[panelId].state = AlertState.Alerting;

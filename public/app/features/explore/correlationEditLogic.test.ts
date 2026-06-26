@@ -1,4 +1,4 @@
-import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types';
 
 import { showModalMessage } from './correlationEditLogic';
 

@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup } from '@grafana/plugin-ui';
+import { SelectableValue } from '@grafana/data';
+import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 
 import { ALIGNMENT_PERIODS } from '../constants';
-import { type PreprocessorType, type TimeSeriesList } from '../dataquery.gen';
-import type CloudMonitoringDatasource from '../datasource';
+import CloudMonitoringDatasource from '../datasource';
 import { alignmentPeriodLabel } from '../functions';
-import { type CustomMetaData, type MetricDescriptor } from '../types/types';
+import { PreprocessorType, TimeSeriesList } from '../types/query';
+import { CustomMetaData, MetricDescriptor } from '../types/types';
 
 import { AlignmentFunction } from './AlignmentFunction';
 import { PeriodSelect } from './PeriodSelect';

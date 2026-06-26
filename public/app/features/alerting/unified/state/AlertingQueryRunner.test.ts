@@ -1,34 +1,24 @@
 import { defaultsDeep } from 'lodash';
-import { type Observable, TimeoutError, lastValueFrom, of, throwError } from 'rxjs';
-import { delay, take, timeout } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { delay, take } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
-  type DataFrame,
-  type DataFrameJSON,
-  type DataSourceInstanceSettings,
-  type Field,
+  DataFrame,
+  DataFrameJSON,
+  DataSourceInstanceSettings,
+  Field,
   FieldType,
   LoadingState,
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { type DataSourceSrv, DataSourceWithBackend, type FetchResponse } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { type DataQuery } from '@grafana/schema';
-import { type BackendSrv } from 'app/core/services/backend_srv';
-import {
-  EXTERNAL_VANILLA_ALERTMANAGER_UID,
-  mockDataSources,
-} from 'app/features/alerting/unified/components/settings/mocks/server';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
+import { DataSourceSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { type AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';
-
-setupMswServer();
+import { AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';
 
 describe('AlertingQueryRunner', () => {
   it('should successfully map response and return panel data by refId', async () => {
@@ -38,12 +28,12 @@ describe('AlertingQueryRunner', () => {
         B: { frames: [createDataFrameJSON([5, 6])] },
       },
     });
-    setupDataSources(...Object.values(mockDataSources));
 
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(response),
-      })
+      }),
+      mockDataSourceSrv()
     );
 
     const data = runner.get();
@@ -131,7 +121,8 @@ describe('AlertingQueryRunner', () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(response).pipe(delay(210)),
-      })
+      }),
+      mockDataSourceSrv()
     );
 
     const data = runner.get();
@@ -185,7 +176,8 @@ describe('AlertingQueryRunner', () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => throwError(error),
-      })
+      }),
+      mockDataSourceSrv()
     );
 
     const data = runner.get();
@@ -202,7 +194,7 @@ describe('AlertingQueryRunner', () => {
     });
   });
 
-  it('should not push any values if all queries fail filterQuery check', async () => {
+  it('should not execute if all queries fail filterQuery check', async () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => throwError(new Error("shouldn't happen")),
@@ -213,13 +205,21 @@ describe('AlertingQueryRunner', () => {
     const data = runner.get();
     runner.run([createQuery('A'), createQuery('B')], 'B');
 
-    await expect(lastValueFrom(data.pipe(timeout(200)))).rejects.toThrow(TimeoutError);
+    await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
+      const [data] = values;
+
+      expect(data.A.state).toEqual(LoadingState.Done);
+      expect(data.A.series).toHaveLength(0);
+
+      expect(data.B.state).toEqual(LoadingState.Done);
+      expect(data.B.series).toHaveLength(0);
+    });
   });
 
-  it('should skip hidden queries and descendant nodes', async () => {
+  it('should skip hidden queries', async () => {
     const results = createFetchResponse<AlertingQueryResponse>({
       results: {
-        C: { frames: [createDataFrameJSON([1, 2, 3])] },
+        B: { frames: [createDataFrameJSON([1, 2, 3])] },
       },
     });
 
@@ -239,17 +239,7 @@ describe('AlertingQueryRunner', () => {
             hide: true,
           },
         }),
-        createQuery('B', {
-          model: {
-            refId: 'B',
-            hide: false,
-          },
-        }),
-        createQuery('C', {
-          model: {
-            refId: 'C',
-          },
-        }),
+        createQuery('B'),
       ],
       'B'
     );
@@ -258,8 +248,7 @@ describe('AlertingQueryRunner', () => {
       const [loading, _data] = values;
 
       expect(loading.A).toBeUndefined();
-      expect(loading.B).toBeUndefined();
-      expect(loading.C.state).toEqual(LoadingState.Done);
+      expect(loading.B.state).toEqual(LoadingState.Done);
     });
   });
 });
@@ -311,66 +300,6 @@ const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: n
   };
 };
 
-describe('prepareQueries', () => {
-  it('should skip node that fail to link', async () => {
-    const queries = [
-      createQuery('A', {
-        model: {
-          refId: 'A',
-          hide: true, // this node will be omitted
-        },
-      }),
-      createQuery('B', {
-        model: {
-          refId: 'B',
-          hide: false, // this node will _not_ be omitted
-        },
-      }),
-      createExpression('C', {
-        model: {
-          refId: 'C',
-          type: ExpressionQueryType.math,
-          expression: '$A', // this node will be omitted because it is a descendant of A (omitted)
-        },
-      }),
-      createExpression('D', {
-        model: {
-          refId: 'D',
-          type: ExpressionQueryType.math,
-          expression: '$ZZZ', // this node will be omitted, ref does not exist
-        },
-      }),
-      createExpression('E', {
-        model: {
-          refId: 'E',
-          type: ExpressionQueryType.math,
-          expression: '$B', // this node will be omitted, ref does not exist
-        },
-      }),
-      createExpression('F', {
-        model: {
-          refId: 'F',
-          type: ExpressionQueryType.math,
-          expression: '$D', // this node will be omitted, because D is broken too
-        },
-      }),
-    ];
-
-    const runner = new AlertingQueryRunner(
-      mockBackendSrv({
-        fetch: () => of(),
-      }),
-      mockDataSourceSrv({ filterQuery: (model: AlertDataQuery) => model.hide !== true })
-    );
-
-    const queriesToRun = await runner.prepareQueries(queries);
-
-    expect(queriesToRun).toHaveLength(2);
-    expect(queriesToRun[0]).toStrictEqual(queries[1]);
-    expect(queriesToRun[1]).toStrictEqual(queries[4]);
-  });
-});
-
 const createDataFrameJSON = (values: number[]): DataFrameJSON => {
   const startTime = 1620051602238;
   const timeValues = values.map((_, index) => startTime + (index + 1) * 10000);
@@ -388,25 +317,12 @@ const createDataFrameJSON = (values: number[]): DataFrameJSON => {
   };
 };
 
-const createQuery = (refId: string, options?: Partial<AlertQuery<DataQuery>>): AlertQuery<DataQuery> => {
+const createQuery = (refId: string, options?: Partial<AlertQuery>): AlertQuery => {
   return defaultsDeep(options, {
     refId,
     queryType: '',
-    datasourceUid: EXTERNAL_VANILLA_ALERTMANAGER_UID,
+    datasourceUid: '',
     model: { refId },
-    relativeTimeRange: getDefaultRelativeTimeRange(),
-  });
-};
-
-const createExpression = (
-  refId: string,
-  options?: Partial<AlertQuery<ExpressionQuery>>
-): AlertQuery<ExpressionQuery> => {
-  return defaultsDeep(options, {
-    refId,
-    queryType: '',
-    datasourceUid: EXTERNAL_VANILLA_ALERTMANAGER_UID,
-    model: { refId, datasource: ExpressionDatasourceRef },
     relativeTimeRange: getDefaultRelativeTimeRange(),
   });
 };

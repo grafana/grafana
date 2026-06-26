@@ -1,4 +1,4 @@
-import { type RegistryItem, Registry } from './Registry';
+import { RegistryItem, Registry } from './Registry';
 
 export enum BinaryOperationID {
   Add = '+',

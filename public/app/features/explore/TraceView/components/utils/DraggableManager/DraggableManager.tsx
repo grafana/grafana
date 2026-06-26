@@ -14,10 +14,10 @@
 
 import { get as _get } from 'lodash';
 
-import type TNil from '../../types/TNil';
+import { TNil } from '../../types';
 
 import EUpdateTypes from './EUpdateTypes';
-import { type DraggableBounds, type DraggingUpdate } from './types';
+import { DraggableBounds, DraggingUpdate } from './types';
 
 const LEFT_MOUSE_BUTTON = 0;
 

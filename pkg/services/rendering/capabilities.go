@@ -18,6 +18,7 @@ type CapabilityName string
 const (
 	ScalingDownImages CapabilityName = "ScalingDownImages"
 	FullHeightImages  CapabilityName = "FullHeightImages"
+	SVGSanitization   CapabilityName = "SvgSanitization"
 	PDFRendering      CapabilityName = "PdfRendering"
 )
 

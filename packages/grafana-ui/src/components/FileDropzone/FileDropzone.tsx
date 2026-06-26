@@ -1,22 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useCallback, useState } from 'react';
-import {
-  type Accept,
-  type DropEvent,
-  type DropzoneOptions,
-  type FileError,
-  type FileRejection,
-  useDropzone,
-  ErrorCode,
-} from 'react-dropzone';
+import { isString, uniqueId } from 'lodash';
+import { ReactNode, useCallback, useState } from 'react';
+import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzone, ErrorCode } from 'react-dropzone';
 
-import { formattedValueToString, getValueFormat, type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-import { uniqueId } from '../../utils/uniqueId';
+import { useTheme2 } from '../../themes';
+import { Trans } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
-import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 
 import { FileListItem } from './FileListItem';
@@ -56,11 +47,6 @@ export interface FileDropzoneProps {
    */
   fileListRenderer?: (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => ReactNode;
   onFileRemove?: (file: DropzoneFile) => void;
-  /**
-   * Optional id attribute for the underlying input element
-   * Use to link a label to the input for accessibility
-   */
-  id?: string;
 }
 
 export interface DropzoneFile {
@@ -72,24 +58,9 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
-/**
- * A dropzone component to use for file uploads.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-filedropzone--docs
- */
-export function FileDropzone({
-  options,
-  children,
-  readAs,
-  onLoad,
-  fileListRenderer,
-  onFileRemove,
-  id: idProp,
-}: FileDropzoneProps) {
+export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
-  const fieldContext = useFieldContext();
-  const id = idProp ?? fieldContext.id;
 
   const formattedSize = getValueFormat('decbytes')(options?.maxSize ? options?.maxSize : 0);
 
@@ -218,11 +189,7 @@ export function FileDropzone({
     const size = formattedValueToString(formattedSize);
     return (
       <div className={styles.errorAlert}>
-        <Alert
-          title={t('grafana-ui.file-dropzone.error-title', 'Upload failed')}
-          severity="error"
-          onRemove={clearAlert}
-        >
+        <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
           {errors.map((error) => {
             switch (error.code) {
               case ErrorCode.FileTooLarge:
@@ -247,7 +214,7 @@ export function FileDropzone({
   return (
     <div className={styles.container}>
       <div data-testid="dropzone" {...getRootProps({ className: styles.dropzone })}>
-        <input {...getInputProps()} id={id} />
+        <input {...getInputProps()} />
         {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
       {fileErrors.length > 0 && renderErrorMessages(fileErrors)}
@@ -261,7 +228,7 @@ export function FileDropzone({
   );
 }
 
-function getMimeTypeByExtension(ext: string) {
+export function getMimeTypeByExtension(ext: string) {
   if (['txt', 'json', 'csv', 'xls', 'yml'].some((e) => ext.match(e))) {
     return 'text/plain';
   }
@@ -269,8 +236,8 @@ function getMimeTypeByExtension(ext: string) {
   return 'application/octet-stream';
 }
 
-function transformAcceptToNewFormat(accept?: string | string[] | Accept): Accept | undefined {
-  if (typeof accept === 'string') {
+export function transformAcceptToNewFormat(accept?: string | string[] | Accept): Accept | undefined {
+  if (isString(accept)) {
     return {
       [getMimeTypeByExtension(accept)]: [accept],
     };
@@ -310,7 +277,7 @@ function getPrimaryText(files: DropzoneFile[], options?: BackwardsCompatibleDrop
 }
 
 function getAcceptedFileTypeText(accept: string | string[] | Accept) {
-  if (typeof accept === 'string') {
+  if (isString(accept)) {
     return `Accepted file type: ${accept}`;
   }
 

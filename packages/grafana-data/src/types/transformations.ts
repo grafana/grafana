@@ -1,11 +1,11 @@
-import { type MonoTypeOperatorFunction } from 'rxjs';
+import { MonoTypeOperatorFunction } from 'rxjs';
 
-import { type MatcherConfig, type DataTransformerConfig } from '@grafana/schema';
+import { MatcherConfig, DataTransformerConfig } from '@grafana/schema';
 
-import { type RegistryItemWithOptions } from '../utils/Registry';
+import { RegistryItemWithOptions } from '../utils/Registry';
 
-import { type DataFrame, type Field } from './dataFrame';
-import { type InterpolateFunction } from './panel';
+import { DataFrame, Field } from './dataFrame';
+import { InterpolateFunction } from './panel';
 
 /** deprecated, use it from schema */
 export type { MatcherConfig };
@@ -115,5 +115,4 @@ export enum SpecialValue {
   False = 'false',
   Null = 'null',
   Empty = 'empty',
-  Zero = 'zero',
 }

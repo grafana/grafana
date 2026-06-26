@@ -1,12 +1,10 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { isEmpty, isString, set } from 'lodash';
 
-import { dateTimeFormatTimeAgo, type TimeZone } from '@grafana/data';
+import { dateTimeFormatTimeAgo, setWeekStart, TimeZone } from '@grafana/data';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/services/context_srv';
-import { type ThunkResult } from 'app/types/store';
-import { type Team } from 'app/types/teams';
-import { type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
+import { contextSrv } from 'app/core/core';
+import { Team, ThunkResult, UserDTO, UserOrg, UserSession } from 'app/types';
 
 export interface UserState {
   orgId: number;
@@ -24,9 +22,9 @@ export interface UserState {
 }
 
 export const initialUserState: UserState = {
-  orgId: contextSrv.user.orgId,
-  timeZone: contextSrv.user.timezone,
-  weekStart: contextSrv.user.weekStart,
+  orgId: config.bootData.user.orgId,
+  timeZone: config.bootData.user.timezone,
+  weekStart: config.bootData.user.weekStart,
   fiscalYearStartMonth: 0,
   orgsAreLoading: false,
   sessionsAreLoading: false,
@@ -38,7 +36,7 @@ export const initialUserState: UserState = {
   user: null,
 };
 
-const slice = createSlice({
+export const slice = createSlice({
   name: 'user/profile',
   initialState: initialUserState,
   reducers: {
@@ -118,7 +116,19 @@ export const updateTimeZoneForSession = (timeZone: TimeZone): ThunkResult<void> 
   };
 };
 
-const {
+export const updateWeekStartForSession = (weekStart: string): ThunkResult<void> => {
+  return async (dispatch) => {
+    if (!isString(weekStart) || isEmpty(weekStart)) {
+      weekStart = config?.bootData?.user?.weekStart;
+    }
+
+    set(contextSrv, 'user.weekStart', weekStart);
+    dispatch(updateWeekStart({ weekStart }));
+    setWeekStart(weekStart);
+  };
+};
+
+export const {
   setUpdating,
   initLoadOrgs,
   orgsLoaded,
@@ -132,20 +142,6 @@ const {
   updateWeekStart,
   updateFiscalYearStartMonth,
 } = slice.actions;
-
-export {
-  setUpdating,
-  initLoadOrgs,
-  orgsLoaded,
-  initLoadTeams,
-  teamsLoaded,
-  userLoaded,
-  userSessionRevoked,
-  initLoadSessions,
-  sessionsLoaded,
-  updateTimeZone,
-  updateWeekStart,
-};
 
 export const userReducer = slice.reducer;
 export default { user: slice.reducer };

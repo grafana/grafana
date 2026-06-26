@@ -1,14 +1,14 @@
 import { cx, css } from '@emotion/css';
-import { type HTMLProps, useRef, useState } from 'react';
+import { HTMLProps, useRef, useState } from 'react';
 import * as React from 'react';
-import { useClickAway } from 'react-use';
+import useClickAway from 'react-use/lib/useClickAway';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { measureText } from '../../utils/measureText';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { getSegmentStyles } from './styles';
-import { type SegmentProps } from './types';
+import { SegmentProps } from './types';
 import { useExpandableLabel } from './useExpandableLabel';
 
 export interface SegmentInputProps
@@ -20,9 +20,6 @@ export interface SegmentInputProps
 
 const FONT_SIZE = 14;
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-segmentinput--docs
- */
 export function SegmentInput({
   value: initialValue,
   onChange,

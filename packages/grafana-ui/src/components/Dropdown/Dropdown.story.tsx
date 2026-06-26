@@ -1,7 +1,7 @@
-import { type Meta } from '@storybook/react-webpack5';
+import { Meta } from '@storybook/react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { Menu } from '../Menu/Menu';

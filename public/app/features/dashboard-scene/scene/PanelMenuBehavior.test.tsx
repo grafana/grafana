@@ -1,19 +1,15 @@
-import { of } from 'rxjs';
-import { testWithFeatureToggles } from 'test/test-utils';
-
 import {
   FieldType,
   LoadingState,
-  type PanelData,
-  type PluginExtensionPanelContext,
+  PanelData,
+  PluginExtensionPanelContext,
   PluginExtensionTypes,
   getDefaultTimeRange,
-  store,
   toDataFrame,
+  urlUtil,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
-import { config, locationService } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -22,19 +18,16 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type GetExploreUrlArguments } from 'app/core/utils/explore';
+import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
-import { AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
-import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
-import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -54,14 +47,24 @@ jest.mock('app/core/utils/explore', () => ({
 
 jest.mock('app/core/services/context_srv');
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  setPluginExtensionGetter: jest.fn(),
+  getPluginLinkExtensions: jest.fn(),
+}));
+
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
 }));
 
-const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
-setGetObservablePluginLinks(getObservablePluginLinksMock);
+const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 describe('panelMenuBehavior', () => {
+  beforeEach(() => {
+    getPluginLinkExtensionsMock.mockRestore();
+    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
+  });
+
   beforeAll(() => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
   });
@@ -80,7 +83,7 @@ describe('panelMenuBehavior', () => {
 
     expect(menu.state.items?.length).toBe(6);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
-    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=a$panel-12');
+    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=panel-12');
     // verify edit url keeps url time range
     expect(menu.state.items?.[1].href).toBe('/d/dash-1?from=now-5m&to=now&editPanel=12');
     // verify share
@@ -94,7 +97,8 @@ describe('panelMenuBehavior', () => {
     expect(getExploreArgs.queries).toEqual([{ query: 'QueryA', refId: 'A' }]);
     expect(getExploreArgs.scopedVars?.__sceneObject?.value).toBe(panel);
 
-    expect(menu.state.items?.[4].text).toBe('Inspect');
+    // verify inspect url keeps url params and adds inspect=<panel-key>
+    expect(menu.state.items?.[4].href).toBe('/d/dash-1?from=now-5m&to=now&inspect=panel-12');
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
@@ -129,8 +133,8 @@ describe('panelMenuBehavior', () => {
 
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', async () => {
-      getObservablePluginLinksMock.mockReturnValue(
-        of([
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
           {
             id: '1',
             pluginId: '...',
@@ -139,8 +143,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
           },
-        ])
-      );
+        ],
+      });
 
       const { menu, panel } = await buildTestScene({});
 
@@ -168,8 +172,8 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate menu item title to 25 chars', async () => {
-      getObservablePluginLinksMock.mockReturnValue(
-        of([
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
           {
             id: '1',
             pluginId: '...',
@@ -178,8 +182,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
           },
-        ])
-      );
+        ],
+      });
 
       const { menu, panel } = await buildTestScene({});
 
@@ -201,47 +205,6 @@ describe('panelMenuBehavior', () => {
           expect.objectContaining({
             text: 'Declare incident when...',
             href: '/a/grafana-basic-app/declare-incident',
-          }),
-        ])
-      );
-    });
-
-    it('should show icons for link extensions (if they provide it)', async () => {
-      getObservablePluginLinksMock.mockReturnValue(
-        of([
-          {
-            id: '1',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Declare incident when pressing this amazing menu item',
-            description: 'Declaring an incident in the app',
-            path: '/a/grafana-basic-app/declare-incident',
-            icon: 'external-link-alt',
-          },
-        ])
-      );
-
-      const { menu, panel } = await buildTestScene({});
-
-      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
-      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
-
-      menu.activate();
-
-      await new Promise((r) => setTimeout(r, 1));
-
-      expect(menu.state.items?.length).toBe(7);
-
-      const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
-
-      expect(extensionsSubMenu).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: 'Declare incident when...',
-            href: '/a/grafana-basic-app/declare-incident',
-            iconClassName: 'external-link-alt',
           }),
         ])
       );
@@ -250,8 +213,8 @@ describe('panelMenuBehavior', () => {
     it('should pass onClick from plugin extension link to menu item', async () => {
       const expectedOnClick = jest.fn();
 
-      getObservablePluginLinksMock.mockReturnValue(
-        of([
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
           {
             id: '1',
             pluginId: '...',
@@ -260,8 +223,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             onClick: expectedOnClick,
           },
-        ])
-      );
+        ],
+      });
 
       const { menu, panel } = await buildTestScene({});
 
@@ -334,10 +297,9 @@ describe('panelMenuBehavior', () => {
           },
         },
         data,
-        panelPathId: expect.any(String) as unknown as string,
       };
 
-      expect(getObservablePluginLinksMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should pass context with default time zone values when configuring extension', async () => {
@@ -392,15 +354,14 @@ describe('panelMenuBehavior', () => {
           },
         },
         data,
-        panelPathId: expect.any(String) as unknown as string,
       };
 
-      expect(getObservablePluginLinksMock).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
 
     it('should contain menu item with category', async () => {
-      getObservablePluginLinksMock.mockReturnValue(
-        of([
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
           {
             id: '1',
             pluginId: '...',
@@ -410,8 +371,8 @@ describe('panelMenuBehavior', () => {
             path: '/a/grafana-basic-app/declare-incident',
             category: 'Incident',
           },
-        ])
-      );
+        ],
+      });
 
       const { menu, panel } = await buildTestScene({});
 
@@ -444,8 +405,8 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should truncate category to 25 chars', async () => {
-      getObservablePluginLinksMock.mockReturnValue(
-        of([
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
           {
             id: '1',
             pluginId: '...',
@@ -455,8 +416,8 @@ describe('panelMenuBehavior', () => {
             path: '/a/grafana-basic-app/declare-incident',
             category: 'Declare incident when pressing this amazing menu item',
           },
-        ])
-      );
+        ],
+      });
 
       const { menu, panel } = await buildTestScene({});
 
@@ -489,8 +450,8 @@ describe('panelMenuBehavior', () => {
     });
 
     it('should contain menu item with category and append items without category after divider', async () => {
-      getObservablePluginLinksMock.mockReturnValue(
-        of([
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
           {
             id: '1',
             pluginId: '...',
@@ -508,8 +469,8 @@ describe('panelMenuBehavior', () => {
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
           },
-        ])
-      );
+        ],
+      });
 
       const { menu, panel } = await buildTestScene({});
 
@@ -547,46 +508,6 @@ describe('panelMenuBehavior', () => {
       );
     });
 
-    it('should add root category items to the main menu', async () => {
-      getObservablePluginLinksMock.mockReturnValue(
-        of([
-          {
-            id: '1',
-            pluginId: '...',
-            type: PluginExtensionTypes.link,
-            title: 'Root Action',
-            description: 'Action at root level',
-            path: '/path',
-            category: '${root}',
-          },
-        ])
-      );
-
-      const { menu, panel } = await buildTestScene({});
-
-      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
-      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
-
-      menu.activate();
-
-      await new Promise((r) => setTimeout(r, 1));
-
-      // Should be in main menu
-      expect(menu.state.items).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: 'Root Action',
-            href: '/path',
-          }),
-        ])
-      );
-
-      // Extensions submenu should not exist if only root items
-      expect(menu.state.items?.find((i) => i.text === 'Extensions')).toBeUndefined();
-    });
-
     it('it should not contain remove and duplicate menu items when not in edit mode', async () => {
       const { menu, panel } = await buildTestScene({});
 
@@ -621,7 +542,7 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.find((i) => i.text === 'Remove')).toBeDefined();
       const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
       expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeDefined();
-      expect(moreMenu?.find((i) => i.text === 'New library panel')).toBeDefined();
+      expect(moreMenu?.find((i) => i.text === 'Create library panel')).toBeDefined();
     });
 
     it('should only contain explore when embedded', async () => {
@@ -639,264 +560,59 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.length).toBe(1);
       expect(menu.state.items?.[0].text).toBe('Explore');
     });
-
-    describe('plugin links', () => {
-      it('should not show Metrics Drilldown menu when no Metrics Drilldown links exist', async () => {
-        getObservablePluginLinksMock.mockReturnValue(
-          of([
-            {
-              id: '1',
-              pluginId: '...',
-              type: PluginExtensionTypes.link,
-              title: 'Other Extension',
-              description: 'Some other extension',
-              path: '/a/other-app/action',
-            },
-          ])
-        );
-
-        const { menu, panel } = await buildTestScene({});
-
-        panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-        mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
-        mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
-
-        menu.activate();
-
-        await new Promise((r) => setTimeout(r, 1));
-
-        const metricsDrilldownMenu = menu.state.items?.find((i) => i.text === 'Metrics drilldown');
-        const extensionsMenu = menu.state.items?.find((i) => i.text === 'Extensions');
-
-        expect(metricsDrilldownMenu).toBeUndefined();
-        expect(extensionsMenu).toBeDefined();
-        expect(extensionsMenu?.subMenu).toEqual([
-          expect.objectContaining({
-            text: 'Other Extension',
-            href: '/a/other-app/action',
-          }),
-        ]);
-      });
-
-      it('should separate Metrics Drilldown links into their own menu', async () => {
-        getObservablePluginLinksMock.mockReturnValue(
-          of([
-            {
-              id: '1',
-              pluginId: '...',
-              type: PluginExtensionTypes.link,
-              title: 'Open in Metrics Drilldown',
-              description: 'Open current query in Metrics Drilldown',
-              path: '/a/grafana-metricsdrilldown-app/trail',
-              category: 'metrics-drilldown',
-            },
-            {
-              id: '2',
-              pluginId: '...',
-              type: PluginExtensionTypes.link,
-              title: 'Other Extension',
-              description: 'Some other extension',
-              path: '/a/other-app/action',
-            },
-          ])
-        );
-
-        const { menu, panel } = await buildTestScene({});
-
-        panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-        mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
-        mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
-
-        menu.activate();
-
-        await new Promise((r) => setTimeout(r, 1));
-
-        expect(menu.state.items?.length).toBe(8); // 6 base items + 2 extension menus
-
-        const metricsDrilldownMenu = menu.state.items?.find((i) => i.text === 'Metrics drilldown');
-        const extensionsMenu = menu.state.items?.find((i) => i.text === 'Extensions');
-
-        expect(metricsDrilldownMenu).toBeDefined();
-        expect(metricsDrilldownMenu?.iconClassName).toBe('code-branch');
-        expect(metricsDrilldownMenu?.subMenu).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              text: 'Open in Metrics Drilld...',
-              href: '/a/grafana-metricsdrilldown-app/trail',
-            }),
-          ])
-        );
-
-        expect(extensionsMenu).toBeDefined();
-        expect(extensionsMenu?.iconClassName).toBe('plug');
-        expect(extensionsMenu?.subMenu).toEqual([
-          expect.objectContaining({
-            text: 'Other Extension',
-            href: '/a/other-app/action',
-          }),
-        ]);
-      });
-
-      it('should not show extensions menu when no non-Metrics Drilldown links exist', async () => {
-        getObservablePluginLinksMock.mockReturnValue(
-          of([
-            {
-              id: '1',
-              pluginId: '...',
-              type: PluginExtensionTypes.link,
-              title: 'Open in Metrics Drilldown',
-              description: 'Open current query in Metrics Drilldown',
-              path: '/a/grafana-metricsdrilldown-app/trail',
-              category: 'metrics-drilldown',
-            },
-          ])
-        );
-
-        const { menu, panel } = await buildTestScene({});
-
-        panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-        mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
-        mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
-
-        menu.activate();
-
-        await new Promise((r) => setTimeout(r, 1));
-
-        const metricsDrilldownMenu = menu.state.items?.find((i) => i.text === 'Metrics drilldown');
-        const extensionsMenu = menu.state.items?.find((i) => i.text === 'Extensions');
-
-        expect(metricsDrilldownMenu).toBeDefined();
-        expect(extensionsMenu).toBeUndefined();
-        expect(metricsDrilldownMenu?.subMenu).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              text: 'Open in Metrics Drilld...',
-              href: '/a/grafana-metricsdrilldown-app/trail',
-            }),
-          ])
-        );
-      });
-    });
   });
 
   describe('onCreateAlert', () => {
     beforeEach(() => {
       jest.spyOn(storeModule, 'dispatch').mockImplementation(() => {});
       jest.spyOn(locationService, 'push').mockImplementation(() => {});
+      jest.spyOn(urlUtil, 'renderUrl').mockImplementation((url, params) => `${url}?${JSON.stringify(params)}`);
     });
 
-    describe('when createAlertRuleFromPanel is enabled', () => {
-      testWithFeatureToggles({ enable: ['createAlertRuleFromPanel'] });
+    it('should navigate to alert creation page on success', async () => {
+      const { menu, panel } = await buildTestScene({});
+      const mockFormValues = { someKey: 'someValue' };
 
-      it('should open the new alert rule drawer with prefilled values on success', async () => {
-        const { menu, panel, scene } = await buildTestScene({});
-        const mockFormValues = { someKey: 'someValue' };
+      config.unifiedAlertingEnabled = true;
+      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-        config.unifiedAlertingEnabled = true;
-        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+      jest
+        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+        .mockResolvedValue(mockFormValues);
 
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(mockFormValues);
-        const showModalSpy = jest.spyOn(scene, 'showModal');
+      // activate the menu
+      menu.activate();
+      // wait for the menu to be activated
+      await new Promise((r) => setTimeout(r, 1));
+      // use userEvent mechanism to click the menu item
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+      expect(alertMenuItem).toBeDefined();
 
-        menu.activate();
-        await new Promise((r) => setTimeout(r, 1));
-
-        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-        expect(alertMenuItem).toBeDefined();
-
-        await alertMenuItem?.({} as React.MouseEvent);
-        await new Promise((r) => setTimeout(r, 0));
-
-        expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
-        expect(locationService.push).not.toHaveBeenCalled();
-        expect(showModalSpy).toHaveBeenCalledTimes(1);
-        const drawer = showModalSpy.mock.calls[0][0];
-        expect(drawer).toBeInstanceOf(NewAlertRuleDrawer);
-        expect((drawer as NewAlertRuleDrawer).state.prefill).toEqual(mockFormValues);
-      });
-
-      it('should show error notification and not open the drawer when no alerting-capable query is found', async () => {
-        const { menu, scene } = await buildTestScene({});
-
-        config.unifiedAlertingEnabled = true;
-        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
-
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(undefined);
-        const showModalSpy = jest.spyOn(scene, 'showModal');
-
-        menu.activate();
-        await new Promise((r) => setTimeout(r, 1));
-
-        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-
-        await alertMenuItem?.({} as React.MouseEvent);
-        await new Promise((r) => setTimeout(r, 0));
-
-        expect(showModalSpy).not.toHaveBeenCalled();
-        expect(storeModule.dispatch).toHaveBeenCalled();
-      });
-
-      it('should show error notification and not open the drawer on failure', async () => {
-        const { menu, panel, scene } = await buildTestScene({});
-        const mockError = new Error('Test error');
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockRejectedValue(mockError);
-        const showModalSpy = jest.spyOn(scene, 'showModal');
-
-        menu.activate();
-        await new Promise((r) => setTimeout(r, 1));
-
-        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-        expect(alertMenuItem).toBeDefined();
-
-        await alertMenuItem?.({} as React.MouseEvent);
-
-        await new Promise((r) => setTimeout(r, 0));
-
-        expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
-        expect(showModalSpy).not.toHaveBeenCalled();
-      });
+      alertMenuItem?.({} as React.MouseEvent);
+      expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
     });
 
-    describe('when createAlertRuleFromPanel is disabled', () => {
-      testWithFeatureToggles({ disable: ['createAlertRuleFromPanel'] });
+    it('should show error notification on failure', async () => {
+      const { menu, panel } = await buildTestScene({});
+      const mockError = new Error('Test error');
+      jest
+        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+        .mockRejectedValue(mockError);
+      // Don't make notifyApp throw an error, just mock it
 
-      it('should navigate to /alerting/new and not open the drawer', async () => {
-        const { menu, scene } = await buildTestScene({});
-        const mockFormValues = { someKey: 'someValue' };
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
 
-        config.unifiedAlertingEnabled = true;
-        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+      expect(alertMenuItem).toBeDefined();
 
-        jest
-          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-          .mockResolvedValue(mockFormValues);
-        const showModalSpy = jest.spyOn(scene, 'showModal');
+      await alertMenuItem?.({} as React.MouseEvent);
 
-        menu.activate();
-        await new Promise((r) => setTimeout(r, 1));
+      await new Promise((r) => setTimeout(r, 0));
 
-        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-
-        await alertMenuItem?.({} as React.MouseEvent);
-        await new Promise((r) => setTimeout(r, 0));
-
-        expect(showModalSpy).not.toHaveBeenCalled();
-        expect(locationService.push).toHaveBeenCalledTimes(1);
-        expect(locationService.push).toHaveBeenCalledWith(expect.stringContaining('/alerting/new'));
-      });
+      expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
     });
 
     it('should render "New alert rule" menu item when user has permissions to read and update alerts', async () => {
@@ -949,192 +665,6 @@ describe('panelMenuBehavior', () => {
 
     afterEach(() => {
       jest.restoreAllMocks();
-    });
-  });
-
-  describe('Panel styles menu', () => {
-    async function buildTimeseriesTestScene(isEditing = true) {
-      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
-      const panel = new VizPanel({
-        title: 'Timeseries Panel',
-        pluginId: 'timeseries',
-        key: 'panel-ts',
-        menu,
-      });
-
-      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-      new DashboardScene({
-        title: 'My dashboard',
-        uid: 'dash-1',
-        meta: { canEdit: true },
-        isEditing,
-        body: DefaultGridLayoutManager.fromVizPanels([panel]),
-      });
-
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
-
-      return { menu, panel };
-    }
-
-    beforeEach(() => {
-      config.featureToggles.panelStyleActions = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.panelStyleActions = false;
-      store.delete(LS_STYLES_COPY_KEY);
-    });
-
-    it('should call analytics when copy styles is clicked', async () => {
-      const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
-      const { menu } = await buildTimeseriesTestScene();
-
-      const copyItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[0];
-      copyItem?.onClick?.({} as never);
-
-      expect(spy).toHaveBeenCalledWith('copy', 'timeseries', expect.any(Number));
-    });
-
-    it('should call analytics when paste styles is clicked', async () => {
-      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
-      const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
-      const { menu } = await buildTimeseriesTestScene();
-
-      const pasteItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[1];
-      pasteItem?.onClick?.({} as never);
-
-      expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
-    });
-
-    it('should not show styles menu when feature flag is disabled', async () => {
-      config.featureToggles.panelStyleActions = false;
-      const { menu } = await buildTimeseriesTestScene();
-
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
-    });
-
-    it('should not show styles menu for unsupported panel types', async () => {
-      const { menu } = await buildTestScene({});
-
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
-    });
-
-    it('should show styles menu when in edit mode', async () => {
-      const { menu } = await buildTimeseriesTestScene();
-
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeDefined();
-    });
-
-    it('should not show styles menu when not in edit mode', async () => {
-      const { menu } = await buildTimeseriesTestScene(false);
-
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
-    });
-
-    it.each([
-      'trend',
-      'candlestick',
-      'stat',
-      'gauge',
-      'bargauge',
-      'barchart',
-      'piechart',
-      'histogram',
-      'heatmap',
-      'state-timeline',
-      'status-history',
-      'xychart',
-    ])('should show styles menu for %s panel', async (pluginId) => {
-      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
-      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
-      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-      new DashboardScene({
-        title: 'My dashboard',
-        uid: 'dash-1',
-        meta: { canEdit: true },
-        isEditing: true,
-        body: DefaultGridLayoutManager.fromVizPanels([panel]),
-      });
-
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
-
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeDefined();
-    });
-
-    it.each([
-      'trend',
-      'candlestick',
-      'stat',
-      'gauge',
-      'bargauge',
-      'barchart',
-      'piechart',
-      'histogram',
-      'heatmap',
-      'state-timeline',
-      'status-history',
-      'xychart',
-    ])('should show paste option for %s panel when matching styles are copied', async (pluginId) => {
-      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: pluginId, styles: {} }));
-
-      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
-      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
-      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-      new DashboardScene({
-        title: 'My dashboard',
-        uid: 'dash-1',
-        meta: { canEdit: true },
-        isEditing: true,
-        body: DefaultGridLayoutManager.fromVizPanels([panel]),
-      });
-
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
-
-      const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
-      expect(stylesMenu).toHaveLength(2);
-      expect(stylesMenu?.[1].text).toBe('Paste styles');
-    });
-
-    it.each([
-      'trend',
-      'candlestick',
-      'stat',
-      'gauge',
-      'bargauge',
-      'barchart',
-      'piechart',
-      'histogram',
-      'heatmap',
-      'state-timeline',
-      'status-history',
-      'xychart',
-    ])('should not show paste option for %s panel when timeseries styles are copied', async (pluginId) => {
-      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
-
-      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
-      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
-      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-
-      new DashboardScene({
-        title: 'My dashboard',
-        uid: 'dash-1',
-        meta: { canEdit: true },
-        isEditing: true,
-        body: DefaultGridLayoutManager.fromVizPanels([panel]),
-      });
-
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
-
-      const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
-      expect(stylesMenu).toHaveLength(1);
-      expect(stylesMenu?.[0].text).toBe('Copy styles');
     });
   });
 });

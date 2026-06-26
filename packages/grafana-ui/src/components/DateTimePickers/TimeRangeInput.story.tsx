@@ -1,10 +1,10 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { dateTime, DefaultTimeZone, isDateTime, type TimeRange } from '@grafana/data';
+import { dateTime, DefaultTimeZone, isDateTime, TimeRange } from '@grafana/data';
+import { TimeRangeInput } from '@grafana/ui';
 
-import { TimeRangeInput } from './TimeRangeInput';
 import mdx from './TimeRangeInput.mdx';
 
 const now = dateTime(Date.now());
@@ -30,7 +30,7 @@ const nullRange = {
 };
 
 const meta: Meta<typeof TimeRangeInput> = {
-  title: 'Date time pickers/TimeRangeInput',
+  title: 'Pickers and Editors/TimePickers/TimeRangeInput',
   component: TimeRangeInput,
   parameters: {
     controls: {

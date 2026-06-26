@@ -1,17 +1,15 @@
 import { cx, css } from '@emotion/css';
-import { cloneElement, type ReactNode, useId } from 'react';
+import { cloneElement } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes';
 import { getChildId } from '../../utils/reactUtils';
-import { type PopoverContent } from '../Tooltip/types';
+import { PopoverContent } from '../Tooltip';
 
-import { type FieldProps } from './Field';
-import { FieldContext } from './FieldContext';
+import { FieldProps } from './Field';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { InlineLabel } from './InlineLabel';
-import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
 
 export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */
@@ -25,17 +23,12 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   /** Make field's background transparent */
   transparent?: boolean;
   /** Error message to display */
-  error?: ReactNode;
+  error?: string | null;
   htmlFor?: string;
   /** Make tooltip interactive */
   interactive?: boolean;
 }
 
-/**
- * A basic component for rendering form elements, like `Input`, `Checkbox`, `Combobox`, etc, inline together with `InlineLabel`. If the child element has `id` specified, the label's `htmlFor` attribute, pointing to the id, will be added.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-inlinefield--docs
- */
 export const InlineField = ({
   children,
   label,
@@ -53,16 +46,11 @@ export const InlineField = ({
   transparent,
   interactive,
   validationMessageHorizontalOverflow,
-  useFieldset: useFieldsetProp,
   ...htmlProps
 }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme, grow, shrink);
-  const fieldId = useId();
-  const labelId = useId();
-  const errorId = useId();
-  const inputId = htmlFor ?? getChildId(children) ?? fieldId;
-  const useFieldset = useFieldsetProp ?? children.type === RadioButtonGroup;
+  const inputId = htmlFor ?? getChildId(children);
 
   const labelElement =
     typeof label === 'string' ? (
@@ -72,8 +60,6 @@ export const InlineField = ({
         tooltip={tooltip}
         htmlFor={inputId}
         transparent={transparent}
-        id={labelId}
-        as={useFieldset ? 'span' : 'label'}
       >
         {`${label}${required ? ' *' : ''}`}
       </InlineLabel>
@@ -81,42 +67,22 @@ export const InlineField = ({
       label
     );
 
-  const Wrapper = useFieldset ? 'fieldset' : 'div';
-
   return (
-    <FieldContext.Provider
-      value={{
-        id: inputId,
-        invalid,
-        disabled,
-        loading,
-        'aria-labelledby': useFieldset ? labelId : undefined,
-        'aria-describedby': invalid && error ? errorId : undefined,
-      }}
-    >
-      <Wrapper className={cx(styles.container, className)} {...htmlProps}>
-        {labelElement}
-        <div className={styles.childContainer}>
-          {/* @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead */}
-          {cloneElement(children, {
-            invalid,
-            disabled,
-            loading,
-            'aria-labelledby': useFieldset ? labelId : undefined,
-            'aria-describedby': invalid && error ? errorId : undefined,
-          })}
-          {invalid && error && (
-            <div
-              className={cx(styles.fieldValidationWrapper, {
-                [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
-              })}
-            >
-              <FieldValidationMessage id={errorId}>{error}</FieldValidationMessage>
-            </div>
-          )}
-        </div>
-      </Wrapper>
-    </FieldContext.Provider>
+    <div className={cx(styles.container, className)} {...htmlProps}>
+      {labelElement}
+      <div className={styles.childContainer}>
+        {cloneElement(children, { invalid, disabled, loading })}
+        {invalid && error && (
+          <div
+            className={cx(styles.fieldValidationWrapper, {
+              [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+            })}
+          >
+            <FieldValidationMessage>{error}</FieldValidationMessage>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

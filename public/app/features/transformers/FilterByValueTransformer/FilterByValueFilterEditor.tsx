@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
 
-import { type Field, type SelectableValue, valueMatchers } from '@grafana/data';
-import { type FilterByValueFilter } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
+import { Field, SelectableValue, valueMatchers } from '@grafana/data';
+import { FilterByValueFilter } from '@grafana/data/src/transformations/transformers/filterByValue';
 import { Button, Select, InlineField, InlineFieldRow, Box } from '@grafana/ui';
 
 import { valueMatchersUI } from './ValueMatchers/valueMatchersUI';
@@ -77,34 +76,29 @@ export const FilterByValueFilterEditor = (props: Props) => {
 
   return (
     <InlineFieldRow>
-      <InlineField label={t('transformers.filter-by-value-filter-editor.label-field', 'Field')} labelWidth={14}>
+      <InlineField label="Field" labelWidth={14}>
         <Select
           className="min-width-15 max-width-24"
-          placeholder={t('transformers.filter-by-value-filter-editor.placeholder-field-name', 'Field name')}
+          placeholder="Field Name"
           options={fieldsAsOptions}
           value={filter.fieldName}
           onChange={onChangeField}
         />
       </InlineField>
-      <InlineField label={t('transformers.filter-by-value-filter-editor.label-match', 'Match')}>
+      <InlineField label="Match">
         <Select
           className="width-12"
-          placeholder={t('transformers.filter-by-value-filter-editor.placeholder-select-test', 'Select test')}
+          placeholder="Select test"
           options={matcherOptions}
           value={matcherId}
           onChange={onChangeMatcher}
         />
       </InlineField>
-      <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
+      <InlineField label="Value" grow>
         <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
       </InlineField>
       <Box marginBottom={0.5}>
-        <Button
-          aria-label={t('transformers.filter-by-value-filter-editor.aria-label-remove-filter', 'Remove filter')}
-          icon="times"
-          onClick={onDelete}
-          variant="secondary"
-        />
+        <Button icon="times" onClick={onDelete} variant="secondary" />
       </Box>
     </InlineFieldRow>
   );

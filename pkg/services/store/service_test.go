@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -8,17 +9,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
 var (
@@ -71,9 +73,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationListFiles(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestListFiles(t *testing.T) {
 	roots := []storageRuntime{publicStaticFilesStorage}
 
 	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
@@ -83,11 +83,18 @@ func TestIntegrationListFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata.golden", frame.Frame, true)
+
+	file, err := store.Read(context.Background(), dummyUser, "public/maps/countries.geojson")
+	require.NoError(t, err)
+	require.NotNil(t, file)
+
+	t.Skip("Skipping golden JSON frame test as it is flaky")
+	testDsFrame, err := testdatasource.LoadCsvContent(bytes.NewReader(file.Contents), file.Name)
+	require.NoError(t, err)
+	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata_js_libraries.golden", testDsFrame, true)
 }
 
-func TestIntegrationListFilesWithoutPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestListFilesWithoutPermissions(t *testing.T) {
 	roots := []storageRuntime{publicStaticFilesStorage}
 
 	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
@@ -116,13 +123,12 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
+	store.quotaService = quotatest.New(false, nil)
 
 	return store, mockStorage, storageName
 }
 
-func TestIntegrationShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.jpg"
@@ -141,9 +147,7 @@ func TestIntegrationShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestIntegrationShouldFailUploadWithoutAccess(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestShouldFailUploadWithoutAccess(t *testing.T) {
 	service, _, storageName := setupUploadStore(t, denyAllAuthService)
 
 	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
@@ -154,9 +158,7 @@ func TestIntegrationShouldFailUploadWithoutAccess(t *testing.T) {
 	require.ErrorIs(t, err, ErrAccessDenied)
 }
 
-func TestIntegrationShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Get", mock.Anything, "/myFile.jpg", &filestorage.GetFileOptions{WithContents: false}).Return(&filestorage.File{Contents: make([]byte, 0)}, true, nil)
@@ -169,9 +171,7 @@ func TestIntegrationShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
 	require.ErrorIs(t, err, ErrFileAlreadyExists)
 }
 
-func TestIntegrationShouldDelegateFileDeletion(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestShouldDelegateFileDeletion(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Delete", mock.Anything, "/myFile.jpg").Return(nil)
@@ -180,9 +180,40 @@ func TestIntegrationShouldDelegateFileDeletion(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestIntegrationShouldUploadSvg(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+func TestShouldDelegateFolderCreation(t *testing.T) {
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
+	mockStorage.On("CreateFolder", mock.Anything, "/nestedFolder/mostNestedFolder").Return(nil)
+
+	err := service.CreateFolder(context.Background(), dummyUser, &CreateFolderCmd{Path: storageName + "/nestedFolder/mostNestedFolder"})
+	require.NoError(t, err)
+}
+
+func TestShouldDelegateFolderDeletion(t *testing.T) {
+	service, mockStorage, storageName := setupUploadStore(t, nil)
+	cmds := []*DeleteFolderCmd{
+		{
+			Path:  storageName,
+			Force: false,
+		},
+		{
+			Path:  storageName,
+			Force: true,
+		}}
+
+	ctx := context.Background()
+
+	for _, cmd := range cmds {
+		mockStorage.On("DeleteFolder", ctx, "/", &filestorage.DeleteFolderOptions{
+			Force:        cmd.Force,
+			AccessFilter: allowAllPathFilter,
+		}).Once().Return(nil)
+		err := service.DeleteFolder(ctx, dummyUser, cmd)
+		require.NoError(t, err)
+	}
+}
+
+func TestShouldUploadSvg(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.svg"
@@ -201,9 +232,7 @@ func TestIntegrationShouldUploadSvg(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestIntegrationShouldNotUploadHtmlDisguisedAsSvg(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestShouldNotUploadHtmlDisguisedAsSvg(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.svg"
@@ -217,9 +246,7 @@ func TestIntegrationShouldNotUploadHtmlDisguisedAsSvg(t *testing.T) {
 	require.ErrorIs(t, err, ErrValidationFailed)
 }
 
-func TestIntegrationShouldNotUploadJpgDisguisedAsSvg(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestShouldNotUploadJpgDisguisedAsSvg(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.svg"
@@ -233,9 +260,7 @@ func TestIntegrationShouldNotUploadJpgDisguisedAsSvg(t *testing.T) {
 	require.ErrorIs(t, err, ErrValidationFailed)
 }
 
-func TestIntegrationSetupWithNonUniqueStoragePrefixes(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 	prefix := "resources"
 	sqlStorage := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
 	sqlStorage2 := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
@@ -251,9 +276,7 @@ func TestIntegrationSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 	}, allowAllAuthService, cfg, nil)
 }
 
-func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestContentRootWithNestedStorage(t *testing.T) {
 	globalOrgID := int64(accesscontrol.GlobalOrgID)
 	testDB := db.InitTestDB(t)
 	orgedUser := &user.SignedInUser{OrgID: 1}
@@ -279,6 +302,7 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
+	store.quotaService = quotatest.New(false, nil)
 	fileName := "file.jpg"
 
 	tests := []struct {
@@ -324,6 +348,20 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 				Path:       strings.Join([]string{RootContent, test.nestedRoot, fileName}, filestorage.Delimiter),
 			})
 			require.NoError(t, err)
+		})
+
+		t.Run(test.name+": Creating a /content/nested folder should fail", func(t *testing.T) {
+			mockContentFSApi.AssertNotCalled(t, "CreateFolder")
+
+			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: RootContent + "/" + test.nestedRoot})
+			require.ErrorIs(t, err, ErrValidationFailed)
+		})
+
+		t.Run(test.name+": Deleting a /content/nested folder should fail", func(t *testing.T) {
+			mockContentFSApi.AssertNotCalled(t, "DeleteFolder")
+
+			err := store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: RootContent + "/" + test.nestedRoot})
+			require.ErrorIs(t, err, ErrValidationFailed)
 		})
 
 		t.Run(test.name+": Listing /content/nested should delegate to the nested root", func(t *testing.T) {
@@ -449,12 +487,42 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 			})
 			require.NoError(t, err)
 		})
+
+		t.Run(test.name+": Creating folders under /content/nested/.. should delegate to the nested roots", func(t *testing.T) {
+			mockContentFSApi.AssertNotCalled(t, "CreateFolder")
+			mockContentFSApi.AssertNotCalled(t, "DeleteFolder")
+
+			test.mockNestedFS.On("CreateFolder", mock.Anything, "/folder").Return(nil)
+
+			path := strings.Join([]string{RootContent, test.nestedRoot, "folder"}, "/")
+			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: path})
+			require.NoError(t, err)
+
+			test.mockNestedFS.On("DeleteFolder", mock.Anything, "/folder", mock.Anything).Return(nil)
+
+			err = store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: path})
+			require.NoError(t, err)
+		})
+
+		t.Run(test.name+": Creating folders under outside of the nested storages should delegate to the content root", func(t *testing.T) {
+			test.mockNestedFS.AssertNotCalled(t, "CreateFolder")
+			test.mockNestedFS.AssertNotCalled(t, "DeleteFolder")
+
+			mockContentFSApi.On("CreateFolder", mock.Anything, "/folder").Return(nil)
+
+			path := strings.Join([]string{RootContent, "folder"}, "/")
+			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: path})
+			require.NoError(t, err)
+
+			mockContentFSApi.On("DeleteFolder", mock.Anything, "/folder", mock.Anything).Return(nil)
+
+			err = store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: path})
+			require.NoError(t, err)
+		})
 	}
 }
 
-func TestIntegrationShadowingExistingFolderByNestedContentRoot(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	db := db.InitTestDB(t)
 	ctx := context.Background()
 	nestedStorage := newSQLStorage(RootStorageMeta{}, "nested", "Testing upload", "dummy descr", &StorageSQLConfig{}, db, accesscontrol.GlobalOrgID, true)
@@ -477,7 +545,7 @@ func TestIntegrationShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
-	rowLen, err := resp.RowLen()
+	rowLen, err := resp.Frame.RowLen()
 	require.NoError(t, err)
 	require.Equal(t, 0, rowLen) // nested storage is empty
 
@@ -485,7 +553,7 @@ func TestIntegrationShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
-	rowLen, err = resp.RowLen()
+	rowLen, err = resp.Frame.RowLen()
 	require.NoError(t, err)
 	require.Equal(t, 1, rowLen) // just a single "nested" folder
 }

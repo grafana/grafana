@@ -1,25 +1,19 @@
-import { type ControllerRenderProps } from 'react-hook-form';
+import { ControllerRenderProps } from 'react-hook-form';
 
-import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
-
-/**
- * Build a content key from all alert fingerprints so that changes in alert content
- * (not just count) trigger a recomputation.
- */
-export const getAlertGroupsKey = (alertGroups: AlertmanagerGroup[]): string =>
-  alertGroups.flatMap((g) => g.alerts.map((a) => a.fingerprint)).join(',');
+import { SelectableValue } from '@grafana/data';
+import { ContactPointWithMetadata } from 'app/features/alerting/unified/components/contact-points/utils';
 
 export const handleContactPointSelect = (
-  name: string | undefined | null,
+  value: SelectableValue<ContactPointWithMetadata>,
   onChange: ControllerRenderProps['onChange']
 ) => {
-  if (name === null) {
+  if (value === null) {
     return onChange(null);
   }
 
-  if (!name) {
+  if (!value) {
     return onChange('');
   }
 
-  return onChange(name);
+  return onChange(value.value?.name);
 };

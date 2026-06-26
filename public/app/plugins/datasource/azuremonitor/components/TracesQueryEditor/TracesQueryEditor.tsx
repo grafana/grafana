@@ -2,19 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { usePrevious } from 'react-use';
 
-import { type TimeRange } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
+import { TimeRange } from '@grafana/data';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
-import { AzureQueryType, ResultFormat } from '../../dataquery.gen';
-import type Datasource from '../../datasource';
+import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { type AzureMonitorQuery } from '../../types/query';
-import { type AzureMonitorErrorish, type AzureMonitorOption } from '../../types/types';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
-import ResourceField from '../ResourceField/ResourceField';
-import { type ResourceRow, type ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
+import ResourceField from '../ResourceField';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import { Field } from '../shared/Field';
 import FormatAsField from '../shared/FormatAsField';
@@ -91,35 +88,37 @@ const TracesQueryEditor = ({
   return (
     <span data-testid={selectors.components.queryEditor.tracesQueryEditor.container.input}>
       <EditorRows>
-        <EditorRow>
-          <EditorFieldGroup>
-            <ResourceField
-              query={query}
-              datasource={datasource}
-              subscriptionId={subscriptionId}
-              variableOptionGroup={variableOptionGroup}
-              onQueryChange={onChange}
-              setError={setError}
-              selectableEntryTypes={[
-                ResourceRowType.Subscription,
-                ResourceRowType.ResourceGroup,
-                ResourceRowType.Resource,
-                ResourceRowType.Variable,
-              ]}
-              resources={query.azureTraces?.resources ?? []}
-              queryType="traces"
-              disableRow={disableRow}
-              renderAdvanced={(resources, onChange) => (
-                // It's required to cast resources because the resource picker
-                // specifies the type to string | AzureMonitorResource.
-                // eslint-disable-next-line
-                <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
-              )}
-              selectionNotice={() => 'You may only choose items of the same resource type.'}
-              range={range}
-            />
-          </EditorFieldGroup>
-        </EditorRow>
+        {query.queryType !== AzureQueryType.TraceExemplar && (
+          <EditorRow>
+            <EditorFieldGroup>
+              <ResourceField
+                query={query}
+                datasource={datasource}
+                subscriptionId={subscriptionId}
+                variableOptionGroup={variableOptionGroup}
+                onQueryChange={onChange}
+                setError={setError}
+                selectableEntryTypes={[
+                  ResourceRowType.Subscription,
+                  ResourceRowType.ResourceGroup,
+                  ResourceRowType.Resource,
+                  ResourceRowType.Variable,
+                ]}
+                resources={query.azureTraces?.resources ?? []}
+                queryType="traces"
+                disableRow={disableRow}
+                renderAdvanced={(resources, onChange) => (
+                  // It's required to cast resources because the resource picker
+                  // specifies the type to string | AzureMonitorResource.
+                  // eslint-disable-next-line
+                  <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
+                )}
+                selectionNotice={() => 'You may only choose items of the same resource type.'}
+                range={range}
+              />
+            </EditorFieldGroup>
+          </EditorRow>
+        )}
         <EditorRow>
           <EditorFieldGroup>
             <TraceTypeField
@@ -130,7 +129,7 @@ const TracesQueryEditor = ({
               variableOptionGroup={variableOptionGroup}
               range={range}
             />
-            <Field label={t('components.traces-query-editor.label-operation-id', 'Operation ID')}>
+            <Field label="Operation ID">
               <Input
                 id="azure-monitor-traces-operation-id-field"
                 value={operationId}

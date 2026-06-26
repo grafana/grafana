@@ -1,26 +1,27 @@
-import { type Observable, type SubscriptionLike, type Unsubscribable } from 'rxjs';
+import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 
 import {
-  type AbsoluteTimeRange,
-  type DataFrame,
-  type DataQuery,
-  type DataQueryRequest,
-  type DataSourceApi,
-  type HistoryItem,
-  type LogsModel,
-  type PanelData,
-  type RawTimeRange,
-  type TimeRange,
-  type EventBusExtended,
-  type DataQueryResponse,
-  type ExplorePanelsState,
-  type SupplementaryQueryType,
-  type UrlQueryMap,
-  type ExploreCorrelationHelperData,
-  type DataLinkTransformationConfig,
+  AbsoluteTimeRange,
+  DataFrame,
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
+  HistoryItem,
+  LogsModel,
+  PanelData,
+  RawTimeRange,
+  TimeRange,
+  EventBusExtended,
+  DataQueryResponse,
+  ExplorePanelsState,
+  SupplementaryQueryType,
+  UrlQueryMap,
+  ExploreCorrelationHelperData,
+  DataLinkTransformationConfig,
 } from '@grafana/data';
-import { type CorrelationData } from '@grafana/runtime';
-import { type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+
+import { CorrelationData } from '../features/correlations/useCorrelations';
 
 export type ExploreQueryParams = UrlQueryMap;
 
@@ -30,7 +31,7 @@ export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
   CLOSE_EDITOR,
 }
 
-interface CorrelationEditorDetails {
+export interface CorrelationEditorDetails {
   editorMode: boolean;
   correlationDirty: boolean;
   queryEditorDirty: boolean;
@@ -135,29 +136,11 @@ export interface ExploreItemState {
    * converted to a query row.
    */
   queries: DataQuery[];
-
-  /**
-   * Index increased when queries change.
-   * Required to derive queriesChangedIndexAtRun correctly.
-   */
-  queriesChangedIndex: number;
-
-  /**
-   * Index updated after running the query. Changes if new query was run.
-   * Used to reset legend in the main graph to match Dashboard's behavior (#113975)
-   */
-  queriesChangedIndexAtRun: number;
-
   /**
    * True if this Explore area has been initialized.
    * Used to distinguish URL state injection versus split view state injection.
    */
   initialized: boolean;
-  /**
-   * Query library reference identifier when editing a query from the query library
-   *
-   */
-  queryLibraryRef?: string;
   /**
    * Log query result to be displayed in the logs result viewer.
    */
@@ -247,11 +230,13 @@ export interface ExploreItemState {
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 
   correlations?: CorrelationData[];
+}
 
-  /**
-   * If set to true, all query rows will be collapsed initially and the content outline will be hidden
-   */
-  compact: boolean;
+export interface ExploreUpdateState {
+  datasource: boolean;
+  queries: boolean;
+  range: boolean;
+  mode: boolean;
 }
 
 export interface QueryOptions {
@@ -300,7 +285,7 @@ export enum TABLE_RESULTS_STYLE {
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
 export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
 
-interface SupplementaryQuery {
+export interface SupplementaryQuery {
   enabled: boolean;
   dataProvider?: Observable<DataQueryResponse>;
   dataSubscription?: SubscriptionLike;

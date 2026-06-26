@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { Fragment, useMemo, type JSX } from 'react';
+import { Fragment, useMemo } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { AccessoryButton } from '@grafana/plugin-ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { AccessoryButton } from '@grafana/experimental';
 import { useTheme2 } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';

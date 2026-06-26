@@ -1,8 +1,8 @@
-import { type MoveableManagerInterface, type Renderer } from 'moveable';
+import { MoveableManagerInterface, Renderer } from 'moveable';
 
 import { VerticalConstraint, HorizontalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { type Scene } from './scene';
+import { Scene } from './scene';
 import { findElementByTarget } from './sceneElementManagement';
 
 export const settingsViewable = (scene: Scene) => ({
@@ -69,7 +69,6 @@ export const dimensionViewable = {
   render(moveable: MoveableManagerInterface<unknown, unknown>, React: Renderer) {
     const rect = moveable.getRect();
     return (
-      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
       <div
         key={'dimension-viewable'}
         className={'moveable-dimension'}

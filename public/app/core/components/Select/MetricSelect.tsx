@@ -1,10 +1,9 @@
 import { flatten } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import { type Variable } from 'app/types/templates';
+import { Variable } from 'app/types/templates';
 
 export interface Props {
   onChange: (value: string | undefined) => void;
@@ -18,7 +17,7 @@ export interface Props {
 
 export const MetricSelect = (props: Props) => {
   const { value, placeholder, className, isSearchable, onChange } = props;
-  const options = useMatcherSelectOptions(props);
+  const options = useSelectOptions(props);
   const selected = useSelectedOption(options, value);
   const onChangeValue = useCallback((selectable: SelectableValue<string>) => onChange(selectable.value), [onChange]);
 
@@ -33,13 +32,13 @@ export const MetricSelect = (props: Props) => {
       isSearchable={isSearchable}
       maxMenuHeight={500}
       placeholder={placeholder}
-      noOptionsMessage={t('metric-select.noOptionsMessage-no-options-found', 'No options found')}
+      noOptionsMessage="No options found"
       value={selected}
     />
   );
 };
 
-const useMatcherSelectOptions = ({ variables = [], options }: Props): Array<SelectableValue<string>> => {
+const useSelectOptions = ({ variables = [], options }: Props): Array<SelectableValue<string>> => {
   return useMemo(() => {
     if (!Array.isArray(variables) || variables.length === 0) {
       return options;

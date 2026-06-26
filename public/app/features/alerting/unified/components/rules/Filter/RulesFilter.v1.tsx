@@ -2,30 +2,60 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { ContactPointSelector } from '@grafana/alerting/unstable';
-import { type DataSourceInstanceSettings, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
+import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
+import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
+import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { LogMessages, logInfo, trackAlertRuleFilterEvent } from '../../../Analytics';
+import {
+  LogMessages,
+  logInfo,
+  trackRulesListViewChange,
+  trackRulesSearchComponentInteraction,
+  trackRulesSearchInputInteraction,
+} from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
+import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
-import { type RulesFilterProps as RulesFilterV2Props } from '../../../rule-list/filter/RulesFilter.v2';
-type RulesFilterProps = RulesFilterV2Props & { onClear?: () => void };
-import { RuleHealth, getSearchFilterFromQuery } from '../../../search/rulesSearchParser';
+import { RuleHealth } from '../../../search/rulesSearchParser';
+import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-import { RulesViewModeSelector } from './RulesViewModeSelector';
+const ViewOptions: SelectableValue[] = [
+  {
+    icon: 'folder',
+    label: 'Grouped',
+    value: 'grouped',
+  },
+  {
+    icon: 'list-ul',
+    label: 'List',
+    value: 'list',
+  },
+  {
+    icon: 'heart-rate',
+    label: 'State',
+    value: 'state',
+  },
+];
 
 const RuleTypeOptions: SelectableValue[] = [
-  { label: 'Alert ', value: PromRuleType.Alerting },
-  { label: 'Recording ', value: PromRuleType.Recording },
+  {
+    label: 'Alert ',
+    value: PromRuleType.Alerting,
+  },
+  {
+    label: 'Recording ',
+    value: PromRuleType.Recording,
+  },
 ];
 
 const RuleHealthOptions: SelectableValue[] = [
@@ -34,17 +64,18 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'Error', value: RuleHealth.Error },
 ];
 
-const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
+interface RulesFilerProps {
+  onClear?: () => void;
+}
 
-const RuleStateOptions = Object.entries(PromAlertingRuleState)
-  .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
-  .map(([key, value]) => ({
-    label: alertStateToReadable(value),
-    value,
-  }));
+const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
+  label: alertStateToReadable(value),
+  value,
+}));
 
-const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilterProps) => {
+const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
+  const [queryParams, updateQueryParams] = useURLSearchParams();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
@@ -75,27 +106,33 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     });
 
     setFilterKey((key) => key + 1);
-    trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: 'dataSourceNames', filterVariant: 'v1' });
+    trackRulesSearchComponentInteraction('dataSourceNames');
   };
 
-  type Filters = typeof filterState;
-
-  const updateAndTrack =
-    <K extends keyof Filters>(key: K) =>
-    (value: Filters[K]) => {
-      updateFilters({ ...filterState, [key]: value });
-      trackAlertRuleFilterEvent({ filterMethod: 'filter-component', filter: key, filterVariant: 'v1' });
-    };
+  const handleDashboardChange = (dashboardUid: string | undefined) => {
+    updateFilters({ ...filterState, dashboardUid });
+    trackRulesSearchComponentInteraction('dashboardUid');
+  };
 
   const clearDataSource = () => {
     updateFilters({ ...filterState, dataSourceNames: [] });
     setFilterKey((key) => key + 1);
   };
 
-  // Note: keep explicit logging for alert state filter clicks
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
-    updateAndTrack('ruleState')(value);
+    updateFilters({ ...filterState, ruleState: value });
+    trackRulesSearchComponentInteraction('ruleState');
+  };
+
+  const handleRuleTypeChange = (ruleType: PromRuleType) => {
+    updateFilters({ ...filterState, ruleType });
+    trackRulesSearchComponentInteraction('ruleType');
+  };
+
+  const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
+    updateFilters({ ...filterState, ruleHealth });
+    trackRulesSearchComponentInteraction('ruleHealth');
   };
 
   const handleClearFiltersClick = () => {
@@ -105,10 +142,20 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
 
-  const handleContactPointChange = (contactPoint: string) => {
-    updateAndTrack('contactPoint')(contactPoint);
+  const handleViewChange = (view: string) => {
+    updateQueryParams({ view });
+    trackRulesListViewChange({ view });
   };
 
+  const handleContactPointChange = (contactPoint: string) => {
+    updateFilters({ ...filterState, contactPoint });
+    trackRulesSearchComponentInteraction('contactPoint');
+  };
+
+  const canRenderContactPointSelector =
+    (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
+      config.featureToggles.alertingSimplifiedRouting) ??
+    false;
   const searchIcon = <Icon name={'search'} />;
 
   return (
@@ -119,23 +166,17 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
           label={
             <Label htmlFor="data-source-picker">
               <Stack gap={0.5} alignItems="center">
-                <span>
-                  <Trans i18nKey="alerting.rules-filter.search-by-data-sources">Search by data sources</Trans>
-                </span>
+                <span>Search by data sources</span>
                 <Tooltip
                   content={
                     <div>
                       <p>
-                        <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
-                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
-                          rules are stored and evaluated in the data source itself.
-                        </Trans>
+                        Data sources containing configured alert rules are Mimir or Loki data sources where alert rules
+                        are stored and evaluated in the data source itself.
                       </p>
                       <p>
-                        <Trans i18nKey="alerting.rules-filter.manage-alerts">
-                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
-                          alert rules in the Grafana UI as well as in the data source where they were configured.
-                        </Trans>
+                        In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                        alert rules in the Grafana UI as well as in the data source where they were configured.
                       </p>
                     </div>
                   }
@@ -144,10 +185,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
                     id="data-source-picker-inline-help"
                     name="info-circle"
                     size="sm"
-                    title={t(
-                      'alerting.rules-filter.data-source-picker-inline-help-title-search-by-data-sources-help',
-                      'Search by data sources help'
-                    )}
+                    title="Search by data sources help"
                   />
                 </Tooltip>
               </Stack>
@@ -158,7 +196,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             key={dataSourceKey}
             alerting
             noDefault
-            placeholder={t('alerting.rules-filter.placeholder-all-data-sources', 'All data sources')}
+            placeholder="All data sources"
             current={filterState.dataSourceNames}
             onChange={handleDataSourceChange}
             onClear={clearDataSource}
@@ -167,11 +205,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
 
         <Field
           className={styles.dashboardPickerContainer}
-          label={
-            <Label htmlFor="filters-dashboard-picker">
-              <Trans i18nKey="alerting.rules-filter.dashboard">Dashboard</Trans>
-            </Label>
-          }
+          label={<Label htmlFor="filters-dashboard-picker">Dashboard</Label>}
         >
           {/* The key prop is to clear the picker value */}
           {/* DashboardPicker doesn't do that itself when value is undefined */}
@@ -179,16 +213,14 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             inputId="filters-dashboard-picker"
             key={filterState.dashboardUid ? 'dashboard-defined' : 'dashboard-not-defined'}
             value={filterState.dashboardUid}
-            onChange={(value) => updateAndTrack('dashboardUid')(value?.uid)}
+            onChange={(value) => handleDashboardChange(value?.uid)}
             isClearable
             cacheOptions
           />
         </Field>
 
         <div>
-          <Label>
-            <Trans i18nKey="alerting.rules-filter.state">State</Trans>
-          </Label>
+          <Label>State</Label>
           <RadioButtonGroup
             options={RuleStateOptions}
             value={filterState.ruleState}
@@ -196,59 +228,49 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
           />
         </div>
         <div>
-          <Label>
-            <Trans i18nKey="alerting.rules-filter.rule-type">Rule type</Trans>
-          </Label>
-          <RadioButtonGroup
-            options={RuleTypeOptions}
-            value={filterState.ruleType}
-            onChange={updateAndTrack('ruleType')}
-          />
+          <Label>Rule type</Label>
+          <RadioButtonGroup options={RuleTypeOptions} value={filterState.ruleType} onChange={handleRuleTypeChange} />
         </div>
         <div>
-          <Label>
-            <Trans i18nKey="alerting.rules-filter.health">Health</Trans>
-          </Label>
+          <Label>Health</Label>
           <RadioButtonGroup
             options={RuleHealthOptions}
             value={filterState.ruleHealth}
-            onChange={updateAndTrack('ruleHealth')}
+            onChange={handleRuleHealthChange}
           />
         </div>
         {canRenderContactPointSelector && (
-          <Stack direction="column" gap={0}>
-            <Field
-              label={
-                <Label htmlFor="contactPointFilter">
-                  <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                </Label>
-              }
-            >
-              <ContactPointSelector
-                id="contactPointFilter"
-                value={filterState.contactPoint ?? null}
-                width={40}
-                placeholder={t(
-                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
-                  'Choose a contact point'
-                )}
-                isClearable
-                onChange={(contactPoint) => {
-                  handleContactPointChange(contactPoint?.spec.title ?? '');
-                }}
-              />
-            </Field>
-          </Stack>
+          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
+            <Stack direction="column" gap={0}>
+              <Field
+                label={
+                  <Label htmlFor="contactPointFilter">
+                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                  </Label>
+                }
+              >
+                <ContactPointSelector
+                  selectedContactPointName={filterState.contactPoint}
+                  selectProps={{
+                    inputId: 'contactPointFilter',
+                    width: 40,
+                    onChange: (selectValue) => {
+                      handleContactPointChange(selectValue?.value?.name!);
+                    },
+                    isClearable: true,
+                  }}
+                />
+              </Field>
+            </Stack>
+          </AlertmanagerProvider>
         )}
         {pluginsFilterEnabled && (
           <div>
-            <Label>
-              <Trans i18nKey="alerting.rules-filter.plugin-rules">Plugin rules</Trans>
-            </Label>
+            <Label>Plugin rules</Label>
             <RadioButtonGroup<'hide'>
               options={[
-                { label: t('alerting.rules-filter.label.show', 'Show'), value: undefined },
-                { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
+                { label: 'Show', value: undefined },
+                { label: 'Hide', value: 'hide' },
               ]}
               value={filterState.plugins}
               onChange={(value) => updateFilters({ ...filterState, plugins: value })}
@@ -264,27 +286,16 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
             onSubmit={handleSubmit((data) => {
               setSearchQuery(data.searchQuery);
               searchQueryRef.current?.blur();
-              trackAlertRuleFilterEvent({
-                filterMethod: 'search-input',
-                filter: getSearchFilterFromQuery(data.searchQuery),
-                filterVariant: 'v1',
-              });
+              trackRulesSearchInputInteraction({ oldQuery: searchQuery, newQuery: data.searchQuery });
             })}
           >
             <Field
               label={
                 <Label htmlFor="rulesSearchInput">
                   <Stack gap={0.5} alignItems="center">
-                    <span>
-                      <Trans i18nKey="alerting.rules-filter.search">Search</Trans>
-                    </span>
+                    <span>Search</span>
                     <PopupCard content={<SearchQueryHelp />}>
-                      <Icon
-                        name="info-circle"
-                        size="sm"
-                        tabIndex={0}
-                        title={t('alerting.rules-filter.title-search-help', 'Search help')}
-                      />
+                      <Icon name="info-circle" size="sm" tabIndex={0} title="Search help" />
                     </PopupCard>
                   </Stack>
                 </Label>
@@ -299,23 +310,25 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
                   searchQueryRef.current = e;
                 }}
                 {...rest}
-                placeholder={t('alerting.rules-filter.rulesSearchInput-placeholder-search', 'Search')}
+                placeholder="Search"
                 data-testid="search-query-input"
               />
             </Field>
             <input type="submit" hidden />
           </form>
           <div>
-            <Label>
-              <Trans i18nKey="alerting.rules-filter.view-as">View as</Trans>
-            </Label>
-            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
+            <Label>View as</Label>
+            <RadioButtonGroup
+              options={ViewOptions}
+              value={queryParams.get('view') ?? ViewOptions[0].value}
+              onChange={handleViewChange}
+            />
           </div>
         </Stack>
         {hasActiveFilters && (
           <div>
             <Button fullWidth={false} icon="times" variant="secondary" onClick={handleClearFiltersClick}>
-              <Trans i18nKey="alerting.rules-filter.clear-filters">Clear filters</Trans>
+              Clear filters
             </Button>
           </div>
         )}
@@ -346,44 +359,21 @@ function SearchQueryHelp() {
 
   return (
     <div>
-      <div>
-        <Trans i18nKey="alerting.search-query-help.search-syntax">
-          Search syntax allows to query alert rules by the parameters defined below.
-        </Trans>
-      </div>
+      <div>Search syntax allows to query alert rules by the parameters defined below.</div>
       <hr />
       <div className={styles.grid}>
-        <div>
-          <Trans i18nKey="alerting.search-query-help.filter-type">Filter type</Trans>
-        </div>
-        <div>
-          <Trans i18nKey="alerting.search-query-help.expression">Expression</Trans>
-        </div>
-        <HelpRow
-          title={t('alerting.search-query-help.title-datasources', 'Datasources')}
-          expr="datasource:mimir datasource:prometheus"
-        />
-        <HelpRow
-          title={t('alerting.search-query-help.title-folder-namespace', 'Folder/Namespace')}
-          expr="namespace:global"
-        />
-        <HelpRow title={t('alerting.search-query-help.title-group', 'Group')} expr="group:cpu-usage" />
-        <HelpRow title={t('alerting.search-query-help.title-rule', 'Rule')} expr='rule:"cpu 80%"' />
-        <HelpRow
-          title={t('alerting.search-query-help.title-labels', 'Labels')}
-          expr='label:team=A label:"cluster=new york"'
-        />
-        <HelpRow title={t('alerting.search-query-help.title-state', 'State')} expr="state:firing|normal|pending" />
-        <HelpRow title={t('alerting.search-query-help.title-type', 'Type')} expr="type:alerting|recording" />
-        <HelpRow title={t('alerting.search-query-help.title-health', 'Health')} expr="health:ok|nodata|error" />
-        <HelpRow
-          title={t('alerting.search-query-help.title-dashboard-uid', 'Dashboard UID')}
-          expr="dashboard:eadde4c7-54e6-4964-85c0-484ab852fd04"
-        />
-        <HelpRow
-          title={t('alerting.search-query-help.title-contact-point', 'Contact point')}
-          expr="contactPoint:slack"
-        />
+        <div>Filter type</div>
+        <div>Expression</div>
+        <HelpRow title="Datasources" expr="datasource:mimir datasource:prometheus" />
+        <HelpRow title="Folder/Namespace" expr="namespace:global" />
+        <HelpRow title="Group" expr="group:cpu-usage" />
+        <HelpRow title="Rule" expr='rule:"cpu 80%"' />
+        <HelpRow title="Labels" expr="label:team=A label:cluster=a1" />
+        <HelpRow title="State" expr="state:firing|normal|pending" />
+        <HelpRow title="Type" expr="type:alerting|recording" />
+        <HelpRow title="Health" expr="health:ok|nodata|error" />
+        <HelpRow title="Dashboard UID" expr="dashboard:eadde4c7-54e6-4964-85c0-484ab852fd04" />
+        <HelpRow title="Contact point" expr="contactPoint:slack" />
       </div>
     </div>
   );

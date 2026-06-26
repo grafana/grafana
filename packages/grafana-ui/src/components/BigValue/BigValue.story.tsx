@@ -1,21 +1,21 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { StoryFn, Meta } from '@storybook/react';
 
-import { type FieldSparkline, FieldType } from '@grafana/data';
+import { FieldSparkline, FieldType } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes';
 
-import { BigValue } from './BigValue';
-import mdx from './BigValue.mdx';
 import {
+  BigValue,
   BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  type Props,
-} from './BigValueTypes';
+  Props,
+} from './BigValue';
+import mdx from './BigValue.mdx';
 
 const meta: Meta = {
-  title: 'Plugins/BigValue',
+  title: 'Visualizations/BigValue',
   component: BigValue,
   parameters: {
     docs: {
@@ -29,36 +29,27 @@ const meta: Meta = {
     width: { control: { type: 'range', min: 200, max: 800 } },
     height: { control: { type: 'range', min: 200, max: 800 } },
     colorMode: {
-      control: {
-        type: 'select',
-      },
-      options: [BigValueColorMode.Value, BigValueColorMode.Background],
+      control: { type: 'select', options: [BigValueColorMode.Value, BigValueColorMode.Background] },
     },
-    graphMode: {
-      control: { type: 'select' },
-      options: [BigValueGraphMode.Area, BigValueGraphMode.None],
-    },
-    justifyMode: {
-      control: { type: 'select' },
-      options: [BigValueJustifyMode.Auto, BigValueJustifyMode.Center],
-    },
+    graphMode: { control: { type: 'select', options: [BigValueGraphMode.Area, BigValueGraphMode.None] } },
+    justifyMode: { control: { type: 'select', options: [BigValueJustifyMode.Auto, BigValueJustifyMode.Center] } },
     textMode: {
       control: {
         type: 'radio',
+        options: [
+          BigValueTextMode.Auto,
+          BigValueTextMode.Name,
+          BigValueTextMode.ValueAndName,
+          BigValueTextMode.None,
+          BigValueTextMode.Value,
+        ],
       },
-      options: [
-        BigValueTextMode.Auto,
-        BigValueTextMode.Name,
-        BigValueTextMode.ValueAndName,
-        BigValueTextMode.None,
-        BigValueTextMode.Value,
-      ],
     },
     color: { control: 'color' },
   },
 };
 
-interface StoryProps extends Props {
+interface StoryProps extends Partial<Props> {
   numeric: number;
   title: string;
   color: string;

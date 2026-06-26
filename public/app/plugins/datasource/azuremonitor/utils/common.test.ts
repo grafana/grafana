@@ -1,4 +1,4 @@
-import { initialCustomVariableModelState } from '../mocks/variables';
+import { initialCustomVariableModelState } from '../__mocks__/variables';
 
 import { hasOption, interpolateVariable } from './common';
 

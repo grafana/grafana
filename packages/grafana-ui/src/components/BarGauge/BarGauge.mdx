@@ -1,4 +1,4 @@
-import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
+import { Meta, ArgTypes } from '@storybook/blocks';
 import { BarGauge } from './BarGauge';
 
 <Meta title="MDX|BarGauge" component={BarGauge} />
@@ -14,35 +14,34 @@ import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor }
 const field: Partial<Field> = {
   type: FieldType.number,
   config: {
-    min: 0,
-    max: 100,
+    min: minValue,
+    max: maxValue,
     thresholds: {
       mode: ThresholdsMode.Absolute,
       steps: [
         { value: -Infinity, color: 'green' },
-        { value: 20, color: 'blue' },
-        { value: 90, color: 'red' },
+        { value: threshold1Value, color: threshold1Color },
+        { value: threshold2Value, color: threshold2Color },
       ],
     },
   },
 };
+field.display = getDisplayProcessor({ field });
 
-field.display = getDisplayProcessor({ theme, field });
+const value = {
+  text: value.toString(),
+  title: title,
+  numeric: value,
+};
 
-return (
-  <BarGauge
-    theme={theme}
-    field={field.config}
-    display={field.display}
-    value={{
-      text: '70',
-      title: 'Title of data point',
-      numeric: 70,
-    }}
-    orientation={VizOrientation.Vertical}
-    displayMode={BarGaugeDisplayMode.Basic}
-  />
-);
+<BarGauge
+  value={70}
+  field={field.config}
+  display={field.display}
+  value={value}
+  orientation={VizOrientation.Vertical}
+  displayMode={BarGaugeDisplayMode.Basic}
+/>;
 ```
 
 <ArgTypes of={BarGauge} />

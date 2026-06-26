@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { type SetupStep } from '../types';
+import { SetupStep } from '../types';
 
 import { DocsCard } from './DocsCard';
 import { TutorialCard } from './TutorialCard';
@@ -52,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     title: css({
-      color: theme.colors.accent.text,
+      color: theme.v1.palette.blue95,
     }),
     cards: css({
       overflowX: 'auto',

@@ -1,14 +1,13 @@
 import debounce from 'debounce-promise';
 import { useEffect, useRef, useState } from 'react';
 
-import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { extractManagerKind } from 'app/features/search/service/utils';
+import impressionSrv from 'app/core/services/impression_srv';
+import { getGrafanaSearcher } from 'app/features/search/service';
 
-import { type CommandPaletteAction } from '../types';
+import { CommandPaletteAction } from '../types';
 import { RECENT_DASHBOARDS_PRIORITY, SEARCH_RESULTS_PRIORITY } from '../values';
 
 const MAX_SEARCH_RESULTS = 100;
@@ -21,17 +20,29 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
     return [];
   }
 
-  const recentResults = await getRecentlyViewedDashboards(MAX_RECENT_DASHBOARDS);
+  const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
+  const resultsDataFrame = await getGrafanaSearcher().search({
+    kind: ['dashboard'],
+    limit: MAX_RECENT_DASHBOARDS,
+    uid: recentUids,
+  });
+
+  // Search results are alphabetical, so reorder them according to recently viewed
+  const recentResults = resultsDataFrame.view.toArray();
+  recentResults.sort((resultA, resultB) => {
+    const orderA = recentUids.indexOf(resultA.uid);
+    const orderB = recentUids.indexOf(resultB.uid);
+    return orderA - orderB;
+  });
 
   const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
-    const { url, name, managedBy } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `recent-dashboards${url}`,
       name: `${name}`,
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
       priority: RECENT_DASHBOARDS_PRIORITY,
       url,
-      managedBy: extractManagerKind(managedBy),
     };
   });
 
@@ -40,7 +51,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
 
 export async function getSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
   // Empty strings should not come through to here
-  if (searchQuery.length === 0 || (!contextSrv.user.isSignedIn && !config.anonymousEnabled)) {
+  if (searchQuery.length === 0 || (!contextSrv.user.isSignedIn && !config.bootData.settings.anonymousEnabled)) {
     return [];
   }
 
@@ -51,7 +62,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   });
 
   const goToSearchResultActions: CommandPaletteAction[] = data.view.map((item) => {
-    const { url, name, kind, location, managedBy } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, kind, location } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `go/${kind}${url}`,
       name: `${name}`,
@@ -62,17 +73,13 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
       priority: SEARCH_RESULTS_PRIORITY,
       url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
-      managedBy: extractManagerKind(managedBy),
     };
   });
 
   return goToSearchResultActions;
 }
 
-/**
- * Implements actual search logic for dashboards and folders.
- */
-export function useSearchResults({ searchQuery, show }: { searchQuery: string; show: boolean }) {
+export function useSearchResults(searchQuery: string, isShowing: boolean) {
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
   const lastSearchTimestamp = useRef<number>(0);
@@ -80,7 +87,7 @@ export function useSearchResults({ searchQuery, show }: { searchQuery: string; s
   // Hit dashboards API
   useEffect(() => {
     const timestamp = Date.now();
-    if (show && searchQuery.length > 0) {
+    if (isShowing && searchQuery.length > 0) {
       setIsFetchingSearchResults(true);
       debouncedSearch(searchQuery).then((resultActions) => {
         // Only keep the results if it's was issued after the most recently resolved search.
@@ -98,7 +105,7 @@ export function useSearchResults({ searchQuery, show }: { searchQuery: string; s
       setIsFetchingSearchResults(false);
       lastSearchTimestamp.current = timestamp;
     }
-  }, [show, searchQuery]);
+  }, [isShowing, searchQuery]);
 
   return {
     searchResults,

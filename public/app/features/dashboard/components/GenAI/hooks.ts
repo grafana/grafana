@@ -1,16 +1,18 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
-import { type Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
-import { llm } from '@grafana/llm';
-import { getLogger } from '@grafana/runtime/unstable';
+import { llms } from '@grafana/experimental';
+import { createMonitoringLogger } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { DEFAULT_LLM_MODEL, isLLMPluginEnabled } from './utils';
+import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
-type Message = llm.Message;
+type Message = llms.openai.Message;
+
+const genAILogger = createMonitoringLogger('features.dashboards.genai');
 
 export enum StreamStatus {
   IDLE = 'idle',
@@ -18,22 +20,20 @@ export enum StreamStatus {
   COMPLETED = 'completed',
 }
 
-export const TIMEOUT = 10000; // 10 seconds
+export const TIMEOUT = 10000;
 
 interface Options {
   model: string;
   temperature: number;
   onResponse?: (response: string) => void;
-  timeout?: number;
 }
 
 const defaultOptions = {
-  model: DEFAULT_LLM_MODEL,
+  model: DEFAULT_OAI_MODEL,
   temperature: 1,
-  timeout: TIMEOUT,
 };
 
-interface UseLLMStreamResponse {
+interface UseOpenAIStreamResponse {
   setMessages: Dispatch<SetStateAction<Message[]>>;
   stopGeneration: () => void;
   messages: Message[];
@@ -47,8 +47,7 @@ interface UseLLMStreamResponse {
 }
 
 // TODO: Add tests
-export function useLLMStream(options: Options = defaultOptions): UseLLMStreamResponse {
-  const { model, temperature, onResponse, timeout } = { ...defaultOptions, ...options };
+export function useOpenAIStream({ model, temperature, onResponse }: Options = defaultOptions): UseOpenAIStreamResponse {
   // The messages array to send to the LLM, updated when the button is clicked.
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -66,15 +65,11 @@ export function useLLMStream(options: Options = defaultOptions): UseLLMStreamRes
       setMessages([]);
       setError(e);
       notifyError(
-        'Failed to generate content using LLM',
+        'Failed to generate content using OpenAI',
         'Please try again or if the problem persists, contact your organization admin.'
       );
       console.error(e);
-      getLogger('features.dashboards.genai').logError(e, {
-        messages: JSON.stringify(messages),
-        model,
-        temperature: String(temperature),
-      });
+      genAILogger.logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
     },
     [messages, model, temperature, notifyError]
   );
@@ -98,7 +93,7 @@ export function useLLMStream(options: Options = defaultOptions): UseLLMStreamRes
     setStreamStatus(StreamStatus.GENERATING);
     setError(undefined);
     // Stream the completions. Each element is the next stream chunk.
-    const stream = llm
+    const stream = llms.openai
       .streamChatCompletions({
         model,
         temperature,
@@ -107,7 +102,7 @@ export function useLLMStream(options: Options = defaultOptions): UseLLMStreamRes
       .pipe(
         // Accumulate the stream content into a stream of strings, where each
         // element contains the accumulated message so far.
-        llm.accumulateContent()
+        llms.openai.accumulateContent()
         // The stream is just a regular Observable, so we can use standard rxjs
         // functionality to update state, e.g. recording when the stream
         // has completed.
@@ -150,17 +145,17 @@ export function useLLMStream(options: Options = defaultOptions): UseLLMStreamRes
 
   // If the stream is generating and we haven't received a reply, it times out.
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | undefined;
+    let timeout: NodeJS.Timeout | undefined;
     if (streamStatus === StreamStatus.GENERATING && reply === '') {
-      timeoutId = setTimeout(() => {
-        onError(new Error(`LLM stream timed out after ${timeout}ms`));
-      }, timeout);
+      timeout = setTimeout(() => {
+        onError(new Error(`OpenAI stream timed out after ${TIMEOUT}ms`));
+      }, TIMEOUT);
     }
 
     return () => {
-      clearTimeout(timeoutId);
+      clearTimeout(timeout);
     };
-  }, [streamStatus, reply, onError, timeout]);
+  }, [streamStatus, reply, onError]);
 
   if (asyncError || enabledError) {
     setError(asyncError || enabledError);

@@ -6,7 +6,7 @@ import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 import { PluginExtensionTypes } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 
-import { type CombinedRuleNamespace } from '../../../../../types/unified-alerting';
+import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from '../../../../../types/unified-alerting-dto';
 import { mockCombinedRule, mockDataSource, mockPromAlert, mockPromAlertingRule } from '../../mocks';
 import { alertStateToReadable } from '../../utils/rules';
@@ -30,7 +30,6 @@ const ui = {
     normal: byLabelText(/^Normal/),
     alerting: byLabelText(/^Alerting/),
     pending: byLabelText(/^Pending/),
-    recovering: byLabelText(/^Recovering/),
     noData: byLabelText(/^NoData/),
     error: byLabelText(/^Error/),
   },
@@ -61,7 +60,7 @@ describe('RuleDetailsMatchingInstances', () => {
   });
 
   describe('Filtering', () => {
-    it('For Grafana Managed rules instances filter should contain six states', () => {
+    it('For Grafana Managed rules instances filter should contain five states', () => {
       const rule = mockCombinedRule();
 
       render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
@@ -71,7 +70,7 @@ describe('RuleDetailsMatchingInstances', () => {
 
       const stateButtons = ui.stateButton.getAll(stateFilter);
 
-      expect(stateButtons).toHaveLength(6);
+      expect(stateButtons).toHaveLength(5);
 
       expect(ui.grafanaStateButton.normal.get(stateFilter)).toBeInTheDocument();
       expect(ui.grafanaStateButton.alerting.get(stateFilter)).toBeInTheDocument();
@@ -87,7 +86,6 @@ describe('RuleDetailsMatchingInstances', () => {
             mockPromAlert({ state: GrafanaAlertState.Normal }),
             mockPromAlert({ state: GrafanaAlertState.Alerting }),
             mockPromAlert({ state: GrafanaAlertState.Pending }),
-            mockPromAlert({ state: GrafanaAlertState.Recovering }),
             mockPromAlert({ state: GrafanaAlertState.NoData }),
             mockPromAlert({ state: GrafanaAlertState.Error }),
           ],
@@ -98,7 +96,6 @@ describe('RuleDetailsMatchingInstances', () => {
         [GrafanaAlertState.Normal]: ui.grafanaStateButton.normal,
         [GrafanaAlertState.Alerting]: ui.grafanaStateButton.alerting,
         [GrafanaAlertState.Pending]: ui.grafanaStateButton.pending,
-        [GrafanaAlertState.Recovering]: ui.grafanaStateButton.recovering,
         [GrafanaAlertState.NoData]: ui.grafanaStateButton.noData,
         [GrafanaAlertState.Error]: ui.grafanaStateButton.error,
       };

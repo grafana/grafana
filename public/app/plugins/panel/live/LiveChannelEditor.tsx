@@ -3,23 +3,17 @@ import { useEffect, useMemo, useState } from 'react';
 
 import {
   LiveChannelScope,
-  type LiveChannelAddress,
-  type SelectableValue,
-  type StandardEditorProps,
-  type GrafanaTheme2,
+  LiveChannelAddress,
+  SelectableValue,
+  StandardEditorProps,
+  GrafanaTheme2,
   parseLiveChannelAddress,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
-import {
-  discoveryResources,
-  getAPIGroupDiscoveryList,
-  type GroupDiscoveryResource,
-} from 'app/features/apiserver/discovery';
+import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { getManagedChannelInfo } from 'app/features/live/info';
 
-import { type LivePanelOptions } from './types';
+import { LivePanelOptions } from './types';
 
 type Props = StandardEditorProps<Partial<LiveChannelAddress>, {}, LivePanelOptions>;
 
@@ -28,18 +22,17 @@ const scopes: Array<SelectableValue<LiveChannelScope>> = [
   { label: 'Data Sources', value: LiveChannelScope.DataSource, description: 'Data sources with live support' },
   { label: 'Plugins', value: LiveChannelScope.Plugin, description: 'Plugins with live support' },
   { label: 'Stream', value: LiveChannelScope.Stream, description: 'data streams (eg, influx style)' },
-  { label: 'Watch', value: LiveChannelScope.Watch, description: 'Watch k8s style resources' },
 ];
 
 export function LiveChannelEditor(props: Props) {
   const [channels, setChannels] = useState<Array<SelectableValue<string>>>([]);
-  const [streams, paths] = useMemo(() => {
-    const streams: Array<SelectableValue<string>> = [];
+  const [namespaces, paths] = useMemo(() => {
+    const namespaces: Array<SelectableValue<string>> = [];
     const paths: Array<SelectableValue<string>> = [];
     const scope = props.value.scope;
-    const stream = props.value.stream;
+    const namespace = props.value.namespace;
     if (!scope?.length) {
-      return [streams, paths];
+      return [namespaces, paths];
     }
     const used: Record<string, boolean> = {};
 
@@ -49,23 +42,23 @@ export function LiveChannelEditor(props: Props) {
         continue;
       }
 
-      if (!used[addr.stream]) {
-        streams.push({
-          value: addr.stream,
-          label: addr.stream,
+      if (!used[addr.namespace]) {
+        namespaces.push({
+          value: addr.namespace,
+          label: addr.namespace,
         });
-        used[addr.stream] = true;
+        used[addr.namespace] = true;
       }
 
-      if (stream?.length && stream === addr.stream) {
+      if (namespace?.length && namespace === addr.namespace) {
         paths.push({
           ...channel,
           value: addr.path,
         });
       }
     }
-    return [streams, paths];
-  }, [channels, props.value.scope, props.value.stream]);
+    return [namespaces, paths];
+  }, [channels, props.value.scope, props.value.namespace]);
 
   useEffect(() => {
     getManagedChannelInfo().then((v) => {
@@ -77,16 +70,16 @@ export function LiveChannelEditor(props: Props) {
     if (v.value) {
       props.onChange({
         scope: v.value,
-        stream: undefined,
+        namespace: undefined,
         path: undefined,
       });
     }
   };
 
-  const onStreamChanged = (v: SelectableValue<string>) => {
+  const onNamespaceChanged = (v: SelectableValue<string>) => {
     props.onChange({
       scope: props.value?.scope,
-      stream: v?.value,
+      namespace: v?.value,
       path: undefined,
     });
   };
@@ -95,72 +88,37 @@ export function LiveChannelEditor(props: Props) {
     const { value, onChange } = props;
     onChange({
       scope: value.scope,
-      stream: value.stream,
+      namespace: value.namespace,
       path: v?.value,
     });
   };
 
-  const getWatchableResources = async (v: string) => {
-    const apis = await getAPIGroupDiscoveryList();
-    return discoveryResources(apis)
-      .filter((v) => v.verbs.includes('watch'))
-      .map((r) => ({
-        value: `${r.responseKind.group}/${r.responseKind.version}/${r.resource}`, // must be string | number
-        resource: r,
-      }));
-  };
-
-  const { scope, stream, path } = props.value;
+  const { scope, namespace, path } = props.value;
   const style = getStyles(config.theme2);
 
   return (
     <>
-      <Alert title={t('live.live-channel-editor.title-grafana-live', 'Grafana Live')} severity="info">
-        <Trans i18nKey="live.live-channel-editor.description-grafana-live">
-          This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the
-          interfaces and structures to change as this becomes more production ready.
-        </Trans>
+      <Alert title="Grafana Live" severity="info">
+        This supports real-time event streams in grafana core. This feature is under heavy development. Expect the
+        intefaces and structures to change as this becomes more production ready.
       </Alert>
 
       <div>
         <div className={style.dropWrap}>
-          <Label>
-            <Trans i18nKey="live.live-channel-editor.scope">Scope</Trans>
-          </Label>
+          <Label>Scope</Label>
           <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={onScopeChanged} />
         </div>
 
-        {scope === LiveChannelScope.Watch && (
-          <div className={style.dropWrap}>
-            <Combobox
-              options={getWatchableResources}
-              placeholder={t(
-                'live.live-channel-editor.placeholder-select-watchable-resource',
-                'Select watchable resource'
-              )}
-              onChange={(v) => {
-                const resource: GroupDiscoveryResource = (v as any).resource;
-                if (resource) {
-                  props.onChange({
-                    scope: LiveChannelScope.Watch,
-                    stream: resource.responseKind.group,
-                    path: `${resource.responseKind.version}/${resource.resource}/${config.bootData.user.uid}`, // only works for this user
-                  });
-                }
-              }}
-            />
-          </div>
-        )}
-
         {scope && (
           <div className={style.dropWrap}>
-            <Label>
-              <Trans i18nKey="live.live-channel-editor.namespace">Namespace</Trans>
-            </Label>
+            <Label>Namespace</Label>
             <Select
-              options={streams}
-              value={streams.find((s) => s.value === stream) ?? (stream ? { label: stream, value: stream } : undefined)}
-              onChange={onStreamChanged}
+              options={namespaces}
+              value={
+                namespaces.find((s) => s.value === namespace) ??
+                (namespace ? { label: namespace, value: namespace } : undefined)
+              }
+              onChange={onNamespaceChanged}
               allowCustomValue={true}
               backspaceRemovesValue={true}
               isClearable={true}
@@ -168,11 +126,9 @@ export function LiveChannelEditor(props: Props) {
           </div>
         )}
 
-        {scope && stream && (
+        {scope && namespace && (
           <div className={style.dropWrap}>
-            <Label>
-              <Trans i18nKey="live.live-channel-editor.path">Path</Trans>
-            </Label>
+            <Label>Path</Label>
             <Select
               options={paths}
               value={findPathOption(paths, path)}

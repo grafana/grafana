@@ -1,31 +1,16 @@
-import saveAs from 'file-saver';
-
 import {
-  type AbsoluteTimeRange,
+  AbsoluteTimeRange,
   FieldType,
-  type Labels,
+  Labels,
   LogLevel,
-  type LogRowModel,
-  type LogsModel,
+  LogRowModel,
+  LogsModel,
   LogsSortOrder,
   MutableDataFrame,
-  type DataFrame,
-  toDataFrame,
-  DataFrameType,
+  DataFrame,
 } from '@grafana/data';
-import {
-  filterFieldsByNameTransformer,
-  mockTransformationsRegistry,
-  organizeFieldsTransformer,
-} from '@grafana/data/internal';
-import { FlagKeys } from '@grafana/runtime/internal';
-import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
-import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
+import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
 
-import { downloadDataFrameAsCsv } from '../inspector/utils/download';
-
-import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
-import { createLogRow } from './components/mocks/logRow';
 import { logSeriesToLogsModel } from './logsModel';
 import {
   calculateLogsLabelStats,
@@ -36,95 +21,38 @@ import {
   getLogLevel,
   getLogLevelFromKey,
   getLogsVolumeMaximumRange,
-  isMissingStringField,
-  isMissingTimeField,
   logRowsToReadableJson,
   mergeLogsVolumeDataFrames,
   sortLogsResult,
-  checkLogsSampled,
-  downloadLogs,
-  DownloadFormat,
 } from './utils';
 
-const mockGetBooleanValue = jest.fn((key: string, defaultValue: boolean) => defaultValue);
-
-jest.mock('@grafana/runtime/internal', () => {
-  const actual = jest.requireActual('@grafana/runtime/internal');
-  return {
-    ...actual,
-    getFeatureFlagClient: jest.fn(() => ({
-      getBooleanValue: mockGetBooleanValue,
-    })),
-  };
-});
-
-jest.mock('file-saver', () => jest.fn());
-
-jest.mock('../inspector/utils/download', () => ({
-  ...jest.requireActual('../inspector/utils/download'),
-  downloadDataFrameAsCsv: jest.fn(),
-}));
-
-describe('deprecated getLoglevel()', () => {
-  describe('with grafana.logLevelInference enabled', () => {
-    beforeEach(() => {
-      mockGetBooleanValue.mockImplementation((key, def) => (key === FlagKeys.GrafanaLogLevelInference ? true : def));
-    });
-
-    afterEach(() => {
-      mockGetBooleanValue.mockImplementation((key, def) => def);
-    });
-
-    it('returns no log level on empty line', () => {
-      expect(getLogLevel('')).toBe(LogLevel.unspecified);
-    });
-
-    it('returns no log level on when level is part of a word', () => {
-      expect(getLogLevel('who warns us')).toBe(LogLevel.unspecified);
-    });
-
-    it('returns same log level for long and short version', () => {
-      expect(getLogLevel('[Warn]')).toBe(LogLevel.warning);
-      expect(getLogLevel('[Warning]')).toBe(LogLevel.warning);
-      expect(getLogLevel('[Warn]')).toBe('warning');
-    });
-
-    it('returns correct log level when level is capitalized', () => {
-      expect(getLogLevel('WARN')).toBe(LogLevel.warn);
-    });
-
-    it('returns log level on line contains a log level', () => {
-      expect(getLogLevel('warn: it is looking bad')).toBe(LogLevel.warn);
-      expect(getLogLevel('2007-12-12 12:12:12 [WARN]: it is looking bad')).toBe(LogLevel.warn);
-    });
-
-    it('returns first log level found', () => {
-      expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
-      expect(getLogLevel('WARN this is a non-critical message')).toBe(LogLevel.warn);
-    });
-
-    it('returns unspecified (not unknown) when no level is present in the line', () => {
-      const level = getLogLevel('a line without any level word');
-      expect(level).toBe(LogLevel.unspecified);
-      expect(level).toBe('');
-      expect(level).not.toBe(LogLevel.unknown);
-    });
-
-    it('returns the actual unknown level when the line explicitly contains it', () => {
-      const level = getLogLevel('2007-12-12 12:12:12 [unknown]: something happened');
-      expect(level).toBe(LogLevel.unknown);
-      expect(level).toBe('unknown');
-      expect(level).not.toBe(LogLevel.unspecified);
-    });
+describe('getLoglevel()', () => {
+  it('returns no log level on empty line', () => {
+    expect(getLogLevel('')).toBe(LogLevel.unknown);
   });
 
-  describe('with grafana.logLevelInference disabled', () => {
-    it('returns unspecified (not unknown) regardless of the line content', () => {
-      const level = getLogLevel('error warn info');
-      expect(level).toBe(LogLevel.unspecified);
-      expect(level).toBe('');
-      expect(level).not.toBe(LogLevel.unknown);
-    });
+  it('returns no log level on when level is part of a word', () => {
+    expect(getLogLevel('who warns us')).toBe(LogLevel.unknown);
+  });
+
+  it('returns same log level for long and short version', () => {
+    expect(getLogLevel('[Warn]')).toBe(LogLevel.warning);
+    expect(getLogLevel('[Warning]')).toBe(LogLevel.warning);
+    expect(getLogLevel('[Warn]')).toBe('warning');
+  });
+
+  it('returns correct log level when level is capitalized', () => {
+    expect(getLogLevel('WARN')).toBe(LogLevel.warn);
+  });
+
+  it('returns log level on line contains a log level', () => {
+    expect(getLogLevel('warn: it is looking bad')).toBe(LogLevel.warn);
+    expect(getLogLevel('2007-12-12 12:12:12 [WARN]: it is looking bad')).toBe(LogLevel.warn);
+  });
+
+  it('returns first log level found', () => {
+    expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
+    expect(getLogLevel('WARN this is a non-critical message')).toBe(LogLevel.warn);
   });
 });
 
@@ -155,32 +83,9 @@ describe('getLogLevelFromKey()', () => {
     it('returns debug', () => {
       expect(getLogLevelFromKey('7')).toBe(LogLevel.debug);
     });
-    it('returns unspecified log level when level is an unexpected integer', () => {
-      expect(getLogLevelFromKey('8')).toBe(LogLevel.unspecified);
-      expect(getLogLevelFromKey(8)).toBe(LogLevel.unspecified);
-    });
-  });
-
-  describe('unspecified vs unknown', () => {
-    it('returns the actual unknown level when the key is explicitly "unknown"', () => {
-      const level = getLogLevelFromKey('unknown');
-      expect(level).toBe(LogLevel.unknown);
-      expect(level).toBe('unknown');
-      expect(level).not.toBe(LogLevel.unspecified);
-    });
-
-    it('returns unspecified (not unknown) for an empty key', () => {
-      const level = getLogLevelFromKey('');
-      expect(level).toBe(LogLevel.unspecified);
-      expect(level).toBe('');
-      expect(level).not.toBe(LogLevel.unknown);
-    });
-
-    it('returns unspecified (not unknown) for an unrecognized key', () => {
-      const level = getLogLevelFromKey('not-a-level');
-      expect(level).toBe(LogLevel.unspecified);
-      expect(level).toBe('');
-      expect(level).not.toBe(LogLevel.unknown);
+    it('returns unknown log level when level is an unexpected integer', () => {
+      expect(getLogLevelFromKey('8')).toBe(LogLevel.unknown);
+      expect(getLogLevelFromKey(8)).toBe(LogLevel.unknown);
     });
   });
 });
@@ -335,36 +240,8 @@ describe('checkLogsError()', () => {
       foo: 'boo',
     } as Labels,
   } as LogRowModel;
-  test('should return the error if present', () => {
-    expect(checkLogsError(log)).toStrictEqual('Error Message');
-  });
-  test('should return undefined otherwise', () => {
-    expect(checkLogsError({ ...log, labels: {} })).toStrictEqual(undefined);
-  });
-});
-
-describe('checkLogsSampled()', () => {
-  const log = {
-    labels: {
-      __adaptive_logs_sampled__: 'true',
-      foo: 'boo',
-    } as Labels,
-  } as LogRowModel;
-  test('should return a message if is sampled', () => {
-    expect(checkLogsSampled(log)).toStrictEqual('Logs like this one have been dropped by Adaptive Logs');
-  });
-  test('should return an interpolated message if is sampled', () => {
-    expect(
-      checkLogsSampled({
-        ...log,
-        labels: {
-          __adaptive_logs_sampled__: '10',
-        },
-      })
-    ).toStrictEqual('10% of logs like this one have been dropped by Adaptive Logs');
-  });
-  test('should return undefined otherwise', () => {
-    expect(checkLogsSampled({ ...log, labels: {} })).toStrictEqual(undefined);
+  test('should return correct error if error is present', () => {
+    expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });
 });
 
@@ -450,22 +327,13 @@ describe('logRowsToReadableJson', () => {
   it('should format a single row', () => {
     const result = logRowsToReadableJson([testRow]);
 
-    expect(result).toEqual([
-      { date: '1970-01-01T00:00:00.010Z', line: 'test entry', timestamp: '123456789', fields: { foo: 'bar' } },
-    ]);
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar' } }]);
   });
 
   it('should format a df field row', () => {
     const result = logRowsToReadableJson([testRow2]);
 
-    expect(result).toEqual([
-      {
-        date: '1970-01-01T00:00:00.010Z',
-        line: 'test entry',
-        timestamp: '123456789',
-        fields: { foo: 'bar', foo2: 'bar2' },
-      },
-    ]);
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: 'bar2' } }]);
   });
 });
 
@@ -680,232 +548,5 @@ describe('findMatchingRow', () => {
       const targetRow = { ...row, rowId: undefined };
       expect(findMatchingRow(targetRow)).toBeTruthy();
     }
-  });
-});
-
-describe('downloadLogs', () => {
-  const logs = [
-    createLogRow({ timeEpochMs: 100, entry: 'test entry', labels: { label: 'value', otherLabel: 'other value' } }),
-  ];
-  describe('Text format', () => {
-    beforeEach(() => {
-      jest.mocked(saveAs).mockClear();
-    });
-
-    it('Downloads logs in txt format', async () => {
-      downloadLogs(DownloadFormat.Text, logs);
-
-      const blob = jest.mocked(saveAs).mock.calls[0][0];
-      const text = typeof blob === 'string' ? blob : await blob.text();
-
-      expect(text).toContain('test entry');
-    });
-
-    it('Downloads selected fields in txt format', async () => {
-      downloadLogs(DownloadFormat.Text, logs, [], ['label', 'otherLabel']);
-
-      const blob = jest.mocked(saveAs).mock.calls[0][0];
-      const text = typeof blob === 'string' ? blob : await blob.text();
-
-      expect(text).toContain('value other value');
-    });
-
-    it('Downloads selected fields including log line', async () => {
-      downloadLogs(DownloadFormat.Text, logs, [], ['label', LOG_LINE_BODY_FIELD_NAME]);
-
-      const blob = jest.mocked(saveAs).mock.calls[0][0];
-      const text = typeof blob === 'string' ? blob : await blob.text();
-
-      expect(text).toContain('test entry');
-    });
-  });
-
-  describe('JSON format', () => {
-    beforeEach(() => {
-      jest.mocked(saveAs).mockClear();
-    });
-
-    it('Downloads logs in JSON format', async () => {
-      downloadLogs(DownloadFormat.Json, logs);
-
-      const blob = jest.mocked(saveAs).mock.calls[0][0];
-      const text = typeof blob === 'string' ? blob : await blob.text();
-
-      expect(JSON.parse(text)[0]).toEqual(
-        expect.objectContaining({
-          line: 'test entry',
-          fields: { label: 'value', otherLabel: 'other value' },
-        })
-      );
-    });
-
-    it('Downloads selected fields in JSON format', async () => {
-      downloadLogs(DownloadFormat.Json, logs, [], ['otherLabel']);
-
-      const blob = jest.mocked(saveAs).mock.calls[0][0];
-      const text = typeof blob === 'string' ? blob : await blob.text();
-
-      expect(JSON.parse(text)[0]).toEqual(
-        expect.objectContaining({
-          line: 'test entry',
-          fields: { otherLabel: 'other value' },
-        })
-      );
-    });
-  });
-
-  describe('CSV format', () => {
-    beforeAll(() => {
-      mockTransformationsRegistry([extractFieldsTransformer, organizeFieldsTransformer, filterFieldsByNameTransformer]);
-    });
-
-    beforeEach(() => {
-      jest.mocked(downloadDataFrameAsCsv).mockClear();
-    });
-
-    it('includes the log line when log line body field is selected', async () => {
-      const csvLogs = [
-        createLogRow({
-          timeEpochMs: 100,
-          entry: 'test entry',
-          labels: { label: 'value' },
-          dataFrame: toDataFrame({
-            refId: 'A',
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [100] },
-              { name: 'Line', type: FieldType.string, values: ['test entry'] },
-              { name: 'labels', type: FieldType.other, values: [{ label: 'value' }] },
-            ],
-          }),
-          rowIndex: 0,
-        }),
-      ];
-
-      await downloadLogs(DownloadFormat.CSV, csvLogs, [], [LOG_LINE_BODY_FIELD_NAME]);
-
-      expect(downloadDataFrameAsCsv).toHaveBeenCalledTimes(1);
-      const exportedFrame = jest.mocked(downloadDataFrameAsCsv).mock.calls[0][0];
-      const lineField = exportedFrame.fields.find((f) => f.name === 'Line');
-      expect(lineField).toBeDefined();
-      expect(lineField?.values).toContain('test entry');
-    });
-
-    it('includes the data plane log line when log line body field is selected', async () => {
-      const csvLogs = [
-        createLogRow({
-          timeEpochMs: 100,
-          entry: 'test entry',
-          labels: { label: 'value' },
-          dataFrame: toDataFrame({
-            refId: 'A',
-            fields: [
-              { name: 'timestamp', type: FieldType.time, values: [100] },
-              { name: 'body', type: FieldType.string, values: ['test entry'] },
-              { name: 'labels', type: FieldType.other, values: [{ label: 'value' }] },
-            ],
-            meta: {
-              type: DataFrameType.LogLines,
-            },
-          }),
-          rowIndex: 0,
-        }),
-      ];
-
-      await downloadLogs(DownloadFormat.CSV, csvLogs, [], [LOG_LINE_BODY_FIELD_NAME]);
-
-      expect(downloadDataFrameAsCsv).toHaveBeenCalledTimes(1);
-      const exportedFrame = jest.mocked(downloadDataFrameAsCsv).mock.calls[0][0];
-      const lineField = exportedFrame.fields.find((f) => f.name === 'body');
-      expect(lineField).toBeDefined();
-      expect(lineField?.values).toContain('test entry');
-    });
-  });
-});
-
-describe('isMissingTimeField', () => {
-  it('returns false when series is undefined', () => {
-    expect(isMissingTimeField(undefined)).toBe(false);
-  });
-
-  it('returns false when series is empty', () => {
-    expect(isMissingTimeField([])).toBe(false);
-  });
-
-  it('returns false when frames have rows and a time field', () => {
-    const frame = toDataFrame({
-      fields: [
-        { name: 'timestamp', type: FieldType.time, values: [1, 2] },
-        { name: 'message', type: FieldType.string, values: ['a', 'b'] },
-      ],
-    });
-    expect(isMissingTimeField([frame])).toBe(false);
-  });
-
-  it('returns false when frames are empty (no rows) even without a time field', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'message', type: FieldType.string, values: [] }],
-    });
-    expect(isMissingTimeField([frame])).toBe(false);
-  });
-
-  it('returns true when frames have rows but no time field', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'message', type: FieldType.string, values: ['a', 'b'] }],
-    });
-    expect(isMissingTimeField([frame])).toBe(true);
-  });
-
-  it('returns true when only a number field is present (no time, no string)', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'count', type: FieldType.number, values: [1, 2] }],
-    });
-    expect(isMissingTimeField([frame])).toBe(true);
-  });
-
-  it('returns false if any frame has a time field', () => {
-    const frameWithTime = toDataFrame({
-      fields: [
-        { name: 'timestamp', type: FieldType.time, values: [1] },
-        { name: 'message', type: FieldType.string, values: ['a'] },
-      ],
-    });
-    const frameWithoutTime = toDataFrame({
-      fields: [{ name: 'message', type: FieldType.string, values: ['b'] }],
-    });
-    expect(isMissingTimeField([frameWithTime, frameWithoutTime])).toBe(false);
-  });
-});
-
-describe('isMissingStringField', () => {
-  it('returns false when series is undefined', () => {
-    expect(isMissingStringField(undefined)).toBe(false);
-  });
-
-  it('returns false when series is empty', () => {
-    expect(isMissingStringField([])).toBe(false);
-  });
-
-  it('returns false when frames have rows and a string field', () => {
-    const frame = toDataFrame({
-      fields: [
-        { name: 'timestamp', type: FieldType.time, values: [1, 2] },
-        { name: 'message', type: FieldType.string, values: ['a', 'b'] },
-      ],
-    });
-    expect(isMissingStringField([frame])).toBe(false);
-  });
-
-  it('returns false when frames are empty (no rows) even without a string field', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'timestamp', type: FieldType.time, values: [] }],
-    });
-    expect(isMissingStringField([frame])).toBe(false);
-  });
-
-  it('returns true when frames have rows but no string field', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'timestamp', type: FieldType.time, values: [1, 2] }],
-    });
-    expect(isMissingStringField([frame])).toBe(true);
   });
 });

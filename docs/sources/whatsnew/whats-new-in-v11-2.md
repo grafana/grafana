@@ -254,7 +254,7 @@ This is a longstanding feature request from the community. We collaborated with 
 
 For Generic OAuth and Okta, you can configure the claim (using the `org_attribute_path` setting) that contains the organizations which the user belongs to. Other OAuth providers use the same attribute for organization mapping that is used for group mapping: Entra ID (previously Azure AD), GitLab and Google use the current user’s Groups, and GitHub uses the user’s Teams.
 
-To configure organization mapping for your instance, please check the documentation for the OAuth provider you are using in the [Grafana documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/). You can find an example of how to configure organization mapping on each OAuth provider page under the **Org roles mapping example** section.
+To configure organization mapping for your instance, please check the documentation for the OAuth provider you are using in the [Grafana documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/). You can find an example of how to configure organization mapping on each OAuth provider page under the **Org roles mapping example** section.
 
 ### Better SAML integration for Azure AD
 
@@ -266,7 +266,7 @@ When setting up Grafana with Azure AD using the SAML protocol, the Azure AD Grap
 
 With Grafana 11.2, we offer a mechanism for setting up an application as a Service Account in Azure AD and retrieving information from Graph API.
 
-Please refer to our [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/#configure-a-graph-api-application-in-azure-ad) on how to set up an Azure AD registered application for this setup.
+Please refer to our [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#configure-a-graph-api-application-in-azure-ad) on how to set up an Azure AD registered application for this setup.
 
 ### API support for LDAP configuration
 
@@ -277,33 +277,3 @@ _Available in public preview in all editions of Grafana_
 [The SSO settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/) has been updated to include support for LDAP settings. This feature is experimental behind the feature flag `ssoSettingsLDAP`.
 
 You will soon be able to configure LDAP from the UI and Terraform.
-
-### Reduce number of required fields from the SAML form
-
-<!-- #proj-grafana-sso-config -->
-
-_Generally available in Grafana Enterprise and Grafana Cloud Pro and Advanced_
-
-The private key and certificate fields are no longer mandatory in the SAML form. To configure SAML without providing a private key and a certificate you have to opt out from using signed requests.
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-11-2-saml-sign-requests.png" alt="Sign requests in SAML config form" >}}
-
-### Generate SAML certificate and private key
-
-<!-- #proj-grafana-sso-config -->
-
-_Generally available in Grafana Enterprise and Grafana Cloud Pro_
-
-You can generate a new certificate and private key for SAML directly from the UI form. Click on the **Generate key and certificate** button from the **Sign requests** tab in the SAML form and then fill in the information you want to be embedded in your generated certificate.
-
-{{< video-embed src="/media/docs/grafana/screen-recording-11-2-generate-saml-certificate.mp4" >}}
-
-### OpenID Connect Discovery URL for Generic OAuth
-
-<!-- #proj-grafana-sso-config -->
-
-_Generally available in all editions of Grafana_
-
-The OpenID Connect Discovery URL is available in the Generic OAuth form. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.
-
-{{< video-embed src="/media/docs/grafana/screen-recording-11-2-openid-discovery-url.mp4" >}}

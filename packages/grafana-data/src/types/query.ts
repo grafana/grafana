@@ -1,6 +1,6 @@
 import {
-  type DataQuery as SchemaDataQuery,
-  type DataSourceRef as SchemaDataSourceRef,
+  DataQuery as SchemaDataQuery,
+  DataSourceRef as SchemaDataSourceRef,
   DataTopic as SchemaDataTopic,
 } from '@grafana/schema';
 

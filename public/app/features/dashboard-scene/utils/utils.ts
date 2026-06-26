@@ -1,52 +1,26 @@
-import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
-import { useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
+import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
-  type CancelActivationHandler,
-  type CustomVariable,
-  LocalValueVariable,
-  type MultiValueVariable,
+  CancelActivationHandler,
+  CustomVariable,
+  MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
-  type SceneObject,
-  SceneObjectBase,
-  type SceneObjectState,
+  SceneObject,
   SceneQueryRunner,
-  SceneVariableSet,
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
-import { createLogger } from '@grafana/ui';
-import kbn from 'app/core/utils/kbn';
-import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
-import { type TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
-import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
-import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
-import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
-import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
-import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
-import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
-import { type DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
-
-const V1_PANEL_PROPERTIES = {
-  LIBRARY_PANEL: 'libraryPanel',
-  COLLAPSED: 'collapsed',
-} as const;
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -108,23 +82,6 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   return null;
 }
 
-export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
-  if (!key) {
-    return null;
-  }
-
-  let panel: SceneObject | null = findVizPanelByKey(scene, key);
-  if (!panel || !panel.state.key) {
-    return null;
-  }
-
-  if (!(panel instanceof VizPanel)) {
-    return null;
-  }
-
-  return panel;
-}
-
 /**
  * Force re-render children. This is useful in some edge case scenarios when
  * children deep down the scene graph needs to be re-rendered when some parent state change.
@@ -162,11 +119,7 @@ export function getMultiVariableValues(variable: MultiValueVariable | CustomVari
 }
 
 // used to transform old interval model to new interval model from scenes
-export function getIntervalsFromQueryString(query: string | undefined): string[] {
-  if (!query) {
-    return initialIntervalVariableModelState.query?.split(',') ?? [];
-  }
-
+export function getIntervalsFromQueryString(query: string): string[] {
   // separate intervals by quotes either single or double
   const matchIntervals = query.match(/(["'])(.*?)\1|\w+/g);
 
@@ -201,22 +154,10 @@ export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): stri
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {
-  // Handle missing current object or value
-  const currentValue = variable.current?.value;
-  const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
-
-  // If no intervals are available, return empty string (will use default from IntervalVariable)
-  if (intervals.length === 0) {
-    return '';
-  }
-
-  // If no selected interval, return the first valid interval
-  if (!selectedInterval) {
-    return intervals[0];
-  }
+  const selectedInterval = Array.isArray(variable.current.value) ? variable.current.value[0] : variable.current.value;
 
   // If the interval is the old auto format, return the new auto interval from scenes.
-  if (selectedInterval.startsWith('$__auto_interval_') || selectedInterval === '$__auto') {
+  if (selectedInterval.startsWith('$__auto_interval_')) {
     return '$__auto';
   }
 
@@ -269,45 +210,27 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
-export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
+export function isPanelClone(key: string) {
+  return key.includes('clone');
 }
 
 export function getDefaultVizPanel(): VizPanel {
-  const defaultPluginId = getDefaultPluginId();
-
-  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
-
-  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
-
   return new VizPanel({
-    title: newPanelTitle,
-    pluginId: defaultPluginId,
-    seriesLimit: config.panelSeriesLimit,
+    title: 'Panel Title',
+    pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
-    $behaviors: [],
-    subHeader: new VizPanelSubHeader({
-      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
-    }),
-    extendPanelContext: setDashboardPanelContext,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    headerActions: new VizPanelHeaderActions({
-      hideGroupByAction:
-        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
+    $data: new SceneDataTransformer({
+      $data: new SceneQueryRunner({
+        queries: [{ refId: 'A' }],
+        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+        $behaviors: [new DashboardDatasourceBehaviour({})],
+      }),
+      transformations: [],
     }),
-    $data: datasourceSettings
-      ? new SceneDataTransformer({
-          $data: new SceneQueryRunner({
-            queries: [{ refId: 'A' }],
-            datasource: getDataSourceRef(datasourceSettings),
-            $behaviors: [new DashboardDatasourceBehaviour({})],
-          }),
-          transformations: [],
-        })
-      : undefined,
   });
 }
 
@@ -325,20 +248,12 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
   return undefined;
 }
 
-export function calculateGridItemDimensions(repeater: DashboardGridItem) {
-  const rowCount = Math.ceil(repeater.getChildCount() / repeater.getMaxPerRow());
-  const columnCount = Math.ceil(repeater.getChildCount() / rowCount);
-  const w = 24 / columnCount;
-  const h = repeater.state.itemHeight ?? 10;
-  return { h, w, columnCount };
-}
-
 /**
- * Activates any inactive ancestors of the scene object.
+ * Activates any inactive parents of the scene object.
  * Useful when rendering a scene object out of context of it's parent
  * @returns
  */
-export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivationHandler | undefined {
+export function activateInActiveParents(so: SceneObject): CancelActivationHandler | undefined {
   let cancel: CancelActivationHandler | undefined;
   let parentCancel: CancelActivationHandler | undefined;
 
@@ -347,7 +262,7 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
   }
 
   if (so.parent) {
-    parentCancel = activateSceneObjectAndParentTree(so.parent);
+    parentCancel = activateInActiveParents(so.parent);
   }
 
   cancel = so.activate();
@@ -356,210 +271,4 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
     parentCancel?.();
     cancel();
   };
-}
-
-/**
- * Adaptation of activateSceneObjectAndParentTree specific for PanelSearchLayout use case with
- *   with panelSearch and panelsPerRow custom panel filtering logic.
- *
- * Activating the whole tree because dashboard does not react to variable updates such as panel repeats
- */
-export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
-  let cancel: CancelActivationHandler | undefined;
-  let parentCancel: CancelActivationHandler | undefined;
-
-  if (so.parent) {
-    parentCancel = forceActivateFullSceneObjectTree(so.parent);
-  }
-
-  if (!so.isActive) {
-    cancel = so.activate();
-    return () => {
-      parentCancel?.();
-      cancel?.();
-    };
-  }
-
-  return () => {
-    parentCancel?.();
-    cancel?.();
-  };
-}
-
-/**
- * @deprecated use activateSceneObjectAndParentTree instead.
- * Activates any inactive ancestors of the scene object.
- * Useful when rendering a scene object out of context of it's parent
- */
-export const activateInActiveParents = activateSceneObjectAndParentTree;
-
-export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutManager {
-  let parent = sceneObject.parent;
-
-  while (parent) {
-    if (isDashboardLayoutManager(parent)) {
-      return parent;
-    }
-    parent = parent.parent;
-  }
-
-  throw new Error('Could not find layout manager for scene object');
-}
-
-export function getGridItemKeyForPanelId(panelId: number): string {
-  return `grid-item-${panelId}`;
-}
-
-export function useDashboard(scene: SceneObject): DashboardScene {
-  return getDashboardSceneFor(scene);
-}
-
-export function useDashboardState(scene: SceneObject): DashboardSceneState {
-  const dashboard = useDashboard(scene);
-  return dashboard.useState();
-}
-
-export function useInterpolatedTitle<T extends SceneObjectState & { title?: string }>(scene: SceneObject<T>): string {
-  const { title } = scene.useState();
-
-  if (!title) {
-    return '';
-  }
-
-  return sceneGraph.interpolate(scene, title, undefined, 'text');
-}
-
-type RepeatableSectionState = SceneObjectState & {
-  repeatByVariable?: string;
-  repeatSourceKey?: string;
-};
-
-export function interpolateSectionTitle<T extends RepeatableSectionState>(
-  scene: SceneObject<T>,
-  value: string | undefined | null
-): string {
-  if (value === '' || value == null) {
-    return '';
-  }
-
-  // Section titles/slugs should resolve in local scene scope so they can
-  // use ancestor section variables (including repeat-local variables).
-  if (scene.state.repeatByVariable || scene.state.repeatSourceKey) {
-    return sceneGraph.interpolate(scene, value, getRepeatLocalScopedVars(scene), 'text');
-  }
-  return sceneGraph.interpolate(scene, value, undefined, 'text');
-}
-
-const getSlug = (item: TabItem | RowItem) => interpolateSectionTitle(item, item.state.title || '').replace(/ +/g, '-');
-
-export function getSlugForRowOrTab<T extends TabItem | RowItem>(newItem: T, items: T[]): string {
-  const baseSlug = getSlug(newItem);
-  const sameSlugs = items.filter((item) => getSlug(item) === baseSlug);
-
-  if (sameSlugs.length > 1) {
-    const slugIndex = sameSlugs.findIndex((item) => item === newItem);
-    if (slugIndex > 0) {
-      return `${baseSlug}__${slugIndex + 1}`;
-    }
-  }
-  return baseSlug;
-}
-
-export function getLegacySlugForRowOrTab(tab: TabItem | RowItem): string {
-  return kbn.slugifyForUrl(interpolateSectionTitle(tab, tab.state.title || ''));
-}
-
-function getRepeatLocalScopedVars<T extends RepeatableSectionState>(scene: SceneObject<T>): ScopedVars | undefined {
-  const variableSet = scene.state.$variables;
-  if (!(variableSet instanceof SceneVariableSet)) {
-    return undefined;
-  }
-
-  const repeatLocalVariable = variableSet.state.variables.find((variable) => variable instanceof LocalValueVariable);
-  if (!(repeatLocalVariable instanceof LocalValueVariable)) {
-    return undefined;
-  }
-
-  return {
-    [repeatLocalVariable.state.name]: {
-      value: repeatLocalVariable.getValue(),
-      text: repeatLocalVariable.state.text,
-    },
-  };
-}
-
-export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
-  return getDashboardSceneFor(scene).state.layoutOrchestrator;
-}
-
-export const getLayoutForObject = (
-  object: DashboardDropTarget | SceneObject<SceneObjectState> | DashboardScene
-): AutoGridLayoutManager | DefaultGridLayoutManager | null => {
-  const gridManagerForObject = sceneGraph.findObject(
-    object,
-    (currentSceneObject) =>
-      currentSceneObject instanceof AutoGridLayoutManager || currentSceneObject instanceof DefaultGridLayoutManager
-  );
-  if (
-    gridManagerForObject instanceof AutoGridLayoutManager ||
-    gridManagerForObject instanceof DefaultGridLayoutManager
-  ) {
-    return gridManagerForObject;
-  }
-  return null;
-};
-
-// @returns true if the panel is a valid library panel reference
-// a valid library panel reference is a panel with this
-// property: `libraryPanel: {name: string, uid: string}`
-
-export function isValidLibraryPanelRef(panel: Panel): boolean {
-  return (
-    (V1_PANEL_PROPERTIES.LIBRARY_PANEL in panel &&
-      panel.libraryPanel &&
-      Boolean(panel.libraryPanel?.uid && panel.libraryPanel?.name)) ||
-    false
-  );
-}
-
-/**
- * Checks if a V1 dashboard contains library panels
- * @returns true if the dashboard contains library panels
- */
-export function hasLibraryPanelsInV1Dashboard(dashboard: Dashboard | undefined): boolean {
-  if (!dashboard?.panels) {
-    return false;
-  }
-
-  return dashboard.panels.some((panel: Panel | RowPanel) => {
-    if (isValidLibraryPanelRef(panel)) {
-      return true;
-    }
-    // Check if this is a collapsed row containing library panels
-    const isCollapsedRow =
-      V1_PANEL_PROPERTIES.COLLAPSED in panel && panel.collapsed && 'panels' in panel && panel.panels;
-
-    if (!isCollapsedRow) {
-      return false;
-    }
-
-    return panel.panels.some(isValidLibraryPanelRef);
-  });
-}
-
-export const dashboardLog = createLogger('Dashboard');
-
-/**
- * Checks if there are save changes but not counting time range, refresh rate and default variable value change
- */
-export function hasActualSaveChanges(dashboard: DashboardScene) {
-  const changes = dashboard.getDashboardChanges();
-  return !!changes.diffCount;
-}
-
-export function useScenesFlickeringFix() {
-  const scenesFlickeringFix = useFlagGrafanaScenesFlickeringFix();
-  if (scenesFlickeringFix) {
-    SceneObjectBase.RENDER_BEFORE_ACTIVATION_DEFAULT = true;
-  }
 }

@@ -35,6 +35,7 @@ To install Grafana on macOS using Homebrew, complete the following steps:
    ```
 
    The brew page downloads and untars the files into:
+
    - `/usr/local/Cellar/grafana/[version]` (Intel Silicon)
    - `/opt/homebrew/Cellar/grafana/[version]` (Apple Silicon)
 
@@ -86,4 +87,4 @@ Alternatively, watch the Grafana for Beginners video below:
 
 ## Next steps
 
-- [Start the Grafana server](../../start-restart-grafana/)
+- [Start the Grafana server]({{< relref "../../start-restart-grafana" >}})

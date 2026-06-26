@@ -5,8 +5,8 @@ labels:
   products:
     - enterprise
     - oss
-title: Manage users
-weight: 3000
+title: User management
+weight: 200
 ---
 
 # User management

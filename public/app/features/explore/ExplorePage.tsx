@@ -1,25 +1,31 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocalStorage } from 'react-use';
 
-import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { ErrorBoundaryAlert, LoadingPlaceholder, useStyles2, useTheme2 } from '@grafana/ui';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { Badge, ErrorBoundaryAlert, Modal, useStyles2, useTheme2 } from '@grafana/ui';
+import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { type ExploreQueryParams } from 'app/types/explore';
-import { useSelector } from 'app/types/store';
+import { Trans, t } from 'app/core/internationalization';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { useSelector } from 'app/types';
+import { ExploreQueryParams } from 'app/types/explore';
 
-import { Page } from '../../core/components/Page/Page';
+import { RowActionComponents } from '../query/components/QueryActionComponent';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
+import { QUERY_LIBRARY_LOCAL_STORAGE_KEYS } from './QueryLibrary/QueryLibrary';
+import { queryLibraryTrackAddFromQueryRow } from './QueryLibrary/QueryLibraryAnalyticsEvents';
+import { QueryTemplateForm } from './QueryLibrary/QueryTemplateForm';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
-import { useExplorePageContext } from './hooks/useExplorePageContext';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
@@ -28,6 +34,7 @@ import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
+const QUERY_LIBRARY_ACTION_KEY = 'queryLibraryAction';
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   return <ExplorePageContent {...props} />;
@@ -51,8 +58,13 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const correlationDetails = useSelector(selectCorrelationDetails);
-  const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
-  const showCorrelationEditorBar = correlationDetails?.editorMode || false;
+  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
+  const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
+  const [queryToAdd, setQueryToAdd] = useState<DataQuery | undefined>();
+  const [showQueryLibraryBadgeButton, setShowQueryLibraryBadgeButton] = useLocalStorage(
+    QUERY_LIBRARY_LOCAL_STORAGE_KEYS.explore.newButton,
+    true
+  );
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -62,55 +74,98 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
     });
   }, [chrome, navModel]);
 
-  useKeyboardShortcuts();
-  useExplorePageContext(panes);
-
-  return (
-    <Page layout={PageLayoutType.Custom}>
-      <div
-        className={cx(styles.pageScrollbarWrapper, {
-          [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
-        })}
-      >
-        <h1 className="sr-only">
-          <Trans i18nKey="nav.explore.title">Explore</Trans>
-        </h1>
-        <ExploreActions />
-        {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
-        <SplitPaneWrapper
-          splitOrientation="vertical"
-          paneSize={widthCalc}
-          minSize={MIN_PANE_WIDTH}
-          maxSize={MIN_PANE_WIDTH * -1}
-          primary="second"
-          splitVisible={hasSplit}
-          parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
-          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-          onDragFinished={(size) => size && updateSplitSize(size)}
-        >
-          {panes.map(([exploreId, pane]) => {
-            return (
-              <ErrorBoundaryAlert boundaryName="explore-pane" key={exploreId} style="page">
-                {pane.initialized ? (
-                  <ExplorePaneContainer exploreId={exploreId} />
-                ) : (
-                  <LoadingPlaceholder text={t('explore.pane.loading-placeholder', 'Loading...')} />
-                )}
-              </ErrorBoundaryAlert>
-            );
-          })}
-        </SplitPaneWrapper>
-        {drawerOpened && (
-          <ExploreDrawer>
-            <RichHistoryContainer
-              onClose={() => {
-                setDrawerOpened(false);
+  useEffect(() => {
+    const hasQueryLibrary = config.featureToggles.queryLibrary || false;
+    if (hasQueryLibrary) {
+      RowActionComponents.addKeyedExtraRenderAction(QUERY_LIBRARY_ACTION_KEY, {
+        scope: CoreApp.Explore,
+        queryActionComponent: (props) =>
+          showQueryLibraryBadgeButton ? (
+            <Badge
+              key={props.key}
+              text={`New: ${t('query-operation.header.save-to-query-library', 'Save to query library')}`}
+              icon="save"
+              color="blue"
+              onClick={() => {
+                setQueryToAdd(props.query);
+                setShowQueryLibraryBadgeButton(false);
+              }}
+              style={{ cursor: 'pointer' }}
+            />
+          ) : (
+            <QueryOperationAction
+              key={props.key}
+              title={t('query-operation.header.save-to-query-library', 'Save to query library')}
+              icon="save"
+              onClick={() => {
+                setQueryToAdd(props.query);
               }}
             />
-          </ExploreDrawer>
-        )}
-      </div>
-    </Page>
+          ),
+      });
+    }
+  }, [showQueryLibraryBadgeButton, setShowQueryLibraryBadgeButton]);
+
+  useKeyboardShortcuts();
+
+  return (
+    <div
+      className={cx(styles.pageScrollbarWrapper, {
+        [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
+      })}
+    >
+      <h1 className="sr-only">
+        <Trans i18nKey="nav.explore.title" />
+      </h1>
+      <ExploreActions />
+      {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
+      <SplitPaneWrapper
+        splitOrientation="vertical"
+        paneSize={widthCalc}
+        minSize={MIN_PANE_WIDTH}
+        maxSize={MIN_PANE_WIDTH * -1}
+        primary="second"
+        splitVisible={hasSplit}
+        parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
+        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+        onDragFinished={(size) => size && updateSplitSize(size)}
+      >
+        {panes.map(([exploreId]) => {
+          return (
+            <ErrorBoundaryAlert key={exploreId} style="page">
+              <ExplorePaneContainer exploreId={exploreId} />
+            </ErrorBoundaryAlert>
+          );
+        })}
+      </SplitPaneWrapper>
+      {drawerOpened && (
+        <ExploreDrawer initialHeight={queryLibraryAvailable ? '75vh' : undefined}>
+          <RichHistoryContainer
+            onClose={() => {
+              setDrawerOpened(false);
+            }}
+          />
+        </ExploreDrawer>
+      )}
+      <Modal
+        title={t('explore.query-template-modal.add-title', 'Add query to Query Library')}
+        isOpen={queryToAdd !== undefined}
+        onDismiss={() => setQueryToAdd(undefined)}
+      >
+        <QueryTemplateForm
+          onCancel={() => {
+            setQueryToAdd(undefined);
+          }}
+          onSave={(isSuccess) => {
+            if (isSuccess) {
+              setQueryToAdd(undefined);
+              queryLibraryTrackAddFromQueryRow(queryToAdd?.datasource?.type || '');
+            }
+          }}
+          queryToAdd={queryToAdd!}
+        />
+      </Modal>
+    </div>
   );
 }
 

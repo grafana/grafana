@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { type Observer, Subject, type Subscription } from 'rxjs';
+import { Observer, Subject, Subscription } from 'rxjs';
 
 import { useForceUpdate } from '@grafana/ui';
 

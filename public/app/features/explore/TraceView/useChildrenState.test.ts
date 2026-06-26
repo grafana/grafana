@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 
-import { type TraceSpan } from './components/types/trace';
+import { TraceSpan } from './components';
 import { useChildrenState } from './useChildrenState';
 
 describe('useChildrenState', () => {

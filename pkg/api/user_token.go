@@ -8,7 +8,7 @@ import (
 
 	"github.com/ua-parser/uap-go/uaparser"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -33,11 +33,11 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
-	if !c.IsIdentityType(claims.TypeUser) {
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		return response.Error(http.StatusForbidden, "entity not allowed to get tokens", nil)
 	}
 
-	userID, err := c.GetInternalID()
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to parse user id", err)
 	}
@@ -63,11 +63,11 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if !c.IsIdentityType(claims.TypeUser) {
+	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
 		return response.Error(http.StatusForbidden, "entity not allowed to revoke tokens", nil)
 	}
 
-	userID, err := c.GetInternalID()
+	userID, err := c.SignedInUser.GetInternalID()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to parse user id", err)
 	}
@@ -89,11 +89,11 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 		return response.Redirect(hs.GetRedirectURL(c))
 	}
 
-	redirectTo := hs.Cfg.AppSubURL + c.Query("redirectTo")
-	if sanitized, err := hs.ValidateRedirectTo(redirectTo); err == nil {
-		return response.Redirect(sanitized)
+	redirectTo := c.Query("redirectTo")
+	if err := hs.ValidateRedirectTo(redirectTo); err != nil {
+		return response.Redirect(hs.Cfg.AppSubURL + "/")
 	}
-	return response.Redirect(hs.Cfg.AppSubURL + "/")
+	return response.Redirect(hs.Cfg.AppSubURL + redirectTo)
 }
 
 // swagger:route POST /user/auth-tokens/rotate

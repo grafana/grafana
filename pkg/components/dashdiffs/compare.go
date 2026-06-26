@@ -34,7 +34,7 @@ type Options struct {
 
 type DiffTarget struct {
 	DashboardId      int64
-	Version          int64
+	Version          int
 	UnsavedDashboard *simplejson.Json
 }
 

@@ -1,4 +1,4 @@
-import { type History, type Location, createMemoryHistory } from 'history';
+import { History, Location, createMemoryHistory } from 'history';
 import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';

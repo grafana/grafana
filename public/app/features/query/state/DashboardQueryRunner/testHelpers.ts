@@ -1,8 +1,8 @@
-import { asyncScheduler, type Observable, of, scheduled } from 'rxjs';
+import { asyncScheduler, Observable, of, scheduled } from 'rxjs';
 
-import { type AnnotationEvent, getDefaultTimeRange, type PanelModel } from '@grafana/data';
+import { AnnotationEvent, getDefaultTimeRange, PanelModel } from '@grafana/data';
 
-import { type DashboardQueryRunnerOptions } from './types';
+import { DashboardQueryRunnerOptions } from './types';
 
 // function that creates an async of result Observable
 export function toAsyncOfResult<T>(result: T): Observable<T> {

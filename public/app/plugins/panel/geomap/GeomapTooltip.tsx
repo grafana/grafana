@@ -5,7 +5,7 @@ import { createRef } from 'react';
 import { Portal, VizTooltipContainer } from '@grafana/ui';
 import { ComplexDataHoverView } from 'app/features/visualization/data-hover/ComplexDataHoverView';
 
-import { type GeomapHoverPayload } from './event';
+import { GeomapHoverPayload } from './event';
 
 interface Props {
   ttip?: GeomapHoverPayload;

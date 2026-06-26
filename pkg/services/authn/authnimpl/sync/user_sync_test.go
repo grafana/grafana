@@ -2,53 +2,29 @@ package sync
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"strconv"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
-	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	claims "github.com/grafana/authlib/types"
-	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/scimutil"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-var (
-	provider            = oftesting.NewTestProvider()
-	defaultFeatureFlags = map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagRememberUserOrgForSso: setting.NewInMemoryFlag(featuremgmt.FlagRememberUserOrgForSso, true),
-	}
-)
+func ptrString(s string) *string {
+	return &s
+}
 
-func TestMain(m *testing.M) {
-	if err := openfeature.SetProvider(provider); err != nil {
-		panic(err)
-	}
-
-	m.Run()
+func ptrBool(b bool) *bool {
+	return &b
 }
 
 func TestUserSync_SyncUserHook(t *testing.T) {
@@ -56,10 +32,10 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	authFakeNil := &authinfotest.FakeService{
 		ExpectedError: user.ErrUserNotFound,
-		SetAuthInfoFn: func(_ context.Context, _ *login.SetAuthInfoCommand) error {
+		SetAuthInfoFn: func(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 			return nil
 		},
-		UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error {
+		UpdateAuthInfoFn: func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 			return nil
 		},
 	}
@@ -69,9 +45,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			AuthModule: "oauth",
 			AuthId:     "2032",
 			UserId:     1,
-			Id:         1,
-		},
-	}
+			Id:         1}}
 
 	userService := &usertest.FakeUserService{ExpectedUser: &user.User{
 		ID:    1,
@@ -79,7 +53,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		Login: "test",
 		Name:  "test",
 		Email: "test",
-		OrgID: 42,
 	}}
 
 	userServiceMod := &usertest.FakeUserService{ExpectedUser: &user.User{
@@ -105,7 +78,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 
 	userServiceNil := &usertest.FakeUserService{
 		ExpectedError: user.ErrUserNotFound,
-		CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+		CreateFn: func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 			return &user.User{
 				ID:      2,
 				UID:     "2",
@@ -117,114 +90,21 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		},
 	}
 
-	// --- Setup for SCIM User Tests ---
-	// mockUpdateFn helps assert the UpdateUserCommand contents.
-	// expectNoUpdateForOtherAttributes is true for SCIM users where only IsGrafanaAdmin should sync from SAML.
-	mockUpdateFn := func(t *testing.T, expectedCmd *user.UpdateUserCommand, expectNoUpdateForOtherAttributes bool, originalUserEmail string) func(context.Context, *user.UpdateUserCommand) error {
-		return func(_ context.Context, cmd *user.UpdateUserCommand) error {
-			if expectedCmd == nil {
-				t.Errorf("userService.Update was called unexpectedly")
-				return nil
-			}
-
-			// Always assert UserID and IsGrafanaAdmin
-			assert.Equal(t, expectedCmd.UserID, cmd.UserID, "UpdateUserCommand UserID mismatch")
-			if expectedCmd.IsGrafanaAdmin != nil {
-				require.NotNil(t, cmd.IsGrafanaAdmin, "UpdateUserCommand IsGrafanaAdmin should not be nil if expected")
-				assert.Equal(t, *expectedCmd.IsGrafanaAdmin, *cmd.IsGrafanaAdmin, "UpdateUserCommand IsGrafanaAdmin value mismatch")
-			} else {
-				assert.Nil(t, cmd.IsGrafanaAdmin, "UpdateUserCommand IsGrafanaAdmin should be nil if not expected to change")
-			}
-
-			if expectNoUpdateForOtherAttributes {
-				// For SCIM provisioned users, Login, Email, Name should NOT be updated from SAML by this sync.
-				assert.Empty(t, cmd.Login, "UpdateUserCommand Login should be empty for SCIM user")
-				assert.Empty(t, cmd.Email, "UpdateUserCommand Email should be empty for SCIM user")
-				assert.Empty(t, cmd.Name, "UpdateUserCommand Name should be empty for SCIM user")
-				assert.Nil(t, cmd.EmailVerified, "UpdateUserCommand EmailVerified should be nil for SCIM user if email not changing")
-			} else {
-				// For non-SCIM users, other attributes can be updated
-				assert.Equal(t, expectedCmd.Login, cmd.Login, "UpdateUserCommand Login mismatch for non-SCIM user")
-				assert.Equal(t, expectedCmd.Email, cmd.Email, "UpdateUserCommand Email mismatch for non-SCIM user")
-				assert.Equal(t, expectedCmd.Name, cmd.Name, "UpdateUserCommand Name mismatch for non-SCIM user")
-				if cmd.Email != "" && cmd.Email != originalUserEmail {
-					require.NotNil(t, cmd.EmailVerified, "UpdateUserCommand EmailVerified should be set for non-SCIM user if email changes")
-					assert.False(t, *cmd.EmailVerified, "UpdateUserCommand EmailVerified should be false for non-SCIM user if email changes")
-				} else if cmd.Email != "" && cmd.Email == originalUserEmail {
-					assert.Nil(t, cmd.EmailVerified, "UpdateUserCommand EmailVerified should be nil if email is same as original")
-				} else {
-					assert.Nil(t, cmd.EmailVerified, "UpdateUserCommand EmailVerified should be nil if email is not changing")
-				}
-			}
-			return nil
-		}
-	}
-
-	scimUserNotAdminInitial := &user.User{
-		ID:            100,
-		UID:           "scim_uid_100",
-		Login:         "scim.user.notadmin",
-		Email:         "scim.notadmin@example.com",
-		Name:          "SCIM NotAdmin",
-		IsProvisioned: true,
-		IsAdmin:       false,
-		EmailVerified: true, // Assume initially verified
-	}
-
-	scimUserIsAdminInitial := &user.User{
-		ID:            101,
-		UID:           "scim_uid_101",
-		Login:         "scim.user.isadmin",
-		Email:         "scim.isadmin@example.com",
-		Name:          "SCIM IsAdmin",
-		IsProvisioned: true,
-		IsAdmin:       true,
-		EmailVerified: true,
-	}
-
-	nonScimUserInitial := &user.User{
-		ID:            102,
-		UID:           "nonscim_uid_102",
-		Login:         "nonscim.user",
-		Email:         "nonscim@example.com",
-		Name:          "NonSCIM User",
-		IsProvisioned: false,
-		IsAdmin:       false,
-		EmailVerified: false,
-	}
-
-	authFakeBaseScimUser := func(userID int64, externalUID string) *authinfotest.FakeService {
-		return &authinfotest.FakeService{
-			ExpectedUserAuth: &login.UserAuth{
-				AuthModule:  "saml",
-				AuthId:      "id_from_saml_assertion",
-				ExternalUID: externalUID,
-				UserId:      userID,
-			},
-			SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
-			UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
-		}
-	}
-
-	int64ToStr := func(i int64) string {
-		return strconv.FormatInt(i, 10)
-	}
-
 	type fields struct {
 		userService     user.Service
 		authInfoService login.AuthInfoService
 		quotaService    quota.Service
 	}
 	type args struct {
-		id *authn.Identity
+		ctx context.Context
+		id  *authn.Identity
 	}
 	tests := []struct {
-		name                         string
-		fields                       fields
-		args                         args
-		wantErr                      bool
-		wantID                       *authn.Identity
-		disableRememberUserOrgForSso bool
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		wantID  *authn.Identity
 	}{
 		{
 			name: "no sync",
@@ -234,13 +114,14 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
+				ctx: context.Background(),
 				id: &authn.Identity{
 					Login: "test",
 					Name:  "test",
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						LookUpParams: login.UserLookupParams{
-							Email: new("test"),
+							Email: ptrString("test"),
 							Login: nil,
 						},
 					},
@@ -253,7 +134,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email: "test",
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
-						Email: new("test"),
+						Email: ptrString("test"),
 						Login: nil,
 					},
 				},
@@ -267,6 +148,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
+				ctx: context.Background(),
 				id: &authn.Identity{
 					Login: "test",
 					Name:  "test",
@@ -274,7 +156,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
-							Email: new("test"),
+							Email: ptrString("test"),
 							Login: nil,
 						},
 					},
@@ -285,15 +167,14 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ID:             "1",
 				UID:            "1",
 				Type:           claims.TypeUser,
-				OrgID:          42,
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: new(false),
+				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
-						Email: new("test"),
+						Email: ptrString("test"),
 						Login: nil,
 					},
 				},
@@ -307,6 +188,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
+				ctx: context.Background(),
 				id: &authn.Identity{
 					Login: "test",
 					Name:  "test",
@@ -315,7 +197,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: new("test"),
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -325,15 +207,14 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ID:             "1",
 				UID:            "1",
 				Type:           claims.TypeUser,
-				OrgID:          42,
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
-				IsGrafanaAdmin: new(false),
+				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: new("test"),
+						Login: ptrString("test"),
 					},
 					SyncUser: true,
 				},
@@ -347,6 +228,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
+				ctx: context.Background(),
 				id: &authn.Identity{
 					AuthID:          "2032",
 					AuthenticatedBy: "oauth",
@@ -367,13 +249,12 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				ID:              "1",
 				UID:             "1",
 				Type:            claims.TypeUser,
-				OrgID:           42,
 				AuthID:          "2032",
 				AuthenticatedBy: "oauth",
 				Login:           "test",
 				Name:            "test",
 				Email:           "test",
-				IsGrafanaAdmin:  new(false),
+				IsGrafanaAdmin:  ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
@@ -391,6 +272,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
+				ctx: context.Background(),
 				id: &authn.Identity{
 					Login:           "test",
 					Name:            "test",
@@ -416,10 +298,11 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
+				ctx: context.Background(),
 				id: &authn.Identity{
 					Login:           "test_create",
 					Name:            "test_create",
-					IsGrafanaAdmin:  new(true),
+					IsGrafanaAdmin:  ptrBool(true),
 					Email:           "test_create",
 					AuthenticatedBy: "oauth",
 					AuthID:          "2032",
@@ -428,7 +311,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 						AllowSignUp: true,
 						EnableUser:  true,
 						LookUpParams: login.UserLookupParams{
-							Email: new("test_create"),
+							Email: ptrString("test_create"),
 							Login: nil,
 						},
 					},
@@ -444,13 +327,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email:           "test_create",
 				AuthenticatedBy: "oauth",
 				AuthID:          "2032",
-				IsGrafanaAdmin:  new(true),
+				IsGrafanaAdmin:  ptrBool(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:    true,
 					AllowSignUp: true,
 					EnableUser:  true,
 					LookUpParams: login.UserLookupParams{
-						Email: new("test_create"),
+						Email: ptrString("test_create"),
 						Login: nil,
 					},
 				},
@@ -464,18 +347,19 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
+				ctx: context.Background(),
 				id: &authn.Identity{
 					Login:          "test_mod",
 					Name:           "test_mod",
 					Email:          "test_mod",
 					IsDisabled:     false,
-					IsGrafanaAdmin: new(true),
+					IsGrafanaAdmin: ptrBool(true),
 					ClientParams: authn.ClientParams{
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: new("test"),
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -489,13 +373,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Name:           "test_mod",
 				Email:          "test_mod",
 				IsDisabled:     false,
-				IsGrafanaAdmin: new(true),
+				IsGrafanaAdmin: ptrBool(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: new("test"),
+						Login: ptrString("test"),
 					},
 				},
 			},
@@ -508,19 +392,20 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				quotaService:    &quotatest.FakeQuotaService{},
 			},
 			args: args{
+				ctx: context.Background(),
 				id: &authn.Identity{
 					Login:          "test",
 					Name:           "test",
 					Email:          "test_mod@test.com",
 					EmailVerified:  true,
 					IsDisabled:     false,
-					IsGrafanaAdmin: new(true),
+					IsGrafanaAdmin: ptrBool(true),
 					ClientParams: authn.ClientParams{
 						SyncUser:   true,
 						EnableUser: true,
 						LookUpParams: login.UserLookupParams{
 							Email: nil,
-							Login: new("test"),
+							Login: ptrString("test"),
 						},
 					},
 				},
@@ -535,464 +420,22 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 				Email:          "test_mod@test.com",
 				IsDisabled:     false,
 				EmailVerified:  false,
-				IsGrafanaAdmin: new(true),
+				IsGrafanaAdmin: ptrBool(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:   true,
 					EnableUser: true,
 					LookUpParams: login.UserLookupParams{
 						Email: nil,
-						Login: new("test"),
+						Login: ptrString("test"),
 					},
 				},
 			},
-		},
-		{
-			name: "SyncUserHook: Provisioned user, Incoming ExternalUID is empty, DB ExternalUID non-empty - expect errEmptyExternalUID",
-			fields: fields{
-				userService:     &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}},
-				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: "db-uid"}},
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					AuthID:          "1",
-					AuthenticatedBy: login.SAMLAuthModule,
-					ExternalUID:     "",
-					ClientParams:    authn.ClientParams{SyncUser: true},
-				},
-			},
-			wantErr: true, // Expecting errEmptyExternalUID
-		},
-		{
-			name: "SyncUserHook: Provisioned user, Incoming ExternalUID is empty, DB ExternalUID also empty - expect errEmptyExternalUID",
-			fields: fields{
-				userService:     &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}},
-				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: ""}}, // DB empty
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					AuthID:          "1",
-					AuthenticatedBy: login.SAMLAuthModule,
-					ExternalUID:     "",
-					ClientParams:    authn.ClientParams{SyncUser: true},
-				},
-			},
-			wantErr: true, // Expecting errEmptyExternalUID
-		},
-		{
-			name: "SyncUserHook: Provisioned user, Incoming and DB ExternalUIDs non-empty and mismatch - expect errMismatchedExternalUID",
-			fields: fields{
-				userService:     &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}},
-				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: "db-uid"}},
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					AuthID:          "1",
-					AuthenticatedBy: login.SAMLAuthModule,
-					ExternalUID:     "incoming-uid",
-					ClientParams:    authn.ClientParams{SyncUser: true},
-				},
-			},
-			wantErr: true, // Expecting errMismatchedExternalUID
-		},
-		{
-			name: "SyncUserHook: Provisioned user, Incoming and DB ExternalUIDs non-empty and match - expect success",
-			fields: fields{
-				userService:     &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, Login: "user1", Email: "user1@test.com", Name: "User One", IsProvisioned: true}},
-				authInfoService: &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, AuthId: "1", ExternalUID: "matching-uid"}},
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					AuthID:          "1",
-					AuthenticatedBy: login.SAMLAuthModule,
-					Login:           "user1",
-					Email:           "user1@test.com",
-					Name:            "User One",
-					ExternalUID:     "matching-uid",
-					ClientParams:    authn.ClientParams{SyncUser: true},
-				},
-			},
-			wantErr: false,
-			wantID: &authn.Identity{
-				ID:              "1",
-				UID:             "",
-				Type:            claims.TypeUser,
-				AuthID:          "1",
-				AuthenticatedBy: login.SAMLAuthModule,
-				Login:           "user1",
-				Email:           "user1@test.com",
-				Name:            "User One",
-				ExternalUID:     "matching-uid",
-				IsGrafanaAdmin:  new(false),
-				ClientParams:    authn.ClientParams{SyncUser: true},
-			},
-		},
-		{
-			name: "SCIM User (not admin) promoted to Grafana Admin via SAML",
-			fields: fields{
-				userService: func() user.Service {
-					userCopy := *scimUserNotAdminInitial                     // Create a mutable copy
-					svc := usertest.FakeUserService{ExpectedUser: &userCopy} // Set ExpectedUser to the copy
-					svc.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
-						// Call the original mockUpdateFn for assertions
-						err := mockUpdateFn(t, &user.UpdateUserCommand{
-							UserID:         scimUserNotAdminInitial.ID,
-							IsGrafanaAdmin: new(true),
-						}, true, scimUserNotAdminInitial.Email)(ctx, cmd)
-						if err != nil {
-							return err
-						}
-						// Simulate the update on the copy
-						if cmd.IsGrafanaAdmin != nil {
-							userCopy.IsAdmin = *cmd.IsGrafanaAdmin
-						}
-						// After modification, GetByID should return this updated userCopy
-						svc.ExpectedUser = &userCopy
-						return nil
-					}
-					return &svc
-				}(),
-				authInfoService: authFakeBaseScimUser(scimUserNotAdminInitial.ID, "external_id_promote"),
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					AuthID:          "id_from_saml_assertion",
-					AuthenticatedBy: "saml",
-					ExternalUID:     "external_id_promote",            // Match AuthInfo for SCIM path
-					Login:           "saml.login. متفاوت",             // SAML sends different login
-					Email:           "saml.email. متفاوت@example.com", // SAML sends different email
-					Name:            "SAML Name متفاوت",               // SAML sends different name
-					IsGrafanaAdmin:  new(true),                        // Key change: SAML says user IS admin
-					ClientParams: authn.ClientParams{
-						SyncUser: true,
-						// LookUpParams not strictly needed if AuthID + AuthenticatedBy + ExternalUID is enough
-					},
-				},
-			},
-			wantErr: false,
-			wantID: &authn.Identity{ // Expected state of identity object AFTER sync
-				ID:              int64ToStr(scimUserNotAdminInitial.ID),
-				UID:             scimUserNotAdminInitial.UID,
-				Type:            claims.TypeUser,
-				Login:           "saml.login. متفاوت",             // Reflects actual behavior: SAML input value persists
-				Email:           "saml.email. متفاوت@example.com", // Reflects actual behavior: SAML input value persists
-				Name:            "SAML Name متفاوت",               // Reflects actual behavior: SAML input value persists
-				IsGrafanaAdmin:  new(true),                        // This SHOULD be updated
-				EmailVerified:   false,                            // Reflects actual behavior: becomes false
-				AuthID:          "id_from_saml_assertion",
-				AuthenticatedBy: "saml",
-				ExternalUID:     "external_id_promote",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-		},
-		{
-			name: "SCIM User (is admin) demoted from Grafana Admin via SAML",
-			fields: fields{
-				userService: func() user.Service {
-					userCopy := *scimUserIsAdminInitial                      // Create a mutable copy
-					svc := usertest.FakeUserService{ExpectedUser: &userCopy} // Set ExpectedUser to the copy
-					svc.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
-						// Call the original mockUpdateFn for assertions
-						err := mockUpdateFn(t, &user.UpdateUserCommand{
-							UserID:         scimUserIsAdminInitial.ID,
-							IsGrafanaAdmin: new(false),
-						}, true, scimUserIsAdminInitial.Email)(ctx, cmd)
-						if err != nil {
-							return err
-						}
-						// Simulate the update on the copy
-						if cmd.IsGrafanaAdmin != nil {
-							userCopy.IsAdmin = *cmd.IsGrafanaAdmin
-						}
-						// After modification, GetByID should return this updated userCopy
-						svc.ExpectedUser = &userCopy
-						return nil
-					}
-					return &svc
-				}(),
-				authInfoService: authFakeBaseScimUser(scimUserIsAdminInitial.ID, "external_id_demote"),
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					AuthID:          "id_from_saml_assertion",
-					AuthenticatedBy: "saml",
-					ExternalUID:     "external_id_demote",
-					IsGrafanaAdmin:  new(false), // Key change: SAML says user is NOT admin
-					ClientParams: authn.ClientParams{
-						SyncUser: true,
-					},
-				},
-			},
-			wantErr: false,
-			wantID: &authn.Identity{
-				ID:              int64ToStr(scimUserIsAdminInitial.ID),
-				UID:             scimUserIsAdminInitial.UID,
-				Type:            claims.TypeUser,
-				Login:           scimUserIsAdminInitial.Login,
-				Email:           scimUserIsAdminInitial.Email,
-				Name:            scimUserIsAdminInitial.Name,
-				IsGrafanaAdmin:  new(false), // Updated
-				EmailVerified:   scimUserIsAdminInitial.EmailVerified,
-				AuthID:          "id_from_saml_assertion",
-				AuthenticatedBy: "saml",
-				ExternalUID:     "external_id_demote",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-		},
-		{
-			name: "SCIM User (not admin), SAML sends different email/name but NO IsGrafanaAdmin change",
-			fields: fields{
-				userService: func() user.Service {
-					userCopy := *scimUserNotAdminInitial                     // Create a mutable copy
-					svc := usertest.FakeUserService{ExpectedUser: &userCopy} // Set ExpectedUser to the copy
-					svc.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
-						// Call the original mockUpdateFn for assertions
-						// In this case, IsGrafanaAdmin from SAML (false) matches DB (false), so it *will* be in the command.
-						err := mockUpdateFn(t, &user.UpdateUserCommand{
-							UserID:         scimUserNotAdminInitial.ID,
-							IsGrafanaAdmin: new(false), // SAML says false, DB is false
-						}, true, scimUserNotAdminInitial.Email)(ctx, cmd)
-						if err != nil {
-							return err
-						}
-						// Simulate the update on the copy (no change expected for IsAdmin here)
-						if cmd.IsGrafanaAdmin != nil {
-							userCopy.IsAdmin = *cmd.IsGrafanaAdmin
-						}
-						// After modification, GetByID should return this userCopy
-						svc.ExpectedUser = &userCopy
-						return nil
-					}
-					return &svc
-				}(),
-				authInfoService: authFakeBaseScimUser(scimUserNotAdminInitial.ID, "external_id_other_attr"),
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					AuthID:          "id_from_saml_assertion",
-					AuthenticatedBy: "saml",
-					ExternalUID:     "external_id_other_attr",
-					Login:           "saml.login.new",             // SAML sends different login
-					Email:           "saml.email.new@example.com", // SAML sends different email
-					Name:            "SAML Name New",              // SAML sends different name
-					IsGrafanaAdmin:  new(false),                   // SAML says not admin (same as DB)
-					ClientParams: authn.ClientParams{
-						SyncUser: true,
-					},
-				},
-			},
-			wantErr: false,
-			wantID: &authn.Identity{
-				ID:              int64ToStr(scimUserNotAdminInitial.ID),
-				UID:             scimUserNotAdminInitial.UID,
-				Type:            claims.TypeUser,
-				Login:           "saml.login.new",             // Reflects actual behavior: SAML input value persists
-				Email:           "saml.email.new@example.com", // Reflects actual behavior: SAML input value persists
-				Name:            "SAML Name New",              // Reflects actual behavior: SAML input value persists
-				IsGrafanaAdmin:  new(false),                   // Unchanged, matches DB
-				EmailVerified:   false,                        // Reflects actual behavior: becomes false
-				AuthID:          "id_from_saml_assertion",
-				AuthenticatedBy: "saml",
-				ExternalUID:     "external_id_other_attr",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-		},
-		{
-			name: "NON-SCIM User, SAML updates IsGrafanaAdmin and Email",
-			fields: fields{
-				userService: func() user.Service {
-					userCopy := *nonScimUserInitial                          // Create a mutable copy
-					svc := usertest.FakeUserService{ExpectedUser: &userCopy} // Set ExpectedUser to the copy
-					svc.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
-						// For non-SCIM, Login and Name are only included if they change.
-						// Email changes, IsGrafanaAdmin changes.
-						expectedCmd := &user.UpdateUserCommand{
-							UserID:         nonScimUserInitial.ID,
-							IsGrafanaAdmin: new(true),
-							Email:          "nonscim.new.email@example.com",
-							Login:          "", // Login not changing, so should be empty in cmd
-							Name:           "", // Name not changing, so should be empty in cmd
-						}
-						err := mockUpdateFn(t, expectedCmd, false, nonScimUserInitial.Email)(ctx, cmd)
-						if err != nil {
-							return err
-						}
-
-						// Simulate the update on the copy
-						if cmd.IsGrafanaAdmin != nil {
-							userCopy.IsAdmin = *cmd.IsGrafanaAdmin
-						}
-						if cmd.Email != "" {
-							if userCopy.Email != cmd.Email {
-								userCopy.Email = cmd.Email
-								userCopy.EmailVerified = false // Email changed, so unverify
-							} else if cmd.EmailVerified != nil { // If email is same, but EmailVerified explicitly passed
-								userCopy.EmailVerified = *cmd.EmailVerified
-							}
-						} else if cmd.EmailVerified != nil { // Email not in cmd, but EmailVerified is (e.g. allow_sign_up case)
-							userCopy.EmailVerified = *cmd.EmailVerified
-						}
-
-						if cmd.Login != "" {
-							userCopy.Login = cmd.Login
-						}
-						if cmd.Name != "" {
-							userCopy.Name = cmd.Name
-						}
-
-						// After modification, GetByID should return this updated userCopy
-						svc.ExpectedUser = &userCopy
-						return nil
-					}
-					return &svc
-				}(),
-				// For non-SCIM, authinfo might not exist or not have ExternalUID, lookup by email/login
-				authInfoService: authFakeNil,
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					AuthenticatedBy: "saml",
-					// No AuthID or ExternalUID for this non-SCIM path, will lookup by email/login
-					Login:          nonScimUserInitial.Login,        // Use initial login for lookup
-					Email:          "nonscim.new.email@example.com", // SAML sends new email
-					Name:           nonScimUserInitial.Name,         // Name is same
-					IsGrafanaAdmin: new(true),                       // SAML promotes to admin
-					ClientParams: authn.ClientParams{
-						SyncUser: true,
-						LookUpParams: login.UserLookupParams{
-							Login: new(nonScimUserInitial.Login), // Lookup by existing login
-						},
-					},
-				},
-			},
-			wantErr: false,
-			wantID: &authn.Identity{
-				ID:              int64ToStr(nonScimUserInitial.ID),
-				UID:             nonScimUserInitial.UID,
-				Type:            claims.TypeUser,
-				Login:           nonScimUserInitial.Login,        // Login updated if it was in UpdateUserCommand
-				Email:           "nonscim.new.email@example.com", // Email updated
-				Name:            nonScimUserInitial.Name,         // Name updated if it was in UpdateUserCommand
-				IsGrafanaAdmin:  new(true),                       // IsAdmin updated
-				EmailVerified:   false,                           // Email changed, so should be unverified
-				AuthenticatedBy: "saml",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-					LookUpParams: login.UserLookupParams{
-						Login: new(nonScimUserInitial.Login),
-					},
-				},
-			},
-		},
-		{
-			name: "sync - incoming identity org not superseded by user org",
-			fields: fields{
-				userService:     userService,
-				authInfoService: authFakeNil,
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					OrgID: 3,
-					Login: "test",
-					Name:  "test",
-					Email: "test",
-					ClientParams: authn.ClientParams{
-						SyncUser: true,
-						LookUpParams: login.UserLookupParams{
-							Email: new("test"),
-							Login: nil,
-						},
-					},
-				},
-			},
-			wantErr: false,
-			wantID: &authn.Identity{
-				ID:             "1",
-				UID:            "1",
-				Type:           claims.TypeUser,
-				OrgID:          3,
-				Login:          "test",
-				Name:           "test",
-				Email:          "test",
-				IsGrafanaAdmin: new(false),
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-					LookUpParams: login.UserLookupParams{
-						Email: new("test"),
-						Login: nil,
-					},
-				},
-			},
-		},
-		{
-			name: "sync - identity org not populated from user when rememberUserOrgForSso is disabled",
-			fields: fields{
-				userService:     userService,
-				authInfoService: authFakeNil,
-				quotaService:    &quotatest.FakeQuotaService{},
-			},
-			args: args{
-				id: &authn.Identity{
-					Login: "test",
-					Name:  "test",
-					Email: "test",
-					ClientParams: authn.ClientParams{
-						SyncUser: true,
-						LookUpParams: login.UserLookupParams{
-							Email: new("test"),
-							Login: nil,
-						},
-					},
-				},
-			},
-			wantErr: false,
-			wantID: &authn.Identity{
-				ID:             "1",
-				UID:            "1",
-				Type:           claims.TypeUser,
-				Login:          "test",
-				Name:           "test",
-				Email:          "test",
-				IsGrafanaAdmin: new(false),
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-					LookUpParams: login.UserLookupParams{
-						Email: new("test"),
-						Login: nil,
-					},
-				},
-			},
-			disableRememberUserOrgForSso: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.Raw.Section("auth.scim").Key("user_sync_enabled").SetValue("true")
-			cfg.Raw.Section("auth.scim").Key("reject_non_provisioned_users").SetValue("true")
-
-			provider.UsingFlags(t, defaultFeatureFlags)
-			if tt.disableRememberUserOrgForSso {
-				provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
-					featuremgmt.FlagRememberUserOrgForSso: setting.NewInMemoryFlag(featuremgmt.FlagRememberUserOrgForSso, false),
-				})
-			}
-			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), cfg, nil)
-			err := s.SyncUserHook(context.Background(), tt.args.id, nil)
+			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest())
+			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -1002,38 +445,6 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			require.EqualValues(t, tt.wantID, tt.args.id)
 		})
 	}
-}
-
-func TestUserSync_SyncUserRetryFetch(t *testing.T) {
-	userSrv := usertest.NewMockService(t)
-	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
-	userSrv.On("Create", mock.Anything, mock.Anything).Return(nil, user.ErrUserAlreadyExists).Once()
-	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(&user.User{ID: 1}, nil).Once()
-
-	provider.UsingFlags(t, defaultFeatureFlags)
-	s := ProvideUserSync(
-		userSrv,
-		authinfoimpl.ProvideOSSUserProtectionService(),
-		&authinfotest.FakeService{},
-		&quotatest.FakeQuotaService{},
-		tracing.NewNoopTracerService(),
-		featuremgmt.WithFeatures(),
-		setting.NewCfg(),
-		nil,
-	)
-
-	email := "test@test.com"
-
-	err := s.SyncUserHook(context.Background(), &authn.Identity{
-		ClientParams: authn.ClientParams{
-			SyncUser:    true,
-			AllowSignUp: true,
-			LookUpParams: login.UserLookupParams{
-				Email: &email,
-			},
-		},
-	}, nil)
-	require.NoError(t, err)
 }
 
 func TestUserSync_FetchSyncedUserHook(t *testing.T) {
@@ -1064,93 +475,6 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 			}
 			err := s.FetchSyncedUserHook(context.Background(), tt.identity, tt.req)
 			require.ErrorIs(t, err, tt.expectedErr)
-		})
-	}
-}
-
-func TestUserSync_CatalogLoginHook(t *testing.T) {
-	type testCase struct {
-		name           string
-		identity       *authn.Identity
-		expectFlagSet  bool
-		catalogVersion string
-	}
-
-	tests := []testCase{
-		{
-			name: "should skip hook when SyncUser flag is not enabled",
-			identity: &authn.Identity{
-				ClientParams: authn.ClientParams{
-					SyncUser: false,
-				},
-			},
-			expectFlagSet: false,
-		},
-		{
-			name: "should skip hook when request is nil",
-			identity: &authn.Identity{
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-		},
-		{
-			name: "should skip hook when catalog version is not set",
-			identity: &authn.Identity{
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectFlagSet: false,
-		},
-		{
-			name: "should not set loginflag when catalog version is set incorrectly",
-			identity: &authn.Identity{
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			catalogVersion: "v0aplha1",
-			expectFlagSet:  false,
-		},
-		{
-			name: "should not set loginflag when catalog version is empty",
-			identity: &authn.Identity{
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectFlagSet: false,
-		},
-		{
-			name: "should set successful loginflag when catalog version is set correctly",
-			identity: &authn.Identity{
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			catalogVersion: "1.0.0",
-			expectFlagSet:  true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := UserSync{
-				tracer: tracing.InitializeTracerForTest(),
-				log:    log.New("test"),
-			}
-
-			req := authn.Request{}
-			if tt.catalogVersion != "" {
-				req.SetMeta("catalog_version", tt.catalogVersion)
-			}
-
-			s.CatalogLoginHook(context.Background(), tt.identity, &req, nil)
-			usageStats := s.GetUsageStats(context.Background())
-			countIndex := fmt.Sprintf("stats.features.saml.catalog_version_%s.count", tt.catalogVersion)
-			countResult := usageStats[countIndex] != nil && usageStats[countIndex].(int) == 1
-			assert.Equal(t, tt.expectFlagSet, countResult)
 		})
 	}
 }
@@ -1199,7 +523,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			userSvc := usertest.NewUserServiceFake()
 			called := false
-			userSvc.UpdateFn = func(_ context.Context, _ *user.UpdateUserCommand) error {
+			userSvc.UpdateFn = func(ctx context.Context, cmd *user.UpdateUserCommand) error {
 				called = true
 				return nil
 			}
@@ -1210,1603 +534,4 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			assert.Equal(t, tt.enableUser, called)
 		})
 	}
-}
-
-func initUserSyncService() *UserSync {
-	userSvc := usertest.NewUserServiceFake()
-	log := log.New("test")
-	authInfoSvc := &authinfotest.FakeService{
-		ExpectedUserAuth: &login.UserAuth{
-			UserId:     1,
-			AuthModule: login.SAMLAuthModule,
-			AuthId:     "1",
-		},
-	}
-	quotaSvc := &quotatest.FakeQuotaService{}
-	return &UserSync{
-		userService:       userSvc,
-		authInfoService:   authInfoSvc,
-		quotaService:      quotaSvc,
-		tracer:            tracing.InitializeTracerForTest(),
-		log:               log,
-		openFeatureClient: openfeature.NewDefaultClient(),
-	}
-}
-
-func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
-	type testCase struct {
-		desc                 string
-		identity             *authn.Identity
-		userSyncServiceSetup func() *UserSync
-		expectedErr          error
-	}
-
-	tests := []testCase{
-		{
-			desc: "it should skip validation if the user identity is not syncying a user",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.isUserProvisioningEnabled = true
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				ID:   "1",
-				Type: claims.TypeAPIKey,
-				ClientParams: authn.ClientParams{
-					SyncUser: false,
-				},
-			},
-		},
-		{
-			desc: "it should skip validation if the user provisioning is disabled",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.isUserProvisioningEnabled = false
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.GenericOAuthModule,
-				AuthID:          "1",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-		},
-		{
-			desc: "it should skip validation if rejectNonProvisionedUsers is disabled",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = false
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: false,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:     1,
-						AuthModule: login.GenericOAuthModule,
-						AuthId:     "1",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.GenericOAuthModule,
-				AuthID:          "1",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-		},
-		{
-			desc: "it should skip validation if the user is authenticated via GrafanaComAuthModule",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.isUserProvisioningEnabled = true
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.GrafanaComAuthModule,
-				AuthID:          "1",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-		},
-		{
-			desc: "it should fail to validate the identity with the provisioned user, unexpected error",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedError: errors.New("random error"),
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "random-external-uid",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectedErr: errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation"),
-		},
-		{
-			desc: "it should fail to validate the identity with the provisioned user, no user found",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "random-external-uid",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectedErr: errUnableToRetrieveUser.Errorf("unable to retrieve user for validation"),
-		},
-		{
-			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - empty ExternalUID",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: true,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:     1,
-						AuthModule: login.SAMLAuthModule,
-						AuthId:     "1",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "random-external-uid",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
-		},
-		{
-			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - different ExternalUID",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: true,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:      1,
-						AuthModule:  login.SAMLAuthModule,
-						AuthId:      "1",
-						ExternalUID: "different-external-uid",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "random-external-uid",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
-		},
-		{
-			desc: "it should successfully validate the provisioned user.ExternalUID with the identity.ExternalUID",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: true,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:      1,
-						AuthModule:  login.SAMLAuthModule,
-						AuthId:      "1",
-						ExternalUID: "random-external-uid",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "random-external-uid",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectedErr: nil,
-		},
-		{
-			desc: "it should fail to validate a non provisioned user when configured to reject non provisioned users",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: false,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:      1,
-						AuthModule:  login.SAMLAuthModule,
-						AuthId:      "1",
-						ExternalUID: "random-external-uid",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "random-external-uid",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectedErr: errUserNotProvisioned.Errorf("user is not provisioned"),
-		},
-		{
-			desc: "it should skip to validate a non provisioned user when configured to allow non provisioned users",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = false
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: false,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:      1,
-						AuthModule:  login.SAMLAuthModule,
-						AuthId:      "1",
-						ExternalUID: "random-external-uid",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "different-external-uid",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectedErr: nil,
-		},
-		{
-			desc: "ValidateProvisioning: DB ExternalUID is empty, Incoming ExternalUID is empty - expect mismatch (stricter logic)",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.userService = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}}
-				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: ""}}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-				ExternalUID: "",
-			},
-			expectedErr: errUserExternalUIDMismatch,
-		},
-		{
-			desc: "ValidateProvisioning: DB ExternalUID is empty, Incoming ExternalUID non-empty - expect mismatch (stricter logic)",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.userService = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}}
-				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: ""}}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-				ExternalUID: "valid-uid",
-			},
-			expectedErr: errUserExternalUIDMismatch,
-		},
-		{
-			desc: "ValidateProvisioning: DB and Incoming ExternalUIDs non-empty and mismatch - expect mismatch",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.userService = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, IsProvisioned: true}}
-				userSyncService.authInfoService = &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{UserId: 1, AuthModule: login.SAMLAuthModule, ExternalUID: "db-uid"}}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-				ExternalUID: "incoming-uid",
-			},
-			expectedErr: errUserExternalUIDMismatch,
-		},
-		{
-			desc: "it should skip ExternalUID validation for a SAML-provisioned user accessed by a non-SAML method with an empty incoming ExternalUID",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = false
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: true,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:      1,
-						AuthModule:  login.SAMLAuthModule,
-						AuthId:      "1",
-						ExternalUID: "saml-originated-uid",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.GenericOAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "",
-			},
-			expectedErr: nil,
-		},
-		{
-			desc: "it should fail validation when a provisioned user is accessed by SAML with an empty incoming ExternalUID",
-			userSyncServiceSetup: func() *UserSync {
-				userSyncService := initUserSyncService()
-				userSyncService.rejectNonProvisionedUsers = true
-				userSyncService.isUserProvisioningEnabled = true
-				userSyncService.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{
-						ID:            1,
-						IsProvisioned: true,
-					},
-				}
-				userSyncService.authInfoService = &authinfotest.FakeService{
-					ExpectedUserAuth: &login.UserAuth{
-						UserId:      1,
-						AuthModule:  login.SAMLAuthModule,
-						AuthId:      "1",
-						ExternalUID: "saml-originated-uid",
-					},
-				}
-				return userSyncService
-			},
-			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
-				AuthID:          "1",
-				ExternalUID:     "",
-				ClientParams: authn.ClientParams{
-					SyncUser: true,
-				},
-			},
-			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			provider.UsingFlags(t, defaultFeatureFlags)
-			userSyncService := tt.userSyncServiceSetup()
-			err := userSyncService.ValidateUserProvisioningHook(context.Background(), tt.identity, nil)
-			require.ErrorIs(t, err, tt.expectedErr)
-		})
-	}
-}
-
-func TestUserSync_SCIMUtilIntegration(t *testing.T) {
-	ctx := context.Background()
-	orgID := int64(1)
-
-	// Mock SCIM utility for testing
-	type mockSCIMUtil struct {
-		userSyncEnabled             bool
-		nonProvisionedUsersRejected bool
-		shouldUseDynamicConfig      bool
-		shouldReturnError           bool
-	}
-
-	createMockSCIMUtil := func(mockCfg *mockSCIMUtil) *scimutil.SCIMUtil {
-		if mockCfg == nil {
-			return nil
-		}
-
-		// Create a mock K8s client that returns the expected behavior
-		mockK8sClient := &MockK8sHandler{}
-
-		if mockCfg.shouldReturnError {
-			mockK8sClient.On("Get", ctx, "default", orgID, mock.AnythingOfType("v1.GetOptions"), mock.Anything).
-				Return(nil, errors.New("k8s error"))
-		} else if mockCfg.shouldUseDynamicConfig {
-			// Create a mock SCIM config with the desired settings
-			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "scim.grafana.com/v0alpha1",
-					"kind":       "SCIMConfig",
-					"metadata": map[string]interface{}{
-						"name":      "test-config",
-						"namespace": "default",
-					},
-					"spec": map[string]interface{}{
-						"enableUserSync":            mockCfg.userSyncEnabled,
-						"enableGroupSync":           false, // Not used for this test
-						"rejectNonProvisionedUsers": mockCfg.nonProvisionedUsersRejected,
-					},
-				},
-			}
-			mockK8sClient.On("Get", ctx, "default", orgID, mock.AnythingOfType("v1.GetOptions"), mock.Anything).
-				Return(obj, nil)
-		}
-
-		return scimutil.NewSCIMUtil(mockK8sClient)
-	}
-
-	tests := []struct {
-		name                           string
-		identity                       *authn.Identity
-		staticConfig                   *StaticSCIMConfig
-		mockSCIMUtil                   *mockSCIMUtil
-		expectedUserSyncEnabled        bool
-		expectedNonProvisionedRejected bool
-		expectedError                  error
-	}{
-		{
-			name: "SCIM util nil - uses static config",
-			identity: &authn.Identity{
-				OrgID: orgID,
-				ID:    "test-user",
-			},
-			staticConfig: &StaticSCIMConfig{
-				IsUserProvisioningEnabled: true,
-				RejectNonProvisionedUsers: false,
-			},
-			mockSCIMUtil:                   nil, // No SCIM util
-			expectedUserSyncEnabled:        true,
-			expectedNonProvisionedRejected: false,
-		},
-		{
-			name: "SCIM util with dynamic config - user sync enabled",
-			identity: &authn.Identity{
-				OrgID: orgID,
-				ID:    "test-user",
-			},
-			staticConfig: &StaticSCIMConfig{
-				IsUserProvisioningEnabled: false, // Static disabled
-				RejectNonProvisionedUsers: true,
-			},
-			mockSCIMUtil: &mockSCIMUtil{
-				userSyncEnabled:             true, // Dynamic enabled
-				nonProvisionedUsersRejected: true,
-				shouldUseDynamicConfig:      true,
-			},
-			expectedUserSyncEnabled:        true,
-			expectedNonProvisionedRejected: true,
-		},
-		{
-			name: "SCIM util with dynamic config - user sync disabled",
-			identity: &authn.Identity{
-				OrgID: orgID,
-				ID:    "test-user",
-			},
-			staticConfig: &StaticSCIMConfig{
-				IsUserProvisioningEnabled: true, // Static enabled
-				RejectNonProvisionedUsers: true,
-			},
-			mockSCIMUtil: &mockSCIMUtil{
-				userSyncEnabled:             false, // Dynamic disabled
-				nonProvisionedUsersRejected: false,
-				shouldUseDynamicConfig:      true,
-			},
-			expectedUserSyncEnabled:        false,
-			expectedNonProvisionedRejected: false,
-		},
-		{
-			name: "SCIM util with error - falls back to static config",
-			identity: &authn.Identity{
-				OrgID: orgID,
-				ID:    "test-user",
-			},
-			staticConfig: &StaticSCIMConfig{
-				IsUserProvisioningEnabled: true,
-				RejectNonProvisionedUsers: false,
-			},
-			mockSCIMUtil: &mockSCIMUtil{
-				shouldReturnError: true,
-			},
-			expectedUserSyncEnabled:        true,
-			expectedNonProvisionedRejected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create UserSync service with mock SCIM util
-			userSync := &UserSync{
-				scimUtil: createMockSCIMUtil(tt.mockSCIMUtil),
-			}
-
-			// Test user sync enabled check
-			var userSyncEnabled bool
-			if userSync.scimUtil != nil {
-				userSyncEnabled = userSync.scimUtil.IsUserSyncEnabled(ctx, orgID, tt.staticConfig.IsUserProvisioningEnabled)
-			} else {
-				userSyncEnabled = tt.staticConfig.IsUserProvisioningEnabled
-			}
-			assert.Equal(t, tt.expectedUserSyncEnabled, userSyncEnabled, "User sync enabled mismatch")
-
-			// Test non-provisioned users rejected check
-			var nonProvisionedReject bool
-			if userSync.scimUtil != nil {
-				nonProvisionedReject = userSync.scimUtil.AreNonProvisionedUsersRejected(ctx, orgID, tt.staticConfig.RejectNonProvisionedUsers)
-			} else {
-				nonProvisionedReject = tt.staticConfig.RejectNonProvisionedUsers
-			}
-			assert.Equal(t, tt.expectedNonProvisionedRejected, nonProvisionedReject, "Non-provisioned users rejected mismatch")
-		})
-	}
-}
-
-// MockK8sHandler is a mock implementation for testing
-type MockK8sHandler struct {
-	mock.Mock
-}
-
-func (m *MockK8sHandler) GetNamespace(orgID int64) string {
-	args := m.Called(orgID)
-	return args.String(0)
-}
-
-func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, opts metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, name, orgID, opts, subresource)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-// Add other required methods with empty implementations for the mock
-func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, orgID, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.UpdateOptions) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, orgID, opts)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
-}
-
-func (m *MockK8sHandler) Delete(ctx context.Context, name string, orgID int64, options metav1.DeleteOptions) error {
-	args := m.Called(ctx, name, orgID, options)
-	return args.Error(0)
-}
-
-func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64, listOptions metav1.ListOptions) error {
-	args := m.Called(ctx, orgID, listOptions)
-	return args.Error(0)
-}
-
-func (m *MockK8sHandler) List(ctx context.Context, orgID int64, options metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	args := m.Called(ctx, orgID, options)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*unstructured.UnstructuredList), args.Error(1)
-}
-
-func (m *MockK8sHandler) Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	args := m.Called(ctx, orgID, in)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*resourcepb.ResourceSearchResponse), args.Error(1)
-}
-
-func (m *MockK8sHandler) GetStats(ctx context.Context, orgID int64) (*resourcepb.ResourceStatsResponse, error) {
-	args := m.Called(ctx, orgID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*resourcepb.ResourceStatsResponse), args.Error(1)
-}
-
-func (m *MockK8sHandler) GetUsersFromMeta(ctx context.Context, userMeta []string) (map[string]*user.User, error) {
-	args := m.Called(ctx, userMeta)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(map[string]*user.User), args.Error(1)
-}
-
-func TestUserSync_NamespaceMappingLogic(t *testing.T) {
-	ctx := context.Background()
-
-	// Test the actual namespace mapping logic
-	tests := []struct {
-		name              string
-		stackID           string
-		orgID             int64
-		expectedNamespace string
-		description       string
-	}{
-		{
-			name:              "Cloud instance with valid stackID",
-			stackID:           "75",
-			orgID:             123,
-			expectedNamespace: "stacks-75",
-			description:       "Should use stack-based namespace for cloud instances",
-		},
-		{
-			name:              "Cloud instance with different stackID",
-			stackID:           "99",
-			orgID:             123,
-			expectedNamespace: "stacks-99",
-			description:       "Should use different stack-based namespace for different stackID",
-		},
-		{
-			name:              "Cloud instance with invalid stackID",
-			stackID:           "invalid",
-			orgID:             456,
-			expectedNamespace: "stacks-0",
-			description:       "Should fallback to stacks-0 for invalid stackID",
-		},
-		{
-			name:              "On-prem instance (no stackID)",
-			stackID:           "",
-			orgID:             456,
-			expectedNamespace: "org-456",
-			description:       "Should use org-based namespace for on-prem instances",
-		},
-		{
-			name:              "On-prem instance with different orgID",
-			stackID:           "",
-			orgID:             789,
-			expectedNamespace: "org-789",
-			description:       "Should use correct orgID in namespace",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock K8s client
-			mockK8sClient := &MockK8sHandler{}
-
-			// Mock the GetNamespace method to simulate the actual namespace mapping logic
-			mockK8sClient.On("GetNamespace", tt.orgID).Return(tt.expectedNamespace)
-
-			// Set up a successful SCIM config response
-			obj := &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "scim.grafana.com/v0alpha1",
-					"kind":       "SCIMConfig",
-					"metadata": map[string]interface{}{
-						"name":      "default",
-						"namespace": tt.expectedNamespace,
-					},
-					"spec": map[string]interface{}{
-						"enableUserSync":  true,
-						"enableGroupSync": false,
-					},
-				},
-			}
-			mockK8sClient.On("Get", ctx, "default", tt.orgID, mock.AnythingOfType("v1.GetOptions"), mock.Anything).
-				Return(obj, nil)
-
-			// Create SCIM util with the mock client
-			scimUtil := scimutil.NewSCIMUtil(mockK8sClient)
-
-			// Test the namespace mapping
-			actualNamespace := mockK8sClient.GetNamespace(tt.orgID)
-			assert.Equal(t, tt.expectedNamespace, actualNamespace,
-				"Namespace mapping failed: %s", tt.description)
-
-			// Test that the SCIM util works with the mapped namespace
-			userSyncEnabled := scimUtil.IsUserSyncEnabled(ctx, tt.orgID, false)
-			assert.True(t, userSyncEnabled,
-				"SCIM util should work with namespace %s: %s", tt.expectedNamespace, tt.description)
-
-			// Verify that the correct API path would be constructed
-			// This is implicit in the mock setup, but we can verify the components
-			assert.Equal(t, "default", obj.GetName(), "Resource name should be 'default'")
-			assert.Equal(t, tt.expectedNamespace, obj.GetNamespace(), "Namespace should match expected")
-
-			// Verify the mock expectations
-			mockK8sClient.AssertExpectations(t)
-		})
-	}
-}
-
-func TestUserSync_GetUsageStats(t *testing.T) {
-	userSync := initUserSyncService()
-
-	// Test that GetUsageStats returns zero initially
-	stats := userSync.GetUsageStats(context.Background())
-
-	require.NotNil(t, stats)
-	require.Contains(t, stats, "stats.features.scim.has_successful_login.count")
-	require.Equal(t, int(0), stats["stats.features.scim.has_successful_login.count"])
-
-	userSync.scimSuccessfulLogin.Store(true)
-
-	// Test that GetUsageStats returns the updated value
-	stats = userSync.GetUsageStats(context.Background())
-	require.Equal(t, int(1), stats["stats.features.scim.has_successful_login.count"])
-}
-
-func TestUserSync_SCIMLoginUsageStatSet(t *testing.T) {
-	provider.UsingFlags(t, defaultFeatureFlags)
-	userSync := initUserSyncService()
-	userSync.rejectNonProvisionedUsers = true
-	userSync.isUserProvisioningEnabled = true
-	userSync.userService = &usertest.FakeUserService{
-		ExpectedUser: &user.User{
-			ID:            1,
-			IsProvisioned: true,
-		},
-	}
-	userSync.authInfoService = &authinfotest.FakeService{
-		ExpectedUserAuth: &login.UserAuth{
-			UserId:      1,
-			AuthModule:  login.SAMLAuthModule,
-			AuthId:      "1",
-			ExternalUID: "test123",
-		},
-	}
-
-	// Check initial counter value
-	initialStats := userSync.GetUsageStats(context.Background())
-	require.Equal(t, int(0), initialStats["stats.features.scim.has_successful_login.count"])
-
-	// Create identity for validation with matching ExternalUID
-	identity := &authn.Identity{
-		AuthID:          "1",
-		AuthenticatedBy: login.SAMLAuthModule,
-		ExternalUID:     "test123",
-		ClientParams:    authn.ClientParams{SyncUser: true},
-	}
-
-	// Call ValidateUserProvisioningHook - this should set the flag to true
-	err := userSync.ValidateUserProvisioningHook(context.Background(), identity, nil)
-	require.NoError(t, err)
-
-	// Check that flag was set to true (count should be 1)
-	finalStats := userSync.GetUsageStats(context.Background())
-	finalCount := finalStats["stats.features.scim.has_successful_login.count"].(int)
-	require.Equal(t, int(1), finalCount)
-}
-
-func TestUserSync_SyncUserHook_SCIMUserSAMLLoginUpdatesExistingUserAuth(t *testing.T) {
-	userSrv := usertest.NewMockService(t)
-	authInfoSrv := authinfotest.NewMockAuthInfoService(t)
-
-	scimUser := &user.User{
-		ID:            333,
-		UID:           "user-uid-333",
-		Login:         "scim.user",
-		Email:         "scim.user@example.com",
-		Name:          "SCIM User",
-		IsProvisioned: true,
-	}
-
-	scimCreatedAuthEntry := &login.UserAuth{
-		Id:          10,
-		UserId:      333,
-		AuthModule:  login.SAMLAuthModule,
-		AuthId:      "",
-		ExternalUID: "scim-external-uid",
-	}
-
-	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
-		return q.AuthId == "saml-generated-auth-id" && q.AuthModule == login.SAMLAuthModule
-	})).Return(nil, user.ErrUserNotFound).Once()
-
-	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(scimUser, nil).Once()
-
-	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
-		return q.UserId == 333 && q.AuthModule == login.SAMLAuthModule
-	})).Return(scimCreatedAuthEntry, nil).Once()
-
-	authInfoSrv.On("UpdateAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.UpdateAuthInfoCommand) bool {
-		return cmd.UserId == 333 && cmd.AuthModule == login.SAMLAuthModule && cmd.AuthId == "saml-generated-auth-id"
-	})).Return(nil).Once()
-
-	provider.UsingFlags(t, defaultFeatureFlags)
-
-	s := ProvideUserSync(
-		userSrv,
-		authinfoimpl.ProvideOSSUserProtectionService(),
-		authInfoSrv,
-		&quotatest.FakeQuotaService{},
-		tracing.NewNoopTracerService(),
-		featuremgmt.WithFeatures(),
-		setting.NewCfg(),
-		nil,
-	)
-
-	email := "scim.user@example.com"
-	err := s.SyncUserHook(context.Background(), &authn.Identity{
-		AuthID:          "saml-generated-auth-id",
-		AuthenticatedBy: login.SAMLAuthModule,
-		Login:           "scim.user",
-		Email:           "scim.user@example.com",
-		Name:            "SCIM User",
-		ClientParams: authn.ClientParams{
-			SyncUser: true,
-			LookUpParams: login.UserLookupParams{
-				Email: &email,
-			},
-		},
-	}, nil)
-
-	require.NoError(t, err)
-}
-
-func TestUserSync_SyncUserHook_NonProvisionedSAMLUserCreatesNewAuthConnection(t *testing.T) {
-	userSrv := usertest.NewMockService(t)
-	authInfoSrv := authinfotest.NewMockAuthInfoService(t)
-
-	nonProvisionedUser := &user.User{
-		ID:            444,
-		UID:           "user-uid-444",
-		Login:         "saml.user",
-		Email:         "saml.user@example.com",
-		Name:          "SAML User",
-		IsProvisioned: false,
-	}
-
-	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
-		return q.AuthId == "saml-auth-id" && q.AuthModule == login.SAMLAuthModule
-	})).Return(nil, user.ErrUserNotFound).Once()
-
-	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nonProvisionedUser, nil).Once()
-
-	authInfoSrv.On("SetAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.SetAuthInfoCommand) bool {
-		return cmd.UserId == 444 && cmd.AuthModule == login.SAMLAuthModule && cmd.AuthId == "saml-auth-id"
-	})).Return(nil).Once()
-
-	provider.UsingFlags(t, defaultFeatureFlags)
-
-	s := ProvideUserSync(
-		userSrv,
-		authinfoimpl.ProvideOSSUserProtectionService(),
-		authInfoSrv,
-		&quotatest.FakeQuotaService{},
-		tracing.NewNoopTracerService(),
-		featuremgmt.WithFeatures(),
-		setting.NewCfg(),
-		nil,
-	)
-
-	email := "saml.user@example.com"
-	err := s.SyncUserHook(context.Background(), &authn.Identity{
-		AuthID:          "saml-auth-id",
-		AuthenticatedBy: login.SAMLAuthModule,
-		Login:           "saml.user",
-		Email:           "saml.user@example.com",
-		Name:            "SAML User",
-		ClientParams: authn.ClientParams{
-			SyncUser: true,
-			LookUpParams: login.UserLookupParams{
-				Email: &email,
-			},
-		},
-	}, nil)
-
-	require.NoError(t, err)
-	authInfoSrv.AssertNotCalled(t, "UpdateAuthInfo", mock.Anything, mock.Anything)
-}
-
-func TestUserSync_SyncUserHook_SCIMAuthModuleMismatch(t *testing.T) {
-	userSrv := usertest.NewMockService(t)
-	authInfoSrv := authinfotest.NewMockAuthInfoService(t)
-
-	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
-
-	userSrv.On("Create", mock.Anything, mock.Anything).Return(nil, user.ErrUserAlreadyExists).Once()
-
-	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(&user.User{
-		ID:            1,
-		Email:         "test@test.com",
-		IsProvisioned: true,
-	}, nil).Once()
-
-	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
-		return q.AuthModule == "oauth_azuread"
-	})).Return(nil, user.ErrUserNotFound).Once()
-
-	provider.UsingFlags(t, defaultFeatureFlags)
-
-	s := ProvideUserSync(
-		userSrv,
-		authinfoimpl.ProvideOSSUserProtectionService(),
-		authInfoSrv,
-		&quotatest.FakeQuotaService{},
-		tracing.NewNoopTracerService(),
-		featuremgmt.WithFeatures(),
-		setting.NewCfg(),
-		nil,
-	)
-
-	email := "test@test.com"
-
-	err := s.SyncUserHook(context.Background(), &authn.Identity{
-		AuthenticatedBy: "oauth_azuread",
-		ClientParams: authn.ClientParams{
-			SyncUser:    true,
-			AllowSignUp: true,
-			LookUpParams: login.UserLookupParams{
-				Email: &email,
-			},
-		},
-	}, nil)
-
-	require.Error(t, err)
-	assert.ErrorIs(t, err, errSCIMAuthModuleMismatch)
-	assert.Contains(t, err.Error(), "SCIM")
-	assert.Contains(t, err.Error(), "oauth_azuread")
-}
-
-func TestUserSync_SyncUserHook_SCIMUserAllowsGCOMLogin(t *testing.T) {
-	userSrv := usertest.NewMockService(t)
-	authInfoSrv := authinfotest.NewMockAuthInfoService(t)
-
-	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
-		return q.AuthModule == login.GrafanaComAuthModule && q.AuthId == "gcom-user-123"
-	})).Return(nil, user.ErrUserNotFound).Once()
-
-	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(nil, user.ErrUserNotFound).Once()
-	userSrv.On("Create", mock.Anything, mock.Anything).Return(nil, user.ErrUserAlreadyExists).Once()
-
-	authInfoSrv.On("GetAuthInfo", mock.Anything, mock.MatchedBy(func(q *login.GetAuthInfoQuery) bool {
-		return q.AuthModule == login.GrafanaComAuthModule && q.AuthId == "gcom-user-123"
-	})).Return(nil, user.ErrUserNotFound).Once()
-
-	userSrv.On("GetByEmail", mock.Anything, mock.Anything).Return(&user.User{
-		ID:            1,
-		Email:         "test@test.com",
-		IsProvisioned: true,
-	}, nil).Once()
-
-	provider.UsingFlags(t, defaultFeatureFlags)
-
-	s := ProvideUserSync(
-		userSrv,
-		authinfoimpl.ProvideOSSUserProtectionService(),
-		authInfoSrv,
-		&quotatest.FakeQuotaService{},
-		tracing.NewNoopTracerService(),
-		featuremgmt.WithFeatures(),
-		setting.NewCfg(),
-		nil,
-	)
-
-	email := "test@test.com"
-
-	err := s.SyncUserHook(context.Background(), &authn.Identity{
-		AuthenticatedBy: login.GrafanaComAuthModule,
-		AuthID:          "gcom-user-123",
-		ClientParams: authn.ClientParams{
-			SyncUser:    true,
-			AllowSignUp: true,
-			LookUpParams: login.UserLookupParams{
-				Email: &email,
-			},
-		},
-	}, nil)
-
-	require.NoError(t, err)
-}
-
-func TestUserSync_createUser_PassesOrgRoleAsDefaultOrgRole(t *testing.T) {
-	tests := []struct {
-		name           string
-		id             *authn.Identity
-		wantOrgRole    string
-		wantSkipOrgSet bool
-	}{
-		{
-			name: "identity role for active org propagates to DefaultOrgRole",
-			id: &authn.Identity{
-				Login:    "identityeditor",
-				Email:    "identityeditor@example.com",
-				Name:     "Identity Editor",
-				OrgID:    1,
-				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
-			},
-			wantOrgRole:    "Editor",
-			wantSkipOrgSet: true,
-		},
-		{
-			name: "no OrgRoles leaves DefaultOrgRole empty so k8s falls back to AutoAssignOrgRole",
-			id: &authn.Identity{
-				Login: "newbie",
-				Email: "newbie@example.com",
-				Name:  "Newbie",
-				OrgID: 1,
-			},
-			wantOrgRole:    "",
-			wantSkipOrgSet: false,
-		},
-		{
-			name: "OrgRoles present but no match for active org propagates RoleNone",
-			id: &authn.Identity{
-				Login:    "mismatched",
-				Email:    "mismatched@example.com",
-				Name:     "Mismatched",
-				OrgID:    1,
-				OrgRoles: map[int64]org.RoleType{2: org.RoleEditor},
-			},
-			wantOrgRole:    "None",
-			wantSkipOrgSet: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			provider.UsingFlags(t, defaultFeatureFlags)
-
-			var captured *user.CreateUserCommand
-			fakeUserSvc := &usertest.FakeUserService{
-				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-					captured = cmd
-					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name}, nil
-				},
-			}
-
-			s := ProvideUserSync(
-				fakeUserSvc,
-				&authinfoimpl.OSSUserProtectionImpl{},
-				&authinfotest.FakeService{
-					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
-					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
-				},
-				&quotatest.FakeQuotaService{},
-				tracing.InitializeTracerForTest(),
-				featuremgmt.WithFeatures(),
-				setting.NewCfg(),
-				nil,
-			)
-
-			_, err := s.createUser(context.Background(), tt.id)
-			require.NoError(t, err)
-			require.NotNil(t, captured)
-			assert.Equal(t, tt.wantOrgRole, captured.DefaultOrgRole, "DefaultOrgRole should match identity role mapping for the active org")
-			assert.Equal(t, tt.wantSkipOrgSet, captured.SkipOrgSetup, "SkipOrgSetup should still reflect whether OrgRoles are present")
-		})
-	}
-}
-
-func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
-	tests := []struct {
-		name                    string
-		authenticatedBy         string
-		kubernetesUsersRedirect bool
-		wantDefaultOrgRole      string
-	}{
-		{
-			name:                    "auth proxy with flag enabled aligns OrgID so the asserted role is written",
-			authenticatedBy:         login.AuthProxyAuthModule,
-			kubernetesUsersRedirect: true,
-			wantDefaultOrgRole:      "Editor",
-		},
-		{
-			name:                    "ldap with flag enabled aligns OrgID so the asserted role is written",
-			authenticatedBy:         login.LDAPAuthModule,
-			kubernetesUsersRedirect: true,
-			wantDefaultOrgRole:      "Editor",
-		},
-		{
-			name:                    "ldap with flag disabled leaves OrgID unaligned so the role resolves to None",
-			authenticatedBy:         login.LDAPAuthModule,
-			kubernetesUsersRedirect: false,
-			wantDefaultOrgRole:      "None",
-		},
-		{
-			name:                    "auth proxy with flag disabled leaves OrgID unaligned so the role resolves to None",
-			authenticatedBy:         login.AuthProxyAuthModule,
-			kubernetesUsersRedirect: false,
-			wantDefaultOrgRole:      "None",
-		},
-		{
-			name:                    "non auth-proxy module is not aligned even with flag enabled",
-			authenticatedBy:         login.SAMLAuthModule,
-			kubernetesUsersRedirect: true,
-			wantDefaultOrgRole:      "None",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
-				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
-			})
-
-			var captured *user.CreateUserCommand
-			fakeUserSvc := &usertest.FakeUserService{
-				ExpectedError: user.ErrUserNotFound,
-				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-					captured = cmd
-					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name, OrgID: 1}, nil
-				},
-			}
-
-			s := ProvideUserSync(
-				fakeUserSvc,
-				&authinfoimpl.OSSUserProtectionImpl{},
-				&authinfotest.FakeService{
-					ExpectedError:    user.ErrUserNotFound,
-					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
-					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
-				},
-				&quotatest.FakeQuotaService{},
-				tracing.InitializeTracerForTest(),
-				featuremgmt.WithFeatures(),
-				setting.NewCfg(),
-				nil,
-			)
-
-			// Mirrors the auth proxy identity: the asserted role is keyed by DefaultOrgID but OrgID is unset.
-			email := "proxyuser@example.com"
-			loginName := "proxyuser"
-			id := &authn.Identity{
-				Login:           loginName,
-				Email:           email,
-				Name:            "Proxy User",
-				AuthID:          "proxyuser",
-				AuthenticatedBy: tt.authenticatedBy,
-				OrgRoles:        map[int64]org.RoleType{1: org.RoleEditor},
-				ClientParams: authn.ClientParams{
-					SyncUser:    true,
-					AllowSignUp: true,
-					LookUpParams: login.UserLookupParams{
-						Email: &email,
-						Login: &loginName,
-					},
-				},
-			}
-
-			err := s.SyncUserHook(context.Background(), id, nil)
-			require.NoError(t, err)
-			require.NotNil(t, captured)
-			assert.Equal(t, tt.wantDefaultOrgRole, captured.DefaultOrgRole,
-				"DefaultOrgRole written to the k8s user must reflect whether OrgID was aligned")
-		})
-	}
-}
-
-func strPtr(s string) *string { return &s }
-
-func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
-	tests := []struct {
-		name                    string
-		singleOrganization      bool
-		kubernetesUsersRedirect bool
-		syncOrgRoles            bool
-		currentRole             string
-		assertedRole            org.RoleType
-		wantUpdateRole          *string
-	}{
-		{
-			name:                    "role change is synced in single-org k8s mode",
-			singleOrganization:      true,
-			kubernetesUsersRedirect: true,
-			syncOrgRoles:            true,
-			currentRole:             "Admin",
-			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          strPtr("Editor"),
-		},
-		{
-			name:                    "explicit None role is synced (demotion)",
-			singleOrganization:      true,
-			kubernetesUsersRedirect: true,
-			syncOrgRoles:            true,
-			currentRole:             "Editor",
-			assertedRole:            org.RoleNone,
-			wantUpdateRole:          strPtr("None"),
-		},
-		{
-			name:                    "unchanged role is not synced",
-			singleOrganization:      true,
-			kubernetesUsersRedirect: true,
-			syncOrgRoles:            true,
-			currentRole:             "Editor",
-			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          nil,
-		},
-		{
-			name:                    "no sync when SyncOrgRoles is disabled",
-			singleOrganization:      true,
-			kubernetesUsersRedirect: true,
-			syncOrgRoles:            false,
-			currentRole:             "Admin",
-			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          nil,
-		},
-		{
-			name:                    "no sync when not in single-org mode",
-			singleOrganization:      false,
-			kubernetesUsersRedirect: true,
-			syncOrgRoles:            true,
-			currentRole:             "Admin",
-			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          nil,
-		},
-		{
-			name:                    "no sync when k8s users redirect is disabled",
-			singleOrganization:      true,
-			kubernetesUsersRedirect: false,
-			syncOrgRoles:            true,
-			currentRole:             "Admin",
-			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
-				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
-			})
-
-			var captured *user.UpdateUserCommand
-			fakeUserSvc := &usertest.FakeUserService{
-				UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
-					captured = cmd
-					return nil
-				},
-			}
-
-			cfg := setting.NewCfg()
-			cfg.RBAC.SingleOrganization = tt.singleOrganization
-
-			s := ProvideUserSync(
-				fakeUserSvc,
-				&authinfoimpl.OSSUserProtectionImpl{},
-				&authinfotest.FakeService{},
-				&quotatest.FakeQuotaService{},
-				tracing.InitializeTracerForTest(),
-				featuremgmt.WithFeatures(),
-				cfg,
-				nil,
-			)
-
-			usr := &user.User{ID: 1, Login: "proxyuser", OrgID: 1, OrgRole: tt.currentRole}
-			id := &authn.Identity{
-				ID:              "1",
-				Login:           "proxyuser",
-				AuthenticatedBy: login.AuthProxyAuthModule,
-				OrgID:           1,
-				OrgRoles:        map[int64]org.RoleType{1: tt.assertedRole},
-				ClientParams:    authn.ClientParams{SyncUser: true, SyncOrgRoles: tt.syncOrgRoles},
-			}
-
-			// userAuth is non-nil so no auth-connection creation is attempted.
-			err := s.updateUserAttributes(context.Background(), usr, id, &login.UserAuth{})
-			require.NoError(t, err)
-
-			if tt.wantUpdateRole == nil {
-				if captured != nil {
-					assert.Nil(t, captured.OrgRole, "OrgRole must not be set on the update command")
-				}
-				return
-			}
-
-			require.NotNil(t, captured, "an update should have been issued")
-			require.NotNil(t, captured.OrgRole)
-			assert.Equal(t, *tt.wantUpdateRole, *captured.OrgRole)
-		})
-	}
-}
-
-// Pins: id.Groups ← usr.TeamUIDs; id.ExternalGroups preserved.
-func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
-	usr := &user.SignedInUser{
-		UserID:   42,
-		UserUID:  "uid-42",
-		Login:    "alice",
-		TeamUIDs: []string{"team-uid-1", "team-uid-2"},
-	}
-
-	id := &authn.Identity{
-		ExternalGroups: []string{"ldap-admins", "ldap-devs"},
-	}
-
-	syncSignedInUserToIdentity(usr, id)
-
-	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, id.Groups,
-		"Groups must be populated from usr.TeamUIDs")
-	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, id.ExternalGroups,
-		"ExternalGroups (set by the auth client) must not be clobbered by the user-sync hook")
-}
-
-func TestMergeExternalAuthInfo(t *testing.T) {
-	authProxy := &authn.Identity{AuthenticatedBy: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}
-
-	t.Run("returns no change when identity has no auth module", func(t *testing.T) {
-		existing := []user.ExternalAuthInfo{{Module: login.LDAPAuthModule, AuthID: "x"}}
-		got, changed := mergeExternalAuthInfo(existing, &authn.Identity{})
-		assert.False(t, changed)
-		assert.Equal(t, existing, got)
-	})
-
-	t.Run("does not record internal auth modules", func(t *testing.T) {
-		for _, module := range []string{
-			login.PasswordAuthModule,
-			login.APIKeyAuthModule,
-			login.ExtendedJWTModule,
-			login.RenderModule,
-		} {
-			got, changed := mergeExternalAuthInfo(nil, &authn.Identity{AuthenticatedBy: module, AuthID: "1"})
-			assert.False(t, changed, "module %q must not be recorded", module)
-			assert.Nil(t, got, "module %q must not be recorded", module)
-		}
-	})
-
-	t.Run("appends a new connection", func(t *testing.T) {
-		got, changed := mergeExternalAuthInfo(nil, authProxy)
-		assert.True(t, changed)
-		assert.Equal(t, []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}, got)
-	})
-
-	t.Run("preserves connections from other modules", func(t *testing.T) {
-		existing := []user.ExternalAuthInfo{{Module: login.LDAPAuthModule, AuthID: "ldap-id"}}
-		got, changed := mergeExternalAuthInfo(existing, authProxy)
-		assert.True(t, changed)
-		assert.Equal(t, []user.ExternalAuthInfo{
-			{Module: login.LDAPAuthModule, AuthID: "ldap-id"},
-			{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"},
-		}, got)
-		assert.Len(t, existing, 1, "input slice must not be mutated")
-	})
-
-	t.Run("updates an existing connection for the same module", func(t *testing.T) {
-		existing := []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "old", ExternalUID: "old-uid"}}
-		got, changed := mergeExternalAuthInfo(existing, authProxy)
-		assert.True(t, changed)
-		assert.Equal(t, []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}, got)
-	})
-
-	t.Run("returns no change when the connection already matches", func(t *testing.T) {
-		existing := []user.ExternalAuthInfo{{Module: login.AuthProxyAuthModule, AuthID: "jdoe", ExternalUID: "ext-1"}}
-		got, changed := mergeExternalAuthInfo(existing, authProxy)
-		assert.False(t, changed)
-		assert.Equal(t, existing, got)
-	})
-}
-
-func TestUserSync_SyncUserHook_PopulatesExternalAuthInfo(t *testing.T) {
-	email := "proxyuser@example.com"
-	loginName := "proxyuser"
-	wantEntry := user.ExternalAuthInfo{Module: login.AuthProxyAuthModule, AuthID: "proxyuser", ExternalUID: "ext-1"}
-
-	newIdentity := func() *authn.Identity {
-		return &authn.Identity{
-			Login:           loginName,
-			Email:           email,
-			Name:            "Proxy User",
-			AuthID:          "proxyuser",
-			ExternalUID:     "ext-1",
-			AuthenticatedBy: login.AuthProxyAuthModule,
-			ClientParams: authn.ClientParams{
-				SyncUser:     true,
-				AllowSignUp:  true,
-				LookUpParams: login.UserLookupParams{Email: &email, Login: &loginName},
-			},
-		}
-	}
-
-	tests := []struct {
-		name                    string
-		kubernetesUsersRedirect bool
-		dualWriterMode          grafanarest.DualWriterMode
-		existing                *user.User
-		wantCreateInfo          []user.ExternalAuthInfo
-		wantUpdateInfo          []user.ExternalAuthInfo
-		wantUpdateCalled        bool
-	}{
-		{
-			name:                    "create seeds ExternalAuthInfo when flag enabled and unified storage",
-			kubernetesUsersRedirect: true,
-			dualWriterMode:          grafanarest.Mode5,
-			wantCreateInfo:          []user.ExternalAuthInfo{wantEntry},
-		},
-		{
-			name:                    "create omits ExternalAuthInfo when flag disabled",
-			kubernetesUsersRedirect: false,
-			dualWriterMode:          grafanarest.Mode5,
-			wantCreateInfo:          nil,
-		},
-		{
-			name:                    "create omits ExternalAuthInfo in legacy-read storage mode",
-			kubernetesUsersRedirect: true,
-			dualWriterMode:          grafanarest.Mode1,
-			wantCreateInfo:          nil,
-		},
-		{
-			name:                    "update adds ExternalAuthInfo when flag enabled and unified storage",
-			kubernetesUsersRedirect: true,
-			dualWriterMode:          grafanarest.Mode5,
-			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User"},
-			wantUpdateInfo:          []user.ExternalAuthInfo{wantEntry},
-			wantUpdateCalled:        true,
-		},
-		{
-			name:                    "update is skipped in legacy-read storage mode",
-			kubernetesUsersRedirect: true,
-			dualWriterMode:          grafanarest.Mode1,
-			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User"},
-			wantUpdateCalled:        false,
-		},
-		{
-			name:                    "update is skipped when the connection is already present",
-			kubernetesUsersRedirect: true,
-			dualWriterMode:          grafanarest.Mode5,
-			existing:                &user.User{ID: 1, Login: loginName, Email: email, Name: "Proxy User", ExternalAuthInfo: []user.ExternalAuthInfo{wantEntry}},
-			wantUpdateCalled:        false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
-				featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, tt.kubernetesUsersRedirect),
-			})
-
-			cfg := setting.NewCfg()
-			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
-				iamv0alpha1.UserResourceInfo.GroupResource().String(): {DualWriterMode: tt.dualWriterMode},
-			}
-
-			var createCmd *user.CreateUserCommand
-			var updateCmd *user.UpdateUserCommand
-			fakeUserSvc := &usertest.FakeUserService{
-				ExpectedUser: tt.existing,
-				CreateFn: func(_ context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-					createCmd = cmd
-					return &user.User{ID: 99, UID: "99", Login: cmd.Login, Email: cmd.Email, Name: cmd.Name, OrgID: 1}, nil
-				},
-				UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
-					updateCmd = cmd
-					return nil
-				},
-			}
-			if tt.existing == nil {
-				fakeUserSvc.ExpectedError = user.ErrUserNotFound
-			}
-
-			s := ProvideUserSync(
-				fakeUserSvc,
-				&authinfoimpl.OSSUserProtectionImpl{},
-				&authinfotest.FakeService{
-					ExpectedError:    user.ErrUserNotFound,
-					SetAuthInfoFn:    func(_ context.Context, _ *login.SetAuthInfoCommand) error { return nil },
-					UpdateAuthInfoFn: func(_ context.Context, _ *login.UpdateAuthInfoCommand) error { return nil },
-				},
-				&quotatest.FakeQuotaService{},
-				tracing.InitializeTracerForTest(),
-				featuremgmt.WithFeatures(),
-				cfg,
-				nil,
-			)
-
-			err := s.SyncUserHook(context.Background(), newIdentity(), nil)
-			require.NoError(t, err)
-
-			if tt.existing == nil {
-				require.NotNil(t, createCmd)
-				assert.Equal(t, tt.wantCreateInfo, createCmd.ExternalAuthInfo)
-				assert.Nil(t, updateCmd)
-				return
-			}
-
-			if tt.wantUpdateCalled {
-				require.NotNil(t, updateCmd)
-				assert.Equal(t, tt.wantUpdateInfo, updateCmd.ExternalAuthInfo)
-			} else {
-				assert.Nil(t, updateCmd, "update should not be called when nothing changed")
-			}
-		})
-	}
-}
-
-func TestUserSync_SyncUserHook_SkipsAnonymousIdentity(t *testing.T) {
-	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, true),
-	})
-
-	createCalled, updateCalled := false, false
-	fakeUserSvc := &usertest.FakeUserService{
-		CreateFn: func(_ context.Context, _ *user.CreateUserCommand) (*user.User, error) {
-			createCalled = true
-			return &user.User{}, nil
-		},
-		UpdateFn: func(_ context.Context, _ *user.UpdateUserCommand) error {
-			updateCalled = true
-			return nil
-		},
-	}
-
-	cfg := setting.NewCfg()
-	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
-		iamv0alpha1.UserResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
-	}
-
-	s := ProvideUserSync(
-		fakeUserSvc,
-		&authinfoimpl.OSSUserProtectionImpl{},
-		&authinfotest.FakeService{},
-		&quotatest.FakeQuotaService{},
-		tracing.InitializeTracerForTest(),
-		featuremgmt.WithFeatures(),
-		cfg,
-		nil,
-	)
-
-	// Mirrors the anonymous client identity: SyncUser is not set.
-	anon := &authn.Identity{Type: claims.TypeAnonymous, ClientParams: authn.ClientParams{SyncPermissions: true}}
-	err := s.SyncUserHook(context.Background(), anon, nil)
-
-	require.NoError(t, err)
-	assert.False(t, createCalled, "anonymous identity must not create a user")
-	assert.False(t, updateCalled, "anonymous identity must not update a user")
 }

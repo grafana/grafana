@@ -1,30 +1,17 @@
-import { css } from '@emotion/css';
-import { useEffect, useState, type JSX } from 'react';
-import { connect, type ConnectedProps } from 'react-redux';
+import pluralize from 'pluralize';
+import { useEffect, useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2, type OrgRole } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import {
-  ConfirmModal,
-  FilterInput,
-  LinkButton,
-  RadioButtonGroup,
-  InlineField,
-  EmptyState,
-  Box,
-  Stack,
-  useStyles2,
-  TextLink,
-} from '@grafana/ui';
+import { OrgRole } from '@grafana/data';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, InlineField, EmptyState, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { ServiceAccountStateFilter, type ServiceAccountDTO } from 'app/types/serviceaccount';
-import { type StoreState } from 'app/types/store';
+import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
+import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { ServiceAccountTable } from './ServiceAccountTable';
-import { CreateTokenModal, type ServiceAccountToken } from './components/CreateTokenModal';
+import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import {
   changeQuery,
   changePage,
@@ -91,7 +78,6 @@ export const ServiceAccountsListPageUnconnected = ({
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
   const [newToken, setNewToken] = useState('');
   const [currentServiceAccount, setCurrentServiceAccount] = useState<ServiceAccountDTO | null>(null);
-  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     fetchServiceAccounts({ withLoadingIndicator: true });
@@ -174,14 +160,20 @@ export const ServiceAccountsListPageUnconnected = ({
     setCurrentServiceAccount(null);
   };
 
+  const docsLink = (
+    <a
+      className="external-link"
+      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      documentation.
+    </a>
+  );
   const subTitle = (
     <span>
-      <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.sub-title">
-        Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
-        <TextLink href="https://grafana.com/docs/grafana/latest/administration/service-accounts/" external>
-          documentation.
-        </TextLink>
-      </Trans>
+      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
+      {docsLink}
     </span>
   );
 
@@ -193,25 +185,20 @@ export const ServiceAccountsListPageUnconnected = ({
         <>
           {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
             <LinkButton href="org/serviceaccounts/create" variant="primary">
-              <Trans i18nKey="serviceaccounts.service-accounts-list-page-unconnected.add-service-account">
-                Add service account
-              </Trans>
+              Add service account
             </LinkButton>
           )}
         </>
       }
     >
       <Page.Contents>
-        <Stack justifyContent="space-between" wrap="wrap">
+        <div className="page-action-bar">
           <InlineField grow>
             <FilterInput
-              className={styles.filterInput}
-              placeholder={t(
-                'serviceaccounts.service-accounts-list-page-unconnected.placeholder-search-service-account-by-name',
-                'Search service account by name'
-              )}
+              placeholder="Search service account by name"
               value={query}
               onChange={onQueryChange}
+              width={50}
             />
           </InlineField>
           <Box marginBottom={1}>
@@ -221,11 +208,11 @@ export const ServiceAccountsListPageUnconnected = ({
               value={serviceAccountStateFilter}
             />
           </Box>
-        </Stack>
+        </div>
         {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
           <EmptyState
             variant="not-found"
-            message={t('service-accounts.empty-state.message', 'No service accounts found')}
+            message={t('service-accounts.empty-state.message', 'No services accounts found')}
           />
         )}
         {!isLoading && noServiceAccountsCreated && (
@@ -269,47 +256,24 @@ export const ServiceAccountsListPageUnconnected = ({
           <>
             <ConfirmModal
               isOpen={isRemoveModalOpen}
-              body={
+              body={`Are you sure you want to delete '${currentServiceAccount.name}'${
                 !!currentServiceAccount.tokens
-                  ? t('serviceaccounts.service-accounts-list-page-unconnected.body-delete', '', {
-                      serviceAccountName: currentServiceAccount.name,
-                      count: currentServiceAccount.tokens,
-                      defaultValue_one:
-                        'Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?',
-                      defaultValue_other:
-                        'Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?',
-                    })
-                  : t(
-                      'serviceaccounts.service-accounts-list-page-unconnected.body-delete-with-tokens',
-                      'Are you sure you want to delete {{serviceAccountName}}?',
-                      {
-                        serviceAccountName: currentServiceAccount.name,
-                      }
-                    )
-              }
-              confirmText={t('serviceaccounts.service-accounts-list-page-unconnected.confirmText-delete', 'Delete')}
-              title={t(
-                'serviceaccounts.service-accounts-list-page-unconnected.title-delete-service-account',
-                'Delete service account'
-              )}
+                  ? ` and ${currentServiceAccount.tokens} accompanying ${pluralize(
+                      'token',
+                      currentServiceAccount.tokens
+                    )}`
+                  : ''
+              }?`}
+              confirmText="Delete"
+              title="Delete service account"
               onConfirm={onServiceAccountRemove}
               onDismiss={onRemoveModalClose}
             />
             <ConfirmModal
               isOpen={isDisableModalOpen}
-              title={t(
-                'serviceaccounts.service-accounts-list-page-unconnected.title-disable-service-account',
-                'Disable service account'
-              )}
-              body={t(
-                'serviceaccounts.service-accounts-list-page-unconnected.body-disable-service-account',
-                "Are you sure you want to disable '{{accountToDisable}}'?",
-                { accountToDisable: currentServiceAccount.name }
-              )}
-              confirmText={t(
-                'serviceaccounts.service-accounts-list-page-unconnected.confirmText-disable-service-account',
-                'Disable service account'
-              )}
+              title="Disable service account"
+              body={`Are you sure you want to disable '${currentServiceAccount.name}'?`}
+              confirmText="Disable service account"
               onConfirm={onDisable}
               onDismiss={onDisableModalClose}
             />
@@ -326,12 +290,6 @@ export const ServiceAccountsListPageUnconnected = ({
     </Page>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  filterInput: css({
-    maxWidth: theme.spacing(50),
-  }),
-});
 
 const ServiceAccountsListPage = connector(ServiceAccountsListPageUnconnected);
 export default ServiceAccountsListPage;

@@ -1,15 +1,14 @@
 import * as React from 'react';
 
-import { type PluginMeta } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { PluginMeta } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { updateAppPluginSettings } from '@grafana/runtime/unstable';
 import { Button } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
+import { updatePluginSettings } from '../../api';
 import { usePluginConfig } from '../../hooks/usePluginConfig';
-import { type CatalogPlugin } from '../../types';
+import { CatalogPlugin } from '../../types';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -26,11 +25,11 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
     return null;
   }
 
-  const { enabled, autoEnabled, jsonData } = pluginConfig?.meta;
+  const { enabled, jsonData } = pluginConfig?.meta;
 
   const enable = () => {
     reportInteraction('plugins_detail_enable_clicked', {
-      path: window.location.pathname,
+      path: location.pathname,
       plugin_id: plugin.id,
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
@@ -44,7 +43,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
 
   const disable = () => {
     reportInteraction('plugins_detail_disable_clicked', {
-      path: window.location.pathname,
+      path: location.pathname,
       plugin_id: plugin.id,
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
@@ -60,13 +59,13 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
     <>
       {!enabled && (
         <Button variant="primary" onClick={enable}>
-          <Trans i18nKey="plugins.get-started-with-app.enable">Enable</Trans>
+          Enable
         </Button>
       )}
 
-      {enabled && !autoEnabled && (
+      {enabled && (
         <Button variant="destructive" onClick={disable}>
-          <Trans i18nKey="plugins.get-started-with-app.disable">Disable</Trans>
+          Disable
         </Button>
       )}
     </>
@@ -75,7 +74,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
 
 const updatePluginSettingsAndReload = async (id: string, data: Partial<PluginMeta>) => {
   try {
-    await updateAppPluginSettings(id, data);
+    await updatePluginSettings(id, data);
 
     // Reloading the page as the plugin meta changes made here wouldn't be propagated throughout the app.
     window.location.reload();

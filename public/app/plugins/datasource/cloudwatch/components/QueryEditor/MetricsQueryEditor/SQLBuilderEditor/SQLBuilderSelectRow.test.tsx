@@ -1,15 +1,9 @@
 import { act, render, screen } from '@testing-library/react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import {
-  type CloudWatchMetricsQuery,
-  MetricEditorMode,
-  MetricQueryType,
-  type SQLExpression,
-  QueryEditorExpressionType,
-  QueryEditorPropertyType,
-} from '../../../../dataquery.gen';
-import { setupMockedDataSource } from '../../../../mocks/CloudWatchDataSource';
+import { setupMockedDataSource } from '../../../../__mocks__/CloudWatchDataSource';
+import { QueryEditorExpressionType, QueryEditorPropertyType } from '../../../../expressions';
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../../../types';
 
 import SQLBuilderSelectRow from './SQLBuilderSelectRow';
 

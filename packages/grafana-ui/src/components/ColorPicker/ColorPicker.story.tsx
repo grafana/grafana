@@ -1,15 +1,13 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { clearButtonStyles } from '../Button/Button';
+import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2, ColorPickerInput } from '@grafana/ui';
 
-import { ColorPicker } from './ColorPicker';
 import mdx from './ColorPicker.mdx';
 
 const meta: Meta<typeof ColorPicker> = {
-  title: 'Pickers/ColorPicker',
+  title: 'Pickers and Editors/ColorPicker',
   component: ColorPicker,
   parameters: {
     docs: {
@@ -21,7 +19,7 @@ const meta: Meta<typeof ColorPicker> = {
   },
   args: {
     enableNamedColors: false,
-    color: '#ee0000',
+    color: '#00ff00',
   },
 };
 
@@ -34,6 +32,24 @@ export const Basic: StoryFn<typeof ColorPicker> = ({ color, enableNamedColors })
         enableNamedColors={enableNamedColors}
         color={color}
         onChange={(color: string) => {
+          action('Color changed')(color);
+          updateArgs({ color });
+        }}
+      />
+    </div>
+  );
+};
+
+export const SeriesPicker: StoryFn<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
+  const [, updateArgs] = useArgs();
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+      <SeriesColorPicker
+        enableNamedColors={enableNamedColors}
+        yaxis={1}
+        onToggleAxis={() => {}}
+        color={color}
+        onChange={(color) => {
           action('Color changed')(color);
           updateArgs({ color });
         }}
@@ -60,13 +76,28 @@ export const CustomTrigger: StoryFn<typeof ColorPicker> = ({ color, enableNamedC
           ref={ref}
           onMouseLeave={hideColorPicker}
           onClick={showColorPicker}
-          style={{ color: 'white', backgroundColor: color, padding: '8px' }}
+          style={{ color }}
           className={clearButton}
         >
           Open color picker
         </button>
       )}
     </ColorPicker>
+  );
+};
+
+export const Input: StoryFn<typeof ColorPickerInput> = ({ color }) => {
+  const [, updateArgs] = useArgs();
+  return (
+    <div style={{ minHeight: '100dvh', display: 'grid', placeContent: 'center' }}>
+      <ColorPickerInput
+        value={color}
+        onChange={(color) => {
+          action('Color changed')(color);
+          updateArgs({ color });
+        }}
+      />
+    </div>
   );
 };
 

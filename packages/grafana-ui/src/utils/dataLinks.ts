@@ -1,6 +1,6 @@
-import { type LinkModel } from '@grafana/data';
+import { ActionModel, LinkModel } from '@grafana/data';
 
-import { type MenuItemProps } from '../components/Menu/MenuItem';
+import { MenuItemProps } from '../components/Menu/MenuItem';
 
 /**
  * Delays creating links until we need to open the ContextMenu
@@ -17,4 +17,20 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => MenuItem
       onClick: link.onClick,
     };
   });
+};
+
+export const actionModelToContextMenuItems: (actions: ActionModel[]) => MenuItemProps[] = (actions) => {
+  return actions.map((action) => {
+    return {
+      label: action.title,
+      ariaLabel: action.title,
+      icon: 'record-audio',
+      onClick: action.onClick,
+    };
+  });
+};
+
+export const isCompactUrl = (url: string) => {
+  const compactExploreUrlRegex = /\/explore\?.*&(left|right)=\[(.*\,){2,}(.*){1}\]/;
+  return compactExploreUrlRegex.test(url);
 };

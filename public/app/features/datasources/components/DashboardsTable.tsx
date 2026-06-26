@@ -1,6 +1,5 @@
-import { Trans, t } from '@grafana/i18n';
 import { Button, Icon } from '@grafana/ui';
-import { type PluginDashboard } from 'app/types/plugins';
+import { PluginDashboard } from 'app/types';
 
 export interface Props {
   // List of plugin dashboards to show in the table
@@ -11,7 +10,7 @@ export interface Props {
   onRemove: (dashboard: PluginDashboard) => void;
 }
 
-function DashboardsTable({ dashboards, onImport, onRemove }: Props) {
+export function DashboardsTable({ dashboards, onImport, onRemove }: Props) {
   function buttonText(dashboard: PluginDashboard) {
     return dashboard.revision !== dashboard.importedRevision ? 'Update' : 'Re-import';
   }
@@ -35,7 +34,7 @@ function DashboardsTable({ dashboards, onImport, onRemove }: Props) {
               <td style={{ textAlign: 'right' }}>
                 {!dashboard.imported ? (
                   <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, false)}>
-                    <Trans i18nKey="datasources.dashboards-table.import">Import</Trans>
+                    Import
                   </Button>
                 ) : (
                   <Button variant="secondary" size="sm" onClick={() => onImport(dashboard, true)}>
@@ -44,7 +43,7 @@ function DashboardsTable({ dashboards, onImport, onRemove }: Props) {
                 )}
                 {dashboard.imported && (
                   <Button
-                    aria-label={t('datasources.dashboards-table.aria-label-delete-dashboard', 'Delete dashboard')}
+                    aria-label="Delete dashboard"
                     icon="trash-alt"
                     variant="destructive"
                     size="sm"

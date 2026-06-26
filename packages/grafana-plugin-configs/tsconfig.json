@@ -1,16 +1,20 @@
 {
   "compilerOptions": {
-    "allowImportingTsExtensions": true,
-    "alwaysStrict": true,
-    "customConditions": ["@grafana-app/source"],
-    "declaration": false,
-    "ignoreDeprecations": "6.0",
     "jsx": "react-jsx",
-    "moduleResolution": "bundler",
-    "noEmit": true,
+    "alwaysStrict": true,
+    "declaration": false,
     "resolveJsonModule": true
   },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs",
+      "target": "es5",
+      "esModuleInterop": true
+    },
+    "transpileOnly": true
+  },
   "extends": "@grafana/tsconfig",
+
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
   "include": ["./types", "."]
 }

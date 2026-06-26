@@ -1,13 +1,11 @@
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type Settings, type UpdateSettingsQuery } from 'app/types/settings';
-import { type ThunkResult } from 'app/types/store';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, Settings, ThunkResult, UpdateSettingsQuery } from 'app/types';
 
-import { getAuthProviderStatus, getRegisteredAuthProviders } from '..';
-import { type AuthProviderStatus, type SettingsError, type SSOProvider } from '../types';
+import { getAuthProviderStatus, getRegisteredAuthProviders, SSOProvider } from '..';
+import { AuthProviderStatus, SettingsError } from '../types';
 
 import {
   loadingBegin,
@@ -39,13 +37,16 @@ export function loadSettings(showSpinner = true): ThunkResult<Promise<Settings>>
 
 export function loadProviders(provider = ''): ThunkResult<Promise<SSOProvider[]>> {
   return async (dispatch) => {
+    if (!config.featureToggles.ssoSettingsApi) {
+      return [];
+    }
     const result = await getBackendSrv().get(`/api/v1/sso-settings${provider ? `/${provider}` : ''}`);
     dispatch(providersLoaded(provider ? [result] : result));
     return result;
   };
 }
 
-function loadProviderStatuses(): ThunkResult<void> {
+export function loadProviderStatuses(): ThunkResult<void> {
   return async (dispatch) => {
     const registeredProviders = getRegisteredAuthProviders();
     const providerStatuses: Record<string, AuthProviderStatus> = {};

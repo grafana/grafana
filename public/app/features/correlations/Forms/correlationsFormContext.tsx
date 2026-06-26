@@ -1,14 +1,14 @@
-import { createContext, type PropsWithChildren, useContext } from 'react';
+import { createContext, PropsWithChildren, useContext } from 'react';
 
-import { type Correlation } from '../types';
+import { Correlation } from '../types';
 
-type CorrelationsFormContextData = {
+export type CorrelationsFormContextData = {
   loading: boolean;
   correlation?: Correlation;
   readOnly: boolean;
 };
 
-const CorrelationsFormContext = createContext<CorrelationsFormContextData>({
+export const CorrelationsFormContext = createContext<CorrelationsFormContextData>({
   loading: false,
   correlation: undefined,
   readOnly: false,

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { InfluxVersion } from '../../../types';
 
-import { ConfigEditor, type Props } from './ConfigEditor';
+import ConfigEditor, { Props } from './ConfigEditor';
 
 jest.mock('lodash', () => {
   const uniqueId = (prefix: string) => `${prefix}42`;
@@ -36,7 +36,6 @@ const setup = (optionOverrides?: object) => {
       jsonData: {
         httpMode: 'POST',
         timeInterval: '4',
-        showTagTime: '3h',
       },
       secureJsonFields: {},
       version: 1,

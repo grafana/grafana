@@ -1,4 +1,4 @@
-import { type PromBuildInfoResponse } from 'app/types/unified-alerting-dto';
+import { PromBuildInfoResponse } from 'app/types/unified-alerting-dto';
 
 export const buildInfoResponse: { prometheus: PromBuildInfoResponse; mimir: PromBuildInfoResponse } = {
   prometheus: {

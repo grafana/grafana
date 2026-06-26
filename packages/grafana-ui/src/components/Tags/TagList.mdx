@@ -1,12 +1,22 @@
-import { Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import { Preview, ArgTypes } from '@storybook/blocks';
 import { TagList } from './TagList';
-import * as TagListStories from './TagList.story';
 
 # TagList
 
 List of tags with predefined margins and positioning.
 
-<Canvas of={TagListStories.List} />
+<Preview>
+  <TagList tags={['datasource-test', 'gdev', 'mysql', 'mssql']} />
+</Preview>
+
+### Usage
+
+```jsx
+import { TagList } from '@grafana/ui';
+const tags = ['datasource-test', 'gdev', 'mysql', 'mssql'];
+
+<TagList tags={tags} onClick={(tag) => console.log(tag)} />;
+```
 
 ### Props
 

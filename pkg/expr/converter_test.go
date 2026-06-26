@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
-	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -22,7 +21,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 		cfg:      setting.NewCfg(),
 		features: featuremgmt.WithFeatures(),
 		tracer:   tracing.InitializeTracerForTest(),
-		metrics:  metrics.NewSSEMetrics(nil),
+		metrics:  newMetrics(nil),
 	}
 	converter := &ResultConverter{Features: s.features, Tracer: s.tracer}
 
@@ -35,13 +34,13 @@ func TestConvertDataFramesToResults(t *testing.T) {
 				frames := []*data.Frame{
 					data.NewFrame("test",
 						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-						data.NewField("test-value1", nil, []*float64{new(2.0)}),
-						data.NewField("test-value2", nil, []*float64{new(2.0)})),
+						data.NewField("test-value1", nil, []*float64{fp(2)}),
+						data.NewField("test-value2", nil, []*float64{fp(2)})),
 				}
 
 				for _, dtype := range supported {
 					t.Run(dtype, func(t *testing.T) {
-						resultType, res, err := converter.Convert(context.Background(), dtype, frames)
+						resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
 						require.NoError(t, err)
 						assert.Equal(t, "single frame series", resultType)
 						require.Len(t, res.Values, 2)
@@ -61,15 +60,15 @@ func TestConvertDataFramesToResults(t *testing.T) {
 				frames := []*data.Frame{
 					data.NewFrame("test-frame1",
 						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-						data.NewField("test-value1", nil, []*float64{new(2.0)})),
+						data.NewField("test-value1", nil, []*float64{fp(2)})),
 					data.NewFrame("test-frame2",
 						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-						data.NewField("test-value2", nil, []*float64{new(2.0)})),
+						data.NewField("test-value2", nil, []*float64{fp(2)})),
 				}
 
 				for _, dtype := range supported {
 					t.Run(dtype, func(t *testing.T) {
-						resultType, res, err := converter.Convert(context.Background(), dtype, frames)
+						resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
 						require.NoError(t, err)
 						assert.Equal(t, "multi frame series", resultType)
 						require.Len(t, res.Values, 2)
@@ -87,9 +86,9 @@ func TestConvertDataFramesToResults(t *testing.T) {
 			})
 		})
 		t.Run("should use fields DisplayNameFromDS when it is unique", func(t *testing.T) {
-			f1 := data.NewField("test-value1", nil, []*float64{new(2.0)})
+			f1 := data.NewField("test-value1", nil, []*float64{fp(2)})
 			f1.Config = &data.FieldConfig{DisplayNameFromDS: "test-value1"}
-			f2 := data.NewField("test-value2", nil, []*float64{new(2.0)})
+			f2 := data.NewField("test-value2", nil, []*float64{fp(2)})
 			f2.Config = &data.FieldConfig{DisplayNameFromDS: "test-value2"}
 			frames := []*data.Frame{
 				data.NewFrame("test-frame1",
@@ -102,7 +101,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 			for _, dtype := range supported {
 				t.Run(dtype, func(t *testing.T) {
-					resultType, res, err := converter.Convert(context.Background(), dtype, frames)
+					resultType, res, err := converter.Convert(context.Background(), dtype, frames, s.allowLongFrames)
 					require.NoError(t, err)
 					assert.Equal(t, "multi frame series", resultType)
 					require.Len(t, res.Values, 2)

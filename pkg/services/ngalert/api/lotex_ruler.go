@@ -7,12 +7,11 @@ import (
 	"net/http"
 	"net/url"
 
-	"go.yaml.in/yaml/v3"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -24,12 +23,20 @@ const (
 )
 
 const (
+	PrometheusDatasourceType = "prometheus"
+	LokiDatasourceType       = "loki"
+
 	mimirPrefix      = "/config/v1/rules"
 	prometheusPrefix = "/rules"
 	lokiPrefix       = "/api/prom/rules"
 
 	subtypeQuery = "subtype"
 )
+
+var dsTypeToRulerPrefix = map[string]string{
+	PrometheusDatasourceType: prometheusPrefix,
+	LokiDatasourceType:       lokiPrefix,
+}
 
 var subtypeToPrefix = map[string]string{
 	Prometheus: prometheusPrefix,
@@ -230,18 +237,13 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 		return "", fmt.Errorf("URL for this data source is empty")
 	}
 
-	var prefix string
-	switch {
-	case isPrometheusCompatible(ds.Type):
-		prefix = prometheusPrefix
-	case ds.Type == datasources.DS_LOKI:
-		prefix = lokiPrefix
-	default:
-		return "", unexpectedDatasourceTypeError(ds.Type, "loki, prometheus, amazon prometheus, azure prometheus")
+	prefix, ok := dsTypeToRulerPrefix[ds.Type]
+	if !ok {
+		return "", fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
 	}
 
 	// If the datasource is Loki, there's nothing else for us to do - it doesn't have subtypes.
-	if ds.Type == datasources.DS_LOKI {
+	if ds.Type == LokiDatasourceType {
 		return prefix, nil
 	}
 

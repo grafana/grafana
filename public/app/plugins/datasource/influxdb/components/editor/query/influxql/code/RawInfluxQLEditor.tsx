@@ -1,8 +1,8 @@
-import { useId, type JSX } from 'react';
+import { useId } from 'react';
 
 import { Stack, InlineField, Input, Select, TextArea } from '@grafana/ui';
 
-import { type InfluxQuery } from '../../../../../types';
+import { InfluxQuery } from '../../../../../types';
 import { DEFAULT_RESULT_FORMAT, RESULT_FORMATS } from '../../../constants';
 import { useShadowedState } from '../hooks/useShadowedState';
 

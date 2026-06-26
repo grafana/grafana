@@ -1,12 +1,12 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { BigValueGraphMode, type DataSourceRef } from '@grafana/schema';
+import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../../home/Insights';
-import { InsightsMenuButton } from '../../InsightsMenuButton';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getRulesPerGroupScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group", stack_id="${INSTANCE_ID}"})`
+    ? `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group", id="${INSTANCE_ID}"})`
     : `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group"})`;
 
   const query = new SceneQueryRunner({
@@ -36,7 +36,7 @@ export function getRulesPerGroupScene(datasource: DataSourceRef, panelTitle: str
         })
       )
       .setNoValue('0')
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

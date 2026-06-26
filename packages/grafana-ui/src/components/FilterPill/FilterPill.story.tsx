@@ -1,14 +1,14 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
-import { getAvailableIcons } from '../../types/icon';
+import { getAvailableIcons } from '../../types';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { FilterPill } from './FilterPill';
 import mdx from './FilterPill.mdx';
 
 const meta: Meta<typeof FilterPill> = {
-  title: 'Inputs/FilterPill',
+  title: 'General/FilterPill',
   component: FilterPill,
   argTypes: {
     icon: { control: { type: 'select', options: getAvailableIcons() } },

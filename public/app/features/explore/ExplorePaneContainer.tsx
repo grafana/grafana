@@ -4,8 +4,9 @@ import { connect } from 'react-redux';
 
 import { EventBusSrv, getTimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { CustomScrollbar } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
-import { type StoreState, useSelector } from 'app/types/store';
+import { StoreState, useSelector } from 'app/types';
 
 import Explore from './Explore';
 import ExploreQueryInspector from './ExploreQueryInspector';
@@ -44,21 +45,23 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   }, []);
 
   return (
-    <div className={containerStyles} ref={ref} data-testid={selectors.pages.Explore.General.container}>
-      <Explore
-        exploreId={exploreId}
-        eventBus={eventBus.current}
-        showQueryInspector={showQueryInspector}
-        setShowQueryInspector={setShowQueryInspector}
-      />
-      {showQueryInspector && (
-        <ExploreQueryInspector
+    <CustomScrollbar hideVerticalTrack>
+      <div className={containerStyles} ref={ref} data-testid={selectors.pages.Explore.General.container}>
+        <Explore
           exploreId={exploreId}
-          onClose={() => setShowQueryInspector(false)}
-          timeZone={getTimeZone()}
+          eventBus={eventBus.current}
+          showQueryInspector={showQueryInspector}
+          setShowQueryInspector={setShowQueryInspector}
         />
-      )}
-    </div>
+        {showQueryInspector && (
+          <ExploreQueryInspector
+            exploreId={exploreId}
+            onClose={() => setShowQueryInspector(false)}
+            timeZone={getTimeZone()}
+          />
+        )}
+      </div>
+    </CustomScrollbar>
   );
 }
 
@@ -74,7 +77,7 @@ export const ExplorePaneContainer = connector(ExplorePaneContainerUnconnected);
 
 function useStopQueries(exploreId: string) {
   const paneSelector = useMemo(() => getExploreItemSelector(exploreId), [exploreId]);
-  const paneRef = useRef<ReturnType<typeof paneSelector>>(undefined);
+  const paneRef = useRef<ReturnType<typeof paneSelector>>();
   paneRef.current = useSelector(paneSelector);
 
   useEffect(() => {

@@ -1,22 +1,22 @@
 import { cloneDeep } from 'lodash';
 
 import {
-  type FieldConfigSource,
-  type PanelModel,
-  type PanelTypeChangedHandler,
-  type Threshold,
+  FieldConfigSource,
+  PanelModel,
+  PanelTypeChangedHandler,
+  Threshold,
   ThresholdsMode,
   fieldReducers,
   FrameGeometrySourceMode,
-  type DataTransformerConfig,
+  DataTransformerConfig,
   DataTransformerID,
 } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
 
-import { defaultMarkersConfig, type MarkersConfig } from './layers/data/markersLayer';
-import { type Options, TooltipMode } from './panelcfg.gen';
+import { defaultMarkersConfig, MarkersConfig } from './layers/data/markersLayer';
 import { getMarkerAsPath } from './style/markers';
 import { defaultStyleConfig } from './style/types';
+import { Options, TooltipMode } from './types';
 import { MapCenterID } from './view';
 
 /**
@@ -39,7 +39,7 @@ export const mapPanelChangedHandler: PanelTypeChangedHandler = (panel, prevPlugi
   return {};
 };
 
-function worldmapToGeomapOptions(angular: any): {
+export function worldmapToGeomapOptions(angular: any): {
   fieldConfig: FieldConfigSource;
   options: Options;
   xform?: DataTransformerConfig;

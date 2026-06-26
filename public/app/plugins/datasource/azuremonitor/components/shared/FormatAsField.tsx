@@ -1,13 +1,11 @@
 import { useCallback, useMemo } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { type ResultFormat } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
-import { type FormatAsFieldProps } from '../../types/types';
+import { FormatAsFieldProps, ResultFormat } from '../../types';
 
 import { Field } from './Field';
 
@@ -46,16 +44,13 @@ const FormatAsField = ({
   });
 
   return (
-    <Field
-      label={t('components.format-as-field.label-format-as', 'Format as')}
-      data-testid={selectors.components.queryEditor.logsQueryEditor.formatSelection.input}
-    >
+    <Field label="Format as" data-testid={selectors.components.queryEditor.logsQueryEditor.formatSelection.input}>
       <Select
         inputId={`${inputId}-format-as-field`}
         value={resultFormat}
         onChange={handleChange}
         options={options}
-        width={20}
+        width={38}
       />
     </Field>
   );

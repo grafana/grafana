@@ -1,35 +1,21 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import {
-  alignTimeRangeCompareData,
-  DashboardCursorSync,
-  type DataFrame,
-  DataFrameType,
-  FieldType,
-  type PanelProps,
-  shouldAlignTimeCompare,
-  useDataLinksContext,
-} from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { PanelProps, DataFrameType, DashboardCursorSync } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
-import {
-  EventBusPlugin,
-  KeyboardPlugin,
-  TooltipPlugin2,
-  usePanelContext,
-  XAxisInteractionAreaPlugin,
-} from '@grafana/ui';
-import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { EventBusPlugin, KeyboardPlugin, TooltipPlugin2, usePanelContext } from '@grafana/ui';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
+import { config } from 'app/core/config';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
-import { type Options } from './panelcfg.gen';
-import { AnnotationsPlugin } from './plugins/AnnotationPlugin';
+import { Options } from './panelcfg.gen';
+import { AnnotationsPlugin2 } from './plugins/AnnotationsPlugin2';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
-import { getXAnnotationFrames } from './plugins/utils';
+import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getGroupedFilters, getTimezones, prepareGraphableFields } from './utils';
+import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -42,7 +28,6 @@ export const TimeSeriesPanel = ({
   options,
   fieldConfig,
   onChangeTimeRange,
-  onOptionsChange,
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
@@ -50,49 +35,16 @@ export const TimeSeriesPanel = ({
     sync,
     eventsScope,
     canAddAnnotations,
+    onThresholdsChange,
+    canEditThresholds,
+    showThresholds,
+    dataLinkPostProcessor,
     eventBus,
-    canExecuteActions,
-    getFiltersBasedOnGrouping,
-    onAddAdHocFilters,
   } = usePanelContext();
-
-  const { dataLinkPostProcessor } = useDataLinksContext();
-
-  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const { frames, compareDiffMs } = useMemo(() => {
-    let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
-    if (frames != null) {
-      let compareDiffMs: number[] = [0];
-
-      frames.forEach((frame: DataFrame) => {
-        const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
-
-        frame.fields.forEach((field) => {
-          if (field.type !== FieldType.time) {
-            compareDiffMs.push(diffMs);
-          }
-        });
-
-        if (diffMs !== 0) {
-          // Check if the compared frame needs time alignment
-          // Apply alignment when time ranges match (no shift applied yet)
-          const needsAlignment = shouldAlignTimeCompare(frame, frames, timeRange);
-
-          if (needsAlignment) {
-            alignTimeRangeCompareData(frame, diffMs, config.theme2);
-          }
-        }
-      });
-
-      return { frames, compareDiffMs };
-    }
-
-    return { frames };
-  }, [data.series, timeRange]);
-
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
@@ -108,13 +60,6 @@ export const TimeSeriesPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
-
-  const onPinnedToSidebarChange = useCallback(
-    (pinned: boolean) => {
-      onOptionsChange({ ...options, legend: { ...options.legend, facetedFilterPinned: pinned } });
-    },
-    [onOptionsChange, options]
-  );
 
   if (!frames || suggestions) {
     return (
@@ -143,17 +88,14 @@ export const TimeSeriesPanel = ({
       replaceVariables={replaceVariables}
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
-      annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
-      onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
         return (
           <>
-            {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
+            <KeyboardPlugin config={uplotConfig} />
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
             )}
-            <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
               <TooltipPlugin2
                 config={uplotConfig}
@@ -164,10 +106,7 @@ export const TimeSeriesPanel = ({
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
-                getDataLinks={(seriesIdx, dataIdx) =>
-                  alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
-                }
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();
@@ -181,14 +120,6 @@ export const TimeSeriesPanel = ({
                     dismiss();
                   };
 
-                  const groupingFilters =
-                    seriesIdx !== null &&
-                    (config.featureToggles.perPanelFiltering ||
-                      config.featureToggles.dashboardUnifiedDrilldownControls) &&
-                    getFiltersBasedOnGrouping
-                      ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
-                      : [];
-
                   return (
                     // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                     <TimeSeriesTooltip
@@ -197,31 +128,10 @@ export const TimeSeriesPanel = ({
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
-                      hideZeros={options.tooltip.hideZeros}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
                       replaceVariables={replaceVariables}
-                      dataLinks={dataLinks}
-                      filterByGroupedLabels={
-                        (config.featureToggles.perPanelFiltering ||
-                          config.featureToggles.dashboardUnifiedDrilldownControls) &&
-                        groupingFilters.length &&
-                        onAddAdHocFilters
-                          ? {
-                              onFilterForGroupedLabels: () => {
-                                onAddAdHocFilters(groupingFilters);
-                              },
-                              onFilterOutGroupedLabels: () => {
-                                onAddAdHocFilters(
-                                  groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                );
-                              },
-                            }
-                          : undefined
-                      }
-                      canExecuteActions={userCanExecuteActions}
-                      compareDiffMs={compareDiffMs}
                     />
                   );
                 }}
@@ -230,10 +140,8 @@ export const TimeSeriesPanel = ({
             )}
             {!isVerticallyOriented && (
               <>
-                <AnnotationsPlugin
-                  replaceVariables={replaceVariables}
-                  options={options.annotations}
-                  annotations={data.annotations}
+                <AnnotationsPlugin2
+                  annotations={data.annotations ?? []}
                   config={uplotConfig}
                   timeZone={timeZone}
                   newRange={newAnnotationRange}
@@ -246,8 +154,13 @@ export const TimeSeriesPanel = ({
                     config={uplotConfig}
                     exemplars={data.annotations}
                     timeZone={timeZone}
-                    maxHeight={options.tooltip.maxHeight}
-                    maxWidth={options.tooltip.maxWidth}
+                  />
+                )}
+                {((canEditThresholds && onThresholdsChange) || showThresholds) && (
+                  <ThresholdControlsPlugin
+                    config={uplotConfig}
+                    fieldConfig={fieldConfig}
+                    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
                   />
                 )}
               </>

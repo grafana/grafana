@@ -10,18 +10,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	setup := func() *testContext {
 		ctx := createTestContext(t)
 		maxInactiveLifetime, _ := time.ParseDuration("168h")
 		maxLifetime, _ := time.ParseDuration("720h")
-		ctx.cfg.LoginMaxInactiveLifetime = maxInactiveLifetime
-		ctx.cfg.LoginMaxLifetime = maxLifetime
+		ctx.tokenService.cfg.LoginMaxInactiveLifetime = maxInactiveLifetime
+		ctx.tokenService.cfg.LoginMaxLifetime = maxLifetime
 		return ctx
 	}
 
@@ -81,7 +82,9 @@ func TestIntegrationUserAuthTokenCleanup(t *testing.T) {
 }
 
 func TestIntegrationOrphanedExternalSessionsCleanup(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	setup := func() *testContext {
 		ctx := createTestContext(t)

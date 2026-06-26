@@ -1,4 +1,4 @@
-import { type FooterLink } from '../Footer/Footer';
+import { FooterLink } from '../Footer/Footer';
 
 export interface BrandingSettings {
   footerLinks?: FooterLink[] | null;

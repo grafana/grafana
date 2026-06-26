@@ -15,18 +15,12 @@ type ITestDB interface {
 	Logf(format string, args ...any)
 	Log(args ...any)
 	Cleanup(func())
-	Skipf(format string, args ...any)
 }
 
 type TestDB struct {
 	DriverName string
 	ConnStr    string
 	Path       string
-	Host       string
-	Port       string
-	User       string
-	Password   string
-	Database   string
 	Cleanup    func()
 }
 
@@ -97,17 +91,17 @@ func sqLite3TestDB() (*TestDB, error) {
 
 		ret.Cleanup = func() {
 			// remove db file if it exists
-			err := os.Remove(sqliteDb) // #nosec G703 -- path returned by os.CreateTemp, not user input
+			err := os.Remove(sqliteDb)
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				fmt.Printf("Error removing sqlite db file %s: %v\n", sqliteDb, err)
 			}
 
 			// remove wal & shm files if they exist
-			err = os.Remove(sqliteDb + "-wal") // #nosec G703 -- path returned by os.CreateTemp, not user input
+			err = os.Remove(sqliteDb + "-wal")
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				fmt.Printf("Error removing sqlite wal file %s: %v\n", sqliteDb+"-wal", err)
 			}
-			err = os.Remove(sqliteDb + "-shm") // #nosec G703 -- path returned by os.CreateTemp, not user input
+			err = os.Remove(sqliteDb + "-shm")
 			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				fmt.Printf("Error removing sqlite shm file %s: %v\n", sqliteDb+"-shm", err)
 			}
@@ -116,8 +110,7 @@ func sqLite3TestDB() (*TestDB, error) {
 
 	ret.ConnStr = "file:" + sqliteDb + "?cache=private&mode=rwc"
 	if os.Getenv("SQLITE_JOURNAL_MODE") != "false" {
-		// For tests, set sync=OFF for faster commits. Reference: https://www.sqlite.org/pragma.html#pragma_synchronous.
-		ret.ConnStr += "&_journal_mode=WAL&_synchronous=OFF"
+		ret.ConnStr += "&_journal_mode=WAL"
 	}
 	ret.Path = sqliteDb
 
@@ -133,15 +126,10 @@ func mySQLTestDB() (*TestDB, error) {
 	if port == "" {
 		port = "3306"
 	}
-	conn_str := fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_tests?collation=utf8mb4_unicode_ci&sql_mode=ANSI_QUOTES&parseTime=true", host, port)
+	conn_str := fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true", host, port)
 	return &TestDB{
 		DriverName: "mysql",
 		ConnStr:    conn_str,
-		Host:       host,
-		Port:       port,
-		User:       "grafana",
-		Password:   "password",
-		Database:   "grafana_tests",
 		Cleanup:    func() {},
 	}, nil
 }
@@ -159,11 +147,6 @@ func postgresTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "postgres",
 		ConnStr:    connStr,
-		Host:       host,
-		Port:       port,
-		User:       "grafanatest",
-		Password:   "grafanatest",
-		Database:   "grafanatest",
 		Cleanup:    func() {},
 	}, nil
 }

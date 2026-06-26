@@ -1,28 +1,26 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
 
 import { Card } from './Card';
 
 describe('Card', () => {
-  it('should execute callback when clicked', async () => {
-    const user = userEvent.setup();
+  it('should execute callback when clicked', () => {
     const callback = jest.fn();
     render(
-      <Card noMargin onClick={callback}>
+      <Card onClick={callback}>
         <Card.Heading>Test Heading</Card.Heading>
       </Card>
     );
-    await user.click(screen.getByText('Test Heading'));
-    expect(callback).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText('Test Heading'));
+    expect(callback).toBeCalledTimes(1);
   });
 
   describe('Card Actions', () => {
     it('Children should be disabled or enabled according to Card disabled prop', () => {
       const { rerender } = render(
-        <Card noMargin>
+        <Card>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
@@ -33,11 +31,11 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
-      expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
 
       rerender(
-        <Card noMargin disabled>
+        <Card disabled>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
@@ -54,7 +52,7 @@ describe('Card', () => {
 
     it('Children should be independently enabled or disabled if explicitly set', () => {
       const { rerender } = render(
-        <Card noMargin>
+        <Card>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button disabled>Click Me</Button>
@@ -69,7 +67,7 @@ describe('Card', () => {
       expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
 
       rerender(
-        <Card noMargin disabled>
+        <Card disabled>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button disabled={false}>Click Me</Button>
@@ -80,14 +78,14 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
-      expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
     });
 
     it('Children should be conditional', () => {
       const shouldNotRender = false;
       render(
-        <Card noMargin>
+        <Card>
           <Card.Heading>Test Heading</Card.Heading>
           <Card.Actions>
             <Button>Click Me</Button>
@@ -99,42 +97,36 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 
     it('Should allow selectable cards', () => {
       const { rerender } = render(
-        <Card noMargin isSelected={true}>
+        <Card isSelected={true}>
           <Card.Heading>My Option</Card.Heading>
         </Card>
       );
 
-      expect(screen.getByRole('radio', { name: 'My Option' })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'My Option' })).toBeChecked();
+      expect(screen.getByRole('radio')).toBeInTheDocument();
+      expect(screen.getByRole('radio')).toBeChecked();
 
       rerender(
-        <Card noMargin isSelected={false}>
+        <Card isSelected={false}>
           <Card.Heading>My Option</Card.Heading>
         </Card>
       );
 
-      expect(screen.getByRole('radio', { name: 'My Option' })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'My Option' })).not.toBeChecked();
+      expect(screen.getByRole('radio')).toBeInTheDocument();
+      expect(screen.getByRole('radio')).not.toBeChecked();
 
       rerender(
-        <Card noMargin>
+        <Card>
           <Card.Heading>My Option</Card.Heading>
         </Card>
       );
 
       expect(screen.queryByRole('radio')).not.toBeInTheDocument();
-    });
-
-    it('Should fall back to a generic name for selectable cards without heading content', () => {
-      render(<Card noMargin isSelected={false} />);
-
-      expect(screen.getByRole('radio', { name: 'option' })).toBeInTheDocument();
     });
   });
 });

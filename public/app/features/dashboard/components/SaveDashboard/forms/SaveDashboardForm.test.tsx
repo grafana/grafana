@@ -1,13 +1,12 @@
 import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { selectors } from '@grafana/e2e-selectors';
-import { type Dashboard } from '@grafana/schema';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Dashboard } from '@grafana/schema';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
-import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { SaveDashboardResponseDTO } from 'app/types';
 
-import { type SaveDashboardOptions } from '../types';
+import { SaveDashboardOptions } from '../types';
 
 import { SaveDashboardForm } from './SaveDashboardForm';
 
@@ -58,7 +57,7 @@ const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mo
     />
   );
 
-  const button = screen.getByRole('button', { name: 'Save' });
+  const button = screen.getByRole('button', { name: 'Dashboard settings Save Dashboard Modal Save button' });
   await userEvent.click(button);
 };
 describe('SaveDashboardAsForm', () => {
@@ -86,8 +85,12 @@ describe('SaveDashboardAsForm', () => {
         />
       );
 
-      const variablesCheckbox = screen.getByTestId(selectors.pages.SaveDashboardModal.saveVariables);
-      const timeRangeCheckbox = screen.getByTestId(selectors.pages.SaveDashboardModal.saveTimerange);
+      const variablesCheckbox = screen.getByRole('checkbox', {
+        name: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
+      });
+      const timeRangeCheckbox = screen.getByRole('checkbox', {
+        name: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
+      });
 
       expect(variablesCheckbox).toBeInTheDocument();
       expect(timeRangeCheckbox).toBeInTheDocument();
@@ -145,7 +148,7 @@ describe('SaveDashboardAsForm', () => {
         />
       );
 
-      const messageTextArea = screen.getByPlaceholderText('Add a note to describe your changes.');
+      const messageTextArea = screen.getByLabelText('message');
 
       expect(messageTextArea).toBeInTheDocument();
       expect(messageTextArea).toHaveTextContent('Saved draft');

@@ -15,7 +15,7 @@ const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
-class UnthemedTimeSeries extends Component<TimeSeriesProps> {
+export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   static contextType = PanelContextRoot;
   declare context: React.ContextType<typeof PanelContextRoot>;
 

@@ -2,24 +2,17 @@ import { includes } from 'lodash';
 import { memo } from 'react';
 
 import {
-  type DataFrame,
-  type Field,
+  DataFrame,
+  Field,
   FieldColorModeId,
   getFieldSeriesColor,
-  type ThresholdsConfig,
+  ThresholdsConfig,
   ThresholdsMode,
-  type ValueMapping,
+  ValueMapping,
 } from '@grafana/data';
-import { type VizLegendOptions, AxisPlacement } from '@grafana/schema';
-import {
-  type UPlotConfigBuilder,
-  VizLayout,
-  type VizLayoutLegendProps,
-  VizLegend,
-  type VizLegendItem,
-  useTheme2,
-} from '@grafana/ui';
-import { getDisplayValuesForCalcs } from '@grafana/ui/internal';
+import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
+import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
+import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 import { getThresholdItems, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
@@ -135,7 +128,6 @@ export const BarChartLegend = memo(
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
           isSortable={true}
-          overflow={vizLayoutLegendProps.overflow}
         />
       </VizLayout.Legend>
     );

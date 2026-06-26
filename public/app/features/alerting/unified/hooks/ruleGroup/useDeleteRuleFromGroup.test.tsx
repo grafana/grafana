@@ -2,21 +2,20 @@ import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import server from '@grafana/test-utils/server';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type CombinedRule } from 'app/types/unified-alerting';
+import { AccessControlAction } from 'app/types';
+import { CombinedRule } from 'app/types/unified-alerting';
 
-import { setupMswServer } from '../../mockApi';
+import server, { setupMswServer } from '../../mockApi';
 import {
-  grantUserPermissions,
   mockCombinedRule,
   mockGrafanaRulerRule,
+  mockRulerRuleGroup,
   mockRulerAlertingRule,
   mockRulerRecordingRule,
-  mockRulerRuleGroup,
+  grantUserPermissions,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
-import { setRulerRuleGroupHandler, setUpdateRulerRuleNamespaceHandler } from '../../mocks/server/configure';
+import { setUpdateRulerRuleNamespaceHandler, setRulerRuleGroupHandler } from '../../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from '../../mocks/server/handlers/mimirRuler';
 import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';

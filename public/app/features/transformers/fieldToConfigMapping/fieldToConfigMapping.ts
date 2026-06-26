@@ -2,20 +2,20 @@ import { isArray } from 'lodash';
 
 import {
   anyToNumber,
-  type DataFrame,
+  DataFrame,
   FieldColorModeId,
-  type FieldConfig,
+  FieldConfig,
   getFieldDisplayName,
   MappingType,
   ReducerID,
   ThresholdsMode,
-  type ValueMapping,
-  type ValueMap,
-  type Field,
+  ValueMapping,
+  ValueMap,
+  Field,
   FieldType,
 } from '@grafana/data';
 
-interface ThresholdArguments {
+export interface ThresholdArguments {
   color: string;
 }
 
@@ -169,7 +169,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
       if (!config.thresholds) {
         config.thresholds = {
           mode: ThresholdsMode.Absolute,
-          steps: [],
+          steps: [{ value: -Infinity, color: 'green' }],
         };
       }
 
@@ -251,7 +251,7 @@ function combineValueMappings(context: FieldToConfigContext): ValueMapping[] {
 
 let configMapHandlersIndex: Record<string, FieldToConfigMapHandler> | null = null;
 
-function getConfigMapHandlersIndex() {
+export function getConfigMapHandlersIndex() {
   if (configMapHandlersIndex === null) {
     configMapHandlersIndex = {};
     for (const def of configMapHandlers) {
@@ -272,6 +272,16 @@ function toNumericOrUndefined(value: unknown) {
   return numeric;
 }
 
+export function getConfigHandlerKeyForField(fieldName: string, mappings: FieldToConfigMapping[]) {
+  for (const map of mappings) {
+    if (fieldName === map.fieldName) {
+      return map.handlerKey;
+    }
+  }
+
+  return fieldName.toLowerCase();
+}
+
 export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler | null {
   if (!key) {
     return null;
@@ -280,7 +290,7 @@ export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler
   return getConfigMapHandlersIndex()[key];
 }
 
-interface EvaluatedMapping {
+export interface EvaluatedMapping {
   automatic: boolean;
   handler: FieldToConfigMapHandler | null;
   handlerArguments: HandlerArguments;

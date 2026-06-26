@@ -1,6 +1,5 @@
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
-import { AdvisorCheckProvider } from 'app/features/connections/hooks/useDatasourceAdvisorChecks';
 import DataSourceTabPage from 'app/features/datasources/components/DataSourceTabPage';
 
 export function EditDataSourcePage() {
@@ -9,9 +8,5 @@ export function EditDataSourcePage() {
   const params = new URLSearchParams(location.search);
   const pageId = params.get('page');
 
-  return (
-    <AdvisorCheckProvider>
-      <DataSourceTabPage uid={uid} pageId={pageId} />
-    </AdvisorCheckProvider>
-  );
+  return <DataSourceTabPage uid={uid} pageId={pageId} />;
 }

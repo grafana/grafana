@@ -1,6 +1,5 @@
-import { type FetchError } from '@grafana/runtime';
+import { FetchError } from '@grafana/runtime';
 import { getMessageFromError } from 'app/core/utils/errors';
-import { type LoadError } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 describe('errors functions', () => {
   let message: string | null;
@@ -52,20 +51,6 @@ describe('errors functions', () => {
 
     it('should return the stringified error', () => {
       expect(message).toBe('{"customError":"error string"}');
-    });
-  });
-
-  describe('when getMessageFromError gets an LoadError object', () => {
-    beforeEach(() => {
-      const error: LoadError = {
-        message: 'error string',
-        status: 500,
-      };
-      message = getMessageFromError(error);
-    });
-
-    it('should return the stringified error', () => {
-      expect(message).toBe('error string');
     });
   });
 });

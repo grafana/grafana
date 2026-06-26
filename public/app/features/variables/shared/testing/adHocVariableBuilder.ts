@@ -1,4 +1,4 @@
-import { type AdHocVariableFilter, type AdHocVariableModel, type DataSourceRef } from '@grafana/data';
+import { AdHocVariableFilter, AdHocVariableModel, DataSourceRef } from '@grafana/data';
 
 import { VariableBuilder } from './variableBuilder';
 

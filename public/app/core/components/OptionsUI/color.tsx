@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, useStyles2, ColorPicker, IconButton } from '@grafana/ui';
-import { ColorSwatch } from '@grafana/ui/internal';
+import { ColorSwatch } from '@grafana/ui/src/components/ColorPicker/ColorSwatch';
 
 export interface ColorValueEditorSettings {
   placeholder?: string;
@@ -14,8 +13,6 @@ export interface ColorValueEditorSettings {
 }
 
 interface Props {
-  id?: string;
-  'aria-describedby'?: string;
   value?: string;
   onChange: (value: string | undefined) => void;
   settings?: ColorValueEditorSettings;
@@ -27,14 +24,7 @@ interface Props {
 /**
  * @alpha
  * */
-export const ColorValueEditor = ({
-  value,
-  settings,
-  onChange,
-  details,
-  id,
-  'aria-describedby': ariaDescribedBy,
-}: Props) => {
+export const ColorValueEditor = ({ value, settings, onChange, details }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -46,8 +36,6 @@ export const ColorValueEditor = ({
             <div className={styles.colorPicker}>
               <ColorSwatch
                 ref={ref}
-                id={id}
-                aria-describedby={ariaDescribedBy}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
                 color={value ? theme.visualization.getColorByName(value) : theme.components.input.borderColor}
@@ -69,11 +57,7 @@ export const ColorValueEditor = ({
                   </span>
                 )}
                 {settings?.isClearable && value && (
-                  <IconButton
-                    name="times"
-                    onClick={() => onChange(undefined)}
-                    tooltip={t('options-ui.color.clear-tooltip', 'Clear settings')}
-                  />
+                  <IconButton name="times" onClick={() => onChange(undefined)} tooltip="Clear settings" />
                 )}
               </>
             )}
@@ -90,7 +74,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'pointer',
       color: theme.colors.text.primary,
       background: theme.components.input.background,
-      borderRadius: theme.shape.radius.default,
       padding: '3px',
       height: theme.v1.spacing.formInputHeight,
       border: `1px solid ${theme.components.input.borderColor}`,

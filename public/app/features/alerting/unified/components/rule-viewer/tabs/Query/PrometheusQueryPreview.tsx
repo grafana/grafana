@@ -1,4 +1,4 @@
-import { RawQuery } from '@grafana/plugin-ui';
+import { RawQuery } from '@grafana/experimental';
 import { promqlGrammar } from '@grafana/prometheus';
 
 interface Props {

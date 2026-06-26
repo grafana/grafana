@@ -14,7 +14,7 @@
 
 import { render, screen } from '@testing-library/react';
 
-import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
+import KeyValuesTable, { LinkValue, KeyValuesTableProps } from './KeyValuesTable';
 
 const data = [
   { key: 'span.kind', value: 'client' },
@@ -33,12 +33,14 @@ const setup = (propOverrides?: Partial<KeyValuesTableProps>) => {
 
 describe('LinkValue', () => {
   it('renders as expected', () => {
-    const link = {
-      title: 'titleValue',
-      path: 'hrefValue',
-    };
+    const title = 'titleValue';
+    const href = 'hrefValue';
     const childrenText = 'childrenTextValue';
-    render(<LinkValue link={link}>{childrenText}</LinkValue>);
+    render(
+      <LinkValue href={href} title={title}>
+        {childrenText}
+      </LinkValue>
+    );
     expect(screen.getByRole('link', { name: 'titleValue' })).toBeInTheDocument();
     expect(screen.getByText(/^childrenTextValue$/)).toBeInTheDocument();
   });
@@ -71,8 +73,8 @@ describe('KeyValuesTable tests', () => {
         array[i].key === 'span.kind'
           ? [
               {
-                path: `http://example.com/?kind=${encodeURIComponent(array[i].value)}`,
-                title: `More info about ${array[i].value}`,
+                url: `http://example.com/?kind=${encodeURIComponent(array[i].value)}`,
+                text: `More info about ${array[i].value}`,
               },
             ]
           : [],

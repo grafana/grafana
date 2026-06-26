@@ -1,8 +1,6 @@
 package schedule
 
 import (
-	"context"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -20,7 +18,7 @@ func (a *alertRule) newLoadedMetricsReader(rule *ngmodels.AlertRule) eval.Alerti
 }
 
 type RuleStateProvider interface {
-	GetStatesForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) []*state.State
+	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*state.State
 }
 
 // AlertingResultsFromRuleState implements eval.AlertingResultsReader that gets the data from state manager.
@@ -30,8 +28,8 @@ type AlertingResultsFromRuleState struct {
 	Rule    *ngmodels.AlertRule
 }
 
-func (n AlertingResultsFromRuleState) Read(ctx context.Context) map[data.Fingerprint]struct{} {
-	states := n.Manager.GetStatesForRuleUID(ctx, n.Rule.OrgID, n.Rule.UID)
+func (n AlertingResultsFromRuleState) Read() map[data.Fingerprint]struct{} {
+	states := n.Manager.GetStatesForRuleUID(n.Rule.OrgID, n.Rule.UID)
 
 	active := map[data.Fingerprint]struct{}{}
 	for _, st := range states {

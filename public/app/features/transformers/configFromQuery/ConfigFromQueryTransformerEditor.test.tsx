@@ -3,7 +3,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { toDataFrame, FieldType } from '@grafana/data';
 
-import { type Props, ConfigFromQueryTransformerEditor } from './ConfigFromQueryTransformerEditor';
+import { Props, ConfigFromQueryTransformerEditor } from './ConfigFromQueryTransformerEditor';
 
 beforeEach(() => {
   jest.clearAllMocks();

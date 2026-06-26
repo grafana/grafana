@@ -1,12 +1,8 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type DataFrame, DataLinksContext, type SplitOpen, type TimeRange } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { PanelChrome, useStyles2 } from '@grafana/ui';
-import { type StoreState, useSelector } from 'app/types/store';
-
-import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
+import { DataFrame, SplitOpen } from '@grafana/data';
+import { PanelChrome } from '@grafana/ui';
+import { StoreState, useSelector } from 'app/types';
 
 import { TraceView } from './TraceView';
 import { transformDataFrames } from './utils/transform';
@@ -16,54 +12,31 @@ interface Props {
   splitOpenFn: SplitOpen;
   exploreId: string;
   scrollElement?: Element;
-  timeRange: TimeRange;
 }
 
 export function TraceViewContainer(props: Props) {
   // At this point we only show single trace
   const frame = props.dataFrames[0];
-  const { dataFrames, splitOpenFn, exploreId, scrollElement, timeRange } = props;
+  const { dataFrames, splitOpenFn, exploreId, scrollElement } = props;
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const datasource = useSelector(
     (state: StoreState) => state.explore.panes[props.exploreId]?.datasourceInstance ?? undefined
   );
-  const styles = useStyles2(getStyles);
-  const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
 
   if (!traceProp) {
     return null;
   }
 
   return (
-    <div className={styles.container}>
-      <PanelChrome padding="none" title={t('explore.trace-view-container.title-trace', 'Trace')}>
-        <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
-          <TraceView
-            exploreId={exploreId}
-            dataFrames={dataFrames}
-            splitOpenFn={splitOpenFn}
-            scrollElement={scrollElement}
-            traceProp={traceProp}
-            datasource={datasource}
-            timeRange={timeRange}
-          />
-        </DataLinksContext.Provider>
-      </PanelChrome>
-    </div>
+    <PanelChrome padding="none" title="Trace">
+      <TraceView
+        exploreId={exploreId}
+        dataFrames={dataFrames}
+        splitOpenFn={splitOpenFn}
+        scrollElement={scrollElement}
+        traceProp={traceProp}
+        datasource={datasource}
+      />
+    </PanelChrome>
   );
 }
-
-const getStyles = () => {
-  return {
-    container: css({
-      '& > section': {
-        /* 
-        The PanelChrome component sets the overflow property, which prevents the Trace View header from 
-        being sticky by creating a new scrolling ancestor.
-        This is a workaround to allow the header to be sticky.
-        */
-        overflow: 'initial',
-      },
-    }),
-  };
-};

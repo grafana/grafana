@@ -17,7 +17,7 @@ export enum AppNotificationSeverity {
   Info = 'info',
 }
 
-enum AppNotificationTimeout {
+export enum AppNotificationTimeout {
   Success = 3000,
   Warning = 5000,
   Error = 7000,

@@ -1,4 +1,4 @@
-import { type DataSourceRef, type QueryVariableModel } from '@grafana/data';
+import { DataSourceRef, QueryVariableModel } from '@grafana/data';
 
 import { DatasourceVariableBuilder } from './datasourceVariableBuilder';
 

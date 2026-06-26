@@ -1,157 +1,152 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { usePrevious } from 'react-use';
 
-import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { PanelProps } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { config } from '@grafana/runtime';
 import {
   TooltipDisplayMode,
   TooltipPlugin2,
   UPlotChart,
+  UPlotConfigBuilder,
+  useTheme2,
   VizLayout,
   VizLegend,
-  type VizLegendItem,
-  getFieldDisplayLinks,
-  useStyles2,
-  useTheme2,
-  usePanelContext,
+  VizLegendItem,
 } from '@grafana/ui';
-import { getDisplayValuesForCalcs, TooltipHoverMode } from '@grafana/ui/internal';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
+import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 
 import { XYChartTooltip } from './XYChartTooltip';
-import { type Options } from './panelcfg.gen';
-import { prepConfig } from './scatter';
-import { prepSeries } from './utils';
+import { Options, SeriesMapping } from './panelcfg.gen';
+import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
+import { ScatterSeries } from './types';
 
-type Props2 = PanelProps<Options>;
+type Props = PanelProps<Options>;
 
-export const XYChartPanel2 = (props: Props2) => {
-  const styles = useStyles2(getStyles);
+export const XYChartPanel = (props: Props) => {
   const theme = useTheme2();
 
-  const { canExecuteActions } = usePanelContext();
-  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+  const [error, setError] = useState<string | undefined>();
+  const [series, setSeries] = useState<ScatterSeries[]>([]);
+  const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
+  const [facets, setFacets] = useState<FacetedData | undefined>();
 
-  let { mapping, series: mappedSeries } = props.options;
+  const oldOptions = usePrevious(props.options);
+  const oldData = usePrevious(props.data);
 
-  // regenerate series schema when mappings or data changes
-  let series = useMemo(
-    () => prepSeries(mapping, mappedSeries, props.data.series, props.fieldConfig),
+  const initSeries = useCallback(() => {
+    const getData = () => props.data.series;
+    const info: ScatterPanelInfo = prepScatter(props.options, getData, config.theme2);
+
+    if (info.error) {
+      setError(info.error);
+    } else if (info.series.length && props.data.series) {
+      setBuilder(info.builder);
+      setSeries(info.series);
+      setFacets(() => prepData(info, props.data.series));
+      setError(undefined);
+    }
+  }, [props.data.series, props.options]);
+
+  const initFacets = useCallback(() => {
+    setFacets(() => prepData({ error, series }, props.data.series));
+  }, [props.data.series, error, series]);
+
+  useEffect(() => {
+    if (oldOptions !== props.options || oldData?.structureRev !== props.data.structureRev) {
+      initSeries();
+    } else if (oldData?.series !== props.data.series) {
+      initFacets();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mapping, mappedSeries, props.data.series, props.fieldConfig]
-  );
+  }, [props]);
 
-  // if series changed due to mappings or data structure, re-init config & renderers
-  const { builder, warn, prepData } = useMemo(
-    () => {
-      return prepConfig(series, config.theme2);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mapping, mappedSeries, props.data.structureRev, props.fieldConfig, props.options.tooltip]
-  );
-
-  // generate data struct for uPlot mode: 2
-  const data = useMemo(
-    () => prepData(series),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [series]
-  );
-
-  // TODO: React.memo()
   const renderLegend = () => {
+    const items: VizLegendItem[] = [];
+
+    for (let si = 0; si < series.length; si++) {
+      const s = series[si];
+      const frame = s.frame(props.data.series);
+      if (frame) {
+        for (const item of s.legend()) {
+          const field = s.y(frame);
+          item.getDisplayValues = () => getDisplayValuesForCalcs(props.options.legend.calcs, field, theme);
+          item.disabled = !(s.show ?? true);
+
+          if (props.options.seriesMapping === SeriesMapping.Manual) {
+            item.label = props.options.series?.[si]?.name ?? `Series ${si + 1}`;
+          }
+
+          item.color = alpha(s.lineColor(frame) as string, 1);
+
+          items.push(item);
+        }
+      }
+    }
+
     if (!props.options.legend.showLegend) {
       return null;
     }
 
-    const items: VizLegendItem[] = [];
-
-    series.forEach((s, idx) => {
-      let yField = s.y.field;
-      let config = yField.config;
-      let custom = config.custom;
-
-      if (!custom.hideFrom?.legend) {
-        items.push({
-          yAxis: 1, // TODO: pull from y field
-          label: s.name.value,
-          color: colorManipulator.alpha(s.color.fixed ?? FALLBACK_COLOR, 1),
-          getItemKey: () => `${idx}-${s.name.value}`,
-          fieldName: yField.state?.displayName ?? yField.name,
-          disabled: yField.state?.hideFrom?.viz ?? false,
-          getDisplayValues: () => getDisplayValuesForCalcs(props.options.legend.calcs, yField, theme),
-        });
-      }
-    });
-
-    const { placement, displayMode, width, sortBy, sortDesc, overflow } = props.options.legend;
+    const legendStyle = {
+      flexStart: css({
+        div: {
+          justifyContent: 'flex-start',
+        },
+      }),
+    };
 
     return (
-      <VizLayout.Legend placement={placement} width={width}>
+      <VizLayout.Legend placement={props.options.legend.placement} width={props.options.legend.width}>
         <VizLegend
-          className={styles.legend}
-          placement={placement}
+          className={legendStyle.flexStart}
+          placement={props.options.legend.placement}
           items={items}
-          displayMode={displayMode}
-          sortBy={sortBy}
-          sortDesc={sortDesc}
-          isSortable={true}
-          overflow={overflow}
+          displayMode={props.options.legend.displayMode}
         />
       </VizLayout.Legend>
     );
   };
 
-  if (warn || !builder || !data) {
+  if (error || !builder || !facets) {
     return (
-      <PanelDataErrorView
-        panelId={props.id}
-        fieldConfig={props.fieldConfig}
-        data={props.data}
-        message={warn ?? t('xychart.errors.unknown', 'Unknown error')}
-      />
+      <div className="panel-empty">
+        <p>{error}</p>
+      </div>
     );
   }
 
   return (
-    <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
-      {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart config={builder} data={data} width={vizWidth} height={vizHeight}>
-          {props.options.tooltip.mode !== TooltipDisplayMode.None && (
-            <TooltipPlugin2
-              config={builder}
-              hoverMode={TooltipHoverMode.xyOne}
-              getDataLinks={(seriesIdx, dataIdx) => {
-                const xySeries = series[seriesIdx - 1];
-                return getFieldDisplayLinks(xySeries.y.field, dataIdx);
-              }}
-              render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync, dataLinks) => {
-                return (
-                  <XYChartTooltip
-                    data={props.data.series}
-                    dataIdxs={dataIdxs}
-                    xySeries={series}
-                    dismiss={dismiss}
-                    isPinned={isPinned}
-                    seriesIdx={seriesIdx!}
-                    replaceVariables={props.replaceVariables}
-                    dataLinks={dataLinks}
-                    canExecuteActions={userCanExecuteActions}
-                  />
-                );
-              }}
-              maxWidth={props.options.tooltip.maxWidth}
-            />
-          )}
-        </UPlotChart>
-      )}
-    </VizLayout>
+    <>
+      <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
+        {(vizWidth: number, vizHeight: number) => (
+          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight}>
+            {props.options.tooltip.mode !== TooltipDisplayMode.None && (
+              <TooltipPlugin2
+                config={builder}
+                hoverMode={TooltipHoverMode.xyOne}
+                render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
+                  return (
+                    <XYChartTooltip
+                      data={props.data.series}
+                      dataIdxs={dataIdxs}
+                      allSeries={series}
+                      dismiss={dismiss}
+                      isPinned={isPinned}
+                      options={props.options}
+                      seriesIdx={seriesIdx}
+                    />
+                  );
+                }}
+                maxWidth={props.options.tooltip.maxWidth}
+              />
+            )}
+          </UPlotChart>
+        )}
+      </VizLayout>
+    </>
   );
 };
-
-const getStyles = () => ({
-  legend: css({
-    div: {
-      justifyContent: 'flex-start',
-    },
-  }),
-});

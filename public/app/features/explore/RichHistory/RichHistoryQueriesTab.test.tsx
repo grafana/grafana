@@ -3,10 +3,10 @@ import * as reactUse from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
-import { RichHistoryQueriesTab, type RichHistoryQueriesTabProps } from './RichHistoryQueriesTab';
+import { RichHistoryQueriesTab, RichHistoryQueriesTabProps } from './RichHistoryQueriesTab';
 
 const asyncSpy = jest
   .spyOn(reactUse, 'useAsync')

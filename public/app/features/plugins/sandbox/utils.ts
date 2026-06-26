@@ -2,29 +2,37 @@ import { isNearMembraneProxy } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
 
-import { type LogContext } from '@grafana/faro-web-sdk';
-import { getLogger } from '@grafana/runtime/unstable';
+import { LogContext } from '@grafana/faro-web-sdk';
+import { config, createMonitoringLogger } from '@grafana/runtime';
 
-import { type SandboxedPluginObject } from './types';
+import { SandboxedPluginObject } from './types';
+
+const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
 export function isSandboxedPluginObject(value: unknown): value is SandboxedPluginObject {
   return !!value && typeof value === 'object' && value?.hasOwnProperty('plugin');
 }
+
+export function assertNever(x: never): never {
+  throw new Error(`Unexpected object: ${x}. This should never happen.`);
+}
+
+const sandboxLogger = createMonitoringLogger('sandbox', { monitorOnly: String(monitorOnly) });
 
 export function isReactClassComponent(obj: unknown): obj is React.Component {
   return obj instanceof React.Component;
 }
 
 export function logWarning(message: string, context?: LogContext) {
-  getLogger('sandbox').logWarning(message, context);
+  sandboxLogger.logWarning(message, context);
 }
 
 export function logError(error: Error, context?: LogContext) {
-  getLogger('sandbox').logError(error, context);
+  sandboxLogger.logError(error, context);
 }
 
 export function logInfo(message: string, context?: LogContext) {
-  getLogger('sandbox').logInfo(message, context);
+  sandboxLogger.logInfo(message, context);
 }
 
 function isRegex(value: unknown): value is RegExp {
@@ -72,37 +80,11 @@ export function unboxNearMembraneProxies(structure: unknown): unknown {
   if (Array.isArray(structure)) {
     return structure.map(unboxNearMembraneProxies);
   }
-
-  if (isTransferable(structure)) {
-    return structure;
-  }
-
   if (typeof structure === 'object') {
     return Object.keys(structure).reduce((acc, key) => {
       Reflect.set(acc, key, unboxNearMembraneProxies(Reflect.get(structure, key)));
       return acc;
     }, {});
   }
-
   return structure;
-}
-
-function isTransferable(structure: unknown): structure is Transferable {
-  // We should probably add all of the transferable types here.
-  // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects
-  // Note: Some of these APIs are not available in all browsers (e.g., MediaSourceHandle,
-  // AudioData, VideoFrame are not in Firefox), so we check for their existence first.
-  return (
-    structure instanceof ArrayBuffer ||
-    (typeof OffscreenCanvas !== 'undefined' && structure instanceof OffscreenCanvas) ||
-    structure instanceof ImageBitmap ||
-    structure instanceof MessagePort ||
-    (typeof MediaSourceHandle !== 'undefined' && structure instanceof MediaSourceHandle) ||
-    structure instanceof ReadableStream ||
-    structure instanceof WritableStream ||
-    structure instanceof TransformStream ||
-    (typeof AudioData !== 'undefined' && structure instanceof AudioData) ||
-    (typeof VideoFrame !== 'undefined' && structure instanceof VideoFrame) ||
-    structure instanceof RTCDataChannel
-  );
 }

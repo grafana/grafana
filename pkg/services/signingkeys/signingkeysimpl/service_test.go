@@ -12,11 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v3"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/signingkeys"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -35,14 +34,14 @@ ielIkb6/Ys51o7KjHxtANhPesw==
 -----END PRIVATE KEY-----`
 )
 
-func getPrivateKey(t *testing.T, svc *Service) string {
+func getPrivateKey(t *testing.T, svc *Service) []byte {
 	pemBlock, _ := pem.Decode([]byte(privateKeyPem))
 	privateKey, err := x509.ParsePKCS8PrivateKey(pemBlock.Bytes)
 	require.NoError(t, err)
 
 	bytes, err := svc.encodePrivateKey(context.Background(), privateKey.(*ecdsa.PrivateKey))
 	require.NoError(t, err)
-	return string(bytes)
+	return bytes
 }
 
 func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {

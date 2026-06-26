@@ -1,32 +1,23 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
 import { VizTooltipRow } from './VizTooltipRow';
-import { type VizTooltipItem } from './types';
+import { VizTooltipItem } from './types';
 
-/** @alpha */
-export interface VizTooltipHeaderProps {
-  /** The item to display in the header row, typically the x-axis or time value. */
+interface Props {
   item: VizTooltipItem;
-  /**
-   * Whether the tooltip is currently pinned (locked open by the user).
-   * When pinned, the label and value become clickable to copy their text to the clipboard.
-   * Defaults to `false`.
-   */
-  isPinned?: boolean;
+  isPinned: boolean;
 }
-
-/** @alpha */
-export const VizTooltipHeader = ({
-  item: { label, value, color, colorIndicator },
-  isPinned = false,
-}: VizTooltipHeaderProps) => {
+export const VizTooltipHeader = ({ item, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
+
+  const { label, value, color, colorIndicator } = item;
+
   return (
-    <div className={styles}>
+    <div className={styles.wrapper}>
       <VizTooltipRow
         label={label}
         value={value}
@@ -39,11 +30,12 @@ export const VizTooltipHeader = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) =>
-  css({
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
     padding: theme.spacing(1),
     lineHeight: 1,
-  });
+  }),
+});

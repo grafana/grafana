@@ -1,70 +1,31 @@
-import { type Field, FieldType, PanelPlugin, VisualizationSuggestionScore } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { GraphDrawStyle } from '@grafana/schema';
+import { Field, FieldType, PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { optsWithHideZeros } from '@grafana/ui/internal';
-import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { TrendPanel } from './TrendPanel';
-import { type FieldConfig, type Options } from './panelcfg.gen';
-import { prepSeries } from './utils';
+import { FieldConfig, Options } from './panelcfg.gen';
+import { TrendSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig, false))
   .setPanelOptions((builder) => {
-    const category = [t('trend.category-x-axis', 'X axis')];
+    const category = ['X axis'];
     builder.addFieldNamePicker({
       path: 'xField',
-      name: t('trend.name-x-field', 'X field'),
-      description: t('trend.description-x-field', 'An increasing numeric value'),
+      name: 'X field',
+      description: 'An increasing numeric value',
       category,
       defaultValue: undefined,
       settings: {
         isClearable: true,
-        placeholderText: t('trend.placeholder-x-field', 'First numeric value'),
+        placeholderText: 'First numeric value',
         filter: (field: Field) => field.type === FieldType.number,
       },
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, true, true);
+    commonOptionsBuilder.addTooltipOptions(builder, false, true);
+    commonOptionsBuilder.addLegendOptions(builder);
   })
-  .setSuggestionsSupplier((ds) => {
-    if (
-      !ds.rawFrames ||
-      ds.fieldCountByType(FieldType.number) < 2 ||
-      ds.rowCountTotal < 2 ||
-      ds.rowCountTotal < 2 ||
-      ds.frameCount > 1
-    ) {
-      return;
-    }
-
-    const info = prepSeries(ds.rawFrames);
-    if (info.warning || !info.frames) {
-      return;
-    }
-
-    return [
-      {
-        score: VisualizationSuggestionScore.Good,
-        fieldConfig: {
-          defaults: {
-            custom: {},
-          },
-          overrides: [],
-        },
-        cardOptions: {
-          previewModifier: (s) => {
-            s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
-            if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
-              s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
-            }
-          },
-        },
-      },
-    ];
-  });
+  .setSuggestionsSupplier(new TrendSuggestionsSupplier());
 //.setDataSupport({ annotations: true, alertStates: true });

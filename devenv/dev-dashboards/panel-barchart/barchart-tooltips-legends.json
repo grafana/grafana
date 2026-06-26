@@ -163,7 +163,8 @@
         {
           "csvContent": "id,column1,column2\r\nA,1,2",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "o63ntNT4z"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -171,7 +172,8 @@
         {
           "csvContent": "id,column1,column2\r\nB,2,1",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "o63ntNT4z"
           },
           "hide": false,
           "refId": "B",
@@ -316,7 +318,8 @@
         {
           "csvContent": "id,column1,column2\r\nA,1,2",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "o63ntNT4z"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -324,7 +327,8 @@
         {
           "csvContent": "id,column1,column2\r\nB,2,1",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "o63ntNT4z"
           },
           "hide": false,
           "refId": "B",
@@ -355,7 +359,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -449,7 +454,8 @@
         {
           "csvContent": "id, field 1, field 2, field 3\na, 20, 30, 40\nb, 40, 50, 60",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -460,7 +466,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -554,7 +561,8 @@
         {
           "csvContent": "id, field 1, field 2, field 3\na, 20, 30, 40\nb, 40, 50, 60",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -578,7 +586,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -637,7 +646,12 @@
         "fullHighlight": false,
         "groupWidth": 0.7,
         "legend": {
-          "calcs": ["min", "max", "mean", "variance"],
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "variance"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -656,7 +670,8 @@
         {
           "csvContent": "time, value\n100000, 10\n200000, 20\n300000, 30\n400000, 40",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -664,7 +679,8 @@
         {
           "csvContent": "time, value\n100000, 500\n200000, 220\n300000, 10\n400000, 550",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "B",
@@ -676,7 +692,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -768,7 +785,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "rawFrameContent": "[\n  {\n    \"fields\": [\n      {\n        \"name\": \"TimeGenerated\",\n        \"type\": \"time\",\n        \"values\": [\n          1687200000000\n        ]\n      },\n      {\n        \"name\": \"Total\",\n        \"type\": \"number\",\n        \"values\": [\n          200\n        ],\n        \"labels\": {\n          \"name\": \"A\"\n        }\n      },\n      {\n        \"name\": \"Total\",\n        \"type\": \"number\",\n        \"values\": [\n          180\n        ],\n        \"labels\": {\n          \"name\": \"B\"\n        }\n      }\n    ],\n    \"refId\": \"A\",\n    \"meta\": {\n      \"custom\": {\n        \"azureColumnTypes\": [\n          \"string\",\n          \"datetime\",\n          \"long\"\n        ]\n      },\n      \"type\": \"timeseries-wide\",\n      \"typeVersion\": [\n        0,\n        0\n      ]\n    }\n  }\n]",
           "refId": "A",
@@ -780,7 +798,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -856,7 +875,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "rawFrameContent": "[\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f141\"\n                },\n                \"values\": [\n                    11834,\n                    26195,\n                    27496,\n                    21417\n                ],\n                \"labels\": {\n                    \"nodename\": \"z141\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f131\"\n                },\n                \"values\": [\n                    11042,\n                    26646,\n                    27120,\n                    21508,\n                    19905\n                ],\n                \"labels\": {\n                    \"nodename\": \"t131\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f121\"\n                },\n                \"values\": [\n                    12095,\n                    26718,\n                    26907,\n                    21483,\n                    20272\n                ],\n                \"labels\": {\n                    \"nodename\": \"k121\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f111\"\n                },\n                \"values\": [\n                    641,\n                    1015,\n                    791,\n                    752,\n                    758\n                ],\n                \"labels\": {\n                    \"nodename\": \"n111\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f102\"\n                },\n                \"values\": [\n                    101,\n                    167,\n                    205,\n                    181,\n                    172\n                ],\n                \"labels\": {\n                    \"nodename\": \"a102\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"f100\"\n                },\n                \"values\": [\n                    89,\n                    137,\n                    161,\n                    150,\n                    161\n                ],\n                \"labels\": {\n                    \"nodename\": \"v100\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d141\"\n                },\n                \"values\": [\n                    11616,\n                    26053,\n                    25586,\n                    21023,\n                    19787\n                ],\n                \"labels\": {\n                    \"nodename\": \"e141\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d131\"\n                },\n                \"values\": [\n                    11682,\n                    26851,\n                    26985,\n                    22475,\n                    20852\n                ],\n                \"labels\": {\n                    \"nodename\": \"r131\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d121\"\n                },\n                \"values\": [\n                    12108,\n                    26379,\n                    25734,\n                    20145,\n                    19310\n                ],\n                \"labels\": {\n                    \"nodename\": \"g121\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d111\"\n                },\n                \"values\": [\n                    11254,\n                    24739,\n                    25406,\n                    21239,\n                    19426\n                ],\n                \"labels\": {\n                    \"nodename\": \"q111\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    },\n    {\n        \"fields\": [\n            {\n                \"name\": \"Time\",\n                \"type\": \"time\",\n                \"config\": {},\n                \"values\": [\n                    1700488200000,\n                    1700488500000,\n                    1700488800000,\n                    1700489100000,\n                    1700489400000\n                ]\n            },\n            {\n                \"name\": \"Value\",\n                \"type\": \"number\",\n                \"config\": {\n                    \"displayNameFromDS\": \"d102\"\n                },\n                \"values\": [\n                    168,\n                    264,\n                    288,\n                    283,\n                    267\n                ],\n                \"labels\": {\n                    \"nodename\": \"d102\"\n                }\n            }\n        ],\n        \"refId\": \"A\",\n        \"meta\": {\n            \"type\": \"timeseries-multi\",\n            \"typeVersion\": [\n                0,\n                0\n            ]\n        }\n    }\n]",
           "refId": "A",
@@ -865,69 +885,16 @@
       ],
       "title": "Stacking 100% unique legend field label when duplicate field names are present",
       "type": "barchart"
-    },
-    {
-      "datasource": { "type": "grafana-testdata-datasource" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
-            "lineWidth": 1
-          },
-          "links": [
-            {
-              "title": "Example Data Link",
-              "url": "https://grafana.com/docs"
-            }
-          ],
-          "actions": [
-            {
-              "fetch": {
-                "body": "{}",
-                "headers": [["Content-Type", "application/json"]],
-                "method": "GET",
-                "queryParams": [],
-                "url": "https://grafana.com"
-              },
-              "title": "Example Action",
-              "type": "fetch"
-            }
-          ]
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 23 },
-      "id": 12,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "orientation": "auto",
-        "showValue": "auto",
-        "stacking": "none",
-        "tooltip": { "mode": "single", "sort": "none" },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "targets": [
-        {
-          "csvContent": "month,sales\nJan,10\nFeb,20\nMar,15\nApr,25\nMay,18",
-          "refId": "A",
-          "scenarioId": "csv_content"
-        }
-      ],
-      "title": "With Data Link",
-      "type": "barchart"
     }
   ],
   "refresh": "",
   "schemaVersion": 39,
-  "tags": ["gdev", "panel-tests", "barchart", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "barchart",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },

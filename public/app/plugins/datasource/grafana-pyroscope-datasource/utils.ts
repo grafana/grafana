@@ -1,16 +1,7 @@
 import { invert } from 'lodash';
-import Prism, { type Grammar, Token } from 'prismjs';
+import Prism, { Grammar, Token } from 'prismjs';
 
-import { createAssistantContextItem } from '@grafana/assistant';
-import {
-  type AbstractLabelMatcher,
-  AbstractLabelOperator,
-  type DataFrame,
-  type DataQueryResponse,
-  type DataQueryRequest,
-} from '@grafana/data';
-
-import { type GrafanaPyroscopeDataQuery } from './dataquery.gen';
+import { AbstractLabelMatcher, AbstractLabelOperator } from '@grafana/data';
 
 export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLabelMatcher[] {
   const labelMatchers: AbstractLabelMatcher[] = [];
@@ -38,9 +29,6 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
           switch (currentToken.type) {
             case 'label-key':
               labelKey = getMaybeTokenStringContent(currentToken);
-              if (labelKey.startsWith('"') && labelKey.endsWith('"')) {
-                labelKey = labelKey.slice(1, -1).replace(/\\(.)/g, '$1');
-              }
               break;
             case 'label-value':
               labelValue = getMaybeTokenStringContent(currentToken);
@@ -59,23 +47,12 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
   return labelMatchers;
 }
 
-export function labelNameNeedsQuoting(name: string): boolean {
-  return !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
-}
-
-export function formatLabelName(name: string): string {
-  if (!labelNameNeedsQuoting(name)) {
-    return name;
-  }
-  return `"${name.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
-}
-
 export function toPromLikeExpr(labelMatchers: AbstractLabelMatcher[]): string {
   const expr = labelMatchers
     .map((selector: AbstractLabelMatcher) => {
       const operator = ToPromLikeMap[selector.operator];
       if (operator) {
-        return `${formatLabelName(selector.name)}${operator}"${selector.value}"`;
+        return `${selector.name}${operator}"${selector.value}"`;
       } else {
         return '';
       }
@@ -140,7 +117,7 @@ export const grammar: Grammar = {
         pattern: /#.*/,
       },
       'label-key': {
-        pattern: /(?:"(?:\\.|[^\\"])*"|[a-zA-Z_]\w*)(?=\s*(=|!=|=~|!~))/,
+        pattern: /[a-zA-Z_]\w*(?=\s*(=|!=|=~|!~))/,
         alias: 'attr-name',
         greedy: true,
       },
@@ -154,47 +131,3 @@ export const grammar: Grammar = {
   },
   punctuation: /[{}(),.]/,
 };
-
-export function enrichDataFrameWithAssistantContentMapper(
-  request: DataQueryRequest<GrafanaPyroscopeDataQuery>,
-  datasourceName: string
-) {
-  const validTargets = request.targets;
-  return (response: DataQueryResponse) => {
-    response.data = response.data.map((data: DataFrame) => {
-      if (data.meta?.preferredVisualisationType !== 'flamegraph') {
-        return data;
-      }
-
-      const query = validTargets.find((target) => target.refId === data.refId);
-      if (!query || !query.datasource?.uid || !query.datasource?.type) {
-        return data;
-      }
-
-      const context = [
-        createAssistantContextItem('datasource', {
-          datasourceUid: query.datasource.uid,
-        }),
-        createAssistantContextItem('structured', {
-          title: 'Analyze Flame Graph',
-          data: {
-            start: request.range.from.toISOString(),
-            end: request.range.to.toISOString(),
-            profile_type_id: query.profileTypeId,
-            label_selector: query.labelSelector,
-            operation: 'execute',
-            ...(query.profileIdSelector?.length ? { profile_id: query.profileIdSelector } : {}),
-          },
-        }),
-      ];
-
-      data.meta = data.meta || {};
-      data.meta.custom = {
-        ...data.meta.custom,
-        assistantContext: context,
-      };
-      return data;
-    });
-    return response;
-  };
-}

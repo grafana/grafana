@@ -1,10 +1,10 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { UsersIndicator } from './UsersIndicator';
 import mdx from './UsersIndicator.mdx';
 
 const meta: Meta<typeof UsersIndicator> = {
-  title: 'Iconography/UsersIndicator',
+  title: 'General/UsersIndicator',
   component: UsersIndicator,
   argTypes: { limit: { control: { type: 'number', min: 1 } } },
   parameters: {

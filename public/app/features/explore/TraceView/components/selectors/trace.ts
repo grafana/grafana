@@ -14,12 +14,12 @@
 
 import { createSelector } from 'reselect';
 
-import { type TraceResponse, type TraceSpanData } from '../types/trace';
+import { TraceResponse, TraceSpanData } from '../types/trace';
 import TreeNode from '../utils/TreeNode';
 
 import { getSpanId } from './span';
 
-const getTraceSpans = (trace: TraceResponse) => trace.spans;
+export const getTraceSpans = (trace: TraceResponse) => trace.spans;
 
 export const getTraceSpansAsMap = createSelector(getTraceSpans, (spans) =>
   spans.reduce((map, span: TraceSpanData) => map.set(getSpanId(span), span), new Map())

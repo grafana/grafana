@@ -1,13 +1,8 @@
-import { type FetchError, type FetchResponse } from 'src/services';
+import { FetchError, FetchResponse } from 'src/services';
 
-import { type DataQuery, toDataFrameDTO, type DataFrame } from '@grafana/data';
+import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
 
-import {
-  type BackendDataSourceResponse,
-  cachedResponseNotice,
-  toDataQueryResponse,
-  toTestingStatus,
-} from './queryResponse';
+import { BackendDataSourceResponse, cachedResponseNotice, toDataQueryResponse, toTestingStatus } from './queryResponse';
 
 const resp = {
   data: {

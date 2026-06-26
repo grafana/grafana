@@ -1,7 +1,7 @@
-import { type ExploreQueryParams } from 'app/types/explore';
+import { ExploreQueryParams } from 'app/types';
 
 import { v0Migrator } from './migrators/v0';
-import { type ExploreURLV1, v1Migrator } from './migrators/v1';
+import { ExploreURLV1, v1Migrator } from './migrators/v1';
 
 type ExploreURL = ExploreURLV1;
 

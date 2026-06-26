@@ -1,50 +1,14 @@
-import type { InternalLoggerLevel } from '@grafana/faro-core';
+import { SystemDateFormatSettings } from '../datetime/formats';
+import { MapLayerOptions } from '../geo/layer';
+import { GrafanaTheme2 } from '../themes/types';
 
-import { type SystemDateFormatSettings } from '../datetime/formats';
-import { type MapLayerOptions } from '../geo/layer';
-
-import { type DataSourceInstanceSettings } from './datasource';
-import { type FeatureToggles } from './featureToggles.gen';
-import { type IconName } from './icon';
-import { type NavLinkDTO } from './navModel';
-import { type OrgRole } from './orgs';
-import { type PanelPluginMeta } from './panel';
-import { type AngularMeta, type PluginDependencies, type PluginExtensions, type PluginLoadingStrategy } from './plugin';
-import { type TimeOption } from './time';
-
-export interface AzureSettings {
-  cloud?: string;
-  clouds?: AzureCloudInfo[];
-  managedIdentityEnabled: boolean;
-  workloadIdentityEnabled: boolean;
-  userIdentityEnabled: boolean;
-  userIdentityFallbackCredentialsEnabled: boolean;
-  azureEntraPasswordCredentialsEnabled: boolean;
-}
-
-export interface AzureCloudInfo {
-  name: string;
-  displayName: string;
-}
-
-export type AppPluginConfig = {
-  id: string;
-  path: string;
-  version: string;
-  preload: boolean;
-  /** @deprecated it will be removed in a future release */
-  angular: AngularMeta;
-  loadingStrategy: PluginLoadingStrategy;
-  dependencies: PluginDependencies;
-  extensions: PluginExtensions;
-  moduleHash?: string;
-  buildMode?: string;
-};
-
-export type PreinstalledPlugin = {
-  id: string;
-  version: string;
-};
+import { DataSourceInstanceSettings } from './datasource';
+import { FeatureToggles } from './featureToggles.gen';
+import { IconName } from './icon';
+import { NavLinkDTO } from './navModel';
+import { OrgRole } from './orgs';
+import { PanelPluginMeta } from './panel';
+import { GrafanaTheme } from './theme';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -56,9 +20,7 @@ export interface BuildInfo {
   version: string;
   // Version to show in the UI instead of version
   versionString: string;
-  buildstamp: number;
   commit: string;
-  commitShort: string;
   env: string;
   edition: GrafanaEdition;
   latestVersion: string;
@@ -73,7 +35,6 @@ export enum GrafanaEdition {
   OpenSource = 'Open Source',
   Pro = 'Pro',
   Enterprise = 'Enterprise',
-  Trial = 'Cloud Trial',
 }
 
 /**
@@ -98,32 +59,18 @@ export interface LicenseInfo {
 export interface GrafanaJavascriptAgentConfig {
   enabled: boolean;
   customEndpoint: string;
-  apiKey: string;
-  internalLoggerLevel: InternalLoggerLevel;
-
+  errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
-  performanceInstrumentalizationEnabled: boolean;
-  cspInstrumentalizationEnabled: boolean;
+  webVitalsInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
-}
-
-interface UnifiedAlertingStateHistoryConfig {
-  backend?: string;
-  primary?: string;
-  prometheusTargetDatasourceUID?: string;
-  prometheusMetricName?: string;
+  apiKey: string;
 }
 
 export interface UnifiedAlertingConfig {
   minInterval: string;
-  stateHistory?: UnifiedAlertingStateHistoryConfig;
-  recordingRulesEnabled?: boolean;
-  defaultRecordingRulesTargetDatasourceUID?: string;
-
-  // Backward compatibility aliases - deprecated
-  /** @deprecated Use stateHistory.backend instead */
+  // will be undefined if alerStateHistory is not enabled
   alertStateHistoryBackend?: string;
-  /** @deprecated Use stateHistory.primary instead */
+  // will be undefined if implementation is not "multiple"
   alertStateHistoryPrimary?: string;
 }
 
@@ -157,9 +104,8 @@ export interface AnalyticsSettings {
   intercomIdentifier?: string;
 }
 
-/**
- * Current user info included in bootData.
- * Corresponds to `window.grafanaBootData.user`
+/** Current user info included in bootData
+ *
  * @internal
  */
 export interface CurrentUserDTO {
@@ -179,6 +125,7 @@ export interface CurrentUserDTO {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
+  locale: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
@@ -188,9 +135,8 @@ export interface CurrentUserDTO {
   lightTheme: boolean;
 }
 
-/**
- * Contains essential user and config info.
- * Corresponds to `window.grafanaBootData`.
+/** Contains essential user and config info
+ *
  * @internal
  */
 export interface BootData {
@@ -201,46 +147,32 @@ export interface BootData {
     light: string;
     dark: string;
   };
-
-  /** @deprecated Internal Grafana usage only. This property will be removed at any time. */
-  _femt?: boolean;
 }
 
 /**
  * Describes all the different Grafana configuration values available for an instance.
- * Corresponds to `window.grafanaBootData.settings`.
- * If you want to access these values, use the `config` object from `@grafana/runtime`.
+ *
  * @internal
  */
 export interface GrafanaConfig {
-  publicDashboardAccessToken: string;
+  publicDashboardAccessToken?: string;
   publicDashboardsEnabled: boolean;
   snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
-  /** @deprecated it will be removed in a future release */
   panels: { [key: string]: PanelPluginMeta };
-  /** @deprecated it will be removed in a future release */
-  apps: Record<string, AppPluginConfig>;
   auth: AuthSettings;
   minRefreshInterval: string;
-  appUrl: string;
   appSubUrl: string;
-  azure: AzureSettings;
-  jwtHeaderName: string;
-  jwtUrlLogin: boolean;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
+  newPanelTitle: string;
+  bootData: BootData;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
-  externalUserMngAnalytics: boolean;
-  externalUserMngAnalyticsParams: string;
-  externalUserUpgradeLinkUrl: string;
   allowOrgCreate: boolean;
   disableLoginForm: boolean;
   defaultDatasource: string;
-  defaultDatasourceManageAlertsUIToggle: boolean;
-  defaultAllowRecordingRulesTargetAlertsUIToggle: boolean;
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   queryHistoryEnabled: boolean;
@@ -251,9 +183,6 @@ export interface GrafanaConfig {
   sigV4AuthEnabled: boolean;
   azureAuthEnabled: boolean;
   samlEnabled: boolean;
-  samlName: string;
-  awsAllowedAuthProviders: string[];
-  awsAssumeRoleProvided: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
@@ -264,93 +193,60 @@ export interface GrafanaConfig {
   passwordHint: string;
   loginError?: string;
   viewersCanEdit: boolean;
+  editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   trustedTypesDefaultPolicyEnabled: boolean;
   cspReportOnlyEnabled: boolean;
-  expressionsEnabled: boolean;
   liveEnabled: boolean;
-  liveMessageSizeLimit: number;
-  liveNamespaced: boolean; // use namespace or orgId prefix
+  /** @deprecated Use `theme2` instead. */
+  theme: GrafanaTheme;
+  theme2: GrafanaTheme2;
   anonymousEnabled: boolean;
-  anonymousDeviceLimit: number;
+  anonymousDeviceLimit: number | undefined;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
-  geomapDefaultBaseLayerConfig?: MapLayerOptions;
-  geomapDisableCustomBaseLayer: boolean;
+  customTheme?: any;
+  geomapDefaultBaseLayer?: MapLayerOptions;
+  geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
+  angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
+  secretsManagerPluginEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;
-  enableFrontendSandboxForPlugins: string[];
-  googleAnalyticsId: string;
-  googleAnalytics4Id: string;
+  googleAnalyticsId: string | undefined;
+  googleAnalytics4Id: string | undefined;
   googleAnalytics4SendManualPageViews: boolean;
-  rudderstackWriteKey: string;
-  rudderstackDataPlaneUrl: string;
-  rudderstackSdkUrl: string;
-  rudderstackV3SdkUrl: string;
-  rudderstackConfigUrl: string;
-  rudderstackIntegrationsUrl: string;
-  applicationInsightsConnectionString: string;
-  applicationInsightsEndpointUrl: string;
-  applicationInsightsAutoRouteTracking: boolean;
-  analyticsConsoleReporting: boolean;
-  rendererAvailable: boolean;
-  rendererVersion: string;
-  rendererDefaultImageWidth: number;
-  rendererDefaultImageHeight: number;
-  rendererDefaultImageScale: number;
-  dashboardPerformanceMetrics: string[];
-  panelSeriesLimit: number;
+  rudderstackWriteKey: string | undefined;
+  rudderstackDataPlaneUrl: string | undefined;
+  rudderstackSdkUrl: string | undefined;
+  rudderstackConfigUrl: string | undefined;
+  rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
-  sharedWithMeFolderUID: string;
-  rootFolderUID: string;
-  localFileSystemAvailable: boolean;
-  cloudMigrationEnabled: boolean;
-  cloudMigrationIsTarget: boolean;
-  cloudMigrationPollIntervalMs: number;
-  pluginCatalogURL: string;
-  pluginAdminEnabled: boolean;
-  pluginAdminExternalManageEnabled: boolean;
-  pluginCatalogHiddenPlugins: string[];
-  pluginCatalogManagedPlugins: string[];
-  pluginCatalogPreinstalledPlugins: PreinstalledPlugin[];
-  pluginCatalogPreinstalledAutoUpdate?: boolean;
-  pluginsCDNBaseURL: string;
-  tokenExpirationDayLimit: number;
-  listDashboardScopesEndpoint: string;
-  listScopesEndpoint: string;
-  reportingStaticContext: Record<string, string>;
-  exploreDefaultTimeOffset: string;
-  exploreHideLogsDownload: boolean;
-  quickRanges?: TimeOption[];
-  pluginRestrictedAPIsAllowList?: Record<string, string[]>;
-  pluginRestrictedAPIsBlockList?: Record<string, string[]>;
-  openFeatureContext: Record<string, unknown>;
+  sharedWithMeFolderUID?: string;
+  rootFolderUID?: string;
+  localFileSystemAvailable?: boolean;
+  cloudMigrationIsTarget?: boolean;
+  listDashboardScopesEndpoint?: string;
+  listScopesEndpoint?: string;
+  reportingStaticContext?: Record<string, string>;
+  exploreDefaultTimeOffset?: string;
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
-  caching: {
-    enabled: boolean;
-    defaultTTLMs: number;
-  };
-  recordedQueries: {
-    enabled: boolean;
-  };
-  reporting: {
-    enabled: boolean;
-  };
-  analytics: {
-    enabled: boolean;
-    presenceIndicatorsDisabled?: boolean;
-  };
+
+  /**
+   * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
+   * Grafana's supported language.
+   */
+  language: string | undefined;
 }
 
-interface SqlConnectionLimits {
+export interface SqlConnectionLimits {
   maxOpenConns: number;
   maxIdleConns: number;
   connMaxLifetime: number;
@@ -383,5 +279,4 @@ export interface AuthSettings {
 
   disableLogin?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
-  disableSignoutMenu?: boolean;
 }

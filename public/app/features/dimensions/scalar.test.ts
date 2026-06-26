@@ -1,4 +1,4 @@
-import { type DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { ScalarDimensionMode } from '@grafana/schema';
 
 import { getScalarDimension } from './scalar';

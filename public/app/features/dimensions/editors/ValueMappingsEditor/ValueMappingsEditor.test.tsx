@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import { MappingType, type StandardEditorsRegistryItem } from '@grafana/data';
+import { MappingType, StandardEditorsRegistryItem } from '@grafana/data';
 
-import { ValueMappingsEditor, type Props } from './ValueMappingsEditor';
+import { ValueMappingsEditor, Props } from './ValueMappingsEditor';
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {

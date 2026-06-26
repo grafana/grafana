@@ -1,6 +1,4 @@
-import type { JSX } from 'react';
-
-import { AccessoryButton } from '@grafana/plugin-ui';
+import { AccessoryButton } from '@grafana/experimental';
 
 import { DEFAULT_POLICY } from '../../../../../types';
 import { toSelectableValue } from '../utils/toSelectableValue';

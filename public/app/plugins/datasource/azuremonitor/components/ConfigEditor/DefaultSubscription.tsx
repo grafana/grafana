@@ -1,15 +1,14 @@
 import { useEffect, useReducer } from 'react';
 
-import { type AzureCredentials, isCredentialsComplete } from '@grafana/azure-sdk';
-import { type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { Select, Button, Field } from '@grafana/ui';
 
+import { isCredentialsComplete } from '../../credentials';
 import { selectors } from '../../e2e/selectors';
-import { type AzureMonitorDataSourceJsonData } from '../../types/types';
+import { AzureCredentials, AzureDataSourceJsonData } from '../../types';
 
 export interface Props {
-  options: AzureMonitorDataSourceJsonData;
+  options: AzureDataSourceJsonData;
   credentials: AzureCredentials;
   getSubscriptions?: () => Promise<SelectableValue[]>;
   subscriptions: Array<SelectableValue<string>>;
@@ -39,7 +38,7 @@ export const DefaultSubscription = (props: Props) => {
     let canceled = false;
     getSubscriptions().then((result) => {
       if (!canceled) {
-        updateSubscriptions(result, Boolean(loadSubscriptionsClicked));
+        updateSubscriptions(result, loadSubscriptionsClicked);
       }
     });
     return () => {
@@ -70,14 +69,14 @@ export const DefaultSubscription = (props: Props) => {
   return (
     <>
       <Field
-        label={t('components.default-subscription.label-default-subscription', 'Default Subscription')}
+        label="Default Subscription"
         data-testid={selectors.components.configEditor.defaultSubscription.input}
         htmlFor="default-subscription"
       >
         <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
           <Select
             inputId="default-subscription"
-            aria-label={t('components.default-subscription.aria-label-default-subscription', 'Default Subscription')}
+            aria-label="Default Subscription"
             value={
               options.subscriptionId ? subscriptions.find((opt) => opt.value === options.subscriptionId) : undefined
             }
@@ -92,7 +91,7 @@ export const DefaultSubscription = (props: Props) => {
             disabled={!hasRequiredFields || disabled}
             data-testid={selectors.components.configEditor.loadSubscriptions.button}
           >
-            <Trans i18nKey="components.default-subscription.load-subscriptions">Load Subscriptions</Trans>
+            Load Subscriptions
           </Button>
         </div>
       </Field>

@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTupleLabelsToLabels(t *testing.T) {
@@ -65,7 +64,7 @@ func BenchmarkTupleLabelsToLabels(b *testing.B) {
 
 		b.ResetTimer()
 
-		for range b.N {
+		for i := 0; i < b.N; i++ {
 			_, err := tupleLablesToLabels(in)
 			if err != nil {
 				b.Fatal(err)
@@ -83,7 +82,7 @@ func BenchmarkTupleLabelsToLabels(b *testing.B) {
 
 		b.ResetTimer()
 
-		for range b.N {
+		for i := 0; i < b.N; i++ {
 			_, err := tupleLablesToLabels(in)
 			if err != nil {
 				b.Fatal(err)
@@ -101,7 +100,7 @@ func BenchmarkTupleLabelsToLabels(b *testing.B) {
 
 		b.ResetTimer()
 
-		for range b.N {
+		for i := 0; i < b.N; i++ {
 			_, err := tupleLablesToLabels(in)
 			if err != nil {
 				b.Fatal(err)
@@ -119,7 +118,7 @@ func BenchmarkTupleLabelsToLabels(b *testing.B) {
 
 		b.ResetTimer()
 
-		for range b.N {
+		for i := 0; i < b.N; i++ {
 			_, err := tupleLablesToLabels(in)
 			if err != nil {
 				b.Fatal(err)

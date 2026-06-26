@@ -1,4 +1,4 @@
-import { type FieldConfigSource, type PanelModel } from '@grafana/data';
+import { FieldConfigSource, PanelModel } from '@grafana/data';
 import { StackingMode } from '@grafana/ui';
 
 import { changeToHistogramPanelMigrationHandler } from './migrations';

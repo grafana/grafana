@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { type AlertingQueryResponse } from 'app/features/alerting/unified/state/AlertingQueryRunner';
+import { AlertingQueryResponse } from 'app/features/alerting/unified/state/AlertingQueryRunner';
 
 const defaultPostEvalResponse = {
   results: {},

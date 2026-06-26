@@ -1,22 +1,22 @@
-import { merge, type Observable, ReplaySubject, Subject, Subscription, timer, type Unsubscribable } from 'rxjs';
+import { merge, Observable, ReplaySubject, Subject, Subscription, timer, Unsubscribable } from 'rxjs';
 import { finalize, map, mapTo, mergeAll, reduce, share, takeUntil } from 'rxjs/operators';
 
-import { type AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 
-import { getTimeSrv, type TimeSrv } from '../../../dashboard/services/TimeSrv';
-import { type DashboardModel } from '../../../dashboard/state/DashboardModel';
+import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
+import { DashboardModel } from '../../../dashboard/state';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { SnapshotWorker } from './SnapshotWorker';
 import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 import {
-  type DashboardQueryRunner,
-  type DashboardQueryRunnerOptions,
-  type DashboardQueryRunnerResult,
-  type DashboardQueryRunnerWorker,
-  type DashboardQueryRunnerWorkerResult,
+  DashboardQueryRunner,
+  DashboardQueryRunnerOptions,
+  DashboardQueryRunnerResult,
+  DashboardQueryRunnerWorker,
+  DashboardQueryRunnerWorkerResult,
 } from './types';
 import { getAnnotationsByPanelId } from './utils';
 
@@ -43,7 +43,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.executeRun = this.executeRun.bind(this);
     this.results = new ReplaySubject<DashboardQueryRunnerWorkerResult>(1);
     this.runs = new Subject<DashboardQueryRunnerOptions>();
-    this.cancellationStream = new Subject<AnnotationQuery>();
+    this.cancellationStream = new Subject<any>();
     this.runsSubscription = this.runs.subscribe((options) => this.executeRun(options));
     this.eventsSubscription = dashboard.events.subscribe(RefreshEvent, (event) => {
       this.run({ dashboard: this.dashboard, range: this.timeSrv.timeRange() });

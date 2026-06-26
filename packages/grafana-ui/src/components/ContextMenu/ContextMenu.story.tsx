@@ -1,17 +1,16 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { action } from '@storybook/addon-actions';
+import { StoryFn, Meta } from '@storybook/react';
 import * as React from 'react';
-import { action } from 'storybook/actions';
 
 import { IconButton } from '../IconButton/IconButton';
-import { Text } from '../Text/Text';
 
-import { ContextMenu, type ContextMenuProps } from './ContextMenu';
+import { ContextMenu, ContextMenuProps } from './ContextMenu';
 import mdx from './ContextMenu.mdx';
 import { renderMenuItems } from './ContextMenuStoryHelper';
-import { WithContextMenu, type WithContextMenuProps } from './WithContextMenu';
+import { WithContextMenu, WithContextMenuProps } from './WithContextMenu';
 
 const meta: Meta<typeof ContextMenu> = {
-  title: 'Overlays/ContextMenu',
+  title: 'General/ContextMenu',
   component: ContextMenu,
   parameters: {
     docs: {
@@ -30,7 +29,7 @@ const meta: Meta<typeof ContextMenu> = {
 };
 
 const renderHeader = (): React.ReactNode => {
-  return <Text variant="h6">Menu</Text>;
+  return <h6>Menu</h6>;
 };
 
 export const Basic: StoryFn<typeof ContextMenu> = (args: ContextMenuProps) => {

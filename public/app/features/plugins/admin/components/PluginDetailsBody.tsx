@@ -1,35 +1,31 @@
 import { css } from '@emotion/css';
-import { useMemo, type JSX } from 'react';
+import { useMemo } from 'react';
 
-import { type GrafanaTheme2, PluginContextProvider, type UrlQueryMap, PluginType } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { type PageInfoItem } from '@grafana/runtime/internal';
-import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
+import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
-import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { type CatalogPlugin, type Permission, PluginTabIds, type Screenshots } from '../types';
+import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
-import Connections from './ConnectionsTab';
+import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
 
 type Props = {
   plugin: CatalogPlugin;
-  info: PageInfoItem[];
   queryParams: UrlQueryMap;
   pageId: string;
-  showDetails: boolean;
 };
 
 type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission, Permission[T]>;
 
-export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
+export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const { value: pluginConfig } = usePluginConfig(plugin);
+
   const columns: Array<Column<Permission>> = useMemo(
     () => [
       {
@@ -46,10 +42,6 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     []
   );
 
-  const buildScreenshotPath = (plugin: CatalogPlugin, path: string) => {
-    return `${config.appSubUrl}/api/gnet/plugins/${plugin.id}/versions/${plugin.latestVersion}/images/${path}`;
-  };
-
   if (pageId === PluginTabIds.OVERVIEW) {
     return (
       <div
@@ -64,7 +56,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div>
-        <VersionList plugin={plugin} />
+        <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
       </div>
     );
   }
@@ -73,30 +65,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return <Changelog sanitizedHTML={plugin?.details?.changelog} />;
   }
 
-  if (pageId === PluginTabIds.SCREENSHOTS && plugin?.details?.screenshots?.length) {
-    const carouselImages: Screenshots[] = plugin?.details?.screenshots.map((screenshot) => ({
-      path: buildScreenshotPath(plugin, screenshot.path),
-      name: screenshot.name,
-    }));
-    return <Carousel images={carouselImages} />;
-  }
-
-  if (pageId === PluginTabIds.PLUGINDETAILS && showDetails) {
+  if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
     return (
       <div>
-        <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} width={'auto'} />
-      </div>
-    );
-  }
-
-  if (
-    config.featureToggles.datasourceConnectionsTab &&
-    pageId === PluginTabIds.DATASOURCE_CONNECTIONS &&
-    plugin.type === PluginType.datasource
-  ) {
-    return (
-      <div>
-        <Connections plugin={plugin} />
+        <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
       </div>
     );
   }
@@ -114,10 +86,8 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return (
       <>
         <Stack direction="row">
-          <Trans i18nKey="plugins.plugin-details-body.needs-service-account" values={{ pluginName: plugin.name }}>
-            The {'{{pluginName}}'} plugin needs a service account to be able to query Grafana. The following list
-            contains the permissions available to the service account:
-          </Trans>
+          The {plugin.name} plugin needs a service account to be able to query Grafana. The following list contains the
+          permissions available to the service account:
         </Stack>
         <InteractiveTable
           columns={columns}
@@ -144,7 +114,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
 
   if (pageId === PluginTabIds.USAGE && pluginConfig) {
     return (
-      <div className={styles.wrap}>
+      <div>
         <PluginUsage plugin={pluginConfig?.meta} />
       </div>
     );
@@ -160,22 +130,12 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
 
   return (
     <div>
-<<<<<<< HEAD
       <p>Страница не найдена.</p>
-=======
-      <p>
-        <Trans i18nKey="plugins.plugin-details-body.page-not-found">Page not found.</Trans>
-      </p>
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrap: css({
-    width: '100%',
-    height: '65vh',
-  }),
+export const getStyles = (theme: GrafanaTheme2) => ({
   readme: css({
     '& img': {
       maxWidth: '100%',
@@ -193,7 +153,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         margin: theme.spacing(1, 0),
       },
       code: {
-        whiteSpace: 'pre-wrap',
+        'white-space': 'pre-wrap',
       },
     },
     a: {

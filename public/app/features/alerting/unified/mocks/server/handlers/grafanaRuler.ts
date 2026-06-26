@@ -1,42 +1,51 @@
-import { produce } from 'immer';
-import { HttpResponse, delay, http } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 
 export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
 
 import {
-  type GrafanaAlertState,
-  type GrafanaRuleDefinition,
-  type PromRulesResponse,
-  type RulerGrafanaRuleDTO,
-  type RulerRuleGroupDTO,
-  type RulerRulesConfigDTO,
-  isGrafanaAlertState,
+  PromRulesResponse,
+  RulerGrafanaRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
 } from '../../../../../../types/unified-alerting-dto';
-import { type GrafanaGroupUpdatedResponse } from '../../../api/alertRuleModel';
-import { getHistoryResponse, grafanaRulerRule, rulerTestDb, time_0, time_plus_30 } from '../../grafanaRulerApi';
-import { type HandlerOptions } from '../configure';
+import { AlertGroupUpdated } from '../../../api/alertRuleApi';
+import {
+  getHistoryResponse,
+  grafanaRulerRule,
+  namespaceByUid,
+  namespaces,
+  time_0,
+  time_plus_30,
+} from '../../grafanaRulerApi';
+import { HandlerOptions } from '../configure';
+export const rulerRulesHandler = () => {
+  return http.get(`/api/ruler/grafana/api/v1/rules`, () => {
+    const response = Object.entries(namespaces).reduce<RulerRulesConfigDTO>((acc, [namespaceUid, groups]) => {
+      acc[namespaceByUid[namespaceUid].name] = groups;
+      return acc;
+    }, {});
 
-const rulerRulesHandler = () => {
-  return http.get(`/api/ruler/grafana/api/v1/rules`, () =>
-    HttpResponse.json<RulerRulesConfigDTO>(rulerTestDb.getRulerConfig())
-  );
+    return HttpResponse.json<RulerRulesConfigDTO>(response);
+  });
 };
 
-const prometheusRulesHandler = () => {
+export const prometheusRulesHandler = () => {
   return http.get('/api/prometheus/grafana/api/v1/rules', () => {
     return HttpResponse.json<PromRulesResponse>({ status: 'success', data: { groups: [] } });
   });
 };
 
-const getRulerRuleNamespaceHandler = () =>
+export const getRulerRuleNamespaceHandler = () =>
   http.get<{ folderUid: string }>(`/api/ruler/grafana/api/v1/rules/:folderUid`, ({ params: { folderUid } }) => {
     // This mimic API response as closely as possible - Invalid folderUid returns 403
-    const namespace = rulerTestDb.getNamespace(folderUid);
+    const namespace = namespaces[folderUid];
     if (!namespace) {
       return new HttpResponse(null, { status: 403 });
     }
 
-    return HttpResponse.json<RulerRulesConfigDTO>(namespace);
+    return HttpResponse.json<RulerRulesConfigDTO>({
+      [namespaceByUid[folderUid].name]: namespaces[folderUid],
+    });
   });
 
 export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
@@ -54,12 +63,12 @@ export const updateRulerRuleNamespaceHandler = (options?: HandlerOptions) =>
 
     // This mimic API response as closely as possible.
     // Invalid folderUid returns 403 but invalid group will return 202 with empty list of rules
-    const namespace = rulerTestDb.getNamespace(folderUid);
+    const namespace = namespaces[folderUid];
     if (!namespace) {
       return new HttpResponse(null, { status: 403 });
     }
 
-    return HttpResponse.json<GrafanaGroupUpdatedResponse>({
+    return HttpResponse.json<AlertGroupUpdated>({
       message: 'updated',
       updated: [],
     });
@@ -73,17 +82,14 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
         return options.response;
       }
 
-      const namespace = rulerTestDb.getNamespace(folderUid);
+      // This mimic API response as closely as possible.
+      // Invalid folderUid returns 403 but invalid group will return 202 with empty list of rules
+      const namespace = namespaces[folderUid];
       if (!namespace) {
         return new HttpResponse(null, { status: 403 });
       }
 
-      const matchingGroup = rulerTestDb.getGroup(folderUid, groupName);
-
-      if (!matchingGroup) {
-        return new HttpResponse({ message: 'group does not exist' }, { status: 404 });
-      }
-
+      const matchingGroup = namespace.find((group) => group.name === groupName);
       return HttpResponse.json<RulerRuleGroupDTO>({
         name: groupName,
         interval: matchingGroup?.interval,
@@ -93,7 +99,7 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
   );
 };
 
-const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
+export const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
   http.delete<{ folderUid: string; groupName: string }>(
     `/api/ruler/grafana/api/v1/rules/:folderUid/:groupName`,
     ({ params: { folderUid } }) => {
@@ -101,7 +107,7 @@ const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
         return options.response;
       }
 
-      const namespace = rulerTestDb.getNamespace(folderUid);
+      const namespace = namespaces[folderUid];
       if (!namespace) {
         return new HttpResponse(null, { status: 403 });
       }
@@ -115,23 +121,7 @@ const deleteRulerRuleGroupHandler = (options?: HandlerOptions) =>
     }
   );
 
-const deleteRulerRulePermanentlyHandler = (options?: HandlerOptions) =>
-  http.delete<{ ruleGuid: string }>(
-    `/api/ruler/grafana/api/v1/trash/rule/guid/:ruleGuid`,
-    ({ params: { ruleGuid } }) => {
-      if (options?.response) {
-        return options.response;
-      }
-
-      if (grafanaRulerRule.grafana_alert.guid !== ruleGuid) {
-        return new HttpResponse(null, { status: 403 });
-      }
-
-      return HttpResponse.json({ status: 202 });
-    }
-  );
-
-const rulerRuleHandler = () => {
+export const rulerRuleHandler = () => {
   const grafanaRules = new Map<string, RulerGrafanaRuleDTO>(
     [grafanaRulerRule].map((rule) => [rule.grafana_alert.uid, rule])
   );
@@ -145,122 +135,9 @@ const rulerRuleHandler = () => {
   });
 };
 
-const rulerRuleVersionHistoryHandler = () => {
-  const grafanaRuleVersions = [
-    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-      draft.grafana_alert.version = 6;
-      draft.grafana_alert.updated = '2025-01-18T09:35:17.000Z';
-      draft.grafana_alert.updated_by = {
-        uid: 'service',
-        name: '',
-      };
-      draft.grafana_alert.message = 'Updated by provisioning service';
-    }),
-    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-      draft.grafana_alert.version = 5;
-      draft.grafana_alert.updated = '2025-01-17T09:35:17.000Z';
-      draft.grafana_alert.updated_by = {
-        uid: '__alerting__',
-        name: '',
-      };
-    }),
-    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-      draft.grafana_alert.version = 4;
-      draft.grafana_alert.title = 'Some new title';
-      draft.grafana_alert.updated = '2025-01-16T09:35:17.000Z';
-      draft.grafana_alert.updated_by = {
-        uid: 'different',
-        name: 'different user',
-      };
-      draft.grafana_alert.message = 'Changed alert title and thresholds';
-    }),
-    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-      draft.grafana_alert.version = 3;
-      draft.grafana_alert.updated = '2025-01-15T09:35:17.000Z';
-      draft.grafana_alert.updated_by = {
-        uid: '1',
-        name: 'user1',
-      };
-    }),
-    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-      draft.grafana_alert.version = 2;
-      draft.grafana_alert.updated = '2025-01-14T09:35:17.000Z';
-      draft.for = '2h';
-      if (!draft.labels) {
-        draft.labels = {};
-      }
-      draft.labels.foo = 'bar';
-      draft.grafana_alert.notification_settings = { receiver: 'another receiver' };
-      draft.grafana_alert.updated_by = {
-        uid: 'foo',
-        name: '',
-      };
-      draft.grafana_alert.message = 'Updated evaluation interval and routing';
-    }),
-    produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
-      draft.grafana_alert.version = 1;
-      draft.grafana_alert.updated = '2025-01-13T09:35:17.000Z';
-      draft.grafana_alert.updated_by = null;
-    }),
-  ];
-
-  return http.get<{ uid: string }>(`/api/ruler/grafana/api/v1/rule/:uid/versions`, ({ params: { uid } }) => {
-    return HttpResponse.json(grafanaRuleVersions);
-  });
-};
-
-const filterHistoryByState = (
-  data: ReturnType<typeof getHistoryResponse>,
-  previous?: GrafanaAlertState,
-  current?: GrafanaAlertState
-) => {
-  if (!previous && !current) {
-    return data;
-  }
-  const stateMap: Record<string, string> = {
-    firing: 'Alerting',
-    normal: 'Normal',
-    pending: 'Pending',
-  };
-
-  const [timeValues, lineValues, labelsValues] = data.data.values;
-
-  const filteredRecords: typeof lineValues = [];
-  const filteredTimes: typeof timeValues = [];
-  const filteredLabels: typeof labelsValues = [];
-
-  lineValues.forEach((record, index: number) => {
-    const matchesPrevious = !previous || record.previous === (stateMap[previous] || previous);
-    const matchesCurrent = !current || record.current === (stateMap[current] || current);
-
-    if (matchesPrevious && matchesCurrent) {
-      filteredRecords.push(record);
-      filteredTimes.push(timeValues[index]);
-      filteredLabels.push(labelsValues[index]);
-    }
-  });
-
-  return {
-    ...data,
-    data: {
-      values: [filteredTimes, filteredRecords, filteredLabels],
-    },
-  };
-};
-
-const historyHandler = () => {
-  return http.get('/api/v1/rules/history', ({ request }) => {
-    const url = new URL(request.url);
-    const previousParam = url.searchParams.get('previous');
-    const currentParam = url.searchParams.get('current');
-
-    const previous = previousParam && isGrafanaAlertState(previousParam) ? previousParam : undefined;
-    const current = currentParam && isGrafanaAlertState(currentParam) ? currentParam : undefined;
-
-    const fullData = getHistoryResponse([time_0, time_0, time_plus_30, time_plus_30]);
-    const filteredData = filterHistoryByState(fullData, previous, current);
-
-    return HttpResponse.json(filteredData);
+export const historyHandler = () => {
+  return http.get('/api/v1/rules/history', () => {
+    return HttpResponse.json(getHistoryResponse([time_0, time_0, time_plus_30, time_plus_30]));
   });
 };
 
@@ -273,7 +150,5 @@ const handlers = [
   historyHandler(),
   updateRulerRuleNamespaceHandler(),
   deleteRulerRuleGroupHandler(),
-  deleteRulerRulePermanentlyHandler(),
-  rulerRuleVersionHistoryHandler(),
 ];
 export default handlers;

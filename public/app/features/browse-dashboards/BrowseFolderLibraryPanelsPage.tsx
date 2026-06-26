@@ -1,26 +1,39 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
-import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
 
-import { type GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { FolderActionsButton } from '../browse-dashboards/components/FolderActionsButton';
+import { buildNavModel, getLibraryPanelsTabID } from '../folders/state/navModel';
 import { LibraryPanelsSearch } from '../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryPanelModal/OpenLibraryPanelModal';
-import { type LibraryElementDTO } from '../library-panels/types';
+import { LibraryElementDTO } from '../library-panels/types';
 
-import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
+import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function BrowseFolderLibraryPanelsPage() {
   const { uid: folderUID = '' } = useParams();
-  const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
+  const { data: folderDTO } = useGetFolderQuery(folderUID);
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
-  const [saveFolder] = useUpdateFolder();
+  const [saveFolder] = useSaveFolderMutation();
 
-  const navModel = useNavModel(folderDTO, 'panels');
+  const navModel = useMemo(() => {
+    if (!folderDTO) {
+      return undefined;
+    }
+    const model = buildNavModel(folderDTO);
+
+    // Set the "Library panels" tab to active
+    const libraryPanelsTabID = getLibraryPanelsTabID(folderDTO.uid);
+    const libraryPanelsTab = model.children?.find((child) => child.id === libraryPanelsTabID);
+    if (libraryPanelsTab) {
+      libraryPanelsTab.active = true;
+    }
+    return model;
+  }, [folderDTO]);
 
   const onEditTitle = folderUID
     ? async (newValue: string) => {
@@ -41,7 +54,7 @@ export function BrowseFolderLibraryPanelsPage() {
       navId="dashboards/browse"
       pageNav={navModel}
       onEditTitle={onEditTitle}
-      actions={folderDTO && <FolderDetailsActions folderDTO={folderDTO} />}
+      actions={<>{folderDTO && <FolderActionsButton folder={folderDTO} />}</>}
     >
       <Page.Contents>
         <LibraryPanelsSearch

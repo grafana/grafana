@@ -9,12 +9,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	claims "github.com/grafana/authlib/types"
-
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -24,7 +24,7 @@ import (
 )
 
 func TestAuthorizeInOrgMiddleware(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 	// Define test cases
 	testCases := []struct {

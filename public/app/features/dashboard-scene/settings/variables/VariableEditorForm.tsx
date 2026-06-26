@@ -1,48 +1,41 @@
 import { css } from '@emotion/css';
-import { type FormEvent, useCallback, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { type SceneVariable } from '@grafana/scenes';
-import { type VariableHide, defaultVariableModel } from '@grafana/schema';
-import { Alert, Button, ConfirmModal, LoadingPlaceholder, ModalsController, Stack, useStyles2 } from '@grafana/ui';
-import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/variables/components/VariableDisplaySelect';
+import { SceneVariable } from '@grafana/scenes';
+import { VariableHide, defaultVariableModel } from '@grafana/schema';
+import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
-import {
-  useGetAllVariableOptions,
-  VariableValuesPreview,
-} from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
+import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
-
 import { VariableTypeSelect } from './components/VariableTypeSelect';
-import {
-  type EditableVariableType,
-  getVariableEditor,
-  hasVariableOptions,
-  isEditableVariableType,
-  validateVariableName,
-} from './utils';
+import { EditableVariableType, getVariableEditor, hasVariableOptions, isEditableVariableType } from './utils';
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
+  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
-export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
+export function VariableEditorForm({
+  variable,
+  onTypeChange,
+  onGoBack,
+  onDelete,
+  onValidateVariableName,
+}: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
-  const [nameError, setNameError] = useState<string>();
-  const [nameWarning, setNameWarning] = useState<string>();
-  const { name, type, label, description, hide: display } = variable.useState();
+  const [nameError, setNameError] = useState<string | null>(null);
+  const { name, type, label, description, hide, key } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
@@ -55,15 +48,12 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
-      const result = validateVariableName(variable, e.currentTarget.value);
-      if (result.errorMessage !== nameError) {
-        setNameError(result.errorMessage);
-      }
-      if (result.warningMessage !== nameWarning) {
-        setNameWarning(result.warningMessage);
+      const [, errorMessage] = onValidateVariableName(e.currentTarget.value, key);
+      if (nameError !== errorMessage) {
+        setNameError(errorMessage);
       }
     },
-    [variable, nameError, nameWarning]
+    [key, nameError, onValidateVariableName]
   );
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
@@ -75,9 +65,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
     variable.setState({ description: e.currentTarget.value });
-  const onDisplayChange = (display: VariableHide) => variable.setState({ hide: display });
-  const sectionOwner = dashboardSceneGraph.findSectionOwner(variable);
-  const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
+  const onHideChange = (hide: VariableHide) => variable.setState({ hide });
 
   const isHasVariableOptions = hasVariableOptions(variable);
 
@@ -87,24 +75,15 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
     hideModal();
   };
 
-  const { options, staticOptions } = useGetAllVariableOptions(variable);
-
   return (
-    <form
-      aria-label={t('dashboard-scene.variable-editor-form.aria-label-variable-editor-form', 'Variable editor form')}
-    >
+    <form aria-label="Variable editor Form">
       <VariableTypeSelect onChange={onVariableTypeChange} type={type} />
 
-      <VariableLegend>
-        <Trans i18nKey="dashboard-scene.variable-editor-form.general">General</Trans>
-      </VariableLegend>
+      <VariableLegend>General</VariableLegend>
       <VariableTextField
-        name={t('dashboard-scene.variable-editor-form.name-name', 'Name')}
-        description={t(
-          'dashboard-scene.variable-editor-form.description-template-variable-characters',
-          'The name of the template variable. (Max. 50 characters)'
-        )}
-        placeholder={t('dashboard-scene.variable-editor-form.placeholder-variable-name', 'Variable name')}
+        name="Name"
+        description="The name of the template variable. (Max. 50 characters)"
+        placeholder="Variable name"
         defaultValue={name ?? ''}
         onChange={onNameChange}
         onBlur={onNameBlur}
@@ -114,36 +93,27 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         invalid={!!nameError}
         error={nameError}
       />
-      {nameWarning && <Alert title={nameWarning} severity="warning" bottomSpacing={2} />}
       <VariableTextField
-        name={t('dashboard-scene.variable-editor-form.name-label', 'Label')}
-        description={t(
-          'dashboard-scene.variable-editor-form.description-optional-display-name',
-          'Optional display name'
-        )}
-        placeholder={t('dashboard-scene.variable-editor-form.placeholder-label-name', 'Label name')}
+        name="Label"
+        description="Optional display name"
+        placeholder="Label name"
         defaultValue={label ?? ''}
         onBlur={onLabelBlur}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
       />
       <VariableTextAreaField
-        name={t('dashboard-scene.variable-editor-form.name-description', 'Description')}
+        name="Description"
         defaultValue={description ?? ''}
-        placeholder={t('dashboard-scene.variable-editor-form.placeholder-descriptive-text', 'Descriptive text')}
+        placeholder="Descriptive text"
         onBlur={onDescriptionBlur}
         width={52}
       />
 
-      <VariableDisplaySelect
-        onChange={onDisplayChange}
-        display={display || defaultVariableModel.hide!}
-        type={type}
-        topPlacementLabel={topPlacementLabel}
-      />
+      <VariableHideSelect onChange={onHideChange} hide={hide || defaultVariableModel.hide!} type={type} />
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-      {isHasVariableOptions && <VariableValuesPreview options={options} staticOptions={staticOptions} />}
+      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect()} />}
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>
@@ -154,19 +124,16 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
                 fill="outline"
                 onClick={() => {
                   showModal(ConfirmModal, {
-                    title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
+                    title: 'Delete variable',
                     body: `Are you sure you want to delete: ${name}?`,
-                    confirmText: t(
-                      'dashboard-scene.variable-editor-form.confirmText.delete-variable',
-                      'Delete variable'
-                    ),
+                    confirmText: 'Delete variable',
                     onConfirm: onDeleteVariable(hideModal),
                     onDismiss: hideModal,
                     isOpen: true,
                   });
                 }}
               >
-                <Trans i18nKey="dashboard-scene.variable-editor-form.delete">Delete</Trans>
+                Delete
               </Button>
             )}
           </ModalsController>
@@ -175,7 +142,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
             data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
             onClick={onGoBack}
           >
-            <Trans i18nKey="dashboard-scene.variable-editor-form.back-to-list">Back to list</Trans>
+            Back to list
           </Button>
 
           {isHasVariableOptions && (
@@ -186,12 +153,9 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
               onClick={onRunQuery}
             >
               {runQueryState.loading ? (
-                <LoadingPlaceholder
-                  className={styles.loadingPlaceHolder}
-                  text={t('dashboard-scene.variable-editor-form.text-running-query', 'Running query...')}
-                />
+                <LoadingPlaceholder className={styles.loadingPlaceHolder} text="Running query..." />
               ) : (
-                t('dashboard-scene.variable-editor-form.run-query', 'Run query')
+                `Run query`
               )}
             </Button>
           )}

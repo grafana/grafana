@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
 
 export interface RadioButtonDotProps<T>
   extends Omit<React.HTMLProps<HTMLInputElement>, 'label' | 'value' | 'onChange' | 'type'> {
@@ -61,12 +61,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(2),
     border: `1px solid ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.circle,
-    cursor: 'pointer',
     margin: '3px 0' /* Space for box-shadow when focused */,
 
     ':checked': {
-      backgroundColor: theme.colors.accent.contrastText,
-      border: `5px solid ${theme.colors.accent.main}`,
+      backgroundColor: theme.v1.palette.white,
+      border: `5px solid ${theme.colors.primary.main}`,
     },
 
     ':disabled': {
@@ -92,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     ':focus': {
       outline: 'none !important',
-      boxShadow: `0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.accent.main}`,
+      boxShadow: `0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.primary.main}`,
     },
   }),
   label: css({
@@ -101,7 +100,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gridTemplateColumns: `${theme.spacing(2)} auto`,
     gap: theme.spacing(1),
-    cursor: 'pointer',
   }),
   description: css({
     fontSize: theme.typography.size.sm,

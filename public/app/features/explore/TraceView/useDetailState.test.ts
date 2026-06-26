@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { type DataFrame, type TraceLog } from '@grafana/data';
+import { DataFrame, TraceLog } from '@grafana/data';
 
 import { useDetailState } from './useDetailState';
 

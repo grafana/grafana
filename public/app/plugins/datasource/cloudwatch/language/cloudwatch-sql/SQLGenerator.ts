@@ -1,18 +1,14 @@
-import { toLower } from 'lodash';
-
-import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import {
-  type QueryEditorArrayExpression,
-  type QueryEditorExpression,
+  QueryEditorArrayExpression,
+  QueryEditorExpression,
   QueryEditorExpressionType,
-  type QueryEditorFunctionExpression,
-  type QueryEditorPropertyExpression,
-  type SQLExpression,
-} from '../../dataquery.gen';
-import { type QueryEditorOperatorExpression } from '../../expressions';
-
-import { InsightsReservedKeywords } from './consts';
+  QueryEditorFunctionExpression,
+  QueryEditorOperatorExpression,
+  QueryEditorPropertyExpression,
+} from '../../expressions';
+import { SQLExpression } from '../../types';
 
 const isAccountIdDefined = (accountId: string | undefined): boolean => !!(accountId && accountId !== 'all');
 
@@ -166,11 +162,7 @@ export default class SQLGenerator {
     const interpolated = this.templateSrv.replace(label, {}, 'raw');
     if (interpolated !== 'AWS.AccountId') {
       // AWS.AccountId should never be in quotes
-      if (
-        specialCharacters.test(interpolated) ||
-        startsWithNumber.test(interpolated) ||
-        InsightsReservedKeywords.some((e) => toLower(e) === toLower(interpolated))
-      ) {
+      if (specialCharacters.test(interpolated) || startsWithNumber.test(interpolated)) {
         return `"${label}"`;
       }
     }

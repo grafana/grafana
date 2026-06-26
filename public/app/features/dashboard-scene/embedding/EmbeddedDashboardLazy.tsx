@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 
-import { type EmbeddedDashboardProps } from '@grafana/runtime';
+import { EmbeddedDashboardProps } from '@grafana/runtime';
 
 export function EmbeddedDashboardLazy(props: EmbeddedDashboardProps) {
   return <Component {...props} />;

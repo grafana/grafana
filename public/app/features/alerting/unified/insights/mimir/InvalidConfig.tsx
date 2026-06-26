@@ -1,12 +1,12 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { BigValueGraphMode, type DataSourceRef } from '@grafana/schema';
+import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../home/Insights';
-import { InsightsMenuButton } from '../InsightsMenuButton';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getInvalidConfigScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config{stack_id="${INSTANCE_ID}"})`
+    ? `sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config{id="${INSTANCE_ID}"})`
     : `sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)`;
 
   const query = new SceneQueryRunner({
@@ -29,7 +29,7 @@ export function getInvalidConfigScene(datasource: DataSourceRef, panelTitle: str
       .setData(query)
       .setUnit('bool_yes_no')
       .setOption('graphMode', BigValueGraphMode.None)
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

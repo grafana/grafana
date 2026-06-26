@@ -1,4 +1,4 @@
-import { components, type InputProps } from 'react-select';
+import { components, InputProps } from 'react-select';
 
 /**
  * Custom input component for react-select to add data-testid attribute

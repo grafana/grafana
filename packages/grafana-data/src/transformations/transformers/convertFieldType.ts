@@ -1,10 +1,10 @@
 import { map } from 'rxjs/operators';
 
-import { type TimeZone } from '@grafana/schema';
+import { TimeZone } from '@grafana/schema';
 
-import { dateTimeParse, type DateTimeOptionsWhenParsing } from '../../datetime/parser';
-import { type DataFrame, type EnumFieldConfig, type Field, FieldType } from '../../types/dataFrame';
-import { type SynchronousDataTransformerInfo } from '../../types/transformations';
+import { dateTimeParse, DateTimeOptionsWhenParsing } from '../../datetime/parser';
+import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
+import { SynchronousDataTransformerInfo } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -168,11 +168,6 @@ function fieldToNumberField(field: Field): Field {
       toBeConverted = toBeConverted.replace(/,/g, '');
     }
 
-    if (toBeConverted == null || toBeConverted === '') {
-      numValues[n] = null;
-      continue;
-    }
-
     const number = +toBeConverted;
 
     numValues[n] = Number.isFinite(number) ? number : null;
@@ -215,15 +210,12 @@ export function fieldToStringField(
       values = values.map((v) => dateTimeParse(v, parseOptions).format(dateFormat));
       break;
 
-    // Handle both "string" and "other" types to ensure compatibility across Grafana versions (10 & 11)
-    // In some cases fields are classified as 'other' in Grafana 10 but as 'string' in Grafana 11
-    case FieldType.string:
     case FieldType.other:
       values = values.map((v) => {
         if (joinWith?.length && Array.isArray(v)) {
           return v.join(joinWith);
         }
-        return JSON.stringify(v);
+        return JSON.stringify(v); // will quote strings and avoid "object"
       });
       break;
 

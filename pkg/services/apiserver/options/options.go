@@ -3,12 +3,11 @@ package options
 import (
 	"net"
 
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
-
-	"github.com/spf13/pflag"
 )
 
 type OptionsProvider interface {
@@ -20,25 +19,28 @@ type OptionsProvider interface {
 const defaultEtcdPathPrefix = "/registry/grafana.app"
 
 type Options struct {
-	RecommendedOptions   *genericoptions.RecommendedOptions
-	APIEnablementOptions *genericoptions.APIEnablementOptions
-	StorageOptions       *StorageOptions
-	ExtraOptions         *ExtraOptions
-	APIOptions           []OptionsProvider
+	RecommendedOptions       *genericoptions.RecommendedOptions
+	GrafanaAggregatorOptions *GrafanaAggregatorOptions
+	KubeAggregatorOptions    *KubeAggregatorOptions
+	StorageOptions           *StorageOptions
+	ExtraOptions             *ExtraOptions
+	APIOptions               []OptionsProvider
 }
 
 func NewOptions(codec runtime.Codec) *Options {
 	return &Options{
-		RecommendedOptions:   NewRecommendedOptions(codec),
-		APIEnablementOptions: genericoptions.NewAPIEnablementOptions(),
-		StorageOptions:       NewStorageOptions(),
-		ExtraOptions:         NewExtraOptions(),
+		RecommendedOptions:       NewRecommendedOptions(codec),
+		GrafanaAggregatorOptions: NewGrafanaAggregatorOptions(),
+		KubeAggregatorOptions:    NewAggregatorServerOptions(),
+		StorageOptions:           NewStorageOptions(),
+		ExtraOptions:             NewExtraOptions(),
 	}
 }
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
-	o.APIEnablementOptions.AddFlags(fs)
+	o.GrafanaAggregatorOptions.AddFlags(fs)
+	o.KubeAggregatorOptions.AddFlags(fs)
 	o.StorageOptions.AddFlags(fs)
 	o.ExtraOptions.AddFlags(fs)
 
@@ -53,6 +55,14 @@ func (o *Options) Validate() []error {
 	}
 
 	if errs := o.StorageOptions.Validate(); len(errs) != 0 {
+		return errs
+	}
+
+	if errs := o.GrafanaAggregatorOptions.Validate(); len(errs) != 0 {
+		return errs
+	}
+
+	if errs := o.KubeAggregatorOptions.Validate(); len(errs) != 0 {
 		return errs
 	}
 
@@ -109,15 +119,6 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 			return err
 		}
 		serverConfig.SecureServing = nil
-	}
-
-	// serverConfig.RequestTimeout is a k8s setting for all http requests, defaulting to 1 minute
-	// This setting is not removable so we force a long timeout to match existing behavior
-	// (ex: most (all?) sql datasources before apiservers were introduced did not have a global timeout and could run indefinitely)
-	// Normally for apiservers, this is set with a command line flag, --request-timeout, however in st-mode, we set a default in ExtraOptions
-	// and make it potentially configurable as needed by users in custom.ini
-	if o.ExtraOptions.RequestTimeout > 0 {
-		serverConfig.RequestTimeout = o.ExtraOptions.RequestTimeout
 	}
 	return nil
 }

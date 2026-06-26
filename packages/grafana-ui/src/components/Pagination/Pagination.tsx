@@ -1,10 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, type JSX } from 'react';
+import { useMemo } from 'react';
 
-import { t } from '@grafana/i18n';
-
-import { useStyles2 } from '../../themes/ThemeContext';
-import { Button, type ButtonVariant } from '../Button/Button';
+import { useStyles2 } from '../../themes';
+import { Button, ButtonVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {
@@ -19,15 +17,8 @@ export interface Props {
   /** Small version only shows the current page and the navigation buttons. */
   showSmallVersion?: boolean;
   className?: string;
-  /** If we are using cursor based pagination, disable next page button when we have no cursor */
-  hasNextPage?: boolean;
 }
 
-/**
- * Component used for rendering a page selector below paginated content.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-pagination--docs
- */
 export const Pagination = ({
   currentPage,
   numberOfPages,
@@ -35,7 +26,6 @@ export const Pagination = ({
   hideWhenSinglePage,
   showSmallVersion,
   className,
-  hasNextPage,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const pageLengthToCondense = showSmallVersion ? 1 : 8;
@@ -92,7 +82,7 @@ export const Pagination = ({
           // Renders and ellipsis to represent condensed pages
           pagesToRender.push(
             <li key={page} className={styles.item}>
-              <Icon className={styles.ellipsis} name="ellipsis-v" data-testid="pagination-ellipsis-icon" />
+              <Icon className={styles.ellipsis} name="ellipsis-v" />
             </li>
           );
         }
@@ -107,15 +97,12 @@ export const Pagination = ({
     return null;
   }
 
-  const previousPageLabel = t('grafana-ui.pagination.previous-page', 'previous page');
-  const nextPageLabel = t('grafana-ui.pagination.next-page', 'next page');
-
   return (
-    <div className={cx(styles.container, className)} role="navigation">
+    <div className={cx(styles.container, className)}>
       <ol>
         <li className={styles.item}>
           <Button
-            aria-label={previousPageLabel}
+            aria-label={`previous page`}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage - 1)}
@@ -125,14 +112,13 @@ export const Pagination = ({
           </Button>
         </li>
         {pageButtons}
-        {pageButtons.length === 0 && <li className={styles.item}>{currentPage}</li>}
         <li className={styles.item}>
           <Button
-            aria-label={nextPageLabel}
+            aria-label={`next page`}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage + 1)}
-            disabled={hasNextPage === false || currentPage === numberOfPages}
+            disabled={currentPage === numberOfPages}
           >
             <Icon name="angle-right" />
           </Button>

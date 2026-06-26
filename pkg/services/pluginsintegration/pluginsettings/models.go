@@ -27,7 +27,6 @@ type InfoDTO struct {
 	Enabled       bool
 	Pinned        bool
 	PluginVersion string
-	AutoEnabled   bool
 }
 
 type UpdateArgs struct {

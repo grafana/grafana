@@ -1,31 +1,23 @@
-import { memo, useState } from 'react';
+import { PureComponent } from 'react';
 
-import {
-  type DataSourcePluginOptionsEditorProps,
-  type SelectableValue,
-  updateDatasourcePluginOption,
-} from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { AdvancedHttpSettings, ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getBackendSrv, isFetchError, config } from '@grafana/runtime';
+import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
 import {
-  type AzureAPIResponse,
-  type AzureMonitorDataSourceJsonData,
-  type AzureMonitorDataSourceSecureJsonData,
-  type AzureMonitorDataSourceSettings,
-  type Subscription,
-} from '../../types/types';
+  AzureAPIResponse,
+  AzureDataSourceJsonData,
+  AzureDataSourceSecureJsonData,
+  AzureDataSourceSettings,
+  Subscription,
+} from '../../types';
 import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
 
-export type Props = DataSourcePluginOptionsEditorProps<
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorDataSourceSecureJsonData
->;
+export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
 interface ErrorMessage {
   title: string;
@@ -33,95 +25,106 @@ interface ErrorMessage {
   details?: string;
 }
 
-export const ConfigEditor = memo(function ConfigEditor(props: Props) {
-  const { options, onOptionsChange } = props;
-  const [unsaved, setUnsaved] = useState(false);
-  const [error, setError] = useState<ErrorMessage | undefined>(undefined);
+export interface State {
+  unsaved: boolean;
+  error?: ErrorMessage;
+}
 
-  const baseURL = `/api/datasources/uid/${options.uid}/resources/${routeNames.azureMonitor}/subscriptions`;
+export class ConfigEditor extends PureComponent<Props, State> {
+  templateSrv: TemplateSrv = getTemplateSrv();
+  baseURL: string;
 
-  function updateOptions(
-    optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings
-  ): void {
-    const updated = optionsFunc(options);
-    onOptionsChange(updated);
-    setUnsaved(true);
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      unsaved: false,
+    };
+    this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
 
-  async function saveOptions(): Promise<void> {
-    if (unsaved) {
+  private updateOptions = (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings): void => {
+    const updated = optionsFunc(this.props.options);
+    this.props.onOptionsChange(updated);
+
+    this.setState({ unsaved: true });
+  };
+
+  private saveOptions = async (): Promise<void> => {
+    if (this.state.unsaved) {
       await getBackendSrv()
-        .put(`/api/datasources/uid/${options.uid}`, options)
-        .then((result: { datasource: AzureMonitorDataSourceSettings }) => {
-          updateDatasourcePluginOption(props, 'version', result.datasource.version);
+        .put(`/api/datasources/${this.props.options.id}`, this.props.options)
+        .then((result: { datasource: AzureDataSourceSettings }) => {
+          updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
         });
 
-      setUnsaved(false);
+      this.setState({ unsaved: false });
     }
-  }
+  };
 
-  async function getSubscriptions(): Promise<Array<SelectableValue<string>>> {
-    await saveOptions();
+  private getSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
+    await this.saveOptions();
 
     const query = `?api-version=2019-03-01`;
     try {
       const result = await getBackendSrv()
         .fetch<AzureAPIResponse<Subscription>>({
-          url: baseURL + query,
+          url: this.baseURL + query,
           method: 'GET',
         })
         .toPromise();
 
-      setError(undefined);
+      this.setState({ error: undefined });
       return ResponseParser.parseSubscriptionsForSelect(result);
     } catch (err) {
       if (isFetchError(err)) {
-        setError({
-          title: 'Error requesting subscriptions',
-          description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
-          details: err?.data?.message,
+        this.setState({
+          error: {
+            title: 'Error requesting subscriptions',
+            description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
+            details: err?.data?.message,
+          },
         });
       }
-      return [];
+      return Promise.resolve([]);
     }
-  }
+  };
 
-  return (
-    <>
-      <DataSourceDescription
-        dataSourceName="Azure Monitor"
-        docsLink="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/"
-        hasRequiredFields
-      />
-      <Divider />
-      <MonitorConfig options={options} updateOptions={updateOptions} getSubscriptions={getSubscriptions} />
-      {error && (
-        <Alert severity="error" title={error.title}>
-          <p>{error.description}</p>
-          {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
-        </Alert>
-      )}
+  render() {
+    const { options, onOptionsChange } = this.props;
+    const { error } = this.state;
+
+    return (
       <>
+        <DataSourceDescription
+          dataSourceName="Azure Monitor"
+          docsLink="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/"
+          hasRequiredFields
+        />
         <Divider />
-        <ConfigSection
-          title={t('components.config-editor.title-additional-settings', 'Additional settings')}
-          description={t(
-            'components.config-editor.description-additional-settings',
-            'Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy, request timeout, and forwarded cookies.'
-          )}
-          isCollapsible={true}
-          isInitiallyOpen={
-            options.jsonData.enableSecureSocksProxy !== undefined ||
-            options.jsonData.timeout !== undefined ||
-            options.jsonData.keepCookies !== undefined
-          }
-        >
-          <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
-          {config.secureSocksDSProxyEnabled && (
-            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-          )}
-        </ConfigSection>
+        <MonitorConfig options={options} updateOptions={this.updateOptions} getSubscriptions={this.getSubscriptions} />
+        {error && (
+          <Alert severity="error" title={error.title}>
+            <p>{error.description}</p>
+            {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
+          </Alert>
+        )}
+        {config.secureSocksDSProxyEnabled && (
+          <>
+            <Divider />
+            <ConfigSection
+              title="Additional settings"
+              description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy."
+              isCollapsible={true}
+              isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
+            >
+              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+            </ConfigSection>
+          </>
+        )}
       </>
-    </>
-  );
-});
+    );
+  }
+}
+
+export default ConfigEditor;

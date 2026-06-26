@@ -1,11 +1,11 @@
 import { cx, css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
-interface Props {
+export interface Props {
   grow?: boolean;
   className?: string;
 }

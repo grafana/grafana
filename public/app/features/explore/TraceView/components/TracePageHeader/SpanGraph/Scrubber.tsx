@@ -18,7 +18,7 @@ import * as React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-const getStyles = () => ({
+export const getStyles = () => ({
   ScrubberHandleExpansion: cx(
     css({
       label: 'ScrubberHandleExpansion',

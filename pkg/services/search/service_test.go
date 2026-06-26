@@ -1,8 +1,7 @@
 package search
 
 import (
-	"net/http"
-	"net/http/httptest"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,65 +9,42 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	starapi "github.com/grafana/grafana/pkg/services/star/api"
+	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/grafana/grafana/pkg/web"
 )
 
-// reqContextOnRequest returns a *http.Request whose context carries a
-// *contextmodel.ReqContext, mimicking what the contexthandler middleware does
-// in production. SearchService.getUserStars looks for this via
-// contexthandler.FromContext.
-func reqContextOnRequest(t *testing.T, signedInUser *user.SignedInUser) *http.Request {
-	t.Helper()
-	req := httptest.NewRequest(http.MethodGet, "/api/search", nil)
-	reqCtx := &contextmodel.ReqContext{
-		Context:      &web.Context{Req: req},
-		SignedInUser: signedInUser,
-	}
-	ctx := ctxkey.Set(req.Context(), reqCtx)
-	return req.WithContext(ctx)
-}
-
 func TestSearch_SortedResults(t *testing.T) {
+	ss := startest.NewStarServiceFake()
 	db := dbtest.NewFakeDB()
 	us := usertest.NewUserServiceFake()
 	ds := dashboards.NewFakeDashboardService(t)
 	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Return(model.HitList{
-		&model.Hit{UID: "test", Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
-		&model.Hit{UID: "test2", Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
-		&model.Hit{UID: "test3", Title: "BBAA", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
-		&model.Hit{UID: "test4", Title: "bbAAa", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
-		&model.Hit{UID: "test5", Title: "FOLDER", Type: "dash-folder"},
+		&model.Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
+		&model.Hit{ID: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
+		&model.Hit{ID: 15, Title: "BBAA", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
+		&model.Hit{ID: 25, Title: "bbAAa", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
+		&model.Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
 	}, nil)
 	us.ExpectedSignedInUser = &user.SignedInUser{IsGrafanaAdmin: true}
-
-	signedInUser := &user.SignedInUser{IsGrafanaAdmin: true}
-	req := reqContextOnRequest(t, signedInUser)
-
-	starClient := starapi.NewMockK8sClients(t)
-	starClient.On("GetStars", mock.Anything).Return([]string{"test2", "test7"}, nil)
-
+	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[int64]bool{10: true, 12: true}}
 	svc := &SearchService{
 		sqlstore:         db,
-		starClient:       starClient,
+		starService:      ss,
 		dashboardService: ds,
-		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{
-		Limit:        2000,
-		SignedInUser: signedInUser,
+		Limit: 2000,
+		SignedInUser: &user.SignedInUser{
+			IsGrafanaAdmin: true,
+		},
 	}
 
-	hits, err := svc.SearchHandler(req.Context(), query)
+	hits, err := svc.SearchHandler(context.Background(), query)
 	require.Nil(t, err)
 
 	// Assert results are sorted.
@@ -85,36 +61,30 @@ func TestSearch_SortedResults(t *testing.T) {
 }
 
 func TestSearch_StarredResults(t *testing.T) {
+	ss := startest.NewStarServiceFake()
 	db := dbtest.NewFakeDB()
 	us := usertest.NewUserServiceFake()
 	ds := dashboards.NewFakeDashboardService(t)
 	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Return(model.HitList{
-		&model.Hit{UID: "test", Title: "A", Type: "dash-db"},
-		&model.Hit{UID: "test2", Title: "B", Type: "dash-db"},
-		&model.Hit{UID: "test3", Title: "C", Type: "dash-db"},
+		&model.Hit{ID: 1, Title: "A", Type: "dash-db"},
+		&model.Hit{ID: 2, Title: "B", Type: "dash-db"},
+		&model.Hit{ID: 3, Title: "C", Type: "dash-db"},
 	}, nil)
 	us.ExpectedSignedInUser = &user.SignedInUser{}
-
-	signedInUser := &user.SignedInUser{}
-	req := reqContextOnRequest(t, signedInUser)
-
-	starClient := starapi.NewMockK8sClients(t)
-	starClient.On("GetStars", mock.Anything).Return([]string{"test", "test3", "test4"}, nil)
-
+	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[int64]bool{1: true, 3: true, 4: true}}
 	svc := &SearchService{
 		sqlstore:         db,
-		starClient:       starClient,
+		starService:      ss,
 		dashboardService: ds,
-		features:         &featuremgmt.FeatureManager{},
 	}
 
 	query := &Query{
 		Limit:        2000,
 		IsStarred:    true,
-		SignedInUser: signedInUser,
+		SignedInUser: &user.SignedInUser{},
 	}
 
-	hits, err := svc.SearchHandler(req.Context(), query)
+	hits, err := svc.SearchHandler(context.Background(), query)
 	require.Nil(t, err)
 
 	// Assert only starred dashboards are returned
@@ -122,8 +92,3 @@ func TestSearch_StarredResults(t *testing.T) {
 	assert.Equal(t, "A", hits[0].Title)
 	assert.Equal(t, "C", hits[1].Title)
 }
-
-// Compile-time assertion that contexthandler.FromContext can read the value
-// set by ctxkey.Set; this guarantees the test helper above mirrors what the
-// middleware does, so getUserStars actually sees a ReqContext.
-var _ = contexthandler.FromContext

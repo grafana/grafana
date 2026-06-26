@@ -1,12 +1,6 @@
 package plugins
 
-import (
-	"context"
-
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-)
+import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 var (
 	errPluginNotRegisteredBase = errutil.NotFound("plugin.notRegistered",
@@ -30,9 +24,9 @@ var (
 		errutil.WithPublicMessage("Plugin health check failed"),
 		errutil.WithDownstream())
 
-	// ErrPluginRequestFailureErrorBase error returned when a plugin request fails.
-	// Exposed as a base error to wrap it with plugin request errors.
-	ErrPluginRequestFailureErrorBase = errutil.Internal("plugin.requestFailureError",
+	// ErrPluginDownstreamErrorBase error returned when a plugin request fails.
+	// Exposed as a base error to wrap it with plugin downstream errors.
+	ErrPluginDownstreamErrorBase = errutil.Internal("plugin.downstreamError",
 		errutil.WithPublicMessage("An error occurred within the plugin"),
 		errutil.WithDownstream())
 
@@ -41,20 +35,4 @@ var (
 	// Exposed as a base error to wrap it with plugin cancelled errors.
 	ErrPluginRequestCanceledErrorBase = errutil.ClientClosedRequest("plugin.requestCanceled",
 		errutil.WithPublicMessage("Plugin request canceled"))
-
-	// ErrPluginGrpcResourceExhaustedBase error returned when a plugin response is larger than the grpc limit.
-	// Exposed as a base error to wrap it with plugin resource exhausted errors.
-	ErrPluginGrpcResourceExhaustedBase = errutil.Internal("plugin.resourceExhausted",
-		errutil.WithPublicMessage("The response is too large. Please try to reduce the time range or narrow down your query to return fewer data points."),
-		errutil.WithDownstream())
-
-	ErrPluginGrpcConnectionUnavailableBaseFn = func(ctx context.Context) errutil.Base {
-		pubMsg := "Data source became unavailable during request. Please try again."
-		if requester, err := identity.GetRequester(ctx); err == nil && requester != nil {
-			if namespace, err := types.ParseNamespace(requester.GetNamespace()); err == nil && namespace.StackID != 0 {
-				pubMsg += " If the problem persists, please contact customer support."
-			}
-		}
-		return errutil.Internal("plugin.connectionUnavailable", errutil.WithPublicMessage(pubMsg))
-	}
 )

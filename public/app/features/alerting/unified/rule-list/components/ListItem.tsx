@@ -1,36 +1,30 @@
 import { css } from '@emotion/css';
-import React, { type AriaAttributes, type ReactNode } from 'react';
+import React, { ReactNode } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
 
-interface ListItemProps extends AriaAttributes {
+interface ListItemProps {
   icon?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
   meta?: ReactNode[];
   metaRight?: ReactNode[];
   actions?: ReactNode;
-  'data-testid'?: string;
 }
 
 export const ListItem = (props: ListItemProps) => {
   const styles = useStyles2(getStyles);
-  const { icon = null, title, description, meta, metaRight, actions, 'data-testid': testId, ...ariaAttributes } = props;
+  const { icon = null, title, description, meta, metaRight, actions } = props;
 
   return (
-    <li
-      className={styles.alertListItemContainer}
-      role="treeitem"
-      aria-selected="false"
-      data-testid={testId}
-      {...ariaAttributes}
-    >
+    <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
       <Stack direction="row" alignItems="start" gap={1} wrap={false}>
         {/* icon */}
-        <span className={styles.statusIcon}>{icon}</span>
+        {icon}
 
-        <Stack direction="column" gap={0.5} flex="1" minWidth={0}>
+        <Stack direction="column" gap={0} flex="1" minWidth={0}>
           {/* title */}
           <Stack direction="column" gap={0}>
             <div className={styles.textOverflow}>{title}</div>
@@ -38,7 +32,7 @@ export const ListItem = (props: ListItemProps) => {
           </Stack>
 
           {/* metadata */}
-          <Stack direction="row" gap={1} alignItems="center">
+          <Stack direction="row" gap={0.5} alignItems="center">
             {meta?.map((item, index) => (
               <React.Fragment key={index}>
                 {index > 0 && <Separator />}
@@ -59,31 +53,34 @@ export const ListItem = (props: ListItemProps) => {
   );
 };
 
+export const SkeletonListItem = () => {
+  return (
+    <ListItem
+      icon={<Skeleton width={16} height={16} circle />}
+      title={<Skeleton height={16} width={350} />}
+      actions={<Skeleton height={10} width={200} />}
+    />
+  );
+};
+
 const Separator = () => (
   <Text color="secondary" variant="bodySmall">
-    {'|'}
+    {'·'}
   </Text>
 );
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({
-    listStyle: 'none',
     position: 'relative',
+    listStyle: 'none',
+    background: theme.colors.background.primary,
 
-    padding: theme.spacing(1),
-
-    '&:hover': {
-      background: theme.colors.action.hover,
-      borderRadius: theme.shape.radius.default,
-    },
+    borderBottom: `solid 1px ${theme.colors.border.weak}`,
+    padding: `${theme.spacing(1)} ${theme.spacing(1)}`,
   }),
   textOverflow: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: 'inherit',
-  }),
-  // this will line up the icon with the title of the rule
-  statusIcon: css({
-    marginTop: theme.spacing(0.5),
   }),
 });

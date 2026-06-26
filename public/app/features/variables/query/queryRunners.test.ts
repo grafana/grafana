@@ -1,16 +1,15 @@
 import { of } from 'rxjs';
 
 import {
-  type DataQueryRequest,
-  type DataSourceApi,
+  DataQueryRequest,
+  DataSourceApi,
   getDefaultTimeRange,
-  type QueryVariableModel,
-  type StandardVariableQuery,
+  QueryVariableModel,
   VariableRefresh,
   VariableSupportType,
 } from '@grafana/data';
 
-import { QueryRunners, type RunnerArgs, variableDummyRefId } from './queryRunners';
+import { QueryRunners, RunnerArgs, variableDummyRefId } from './queryRunners';
 
 describe('QueryRunners', () => {
   describe('when using a legacy data source', () => {
@@ -167,9 +166,9 @@ describe('QueryRunners', () => {
         ({
           variables: {
             getType: () => VariableSupportType.Standard,
-            toDataQuery: (query: StandardVariableQuery) => ({ ...query, extra: 'extra' }),
+            toDataQuery: (query: any) => ({ ...query, extra: 'extra' }),
           },
-        } as unknown as DataSourceApi);
+        } as DataSourceApi);
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
       const runnerArgs = {

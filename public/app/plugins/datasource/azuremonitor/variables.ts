@@ -1,40 +1,20 @@
-import { startsWith } from 'lodash';
-import { from, lastValueFrom, type Observable } from 'rxjs';
+import { from, lastValueFrom, Observable } from 'rxjs';
 
 import {
   CustomVariableSupport,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type MetricFindValue,
+  DataQueryRequest,
+  DataQueryResponse,
+  MetricFindValue,
   toDataFrame,
 } from '@grafana/data';
-import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import UrlBuilder from './azure_monitor/url_builder';
-import { parseResourceURI } from './components/ResourcePicker/utils';
 import VariableEditor from './components/VariableEditor/VariableEditor';
-import { AzureQueryType, type GrafanaTemplateVariableQuery } from './dataquery.gen';
-import type DataSource from './datasource';
+import DataSource from './datasource';
 import { migrateQuery } from './grafanaTemplateVariableFns';
-import { type AzureMonitorQuery } from './types/query';
-import { type RawAzureResourceItem } from './types/types';
+import { AzureMonitorQuery, AzureQueryType } from './types';
+import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 import messageFromError from './utils/messageFromError';
-
-function parseResourceNamesAsTemplateVariable(resources: RawAzureResourceItem[], metricNamespace?: string) {
-  return resources.map((r) => {
-    if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
-      return {
-        text: r.name + '/default',
-        value: r.name + '/default',
-      };
-    }
-
-    return {
-      text: r.name,
-      value: parseResourceURI(r.id).resourceName,
-    };
-  });
-}
 
 export class VariableSupport extends CustomVariableSupport<DataSource, AzureMonitorQuery> {
   constructor(
@@ -72,28 +52,22 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             return { data: [] };
           case AzureQueryType.NamespacesQuery:
             if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
-              const namespaces = await this.datasource.getMetricNamespaces(
-                queryObj.subscription,
-                queryObj.resourceGroup,
-                undefined,
-                false,
-                true
-              );
+              const rgs = await this.datasource.getMetricNamespaces(queryObj.subscription, queryObj.resourceGroup);
               return {
-                data: namespaces?.length ? [toDataFrame(namespaces)] : [],
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
               };
             }
             return { data: [] };
           case AzureQueryType.ResourceNamesQuery:
             if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
-              const resources = await this.datasource.getResourceNames(
+              const rgs = await this.datasource.getResourceNames(
                 queryObj.subscription,
                 queryObj.resourceGroup,
                 queryObj.namespace,
                 queryObj.region
               );
               return {
-                data: resources?.length ? [toDataFrame(parseResourceNamesAsTemplateVariable(resources))] : [],
+                data: rgs?.length ? [toDataFrame(rgs)] : [],
               };
             }
             return { data: [] };
@@ -145,58 +119,6 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
                 data: res?.length ? [toDataFrame(res)] : [],
               };
             }
-          case AzureQueryType.CustomNamespacesQuery:
-            if (
-              queryObj.subscription &&
-              queryObj.resourceGroup &&
-              queryObj.namespace &&
-              queryObj.resource &&
-              this.hasValue(queryObj.subscription, queryObj.resourceGroup, queryObj.namespace, queryObj.resource)
-            ) {
-              const resourceUri = UrlBuilder.buildResourceUri(this.templateSrv, {
-                subscription: queryObj.subscription,
-                resourceGroup: queryObj.resourceGroup,
-                metricNamespace: queryObj.namespace,
-                resourceName: queryObj.resource,
-              });
-              const res = await this.datasource.getMetricNamespaces(
-                queryObj.subscription,
-                queryObj.resourceGroup,
-                resourceUri,
-                true
-              );
-              return {
-                data: res?.length ? [toDataFrame(res)] : [],
-              };
-            }
-            return { data: [] };
-          case AzureQueryType.CustomMetricNamesQuery:
-            if (
-              queryObj.subscription &&
-              queryObj.resourceGroup &&
-              queryObj.namespace &&
-              queryObj.resource &&
-              queryObj.customNamespace &&
-              this.hasValue(
-                queryObj.subscription,
-                queryObj.resourceGroup,
-                queryObj.namespace,
-                queryObj.resource,
-                queryObj.customNamespace
-              )
-            ) {
-              const rgs = await this.datasource.getMetricNames(
-                queryObj.subscription,
-                queryObj.resourceGroup,
-                queryObj.namespace,
-                queryObj.resource,
-                queryObj.customNamespace
-              );
-              return {
-                data: rgs?.length ? [toDataFrame(rgs)] : [],
-              };
-            }
-            return { data: [] };
           default:
             request.targets[0] = queryObj;
             const queryResp = await lastValueFrom(this.datasource.query(request));
@@ -220,28 +142,15 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     }
 
     if (query.kind === 'ResourceGroupsQuery') {
-      return this.datasource.getResourceGroups(this.replaceVariable(query.subscription)).then((rgs) => {
-        if (rgs.length > 0) {
-          return rgs.map((rg) => ({ text: rg.resourceGroupName, value: rg.resourceGroupName }));
-        }
-
-        return [];
-      });
+      return this.datasource.getResourceGroups(this.replaceVariable(query.subscription));
     }
 
     if (query.kind === 'ResourceNamesQuery') {
-      return this.datasource
-        .getResourceNames(
-          this.replaceVariable(query.subscription),
-          this.replaceVariable(query.resourceGroup),
-          this.replaceVariable(query.metricNamespace)
-        )
-        .then((resources) => {
-          if (resources.length > 0) {
-            return parseResourceNamesAsTemplateVariable(resources, query.metricNamespace);
-          }
-          return [];
-        });
+      return this.datasource.getResourceNames(
+        this.replaceVariable(query.subscription),
+        this.replaceVariable(query.resourceGroup),
+        this.replaceVariable(query.metricNamespace)
+      );
     }
 
     if (query.kind === 'MetricNamespaceQuery') {

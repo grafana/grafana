@@ -4,28 +4,18 @@ import pluralize from 'pluralize';
 import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import {
-  type DataQuery,
-  type GrafanaTheme2,
-  type SelectableValue,
-  DataTopic,
-  type QueryEditorProps,
-} from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { OperationsEditorRow } from '@grafana/plugin-ui';
-import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { Alert, Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
+import { DataQuery, GrafanaTheme2, SelectableValue, DataTopic, QueryEditorProps } from '@grafana/data';
+import { OperationsEditorRow } from '@grafana/experimental';
+import { Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
+import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
-import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
-
-import { SHARED_DASHBOARD_QUERY } from './constants';
-import { type DashboardDatasource } from './datasource';
-import { type DashboardQuery, type ResultInfo } from './types';
+import { DashboardDatasource } from './datasource';
+import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 
 function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
@@ -48,11 +38,8 @@ const topics = [
   { label: 'Annotations', value: true, description: 'Include annotations as regular data' },
 ];
 
-export const INVALID_PANEL_DESCRIPTION = 'Contains a shared dashboard query';
-
 export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Props) {
   const { value: defaultDatasource } = useAsync(() => getDatasourceSrv().get());
-  const { value: panelPluginMetas, error: panelPluginMetasError } = usePanelPluginMetasMap();
 
   const panel = useMemo(() => {
     const dashboard = getDashboardSrv().getCurrent();
@@ -116,20 +103,6 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
     [query, onUpdateQuery]
   );
 
-  const onAdHocFiltersToggle = useCallback(() => {
-    onUpdateQuery({
-      ...query,
-      adHocFiltersEnabled: !query.adHocFiltersEnabled,
-    });
-  }, [query, onUpdateQuery]);
-
-  const isMixedDSWithDashboardQueries = (panel: PanelModel) => {
-    return (
-      panel.datasource?.uid === MIXED_DATASOURCE_NAME &&
-      panel.targets.some((t) => t.datasource?.uid === SHARED_DASHBOARD_QUERY)
-    );
-  };
-
   const getPanelDescription = useCallback(
     (panel: PanelModel): string => {
       const datasource = panel.datasource ?? defaultDatasource;
@@ -147,39 +120,22 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
       dashboard?.panels
         .filter(
           (panel) =>
-            Boolean(panelPluginMetas?.[panel.type]) &&
+            config.panels[panel.type] &&
             panel.targets &&
-            !isPanelInEdit(panel.id, dashboard.panelInEdit?.id)
+            !isPanelInEdit(panel.id, dashboard.panelInEdit?.id) &&
+            panel.datasource?.uid !== SHARED_DASHBOARD_QUERY
         )
-        .map((panel) => {
-          let description = getPanelDescription(panel);
-          let isDisabled = false;
-          if (panel.datasource?.uid === SHARED_DASHBOARD_QUERY || isMixedDSWithDashboardQueries(panel)) {
-            description = INVALID_PANEL_DESCRIPTION;
-            isDisabled = true;
-          }
-
-          return {
-            value: panel.id,
-            label: panel.title ?? 'Panel ' + panel.id,
-            imgUrl: panelPluginMetas?.[panel.type]?.info.logos.small,
-            description,
-            isDisabled,
-          };
-        }) ?? [],
-    [dashboard, getPanelDescription, panelPluginMetas]
+        .map((panel) => ({
+          value: panel.id,
+          label: panel.title ?? 'Panel ' + panel.id,
+          description: getPanelDescription(panel),
+          imgUrl: config.panels[panel.type].info.logos.small,
+        })) ?? [],
+    [dashboard, getPanelDescription]
   );
 
   const styles = useStyles2(getStyles);
   const selectId = useId();
-
-  if (panelPluginMetasError) {
-    return (
-      <Alert severity="error" title={t('dashboard.query-editor.load-error', 'Failed to load panel plugins')}>
-        {panelPluginMetasError.message}
-      </Alert>
-    );
-  }
 
   if (!dashboard) {
     return null;
@@ -223,10 +179,6 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
               <InlineSwitch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
             </Field>
           )}
-
-          <Field label="Filters" description="Apply --Dashboard-- data source filters to this panel" noMargin>
-            <InlineSwitch value={Boolean(query.adHocFiltersEnabled)} onChange={onAdHocFiltersToggle} />
-          </Field>
         </Stack>
 
         {loadingResults ? (

@@ -7,14 +7,13 @@ package xorm
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"hash/crc32"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 )
 
 // Session keep a pointer to sql.DB and provides all execution of all
@@ -44,7 +43,7 @@ type Session struct {
 	afterProcessors []executedProcessor
 
 	prepareStmt bool
-	stmtCache   map[uint32]*core.Stmt // key: hash.Hash32 of (queryStr, len(queryStr))
+	stmtCache   map[uint32]*core.Stmt //key: hash.Hash32 of (queryStr, len(queryStr))
 
 	// !evalphobia! stored the last executed query on this session
 	lastSQL     string
@@ -237,14 +236,6 @@ func (session *Session) DB() *core.DB {
 	return session.db
 }
 
-// Tx returns the underlying transaction
-func (session *Session) Tx() (*core.Tx, error) {
-	if session.tx == nil {
-		return nil, errors.New("no open transaction")
-	}
-	return session.tx, nil
-}
-
 func cleanupProcessorsClosures(slices *[]func(any)) {
 	if len(*slices) > 0 {
 		*slices = make([]func(any), 0)
@@ -425,7 +416,7 @@ func (session *Session) slice2Bean(scanResults []any, fields []string, bean any,
 
 		if _, ok := fieldValue.Interface().(core.Conversion); ok {
 			if data, err := value2Bytes(&rawValue); err == nil {
-				if fieldValue.Kind() == reflect.Pointer && fieldValue.IsNil() {
+				if fieldValue.Kind() == reflect.Ptr && fieldValue.IsNil() {
 					fieldValue.Set(reflect.New(fieldValue.Type().Elem()))
 				}
 				fieldValue.Interface().(core.Conversion).FromDB(data)
@@ -647,7 +638,7 @@ func (session *Session) slice2Bean(scanResults []any, fields []string, bean any,
 					}
 				}
 			}
-		case reflect.Pointer:
+		case reflect.Ptr:
 			// !nashtsai! TODO merge duplicated codes above
 			switch fieldType {
 			// following types case matching ptr's native type, therefore assign ptr directly

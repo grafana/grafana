@@ -1,6 +1,4 @@
-import grafanaIconSvg from 'img/grafana_icon.svg';
-
-import { type ConnectionStatus } from '../../hooks/useExternalAmSelector';
+import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { isInternalAlertmanagerInterestedInAlerts } from '../../utils/settings';
 
@@ -26,13 +24,12 @@ export default function InternalAlertmanager({ onEditConfiguration }: Props) {
   return (
     <AlertmanagerCard
       name={BUILTIN_ALERTMANAGER_NAME}
-      logo={grafanaIconSvg}
+      logo="public/img/grafana_icon.svg"
       status={status}
       receiving={isReceiving}
       onEditConfiguration={handleEditConfiguration}
       onEnable={handleEnable}
       onDisable={handleDisable}
-      readOnly
     />
   );
 }

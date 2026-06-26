@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -29,11 +28,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
-	usernameAdmin    = "otherAdmin"
+	usernameAdmin    = "admin"
 	usernameNonAdmin = "nonAdmin"
 	defaultPassword  = "password"
 )
@@ -45,7 +43,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationPlugins(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	dir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		PluginAdminEnabled: true,
@@ -100,7 +100,7 @@ func TestIntegrationPlugins(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		testCases := []testCase{
 			{
-				desc:        "should return all loaded core plugins",
+				desc:        "should return all loaded core and bundled plugins",
 				url:         "http://%s/api/plugins",
 				expStatus:   http.StatusOK,
 				expRespPath: "expectedListResp.json",
@@ -143,7 +143,9 @@ func TestIntegrationPlugins(t *testing.T) {
 }
 
 func TestIntegrationPluginAssets(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	type testCase struct {
 		desc            string
@@ -197,14 +199,12 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	cfgProvider, err := configprovider.ProvideService(cfg)
-	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
+	quotaService := quotaimpl.ProvideService(db, cfg)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
 
@@ -224,7 +224,7 @@ func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	body := make(map[string]interface{})
+	var body = make(map[string]interface{})
 	err = json.Unmarshal(b, &body)
 	require.NoError(t, err)
 
@@ -251,7 +251,7 @@ func expectedResp(t *testing.T, filename string) dtos.PluginList {
 }
 
 func updateRespSnapshot(t *testing.T, filename string, body string) {
-	err := os.WriteFile(filepath.Join("data", filename), []byte(body), 0o600)
+	err := os.WriteFile(filepath.Join("data", filename), []byte(body), 0600)
 	if err != nil {
 		t.Errorf("error writing snapshot %s: %v", filename, err)
 	}

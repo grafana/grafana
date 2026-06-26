@@ -1,5 +1,5 @@
 import { getNextRefId } from '@grafana/data';
-import { type DataQuery } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 
 /**
  * Makes sure all the queries have unique (and valid) refIds

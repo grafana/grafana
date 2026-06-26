@@ -48,8 +48,7 @@ func getQueryModel(dataQuery backend.DataQuery) (*queryModel, error) {
 		Format:        format,
 	}
 
-	// Process macros and generate raw fsql to be sent to
-	// influxdb backend for execution.
+	// Process macros and execute the query.
 	sql, err := sqlutil.Interpolate(query, macros)
 	if err != nil {
 		return nil, fmt.Errorf("macro interpolation: %w", err)

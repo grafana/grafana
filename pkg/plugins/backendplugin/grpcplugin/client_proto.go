@@ -3,12 +3,8 @@ package grpcplugin
 import (
 	"context"
 	"errors"
-	"os/exec"
 
-	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin/runner"
-
-	"go.opentelemetry.io/otel/trace"
+	trace "go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -24,17 +20,13 @@ var (
 
 var _ ProtoClient = (*protoClient)(nil)
 
-type PluginV2 interface {
+type ProtoClient interface {
 	pluginv2.DataClient
 	pluginv2.ResourceClient
 	pluginv2.DiagnosticsClient
 	pluginv2.StreamClient
 	pluginv2.AdmissionControlClient
 	pluginv2.ResourceConversionClient
-}
-
-type ProtoClient interface {
-	PluginV2
 
 	PID(context.Context) (string, error)
 	PluginID() string
@@ -48,46 +40,27 @@ type protoClient struct {
 }
 
 type ProtoClientOpts struct {
-	PluginJSON      plugins.JSONData
-	ExecutablePath  string
-	ExecutableArgs  []string
-	Env             []string
-	ContainerMode   ContainerModeOpts
-	RunnerFunc      func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error)
-	SkipHostEnvVars bool
-	Logger          log.Logger
-	Tracer          trace.Tracer
-}
-
-type ContainerModeOpts struct {
-	Enabled bool
-	Image   string
-	Tag     string
+	PluginJSON     plugins.JSONData
+	ExecutablePath string
+	ExecutableArgs []string
+	Env            []string
+	Logger         log.Logger
+	Tracer         trace.Tracer
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
-	p, err := newGrpcPlugin(
+	p := newGrpcPlugin(
 		PluginDescriptor{
 			pluginID:         opts.PluginJSON.ID,
 			managed:          true,
 			executablePath:   opts.ExecutablePath,
 			executableArgs:   opts.ExecutableArgs,
 			versionedPlugins: pluginSet,
-			containerMode: containerModeOpts{
-				enabled: opts.ContainerMode.Enabled,
-				image:   opts.ContainerMode.Image,
-				tag:     opts.ContainerMode.Tag,
-			},
-			runnerFunc:      opts.RunnerFunc,
-			skipHostEnvVars: opts.SkipHostEnvVars,
 		},
 		opts.Logger,
 		opts.Tracer,
 		func() []string { return opts.Env },
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	return &protoClient{plugin: p, pluginJSON: opts.PluginJSON}, nil
 }
@@ -125,14 +98,6 @@ func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataReque
 		return nil, errClientNotAvailable
 	}
 	return c.DataClient.QueryData(ctx, in, opts...)
-}
-
-func (r *protoClient) QueryChunkedData(ctx context.Context, in *pluginv2.QueryChunkedDataRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse], error) {
-	c, exists := r.client(ctx)
-	if !exists {
-		return nil, errClientNotAvailable
-	}
-	return c.DataClient.QueryChunkedData(ctx, in, opts...)
 }
 
 func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourceRequest, opts ...grpc.CallOption) (pluginv2.Resource_CallResourceClient, error) {

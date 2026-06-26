@@ -1,8 +1,9 @@
-import { type QueryEditorProps } from '@grafana/data';
-import { InlineField, InlineFieldRow, Input, TextArea } from '@grafana/ui';
+import { QueryEditorProps } from '@grafana/data';
+import { InlineFieldRow, Input, TextArea } from '@grafana/ui';
+import { InlineField } from '@grafana/ui/';
 
-import type InfluxDatasource from '../../../datasource';
-import { type InfluxOptions, type InfluxQuery, type InfluxVariableQuery, InfluxVersion } from '../../../types';
+import InfluxDatasource from '../../../datasource';
+import { InfluxOptions, InfluxQuery, InfluxVariableQuery, InfluxVersion } from '../../../types';
 import { FluxQueryEditor } from '../query/flux/FluxQueryEditor';
 
 type Props = QueryEditorProps<InfluxDatasource, InfluxQuery, InfluxOptions, InfluxVariableQuery>;

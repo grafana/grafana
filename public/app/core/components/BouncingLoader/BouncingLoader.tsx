@@ -1,10 +1,9 @@
 import { css, keyframes } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { Branding } from '../Branding/Branding';
+import { t } from '../../internationalization';
 
 export function BouncingLoader() {
   const styles = useStyles2(getStyles);
@@ -17,7 +16,7 @@ export function BouncingLoader() {
       aria-label={t('bouncing-loader.label', 'Loading')}
     >
       <div className={styles.bounce}>
-        <Branding.LoginLogo className={styles.logo} />
+        <img alt="" src="public/img/grafana_icon.svg" className={styles.logo} />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { type FormatVariable, type SceneObject, sceneUtils } from '@grafana/scenes';
+import { FormatVariable, SceneObject, sceneUtils } from '@grafana/scenes';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -34,12 +34,7 @@ class DashboardMacro implements FormatVariable {
 }
 
 export function registerDashboardMacro() {
-  try {
-    const unregister = sceneUtils.registerVariableMacro('__dashboard', DashboardMacro);
+  const unregister = sceneUtils.registerVariableMacro('__dashboard', DashboardMacro);
 
-    return () => unregister();
-  } catch (e) {
-    console.error('Error registering dashboard macro', e);
-    return () => {};
-  }
+  return () => unregister();
 }

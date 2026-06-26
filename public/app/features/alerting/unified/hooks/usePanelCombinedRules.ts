@@ -1,4 +1,4 @@
-import { type CombinedRule } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useCombinedRules } from './useCombinedRuleNamespaces';
 

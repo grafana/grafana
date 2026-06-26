@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/alerting/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestSilenceGetRuleUID(t *testing.T) {
@@ -23,7 +24,7 @@ func TestSilenceGetRuleUID(t *testing.T) {
 		{
 			name:            "silence with rule UID",
 			silence:         SilenceGen(SilenceMuts.WithMatcher(models.RuleUIDLabel, "someuid", labels.MatchEqual))(),
-			expectedRuleUID: new("someuid"),
+			expectedRuleUID: util.Pointer("someuid"),
 		},
 		{
 			name:            "silence with rule UID Matcher but MatchNotEqual",

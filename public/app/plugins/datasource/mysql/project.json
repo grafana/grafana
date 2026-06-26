@@ -1,5 +1,4 @@
 {
-  "name": "@grafana-plugins/mysql",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "tags": ["scope:plugin", "type:datasource"],

@@ -1,3 +1,4 @@
-import config, { type Env } from '@grafana/plugin-configs/webpack.config.ts';
+import config from '@grafana/plugin-configs/webpack.config';
 
-export default (env: Env) => config(env, import.meta.dirname);
+// eslint-disable-next-line no-barrel-files/no-barrel-files
+export default config;

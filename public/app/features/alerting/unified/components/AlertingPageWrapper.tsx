@@ -1,25 +1,20 @@
-import { type PropsWithChildren, type ReactNode, useMemo } from 'react';
+import { PropsWithChildren } from 'react';
 import { useLocation } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';
-import { type PageProps } from 'app/core/components/Page/types';
+import { PageProps } from 'app/core/components/Page/types';
 
 import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
-import { getAlertManagerDataSourcesByPermission } from '../utils/datasource';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
 
 /**
  * This is the main alerting page wrapper, used by the alertmanager page wrapper and the alert rules list view
- *
- * NOTE: we're omitting "title" here because it's not actually rendering the title (it's the html attribute "title").
- * Use "renderTitle" instead for custom page titles.
  */
-type AlertingPageWrapperProps = Omit<PageProps, 'children' | 'title'> & {
+interface AlertingPageWrapperProps extends PageProps {
   isLoading?: boolean;
-  children?: ReactNode;
-};
+}
 
 export const AlertingPageWrapper = ({ children, isLoading, ...rest }: AlertingPageWrapperProps) => (
   <Page {...rest}>
@@ -35,19 +30,10 @@ interface AlertmanagerPageWrapperProps extends AlertingPageWrapperProps {
 }
 export const AlertmanagerPageWrapper = ({ children, accessType, ...props }: AlertmanagerPageWrapperProps) => {
   const disableAlertmanager = useIsDisabledAlertmanagerSelection();
-  // Check if there are any external Alertmanager data sources the user can access
-  // If so, show the AlertManagerPicker so users can switch between them
-  const hasExternalAlertmanagers = useMemo(
-    () => getAlertManagerDataSourcesByPermission(accessType).availableExternalDataSources.length > 0,
-    [accessType]
-  );
 
   return (
     <AlertmanagerProvider accessType={accessType}>
-      <AlertingPageWrapper
-        {...props}
-        actions={hasExternalAlertmanagers && <AlertManagerPicker disabled={disableAlertmanager} />}
-      >
+      <AlertingPageWrapper {...props} actions={<AlertManagerPicker disabled={disableAlertmanager} />}>
         <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
       </AlertingPageWrapper>
     </AlertmanagerProvider>

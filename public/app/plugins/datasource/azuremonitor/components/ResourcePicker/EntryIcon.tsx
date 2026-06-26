@@ -1,6 +1,6 @@
 import { Icon } from '@grafana/ui';
 
-import { type ResourceRow, ResourceRowType } from './types';
+import { ResourceRow, ResourceRowType } from './types';
 
 interface EntryIconProps {
   entry: ResourceRow;

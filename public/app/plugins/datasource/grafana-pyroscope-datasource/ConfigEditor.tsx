@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import {
   AdvancedHttpSettings,
   Auth,
@@ -9,11 +9,19 @@ import {
   ConnectionSettings,
   DataSourceDescription,
   convertLegacyAuthProps,
-} from '@grafana/plugin-ui';
+} from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Divider, Field, Input, SecureSocksProxySettings, Stack, useStyles2 } from '@grafana/ui';
+import {
+  Divider,
+  EventsWithValidation,
+  LegacyForms,
+  SecureSocksProxySettings,
+  Stack,
+  regexValidation,
+  useStyles2,
+} from '@grafana/ui';
 
-import { type PyroscopeDataSourceOptions } from './types';
+import { PyroscopeDataSourceOptions } from './types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<PyroscopeDataSourceOptions> {}
 
@@ -48,7 +56,7 @@ export const ConfigEditor = (props: Props) => {
         isCollapsible={true}
         isInitiallyOpen={false}
       >
-        <Stack gap={5} direction="column" maxWidth={72}>
+        <Stack gap={5} direction="column">
           <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
 
           {config.secureSocksDSProxyEnabled && (
@@ -56,30 +64,36 @@ export const ConfigEditor = (props: Props) => {
           )}
 
           <ConfigSubSection title="Querying">
-            <Field
-              noMargin
+            <LegacyForms.FormField
               label="Minimal step"
-              htmlFor="minimal-step"
-              description="Minimal step used for metric query. Should be the same or higher as the scrape interval setting in the Pyroscope database."
-              error="Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s"
-              invalid={!!options.jsonData.minStep && !/^\d+(ms|[Mwdhmsy])$/.test(options.jsonData.minStep)}
-            >
-              <Input
-                id="minimal-step"
-                value={options.jsonData.minStep}
-                spellCheck={false}
-                placeholder="15s"
-                onChange={(event) => {
-                  onOptionsChange({
-                    ...options,
-                    jsonData: {
-                      ...options.jsonData,
-                      minStep: event.currentTarget.value,
-                    },
-                  });
-                }}
-              />
-            </Field>
+              labelWidth={13}
+              inputEl={
+                <LegacyForms.Input
+                  className="width-6"
+                  value={options.jsonData.minStep}
+                  spellCheck={false}
+                  placeholder="15s"
+                  onChange={(event) => {
+                    onOptionsChange({
+                      ...options,
+                      jsonData: {
+                        ...options.jsonData,
+                        minStep: event.currentTarget.value,
+                      },
+                    });
+                  }}
+                  validationEvents={{
+                    [EventsWithValidation.onBlur]: [
+                      regexValidation(
+                        /^$|^\d+(ms|[Mwdhmsy])$/,
+                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
+                      ),
+                    ],
+                  }}
+                />
+              }
+              tooltip="Minimal step used for metric query. Should be the same or higher as the scrape interval setting in the Pyroscope database."
+            />
           </ConfigSubSection>
         </Stack>
       </ConfigSection>

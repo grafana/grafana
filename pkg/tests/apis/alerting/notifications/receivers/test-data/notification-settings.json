@@ -3,7 +3,7 @@
   "template_file_provenances": {},
   "alertmanager_config": {
     "route": {
-      "receiver": "empty",
+      "receiver": "grafana-default-email",
       "routes": [
         {
           "receiver": "user-defined",
@@ -19,13 +19,13 @@
     },
     "receivers": [
       {
-        "name": "empty",
+        "name": "grafana-default-email",
         "grafana_managed_receiver_configs": [
           {
             "type": "email",
             "name": "email receiver",
             "settings": {
-              "addresses": "<example@example.com>"
+              "addresses": "<example@email.com>"
             }
           }
         ]
@@ -37,7 +37,7 @@
             "type": "email",
             "name": "user-defined",
             "settings": {
-              "addresses": "example@example.com"
+              "addresses": "example@email.com"
             }
           }
         ]

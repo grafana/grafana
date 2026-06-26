@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 
-import { type AzureQueryEditorFieldProps } from '../../types/types';
+import { AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../shared/Field';
 
 import { setTop } from './setQueryValue';
@@ -26,7 +25,7 @@ const TopField = ({ onQueryChange, query }: AzureQueryEditorFieldProps) => {
   }, [onQueryChange, query, value]);
 
   return (
-    <Field label={t('components.top-field.label-top', 'Top')}>
+    <Field label="Top">
       <Input
         id="azure-monitor-metrics-top-field"
         value={value}

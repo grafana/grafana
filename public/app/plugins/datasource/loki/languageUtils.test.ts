@@ -1,9 +1,9 @@
-import { toDataFrame, FieldType, type AbstractQuery, AbstractLabelOperator } from '@grafana/data';
+import { toDataFrame, FieldType, AbstractQuery, AbstractLabelOperator } from '@grafana/data';
 
 import {
   abstractQueryToExpr,
   escapeLabelValueInExactSelector,
-  getLokiLabelTypeFromFrame,
+  getLabelTypeFromFrame,
   isBytesString,
   processLabels,
   unescapeLabelValue,
@@ -53,70 +53,43 @@ describe('unescapeLabelValueInExactSelector', () => {
   });
 });
 
-describe('getLabelDisplayTypeFromFrame', () => {
+describe('getLabelTypeFromFrame', () => {
   const frameWithTypes = toDataFrame({
     fields: [
-      { name: 'Time', type: FieldType.time, values: [0, 1] },
+      { name: 'Time', type: FieldType.time, values: [0] },
       {
         name: 'Line',
         type: FieldType.string,
-        values: ['line1', 'line2'],
+        values: ['line1'],
       },
-      {
-        name: 'labelTypes',
-        type: FieldType.other,
-        values: [
-          { indexed: 'I', parsed: 'P', structured: 'S' },
-          {
-            /* Empty, the second value has no label types */
-          },
-        ],
-      },
+      { name: 'labelTypes', type: FieldType.other, values: [{ indexed: 'I', parsed: 'P', structured: 'S' }] },
     ],
   });
   const frameWithoutTypes = toDataFrame({
     fields: [
-      { name: 'Time', type: FieldType.time, values: [0, 1] },
+      { name: 'Time', type: FieldType.time, values: [0] },
       {
         name: 'Line',
         type: FieldType.string,
-        values: ['line1', 'line2'],
+        values: ['line1'],
       },
       { name: 'labels', type: FieldType.other, values: [{ job: 'test' }] },
     ],
   });
-  it('returns structuredMetadata if given correct index', () => {
-    expect(getLokiLabelTypeFromFrame('structured', frameWithTypes, 0)).toBe(LabelType.StructuredMetadata);
-  });
-  it('returns null if given index to value without label', () => {
-    expect(getLokiLabelTypeFromFrame('structured', frameWithTypes, 1)).toBe(null);
-  });
-  it('returns structuredMetadata if index arg is null, searches through all labels to find a match', () => {
-    expect(getLokiLabelTypeFromFrame('structured', frameWithTypes, null)).toBe(LabelType.StructuredMetadata);
+  it('returns structuredMetadata', () => {
+    expect(getLabelTypeFromFrame('structured', frameWithTypes, 0)).toBe(LabelType.StructuredMetadata);
   });
   it('returns indexed', () => {
-    expect(getLokiLabelTypeFromFrame('indexed', frameWithTypes, 0)).toBe(LabelType.Indexed);
-  });
-  it('returns indexed if null', () => {
-    expect(getLokiLabelTypeFromFrame('indexed', frameWithTypes, null)).toBe(LabelType.Indexed);
+    expect(getLabelTypeFromFrame('indexed', frameWithTypes, 0)).toBe(LabelType.Indexed);
   });
   it('returns parsed', () => {
-    expect(getLokiLabelTypeFromFrame('parsed', frameWithTypes, 0)).toBe(LabelType.Parsed);
-  });
-  it('returns parsed if null', () => {
-    expect(getLokiLabelTypeFromFrame('parsed', frameWithTypes, null)).toBe(LabelType.Parsed);
+    expect(getLabelTypeFromFrame('parsed', frameWithTypes, 0)).toBe(LabelType.Parsed);
   });
   it('returns null for unknown field', () => {
-    expect(getLokiLabelTypeFromFrame('unknown', frameWithTypes, 0)).toBe(null);
-  });
-  it('returns null for unknown field and unknown index', () => {
-    expect(getLokiLabelTypeFromFrame('unknown', frameWithTypes, null)).toBe(null);
-  });
-  it('returns null for frame value without types', () => {
-    expect(getLokiLabelTypeFromFrame('job', frameWithoutTypes, 0)).toBe(null);
+    expect(getLabelTypeFromFrame('unknown', frameWithTypes, 0)).toBe(null);
   });
   it('returns null for frame without types', () => {
-    expect(getLokiLabelTypeFromFrame('job', frameWithoutTypes, null)).toBe(null);
+    expect(getLabelTypeFromFrame('job', frameWithoutTypes, 0)).toBe(null);
   });
 });
 

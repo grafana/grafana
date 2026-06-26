@@ -3,12 +3,12 @@ import { useRef } from 'react';
 import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
 type Props = {
-  children: React.ReactElement<Record<string, unknown>>;
+  children: React.ReactElement;
   visible: boolean;
   size: number;
 

@@ -1,9 +1,10 @@
-import { type MigrateDataResponseItemDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, Stack, Text } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
+
+import { MigrateDataResponseItemDto } from '../api';
 
 import { prettyTypeName } from './TypeCell';
-import { type ResourceTableItem } from './types';
+import { ResourceTableItem } from './types';
 
 interface ResourceDetailsModalProps {
   resource: ResourceTableItem | undefined;
@@ -12,16 +13,6 @@ interface ResourceDetailsModalProps {
 
 function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string {
   switch (errorCode) {
-    case 'ALERT_RULES_QUOTA_REACHED':
-      return t(
-        'migrate-to-cloud.resource-details.error-messages.alert-rules-quota-reached',
-        'Maximum number of alert rules reached: Delete some alert rules or upgrade your plan and try again.'
-      );
-    case 'ALERT_RULES_GROUP_QUOTA_REACHED':
-      return t(
-        'migrate-to-cloud.resource-details.error-messages.alert-rules-group-quota-reached',
-        'Maximum number of alert rule groups reached: Delete some alert rule groups or upgrade your plan and try again.'
-      );
     case 'DATASOURCE_NAME_CONFLICT':
       return t(
         'migrate-to-cloud.resource-details.error-messages.datasource-name-conflict',
@@ -61,6 +52,11 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
       return t(
         'migrate-to-cloud.resource-details.error-messages.resource-conflict',
         'There is a resource conflict with the target instance. Please check the Grafana server logs for more details.'
+      );
+    case 'ONLY_CORE_DATA_SOURCES':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.only-core-data-sources',
+        'Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.'
       );
     case 'UNEXPECTED_STATUS_CODE':
       return t(
@@ -115,11 +111,9 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
             <>
               <Text element="p">{msgTitle}</Text>
               <Text element="p">
-                {getTMessage(resource?.errorCode) || resource?.message || (
-                  <Trans i18nKey="migrate-to-cloud.resource-details.error-messages.generic-error">
-                    There has been an error while migrating. Please check the cloud migration logs for more information.
-                  </Trans>
-                )}
+                {getTMessage(resource?.errorCode) ||
+                  resource?.message ||
+                  'There has been an error while migrating. Please check the cloud migration logs for more information.'}
               </Text>
             </>
           ) : (

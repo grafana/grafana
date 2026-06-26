@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-const maxRetrievedTokens = 1000
+const maxRetrievedTokens = 300
 
 func (s *ServiceAccountsStoreImpl) ListTokens(
 	ctx context.Context, query *serviceaccounts.GetSATokensQuery,
@@ -96,7 +96,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 	rawSQL := "UPDATE api_key SET is_revoked = ? WHERE id=? and org_id=? and service_account_id=?"
 
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		result, err := sess.Exec(rawSQL, s.sqlStore.GetDialect().BooleanValue(true), tokenId, orgId, serviceAccountId)
+		result, err := sess.Exec(rawSQL, s.sqlStore.GetDialect().BooleanStr(true), tokenId, orgId, serviceAccountId)
 		if err != nil {
 			return err
 		}

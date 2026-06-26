@@ -1,18 +1,14 @@
 import { css } from '@emotion/css';
-import { type FormEvent } from 'react';
+import { FormEvent } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
-import { TagFilter, type TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { contextSrv } from 'app/core/services/context_srv';
+import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { t, Trans } from 'app/core/internationalization';
 
-import { SearchLayout, type SearchState } from '../../types';
-import { needsListLayout } from '../../utils';
-
-import { OwnersFilter } from './OwnersFilter';
+import { SearchLayout, SearchState } from '../../types';
 
 function getLayoutOptions() {
   return [
@@ -40,16 +36,16 @@ interface ActionRowProps {
   onDatasourceChange: (ds?: string) => void;
   onPanelTypeChange: (pt?: string) => void;
   onSetIncludePanels: (v: boolean) => void;
-  onCreatedByChange?: (createdBy?: string) => void;
-  onOwnerReferenceChange?: (ownerReference: string[]) => void;
 }
 
-function getValidQueryLayout(q: SearchState): SearchLayout {
+export function getValidQueryLayout(q: SearchState): SearchLayout {
   const layout = q.layout ?? SearchLayout.Folders;
 
   // Folders is not valid when a query exists
-  if (layout === SearchLayout.Folders && needsListLayout(q)) {
-    return SearchLayout.List;
+  if (layout === SearchLayout.Folders) {
+    if (q.query || q.sort || q.starred || q.tag.length > 0) {
+      return SearchLayout.List;
+    }
   }
 
   return layout;
@@ -69,26 +65,20 @@ export const ActionRow = ({
   onDatasourceChange,
   onPanelTypeChange,
   onSetIncludePanels,
-  onCreatedByChange,
-  onOwnerReferenceChange,
 }: ActionRowProps) => {
   const styles = useStyles2(getStyles);
-
   const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = needsListLayout(state) ? [SearchLayout.Folders] : [];
-
-  const createdByMe = `user:${contextSrv.user.uid}`;
-  const isFilteredByMe = state.createdBy === createdByMe;
+  const disabledOptions =
+    state.tag.length || state.starred || state.query || state.datasource || state.panel_type
+      ? [SearchLayout.Folders]
+      : [];
 
   return (
-    <Stack justifyContent="space-between" alignItems="center" wrap={true}>
-      <Stack alignItems="center" wrap={true}>
+    <Stack justifyContent="space-between" alignItems="center">
+      <Stack gap={2} alignItems="center">
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
-        {config.featureToggles.teamFolders && onOwnerReferenceChange && (
-          <OwnersFilter values={state.ownerReference ?? []} onChange={onOwnerReferenceChange} />
-        )}
         {config.featureToggles.panelTitleSearch && (
           <Checkbox
             data-testid="include-panels"
@@ -108,16 +98,6 @@ export const ActionRow = ({
             />
           </div>
         )}
-        {onCreatedByChange && (
-          <div className={styles.checkboxWrapper}>
-            <Checkbox
-              label={t('search.actions.created-by-me', 'Created by me')}
-              // Make sure the checkbox is checked if the createdBy is the current user
-              value={state.createdBy === `user:${contextSrv.user.uid}`}
-              onChange={() => onCreatedByChange(isFilteredByMe ? undefined : createdByMe)}
-            />
-          </div>
-        )}
         {state.datasource && (
           <Button icon="times" variant="secondary" onClick={() => onDatasourceChange(undefined)}>
             <Trans i18nKey="search.actions.remove-datasource-filter">
@@ -127,14 +107,12 @@ export const ActionRow = ({
         )}
         {state.panel_type && (
           <Button icon="times" variant="secondary" onClick={() => onPanelTypeChange(undefined)}>
-            <Trans i18nKey="search.action-row.panel-type" values={{ panel: state.panel_type }}>
-              Panel: {'{{panel}}'}
-            </Trans>
+            Panel: {state.panel_type}
           </Button>
         )}
       </Stack>
 
-      <Stack gap={2} wrap={true}>
+      <Stack gap={2}>
         {showLayout && (
           <RadioButtonGroup
             options={getLayoutOptions()}
@@ -149,7 +127,6 @@ export const ActionRow = ({
           getSortOptions={getSortOptions}
           placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
           isClearable
-          width={28}
         />
       </Stack>
     </Stack>
@@ -158,7 +135,7 @@ export const ActionRow = ({
 
 ActionRow.displayName = 'ActionRow';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     checkboxWrapper: css({
       label: {

@@ -4,17 +4,10 @@ import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
 
-import {
-  DOCS_URL_FILE_PROVISIONING,
-  DOCS_URL_HTTP_API_PROVISIONING,
-  DOCS_URL_TERRAFORM_PROVISIONING,
-} from '../../utils/docs';
-
-import { type ExportFormats, type ExportProvider, type ProvisioningType, allGrafanaExportProviders } from './providers';
+import { allGrafanaExportProviders, ExportFormats, ExportProvider, ProvisioningType } from './providers';
 
 interface FileExportPreviewProps {
   format: ExportFormats;
@@ -66,13 +59,13 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
       </div>
       <div className={styles.actions}>
         <Button variant="secondary" onClick={onClose}>
-          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+          Cancel
         </Button>
         <ClipboardButton icon="copy" getText={() => textDefinition}>
-          <Trans i18nKey="alerting.file-export-preview.copy-code">Copy code</Trans>
+          Copy code
         </ClipboardButton>
         <Button icon="download-alt" onClick={onDownload}>
-          <Trans i18nKey="alerting.file-export-preview.download">Download</Trans>
+          Download
         </Button>
       </div>
     </div>
@@ -102,45 +95,45 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
 
   const exportInlineDoc: Record<ProvisioningType, { title: string; component: React.ReactNode }> = {
     file: {
-      title: t(
-        'alerting.file-export-inline-documentation.export-inline-doc.title.fileprovisioning-format',
-        'File-provisioning format'
-      ),
+      title: 'File-provisioning format',
       component: (
-        <Trans i18nKey="alerting.file-export-inline-documentation.file-provisioning">
-          {{ name }} format is only valid for File Provisioning.{' '}
-          <TextLink href={DOCS_URL_FILE_PROVISIONING} external>
+        <>
+          {name} format is only valid for File Provisioning.{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/"
+            external
+          >
             Read more in the docs.
           </TextLink>
-        </Trans>
+        </>
       ),
     },
     api: {
-      title: t(
-        'alerting.file-export-inline-documentation.export-inline-doc.title.apiprovisioning-format',
-        'API-provisioning format'
-      ),
+      title: 'API-provisioning format',
       component: (
-        <Trans i18nKey="alerting.file-export-inline-documentation.api-provisioning">
-          {{ name }} format is only valid for API Provisioning.{' '}
-          <TextLink href={DOCS_URL_HTTP_API_PROVISIONING} external>
+        <>
+          {name} format is only valid for API Provisioning.{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/http-api-provisioning/"
+            external
+          >
             Read more in the docs.
           </TextLink>
-        </Trans>
+        </>
       ),
     },
     terraform: {
-      title: t(
-        'alerting.file-export-inline-documentation.export-inline-doc.title.terraformprovisioning-format',
-        'Terraform-provisioning format'
-      ),
+      title: 'Terraform-provisioning format',
       component: (
-        <Trans i18nKey="alerting.file-export-inline-documentation.terraform-provisioning">
-          {{ name }} format is only valid for Terraform Provisioning.{' '}
-          <TextLink href={DOCS_URL_TERRAFORM_PROVISIONING} external>
+        <>
+          {name} format is only valid for Terraform Provisioning.{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/"
+            external
+          >
             Read more in the docs.
           </TextLink>
-        </Trans>
+        </>
       ),
     },
   };

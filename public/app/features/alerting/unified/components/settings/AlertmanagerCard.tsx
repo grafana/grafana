@@ -1,10 +1,8 @@
 import { capitalize } from 'lodash';
 
-import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
-import alertmanagerLogo from 'app/plugins/datasource/alertmanager/img/logo.svg';
 
-import { type ConnectionStatus } from '../../hooks/useExternalAmSelector';
+import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { ProvisioningBadge } from '../Provisioning';
 import { WithReturnButton } from '../WithReturnButton';
 
@@ -29,7 +27,7 @@ export function AlertmanagerCard({
   name,
   href,
   url,
-  logo = alertmanagerLogo,
+  logo = 'public/app/plugins/datasource/alertmanager/img/logo.svg',
   provisioned = false,
   readOnly = provisioned,
   showStatus = true,
@@ -43,12 +41,12 @@ export function AlertmanagerCard({
   const showActions = !provisioned && Boolean(onEnable) && Boolean(onDisable);
 
   return (
-    <Card noMargin data-testid={`alertmanager-card-${name}`}>
+    <Card data-testid={`alertmanager-card-${name}`}>
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           {href ? (
             <WithReturnButton
-              title={t('alerting.alertmanager-card.title-alerting-settings', 'Alerting settings')}
+              title="Alerting settings"
               component={
                 <TextLink href={href} inline={false}>
                   {name}
@@ -76,40 +74,13 @@ export function AlertmanagerCard({
           {showStatus ? (
             <>
               {!receiving ? (
-                <Text variant="bodySmall">
-                  <Trans i18nKey="alerting.alertmanager-card.not-receiving-grafana-managed-alerts">
-                    Not receiving Grafana managed alerts
-                  </Trans>
-                </Text>
+                <Text variant="bodySmall">Not receiving Grafana managed alerts</Text>
               ) : (
                 <>
-                  {status === 'pending' && (
-                    <Badge
-                      text={t('alerting.alertmanager-card.text-activation-in-progress', 'Activation in progress')}
-                      color="orange"
-                    />
-                  )}
-                  {status === 'active' && (
-                    <Badge
-                      text={t(
-                        'alerting.alertmanager-card.text-receiving-grafanamanaged-alerts',
-                        'Receiving Grafana-managed alerts'
-                      )}
-                      color="green"
-                    />
-                  )}
-                  {status === 'dropped' && (
-                    <Badge
-                      text={t(
-                        'alerting.alertmanager-card.text-failed-to-adopt-alertmanager',
-                        'Failed to adopt Alertmanager'
-                      )}
-                      color="red"
-                    />
-                  )}
-                  {status === 'inconclusive' && (
-                    <Badge text={t('alerting.alertmanager-card.text-inconclusive', 'Inconclusive')} color="orange" />
-                  )}
+                  {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
+                  {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
+                  {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
+                  {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
                 </>
               )}
             </>
@@ -122,21 +93,17 @@ export function AlertmanagerCard({
         <Stack direction="row" gap={1}>
           {/* ⚠️ provisioned Data sources cannot have their "enable" / "disable" actions but we should still allow editing of the configuration */}
           <Button onClick={onEditConfiguration} icon={readOnly ? 'eye' : 'edit'} variant="secondary" fill="outline">
-            {readOnly ? (
-              <Trans i18nKey="alerting.alertmanager-card.view-configuration">View configuration</Trans>
-            ) : (
-              <Trans i18nKey="alerting.alertmanager-card.edit-configuration">Edit configuration</Trans>
-            )}
+            {readOnly ? 'View configuration' : 'Edit configuration'}
           </Button>
           {showActions ? (
             <>
               {receiving ? (
                 <Button icon="times" variant="destructive" fill="outline" onClick={onDisable}>
-                  <Trans i18nKey="alerting.alertmanager-card.disable">Disable</Trans>
+                  Disable
                 </Button>
               ) : (
                 <Button icon="check" variant="secondary" fill="outline" onClick={onEnable}>
-                  <Trans i18nKey="alerting.alertmanager-card.enable">Enable</Trans>
+                  Enable
                 </Button>
               )}
             </>

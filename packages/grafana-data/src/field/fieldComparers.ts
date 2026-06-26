@@ -1,7 +1,7 @@
 import { isNumber } from 'lodash';
 
 import { isDateTimeInput, dateTime } from '../datetime/moment_wrapper';
-import { type Field, FieldType } from '../types/dataFrame';
+import { Field, FieldType } from '../types/dataFrame';
 
 type IndexComparer = (a: number, b: number) => number;
 
@@ -17,9 +17,9 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
       return booleanIndexComparer(values, reverse);
     case FieldType.time:
       if (typeof field.values[0] === 'number') {
-        return timestampIndexComparer(values, reverse, field.nanos);
+        return timestampIndexComparer(values, reverse);
       }
-      return timeIndexComparer(values, reverse, field.nanos);
+      return timeIndexComparer(values, reverse);
     default:
       return naturalIndexComparer(reverse);
   }
@@ -51,16 +51,11 @@ const numericComparer = (a: number, b: number): number => {
   return a - b;
 };
 
-// Using the Intl.Collator object compare method results in much faster
-// string sorting than .localeCompare
-const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
-
 const stringComparer = (a: string, b: string): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
   }
-
-  return compare(String(a), String(b));
+  return a.localeCompare(b);
 };
 
 const booleanComparer = (a: boolean, b: boolean): number => {
@@ -79,24 +74,17 @@ const falsyComparer = (a: unknown, b: unknown): number => {
   return 0;
 };
 
-const timestampIndexComparer = (values: number[], reverse: boolean, nanos?: number[]): IndexComparer => {
+const timestampIndexComparer = (values: number[], reverse: boolean): IndexComparer => {
   let mult = reverse ? -1 : 1;
-
-  if (nanos !== undefined) {
-    return (a: number, b: number): number => mult * (values[a] - values[b] || nanos[a] - nanos[b]);
-  }
-
   return (a: number, b: number): number => mult * (values[a] - values[b]);
 };
 
-const timeIndexComparer = (values: unknown[], reverse: boolean, nanos?: number[]): IndexComparer => {
-  const mult = reverse ? -1 : 1;
-
-  if (nanos !== undefined) {
-    return (a: number, b: number): number => mult * (timeComparer(values[a], values[b]) || nanos[a] - nanos[b]);
-  }
-
-  return (a: number, b: number): number => mult * timeComparer(values[a], values[b]);
+const timeIndexComparer = (values: unknown[], reverse: boolean): IndexComparer => {
+  return (a: number, b: number): number => {
+    const vA = values[a];
+    const vB = values[b];
+    return reverse ? timeComparer(vB, vA) : timeComparer(vA, vB);
+  };
 };
 
 const booleanIndexComparer = (values: boolean[], reverse: boolean): IndexComparer => {

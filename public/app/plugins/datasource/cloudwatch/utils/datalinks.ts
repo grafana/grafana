@@ -1,17 +1,8 @@
-import {
-  type DataFrame,
-  type DataLink,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  FieldType,
-  type ScopedVars,
-  type TimeRange,
-} from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { DataFrame, DataLink, DataQueryRequest, DataQueryResponse, ScopedVars, TimeRange } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 
-import { type AwsUrl, encodeUrl } from '../aws_url';
-import { type CloudWatchLogsQuery } from '../dataquery.gen';
-import { type CloudWatchQuery } from '../types';
+import { AwsUrl, encodeUrl } from '../aws_url';
+import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 
 type ReplaceFn = (
   target?: string,
@@ -42,22 +33,13 @@ export async function addDataLinksToLogsResponse(
         if (xrayLink) {
           field.config.links = [xrayLink];
         }
+      } else {
+        // Right now we add generic link to open the query in xray console to every field so it shows in the logs row
+        // details. Unfortunately this also creates link for all values inside table which look weird.
+        field.config.links = [
+          createAwsConsoleLink(curTarget, request.range, interpolatedRegion, replace, getVariableValue),
+        ];
       }
-    }
-
-    // add a link to the cloudwatch console as a separate field that will be displayed as a link
-    // @ts-ignore ignore feature toggle type error
-    if (config.featureToggles.cloudWatchLogsInsightsDataLinks && dataFrame.fields.length) {
-      dataFrame.fields.push({
-        name: '',
-        type: FieldType.string,
-        values: dataFrame.fields[0]?.values?.length
-          ? new Array(dataFrame.fields[0].values.length).fill('View this query in CloudWatch console')
-          : [],
-        config: {
-          links: [createAwsConsoleLink(curTarget, request.range, interpolatedRegion, replace, getVariableValue)],
-        },
-      });
     }
   }
 }

@@ -1,9 +1,9 @@
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { type RichHistoryQuery } from 'app/types/explore';
 
+import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
 
-import { type RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
+import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
 
 const dsMock = new DatasourceSrv();

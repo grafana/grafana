@@ -1,5 +1,5 @@
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
-import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 interface IncidentsPluginConfig {
@@ -10,13 +10,11 @@ interface IncidentsPluginConfig {
 }
 
 export function useGetIncidentPluginConfig(): IncidentsPluginConfig {
-  const {
-    pluginId,
-    installed: incidentPluginInstalled,
-    loading: loadingPluginSettings,
-  } = useIrmPlugin(SupportedPlugin.Incident);
+  const { installed: incidentPluginInstalled, loading: loadingPluginSettings } = usePluginBridge(
+    SupportedPlugin.Incident
+  );
   const { data: incidentsConfig, isLoading: loadingPluginConfig } =
-    incidentsApi.endpoints.getIncidentsPluginConfig.useQuery({ pluginId });
+    incidentsApi.endpoints.getIncidentsPluginConfig.useQuery();
 
   return {
     isInstalled: incidentPluginInstalled ?? false,

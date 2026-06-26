@@ -1,6 +1,6 @@
 import { createEntityAdapter, createSlice } from '@reduxjs/toolkit';
 
-import { type Invitee } from 'app/types/user';
+import { Invitee } from 'app/types';
 
 import { fetchInvitees, revokeInvite } from './actions';
 

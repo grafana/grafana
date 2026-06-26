@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { FieldValidationMessage, MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { type AzureMonitorQuery } from '../../types/query';
-import { type AzureMonitorOption, type AzureQueryEditorFieldProps } from '../../types/types';
+import { AzureMonitorQuery, AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { findOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 
@@ -56,10 +54,7 @@ const SubscriptionField = ({ query, subscriptions, variableOptionGroup, onQueryC
   };
 
   return (
-    <Field
-      label={t('components.subscription-field.label-subscriptions', 'Subscriptions')}
-      data-testid={selectors.components.queryEditor.argsQueryEditor.subscriptions.input}
-    >
+    <Field label="Subscriptions" data-testid={selectors.components.queryEditor.argsQueryEditor.subscriptions.input}>
       <>
         <MultiSelect
           isClearable
@@ -69,13 +64,7 @@ const SubscriptionField = ({ query, subscriptions, variableOptionGroup, onQueryC
           options={options}
           width={38}
         />
-        {error ? (
-          <FieldValidationMessage>
-            <Trans i18nKey="components.subscription-field.validation-subscriptions">
-              At least one subscription must be chosen.
-            </Trans>
-          </FieldValidationMessage>
-        ) : null}
+        {error ? <FieldValidationMessage>At least one subscription must be chosen.</FieldValidationMessage> : null}
       </>
     </Field>
   );

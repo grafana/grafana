@@ -6,11 +6,8 @@ import (
 )
 
 var (
-	// ErrImageNotFound is returned when the image does not exist or is expired.
+	// ErrImageNotFound is returned when the image does not exist.
 	ErrImageNotFound = errors.New("image not found")
-
-	// ErrImageDataUnavailable is returned when image data is unavailable. Usually because the image is missing a path.
-	ErrImageDataUnavailable = errors.New("image data is unavailable")
 )
 
 type Image struct {

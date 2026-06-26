@@ -1,17 +1,15 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
-import { Fragment, memo, useEffect, useRef } from 'react';
+import { formatDistanceToNowStrict } from 'date-fns';
+import { groupBy, uniqueId } from 'lodash';
+import { memo, Fragment, useEffect } from 'react';
 
-import { AlertLabel } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { Icon, TagList, useStyles2, Stack } from '@grafana/ui';
 
+import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
 
-import { ErrorMessageRow } from './ErrorMessageRow';
-import { type LogRecord, omitLabels } from './common';
-import { formatNumericValue } from './numberFormatter';
+import { LogRecord, omitLabels } from './common';
 
 type LogRecordViewerProps = {
   records: LogRecord[];
@@ -50,60 +48,43 @@ export const LogRecordViewerByTimestamp = memo(
 
     const groupedLines = groupRecordsByTimestamp(records);
 
-    const timestampRefs = useRef<Map<number, HTMLElement>>(new Map());
+    const timestampRefs = new Map<number, HTMLElement>();
     useEffect(() => {
-      onRecordsRendered && onRecordsRendered(timestampRefs.current);
-    }, [onRecordsRendered, records]);
+      onRecordsRendered && onRecordsRendered(timestampRefs);
+    });
 
     return (
-      <ul
-        className={styles.logsScrollable}
-        aria-label={t(
-          'alerting.log-record-viewer-by-timestamp.aria-label-state-history-by-timestamp',
-          'State history by timestamp'
-        )}
-      >
+      <ul className={styles.logsScrollable} aria-label="State history by timestamp">
         {Array.from(groupedLines.entries()).map(([key, records]) => {
           return (
             <li
               id={key.toString(10)}
               key={key}
               data-testid={key}
-              ref={(element) => {
-                if (element) {
-                  timestampRefs.current.set(key, element);
-                } else {
-                  timestampRefs.current.delete(key);
-                }
-              }}
+              ref={(element) => element && timestampRefs.set(key, element)}
               className={styles.listItemWrapper}
             >
               <Timestamp time={key} />
-              {records.map(({ line }, idx) => {
-                const id = line.fingerprint ?? `${key}-${idx}`;
-
-                return (
-                  <Fragment key={id}>
-                    <div className={styles.logsContainer}>
-                      <AlertStateTag state={line.previous} size="sm" muted />
-                      <Icon name="arrow-right" size="sm" />
-                      <AlertStateTag state={line.current} />
-                      <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
-                      <div>
-                        {line.labels && (
-                          <TagList
-                            tags={omitLabels(Object.entries(line.labels), commonLabels).map(
-                              ([key, value]) => `${key}=${value}`
-                            )}
-                            onClick={onLabelClick}
-                          />
-                        )}
-                      </div>
+              <div className={styles.logsContainer}>
+                {records.map(({ line }) => (
+                  <Fragment key={uniqueId()}>
+                    <AlertStateTag state={line.previous} size="sm" muted />
+                    <Icon name="arrow-right" size="sm" />
+                    <AlertStateTag state={line.current} />
+                    <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                    <div>
+                      {line.labels && (
+                        <TagList
+                          tags={omitLabels(Object.entries(line.labels), commonLabels).map(
+                            ([key, value]) => `${key}=${value}`
+                          )}
+                          onClick={onLabelClick}
+                        />
+                      )}
                     </div>
-                    {line.error && <ErrorMessageRow message={line.error} />}
                   </Fragment>
-                );
-              })}
+                ))}
+              </div>
             </li>
           );
         })}
@@ -112,6 +93,43 @@ export const LogRecordViewerByTimestamp = memo(
   }
 );
 LogRecordViewerByTimestamp.displayName = 'LogRecordViewerByTimestamp';
+
+export function LogRecordViewerByInstance({ records, commonLabels }: LogRecordViewerProps) {
+  const styles = useStyles2(getStyles);
+
+  const groupedLines = groupBy(records, (record: LogRecord) => {
+    return JSON.stringify(record.line.labels);
+  });
+
+  return (
+    <>
+      {Object.entries(groupedLines).map(([key, records]) => {
+        return (
+          <Stack direction="column" key={key}>
+            <h4>
+              <TagList
+                tags={omitLabels(Object.entries(records[0].line.labels ?? {}), commonLabels).map(
+                  ([key, value]) => `${key}=${value}`
+                )}
+              />
+            </h4>
+            <div className={styles.logsContainer}>
+              {records.map(({ line, timestamp }) => (
+                <div key={uniqueId()}>
+                  <AlertStateTag state={line.previous} size="sm" muted />
+                  <Icon name="arrow-right" size="sm" />
+                  <AlertStateTag state={line.current} />
+                  <Stack>{line.values && <AlertInstanceValues record={line.values} />}</Stack>
+                  <div>{dateTimeFormat(timestamp)}</div>
+                </div>
+              ))}
+            </div>
+          </Stack>
+        );
+      })}
+    </>
+  );
+}
 
 interface TimestampProps {
   time: number; // epoch timestamp
@@ -126,11 +144,7 @@ const Timestamp = ({ time }: TimestampProps) => {
       <Stack alignItems="center" gap={1}>
         <Icon name="clock-nine" size="sm" />
         <span className={styles.timestampText}>{dateTimeFormat(dateTime)}</span>
-        <small>
-          <Trans i18nKey="alerting.timestamp.time-ago" values={{ time: formatDistanceToNowStrict(dateTime) }}>
-            ({'{{time}}'} ago)
-          </Trans>
-        </small>
+        <small>({formatDistanceToNowStrict(dateTime)} ago)</small>
       </Stack>
     </div>
   );
@@ -142,7 +156,7 @@ const AlertInstanceValues = memo(({ record }: { record: Record<string, number> }
   return (
     <>
       {values.map(([key, value]) => (
-        <AlertLabel key={key} labelKey={key} value={formatNumericValue(value)} />
+        <Label key={key} label={key} value={value} />
       ))}
     </>
   );

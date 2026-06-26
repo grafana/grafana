@@ -1,17 +1,17 @@
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { AccessControlAction } from 'app/types/accessControl';
-import { type RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { AccessControlAction } from 'app/types';
+import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { grafanaRulerGroupName, grafanaRulerGroupName2, grafanaRulerNamespace } from '../../mocks/grafanaRulerApi';
-import { GROUP_1, NAMESPACE_1, NAMESPACE_2, namespace2 } from '../../mocks/mimirRulerApi';
+import { grafanaRulerGroupName2, grafanaRulerGroupName, grafanaRulerNamespace } from '../../mocks/grafanaRulerApi';
+import { NAMESPACE_2, namespace2, GROUP_1, NAMESPACE_1 } from '../../mocks/mimirRulerApi';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
-import { type SwapOperation } from '../../reducers/ruler/ruleGroups';
+import { SwapOperation } from '../../reducers/ruler/ruleGroups';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { SerializeState } from '../useAsync';
 

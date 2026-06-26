@@ -1,22 +1,22 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { type Role } from 'app/types/accessControl';
-import { type ApiKey } from 'app/types/apiKeys';
 import {
-  type ServiceAccountProfileState,
-  type ServiceAccountDTO,
-  type ServiceAccountsState,
+  ApiKey,
+  Role,
+  ServiceAccountDTO,
+  ServiceAccountProfileState,
+  ServiceAccountsState,
   ServiceAccountStateFilter,
-} from 'app/types/serviceaccount';
+} from 'app/types';
 
 // serviceAccountsProfilePage
-const initialStateProfile: ServiceAccountProfileState = {
+export const initialStateProfile: ServiceAccountProfileState = {
   serviceAccount: {} as ServiceAccountDTO,
   isLoading: true,
   tokens: [],
 };
 
-const serviceAccountProfileSlice = createSlice({
+export const serviceAccountProfileSlice = createSlice({
   name: 'serviceaccount',
   initialState: initialStateProfile,
   reducers: {
@@ -41,7 +41,7 @@ const serviceAccountProfileSlice = createSlice({
   },
 });
 
-const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
+export const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
 export const {
   serviceAccountLoaded,
   serviceAccountTokensLoaded,
@@ -52,7 +52,7 @@ export const {
 } = serviceAccountProfileSlice.actions;
 
 // serviceAccountsListPage
-const initialStateList: ServiceAccountsState = {
+export const initialStateList: ServiceAccountsState = {
   serviceAccounts: [],
   isLoading: true,
   roleOptions: [],
@@ -114,7 +114,7 @@ const serviceAccountsSlice = createSlice({
     }),
   },
 });
-const serviceAccountsReducer = serviceAccountsSlice.reducer;
+export const serviceAccountsReducer = serviceAccountsSlice.reducer;
 
 export const {
   serviceAccountsFetchBegin,

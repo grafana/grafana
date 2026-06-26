@@ -28,8 +28,7 @@
 Here span B is ref-type is 'FOLLOWS_FROM'    |
 */
 
-import transformTraceData from '../../model/transform-trace-data';
-import { type TraceResponse } from '../../types/trace';
+import { TraceResponse, transformTraceData } from '../../index';
 
 const trace: TraceResponse = {
   traceID: 'trace-abc',

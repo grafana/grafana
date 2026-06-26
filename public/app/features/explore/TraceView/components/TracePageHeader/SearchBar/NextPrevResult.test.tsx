@@ -17,9 +17,9 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
 import { createTheme } from '@grafana/data';
-import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
-import { trace } from '../mocks';
+import { defaultFilters } from '../../../useSearch';
+import { trace } from '../TracePageHeader.test';
 
 import NextPrevResult, { getStyles } from './NextPrevResult';
 
@@ -39,7 +39,7 @@ describe('<NextPrevResult>', () => {
     const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
     const searchBarProps = {
       trace: trace,
-      search: DEFAULT_SPAN_FILTERS,
+      search: defaultFilters,
       spanFilterMatches: props.matches ? new Set(props.matches) : undefined,
       showSpanFilterMatchesOnly: false,
       setShowSpanFilterMatchesOnly: jest.fn(),
@@ -64,8 +64,8 @@ describe('<NextPrevResult>', () => {
     const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
     expect(nextResButton).toBeInTheDocument();
     expect(prevResButton).toBeInTheDocument();
-    expect(nextResButton).toBeDisabled();
-    expect(prevResButton).toBeDisabled();
+    expect(nextResButton as HTMLDivElement).toHaveStyle('pointer-events: none');
+    expect(prevResButton as HTMLDivElement).toHaveStyle('pointer-events: none');
     expect(screen.getByText('0 matches')).toBeDefined();
   });
 
@@ -80,8 +80,8 @@ describe('<NextPrevResult>', () => {
     const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
     expect(nextResButton).toBeInTheDocument();
     expect(prevResButton).toBeInTheDocument();
-    expect(nextResButton).not.toBeDisabled();
-    expect(prevResButton).not.toBeDisabled();
+    expect(nextResButton as HTMLDivElement).not.toHaveStyle('pointer-events: none');
+    expect(prevResButton as HTMLDivElement).not.toHaveStyle('pointer-events: none');
     expect(screen.getByText('1 match')).toBeDefined();
   });
 

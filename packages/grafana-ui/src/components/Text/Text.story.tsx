@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
@@ -7,7 +7,7 @@ import { Text } from './Text';
 import mdx from './Text.mdx';
 
 const meta: Meta = {
-  title: 'Foundations/Text',
+  title: 'General/Text',
   component: Text,
   parameters: {
     docs: {

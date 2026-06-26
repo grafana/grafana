@@ -1,35 +1,33 @@
 import { cx } from '@emotion/css';
-import { intervalToDuration } from 'date-fns/intervalToDuration';
+import { intervalToDuration } from 'date-fns';
 import Skeleton from 'react-loading-skeleton';
 
 import {
-  type DisplayProcessor,
-  type Field,
+  DisplayProcessor,
+  Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { type PanelPluginMetas } from '@grafana/runtime/internal';
-import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
+import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { type QueryResponse, type SearchResultMeta } from '../../service/types';
-import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
-import { type SelectionChecker, type SelectionToggle } from '../selection';
+import { QueryResponse, SearchResultMeta } from '../../service';
+import { getIconForKind } from '../../service/utils';
+import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
-import { type TableColumn } from './SearchResultsTable';
+import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
-const DELETED_BY_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -40,8 +38,7 @@ export const generateColumns = (
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
   onDatasourceChange?: (datasource?: string) => void,
-  showingEverything?: boolean,
-  panelPluginMetas: PanelPluginMetas = {}
+  showingEverything?: boolean
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const access = response.view.fields;
@@ -131,7 +128,7 @@ export const generateColumns = (
         <div key={key} className={styles.cell} {...cellProps}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
-          ) : isDeleted || !p.userProps.href ? (
+          ) : isDeleted ? (
             <span className={classNames}>{name}</span>
           ) : (
             <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
@@ -157,47 +154,7 @@ export const generateColumns = (
     availableWidth -= width;
   } else {
     width = TYPE_COLUMN_WIDTH;
-    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles, panelPluginMetas));
-    availableWidth -= width;
-  }
-
-  const deletedByField = access.deletedBy;
-  if (deletedByField && hasValue(deletedByField)) {
-    width = DELETED_BY_COLUMN_WIDTH;
-    columns.push({
-      id: `column-deleted-by`,
-      field: deletedByField,
-      Header: t('search.results-table.deleted-by-header', 'Deleted by'),
-      width,
-      Cell: (p) => {
-        const rawValue = deletedByField.values[p.row.index];
-        const { key, ...cellProps } = p.cellProps;
-        return (
-          <div key={key} {...cellProps} className={styles.cell}>
-            {!response.isItemLoaded(p.row.index) ? (
-              <Skeleton width={150} />
-            ) : rawValue === DELETED_BY_UNKNOWN ? (
-              <Tooltip
-                content={t(
-                  'search.results-table.deleted-by-unknown-tooltip',
-                  'Failed to look up the account that deleted this dashboard'
-                )}
-              >
-                <Text variant="body" truncate>
-                  <Trans i18nKey="search.results-table.deleted-by-unknown-short">
-                    <Icon name="exclamation-triangle" /> Unknown
-                  </Trans>
-                </Text>
-              </Tooltip>
-            ) : (
-              <Text variant="body" truncate>
-                {formatDeletedByDisplayValue(rawValue, t)}
-              </Text>
-            )}
-          </div>
-        );
-      },
-    });
+    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
     availableWidth -= width;
   }
 
@@ -237,34 +194,17 @@ export const generateColumns = (
                   if (!info && p === 'general') {
                     info = { kind: 'folder', url: '/dashboards', name: 'Dashboards' };
                   }
+                  return info ? (
+                    <a key={p} href={info.url} className={styles.locationItem}>
+                      <Icon name={getIconForKind(info.kind)} />
 
-                  if (info) {
-                    const content = (
-                      <>
-                        <Icon name={getIconForKind(info.kind)} />
-
-                        <Text variant="body" truncate>
-                          {info.name}
-                        </Text>
-                      </>
-                    );
-
-                    if (info.url) {
-                      return (
-                        <a key={p} href={info.url} className={styles.locationItem}>
-                          {content}
-                        </a>
-                      );
-                    }
-
-                    return (
-                      <div key={p} className={styles.locationItem}>
-                        {content}
-                      </div>
-                    );
-                  }
-
-                  return <span key={p}>{p}</span>;
+                      <Text variant="body" truncate>
+                        {info.name}
+                      </Text>
+                    </a>
+                  ) : (
+                    <span key={p}>{p}</span>
+                  );
                 })}
               </div>
             )}
@@ -323,11 +263,7 @@ export const generateColumns = (
     };
 
     columns.push({
-      Header: () => (
-        <div className={styles.sortedHeader}>
-          <Trans i18nKey="search.generate-columns.score">Score</Trans>
-        </div>
-      ),
+      Header: () => <div className={styles.sortedHeader}>Score</div>,
       Cell: (p) => {
         const { key, ...cellProps } = p.cellProps;
         return (
@@ -461,8 +397,7 @@ function makeTypeColumn(
   kindField: Field<string>,
   typeField: Field<string>,
   width: number,
-  styles: Record<string, string>,
-  panelPluginMetas: PanelPluginMetas
+  styles: Record<string, string>
 ): TableColumn {
   return {
     id: `column-type`,
@@ -490,7 +425,7 @@ function makeTypeColumn(
             const type = typeField.values[i];
             if (type) {
               txt = type;
-              const info = panelPluginMetas[txt];
+              const info = config.panels[txt];
               if (info?.name) {
                 txt = info.name;
               } else {

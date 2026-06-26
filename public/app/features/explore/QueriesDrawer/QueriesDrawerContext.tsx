@@ -1,25 +1,29 @@
-import { type PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
+import { PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
 
-import { useSelector } from 'app/types/store';
+import { config } from '@grafana/runtime';
+import { useSelector } from 'app/types';
 
 import { selectRichHistorySettings } from '../state/selectors';
 
 export enum Tabs {
+  QueryLibrary = 'Query library',
   RichHistory = 'Query history',
   Starred = 'Starred',
   Settings = 'Settings',
 }
 
-type RichHistoryContextType = {
-  selectedTab: Tabs;
+type QueryLibraryContextType = {
+  selectedTab?: Tabs;
   setSelectedTab: (tab: Tabs) => void;
+  queryLibraryAvailable: boolean;
   drawerOpened: boolean;
   setDrawerOpened: (value: boolean) => void;
 };
 
-export const QueriesDrawerContext = createContext<RichHistoryContextType>({
-  selectedTab: Tabs.RichHistory,
+export const QueriesDrawerContext = createContext<QueryLibraryContextType>({
+  selectedTab: undefined,
   setSelectedTab: () => {},
+  queryLibraryAvailable: false,
   drawerOpened: false,
   setDrawerOpened: () => {},
 });
@@ -29,20 +33,24 @@ export function useQueriesDrawerContext() {
 }
 
 export function QueriesDrawerContextProvider({ children }: PropsWithChildren) {
-  const [selectedTab, setSelectedTab] = useState<Tabs>(Tabs.RichHistory);
+  const queryLibraryAvailable = config.featureToggles.queryLibrary === true;
+  const [selectedTab, setSelectedTab] = useState<Tabs | undefined>(
+    queryLibraryAvailable ? Tabs.QueryLibrary : undefined
+  );
   const [drawerOpened, setDrawerOpened] = useState<boolean>(false);
 
   const settings = useSelector(selectRichHistorySettings);
 
   useEffect(() => {
-    if (settings) {
+    if (settings && !queryLibraryAvailable) {
       setSelectedTab(settings.starredTabAsFirstTab ? Tabs.Starred : Tabs.RichHistory);
     }
-  }, [settings, setSelectedTab]);
+  }, [settings, setSelectedTab, queryLibraryAvailable]);
 
   return (
     <QueriesDrawerContext.Provider
       value={{
+        queryLibraryAvailable,
         selectedTab,
         setSelectedTab,
         drawerOpened,

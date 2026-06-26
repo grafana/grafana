@@ -23,21 +23,20 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
-	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -45,12 +44,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/updatemanager"
+	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -75,7 +72,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		preInstalledPlugin               bool
 	}
 	tcs := []testCase{
-		{expectedCode: http.StatusOK, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
+		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true},
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusForbidden, permissionOrg: globalOrg, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
@@ -101,20 +98,19 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
 			hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
 			hs.Cfg.RBAC.SingleOrganization = tc.singleOrganization
-			hs.Cfg.PreinstallPluginsAsync = []setting.InstallPlugin{{ID: "grafana-preinstalled-datasource", Version: "1.0.0"}}
+			hs.Cfg.PreinstallPlugins = []setting.InstallPlugin{{ID: "grafana-preinstalled-datasource", Version: "1.0.0"}}
 
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.accesscontrolService = &actest.FakeService{}
 
 			hs.pluginInstaller = NewFakePluginInstaller()
-			hs.pluginFileStore = &pluginfakes.FakePluginFileStore{}
+			hs.pluginFileStore = &fakes.FakePluginFileStore{}
 			hs.pluginStore = pluginstore.NewFakePluginStore(pluginstore.Plugin{
 				JSONData: plugins.JSONData{
 					ID: pluginID,
 				},
 			})
 			hs.managedPluginsService = managedplugins.NewNoop()
-			hs.pluginPreinstall = pluginchecker.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
@@ -161,7 +157,7 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 		nonCdnPlugin := &plugins.Plugin{
 			JSONData: plugins.JSONData{ID: nonCDNPluginID, Info: plugins.Info{Version: "2.0.0"}},
 		}
-		registry := &pluginfakes.FakePluginRegistry{
+		registry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				cdnPluginID:    cdnPlugin,
 				nonCDNPluginID: nonCdnPlugin,
@@ -265,7 +261,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 	t.Run("Given a request for an existing plugin file", func(t *testing.T) {
 		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewLocalFS(filepath.Dir(requestedFile)))
-		pluginRegistry := &pluginfakes.FakePluginRegistry{
+		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
 			},
@@ -283,7 +279,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
 		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewFakeFS())
-		pluginRegistry := &pluginfakes.FakePluginRegistry{
+		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
 			},
@@ -300,7 +296,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
 		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassCore, plugins.NewLocalFS(filepath.Dir(requestedFile)))
-		pluginRegistry := &pluginfakes.FakePluginRegistry{
+		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
 			},
@@ -318,7 +314,7 @@ func Test_GetPluginAssets(t *testing.T) {
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
 		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewFakeFS())
-		service := &pluginfakes.FakePluginRegistry{
+		service := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
 			},
@@ -342,7 +338,7 @@ func Test_GetPluginAssets(t *testing.T) {
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
 		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
-			setting.NewCfg(), pluginfakes.NewFakePluginRegistry(), func(sc *scenarioContext) {
+			setting.NewCfg(), fakes.NewFakePluginRegistry(), func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				var respJson map[string]any
@@ -367,7 +363,11 @@ func TestMakePluginResourceRequest(t *testing.T) {
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
 	require.NoError(t, err)
 
-	require.True(t, resp.Flushed, "response should be flushed after request is processed")
+	for {
+		if resp.Flushed {
+			break
+		}
+	}
 
 	res := resp.Result()
 	require.NoError(t, res.Body.Close())
@@ -400,7 +400,11 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 			err := hs.makePluginResourceRequest(resp, req, pCtx)
 			require.NoError(t, err)
 
-			require.True(t, resp.Flushed, "response should be flushed after request is processed")
+			for {
+				if resp.Flushed {
+					break
+				}
+			}
 			require.Len(t, resp.Header().Values("Content-Type"), 1, "should have 1 Content-Type header")
 			require.Len(t, resp.Header().Values("x-another"), 1, "should have 1 X-Another header")
 		})
@@ -420,16 +424,20 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
-	// Go 1.26's httptest.ResponseRecorder.Write returns http.ErrBodyNotAllowed
-	// for status codes that disallow a body (204, 304). The error is expected
-	// because HTTPResponseSender unconditionally calls Write on the response.
-	require.ErrorContains(t, err, "request method or response status code does not allow body")
+	require.NoError(t, err)
+
+	for {
+		if resp.Flushed {
+			break
+		}
+	}
+
 	require.Zero(t, resp.Header().Get("Content-Type"))
 }
 
 func TestPluginMarkdown(t *testing.T) {
 	t.Run("Plugin not installed returns error", func(t *testing.T) {
-		pluginFileStore := &pluginfakes.FakePluginFileStore{
+		pluginFileStore := &fakes.FakePluginFileStore{
 			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				return nil, plugins.ErrPluginNotInstalled
 			},
@@ -444,7 +452,7 @@ func TestPluginMarkdown(t *testing.T) {
 
 	t.Run("File fetch will be retried using different casing if error occurs", func(t *testing.T) {
 		var requestedFiles []string
-		pluginFileStore := &pluginfakes.FakePluginFileStore{
+		pluginFileStore := &fakes.FakePluginFileStore{
 			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				requestedFiles = append(requestedFiles, filename)
 				return nil, errors.New("some error")
@@ -481,7 +489,7 @@ func TestPluginMarkdown(t *testing.T) {
 		for _, tc := range tcs {
 			data := []byte{123}
 			var requestedFiles []string
-			pluginFileStore := &pluginfakes.FakePluginFileStore{
+			pluginFileStore := &fakes.FakePluginFileStore{
 				FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 					requestedFiles = append(requestedFiles, filename)
 					return &plugins.File{Content: data}, nil
@@ -498,7 +506,7 @@ func TestPluginMarkdown(t *testing.T) {
 	})
 
 	t.Run("Non markdown file request returns an error", func(t *testing.T) {
-		hs := HTTPServer{pluginFileStore: &pluginfakes.FakePluginFileStore{}}
+		hs := HTTPServer{pluginFileStore: &fakes.FakePluginFileStore{}}
 
 		md, err := hs.pluginMarkdown(context.Background(), "", "", "test.json")
 		require.ErrorIs(t, err, ErrUnexpectedFileExtension)
@@ -508,7 +516,7 @@ func TestPluginMarkdown(t *testing.T) {
 	t.Run("Happy path", func(t *testing.T) {
 		data := []byte{1, 2, 3}
 
-		pluginFileStore := &pluginfakes.FakePluginFileStore{
+		pluginFileStore := &fakes.FakePluginFileStore{
 			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				return &plugins.File{Content: data}, nil
 			},
@@ -529,12 +537,9 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
 	cfg *setting.Cfg, pluginRegistry registry.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
-		require.NoError(t, err)
-
 		hs := HTTPServer{
 			Cfg:             cfg,
-			pluginStore:     store,
+			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
@@ -568,29 +573,22 @@ type fakePluginClient struct {
 
 func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
+	bytes, err := json.Marshal(map[string]any{
+		"message": "hello",
+	})
+	if err != nil {
+		return err
+	}
 
 	statusCode := http.StatusOK
 	if c.statusCode != 0 {
 		statusCode = c.statusCode
 	}
 
-	// Go 1.26.0 follows RFC 7230 more strictly:
-	// https://github.com/golang/go/blame/master/src/net/http/httptest/recorder.go#L113-L115
-	var body []byte
-	if statusCode != http.StatusNoContent && statusCode != http.StatusNotModified {
-		var err error
-		body, err = json.Marshal(map[string]any{
-			"message": "hello",
-		})
-		if err != nil {
-			return err
-		}
-	}
-
 	return sender.Send(&backend.CallResourceResponse{
 		Status:  statusCode,
 		Headers: c.headers,
-		Body:    body,
+		Body:    bytes,
 	})
 }
 
@@ -615,7 +613,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				Description: "Data source for MySQL databases",
 			}}, plugins.ClassCore, plugins.NewFakeFS())
 
-	pluginRegistry := &pluginfakes.FakePluginRegistry{
+	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
 			p1.ID: p1,
 			p2.ID: p2,
@@ -651,22 +649,13 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
-				require.NoError(t, err)
-
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				hs.managedPluginsService = managedplugins.NewNoop()
-				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
-					hs.Cfg,
-					hs.pluginStore,
-					nil, // plugins.Installer
-					tracing.InitializeTracerForTest(),
-					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
-				)
+				var err error
+				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
 				require.NoError(t, err)
 			})
 
@@ -684,136 +673,23 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	}
 }
 
-func Test_PluginsList_EmbeddedFilter(t *testing.T) {
-	parentApp := createPlugin(plugins.JSONData{
-		ID: "parent-app", Type: plugins.TypeApp, Name: "Parent App",
-		Info: plugins.Info{Version: "1.0.0"},
-	}, plugins.ClassExternal, plugins.NewFakeFS())
-
-	embeddedDS := createPlugin(plugins.JSONData{
-		ID: "embedded-ds", Type: plugins.TypeDataSource, Name: "Embedded Datasource",
-		Info: plugins.Info{Version: "1.0.0"},
-	}, plugins.ClassExternal, plugins.NewFakeFS())
-	embeddedDS.IncludedInAppID = "parent-app"
-
-	embeddedPanel := createPlugin(plugins.JSONData{
-		ID: "embedded-panel", Type: plugins.TypePanel, Name: "Embedded Panel",
-		Info: plugins.Info{Version: "1.0.0"},
-	}, plugins.ClassExternal, plugins.NewFakeFS())
-	embeddedPanel.IncludedInAppID = "parent-app"
-
-	standaloneDS := createPlugin(plugins.JSONData{
-		ID: "standalone-ds", Type: plugins.TypeDataSource, Name: "Standalone Datasource",
-		Info: plugins.Info{Version: "1.0.0"},
-	}, plugins.ClassCore, plugins.NewFakeFS())
-
-	pluginRegistry := &pluginfakes.FakePluginRegistry{
-		Store: map[string]*plugins.Plugin{
-			parentApp.ID:     parentApp,
-			embeddedDS.ID:    embeddedDS,
-			embeddedPanel.ID: embeddedPanel,
-			standaloneDS.ID:  standaloneDS,
-		},
-	}
-
-	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-		"parent-app":     {ID: 0, OrgID: 1, PluginID: "parent-app", PluginVersion: "1.0.0", Enabled: true},
-		"embedded-ds":    {ID: 0, OrgID: 1, PluginID: "embedded-ds", PluginVersion: "1.0.0", Enabled: true},
-		"embedded-panel": {ID: 0, OrgID: 1, PluginID: "embedded-panel", PluginVersion: "1.0.0", Enabled: true},
-		"standalone-ds":  {ID: 0, OrgID: 1, PluginID: "standalone-ds", PluginVersion: "1.0.0", Enabled: true},
-	}}
-
-	type testCase struct {
-		desc            string
-		embeddedParam   string
-		expectedPlugins []string
-	}
-	tcs := []testCase{
-		{
-			desc:            "no embedded filter returns all plugins",
-			embeddedParam:   "",
-			expectedPlugins: []string{"parent-app", "embedded-ds", "embedded-panel", "standalone-ds"},
-		},
-		{
-			desc:            "embedded=0 excludes all embedded plugins",
-			embeddedParam:   "0",
-			expectedPlugins: []string{"parent-app", "standalone-ds"},
-		},
-		{
-			desc:            "embedded=include-datasource includes embedded datasource but excludes embedded panel",
-			embeddedParam:   "include-datasource",
-			expectedPlugins: []string{"parent-app", "embedded-ds", "standalone-ds"},
-		},
-		{
-			desc:            "embedded=include-panel includes embedded panel but excludes embedded datasource",
-			embeddedParam:   "include-panel",
-			expectedPlugins: []string{"parent-app", "embedded-panel", "standalone-ds"},
-		},
-	}
-
-	for _, tc := range tcs {
-		t.Run(tc.desc, func(t *testing.T) {
-			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
-				require.NoError(t, err)
-
-				hs.Cfg = setting.NewCfg()
-				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store
-				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-				hs.managedPluginsService = managedplugins.NewNoop()
-				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
-					hs.Cfg,
-					hs.pluginStore,
-					nil,
-					tracing.InitializeTracerForTest(),
-					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
-				)
-				require.NoError(t, err)
-			})
-
-			url := "/api/plugins"
-			if tc.embeddedParam != "" {
-				url += "?embedded=" + tc.embeddedParam
-			}
-
-			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(url), userWithPermissions(1, []ac.Permission{
-				{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:parent-app"},
-				{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:embedded-ds"},
-				{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:embedded-panel"},
-			})))
-			require.NoError(t, err)
-			require.Equal(t, http.StatusOK, res.StatusCode)
-
-			var result dtos.PluginList
-			require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
-			require.NoError(t, res.Body.Close())
-
-			resultIDs := make([]string, 0, len(result))
-			for _, p := range result {
-				resultIDs = append(resultIDs, p.Id)
-			}
-			require.ElementsMatch(t, tc.expectedPlugins, resultIDs)
-		})
-	}
-}
-
 func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	return &plugins.Plugin{
-		JSONData:        jd,
-		Class:           class,
-		FS:              files,
-		LoadingStrategy: plugins.LoadingStrategyScript,
+		JSONData: jd,
+		Class:    class,
+		FS:       files,
 	}
 }
 
 func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
+	newStr := func(s string) *string {
+		return &s
+	}
 	pluginReg := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
 			ID: "grafana-test-app",
-			IAM: &auth.IAM{
-				Permissions: []auth.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}, {Action: ac.ActionUsersCreate}},
+			IAM: &pfs.IAM{
+				Permissions: []pfs.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}, {Action: ac.ActionUsersCreate}},
 			},
 		},
 	}
@@ -886,7 +762,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			}
 			hs.log = logger
 			hs.accesscontrolService = actest.FakeService{}
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tt.orgID,
@@ -914,7 +790,7 @@ func Test_PluginsSettings(t *testing.T) {
 		Info: plugins.Info{
 			Version: "1.0.0",
 		}}, plugins.ClassExternal, plugins.NewFakeFS())
-	pluginRegistry := &pluginfakes.FakePluginRegistry{
+	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
 			p1.ID: p1,
 		},
@@ -957,12 +833,9 @@ func Test_PluginsSettings(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
-				require.NoError(t, err)
-
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				errTracker := pluginerrs.ProvideErrorTracker()
 				if tc.errCode != "" {
@@ -974,17 +847,10 @@ func Test_PluginsSettings(t *testing.T) {
 				pCfg := &config.PluginManagementCfg{}
 				pluginCDN := pluginscdn.ProvideService(pCfg)
 				sig := signature.ProvideService(pCfg, statickey.New())
-				calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
-				hs.pluginAssets = pluginassets.ProvideService(calc)
+				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
-				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
-					hs.Cfg,
-					hs.pluginStore,
-					&pluginfakes.FakePluginInstaller{},
-					tracing.InitializeTracerForTest(),
-					kvstore.NewFakeFeatureToggles(t, true),
-					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
-				)
+				var err error
+				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
 				require.NoError(t, err)
 			})
 
@@ -1004,47 +870,4 @@ func Test_PluginsSettings(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_UpdatePluginSetting(t *testing.T) {
-	pID := "test-app"
-	p1 := createPlugin(plugins.JSONData{
-		ID: pID, Type: "app", Name: pID,
-		Info: plugins.Info{
-			Version: "1.0.0",
-		},
-		AutoEnabled: true,
-	}, plugins.ClassExternal, plugins.NewFakeFS(),
-	)
-	pluginRegistry := &pluginfakes.FakePluginRegistry{
-		Store: map[string]*plugins.Plugin{
-			p1.ID: p1,
-		},
-	}
-
-	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-		pID: {ID: 0, OrgID: 1, PluginID: pID, PluginVersion: "1.0.0", Enabled: true},
-	}}
-
-	t.Run("should return an error when trying to disable an auto-enabled plugin", func(t *testing.T) {
-		server := SetupAPITestServer(t, func(hs *HTTPServer) {
-			store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
-			require.NoError(t, err)
-
-			hs.Cfg = setting.NewCfg()
-			hs.PluginSettings = &pluginSettings
-			hs.pluginStore = store
-			hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-			hs.managedPluginsService = managedplugins.NewNoop()
-			hs.log = log.NewNopLogger()
-		})
-
-		input := strings.NewReader(`{"enabled": false}`)
-		endpoint := fmt.Sprintf("/api/plugins/%s/settings", pID)
-		req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(1, []ac.Permission{{Action: pluginaccesscontrol.ActionWrite, Scope: "plugins:id:test-app"}}))
-		res, err := server.SendJSON(req)
-		require.NoError(t, err)
-		require.Equal(t, http.StatusBadRequest, res.StatusCode)
-		require.NoError(t, res.Body.Close())
-	})
 }

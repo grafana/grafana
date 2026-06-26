@@ -2,55 +2,72 @@ import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import { useCallback } from 'react';
 
-import { type SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { EditorField } from '@grafana/plugin-ui';
-import { Button, Select, Stack, useStyles2 } from '@grafana/ui';
+import { EditorField, Stack } from '@grafana/experimental';
+import { Button, Select, useStyles2 } from '@grafana/ui';
 
-import { QueryEditorExpressionType, type QueryEditorFunctionExpression } from '../../expressions';
-import { type DB, QueryFormat, type SQLExpression, type SQLQuery } from '../../types';
+import { QueryEditorExpressionType, QueryEditorFunctionExpression } from '../../expressions';
+import { SQLExpression, QueryFormat } from '../../types';
 import { createFunctionField } from '../../utils/sql.utils';
-import { useSqlChange } from '../../utils/useSqlChange';
-
-import { SelectFunctionParameters } from './SelectFunctionParameters';
 
 interface SelectRowProps {
-  query: SQLQuery;
-  onQueryChange: (sql: SQLQuery) => void;
-  db: DB;
-  columns: Array<SelectableValue<string>>;
+  sql: SQLExpression;
+  format: QueryFormat | undefined;
+  onSqlChange: (sql: SQLExpression) => void;
+  columns?: Array<SelectableValue<string>>;
+  functions?: Array<SelectableValue<string>>;
 }
 
-export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps) {
+const asteriskValue = { label: '*', value: '*' };
+
+export function SelectRow({ sql, format, columns, onSqlChange, functions }: SelectRowProps) {
   const styles = useStyles2(getStyles);
-  const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
+  const columnsWithAsterisk = [asteriskValue, ...(columns || [])];
   const timeSeriesAliasOpts: Array<SelectableValue<string>> = [];
 
   // Add necessary alias options for time series format
   // when that format has been selected
-  if (query.format === QueryFormat.Timeseries) {
-    timeSeriesAliasOpts.push({ label: t('grafana-sql.components.select-row.label.time', 'time'), value: 'time' });
-    timeSeriesAliasOpts.push({ label: t('grafana-sql.components.select-row.label.value', 'value'), value: 'value' });
+  if (format === QueryFormat.Timeseries) {
+    timeSeriesAliasOpts.push({ label: 'time', value: 'time' });
+    timeSeriesAliasOpts.push({ label: 'value', value: 'value' });
   }
+
+  const onColumnChange = useCallback(
+    (item: QueryEditorFunctionExpression, index: number) => (column: SelectableValue<string>) => {
+      let modifiedItem = { ...item };
+      if (!item.parameters?.length) {
+        modifiedItem.parameters = [{ type: QueryEditorExpressionType.FunctionParameter, name: column.value } as const];
+      } else {
+        modifiedItem.parameters = item.parameters.map((p) =>
+          p.type === QueryEditorExpressionType.FunctionParameter ? { ...p, name: column.value } : p
+        );
+      }
+
+      const newSql: SQLExpression = {
+        ...sql,
+        columns: sql.columns?.map((c, i) => (i === index ? modifiedItem : c)),
+      };
+
+      onSqlChange(newSql);
+    },
+    [onSqlChange, sql]
+  );
 
   const onAggregationChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (aggregation: SelectableValue<string>) => {
       const newItem = {
         ...item,
         name: aggregation?.value,
-        parameters: [
-          { type: QueryEditorExpressionType.FunctionParameter as const, name: item.parameters?.[0]?.name || '' },
-        ],
       };
       const newSql: SQLExpression = {
-        ...query.sql,
-        columns: query.sql?.columns?.map((c, i) => (i === index ? newItem : c)),
+        ...sql,
+        columns: sql.columns?.map((c, i) => (i === index ? newItem : c)),
       };
 
       onSqlChange(newSql);
     },
-    [onSqlChange, query.sql]
+    [onSqlChange, sql]
   );
 
   const onAliasChange = useCallback(
@@ -64,62 +81,51 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
       }
 
       const newSql: SQLExpression = {
-        ...query.sql,
-        columns: query.sql?.columns?.map((c, i) => (i === index ? newItem : c)),
+        ...sql,
+        columns: sql.columns?.map((c, i) => (i === index ? newItem : c)),
       };
 
       onSqlChange(newSql);
     },
-    [onSqlChange, query.sql]
+    [onSqlChange, sql]
   );
 
   const removeColumn = useCallback(
     (index: number) => () => {
-      const clone = [...(query.sql?.columns || [])];
+      const clone = [...sql.columns!];
       clone.splice(index, 1);
       const newSql: SQLExpression = {
-        ...query.sql,
+        ...sql,
         columns: clone,
       };
       onSqlChange(newSql);
     },
-    [onSqlChange, query.sql]
+    [onSqlChange, sql]
   );
 
   const addColumn = useCallback(() => {
-    const newSql: SQLExpression = { ...query.sql, columns: [...(query.sql?.columns || []), createFunctionField()] };
+    const newSql: SQLExpression = { ...sql, columns: [...sql.columns!, createFunctionField()] };
     onSqlChange(newSql);
-  }, [onSqlChange, query.sql]);
-
-  const aggregateOptions = () => {
-    const options: Array<SelectableValue<string>> = [
-      {
-        label: t('grafana-sql.components.select-row.aggregate-options.options.label.aggregations', 'Aggregations'),
-        options: [],
-      },
-      { label: t('grafana-sql.components.select-row.aggregate-options.options.label.macros', 'Macros'), options: [] },
-    ];
-    for (const func of db.functions()) {
-      // Create groups for macros
-      if (func.name.startsWith('$__')) {
-        options[1].options.push({ label: func.name, value: func.name });
-      } else {
-        options[0].options.push({ label: func.name, value: func.name });
-      }
-    }
-    return options;
-  };
+  }, [onSqlChange, sql]);
 
   return (
-    <Stack gap={2} wrap="wrap" direction="column">
-      {query.sql?.columns?.map((item, index) => (
+    <Stack gap={2} wrap direction="column">
+      {sql.columns?.map((item, index) => (
         <div key={index}>
           <Stack gap={2} alignItems="end">
-            <EditorField
-              label={t('grafana-sql.components.select-row.label-data-operations', 'Data operations')}
-              optional
-              width={25}
-            >
+            <EditorField label="Column" width={25}>
+              <Select
+                value={getColumnValue(item)}
+                data-testid={selectors.components.SQLQueryEditor.selectColumn}
+                options={columnsWithAsterisk}
+                inputId={`select-column-${index}-${uniqueId()}`}
+                menuShouldPortal
+                allowCustomValue
+                onChange={onColumnChange(item, index)}
+              />
+            </EditorField>
+
+            <EditorField label="Aggregation" optional width={25}>
               <Select
                 value={item.name ? toOption(item.name) : null}
                 inputId={`select-aggregation-${index}-${uniqueId()}`}
@@ -127,20 +133,11 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
                 isClearable
                 menuShouldPortal
                 allowCustomValue
-                options={aggregateOptions()}
+                options={functions}
                 onChange={onAggregationChange(item, index)}
               />
             </EditorField>
-
-            <SelectFunctionParameters
-              currentColumnIndex={index}
-              columns={columns}
-              onSqlChange={onSqlChange}
-              query={query}
-              db={db}
-            />
-
-            <EditorField label={t('grafana-sql.components.select-row.label-alias', 'Alias')} optional width={15}>
+            <EditorField label="Alias" optional width={15}>
               <Select
                 value={item.alias ? toOption(item.alias) : null}
                 inputId={`select-alias-${index}-${uniqueId()}`}
@@ -153,7 +150,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
               />
             </EditorField>
             <Button
-              aria-label={t('grafana-sql.components.select-row.title-remove-column', 'Remove column')}
+              title="Remove column"
               type="button"
               icon="trash-alt"
               variant="secondary"
@@ -167,7 +164,7 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
         type="button"
         onClick={addColumn}
         variant="secondary"
-        aria-label={t('grafana-sql.components.select-row.title-add-column', 'Add column')}
+        title="Add column"
         size="md"
         icon="plus"
         className={styles.addButton}
@@ -177,12 +174,13 @@ export function SelectRow({ query, onQueryChange, db, columns }: SelectRowProps)
 }
 
 const getStyles = () => {
-  return {
-    addButton: css({ alignSelf: 'flex-start' }),
-    label: css({
-      padding: 0,
-      margin: 0,
-      width: 'unset',
-    }),
-  };
+  return { addButton: css({ alignSelf: 'flex-start' }) };
 };
+
+function getColumnValue({ parameters }: QueryEditorFunctionExpression): SelectableValue<string> | null {
+  const column = parameters?.find((p) => p.type === QueryEditorExpressionType.FunctionParameter);
+  if (column?.name) {
+    return toOption(column.name);
+  }
+  return null;
+}

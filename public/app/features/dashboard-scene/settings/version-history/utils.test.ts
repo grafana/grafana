@@ -1,6 +1,6 @@
-import { type Dashboard } from '@grafana/schema';
+import { Dashboard } from '@grafana/schema';
 
-import { type Diff, getDiffOperationText, getDiffText, jsonDiff } from './utils';
+import { Diff, getDiffOperationText, getDiffText, jsonDiff } from './utils';
 
 describe('getDiffOperationText', () => {
   const cases = [

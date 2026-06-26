@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -62,7 +61,6 @@ func TestTracingConfig(t *testing.T) {
 		Env                map[string]string
 		ExpectedExporter   string
 		ExpectedAddress    string
-		ExpectedInsecure   bool
 		ExpectedPropagator string
 		ExpectedAttrs      []attribute.KeyValue
 
@@ -74,7 +72,6 @@ func TestTracingConfig(t *testing.T) {
 			Name:             "default config uses noop exporter",
 			Cfg:              "",
 			ExpectedExporter: noopExporter,
-			ExpectedInsecure: true,
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
 		{
@@ -84,7 +81,6 @@ func TestTracingConfig(t *testing.T) {
 			custom_attributes = key1:value1,key2:value2
 			`,
 			ExpectedExporter: noopExporter,
-			ExpectedInsecure: true,
 			ExpectedAttrs:    []attribute.KeyValue{attribute.String("key1", "value1"), attribute.String("key2", "value2")},
 		},
 		{
@@ -105,19 +101,6 @@ func TestTracingConfig(t *testing.T) {
 			`,
 			ExpectedExporter: otlpExporter,
 			ExpectedAddress:  "otlp.example.com:4317",
-			ExpectedInsecure: true,
-			ExpectedAttrs:    []attribute.KeyValue{},
-		},
-		{
-			Name: "OTLP insecure is parsed",
-			Cfg: `
-			[tracing.opentelemetry.otlp]
-			address = otlp.example.com:4317
-			insecure = false
-			`,
-			ExpectedExporter: otlpExporter,
-			ExpectedAddress:  "otlp.example.com:4317",
-			ExpectedInsecure: false,
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
 		{
@@ -171,7 +154,6 @@ func TestTracingConfig(t *testing.T) {
 			`,
 			ExpectedExporter:          otlpExporter,
 			ExpectedAddress:           "otlp.example.com:4317",
-			ExpectedInsecure:          true,
 			ExpectedAttrs:             []attribute.KeyValue{},
 			ExpectedSampler:           "remote",
 			ExpectedSamplerParam:      0.5,
@@ -190,16 +172,13 @@ func TestTracingConfig(t *testing.T) {
 			err := cfg.Raw.Append([]byte(test.Cfg))
 			assert.NoError(t, err)
 			// create tracingConfig
-			cfgProvider, err := configprovider.ProvideService(cfg)
-			assert.NoError(t, err)
-			tracingConfig, err := ProvideTracingConfig(cfgProvider)
+			tracingConfig, err := ProvideTracingConfig(cfg)
 			assert.NoError(t, err)
 			// make sure tracker is properly configured
 			assert.Equal(t, test.ExpectedExporter, tracingConfig.enabled)
 			assert.Equal(t, test.ExpectedAddress, tracingConfig.Address)
 			assert.Equal(t, test.ExpectedPropagator, tracingConfig.Propagation)
 			assert.Equal(t, test.ExpectedAttrs, tracingConfig.CustomAttribs)
-			assert.Equal(t, test.ExpectedInsecure, tracingConfig.Insecure)
 
 			if test.ExpectedSampler != "" {
 				assert.Equal(t, test.ExpectedSampler, tracingConfig.Sampler)

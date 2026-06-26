@@ -1,18 +1,17 @@
 import { css } from '@emotion/css';
-import { autoUpdate, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { type ChangeEvent, forwardRef, useImperativeHandle, useState } from 'react';
+import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { ChangeEvent, useState } from 'react';
 
-import { type GrafanaTheme2, dateTime } from '@grafana/data';
+import { GrafanaTheme2, dateTime } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
-import { getPositioningMiddleware } from '../../../utils/floating';
-import { type Props as InputProps, Input } from '../../Input/Input';
+import { useStyles2 } from '../../../themes';
+import { Props as InputProps, Input } from '../../Input/Input';
 import { DatePicker } from '../DatePicker/DatePicker';
 
-const formatDate = (date: Date | string) => dateTime(date).format('L');
+export const formatDate = (date: Date | string) => dateTime(date).format('L');
 
 /** @public */
-export interface DatePickerWithInputProps extends Omit<InputProps, 'value' | 'onChange'> {
+export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
   /** Value selected by the DatePicker */
   value?: Date | string;
   /** The minimum date the value can be set to */
@@ -27,78 +26,79 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'value' | 'on
   placeholder?: string;
 }
 
-/**
- * An input with a calendar view, used to select a date.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-datepickerwithinput--docs
- * @public
- */
-export const DatePickerWithInput = forwardRef<HTMLInputElement, DatePickerWithInputProps>(
-  ({ value, minDate, maxDate, onChange, closeOnSelect, placeholder = 'Date', ...rest }, ref) => {
-    const [open, setOpen] = useState(false);
-    const styles = useStyles2(getStyles);
-    const placement = 'bottom-start';
+/** @public */
+export const DatePickerWithInput = ({
+  value,
+  minDate,
+  maxDate,
+  onChange,
+  closeOnSelect,
+  placeholder = 'Date',
+  ...rest
+}: DatePickerWithInputProps) => {
+  const [open, setOpen] = useState(false);
+  const styles = useStyles2(getStyles);
 
-    // the order of middleware is important!
-    // see https://floating-ui.com/docs/arrow#order
-    const middleware = getPositioningMiddleware(placement);
+  // the order of middleware is important!
+  // see https://floating-ui.com/docs/arrow#order
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
 
-    const { context, refs, floatingStyles } = useFloating<HTMLInputElement>({
-      open,
-      placement,
-      onOpenChange: setOpen,
-      middleware,
-      whileElementsMounted: autoUpdate,
-      strategy: 'fixed',
-    });
+  const { context, refs, floatingStyles } = useFloating({
+    open,
+    placement: 'bottom-start',
+    onOpenChange: setOpen,
+    middleware,
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
+  });
 
-    const click = useClick(context);
-    const dismiss = useDismiss(context);
-    const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
-    useImperativeHandle<HTMLInputElement | null, HTMLInputElement | null>(ref, () => refs.domReference.current, [
-      refs.domReference,
-    ]);
-
-    return (
-      <div className={styles.container}>
-        <Input
-          ref={refs.setReference}
-          type="text"
-          autoComplete={'off'}
-          placeholder={placeholder}
-          value={value ? formatDate(value) : value}
-          onChange={(ev: ChangeEvent<HTMLInputElement>) => {
-            // Allow resetting the date
-            if (ev.target.value === '') {
-              onChange('');
+  return (
+    <div className={styles.container}>
+      <Input
+        ref={refs.setReference}
+        type="text"
+        autoComplete={'off'}
+        placeholder={placeholder}
+        value={value ? formatDate(value) : value}
+        onChange={(ev: ChangeEvent<HTMLInputElement>) => {
+          // Allow resetting the date
+          if (ev.target.value === '') {
+            onChange('');
+          }
+        }}
+        className={styles.input}
+        {...rest}
+        {...getReferenceProps()}
+      />
+      <div className={styles.popover} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
+        <DatePicker
+          isOpen={open}
+          value={value && typeof value !== 'string' ? value : dateTime().toDate()}
+          minDate={minDate}
+          maxDate={maxDate}
+          onChange={(ev) => {
+            onChange(ev);
+            if (closeOnSelect) {
+              setOpen(false);
             }
           }}
-          className={styles.input}
-          {...rest}
-          {...getReferenceProps()}
+          onClose={() => setOpen(false)}
         />
-        <div className={styles.popover} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
-          <DatePicker
-            isOpen={open}
-            value={value && typeof value !== 'string' ? value : dateTime().toDate()}
-            minDate={minDate}
-            maxDate={maxDate}
-            onChange={(ev) => {
-              onChange(ev);
-              if (closeOnSelect) {
-                setOpen(false);
-              }
-            }}
-            onClose={() => setOpen(false)}
-          />
-        </div>
       </div>
-    );
-  }
-);
-
-DatePickerWithInput.displayName = 'DatePickerWithInput';
+    </div>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

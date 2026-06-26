@@ -1,21 +1,15 @@
+import { css } from '@emotion/css';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useReducer } from 'react';
 import * as React from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import { arrayToDataFrame, colorManipulator, type DataFrame, DataTopic, type InterpolateFunction } from '@grafana/data';
-import { type TimeZone } from '@grafana/schema';
-import {
-  DEFAULT_ANNOTATION_COLOR,
-  getPortalContainer,
-  type UPlotConfigBuilder,
-  usePanelContext,
-  useTheme2,
-} from '@grafana/ui';
+import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
+import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
-import { ANNOTATION_LANE_SIZE, getXAnnotationFrames, getXYAnnotationFrames } from './utils';
 
 // (copied from TooltipPlugin2)
 interface TimeRange2 {
@@ -25,13 +19,11 @@ interface TimeRange2 {
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
-  annotations?: DataFrame[];
+  annotations: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
-  setNewRange: (newRange: TimeRange2 | null) => void;
+  setNewRange: (newRage: TimeRange2 | null) => void;
   canvasRegionRendering?: boolean;
-  replaceVariables: InterpolateFunction;
-  multiLane?: boolean;
 }
 
 // TODO: batch by color, use Path2D objects
@@ -64,42 +56,27 @@ function getVals(frame: DataFrame) {
   return vals;
 }
 
-/**
- * @deprecated - remove and replace with AnnotationsPlugin2Cluster
- * @param annotations
- * @param timeZone
- * @param config
- * @param newRange
- * @param setNewRange
- * @param replaceVariables
- * @param canvasRegionRendering
- * @param multiLane
- * @constructor
- */
 export const AnnotationsPlugin2 = ({
   annotations,
   timeZone,
   config,
   newRange,
   setNewRange,
-  replaceVariables,
   canvasRegionRendering = true,
-  multiLane = false,
 }: AnnotationsPluginProps) => {
-  const plotRef = useRef<uPlot | null>(null);
+  const [plot, setPlot] = useState<uPlot>();
 
   const [portalRoot] = useState(() => getPortalContainer());
-  const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
+
+  const styles = useStyles2(getStyles);
   const getColorByName = useTheme2().visualization.getColorByName;
 
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const { canExecuteActions } = usePanelContext();
-  const userCanExecuteActions = canExecuteActions?.() ?? false;
-
-  const { xAnnos, xyAnnos } = useMemo(() => {
-    let xAnnos = getXAnnotationFrames(annotations);
-    let xyAnnos = getXYAnnotationFrames(annotations);
+  const annos = useMemo(() => {
+    let annos = annotations.filter(
+      (frame) => frame.name !== 'exemplar' && frame.length > 0 && frame.fields.some((f) => f.name === 'time')
+    );
 
     if (newRange) {
       let isRegion = newRange.to > newRange.from;
@@ -120,44 +97,32 @@ export const AnnotationsPlugin2 = ({
         },
       };
 
-      xAnnos.push(wipAnnoFrame);
+      annos.push(wipAnnoFrame);
     }
 
-    return {
-      xAnnos,
-      xyAnnos,
-    };
+    return annos;
   }, [annotations, newRange]);
 
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
   }, [setNewRange]);
 
-  const xAnnoRef = useRef(xAnnos);
-  xAnnoRef.current = xAnnos;
-
-  const xyAnnoRef = useRef(xyAnnos);
-  xyAnnoRef.current = xyAnnos;
-
+  const annoRef = useRef(annos);
+  annoRef.current = annos;
   const newRangeRef = useRef(newRange);
   newRangeRef.current = newRange;
 
-  const xAxisRef = useRef<HTMLDivElement | undefined>(undefined);
+  const xAxisRef = useRef<HTMLDivElement>();
 
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
       let xAxisEl = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       xAxisRef.current = xAxisEl;
-      plotRef.current = u;
-      // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
-      if (annotations?.length) {
-        forceUpdate();
-      }
+      setPlot(u);
     });
 
     config.addHook('draw', (u) => {
-      let xAnnos = xAnnoRef.current;
-      let xyAnnos = xyAnnoRef.current;
+      let annos = annoRef.current;
 
       const ctx = u.ctx;
 
@@ -167,10 +132,40 @@ export const AnnotationsPlugin2 = ({
       ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
       ctx.clip();
 
-      // Multi-lane annotations do not support vertical lines or shaded regions
-      xAnnos.forEach((frame) => {
+      annos.forEach((frame) => {
         let vals = getVals(frame);
-        if (!multiLane) {
+
+        if (frame.name === 'xymark') {
+          // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
+
+          let xKey = config.scales[0].props.scaleKey;
+          let yKey = config.scales[1].props.scaleKey;
+
+          for (let i = 0; i < frame.length; i++) {
+            let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
+
+            let x0 = u.valToPos(vals.xMin[i], xKey, true);
+            let x1 = u.valToPos(vals.xMax[i], xKey, true);
+            let y0 = u.valToPos(vals.yMax[i], yKey, true);
+            let y1 = u.valToPos(vals.yMin[i], yKey, true);
+
+            ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
+            ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+
+            ctx.lineWidth = Math.round(vals.lineWidth[i] * uPlot.pxRatio);
+
+            if (vals.lineStyle[i] === 'dash') {
+              // maybe extract this to vals.lineDash[i] in future?
+              ctx.setLineDash([5, 5]);
+            } else {
+              // solid
+              ctx.setLineDash([]);
+            }
+
+            ctx.strokeStyle = color;
+            ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          }
+        } else {
           let y0 = u.bbox.top;
           let y1 = y0 + u.bbox.height;
 
@@ -178,67 +173,35 @@ export const AnnotationsPlugin2 = ({
           ctx.setLineDash([5, 5]);
 
           for (let i = 0; i < vals.time.length; i++) {
-            let color = getColorByName(vals.color?.[i] ?? DEFAULT_ANNOTATION_COLOR_HEX8);
+            let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
             let x0 = u.valToPos(vals.time[i], 'x', true);
-            renderLine(ctx, y0, y1, x0, color);
 
-            // If dataframe does not have end times, let's omit rendering the region for now to prevent runtime error in valToPos
-            // @todo do we want to fix isRegion to render a point (or use "to" as timeEnd) when we're missing timeEnd?
-            if (vals.isRegion?.[i] && vals.timeEnd?.[i]) {
+            if (!vals.isRegion?.[i]) {
+              renderLine(ctx, y0, y1, x0, color);
+              // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
+            } else if (canvasRegionRendering) {
+              renderLine(ctx, y0, y1, x0, color);
+
               let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
+
               renderLine(ctx, y0, y1, x1, color);
 
-              if (canvasRegionRendering) {
-                ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-                ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
-              }
+              ctx.fillStyle = colorManipulator.alpha(color, 0.1);
+              ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
             }
           }
         }
       });
 
-      // xMin, xMax, yMin, yMax, color, lineWidth, lineStyle, fillOpacity, text
-      xyAnnos.forEach((frame) => {
-        let vals = getVals(frame);
-
-        let xKey = config.scales[0].props.scaleKey;
-        let yKey = config.scales[1].props.scaleKey;
-
-        for (let i = 0; i < frame.length; i++) {
-          let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
-
-          let x0 = u.valToPos(vals.xMin[i], xKey, true);
-          let x1 = u.valToPos(vals.xMax[i], xKey, true);
-          let y0 = u.valToPos(vals.yMax[i], yKey, true);
-          let y1 = u.valToPos(vals.yMin[i], yKey, true);
-
-          ctx.fillStyle = colorManipulator.alpha(color, vals.fillOpacity[i]);
-          ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-
-          ctx.lineWidth = Math.round(vals.lineWidth[i] * uPlot.pxRatio);
-
-          if (vals.lineStyle[i] === 'dash') {
-            // maybe extract this to vals.lineDash[i] in future?
-            ctx.setLineDash([5, 5]);
-          } else {
-            // solid
-            ctx.setLineDash([]);
-          }
-
-          ctx.strokeStyle = color;
-          ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
-        }
-      });
-
       ctx.restore();
     });
-  }, [config, canvasRegionRendering, getColorByName, multiLane, annotations?.length]);
+  }, [config, canvasRegionRendering, getColorByName]);
 
-  // ensure xAnnos are re-drawn whenever they change
+  // ensure annos are re-drawn whenever they change
   useEffect(() => {
-    if (plotRef.current) {
-      plotRef.current.redraw();
+    if (plot) {
+      plot.redraw();
 
       // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
       // and ensures the anno marker positions in the dom are re-rendered in correct places
@@ -247,27 +210,19 @@ export const AnnotationsPlugin2 = ({
         forceUpdate();
       }, 0);
     }
-  }, [xAnnos]);
+  }, [annos, plot]);
 
-  if (plotRef.current) {
-    const plot = plotRef.current;
-    const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
-    const wipVals = wipFrame ? getVals(wipFrame) : null;
-    const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time[0] > 0;
-
-    let markers = xAnnos.flatMap((frame, frameIdx) => {
-      const isWipFrame = frame?.meta?.custom?.isWip;
-      const vals = getVals(frame);
+  if (plot) {
+    let markers = annos.flatMap((frame, frameIdx) => {
+      let vals = getVals(frame);
 
       let markers: React.ReactNode[] = [];
-
-      // Top offset for multi-lane annotations
-      const top = multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
 
       for (let i = 0; i < vals.time.length; i++) {
         let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
         let left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
         let style: React.CSSProperties | null = null;
+        let className = '';
         let isVisible = true;
 
         if (vals.isRegion?.[i]) {
@@ -279,48 +234,32 @@ export const AnnotationsPlugin2 = ({
             let clampedLeft = Math.max(0, left);
             let clampedRight = Math.min(plot.rect.width, right);
 
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
+            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft };
+            className = styles.annoRegion;
           }
         } else {
           isVisible = left >= 0 && left <= plot.rect.width;
 
           if (isVisible) {
-            style = { left, borderBottomColor: color, top };
+            style = { left, borderBottomColor: color };
+            className = styles.annoMarker;
           }
         }
 
         // @TODO: Reset newRange after annotation is saved
         if (isVisible) {
-          const annotationKey = getAnnotationKey(frameIdx, i);
-          const setPinned = (active: boolean) => {
-            if (active) {
-              setPinnedAnnotationId(annotationKey);
-            } else {
-              setPinnedAnnotationId(undefined);
-            }
-          };
-
-          // Do not let other tooltips render if one is already pinned, or the wip is being edited
-          const showTooltipOnHover = !pinnedAnnotationId && !isWipVisible;
-
-          // The tooltip should render as pinned if the pinned state index matches this annotation
-          const isPinned = pinnedAnnotationId === annotationKey;
+          let isWip = frame.meta?.custom?.isWip;
 
           markers.push(
             <AnnotationMarker2
-              key={annotationKey}
-              setPinned={setPinned}
-              isPinned={isPinned}
-              showTooltipOnHover={showTooltipOnHover}
-              frame={frame}
               annoIdx={i}
               annoVals={vals}
+              className={className}
               style={style}
               timeZone={timeZone}
-              exitWipEdit={isWipFrame ? exitWipEdit : null}
+              key={`${frameIdx}:${i}`}
+              exitWipEdit={isWip ? exitWipEdit : null}
               portalRoot={portalRoot}
-              canExecuteActions={userCanExecuteActions}
-              replaceVariables={replaceVariables}
             />
           );
         }
@@ -335,11 +274,23 @@ export const AnnotationsPlugin2 = ({
   return null;
 };
 
-/**
- * helper method to return a unique identifier for an annotation
- * @param frameIdx
- * @param i
- */
-const getAnnotationKey = (frameIdx: number, i: number) => {
-  return `${frameIdx}:${i}`;
-};
+const getStyles = () => ({
+  annoMarker: css({
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    borderLeft: '5px solid transparent',
+    borderRight: '5px solid transparent',
+    borderBottomWidth: '5px',
+    borderBottomStyle: 'solid',
+    transform: 'translateX(-50%)',
+    cursor: 'pointer',
+    zIndex: 1,
+  }),
+  annoRegion: css({
+    position: 'absolute',
+    height: '5px',
+    cursor: 'pointer',
+    zIndex: 1,
+  }),
+});

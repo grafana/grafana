@@ -1,11 +1,11 @@
-import { type Observable, throwError, timer } from 'rxjs';
+import { Observable, throwError, timer } from 'rxjs';
 import { finalize, map, retryWhen, mergeMap } from 'rxjs/operators';
 import { webSocket } from 'rxjs/webSocket';
 
-import { type DataFrame, FieldType, type KeyValue, CircularDataFrame } from '@grafana/data';
+import { DataFrame, FieldType, KeyValue, CircularDataFrame } from '@grafana/data';
 
 import { appendResponseToBufferedData } from './liveStreamsResultTransformer';
-import { type LokiTailResponse } from './types';
+import { LokiTailResponse } from './types';
 
 /**
  * Maps directly to a query in the UI (refId is key)

@@ -1,11 +1,10 @@
-import { type FC, useEffect, useMemo, useReducer } from 'react';
+import { FC, useEffect, useMemo, useReducer } from 'react';
 
 import { LoadingState } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, useStyles2 } from '@grafana/ui';
 
 import { getModalStyles } from '../../styles';
-import { type LibraryElementDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { asyncDispatcher } from '../LibraryPanelsView/actions';
 
 import { getConnectedDashboards } from './actions';
@@ -27,17 +26,11 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   useEffect(() => {
     asyncDispatch(getConnectedDashboards(libraryPanel));
   }, [asyncDispatch, libraryPanel]);
-
   const connected = Boolean(dashboardTitles.length);
   const done = loadingState === LoadingState.Done;
 
   return (
-    <Modal
-      className={styles.modal}
-      title={t('library-panels.delete-library-panel-modal.title-delete-library-panel', 'Delete library panel')}
-      onDismiss={onDismiss}
-      isOpen={true}
-    >
+    <Modal className={styles.modal} title="Delete library panel" icon="trash-alt" onDismiss={onDismiss} isOpen={true}>
       {!done ? <LoadingIndicator /> : null}
       {done ? (
         <div>
@@ -46,10 +39,10 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
 
           <Modal.ButtonRow>
             <Button variant="secondary" onClick={onDismiss} fill="outline">
-              <Trans i18nKey="library-panels.delete-library-panel-modal.cancel">Cancel</Trans>
+              Cancel
             </Button>
             <Button variant="destructive" onClick={onConfirm} disabled={connected}>
-              <Trans i18nKey="library-panels.delete-library-panel-modal.delete">Delete</Trans>
+              Delete
             </Button>
           </Modal.ButtonRow>
         </div>
@@ -58,20 +51,12 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   );
 };
 
-const LoadingIndicator = () => (
-  <span>
-    <Trans i18nKey="library-panels.loading-indicator.loading-library-panel">Loading library panel...</Trans>
-  </span>
-);
+const LoadingIndicator = () => <span>Loading library panel...</span>;
 
 const Confirm = () => {
   const styles = useStyles2(getModalStyles);
 
-  return (
-    <div className={styles.modalText}>
-      <Trans i18nKey="library-panels.confirm.delete-panel">Do you want to delete this panel?</Trans>
-    </div>
-  );
+  return <div className={styles.modalText}>Do you want to delete this panel?</div>;
 };
 
 const HasConnectedDashboards: FC<{ dashboardTitles: string[] }> = ({ dashboardTitles }) => {
@@ -92,9 +77,7 @@ const HasConnectedDashboards: FC<{ dashboardTitles: string[] }> = ({ dashboardTi
       <table className={styles.myTable}>
         <thead>
           <tr>
-            <th>
-              <Trans i18nKey="library-panels.has-connected-dashboards.dashboard-name">Dashboard name</Trans>
-            </th>
+            <th>Dashboard name</th>
           </tr>
         </thead>
         <tbody>

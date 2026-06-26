@@ -9,12 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationDatabaseStorageGarbageCollection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestDatabaseStorageGarbageCollection(t *testing.T) {
 	sqlstore := db.InitTestDB(t)
 
 	db := &databaseCache{
@@ -61,9 +58,7 @@ func TestIntegrationDatabaseStorageGarbageCollection(t *testing.T) {
 	assert.Equal(t, err, nil)
 }
 
-func TestIntegrationSecondSet(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestSecondSet(t *testing.T) {
 	var err error
 	sqlstore := db.InitTestDB(t)
 

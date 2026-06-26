@@ -2,26 +2,26 @@ import deepEqual from 'fast-deep-equal';
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { CoreApp, type QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
-import { GoogleAuthType } from '@grafana/google-sdk';
-import { EditorRows } from '@grafana/plugin-ui';
-import { Alert, ConfirmModal, TextLink } from '@grafana/ui';
+import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
+import { EditorRows } from '@grafana/experimental';
+import { ConfirmModal } from '@grafana/ui';
 
-import { type PromQLQuery, QueryType, type SLOQuery } from '../dataquery.gen';
-import type CloudMonitoringDatasource from '../datasource';
+import CloudMonitoringDatasource from '../datasource';
 import { selectors } from '../e2e/selectors';
-import { type CloudMonitoringQuery } from '../types/query';
-import { type CloudMonitoringOptions } from '../types/types';
+import { CloudMonitoringQuery, PromQLQuery, QueryType, SLOQuery } from '../types/query';
+import { CloudMonitoringOptions } from '../types/types';
 
-import { defaultTimeSeriesList, defaultTimeSeriesQuery, MetricQueryEditor } from './MetricQueryEditor';
+import { defaultTimeSeriesList, defaultTimeSeriesQuery } from './MetricQueryEditor';
 import { PromQLQueryEditor } from './PromQLEditor';
 import { QueryHeader } from './QueryHeader';
-import { defaultQuery as defaultSLOQuery, SLOQueryEditor } from './SLOQueryEditor';
+import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
+
+import { MetricQueryEditor, SLOQueryEditor } from './';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
 export const QueryEditor = (props: Props) => {
-  const { app, datasource, query, onRunQuery, onChange, range } = props;
+  const { datasource, query, onRunQuery, onChange, range } = props;
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -88,16 +88,6 @@ export const QueryEditor = (props: Props) => {
     setCurrentQuery(q);
   };
 
-  // Forward OAuth Identity has no signed-in user during alert rule evaluation,
-  // so the data source can't forward a token. Show a clear message instead of
-  // letting the user compose a query that will always fail at runtime.
-  if (
-    datasource.authenticationType === GoogleAuthType.ForwardOAuthIdentity &&
-    (app === CoreApp.UnifiedAlerting || app === CoreApp.CloudAlerting)
-  ) {
-    return <OAuthPassthroughAlertingAlert />;
-  }
-
   return (
     <span data-testid={selectors.components.queryEditor.container}>
       <EditorRows>
@@ -158,21 +148,5 @@ export const QueryEditor = (props: Props) => {
         )}
       </EditorRows>
     </span>
-  );
-};
-
-const OAuthPassthroughAlertingAlert = () => {
-  return (
-    <Alert title="Unsupported authentication provider" data-testid="cloud-monitoring-oauth-passthrough-alerting-alert">
-      Forward OAuth Identity authentication is not supported. Use Google JWT File or GCE Default Service Account
-      authentication for data sources used by alerting rules. Refer to the{' '}
-      <TextLink
-        href="https://grafana.com/docs/grafana/latest/datasources/google-cloud-monitoring/google-authentication/"
-        external
-      >
-        documentation
-      </TextLink>{' '}
-      for more information.
-    </Alert>
   );
 };

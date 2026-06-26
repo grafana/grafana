@@ -1,11 +1,10 @@
-import { type FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 
-import { type DataFrame, type SelectableValue, standardTransformersRegistry } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
 import {
-  type FilterCategory,
+  FilterCategory,
   VIEW_ALL_VALUE,
 } from 'app/features/dashboard/components/TransformationsEditor/TransformationsEditor';
 
@@ -40,11 +39,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     setDrawerState({ ...drawerState, ...{ selectedFilter } });
 
   const allTransformations = useMemo(
-    () =>
-      standardTransformersRegistry
-        .list()
-        .filter((t) => !t.excludeFromPicker)
-        .sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
+    () => standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0)),
     []
   );
 
@@ -56,13 +51,10 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
     ) {
       return false;
     }
-    const searchLower = drawerState.search.toLocaleLowerCase();
-    const textMatch =
-      t.name.toLocaleLowerCase().includes(searchLower) || t.description?.toLocaleLowerCase().includes(searchLower);
-    const tagMatch = t.tags?.size
-      ? Array.from(t.tags).some((tag) => tag.toLocaleLowerCase().includes(searchLower))
-      : false;
-    return textMatch || tagMatch;
+    return (
+      t.name.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase()) ||
+      t.description?.toLocaleLowerCase().includes(drawerState.search.toLocaleLowerCase())
+    );
   });
 
   const searchBoxSuffix = (
@@ -73,7 +65,7 @@ export function TransformationsDrawer(props: TransformationsDrawerProps) {
         onClick={() => {
           setDrawerState({ ...drawerState, ...{ search: '' } });
         }}
-        tooltip={t('dashboard-scene.transformations-drawer.search-box-suffix.tooltip-clear-search', 'Clear search')}
+        tooltip="Clear search"
       />
     </>
   );

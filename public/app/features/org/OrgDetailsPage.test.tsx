@@ -1,27 +1,26 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { render, screen } from 'test/test-utils';
+import { TestProvider } from 'test/helpers/TestProvider';
 
-import { type NavModel } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
-import { ModalRoot } from '@grafana/ui';
-import { type Organization } from 'app/types/organization';
+import { NavModel } from '@grafana/data';
 
 import { backendSrv } from '../../core/services/backend_srv';
+import { Organization } from '../../types';
 
-import { OrgDetailsPage, type Props } from './OrgDetailsPage';
+import { OrgDetailsPage, Props } from './OrgDetailsPage';
 import { setOrganizationName } from './state/reducers';
 
-jest.mock('app/core/services/context_srv', () => {
+jest.mock('app/core/core', () => {
   return {
+    ...jest.requireActual('app/core/core'),
     contextSrv: {
-      ...jest.requireActual('app/core/services/context_srv').contextSrv,
       hasPermission: () => true,
     },
   };
 });
 
 const setup = (propOverrides?: object) => {
-  setBackendSrv(backendSrv);
   jest.clearAllMocks();
   // needed because SharedPreferences is rendered in the test
   jest.spyOn(backendSrv, 'put');
@@ -46,11 +45,10 @@ const setup = (propOverrides?: object) => {
   };
   Object.assign(props, propOverrides);
 
-  return render(
-    <>
+  render(
+    <TestProvider>
       <OrgDetailsPage {...props} />
-      <ModalRoot />
-    </>
+    </TestProvider>
   );
 };
 
@@ -87,7 +85,7 @@ describe('Render', () => {
   });
 
   it('should show a modal when submitting', async () => {
-    const { user } = setup({
+    setup({
       organization: {
         name: 'Cool org',
         id: 1,
@@ -100,8 +98,8 @@ describe('Render', () => {
       },
     });
 
-    await user.click(screen.getByRole('button', { name: 'Save preferences' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(await screen.findByText('Confirm preferences update')).toBeInTheDocument();
+    expect(screen.getByText('Confirm preferences update')).toBeInTheDocument();
   });
 });

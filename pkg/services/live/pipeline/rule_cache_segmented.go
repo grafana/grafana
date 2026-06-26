@@ -12,13 +12,13 @@ import (
 // CacheSegmentedTree provides a fast access to channel rule configuration.
 type CacheSegmentedTree struct {
 	radixMu     sync.RWMutex
-	radix       map[string]*tree.Node
+	radix       map[int64]*tree.Node
 	ruleBuilder RuleBuilder
 }
 
 func NewCacheSegmentedTree(storage RuleBuilder) *CacheSegmentedTree {
 	s := &CacheSegmentedTree{
-		radix:       map[string]*tree.Node{},
+		radix:       map[int64]*tree.Node{},
 		ruleBuilder: storage,
 	}
 	go s.updatePeriodically()
@@ -27,51 +27,51 @@ func NewCacheSegmentedTree(storage RuleBuilder) *CacheSegmentedTree {
 
 func (s *CacheSegmentedTree) updatePeriodically() {
 	for {
+		var orgIDs []int64
 		s.radixMu.Lock()
-		namespaces := make([]string, 0, len(s.radix))
-		for v := range s.radix {
-			namespaces = append(namespaces, v)
+		for orgID := range s.radix {
+			orgIDs = append(orgIDs, orgID)
 		}
 		s.radixMu.Unlock()
-		for _, v := range namespaces {
-			err := s.fillOrg(v)
+		for _, orgID := range orgIDs {
+			err := s.fillOrg(orgID)
 			if err != nil {
-				logger.Error("Error filling orgId", "error", err, "ns", v)
+				logger.Error("Error filling orgId", "error", err, "orgId", orgID)
 			}
 		}
 		time.Sleep(20 * time.Second)
 	}
 }
 
-func (s *CacheSegmentedTree) fillOrg(ns string) error {
+func (s *CacheSegmentedTree) fillOrg(orgID int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	channels, err := s.ruleBuilder.BuildRules(ctx, ns)
+	channels, err := s.ruleBuilder.BuildRules(ctx, orgID)
 	if err != nil {
 		return err
 	}
 	s.radixMu.Lock()
 	defer s.radixMu.Unlock()
-	s.radix[ns] = tree.New()
+	s.radix[orgID] = tree.New()
 	for _, ch := range channels {
-		s.radix[ns].AddRoute("/"+ch.Pattern, ch)
+		s.radix[orgID].AddRoute("/"+ch.Pattern, ch)
 	}
 	return nil
 }
 
-func (s *CacheSegmentedTree) Get(ns string, channel string) (*LiveChannelRule, bool, error) {
+func (s *CacheSegmentedTree) Get(orgID int64, channel string) (*LiveChannelRule, bool, error) {
 	s.radixMu.RLock()
-	_, ok := s.radix[ns]
+	_, ok := s.radix[orgID]
 	s.radixMu.RUnlock()
 	if !ok {
-		err := s.fillOrg(ns)
+		err := s.fillOrg(orgID)
 		if err != nil {
 			return nil, false, fmt.Errorf("error filling org: %w", err)
 		}
 	}
 	s.radixMu.RLock()
 	defer s.radixMu.RUnlock()
-	t, ok := s.radix[ns]
+	t, ok := s.radix[orgID]
 	if !ok {
 		return nil, false, nil
 	}

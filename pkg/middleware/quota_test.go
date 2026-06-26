@@ -3,9 +3,8 @@ package middleware
 import (
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
-
-	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -183,5 +182,5 @@ func getQuotaHandler(reached bool, target string) web.Handler {
 }
 
 func configure(cfg *setting.Cfg) {
-	cfg.Anonymous.Enabled = false
+	cfg.AnonymousEnabled = false
 }

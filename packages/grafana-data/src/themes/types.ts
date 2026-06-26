@@ -1,17 +1,15 @@
-import { z } from 'zod';
+import { GrafanaTheme } from '../types/theme';
 
-import { type GrafanaTheme } from '../types/theme';
-
-import { type ThemeBreakpoints } from './breakpoints';
-import { type ThemeColors } from './createColors';
-import { type ThemeComponents } from './createComponents';
-import { type ThemeShadows } from './createShadows';
-import { type ThemeShape } from './createShape';
-import { type ThemeSpacing } from './createSpacing';
-import { type ThemeTransitions } from './createTransitions';
-import { type ThemeTypography } from './createTypography';
-import { type ThemeVisualizationColors } from './createVisualizationColors';
-import { type ThemeZIndices } from './zIndex';
+import { ThemeBreakpoints } from './breakpoints';
+import { ThemeColors } from './createColors';
+import { ThemeComponents } from './createComponents';
+import { ThemeShadows } from './createShadows';
+import { ThemeShape } from './createShape';
+import { ThemeSpacing } from './createSpacing';
+import { ThemeTransitions } from './createTransitions';
+import { ThemeTypography } from './createTypography';
+import { ThemeVisualizationColors } from './createVisualizationColors';
+import { ThemeZIndices } from './zIndex';
 
 /**
  * @beta
@@ -37,31 +35,27 @@ export interface GrafanaTheme2 {
   flags: {};
 }
 
-export const ThemeRichColorInputSchema = z.object({
-  /** color intent (primary, secondary, info, error, etc) */
-  name: z.string().optional(),
-  /** Main color */
-  main: z.string().optional(),
-  /** Used for hover */
-  shade: z.string().optional(),
-  /** Used for text */
-  text: z.string().optional(),
-  /** Used for borders */
-  border: z.string().optional(),
-  /** Used subtly colored backgrounds */
-  transparent: z.string().optional(),
-  /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
-  borderTransparent: z.string().optional(),
-  /** Text color for text ontop of main */
-  contrastText: z.string().optional(),
-});
-
-const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
-
 /** @alpha */
-export type ThemeRichColor = z.infer<typeof ThemeRichColorSchema>;
+export interface ThemeRichColor {
+  /** color intent (primary, secondary, info, error, etc) */
+  name: string;
+  /** Main color */
+  main: string;
+  /** Used for hover */
+  shade: string;
+  /** Used for text */
+  text: string;
+  /** Used for borders */
+  border: string;
+  /** Used subtly colored backgrounds */
+  transparent: string;
+  /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
+  borderTransparent: string;
+  /** Text color for text ontop of main */
+  contrastText: string;
+}
 
 /** @internal */
-export type DeepRequired<T> = Required<{
-  [P in keyof T]: T[P] extends Required<T[P]> ? T[P] : DeepRequired<T[P]>;
-}>;
+export type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};

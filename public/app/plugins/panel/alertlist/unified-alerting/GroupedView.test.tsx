@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 
-import { type CombinedRuleWithLocation } from 'app/types/unified-alerting';
+import { CombinedRuleWithLocation } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { type UnifiedAlertListOptions } from '../types';
+import { UnifiedAlertListOptions } from '../types';
 
 import GroupedView, { UNGROUPED_KEY } from './GroupedView';
 

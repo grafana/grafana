@@ -2,16 +2,14 @@ import {
   createTheme,
   FieldType,
   ThresholdsMode,
-  type TimeRange,
+  TimeRange,
   toDataFrame,
   dateTime,
-  type DataFrame,
+  DataFrame,
   fieldMatchers,
   FieldMatcherID,
-  type Field,
-  SpecialValueMatch,
 } from '@grafana/data';
-import { LegendDisplayMode, MappingType, type VizLegendOptions } from '@grafana/schema';
+import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
 
 import { preparePlotFrame } from '../GraphNG/utils';
 
@@ -19,7 +17,6 @@ import {
   findNextStateIndex,
   fmtDuration,
   getThresholdItems,
-  hasSpecialMappedValue,
   makeFramePerSeries,
   prepareTimelineFields,
   prepareTimelineLegendItems,
@@ -60,18 +57,6 @@ describe('prepare timeline graph', () => {
     ];
     const info = prepareTimelineFields(frames, true, timeRange, theme);
     expect(info.warn).toEqual('No graphable fields');
-  });
-
-  it('errors with no frame', () => {
-    const info = prepareTimelineFields(undefined, true, timeRange, theme);
-    expect(info.frames).toBeUndefined();
-    expect(info.warn).toBe('');
-  });
-
-  it('errors with empty frame', () => {
-    const info = prepareTimelineFields([], true, timeRange, theme);
-    expect(info.frames).toBeUndefined();
-    expect(info.warn).toBe('');
   });
 
   it('will merge duplicate values', () => {
@@ -517,49 +502,5 @@ describe('duration', () => {
   `(' function should format $value ms to $expected', ({ value, expected }) => {
     const result = fmtDuration(value);
     expect(result).toEqual(expected);
-  });
-});
-
-describe('hasSpecialMappedValue', () => {
-  const makeField = (mappingsType: MappingType | SpecialValueMatch, optionsMatch: MappingType | SpecialValueMatch) =>
-    ({
-      name: 'Field',
-      type: FieldType.frame,
-      config: {
-        mappings: [
-          {
-            type: mappingsType,
-            options: { match: optionsMatch, result: {} },
-          },
-        ],
-      },
-      values: [],
-    }) as Field;
-
-  it.each([
-    [[MappingType.SpecialValue, SpecialValueMatch.Null], SpecialValueMatch.Null, true, 'should match Null with Null'],
-    [[MappingType.SpecialValue, SpecialValueMatch.NaN], SpecialValueMatch.NaN, true, 'should match NaN with NaN'],
-    [
-      [MappingType.SpecialValue, SpecialValueMatch.NullAndNaN],
-      SpecialValueMatch.NullAndNaN,
-      true,
-      'should match Null and NaN with Null and NaN',
-    ],
-    [
-      [MappingType.SpecialValue, SpecialValueMatch.NullAndNaN],
-      SpecialValueMatch.Empty,
-      false,
-      'should NOT match Null and NaN with Empty',
-    ],
-    [
-      [MappingType.ValueToText, SpecialValueMatch.Null],
-      SpecialValueMatch.Null,
-      false,
-      'should NOT match non-special value',
-    ],
-  ])('%s', ([mappingsType, optionsMatch], valueMatch, expected, _) => {
-    const field = makeField(mappingsType, optionsMatch);
-
-    expect(hasSpecialMappedValue(field, valueMatch)).toEqual(expected);
   });
 });

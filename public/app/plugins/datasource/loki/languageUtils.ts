@@ -1,14 +1,8 @@
 import { invert } from 'lodash';
 
-import {
-  type AbstractLabelMatcher,
-  AbstractLabelOperator,
-  type AbstractQuery,
-  type DataFrame,
-  type TimeRange,
-} from '@grafana/data';
+import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataFrame, TimeRange } from '@grafana/data';
 
-import { DATAPLANE_LABEL_TYPES_NAME, LabelType } from './types';
+import { LabelType } from './types';
 
 function roundMsToMin(milliseconds: number): number {
   return roundSecToMin(milliseconds / 1000);
@@ -99,33 +93,16 @@ export function isBytesString(string: string) {
   return !!match;
 }
 
-/**
- * Gets the label type from the data frame if present
- * @param labelKey
- * @param frame
- * @param index - if null, will check every value in the data frame for a match.
- */
-export function getLokiLabelTypeFromFrame(
-  labelKey: string,
-  frame: DataFrame | undefined,
-  index: number | null
-): null | LabelType {
-  if (!frame) {
+export function getLabelTypeFromFrame(labelKey: string, frame?: DataFrame, index?: number): null | LabelType {
+  if (!frame || index === undefined) {
     return null;
   }
 
-  const typeField = frame.fields.find((field) => field.name === DATAPLANE_LABEL_TYPES_NAME);
-
+  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
   if (!typeField) {
     return null;
   }
-
-  if (index === null) {
-    index = typeField.values.findIndex((typeFieldValue) => typeFieldValue[labelKey]);
-  }
-
-  const valueTypes = typeField?.values[index];
-  switch (valueTypes?.[labelKey]) {
+  switch (typeField[labelKey]) {
     case 'I':
       return LabelType.Indexed;
     case 'S':
@@ -137,7 +114,7 @@ export function getLokiLabelTypeFromFrame(
   }
 }
 
-const mapOpToAbstractOp: Record<AbstractLabelOperator, string> = {
+export const mapOpToAbstractOp: Record<AbstractLabelOperator, string> = {
   [AbstractLabelOperator.Equal]: '=',
   [AbstractLabelOperator.NotEqual]: '!=',
   [AbstractLabelOperator.EqualRegEx]: '=~',
@@ -185,7 +162,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>) {
 }
 
 // Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
-const SUGGESTIONS_LIMIT = 10000;
-function limitSuggestions(items: string[]) {
+export const SUGGESTIONS_LIMIT = 10000;
+export function limitSuggestions(items: string[]) {
   return items.slice(0, SUGGESTIONS_LIMIT);
 }

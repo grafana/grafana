@@ -13,18 +13,20 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React from 'react';
+import classNames from 'classnames';
+import { PureComponent } from 'react';
 
-import { type CoreApp, type GrafanaTheme2, type LinkModel, type TimeRange, type TraceLog } from '@grafana/data';
-import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
-import { type TimeZone } from '@grafana/schema';
-import { stylesFactory, withTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, LinkModel, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { TimeZone } from '@grafana/schema';
+import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { type SpanLinkFunc } from '../types/links';
-import { type TraceSpan, type TraceSpanReference } from '../types/trace';
+import { autoColor } from '../Theme';
+import { SpanLinkFunc } from '../types';
+import { TraceSpan, TraceLink, TraceSpanReference } from '../types/trace';
 
-import SpanDetail, { type TraceFlameGraphs } from './SpanDetail';
-import type DetailState from './SpanDetail/DetailState';
+import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
+import DetailState from './SpanDetail/DetailState';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 
@@ -62,23 +64,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     infoWrapper: css({
       label: 'infoWrapper',
+      border: `1px solid ${autoColor(theme, '#d3d3d3')}`,
+      borderTop: '3px solid',
       padding: '0.75rem',
-    }),
-    cell: css({
-      label: 'cell',
-      display: 'flex !important',
-      width: '100% !important',
-    }),
-    indentSpacer: css({
-      label: 'indentSpacer',
-      flex: 'none',
-    }),
-    detailWrapper: css({
-      label: 'detailWrapper',
-      flex: '1',
-      minWidth: 0,
-      backgroundColor: theme.colors.background.canvas,
-      border: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 });
@@ -88,6 +76,7 @@ export type SpanDetailRowProps = {
   columnDivision: number;
   detailState: DetailState;
   onDetailToggled: (spanID: string) => void;
+  linksGetter: (span: TraceSpan, links: TraceKeyValuePair[], index: number) => TraceLink[];
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
@@ -110,56 +99,58 @@ export type SpanDetailRowProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
-  datasourceUid: string;
   visibleSpanIds: string[];
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
-  timeRange: TimeRange;
-  app: CoreApp;
 };
 
-const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
-  const {
-    color,
-    detailState,
-    logItemToggle,
-    logsToggle,
-    processToggle,
-    referenceItemToggle,
-    referencesToggle,
-    warningsToggle,
-    stackTracesToggle,
-    span,
-    traceToProfilesOptions,
-    timeZone,
-    tagsToggle,
-    traceStartTime,
-    traceDuration,
-    traceName,
-    theme,
-    createSpanLink,
-    focusedSpanId,
-    createFocusSpanLink,
-    datasourceType,
-    datasourceUid,
-    traceFlameGraphs,
-    setTraceFlameGraphs,
-    setRedrawListView,
-    timeRange,
-    app,
-    hoverIndentGuideIds,
-    addHoverIndentGuideId,
-    removeHoverIndentGuideId,
-    visibleSpanIds,
-  } = props;
+export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
+  _detailToggle = () => {
+    this.props.onDetailToggled(this.props.span.spanID);
+  };
 
-  const styles = getStyles(theme);
+  _linksGetter = (items: TraceKeyValuePair[], itemIndex: number) => {
+    const { linksGetter, span } = this.props;
+    return linksGetter(span, items, itemIndex);
+  };
 
-  return (
-    <TimelineRow>
-      <TimelineRow.Cell width={1} className={styles.cell}>
-        <div className={styles.indentSpacer}>
+  render() {
+    const {
+      color,
+      columnDivision,
+      detailState,
+      logItemToggle,
+      logsToggle,
+      processToggle,
+      referenceItemToggle,
+      referencesToggle,
+      warningsToggle,
+      stackTracesToggle,
+      span,
+      traceToProfilesOptions,
+      timeZone,
+      tagsToggle,
+      traceStartTime,
+      traceDuration,
+      traceName,
+      hoverIndentGuideIds,
+      addHoverIndentGuideId,
+      removeHoverIndentGuideId,
+      theme,
+      createSpanLink,
+      focusedSpanId,
+      createFocusSpanLink,
+      datasourceType,
+      visibleSpanIds,
+      traceFlameGraphs,
+      setTraceFlameGraphs,
+      setRedrawListView,
+    } = this.props;
+    const styles = getStyles(theme);
+    return (
+      <TimelineRow>
+        <TimelineRow.Cell width={columnDivision} style={{ overflow: 'hidden' }}>
           <SpanTreeOffset
             span={span}
             showChildrenIcon={false}
@@ -167,14 +158,20 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             visibleSpanIds={visibleSpanIds}
-            removeLastIndentGuide={true}
           />
-        </div>
-        <div className={styles.detailWrapper}>
+          <Button
+            fill="text"
+            onClick={this._detailToggle}
+            className={classNames(styles.expandedAccent, clearButtonStyles(theme))}
+            style={{ borderColor: color }}
+            data-testid="detail-row-expanded-accent"
+          ></Button>
+        </TimelineRow.Cell>
+        <TimelineRow.Cell width={1 - columnDivision}>
           <div className={styles.infoWrapper} style={{ borderTopColor: color }}>
             <SpanDetail
-              color={color}
               detailState={detailState}
+              linksGetter={this._linksGetter}
               logItemToggle={logItemToggle}
               logsToggle={logsToggle}
               processToggle={processToggle}
@@ -193,20 +190,15 @@ const UnthemedSpanDetailRow = React.memo<SpanDetailRowProps>((props) => {
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
               datasourceType={datasourceType}
-              datasourceUid={datasourceUid}
               traceFlameGraphs={traceFlameGraphs}
               setTraceFlameGraphs={setTraceFlameGraphs}
               setRedrawListView={setRedrawListView}
-              timeRange={timeRange}
-              app={app}
             />
           </div>
-        </div>
-      </TimelineRow.Cell>
-    </TimelineRow>
-  );
-});
-
-UnthemedSpanDetailRow.displayName = 'UnthemedSpanDetailRow';
+        </TimelineRow.Cell>
+      </TimelineRow>
+    );
+  }
+}
 
 export default withTheme2(UnthemedSpanDetailRow);

@@ -1,5 +1,5 @@
-import { type ComponentType } from 'react';
-import { type DefaultValues } from 'react-hook-form';
+import { ComponentType } from 'react';
+import { DefaultValues } from 'react-hook-form';
 
 export type WizardProps<T> = {
   /**

@@ -1,13 +1,13 @@
-import { contextSrv } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/core';
 import { EmailSharingPricingAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/EmailSharingPricingAlert';
 import { UnsupportedDataSourcesAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/UnsupportedTemplateVariablesAlert';
 import {
   isEmailSharingEnabled,
-  type PublicDashboard,
+  PublicDashboard,
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types';
 
 import { NoUpsertPermissionsAlert } from '../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
 import { PublicDashboardAlert } from '../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/PublicDashboardAlert';

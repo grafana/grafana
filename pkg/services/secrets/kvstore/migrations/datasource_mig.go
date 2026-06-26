@@ -13,8 +13,10 @@ import (
 const (
 	// Not set means migration has not happened
 	secretMigrationStatusKey = "secretMigrationStatus"
-	// Migration happened and secrets are stored in both locations
+	// Migration happened with disableSecretCompatibility set to false
 	compatibleSecretMigrationValue = "compatible"
+	// Migration happened with disableSecretCompatibility set to true
+	completeSecretMigrationValue = "complete"
 )
 
 type DataSourceSecretMigrationService struct {
@@ -41,10 +43,17 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 		return err
 	}
 	logger.Debug(fmt.Sprint("secret migration status is ", migrationStatus))
+	// If this flag is true, delete secrets from the legacy secrets store as they are migrated
+	disableSecretsCompatibility := s.features.IsEnabled(ctx, featuremgmt.FlagDisableSecretsCompatibility)
+	// If migration hasn't happened, migrate to unified secrets and keep copy in legacy
+	// If a complete migration happened and now backwards compatibility is enabled, copy secrets back to legacy
+	needCompatibility := migrationStatus != compatibleSecretMigrationValue && !disableSecretsCompatibility
+	// If migration hasn't happened, migrate to unified secrets and delete from legacy
+	// If a compatible migration happened and now compatibility is disabled, delete secrets from legacy
+	needMigration := migrationStatus != completeSecretMigrationValue && disableSecretsCompatibility
 
-	// Only migrate if it hasn't happened yet
-	if migrationStatus != compatibleSecretMigrationValue {
-		logger.Debug("performing secret migration")
+	if needCompatibility || needMigration {
+		logger.Debug("performing secret migration", "needs migration", needMigration, "needs compatibility", needCompatibility)
 		query := &datasources.GetAllDataSourcesQuery{}
 		dsList, err := s.dataSourcesService.GetAllDataSources(ctx, query)
 		if err != nil {
@@ -58,6 +67,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 			}
 
 			// Secrets are set by the update data source function if the SecureJsonData is set in the command
+			// Secrets are deleted by the update data source function if the disableSecretsCompatibility flag is enabled
 			_, err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
 				ID:             ds.ID,
 				OrgID:          ds.OrgID,
@@ -79,11 +89,17 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 			}
 		}
 
-		err = s.kvStore.Set(ctx, secretMigrationStatusKey, compatibleSecretMigrationValue)
+		var newMigStatus string
+		if disableSecretsCompatibility {
+			newMigStatus = completeSecretMigrationValue
+		} else {
+			newMigStatus = compatibleSecretMigrationValue
+		}
+		err = s.kvStore.Set(ctx, secretMigrationStatusKey, newMigStatus)
 		if err != nil {
 			return err
 		}
-		logger.Debug(fmt.Sprint("set secret migration status to ", compatibleSecretMigrationValue))
+		logger.Debug(fmt.Sprint("set secret migration status to ", newMigStatus))
 	}
 
 	return nil

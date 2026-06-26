@@ -1,114 +1,87 @@
 import { difference } from 'lodash';
-import { memo, useEffect } from 'react';
+import { PureComponent } from 'react';
 
-import { fieldReducers, type FieldReducerInfo } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { fieldReducers, SelectableValue, FieldReducerInfo } from '@grafana/data';
 
-import { Combobox, type ComboboxProps } from '../Combobox/Combobox';
-import { MultiCombobox, type MultiComboboxProps } from '../Combobox/MultiCombobox';
-import { type ComboboxOption } from '../Combobox/types';
-import { selectableValueToComboboxOption } from '../Combobox/utils';
+import { Select } from '../Select/Select';
 
-import { pickComboboxLayout } from './pickComboboxLayout';
-
-/** Props managed by StatsPicker — forwarded combobox props must not replace these. */
-type ComboboxManagedProps = 'value' | 'options' | 'onChange' | 'isClearable' | 'width' | 'minWidth' | 'maxWidth';
-
-/** Forwarded props (managed keys + layout are applied after the spread). */
-type MultiSpread = Omit<MultiComboboxProps<string>, ComboboxManagedProps>;
-type SingleSpread = Omit<ComboboxProps<string>, ComboboxManagedProps>;
-
-interface BaseProps {
-  stats: string[];
+export interface Props {
+  placeholder?: string;
   onChange: (stats: string[]) => void;
+  stats: string[];
+  allowMultiple?: boolean;
   defaultStat?: string;
-  width?: number | 'auto';
-  minWidth?: number;
-  maxWidth?: number;
+  className?: string;
+  width?: number;
+  menuPlacement?: 'auto' | 'bottom' | 'top';
+  inputId?: string;
   filterOptions?: (ext: FieldReducerInfo) => boolean;
 }
 
-type MultiProps = MultiSpread & { allowMultiple: true };
-type SingleProps = SingleSpread & { allowMultiple?: false };
+export class StatsPicker extends PureComponent<Props> {
+  static defaultProps: Partial<Props> = {
+    allowMultiple: false,
+  };
 
-export type StatsPickerProps = BaseProps & (MultiProps | SingleProps);
+  componentDidMount() {
+    this.checkInput();
+  }
 
-export const StatsPicker = memo<StatsPickerProps>(
-  ({
-    placeholder = t('grafana-ui.stats-picker.placeholder', 'Choose'),
-    onChange,
-    stats,
-    allowMultiple = false,
-    defaultStat,
-    width,
-    minWidth,
-    maxWidth,
-    filterOptions,
-    ...rest
-  }) => {
-    const layout = pickComboboxLayout(width, minWidth, maxWidth);
+  componentDidUpdate(prevProps: Props) {
+    this.checkInput();
+  }
 
-    useEffect(() => {
-      const current = fieldReducers.list(stats);
-      if (current.length !== stats.length) {
-        const found = current.map((v) => v.id);
-        const notFound = difference(stats, found);
-        console.warn('Unknown stats', notFound, stats);
-        onChange(current.map((stat) => stat.id));
-      }
+  checkInput = () => {
+    const { stats, allowMultiple, defaultStat, onChange } = this.props;
 
-      // Make sure there is only one
-      if (!allowMultiple && stats.length > 1) {
-        console.warn('Removing extra stat', stats);
-        onChange([stats[0]]);
-      }
-
-      // Set the reducer from callback
-      if (defaultStat && stats.length < 1) {
-        onChange([defaultStat]);
-      }
-    }, [stats, allowMultiple, defaultStat, onChange]);
-
-    const select = fieldReducers.selectOptions(stats, filterOptions);
-    const options = select.options.map((v) => selectableValueToComboboxOption(v)).filter((v) => !!v);
-    const value = select.current.map((v) => selectableValueToComboboxOption(v)).filter((v) => !!v);
-
-    if (allowMultiple) {
-      return (
-        <MultiCombobox
-          {...rest}
-          {...layout}
-          value={value}
-          options={options}
-          placeholder={placeholder}
-          isClearable={!defaultStat}
-          onChange={(items: Array<ComboboxOption<string>>) => onChange(items.map((v) => v.value))}
-        />
-      );
+    const current = fieldReducers.list(stats);
+    if (current.length !== stats.length) {
+      const found = current.map((v) => v.id);
+      const notFound = difference(stats, found);
+      console.warn('Unknown stats', notFound, stats);
+      onChange(current.map((stat) => stat.id));
     }
 
-    const commonOptions = {
-      ...rest,
-      ...layout,
-      value: value[0],
-      options,
-      placeholder,
-    };
+    // Make sure there is only one
+    if (!allowMultiple && stats.length > 1) {
+      console.warn('Removing extra stat', stats);
+      onChange([stats[0]]);
+    }
 
-    return defaultStat ? (
-      <Combobox
-        {...commonOptions}
-        isClearable={false}
-        onChange={(item: ComboboxOption | null) => onChange(item && item.value ? [item.value] : [])}
-      />
-    ) : (
-      <Combobox
-        {...commonOptions}
-        isClearable={true}
-        onChange={(item: ComboboxOption | null) => onChange(item && item.value ? [item.value] : [])}
+    // Set the reducer from callback
+    if (defaultStat && stats.length < 1) {
+      onChange([defaultStat]);
+    }
+  };
+
+  onSelectionChange = (item: SelectableValue<string>) => {
+    const { onChange } = this.props;
+    if (Array.isArray(item)) {
+      onChange(item.map((v) => v.value));
+    } else {
+      onChange(item && item.value ? [item.value] : []);
+    }
+  };
+
+  render() {
+    const { stats, allowMultiple, defaultStat, placeholder, className, menuPlacement, width, inputId, filterOptions } =
+      this.props;
+
+    const select = fieldReducers.selectOptions(stats, filterOptions);
+    return (
+      <Select
+        value={select.current}
+        className={className}
+        isClearable={!defaultStat}
+        isMulti={allowMultiple}
+        width={width}
+        isSearchable={true}
+        options={select.options}
+        placeholder={placeholder}
+        onChange={this.onSelectionChange}
+        menuPlacement={menuPlacement}
+        inputId={inputId}
       />
     );
   }
-);
-
-StatsPicker.displayName = 'StatsPicker';
+}

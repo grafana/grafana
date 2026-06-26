@@ -1,8 +1,7 @@
-import type * as React from 'react';
-import type { JSX, ReactNode } from 'react';
+import * as React from 'react';
 
-import { type DataFrameFieldIndex, type DisplayValue } from '@grafana/data';
-import { type LegendOverflow, type LegendDisplayMode, type LegendPlacement, type LineStyle } from '@grafana/schema';
+import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
+import { LegendDisplayMode, LegendPlacement, LineStyle } from '@grafana/schema';
 
 export enum SeriesVisibilityChangeBehavior {
   Isolate,
@@ -27,8 +26,6 @@ export interface VizLegendBaseProps<T> {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
-  limit?: number;
-  filterAction?: ReactNode;
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
@@ -36,11 +33,10 @@ export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
   sortDesc?: boolean;
   onToggleSort?: (sortBy: string) => void;
   isSortable?: boolean;
-  overflow?: LegendOverflow;
 }
 
 export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableProps<T> {
-  displayMode?: LegendDisplayMode;
+  displayMode: LegendDisplayMode;
 }
 
 export interface VizLegendItem<T = any> {

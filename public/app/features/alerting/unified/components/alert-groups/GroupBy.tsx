@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import { uniq } from 'lodash';
 
-import { type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Icon, Label, MultiSelect, Tooltip, useStyles2 } from '@grafana/ui';
-import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { SelectableValue } from '@grafana/data';
+import { Icon, Label, MultiSelect, Tooltip } from '@grafana/ui';
+import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isPrivateLabelKey } from '../../utils/labels';
 
@@ -15,7 +13,6 @@ interface Props {
 }
 
 export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
-  const styles = useStyles2(getStyles);
   const labelKeyOptions = uniq(groups.flatMap((group) => group.alerts).flatMap(({ labels }) => Object.keys(labels)))
     .filter((label) => !isPrivateLabelKey(label)) // Filter out private labels
     .map<SelectableValue>((key) => ({
@@ -24,18 +21,14 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
     }));
 
   return (
-    <div data-testid={'group-by-container'} className={styles.wrapper}>
+    <div data-testid={'group-by-container'}>
       <Label>
-        <span>
-          <Trans i18nKey="alerting.group-by.custom-group-by">Custom group by</Trans>&nbsp;
-        </span>
+        <span>Custom group by&nbsp;</span>
         <Tooltip
           content={
             <div>
-              <Trans i18nKey="alerting.group-by.tooltip-group-by">
-                Group notifications using a different combination of labels. This option can help validate the grouping
-                settings of your notification policies.
-              </Trans>
+              Group notifications using a different combination of labels. This option can help validate the grouping
+              settings of your notification policies.
             </div>
           }
         >
@@ -43,23 +36,16 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
         </Tooltip>
       </Label>
       <MultiSelect
-        aria-label={t('alerting.group-by.aria-label-group-by-label-keys', 'Group by label keys')}
+        aria-label={'group by label keys'}
         value={groupBy}
-        placeholder={t('alerting.group-by.placeholder-group-by', 'Group by')}
+        placeholder="Group by"
         prefix={<Icon name={'tag-alt'} />}
         onChange={(items) => {
           onGroupingChange(items.map(({ value }) => value as string));
         }}
         options={labelKeyOptions}
-        width={32}
+        width={34}
       />
     </div>
   );
 };
-
-const getStyles = () => ({
-  wrapper: css({
-    minWidth: 0,
-    flex: '1 1 0',
-  }),
-});

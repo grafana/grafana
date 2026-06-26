@@ -1,24 +1,23 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import Tree, { type TreeNodeProps } from '@rc-component/tree';
-import { type Key, useEffect, useMemo, useState } from 'react';
+import Tree, { TreeNodeProps } from 'rc-tree';
+import { Key, useEffect, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
-import { type ElementState } from 'app/features/canvas/runtime/element';
+import { ElementState } from 'app/features/canvas/runtime/element';
 import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { getGlobalStyles } from '../../globalStyles';
-import { type Options } from '../../panelcfg.gen';
-import { type DragNode, type DropNode } from '../../types';
+import { Options } from '../../panelcfg.gen';
+import { DragNode, DropNode } from '../../types';
 import { doSelect, getElementTypes, onAddItem } from '../../utils';
-import { type TreeViewEditorProps } from '../element/elementEditor';
+import { TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
-import { getTreeData, onNodeDrop, type TreeElement } from './tree';
+import { getTreeData, onNodeDrop, TreeElement } from './tree';
 
 let allowSelection = true;
 
@@ -51,20 +50,12 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
   }, [item?.settings?.scene.root, selectedBgColor, selection, selectionByUID]);
 
   if (!settings) {
-    return (
-      <div>
-        <Trans i18nKey="canvas.tree-navigation-editor.no-settings">No settings</Trans>
-      </div>
-    );
+    return <div>No settings</div>;
   }
 
   const layer = settings.layer;
   if (!layer) {
-    return (
-      <div>
-        <Trans i18nKey="canvas.tree-navigation-editor.missing-layer">Missing layer?</Trans>
-      </div>
-    );
+    return <div>Missing layer?</div>;
   }
 
   const onSelect = (selectedKeys: Key[], info: { node: { dataRef: ElementState } }) => {
@@ -104,7 +95,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     return (
       <Icon
         name="angle-right"
-        title={t('canvas.tree-navigation-editor.switcher-icon.title-node-icon', 'Node Icon')}
+        title={'Node Icon'}
         style={{
           transform: `rotate(${obj.expanded ? 90 : 0}deg)`,
           fill: theme.colors.text.primary,
@@ -159,20 +150,16 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
 
       <Stack justifyContent="space-between" direction="row">
         <div className={styles.addLayerButton}>
-          <AddLayerButton
-            onChange={(sel) => onAddItem(sel, layer)}
-            options={typeOptions}
-            label={t('canvas.tree-navigation-editor.label-add-item', 'Add item')}
-          />
+          <AddLayerButton onChange={(sel) => onAddItem(sel, layer)} options={typeOptions} label={'Add item'} />
         </div>
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>
-            <Trans i18nKey="canvas.tree-navigation-editor.clear-selection">Clear selection</Trans>
+            Clear selection
           </Button>
         )}
         {selection.length > 1 && config.featureToggles.canvasPanelNesting && (
           <Button size="sm" variant="secondary" onClick={onFrameSelection}>
-            <Trans i18nKey="canvas.tree-navigation-editor.frame-selection">Frame selection</Trans>
+            Frame selection
           </Button>
         )}
       </Stack>

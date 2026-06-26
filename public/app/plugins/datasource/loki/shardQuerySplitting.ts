@@ -1,26 +1,16 @@
 import { groupBy, partition } from 'lodash';
-import { Observable, type Subscriber, type Subscription } from 'rxjs';
+import { Observable, Subscriber, Subscription } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
-import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  LoadingState,
-  type QueryResultMetaStat,
-  generateUUID,
-} from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { DataQueryRequest, LoadingState, DataQueryResponse, QueryResultMetaStat } from '@grafana/data';
 
-import { type LokiDatasource } from './datasource';
+import { LokiDatasource } from './datasource';
 import { combineResponses, replaceResponses } from './mergeResponses';
 import { adjustTargetsFromResponseState, runSplitQuery } from './querySplitting';
-import {
-  addQueryLimitsContext,
-  getSelectorForShardValues,
-  interpolateShardingSelector,
-  requestSupportsSharding,
-} from './queryUtils';
+import { getSelectorForShardValues, interpolateShardingSelector, requestSupportsSharding } from './queryUtils';
 import { isRetriableError } from './responseUtils';
-import { type LokiQuery } from './types';
+import { LokiQuery } from './types';
+
 /**
  * Query splitting by stream shards.
  * Query splitting was introduced in Loki to optimize querying for long intervals and high volume of data,
@@ -56,26 +46,13 @@ import { type LokiQuery } from './types';
  */
 
 export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  const queries = request.targets
+  const queries = datasource
+    .interpolateVariablesInQueries(request.targets, request.scopedVars)
     .filter((query) => query.expr)
-    .filter((query) => !query.hide)
-    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
+    .filter((query) => !query.hide);
 
   return splitQueriesByStreamShard(datasource, request, queries);
 }
-
-const addLimitsToShardGroups = (
-  queryIndex: number,
-  groups: ShardedQueryGroup[],
-  request: DataQueryRequest<LokiQuery>
-) => {
-  return groups.map((g) => ({
-    ...g,
-    targets: g.targets.map((t) => {
-      return queryIndex === 0 ? addQueryLimitsContext(t, request) : { ...t, limitsContext: undefined };
-    }),
-  }));
-};
 
 function splitQueriesByStreamShard(
   datasource: LokiDatasource,
@@ -83,17 +60,12 @@ function splitQueriesByStreamShard(
   splittingTargets: LokiQuery[]
 ) {
   let shouldStop = false;
-  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: generateUUID() };
+  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: uuidv4() };
   let subquerySubscription: Subscription | null = null;
   let retriesMap = new Map<string, number>();
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
-  let queryIndex = 0;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, group: number, groups: ShardedQueryGroup[]) => {
-    if (config.featureToggles.lokiQueryLimitsContext) {
-      groups = addLimitsToShardGroups(queryIndex, groups, request);
-    }
-    queryIndex++;
     let nextGroupSize = groups[group].groupSize;
     const { shards, groupSize, cycle } = groups[group];
     let retrying = false;
@@ -103,21 +75,20 @@ function splitQueriesByStreamShard(
       subquerySubscription = null;
     }
 
+    if (shouldStop) {
+      subscriber.complete();
+      return;
+    }
+
     const done = () => {
-      mergedResponse.state = shouldStop ? LoadingState.Error : LoadingState.Done;
+      mergedResponse.state = LoadingState.Done;
       subscriber.next(mergedResponse);
       subscriber.complete();
     };
 
-    if (shouldStop) {
-      done();
-      return;
-    }
-
     const nextRequest = () => {
-      // Find the next group to execute, which can be queries with pending shards to execute, or the next query with no shards.
       const nextGroup =
-        groups[group + 1] && (groups[group + 1].shards === undefined || groupHasPendingRequests(groups[group + 1]))
+        groups[group + 1] && groupHasPendingRequests(groups[group + 1])
           ? groups[group + 1]
           : groups.find((shardGroup) => groupHasPendingRequests(shardGroup));
 
@@ -189,11 +160,9 @@ function splitQueriesByStreamShard(
 
     debug(shardsToQuery.length ? `Querying ${shardsToQuery.join(', ')}` : 'Running regular query');
 
-    subquerySubscription = runSplitQuery(datasource, subRequest, {
-      skipPartialUpdates: true,
-      disableRetry: true,
-      shardQueryIndex: queryIndex - 1,
-    }).subscribe({
+    const queryRunner =
+      shardsToQuery.length > 0 ? datasource.runQuery.bind(datasource) : runSplitQuery.bind(null, datasource);
+    subquerySubscription = queryRunner(subRequest).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
           if (retry(partialResponse)) {

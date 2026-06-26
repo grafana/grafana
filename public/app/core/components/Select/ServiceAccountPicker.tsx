@@ -1,71 +1,77 @@
-import debounce from 'debounce-promise';
-import { isNil } from 'lodash';
-import { useMemo, useState } from 'react';
+import { debounce, DebouncedFuncLeading, isNil } from 'lodash';
+import { Component } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
-import { type ServiceAccountDTO, type ServiceAccountsState } from 'app/types/serviceaccount';
+import { ServiceAccountDTO, ServiceAccountsState } from 'app/types';
 
 export interface Props {
-  onSelected: (user: SelectableValue<ServiceAccountDTO>) => void;
+  onSelected: (user: SelectableValue<ServiceAccountDTO['id']>) => void;
   className?: string;
   inputId?: string;
 }
 
-export const ServiceAccountPicker = ({ className, onSelected, inputId }: Props) => {
-  const [isLoading, setIsLoading] = useState(false);
+export interface State {
+  isLoading: boolean;
+}
 
-  const search = useMemo(
-    () =>
-      debounce(
-        async (query?: string) => {
-          setIsLoading(true);
+export class ServiceAccountPicker extends Component<Props, State> {
+  debouncedSearch: DebouncedFuncLeading<typeof this.search>;
 
-          if (isNil(query)) {
-            query = '';
-          }
+  constructor(props: Props) {
+    super(props);
+    this.state = { isLoading: false };
+    this.search = this.search.bind(this);
 
-          return getBackendSrv()
-            .get(`/api/serviceaccounts/search?query=${query}&perpage=100`)
-            .then((result: ServiceAccountsState) => {
-              return result.serviceAccounts.map((sa) => ({
-                id: sa.id,
-                uid: sa.uid,
-                value: sa,
-                label: sa.login,
-                imgUrl: sa.avatarUrl,
-                login: sa.login,
-              }));
-            })
-            .finally(() => {
-              setIsLoading(false);
-            });
-        },
-        300,
-        { leading: true }
-      ),
-    []
-  );
+    this.debouncedSearch = debounce(this.search, 300, {
+      leading: true,
+      trailing: true,
+    });
+  }
 
-  return (
-    <div className="service-account-picker" data-testid="serviceAccountPicker">
-      <AsyncSelect
-        isClearable
-        className={className}
-        inputId={inputId}
-        isLoading={isLoading}
-        defaultOptions={true}
-        loadOptions={search}
-        onChange={onSelected}
-        placeholder={t('service-account-picker.select-placeholder', 'Start typing to search for service accounts')}
-        noOptionsMessage={t(
-          'service-account-picker.noOptionsMessage-no-service-accounts-found',
-          'No service accounts found'
-        )}
-        aria-label={t('service-account-picker.select-aria-label', 'Service account picker')}
-      />
-    </div>
-  );
-};
+  search(query?: string) {
+    this.setState({ isLoading: true });
+
+    if (isNil(query)) {
+      query = '';
+    }
+
+    return getBackendSrv()
+      .get(`/api/serviceaccounts/search`)
+      .then((result: ServiceAccountsState) => {
+        return result.serviceAccounts.map((sa) => ({
+          id: sa.id,
+          value: sa.id,
+          label: sa.login,
+          imgUrl: sa.avatarUrl,
+          login: sa.login,
+        }));
+      })
+      .finally(() => {
+        this.setState({ isLoading: false });
+      });
+  }
+
+  render() {
+    const { className, onSelected, inputId } = this.props;
+    const { isLoading } = this.state;
+
+    return (
+      <div className="service-account-picker" data-testid="serviceAccountPicker">
+        <AsyncSelect
+          isClearable
+          className={className}
+          inputId={inputId}
+          isLoading={isLoading}
+          defaultOptions={true}
+          loadOptions={this.debouncedSearch}
+          onChange={onSelected}
+          placeholder="Start typing to search for service accounts"
+          noOptionsMessage="No service accounts found"
+          aria-label="Service Account picker"
+        />
+      </div>
+    );
+  }
+}

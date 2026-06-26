@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 )
 
 const (
@@ -212,7 +212,7 @@ func (session *Session) bytes2Value(col *core.Column, fieldValue *reflect.Value,
 				fieldValue.Set(reflect.ValueOf(v).Convert(fieldType))
 			}
 		}
-	case reflect.Pointer:
+	case reflect.Ptr:
 		// !nashtsai! TODO merge duplicated codes above
 		//typeStr := fieldType.String()
 		switch fieldType.Elem().Kind() {
@@ -498,7 +498,7 @@ func (session *Session) value2Interface(col *core.Column, fieldValue reflect.Val
 
 	fieldType := fieldValue.Type()
 	k := fieldType.Kind()
-	if k == reflect.Pointer {
+	if k == reflect.Ptr {
 		if fieldValue.IsNil() {
 			return nil, nil
 		} else if !fieldValue.IsValid() {

@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { type ResourcePermission } from './types';
+import { ResourcePermission } from './types';
 
 interface Props {
   item: ResourcePermission;
@@ -21,13 +20,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
     <tr>
       <td>{getAvatar(item)}</td>
       <td>{getDescription(item)}</td>
-      <td>
-        {item.isInherited && (
-          <em className={styles.inherited}>
-            <Trans i18nKey="access-control.permission-list-item.inherited">Inherited from folder</Trans>
-          </em>
-        )}
-      </td>
+      <td>{item.isInherited && <em className={styles.inherited}>Inherited from folder</em>}</td>
       <td>
         <Select
           disabled={!canSet || !item.isManaged}
@@ -62,27 +55,11 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
             variant="destructive"
             disabled={!canSet}
             onClick={() => onRemove(item)}
-            aria-label={t(
-              'access-control.permission-list-item.remove-aria-label',
-              'Remove permission for {{identifier}}',
-              {
-                identifier: getName(item),
-              }
-            )}
+            aria-label={`Remove permission for ${getName(item)}`}
           />
         ) : (
-          <Tooltip
-            content={
-              item.isInherited
-                ? t('access-control.permission-list-item.tooltip-inherited-permission', 'Inherited permission')
-                : t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')
-            }
-          >
-            <Button
-              size="sm"
-              icon="lock"
-              aria-label={t('access-control.permission-list-item.locked-aria-label', 'Locked permission indicator')}
-            />
+          <Tooltip content={item.isInherited ? 'Inherited Permission' : 'Provisioned Permission'}>
+            <Button size="sm" icon="lock" aria-label="Locked permission indicator" />
           </Tooltip>
         )}
       </td>

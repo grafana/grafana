@@ -1,8 +1,8 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { INSTANCE_ID, PANEL_STYLES, overrideToFixedColor } from '../../home/Insights';
-import { InsightsMenuButton } from '../InsightsMenuButton';
+import { INSTANCE_ID, overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getGrafanaRulesByEvaluationPercentageScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
@@ -35,7 +35,7 @@ export function getGrafanaRulesByEvaluationPercentageScene(datasource: DataSourc
       .setOverrides((b) =>
         b.matchFieldsWithName('active evaluation').overrideColor(overrideToFixedColor('active evaluation'))
       )
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

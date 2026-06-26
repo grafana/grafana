@@ -14,15 +14,10 @@
 
 import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import { memo } from 'react';
+import * as React from 'react';
 
-import {
-  type ViewRange,
-  type TUpdateViewRangeTimeFunction,
-  type ViewRangeTimeUpdate,
-} from '../../TraceTimelineViewer/types';
-import { type Trace, type TraceSpan } from '../../types/trace';
-import { getServiceColorKey } from '../../utils/service-name';
+import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../../index';
+import { TraceSpan, Trace } from '../../types';
 
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
@@ -30,6 +25,9 @@ import ViewingLayer from './ViewingLayer';
 
 const getStyles = () => {
   return {
+    container: css({
+      padding: '0 0.5rem 0.5rem 0.5rem',
+    }),
     canvasContainer: css({
       position: 'relative',
     }),
@@ -57,7 +55,7 @@ function getItem(span: TraceSpan): SpanItem {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,
-    serviceName: getServiceColorKey(span.process),
+    serviceName: span.process.serviceName,
   };
 }
 
@@ -67,8 +65,13 @@ function getItems(trace: Trace): SpanItem[] {
 
 const memoizedGetitems = memoizeOne(getItems);
 
-const SpanGraph = memo(
-  ({ height = DEFAULT_HEIGHT, trace, viewRange, updateNextViewRangeTime, updateViewRangeTime }: SpanGraphProps) => {
+export default class SpanGraph extends React.PureComponent<SpanGraphProps> {
+  static defaultProps = {
+    height: DEFAULT_HEIGHT,
+  };
+
+  render() {
+    const { height, trace, viewRange, updateNextViewRangeTime, updateViewRangeTime } = this.props;
     const styles = getStyles();
 
     if (!trace) {
@@ -77,14 +80,14 @@ const SpanGraph = memo(
 
     const items = memoizedGetitems(trace);
     return (
-      <div>
+      <div className={styles.container}>
         <TickLabels numTicks={TIMELINE_TICK_INTERVAL} duration={trace.duration} />
         <div className={styles.canvasContainer}>
           <CanvasSpanGraph valueWidth={trace.duration} items={items} />
           <ViewingLayer
             viewRange={viewRange}
             numTicks={TIMELINE_TICK_INTERVAL}
-            height={height}
+            height={height || DEFAULT_HEIGHT}
             updateViewRangeTime={updateViewRangeTime}
             updateNextViewRangeTime={updateNextViewRangeTime}
           />
@@ -92,8 +95,4 @@ const SpanGraph = memo(
       </div>
     );
   }
-);
-
-SpanGraph.displayName = 'SpanGraph';
-
-export default SpanGraph;
+}

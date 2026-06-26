@@ -1,4 +1,4 @@
-import { type JSX, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaMuteTimingsExporter } from '../export/GrafanaMuteTimingsExporter';

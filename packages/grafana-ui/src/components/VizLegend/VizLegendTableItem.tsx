@@ -2,15 +2,14 @@ import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { formattedValueToString, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { type LegendOverflow } from '@grafana/schema';
+import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
 
+import { styleMixins } from '../../themes';
 import { useStyles2 } from '../../themes/ThemeContext';
-import { hoverColor } from '../../themes/mixins';
+import { Trans } from '../../utils/i18n';
 
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { type VizLegendItem } from './types';
+import { VizLegendItem } from './types';
 
 export interface Props {
   key?: React.Key;
@@ -26,8 +25,6 @@ export interface Props {
     event: React.MouseEvent<HTMLButtonElement> | React.FocusEvent<HTMLButtonElement>
   ) => void;
   readonly?: boolean;
-  hasMixedAxes?: boolean;
-  overflow?: LegendOverflow;
 }
 
 /**
@@ -40,10 +37,8 @@ export const LegendTableItem = ({
   onLabelMouseOut,
   className,
   readonly,
-  hasMixedAxes,
-  overflow,
 }: Props) => {
-  const styles = useStyles2(getStyles, overflow);
+  const styles = useStyles2(getStyles);
 
   const onMouseOver = useCallback(
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>) => {
@@ -75,36 +70,40 @@ export const LegendTableItem = ({
   return (
     <tr className={cx(styles.row, className)}>
       <td>
-        <VizLegendSeriesIcon
-          color={item.color}
-          seriesName={item.fieldName ?? item.label}
-          readonly={readonly}
-          lineStyle={item.lineStyle}
-        />
-      </td>
-      <td className={styles.name}>
-        <button
-          disabled={readonly}
-          type="button"
-          title={item.label}
-          onBlur={onMouseOut}
-          onFocus={onMouseOver}
-          onMouseOver={onMouseOver}
-          onMouseOut={onMouseOut}
-          onClick={!readonly ? onClick : undefined}
-          className={cx(styles.label, item.disabled && styles.labelDisabled)}
-        >
-          {item.label}{' '}
-          {item.yAxis === 2 && hasMixedAxes && (
-            <span className={styles.yAxisLabel}>
-              <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
-            </span>
-          )}
-        </button>
+        <span className={styles.itemWrapper}>
+          <VizLegendSeriesIcon
+            color={item.color}
+            seriesName={item.fieldName ?? item.label}
+            readonly={readonly}
+            lineStyle={item.lineStyle}
+          />
+          <button
+            disabled={readonly}
+            type="button"
+            title={item.label}
+            onBlur={onMouseOut}
+            onFocus={onMouseOver}
+            onMouseOver={onMouseOver}
+            onMouseOut={onMouseOut}
+            onClick={!readonly ? onClick : undefined}
+            className={cx(styles.label, item.disabled && styles.labelDisabled)}
+          >
+            {item.label}{' '}
+            {item.yAxis === 2 && (
+              <span className={styles.yAxisLabel}>
+                <Trans i18nKey="grafana-ui.viz-legend.right-axis-indicator">(right y-axis)</Trans>
+              </span>
+            )}
+          </button>
+        </span>
       </td>
       {item.getDisplayValues &&
         item.getDisplayValues().map((stat, index) => {
-          return <td key={`${stat.title}-${index}`}>{formattedValueToString(stat)}</td>;
+          return (
+            <td className={styles.value} key={`${stat.title}-${index}`}>
+              {formattedValueToString(stat)}
+            </td>
+          );
         })}
     </tr>
   );
@@ -112,12 +111,18 @@ export const LegendTableItem = ({
 
 LegendTableItem.displayName = 'LegendTableItem';
 
-const getStyles = (theme: GrafanaTheme2, overflow?: LegendOverflow) => {
-  const rowHoverBg = hoverColor(theme.colors.background.primary, theme);
+const getStyles = (theme: GrafanaTheme2) => {
+  const rowHoverBg = styleMixins.hoverColor(theme.colors.background.primary, theme);
 
   return {
     row: css({
       label: 'LegendRow',
+      fontSize: theme.v1.typography.size.sm,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      td: {
+        padding: theme.spacing(0.25, 1),
+        whiteSpace: 'nowrap',
+      },
 
       '&:hover': {
         background: rowHoverBg,
@@ -125,25 +130,27 @@ const getStyles = (theme: GrafanaTheme2, overflow?: LegendOverflow) => {
     }),
     label: css({
       label: 'LegendLabel',
+      whiteSpace: 'nowrap',
       background: 'none',
       border: 'none',
       fontSize: 'inherit',
       padding: 0,
-      width: '100%',
-
+      maxWidth: '600px',
       textOverflow: 'ellipsis',
-      whiteSpace: overflow === 'wrap' ? 'normal' : 'nowrap',
-
       overflow: 'hidden',
       userSelect: 'text',
-      textAlign: 'left',
     }),
     labelDisabled: css({
       label: 'LegendLabelDisabled',
       color: theme.colors.text.disabled,
     }),
-    name: css({
-      textAlign: 'left',
+    itemWrapper: css({
+      display: 'flex',
+      whiteSpace: 'nowrap',
+      alignItems: 'center',
+    }),
+    value: css({
+      textAlign: 'right',
     }),
     yAxisLabel: css({
       color: theme.colors.text.secondary,

@@ -15,14 +15,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -47,7 +45,7 @@ type expressionExecutor interface {
 
 type expressionBuilder interface {
 	expressionExecutor
-	BuildPipeline(ctx context.Context, req *expr.Request) (expr.DataPipeline, error)
+	BuildPipeline(req *expr.Request) (expr.DataPipeline, error)
 }
 
 type conditionEvaluator struct {
@@ -96,13 +94,12 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 }
 
 // Evaluate evaluates the condition and converts the response to Results
-func (r *conditionEvaluator) Evaluate(ctx context.Context, scheduledAt time.Time) (Results, error) {
-	start := time.Now()
-	response, err := r.EvaluateRaw(ctx, scheduledAt)
+func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Results, error) {
+	response, err := r.EvaluateRaw(ctx, now)
 	if err != nil {
 		return nil, err
 	}
-	return EvaluateAlert(response, r.condition, scheduledAt, start), nil
+	return EvaluateAlert(response, r.condition, now), nil
 }
 
 type evaluatorImpl struct {
@@ -126,9 +123,9 @@ func NewEvaluatorFactory(
 }
 
 // EvaluateAlert takes the results of an executed query and evaluates it as an alert rule, returning alert states that the query produces.
-func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, scheduledAt time.Time, evalStart time.Time) Results {
+func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, now time.Time) Results {
 	execResults := queryDataResponseToExecutionResults(condition, queryResponse)
-	return evaluateExecutionResult(execResults, scheduledAt, evalStart)
+	return evaluateExecutionResult(execResults, now)
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -194,8 +191,8 @@ func (evalResults Results) HasNonRetryableErrors() bool {
 	return false
 }
 
-// IsNonRetryableError reports whether an error is persistent and not worth retrying within an
-// evaluation cycle: malformed results, or deterministic Mimir query-limit / write rejections.
+// IsNonRetryableError indicates whether an error is considered persistent and not worth performing evaluation retries.
+// Currently it is true if err is `&invalidEvalResultFormatError` or `ErrSeriesMustBeWide`
 func IsNonRetryableError(err error) bool {
 	var nonRetryableError *invalidEvalResultFormatError
 	if errors.As(err, &nonRetryableError) {
@@ -204,16 +201,10 @@ func IsNonRetryableError(err error) bool {
 	if errors.Is(err, expr.ErrSeriesMustBeWide) {
 		return true
 	}
-	if errors.Is(err, expr.ErrQueryLimit) {
-		return true
-	}
-	if errors.Is(err, writer.ErrNonRetryableWrite) {
-		return true
-	}
 	return false
 }
 
-// IsError returns true when Results contains at least one element and all elements are errors
+// HasErrors returns true when Results contains at least one element and all elements are errors
 func (evalResults Results) IsError() bool {
 	for _, r := range evalResults {
 		if r.State != Error {
@@ -304,11 +295,6 @@ const (
 	// Error is the eval state for an alert rule condition
 	// that evaluated to Error.
 	Error
-
-	// Recovering is the eval state for an alert instance condition
-	// that evaluated to false (Normal) but has not yet met
-	// the KeepFiringFor duration defined in AlertRule.
-	Recovering
 )
 
 func (s State) IsValid() bool {
@@ -316,7 +302,7 @@ func (s State) IsValid() bool {
 }
 
 func (s State) String() string {
-	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error", "Recovering"}[s]
+	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
 func ParseStateString(repr string) (State, error) {
@@ -331,27 +317,9 @@ func ParseStateString(repr string) (State, error) {
 		return NoData, nil
 	case "error":
 		return Error, nil
-	case "recovering":
-		return Recovering, nil
 	default:
 		return -1, fmt.Errorf("invalid state: %s", repr)
 	}
-}
-
-// sanitizeHeaderValue strips ASCII control characters (including CRLF) and
-// truncates to 128 bytes to prevent header injection and oversized headers.
-func sanitizeHeaderValue(v string) string {
-	s := strings.Map(func(r rune) rune {
-		if r < 0x20 || r == 0x7f {
-			return -1
-		}
-		return r
-	}, v)
-	const maxLen = 128
-	if len(s) > maxLen {
-		s = s[:maxLen]
-	}
-	return s
 }
 
 func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map[string]string {
@@ -359,7 +327,7 @@ func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map
 
 	if len(metadata) > 0 {
 		for key, value := range metadata {
-			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(sanitizeHeaderValue(value))
+			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(value)
 		}
 	}
 
@@ -421,7 +389,7 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 					return nil, fmt.Errorf("recovery threshold '%s' is only allowed to be the alert condition", q.RefID)
 				}
 				if reader != nil {
-					active := reader.Read(ctx.Ctx)
+					active := reader.Read()
 					logger.FromContext(ctx.Ctx).Debug("Detected hysteresis threshold command. Populating with the results", "items", len(active))
 					err = q.PatchHysteresisExpression(active)
 					if err != nil {
@@ -459,10 +427,8 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 }
 
 type NumberValueCapture struct {
-	Var              string // RefID
-	IsDatasourceNode bool
-	Labels           data.Labels
-	Type             string // Expression type (reduce, threshold, classic_conditions, etc.)
+	Var    string // RefID
+	Labels data.Labels
 
 	Value *float64
 }
@@ -488,33 +454,16 @@ func IsNoData(res backend.DataResponse) bool {
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// captures contains the values of all instant queries and expressions for each dimension
 	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
-
-	// Build a lookup table for expression types by RefID
-	expressionTypes := make(map[string]string)
-	for _, query := range c.Data {
-		if exprType, err := query.GetExpressionType(); err == nil {
-			expressionTypes[query.RefID] = exprType
-		}
-	}
-
-	captureFn := func(refID string, datasourceType expr.NodeType, labels data.Labels, value *float64) {
+	captureFn := func(refID string, labels data.Labels, value *float64) {
 		m := captures[refID]
 		if m == nil {
 			m = make(map[data.Fingerprint]NumberValueCapture)
 		}
 		fp := labels.Fingerprint()
-
-		exprType := expressionTypes[refID]
-		if exprType == "" && datasourceType == expr.TypeDatasourceNode {
-			exprType = "query"
-		}
-
 		m[fp] = NumberValueCapture{
-			Var:              refID,
-			IsDatasourceNode: datasourceType == expr.TypeDatasourceNode,
-			Value:            value,
-			Labels:           labels.Copy(),
-			Type:             exprType,
+			Var:    refID,
+			Value:  value,
+			Labels: labels.Copy(),
 		}
 		captures[refID] = m
 	}
@@ -531,20 +480,14 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	result.Error = FindConditionError(execResp, c.Condition)
 
 	for refID, res := range execResp.Responses {
-		var datasourceType expr.NodeType
-		datasourceUID, ok := datasourceUIDsForRefIDs[refID]
-		if ok {
-			datasourceType = expr.NodeTypeFromDatasourceUID(datasourceUID)
-		}
-
 		if IsNoData(res) {
 			// To make sure NoData is nil when Results are also nil we wait to initialize
 			// NoData until there is at least one query or expression that returned no data
 			if result.NoData == nil {
 				result.NoData = make(map[string]string)
 			}
-			if datasourceType == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
-				result.NoData[refID] = datasourceUID
+			if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
+				result.NoData[refID] = s
 			}
 		}
 
@@ -558,7 +501,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureFn(refID, datasourceType, frame.Fields[0].Labels, v)
+			captureFn(frame.RefID, frame.Fields[0].Labels, v)
 		}
 
 		if refID == c.Condition {
@@ -717,22 +660,19 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 //   - Nonzero (e.g 1.2, NaN) results in Alerting.
 //   - nil results in noData.
 //   - unsupported Frame schemas results in Error.
-func evaluateExecutionResult(execResults ExecutionResults, scheduledAt time.Time, evalStart time.Time) Results {
+func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
 	evalResults := make([]Result, 0)
-	// EvaluationDuration is calculated from evalStart (when evaluation actually began) rather than scheduledAt
-	// (when it was scheduled to begin) to exclude any delays from scheduling jitter or retry attempts.
-	duration := time.Since(evalStart)
 
 	appendErrRes := func(e error) {
-		evalResults = append(evalResults, NewResultFromError(e, scheduledAt, duration))
+		evalResults = append(evalResults, NewResultFromError(e, ts, time.Since(ts)))
 	}
 
 	appendNoData := func(labels data.Labels) {
 		evalResults = append(evalResults, Result{
 			State:              NoData,
 			Instance:           labels,
-			EvaluatedAt:        scheduledAt,
-			EvaluationDuration: duration,
+			EvaluatedAt:        ts,
+			EvaluationDuration: time.Since(ts),
 		})
 	}
 
@@ -796,14 +736,7 @@ func evaluateExecutionResult(execResults ExecutionResults, scheduledAt time.Time
 		}
 
 		val := f.Fields[0].At(0).(*float64) // type checked by data.FieldTypeNullableFloat64 above
-		r := Result{
-			Instance:           f.Fields[0].Labels,
-			EvaluatedAt:        scheduledAt,
-			EvaluationDuration: duration,
-			EvaluationString:   extractEvalString(f),
-			Values:             extractValues(f),
-			State:              stateFromVal(val),
-		}
+		r := buildResult(f, val, ts)
 
 		evalResults = append(evalResults, r)
 	}
@@ -817,8 +750,8 @@ func evaluateExecutionResult(execResults ExecutionResults, scheduledAt time.Time
 				Result{
 					State:              Error,
 					Instance:           res.Instance,
-					EvaluatedAt:        scheduledAt,
-					EvaluationDuration: duration,
+					EvaluatedAt:        ts,
+					EvaluationDuration: time.Since(ts),
 					Error:              &invalidEvalResultFormatError{reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: has duplicate results with labels {%s}", labelsStr)},
 				},
 			}
@@ -829,14 +762,23 @@ func evaluateExecutionResult(execResults ExecutionResults, scheduledAt time.Time
 	return evalResults
 }
 
-func stateFromVal(val *float64) State {
-	if val == nil {
-		return NoData
+func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
+	r := Result{
+		Instance:           f.Fields[0].Labels,
+		EvaluatedAt:        ts,
+		EvaluationDuration: time.Since(ts),
+		EvaluationString:   extractEvalString(f),
+		Values:             extractValues(f),
 	}
-	if *val == 0 {
-		return Normal
+	switch {
+	case val == nil:
+		r.State = NoData
+	case *val == 0:
+		r.State = Normal
+	default:
+		r.State = Alerting
 	}
-	return Alerting
+	return r
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
@@ -892,11 +834,11 @@ func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition
 	if err != nil {
 		return nil, err
 	}
-	return e.create(ctx.Ctx, condition, req)
+	return e.create(condition, req)
 }
 
-func (e *evaluatorImpl) create(ctx context.Context, condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
-	pipeline, err := e.expressionService.BuildPipeline(ctx, req)
+func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
+	pipeline, err := e.expressionService.BuildPipeline(req)
 	if err != nil {
 		return nil, err
 	}

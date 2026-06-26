@@ -2,27 +2,26 @@ import { css, cx } from '@emotion/css';
 import {
   arrow,
   autoUpdate,
+  flip,
   FloatingArrow,
   FloatingFocusManager,
   offset,
+  shift,
   useClick,
   useDismiss,
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { type Placement } from '@popperjs/core';
-import { memo, cloneElement, isValidElement, useRef, useState, type JSX } from 'react';
+import { Placement } from '@popperjs/core';
+import { memo, cloneElement, isValidElement, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
-import { getPortalContainer, Portal } from '../Portal/Portal';
 
-import { type ToggletipContent } from './types';
+import { ToggletipContent } from './types';
 
 export interface ToggletipProps {
   /** The theme used to display the toggletip */
@@ -47,15 +46,8 @@ export interface ToggletipProps {
   show?: boolean;
   /** Callback function to be called when the toggletip is opened */
   onOpen?: () => void;
-  /** Dismiss the toggletip when an ancestor element is scrolled */
-  dismissOnScroll?: boolean;
 }
 
-/**
- * Toggletips, similar to Tooltips, provide contextual support for users when needed. They are hidden by default, a UI trigger or text link are clicked to set them to their visible state. Toggletips, unlike tooltips, are persistent until a user takes action to dismiss them by clicking on the required “X” (close) trigger. Toggletips are capable of containing varying types of complex content including interactive components, buttons, and dropdowns.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-toggletip--docs
- */
 export const Toggletip = memo(
   ({
     children,
@@ -69,7 +61,6 @@ export const Toggletip = memo(
     fitContent = false,
     onOpen,
     show,
-    dismissOnScroll = false,
   }: ToggletipProps) => {
     const arrowRef = useRef(null);
     const grafanaTheme = useTheme2();
@@ -77,14 +68,19 @@ export const Toggletip = memo(
     const style = styles[theme];
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
-    const floatingUIPlacement = getPlacement(placement);
 
     // the order of middleware is important!
     // `arrow` should almost always be at the end
     // see https://floating-ui.com/docs/arrow#order
     const middleware = [
       offset(8),
-      ...getPositioningMiddleware(floatingUIPlacement),
+      flip({
+        fallbackAxisSideDirection: 'end',
+        // see https://floating-ui.com/docs/flip#combining-with-shift
+        crossAxis: false,
+        boundary: document.body,
+      }),
+      shift(),
       arrow({
         element: arrowRef,
       }),
@@ -92,7 +88,7 @@ export const Toggletip = memo(
 
     const { context, refs, floatingStyles } = useFloating({
       open: isOpen,
-      placement: floatingUIPlacement,
+      placement: getPlacement(placement),
       onOpenChange: (open) => {
         if (show === undefined) {
           setControlledVisible(open);
@@ -109,7 +105,7 @@ export const Toggletip = memo(
     });
 
     const click = useClick(context);
-    const dismiss = useDismiss(context, { ancestorScroll: dismissOnScroll });
+    const dismiss = useDismiss(context);
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
@@ -122,46 +118,44 @@ export const Toggletip = memo(
           ...getReferenceProps(),
         })}
         {isOpen && (
-          <Portal>
-            <FloatingFocusManager context={context} modal={true} getInsideElements={() => [getPortalContainer()]}>
-              <div
-                data-testid="toggletip-content"
-                className={cx(style.container, {
-                  [styles.fitContent]: fitContent,
-                })}
-                ref={refs.setFloating}
-                style={floatingStyles}
-                {...getFloatingProps()}
-              >
-                <FloatingArrow
-                  strokeWidth={0.3}
-                  stroke={grafanaTheme.colors.border.weak}
-                  className={style.arrow}
-                  ref={arrowRef}
-                  context={context}
-                />
-                {Boolean(title) && <div className={style.header}>{title}</div>}
-                {closeButton && (
-                  <div className={style.headerClose}>
-                    <IconButton
-                      aria-label={t('grafana-ui.toggletip.close', 'Close')}
-                      name="times"
-                      data-testid="toggletip-header-close"
-                      onClick={() => {
-                        setControlledVisible(false);
-                        onClose?.();
-                      }}
-                    />
-                  </div>
-                )}
-                <div className={style.body}>
-                  {(typeof content === 'string' || isValidElement(content)) && content}
-                  {typeof content === 'function' && content({})}
+          <FloatingFocusManager context={context} modal={false} closeOnFocusOut={false}>
+            <div
+              data-testid="toggletip-content"
+              className={cx(style.container, {
+                [styles.fitContent]: fitContent,
+              })}
+              ref={refs.setFloating}
+              style={floatingStyles}
+              {...getFloatingProps()}
+            >
+              <FloatingArrow
+                strokeWidth={0.3}
+                stroke={grafanaTheme.colors.border.weak}
+                className={style.arrow}
+                ref={arrowRef}
+                context={context}
+              />
+              {Boolean(title) && <div className={style.header}>{title}</div>}
+              {closeButton && (
+                <div className={style.headerClose}>
+                  <IconButton
+                    aria-label="Close"
+                    name="times"
+                    data-testid="toggletip-header-close"
+                    onClick={() => {
+                      setControlledVisible(false);
+                      onClose?.();
+                    }}
+                  />
                 </div>
-                {Boolean(footer) && <div className={style.footer}>{footer}</div>}
+              )}
+              <div className={style.body}>
+                {(typeof content === 'string' || isValidElement(content)) && content}
+                {typeof content === 'function' && content({})}
               </div>
-            </FloatingFocusManager>
-          </Portal>
+              {Boolean(footer) && <div className={style.footer}>{footer}</div>}
+            </div>
+          </FloatingFocusManager>
         )}
       </>
     );
@@ -170,7 +164,7 @@ export const Toggletip = memo(
 
 Toggletip.displayName = 'Toggletip';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.colors.background.primary,

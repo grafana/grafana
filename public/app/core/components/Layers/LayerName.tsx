@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, FieldValidationMessage, useStyles2 } from '@grafana/ui';
 
 export interface LayerNameProps {
@@ -74,7 +73,7 @@ export const LayerName = ({ name, onChange, verifyLayerNameUniqueness, overrideS
         {!isEditing && (
           <button
             className={styles.layerNameWrapper}
-            title={t('layers.layer-name.edit-layer-title', 'Edit layer name')}
+            title="Edit layer name"
             onClick={onEditLayer}
             data-testid="layer-name-div"
           >

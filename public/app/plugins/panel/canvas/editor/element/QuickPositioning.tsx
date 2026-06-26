@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { IconButton, useStyles2 } from '@grafana/ui';
-import { type ElementState } from 'app/features/canvas/runtime/element';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { IconButton, useStyles2 } from '@grafana/ui/src';
+import { ElementState } from 'app/features/canvas/runtime/element';
 import { QuickPlacement } from 'app/features/canvas/types';
 
-import { HorizontalConstraint, VerticalConstraint, type Placement } from '../../panelcfg.gen';
+import { HorizontalConstraint, VerticalConstraint, Placement } from '../../panelcfg.gen';
 
-import { type CanvasEditorOptions } from './elementEditor';
+import { CanvasEditorOptions } from './elementEditor';
 
 type Props = {
   onPositionChange: (value: number | undefined, placement: keyof Placement) => void;
@@ -71,41 +70,41 @@ export const QuickPositioning = ({ onPositionChange, element, settings }: Props)
         onClick={() => onQuickPositioningChange(QuickPlacement.Left)}
         className={styles.button}
         size="lg"
-        tooltip={t('canvas.quick-positioning.tooltip-align-left', 'Align left')}
+        tooltip="Align left"
       />
       <IconButton
         name="horizontal-align-center"
         onClick={() => onQuickPositioningChange(QuickPlacement.HorizontalCenter)}
         className={styles.button}
         size="lg"
-        tooltip={t('canvas.quick-positioning.tooltip-align-horizontal-centers', 'Align horizontal centers')}
+        tooltip="Align horizontal centers"
       />
       <IconButton
         name="horizontal-align-right"
         onClick={() => onQuickPositioningChange(QuickPlacement.Right)}
         className={styles.button}
         size="lg"
-        tooltip={t('canvas.quick-positioning.tooltip-align-right', 'Align right')}
+        tooltip="Align right"
       />
       <IconButton
         name="vertical-align-top"
         onClick={() => onQuickPositioningChange(QuickPlacement.Top)}
         size="lg"
-        tooltip={t('canvas.quick-positioning.tooltip-align-top', 'Align top')}
+        tooltip="Align top"
       />
       <IconButton
         name="vertical-align-center"
         onClick={() => onQuickPositioningChange(QuickPlacement.VerticalCenter)}
         className={styles.button}
         size="lg"
-        tooltip={t('canvas.quick-positioning.tooltip-align-vertical-centers', 'Align vertical centers')}
+        tooltip="Align vertical centers"
       />
       <IconButton
         name="vertical-align-bottom"
         onClick={() => onQuickPositioningChange(QuickPlacement.Bottom)}
         className={styles.button}
         size="lg"
-        tooltip={t('canvas.quick-positioning.tooltip-align-bottom', 'Align bottom')}
+        tooltip="Align bottom"
       />
     </div>
   );

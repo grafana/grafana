@@ -1,23 +1,20 @@
-import { type ReactNode, useCallback } from 'react';
+import { ReactNode, useCallback } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
 import { Button, EmptyState } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-import { type SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { type SearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { type DashboardViewItemKind, type SearchState } from 'app/features/search/types';
-import { useDispatch, useSelector } from 'app/types/store';
+import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
+import { SearchStateManager } from 'app/features/search/state/SearchStateManager';
+import { DashboardViewItemKind, SearchState } from 'app/features/search/types';
+import { useDispatch, useSelector } from 'app/types';
 
-import { canEditItemType, canSelectItems } from '../permissions';
-import { useHasSelection } from '../state/hooks';
-import { setAllSelection, setItemSelectionState } from '../state/slice';
-import { type BrowseDashboardsPermissions } from '../types';
+import { setAllSelection, setItemSelectionState, useHasSelection } from '../state';
 
 interface SearchViewProps {
   height: number;
   width: number;
-  permissions: BrowseDashboardsPermissions;
+  canSelect: boolean;
   searchState: SearchState;
   searchStateManager: SearchStateManager;
   emptyState?: ReactNode;
@@ -50,7 +47,7 @@ const initialLoadingView = {
 export function SearchView({
   width,
   height,
-  permissions,
+  canSelect,
   searchState,
   searchStateManager: stateManager,
   emptyState: emptyStateProp,
@@ -69,12 +66,7 @@ export function SearchView({
         return false;
       }
 
-      // Check if user has permission to select this item type
-      if (!canEditItemType(kind, permissions)) {
-        return false;
-      }
-
-      // Currently, this indicates _some_ items are selected, not necessarily all are
+      // Currently, this indicates _some_ items are selected, not nessicarily all are
       // selected.
       if (kind === '*' && uid === '*') {
         return hasSelection;
@@ -85,7 +77,7 @@ export function SearchView({
 
       return selectedItems[assertDashboardViewItemKind(kind)][uid] ?? false;
     },
-    [selectedItems, hasSelection, permissions]
+    [selectedItems, hasSelection]
   );
 
   const clearSelection = useCallback(() => {
@@ -94,17 +86,13 @@ export function SearchView({
 
   const handleItemSelectionChange = useCallback(
     (kind: string, uid: string) => {
-      if (!canEditItemType(kind, permissions)) {
-        return; // Cannot select this item
-      }
-
       const newIsSelected = !selectionChecker(kind, uid);
 
       dispatch(
         setItemSelectionState({ item: { kind: assertDashboardViewItemKind(kind), uid }, isSelected: newIsSelected })
       );
     },
-    [selectionChecker, dispatch, permissions]
+    [selectionChecker, dispatch]
   );
 
   if (value.totalRows === 0) {
@@ -124,7 +112,6 @@ export function SearchView({
     return <div style={{ width }}>{emptyState}</div>;
   }
 
-  const canSelect = canSelectItems(permissions);
   const props: SearchResultsProps = {
     response: value,
     selection: canSelect ? selectionChecker : undefined,
@@ -135,8 +122,7 @@ export function SearchView({
     onTagSelected: stateManager.onAddTag,
     keyboardEvents,
     onDatasourceChange: searchState.datasource ? stateManager.onDatasourceChange : undefined,
-    onClickItem: searchState.deleted ? undefined : stateManager.onSearchItemClicked,
-    trackingSource: 'browseDashboardsPage_SearchView',
+    onClickItem: stateManager.onSearchItemClicked,
   };
 
   return <SearchResultsTable {...props} />;

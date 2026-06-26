@@ -1,8 +1,7 @@
 import { isArray, reduce } from 'lodash';
 
-import { t } from '@grafana/i18n';
-import { type IconName } from '@grafana/ui';
-import { QueryPart, QueryPartDef } from 'app/features/alerting/state/query_part';
+import { IconName } from '@grafana/ui';
+import { QueryPartDef, QueryPart } from 'app/features/alerting/state/query_part';
 
 const alertQueryDef = new QueryPartDef({
   type: 'query',
@@ -33,28 +32,16 @@ const alertStateSortScore = {
 export enum EvalFunction {
   'IsAbove' = 'gt',
   'IsBelow' = 'lt',
-  'IsEqual' = 'eq',
-  'IsNotEqual' = 'ne',
-  'IsGreaterThanEqual' = 'gte',
-  'IsLessThanEqual' = 'lte',
   'IsOutsideRange' = 'outside_range',
   'IsWithinRange' = 'within_range',
-  'IsWithinRangeIncluded' = 'within_range_included',
-  'IsOutsideRangeIncluded' = 'outside_range_included',
   'HasNoValue' = 'no_value',
 }
 
 const evalFunctions = [
   { value: EvalFunction.IsAbove, text: 'IS ABOVE' },
   { value: EvalFunction.IsBelow, text: 'IS BELOW' },
-  { value: EvalFunction.IsEqual, text: 'IS EQUAL TO' },
-  { value: EvalFunction.IsNotEqual, text: 'IS NOT EQUAL TO' },
-  { value: EvalFunction.IsGreaterThanEqual, text: 'IS ABOVE OR EQUAL TO' },
-  { value: EvalFunction.IsLessThanEqual, text: 'IS BELOW OR EQUAL TO' },
   { value: EvalFunction.IsOutsideRange, text: 'IS OUTSIDE RANGE' },
   { value: EvalFunction.IsWithinRange, text: 'IS WITHIN RANGE' },
-  { value: EvalFunction.IsOutsideRangeIncluded, text: 'IS OUTSIDE RANGE INCLUDED' },
-  { value: EvalFunction.IsWithinRangeIncluded, text: 'IS WITHIN RANGE INCLUDED' },
   { value: EvalFunction.HasNoValue, text: 'HAS NO VALUE' },
 ];
 
@@ -115,42 +102,35 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
     case 'normal':
     case 'ok': {
       return {
-        text: t('alerting.get-state-display-model.text.ok', 'OK'),
+        text: 'OK',
         iconClass: 'heart',
         stateClass: 'alert-state-ok',
       };
     }
     case 'alerting': {
       return {
-        text: t('alerting.get-state-display-model.text.alerting', 'ALERTING'),
+        text: 'ALERTING',
         iconClass: 'heart-break',
         stateClass: 'alert-state-critical',
       };
     }
     case 'nodata': {
       return {
-        text: t('alerting.get-state-display-model.text.no-data', 'NO DATA'),
+        text: 'NO DATA',
         iconClass: 'question-circle',
         stateClass: 'alert-state-warning',
       };
     }
     case 'paused': {
       return {
-        text: t('alerting.get-state-display-model.text.paused', 'PAUSED'),
+        text: 'PAUSED',
         iconClass: 'pause',
         stateClass: 'alert-state-paused',
       };
     }
     case 'pending': {
       return {
-        text: t('alerting.get-state-display-model.text.pending', 'PENDING'),
-        iconClass: 'hourglass',
-        stateClass: 'alert-state-warning',
-      };
-    }
-    case 'recovering': {
-      return {
-        text: t('alerting.get-state-display-model.text.recovering', 'RECOVERING'),
+        text: 'PENDING',
         iconClass: 'hourglass',
         stateClass: 'alert-state-warning',
       };
@@ -158,7 +138,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
 
     case 'firing': {
       return {
-        text: t('alerting.get-state-display-model.text.firing', 'FIRING'),
+        text: 'FIRING',
         iconClass: 'fire',
         stateClass: '',
       };
@@ -166,7 +146,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
 
     case 'inactive': {
       return {
-        text: t('alerting.get-state-display-model.text.inactive', 'INACTIVE'),
+        text: 'INACTIVE',
         iconClass: 'check',
         stateClass: '',
       };
@@ -174,7 +154,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
 
     case 'error': {
       return {
-        text: t('alerting.get-state-display-model.text.error', 'ERROR'),
+        text: 'ERROR',
         iconClass: 'heart-break',
         stateClass: 'alert-state-critical',
       };
@@ -183,7 +163,7 @@ function getStateDisplayModel(state: string): AlertStateDisplayModel {
     case 'unknown':
     default: {
       return {
-        text: t('alerting.get-state-display-model.text.unknown', 'UNKNOWN'),
+        text: 'UNKNOWN',
         iconClass: 'question-circle',
         stateClass: '.alert-state-paused',
       };

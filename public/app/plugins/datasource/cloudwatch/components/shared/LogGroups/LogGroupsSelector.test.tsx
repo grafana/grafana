@@ -4,38 +4,9 @@ import userEvent from '@testing-library/user-event';
 import lodash from 'lodash';
 import selectEvent from 'react-select-event';
 
-import { AppEvents } from '@grafana/data';
-
-import { type LogGroupsResponse } from '../../../resources/types';
+import { ResourceResponse, LogGroupResponse } from '../../../resources/types';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
-
-const mockPublish = jest.fn();
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: () => ({
-    publish: mockPublish,
-  }),
-}));
-
-const defaultLogGroupsResponse: LogGroupsResponse = {
-  results: [
-    {
-      accountId: '123',
-      value: {
-        name: 'logGroup1',
-        arn: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
-      },
-    },
-    {
-      accountId: '456',
-      value: {
-        name: 'logGroup2',
-        arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
-      },
-    },
-  ],
-};
 
 const defaultProps = {
   variables: [],
@@ -52,7 +23,23 @@ const defaultProps = {
       label: 'Account Name 456',
     },
   ],
-  fetchLogGroups: () => Promise.resolve(defaultLogGroupsResponse),
+  fetchLogGroups: () =>
+    Promise.resolve([
+      {
+        accountId: '123',
+        value: {
+          name: 'logGroup1',
+          arn: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
+        },
+      },
+      {
+        accountId: '456',
+        value: {
+          name: 'logGroup2',
+          arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
+        },
+      },
+    ] as Array<ResourceResponse<LogGroupResponse>>),
   onChange: jest.fn(),
 };
 
@@ -90,7 +77,7 @@ describe('LogGroupsSelector', () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
-      return defaultLogGroupsResponse;
+      return defaultProps.fetchLogGroups();
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
@@ -105,7 +92,7 @@ describe('LogGroupsSelector', () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
-      return { results: [] } satisfies LogGroupsResponse;
+      return [];
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
@@ -118,7 +105,7 @@ describe('LogGroupsSelector', () => {
   });
 
   it('calls fetchLogGroups with a search phrase when it is typed in the Search Field', async () => {
-    const fetchLogGroups = jest.fn(() => Promise.resolve(defaultLogGroupsResponse));
+    const fetchLogGroups = jest.fn(() => defaultProps.fetchLogGroups());
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
@@ -134,11 +121,11 @@ describe('LogGroupsSelector', () => {
     const fetchLogGroups = jest.fn(async () => {
       if (once) {
         await Promise.all([secondCall.promise]);
-        return defaultLogGroupsResponse;
+        return defaultProps.fetchLogGroups();
       }
       await Promise.all([firstCall.promise]);
       once = true;
-      return defaultLogGroupsResponse;
+      return defaultProps.fetchLogGroups();
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
@@ -200,12 +187,13 @@ describe('LogGroupsSelector', () => {
     ]);
   });
 
-  const labelText = 'If you do not see an expected log group, try narrowing down your search.';
+  const labelText =
+    'Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your search.';
   it('should not display max result info label in case less than 50 logs groups are being displayed', async () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
-      return { results: [] } satisfies LogGroupsResponse;
+      return [];
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
@@ -218,16 +206,12 @@ describe('LogGroupsSelector', () => {
     const defer = new Deferred();
     const fetchLogGroups = jest.fn(async () => {
       await Promise.all([defer.promise]);
-      return {
-        results: Array(50)
-          .fill(null)
-          .map((_, i) => ({
-            value: {
-              arn: `logGroup${i}`,
-              name: `logGroup${i}`,
-            },
-          })),
-      } satisfies LogGroupsResponse;
+      return Array(50).map((i) => ({
+        value: {
+          arn: `logGroup${i}`,
+          name: `logGroup${i}`,
+        },
+      }));
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
     await userEvent.click(screen.getByText('Select log groups'));
@@ -300,7 +284,7 @@ describe('LogGroupsSelector', () => {
       />
     );
     await userEvent.click(screen.getByText('Select log groups'));
-    await userEvent.click(screen.getByRole('button', { name: 'Clear value' }));
+    await userEvent.click(screen.getByRole('button', { name: 'select-clear-value' }));
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
       {
@@ -324,97 +308,5 @@ describe('LogGroupsSelector', () => {
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     expect(screen.queryByText('Account label')).not.toBeInTheDocument();
     waitFor(() => expect(screen.queryByText('Account Name 123')).not.toBeInTheDocument());
-  });
-
-  it('should show Load more button when nextToken is present and append results on click', async () => {
-    let callCount = 0;
-    const fetchLogGroups = jest.fn(async () => {
-      callCount++;
-      if (callCount === 1) {
-        return {
-          results: [
-            {
-              accountId: '123',
-              value: {
-                name: 'logGroup1',
-                arn: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
-              },
-            },
-          ],
-          nextToken: 'page2_token',
-        } satisfies LogGroupsResponse;
-      }
-      return {
-        results: [
-          {
-            accountId: '456',
-            value: {
-              name: 'logGroup2',
-              arn: 'arn:partition:service:region:account-id456:loggroup:someotherloggroup',
-            },
-          },
-        ],
-      } satisfies LogGroupsResponse;
-    });
-
-    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByText('Select log groups'));
-
-    await waitFor(() => expect(screen.getByText('logGroup1')).toBeInTheDocument());
-    expect(await screen.findByRole('button', { name: 'Load more' })).toBeInTheDocument();
-    expect(screen.queryByText('logGroup2')).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByText('Load more'));
-
-    await waitFor(() => expect(screen.getByText('logGroup2')).toBeInTheDocument());
-    expect(screen.getByText('logGroup1')).toBeInTheDocument();
-    expect(fetchLogGroups).toBeCalledTimes(2);
-    expect(fetchLogGroups).toHaveBeenLastCalledWith({
-      logGroupPattern: '',
-      accountId: 'all',
-      nextToken: 'page2_token',
-    });
-  });
-
-  it('should not show Load more button when nextToken is not present', async () => {
-    render(<LogGroupsSelector {...defaultProps} />);
-    await userEvent.click(screen.getByText('Select log groups'));
-    await waitFor(() => expect(screen.getByText('logGroup1')).toBeInTheDocument());
-    expect(screen.queryByText('Load more')).not.toBeInTheDocument();
-  });
-
-  it('should show a toast error when load more fails', async () => {
-    let callCount = 0;
-    const fetchLogGroups = jest.fn(async () => {
-      callCount++;
-      if (callCount === 1) {
-        return {
-          results: [
-            {
-              accountId: '123',
-              value: {
-                name: 'logGroup1',
-                arn: 'arn:partition:service:region:account-id123:loggroup:someloggroup',
-              },
-            },
-          ],
-          nextToken: 'page2_token',
-        } satisfies LogGroupsResponse;
-      }
-      throw new Error('network error');
-    });
-
-    render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Select log groups' }));
-    await waitFor(() => expect(screen.getByText('logGroup1')).toBeInTheDocument());
-
-    await userEvent.click(screen.getByRole('button', { name: 'Load more' }));
-
-    await waitFor(() =>
-      expect(mockPublish).toHaveBeenCalledWith({
-        type: AppEvents.alertError.name,
-        payload: ['Failed to load more log groups. Please try again.'],
-      })
-    );
   });
 });

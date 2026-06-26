@@ -1,7 +1,7 @@
-import { HttpResponse, http } from 'msw';
+import { http, HttpResponse } from 'msw';
 
-import { PluginLoadingStrategy, type PluginMeta } from '@grafana/data';
-import { type AppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
+import { PluginLoadingStrategy, PluginMeta } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { plugins } from 'app/features/alerting/unified/testSetup/plugins';
 
 const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plugin with that id' };
@@ -10,9 +10,9 @@ const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plu
  * Returns a handler that maps from plugin ID to PluginMeta, and additionally sets up necessary
  * config side effects that are expected to come along with this API behaviour
  */
-const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
-  const appPluginMetas = plugins.reduce((acc, { id, baseUrl, info, angular }) => {
-    acc[id] = {
+export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
+  plugins.forEach(({ id, baseUrl, info, angular }) => {
+    config.apps[id] = {
       id,
       path: baseUrl,
       preload: true,
@@ -24,7 +24,6 @@ const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
         addedComponents: [],
         extensionPoints: [],
         exposedComponents: [],
-        addedFunctions: [],
       },
       dependencies: {
         grafanaVersion: '',
@@ -34,16 +33,9 @@ const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
         },
       },
     };
-    return acc;
-  }, {} as AppPluginMetas);
-
-  setAppPluginMetas(appPluginMetas);
+  });
 
   return http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) => {
-    // Handle empty plugin ID (used when no plugin origin) - return 404 silently
-    if (!pluginId || pluginId === '') {
-      return HttpResponse.json(PLUGIN_NOT_FOUND_RESPONSE, { status: 404 });
-    }
     const matchingPlugin = pluginsArray.find((plugin) => plugin.id === pluginId);
     return matchingPlugin
       ? HttpResponse.json<PluginMeta>(matchingPlugin)
@@ -64,16 +56,6 @@ export const getPluginMissingHandler = (pluginIdToRemove: string) =>
   http.get(`/api/plugins/${pluginIdToRemove}/settings`, () =>
     HttpResponse.json(PLUGIN_NOT_FOUND_RESPONSE, { status: 404 })
   );
-
-/**
- * Returns a handler that responds to a specific plugin ID with the given PluginMeta.
- * Useful for adding a single plugin without replacing the global handler.
- */
-export const getSpecificPluginHandler = (pluginMeta: PluginMeta) => {
-  return http.get(`/api/plugins/${pluginMeta.id}/settings`, () => {
-    return HttpResponse.json<PluginMeta>(pluginMeta);
-  });
-};
 
 const handlers = [getPluginsHandler()];
 export default handlers;

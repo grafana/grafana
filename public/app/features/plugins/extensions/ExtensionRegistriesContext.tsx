@@ -1,21 +1,19 @@
-import { type PropsWithChildren, createContext, useContext } from 'react';
+import { PropsWithChildren, createContext, useContext } from 'react';
 
-import { type AddedComponentsRegistry } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
-import { type AddedFunctionsRegistry } from 'app/features/plugins/extensions/registry/AddedFunctionsRegistry';
-import { type AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
-import { type ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
+import { AddedComponentsRegistry } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
+import { AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
+import { ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
 
-import { type PluginExtensionRegistries } from './registry/types';
+import { PluginExtensionRegistries } from './registry/types';
 
 export interface ExtensionRegistriesContextType {
-  registries?: PluginExtensionRegistries;
+  registries: PluginExtensionRegistries;
 }
 
 // Using a different context for each registry to avoid unnecessary re-renders
-const AddedLinksRegistryContext = createContext<AddedLinksRegistry | undefined>(undefined);
-const AddedComponentsRegistryContext = createContext<AddedComponentsRegistry | undefined>(undefined);
-const AddedFunctionsRegistryContext = createContext<AddedFunctionsRegistry | undefined>(undefined);
-const ExposedComponentsRegistryContext = createContext<ExposedComponentsRegistry | undefined>(undefined);
+export const AddedLinksRegistryContext = createContext<AddedLinksRegistry | undefined>(undefined);
+export const AddedComponentsRegistryContext = createContext<AddedComponentsRegistry | undefined>(undefined);
+export const ExposedComponentsRegistryContext = createContext<ExposedComponentsRegistry | undefined>(undefined);
 
 export function useAddedLinksRegistry(): AddedLinksRegistry {
   const context = useContext(AddedLinksRegistryContext);
@@ -33,14 +31,6 @@ export function useAddedComponentsRegistry(): AddedComponentsRegistry {
   return context;
 }
 
-export function useAddedFunctionsRegistry(): AddedFunctionsRegistry {
-  const context = useContext(AddedFunctionsRegistryContext);
-  if (!context) {
-    throw new Error('No `AddedFunctionsRegistry` found.');
-  }
-  return context;
-}
-
 export function useExposedComponentsRegistry(): ExposedComponentsRegistry {
   const context = useContext(ExposedComponentsRegistryContext);
   if (!context) {
@@ -53,18 +43,12 @@ export const ExtensionRegistriesProvider = ({
   registries,
   children,
 }: PropsWithChildren<ExtensionRegistriesContextType>) => {
-  if (!registries) {
-    return null;
-  }
-
   return (
     <AddedLinksRegistryContext.Provider value={registries.addedLinksRegistry}>
       <AddedComponentsRegistryContext.Provider value={registries.addedComponentsRegistry}>
-        <AddedFunctionsRegistryContext.Provider value={registries.addedFunctionsRegistry}>
-          <ExposedComponentsRegistryContext.Provider value={registries.exposedComponentsRegistry}>
-            {children}
-          </ExposedComponentsRegistryContext.Provider>
-        </AddedFunctionsRegistryContext.Provider>
+        <ExposedComponentsRegistryContext.Provider value={registries.exposedComponentsRegistry}>
+          {children}
+        </ExposedComponentsRegistryContext.Provider>
       </AddedComponentsRegistryContext.Provider>
     </AddedLinksRegistryContext.Provider>
   );

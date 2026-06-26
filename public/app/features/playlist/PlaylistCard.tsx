@@ -1,25 +1,15 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
-import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
+import { attachSkeleton, SkeletonComponent } from '@grafana/ui/src/unstable';
+import { t, Trans } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { SourceLink } from 'app/features/provisioning/components/SourceLink';
-import {
-  getManagerIdentity,
-  getManagerKind,
-  getSourcePath,
-  isManaged,
-  isManagedByRepository,
-} from 'app/features/provisioning/utils/managedResource';
-
-import { type Playlist } from '../../api/clients/playlist/v1';
 
 import { ShareModal } from './ShareModal';
-import { canWritePlaylists } from './utils';
+import { Playlist } from './types';
 
 interface Props {
   setStartPlaylist: (playlistItem: Playlist) => void;
@@ -29,22 +19,32 @@ interface Props {
 
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {
   return (
-    <Card noMargin>
+    <Card>
       <Card.Heading>
-        <Stack direction="row" gap={1} alignItems="center" wrap>
-          {playlist.spec?.title}
-          {isManaged(playlist) && (
-            <ManagedBadge managerKind={getManagerKind(playlist)} name={getManagerIdentity(playlist)} />
+        {playlist.name}
+        <ModalsController key="button-share">
+          {({ showModal, hideModal }) => (
+            <DashNavButton
+              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
+              icon="share-alt"
+              iconSize="lg"
+              onClick={() => {
+                showModal(ShareModal, {
+                  playlistUid: playlist.uid,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
           )}
-        </Stack>
+        </ModalsController>
       </Card.Heading>
       <Card.Actions>
         <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
           <Trans i18nKey="playlist-page.card.start">Start playlist</Trans>
         </Button>
-        {canWritePlaylists() && (
+        {contextSrv.isEditor && (
           <>
-            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
+            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.uid}`} icon="cog">
               <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
             </LinkButton>
             <Button
@@ -57,27 +57,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             </Button>
           </>
         )}
-        {isManagedByRepository(playlist) && (
-          <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} size="md" />
-        )}
       </Card.Actions>
-      <Card.SecondaryActions>
-        <ModalsController key="button-share">
-          {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
-              icon="share-alt"
-              iconSize="lg"
-              onClick={() => {
-                showModal(ShareModal, {
-                  playlistUid: playlist.metadata?.name ?? '',
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
-      </Card.SecondaryActions>
     </Card>
   );
 };
@@ -85,14 +65,14 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
 const PlaylistCardSkeleton: SkeletonComponent = ({ rootProps }) => {
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
-    <Card noMargin {...rootProps}>
+    <Card {...rootProps}>
       <Card.Heading>
         <Skeleton width={140} />
       </Card.Heading>
       <Card.Actions>
         <Stack direction="row" wrap="wrap">
           <Skeleton containerClassName={skeletonStyles.button} width={142} height={32} />
-          {canWritePlaylists() && (
+          {contextSrv.isEditor && (
             <>
               <Skeleton containerClassName={skeletonStyles.button} width={135} height={32} />
               <Skeleton containerClassName={skeletonStyles.button} width={153} height={32} />

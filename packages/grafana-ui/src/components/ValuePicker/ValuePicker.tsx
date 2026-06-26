@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-import { type IconName } from '../../types/icon';
-import { type ComponentSize } from '../../types/size';
-import { Button, type ButtonFill, type ButtonVariant } from '../Button/Button';
+import { useTheme2 } from '../../themes';
+import { IconName } from '../../types';
+import { ComponentSize } from '../../types/size';
+import { Button, ButtonFill, ButtonVariant } from '../Button';
 import { Select } from '../Select/Select';
 
 export interface ValuePickerProps<T> {
@@ -37,11 +37,6 @@ export interface ValuePickerProps<T> {
   buttonCss?: string;
 }
 
-/**
- * A component that looks like a button but transforms into a select when clicked.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-valuepicker--docs
- */
 export function ValuePicker<T>({
   'aria-label': ariaLabel,
   label,
@@ -81,8 +76,7 @@ export function ValuePicker<T>({
           <Select
             placeholder={label}
             options={options}
-            data-testid={selectors.components.ValuePicker.select(label)}
-            aria-label={ariaLabel}
+            aria-label={selectors.components.ValuePicker.select(ariaLabel ?? label)}
             isOpen
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}

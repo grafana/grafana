@@ -2,19 +2,7 @@ import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 
 import { NodeGraph } from './NodeGraph';
-import { LayoutAlgorithm, ZoomMode } from './panelcfg.gen';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
-
-jest.mock('./layout', () => {
-  const actual = jest.requireActual('./layout');
-  return {
-    ...actual,
-    defaultConfig: {
-      ...actual.defaultConfig,
-      layoutAlgorithm: 'force',
-    },
-  };
-});
 
 jest.mock('react-use/lib/useMeasure', () => {
   return {
@@ -32,60 +20,21 @@ describe('NodeGraph', () => {
     await screen.findByText('No data');
   });
 
-  it('can zoom in and out with zoom buttons', async () => {
+  it('can zoom in and out', async () => {
     render(
       <NodeGraph
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
         getLinks={() => []}
-        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
-    const zoomIn = await screen.findByLabelText(/Zoom in/);
-    const zoomOut = await screen.findByLabelText(/Zoom out/);
+    const zoomIn = await screen.findByTitle(/Zoom in/);
+    const zoomOut = await screen.findByTitle(/Zoom out/);
 
     expect(getScale()).toBe(1);
     await userEvent.click(zoomIn);
     expect(getScale()).toBe(1.5);
     await userEvent.click(zoomOut);
     expect(getScale()).toBe(1);
-  });
-
-  it('can zoom while pressing ctrl/command key with cooperative zoom mode', async () => {
-    render(
-      <NodeGraph
-        dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
-        zoomMode={ZoomMode.Cooperative}
-        getLinks={() => []}
-        layoutAlgorithm={LayoutAlgorithm.Force}
-      />
-    );
-
-    await screen.findByLabelText('Node: service:1');
-
-    scrollView({ deltaY: -2, ctrlKey: false });
-    expect(getScale()).toBe(1);
-
-    scrollView({ deltaY: -2, ctrlKey: true });
-    expect(getScale()).toBe(1.03);
-  });
-
-  it('can zoom without pressing ctrl/command key with greedy zoom mode', async () => {
-    render(
-      <NodeGraph
-        dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
-        zoomMode={ZoomMode.Greedy}
-        getLinks={() => []}
-        layoutAlgorithm={LayoutAlgorithm.Force}
-      />
-    );
-
-    await screen.findByLabelText('Node: service:1');
-
-    scrollView({ deltaY: -2, ctrlKey: true });
-    expect(getScale()).toBe(1.03);
-
-    scrollView({ deltaY: -2, ctrlKey: true });
-    expect(getScale()).toBe(1.06);
   });
 
   it('can pan the graph', async () => {
@@ -99,7 +48,6 @@ describe('NodeGraph', () => {
           ]),
         ]}
         getLinks={() => []}
-        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -112,9 +60,7 @@ describe('NodeGraph', () => {
   });
 
   it('renders with single node', async () => {
-    render(
-      <NodeGraph dataFrames={[makeNodesDataFrame(1)]} getLinks={() => []} layoutAlgorithm={LayoutAlgorithm.Force} />
-    );
+    render(<NodeGraph dataFrames={[makeNodesDataFrame(1)]} getLinks={() => []} />);
     const circle = await screen.findByText('', { selector: 'circle' });
     await screen.findByText(/service:0/);
     expect(getXY(circle)).toEqual({ x: 0, y: 0 });
@@ -134,7 +80,6 @@ describe('NodeGraph', () => {
             },
           ];
         }}
-        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -164,7 +109,6 @@ describe('NodeGraph', () => {
           ]),
         ]}
         getLinks={() => []}
-        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -184,7 +128,6 @@ describe('NodeGraph', () => {
           ]),
         ]}
         getLinks={() => []}
-        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -208,7 +151,6 @@ describe('NodeGraph', () => {
         ]}
         getLinks={() => []}
         nodeLimit={2}
-        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -234,7 +176,6 @@ describe('NodeGraph', () => {
         ]}
         getLinks={() => []}
         nodeLimit={3}
-        layoutAlgorithm={LayoutAlgorithm.Force}
       />
     );
 
@@ -266,7 +207,7 @@ describe('NodeGraph', () => {
       />
     );
 
-    const button = await screen.findByText('Grid');
+    const button = await screen.findByTitle(/Grid layout/);
     await userEvent.click(button);
 
     await expectNodePositionCloseTo('service:0', { x: -60, y: -60 });
@@ -292,11 +233,6 @@ function panView(toPos: { x: number; y: number }) {
   fireEvent(svg, new MouseEvent('mousedown', { clientX: 0, clientY: 0 }));
   fireEvent(document, new MouseEvent('mousemove', { clientX: toPos.x, clientY: toPos.y }));
   fireEvent(document, new MouseEvent('mouseup'));
-}
-
-function scrollView({ deltaY, ctrlKey }: { deltaY: number; ctrlKey: boolean }) {
-  const svg = getSvg();
-  fireEvent.wheel(svg, { deltaY, ctrlKey });
 }
 
 function getSvg() {

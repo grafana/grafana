@@ -3,12 +3,8 @@ import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
-import {
-  type EditableRuleIdentifier,
-  type GrafanaRuleIdentifier,
-  type RuleGroupIdentifier,
-} from 'app/types/unified-alerting';
-import { type PostableRuleDTO } from 'app/types/unified-alerting-dto';
+import { EditableRuleIdentifier, GrafanaRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -18,7 +14,7 @@ import {
   grafanaRulerNamespace,
   grafanaRulerRule,
 } from '../../mocks/grafanaRulerApi';
-import { GROUP_3, NAMESPACE_1, NAMESPACE_2, group1 } from '../../mocks/mimirRulerApi';
+import { group1, GROUP_3, NAMESPACE_1, NAMESPACE_2 } from '../../mocks/mimirRulerApi';
 import { mimirDataSource } from '../../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';

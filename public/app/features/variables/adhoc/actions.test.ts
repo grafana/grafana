@@ -1,18 +1,18 @@
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type TypedVariableModel } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta, TypedVariableModel } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
-import { getPreloadedState, getRootReducer, type RootReducerType } from '../state/helpers';
+import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import {
   addFilter,
-  type AdHocTableOptions,
+  AdHocTableOptions,
   applyFilterFromTable,
   changeFilter,
   changeVariableDatasource,

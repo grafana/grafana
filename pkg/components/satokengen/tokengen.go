@@ -2,7 +2,6 @@ package satokengen
 
 import (
 	"encoding/hex"
-	"errors"
 	"hash/crc32"
 	"strings"
 
@@ -10,8 +9,6 @@ import (
 )
 
 const GrafanaPrefix = "gl"
-
-var ErrInvalidApiKey = errors.New("invalid API key")
 
 type KeyGenResult struct {
 	HashedKey    string
@@ -75,12 +72,12 @@ func New(serviceID string) (KeyGenResult, error) {
 
 func Decode(keyString string) (*PrefixedKey, error) {
 	if !strings.HasPrefix(keyString, GrafanaPrefix) {
-		return nil, ErrInvalidApiKey
+		return nil, &ErrInvalidApiKey{}
 	}
 
 	parts := strings.Split(keyString, "_")
 	if len(parts) != 3 {
-		return nil, ErrInvalidApiKey
+		return nil, &ErrInvalidApiKey{}
 	}
 
 	key := &PrefixedKey{
@@ -89,7 +86,7 @@ func Decode(keyString string) (*PrefixedKey, error) {
 		Checksum:  parts[2],
 	}
 	if key.CalculateChecksum() != key.Checksum {
-		return nil, ErrInvalidApiKey
+		return nil, &ErrInvalidApiKey{}
 	}
 
 	return key, nil

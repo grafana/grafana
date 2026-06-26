@@ -4,14 +4,13 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
 
-import { AppEvents, type PanelData, type SelectableValue, LoadingState } from '@grafana/data';
+import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { appEvents } from 'app/core/core';
+import { t } from 'app/core/internationalization';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles2 } from '../inspector/styles';
@@ -26,6 +25,30 @@ enum ShowContent {
   DataFrames = 'frames',
 }
 
+const options: Array<SelectableValue<ShowContent>> = [
+  {
+    label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
+    description: t(
+      'dashboard.inspect-json.panel-json-description',
+      'The model saved in the dashboard JSON that configures how everything works.'
+    ),
+    value: ShowContent.PanelJSON,
+  },
+  {
+    label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
+    description: t('dashboard.inspect-json.panel-data-description', 'The raw model passed to the panel visualization'),
+    value: ShowContent.PanelData,
+  },
+  {
+    label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
+    description: t(
+      'dashboard.inspect-json.dataframe-description',
+      'Raw data without transformations and field config applied. '
+    ),
+    value: ShowContent.DataFrames,
+  },
+];
+
 interface Props {
   onClose: () => void;
   dashboard?: DashboardModel;
@@ -34,35 +57,6 @@ interface Props {
 }
 
 export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
-  const options: Array<SelectableValue<ShowContent>> = useMemo(
-    () => [
-      {
-        label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
-        description: t(
-          'dashboard.inspect-json.panel-json-description',
-          'The model saved in the dashboard JSON that configures how everything works.'
-        ),
-        value: ShowContent.PanelJSON,
-      },
-      {
-        label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
-        description: t(
-          'dashboard.inspect-json.panel-data-description',
-          'The raw model passed to the panel visualization'
-        ),
-        value: ShowContent.PanelData,
-      },
-      {
-        label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
-        description: t(
-          'dashboard.inspect-json.dataframe-description',
-          'Raw data without transformations and field config applied. '
-        ),
-        value: ShowContent.DataFrames,
-      },
-    ],
-    []
-  );
   const styles = useStyles2(getPanelInspectorStyles2);
   const jsonOptions = useMemo(() => {
     if (panel) {
@@ -72,7 +66,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
       return options;
     }
     return options.slice(1, options.length);
-  }, [options, panel]);
+  }, [panel]);
   const [show, setShow] = useState(panel ? ShowContent.PanelJSON : ShowContent.DataFrames);
   const [text, setText] = useState('');
 
@@ -125,7 +119,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar} data-testid={selectors.components.PanelInspector.Json.content}>
-        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1" noMargin>
+        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
           <Select
             inputId="select-source-dropdown"
             options={jsonOptions}
@@ -135,12 +129,12 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
         </Field>
         {panel && isPanelJSON && canEdit && (
           <Button className={styles.toolbarItem} onClick={onApplyPanelModel}>
-            <Trans i18nKey="inspector.inspect-jsontab.apply">Apply</Trans>
+            Apply
           </Button>
         )}
         {show === ShowContent.DataFrames && dashboard !== undefined && (
           <Button className={styles.toolbarItem} onClick={onShowHelpWizard}>
-            <Trans i18nKey="inspector.inspect-jsontab.support">Support</Trans>
+            Support
           </Button>
         )}
       </div>

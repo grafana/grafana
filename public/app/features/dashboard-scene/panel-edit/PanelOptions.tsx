@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import { type PanelData } from '@grafana/data';
+import { PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
@@ -13,7 +13,7 @@ import {
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
-import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
+import { getPanelFrameCategory2 } from './getPanelFrameOptions';
 
 interface Props {
   panel: VizPanel;
@@ -24,9 +24,13 @@ interface Props {
 
 export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
+  const layoutElement = panel.parent!;
+  const layoutElementState = layoutElement.useState();
 
-  const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
-  const panelStylesOptions = useMemo(() => getPanelStylesOptions(panel), [panel]);
+  const panelFrameOptions = useMemo(
+    () => getPanelFrameCategory2(panel, layoutElementState),
+    [panel, layoutElementState]
+  );
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();
@@ -40,9 +44,8 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
       instanceState: _pluginInstanceState,
-      currentOptions: options,
-      currentFieldConfig: fieldConfig,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
@@ -69,6 +72,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
           panel.onFieldConfigChange(newConfig, true);
         }
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, searchQuery, panel, fieldConfig]
   );
 
@@ -78,12 +82,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
   if (isSearching) {
     mainBoxElements.push(
       renderSearchHits(
-        [
-          panelFrameOptions,
-          ...(panelStylesOptions ? [panelStylesOptions] : []),
-          ...(libraryPanelOptions ? [libraryPanelOptions] : []),
-          ...(visualizationOptions ?? []),
-        ],
+        [panelFrameOptions, ...(libraryPanelOptions ? [libraryPanelOptions] : []), ...(visualizationOptions ?? [])],
         justOverrides,
         searchQuery
       )
@@ -93,24 +92,21 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       case OptionFilter.All:
         if (libraryPanelOptions) {
           // Library Panel options first
-          mainBoxElements.push(libraryPanelOptions.renderElement());
+          mainBoxElements.push(libraryPanelOptions.render());
         }
-        mainBoxElements.push(panelFrameOptions.renderElement());
-        if (panelStylesOptions) {
-          mainBoxElements.push(panelStylesOptions.renderElement());
-        }
+        mainBoxElements.push(panelFrameOptions.render());
 
         for (const item of visualizationOptions ?? []) {
-          mainBoxElements.push(item.renderElement());
+          mainBoxElements.push(item.render());
         }
 
         for (const item of justOverrides) {
-          mainBoxElements.push(item.renderElement());
+          mainBoxElements.push(item.render());
         }
         break;
       case OptionFilter.Overrides:
         for (const item of justOverrides) {
-          mainBoxElements.push(item.renderElement());
+          mainBoxElements.push(item.render());
         }
       default:
         break;

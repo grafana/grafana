@@ -1,19 +1,27 @@
 import { useCallback, useMemo } from 'react';
 
-import { type TransformerUIProps, type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import {
+  DataTransformerID,
+  PluginState,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  SelectableValue,
+  TransformerCategory,
+} from '@grafana/data';
 import {
   InlineField,
   InlineFieldRow,
   ValuePicker,
   Button,
-  Stack,
+  HorizontalGroup,
   FieldValidationMessage,
   RadioButtonGroup,
 } from '@grafana/ui';
-import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
-import { type PartitionByValuesTransformerOptions } from './partitionByValues';
+import { getTransformationContent } from '../docs/getTransformationContent';
+
+import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
   input,
@@ -21,7 +29,7 @@ export function PartitionByValuesEditor({
   onChange,
 }: TransformerUIProps<PartitionByValuesTransformerOptions>) {
   const names = useFieldDisplayNames(input);
-  const allSelectOptions = useMatcherSelectOptions(names);
+  const allSelectOptions = useSelectOptions(names);
   const selectOptions = useMemo(() => {
     const fieldNames = new Set(options.fields);
 
@@ -55,19 +63,13 @@ export function PartitionByValuesEditor({
   }
 
   const namingModesOptions = [
-    {
-      label: t('transformers.partition-by-values-editor.naming-modes-options.label.as-label', 'As label'),
-      value: namingModes.asLabels,
-    },
-    {
-      label: t('transformers.partition-by-values-editor.naming-modes-options.label.as-frame-name', 'As frame name'),
-      value: namingModes.frameName,
-    },
+    { label: 'As label', value: namingModes.asLabels },
+    { label: 'As frame name', value: namingModes.frameName },
   ];
 
   const KeepFieldsOptions = [
-    { label: t('transformers.partition-by-values-editor.keep-fields-options.label.yes', 'Yes'), value: true },
-    { label: t('transformers.partition-by-values-editor.keep-fields-options.label.no', 'No'), value: false },
+    { label: 'Yes', value: true },
+    { label: 'No', value: false },
   ];
 
   const removeField = useCallback(
@@ -89,13 +91,7 @@ export function PartitionByValuesEditor({
   );
 
   if (input.length > 1) {
-    return (
-      <FieldValidationMessage>
-        <Trans i18nKey="transformers.partition-by-values-editor.partition-values-works-single-frame">
-          Partition by values only works with a single frame.
-        </Trans>
-      </FieldValidationMessage>
-    );
+    return <FieldValidationMessage>Partition by values only works with a single frame.</FieldValidationMessage>;
   }
 
   const fieldNames = [...new Set(options.fields)];
@@ -103,12 +99,8 @@ export function PartitionByValuesEditor({
   return (
     <div>
       <InlineFieldRow>
-        <InlineField
-          label={t('transformers.partition-by-values-editor.label-field', 'Field')}
-          labelWidth={10}
-          grow={true}
-        >
-          <Stack>
+        <InlineField label="Field" labelWidth={10} grow={true}>
+          <HorizontalGroup>
             {fieldNames.map((name) => (
               <Button key={name} icon="times" variant="secondary" size="md" onClick={() => removeField(name)}>
                 {name}
@@ -120,21 +112,19 @@ export function PartitionByValuesEditor({
                 size="md"
                 options={selectOptions}
                 onChange={addField}
-                label={t('transformers.partition-by-values-editor.label-select-field', 'Select field')}
+                label="Select field"
                 icon="plus"
-                isFullWidth={false}
               />
             )}
-          </Stack>
+          </HorizontalGroup>
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField
-          tooltip={t(
-            'transformers.partion-by-values-editor.tooltip-naming',
+          tooltip={
             'Sets how the names of the selected fields are displayed. As frame name is usually better for tabular data'
-          )}
-          label={t('transformers.partition-by-values-editor.label-naming', 'Naming')}
+          }
+          label={'Naming'}
           labelWidth={10}
         >
           <RadioButtonGroup
@@ -151,14 +141,7 @@ export function PartitionByValuesEditor({
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField
-          tooltip={t(
-            'transformers.partition-by-values-editor.tooltip-keeps-partition-fields-frames',
-            'Keeps the partition fields in the frames'
-          )}
-          label={t('transformers.partition-by-values-editor.label-keep-fields', 'Keep fields')}
-          labelWidth={16}
-        >
+        <InlineField tooltip={'Keeps the partition fields in the frames.'} label={'Keep fields'} labelWidth={16}>
           <RadioButtonGroup
             options={KeepFieldsOptions}
             value={options.keepFields}
@@ -169,3 +152,14 @@ export function PartitionByValuesEditor({
     </div>
   );
 }
+
+export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<PartitionByValuesTransformerOptions> = {
+  id: DataTransformerID.partitionByValues,
+  editor: PartitionByValuesEditor,
+  transformation: partitionByValuesTransformer,
+  name: partitionByValuesTransformer.name,
+  description: partitionByValuesTransformer.description,
+  state: PluginState.alpha,
+  categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
+};

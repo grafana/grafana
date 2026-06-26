@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TraceResponse } from 'app/features/explore/TraceView/components/types';
+
 import traceGenerator from '../demo/trace-generators';
-import { type TraceResponse } from '../types/trace';
 
 import * as spanSelectors from './span';
 

@@ -1,18 +1,12 @@
-import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Button, LinkButton } from '@grafana/ui';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { useSelector } from 'app/types/store';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { useSelector } from 'app/types';
 
-import { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened } from '../../Analytics';
-import { AlertRuleDrawerForm } from '../../components/AlertRuleDrawerForm';
-import { createPanelAlertRuleNavigation } from '../../utils/navigation';
+import { logInfo, LogMessages } from '../../Analytics';
 import { panelToRuleFormValues } from '../../utils/rule-form';
 
 interface Props {
@@ -33,61 +27,16 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
     // Templating variables are required to update formValues on each variable's change. It's used implicitly by the templating engine
     [panel, dashboard, templating]
   );
-  const [isOpen, setIsOpen] = useState(false);
 
   if (loading) {
-    return (
-      <Button disabled={true}>
-        <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
-      </Button>
-    );
+    return <Button disabled={true}>New alert rule</Button>;
   }
 
   if (!formValues) {
     return (
-      <Alert
-        severity="info"
-        title={t(
-          'alerting.new-rule-from-panel-button.title-no-alerting-capable-query-found',
-          'No alerting capable query found'
-        )}
-      >
-        <Trans i18nKey="alerting.new-rule-from-panel-button.body-no-alerting-capable-query-found">
-          Cannot create alerts from this panel because no query to an alerting capable datasource is found.
-        </Trans>
+      <Alert severity="info" title="No alerting capable query found">
+        Cannot create alerts from this panel because no query to an alerting capable datasource is found.
       </Alert>
-    );
-  }
-
-  const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
-
-  if (shouldUseDrawer) {
-    const { onContinueInAlertingFromDrawer } = createPanelAlertRuleNavigation(
-      () => panelToRuleFormValues(panel, dashboard),
-      location
-    );
-
-    return (
-      <>
-        <Button
-          icon="bell"
-          className={className}
-          data-testid="create-alert-rule-button-drawer"
-          onClick={() => {
-            logInfo(LogMessages.alertRuleFromPanel);
-            trackCreateRuleFromPanelDrawerOpened();
-            setIsOpen(true);
-          }}
-        >
-          <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
-        </Button>
-        <AlertRuleDrawerForm
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          onContinueInAlerting={onContinueInAlertingFromDrawer}
-          prefill={formValues ?? undefined}
-        />
-      </>
     );
   }
 
@@ -104,7 +53,7 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
       className={className}
       data-testid="create-alert-rule-button"
     >
-      <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+      New alert rule
     </LinkButton>
   );
 };

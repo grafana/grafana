@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 )
 
 type fakeDetector struct {
@@ -28,17 +27,17 @@ func (d *fakeDetector) String() string {
 }
 
 func TestPatternsListInspector(t *testing.T) {
+	plugin := &plugins.Plugin{
+		FS: plugins.NewInMemoryFS(map[string][]byte{"module.js": nil}),
+	}
+
 	for _, tc := range []struct {
 		name          string
-		plugin        *plugins.Plugin
 		fakeDetectors []*fakeDetector
 		exp           func(t *testing.T, r bool, err error, fakeDetectors []*fakeDetector)
 	}{
 		{
 			name: "calls the detectors in sequence until true is returned",
-			plugin: &plugins.Plugin{
-				FS: plugins.NewInMemoryFS(map[string][]byte{"module.js": nil}),
-			},
 			fakeDetectors: []*fakeDetector{
 				{returns: false},
 				{returns: true},
@@ -54,9 +53,6 @@ func TestPatternsListInspector(t *testing.T) {
 		},
 		{
 			name: "calls the detectors in sequence and returns false as default",
-			plugin: &plugins.Plugin{
-				FS: plugins.NewInMemoryFS(map[string][]byte{"module.js": nil}),
-			},
 			fakeDetectors: []*fakeDetector{
 				{returns: false},
 				{returns: false},
@@ -69,32 +65,11 @@ func TestPatternsListInspector(t *testing.T) {
 			},
 		},
 		{
-			name: "empty detectors should return false",
-			plugin: &plugins.Plugin{
-				FS: plugins.NewInMemoryFS(map[string][]byte{"module.js": nil}),
-			},
+			name:          "empty detectors should return false",
 			fakeDetectors: nil,
 			exp: func(t *testing.T, r bool, err error, fakeDetectors []*fakeDetector) {
 				require.NoError(t, err)
 				require.False(t, r, "inspector should return false")
-			},
-		},
-		{
-			name: "CDN plugins return false without calling detectors",
-			plugin: &plugins.Plugin{
-				FS: &pluginfakes.FakePluginFS{
-					TypeFunc: func() plugins.FSType {
-						return plugins.FSTypeCDN
-					},
-				},
-			},
-			fakeDetectors: []*fakeDetector{
-				{returns: true},
-			},
-			exp: func(t *testing.T, r bool, err error, fakeDetectors []*fakeDetector) {
-				require.NoError(t, err)
-				require.False(t, r, "inspector should return false for CDN plugins")
-				require.Equal(t, 0, fakeDetectors[0].calls, "detectors should not be called for CDN plugins")
 			},
 		},
 	} {
@@ -104,7 +79,7 @@ func TestPatternsListInspector(t *testing.T) {
 				detectors = append(detectors, angulardetector.AngularDetector(d))
 			}
 			inspector := NewPatternListInspector(&angulardetector.StaticDetectorsProvider{Detectors: detectors})
-			r, err := inspector.Inspect(context.Background(), tc.plugin)
+			r, err := inspector.Inspect(context.Background(), plugin)
 			tc.exp(t, r, err, tc.fakeDetectors)
 		})
 	}

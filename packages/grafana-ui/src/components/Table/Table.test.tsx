@@ -1,12 +1,12 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { applyFieldOverrides, createTheme, type DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
 import { Icon } from '../Icon/Icon';
 
-import { Table } from './TableRT/Table';
-import { type CustomHeaderRendererProps, type TableRTProps } from './types';
+import { Table } from './Table';
+import { CustomHeaderRendererProps, Props } from './types';
 
 // mock transition styles to ensure consistent behaviour in unit tests
 jest.mock('@floating-ui/react', () => ({
@@ -101,11 +101,11 @@ function applyOverrides(dataFrame: DataFrame) {
   return dataFrames[0];
 }
 
-function getTestContext(propOverrides: Partial<TableRTProps> = {}) {
+function getTestContext(propOverrides: Partial<Props> = {}) {
   const onSortByChange = jest.fn();
   const onCellFilterAdded = jest.fn();
   const onColumnResize = jest.fn();
-  const props: TableRTProps = {
+  const props: Props = {
     ariaLabel: 'aria-label',
     data: getDataFrame(fullDataFrame),
     height: 600,
@@ -308,13 +308,13 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('7');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('1'));
       await userEvent.click(screen.getByText('Ok'));
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('3');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('3');
     });
 
     it('should filter rows and recalculate footer values when multiple filter values are selected', async () => {
@@ -338,7 +338,7 @@ describe('Table', () => {
       });
 
       expect(within(getTable()).getAllByRole('row')).toHaveLength(8);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('13');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('13');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('2'));
@@ -347,7 +347,7 @@ describe('Table', () => {
 
       //4 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('10');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('10');
     });
 
     it('should reset when clear filters button is pressed', async () => {
@@ -376,14 +376,14 @@ describe('Table', () => {
 
       //3 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('3');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('3');
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByText('Clear filter'));
 
       //5 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('7');
     });
   });
 
@@ -410,12 +410,12 @@ describe('Table', () => {
 
       //5 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(6);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('7');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('7');
 
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
       const onColumnResize = jest.fn();
-      const props: TableRTProps = {
+      const props: Props = {
         ariaLabel: 'aria-label',
         data: getDataFrame(fullDataFrame),
         height: 600,
@@ -450,7 +450,7 @@ describe('Table', () => {
 
       //4 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('5');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('5');
     });
   });
 
@@ -500,7 +500,7 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('4');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('4');
     });
 
     it('should show count of rows when `count rows` is selected', async () => {
@@ -523,8 +523,10 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
+        'Count'
+      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
     });
 
     it('should show correct counts when turning `count rows` on and off', async () => {
@@ -547,13 +549,15 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
+        'Count'
+      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
 
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
       const onColumnResize = jest.fn();
-      const props: TableRTProps = {
+      const props: Props = {
         ariaLabel: 'aria-label',
         data: getDataFrame(fullDataFrame),
         height: 600,
@@ -586,7 +590,7 @@ describe('Table', () => {
 
       rerender(<Table {...props} />);
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('4');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('4');
     });
   });
 
@@ -710,7 +714,7 @@ describe('Table', () => {
       tables = screen.getAllByRole('table');
       expect(tables).toHaveLength(3);
       let subTable = screen.getAllByRole('table')[2];
-      expect(subTable).toHaveStyle({ height: '108px' });
+      expect(subTable.style.height).toBe('108px');
 
       // Sort again rows
       tables = screen.getAllByRole('table');
@@ -728,7 +732,7 @@ describe('Table', () => {
       rows = within(getTable()).getAllByRole('row');
       await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
       subTable = screen.getAllByRole('table')[2];
-      expect(subTable).toHaveStyle({ height: '108px' });
+      expect(subTable.style.height).toBe('108px');
     });
   });
 

@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
+	"xorm.io/core"
 )
 
 // Update records, bean's non-empty fields are updated contents,
@@ -147,7 +147,7 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 			} else {
 				ct := reflect.TypeOf(condiBean[0])
 				k := ct.Kind()
-				if k == reflect.Pointer {
+				if k == reflect.Ptr {
 					k = ct.Elem().Kind()
 				}
 				if k == reflect.Struct {
@@ -315,6 +315,10 @@ func (session *Session) genUpdateColumns(bean any) ([]string, []any, error) {
 				continue
 			}
 		}
+		if col.MapType == core.ONLYFROMDB {
+			continue
+		}
+
 		fieldValuePtr, err := col.ValueOf(bean)
 		if err != nil {
 			return nil, nil, err
@@ -335,7 +339,7 @@ func (session *Session) genUpdateColumns(bean any) ([]string, []any, error) {
 				if len(fieldValue.String()) == 0 {
 					continue
 				}
-			case reflect.Pointer:
+			case reflect.Ptr:
 				if fieldValue.Pointer() == 0 {
 					continue
 				}

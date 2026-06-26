@@ -142,13 +142,6 @@ func (sc *SmtpClient) setFiles(
 		m.Embed(file)
 	}
 
-	for _, file := range msg.EmbeddedContents {
-		m.Embed(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
-			_, err := writer.Write(file.Content)
-			return err
-		}))
-	}
-
 	for _, file := range msg.AttachedFiles {
 		file := file
 		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
@@ -207,7 +200,7 @@ type gomailHeaderCarrier struct {
 var _ propagation.TextMapCarrier = (*gomailHeaderCarrier)(nil)
 
 func (c gomailHeaderCarrier) Get(key string) string {
-	if hdr := c.GetHeader(key); len(hdr) > 0 {
+	if hdr := c.Message.GetHeader(key); len(hdr) > 0 {
 		return hdr[0]
 	}
 
@@ -215,7 +208,7 @@ func (c gomailHeaderCarrier) Get(key string) string {
 }
 
 func (c gomailHeaderCarrier) Set(key string, value string) {
-	c.SetHeader(key, value)
+	c.Message.SetHeader(key, value)
 }
 
 func (c gomailHeaderCarrier) Keys() []string {
@@ -223,7 +216,7 @@ func (c gomailHeaderCarrier) Keys() []string {
 	// but we can encode the whole message and re-parse. This is not ideal, but
 	// this function shouldn't be used in the hot path.
 	buf := bytes.Buffer{}
-	_, _ = c.WriteTo(&buf)
+	_, _ = c.Message.WriteTo(&buf)
 	hdr, _ := textproto.NewReader(bufio.NewReader(&buf)).ReadMIMEHeader()
 	keys := make([]string, 0, len(hdr))
 	for k := range hdr {

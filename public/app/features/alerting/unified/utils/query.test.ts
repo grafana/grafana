@@ -1,6 +1,6 @@
-import { type DataSourceJsonData, type PluginMeta } from '@grafana/data';
+import { DataSourceJsonData, PluginMeta } from '@grafana/data';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import { type CombinedRule } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
@@ -55,6 +55,7 @@ describe('alertRuleToQueries', () => {
           name: 'prom test',
           type: 'prometheus',
           uid: 'asdf23',
+          id: 1,
           access: 'proxy',
           meta: {} as PluginMeta,
           jsonData: {} as DataSourceJsonData,
@@ -92,7 +93,6 @@ const grafanaAlert = {
   no_data_state: GrafanaAlertStateDecision.NoData,
   title: 'Test alert',
   uid: 'asdf23',
-  version: 1,
   data: [
     {
       refId: 'A',

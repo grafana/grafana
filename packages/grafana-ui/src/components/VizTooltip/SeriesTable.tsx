@@ -1,14 +1,13 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type GraphSeriesValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 /**
- * @alpha
+ * @public
  */
 export interface SeriesTableRowProps {
   color?: string;
@@ -52,7 +51,7 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
 };
 
 /**
- * @alpha
+ * @public
  */
 export const SeriesTableRow = ({ color, label, value, isActive }: SeriesTableRowProps) => {
   const styles = useStyles2(getSeriesTableRowStyles);
@@ -71,7 +70,7 @@ export const SeriesTableRow = ({ color, label, value, isActive }: SeriesTableRow
 };
 
 /**
- * @alpha
+ * @public
  */
 export interface SeriesTableProps {
   timestamp?: string | GraphSeriesValue;
@@ -79,7 +78,7 @@ export interface SeriesTableProps {
 }
 
 /**
- * @alpha
+ * @public
  */
 export const SeriesTable = ({ timestamp, series }: SeriesTableProps) => {
   const styles = useStyles2(getSeriesTableRowStyles);
@@ -87,7 +86,7 @@ export const SeriesTable = ({ timestamp, series }: SeriesTableProps) => {
   return (
     <>
       {timestamp && (
-        <div className={styles.timestamp} aria-label={t('grafana-ui.viz-tooltip.timestamp', 'Timestamp')}>
+        <div className={styles.timestamp} aria-label="Timestamp">
           {timestamp}
         </div>
       )}

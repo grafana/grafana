@@ -1,22 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { type CSSProperties, useCallback, useMemo, useState } from 'react';
-import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
+import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
+  clearButtonStyles,
   FilterInput,
-  Icon,
   LoadingPlaceholder,
   Modal,
-  Tag,
   Tooltip,
-  clearButtonStyles,
   useStyles2,
+  Icon,
+  Tag,
 } from '@grafana/ui';
-import { type AlertmanagerAlert, type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -60,13 +59,6 @@ export function AlertInstanceModalSelector({
         if (!rules[instance.labels.alertname]) {
           rules[instance.labels.alertname] = [];
         }
-        const filteredAnnotations = Object.fromEntries(
-          Object.entries(instance.annotations).filter(([key]) => !key.startsWith('__'))
-        );
-        const filteredLabels = Object.fromEntries(
-          Object.entries(instance.labels).filter(([key]) => !key.startsWith('__'))
-        );
-        instance = { ...instance, annotations: filteredAnnotations, labels: filteredLabels };
         rules[instance.labels.alertname].push(instance);
       });
     }
@@ -113,7 +105,9 @@ export function AlertInstanceModalSelector({
       >
         <div className={cx(styles.ruleTitle, styles.rowButtonTitle)}>{ruleName}</div>
         <div className={styles.alertFolder}>
-          <Icon name="folder" /> {filteredRules[ruleName][0].labels.grafana_folder ?? ''}
+          <>
+            <Icon name="folder" /> {filteredRules[ruleName][0].labels.grafana_folder ?? ''}
+          </>
         </div>
       </button>
     );
@@ -208,7 +202,7 @@ export function AlertInstanceModalSelector({
   return (
     <div>
       <Modal
-        title={t('alerting.alert-instance-modal-selector.title-select-alert-instances', 'Select alert instances')}
+        title="Select alert instances"
         className={styles.modal}
         closeOnEscape
         isOpen={isOpen}
@@ -219,23 +213,18 @@ export function AlertInstanceModalSelector({
           <FilterInput
             value={ruleFilter}
             onChange={handleSearchRules}
-            title={t('alerting.alert-instance-modal-selector.title-search-alert-rule', 'Search alert rule')}
-            placeholder={t('alerting.alert-instance-modal-selector.placeholder-search-alert-rule', 'Search alert rule')}
+            title="Search alert rule"
+            placeholder="Search alert rule"
             autoFocus
           />
           <div>{(selectedRule && 'Select one or more instances from the list below') || ''}</div>
 
           <div className={styles.column}>
-            {loading && (
-              <LoadingPlaceholder
-                text={t('alerting.alert-instance-modal-selector.text-loading-rules', 'Loading rules...')}
-                className={styles.loadingPlaceholder}
-              />
-            )}
+            {loading && <LoadingPlaceholder text="Loading rules..." className={styles.loadingPlaceholder} />}
 
             {!loading && (
               <AutoSizer>
-                {({ height, width }: Size) => (
+                {({ height, width }) => (
                   <FixedSizeList itemSize={50} height={height} width={width} itemCount={filteredRulesKeys.length}>
                     {RuleRow}
                   </FixedSizeList>
@@ -247,23 +236,14 @@ export function AlertInstanceModalSelector({
           <div className={styles.column}>
             {!selectedRule && !loading && (
               <div className={styles.selectedRulePlaceholder}>
-                <div>
-                  <Trans i18nKey="alerting.alert-instance-modal-selector.select-alert-rule">
-                    Select an alert rule to get a list of available firing instances
-                  </Trans>
-                </div>
+                <div>Select an alert rule to get a list of available firing instances</div>
               </div>
             )}
-            {loading && (
-              <LoadingPlaceholder
-                text={t('alerting.alert-instance-modal-selector.text-loading-rule', 'Loading rule...')}
-                className={styles.loadingPlaceholder}
-              />
-            )}
+            {loading && <LoadingPlaceholder text="Loading rule..." className={styles.loadingPlaceholder} />}
 
             {selectedRule && rulesWithInstances[selectedRule].length && !loading && (
               <AutoSizer>
-                {({ width, height }: Size) => (
+                {({ width, height }) => (
                   <FixedSizeList
                     itemSize={32}
                     height={height}
@@ -279,7 +259,7 @@ export function AlertInstanceModalSelector({
         </div>
         <Modal.ButtonRow>
           <Button type="button" variant="secondary" onClick={onDismiss}>
-            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+            Cancel
           </Button>
           <Button
             type="button"
@@ -291,9 +271,7 @@ export function AlertInstanceModalSelector({
               }
             }}
           >
-            <Trans i18nKey="alerting.alert-instance-modal-selector.add-alert-data-to-payload">
-              Add alert data to payload
-            </Trans>
+            Add alert data to payload
           </Button>
         </Modal.ButtonRow>
       </Modal>

@@ -1,4 +1,6 @@
-import { type VariableType, type TypedVariableModel, type BaseVariableModel } from '@grafana/data';
+import { VariableType, TypedVariableModel } from '@grafana/data';
+
+import { VariableModel } from '../types';
 
 export type VariablesState = Record<string, TypedVariableModel>;
 
@@ -15,11 +17,11 @@ export interface KeyedVariableIdentifier {
   rootStateKey: string;
 }
 
-export interface VariablePayload<T = undefined> extends VariableIdentifier {
+export interface VariablePayload<T extends any = undefined> extends VariableIdentifier {
   data: T;
 }
 
-export interface AddVariable<T extends BaseVariableModel = BaseVariableModel> {
+export interface AddVariable<T extends VariableModel = VariableModel> {
   global: boolean; // part of dashboard or global
   index: number; // the order in variables list
   model: T;

@@ -1,17 +1,11 @@
 import { intersection } from 'lodash';
 import { useState, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
-import { Combobox } from '@grafana/ui';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 
-import { ARGScope } from '../../dataquery.gen';
-import type Datasource from '../../datasource';
+import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { type AzureMonitorQuery } from '../../types/query';
-import { type AzureMonitorErrorish, type AzureMonitorOption } from '../../types/types';
-import { Field } from '../shared/Field';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 
 import QueryField from './QueryField';
 import SubscriptionField from './SubscriptionField';
@@ -60,71 +54,44 @@ const ArgQueryEditor = ({
 }: ArgQueryEditorProps) => {
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
   useMemo(() => {
-    if (query.azureResourceGraph?.scope !== ARGScope.Directory) {
-      datasource
-        .getSubscriptions()
-        .then((results) => {
-          const selectAllSubscriptionOption = [
-            { label: 'Select all subscriptions', value: 'Select all subscriptions', description: 'Select all' },
-          ];
-          const fetchedSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
-          setSubscriptions(selectAllSubscriptionOption.concat(fetchedSubscriptions));
-          setError(ERROR_SOURCE, undefined);
+    datasource
+      .getSubscriptions()
+      .then((results) => {
+        const selectAllSubscriptionOption = [
+          { label: 'Select all subscriptions', value: 'Select all subscriptions', description: 'Select all' },
+        ];
+        const fetchedSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
+        setSubscriptions(selectAllSubscriptionOption.concat(fetchedSubscriptions));
+        setError(ERROR_SOURCE, undefined);
 
-          onChange({
-            ...query,
-            subscriptions: selectSubscriptions(
-              fetchedSubscriptions.map((v) => v.value),
-              query.subscriptions,
-              query.subscription
-            ),
-          });
-        })
-        .catch((err) => setError(ERROR_SOURCE, err));
-    }
+        onChange({
+          ...query,
+          subscriptions: selectSubscriptions(
+            fetchedSubscriptions.map((v) => v.value),
+            query.subscriptions,
+            query.subscription
+          ),
+        });
+      })
+      .catch((err) => setError(ERROR_SOURCE, err));
     // We are only interested in re-fetching subscriptions if the data source changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasource, query?.azureResourceGraph?.scope]);
-
-  const onChangeScope = (change: SelectableValue<ARGScope>) => {
-    onChange({
-      ...query,
-      azureResourceGraph: {
-        ...query.azureResourceGraph,
-        scope: change.value,
-      },
-      subscriptions: [],
-    });
-  };
+  }, [datasource]);
 
   return (
     <span data-testid={selectors.components.queryEditor.argsQueryEditor.container.input}>
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>
-            <Field label={t('components.scope-selector.label', 'Scope')}>
-              <Combobox
-                onChange={onChangeScope}
-                options={[
-                  { value: ARGScope.Directory, label: 'Directory' },
-                  { value: ARGScope.Subscription, label: 'Subscription' },
-                ]}
-                value={query.azureResourceGraph?.scope || ARGScope.Subscription}
-                width={20}
-                data-testid={selectors.components.queryEditor.argsQueryEditor.scope.input}
-              />
-            </Field>
-            {query?.azureResourceGraph?.scope !== ARGScope.Directory ? (
-              <SubscriptionField
-                subscriptions={subscriptions}
-                query={query}
-                datasource={datasource}
-                subscriptionId={subscriptionId}
-                variableOptionGroup={variableOptionGroup}
-                onQueryChange={onChange}
-                setError={setError}
-              />
-            ) : null}
+            <SubscriptionField
+              subscriptions={subscriptions}
+              query={query}
+              datasource={datasource}
+              subscriptionId={subscriptionId}
+              variableOptionGroup={variableOptionGroup}
+              onQueryChange={onChange}
+              setError={setError}
+            />
           </EditorFieldGroup>
         </EditorRow>
       </EditorRows>

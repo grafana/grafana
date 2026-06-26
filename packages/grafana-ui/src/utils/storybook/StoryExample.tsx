@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { Stack } from '../../components/Layout/Stack/Stack';
-import { Text } from '../../components/Text/Text';
+import { useTheme2 } from '../../themes/ThemeContext';
 
 export interface Props {
   name: string;
@@ -10,17 +9,20 @@ export interface Props {
 }
 
 export const StoryExample = ({ name, children }: Props) => {
+  const theme = useTheme2();
   const style = css({
     width: '100%',
     padding: '16px',
   });
+  const heading = css({
+    color: theme.colors.text.secondary,
+    marginBottom: '16px',
+  });
 
   return (
     <div className={style}>
-      <Stack gap={2} direction="column">
-        <Text variant="h5">{name}</Text>
-        {children}
-      </Stack>
+      <h5 className={heading}>{name}</h5>
+      {children}
     </div>
   );
 };

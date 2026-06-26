@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type DataSourcePluginMeta } from '@grafana/data';
+import { DataSourcePluginMeta } from '@grafana/data';
 import { List } from '@grafana/ui';
 
 import { DataSourceTypeCard } from './DataSourceTypeCard';

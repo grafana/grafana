@@ -1,9 +1,8 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { useState, useCallback, useId } from 'react';
+import { Meta, StoryFn } from '@storybook/react';
+import { useState, useCallback } from 'react';
 import * as React from 'react';
 
-import { Input } from '../Input/Input';
-import { Switch } from '../Switch/Switch';
+import { Input, Switch } from '..';
 
 import { Field } from './Field';
 import mdx from './Field.mdx';
@@ -29,15 +28,13 @@ const meta: Meta<typeof Field> = {
   },
 };
 
-export const Simple: StoryFn<typeof Field> = (args) => {
-  return (
-    <div>
-      <Field {...args}>
-        <Input />
-      </Field>
-    </div>
-  );
-};
+export const Simple: StoryFn<typeof Field> = (args) => (
+  <div>
+    <Field {...args}>
+      <Input id="thisField" />
+    </Field>
+  </div>
+);
 
 Simple.args = {
   label: 'Graphite API key',
@@ -50,7 +47,6 @@ Simple.args = {
 };
 
 export const HorizontalLayout: StoryFn<typeof Field> = (args) => {
-  const id = useId();
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
@@ -59,7 +55,7 @@ export const HorizontalLayout: StoryFn<typeof Field> = (args) => {
   return (
     <div>
       <Field {...args}>
-        <Switch checked={checked} onChange={onChange} id={id} />
+        <Switch checked={checked} onChange={onChange} />
       </Field>
     </div>
   );

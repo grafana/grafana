@@ -1,11 +1,12 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { t } from '@grafana/i18n';
+import { PanelPlugin } from '@grafana/data';
+import { AngularComponent } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
-import { type DashboardInitError, DashboardInitPhase, type DashboardState } from 'app/types/dashboard';
+import { DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 
 import { DashboardModel } from './DashboardModel';
-import { type PanelModel } from './PanelModel';
+import { PanelModel } from './PanelModel';
 
 export const initialState: DashboardState = {
   initPhase: DashboardInitPhase.NotStarted,
@@ -33,13 +34,15 @@ const dashboardSlice = createSlice({
       state.initError = action.payload;
       state.getModel = () => {
         return new DashboardModel(
-          {
-            ...defaultDashboard,
-            title: t('dashboard.dashboard-slice.title.dashboard-init-failed', 'Dashboard init failed'),
-          },
+          { ...defaultDashboard, title: 'Dashboard init failed' },
           { canSave: false, canEdit: false }
         );
       };
+    },
+    cleanUpDashboard: (state) => {
+      state.initPhase = DashboardInitPhase.NotStarted;
+      state.initError = null;
+      state.getModel = () => null;
     },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
       //state.panels[action.payload.id] = { pluginId: action.payload.type };
@@ -50,11 +53,28 @@ const dashboardSlice = createSlice({
   },
 });
 
+export interface PanelModelAndPluginReadyPayload {
+  panelId: number;
+  plugin: PanelPlugin;
+}
+
+export interface SetPanelAngularComponentPayload {
+  panelId: number;
+  angularComponent: AngularComponent | null;
+}
+
+export interface SetPanelInstanceStatePayload {
+  panelId: number;
+  value: unknown;
+}
+
 export const {
   dashboardInitFetching,
   dashboardInitFailed,
   dashboardInitCompleted,
-
+  dashboardInitServices,
+  cleanUpDashboard,
+  addPanel,
   setInitialDatasource,
 } = dashboardSlice.actions;
 

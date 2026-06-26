@@ -52,19 +52,15 @@ var (
 	ErrVersionUnsupportedBase = errutil.Conflict("plugin.unsupportedVersion").
 					MustTemplate(ErrVersionUnsupportedMsg, errutil.WithPublic(ErrVersionUnsupportedMsg))
 
-	ErrVersionNotFoundMsg  = "{{.Public.PluginID}} v{{.Public.Version}} was not returned by the Grafana.com catalog. The version may not exist, or the configured Grafana.com proxy token ([grafana_com].proxy_token or GF_GRAFANA_COM_PROXY_TOKEN) may lack the required scopes."
+	ErrVersionNotFoundMsg  = "{{.Public.PluginID}} v{{.Public.Version}} either does not exist or is not supported on your system {{.Public.SysInfo}}"
 	ErrVersionNotFoundBase = errutil.NotFound("plugin.versionNotFound").
 				MustTemplate(ErrVersionNotFoundMsg, errutil.WithPublic(ErrVersionNotFoundMsg))
-
-	ErrVersionNotCompatibleMsg  = "{{.Public.PluginID}} v{{.Public.Version}} is not compatible with your Grafana version: {{.Public.GrafanaVersion}}"
-	ErrVersionNotCompatibleBase = errutil.NotFound("plugin.versionNotCompatible").
-					MustTemplate(ErrVersionNotCompatibleMsg, errutil.WithPublic(ErrVersionNotCompatibleMsg))
 
 	ErrArcNotFoundMsg  = "{{.Public.PluginID}} is not compatible with your system architecture: {{.Public.SysInfo}}"
 	ErrArcNotFoundBase = errutil.NotFound("plugin.archNotFound").
 				MustTemplate(ErrArcNotFoundMsg, errutil.WithPublic(ErrArcNotFoundMsg))
 
-	ErrChecksumMismatchMsg  = "expected SHA256 checksum ({{.Public.ExpectedSHA256}}) does not match the downloaded archive ({{.Public.ArchiveURL}}) computed SHA256 checksum ({{.Public.ComputedSHA256}}) - please contact security@grafana.com"
+	ErrChecksumMismatchMsg  = "expected SHA256 checksum does not match the downloaded archive ({{.Public.ArchiveURL}}) - please contact security@grafana.com"
 	ErrChecksumMismatchBase = errutil.UnprocessableEntity("plugin.checksumMismatch").
 				MustTemplate(ErrChecksumMismatchMsg, errutil.WithPublic(ErrChecksumMismatchMsg))
 
@@ -81,27 +77,16 @@ func ErrVersionUnsupported(pluginID, requestedVersion, systemInfo string) error 
 	return ErrVersionUnsupportedBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
 }
 
-func ErrVersionNotFound(pluginID, requestedVersion string) error {
-	return ErrVersionNotFoundBase.Build(errutil.TemplateData{Public: map[string]any{
-		"PluginID": pluginID,
-		"Version":  requestedVersion,
-	}})
-}
-
-func ErrVersionNotCompatible(pluginID, requestedVersion, grafanaVersion string) error {
-	return ErrVersionNotCompatibleBase.Build(errutil.TemplateData{Public: map[string]any{
-		"PluginID":       pluginID,
-		"Version":        requestedVersion,
-		"GrafanaVersion": grafanaVersion,
-	}})
+func ErrVersionNotFound(pluginID, requestedVersion, systemInfo string) error {
+	return ErrVersionNotFoundBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "Version": requestedVersion, "SysInfo": systemInfo}})
 }
 
 func ErrArcNotFound(pluginID, systemInfo string) error {
 	return ErrArcNotFoundBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "SysInfo": systemInfo}})
 }
 
-func ErrChecksumMismatch(archiveURL, expectedSHA256, computedSHA256 string) error {
-	return ErrChecksumMismatchBase.Build(errutil.TemplateData{Public: map[string]any{"ArchiveURL": archiveURL, "ExpectedSHA256": expectedSHA256, "ComputedSHA256": computedSHA256}})
+func ErrChecksumMismatch(archiveURL string) error {
+	return ErrChecksumMismatchBase.Build(errutil.TemplateData{Public: map[string]any{"ArchiveURL": archiveURL}})
 }
 
 func ErrCorePlugin(pluginID string) error {

@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, offset, type Side, useFloating, useTransitionStyles } from '@floating-ui/react';
+import { autoUpdate, flip, offset, shift, Side, useFloating, useTransitionStyles } from '@floating-ui/react';
 import { useLayoutEffect } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { type IconName } from '../../types/icon';
-import { getPositioningMiddleware } from '../../utils/floating';
+import { useStyles2, useTheme2 } from '../../themes';
+import { IconName } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { Portal } from '../Portal/Portal';
 
@@ -24,11 +23,6 @@ export interface InlineToastProps {
   alternativePlacement?: Side;
 }
 
-/**
- * Used to indicate temporal status near fields/components, such as a *Saved* indicator next to a field, or a little *Copied!* indicator above a button.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-inlinetoast--docs
- */
 export function InlineToast({ referenceElement, children, suffixIcon, placement }: InlineToastProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -36,7 +30,16 @@ export function InlineToast({ referenceElement, children, suffixIcon, placement 
   // the order of middleware is important!
   // `arrow` should almost always be at the end
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = [offset(8), ...getPositioningMiddleware(placement)];
+  const middleware = [
+    offset(8),
+    flip({
+      fallbackAxisSideDirection: 'end',
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
 
   const { context, refs, floatingStyles } = useFloating({
     open: true,

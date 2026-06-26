@@ -2,11 +2,11 @@ import { cx, css } from '@emotion/css';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { type IconSize, isIconSize } from '../../types/icon';
+import { useStyles2 } from '../../themes';
+import { IconSize, isIconSize } from '../../types';
+import { t } from '../../utils/i18n';
 import { spin } from '../../utils/keyframes';
 import { Icon } from '../Icon/Icon';
 import { getIconRoot, getIconSubDir } from '../Icon/utils';
@@ -29,10 +29,6 @@ interface PropsWithDeprecatedSize extends Omit<Props, 'size'> {
 
 /**
  * @public
- *
- * Spinner is `fa-spinner` icon animated. It is used to alert a user to wait for an activity to complete.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-spinner--docs
  */
 export const Spinner = ({
   className,
@@ -65,7 +61,6 @@ export const Spinner = ({
           className
         )}
       >
-        {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
         <SVG
           src={svgPath}
           width={size}
@@ -101,7 +96,6 @@ export const Spinner = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   inline: css({
     display: 'inline-block',
-    lineHeight: 0,
   }),
   spin: css({
     [theme.transitions.handleMotion('no-preference')]: {

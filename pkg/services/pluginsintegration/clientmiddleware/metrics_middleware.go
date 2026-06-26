@@ -2,13 +2,10 @@ package clientmiddleware
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
-	"google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -18,11 +15,10 @@ import (
 
 // pluginMetrics contains the prometheus metrics used by the MetricsMiddleware.
 type pluginMetrics struct {
-	pluginRequestCounter                      *prometheus.CounterVec
-	pluginRequestDuration                     *prometheus.HistogramVec
-	pluginRequestSize                         *prometheus.HistogramVec
-	pluginRequestDurationSeconds              *prometheus.HistogramVec
-	pluginRequestConnectionUnavailableCounter *prometheus.CounterVec
+	pluginRequestCounter         *prometheus.CounterVec
+	pluginRequestDuration        *prometheus.HistogramVec
+	pluginRequestSize            *prometheus.HistogramVec
+	pluginRequestDurationSeconds *prometheus.HistogramVec
 }
 
 // MetricsMiddleware is a middleware that instruments plugin requests.
@@ -39,47 +35,39 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, append([]string{"plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
+	}, append([]string{"plugin_id", "endpoint", "status", "target"}, additionalLabels...))
 	pluginRequestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-	}, append([]string{"plugin_id", "endpoint", "target", "plugin_version"}, additionalLabels...))
+	}, append([]string{"plugin_id", "endpoint", "target"}, additionalLabels...))
 	pluginRequestSize := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Name:      "plugin_request_size_bytes",
 			Help:      "histogram of plugin request sizes returned",
 			Buckets:   []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
-		}, []string{"source", "plugin_id", "endpoint", "target", "plugin_version"},
+		}, []string{"source", "plugin_id", "endpoint", "target"},
 	)
 	pluginRequestDurationSeconds := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",
-		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 60, 120, 300, 600},
-	}, append([]string{"source", "plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
-	pluginRequestConnectionUnavailableCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace:   "grafana",
-		Name:        "plugin_request_connection_unavailable_total",
-		Help:        "The total amount of plugin request connection unavailable errors.",
-		ConstLabels: nil,
-	}, append([]string{"plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
+		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
+	}, append([]string{"source", "plugin_id", "endpoint", "status", "target"}, additionalLabels...))
 	promRegisterer.MustRegister(
 		pluginRequestCounter,
 		pluginRequestDuration,
 		pluginRequestSize,
 		pluginRequestDurationSeconds,
-		pluginRequestConnectionUnavailableCounter,
 	)
 	return &MetricsMiddleware{
 		pluginMetrics: pluginMetrics{
-			pluginRequestCounter:                      pluginRequestCounter,
-			pluginRequestDuration:                     pluginRequestDuration,
-			pluginRequestSize:                         pluginRequestSize,
-			pluginRequestDurationSeconds:              pluginRequestDurationSeconds,
-			pluginRequestConnectionUnavailableCounter: pluginRequestConnectionUnavailableCounter,
+			pluginRequestCounter:         pluginRequestCounter,
+			pluginRequestDuration:        pluginRequestDuration,
+			pluginRequestSize:            pluginRequestSize,
+			pluginRequestDurationSeconds: pluginRequestDurationSeconds,
 		},
 		pluginRegistry: pluginRegistry,
 	}
@@ -87,13 +75,10 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 
 // NewMetricsMiddleware returns a new MetricsMiddleware.
 func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) backend.HandlerMiddleware {
-	metrics := newMetricsMiddleware(promRegisterer, pluginRegistry)
+	imw := newMetricsMiddleware(promRegisterer, pluginRegistry)
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
-		return &MetricsMiddleware{
-			BaseHandler:    backend.NewBaseHandler(next),
-			pluginMetrics:  metrics.pluginMetrics,
-			pluginRegistry: metrics.pluginRegistry,
-		}
+		imw.BaseHandler = backend.NewBaseHandler(next)
+		return imw
 	})
 }
 
@@ -113,7 +98,7 @@ func (m *MetricsMiddleware) instrumentPluginRequestSize(ctx context.Context, plu
 		return err
 	}
 	endpoint := backend.EndpointFromContext(ctx)
-	m.pluginRequestSize.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), target, pluginCtx.PluginVersion).Observe(requestSize)
+	m.pluginRequestSize.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), target).Observe(requestSize)
 	return nil
 }
 
@@ -132,15 +117,9 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	statusSource := backend.ErrorSourceFromContext(ctx)
 	endpoint := backend.EndpointFromContext(ctx)
 
-	if err != nil {
-		if grpcstatus.Code(err) == codes.Unavailable || errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)) {
-			m.pluginRequestConnectionUnavailableCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
-		}
-	}
-
-	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, string(endpoint), target, pluginCtx.PluginVersion, string(statusSource))
-	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
-	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), status.String(), target, pluginCtx.PluginVersion, string(statusSource))
+	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, string(endpoint), target, string(statusSource))
+	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, string(endpoint), status.String(), target, string(statusSource))
+	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, string(endpoint), status.String(), target, string(statusSource))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		pluginRequestDurationWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(
@@ -183,38 +162,10 @@ func (m *MetricsMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, float64(len(req.Body))); err != nil {
 		return err
 	}
-
-	// Wrap the sender to capture the HTTP status code from the first response
-	statusCapture := &callResourceStatusCapturingSender{
-		sender:     sender,
-		statusCode: -1, // -1 indicates no response was sent yet
-	}
 	return m.instrumentPluginRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
-		innerErr := m.BaseHandler.CallResource(ctx, req, statusCapture)
-
-		// If we captured an HTTP status code, use it to determine the status
-		// Otherwise, fall back to error-based status determination
-		if statusCapture.statusCode >= 0 {
-			return instrumentationutils.RequestStatusFromHTTPStatus(statusCapture.statusCode), innerErr
-		}
+		innerErr := m.BaseHandler.CallResource(ctx, req, sender)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
-}
-
-// callResourceStatusCapturingSender wraps a CallResourceResponseSender to capture
-// the HTTP status code from the first response sent. This allows the metrics middleware
-// to properly label requests based on HTTP status codes rather than just Go error returns.
-type callResourceStatusCapturingSender struct {
-	sender     backend.CallResourceResponseSender
-	statusCode int
-}
-
-func (s *callResourceStatusCapturingSender) Send(res *backend.CallResourceResponse) error {
-	// Capture the status code from the first response
-	if s.statusCode == -1 && res != nil {
-		s.statusCode = res.Status
-	}
-	return s.sender.Send(res)
 }
 
 func (m *MetricsMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

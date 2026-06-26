@@ -1,9 +1,9 @@
-import { type HTMLAttributes } from 'react';
+import { HTMLAttributes } from 'react';
 
 import { PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 
-import { type IconName } from '../../types/icon';
-import { Badge, type BadgeProps } from '../Badge/Badge';
+import { IconName } from '../../types';
+import { Badge, BadgeProps } from '../Badge/Badge';
 
 const SIGNATURE_ICONS: Record<string, IconName> = {
   [PluginSignatureType.grafana]: 'grafana',
@@ -22,8 +22,6 @@ export interface PluginSignatureBadgeProps extends HTMLAttributes<HTMLDivElement
 }
 
 /**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-pluginsignaturebadge--docs
- *
  * @public
  */
 export const PluginSignatureBadge = ({

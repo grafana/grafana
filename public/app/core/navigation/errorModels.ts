@@ -1,4 +1,4 @@
-import { type NavModel, type NavModelItem } from '@grafana/data';
+import { NavModel, NavModelItem } from '@grafana/data';
 
 export function getExceptionNav(error: unknown): NavModel {
   console.error(error);

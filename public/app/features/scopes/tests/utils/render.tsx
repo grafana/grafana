@@ -1,16 +1,19 @@
-import { cleanup, waitFor } from '@testing-library/react';
+import { cleanup } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
-import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
-import { type DashboardDataDTO, type DashboardDTO, type DashboardMeta } from 'app/types/dashboard';
+import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
-import { defaultScopesServices, ScopesContextProvider } from '../../ScopesContextProvider';
+import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../../instance';
+import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
+import { initialSelectorState } from '../../internal/ScopesSelectorScene';
+
+import { clearMocks } from './actions';
 
 const getDashboardDTO: (
   overrideDashboard: Partial<DashboardDataDTO>,
@@ -166,44 +169,40 @@ const panelPlugin = getPanelPlugin({
   skipDataQuery: true,
 });
 
+config.panels['table'] = panelPlugin.meta;
+
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(panelPlugin),
   getPanelPluginFromCache: () => undefined,
 });
 
-export async function renderDashboard(
+export function renderDashboard(
   overrideDashboard: Partial<DashboardDataDTO> = {},
   overrideMeta: Partial<DashboardMeta> = {}
 ) {
   jest.useFakeTimers({ advanceTimers: true });
   jest.spyOn(console, 'error').mockImplementation(jest.fn());
+  clearMocks();
+  initializeScopes();
 
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
   const scene = transformSaveModelToScene(dto);
 
-  const services = defaultScopesServices();
-
   render(
     <KBarProvider>
-      <ScopesContextProvider services={services}>
-        <AppChrome>
-          <scene.Component model={scene} />
-        </AppChrome>
-      </ScopesContextProvider>
+      <AppChrome>
+        <scene.Component model={scene} />
+      </AppChrome>
     </KBarProvider>
   );
 
-  await waitFor(() => expect(sceneGraph.getScopes(scene)).toBeDefined());
-
-  return {
-    scene,
-    ...services,
-  };
+  return scene;
 }
 
-export async function resetScenes(spies: jest.SpyInstance[] = []) {
+export async function resetScenes() {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
-  spies.forEach((spy) => spy.mockClear());
+  scopesSelectorScene?.setState(initialSelectorState);
+  scopesDashboardsScene?.setState(getInitialDashboardsState());
   cleanup();
 }

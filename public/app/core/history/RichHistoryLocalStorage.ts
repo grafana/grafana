@@ -1,15 +1,12 @@
 import { find, isEqual, omit } from 'lodash';
 
-import { type DataQuery, type SelectableValue, store } from '@grafana/data';
-import { getLogger } from '@grafana/runtime/unstable';
-import { type RichHistorySearchFilters, type RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
-import { type RichHistoryQuery } from 'app/types/explore';
+import { DataQuery, SelectableValue } from '@grafana/data';
+import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 
-import {
-  type default as RichHistoryStorage,
-  RichHistoryServiceError,
-  RichHistoryStorageWarning,
-} from './RichHistoryStorage';
+import { RichHistoryQuery } from '../../types';
+import store from '../store';
+
+import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from './RichHistoryStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
 import {
   createRetentionPeriodBoundary,
@@ -33,12 +30,6 @@ export type RichHistoryLocalStorageDTO = {
  * Local storage implementation for Rich History. It keeps all entries in browser's local storage.
  */
 export default class RichHistoryLocalStorage implements RichHistoryStorage {
-  public static getLocalStorageUsageInBytes(): number {
-    const richHistory: RichHistoryLocalStorageDTO[] = store.get(RICH_HISTORY_KEY) || '';
-    // each character is 2 bytes
-    return richHistory.length * 2;
-  }
-
   /**
    * Return history entries based on provided filters, perform migration and clean up entries not matching retention policy.
    */
@@ -86,43 +77,21 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       throw error;
     }
 
-    let { queriesToKeep, limitExceeded } = cleanUpUnstarredQuery(currentRichHistoryDTOs, MAX_HISTORY_ITEMS);
+    const { queriesToKeep, limitExceeded } = checkLimits(currentRichHistoryDTOs);
 
-    let updatedHistory: RichHistoryLocalStorageDTO[] = [newRichHistoryQueryDTO, ...queriesToKeep];
+    const updatedHistory: RichHistoryLocalStorageDTO[] = [newRichHistoryQueryDTO, ...queriesToKeep];
 
-    let saveRetriesLeft = 3;
-    let saved = false;
-
-    while (!saved && saveRetriesLeft >= 0) {
-      try {
-        store.setObject(RICH_HISTORY_KEY, updatedHistory);
-        saved = true;
-      } catch (error) {
-        await this.trackLocalStorageUsage('Failed to save rich history to local storage', {
-          saveRetriesLeft: saveRetriesLeft.toString(),
-          quotaExceededError: error instanceof Error && error.name === 'QuotaExceededError' ? 'true' : 'false',
-          errorMessage: error instanceof Error ? error?.message : 'unknown',
-        });
-
-        if (saveRetriesLeft >= 1) {
-          saveRetriesLeft--;
-          const { queriesToKeep: newQueriesToKeep } = cleanUpUnstarredQuery(queriesToKeep, queriesToKeep.length - 1);
-          updatedHistory = [newRichHistoryQueryDTO, ...newQueriesToKeep];
-          queriesToKeep = newQueriesToKeep;
-          continue;
-        }
-
-        if (error instanceof Error && error.name === 'QuotaExceededError') {
-          throwError(RichHistoryServiceError.StorageFull, `Saving rich history failed: ${error.message}`);
-        } else {
-          throw error;
-        }
+    try {
+      store.setObject(RICH_HISTORY_KEY, updatedHistory);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        throwError(RichHistoryServiceError.StorageFull, `Saving rich history failed: ${error.message}`);
+      } else {
+        throw error;
       }
     }
 
     if (limitExceeded) {
-      await this.trackLocalStorageUsage('Rich history query limit exceeded.');
-
       return {
         warning: {
           type: RichHistoryStorageWarning.LimitExceeded,
@@ -179,33 +148,6 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       })
     );
   }
-
-  private async trackLocalStorageUsage(message: string, additionalInfo?: Record<string, string>) {
-    const allQueriesCount =
-      (
-        await this.getRichHistory({
-          search: '',
-          sortOrder: SortOrder.Ascending,
-          datasourceFilters: [],
-          starred: false,
-        })
-      ).total || -1;
-
-    const allQueriesSizeInBytes = RichHistoryLocalStorage.getLocalStorageUsageInBytes();
-
-    const totalLocalStorageSize = calculateTotalLocalStorageSize();
-
-    const localStats = {
-      totalLocalStorageSize: totalLocalStorageSize?.toString(),
-      allQueriesSizeInBytes: allQueriesSizeInBytes?.toString(),
-      allQueriesCount: allQueriesCount?.toString(),
-    };
-
-    getLogger('features.query-history.local-storage').logWarning(message, {
-      ...localStats,
-      ...additionalInfo,
-    });
-  }
 }
 
 function updateRichHistory(
@@ -243,20 +185,17 @@ function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalSto
 }
 
 /**
- * Ensures the entry can be added.
+ * Ensures the entry can be added. Throws an error if current limit has been hit.
  * Returns queries that should be saved back giving space for one extra query.
  */
-export function cleanUpUnstarredQuery(
-  queriesToKeep: RichHistoryLocalStorageDTO[],
-  max: number
-): {
+export function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
   queriesToKeep: RichHistoryLocalStorageDTO[];
   limitExceeded: boolean;
 } {
   // remove oldest non-starred items to give space for the recent query
   let limitExceeded = false;
   let current = queriesToKeep.length - 1;
-  while (current >= 0 && queriesToKeep.length >= max) {
+  while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
     if (!queriesToKeep[current].starred) {
       queriesToKeep.splice(current, 1);
       limitExceeded = true;
@@ -273,23 +212,10 @@ function getRichHistoryDTOs(): RichHistoryLocalStorageDTO[] {
 }
 
 function migrateRichHistory(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalStorageDTO[] {
-  const transformedRichHistory = richHistory
-    .filter((query) => {
-      // Filter out entries that are missing any required properties
-      return (
-        query &&
-        typeof query.ts === 'number' &&
-        typeof query.datasourceName === 'string' &&
-        typeof query.starred === 'boolean' &&
-        typeof query.comment === 'string' &&
-        Array.isArray(query.queries)
-      );
-    })
-    .map((query) => {
-      const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
-
-      return { ...query, queries: transformedQueries };
-    });
+  const transformedRichHistory = richHistory.map((query) => {
+    const transformedQueries: DataQuery[] = query.queries.map((q, index) => createDataQuery(query, q, index));
+    return { ...query, queries: transformedQueries };
+  });
 
   return transformedRichHistory;
 }
@@ -320,27 +246,4 @@ function throwError(name: string, message: string) {
   const error = new Error(message);
   error.name = name;
   throw error;
-}
-
-function calculateTotalLocalStorageSize() {
-  try {
-    let total = 0;
-
-    // eslint-disable-next-line
-    const ls = window.localStorage;
-
-    for (let i = 0; i < ls.length; i++) {
-      const key = ls.key(i);
-      if (key) {
-        const value = ls.getItem(key);
-        if (value) {
-          total += key.length + value.length;
-        }
-      }
-    }
-    // each character is 2 bytes
-    return total * 2;
-  } catch (e) {
-    return -1;
-  }
 }

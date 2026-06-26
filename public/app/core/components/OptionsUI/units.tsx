@@ -1,29 +1,23 @@
 import { css } from '@emotion/css';
 
-import { type StandardEditorProps, type GrafanaTheme2, type UnitFieldConfigSettings } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { StandardEditorProps, GrafanaTheme2, UnitFieldConfigSettings } from '@grafana/data';
 import { IconButton, UnitPicker, useStyles2 } from '@grafana/ui';
 
 type Props = StandardEditorProps<string, UnitFieldConfigSettings>;
 
-export function UnitValueEditor({ value, onChange, item, id }: Props) {
+export function UnitValueEditor({ value, onChange, item }: Props) {
   const styles = useStyles2(getStyles);
-
   if (item?.settings?.isClearable && value != null) {
     return (
       <div className={styles.wrapper}>
         <span className={styles.first}>
-          <UnitPicker value={value} onChange={onChange} id={id} />
+          <UnitPicker value={value} onChange={onChange} />
         </span>
-        <IconButton
-          name="times"
-          onClick={() => onChange(undefined)}
-          tooltip={t('options-ui.units.clear-tooltip', 'Clear unit selection')}
-        />
+        <IconButton name="times" onClick={() => onChange(undefined)} tooltip="Clear unit selection" />
       </div>
     );
   }
-  return <UnitPicker value={value} onChange={onChange} id={id} />;
+  return <UnitPicker value={value} onChange={onChange} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

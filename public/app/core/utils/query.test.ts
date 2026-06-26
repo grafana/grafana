@@ -1,8 +1,8 @@
-import { type DataQuery } from '@grafana/data';
+import { DataQuery } from '@grafana/data';
 
 import { queryIsEmpty } from './query';
 
-interface TestQuery extends DataQuery {
+export interface TestQuery extends DataQuery {
   name?: string;
 }
 

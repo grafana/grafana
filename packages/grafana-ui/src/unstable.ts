@@ -10,16 +10,4 @@
  */
 
 export * from './utils/skeleton';
-
-export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
-export type {
-  CodeMirrorCompletion,
-  CodeMirrorCompletionContext,
-  CodeMirrorCompletionMode,
-  CodeMirrorCompletionResult,
-  CodeMirrorCompletionSource,
-  CodeMirrorEditorLanguage,
-  CodeMirrorEditorProps,
-  CodeMirrorExtension,
-} from './components/CodeMirror/types';
-export { TableNG } from './components/Table/TableNG/TableNG';
+export * from './components/Combobox/Combobox';

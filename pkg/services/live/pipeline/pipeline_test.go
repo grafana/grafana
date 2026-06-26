@@ -6,9 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 )
 
 type testRuleGetter struct {
@@ -16,7 +15,7 @@ type testRuleGetter struct {
 	rules map[string]*LiveChannelRule
 }
 
-func (t *testRuleGetter) Get(_ string, channel string) (*LiveChannelRule, bool, error) {
+func (t *testRuleGetter) Get(_ int64, channel string) (*LiveChannelRule, bool, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	rule, ok := t.rules[channel]
@@ -38,7 +37,7 @@ func TestPipelineNoConverter(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	ok, err := p.ProcessInput(context.Background(), "default", "test", []byte(`{}`))
+	ok, err := p.ProcessInput(context.Background(), 1, "test", []byte(`{}`))
 	require.NoError(t, err)
 	require.False(t, ok)
 }
@@ -95,7 +94,7 @@ func TestPipeline(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	ok, err := p.ProcessInput(context.Background(), "default", "stream/test/xxx", []byte(`{}`))
+	ok, err := p.ProcessInput(context.Background(), 1, "stream/test/xxx", []byte(`{}`))
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.NotNil(t, outputter.frame)
@@ -114,7 +113,7 @@ func TestPipeline_OutputError(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	_, err = p.ProcessInput(context.Background(), "default", "stream/test/xxx", []byte(`{}`))
+	_, err = p.ProcessInput(context.Background(), 1, "stream/test/xxx", []byte(`{}`))
 	require.ErrorIs(t, err, boomErr)
 }
 
@@ -140,6 +139,6 @@ func TestPipeline_Recursion(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	_, err = p.ProcessInput(context.Background(), "default", "stream/test/xxx", []byte(`{}`))
+	_, err = p.ProcessInput(context.Background(), 1, "stream/test/xxx", []byte(`{}`))
 	require.ErrorIs(t, err, errChannelRecursion)
 }

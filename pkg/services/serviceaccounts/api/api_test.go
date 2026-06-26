@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -102,7 +104,6 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		desc         string
 		id           int64
 		permissions  []accesscontrol.Permission
-		expectedErr  error
 		expectedCode int
 	}
 
@@ -119,21 +120,11 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: "serviceaccounts:id:1"}},
 			expectedCode: http.StatusForbidden,
 		},
-		{
-			desc:         "should return a 404 error if the service account doesn't exist",
-			id:           1,
-			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: "serviceaccounts:id:1"}},
-			expectedErr:  serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id 1 not found"),
-			expectedCode: http.StatusNotFound,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &satests.FakeServiceAccountService{ExpectedErr: tt.expectedErr}
-			})
-
+			server := setupTests(t)
 			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), nil)
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.Send(req)
@@ -249,6 +240,66 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	}
 }
 
+func TestServiceAccountsAPI_MigrateApiKeysToServiceAccounts(t *testing.T) {
+	type TestCase struct {
+		desc                    string
+		orgId                   int64
+		basicRole               org.RoleType
+		permissions             []accesscontrol.Permission
+		expectedMigrationResult *serviceaccounts.MigrationResult
+		expectedCode            int
+	}
+
+	tests := []TestCase{
+		{
+			desc:      "should be able to migrate API keys to service accounts with correct permissions",
+			orgId:     1,
+			basicRole: org.RoleAdmin,
+			permissions: []accesscontrol.Permission{
+				{Action: serviceaccounts.ActionCreate, Scope: serviceaccounts.ScopeAll},
+			},
+			expectedMigrationResult: &serviceaccounts.MigrationResult{
+				Total:         5,
+				Migrated:      4,
+				Failed:        1,
+				FailedDetails: []string{"API key name: failedKey - Error: migration error"},
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:      "should not be able to migrate API keys to service accounts with wrong permissions",
+			orgId:     2,
+			basicRole: org.RoleAdmin,
+			permissions: []accesscontrol.Permission{
+				{Action: serviceaccounts.ActionCreate, Scope: serviceaccounts.ScopeAll},
+			},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := setupTests(t, func(a *ServiceAccountsAPI) {
+				a.service = &satests.FakeServiceAccountService{ExpectedMigrationResult: tt.expectedMigrationResult}
+			})
+
+			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/migrate", nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: tt.orgId, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			if tt.expectedCode == http.StatusOK {
+				var result serviceaccounts.MigrationResult
+				err := json.NewDecoder(res.Body).Decode(&result)
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedMigrationResult, &result)
+			}
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
 func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Server {
 	t.Helper()
 	cfg := setting.NewCfg()
@@ -256,7 +307,7 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 		cfg:                  cfg,
 		service:              &satests.FakeServiceAccountService{},
 		accesscontrolService: &actest.FakeService{},
-		accesscontrol:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		accesscontrol:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		RouterRegister:       routing.NewRouteRegister(),
 		log:                  log.NewNopLogger(),
 		permissionService:    &actest.FakePermissionsService{},

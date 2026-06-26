@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getAlertManagerDataSourcesByPermission } from 'app/features/alerting/unified/utils/datasource';
 
 import { AlertManagerManualRouting } from './AlertManagerRouting';
@@ -32,7 +32,6 @@ export function SimplifiedRouting() {
           selectedContactPoint: selectedContactPoint?.selectedContactPoint ?? '',
           routeSettings: {
             muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
-            activeTimeIntervals: selectedContactPoint?.activeTimeIntervals ?? [],
             overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
             groupBy: selectedContactPoint?.groupBy ?? [],
             overrideTimings: selectedContactPoint?.overrideTimings ?? false,

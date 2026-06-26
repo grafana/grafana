@@ -1,12 +1,12 @@
-import { type FormEvent, useState, useEffect } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
-import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-import { type LokiDatasource } from '../datasource';
+import { LokiDatasource } from '../datasource';
 import { migrateVariableQuery } from '../migrations/variableQueryMigrations';
-import { type LokiOptions, type LokiQuery, type LokiVariableQuery, LokiVariableQueryType as QueryType } from '../types';
+import { LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType as QueryType } from '../types';
 
 const variableOptions = [
   { label: 'Label names', value: QueryType.LabelNames },

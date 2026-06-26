@@ -6,7 +6,7 @@ import {
   toEdgesFrame,
   toNodesFrame,
 } from './testResponse';
-import { type TraceResponse } from './types';
+import { TraceResponse } from './types';
 
 describe('createGraphFrames', () => {
   it('transforms basic response into nodes and edges frame', async () => {

@@ -1,10 +1,8 @@
 import { css, cx } from '@emotion/css';
-import type { JSX } from 'react';
 
-import { dateTimeFormat, type GrafanaTheme2, type TimeZone, dateTimeFormatTimeAgo } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { type ApiKey } from 'app/types/apiKeys';
+import { ApiKey } from 'app/types';
 
 interface Props {
   tokens: ApiKey[];
@@ -15,25 +13,16 @@ interface Props {
 
 export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabled, onDelete }: Props): JSX.Element => {
   const theme = useTheme2();
-
   const styles = getStyles(theme);
 
   return (
     <table className={cx(styles.section, 'filter-table')}>
       <thead>
         <tr>
-          <th>
-            <Trans i18nKey="serviceaccounts.service-account-tokens-table.name">Name</Trans>
-          </th>
-          <th>
-            <Trans i18nKey="serviceaccounts.service-account-tokens-table.expires">Expires</Trans>
-          </th>
-          <th>
-            <Trans i18nKey="serviceaccounts.service-account-tokens-table.created">Created</Trans>
-          </th>
-          <th>
-            <Trans i18nKey="serviceaccounts.service-account-tokens-table.last-used-at">Last used at</Trans>
-          </th>
+          <th>Name</th>
+          <th>Expires</th>
+          <th>Created</th>
+          <th>Last used at</th>
           <th />
           <th />
         </tr>
@@ -51,11 +40,7 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
               <td className="width-1 text-center">{key.isRevoked && <TokenRevoked />}</td>
               <td>
                 <DeleteButton
-                  aria-label={t(
-                    'serviceaccounts.service-account-tokens-table.aria-label-delete-button',
-                    'Delete service account token {{key}}',
-                    { key: key.name }
-                  )}
+                  aria-label={`Delete service account token ${key.name}`}
                   size="sm"
                   onConfirm={() => onDelete(key)}
                   disabled={tokenActionsDisabled}
@@ -84,24 +69,18 @@ function formatDate(timeZone: TimeZone, expiration?: string): string {
 }
 
 function formatSecondsLeftUntilExpiration(secondsUntilExpiration: number): string {
-  const expirationTime = Date.now() + secondsUntilExpiration * 1000;
-  const daysFormat = dateTimeFormatTimeAgo(expirationTime, { timeZone: 'browser' });
-  return `Expires ${daysFormat}`;
+  const days = Math.ceil(secondsUntilExpiration / (3600 * 24));
+  const daysFormat = days > 1 ? `${days} days` : `${days} day`;
+  return `Expires in ${daysFormat}`;
 }
 
 const TokenRevoked = () => {
   const styles = useStyles2(getStyles);
-
   return (
     <span className={styles.hasExpired}>
-      <Trans i18nKey="serviceaccounts.token-revoked.revoked-label">Revoked</Trans>
+      Revoked
       <span className={styles.tooltipContainer}>
-        <Tooltip
-          content={t(
-            'serviceaccounts.token-revoked.content-token-publicly-exposed-please-rotate',
-            'This token has been publicly exposed. Please rotate this token'
-          )}
-        >
+        <Tooltip content="This token has been publicly exposed. Please rotate this token">
           <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
         </Tooltip>
       </span>
@@ -116,29 +95,22 @@ interface TokenExpirationProps {
 
 const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
   const styles = useStyles2(getStyles);
-
   if (!token.expiration) {
-    return (
-      <span className={styles.neverExpire}>
-        <Trans i18nKey="serviceaccounts.token-expiration.never">Never</Trans>
-      </span>
-    );
+    return <span className={styles.neverExpire}>Never</span>;
   }
   if (token.secondsUntilExpiration) {
     return (
-      <span className={styles.secondsUntilExpiration} title={formatDate(timeZone, token.expiration)}>
+      <span className={styles.secondsUntilExpiration}>
         {formatSecondsLeftUntilExpiration(token.secondsUntilExpiration)}
       </span>
     );
   }
   if (token.hasExpired) {
     return (
-      <span className={styles.hasExpired} title={formatDate(timeZone, token.expiration)}>
-        <Trans i18nKey="serviceaccounts.token-expiration.expired-label">Expired</Trans>
+      <span className={styles.hasExpired}>
+        Expired
         <span className={styles.tooltipContainer}>
-          <Tooltip
-            content={t('serviceaccounts.token-expiration.content-this-token-has-expired', 'This token has expired')}
-          >
+          <Tooltip content="This token has expired">
             <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
           </Tooltip>
         </span>

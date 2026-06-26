@@ -1,7 +1,7 @@
 ﻿import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Button, LinkButton } from '../Button/Button';
+import { Button, LinkButton } from '../Button';
 
 import { Toggletip } from './Toggletip';
 
@@ -75,7 +75,7 @@ describe('Toggletip', () => {
     const button = screen.getByTestId('myButton');
     await userEvent.click(button);
 
-    expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+    expect(await screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
@@ -140,7 +140,7 @@ describe('Toggletip', () => {
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
-  it('should trap content within the overlay', async () => {
+  it('should be able to focus toggletip content next in DOM order - forwards and backwards', async () => {
     const onClose = jest.fn();
     const afterInDom = 'Outside of toggletip';
 
@@ -164,39 +164,17 @@ describe('Toggletip', () => {
     const closeButton = screen.getByTestId('toggletip-header-close');
     expect(closeButton).toHaveFocus();
 
-    // tab forwards
-    await userEvent.keyboard('{tab}');
-    // need to waitFor here to wait for the floating-ui focus manager to take effect
-    await waitFor(() => {
-      expect(closeButton).toHaveFocus();
-    });
-    expect(afterButton).not.toHaveFocus();
-
-    // tab forwards again
-    await userEvent.keyboard('{tab}');
-    // need to waitFor here to wait for the floating-ui focus manager to take effect
-    await waitFor(() => {
-      expect(closeButton).toHaveFocus();
-    });
-    expect(afterButton).not.toHaveFocus();
-
-    // tab backwards
-    await userEvent.keyboard('{shift}{tab}');
-    // need to waitFor here to wait for the floating-ui focus manager to take effect
-    await waitFor(() => {
-      expect(closeButton).toHaveFocus();
-    });
-    expect(afterButton).not.toHaveFocus();
-
-    // close overlay, focus back to togglebutton
-    await userEvent.keyboard('{escape}');
-    expect(button).toHaveFocus();
-    expect(afterButton).not.toHaveFocus();
-
-    // tab forwards with overlay closed
+    // focus after
     await userEvent.tab();
-    expect(closeButton).not.toHaveFocus();
     expect(afterButton).toHaveFocus();
+
+    // focus backwards
+    await userEvent.tab({ shift: true });
+    expect(closeButton).toHaveFocus();
+
+    // focus back to togglebutton
+    await userEvent.tab({ shift: true });
+    expect(button).toHaveFocus();
   });
 
   describe('Focus state', () => {

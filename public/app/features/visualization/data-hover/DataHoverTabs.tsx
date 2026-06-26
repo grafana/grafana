@@ -1,7 +1,7 @@
-import { type Dispatch, type SetStateAction } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
 import { Tab, TabsBar } from '@grafana/ui';
-import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
+import { GeomapLayerHover } from 'app/plugins/panel/geomap/event';
 
 type Props = {
   layers?: GeomapLayerHover[];
@@ -11,7 +11,7 @@ type Props = {
 
 export const DataHoverTabs = ({ layers, setActiveTabIndex, activeTabIndex }: Props) => {
   return (
-    <TabsBar data-testid="data-hover-tabs">
+    <TabsBar>
       {layers &&
         layers.map((g, index) => (
           <Tab

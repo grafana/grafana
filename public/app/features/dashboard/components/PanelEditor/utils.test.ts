@@ -1,7 +1,7 @@
 import {
-  type FieldConfig,
-  type FieldConfigSource,
-  type PanelPlugin,
+  FieldConfig,
+  FieldConfigSource,
+  PanelPlugin,
   standardFieldConfigEditorRegistry,
   ThresholdsMode,
 } from '@grafana/data';

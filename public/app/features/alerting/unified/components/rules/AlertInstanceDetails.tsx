@@ -1,5 +1,4 @@
-import { t } from '@grafana/i18n';
-import { type Alert } from 'app/types/unified-alerting';
+import { Alert } from 'app/types/unified-alerting';
 
 import { useAnnotationLinks, useCleanAnnotations } from '../../utils/annotations';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
@@ -16,7 +15,7 @@ export const AlertInstanceDetails = ({ instance }: Props) => {
   return (
     <div>
       {instance.value && (
-        <DetailsField label={t('alerting.alert-instance-details.label-value', 'Value')} horizontal={true}>
+        <DetailsField label="Value" horizontal={true}>
           {instance.value}
         </DetailsField>
       )}

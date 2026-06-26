@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { type HTMLAttributes, useEffect } from 'react';
+import { HTMLAttributes, useEffect } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { reportExperimentView } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
+import { reportExperimentView } from '@grafana/runtime/src';
 import { Button, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 
 type ComponentSize = 'sm' | 'md';
@@ -37,11 +36,7 @@ export const UpgradeBox = ({
       <Icon name={'rocket'} className={styles.icon} />
       <div className={styles.inner}>
         <p className={styles.text}>
-          <Trans i18nKey="upgrade-box.discovery-text">You’ve discovered a Pro feature!</Trans>{' '}
-          {text ||
-            t('upgrade-box.discovery-text-continued', 'Get the Grafana Pro plan to access {{featureName}}.', {
-              featureName,
-            })}
+          You’ve discovered a Pro feature! {text || `Get the Grafana Pro plan to access ${featureName}.`}
         </p>
         <LinkButton
           variant="secondary"
@@ -51,7 +46,7 @@ export const UpgradeBox = ({
           target="__blank"
           rel="noopener noreferrer"
         >
-          <Trans i18nKey="upgrade-box.upgrade-button">Upgrade</Trans>
+          Upgrade
         </LinkButton>
       </div>
     </div>
@@ -135,9 +130,7 @@ export const UpgradeContent = ({
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <h3 className={styles.title}>
-          <Trans i18nKey="upgrade-box.get-started">Get started with {{ featureName }}</Trans>
-        </h3>
+        <h3 className={styles.title}>Get started with {featureName}</h3>
         {description && <h6 className={styles.description}>{description}</h6>}
         <ul className={styles.list}>
           {listItems.map((item, index) => (
@@ -158,7 +151,7 @@ export const UpgradeContent = ({
         )}
         {featureUrl && (
           <LinkButton fill={'text'} href={featureUrl} className={styles.link} target="_blank" rel="noreferrer noopener">
-            <Trans i18nKey="upgrade-box.learn-more">Learn more</Trans>
+            Learn more
           </LinkButton>
         )}
       </div>
@@ -228,12 +221,10 @@ export const UpgradeContentVertical = ({
   const styles = useStyles2(getContentVerticalStyles);
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>
-        <Trans i18nKey="upgrade-box.get-started">Get started with {{ featureName }}</Trans>
-      </h3>
+      <h3 className={styles.title}>Get started with {featureName}</h3>
       {description && <h6 className={styles.description}>{description}</h6>}
       <LinkButton fill={'text'} href={featureUrl} target="_blank" rel="noreferrer noopener">
-        <Trans i18nKey="upgrade-box.learn-more">Learn more</Trans>
+        Learn more
       </LinkButton>
       <div className={styles.media}>
         <img src={getImgUrl(image)} alt={'Feature screenshot'} />
@@ -271,5 +262,5 @@ const getImgUrl = (urlOrId: string) => {
     return urlOrId;
   }
 
-  return '/public/build/img/enterprise/highlights/' + urlOrId;
+  return '/public/img/enterprise/highlights/' + urlOrId;
 };

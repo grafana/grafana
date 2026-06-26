@@ -1,31 +1,29 @@
 import { cloneDeep } from 'lodash';
-import { forkJoin, type Observable, of } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { type AadCurrentUserCredentials, instanceOfAzureCredential, isCredentialsComplete } from '@grafana/azure-sdk';
 import {
-  type DataFrame,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
+  DataFrame,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
   LoadingState,
-  type QueryFixAction,
-  type ScopedVars,
+  QueryFixAction,
+  ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
-import { AzureQueryType } from './dataquery.gen';
+import { instanceOfAzureCredential, isCredentialsComplete } from './credentials';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { type AzureMonitorQuery } from './types/query';
-import { type AzureMonitorDataSourceJsonData } from './types/types';
+import { AadCurrentUserCredentials, AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
 
-export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureMonitorDataSourceJsonData> {
+export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   annotations = {
     prepareAnnotation: migrateAnnotation,
   };
@@ -36,7 +34,6 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
   currentUserAuth: boolean;
   currentUserAuthFallbackAvailable: boolean;
-  defaultSubscriptionId?: string;
 
   pseudoDatasource: {
     [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
@@ -45,18 +42,14 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   declare optionsKey: Record<AzureQueryType, string>;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>,
+    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
-    this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
-    this.resourcePickerData = new ResourcePickerData(
-      instanceSettings,
-      this.azureMonitorDatasource,
-      this.azureResourceGraphDatasource
-    );
+    this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+    this.resourcePickerData = new ResourcePickerData(instanceSettings, this.azureMonitorDatasource);
 
     this.pseudoDatasource = {
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,
@@ -67,21 +60,17 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
     this.variables = new VariableSupport(this);
 
+    this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
     const credentials = instanceSettings.jsonData.azureCredentials;
     if (credentials && instanceOfAzureCredential<AadCurrentUserCredentials>('currentuser', credentials)) {
-      this.currentUserAuth = true;
       if (!credentials.serviceCredentials) {
         this.currentUserAuthFallbackAvailable = false;
       } else {
         this.currentUserAuthFallbackAvailable = isCredentialsComplete(credentials.serviceCredentials, true);
       }
     } else {
-      // Handle legacy credentials case
-      this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
       this.currentUserAuthFallbackAvailable = false;
     }
-
-    this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
@@ -101,7 +90,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       // Migrate old query structures
       const target = migrateQuery(baseTarget);
 
-      // Skip hidden or invalid queries, or ones without properties
+      // Skip hidden or invalid queries or ones without properties
       if (!target.queryType || target.hide || !hasQueryForType(target)) {
         continue;
       }
@@ -173,56 +162,29 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   }
 
   /* Azure Monitor REST API methods */
-  getMetricNamespaces(
-    subscriptionId: string,
-    resourceGroup?: string,
-    resourceUri?: string,
-    custom?: boolean,
-    variableQuery?: boolean
-  ) {
+  getResourceGroups(subscriptionId: string) {
+    return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
+  }
+
+  getMetricNamespaces(subscriptionId: string, resourceGroup?: string) {
     let url = `/subscriptions/${subscriptionId}`;
     if (resourceGroup) {
       url += `/resourceGroups/${resourceGroup}`;
     }
-    if (resourceUri) {
-      url = resourceUri;
-    }
-
-    // For variable queries it's more efficient to use resource graph
-    // Using resource graph allows us to return namespaces irrespective of a users permissions
-    // This also ensure the returned namespaces are filtered to the selected resource group when specified
-    if (variableQuery) {
-      return this.azureResourceGraphDatasource.getMetricNamespaces(url);
-    }
-
-    return this.azureMonitorDatasource.getMetricNamespaces(
-      { resourceUri: url },
-      // If custom namespaces are being queried we do not issue the query against the global region
-      // as resources have a specific region
-      custom ? false : true,
-      undefined,
-      custom
-    );
+    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url }, true);
   }
 
-  getMetricNames(
-    subscriptionId: string,
-    resourceGroup: string,
-    metricNamespace: string,
-    resourceName: string,
-    customNamespace?: string
-  ) {
+  getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string, region?: string) {
+    return this.azureMonitorDatasource.getResourceNames({ subscriptionId, resourceGroup, metricNamespace, region });
+  }
+
+  getMetricNames(subscriptionId: string, resourceGroup: string, metricNamespace: string, resourceName: string) {
     return this.azureMonitorDatasource.getMetricNames({
       subscription: subscriptionId,
       resourceGroup,
       metricNamespace,
       resourceName,
-      customNamespace,
     });
-  }
-
-  getSubscriptions() {
-    return this.azureMonitorDatasource.getSubscriptions();
   }
 
   /*Azure Log Analytics */
@@ -230,22 +192,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return this.azureLogAnalyticsDatasource.getWorkspaces(subscriptionId);
   }
 
-  /*Azure Resource Graph */
-  getResourceGroups(subscriptionId: string) {
-    return this.azureResourceGraphDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
-  }
-
-  getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string, region?: string) {
-    return this.azureResourceGraphDatasource.getResourceNames({
-      subscriptionId,
-      resourceGroup,
-      metricNamespace,
-      region,
-    });
-  }
-
-  getLocations(subscriptions: string[]) {
-    return this.azureMonitorDatasource.getLocations(subscriptions);
+  getSubscriptions() {
+    return this.azureMonitorDatasource.getSubscriptions();
   }
 
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
@@ -292,10 +240,6 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       }
     }
     return { ...query, azureLogAnalytics: { ...query.azureLogAnalytics, query: expression } };
-  }
-
-  getDefaultSubscriptionId() {
-    return this.defaultSubscriptionId || '';
   }
 }
 

@@ -14,16 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationPasswordMigrationCommand(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestPasswordMigrationCommand(t *testing.T) {
 	// setup datasources with password, basic_auth and none
 	store := db.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {

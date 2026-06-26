@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../manage-notifications/images-in-notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/images-in-notifications/
+  - ../manage-notifications/images-in-notifications/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/images-in-notifications/
 canonical: https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/images-in-notifications/
 description: Use images in notifications to help users better understand why alerts are firing or have been resolved
 keywords:
@@ -20,15 +20,15 @@ weight: 105
 
 # Use images in notifications
 
-{{< admonition type="note" >}}
+{{% admonition type="note" %}}
 Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
-{{< /admonition >}}
+{{% /admonition %}}
 
 Images in notifications helps recipients of alert notifications better understand why an alert has fired or resolved by including a screenshot of the panel associated with the alert.
 
-{{< admonition type="note" >}}
+{{% admonition type="note" %}}
 This feature is not supported in Mimir or Loki, or when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
-{{< /admonition >}}
+{{% /admonition %}}
 
 When an alert is fired or resolved Grafana takes a screenshot of the panel associated with the alert. This is determined via the Dashboard UID and Panel ID annotations of the rule. Grafana cannot take a screenshot for alerts that are not associated with a panel.
 
@@ -40,7 +40,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 ## Requirements
 
-1. To use images in notifications, Grafana OSS and Enterprise must be set up to use the [Grafana image renderer](https://github.com/grafana/grafana-image-renderer/) service.
+1. To use images in notifications, Grafana must be set up to use image rendering. You can either install the image rendering plugin or run it as a remote rendering service.
 
 2. When a screenshot is taken, it is saved to the [data][paths] folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error is logged for each failed screenshot attempt.
 
@@ -60,11 +60,11 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 ## Configuration
 
-{{< admonition type="note" >}}
+{{% admonition type="note" %}}
 Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
-{{< /admonition >}}
+{{% /admonition %}}
 
-Having set up Grafana to use the image renderer service, set `capture` in `[unified_alerting.screenshots]` to `true`:
+Having installed either the image rendering plugin, or set up Grafana to use a remote rendering service, set `capture` in `[unified_alerting.screenshots]` to `true`:
 
     # Enable screenshots in notifications. You must have either installed the Grafana image rendering
     # plugin, or set up Grafana to use a remote rendering service.
@@ -105,7 +105,7 @@ Grafana supports a wide range of contact points with varied support for images i
 | MQTT                    | No                                                         | No                                                       |
 | Microsoft Teams         | No                                                         | Yes                                                      |
 | Opsgenie                | No                                                         | Yes                                                      |
-| PagerDuty               | No                                                         | Yes                                                      |
+| Pagerduty               | No                                                         | Yes                                                      |
 | Prometheus Alertmanager | No                                                         | No                                                       |
 | Pushover                | Yes (Maximum of 1 per notification)                        | No                                                       |
 | Sensu Go                | No                                                         | No                                                       |
@@ -118,7 +118,6 @@ Grafana supports a wide range of contact points with varied support for images i
 ## Limitations
 
 - This feature is not supported in Mimir or Loki, or when Grafana is configured to send alerts to other Alertmanagers such as the Prometheus Alertmanager.
-- This feature is not supported when using custom templates in email notifications.
 - A number of contact points support at most one image per notification. In this case, just the first image is either uploaded to the receiving service or referenced from cloud storage per notification.
 - When multiple alerts are sent in a single notification a screenshot might be included for each alert. The order the images are shown is random.
 - If uploading screenshots to a cloud storage service such as Amazon S3, Azure Blob Storage or Google Cloud Storage; and accessing screenshots in the bucket requires authentication, logging into a VPN or corporate network; image previews might not work in all instant messaging and communication platforms as some services rewrite URLs to use their CDN.

@@ -1,6 +1,8 @@
-import { type SimulationNodeDatum, type SimulationLinkDatum } from 'd3-force';
+import { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
 
-import { type DataFrame, type Field, type IconName } from '@grafana/data';
+import { DataFrame, Field, IconName } from '@grafana/data';
+
+export { Options as NodeGraphOptions, ArcOption } from './panelcfg.gen';
 
 export type NodeDatum = SimulationNodeDatum & {
   id: string;
@@ -15,7 +17,6 @@ export type NodeDatum = SimulationNodeDatum & {
   icon?: IconName;
   nodeRadius?: Field;
   highlighted: boolean;
-  isInstrumented?: boolean;
 };
 
 export type NodeDatumFromEdge = NodeDatum & { mainStatNumeric?: number; secondaryStatNumeric?: number };

@@ -7,8 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -39,16 +38,16 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				proxyFieldName:   "name",
 				proxyFieldRole:   "Viewer",
 				proxyFieldGroups: "grp1,grp2",
-				proxyFieldEmail:  "email@example.com",
+				proxyFieldEmail:  "email@email.com",
 			},
 			expectedIdentity: &authn.Identity{
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
 				Login:           "test",
 				Name:            "name",
-				Email:           "email@example.com",
+				Email:           "email@email.com",
 				AuthenticatedBy: login.AuthProxyAuthModule,
 				AuthID:          "test",
-				ExternalGroups:  []string{"grp1", "grp2"},
+				Groups:          []string{"grp1", "grp2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					SyncTeams:       true,
@@ -56,8 +55,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 					FetchSyncedUser: true,
 					SyncOrgRoles:    true,
 					LookUpParams: login.UserLookupParams{
-						Email: new("email@example.com"),
-						Login: new("test"),
+						Email: strPtr("email@email.com"),
+						Login: strPtr("test"),
 					},
 				},
 			},
@@ -78,8 +77,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 					AllowSignUp:  true,
 					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
-						Email: new("test@test.com"),
-						Login: new("test@test.com"),
+						Email: strPtr("test@test.com"),
+						Login: strPtr("test@test.com"),
 					},
 				},
 			},
@@ -98,7 +97,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AuthProxy.AutoSignUp = true
 			cfg.AuthProxy.HeaderProperty = tt.proxyProperty
-			c := ProvideGrafana(cfg, usertest.NewUserServiceFake(), tracing.InitializeTracerForTest())
+			c := ProvideGrafana(cfg, usertest.NewUserServiceFake())
 
 			identity, err := c.AuthenticateProxy(context.Background(), tt.req, tt.username, tt.additional)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -109,8 +108,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
 				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
-				assert.Equal(t, tt.expectedIdentity.ExternalGroups, identity.ExternalGroups)
-				assert.Empty(t, identity.Groups, "IdP groups must not leak into Identity.Groups")
+				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
@@ -177,7 +175,7 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 				userService.ExpectedError = user.ErrUserNotFound
 			}
 
-			c := ProvideGrafana(setting.NewCfg(), userService, tracing.InitializeTracerForTest())
+			c := ProvideGrafana(setting.NewCfg(), userService)
 			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)

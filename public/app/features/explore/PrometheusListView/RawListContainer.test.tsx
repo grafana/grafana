@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 
-import { FieldType, type FormattedValue, toDataFrame } from '@grafana/data';
+import { FieldType, FormattedValue, toDataFrame } from '@grafana/data/src';
 
-import RawListContainer, { type RawListContainerProps } from './RawListContainer';
+import RawListContainer, { RawListContainerProps } from './RawListContainer';
 
 function getList(): HTMLElement {
   return screen.getByRole('table');

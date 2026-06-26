@@ -1,12 +1,10 @@
-import { connect, type ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { useEffectOnce } from 'react-use';
 
-import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { type StoreState } from 'app/types/store';
-import { type UserOrg } from 'app/types/user';
+import { StoreState, UserOrg } from 'app/types';
 
 import { getUserOrganizations, setUserOrganization } from './state/actions';
 
@@ -51,10 +49,8 @@ export const SelectOrgPage = ({ setUserOrganization, getUserOrganizations, userO
       <Page.Contents>
         <div>
           <p>
-            <Trans i18nKey="org.select-org-page.description">
-              You have been invited to another organization! Please select which organization that you want to use right
-              now. You can change this later at any time.
-            </Trans>
+            You have been invited to another organization! Please select which organization that you want to use right
+            now. You can change this later at any time.
           </p>
           <Stack wrap="wrap">
             {userOrgs &&

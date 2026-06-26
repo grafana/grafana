@@ -2,19 +2,17 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -42,7 +40,7 @@ func TestAPI_getUserActions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
-			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, &usertest.FakeUserService{})
+			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
@@ -95,7 +93,7 @@ func TestAPI_getUserPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
-			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, &usertest.FakeUserService{})
+			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
@@ -132,7 +130,6 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 		filters        string
 		expectedOutput map[int64]map[string][]string
 		expectedCode   int
-		serviceErr     error
 	}
 
 	tests := []testCase{
@@ -151,19 +148,6 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 			permissions:    map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
 			expectedCode:   http.StatusOK,
 			expectedOutput: map[int64]map[string][]string{2: {"users:read": {"users:*"}}},
-		},
-		{
-			desc:           "Should resolve UID based identifier to the corresponding ID",
-			filters:        "?namespacedId=user:user_2_uid",
-			permissions:    map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
-			expectedCode:   http.StatusOK,
-			expectedOutput: map[int64]map[string][]string{2: {"users:read": {"users:*"}}},
-		},
-		{
-			desc:         "Should fail if cannot resolve UID based identifier",
-			filters:      "?namespacedId=user:non_existent_uid",
-			permissions:  map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
-			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:           "Should reduce permissions",
@@ -185,76 +169,12 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 				2: {"users:read": {"users:id:2"}},
 			},
 		},
-		{
-			desc:         "Should return 500 for invalid namespacedId format",
-			filters:      "?namespacedId=invalid_format",
-			expectedCode: http.StatusInternalServerError,
-		},
-		{
-			desc:         "Should return 500 for unsupported identity type",
-			filters:      "?namespacedId=team:1",
-			expectedCode: http.StatusInternalServerError,
-		},
-		{
-			desc:    "Should accept exact action filter",
-			filters: "?action=dashboards:read",
-			permissions: map[int64][]ac.Permission{
-				1: {{Action: "dashboards:read", Scope: "dashboards:*"}},
-				2: {{Action: "dashboards:write", Scope: "dashboards:*"}},
-			},
-			expectedCode: http.StatusOK,
-			expectedOutput: map[int64]map[string][]string{
-				1: {"dashboards:read": {"dashboards:*"}},
-				2: {"dashboards:write": {"dashboards:*"}},
-			},
-		},
-		{
-			desc:    "Should accept scope filter",
-			filters: "?actionPrefix=teams:&scope=teams:id:1",
-			permissions: map[int64][]ac.Permission{
-				1: {{Action: "teams:read", Scope: "teams:id:1"}},
-				2: {{Action: "teams:read", Scope: "teams:id:2"}},
-			},
-			expectedCode: http.StatusOK,
-			expectedOutput: map[int64]map[string][]string{
-				1: {"teams:read": {"teams:id:1"}},
-				2: {"teams:read": {"teams:id:2"}},
-			},
-		},
-		{
-			desc:         "Should return 500 when service returns error",
-			filters:      "?actionPrefix=users:",
-			serviceErr:   errors.New("database connection failed"),
-			expectedCode: http.StatusInternalServerError,
-		},
-		{
-			desc:           "Should return empty map when no users match",
-			filters:        "?actionPrefix=nonexistent:",
-			permissions:    map[int64][]ac.Permission{},
-			expectedCode:   http.StatusOK,
-			expectedOutput: map[int64]map[string][]string{},
-		},
-		{
-			desc:           "Should resolve service-account UID",
-			filters:        "?namespacedId=service-account:sa_abc123",
-			permissions:    map[int64][]ac.Permission{3: {{Action: "users:read", Scope: "users:*"}}},
-			expectedCode:   http.StatusOK,
-			expectedOutput: map[int64]map[string][]string{3: {"users:read": {"users:*"}}},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			acSvc := actest.FakeService{
-				ExpectedUsersPermissions: tt.permissions,
-				ExpectedErr:              tt.serviceErr,
-			}
-
-			accessControl := actest.FakeAccessControl{ExpectedEvaluate: true}
-			mockUserSvc := usertest.NewMockService(t)
-			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "user_2_uid"}).Return(&user.User{ID: 2}, nil).Maybe()
-			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "non_existent_uid"}).Return(nil, user.ErrUserNotFound).Maybe()
-			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "sa_abc123"}).Return(&user.User{ID: 3, IsServiceAccount: true}, nil).Maybe()
-			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, mockUserSvc)
+			acSvc := actest.FakeService{ExpectedUsersPermissions: tt.permissions}
+			accessControl := actest.FakeAccessControl{ExpectedEvaluate: true} // Always allow access to the endpoint
+			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)

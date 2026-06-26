@@ -1,37 +1,23 @@
 import * as React from 'react';
-import type { JSX } from 'react';
-import { type DeepMap, type FieldError, type FieldErrors, useFormContext } from 'react-hook-form';
+import { DeepMap, FieldError, FieldErrors, useFormContext } from 'react-hook-form';
 
-import { Field } from '@grafana/ui';
-import {
-  type NotificationChannelOption,
-  type NotificationChannelSecureFields,
-  type OptionMeta,
-} from 'app/features/alerting/unified/types/alerting';
+import { Field, SecretInput } from '@grafana/ui';
+import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
 
-import {
-  type ChannelValues,
-  type CloudChannelValues,
-  type GrafanaChannelValues,
-  type ReceiverFormValues,
-} from '../../../types/receiver-form';
+import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 
-import { ConfiguredSecretInput, OptionField } from './fields/OptionField';
+import { OptionField } from './fields/OptionField';
 
 export interface Props<R extends ChannelValues> {
   defaultValues: R;
   selectedChannelOptions: NotificationChannelOption[];
+  secureFields: NotificationChannelSecureFields;
 
   onResetSecureField: (key: string) => void;
-  onDeleteSubform?: (settingsPath: string, option: NotificationChannelOption) => void;
   errors?: FieldErrors<R>;
-  /**
-   * The path for the integration in the array of integrations.
-   * This is used to access the settings and secure fields for the integration in a type-safe way.
-   */
-  integrationPrefix: `items.${number}`;
-  canEditProtectedFields: boolean;
+  pathPrefix?: string;
   readOnly?: boolean;
+
   customValidators?: Record<string, React.ComponentProps<typeof OptionField>['customValidator']>;
 }
 
@@ -39,24 +25,14 @@ export function ChannelOptions<R extends ChannelValues>({
   defaultValues,
   selectedChannelOptions,
   onResetSecureField,
-  onDeleteSubform,
+  secureFields,
   errors,
-  integrationPrefix,
+  pathPrefix = '',
   readOnly = false,
   customValidators = {},
-  canEditProtectedFields,
 }: Props<R>): JSX.Element {
-  const { watch } = useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
-
-  const [settings, secureFields] = watch([`${integrationPrefix}.settings`, `${integrationPrefix}.secureFields`]);
-
-  // Note: settingsPath includes a trailing dot for OptionField, unlike the path used in watch()
-  const settingsPath = `${integrationPrefix}.settings.` as const;
-
-  const getOptionMeta = (option: NotificationChannelOption): OptionMeta => ({
-    required: determineRequired(option, settings, secureFields),
-    readOnly: determineReadOnly(option, settings, secureFields, canEditProtectedFields),
-  });
+  const { watch } = useFormContext<ReceiverFormValues<R>>();
+  const currentFormValues = watch(); // react hook form types ARE LYING!
 
   return (
     <>
@@ -65,98 +41,43 @@ export function ChannelOptions<R extends ChannelValues>({
         // Some options can be dependent on other options, this determines what is selected in the dependency options
         // I think this needs more thought.
         // pathPrefix = items.index.
-        // const paths = pathPrefix.split('.');
-        const selectedOptionValue = settings?.[option.showWhen.field];
+        const paths = pathPrefix.split('.');
+        const selectedOptionValue =
+          paths.length >= 2 ? currentFormValues.items?.[Number(paths[1])].settings?.[option.showWhen.field] : undefined;
 
         if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
           return null;
         }
 
-        if (secureFields && secureFields[option.secureFieldKey ?? option.propertyName]) {
+        if (secureFields && secureFields[option.propertyName]) {
           return (
-            <Field
-              key={key}
-              label={option.label}
-              description={option.description}
-              htmlFor={`${settingsPath}${option.propertyName}`}
-              noMargin
-            >
-              <ConfiguredSecretInput
-                id={`${settingsPath}${option.propertyName}`}
-                readOnly={readOnly}
-                onReset={() => onResetSecureField(option.secureFieldKey ?? option.propertyName)}
-              />
+            <Field key={key} label={option.label} description={option.description}>
+              <SecretInput onReset={() => onResetSecureField(option.propertyName)} isConfigured />
             </Field>
           );
         }
 
-        const errorSource = option.secure ? errors?.secureFields : errors?.settings;
-        const propertyKey = option.secureFieldKey ?? option.propertyName;
-        const error = // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          (errorSource as Record<string, FieldError | DeepMap<Record<string, unknown>, FieldError>> | undefined)?.[
-            propertyKey
-          ];
+        const error: FieldError | DeepMap<any, FieldError> | undefined = (
+          (option.secure ? errors?.secureSettings : errors?.settings) as DeepMap<any, FieldError> | undefined
+        )?.[option.propertyName];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];
 
         return (
           <OptionField
-            secureFields={secureFields}
             onResetSecureField={onResetSecureField}
-            onDeleteSubform={onDeleteSubform}
+            secureFields={secureFields}
             defaultValue={defaultValue}
             readOnly={readOnly}
             key={key}
             error={error}
-            pathPrefix={settingsPath}
+            pathPrefix={pathPrefix}
+            pathSuffix={option.secure ? 'secureSettings.' : 'settings.'}
             option={option}
             customValidator={customValidators[option.propertyName]}
-            getOptionMeta={getOptionMeta}
           />
         );
       })}
     </>
   );
 }
-
-const determineRequired = (
-  option: NotificationChannelOption,
-  settings: Record<string, unknown>,
-  secureFields: NotificationChannelSecureFields
-) => {
-  if (!option.required) {
-    return false;
-  }
-
-  if (!option.dependsOn) {
-    return option.required ? 'Required' : false;
-  }
-
-  // TODO: This doesn't work with nested secureFields.
-  const dependentOn = Boolean(settings[option.dependsOn]) || Boolean(secureFields[option.dependsOn]);
-
-  if (dependentOn) {
-    return false;
-  }
-
-  return 'Required';
-};
-
-const determineReadOnly = (
-  option: NotificationChannelOption,
-  settings: Record<string, unknown>,
-  secureFields: NotificationChannelSecureFields,
-  canEditProtectedFields: boolean
-) => {
-  if (option.protected && !canEditProtectedFields) {
-    return true;
-  }
-
-  // Handle fields with dependencies (e.g., field B depends on field A being set)
-  if (!option.dependsOn) {
-    return false;
-  }
-
-  // TODO: This doesn't work with nested secureFields.
-  return Boolean(settings[option.dependsOn]) || Boolean(secureFields[option.dependsOn]);
-};

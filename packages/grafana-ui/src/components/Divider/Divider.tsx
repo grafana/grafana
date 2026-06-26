@@ -1,17 +1,14 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
+import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
 interface DividerProps {
   direction?: 'vertical' | 'horizontal';
   spacing?: ThemeSpacingTokens;
 }
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-divider--docs
- */
 export const Divider = ({ direction = 'horizontal', spacing = 2 }: DividerProps) => {
   const styles = useStyles2(getStyles, spacing);
 

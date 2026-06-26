@@ -18,21 +18,6 @@ type MultiOrgAlertmanager struct {
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
 
-	// ExternalAMConfigSyncTotal counts external Alertmanager fetch attempts that
-	// successfully reached upstream and returned a parsed config, by org. This
-	// includes ticks where the body hashed the same as the previous save (no DB
-	// write happens). Failed fetches are tracked separately on ExternalAMConfigSyncFailures.
-	ExternalAMConfigSyncTotal *prometheus.CounterVec
-	// ExternalAMConfigSyncFailures counts failed sync attempts by org and reason.
-	ExternalAMConfigSyncFailures *prometheus.CounterVec
-	// ExternalAMConfigSyncDuration measures per-org sync duration in seconds.
-	ExternalAMConfigSyncDuration *prometheus.HistogramVec
-	// ExternalAMConfigSyncHash exposes the hash of the most recently synced external
-	// Alertmanager configuration per org so operators can correlate sync state with
-	// what's actually applied. Hash is masked to 53 bits (Prometheus stores values
-	// as float64), matching the pattern used by alertmanager_config_hash.
-	ExternalAMConfigSyncHash *prometheus.GaugeVec
-
 	aggregatedMetrics *AlertmanagerAggregatedMetrics
 }
 
@@ -53,31 +38,6 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Name:      "active_configurations",
 			Help:      "The number of active Alertmanager configurations.",
 		}),
-		ExternalAMConfigSyncTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "external_alertmanager_config_sync_total",
-			Help:      "Total number of successful external Alertmanager config sync attempts, partitioned by org.",
-		}, []string{"org_id"}),
-		ExternalAMConfigSyncFailures: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "external_alertmanager_config_sync_failures_total",
-			Help:      "Total number of failed external Alertmanager config sync attempts, partitioned by org and failure reason.",
-		}, []string{"org_id", "reason"}),
-		ExternalAMConfigSyncDuration: promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "external_alertmanager_config_sync_duration_seconds",
-			Help:      "Duration of external Alertmanager config sync operations in seconds, partitioned by org.",
-			Buckets:   prometheus.DefBuckets,
-		}, []string{"org_id"}),
-		ExternalAMConfigSyncHash: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "external_alertmanager_config_sync_hash",
-			Help:      "FNV-1a hash of the most recently synced external Alertmanager configuration per org. Masked to 53 bits to fit Prometheus float64 storage; useful for correlating sync state with applied config but not for cryptographic verification.",
-		}, []string{"org_id"}),
 		aggregatedMetrics: NewAlertmanagerAggregatedMetrics(registries),
 	}
 
@@ -365,8 +325,8 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 
 	data.SendSumOfCountersPerTenant(out, a.numReceivedAlerts, "alertmanager_alerts_received_total", metrics.WithLabels("status"))
 	data.SendSumOfCountersPerTenant(out, a.numInvalidAlerts, "alertmanager_alerts_invalid_total")
-	data.SendSumOfGaugesPerTenant(out, a.configuredReceivers, "grafana_alerting_alertmanager_receivers", metrics.WithLabels("state"))
-	data.SendSumOfGaugesPerTenant(out, a.configuredIntegrations, "grafana_alerting_alertmanager_integrations", metrics.WithLabels("type"))
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.configuredReceivers, "grafana_alerting_alertmanager_receivers", "state")
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.configuredIntegrations, "grafana_alerting_alertmanager_integrations", "type")
 	data.SendSumOfGaugesPerTenant(out, a.configuredInhibitionRules, "grafana_alerting_alertmanager_inhibition_rules")
 
 	data.SendSumOfCountersPerTenant(out, a.numNotifications, "alertmanager_notifications_total", metrics.WithLabels("integration"), metrics.WithSkipZeroValueMetrics)
@@ -383,7 +343,7 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfHistograms(out, a.nflogQueryDuration, "alertmanager_nflog_query_duration_seconds")
 	data.SendSumOfCounters(out, a.nflogPropagatedMessagesTotal, "alertmanager_nflog_gossip_messages_propagated_total")
 
-	data.SendSumOfGaugesPerTenant(out, a.markerAlerts, "alertmanager_alerts", metrics.WithLabels("state"))
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.markerAlerts, "alertmanager_alerts", "state")
 
 	data.SendSumOfSummaries(out, a.silencesGCDuration, "alertmanager_silences_gc_duration_seconds")
 	data.SendSumOfSummaries(out, a.silencesSnapshotDuration, "alertmanager_silences_snapshot_duration_seconds")
@@ -392,7 +352,7 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfCounters(out, a.silencesQueryErrorsTotal, "alertmanager_silences_query_errors_total")
 	data.SendSumOfHistograms(out, a.silencesQueryDuration, "alertmanager_silences_query_duration_seconds")
 	data.SendSumOfCounters(out, a.silencesPropagatedMessagesTotal, "alertmanager_silences_gossip_messages_propagated_total")
-	data.SendSumOfGaugesPerTenant(out, a.silences, "alertmanager_silences", metrics.WithLabels("state"))
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.silences, "alertmanager_silences", "state")
 
 	data.SendSumOfGauges(out, a.dispatchAggrGroups, "alertmanager_dispatcher_aggregation_groups")
 	data.SendSumOfSummaries(out, a.dispatchProcessingDuration, "alertmanager_dispatcher_alert_processing_duration_seconds")

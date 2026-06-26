@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
+import { SelectableValue } from '@grafana/data';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 
 import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../constants';
-import { AlignmentTypes, type SLOQuery } from '../dataquery.gen';
-import type CloudMonitoringDatasource from '../datasource';
+import CloudMonitoringDatasource from '../datasource';
 import { selectors } from '../e2e/selectors';
 import { alignmentPeriodLabel } from '../functions';
-import { type CustomMetaData } from '../types/types';
+import { AlignmentTypes, SLOQuery } from '../types/query';
+import { CustomMetaData } from '../types/types';
 
 import { AliasBy } from './AliasBy';
 import { LookbackPeriodSelect } from './LookbackPeriodSelect';

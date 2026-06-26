@@ -1,11 +1,10 @@
-import { type PropsWithChildren, useMemo } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 
-import { type SelectableValue, type VariableType } from '@grafana/data';
+import { SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
 
-import { type EditableVariableType, getVariableTypeSelectOptions } from '../utils';
+import { EditableVariableType, getVariableTypeSelectOptions } from '../utils';
 
 interface Props {
   onChange: (option: SelectableValue<EditableVariableType>) => void;
@@ -21,7 +20,7 @@ export function VariableTypeSelect({ onChange, type }: PropsWithChildren<Props>)
 
   return (
     <VariableSelectField
-      name={t('dashboard-scene.variable-type-select.name-variable-type', 'Variable type')}
+      name="Select variable type"
       value={value}
       options={options}
       onChange={onChange}

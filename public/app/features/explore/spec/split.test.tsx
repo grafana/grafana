@@ -1,7 +1,7 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ComponentProps } from 'react';
-import type AutoSizer from 'react-virtualized-auto-sizer';
+import { ComponentProps } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 
@@ -12,10 +12,9 @@ import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
 const testEventBus = new EventBusSrv();
 
-jest.mock('app/core/services/context_srv', () => {
+jest.mock('app/core/core', () => {
   return {
     contextSrv: {
-      ...jest.requireActual('app/core/services/context_srv').contextSrv,
       hasPermission: () => true,
       getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
     },
@@ -122,7 +121,7 @@ describe('Handles open/close splits and related events in UI and URL', () => {
 
     // Make sure we render the logs panel
     await waitFor(() => {
-      const logsPanels = screen.getAllByRole('heading', { name: /^Logs$/ });
+      const logsPanels = screen.getAllByText(/^Logs$/);
       expect(logsPanels.length).toBe(2);
     });
 

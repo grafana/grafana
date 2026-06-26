@@ -1,4 +1,4 @@
-import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
+import { NotificationChannelOption } from '../../../../types';
 
 export function option(
   propertyName: string,

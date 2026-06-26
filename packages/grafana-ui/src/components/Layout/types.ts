@@ -1,4 +1,4 @@
-import { type ResponsiveProp } from './utils/responsiveness';
+import { ResponsiveProp } from './utils/responsiveness';
 
 export type AlignItems =
   | 'stretch'
@@ -18,7 +18,6 @@ export type JustifyContent =
   | 'space-between'
   | 'space-around'
   | 'space-evenly'
-  | 'stretch'
   | 'start'
   | 'end'
   | 'left'

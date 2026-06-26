@@ -1,24 +1,19 @@
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useRef } from 'react';
 import * as React from 'react';
-import { type Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import {
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
-  type DataSourceRef,
-  type GrafanaTheme2,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { type FavoriteDatasources, getTemplateSrv } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
+import { useStyles2, useTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
-import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
+import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
-import { VirtualizedList } from './VirtualizedList';
-import { getDataSourceCompareFn } from './utils';
+import { DataSourceCard } from './DataSourceCard';
+import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -48,82 +43,61 @@ export interface DataSourceListProps {
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
-  dataSources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
-  favoriteDataSources: FavoriteDatasources;
-  /** Ref to the scroll container element, used by the virtualizer */
-  scrollRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
-  const styles = useStyles2(getStyles);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const {
-    className,
-    current,
-    onChange,
-    enableKeyboardNavigation,
-    onClickEmptyStateCTA,
-    favoriteDataSources,
-    scrollRef,
-  } = props;
+  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
+    keyboardEvents: props.keyboardEvents,
+    containerRef: containerRef,
+  });
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, selectedItemCssSelector);
+
+  const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
+  const dataSources = useDatasources({
+    alerting: props.alerting,
+    annotations: props.annotations,
+    dashboard: props.dashboard,
+    logs: props.logs,
+    metrics: props.metrics,
+    mixed: props.mixed,
+    pluginId: props.pluginId,
+    tracing: props.tracing,
+    type: props.type,
+    variables: props.variables,
+  });
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
-  const sortedDataSources = useSortedDataSources(props, current, recentlyUsedDataSources, favoriteDataSources);
-
-  return (
-    <div className={cx(className, styles.container)} data-testid={selectors.components.DataSourcePicker.dataSourceList}>
-      {sortedDataSources.length === 0 && <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />}
-      {sortedDataSources.length > 0 && (
-        <VirtualizedList
-          sortedDataSources={sortedDataSources}
-          enableKeyboardNavigation={enableKeyboardNavigation}
-          keyboardEvents={props.keyboardEvents}
-          current={current}
-          favoriteDataSources={favoriteDataSources}
-          onChange={onChange}
-          pushRecentlyUsedDataSource={pushRecentlyUsedDataSource}
-          scrollRef={scrollRef}
-        />
-      )}
-    </div>
-  );
-}
-
-function useSortedDataSources(
-  props: DataSourceListProps,
-  current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined,
-  recentlyUsedDataSources: string[],
-  favoriteDataSources: FavoriteDatasources
-) {
-  const dataSources = useDatasources(
-    {
-      alerting: props.alerting,
-      annotations: props.annotations,
-      dashboard: props.dashboard,
-      logs: props.logs,
-      metrics: props.metrics,
-      mixed: props.mixed,
-      pluginId: props.pluginId,
-      tracing: props.tracing,
-      type: props.type,
-      variables: props.variables,
-    },
-    props.dataSources
-  );
-
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
-  return useMemo(
-    () =>
-      [...filteredDataSources].sort(
-        getDataSourceCompareFn(
-          current,
-          recentlyUsedDataSources,
-          getDataSourceVariableIDs(),
-          favoriteDataSources.enabled ? favoriteDataSources.initialFavoriteDataSources : undefined
-        )
-      ),
-    [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
+  return (
+    <div
+      ref={containerRef}
+      className={cx(className, styles.container)}
+      data-testid={selectors.components.DataSourcePicker.dataSourceList}
+    >
+      {filteredDataSources.length === 0 && (
+        <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
+      )}
+      {filteredDataSources
+        .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
+        .map((ds) => (
+          <DataSourceCard
+            data-testid="data-source-card"
+            key={ds.uid}
+            ds={ds}
+            onClick={() => {
+              pushRecentlyUsedDataSource(ds);
+              onChange(ds);
+            }}
+            selected={isDataSourceMatch(ds, current)}
+            {...(enableKeyboardNavigation ? navigatableProps : {})}
+          />
+        ))}
+    </div>
   );
 }
 
@@ -162,14 +136,13 @@ function getDataSourceVariableIDs() {
     .map((v) => `\${${v.id}}`);
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
   return {
     container: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(0.5),
-      '[data-selecteditem="true"]': {
-        backgroundColor: theme.colors.action.focus,
+      [`${selectedItemCssSelector}`]: {
+        backgroundColor: theme.colors.background.secondary,
       },
     }),
     emptyState: css({

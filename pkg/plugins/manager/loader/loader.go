@@ -8,18 +8,16 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
-	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 type Loader struct {
-	cfg          *pluginsCfg.PluginManagementCfg
 	discovery    discovery.Discoverer
 	bootstrap    bootstrap.Bootstrapper
 	initializer  initialization.Initializer
@@ -29,13 +27,9 @@ type Loader struct {
 	log          log.Logger
 }
 
-func New(
-	cfg *pluginsCfg.PluginManagementCfg,
-	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
-	initializer initialization.Initializer, termination termination.Terminator, errorTracker pluginerrs.ErrorTracker,
-) *Loader {
+func New(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
+	initializer initialization.Initializer, termination termination.Terminator, errorTracker pluginerrs.ErrorTracker) *Loader {
 	return &Loader{
-		cfg:          cfg,
 		discovery:    discovery,
 		bootstrap:    bootstrap,
 		validation:   validation,
@@ -61,14 +55,11 @@ func (l *Loader) recordError(ctx context.Context, p *plugins.Plugin, err error) 
 func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 	end := l.instrumentLoad(ctx, src)
 
-	st := time.Now()
 	discoveredPlugins, err := l.discovery.Discover(ctx, src)
 	if err != nil {
 		return nil, err
 	}
-	l.log.Debug("Discovered", "class", src.PluginClass(ctx), "duration", time.Since(st))
 
-	st = time.Now()
 	bootstrappedPlugins := []*plugins.Plugin{}
 	for _, foundBundle := range discoveredPlugins {
 		bootstrappedPlugin, err := l.bootstrap.Bootstrap(ctx, src, foundBundle)
@@ -81,9 +72,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		bootstrappedPlugins = append(bootstrappedPlugins, bootstrappedPlugin...)
 	}
-	l.log.Debug("Bootstrapped", "class", src.PluginClass(ctx), "duration", time.Since(st))
 
-	st = time.Now()
 	validatedPlugins := []*plugins.Plugin{}
 	for _, bootstrappedPlugin := range bootstrappedPlugins {
 		err := l.validation.Validate(ctx, bootstrappedPlugin)
@@ -93,9 +82,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		validatedPlugins = append(validatedPlugins, bootstrappedPlugin)
 	}
-	l.log.Debug("Validated", "class", src.PluginClass(ctx), "duration", time.Since(st), "total", len(validatedPlugins))
 
-	st = time.Now()
 	initializedPlugins := []*plugins.Plugin{}
 	for _, validatedPlugin := range validatedPlugins {
 		initializedPlugin, err := l.initializer.Initialize(ctx, validatedPlugin)
@@ -105,7 +92,6 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		}
 		initializedPlugins = append(initializedPlugins, initializedPlugin)
 	}
-	l.log.Debug("Initialized", "class", src.PluginClass(ctx), "duration", time.Since(st))
 
 	// Clean errors from registry for initialized plugins
 	for _, p := range initializedPlugins {

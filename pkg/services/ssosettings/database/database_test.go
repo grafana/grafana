@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -24,7 +23,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationGetSSOSettings(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
@@ -85,7 +86,9 @@ func TestIntegrationGetSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationUpsertSSOSettings(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
@@ -262,7 +265,9 @@ func TestIntegrationUpsertSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationListSSOSettings(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
@@ -326,7 +331,9 @@ func TestIntegrationListSSOSettings(t *testing.T) {
 }
 
 func TestIntegrationDeleteSSOSettings(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	var sqlStore db.DB
 	var ssoSettingsStore *SSOSettingsStore
@@ -472,11 +479,11 @@ func populateSSOSettings(sqlStore db.DB, template models.SSOSettings, providers 
 
 func getSSOSettingsCountByDeleted(sqlStore db.DB) (deleted, notDeleted int64, err error) {
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		deleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanValue(true)).Count()
+		deleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
 		if err != nil {
 			return err
 		}
-		notDeleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanValue(false)).Count()
+		notDeleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(false)).Count()
 		return err
 	})
 
@@ -488,7 +495,7 @@ func getSSOSettingsByProvider(sqlStore db.DB, provider string, deleted bool) (*m
 	var err error
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err = sess.Table("sso_setting").Where("provider = ? AND is_deleted = ?", provider, sqlStore.GetDialect().BooleanValue(deleted)).Get(&model)
+		_, err = sess.Table("sso_setting").Where("provider = ? AND is_deleted = ?", provider, sqlStore.GetDialect().BooleanStr(deleted)).Get(&model)
 		return err
 	})
 

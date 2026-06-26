@@ -5,27 +5,20 @@ import (
 	"context"
 	"net/http"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
 func UpdatePreferencesFor(ctx context.Context,
-	dashboardService dashboards.DashboardService, preferenceService pref.Service, features featuremgmt.FeatureToggles,
+	dashboardService dashboards.DashboardService, preferenceService pref.Service,
 	orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
 	if dtoCmd.Theme != "" && !pref.IsValidThemeID(dtoCmd.Theme) {
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
 
-	if !pref.IsValidTimezone(dtoCmd.Timezone) {
-		return response.Error(http.StatusBadRequest, "Invalid timezone. Must be a valid IANA timezone (e.g., America/New_York), 'utc', 'browser', or empty string", nil)
-	}
-
-	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
-	// nolint:staticcheck
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
@@ -39,29 +32,21 @@ func UpdatePreferencesFor(ctx context.Context,
 			}
 			dashboardID = queryResult.ID
 		}
-	} else if dtoCmd.HomeDashboardID != 0 {
-		// make sure uid is always set if id is set
-		queryResult, err := dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: dtoCmd.HomeDashboardID, OrgID: orgID}) // nolint:staticcheck
-		if err != nil {
-			return response.Error(http.StatusNotFound, "Dashboard not found", err)
-		}
-		dtoCmd.HomeDashboardUID = &queryResult.UID
 	}
-	// nolint:staticcheck
 	dtoCmd.HomeDashboardID = dashboardID
 
 	saveCmd := pref.SavePreferenceCommand{
-		UserID:           userID,
-		OrgID:            orgID,
-		TeamID:           teamId,
-		Theme:            dtoCmd.Theme,
-		Language:         dtoCmd.Language,
-		Timezone:         dtoCmd.Timezone,
-		WeekStart:        dtoCmd.WeekStart,
-		HomeDashboardID:  dtoCmd.HomeDashboardID,
-		HomeDashboardUID: dtoCmd.HomeDashboardUID,
-		QueryHistory:     dtoCmd.QueryHistory,
-		Navbar:           dtoCmd.Navbar,
+		UserID:            userID,
+		OrgID:             orgID,
+		TeamID:            teamId,
+		Theme:             dtoCmd.Theme,
+		Language:          dtoCmd.Language,
+		Timezone:          dtoCmd.Timezone,
+		WeekStart:         dtoCmd.WeekStart,
+		HomeDashboardID:   dtoCmd.HomeDashboardID,
+		QueryHistory:      dtoCmd.QueryHistory,
+		CookiePreferences: dtoCmd.Cookies,
+		Navbar:            dtoCmd.Navbar,
 	}
 
 	if err := preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -73,7 +58,7 @@ func UpdatePreferencesFor(ctx context.Context,
 
 func GetPreferencesFor(ctx context.Context,
 	dashboardService dashboards.DashboardService, preferenceService pref.Service,
-	features featuremgmt.FeatureToggles, orgID, userID, teamID int64) response.Response {
+	orgID, userID, teamID int64) response.Response {
 	prefsQuery := pref.GetPreferenceQuery{UserID: userID, OrgID: orgID, TeamID: teamID}
 
 	preference, err := preferenceService.Get(ctx, &prefsQuery)
@@ -81,15 +66,27 @@ func GetPreferencesFor(ctx context.Context,
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
 
-	dto := preferences.PreferencesSpec{}
+	var dashboardUID string
+
+	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
+	if preference.HomeDashboardID != 0 {
+		query := dashboards.GetDashboardQuery{ID: preference.HomeDashboardID, OrgID: orgID}
+		queryResult, err := dashboardService.GetDashboard(ctx, &query)
+		if err == nil {
+			dashboardUID = queryResult.UID
+		}
+	}
+
+	dto := preferences.Spec{}
+
 	if preference.WeekStart != nil && *preference.WeekStart != "" {
 		dto.WeekStart = preference.WeekStart
 	}
 	if preference.Theme != "" {
 		dto.Theme = &preference.Theme
 	}
-	if preference.HomeDashboardUID != "" {
-		dto.HomeDashboardUID = &preference.HomeDashboardUID
+	if dashboardUID != "" {
+		dto.HomeDashboardUID = &dashboardUID
 	}
 	if preference.Timezone != "" {
 		dto.Timezone = &preference.Timezone
@@ -101,14 +98,14 @@ func GetPreferencesFor(ctx context.Context,
 		}
 
 		if preference.JSONData.Navbar.BookmarkUrls != nil {
-			dto.Navbar = &preferences.PreferencesNavbarPreference{
+			dto.Navbar = &preferences.NavbarPreference{
 				BookmarkUrls: []string{},
 			}
 			dto.Navbar.BookmarkUrls = preference.JSONData.Navbar.BookmarkUrls
 		}
 
 		if preference.JSONData.QueryHistory.HomeTab != "" {
-			dto.QueryHistory = &preferences.PreferencesQueryHistoryPreference{
+			dto.QueryHistory = &preferences.QueryHistoryPreference{
 				HomeTab: &preference.JSONData.QueryHistory.HomeTab,
 			}
 		}

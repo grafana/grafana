@@ -9,9 +9,9 @@ import (
 	mock "github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
@@ -38,7 +38,7 @@ const defaultAlertmanagerConfigJSON = `
 				"type": "email",
 				"disableResolveMessage": false,
 				"settings": {
-					"addresses": "\u003cexample@example.com\u003e"
+					"addresses": "\u003cexample@email.com\u003e"
 				},
 				"secureFields": {}
 			}]
@@ -113,7 +113,6 @@ type fakeRuleAccessControlService struct {
 	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	CanReadAllRulesFunc            func(ctx context.Context, user identity.Requester) (bool, error)
 	CanWriteAllRulesFunc           func(ctx context.Context, user identity.Requester) (bool, error)
-	HasAccessInFolderFunc          func(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
 }
 
 func (s *fakeRuleAccessControlService) RecordCall(method string, args ...interface{}) {
@@ -168,20 +167,12 @@ func (s *fakeRuleAccessControlService) CanWriteAllRules(ctx context.Context, use
 	return false, nil
 }
 
-func (s *fakeRuleAccessControlService) HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error) {
-	s.RecordCall("HasAccessInFolder", ctx, user, folder)
-	if s.HasAccessInFolderFunc != nil {
-		return s.HasAccessInFolderFunc(ctx, user, folder)
-	}
-	return true, nil
-}
-
 type fakeAlertRuleNotificationStore struct {
 	Calls []call
 
 	RenameReceiverInNotificationSettingsFn     func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	RenameTimeIntervalInNotificationSettingsFn func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListContactPointRoutingsFn                 func(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
+	ListNotificationSettingsFn                 func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
 func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
@@ -214,15 +205,15 @@ func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSetting
 	return nil, nil, nil
 }
 
-func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error) {
+func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
 	call := call{
-		Method: "ListContactPointRoutings",
+		Method: "ListNotificationSettings",
 		Args:   []interface{}{ctx, q},
 	}
 	f.Calls = append(f.Calls, call)
 
-	if f.ListContactPointRoutingsFn != nil {
-		return f.ListContactPointRoutingsFn(ctx, q)
+	if f.ListNotificationSettingsFn != nil {
+		return f.ListNotificationSettingsFn(ctx, q)
 	}
 
 	// Default values when no function hook is provided
@@ -232,8 +223,7 @@ func (f *fakeAlertRuleNotificationStore) ListContactPointRoutings(ctx context.Co
 type fakeReceiverService struct {
 	Calls                                  []call
 	GetReceiversFunc                       func(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
-	RenameReceiverInDependentResourcesFunc func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error
-	ReceiverNameUsedByRoutesFunc           func(ctx context.Context, revision *legacy_storage.ConfigRevision, name string) bool
+	RenameReceiverInDependentResourcesFunc func(ctx context.Context, orgID int64, route *apimodels.Route, oldName, newName string, receiverProvenance models.Provenance) error
 }
 
 func (f *fakeReceiverService) GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error) {
@@ -244,18 +234,10 @@ func (f *fakeReceiverService) GetReceivers(ctx context.Context, query models.Get
 	return nil, nil
 }
 
-func (f *fakeReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
-	f.Calls = append(f.Calls, call{Method: "RenameReceiverInDependentResources", Args: []interface{}{ctx, orgID, revision, oldName, newName, receiverProvenance}})
+func (f *fakeReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *apimodels.Route, oldName, newName string, receiverProvenance models.Provenance) error {
+	f.Calls = append(f.Calls, call{Method: "RenameReceiverInDependentResources", Args: []interface{}{ctx, orgID, route, oldName, newName, receiverProvenance}})
 	if f.RenameReceiverInDependentResourcesFunc != nil {
-		return f.RenameReceiverInDependentResourcesFunc(ctx, orgID, revision, oldName, newName, receiverProvenance)
+		return f.RenameReceiverInDependentResourcesFunc(ctx, orgID, route, oldName, newName, receiverProvenance)
 	}
 	return nil
-}
-
-func (f *fakeReceiverService) ReceiverNameUsedByRoutes(ctx context.Context, revision *legacy_storage.ConfigRevision, name string) bool {
-	f.Calls = append(f.Calls, call{Method: "ReceiverNameUsedByRoutes", Args: []interface{}{ctx, revision, name}})
-	if f.ReceiverNameUsedByRoutesFunc != nil {
-		return f.ReceiverNameUsedByRoutesFunc(ctx, revision, name)
-	}
-	return false
 }

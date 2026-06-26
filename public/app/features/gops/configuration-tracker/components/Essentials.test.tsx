@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { byRole } from 'testing-library-selector';
 
-import { type SectionsDto } from '../irmHooks';
+import { SectionsDto } from '../irmHooks';
 
 import { Essentials } from './Essentials';
 

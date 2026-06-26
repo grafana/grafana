@@ -1,25 +1,20 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2, PluginState } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
+import { PluginState } from '@grafana/data/src';
 import { TextDimensionMode } from '@grafana/schema';
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
-import { type DimensionContext } from 'app/features/dimensions/context';
-import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { DimensionContext } from 'app/features/dimensions/context';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { APIEditor, type APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
-import { type ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
+import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
 import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import {
-  type CanvasElementItem,
-  type CanvasElementOptions,
-  type CanvasElementProps,
-  defaultLightTextColor,
-} from '../element';
-import { Align, type TextConfig, type TextData } from '../types';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultLightTextColor } from '../element';
+import { Align, TextConfig, TextData } from '../types';
 
 interface ButtonData extends Omit<TextData, 'valign'> {
   api?: APIEditorConfig;
@@ -38,7 +33,6 @@ export const defaultApiConfig: APIEditorConfig = {
   contentType: 'application/json',
   queryParams: [],
   headerParams: [],
-  successMessage: 'API call was successful',
 };
 
 export const defaultStyleConfig: ButtonStyleConfig = {
@@ -170,27 +164,27 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.button-item.category-button', 'Button')];
+    const category = ['Button'];
     builder
       .addCustomEditor({
         category,
         id: 'styleSelector',
         path: 'config.style',
-        name: t('canvas.button-item.name-style', 'Style'),
+        name: 'Style',
         editor: ButtonStyleEditor,
       })
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: t('canvas.button-item.name-text', 'Text'),
+        name: 'Text',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: t('canvas.button-item.name-text-color', 'Text color'),
+        name: 'Text color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -198,12 +192,12 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       .addRadio({
         category,
         path: 'config.align',
-        name: t('canvas.button-item.name-align-text', 'Align text'),
+        name: 'Align text',
         settings: {
           options: [
-            { value: Align.Left, label: t('canvas.button-item.label.left', 'Left') },
-            { value: Align.Center, label: t('canvas.button-item.label.center', 'Center') },
-            { value: Align.Right, label: t('canvas.button-item.label.right', 'Right') },
+            { value: Align.Left, label: 'Left' },
+            { value: Align.Center, label: 'Center' },
+            { value: Align.Right, label: 'Right' },
           ],
         },
         defaultValue: Align.Left,
@@ -211,16 +205,16 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: t('canvas.button-item.name-text-size', 'Text size'),
+        name: 'Text size',
         settings: {
-          placeholder: t('canvas.button-item.placeholder.auto', 'Auto'),
+          placeholder: 'Auto',
         },
       })
       .addCustomEditor({
         category,
         id: 'apiSelector',
         path: 'config.api',
-        name: t('canvas.button-item.name-api', 'API'),
+        name: 'API',
         editor: APIEditor,
       });
   },

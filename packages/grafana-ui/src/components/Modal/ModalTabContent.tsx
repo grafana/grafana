@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { type IconName } from '../../types/icon';
+import { useStyles2 } from '../../themes';
+import { IconName } from '../../types';
 
 interface Props {
   /** @deprecated */

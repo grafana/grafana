@@ -1,206 +1,89 @@
-import { type PropsOf } from '@emotion/react';
-
-import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { type Button, type ComponentSize, Dropdown, Menu } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
+import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
-import {
-  type EditableRuleIdentifier,
-  type Rule,
-  type RuleGroupIdentifierV2,
-  type RuleIdentifier,
-} from 'app/types/unified-alerting';
-import { PromAlertingRuleState, type RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
+import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import {
-  AlertRuleAction,
-  EnrichmentAction,
-  skipToken,
-  useEnrichmentAbility,
-  useGrafanaPromRuleAbilities,
-  useRulerRuleAbilities,
-} from '../../hooks/useAbilities';
+import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import {
-  getRuleUID,
-  isEditableRuleIdentifier,
-  isPausedRule,
-  prometheusRuleType,
-  rulerRuleType,
-} from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
-import { AnalyzeRuleButton } from '../assistant/AnalizeRuleButton';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
-  promRule?: Rule;
-  rulerRule?: RulerRuleDTO;
+  rule: CombinedRule;
   identifier: RuleIdentifier;
-  groupIdentifier: RuleGroupIdentifierV2;
+  showCopyLinkButton?: boolean;
   handleSilence: () => void;
-  handleManageEnrichments?: () => void;
-  handleDelete: (identifier: EditableRuleIdentifier, groupIdentifier: RuleGroupIdentifierV2) => void;
+  handleDelete: (rule: CombinedRule) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
-  fill?: PropsOf<typeof Button>['fill'];
 }
 
 /**
  * Get a list of menu items + divider elements for rendering in an alert rule's
  * dropdown menu
- * If the consumer of this component comes from the alert list view, we need to use promRule to check abilities and permissions,
- * as we have removed all requests to the ruler API in the list view.
  */
 const AlertRuleMenu = ({
-  promRule,
-  rulerRule,
+  rule,
   identifier,
-  groupIdentifier,
+  showCopyLinkButton,
   handleSilence,
-  handleManageEnrichments,
   handleDelete,
   handleDuplicateRule,
   onPauseChange,
   buttonSize,
-  fill,
 }: Props) => {
-  // check all abilities and permissions using rulerRule
-  const [rulerPauseAbility, rulerDeleteAbility, rulerDuplicateAbility, rulerSilenceAbility, rulerExportAbility] =
-    useRulerRuleAbilities(rulerRule, groupIdentifier, [
-      AlertRuleAction.Pause,
-      AlertRuleAction.Delete,
-      AlertRuleAction.Duplicate,
-      AlertRuleAction.Silence,
-      AlertRuleAction.ModifyExport,
-    ]);
+  // check all abilities and permissions
+  const [pauseSupported, pauseAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Pause);
+  const canPause = pauseSupported && pauseAllowed;
 
-  // check all abilities and permissions using promRule
-  const [
-    grafanaPauseAbility,
-    grafanaDeleteAbility,
-    grafanaDuplicateAbility,
-    grafanaSilenceAbility,
-    grafanaExportAbility,
-  ] = useGrafanaPromRuleAbilities(prometheusRuleType.grafana.rule(promRule) ? promRule : skipToken, [
-    AlertRuleAction.Pause,
-    AlertRuleAction.Delete,
-    AlertRuleAction.Duplicate,
-    AlertRuleAction.Silence,
-    AlertRuleAction.ModifyExport,
-  ]);
+  const [deleteSupported, deleteAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
+  const canDelete = deleteSupported && deleteAllowed;
 
-  const [pauseSupported, pauseAllowed] = rulerPauseAbility;
-  const [grafanaPauseSupported, grafanaPauseAllowed] = grafanaPauseAbility;
-  const canPause = (pauseSupported && pauseAllowed) || (grafanaPauseSupported && grafanaPauseAllowed);
+  const [duplicateSupported, duplicateAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Duplicate);
+  const canDuplicate = duplicateSupported && duplicateAllowed;
 
-  const [deleteSupported, deleteAllowed] = rulerDeleteAbility;
-  const [grafanaDeleteSupported, grafanaDeleteAllowed] = grafanaDeleteAbility;
-  const canDelete = (deleteSupported && deleteAllowed) || (grafanaDeleteSupported && grafanaDeleteAllowed);
+  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
+  const canSilence = silenceSupported && silenceAllowed;
 
-  const [duplicateSupported, duplicateAllowed] = rulerDuplicateAbility;
-  const [grafanaDuplicateSupported, grafanaDuplicateAllowed] = grafanaDuplicateAbility;
-  const canDuplicate =
-    (duplicateSupported && duplicateAllowed) || (grafanaDuplicateSupported && grafanaDuplicateAllowed);
+  const [exportSupported, exportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
+  const canExport = exportSupported && exportAllowed;
 
-  const [silenceSupported, silenceAllowed] = rulerSilenceAbility;
-  const [grafanaSilenceSupported, grafanaSilenceAllowed] = grafanaSilenceAbility;
-  const canSilence = (silenceSupported && silenceAllowed) || (grafanaSilenceSupported && grafanaSilenceAllowed);
-
-  const [exportSupported, exportAllowed] = rulerExportAbility;
-  const [grafanaExportSupported, grafanaExportAllowed] = grafanaExportAbility;
-  const canExport = (exportSupported && exportAllowed) || (grafanaExportSupported && grafanaExportAllowed);
-
-  const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
+  const ruleExtensionLinks = useRulePluginLinkExtension(rule);
 
   const extensionsAvailable = ruleExtensionLinks.length > 0;
-
-  const [enrichmentReadSupported, enrichmentReadAllowed] = useEnrichmentAbility(EnrichmentAction.Read);
 
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
    * We should show it in development mode
    */
-  // @TODO Migrate "declare incident button" to plugin links extensions
   const shouldShowDeclareIncidentButton =
     (!isOpenSourceEdition() || isLocalDevEnv()) &&
-    prometheusRuleType.alertingRule(promRule) &&
-    promRule.state === PromAlertingRuleState.Firing;
-
-  const { isAvailable: isAssistantAvailable } = useAssistant();
-  const shouldShowAnalyzeRuleButton = isAssistantAvailable && prometheusRuleType.grafana.rule(promRule);
-
-  const shareUrl = createShareLink(identifier);
+    isAlertingRule(rule.promRule) &&
+    rule.promRule.state === PromAlertingRuleState.Firing;
+  const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
 
   const showDivider =
-    [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) && [canExport].some(Boolean);
-
-  // grab the UID from either rulerRule or promRule
-  const ruleUid = getRuleUID(rulerRule ?? promRule);
-
-  const isPaused =
-    (rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule)) ||
-    (prometheusRuleType.grafana.rule(promRule) && promRule.isPaused);
-
-  // todo: make this new menu item for enrichments an extension of the alertrulemenu items. For first iteration, we'll keep it here.
-  const canManageEnrichments =
-    ruleUid &&
-    handleManageEnrichments &&
-    config.featureToggles.alertingEnrichmentPerRule &&
-    enrichmentReadSupported &&
-    enrichmentReadAllowed;
+    [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) &&
+    [showCopyLinkButton, canExport].some(Boolean);
 
   const menuItems = (
     <>
-      {canManageEnrichments && (
-        <Menu.Item
-          label={t('alerting.alert-menu.manage-enrichments', 'Manage enrichments')}
-          icon="edit"
-          onClick={handleManageEnrichments}
-        />
-      )}
-      {canPause && ruleUid && groupIdentifier.groupOrigin === 'grafana' && (
-        <MenuItemPauseRule
-          uid={ruleUid}
-          isPaused={isPaused}
-          groupIdentifier={groupIdentifier}
-          onPauseChange={onPauseChange}
-        />
-      )}
-      {canSilence && (
-        <Menu.Item
-          label={t('alerting.alert-menu.silence-notifications', 'Silence notifications')}
-          icon="bell-slash"
-          onClick={handleSilence}
-        />
-      )}
-      {/* TODO Migrate Declare Incident to plugin links extensions */}
-      {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
-      {shouldShowAnalyzeRuleButton && <AnalyzeRuleButton rule={promRule} />}
-      {canDuplicate && (
-        <Menu.Item
-          label={t('alerting.alert-menu.duplicate', 'Duplicate')}
-          icon="copy"
-          onClick={() => handleDuplicateRule(identifier)}
-        />
-      )}
+      {canPause && <MenuItemPauseRule rule={rule} onPauseChange={onPauseChange} />}
+      {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}
+      {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
+      {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
       {showDivider && <Menu.Divider />}
-      {shareUrl && (
-        <Menu.Item
-          label={t('alerting.alert-menu.copy-link', 'Copy link')}
-          icon="share-alt"
-          onClick={() => copyToClipboard(shareUrl)}
-        />
-      )}
+      {shareUrl && <Menu.Item label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />}
       {canExport && (
         <Menu.Item
-          label={t('alerting.alert-menu.export', 'Export')}
+          label="Export"
           icon="download-alt"
           childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
         />
@@ -216,49 +99,16 @@ const AlertRuleMenu = ({
       {canDelete && (
         <>
           <Menu.Divider />
-          <Menu.Item
-            label={t('alerting.common.delete', 'Delete')}
-            icon="trash-alt"
-            destructive
-            onClick={() => {
-              // if the identifier is not for a editable rule I wonder how you even got here.
-              if (isEditableRuleIdentifier(identifier)) {
-                handleDelete(identifier, groupIdentifier);
-              }
-            }}
-          />
+          <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => handleDelete(rule)} />
         </>
       )}
     </>
   );
 
   return (
-    <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom">
-      <MoreButton size={buttonSize} fill={fill} />
+    <Dropdown overlay={<Menu>{menuItems}</Menu>}>
+      <MoreButton size={buttonSize} />
     </Dropdown>
-  );
-};
-
-interface ExportMenuItemProps {
-  identifier: RuleIdentifier;
-}
-
-const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
-  const returnTo = window.location.pathname + window.location.search;
-  const url = createRelativeUrl(
-    `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
-    {
-      returnTo,
-    }
-  );
-
-  return (
-    <Menu.Item
-      key="with-modifications"
-      label={t('alerting.alert-menu.with-modifications', 'With modifications')}
-      icon="file-edit-alt"
-      url={url}
-    />
   );
 };
 
@@ -267,5 +117,19 @@ function copyToClipboard(text: string) {
     appEvents.emit(AppEvents.alertSuccess, ['URL copied to clipboard']);
   });
 }
+
+type PropsWithIdentifier = { identifier: RuleIdentifier };
+
+const ExportMenuItem = ({ identifier }: PropsWithIdentifier) => {
+  const returnTo = location.pathname + location.search;
+  const url = createRelativeUrl(
+    `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
+    {
+      returnTo,
+    }
+  );
+
+  return <Menu.Item key="with-modifications" label="With modifications" icon="file-edit-alt" url={url} />;
+};
 
 export default AlertRuleMenu;

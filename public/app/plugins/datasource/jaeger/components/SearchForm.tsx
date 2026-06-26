@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
-import { type SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-import { type JaegerDatasource } from '../datasource';
-import { type JaegerQuery } from '../types';
+import { JaegerDatasource } from '../datasource';
+import { JaegerQuery } from '../types';
+import { transformToLogfmt } from '../util';
 
 const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 
@@ -17,7 +18,7 @@ type Props = {
   onChange: (value: JaegerQuery) => void;
 };
 
-const ALL_OPERATIONS_KEY = 'All';
+export const ALL_OPERATIONS_KEY = 'All';
 const allOperationsOption: SelectableValue<string> = {
   label: ALL_OPERATIONS_KEY,
   value: undefined,
@@ -67,7 +68,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
 
   useEffect(() => {
     const getServices = async () => {
-      const services = await loadOptions('services', 'services');
+      const services = await loadOptions('/api/services', 'services');
       if (query.service && getTemplateSrv().containsTemplate(query.service)) {
         services.push(toOption(query.service));
       }
@@ -79,7 +80,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   useEffect(() => {
     const getOperations = async () => {
       const operations = await loadOptions(
-        `services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
+        `/api/services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
         'operations'
       );
       if (query.operation && getTemplateSrv().containsTemplate(query.operation)) {
@@ -100,7 +101,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             <Select
               inputId="service"
               options={serviceOptions}
-              onOpenMenu={() => loadOptions('services', 'services')}
+              onOpenMenu={() => loadOptions('/api/services', 'services')}
               isLoading={isLoading.services}
               value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
               placeholder="Select a service"
@@ -125,7 +126,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
               options={operationOptions}
               onOpenMenu={() =>
                 loadOptions(
-                  `services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
+                  `/api/services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
                   'operations'
                 )
               }
@@ -149,7 +150,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
             <Input
               id="tags"
-              value={query.tags}
+              value={transformToLogfmt(query.tags)}
               placeholder="http.status_code=200 error=true"
               onChange={(v) =>
                 onChange({
@@ -213,3 +214,5 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     </>
   );
 }
+
+export default SearchForm;

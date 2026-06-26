@@ -3,15 +3,14 @@ import { SimpleLinearRegression } from 'ml-regression-simple-linear';
 import { map } from 'rxjs';
 
 import {
-  type DataFrame,
+  DataFrame,
   DataTransformerID,
   FieldMatcherID,
   FieldType,
-  type SynchronousDataTransformerInfo,
+  SynchronousDataTransformerInfo,
   fieldMatchers,
   getFieldDisplayName,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 
 export enum ModelType {
   linear = 'linear',
@@ -28,27 +27,11 @@ export interface RegressionTransformerOptions {
 
 export const DEFAULTS = { predictionCount: 100, modelType: ModelType.linear, degree: 2 };
 
-export const DEGREES = [
-  { label: () => t('transformers.regression-transformer-editor.label.quadratic', 'Quadratic'), value: 2 },
-  { label: () => t('transformers.regression-transformer-editor.label.cubic', 'Cubic'), value: 3 },
-  { label: () => t('transformers.regression-transformer-editor.label.quartic', 'Quartic'), value: 4 },
-  { label: () => t('transformers.regression-transformer-editor.label.quintic', 'Quintic'), value: 5 },
-  { label: () => t('transformers.regression-transformer-editor.label.sextic', 'Sextic'), value: 6 },
-  { label: () => t('transformers.regression-transformer-editor.label.septic', 'Septic'), value: 7 },
-  { label: () => t('transformers.regression-transformer-editor.label.octic', 'Octic'), value: 8 },
-  { label: () => t('transformers.regression-transformer-editor.label.nonic', 'Nonic'), value: 9 },
-  { label: () => t('transformers.regression-transformer-editor.label.decic', 'Decic'), value: 10 },
-];
-
-export const getRegressionTransformer: () => SynchronousDataTransformerInfo<RegressionTransformerOptions> = () => ({
+export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTransformerOptions> = {
   id: DataTransformerID.regression,
-  name: t('transformers.regression.name.trendline', 'Trendline'),
-  description: t(
-    'transformers.regression.description.create-new-data-frame',
-    'Create a new data frame containing values predicted by a statistical model.'
-  ),
+  name: 'Regression analysis',
   operator: (options, ctx) => (source) =>
-    source.pipe(map((data) => getRegressionTransformer().transformer(options, ctx)(data))),
+    source.pipe(map((data) => RegressionTransformer.transformer(options, ctx)(data))),
   transformer: (options, ctx) => {
     return (frames: DataFrame[]) => {
       const { predictionCount, modelType, degree } = { ...DEFAULTS, ...options };
@@ -122,19 +105,13 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
           return frames;
       }
 
-      let frameName = `${t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear')} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
-      if (modelType === ModelType.polynomial) {
-        const degreeData = DEGREES.find((deg) => deg.value === degree);
-        frameName = `${degreeData?.label()} ${t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial').toLocaleLowerCase()} ${t('transformers.regression-transformer-editor.regression', 'regression')}`;
-      }
-
       const newFrame: DataFrame = {
-        name: `${frameName}`,
+        name: `${modelType} regression`,
         length: predictionPoints.length,
         fields: [
           { name: xField.name, type: xField.type, values: predictionPoints, config: {} },
           {
-            name: `${getFieldDisplayName(yField, predictFromFrame, frames)}`,
+            name: `${getFieldDisplayName(yField, predictFromFrame, frames)} predicted`,
             type: yField.type,
             values: predictionPoints.map((x) => result.predict(x - normalizationSubtrahend)),
             config: {},
@@ -145,4 +122,4 @@ export const getRegressionTransformer: () => SynchronousDataTransformerInfo<Regr
       return [...frames, newFrame];
     };
   },
-});
+};

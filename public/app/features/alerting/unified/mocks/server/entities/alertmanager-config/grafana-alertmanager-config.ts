@@ -1,4 +1,4 @@
-import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 const grafanaAlertmanagerConfig: AlertManagerCortexConfig = {
   template_files: {

@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type ScalarDimensionConfig } from '@grafana/schema';
+import { GrafanaTheme2, LinkModel, OneClickMode } from '@grafana/data';
+import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { type DimensionContext } from 'app/features/dimensions/context';
-import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
+import { DimensionContext } from 'app/features/dimensions';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { type CanvasElementItem, type CanvasElementOptions, type CanvasElementProps, defaultBgColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
 interface WindTurbineData {
   rpm?: number;
@@ -91,6 +90,7 @@ export const windTurbineItem: CanvasElementItem = {
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -106,12 +106,12 @@ export const windTurbineItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.wind-turbine-item.category-wind-turbine', 'Wind Turbine')];
+    const category = ['Wind Turbine'];
     builder.addCustomEditor({
       category,
       id: 'rpm',
       path: 'config.rpm',
-      name: t('canvas.wind-turbine-item.name-rpm', 'RPM'),
+      name: 'RPM',
       editor: ScalarDimensionEditor,
     });
   },

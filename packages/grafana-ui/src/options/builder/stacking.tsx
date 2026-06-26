@@ -1,18 +1,17 @@
 import {
-  type FieldConfigEditorBuilder,
-  type StandardEditorProps,
+  FieldConfigEditorBuilder,
+  StandardEditorProps,
   FieldType,
   identityOverrideProcessor,
-  type SelectableValue,
+  SelectableValue,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type GraphFieldConfig, type StackingConfig, StackingMode } from '@grafana/schema';
+import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
 
 import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
 import { IconButton } from '../../components/IconButton/IconButton';
 import { Input } from '../../components/Input/Input';
 import { Stack } from '../../components/Layout/Stack/Stack';
-import { getGraphFieldOptions } from '../../components/uPlot/config';
+import { graphFieldOptions } from '../../components/uPlot/config';
 
 export const StackingEditor = ({
   value,
@@ -35,14 +34,8 @@ export const StackingEditor = ({
       {context.isOverride && value?.mode && value?.mode !== StackingMode.None && (
         <Input
           type="text"
-          placeholder={t('grafana-ui.stacking-builder.group', 'Group')}
-          suffix={
-            <IconButton
-              name="question-circle"
-              tooltip={t('grafana-ui.stacking-builder.group-tooltip', 'Name of the stacking group')}
-              tooltipPlacement="top"
-            />
-          }
+          placeholder="Group"
+          suffix={<IconButton name="question-circle" tooltip="Name of the stacking group" tooltipPlacement="top" />}
           defaultValue={value?.group}
           onChange={(v) => {
             onChange({
@@ -61,13 +54,11 @@ export function addStackingConfig(
   defaultConfig?: StackingConfig,
   category = ['Graph styles']
 ) {
-  const graphFieldOptions = getGraphFieldOptions();
   builder.addCustomEditor({
     id: 'stacking',
     path: 'stacking',
-    name: t('grafana-ui.builder.stacking.name-stack-series', 'Stack series'),
+    name: 'Stack series',
     category: category,
-    useFieldset: true,
     defaultValue: defaultConfig,
     editor: StackingEditor,
     override: StackingEditor,

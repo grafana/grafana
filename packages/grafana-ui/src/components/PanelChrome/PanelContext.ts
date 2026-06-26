@@ -1,18 +1,19 @@
 import { createContext, useContext } from 'react';
 
 import {
-  type AnnotationEventUIModel,
-  type CoreApp,
-  type DashboardCursorSync,
-  type DataFrame,
-  type DataLinkPostProcessor,
-  type EventBus,
   EventBusSrv,
+  EventBus,
+  DashboardCursorSync,
+  AnnotationEventUIModel,
+  ThresholdsConfig,
+  CoreApp,
+  DataFrame,
+  DataLinkPostProcessor,
 } from '@grafana/data';
 
-import { type AdHocFilterItem } from '../Table/types';
+import { AdHocFilterItem } from '../Table/types';
 
-import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
+import { OnSelectRangeCallback, SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
 export interface PanelContext {
@@ -33,12 +34,11 @@ export interface PanelContext {
    */
   onSeriesColorChange?: (label: string, color: string) => void;
 
-  onToggleSeriesVisibility?: (label: string | string[] | null, mode: SeriesVisibilityChangeMode) => void;
+  onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
 
   canAddAnnotations?: () => boolean;
   canEditAnnotations?: (dashboardUID?: string) => boolean;
   canDeleteAnnotations?: (dashboardUID?: string) => boolean;
-  canExecuteActions?: () => boolean;
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
@@ -55,14 +55,25 @@ export interface PanelContext {
   onAddAdHocFilter?: (item: AdHocFilterItem) => void;
 
   /**
-   * Returns filters based on existing grouping or an empty array
-   */
-  getFiltersBasedOnGrouping?: (items: AdHocFilterItem[]) => AdHocFilterItem[];
-  /**
+   * Enables modifying thresholds directly from the panel
    *
-   * Used to apply multiple filters at once
+   * @alpha -- experimental
    */
-  onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
+  canEditThresholds?: boolean;
+
+  /**
+   * Shows threshold indicators on the right-hand side of the panel
+   *
+   * @alpha -- experimental
+   */
+  showThresholds?: boolean;
+
+  /**
+   * Called when a panel wants to change default thresholds configuration
+   *
+   * @alpha -- experimental
+   */
+  onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;
@@ -84,7 +95,6 @@ export interface PanelContext {
   /**
    * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.
    * @internal
-   * @deprecated Please use DataLinksContext instead. This property will be removed in next major.
    */
   dataLinkPostProcessor?: DataLinkPostProcessor;
 }

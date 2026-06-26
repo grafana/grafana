@@ -1,5 +1,5 @@
-import { type OptionsPaneCategoryDescriptor } from '../OptionsPaneCategoryDescriptor';
-import { type OptionsPaneItemDescriptor } from '../OptionsPaneItemDescriptor';
+import { OptionsPaneCategoryDescriptor } from '../OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemDescriptor } from '../OptionsPaneItemDescriptor';
 
 export function getRecentOptions(allOptions: OptionsPaneCategoryDescriptor[]) {
   const popularOptions: OptionsPaneItemDescriptor[] = [];

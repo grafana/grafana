@@ -29,7 +29,10 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -128,7 +131,10 @@
       "type": "state-timeline"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -231,7 +237,10 @@
       "type": "state-timeline"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "description": "Should show gaps",
       "fieldConfig": {
         "defaults": {
@@ -334,7 +343,10 @@
       "type": "state-timeline"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -428,7 +440,12 @@
   ],
   "refresh": false,
   "schemaVersion": 36,
-  "tags": ["gdev", "panel-tests", "graph-ng", "demo"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng",
+    "demo"
+  ],
   "templating": {
     "list": []
   },

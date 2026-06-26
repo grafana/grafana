@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -100,8 +99,9 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 }
 
 func TestIntegrationPluginSettings(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := db.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	psService := ProvideService(store, secretsService)

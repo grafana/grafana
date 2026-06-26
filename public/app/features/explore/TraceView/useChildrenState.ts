@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { type TraceSpan } from './components/types/trace';
+import { TraceSpan } from './components';
 
 /**
  * Children state means whether spans are collapsed or not. Also provides some functions to manipulate that state.

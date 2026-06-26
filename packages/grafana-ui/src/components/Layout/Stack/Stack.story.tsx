@@ -1,23 +1,13 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { type ThemeSpacingTokens } from '@grafana/data';
+import { ThemeSpacingTokens } from '@grafana/data';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
+import { useTheme2 } from '../../../themes';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
-import { type JustifyContent, type Wrap, type Direction } from '../types';
+import { JustifyContent, Wrap, Direction } from '../types';
 
 import { Stack } from './Stack';
 import mdx from './Stack.mdx';
-
-const meta: Meta<typeof Stack> = {
-  title: 'Layout/Stack',
-  component: Stack,
-  parameters: {
-    docs: {
-      page: mdx,
-    },
-  },
-};
 
 const Item = ({ color, text, height }: { color: string; text?: string | number; height?: string }) => {
   return (
@@ -36,11 +26,21 @@ const Item = ({ color, text, height }: { color: string; text?: string | number; 
   );
 };
 
-export const Basic: StoryFn<typeof Stack> = (args) => {
+const meta: Meta<typeof Stack> = {
+  title: 'General/Layout/Stack',
+  component: Stack,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
+};
+
+export const Basic: StoryFn<typeof Stack> = ({ direction, wrap, alignItems, justifyContent, gap }) => {
   const theme = useTheme2();
   return (
     <div style={{ width: '600px', height: '600px', border: '1px solid grey' }}>
-      <Stack {...args}>
+      <Stack direction={direction} wrap={wrap} alignItems={alignItems} justifyContent={justifyContent} gap={gap}>
         {Array.from({ length: 5 }).map((_, i) => (
           <Item key={i} color={theme.colors.warning.main} text={i + 1} />
         ))}
@@ -51,8 +51,6 @@ export const Basic: StoryFn<typeof Stack> = (args) => {
 
 Basic.argTypes = {
   gap: SpacingTokenControl,
-  rowGap: SpacingTokenControl,
-  columnGap: SpacingTokenControl,
   direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
   wrap: { control: 'select', options: ['nowrap', 'wrap', 'wrap-reverse'] },
   alignItems: {

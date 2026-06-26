@@ -3,30 +3,21 @@ import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 
 import { CoreApp } from '@grafana/data';
-import { QueryEditorMode } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
+import { QueryEditorMode } from '@grafana/experimental';
 
-import { LokiQueryType } from '../dataquery.gen';
-import { createLokiDatasource } from '../mocks/datasource';
+import { createLokiDatasource } from '../__mocks__/datasource';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQueryBuilderExplained';
-import { type LokiQuery } from '../types';
+import { LokiQuery, LokiQueryType } from '../types';
 
 import { LokiQueryEditor } from './LokiQueryEditor';
-import { type LokiQueryEditorProps } from './types';
+import { LokiQueryEditorProps } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
-    getAppEvents: jest.fn().mockReturnValue({
-      subscribe: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
-    }),
     reportInteraction: jest.fn(),
   };
 });
-
-jest.mock('@grafana/assistant', () => ({
-  QueryWithAssistantButton: () => <div data-testid="query-with-assistant-button" />,
-}));
 
 // We need to mock this because it seems jest has problem importing monaco in tests
 jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
@@ -59,37 +50,6 @@ describe('LokiQueryEditorSelector', () => {
   afterEach(() => {
     window.localStorage.clear();
   });
-
-  beforeEach(() => {
-    config.featureToggles.queryWithAssistant = true;
-  });
-
-  it('shows the assistant button when feature toggle is enabled and app is Explore', async () => {
-    renderWithProps({}, { app: CoreApp.Explore });
-    expect(await screen.findByTestId('query-with-assistant-button')).toBeInTheDocument();
-  });
-
-  it('shows the assistant button when feature toggle is enabled and app is Dashboard', async () => {
-    renderWithProps({}, { app: CoreApp.Dashboard });
-    expect(await screen.findByTestId('query-with-assistant-button')).toBeInTheDocument();
-  });
-
-  it('shows the assistant button when feature toggle is enabled and app is PanelEditor', async () => {
-    renderWithProps({}, { app: CoreApp.PanelEditor });
-    expect(await screen.findByTestId('query-with-assistant-button')).toBeInTheDocument();
-  });
-
-  it('does not show the assistant button for UnifiedAlerting', async () => {
-    renderWithProps({}, { app: CoreApp.UnifiedAlerting });
-    expect(screen.queryByTestId('query-with-assistant-button')).not.toBeInTheDocument();
-  });
-
-  it('does not show the assistant button when feature toggle is disabled', async () => {
-    config.featureToggles.queryWithAssistant = false;
-    renderWithProps({}, { app: CoreApp.Explore });
-    expect(screen.queryByTestId('query-with-assistant-button')).not.toBeInTheDocument();
-  });
-
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
     render(<LokiQueryEditor {...defaultProps} />);
@@ -188,7 +148,7 @@ describe('LokiQueryEditorSelector', () => {
   it('parses query when changing to builder mode', async () => {
     const { rerender } = renderWithProps({
       refId: 'A',
-      expr: 'rate({instance="host.docker.internal:3000"}[$__auto])',
+      expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
       editorMode: QueryEditorMode.Code,
     });
     await expectCodeEditor();
@@ -198,7 +158,7 @@ describe('LokiQueryEditorSelector', () => {
         {...defaultProps}
         query={{
           refId: 'A',
-          expr: 'rate({instance="host.docker.internal:3000"}[$__auto])',
+          expr: 'rate({instance="host.docker.internal:3000"}[$__interval])',
           editorMode: QueryEditorMode.Builder,
         }}
       />
@@ -206,7 +166,7 @@ describe('LokiQueryEditorSelector', () => {
 
     await screen.findByText('host.docker.internal:3000');
     expect(screen.getByText('Rate')).toBeInTheDocument();
-    expect(screen.getByText('$__auto')).toBeInTheDocument();
+    expect(screen.getByText('$__interval')).toBeInTheDocument();
   });
 
   it('renders the label browser button', async () => {

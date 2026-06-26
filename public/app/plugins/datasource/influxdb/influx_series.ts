@@ -1,9 +1,9 @@
 import { each, map, includes, flatten, keys } from 'lodash';
 
-import { FieldType, type QueryResultMeta, type TimeSeries, type TableData } from '@grafana/data';
+import { FieldType, QueryResultMeta, TimeSeries, TableData } from '@grafana/data';
+import TableModel from 'app/core/TableModel';
 
-import TableModel from './table_model';
-import { type InfluxQuery } from './types';
+import { InfluxQuery } from './types';
 
 export default class InfluxSeries {
   refId?: string;
@@ -110,7 +110,7 @@ export default class InfluxSeries {
       let titleCol: any = null;
       let timeCol: any = null;
       let timeEndCol: any = null;
-      const tagsCol: string[] = [];
+      const tagsCol: any = [];
       let textCol: any = null;
 
       each(series.columns, (column, index) => {
@@ -152,10 +152,10 @@ export default class InfluxSeries {
           // Remove empty values, then split in different tags for comma separated values
           tags: flatten(
             tagsCol
-              .filter((t) => {
+              .filter((t: any) => {
                 return value[t];
               })
-              .map((t) => {
+              .map((t: any) => {
                 return value[t].split(',');
               })
           ),
@@ -187,7 +187,7 @@ export default class InfluxSeries {
     //
     // we have to keep this order both in table.columns and table.rows
 
-    each(this.series, (series, seriesIndex: number) => {
+    each(this.series, (series: any, seriesIndex: number) => {
       if (seriesIndex === 0) {
         const firstCol = series.columns[0];
         // Check the first column's name, if it is `time`, we

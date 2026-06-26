@@ -29,7 +29,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 14,
@@ -41,7 +42,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "flame_graph"
@@ -54,7 +56,10 @@
   "refresh": "",
   "revision": 1,
   "schemaVersion": 38,
-  "tags": ["gdev", "panel-tests"],
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
   "templating": {
     "list": []
   },

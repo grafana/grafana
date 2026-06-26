@@ -1,7 +1,7 @@
-import { type MonoTypeOperatorFunction } from 'rxjs';
+import { MonoTypeOperatorFunction } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { type BackendSrv } from 'app/core/services/backend_srv';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 export function cancelNetworkRequestsOnUnsubscribe<T>(
   backendSrv: BackendSrv,

@@ -1,7 +1,7 @@
-import { type ExploreUrlState } from '@grafana/data';
-import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
+import { ExploreUrlState } from '@grafana/data';
+import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
-import { type BaseExploreURL, type MigrationHandler } from './types';
+import { BaseExploreURL, MigrationHandler } from './types';
 
 export interface ExploreURLV0 extends BaseExploreURL {
   schemaVersion: 0;

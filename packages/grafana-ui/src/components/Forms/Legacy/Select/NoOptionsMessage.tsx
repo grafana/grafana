@@ -17,3 +17,5 @@ export const NoOptionsMessage = <T extends unknown>(props: Props<T>) => {
     </components.NoOptionsMessage>
   );
 };
+
+export default NoOptionsMessage;

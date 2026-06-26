@@ -1,4 +1,4 @@
-import { type LanguageDefinition } from '../monarch/register';
+import { LanguageDefinition } from '../monarch/register';
 
 const cloudWatchSqlLanguageDefinition: LanguageDefinition = {
   id: 'cloudwatch-sql',

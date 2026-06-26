@@ -1,7 +1,7 @@
-import { type FC, type JSX } from 'react';
-import { useFieldArray, type UseFieldArrayProps } from 'react-hook-form';
+import { FC } from 'react';
+import { useFieldArray, UseFieldArrayProps } from 'react-hook-form';
 
-import { type FieldArrayApi } from '../../types/forms';
+import { FieldArrayApi } from '../../types';
 
 export interface FieldArrayProps extends UseFieldArrayProps {
   children: (api: FieldArrayApi) => JSX.Element;
@@ -9,8 +9,6 @@ export interface FieldArrayProps extends UseFieldArrayProps {
 
 /**
  * @deprecated use the `useFieldArray` hook from react-hook-form instead
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-fieldarray--docs
  */
 export const FieldArray: FC<FieldArrayProps> = ({ name, control, children, ...rest }) => {
   const { fields, append, prepend, remove, swap, move, insert } = useFieldArray({

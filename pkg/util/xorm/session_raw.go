@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
+	"xorm.io/core"
 )
 
 func (session *Session) queryPreprocess(sqlStr *string, paramStr ...any) {
@@ -220,11 +220,4 @@ func (session *Session) Exec(sqlOrArgs ...any) (sql.Result, error) {
 	}
 
 	return session.exec(sqlStr, args...)
-}
-
-// QueryRows executes a raw SQL query on the session's database connection (including
-// any active transaction). The SQL is processed through dialect filters. The caller
-// must close the returned rows.
-func (session *Session) QueryRows(sqlStr string, args ...any) (*core.Rows, error) {
-	return session.queryRows(sqlStr, args...)
 }

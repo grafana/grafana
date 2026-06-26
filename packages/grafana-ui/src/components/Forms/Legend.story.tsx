@@ -1,6 +1,7 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { Legend } from './Legend';
+import { Legend } from '@grafana/ui';
+
 import mdx from './Legend.mdx';
 
 const meta: Meta<typeof Legend> = {

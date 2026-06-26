@@ -18,9 +18,7 @@
   "links": [],
   "panels": [
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -145,9 +143,7 @@
       "colorBackground": false,
       "colorValue": true,
       "colors": ["#299c46", "#73BF69", "#d44a3a"],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": null,
       "format": "ms",
       "gauge": {
@@ -226,9 +222,7 @@
       "colorBackground": false,
       "colorValue": true,
       "colors": ["#299c46", "#73BF69", "#d44a3a"],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": null,
       "format": "ms",
       "gauge": {
@@ -307,9 +301,7 @@
       "colorBackground": false,
       "colorValue": true,
       "colors": ["#299c46", "#73BF69", "#d44a3a"],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": null,
       "format": "ms",
       "gauge": {
@@ -388,9 +380,7 @@
       "colorBackground": false,
       "colorValue": true,
       "colors": ["#299c46", "#73BF69", "#d44a3a"],
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": null,
       "format": "ms",
       "gauge": {
@@ -474,9 +464,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 3,
       "fillGradient": 0,
       "gridPos": {
@@ -573,9 +561,7 @@
       }
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 4,
         "w": 24,
@@ -631,9 +617,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -722,9 +706,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -813,9 +795,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -904,9 +884,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -998,9 +976,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 3,
       "fillGradient": 0,
       "gridPos": {
@@ -1104,9 +1080,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 10,
       "gridPos": {
@@ -1193,9 +1167,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 8,
       "gridPos": {
@@ -1284,9 +1256,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -1375,9 +1345,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -1466,9 +1434,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -1557,9 +1523,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -1651,9 +1615,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 3,
       "fillGradient": 0,
       "gridPos": {
@@ -1757,9 +1719,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -1848,9 +1808,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -1939,9 +1897,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -2030,9 +1986,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fill": 1,
       "fillGradient": 5,
       "gridPos": {
@@ -2115,9 +2069,7 @@
       }
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -2250,7 +2202,8 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "",
   "title": "Lazy Loading",

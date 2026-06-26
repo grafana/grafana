@@ -3,45 +3,32 @@ import { catchError, lastValueFrom, of, switchMap } from 'rxjs';
 
 import {
   CoreApp,
-  type DataFrame,
-  type DataQueryError,
-  type DataQueryResponse,
+  DataFrame,
+  DataQueryError,
+  DataQueryResponse,
   FieldCache,
   FieldType,
-  type LogRowModel,
-  type TimeRange,
+  LogRowModel,
+  TimeRange,
   toUtc,
   LogRowContextQueryDirection,
-  type LogRowContextOptions,
+  LogRowContextOptions,
   dateTime,
-  type ScopedVars,
-  store,
 } from '@grafana/data';
-import {
-  LabelParser,
-  LabelFilter,
-  LineFilters,
-  PipelineStage,
-  Logfmt,
-  Json,
-  JsonExpressionParser,
-  LogfmtParser,
-  LogfmtExpressionParser,
-} from '@grafana/lezer-logql';
+import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 
 import { LokiContextUi } from './components/LokiContextUi';
-import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
-import { type LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
-import { escapeLabelValueInExactSelector, getLokiLabelTypeFromFrame } from './languageUtils';
+import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
+import { escapeLabelValueInExactSelector, getLabelTypeFromFrame } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import {
   getNodePositionsFromQuery,
-  getNodesFromQuery,
+  getParserFromQuery,
   getStreamSelectorsFromQuery,
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { type ContextFilter, LabelType, type LokiQuery } from './types';
+import { ContextFilter, LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
@@ -83,7 +70,7 @@ export class LogContextProvider {
       this.cachedContextFilters = filters;
     }
 
-    return await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery, options?.timeWindowMs);
+    return await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
   }
 
   getLogRowContextQuery = async (
@@ -92,9 +79,6 @@ export class LogContextProvider {
     origQuery?: LokiQuery,
     cacheFilters = true
   ): Promise<LokiQuery> => {
-    if (origQuery && options?.scopedVars) {
-      origQuery = this.datasource.applyTemplateVariables(origQuery, options?.scopedVars);
-    }
     const { query } = await this.getQueryAndRange(row, options, origQuery, cacheFilters);
 
     if (!cacheFilters) {
@@ -110,9 +94,6 @@ export class LogContextProvider {
     options?: LogRowContextOptions,
     origQuery?: LokiQuery
   ): Promise<{ data: DataFrame[] }> => {
-    if (origQuery && options?.scopedVars) {
-      origQuery = this.datasource.applyTemplateVariables(origQuery, options?.scopedVars);
-    }
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const { query, range } = await this.getQueryAndRange(row, options, origQuery);
 
@@ -148,10 +129,11 @@ export class LogContextProvider {
     row: LogRowModel,
     limit: number,
     direction: LogRowContextQueryDirection,
-    origQuery?: LokiQuery,
-    timeWindowMs = 2 * 60 * 60 * 1000
+    origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
     const expr = this.prepareExpression(this.cachedContextFilters, origQuery);
+
+    const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
     const queryDirection =
       direction === LogRowContextQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
@@ -185,11 +167,11 @@ export class LogContextProvider {
             // because the are before but came it he response that should return only rows after.
             from: timestamp,
             // convert to ns, we lose some precision here but it is not that important at the far points of the context
-            to: toUtc(row.timeEpochMs + timeWindowMs),
+            to: toUtc(row.timeEpochMs + contextTimeBuffer),
           }
         : {
             // convert to ns, we lose some precision here but it is not that important at the far points of the context
-            from: toUtc(row.timeEpochMs - timeWindowMs),
+            from: toUtc(row.timeEpochMs - contextTimeBuffer),
             to: timestamp,
           };
 
@@ -203,15 +185,7 @@ export class LogContextProvider {
     };
   }
 
-  getLogRowContextUi(
-    row: LogRowModel,
-    runContextQuery?: () => void,
-    origQuery?: LokiQuery,
-    scopedVars?: ScopedVars
-  ): React.ReactNode {
-    if (origQuery && scopedVars) {
-      origQuery = this.datasource.applyTemplateVariables(origQuery, scopedVars);
-    }
+  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, origQuery?: LokiQuery): React.ReactNode {
     const updateFilter = (contextFilters: ContextFilter[]) => {
       this.cachedContextFilters = contextFilters;
 
@@ -239,7 +213,7 @@ export class LogContextProvider {
 
   prepareExpression(contextFilters: ContextFilter[], query: LokiQuery | undefined): string {
     let preparedExpression = this.processContextFiltersToExpr(contextFilters, query);
-    if (store.get(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
+    if (window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
       preparedExpression = this.processPipelineStagesToExpr(preparedExpression, query);
     }
     return preparedExpression;
@@ -261,26 +235,14 @@ export class LogContextProvider {
     let expr = `{${labelFilters}}`;
 
     // We need to have original query to get parser and include parsed labels
-    // We add all parsers if there is at least one parser in the query
+    // We only add parser and parsed labels if there is only one parser in query
     if (query) {
       let hasParser = false;
-      const parserInfo = isQueryWithParser(query.expr);
-      if (parserInfo.parserCount >= 1) {
+      if (isQueryWithParser(query.expr).parserCount === 1) {
         hasParser = true;
-        // Extract parsers
-        const parserNodes = getNodesFromQuery(query.expr, [
-          LabelParser,
-          JsonExpressionParser,
-          LogfmtParser,
-          LogfmtExpressionParser,
-        ]);
-
-        parserNodes.sort((a, b) => b.from - a.from);
-
-        // Add parsers first
-        for (const node of parserNodes) {
-          const parserName = query.expr.substring(node.from, node.to).trim();
-          expr = addParserToQuery(expr, parserName);
+        const parser = getParserFromQuery(query.expr);
+        if (parser) {
+          expr = addParserToQuery(expr, parser);
         }
       }
 
@@ -304,6 +266,10 @@ export class LogContextProvider {
   processPipelineStagesToExpr = (currentExpr: string, query: LokiQuery | undefined): string => {
     let newExpr = currentExpr;
     const origExpr = query?.expr ?? '';
+
+    if (isQueryWithParser(origExpr).parserCount > 1) {
+      return newExpr;
+    }
 
     const allNodePositions = getNodePositionsFromQuery(origExpr, [
       PipelineStage,
@@ -372,7 +338,7 @@ export class LogContextProvider {
 
     const contextFilters: ContextFilter[] = [];
     Object.entries(rowLabels).forEach(([label, value]) => {
-      const labelType = getLokiLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
+      const labelType = getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
       const filter: ContextFilter = {
         label,
         value: value,
@@ -385,7 +351,7 @@ export class LogContextProvider {
 
     // Secondly we check for preserved labels and update enabled state of filters based on that
     let preservedLabels: undefined | PreservedLabels = undefined;
-    const preservedLabelsString = store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+    const preservedLabelsString = window.localStorage.getItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
     if (preservedLabelsString) {
       try {
         preservedLabels = JSON.parse(preservedLabelsString);

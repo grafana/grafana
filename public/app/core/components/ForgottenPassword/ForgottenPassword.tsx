@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, Legend, Container, useStyles2, LinkButton, Stack } from '@grafana/ui';
 import config from 'app/core/config';
@@ -41,52 +40,37 @@ export const ForgottenPassword = () => {
   if (emailSent) {
     return (
       <div>
-        <p>
-          <Trans i18nKey="forgot-password.email-sent">
-            An email with a reset link has been sent to the email address. You should receive it shortly.
-          </Trans>
-        </p>
+        <p>An email with a reset link has been sent to the email address. You should receive it shortly.</p>
         <Container margin="md" />
         <LinkButton variant="primary" href={loginHref}>
-          <Trans i18nKey="forgot-password.back-button">Back to login</Trans>
+          Back to login
         </LinkButton>
       </div>
     );
   }
   return (
     <form onSubmit={handleSubmit(sendEmail)}>
-      <Legend>
-        <Trans i18nKey="forgot-password.reset-password-header">Reset password</Trans>
-      </Legend>
+      <Legend>Reset password</Legend>
       <Field
-        label={t('forgot-password.user-field-label', 'User')}
-        description={t(
-          'forgot-password.user-field-description',
-          'Enter your information to get a reset link sent to you'
-        )}
+        label="User"
+        description="Enter your information to get a reset link sent to you"
         invalid={!!errors.userOrEmail}
         error={errors?.userOrEmail?.message}
       >
         <Input
           id="user-input"
-          placeholder={t('forgot-password.user-field-placeholder', 'Email or username')}
+          placeholder="Email or username"
           {...register('userOrEmail', { required: 'Email or username is required' })}
         />
       </Field>
       <Stack>
-        <Button type="submit">
-          <Trans i18nKey="forgot-password.send-email-button">Send reset email</Trans>
-        </Button>
+        <Button type="submit">Send reset email</Button>
         <LinkButton fill="text" href={loginHref}>
-          <Trans i18nKey="forgot-password.back-button">Back to login</Trans>
+          Back to login
         </LinkButton>
       </Stack>
 
-      <p className={styles}>
-        <Trans i18nKey="forgot-password.contact-admin">
-          Did you forget your username or email? Contact your Grafana administrator.
-        </Trans>
-      </p>
+      <p className={styles}>Did you forget your username or email? Contact your Grafana administrator.</p>
     </form>
   );
 };

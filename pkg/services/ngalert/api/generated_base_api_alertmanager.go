@@ -23,6 +23,7 @@ type AlertmanagerApi interface {
 	RouteCreateGrafanaSilence(*contextmodel.ReqContext) response.Response
 	RouteCreateSilence(*contextmodel.ReqContext) response.Response
 	RouteDeleteAlertingConfig(*contextmodel.ReqContext) response.Response
+	RouteDeleteGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
 	RouteDeleteGrafanaSilence(*contextmodel.ReqContext) response.Response
 	RouteDeleteSilence(*contextmodel.ReqContext) response.Response
 	RouteGetAMAlertGroups(*contextmodel.ReqContext) response.Response
@@ -41,6 +42,7 @@ type AlertmanagerApi interface {
 	RouteGetSilences(*contextmodel.ReqContext) response.Response
 	RoutePostAMAlerts(*contextmodel.ReqContext) response.Response
 	RoutePostAlertingConfig(*contextmodel.ReqContext) response.Response
+	RoutePostGrafanaAlertingConfig(*contextmodel.ReqContext) response.Response
 	RoutePostGrafanaAlertingConfigHistoryActivate(*contextmodel.ReqContext) response.Response
 	RoutePostTestGrafanaReceivers(*contextmodel.ReqContext) response.Response
 	RoutePostTestGrafanaTemplates(*contextmodel.ReqContext) response.Response
@@ -68,6 +70,9 @@ func (f *AlertmanagerApiHandler) RouteDeleteAlertingConfig(ctx *contextmodel.Req
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteDeleteAlertingConfig(ctx, datasourceUIDParam)
+}
+func (f *AlertmanagerApiHandler) RouteDeleteGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteDeleteGrafanaAlertingConfig(ctx)
 }
 func (f *AlertmanagerApiHandler) RouteDeleteGrafanaSilence(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -151,11 +156,19 @@ func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *contextmodel.ReqCo
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	// Parse Request Body
-	conf := apimodels.ExternalAlertmanagerConfig{}
+	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.handleRoutePostAlertingConfig(ctx, conf, datasourceUIDParam)
+}
+func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
+	conf := apimodels.PostableUserConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePostGrafanaAlertingConfig(ctx, conf)
 }
 func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfigHistoryActivate(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -163,7 +176,12 @@ func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfigHistoryActivate(c
 	return f.handleRoutePostGrafanaAlertingConfigHistoryActivate(ctx, idParam)
 }
 func (f *AlertmanagerApiHandler) RoutePostTestGrafanaReceivers(ctx *contextmodel.ReqContext) response.Response {
-	return f.handleRoutePostTestGrafanaReceivers(ctx)
+	// Parse Request Body
+	conf := apimodels.TestReceiversConfigBodyParams{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePostTestGrafanaReceivers(ctx, conf)
 }
 func (f *AlertmanagerApiHandler) RoutePostTestGrafanaTemplates(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
@@ -209,6 +227,18 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 				http.MethodDelete,
 				"/api/alertmanager/{DatasourceUID}/config/api/v1/alerts",
 				api.Hooks.Wrap(srv.RouteDeleteAlertingConfig),
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodDelete, "/api/alertmanager/grafana/config/api/v1/alerts"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/alertmanager/grafana/config/api/v1/alerts",
+				api.Hooks.Wrap(srv.RouteDeleteGrafanaAlertingConfig),
 				m,
 			),
 		)
@@ -425,6 +455,18 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApi, m *metrics
 				http.MethodPost,
 				"/api/alertmanager/{DatasourceUID}/config/api/v1/alerts",
 				api.Hooks.Wrap(srv.RoutePostAlertingConfig),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/alertmanager/grafana/config/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/alertmanager/grafana/config/api/v1/alerts"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/alertmanager/grafana/config/api/v1/alerts",
+				api.Hooks.Wrap(srv.RoutePostGrafanaAlertingConfig),
 				m,
 			),
 		)

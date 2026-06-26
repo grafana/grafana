@@ -1,8 +1,8 @@
 import { isKeyHotkey } from 'is-hotkey';
-import type * as React from 'react';
-import { type RangeJSON, Range as SlateRange } from 'slate';
+import * as React from 'react';
+import { RangeJSON, Range as SlateRange } from 'slate';
 import Plain from 'slate-plain-serializer';
-import { type Editor, type Plugin } from 'slate-react';
+import { Editor, Plugin } from 'slate-react';
 
 const isIndentLeftHotkey = isKeyHotkey('mod+[');
 const isShiftTabHotkey = isKeyHotkey('shift+tab');

@@ -1,15 +1,15 @@
 // Libraries
-import { memo } from 'react';
+import { PureComponent } from 'react';
 
-import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 
 type Props = DataSourcePluginOptionsEditorProps;
 
 /**
  * Empty Config Editor -- settings to save
  */
-export const ConfigEditor = memo<Props>(() => {
-  return <div />;
-});
-
-ConfigEditor.displayName = 'ConfigEditor';
+export class ConfigEditor extends PureComponent<Props> {
+  render() {
+    return <div />;
+  }
+}

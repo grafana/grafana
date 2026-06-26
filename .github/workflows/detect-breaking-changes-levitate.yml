@@ -6,42 +6,48 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions: {}
+permissions:
+  contents: read
+  id-token: write
 
 on:
   pull_request:
     paths:
       - 'packages/**'
-      - '.nvmrc'
-      - '.github/workflows/detect-breaking-changes-levitate.yml'
     branches:
       - 'main'
 
 jobs:
   buildPR:
     name: Build PR packages artifacts
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: './pr'
-    permissions:
-      contents: read
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           path: './pr'
-          persist-credentials: false
-
-      - name: Setup Node
-        uses: ./pr/.github/actions/setup-node
+      - uses: actions/setup-node@v4
         with:
-          cwd: './pr'
+          node-version: 20.9.0
 
-      - name: Install yarn dependencies
-        uses: ./pr/.github/actions/yarn-install
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore yarn cache
+        uses: actions/cache@v4
+        id: yarn-cache
         with:
-          cwd: './pr'
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
+          restore-keys: |
+            yarn-cache-folder-
+
+      - name: Install dependencies
+        run: yarn install --immutable
 
       - name: Build packages
         run: yarn packages:build
@@ -53,42 +59,43 @@ jobs:
         run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: buildPr
           path: './pr/pr_built_packages.zip'
 
   buildBase:
     name: Build Base packages artifacts
-    runs-on: ubuntu-arm64
-    permissions:
-      contents: read
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: './base'
 
     steps:
-      # We need to check out the PR's branch to get actions from the same branch, so if they change in a PR this action can pick up those changes
-      - uses: actions/checkout@v5
-        with:
-          path: './pr'
-          persist-credentials: false
-
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
-          persist-credentials: false
 
-      - name: Setup Node
-        uses: ./pr/.github/actions/setup-node # run the action from the PR, pointing to the base checkout
+      - uses: actions/setup-node@v4
         with:
-          cwd: './base'
+          node-version: 20.9.0
 
-      - name: Install yarn dependencies
-        uses: ./pr/.github/actions/yarn-install # run the action from the PR, pointing to the base checkout
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore yarn cache
+        uses: actions/cache@v4
+        id: yarn-cache
         with:
-          cwd: './base'
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
+          restore-keys: |
+            yarn-cache-folder-
+
+      - name: Install dependencies
+        run: yarn install --immutable
 
       - name: Build packages
         run: yarn packages:build
@@ -100,14 +107,14 @@ jobs:
         run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: buildBase
           path: './base/base_built_packages.zip'
 
   Detect:
     name: Detect breaking changes between PR and base
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-latest
     needs: ['buildPR', 'buildBase']
     env:
       GITHUB_STEP_NUMBER: 8
@@ -116,23 +123,18 @@ jobs:
       id-token: 'write'
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+          node-version: 20.9.0
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: buildBase
 
@@ -143,16 +145,14 @@ jobs:
         run: unzip -j base_built_packages.zip -d ./base && rm base_built_packages.zip
 
       - id: 'auth'
-        uses: 'google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093'
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: projects/304398677251/locations/global/workloadIdentityPools/github/providers/github-provider
-          service_account: github-plugins-data-levitate@grafanalabs-workload-identity.iam.gserviceaccount.com
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.LEVITATE_SA }}
           project_id: 'grafanalabs-global'
 
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db'
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: 'google-github-actions/setup-gcloud@v2'
         with:
           version: '>= 363.0.0'
           project_id: 'grafanalabs-global'
@@ -160,22 +160,17 @@ jobs:
 
       - name: Detect breaking changes
         id: breaking-changes
-        run: ./.github/workflows/scripts/levitate/check-breaking-changes.sh
+        run: ./scripts/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
-          IS_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }} # used in check-breaking-changes.sh and levitate-parse-json-report.js
 
       - name: Persisting the check output
         run: |
             mkdir -p ./levitate
-            echo "{ \"exit_code\": ${IS_BREAKING}, \"message\": \"${MESSAGE}\", \"pr_number\": \"${PR_NUMBER}\" }" > ./levitate/result.json
-        env:
-          IS_BREAKING: ${{ steps.breaking-changes.outputs.is_breaking }}
-          MESSAGE: ${{ steps.breaking-changes.outputs.message }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
 
       - name: Upload check output as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: levitate
           path: levitate/
@@ -183,42 +178,37 @@ jobs:
 
   Report:
     name: Report breaking changes in PR comment
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-latest
     needs: ['Detect']
-    permissions:
-      contents: read
-      id-token: write
-    if: github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
-      - name: Get GitHub App token
-        id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          github_app: grafana-pr-automation
+          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
 
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: false
+      - uses: actions/checkout@v4
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: levitate
 
       - name: Parsing levitate result
-        uses: actions/github-script@v8
+        uses: actions/github-script@v6
         id: levitate-run
         with:
           script: |
             const filePath = 'result.json';
-            const script = require('./.github/workflows/scripts/levitate/json-file-to-job-output.js');
+            const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
             await script({ core, filePath });
 
       # Check if label exists
       - name: Check if "levitate breaking change" label exists
         id: does-label-exist
-        uses: actions/github-script@v8
+        uses: actions/github-script@v6
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
@@ -248,7 +238,7 @@ jobs:
       # Comment on the PR
       - name: Comment on PR
         if: steps.levitate-run.outputs.exit_code == 1
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: levitate-breaking-change-comment
           number: ${{ github.event.pull_request.number }}
@@ -260,27 +250,27 @@ jobs:
             [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
 
             * Your pull request merge won't be blocked.
-          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       # Remove comment from the PR (no more breaking changes)
       - name: Remove comment from PR
         if: steps.levitate-run.outputs.exit_code == 0
-        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: levitate-breaking-change-comment
           number: ${{ github.event.pull_request.number }}
           delete: true
-          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Send Slack Message via Payload
         id: slack
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && github.repository == 'grafana/grafana'
-        uses: grafana/shared-workflows/actions/send-slack-message@7b628e7352c2dea057c565cc4fcd5564d5f396c0 #v1.0.0
+        uses: grafana/shared-workflows/actions/send-slack-message@main
         with:
-          channel-id: "C08QATP6AE9"
+          channel-id: "C031SLFH6G0"
           payload:  |
             {
-              "channel": "C08QATP6AE9",
+              "channel": "C031SLFH6G0",
               "text": ":warning: Possible breaking changes detected in *PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} :warning:",
               "icon_emoji": ":grot:",
               "username": "Levitate Bot",
@@ -297,7 +287,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>\n\nAuthor: ${{ github.event.pull_request.user.login }}"
+                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>"
                     },
                     {
                       "type": "mrkdwn",
@@ -311,11 +301,11 @@ jobs:
       # Add the label
       - name: Add "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0
-        uses: actions/github-script@v8
+        uses: actions/github-script@v6
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             await github.rest.issues.addLabels({
               issue_number: process.env.PR_NUMBER,
@@ -327,11 +317,11 @@ jobs:
       # Remove label (no more breaking changes)
       - name: Remove "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1
-        uses: actions/github-script@v8
+        uses: actions/github-script@v6
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             await github.rest.issues.removeLabel({
               issue_number: process.env.PR_NUMBER,
@@ -343,50 +333,44 @@ jobs:
       # Add reviewers
       # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
       # Related issue: https://github.com/renovatebot/renovate/issues/1908
-      - name: Add "grafana/grafana-frontend-platform" as a reviewer
+      - name: Add "grafana/plugins-platform-frontend" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
-        uses: actions/github-script@v8
-        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
-        continue-on-error: true
+        uses: actions/github-script@v6
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             await github.rest.pulls.requestReviewers({
               pull_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               reviewers: [],
-              team_reviewers: ['grafana-frontend-platform']
+              team_reviewers: ['plugins-platform-frontend']
             });
 
       # Remove reviewers (no more breaking changes)
-      - name: Remove "grafana/grafana-frontend-platform" from the list of reviewers
+      - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
-        uses: actions/github-script@v8
-        # FIXME: GATB doesn't seem to grant us necessary pull_requests write permissions
-        continue-on-error: true
+        uses: actions/github-script@v6
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
-          github-token: ${{ steps.get-github-app-token.outputs.token }}
+          github-token: ${{ steps.generate_token.outputs.token }}
           script: |
             await github.rest.pulls.removeRequestedReviewers({
               pull_number: process.env.PR_NUMBER,
               owner: context.repo.owner,
               repo: context.repo.repo,
               reviewers: [],
-              team_reviewers: ['grafana-frontend-platform']
+              team_reviewers: ['plugins-platform-frontend']
             });
 
       - name: Exit
         run: |
-          if [ "${LV_EXIT_CODE}" -ne 0 ]; then
+          if [ "${{ steps.levitate-run.outputs.exit_code }}" -ne 0 ]; then
             echo "Breaking changes detected. Please check the levitate report in your pull request. This workflow won't block merging."
           fi
 
-          exit "${LV_EXIT_CODE}"
+          exit ${{ steps.levitate-run.outputs.exit_code }}
         shell: bash
-        env:
-          LV_EXIT_CODE: ${{ steps.levitate-run.outputs.exit_code }}

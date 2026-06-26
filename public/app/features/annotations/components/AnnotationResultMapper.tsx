@@ -1,38 +1,51 @@
-import { css } from '@emotion/css';
-import { memo, useState, useEffect, useCallback } from 'react';
+import { PureComponent } from 'react';
 
 import {
-  type SelectableValue,
+  SelectableValue,
   getFieldDisplayName,
-  type AnnotationEvent,
-  type AnnotationEventMappings,
-  type AnnotationEventFieldMapping,
+  AnnotationEvent,
+  AnnotationEventMappings,
+  AnnotationEventFieldMapping,
   formattedValueToString,
   AnnotationEventFieldSource,
   getValueFormat,
-  type GrafanaTheme2,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Select, Tooltip, Icon, useStyles2, Label } from '@grafana/ui';
+import { Select, Tooltip, Icon } from '@grafana/ui';
 
-import { getAnnotationEventNames, type AnnotationFieldInfo } from '../standardAnnotationSupport';
-import { type AnnotationQueryResponse } from '../types';
+import { annotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
+import { AnnotationQueryResponse } from '../types';
+
+// const valueOptions: Array<SelectableValue<AnnotationEventFieldSource>> = [
+//   { value: AnnotationEventFieldSource.Field, label: 'Field', description: 'Set the field value from a response field' },
+//   { value: AnnotationEventFieldSource.Text, label: 'Text', description: 'Enter direct text for the value' },
+//   { value: AnnotationEventFieldSource.Skip, label: 'Skip', description: 'Hide this field' },
+// ];
 
 interface Props {
   response?: AnnotationQueryResponse;
+
   mappings?: AnnotationEventMappings;
+
   change: (mappings?: AnnotationEventMappings) => void;
 }
 
-export const AnnotationFieldMapper = memo(({ response, mappings, change }: Props) => {
-  const styles = useStyles2(getStyles);
-  const [fieldNames, setFieldNames] = useState<Array<SelectableValue<string>>>([]);
+interface State {
+  fieldNames: Array<SelectableValue<string>>;
+}
 
-  useEffect(() => {
-    const panelData = response?.panelData;
+export class AnnotationFieldMapper extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      fieldNames: [],
+    };
+  }
+
+  updateFields = () => {
+    const panelData = this.props.response?.panelData;
     const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
     if (frame && frame.fields) {
-      const newFieldNames = frame.fields.map((f) => {
+      const fieldNames = frame.fields.map((f) => {
         const name = getFieldDisplayName(f, frame);
 
         let description = '';
@@ -57,135 +70,135 @@ export const AnnotationFieldMapper = memo(({ response, mappings, change }: Props
           description,
         };
       });
-      setFieldNames(newFieldNames);
+      this.setState({ fieldNames });
     }
-  }, [response]);
+  };
 
-  const onFieldNameChange = useCallback(
-    (k: keyof AnnotationEvent, v: SelectableValue<string>) => {
-      const currentMappings = mappings || {};
+  componentDidMount() {
+    this.updateFields();
+  }
 
-      // in case of clearing the value
-      if (!v) {
-        const newMappings = { ...mappings };
-        delete newMappings[k];
-        change(newMappings);
-        return;
-      }
+  componentDidUpdate(oldProps: Props) {
+    if (oldProps.response !== this.props.response) {
+      this.updateFields();
+    }
+  }
 
-      const mapping = currentMappings[k] || {};
+  onFieldSourceChange = (k: keyof AnnotationEvent, v: SelectableValue<AnnotationEventFieldSource>) => {
+    const mappings = this.props.mappings || {};
+    const mapping = mappings[k] || {};
 
-      change({
-        ...currentMappings,
-        [k]: {
-          ...mapping,
-          value: v.value,
-          source: AnnotationEventFieldSource.Field,
-        },
+    this.props.change({
+      ...mappings,
+      [k]: {
+        ...mapping,
+        source: v.value || AnnotationEventFieldSource.Field,
+      },
+    });
+  };
+
+  onFieldNameChange = (k: keyof AnnotationEvent, v: SelectableValue<string>) => {
+    const mappings = this.props.mappings || {};
+
+    // in case of clearing the value
+    if (!v) {
+      const newMappings = { ...this.props.mappings };
+      delete newMappings[k];
+      this.props.change(newMappings);
+      return;
+    }
+
+    const mapping = mappings[k] || {};
+
+    this.props.change({
+      ...mappings,
+      [k]: {
+        ...mapping,
+        value: v.value,
+        source: AnnotationEventFieldSource.Field,
+      },
+    });
+  };
+
+  renderRow(row: AnnotationFieldInfo, mapping: AnnotationEventFieldMapping, first?: AnnotationEvent) {
+    const { fieldNames } = this.state;
+
+    let picker = [...fieldNames];
+    const current = mapping.value;
+    let currentValue = fieldNames.find((f) => current === f.value);
+    if (current && !currentValue) {
+      picker.push({
+        label: current,
+        value: current,
       });
-    },
-    [mappings, change]
-  );
+    }
 
-  const renderRow = useCallback(
-    (row: AnnotationFieldInfo, mapping: AnnotationEventFieldMapping, first?: AnnotationEvent) => {
-      let picker = [...fieldNames];
-      const current = mapping.value;
-      let currentValue = fieldNames.find((f) => current === f.value);
-      if (current && !currentValue) {
-        picker.push({
-          label: current,
-          value: current,
-        });
-      }
+    let value = first ? first[row.key] : '';
+    if (value && row.key.startsWith('time')) {
+      const fmt = getValueFormat('dateTimeAsIso');
+      value = formattedValueToString(fmt(value));
+    }
+    if (value === null || value === undefined) {
+      value = ''; // empty string
+    }
 
-      let value = first ? first[row.key] : '';
-      if (value && row.key.startsWith('time')) {
-        const fmt = getValueFormat('dateTimeAsIso');
-        value = formattedValueToString(fmt(value));
-      }
-      if (value === null || value === undefined) {
-        value = ''; // empty string
-      }
+    return (
+      <tr key={row.key}>
+        <td>
+          {row.label || row.key}{' '}
+          {row.help && (
+            <Tooltip content={row.help}>
+              <Icon name="info-circle" />
+            </Tooltip>
+          )}
+        </td>
+        {/* <td>
+          <Select
 
-      return (
-        <tr key={row.key}>
-          <td>
-            <Label htmlFor={`select-${row.key}`}>
-              {row.label || row.key}{' '}
-              {row.help && (
-                <Tooltip content={row.help}>
-                  <Icon name="info-circle" />
-                </Tooltip>
-              )}
-            </Label>
-          </td>
-          <td>
-            <Select
-              value={currentValue}
-              options={picker}
-              inputId={`select-${row.key}`}
-              placeholder={row.placeholder || row.key}
-              onChange={(v: SelectableValue<string>) => {
-                onFieldNameChange(row.key, v);
-              }}
-              noOptionsMessage={t(
-                'annotations.annotation-field-mapper.noOptionsMessage-unknown-field-names',
-                'Unknown field names'
-              )}
-              allowCustomValue={true}
-              isClearable
-            />
-          </td>
-          <td className={styles.valueCell}>
-            {value ? (
-              <Tooltip content={value}>
-                <span>{value}</span>
-              </Tooltip>
-            ) : (
-              ''
-            )}
-          </td>
-        </tr>
-      );
-    },
-    [fieldNames, onFieldNameChange, styles.valueCell]
-  );
+            value={valueOptions.find(v => v.value === mapping.source) || valueOptions[0]}
+            options={valueOptions}
+            onChange={(v: SelectableValue<AnnotationEventFieldSource>) => {
+              this.onFieldSourceChange(row.key, v);
+            }}
+          />
+        </td> */}
+        <td>
+          <Select
+            value={currentValue}
+            options={picker}
+            placeholder={row.placeholder || row.key}
+            onChange={(v: SelectableValue<string>) => {
+              this.onFieldNameChange(row.key, v);
+            }}
+            noOptionsMessage="Unknown field names"
+            allowCustomValue={true}
+            isClearable
+          />
+        </td>
+        <td>{`${value}`}</td>
+      </tr>
+    );
+  }
 
-  const first = response?.events?.[0];
-  const currentMappings = mappings || {};
+  render() {
+    const first = this.props.response?.events?.[0];
+    const mappings = this.props.mappings || {};
 
-  return (
-    <table className="filter-table">
-      <thead>
-        <tr>
-          <th>
-            <Trans i18nKey="annotations.annotation-field-mapper.annotation">Annotation</Trans>
-          </th>
-          <th>
-            <Trans i18nKey="annotations.annotation-field-mapper.from">From</Trans>
-          </th>
-          <th>
-            <Trans i18nKey="annotations.annotation-field-mapper.first-value">First value</Trans>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {getAnnotationEventNames().map((row) => {
-          return renderRow(row, currentMappings[row.key] || {}, first);
-        })}
-      </tbody>
-    </table>
-  );
-});
-
-AnnotationFieldMapper.displayName = 'AnnotationFieldMapper';
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  valueCell: css({
-    maxWidth: 200,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  }),
-});
+    return (
+      <table className="filter-table">
+        <thead>
+          <tr>
+            <th>Annotation</th>
+            <th>From</th>
+            <th>First Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {annotationEventNames.map((row) => {
+            return this.renderRow(row, mappings[row.key] || {}, first);
+          })}
+        </tbody>
+      </table>
+    );
+  }
+}

@@ -16,25 +16,17 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { withTheme2, stylesFactory, Button } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import {
-  type TUpdateViewRangeTimeFunction,
-  type ViewRangeTimeUpdate,
-  type ViewRange,
-} from '../../TraceTimelineViewer/types';
-import type TNil from '../../types/TNil';
-import DraggableManager from '../../utils/DraggableManager/DraggableManager';
-import EUpdateTypes from '../../utils/DraggableManager/EUpdateTypes';
-import { type DraggableBounds, type DraggingUpdate } from '../../utils/DraggableManager/types';
+import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate, TNil } from '../../index';
+import DraggableManager, { DraggableBounds, DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager';
 
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   // Need this cause emotion will merge emotion generated classes into single className if used with cx from emotion
   // package and the selector won't work
   const ViewingLayerResetZoomHoverClassName = 'JaegerUiComponents__ViewingLayerResetZoomHoverClassName';
@@ -117,7 +109,7 @@ type ViewingLayerState = {
 /**
  * Designate the tags for the different dragging managers. Exported for tests.
  */
-const dragTypes = {
+export const dragTypes = {
   /**
    * Tag for dragging the right scrubber, e.g. end of the current view range.
    */
@@ -152,7 +144,7 @@ function getNextViewLayout(start: number, position: number) {
  * `ViewingLayer` is rendered on top of the Canvas rendering of the minimap and
  * handles showing the current view range and handles mouse UX for modifying it.
  */
-class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps, ViewingLayerState> {
+export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps, ViewingLayerState> {
   state: ViewingLayerState;
 
   _root: Element | TNil;
@@ -362,7 +354,7 @@ class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps, Viewin
             type="button"
             variant="secondary"
           >
-            <Trans i18nKey="explore.unthemed-viewing-layer.reset-selection">Reset selection</Trans>
+            Reset Selection
           </Button>
         )}
         <svg

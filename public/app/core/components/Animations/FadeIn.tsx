@@ -1,5 +1,5 @@
-import { type CSSProperties, useRef, type JSX } from 'react';
-import Transition, { type ExitHandler } from 'react-transition-group/Transition';
+import { CSSProperties, useRef } from 'react';
+import Transition, { ExitHandler } from 'react-transition-group/Transition';
 
 interface Props {
   duration: number;

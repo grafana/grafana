@@ -1,14 +1,14 @@
-import { type ComponentType } from 'react';
+import { ComponentType } from 'react';
 
 import {
-  type NumberFieldConfigSettings,
-  type SelectFieldConfigSettings,
-  type SliderFieldConfigSettings,
-  type StringFieldConfigSettings,
+  NumberFieldConfigSettings,
+  SelectFieldConfigSettings,
+  SliderFieldConfigSettings,
+  StringFieldConfigSettings,
 } from '../field/overrides/processors';
-import { type RegistryItem, Registry } from '../utils/Registry';
+import { RegistryItem, Registry } from '../utils/Registry';
 
-import { type OptionEditorConfig } from './options';
+import { OptionEditorConfig } from './options';
 
 /**
  * Option editor registry item
@@ -20,8 +20,6 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>
    * React component used to edit the options property
    */
   editor: ComponentType<TEditorProps>;
-
-  useFieldset?: boolean;
 
   /*
    * @param value
@@ -61,11 +59,11 @@ interface OptionsUIRegistryBuilderAPI<
     config: OptionEditorConfig<TOptions, TSettings, TOption>
   ): this;
 
-  addBooleanSwitch?<TSettings>(config: OptionEditorConfig<TOptions, TSettings, boolean>): this;
+  addBooleanSwitch?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, boolean>): this;
 
-  addUnitPicker?<TSettings>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
+  addUnitPicker?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
 
-  addColorPicker?<TSettings>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
+  addColorPicker?<TSettings = any>(config: OptionEditorConfig<TOptions, TSettings, string>): this;
 
   /**
    * Enables custom editor definition

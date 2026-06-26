@@ -1,11 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ComponentProps } from 'react';
-import { type Props } from 'react-virtualized-auto-sizer';
+import { ComponentProps } from 'react';
+import { Props } from 'react-virtualized-auto-sizer';
 
-import { type DataFrame, FieldType } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { DataFrame, FieldType } from '@grafana/data';
 
 import { InspectDataTab } from './InspectDataTab';
 
@@ -55,7 +53,7 @@ describe('InspectDataTab', () => {
   describe('when panel is not passed as prop (Explore)', () => {
     it('should render InspectDataTab', () => {
       render(<InspectDataTab {...createProps()} />);
-      expect(screen.getByTestId(selectors.components.PanelInspector.Data.content)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Panel inspector Data content/i)).toBeInTheDocument();
     });
     it('should render Data Option row', () => {
       render(<InspectDataTab {...createProps()} />);
@@ -77,8 +75,6 @@ describe('InspectDataTab', () => {
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
     it('should show download logs button if logs data', () => {
-      const oldConfig = config.exploreHideLogsDownload;
-      config.exploreHideLogsDownload = false;
       const dataWithLogs = [
         {
           name: 'Data frame with logs',
@@ -95,28 +91,6 @@ describe('InspectDataTab', () => {
       ] as unknown as DataFrame[];
       render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
       expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
-      config.exploreHideLogsDownload = oldConfig;
-    });
-    it('should not show download logs button if logs data but config disabled', () => {
-      const oldConfig = config.exploreHideLogsDownload;
-      config.exploreHideLogsDownload = true;
-      const dataWithLogs = [
-        {
-          name: 'Data frame with logs',
-          fields: [
-            { name: 'time', type: FieldType.time, values: [100, 200, 300], config: {} },
-            { name: 'name', type: FieldType.string, values: ['uniqueA', 'b', 'c'], config: {} },
-            { name: 'value', type: FieldType.number, values: [1, 2, 3], config: {} },
-          ],
-          length: 3,
-          meta: {
-            preferredVisualisationType: 'logs',
-          },
-        },
-      ] as unknown as DataFrame[];
-      render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
-      expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
-      config.exploreHideLogsDownload = oldConfig;
     });
     it('should not show download logs button if no logs data', () => {
       render(<InspectDataTab {...createProps()} />);

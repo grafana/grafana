@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
-import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 
-import { isGranted } from '../../hooks/abilities/abilityUtils';
-import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
-import { useGlobalRuleAbility } from '../../hooks/abilities/rules/ruleAbilities';
-import { RuleAction, SilenceAction } from '../../hooks/abilities/types';
+import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
+import { Authorize } from '../Authorize';
 
 interface AmNotificationsAlertDetailsProps {
   alertManagerSourceName: string;
@@ -24,42 +23,43 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
   // For Grafana Managed alerts the Generator URL redirects to the alert rule edit page, so update permission is required
   // For external alert manager the Generator URL redirects to an external service which we don't control
   const isGrafanaSource = isGrafanaRulesSource(alertManagerSourceName);
-  const viewRuleAbility = useGlobalRuleAbility(RuleAction.View);
-  const isSeeSourceButtonEnabled = isGrafanaSource ? isGranted(viewRuleAbility) : true;
-  const canCreateSilence = isGranted(useSilenceAbility({ action: SilenceAction.Create }));
-  const canUpdateSilence = isGranted(useSilenceAbility({ action: SilenceAction.Update }));
+  const isSeeSourceButtonEnabled = isGrafanaSource
+    ? contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)
+    : true;
 
   return (
     <>
       <div className={styles.actionsRow}>
-        {alert.status.state === AlertState.Suppressed && (canCreateSilence || canUpdateSilence) && (
-          <LinkButton
-            href={`${makeAMLink(
-              '/alerting/silences',
-              alertManagerSourceName
-            )}&silenceIds=${alert.status.silencedBy.join(',')}`}
-            className={styles.button}
-            icon={'bell'}
-            size={'sm'}
-          >
-            <Trans i18nKey="alerting.alert-details.manage-silences">Manage silences</Trans>
-          </LinkButton>
+        {alert.status.state === AlertState.Suppressed && (
+          <Authorize actions={[AlertmanagerAction.CreateSilence, AlertmanagerAction.UpdateSilence]}>
+            <LinkButton
+              href={`${makeAMLink(
+                '/alerting/silences',
+                alertManagerSourceName
+              )}&silenceIds=${alert.status.silencedBy.join(',')}`}
+              className={styles.button}
+              icon={'bell'}
+              size={'sm'}
+            >
+              Manage silences
+            </LinkButton>
+          </Authorize>
         )}
-        {alert.status.state === AlertState.Active && canCreateSilence && (
-          <LinkButton
-            href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
-            className={styles.button}
-            icon={'bell-slash'}
-            size={'sm'}
-          >
-            <Trans i18nKey="alerting.alert-details.silence">Silence</Trans>
-          </LinkButton>
+        {alert.status.state === AlertState.Active && (
+          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
+            <LinkButton
+              href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
+              className={styles.button}
+              icon={'bell-slash'}
+              size={'sm'}
+            >
+              Silence
+            </LinkButton>
+          </Authorize>
         )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
-            {isGrafanaSource
-              ? t('alerting.alert-details.button-see-rule', 'See alert rule')
-              : t('alerting.alert-details.button-see-source', 'See source')}
+            {isGrafanaSource ? 'See alert rule' : 'See source'}
           </LinkButton>
         )}
       </div>
@@ -67,17 +67,11 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
         <AnnotationDetailsField key={annotationKey} annotationKey={annotationKey} value={annotationValue} />
       ))}
       <div className={styles.receivers}>
-        <Trans
-          i18nKey="alerting.alert-details.receivers-list"
-          values={{
-            receivers: alert.receivers
-              .map(({ name }) => name)
-              .filter((name) => !!name)
-              .join(', '),
-          }}
-        >
-          Receivers: {'{{receivers}}'}
-        </Trans>
+        Receivers:{' '}
+        {alert.receivers
+          .map(({ name }) => name)
+          .filter((name) => !!name)
+          .join(', ')}
       </div>
     </>
   );

@@ -29,7 +29,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "description": "",
       "fieldConfig": {
@@ -103,7 +104,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -111,7 +113,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -119,7 +122,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -305,7 +309,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "description": "",
       "fieldConfig": {
@@ -380,7 +385,8 @@
         {
           "alias": "+100",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "A",
@@ -390,7 +396,8 @@
         {
           "alias": "+50",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -399,7 +406,8 @@
         {
           "alias": "+25",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -408,7 +416,8 @@
         {
           "alias": "-50",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -417,7 +426,8 @@
         {
           "alias": "-100",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "E",
           "scenarioId": "csv_metric_values",
@@ -603,7 +613,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "description": "",
       "fieldConfig": {
@@ -691,7 +702,8 @@
         {
           "alias": "NegY",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -699,7 +711,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -707,7 +720,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -716,7 +730,8 @@
         {
           "alias": "Neg",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -928,7 +943,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "description": "",
       "fieldConfig": {
@@ -980,7 +996,9 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": ["max"],
+          "calcs": [
+            "max"
+          ],
           "displayMode": "hidden",
           "placement": "right"
         },
@@ -999,7 +1017,8 @@
         {
           "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8\nA, 10, 15,8,3,4,12,14,1\nB, 19, 5,8,3,4,12,14,6\nC, 15, 5,8,3,4,10,4,6\n",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1063,7 +1082,9 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": ["max"],
+          "calcs": [
+            "max"
+          ],
           "displayMode": "hidden",
           "placement": "right"
         },
@@ -1146,7 +1167,9 @@
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
-          "calcs": ["max"],
+          "calcs": [
+            "max"
+          ],
           "displayMode": "hidden",
           "placement": "right"
         },
@@ -1476,7 +1499,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1570,7 +1594,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1578,7 +1603,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -1586,7 +1612,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -1594,7 +1621,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -1821,7 +1849,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "description": "",
       "fieldConfig": {
@@ -1896,7 +1925,8 @@
         {
           "alias": "+100",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "A",
@@ -1906,7 +1936,8 @@
         {
           "alias": "+50",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -1915,7 +1946,8 @@
         {
           "alias": "+25",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -1924,7 +1956,8 @@
         {
           "alias": "-50",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -1933,7 +1966,8 @@
         {
           "alias": "-100",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "E",
           "scenarioId": "csv_metric_values",
@@ -2032,7 +2066,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "description": "",
       "fieldConfig": {
@@ -2119,7 +2154,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "A",
@@ -2129,7 +2165,8 @@
         {
           "alias": "NegY",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -2141,7 +2178,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2214,7 +2252,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -2222,7 +2261,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_metric_values",
@@ -2230,7 +2270,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "csv_metric_values",
@@ -2238,7 +2279,8 @@
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "csv_metric_values",
@@ -2457,7 +2499,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2568,7 +2611,8 @@
         {
           "csvContent": "\"Time\",\"Sum daily.cost_per_kwh\"\n1639612800000,\n1639872000000,0\n1639958400000,272\n1640044800000,272\n1640131200000,327\n1640217600000,290\n1640304000000,286\n1640390400000,256\n1640476800000,397\n1640563200000,295\n1640649600000,310\n1640736000000,224\n1640822400000,291\n1640908800000,265\n1640995200000,256\n1641081600000,399\n1641168000000,471\n1641254400000,325\n1641340800000,363\n1641427200000,375\n1641513600000,365\n1641600000000,492\n1641686400000,409\n1641772800000,371\n1641859200000,448\n1641945600000,372\n1642032000000,0\n1642118400000,0\n1642204800000,0\n1642291200000,0\n1642377600000,0\n1642464000000,0\n\n",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "A",
@@ -2577,7 +2621,8 @@
         {
           "csvContent": "\"Time\",\"Sum morning.cost_per_kwh\",\"Sum afternoon.cost_per_kwh\",\"Sum evening.cost_per_kwh\",\"Sum night.cost_per_kwh\",\"Sum late.cost_per_kwh\"\n1639612800000,0,0,0,0,0\n1639872000000,,,,,\n1639958400000,,,,,\n1640044800000,,,,,\n1640131200000,,,,,\n1640217600000,32,28,62,63,32\n1640304000000,,,,,\n1640390400000,,,,,\n1640476800000,,,,,\n1640563200000,,,,,\n1640649600000,,,,,\n1640736000000,,,,,\n1640822400000,47,53,68,96,45\n1640908800000,,,,,\n1640995200000,,,,,\n1641081600000,,,,,\n1641168000000,,,,,\n1641254400000,,,,,\n1641340800000,,,,,\n1641427200000,112,130,147,152,115\n1641513600000,,,,,\n1641600000000,,,,,\n1641686400000,,,,,\n1641772800000,,,,,\n1641859200000,,,,,\n1641945600000,,,,,\n1642032000000,0,0,0,0,0\n1642118400000,,,,,\n1642204800000,,,,,\n1642291200000,,,,,\n1642377600000,,,,,\n1642464000000,,,,,\n\n",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "B",
@@ -2590,7 +2635,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2701,7 +2747,8 @@
         {
           "csvContent": "\"Time\",\"Sum daily.cost_per_kwh\"\n1639612800000,\n1639872000000,0\n1639958400000,272\n1640044800000,272\n1640131200000,327\n1640217600000,290\n1640304000000,286\n1640390400000,256\n1640476800000,397\n1640563200000,295\n1640649600000,310\n1640736000000,224\n1640822400000,291\n1640908800000,265\n1640995200000,256\n1641081600000,399\n1641168000000,471\n1641254400000,325\n1641340800000,363\n1641427200000,375\n1641513600000,365\n1641600000000,492\n1641686400000,409\n1641772800000,371\n1641859200000,448\n1641945600000,372\n1642032000000,0\n1642118400000,0\n1642204800000,0\n1642291200000,0\n1642377600000,0\n1642464000000,0\n\n",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "A",
@@ -2710,7 +2757,8 @@
         {
           "csvContent": "\"Time\",\"Sum morning.cost_per_kwh\",\"Sum afternoon.cost_per_kwh\",\"Sum evening.cost_per_kwh\",\"Sum night.cost_per_kwh\",\"Sum late.cost_per_kwh\"\n1639612800000,0,0,0,0,0\n1639872000000,,,,,\n1639958400000,,,,,\n1640044800000,,,,,\n1640131200000,,,,,\n1640217600000,32,28,62,63,32\n1640304000000,,,,,\n1640390400000,,,,,\n1640476800000,,,,,\n1640563200000,,,,,\n1640649600000,,,,,\n1640736000000,,,,,\n1640822400000,47,53,68,96,45\n1640908800000,,,,,\n1640995200000,,,,,\n1641081600000,,,,,\n1641168000000,,,,,\n1641254400000,,,,,\n1641340800000,,,,,\n1641427200000,112,130,147,152,115\n1641513600000,,,,,\n1641600000000,,,,,\n1641686400000,,,,,\n1641772800000,,,,,\n1641859200000,,,,,\n1641945600000,,,,,\n1642032000000,0,0,0,0,0\n1642118400000,,,,,\n1642204800000,,,,,\n1642291200000,,,,,\n1642377600000,,,,,\n1642464000000,,,,,\n\n",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "B",
@@ -2723,7 +2771,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2834,7 +2883,8 @@
         {
           "csvContent": "\"Time\",\"Sum daily.cost_per_kwh\"\n1639612800000,\n1639872000000,0\n1639958400000,272\n1640044800000,272\n1640131200000,327\n1640217600000,290\n1640304000000,286\n1640390400000,256\n1640476800000,397\n1640563200000,295\n1640649600000,310\n1640736000000,224\n1640822400000,291\n1640908800000,265\n1640995200000,256\n1641081600000,399\n1641168000000,471\n1641254400000,325\n1641340800000,363\n1641427200000,375\n1641513600000,365\n1641600000000,492\n1641686400000,409\n1641772800000,371\n1641859200000,448\n1641945600000,372\n1642032000000,0\n1642118400000,0\n1642204800000,0\n1642291200000,0\n1642377600000,0\n1642464000000,0\n\n",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "A",
@@ -2843,7 +2893,8 @@
         {
           "csvContent": "\"Time\",\"Sum morning.cost_per_kwh\",\"Sum afternoon.cost_per_kwh\",\"Sum evening.cost_per_kwh\",\"Sum night.cost_per_kwh\",\"Sum late.cost_per_kwh\"\n1639612800000,0,0,0,0,0\n1639872000000,,,,,\n1639958400000,,,,,\n1640044800000,,,,,\n1640131200000,,,,,\n1640217600000,32,28,62,63,32\n1640304000000,,,,,\n1640390400000,,,,,\n1640476800000,,,,,\n1640563200000,,,,,\n1640649600000,,,,,\n1640736000000,,,,,\n1640822400000,47,53,68,96,45\n1640908800000,,,,,\n1640995200000,,,,,\n1641081600000,,,,,\n1641168000000,,,,,\n1641254400000,,,,,\n1641340800000,,,,,\n1641427200000,112,130,147,152,115\n1641513600000,,,,,\n1641600000000,,,,,\n1641686400000,,,,,\n1641772800000,,,,,\n1641859200000,,,,,\n1641945600000,,,,,\n1642032000000,0,0,0,0,0\n1642118400000,,,,,\n1642204800000,,,,,\n1642291200000,,,,,\n1642377600000,,,,,\n1642464000000,,,,,\n\n",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "B",
@@ -2856,7 +2907,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2929,7 +2981,8 @@
         {
           "csvContent": "time,Label 1\n2021-12-20T05:09:05.832Z,1000",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -2937,7 +2990,8 @@
         {
           "csvContent": "time,Label 10\n2021-12-18T04:54:45.888Z,2500\n2021-12-20T05:09:05.832Z,600\n2021-12-22T05:23:25.776Z,350\n2022-01-03T06:49:25.440Z,500",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_content"
@@ -2945,7 +2999,8 @@
         {
           "csvContent": "time,Label 11\n2021-12-18T04:54:45.888Z,28000\n2021-12-20T05:09:05.832Z,3100\n2021-12-22T05:23:25.776Z,36000\n2021-12-24T05:37:45.720Z,2800",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "csv_content"
@@ -2953,7 +3008,8 @@
         {
           "csvContent": "time,Label 12\n2021-12-20T05:09:05.832Z,255\n2021-12-24T05:37:45.720Z,651\n2021-12-26T05:52:05.664Z,50",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "csv_content"
@@ -2961,7 +3017,8 @@
         {
           "csvContent": "time,Label 13\n2021-12-18T04:54:45.888Z,5000\n2021-12-20T05:09:05.832Z,1231",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "E",
           "scenarioId": "csv_content"
@@ -2969,7 +3026,8 @@
         {
           "csvContent": "time,Label 14\n2021-12-14T04:26:06.000Z,122\n2021-12-16T04:40:25.944Z,123\n2021-12-18T04:54:45.888Z,12345\n2021-12-20T05:09:05.832Z,23456\n2021-12-22T05:23:25.776Z,34567\n2021-12-24T05:37:45.720Z,12345\n2021-12-26T05:52:05.664Z,8000\n2021-12-28T06:06:25.608Z,3000\n2021-12-30T06:20:45.552Z,1000\n2022-01-01T06:35:05.496Z,21",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "F",
           "scenarioId": "csv_content"
@@ -2977,7 +3035,8 @@
         {
           "csvContent": "time,Label 15\n2022-01-07T07:18:05.328Z,20",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "G",
           "scenarioId": "csv_content"
@@ -2985,7 +3044,8 @@
         {
           "csvContent": "time,Label 16\n2022-01-03T06:49:25.440Z,210\n2022-01-07T07:18:05.328Z,321",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "H",
           "scenarioId": "csv_content"
@@ -2993,7 +3053,8 @@
         {
           "csvContent": "time,Label 17\n2021-12-28T06:06:25.608Z,210\n2022-01-07T07:18:05.328Z,210",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "I",
           "scenarioId": "csv_content"
@@ -3001,7 +3062,8 @@
         {
           "csvContent": "time,Label 18\n2021-12-18T04:54:45.888Z,250\n2021-12-20T05:09:05.832Z,852\n2021-12-22T05:23:25.776Z,1234\n2021-12-26T05:52:05.664Z,321\n2021-12-30T06:20:45.552Z,432",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "J",
           "scenarioId": "csv_content"
@@ -3009,7 +3071,8 @@
         {
           "csvContent": "time,Label 2\n2021-12-24T05:37:45.720Z,543\n2021-12-26T05:52:05.664Z,18000\n2021-12-28T06:06:25.608Z,17000\n2021-12-30T06:20:45.552Z,12000\n2022-01-01T06:35:05.496Z,8500\n2022-01-03T06:49:25.440Z,8000\n2022-01-05T07:03:45.384Z,5000\n2022-01-07T07:18:05.328Z,3000\n2022-01-09T07:32:25.272Z,2500\n2022-01-11T07:46:45.216Z,2200\n2022-01-13T08:01:05.160Z,3000\n2022-01-15T08:15:25.104Z,1520\n2022-01-17T08:29:45.048Z,665.35",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "K",
           "scenarioId": "csv_content"
@@ -3017,7 +3080,8 @@
         {
           "csvContent": "time,Label 3\n2022-01-11T07:46:45.216Z,800",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "L",
           "scenarioId": "csv_content"
@@ -3025,7 +3089,8 @@
         {
           "csvContent": "time,Label 4\n2021-12-22T05:23:25.776Z,14173\n2021-12-24T05:37:45.720Z,14805\n2021-12-26T05:52:05.664Z,5600\n2021-12-28T06:06:25.608Z,5950\n2021-12-30T06:20:45.552Z,775\n2022-01-01T06:35:05.496Z,725\n2022-01-03T06:49:25.440Z,1450\n2022-01-05T07:03:45.384Z,3175\n2022-01-07T07:18:05.328Z,1850\n2022-01-09T07:32:25.272Z,1025\n2022-01-11T07:46:45.216Z,2700\n2022-01-13T08:01:05.160Z,4825\n2022-01-15T08:15:25.104Z,3600",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "M",
           "scenarioId": "csv_content"
@@ -3033,7 +3098,8 @@
         {
           "csvContent": "time,Label 5\n2022-01-15T08:15:25.104Z,1675",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "N",
           "scenarioId": "csv_content"
@@ -3041,7 +3107,8 @@
         {
           "csvContent": "time,Label 6\n2021-12-22T05:23:25.776Z,433.16",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "O",
           "scenarioId": "csv_content"
@@ -3049,7 +3116,8 @@
         {
           "csvContent": "time,Label 7\n2021-12-24T05:37:45.720Z,41250\n2021-12-26T05:52:05.664Z,45150\n2021-12-28T06:06:25.608Z,45870.16\n2021-12-30T06:20:45.552Z,38728.17\n2022-01-01T06:35:05.496Z,39931.77\n2022-01-03T06:49:25.440Z,39831.8\n2022-01-05T07:03:45.384Z,38252.06\n2022-01-07T07:18:05.328Z,44332.92\n2022-01-09T07:32:25.272Z,51359.74\n2022-01-11T07:46:45.216Z,56155.84\n2022-01-13T08:01:05.160Z,55676.92\n2022-01-15T08:15:25.104Z,55323.84\n2022-01-17T08:29:45.048Z,13830.96",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "P",
           "scenarioId": "csv_content"
@@ -3057,7 +3125,8 @@
         {
           "csvContent": "time,Label 8\n2021-12-30T06:20:45.552Z,52.89\n2022-01-01T06:35:05.496Z,569.57",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "Q",
           "scenarioId": "csv_content"
@@ -3065,7 +3134,8 @@
         {
           "csvContent": "time,Label 9\n2022-01-01T06:35:05.496Z,2140.34\n2022-01-03T06:49:25.440Z,4074.92\n2022-01-05T07:03:45.384Z,1557.85\n2022-01-07T07:18:05.328Z,1097.74\n2022-01-09T07:32:25.272Z,692.06\n2022-01-11T07:46:45.216Z,758.67\n2022-01-13T08:01:05.160Z,957.56\n2022-01-15T08:15:25.104Z,1470.49\n2022-01-17T08:29:45.048Z,198.18",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "R",
           "scenarioId": "csv_content"
@@ -3076,7 +3146,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -3149,7 +3220,8 @@
         {
           "csvContent": "time,Label 1\n2021-12-20T05:09:05.832Z,1000",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -3157,7 +3229,8 @@
         {
           "csvContent": "time,Label 10\n2021-12-18T04:54:45.888Z,2500\n2021-12-20T05:09:05.832Z,600\n2021-12-22T05:23:25.776Z,350\n2022-01-03T06:49:25.440Z,500",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_content"
@@ -3165,7 +3238,8 @@
         {
           "csvContent": "time,Label 11\n2021-12-18T04:54:45.888Z,28000\n2021-12-20T05:09:05.832Z,3100\n2021-12-22T05:23:25.776Z,36000\n2021-12-24T05:37:45.720Z,2800",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "csv_content"
@@ -3173,7 +3247,8 @@
         {
           "csvContent": "time,Label 12\n2021-12-20T05:09:05.832Z,255\n2021-12-24T05:37:45.720Z,651\n2021-12-26T05:52:05.664Z,50",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "csv_content"
@@ -3181,7 +3256,8 @@
         {
           "csvContent": "time,Label 13\n2021-12-18T04:54:45.888Z,5000\n2021-12-20T05:09:05.832Z,1231",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "E",
           "scenarioId": "csv_content"
@@ -3189,7 +3265,8 @@
         {
           "csvContent": "time,Label 14\n2021-12-14T04:26:06.000Z,122\n2021-12-16T04:40:25.944Z,123\n2021-12-18T04:54:45.888Z,12345\n2021-12-20T05:09:05.832Z,23456\n2021-12-22T05:23:25.776Z,34567\n2021-12-24T05:37:45.720Z,12345\n2021-12-26T05:52:05.664Z,8000\n2021-12-28T06:06:25.608Z,3000\n2021-12-30T06:20:45.552Z,1000\n2022-01-01T06:35:05.496Z,21",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "F",
           "scenarioId": "csv_content"
@@ -3197,7 +3274,8 @@
         {
           "csvContent": "time,Label 15\n2022-01-07T07:18:05.328Z,20",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "G",
           "scenarioId": "csv_content"
@@ -3205,7 +3283,8 @@
         {
           "csvContent": "time,Label 16\n2022-01-03T06:49:25.440Z,210\n2022-01-07T07:18:05.328Z,321",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "H",
           "scenarioId": "csv_content"
@@ -3213,7 +3292,8 @@
         {
           "csvContent": "time,Label 17\n2021-12-28T06:06:25.608Z,210\n2022-01-07T07:18:05.328Z,210",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "I",
           "scenarioId": "csv_content"
@@ -3221,7 +3301,8 @@
         {
           "csvContent": "time,Label 18\n2021-12-18T04:54:45.888Z,250\n2021-12-20T05:09:05.832Z,852\n2021-12-22T05:23:25.776Z,1234\n2021-12-26T05:52:05.664Z,321\n2021-12-30T06:20:45.552Z,432",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "J",
           "scenarioId": "csv_content"
@@ -3229,7 +3310,8 @@
         {
           "csvContent": "time,Label 2\n2021-12-24T05:37:45.720Z,543\n2021-12-26T05:52:05.664Z,18000\n2021-12-28T06:06:25.608Z,17000\n2021-12-30T06:20:45.552Z,12000\n2022-01-01T06:35:05.496Z,8500\n2022-01-03T06:49:25.440Z,8000\n2022-01-05T07:03:45.384Z,5000\n2022-01-07T07:18:05.328Z,3000\n2022-01-09T07:32:25.272Z,2500\n2022-01-11T07:46:45.216Z,2200\n2022-01-13T08:01:05.160Z,3000\n2022-01-15T08:15:25.104Z,1520\n2022-01-17T08:29:45.048Z,665.35",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "K",
           "scenarioId": "csv_content"
@@ -3237,7 +3319,8 @@
         {
           "csvContent": "time,Label 3\n2022-01-11T07:46:45.216Z,800",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "L",
           "scenarioId": "csv_content"
@@ -3245,7 +3328,8 @@
         {
           "csvContent": "time,Label 4\n2021-12-22T05:23:25.776Z,14173\n2021-12-24T05:37:45.720Z,14805\n2021-12-26T05:52:05.664Z,5600\n2021-12-28T06:06:25.608Z,5950\n2021-12-30T06:20:45.552Z,775\n2022-01-01T06:35:05.496Z,725\n2022-01-03T06:49:25.440Z,1450\n2022-01-05T07:03:45.384Z,3175\n2022-01-07T07:18:05.328Z,1850\n2022-01-09T07:32:25.272Z,1025\n2022-01-11T07:46:45.216Z,2700\n2022-01-13T08:01:05.160Z,4825\n2022-01-15T08:15:25.104Z,3600",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "M",
           "scenarioId": "csv_content"
@@ -3253,7 +3337,8 @@
         {
           "csvContent": "time,Label 5\n2022-01-15T08:15:25.104Z,1675",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "N",
           "scenarioId": "csv_content"
@@ -3261,7 +3346,8 @@
         {
           "csvContent": "time,Label 6\n2021-12-22T05:23:25.776Z,433.16",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "O",
           "scenarioId": "csv_content"
@@ -3269,7 +3355,8 @@
         {
           "csvContent": "time,Label 7\n2021-12-24T05:37:45.720Z,41250\n2021-12-26T05:52:05.664Z,45150\n2021-12-28T06:06:25.608Z,45870.16\n2021-12-30T06:20:45.552Z,38728.17\n2022-01-01T06:35:05.496Z,39931.77\n2022-01-03T06:49:25.440Z,39831.8\n2022-01-05T07:03:45.384Z,38252.06\n2022-01-07T07:18:05.328Z,44332.92\n2022-01-09T07:32:25.272Z,51359.74\n2022-01-11T07:46:45.216Z,56155.84\n2022-01-13T08:01:05.160Z,55676.92\n2022-01-15T08:15:25.104Z,55323.84\n2022-01-17T08:29:45.048Z,13830.96",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "P",
           "scenarioId": "csv_content"
@@ -3277,7 +3364,8 @@
         {
           "csvContent": "time,Label 8\n2021-12-30T06:20:45.552Z,52.89\n2022-01-01T06:35:05.496Z,569.57",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "Q",
           "scenarioId": "csv_content"
@@ -3285,7 +3373,8 @@
         {
           "csvContent": "time,Label 9\n2022-01-01T06:35:05.496Z,2140.34\n2022-01-03T06:49:25.440Z,4074.92\n2022-01-05T07:03:45.384Z,1557.85\n2022-01-07T07:18:05.328Z,1097.74\n2022-01-09T07:32:25.272Z,692.06\n2022-01-11T07:46:45.216Z,758.67\n2022-01-13T08:01:05.160Z,957.56\n2022-01-15T08:15:25.104Z,1470.49\n2022-01-17T08:29:45.048Z,198.18",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "R",
           "scenarioId": "csv_content"
@@ -3296,7 +3385,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -3366,7 +3456,8 @@
         {
           "csvContent": "name, number, number2, number3, number4\nName1, 40, 5, 20, 10\nName2, 0,0,0,0\nName3, 6, 3, 5, 1\nName4, 1, 1, 1, 2",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -3378,7 +3469,11 @@
   ],
   "refresh": false,
   "schemaVersion": 36,
-  "tags": ["gdev", "panel-tests", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },

@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { memo, useRef } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
+import { useAsync } from 'react-use';
 
 import { featureEnabled } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
@@ -8,15 +9,14 @@ import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
 import config from 'app/core/config';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type StoreState, useSelector } from 'app/types/store';
+import { AccessControlAction, StoreState, useDispatch, useSelector } from 'app/types';
 
-import { TeamFolders } from './TeamFolders';
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
 import TeamPermissions from './TeamPermissions';
 import TeamSettings from './TeamSettings';
-import { useGetTeam } from './hooks';
+import { loadTeam } from './state/actions';
 import { getTeamLoadingNav } from './state/navModel';
+import { getTeam } from './state/selectors';
 
 type TeamPageRouteParams = {
   uid: string;
@@ -26,30 +26,21 @@ type TeamPageRouteParams = {
 enum PageTypes {
   Members = 'members',
   Settings = 'settings',
-  Folders = 'folders',
   GroupSync = 'groupsync',
 }
 
-function getPageType(page: string | undefined): PageTypes | undefined {
-  switch (page) {
-    case PageTypes.Members:
-      return PageTypes.Members;
-    case PageTypes.Settings:
-      return PageTypes.Settings;
-    case PageTypes.Folders:
-      return PageTypes.Folders;
-    case PageTypes.GroupSync:
-      return PageTypes.GroupSync;
-    default:
-      return undefined;
-  }
-}
+const PAGES = ['members', 'settings', 'groupsync'];
+
+const teamSelector = createSelector(
+  [(state: StoreState) => state.team, (_: StoreState, teamUid: string) => teamUid],
+  (team, teamUid) => getTeam(team, teamUid)
+);
 
 const pageNavSelector = createSelector(
   [
     (state: StoreState) => state.navIndex,
-    (_state: StoreState, pageName: PageTypes) => pageName,
-    (_state: StoreState, _pageName: PageTypes, teamUid: string) => teamUid,
+    (_state: StoreState, pageName: string) => pageName,
+    (_state: StoreState, _pageName: string, teamUid: string) => teamUid,
   ],
   (navIndex, pageName, teamUid) => {
     const teamLoadingNav = getTeamLoadingNav(pageName);
@@ -60,21 +51,22 @@ const pageNavSelector = createSelector(
 const TeamPages = memo(() => {
   const isSyncEnabled = useRef(featureEnabled('teamsync'));
   const { uid: teamUid = '', page } = useParams<TeamPageRouteParams>();
+  const team = useSelector((state) => teamSelector(state, teamUid));
 
-  const { data: team, isLoading } = useGetTeam({ uid: teamUid });
-
-  let defaultPage = PageTypes.Members;
+  let defaultPage = 'members';
   // With RBAC the settings page will always be available
   if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
-    defaultPage = PageTypes.Settings;
+    defaultPage = 'settings';
   }
-  let currentPage = getPageType(page) ?? defaultPage;
-  if (currentPage === PageTypes.Folders && !config.featureToggles.teamFolders) {
-    currentPage = defaultPage;
-  }
-  const pageNav = useSelector((state) => pageNavSelector(state, currentPage, teamUid));
+  const pageName = page ?? defaultPage;
+  const pageNav = useSelector((state) => pageNavSelector(state, pageName, teamUid));
+
+  const dispatch = useDispatch();
+  const { loading: isLoading } = useAsync(async () => dispatch(loadTeam(teamUid)), [teamUid]);
 
   const renderPage = () => {
+    const currentPage = PAGES.includes(pageName) ? pageName : PAGES[0];
+
     const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, team!);
     const canReadTeamPermissions = contextSrv.hasPermissionInMetadata(
       AccessControlAction.ActionTeamsPermissionsRead,
@@ -93,12 +85,10 @@ const TeamPages = memo(() => {
         return null;
       case PageTypes.Settings:
         return canReadTeam && <TeamSettings team={team!} />;
-      case PageTypes.Folders:
-        return canReadTeam && <TeamFolders teamUid={teamUid} />;
       case PageTypes.GroupSync:
         if (isSyncEnabled.current) {
           if (canReadTeamPermissions) {
-            return <TeamGroupSync isReadOnly={!canWriteTeamPermissions} teamUid={teamUid} />;
+            return <TeamGroupSync isReadOnly={!canWriteTeamPermissions} />;
           }
         } else if (config.featureToggles.featureHighlights) {
           return (

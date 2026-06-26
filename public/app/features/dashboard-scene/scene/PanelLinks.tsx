@@ -1,10 +1,9 @@
-import { type DataLink, type LinkModel } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { DataLink, LinkModel } from '@grafana/data';
 import {
-  type SceneComponentProps,
+  SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  type SceneObjectState,
+  SceneObjectState,
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
@@ -57,11 +56,7 @@ function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
         return <menu.Component model={menu} key={menu.state.key} />;
       }}
     >
-      <ToolbarButton
-        icon="external-link-alt"
-        iconSize="md"
-        aria-label={t('dashboard-scene.viz-panel-links-renderer.aria-label-panel-links', 'Panel links')}
-      />
+      <ToolbarButton icon="external-link-alt" iconSize="md" aria-label="panel links" />
     </Dropdown>
   );
 }

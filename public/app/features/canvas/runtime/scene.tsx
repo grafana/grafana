@@ -1,49 +1,45 @@
 import { css } from '@emotion/css';
-import type InfiniteViewer from 'infinite-viewer';
-import type Moveable from 'moveable';
-import { type CSSProperties } from 'react';
-import { BehaviorSubject, ReplaySubject, Subject, type Subscription } from 'rxjs';
-import type Selecto from 'selecto';
+import Moveable from 'moveable';
+import { createRef, CSSProperties, RefObject } from 'react';
+import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
+import Selecto from 'selecto';
 
-import { AppEvents, type PanelData, OneClickMode, ActionType } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { AppEvents, PanelData } from '@grafana/data';
+import { locationService } from '@grafana/runtime/src';
 import {
-  type ColorDimensionConfig,
-  type ResourceDimensionConfig,
-  type ScalarDimensionConfig,
-  type ScaleDimensionConfig,
-  type TextDimensionConfig,
-  TooltipDisplayMode,
-  type DirectionDimensionConfig,
+  ColorDimensionConfig,
+  ResourceDimensionConfig,
+  ScalarDimensionConfig,
+  ScaleDimensionConfig,
+  TextDimensionConfig,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
-import { type DimensionContext } from 'app/features/dimensions/context';
+import { config } from 'app/core/config';
+import { DimensionContext } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
   getResourceDimensionFromData,
   getScalarDimensionFromData,
   getScaleDimensionFromData,
   getTextDimensionFromData,
-  getDirectionDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
-import { Connections2 } from 'app/plugins/panel/canvas/components/connections/Connections2';
-import { type Options } from 'app/plugins/panel/canvas/panelcfg.gen';
-import { type AnchorPoint, type CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
+import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
+import { getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
-import { appEvents } from '../../../core/app_events';
-import { type CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
-import { isInfinityActionWithAuth } from '../../actions/utils';
-import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import { type CanvasFrameOptions } from '../frame';
+import appEvents from '../../../core/app_events';
+import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
+import { CanvasFrameOptions } from '../frame';
 import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
-import { type ElementState } from './element';
+import { SceneTransformWrapper } from './SceneTransformWrapper';
+import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
-import { initMoveable, calculateZoomToFitScale } from './sceneAbleManagement';
+import { initMoveable } from './sceneAbleManagement';
 import { findElementByTarget } from './sceneElementManagement';
 
 export interface SelectionParams {
@@ -64,31 +60,31 @@ export class Scene {
   width = 0;
   height = 0;
   scale = 1;
-  scrollLeft = 0;
-  scrollTop = 0;
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
   moveable?: Moveable;
-  infiniteViewer?: InfiniteViewer;
   div?: HTMLDivElement;
-  viewerDiv?: HTMLDivElement;
-  viewportDiv?: HTMLDivElement;
-  connections: Connections | Connections2;
+  connections: Connections;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
-  zoomToContent?: boolean;
-  tooltipMode?: TooltipDisplayMode;
-  tooltipDisableForOneClick?: boolean;
+  shouldInfinitePan?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
   contextMenuVisible?: boolean;
-  openContextMenu?: (position: AnchorPoint) => void;
   contextMenuOnVisibilityChange = (visible: boolean) => {
     this.contextMenuVisible = visible;
+    const transformInstance = getTransformInstance(this);
+    if (transformInstance) {
+      if (visible) {
+        transformInstance.setup.disabled = true;
+      } else {
+        transformInstance.setup.disabled = false;
+      }
+    }
   };
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
@@ -97,28 +93,26 @@ export class Scene {
   setBackgroundCallback?: (anchorPoint: AnchorPoint) => void;
 
   tooltipCallback?: (tooltip: CanvasTooltipPayload | undefined) => void;
-  tooltipPayload?: CanvasTooltipPayload;
+  tooltip?: CanvasTooltipPayload;
 
   moveableActionCallback?: (moved: boolean) => void;
-
-  actionConfirmationCallback?: () => void;
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
 
   targetsToSelect = new Set<HTMLDivElement>();
+  transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
 
   constructor(
-    options: Options,
+    cfg: CanvasFrameOptions,
+    enableEditing: boolean,
+    showAdvancedTypes: boolean,
+    panZoom: boolean,
+    infinitePan: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    // TODO: Will need to update this approach for dashboard scenes
-    // migration (new dashboard edit experience)
-    const dashboard = getDashboardSrv().getCurrent();
-    const enableEditing = options.inlineEditing && dashboard?.editable;
-
-    this.root = this.load(options, enableEditing);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -128,7 +122,8 @@ export class Scene {
     });
 
     this.panel = panel;
-    this.connections = config.featureToggles.canvasPanelPanZoom ? new Connections2(this) : new Connections(this);
+    this.connections = new Connections(this);
+    this.transformComponentRef = createRef();
   }
 
   getNextElementName = (isFrame = false) => {
@@ -150,13 +145,15 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(options: Options, enableEditing: boolean) {
-    const { root, showAdvancedTypes, panZoom, zoomToContent, tooltip } = options;
-    const tooltipMode = tooltip?.mode ?? TooltipDisplayMode.Single;
-    const tooltipDisableForOneClick = tooltip?.disableForOneClick ?? false;
-
+  load(
+    cfg: CanvasFrameOptions,
+    enableEditing: boolean,
+    showAdvancedTypes: boolean,
+    panZoom: boolean,
+    infinitePan: boolean
+  ) {
     this.root = new RootElement(
-      root ?? {
+      cfg ?? {
         type: 'frame',
         elements: [DEFAULT_CANVAS_ELEMENT_CONFIG],
       },
@@ -167,40 +164,17 @@ export class Scene {
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
-    this.zoomToContent = zoomToContent;
-    this.tooltipMode = tooltipMode;
-    this.tooltipDisableForOneClick = tooltipDisableForOneClick;
+    this.shouldInfinitePan = infinitePan;
 
     setTimeout(() => {
-      if (config.featureToggles.canvasPanelPanZoom) {
-        if (this.viewportDiv && this.viewerDiv) {
-          if (!this.shouldPanZoom) {
-            this.scale = 1;
-            this.scrollLeft = 0;
-            this.scrollTop = 0;
-          }
-
-          // If editing is enabled, clear selecto instance
-          const destroySelecto = enableEditing;
-          initMoveable(destroySelecto, enableEditing, this);
-          this.currentLayer = this.root;
-          this.selection.next([]);
-          this.connections.select(undefined);
-          this.connections.updateState();
-          // update initial connections svg size
-          this.updateConnectionsSize();
-          this.fitContent(this, zoomToContent);
-        }
-      } else {
-        if (this.div) {
-          // If editing is enabled, clear selecto instance
-          const destroySelecto = enableEditing;
-          initMoveable(destroySelecto, enableEditing, this);
-          this.currentLayer = this.root;
-          this.selection.next([]);
-          this.connections.select(undefined);
-          this.connections.updateState();
-        }
+      if (this.div) {
+        // If editing is enabled, clear selecto instance
+        const destroySelecto = enableEditing;
+        initMoveable(destroySelecto, enableEditing, this);
+        this.currentLayer = this.root;
+        this.selection.next([]);
+        this.connections.select(undefined);
+        this.connections.updateState();
       }
     });
     return this.root;
@@ -212,7 +186,6 @@ export class Scene {
     getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.data, scalar),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
-    getDirection: (direction: DirectionDimensionConfig) => getDirectionDimensionFromData(this.data, direction),
     getPanelData: () => this.data,
   };
 
@@ -226,52 +199,15 @@ export class Scene {
     this.height = height;
     this.style = { width, height };
 
-    if (config.featureToggles.canvasPanelPanZoom) {
-      this.updateConnectionsSize();
-      this.fitContent(this, this.zoomToContent!);
-
-      // TODO: This is a workaround to apply styles to the elements after the size update.
-      // It's a good to go approach used by movable creator, but maybe we can find a better way.
-      this.root.elements.forEach((el) => {
-        el.applyLayoutStylesToDiv(false);
-      });
-      // TODO: This is a workaround to apply styles to the elements after the size update.
-      // Remove this after dealing with the connection anchors stacking context issue.
-      if (this.connections.connectionAnchorDiv) {
-        this.connections.connectionAnchorDiv.style.display = 'none';
-      }
-    }
-  }
-
-  updateConnectionsSize() {
-    const svgConnections = this.connections.connectionsSVG;
-
-    if (svgConnections) {
-      const scale = this.infiniteViewer!.getZoom();
-      // NOTE: sometimes getScrollLeft and getScrollTop return NaN,
-      // so we use || 0 to ensure we have a valid number
-      const left = this.infiniteViewer!.getScrollLeft() || 0;
-      const top = this.infiniteViewer!.getScrollTop() || 0;
-      const width = this.width;
-      const height = this.height;
-
-      svgConnections.style.left = `${left}px`;
-      svgConnections.style.top = `${top}px`;
-      svgConnections.style.width = `${width / scale}px`;
-      svgConnections.style.height = `${height / scale}px`;
-
-      svgConnections.setAttribute('viewBox', `${left} ${top} ${width / scale} ${height / scale}`);
+    if (this.selecto?.getSelectedTargets().length) {
+      this.clearCurrentSelection();
     }
   }
 
   clearCurrentSelection(skipNextSelectionBroadcast = false) {
     this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
     let event: MouseEvent = new MouseEvent('click');
-    if (config.featureToggles.canvasPanelPanZoom) {
-      this.selecto?.clickTarget(event, this.viewportDiv);
-    } else {
-      this.selecto?.clickTarget(event, this.div);
-    }
+    this.selecto?.clickTarget(event, this.div);
   }
 
   save = (updateMoveable = false) => {
@@ -279,15 +215,8 @@ export class Scene {
 
     if (updateMoveable) {
       setTimeout(() => {
-        if (config.featureToggles.canvasPanelPanZoom) {
-          if (this.viewportDiv && this.viewerDiv) {
-            initMoveable(true, this.isEditingEnabled, this);
-            this.updateConnectionsSize();
-          }
-        } else {
-          if (this.div) {
-            initMoveable(true, this.isEditingEnabled, this);
-          }
+        if (this.div) {
+          initMoveable(true, this.isEditingEnabled, this);
         }
       });
     }
@@ -311,14 +240,6 @@ export class Scene {
 
   setRef = (sceneContainer: HTMLDivElement) => {
     this.div = sceneContainer;
-  };
-
-  setViewerRef = (viewerContainer: HTMLDivElement) => {
-    this.viewerDiv = viewerContainer;
-  };
-
-  setViewportRef = (viewportContainer: HTMLDivElement) => {
-    this.viewportDiv = viewportContainer;
   };
 
   select = (selection: SelectionParams) => {
@@ -359,36 +280,17 @@ export class Scene {
     }
   };
 
-  fitContent = (scene: Scene, zoomToContent: boolean) => {
-    const { root, viewerDiv, infiniteViewer } = scene;
-    if (zoomToContent && root.div && infiniteViewer && viewerDiv) {
-      const dimentions = calculateZoomToFitScale(Array.from(root.div.children), viewerDiv);
-      const { scale, centerX, centerY } = dimentions;
-      infiniteViewer.setZoom(scale);
-      infiniteViewer.scrollTo(centerX, centerY);
-    }
-  };
+  render() {
+    const hasDataLinks = this.tooltip?.element?.getLinks && this.tooltip.element.getLinks({}).length > 0;
+    const hasActions = this.tooltip?.element?.options.actions && this.tooltip.element.options.actions.length > 0;
 
-  renderElement() {
-    const hasDataLinks = this.tooltipPayload?.element?.getLinks && this.tooltipPayload.element.getLinks({}).length > 0;
-    const hasActions =
-      this.tooltipPayload?.element?.options.actions &&
-      this.tooltipPayload.element.options.actions.filter(
-        (action) => action.type === ActionType.Fetch || isInfinityActionWithAuth(action)
-      ).length > 0;
-
-    const isTooltipValid = hasDataLinks || hasActions || this.tooltipPayload?.element?.data?.field;
-    const isCanvasTooltipEnabled = this.tooltipMode !== TooltipDisplayMode.None;
-
-    const isTooltipDisabledForOneClick =
-      this.tooltipDisableForOneClick && this.tooltipPayload?.element?.oneClickMode !== OneClickMode.Off;
-    const shouldShowElementTooltip =
-      !this.isEditingEnabled && isTooltipValid && isCanvasTooltipEnabled && !isTooltipDisabledForOneClick;
+    const isTooltipValid = hasDataLinks || hasActions || this.tooltip?.element?.data?.field;
+    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (
-      <>
-        {this.connections.renderElement()}
-        {this.root.renderElement()}
+      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
+        {this.connections.render()}
+        {this.root.render()}
         {this.isEditingEnabled && (
           <Portal>
             <CanvasContextMenu
@@ -398,35 +300,18 @@ export class Scene {
             />
           </Portal>
         )}
-        {shouldShowElementTooltip && (
+        {canShowElementTooltip && (
           <Portal>
             <CanvasTooltip scene={this} />
           </Portal>
         )}
-      </>
+      </div>
     );
 
     return config.featureToggles.canvasPanelPanZoom ? (
-      <div className={this.styles.viewer} ref={this.setViewerRef} key={this.revId} data-testid="canvas-scene-wrapper">
-        <div
-          className={this.styles.viewport}
-          ref={this.setViewportRef}
-          key={this.revId}
-          data-testid="canvas-scene-pan-zoom"
-        >
-          {sceneDiv}
-        </div>
-      </div>
+      <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper>
     ) : (
-      <div
-        key={this.revId}
-        className={this.styles.wrap}
-        style={this.style}
-        ref={this.setRef}
-        data-testid="canvas-scene"
-      >
-        {sceneDiv}
-      </div>
+      sceneDiv
     );
   }
 }
@@ -435,17 +320,5 @@ const getStyles = () => ({
   wrap: css({
     overflow: 'hidden',
     position: 'relative',
-  }),
-  selected: css({
-    zIndex: '999 !important',
-  }),
-  viewer: css({
-    overflow: 'hidden',
-    width: '100%',
-    height: '100%',
-  }),
-  viewport: css({
-    width: '100%',
-    height: '100%',
   }),
 });

@@ -1,29 +1,24 @@
 import { css } from '@emotion/css';
-import { useEffect, useId, useState } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
+import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
 import {
-  type DataLinkTransformationConfig,
-  type ExploreCorrelationHelperData,
-  type GrafanaTheme2,
-} from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import {
+  Collapse,
   Alert,
+  Field,
+  Input,
   Button,
   Card,
-  Collapse,
-  DeleteButton,
-  Field,
-  Icon,
   IconButton,
-  Input,
-  Stack,
-  Tooltip,
   useStyles2,
+  DeleteButton,
+  Tooltip,
+  Icon,
+  Stack,
 } from '@grafana/ui';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types';
 
 import { getTransformationVars } from '../correlations/transformations';
 import { generateDefaultLabel } from '../correlations/utils';
@@ -161,34 +156,30 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           }
         />
       )}
-      <Alert title={t('explore.correlation-helper.title-correlation-details', 'Correlation details')} severity="info">
-        <Trans
-          i18nKey="explore.correlation-helper.body-correlation-details"
-          values={{ resultField: correlations.resultField }}
-        >
-          The correlation link will appear by the <code>{'{{resultField}}'}</code> field. You can use the following
-          variables to set up your correlations:
-        </Trans>
+      <Alert title="Correlation details" severity="info">
+        The correlation link will appear by the <code>{correlations.resultField}</code> field. You can use the following
+        variables to set up your correlations:
         <pre>
           {Object.entries(correlations.vars).map((entry) => {
             return `\$\{${entry[0]}\} = ${entry[1]}\n`;
           })}
         </pre>
         <Collapse
+          collapsible
           isOpen={isLabelDescOpen}
           onToggle={() => {
             setIsLabelDescOpen(!isLabelDescOpen);
           }}
           label={
             <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
-              <Trans i18nKey="explore.correlation-helper.label-description-header">Label / Description</Trans>
+              Label / Description
               {!isLabelDescOpen && !loadingLabel && (
                 <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label') || defaultLabel}`}</span>
               )}
             </Stack>
           }
         >
-          <Field label={t('explore.correlation-helper.label-label', 'Label')} htmlFor={`${id}-label`}>
+          <Field label="Label" htmlFor={`${id}-label`}>
             <Input
               {...register('label')}
               id={`${id}-label`}
@@ -199,24 +190,20 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
               }}
             />
           </Field>
-          <Field label={t('explore.correlation-helper.label-description', 'Description')} htmlFor={`${id}-description`}>
+          <Field label="Description" htmlFor={`${id}-description`}>
             <Input {...register('description')} id={`${id}-description`} />
           </Field>
         </Collapse>
         <Collapse
+          collapsible
           isOpen={isTransformOpen}
           onToggle={() => {
             setIsTransformOpen(!isTransformOpen);
           }}
           label={
             <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
-              <Trans i18nKey="explore.correlation-helper.transformations">Transformations</Trans>
-              <Tooltip
-                content={t(
-                  'explore.correlation-helper.tooltip-transformations',
-                  'A transformation extracts one or more variables out of a single field.'
-                )}
-              >
+              Transformations
+              <Tooltip content="A transformation extracts one or more variables out of a single field.">
                 <Icon name="info-circle" size="sm" />
               </Tooltip>
             </Stack>
@@ -230,20 +217,20 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             }}
             className={styles.transformationAction}
           >
-            <Trans i18nKey="explore.correlation-helper.add-transformation">Add transformation</Trans>
+            Add transformation
           </Button>
           {transformations.map((transformation, i) => {
             const { type, field, expression, mapValue } = transformation;
             const detailsString = [
               (mapValue ?? '').length > 0 ? `Variable name: ${mapValue}` : undefined,
               (expression ?? '').length > 0 ? (
-                <Trans i18nKey="explore.correlation-helper.expression" values={{ expression }}>
-                  Expression: <code>{'{{expression}}'}</code>
-                </Trans>
+                <>
+                  Expression: <code>{expression}</code>
+                </>
               ) : undefined,
             ].filter((val) => val);
             return (
-              <Card noMargin key={`trans-${i}`}>
+              <Card key={`trans-${i}`}>
                 <Card.Heading>
                   {field}: {type}
                 </Card.Heading>
@@ -254,17 +241,14 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
                   <IconButton
                     key="edit"
                     name="edit"
-                    aria-label={t('explore.correlation-helper.aria-label-edit-transformation', 'Edit transformation')}
+                    aria-label="edit transformation"
                     onClick={() => {
                       setTransformationIdxToEdit(i);
                       setShowTransformationAddModal(true);
                     }}
                   />
                   <DeleteButton
-                    aria-label={t(
-                      'explore.correlation-helper.aria-label-delete-transformation',
-                      'Delete transformation'
-                    )}
+                    aria-label="delete transformation"
                     onConfirm={() => setTransformations(transformations.filter((_, idx) => i !== idx))}
                     closeOnConfirm
                   />

@@ -1,6 +1,6 @@
-import { type DataFrame, FieldType } from '../types/dataFrame';
+import { DataFrame, FieldType } from '../types/dataFrame';
 
-import { type DataFrameJSON, dataFrameFromJSON, dataFrameToJSON } from './DataFrameJSON';
+import { DataFrameJSON, dataFrameFromJSON, dataFrameToJSON } from './DataFrameJSON';
 
 describe('DataFrame JSON', () => {
   describe('when called with a DataFrame', () => {

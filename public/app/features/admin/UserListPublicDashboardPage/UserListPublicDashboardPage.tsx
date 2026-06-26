@@ -1,7 +1,7 @@
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { Icon, Stack, Tag, Tooltip } from '@grafana/ui';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Icon, Stack, Tag, Tooltip } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans, t } from 'app/core/internationalization';
 
 import { useGetActiveUsersQuery } from '../../dashboard/api/publicDashboardApi';
 
@@ -59,18 +59,7 @@ export const UserListPublicDashboardPage = () => {
               <td className="max-width-10">{user.lastSeenAtAge}</td>
               <td className="max-width-10">
                 <Stack gap={2}>
-                  <span>
-                    <Trans
-                      i18nKey="public-dashboard-users-access-list.table-body.dashboard-count"
-                      count={user.totalDashboards}
-                      tOptions={{
-                        defaultValue_one: '{{count}} dashboards',
-                        defaultValue_other: '{{count}} dashboards',
-                      }}
-                    >
-                      {{ count: user.totalDashboards }} dashboards
-                    </Trans>
-                  </span>
+                  <span>{user.totalDashboards} dashboard(s)</span>
                   <DashboardsListModalButton email={user.email} />
                 </Stack>
               </td>

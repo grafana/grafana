@@ -1,19 +1,17 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { isEmptyObject, type SelectableValue, VariableRefresh } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { isEmptyObject, SelectableValue, VariableRefresh } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner, Stack } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
-import { type ShareModalTabProps } from './types';
+import { ShareModalTabProps } from './types';
 import { getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {}
@@ -30,8 +28,6 @@ interface State {
   externalEnabled: boolean;
   sharingButtonText: string;
 }
-
-const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
 export class ShareSnapshot extends PureComponent<Props, State> {
   private dashboard: DashboardModel;
@@ -283,12 +279,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               {sharingButtonText}
             </Button>
           )}
-          <Button
-            variant="primary"
-            disabled={isLoading}
-            onClick={this.createSnapshot()}
-            data-testid={selectors.PublishSnapshot}
-          >
+          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
             <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
           </Button>
         </Modal.ButtonRow>
@@ -305,15 +296,9 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           <Input
             id="snapshot-url-input"
             value={snapshotUrl}
-            data-testid={selectors.CopyUrlInput}
             readOnly
             addonAfter={
-              <ClipboardButton
-                icon="copy"
-                variant="primary"
-                getText={this.getSnapshotUrl}
-                data-testid={selectors.CopyUrlButton}
-              >
+              <ClipboardButton icon="copy" variant="primary" getText={this.getSnapshotUrl}>
                 <Trans i18nKey="share-modal.snapshot.copy-link-button">Copy</Trans>
               </ClipboardButton>
             }

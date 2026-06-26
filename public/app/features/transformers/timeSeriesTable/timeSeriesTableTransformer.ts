@@ -1,11 +1,11 @@
 import { map } from 'rxjs/operators';
 
 import {
-  type DataFrame,
+  DataFrame,
   DataTransformerID,
-  type DataTransformerInfo,
-  type DataFrameWithValue,
-  type Field,
+  DataTransformerInfo,
+  DataFrameWithValue,
+  Field,
   FieldType,
   MutableDataFrame,
   isTimeSeriesFrame,
@@ -14,7 +14,6 @@ import {
   TransformationApplicabilityLevels,
   isTimeSeriesField,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 
 /**
  * Maps a refId to a Field which can contain
@@ -82,13 +81,10 @@ export interface RefIdTransformerOptions {
   inlineStat?: boolean;
 }
 
-export const getTimeSeriesTableTransformer: () => DataTransformerInfo<TimeSeriesTableTransformerOptions> = () => ({
+export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTransformerOptions> = {
   id: DataTransformerID.timeSeriesTable,
-  name: t('transformers.time-series-table.name.time-series-to-table', 'Time series to table'),
-  description: t(
-    'transformers.time-series-table.description.convert-to-table-rows',
-    'Convert time series data to table rows so that they can be viewed in tabular or sparkline format.'
-  ),
+  name: 'Time series to table',
+  description: 'Convert time series data to table rows so that they can be viewed in tabular or sparkline format.',
   defaultOptions: {},
   isApplicable: (data) => {
     for (const frame of data) {
@@ -99,17 +95,15 @@ export const getTimeSeriesTableTransformer: () => DataTransformerInfo<TimeSeries
 
     return TransformationApplicabilityLevels.NotApplicable;
   },
-  isApplicableDescription: t(
-    'transformers.time-series-table.is-applicable-description.requires-time-series-frame',
-    'The Time series to table transformation requires at least one time series frame to function. You currently have none.'
-  ),
+  isApplicableDescription:
+    'The Time series to table transformation requires at least one time series frame to function. You currently have none.',
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
         return timeSeriesToTableTransform(options, data);
       })
     ),
-});
+};
 
 /**
  * Converts time series frames to table frames for use with sparkline chart type.

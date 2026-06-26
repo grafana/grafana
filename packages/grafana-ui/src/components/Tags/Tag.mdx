@@ -1,6 +1,5 @@
-import { Meta, Canvas, ArgTypes } from '@storybook/addon-docs/blocks';
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
 import { Tag } from './Tag';
-import * as TagStories from './Tag.story';
 
 <Meta title="MDX|Tag" component={Tag} />
 
@@ -8,7 +7,19 @@ import * as TagStories from './Tag.story';
 
 Used for displaying metadata, for example to add more details to search results. Background and border colors are generated from the tag name.
 
-<Canvas of={TagStories.Single} />
+<Preview>
+  <div>
+    <Tag name="Tag" onClick={(name) => console.log(name)} />
+  </div>
+</Preview>
+
+### Usage
+
+```jsx
+import { Tag } from '@grafana/ui';
+
+<Tag name="Tag" onClick={(name) => console.log(name)} />;
+```
 
 ### Props
 

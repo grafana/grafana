@@ -1,20 +1,19 @@
-import { useCallback, useContext, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { type IconName, Menu, ModalsContext } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { IconName, Menu } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
-import { type DashboardScene } from '../../scene/DashboardScene';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { SaveBeforeShareModal } from '../SaveBeforeShareModal';
 
 const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportButton.Menu;
 
 export interface ExportDrawerMenuItem {
   shareId: string;
-  testId?: string;
+  testId: string;
   label: string;
   description?: string;
   icon: IconName;
@@ -29,8 +28,6 @@ export function addDashboardExportDrawerItem(item: ExportDrawerMenuItem) {
 }
 
 export default function ExportMenu({ dashboard }: { dashboard: DashboardScene }) {
-  const { showModal, hideModal } = useContext(ModalsContext);
-
   const onMenuItemClick = (shareView: string) => {
     locationService.partial({ shareView });
   };
@@ -44,70 +41,33 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       shareId: shareDashboardType.export,
       testId: newExportButtonSelector.exportAsJson,
       icon: 'arrow',
-      label: t('dashboard.toolbar.new.export.tooltip.as-code', 'Export as code'),
+      label: t('share-dashboard.menu.export-json-title', 'Export as JSON'),
       renderCondition: true,
       onClick: () => onMenuItemClick(shareDashboardType.export),
-    });
-
-    menuItems.push({
-      shareId: shareDashboardType.image,
-      testId: newExportButtonSelector.exportAsImage,
-      icon: 'camera',
-      label: t('share-dashboard.menu.export-image-title', 'Export as image'),
-      renderCondition: true,
-      onClick: () => onMenuItemClick(shareDashboardType.image),
     });
 
     return menuItems.filter((item) => item.renderCondition);
   }, []);
 
-  const onClick = useCallback(
-    (item: ExportDrawerMenuItem) => {
-      const continueAction = () => {
-        DashboardInteractions.sharingCategoryClicked({
-          item: item.shareId,
-          shareResource: getTrackingSource(),
-        });
+  const onClick = (item: ExportDrawerMenuItem) => {
+    DashboardInteractions.sharingCategoryClicked({
+      item: item.shareId,
+      shareResource: getTrackingSource(),
+    });
 
-        item.onClick(dashboard);
-      };
-
-      if (dashboard.state.isEditing && dashboard.state.isDirty) {
-        showModal(SaveBeforeShareModal, { dashboard, onContinue: continueAction, onDismiss: hideModal });
-        return;
-      }
-
-      continueAction();
-
-      reportInteraction('grafana_dashboards_export_dashboard_button_clicked', {
-        item: item.shareId,
-      });
-    },
-    [dashboard, hideModal, showModal]
-  );
-
-  const menuItems = useMemo(() => buildMenuItems(), [buildMenuItems]);
-
-  const menuItemsWithHandlers = useMemo(() => {
-    return menuItems.map((item) => ({
-      ...item,
-      onSelect: () => onClick(item),
-    }));
-  }, [menuItems, onClick]);
+    item.onClick(dashboard);
+  };
 
   return (
-    <Menu
-      ariaLabel={t('dashboard.export.menu.label', 'Export dashboard menu')}
-      data-testid={newExportButtonSelector.container}
-    >
-      {menuItemsWithHandlers.map((item) => (
+    <Menu data-testid={newExportButtonSelector.container}>
+      {buildMenuItems().map((item) => (
         <Menu.Item
           key={item.label}
+          testId={item.testId}
           label={item.label}
           icon={item.icon}
           description={item.description}
-          onClick={item.onSelect}
-          testId={item.testId}
+          onClick={() => onClick(item)}
         />
       ))}
     </Menu>

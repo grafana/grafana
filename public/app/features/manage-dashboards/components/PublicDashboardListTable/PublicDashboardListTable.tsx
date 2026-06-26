@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMedia } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Card,
   EmptyState,
+  HorizontalGroup,
   LinkButton,
   Pagination,
   Spinner,
@@ -18,6 +18,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useListPublicDashboardsQuery,
@@ -27,9 +28,9 @@ import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types';
 
-import { type PublicDashboardListResponse } from '../../types';
+import { PublicDashboardListResponse } from '../../types';
 
 import { DeletePublicDashboardButton } from './DeletePublicDashboardButton';
 
@@ -57,9 +58,13 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
 
   const CardActions = useMemo(() => (isMobile ? Card.Actions : Card.SecondaryActions), [isMobile]);
 
-  const translatedPauseSharingText = t('shared-dashboard-list.toggle.pause-sharing-toggle-text', 'Pause access');
+  const isNewSharingComponentEnabled = config.featureToggles.newDashboardSharingComponent;
+  const translatedPauseSharingText = isNewSharingComponentEnabled
+    ? t('shared-dashboard-list.toggle.pause-sharing-toggle-text', 'Pause access')
+    : t('public-dashboard-list.toggle.pause-sharing-toggle-text', 'Pause sharing');
+
   return (
-    <Card noMargin className={styles.card} href={`/d/${pd.dashboardUid}`}>
+    <Card className={styles.card} href={`/d/${pd.dashboardUid}`}>
       <Card.Heading className={styles.heading}>
         <span>{pd.title}</span>
       </Card.Heading>
@@ -87,7 +92,11 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
           color={theme.colors.warning.text}
           href={generatePublicDashboardUrl(pd.accessToken)}
           key="public-dashboard-url"
-          tooltip={t('shared-dashboard-list.button.view-button-tooltip', 'View shared dashboard')}
+          tooltip={
+            isNewSharingComponentEnabled
+              ? t('shared-dashboard-list.button.view-button-tooltip', 'View shared dashboard')
+              : t('public-dashboard-list.button.view-button-tooltip', 'View public dashboard')
+          }
           data-testid={selectors.ListItem.linkButton}
         />
         <LinkButton
@@ -97,7 +106,11 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
           color={theme.colors.warning.text}
           href={generatePublicDashboardConfigUrl(pd.dashboardUid, pd.slug)}
           key="public-dashboard-config-url"
-          tooltip={t('shared-dashboard-list.button.config-button-tooltip', 'Configure shared dashboard')}
+          tooltip={
+            isNewSharingComponentEnabled
+              ? t('shared-dashboard-list.button.config-button-tooltip', 'Configure shared dashboard')
+              : t('public-dashboard-list.button.config-button-tooltip', 'Configure public dashboard')
+          }
           data-testid={selectors.ListItem.configButton}
         />
         {hasWritePermissions && (
@@ -106,7 +119,11 @@ const PublicDashboardCard = ({ pd }: { pd: PublicDashboardListResponse }) => {
             icon="trash-alt"
             variant="secondary"
             publicDashboard={pd}
-            tooltip={t('shared-dashboard-list.button.revoke-button-tooltip', 'Revoke access')}
+            tooltip={
+              isNewSharingComponentEnabled
+                ? t('shared-dashboard-list.button.revoke-button-tooltip', 'Revoke access')
+                : t('public-dashboard-list.button.revoke-button-tooltip', 'Revoke public dashboard URL')
+            }
             loader={<Spinner />}
             data-testid={selectors.ListItem.trashcanButton}
           />
@@ -128,23 +145,43 @@ export const PublicDashboardListTable = () => {
         {!isLoading && !isError && !!paginatedPublicDashboards && (
           <div>
             {paginatedPublicDashboards.publicDashboards.length === 0 ? (
-              <EmptyState
-                variant="call-to-action"
-                message={t(
-                  'shared-dashboard-list.empty-state.message',
-                  "You haven't created any shared dashboards yet"
-                )}
-              >
-                <Trans i18nKey="shared-dashboard-list.empty-state.more-info">
-                  Create a shared dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
-                  <TextLink
-                    external
-                    href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/shared-dashboards"
-                  >
-                    Learn more
-                  </TextLink>
-                </Trans>
-              </EmptyState>
+              config.featureToggles.newDashboardSharingComponent ? (
+                <EmptyState
+                  variant="call-to-action"
+                  message={t(
+                    'shared-dashboard-list.empty-state.message',
+                    "You haven't created any shared dashboards yet"
+                  )}
+                >
+                  <Trans i18nKey="shared-dashboard-list.empty-state.more-info">
+                    Create a shared dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
+                    <TextLink
+                      external
+                      href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/shared-dashboards"
+                    >
+                      Learn more
+                    </TextLink>
+                  </Trans>
+                </EmptyState>
+              ) : (
+                <EmptyState
+                  variant="call-to-action"
+                  message={t(
+                    'public-dashboard-list.empty-state.message',
+                    "You haven't created any public dashboards yet"
+                  )}
+                >
+                  <Trans i18nKey="public-dashboard-list.empty-state.more-info">
+                    Create a public dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
+                    <TextLink
+                      external
+                      href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#make-a-dashboard-public"
+                    >
+                      Learn more
+                    </TextLink>
+                  </Trans>
+                </EmptyState>
+              )
             ) : (
               <>
                 <ul className={styles.list}>
@@ -154,12 +191,14 @@ export const PublicDashboardListTable = () => {
                     </li>
                   ))}
                 </ul>
-                <Pagination
-                  onNavigate={setPage}
-                  currentPage={paginatedPublicDashboards.page}
-                  numberOfPages={paginatedPublicDashboards.totalPages}
-                  hideWhenSinglePage
-                />
+                <HorizontalGroup justify="flex-end">
+                  <Pagination
+                    onNavigate={setPage}
+                    currentPage={paginatedPublicDashboards.page}
+                    numberOfPages={paginatedPublicDashboards.totalPages}
+                    hideWhenSinglePage
+                  />
+                </HorizontalGroup>
               </>
             )}
           </div>
@@ -173,9 +212,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyleType: 'none',
     marginBottom: theme.spacing(2),
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
   }),
   card: css({
     [theme.breakpoints.up('sm')]: {

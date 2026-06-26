@@ -2,14 +2,13 @@
 aliases:
   - ../data-sources/testdata/
   - ../features/datasources/testdata/
-description: Guide for using TestData in Grafana to generate simulated data for testing dashboards and panels.
 keywords:
   - grafana
+  - dashboard
+  - documentation
+  - troubleshooting
+  - panels
   - testdata
-  - test data
-  - mock data
-  - simulated data
-  - dashboard testing
 labels:
   products:
     - cloud
@@ -18,79 +17,128 @@ labels:
 menuTitle: TestData
 title: TestData data source
 weight: 1500
-review_date: '2026-04-08'
+refs:
+  panels-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
 ---
 
 # TestData data source
 
-Grafana ships with a built-in TestData data source that generates simulated time-series, log, trace, and other data for any [panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/). You can use it to verify dashboard functionality, test visualizations, prototype alerting rules, and reproduce issues without connecting to an external data source.
+Grafana ships with a TestData data source, which creates simulated time series data for any [panel](ref:panels-visualizations).
+You can use it to build your own fake and random time series data and render it in any panel, which helps you verify dashboard functionality since you can safely and easily share the data.
 
-## Supported features
+For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
+Only users with the organization administrator role can add data sources.
 
-| Feature     | Supported |
-| ----------- | --------- |
-| Metrics     | Yes       |
-| Logs        | Yes       |
-| Alerting    | Yes       |
-| Annotations | Yes       |
+## Configure the data source
 
-## Get started
+To configure basic settings for the data source, complete the following steps:
 
-The following pages help you set up and use the TestData data source:
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `TestData` in the search bar.
+1.  Select **TestData**.
 
-- [Configure the TestData data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/configure/) for setup and provisioning instructions.
-- [TestData query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/) for a reference of all 30 available scenarios and their options.
-- [TestData alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) for prototyping and testing alert rules with simulated data.
-- [TestData template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/template-variables/) for using TestData with dashboard variables.
-- [Troubleshoot TestData](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/troubleshooting/) for solutions to common issues.
+    The **Settings** tab of the data source is displayed. The data source doesn't provide any settings beyond the most basic options common to all data sources:
 
-## Additional features
+    | Name        | Description                                                              |
+    | ----------- | ------------------------------------------------------------------------ |
+    | **Name**    | Sets the name you use to refer to the data source in panels and queries. |
+    | **Default** | Defines whether this data source is pre-selected for new panels.         |
 
-After adding the data source, you can:
+## Create mock data
 
-- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to run scenarios without building a dashboard.
-- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results.
-- Build [dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) with simulated data for prototyping and demos.
+{{< figure src="/media/docs/grafana/data-sources/screenshot-testdata-add-10.0.png" class="docs-image--no-shadow" caption="Adding test data" >}}
 
-## Pre-built dashboard
+Once you've added the TestData data source, your Grafana instance's users can use it as a data source in any metric panel.
 
-TestData includes a bundled dashboard that demonstrates streaming data scenarios.
+### Choose a scenario
 
-To import the dashboard:
+Instead of providing a query editor, the TestData data source helps you select a **Scenario** that generates simulated data for panels.
 
-1. Navigate to the data source's [configuration page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/configure/).
+You can assign an **Alias** to each scenario, and many have their own options that appear when selected.
+
+{{< figure src="/media/docs/grafana/data-sources/screenshot-testdata-csv-example-10.0.png" class="docs-image--no-shadow" caption="Using CSV Metric Values" >}}
+
+**Available scenarios:**
+
+- **Annotations**
+- **Conditional Error**
+- **CSV Content**
+- **CSV File**
+- **CSV Metric Values**
+- **Datapoints Outside Range**
+- **Exponential heatmap bucket data**
+- **Flame Graph**
+- **Grafana API**
+- **Grafana Live**
+- **Linear heatmap bucket data**
+- **Load Apache Arrow Data**
+- **Logs**
+- **No Data Points**
+- **Node Graph**
+- **Predictable CSV Wave**
+- **Predictable Pulse**
+- **Random Walk**
+- **Random Walk (with error)**
+- **Random Walk Table**
+- **Raw Frames**
+- **Simulation**
+- **Slow Query**
+- **Streaming Client**
+- **Table Static**
+- **Trace**
+- **USA generated data**
+
+## Import a pre-configured dashboard
+
+TestData also provides an example dashboard.
+
+**To import the example dashboard:**
+
+1. Navigate to the data source's [configuration page](#configure-the-data-source).
 1. Select the **Dashboards** tab.
-1. Click **Import** for the **Streaming Example** dashboard.
+1. Select **Import** for the **Simple Streaming Example** dashboard.
 
-To customize the imported dashboard, save it under a different name first. Otherwise, upgrading Grafana can overwrite your customizations.
+**To customize an imported dashboard:**
 
-## Report issues with test data
+To customize the imported dashboard, we recommend that you save it under a different name.
+If you don't, upgrading Grafana can overwrite the customized dashboard with the new version.
 
-If you report an issue on GitHub involving time-series data rendering, use the TestData data source to replicate the problem. This makes it easier for developers to reproduce and resolve the issue.
+## Use test data to report issues
+
+If you report an issue on GitHub involving the use or rendering of time series data, we strongly recommend that you use this data source to replicate the issue.
+That makes it much easier for the developers to replicate and solve your issue.
 
 ## Use a custom version of TestData
 
-If you want to use a version of TestData different from the one shipped with Grafana, you can configure Grafana to skip loading the bundled version. This lets you install TestData as an external plugin and manage its lifecycle independently.
+{{% admonition type="note" %}}
+This feature is experimental and requires Grafana version 10.3.0 or later.
+{{% /admonition %}}
 
-To enable this:
+If you want to use a version of TestData different from the one shipped with Grafana, follow these steps:
 
-1. Set the `as_external` configuration field for the plugin to `true`:
+1. Enable the [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) `externalCorePlugins`.
+1. Set the configuration field `as_external` for the plugin to `true`. An example configuration would be:
 
    ```ini
+   [feature_toggles]
+   externalCorePlugins = true
+
    [plugin.grafana-testdata-datasource]
    as_external = true
    ```
 
 1. Restart Grafana.
 
-With the default configuration, Grafana loads the bundled core version of TestData. An externally installed version has no effect unless `as_external` is set to `true`.
+These settings, if enabled, allow you to to install TestData as an external plugin and manage its lifecycle independently of Grafana.
 
-## Plugin updates
-
-TestData is a core plugin that ships with Grafana. It updates automatically when you upgrade your Grafana instance.
-
-If you use TestData as an [external plugin](#use-a-custom-version-of-testdata), navigate to **Administration** > **Plugins and data** > **Plugins** to check for updates.
-
-{{< admonition type="note" >}}
-Plugins are automatically updated in Grafana Cloud.
-{{< /admonition >}}
+With the feature toggle disabled (default) TestData can still be installed as an external plugin, but it has no effect as the bundled, Core version of TestData is already installed and takes precedence.

@@ -1,6 +1,6 @@
-import { type CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../dataquery.gen';
+import { CloudWatchMetricsQuery } from '../types';
 
-import { migrateAliasPatterns, migrateMetricQuery } from './metricQueryMigrations';
+import { migrateAliasPatterns } from './metricQueryMigrations';
 
 describe('metricQueryMigrations', () => {
   interface TestScenario {
@@ -72,24 +72,5 @@ describe('metricQueryMigrations', () => {
         expect(result.alias).toBe(alias);
       });
     });
-  });
-
-  it('migrates type and mode', () => {
-    const baseQuery: CloudWatchMetricsQuery = {
-      statistic: 'Average',
-      refId: 'A',
-      id: '',
-      region: 'us-east-2',
-      namespace: 'AWS/EC2',
-      period: '300',
-      alias: '',
-      metricName: 'CPUUtilization',
-      dimensions: {},
-      matchExact: false,
-      expression: '',
-    };
-    const migratedQuery = migrateMetricQuery(baseQuery);
-    expect(migratedQuery.metricQueryType).toBe(MetricQueryType.Search);
-    expect(migratedQuery.metricEditorMode).toBe(MetricEditorMode.Builder);
   });
 });

@@ -1,17 +1,6 @@
-import { type PluginExtensionLink } from '@grafana/data';
+import { UsePluginLinksOptions, UsePluginLinksResult } from './getPluginExtensions';
 
-export type UsePluginLinksOptions = {
-  extensionPointId: string;
-  context?: object | Record<string | symbol, unknown>;
-  limitPerPlugin?: number;
-};
-
-export type UsePluginLinksResult = {
-  isLoading: boolean;
-  links: PluginExtensionLink[];
-};
-
-type UsePluginLinks = (options: UsePluginLinksOptions) => UsePluginLinksResult;
+export type UsePluginLinks = (options: UsePluginLinksOptions) => UsePluginLinksResult;
 
 let singleton: UsePluginLinks | undefined;
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-	"go.yaml.in/yaml/v3"
+	"gopkg.in/yaml.v3"
 )
 
 func Test_Rule_Marshaling(t *testing.T) {

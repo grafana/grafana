@@ -2,8 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { createTheme } from '@grafana/data';
 
-import { BigValue } from './BigValue';
-import { BigValueColorMode, BigValueGraphMode, type Props } from './BigValueTypes';
+import { BigValue, BigValueColorMode, BigValueGraphMode, Props } from './BigValue';
 
 const valueObject = {
   text: '25',
@@ -47,7 +46,7 @@ describe('BigValue', () => {
 
     it('should render without percent change', () => {
       render(<BigValue {...getProps()} />);
-      expect(screen.queryByText('%')).not.toBeInTheDocument();
+      expect(screen.queryByText('%')).toBeNull();
     });
   });
 });

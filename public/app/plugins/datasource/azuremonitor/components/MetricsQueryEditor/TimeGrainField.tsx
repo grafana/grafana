@@ -1,11 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import TimegrainConverter from '../../time_grain_converter';
-import { type AzureQueryEditorFieldProps, type AzureMonitorOption } from '../../types/types';
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { addValueToOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 
@@ -51,7 +50,7 @@ const TimeGrainField = ({ query, timeGrainOptions, variableOptionGroup, onQueryC
   }, [timeGrainOptions, variableOptionGroup, query.azureMonitor?.timeGrain]);
 
   return (
-    <Field label={t('components.time-grain-field.label-time-grain', 'Time grain')}>
+    <Field label="Time grain">
       <Select
         inputId="azure-monitor-metrics-time-grain-field"
         value={query.azureMonitor?.timeGrain}

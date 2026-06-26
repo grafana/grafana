@@ -1,18 +1,17 @@
 import { useState, useMemo, useEffect } from 'react';
 
 import {
-  type FieldConfigSource,
+  FieldConfigSource,
   getTimeZone,
-  type PanelPlugin,
+  PanelPlugin,
   PluginContextProvider,
   getPanelOptionsWithDefaults,
-  type OptionDefaults,
+  OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { getTemplateSrv, type PanelRendererProps } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
+import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
+import { ErrorBoundaryAlert, usePanelContext, useTheme2 } from '@grafana/ui';
+import { appEvents } from 'app/core/core';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
@@ -39,7 +38,16 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
-  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone, theme, replace);
+  const { dataLinkPostProcessor } = usePanelContext();
+  const dataWithOverrides = useFieldOverrides(
+    plugin,
+    optionsWithDefaults?.fieldConfig,
+    data,
+    timeZone,
+    theme,
+    replace,
+    dataLinkPostProcessor
+  );
 
   useEffect(() => {
     // If we already have a plugin and it's correct one do nothing
@@ -56,43 +64,25 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
   }, [pluginId, plugin]);
 
   if (error) {
-    return (
-      <div>
-        <Trans i18nKey="panel.panel-renderer.failed-to-load-plugin">Failed to load plugin: {{ error }}</Trans>
-      </div>
-    );
+    return <div>Failed to load plugin: {error}</div>;
   }
 
   if (!plugin || !plugin.hasPluginId(pluginId)) {
-    return (
-      <div>
-        <Trans i18nKey="panel.panel-renderer.loading-plugin-panel">Loading plugin panel...</Trans>
-      </div>
-    );
+    return <div>Loading plugin panel...</div>;
   }
 
   if (!plugin.panel) {
-    return (
-      <div>
-        <Trans i18nKey="panel.panel-renderer.no-panel-component">
-          Seems like the plugin you are trying to load does not have a panel component.
-        </Trans>
-      </div>
-    );
+    return <div>Seems like the plugin you are trying to load does not have a panel component.</div>;
   }
 
   if (!dataWithOverrides) {
-    return (
-      <div>
-        <Trans i18nKey="panel.panel-renderer.no-panel-data">No panel data</Trans>
-      </div>
-    );
+    return <div>No panel data</div>;
   }
 
   const PanelComponent = plugin.panel;
 
   return (
-    <ErrorBoundaryAlert boundaryName="panel-renderer" dependencies={[plugin, data]}>
+    <ErrorBoundaryAlert dependencies={[plugin, data]}>
       <PluginContextProvider meta={plugin.meta}>
         <PanelComponent
           id={1}

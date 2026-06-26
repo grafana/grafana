@@ -2,20 +2,20 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
+import { SelectableValue, toOption } from '@grafana/data';
+import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
-import {
-  type CloudWatchMetricsQuery,
-  QueryEditorExpressionType,
-  QueryEditorPropertyType,
-} from 'app/plugins/datasource/cloudwatch/dataquery.gen';
 
-import { type CloudWatchDatasource } from '../../../../datasource';
-import { type QueryEditorOperatorExpression } from '../../../../expressions';
+import { CloudWatchDatasource } from '../../../../datasource';
+import {
+  QueryEditorExpressionType,
+  QueryEditorOperatorExpression,
+  QueryEditorPropertyType,
+} from '../../../../expressions';
 import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../../hooks';
 import { COMPARISON_OPERATORS, EQUALS } from '../../../../language/cloudwatch-sql/language';
+import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
 
 import {
@@ -113,7 +113,10 @@ const FilterItem = (props: FilterItemProps) => {
     region: query.region,
     namespace,
     metricName,
-    ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
+    ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
+    config.featureToggles.cloudwatchMetricInsightsCrossAccount
+      ? { accountId: query.accountId }
+      : {}),
   });
 
   const loadDimensionValues = async () => {
@@ -127,7 +130,10 @@ const FilterItem = (props: FilterItemProps) => {
         namespace,
         metricName,
         dimensionKey: filter.property.name,
-        ...(config.featureToggles.cloudWatchCrossAccountQuerying && { accountId: query.accountId }),
+        ...(config.featureToggles.cloudWatchCrossAccountQuerying &&
+        config.featureToggles.cloudwatchMetricInsightsCrossAccount
+          ? { accountId: query.accountId }
+          : {}),
       })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);

@@ -1,8 +1,7 @@
 import { isEmpty, uniq } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { Icon, MultiSelect } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
@@ -10,8 +9,8 @@ import {
   isAsyncRequestMapSlicePending,
   isAsyncRequestMapSliceSettled,
 } from 'app/features/alerting/unified/utils/redux';
-import { useDispatch } from 'app/types/store';
-import { type AlertingRule } from 'app/types/unified-alerting';
+import { useDispatch } from 'app/types';
+import { AlertingRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { fetchPromRulesAction } from '../../../features/alerting/unified/state/actions';
@@ -66,8 +65,8 @@ export const GroupBy = (props: Props) => {
       id={id}
       isLoading={loading}
       defaultValue={defaultValue}
-      aria-label={t('alertlist.group-by.aria-label-group-by-label-keys', 'group by label keys')}
-      placeholder={t('alertlist.group-by.placeholder-group-by', 'Group by')}
+      aria-label={'group by label keys'}
+      placeholder="Group by"
       prefix={<Icon name={'tag-alt'} />}
       onChange={(items) => {
         onChange(items.map((item) => item.value ?? ''));

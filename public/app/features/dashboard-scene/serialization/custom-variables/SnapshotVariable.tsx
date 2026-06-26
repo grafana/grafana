@@ -1,15 +1,15 @@
-import { type Observable, map, of } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
 
 import {
   MultiValueVariable,
-  type MultiValueVariableState,
-  type SceneComponentProps,
-  type ValidateAndUpdateResult,
+  MultiValueVariableState,
+  SceneComponentProps,
+  ValidateAndUpdateResult,
   VariableDependencyConfig,
-  type VariableValueOption,
-  MultiOrSingleValueSelect,
+  VariableValueOption,
+  renderSelectForVariable,
   sceneGraph,
-  type VariableGetOptionsArgs,
+  VariableGetOptionsArgs,
 } from '@grafana/scenes';
 
 export interface SnapshotVariableState extends MultiValueVariableState {
@@ -64,7 +64,7 @@ export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> 
   }
 
   public static Component = ({ model }: SceneComponentProps<MultiValueVariable<SnapshotVariableState>>) => {
-    return <MultiOrSingleValueSelect model={model} />;
+    return renderSelectForVariable(model);
   };
   // we will always preserve the current value and text for snapshots
   private _updateValueGivenNewOptions(options: VariableValueOption[]) {

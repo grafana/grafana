@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { BreadcrumbItem } from './BreadcrumbItem';
-import { type Breadcrumb } from './types';
+import { Breadcrumb } from './types';
 
 export interface Props {
   breadcrumbs: Breadcrumb[];
@@ -16,7 +15,7 @@ export function Breadcrumbs({ breadcrumbs, className }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <nav aria-label={t('navigation.breadcrumbs.aria-label', 'Breadcrumbs')} className={className}>
+    <nav aria-label="Breadcrumbs" className={className}>
       <ol className={styles.breadcrumbs}>
         {breadcrumbs.map((breadcrumb, index) => (
           <BreadcrumbItem

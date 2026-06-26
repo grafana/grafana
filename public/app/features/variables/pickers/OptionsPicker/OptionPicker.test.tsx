@@ -1,22 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
-import { type Store } from 'redux';
+import { Store } from 'redux';
 
-import {
-  LoadingState,
-  type QueryVariableModel,
-  type VariableWithMultiSupport,
-  type VariableWithOptions,
-} from '@grafana/data';
+import { LoadingState, QueryVariableModel, VariableWithMultiSupport, VariableWithOptions } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { queryBuilder } from '../../shared/testing/builders';
 import { getPreloadedState } from '../../state/helpers';
-import { type VariablePickerProps } from '../types';
+import { VariablePickerProps } from '../types';
 
 import { optionPickerFactory } from './OptionsPicker';
-import { initialOptionPickerState, type OptionsPickerState } from './reducer';
+import { initialOptionPickerState, OptionsPickerState } from './reducer';
 
 interface Args {
   pickerState?: Partial<OptionsPickerState>;
@@ -138,7 +133,7 @@ describe('OptionPicker', () => {
       expect(screen.getByRole('textbox')).toBeInTheDocument();
       expect(screen.getByRole('textbox')).toHaveValue('');
       expect(
-        screen.getByTestId(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown)
+        screen.getByLabelText(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown)
       ).toBeInTheDocument();
       expect(getOption('A')).toBeInTheDocument();
       expect(getOption('B')).toBeInTheDocument();

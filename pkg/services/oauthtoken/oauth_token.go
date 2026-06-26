@@ -7,23 +7,19 @@ import (
 	"strings"
 	"time"
 
-	jose "github.com/go-jose/go-jose/v4"
-	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
-	claims "github.com/grafana/authlib/types"
-
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,45 +32,34 @@ var (
 	ExpiryDelta            = 10 * time.Second
 	ErrNoRefreshTokenFound = errors.New("no refresh token found")
 	ErrNotAnOAuthProvider  = errors.New("not an oauth provider")
-	ErrRetriesExhausted    = errors.New("retries exhausted")
+	ErrCouldntRefreshToken = errors.New("could not refresh token")
 )
 
 type Service struct {
 	Cfg             *setting.Cfg
 	SocialService   social.Service
 	AuthInfoService login.AuthInfoService
-	sessionService  auth.UserTokenService
-	features        featuremgmt.FeatureToggles
 	serverLock      *serverlock.ServerLockService
 	tracer          tracing.Tracer
 
 	tokenRefreshDuration *prometheus.HistogramVec
 }
 
-var _ OAuthTokenService = (*Service)(nil)
-
 //go:generate mockery --name OAuthTokenService --structname MockService --outpkg oauthtokentest --filename service_mock.go --output ./oauthtokentest/
 type OAuthTokenService interface {
-	GetCurrentOAuthToken(context.Context, identity.Requester, *auth.UserToken) *oauth2.Token
-	TryTokenRefresh(context.Context, identity.Requester, *TokenRefreshMetadata) (*oauth2.Token, error)
-	InvalidateOAuthTokens(context.Context, identity.Requester, *TokenRefreshMetadata) error
-}
-
-type TokenRefreshMetadata struct {
-	ExternalSessionID int64
-	AuthModule        string
-	AuthID            string
+	GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token
+	IsOAuthPassThruEnabled(*datasources.DataSource) bool
+	HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error)
+	TryTokenRefresh(context.Context, identity.Requester) (*oauth2.Token, error)
+	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
-	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer, sessionService auth.UserTokenService, features featuremgmt.FeatureToggles,
-) *Service {
+	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer) *Service {
 	return &Service{
 		AuthInfoService:      authInfoService,
-		sessionService:       sessionService,
 		Cfg:                  cfg,
 		SocialService:        socialService,
-		features:             features,
 		serverLock:           serverLockService,
 		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
 		tracer:               tracer,
@@ -82,104 +67,33 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) *oauth2.Token {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester) *oauth2.Token {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.GetCurrentOAuthToken")
 	defer span.End()
 
-	ctxLogger := logger.FromContext(ctx)
-
-	if usr == nil || usr.IsNil() {
-		ctxLogger.Warn("Can only get OAuth tokens for existing users", "user", "nil")
-		// Not user, no token.
+	authInfo, ok, _ := o.HasOAuthEntry(ctx, usr)
+	if !ok {
 		return nil
 	}
 
-	if !usr.IsIdentityType(claims.TypeUser) {
-		ctxLogger.Warn("Can only get OAuth tokens for users", "id", usr.GetID())
-		return nil
-	}
-
-	userID, err := usr.GetInternalID()
-	if err != nil {
-		logger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
-		return nil
-	}
-
-	ctxLogger = ctxLogger.New("userID", userID)
-
-	tokenRefreshMetadata := &TokenRefreshMetadata{
-		ExternalSessionID: 0,
-	}
-	var persistedToken *oauth2.Token
-	// Find the external session associated with the user and session token
-	// regardless of the improvedExternalSessionHandling feature toggle,
-	// because Grafana writes and updates both tables to make the switch
-	// to the new session handling smoother.
-	externalSession, err := o.getExternalSession(ctx, usr, userID, sessionToken)
-	if err != nil && !errors.Is(err, auth.ErrExternalSessionNotFound) {
-		ctxLogger.Error("Failed to get external session", "error", err)
-		return nil
-	}
-
-	// If the feature toggle is enabled, an external session is required.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) && (externalSession == nil || errors.Is(err, auth.ErrExternalSessionNotFound)) {
-		ctxLogger.Error("No external session found for user", "userID", userID)
-		return nil
-	}
-
-	// externalSession can be nil if Grafana was updated from a version where the
-	// external session table was not used yet (did not exist) and the user has not logged in since
-	// the version update (therefore no external session was created for the user yet).
-	if externalSession != nil {
-		tokenRefreshMetadata.ExternalSessionID = externalSession.ID
-	}
-
-	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{
-		UserId: userID,
-	})
-	if err != nil {
-		if errors.Is(err, user.ErrUserNotFound) {
-			ctxLogger.Warn("No AuthInfo found for user", "userID", userID)
-			return nil
+	if err := checkOAuthRefreshToken(authInfo); err != nil {
+		if errors.Is(err, ErrNoRefreshTokenFound) {
+			return buildOAuthTokenFromAuthInfo(authInfo)
 		}
 
-		ctxLogger.Error("Failed to fetch AuthInfo for user", "userID", userID, "error", err)
 		return nil
 	}
 
-	tokenRefreshMetadata.AuthID = authInfo.AuthId
-	tokenRefreshMetadata.AuthModule = authInfo.AuthModule
-
-	if !strings.HasPrefix(tokenRefreshMetadata.AuthModule, "oauth_") {
-		ctxLogger.Warn("The specified user's auth provider is not oauth",
-			"authmodule", tokenRefreshMetadata.AuthModule)
-		return nil
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		persistedToken = buildOAuthTokenFromExternalSession(externalSession)
-	} else {
-		persistedToken = buildOAuthTokenFromAuthInfo(authInfo)
-	}
-
-	if persistedToken.RefreshToken == "" {
-		return persistedToken
-	}
-
-	refreshNeeded := needTokenRefresh(ctx, persistedToken)
+	persistedToken, refreshNeeded := needTokenRefresh(authInfo)
 	if !refreshNeeded {
 		return persistedToken
 	}
 
-	token, err := o.TryTokenRefresh(ctx, usr, tokenRefreshMetadata)
+	token, err := o.TryTokenRefresh(ctx, usr)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
-			return persistedToken
+			return buildOAuthTokenFromAuthInfo(authInfo)
 		}
-
-		ctxLogger.Error("Failed to refresh OAuth token", "error", err)
 
 		return nil
 	}
@@ -187,9 +101,14 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	return token
 }
 
-// hasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
-func (o *Service) hasOAuthEntry(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
-	ctx, span := o.tracer.Start(ctx, "oauthtoken.hasOAuthEntry")
+// IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
+func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
+	return IsOAuthPassThruEnabled(ds)
+}
+
+// HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
+func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
+	ctx, span := o.tracer.Start(ctx, "oauthtoken.HasOAuthEntry")
 	defer span.End()
 
 	if usr == nil || usr.IsNil() {
@@ -224,19 +143,12 @@ func (o *Service) hasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 	if !strings.Contains(authInfo.AuthModule, "oauth") {
 		return nil, false, nil
 	}
-
-	// An extra check to ensure that the user has an OAuth token
-	// It's required to handle the case when the `improvedExternalSessionHandling` feature flag gets disabled
-	if authInfo.OAuthAccessToken == "" {
-		ctxLogger.Debug("No access token found for user")
-		return nil, false, fmt.Errorf("no access token found for user %d", userID)
-	}
 	return authInfo, true, nil
 }
 
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
 // It uses a server lock to prevent getting the Refresh Token multiple times for a given User
-func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, tokenRefreshMetadata *TokenRefreshMetadata) (*oauth2.Token, error) {
+func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (*oauth2.Token, error) {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.TryTokenRefresh")
 	defer span.End()
 
@@ -261,13 +173,14 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 
 	ctxLogger = ctxLogger.New("userID", userID)
 
-	if !strings.HasPrefix(tokenRefreshMetadata.AuthModule, "oauth_") {
-		ctxLogger.Warn("The specified user's auth provider is not oauth",
-			"authmodule", tokenRefreshMetadata.AuthModule)
+	// get the token's auth provider (f.e. azuread)
+	currAuthenticator := usr.GetAuthenticatedBy()
+	if !strings.HasPrefix(currAuthenticator, "oauth") {
+		ctxLogger.Warn("The specified user's auth provider is not OAuth", "authmodule", currAuthenticator)
 		return nil, nil
 	}
 
-	provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
+	provider := strings.TrimPrefix(currAuthenticator, "oauth_")
 	currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
 	if currentOAuthInfo == nil {
 		ctxLogger.Warn("OAuth provider not found", "provider", provider)
@@ -281,10 +194,6 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 	}
 
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		lockKey = fmt.Sprintf("oauth-refresh-token-%d-%d", userID, tokenRefreshMetadata.ExternalSessionID)
-	}
 
 	lockTimeConfig := serverlock.LockTimeConfig{
 		MaxInterval: 30 * time.Second,
@@ -296,7 +205,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 		if attempts < 5 {
 			return nil
 		}
-		return ErrRetriesExhausted
+		return ErrCouldntRefreshToken
 	}
 
 	var newToken *oauth2.Token
@@ -309,42 +218,22 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 
 		ctxLogger.Debug("Serverlock request for getting a new access token", "key", lockKey)
 
-		var persistedToken *oauth2.Token
-		var externalSession *auth.ExternalSession
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			externalSession, err = o.sessionService.GetExternalSession(ctx, tokenRefreshMetadata.ExternalSessionID)
+		authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
+		if !exists {
 			if err != nil {
-				if errors.Is(err, auth.ErrExternalSessionNotFound) {
-					ctxLogger.Error("External session was not found for user", "error", err)
-					return
-				}
-				ctxLogger.Error("Failed to fetch external session", "error", err)
-				return
+				ctxLogger.Debug("Failed to fetch oauth entry", "error", err)
 			}
-
-			persistedToken = buildOAuthTokenFromExternalSession(externalSession)
-		} else {
-			authInfo, exists, err := o.hasOAuthEntry(ctx, usr)
-			if !exists {
-				if err != nil {
-					ctxLogger.Debug("Failed to fetch oauth entry", "error", err)
-					cmdErr = err
-				}
-				return
-			}
-
-			persistedToken = buildOAuthTokenFromAuthInfo(authInfo)
-		}
-
-		needRefresh := needTokenRefresh(ctx, persistedToken)
-		if !needRefresh {
-			// Set the token which is returned by the outer function in case there's no need to refresh the token
-			newToken = persistedToken
 			return
 		}
 
-		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, persistedToken, usr, tokenRefreshMetadata)
+		storedToken, needRefresh := needTokenRefresh(authInfo)
+		if !needRefresh {
+			// Set the token which is returned by the outer function in case there's no need to refresh the token
+			newToken = storedToken
+			return
+		}
+
+		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, authInfo)
 	}, retryOpt)
 	if lockErr != nil {
 		ctxLogger.Error("Failed to obtain token refresh lock", "error", lockErr)
@@ -353,36 +242,49 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 
 	// Silence ErrNoRefreshTokenFound
 	if errors.Is(cmdErr, ErrNoRefreshTokenFound) {
-		return nil, ErrNoRefreshTokenFound
+		return nil, nil
 	}
 
 	return newToken, cmdErr
 }
 
+func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
+	token := &oauth2.Token{
+		AccessToken:  authInfo.OAuthAccessToken,
+		Expiry:       authInfo.OAuthExpiry,
+		RefreshToken: authInfo.OAuthRefreshToken,
+		TokenType:    authInfo.OAuthTokenType,
+	}
+
+	if authInfo.OAuthIdToken != "" {
+		token = token.WithExtra(map[string]any{"id_token": authInfo.OAuthIdToken})
+	}
+
+	return token
+}
+
+func checkOAuthRefreshToken(authInfo *login.UserAuth) error {
+	if !strings.Contains(authInfo.AuthModule, "oauth") {
+		logger.Warn("The specified user's auth provider is not oauth",
+			"authmodule", authInfo.AuthModule, "userid", authInfo.UserId)
+		return ErrNotAnOAuthProvider
+	}
+
+	if authInfo.OAuthRefreshToken == "" {
+		logger.Warn("No refresh token available",
+			"authmodule", authInfo.AuthModule, "userid", authInfo.UserId)
+		return ErrNoRefreshTokenFound
+	}
+
+	return nil
+}
+
 // InvalidateOAuthTokens invalidates the OAuth tokens (access_token, refresh_token) and sets the Expiry to default/zero
-func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Requester, tokenRefreshMetadata *TokenRefreshMetadata) error {
-	userID, err := usr.GetInternalID()
-	if err != nil {
-		logger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
-		return err
-	}
-
-	ctxLogger := logger.FromContext(ctx).New("userID", userID)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		err := o.sessionService.UpdateExternalSession(ctx, tokenRefreshMetadata.ExternalSessionID, &auth.UpdateExternalSessionCommand{
-			Token: &oauth2.Token{},
-		})
-		if err != nil {
-			ctxLogger.Error("Failed to update external session", "error", err)
-			return err
-		}
-	}
-
+func (o *Service) InvalidateOAuthTokens(ctx context.Context, authInfo *login.UserAuth) error {
 	return o.AuthInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
-		UserId:     userID,
-		AuthModule: tokenRefreshMetadata.AuthModule,
-		AuthId:     tokenRefreshMetadata.AuthID,
+		UserId:     authInfo.UserId,
+		AuthModule: authInfo.AuthModule,
+		AuthId:     authInfo.AuthId,
 		OAuthToken: &oauth2.Token{
 			AccessToken:  "",
 			RefreshToken: "",
@@ -391,119 +293,85 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Reques
 	})
 }
 
-func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken *oauth2.Token, usr identity.Requester, tokenRefreshMetadata *TokenRefreshMetadata) (*oauth2.Token, error) {
-	ctx, span := o.tracer.Start(ctx, "oauthtoken.tryGetOrRefreshOAuthToken")
+func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, authInfo *login.UserAuth) (*oauth2.Token, error) {
+	ctx, span := o.tracer.Start(ctx, "oauthtoken.tryGetOrRefreshOAuthToken",
+		trace.WithAttributes(attribute.Int64("userID", authInfo.UserId)))
 	defer span.End()
 
-	userID, err := usr.GetInternalID()
-	if err != nil {
-		logger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
-		span.SetStatus(codes.Error, "Failed to convert user id to int")
+	ctxLogger := logger.FromContext(ctx).New("userID", authInfo.UserId)
+
+	if err := checkOAuthRefreshToken(authInfo); err != nil {
 		return nil, err
 	}
 
-	span.SetAttributes(attribute.Int64("userID", userID))
-
-	ctxLogger := logger.FromContext(ctx).New("userID", userID)
-
-	// tryGetOrRefreshOAuthToken assumes that the AuthModule has RefreshToken enabled
-	// which is checked by the caller (TryTokenRefresh)
-	if persistedToken.RefreshToken == "" {
-		ctxLogger.Error("No refresh token available", "authmodule", tokenRefreshMetadata.AuthModule)
-		span.SetStatus(codes.Error, ErrNoRefreshTokenFound.Error())
-		return nil, ErrNoRefreshTokenFound
-	}
-
-	refreshNeeded := needTokenRefresh(ctx, persistedToken)
+	persistedToken, refreshNeeded := needTokenRefresh(authInfo)
 	if !refreshNeeded {
 		return persistedToken, nil
 	}
 
-	connect, err := o.SocialService.GetConnector(tokenRefreshMetadata.AuthModule)
+	authProvider := authInfo.AuthModule
+	connect, err := o.SocialService.GetConnector(authProvider)
 	if err != nil {
-		ctxLogger.Error("Failed to get oauth connector", "provider", tokenRefreshMetadata.AuthModule, "error", err)
-		span.SetStatus(codes.Error, "Failed to get oauth connector: "+err.Error())
-		return nil, err
+		ctxLogger.Error("Failed to get oauth connector", "provider", authProvider, "error", err)
+		return persistedToken, err
 	}
 
-	client, err := o.SocialService.GetOAuthHttpClient(tokenRefreshMetadata.AuthModule)
+	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
 	if err != nil {
-		ctxLogger.Error("Failed to get oauth http client", "provider", tokenRefreshMetadata.AuthModule, "error", err)
-		span.SetStatus(codes.Error, "Failed to get oauth http client")
-		return nil, err
+		ctxLogger.Error("Failed to get oauth http client", "provider", authProvider, "error", err)
+		return persistedToken, err
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
 	start := time.Now()
 	// TokenSource handles refreshing the token if it has expired
-	token, refreshErr := connect.TokenSource(ctx, persistedToken).Token()
+	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	duration := time.Since(start)
-	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
+	o.tokenRefreshDuration.WithLabelValues(authProvider, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
 
-	if refreshErr != nil {
-		span.SetAttributes(attribute.Bool("token_refreshed", false))
+	if err != nil {
 		ctxLogger.Error("Failed to retrieve oauth access token",
-			"provider", tokenRefreshMetadata.AuthModule, "error", refreshErr)
+			"provider", authInfo.AuthModule, "userId", authInfo.UserId, "error", err)
 
 		// token refresh failed, invalidate the old token
-		if err := o.InvalidateOAuthTokens(ctx, usr, tokenRefreshMetadata); err != nil {
-			ctxLogger.Warn("Failed to invalidate OAuth tokens", "authID", tokenRefreshMetadata.AuthID, "error", err)
+		if err := o.InvalidateOAuthTokens(ctx, authInfo); err != nil {
+			ctxLogger.Warn("Failed to invalidate OAuth tokens", "id", authInfo.Id, "error", err)
 		}
 
-		return nil, refreshErr
+		return nil, err
 	}
-
-	span.SetAttributes(attribute.Bool("token_refreshed", true))
 
 	// If the tokens are not the same, update the entry in the DB
 	if !tokensEq(persistedToken, token) {
+		updateAuthCommand := &login.UpdateAuthInfoCommand{
+			UserId:     authInfo.UserId,
+			AuthModule: authInfo.AuthModule,
+			AuthId:     authInfo.AuthId,
+			OAuthToken: token,
+		}
+
 		if o.Cfg.Env == setting.Dev {
 			ctxLogger.Debug("Oauth got token",
-				"auth_module", usr.GetAuthenticatedBy(),
+				"auth_module", authInfo.AuthModule,
 				"expiry", fmt.Sprintf("%v", token.Expiry),
 				"access_token", fmt.Sprintf("%v", token.AccessToken),
 				"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
 			)
 		}
 
-		if token.RefreshToken == "" {
-			ctxLogger.Warn("Refresh token is missing after token refresh", "authmodule", tokenRefreshMetadata.AuthModule)
+		if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
+			ctxLogger.Error("Failed to update auth info during token refresh", "userId", authInfo.UserId, "error", err)
+			return token, err
 		}
-
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			updateAuthCommand := &login.UpdateAuthInfoCommand{
-				UserId:     userID,
-				AuthModule: tokenRefreshMetadata.AuthModule,
-				AuthId:     tokenRefreshMetadata.AuthID,
-				OAuthToken: token,
-			}
-			if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
-				ctxLogger.Error("Failed to update auth info during token refresh", "authID", tokenRefreshMetadata.AuthID, "error", err)
-				span.SetStatus(codes.Error, "Failed to update auth info during token refresh")
-				return nil, err
-			}
-		}
-
-		// Update the external session with the new token if we the user has an external session,
-		// regardless of the feature flag state to keep the `user_external_session` table in sync.
-		// ExternalSessionID should always be set except for some edge cases:
-		// - when Grafana was updated to a version where the `improvedExternalSessionHandling` feature flag
-		//   was enabled after the user logged in
-		if tokenRefreshMetadata.ExternalSessionID != 0 {
-			if err := o.sessionService.UpdateExternalSession(ctx, tokenRefreshMetadata.ExternalSessionID, &auth.UpdateExternalSessionCommand{
-				Token: token,
-			}); err != nil {
-				ctxLogger.Error("Failed to update external session during token refresh", "error", err)
-				span.SetStatus(codes.Error, "Failed to update external session during token refresh")
-				return nil, err
-			}
-		}
-
 		ctxLogger.Debug("Updated oauth info for user")
 	}
 
 	return token, nil
+}
+
+// IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
+func IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
+	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 
 func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus.HistogramVec {
@@ -533,19 +401,14 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 		t1IdToken == t2IdToken
 }
 
-func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) bool {
+func needTokenRefresh(authInfo *login.UserAuth) (*oauth2.Token, bool) {
 	var hasAccessTokenExpired, hasIdTokenExpired bool
 
-	ctxLogger := logger.FromContext(ctx)
-
-	if persistedToken.AccessToken == "" {
-		ctxLogger.Debug("Access token has been cleared, need to refresh")
-		return true
-	}
+	persistedToken := buildOAuthTokenFromAuthInfo(authInfo)
 
 	idTokenExp, err := GetIDTokenExpiry(persistedToken)
 	if err != nil {
-		ctxLogger.Warn("Could not get ID Token expiry", "error", err)
+		logger.Warn("Could not get ID Token expiry", "error", err)
 	}
 	if !persistedToken.Expiry.IsZero() {
 		_, hasAccessTokenExpired = getExpiryWithSkew(persistedToken.Expiry)
@@ -554,43 +417,14 @@ func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) bool {
 		_, hasIdTokenExpired = getExpiryWithSkew(idTokenExp)
 	}
 	if !hasAccessTokenExpired && !hasIdTokenExpired {
-		ctxLogger.Debug("Neither access nor id token have expired yet")
-		return false
+		logger.Debug("Neither access nor id token have expired yet", "userID", authInfo.UserId)
+		return persistedToken, false
 	}
 	if hasIdTokenExpired {
 		// Force refreshing token when id token is expired
 		persistedToken.AccessToken = ""
 	}
-	return true
-}
-
-func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
-	token := &oauth2.Token{
-		AccessToken:  authInfo.OAuthAccessToken,
-		Expiry:       authInfo.OAuthExpiry,
-		RefreshToken: authInfo.OAuthRefreshToken,
-		TokenType:    authInfo.OAuthTokenType,
-	}
-
-	if authInfo.OAuthIdToken != "" {
-		token = token.WithExtra(map[string]any{"id_token": authInfo.OAuthIdToken})
-	}
-
-	return token
-}
-
-func buildOAuthTokenFromExternalSession(externalSession *auth.ExternalSession) *oauth2.Token {
-	token := &oauth2.Token{
-		AccessToken:  externalSession.AccessToken,
-		Expiry:       externalSession.ExpiresAt,
-		RefreshToken: externalSession.RefreshToken,
-	}
-
-	if externalSession.IDToken != "" {
-		token = token.WithExtra(map[string]any{"id_token": externalSession.IDToken})
-	}
-
-	return token
+	return persistedToken, true
 }
 
 // GetIDTokenExpiry extracts the expiry time from the ID token
@@ -604,8 +438,7 @@ func GetIDTokenExpiry(token *oauth2.Token) (time.Time, error) {
 		return time.Time{}, nil
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken, []jose.SignatureAlgorithm{jose.EdDSA, jose.HS256, jose.HS384,
-		jose.HS512, jose.RS512, jose.RS256, jose.ES256, jose.ES384, jose.ES512, jose.PS256, jose.PS384, jose.PS512})
+	parsedToken, err := jwt.ParseSigned(idToken)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error parsing id token: %w", err)
 	}
@@ -625,33 +458,4 @@ func getExpiryWithSkew(expiry time.Time) (adjustedExpiry time.Time, hasTokenExpi
 	adjustedExpiry = expiry.Round(0).Add(-ExpiryDelta)
 	hasTokenExpired = adjustedExpiry.Before(time.Now())
 	return
-}
-
-// getExternalSession fetches the external session based on the user and session token.
-// When using the render module, it fetches the most recent external session for the user
-// since the session token ID is not available.
-// For regular users, it uses the session token ID to fetch the external session.
-func (o *Service) getExternalSession(ctx context.Context, usr identity.Requester, userID int64, sessionToken *auth.UserToken) (*auth.ExternalSession, error) {
-	if usr.GetAuthenticatedBy() == login.RenderModule {
-		// When using render module, we don't have the session token ID, so we need to fetch the most recent session
-		// entry for the user (as it is done with the old flow).
-		// In the future, we might want to consider passing the session token ID to the render module to make this more robust.
-		externalSessions, err := o.sessionService.FindExternalSessions(ctx, &auth.ListExternalSessionQuery{UserID: userID})
-		if err != nil {
-			return nil, err
-		}
-
-		if len(externalSessions) == 0 || externalSessions[0] == nil {
-			return nil, auth.ErrExternalSessionNotFound
-		}
-
-		return externalSessions[0], nil
-	}
-
-	if sessionToken == nil {
-		return nil, auth.ErrExternalSessionTokenNotFound
-	}
-
-	// For regular users, we use the session token ID to fetch the external session
-	return o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
 }

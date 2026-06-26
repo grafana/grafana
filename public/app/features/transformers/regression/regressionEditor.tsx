@@ -1,125 +1,142 @@
-import { type ReactElement, useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
-import { type TransformerUIProps, type Field } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Combobox, InlineField } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/internal';
+import {
+  DataTransformerID,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+  fieldMatchers,
+  FieldMatcherID,
+  Field,
+} from '@grafana/data';
+import { InlineField, Select } from '@grafana/ui';
+import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { FIELD_MATCHERS, LABEL_WIDTH, fieldNamePickerSettings, getModelTypeOptions } from './constants';
-import { DEFAULTS, DEGREES, ModelType, type RegressionTransformerOptions } from './regression';
-import { findFirstFieldByMatcher } from './utils';
+import { getTransformationContent } from '../docs/getTransformationContent';
+
+import { DEFAULTS, ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+
+const fieldNamePickerSettings = {
+  editor: FieldNamePicker,
+  id: '',
+  name: '',
+  settings: { width: 24, isClearable: false },
+};
+
+const LABEL_WIDTH = 20;
 
 export const RegressionTransformerEditor = ({
   input,
   options,
   onChange,
 }: TransformerUIProps<RegressionTransformerOptions>) => {
-  const modelTypeOptions = useMemo(() => getModelTypeOptions(), []);
-  const degreeOptions = useMemo(
-    () =>
-      DEGREES.map((deg) => {
-        return {
-          label: deg.label(),
-          value: deg.value,
-        };
-      }),
-    []
-  );
+  const modelTypeOptions = [
+    { label: 'Linear', value: ModelType.linear },
+    { label: 'Polynomial', value: ModelType.polynomial },
+  ];
 
-  // Auto-select default X and Y fields when they're not explicitly set by the user.
-  // This provides better UX when adding a new regression transform by automatically
-  // choosing sensible defaults: time field (or numeric fallback) for X, and a different
-  // numeric field for Y. Only runs when fields are missing due to early return optimization.
   useEffect(() => {
     let x: Field | undefined;
     let y: Field | undefined;
-
-    // Both fields already selected, nothing to do, early return
-    if (options.xFieldName && options.yFieldName) {
-      return;
-    }
-
     if (!options.xFieldName) {
-      x =
-        findFirstFieldByMatcher(input, FIELD_MATCHERS.firstTimeMatcher) ||
-        findFirstFieldByMatcher(input, FIELD_MATCHERS.numericMatcher);
+      const timeMatcher = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
+      for (const frame of input) {
+        x = frame.fields.find((field) => timeMatcher(field, frame, input));
+        if (x) {
+          break;
+        }
+      }
+      if (!x) {
+        const firstMatcher = fieldMatchers.get(FieldMatcherID.numeric).get({});
+        for (const frame of input) {
+          x = frame.fields.find((field) => firstMatcher(field, frame, input));
+          if (x) {
+            break;
+          }
+        }
+      }
     }
     if (!options.yFieldName) {
-      y = findFirstFieldByMatcher(input, FIELD_MATCHERS.numericMatcher, x);
+      const numberMatcher = fieldMatchers.get(FieldMatcherID.numeric).get({});
+      for (const frame of input) {
+        y = frame.fields.find((field) => numberMatcher(field, frame, input) && field !== x);
+        if (y) {
+          break;
+        }
+      }
     }
 
     if (x && y) {
       onChange({ ...options, xFieldName: x.name, yFieldName: y.name });
     }
-  }, [input, options, onChange]);
+  });
 
   return (
     <>
-      <RegressionField label={t('transformers.regression-transformer-editor.label-x-field', 'X field')}>
+      <InlineField labelWidth={LABEL_WIDTH} label="X field">
         <FieldNamePicker
           context={{ data: input }}
           value={options.xFieldName ?? ''}
           item={fieldNamePickerSettings}
-          onChange={(v) => onChange({ ...options, xFieldName: v })}
-        />
-      </RegressionField>
-      <RegressionField label={t('transformers.regression-transformer-editor.label-y-field', 'Y field')}>
+          onChange={(v) => {
+            onChange({ ...options, xFieldName: v });
+          }}
+        ></FieldNamePicker>
+      </InlineField>
+      <InlineField labelWidth={LABEL_WIDTH} label="Y field">
         <FieldNamePicker
           context={{ data: input }}
           value={options.yFieldName ?? ''}
           item={fieldNamePickerSettings}
-          onChange={(v) => onChange({ ...options, yFieldName: v })}
-        />
-      </RegressionField>
-      <RegressionField label={t('transformers.regression-transformer-editor.label-model-type', 'Model type')}>
-        <Combobox
+          onChange={(v) => {
+            onChange({ ...options, yFieldName: v });
+          }}
+        ></FieldNamePicker>
+      </InlineField>
+      <InlineField labelWidth={LABEL_WIDTH} label="Model type">
+        <Select
           value={options.modelType ?? DEFAULTS.modelType}
-          onChange={(v) => onChange({ ...options, modelType: v.value ?? DEFAULTS.modelType })}
+          onChange={(v) => {
+            onChange({ ...options, modelType: v.value ?? DEFAULTS.modelType });
+          }}
           options={modelTypeOptions}
-        />
-      </RegressionField>
-      <RegressionField
-        label={t('transformers.regression-transformer-editor.label-predicted-points', 'Predicted points')}
-        tooltip={t(
-          'transformers.regression-transformer-editor.tooltip-number-of-xy-points-to-predict',
-          'Number of X,Y points to predict'
-        )}
-      >
+        ></Select>
+      </InlineField>
+      <InlineField labelWidth={LABEL_WIDTH} label="Predicted points" tooltip={'Number of X,Y points to predict'}>
         <NumberInput
           value={options.predictionCount ?? DEFAULTS.predictionCount}
-          onChange={(v) => onChange({ ...options, predictionCount: v })}
-        />
-      </RegressionField>
+          onChange={(v) => {
+            onChange({ ...options, predictionCount: v });
+          }}
+        ></NumberInput>
+      </InlineField>
       {options.modelType === ModelType.polynomial && (
-        <RegressionField
-          label={t('transformers.regression-transformer-editor.label-degree', 'Degree')}
-          tooltip={t(
-            'transformers.regression-transformer-editor.tooltip-high-degree-polynomial',
-            'Higher-degree polynomials (e.g., degree 4 or higher) can result in misleading trends and unstable fits. Proceed with caution.'
-          )}
-        >
-          <Combobox
+        <InlineField labelWidth={LABEL_WIDTH} label="Degree">
+          <Select<number>
             value={options.degree ?? DEFAULTS.degree}
-            options={degreeOptions}
-            onChange={(v) => onChange({ ...options, degree: Number(v.value) })}
-          />
-        </RegressionField>
+            options={[
+              { label: 'Quadratic', value: 2 },
+              { label: 'Cubic', value: 3 },
+              { label: 'Quartic', value: 4 },
+              { label: 'Quintic', value: 5 },
+            ]}
+            onChange={(v) => {
+              onChange({ ...options, degree: v.value });
+            }}
+          ></Select>
+        </InlineField>
       )}
     </>
   );
 };
 
-const RegressionField = ({
-  label,
-  tooltip,
-  children,
-}: {
-  label: string;
-  tooltip?: string;
-  children: ReactElement<Record<string, unknown>>;
-}) => (
-  <InlineField labelWidth={LABEL_WIDTH} label={label} tooltip={tooltip}>
-    {children}
-  </InlineField>
-);
+export const regressionTransformerRegistryItem: TransformerRegistryItem<RegressionTransformerOptions> = {
+  id: DataTransformerID.regression,
+  editor: RegressionTransformerEditor,
+  transformation: RegressionTransformer,
+  name: RegressionTransformer.name,
+  description: RegressionTransformer.description,
+  categories: new Set([TransformerCategory.CalculateNewFields]),
+  help: getTransformationContent(DataTransformerID.regression).helperDocs,
+};

@@ -14,6 +14,7 @@
       "public/**/*",
       "packages/**/*",
       "e2e/**/*",
+      "plugins-bundled/**/*",
       "scripts/build/release-packages.sh",
       "scripts/circle-release-next-packages.sh",
       "scripts/ci-frontend-metrics.sh",
@@ -74,6 +75,16 @@
   {
     "type": "changedfiles",
     "matches": [
+      "scripts/*.star",
+      ".drone.star",
+      ".drone.yml"
+    ],
+    "action": "updateLabel",
+    "addLabel": "type/ci"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
       "public/app/plugins/datasource/azuremonitor/**/*",
       "pkg/tsdb/azuremonitor/**/*"
     ],
@@ -97,6 +108,15 @@
     ],
     "action": "updateLabel",
     "addLabel": "datasource/CloudWatch"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "public/app/plugins/datasource/elasticsearch/**/*",
+      "pkg/tsdb/elasticsearch/**/*"
+    ],
+    "action": "updateLabel",
+    "addLabel": "datasource/Elasticsearch"
   },
   {
     "type": "changedfiles",
@@ -154,6 +174,15 @@
   {
     "type": "changedfiles",
     "matches": [
+      "public/app/plugins/datasource/opentsdb/**/*",
+      "pkg/tsdb/opentsdb/**/*"
+    ],
+    "action": "updateLabel",
+    "addLabel": "datasource/OpenTSDB"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
       "public/app/plugins/datasource/parca/**/*"
     ],
     "action": "updateLabel",
@@ -166,7 +195,7 @@
       "pkg/tsdb/grafana-pyroscope-datasource/**/*"
     ],
     "action": "updateLabel",
-    "addLabel": "datasource/Pyroscope"
+    "addLabel": "datasource/grafana-pyroscope"
   },
   {
     "type": "changedfiles",
@@ -198,6 +227,14 @@
   {
     "type": "changedfiles",
     "matches": [
+      "public/app/plugins/datasource/zipkin/**/*"
+    ],
+    "action": "updateLabel",
+    "addLabel": "datasource/Zipkin"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
       "public/app/features/variables/**/*",
       "public/app/features/templating/**/*"
     ],
@@ -207,15 +244,37 @@
   {
     "type": "changedfiles",
     "matches": [
-      "pkg/services/ngalert/**/*",
-      "pkg/services/sqlstore/migrations/ualert/**/*",
-      "pkg/services/alerting/**/*",
-      "public/app/features/alerting/**/*",
-      "pkg/tests/api/alerting/**/*",
-      "pkg/tests/alertmanager/**/*"
+      "/pkg/services/ngalert/**/*",
+      "/pkg/services/sqlstore/migrations/ualert/**/*",
+      "/pkg/services/alerting/**/*",
+      "/public/app/features/alerting/**/*",
+      "/pkg/tests/api/alerting/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/alerting"
+  },
+  {
+    "type": "author",
+    "name": "pr/external",
+    "notMemberOf": {
+      "org": "grafana"
+    },
+    "ignoreList": [
+      "renovate[bot]",
+      "dependabot[bot]",
+      "grafana-delivery-bot[bot]",
+      "grafanabot"
+    ],
+    "action": "updateLabel",
+    "addLabel": "pr/external"
+  },
+  {
+    "type": "label",
+    "name": "type/docs",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/69"
+    }
   },
   {
     "type": "changedfiles",
@@ -339,7 +398,7 @@
     "type": "changedfiles",
     "matches": [
       "public/app/plugins/panel/gauge/**/*",
-      "/packages/grafana-ui/src/components/RadialGauge/**/*"
+      "/packages/grafana-ui/src/components/Gauge/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/panel/gauge"
@@ -377,59 +436,5 @@
     ],
     "action": "updateLabel",
     "addLabel": "area/panel/table"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/azuremonitor/**/*",
-      "pkg/tsdb/azuremonitor/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/graphite/**/*",
-      "pkg/tsdb/graphite/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/influxdb/**/*",
-      "pkg/tsdb/influx/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/features/panel/suggestions/**/*",
-      "public/app/plugins/panel/**/suggestions.ts",
-      "packages/grafana-data/src/types/suggestions*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "area/suggestions"
   }
 ]

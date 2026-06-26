@@ -1,14 +1,14 @@
-import { cloneDeep, defaults, find } from 'lodash';
+import { chain, cloneDeep, defaults, find } from 'lodash';
 
-import { type PanelPluginMeta, store } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { PanelPluginMeta } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import store from 'app/core/store';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
-export const NEW_PANEL_TITLE = 'New panel';
+export const NEW_PANEL_TITLE = 'Panel Title';
 
 export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string): number | undefined {
   const newPanel: Partial<PanelModel> = {
@@ -23,10 +23,23 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
   return newPanel.id;
 }
 
+export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {
+  const newPanel: Partial<PanelModel> = {
+    type: widgetType,
+    title: 'Widget title',
+    gridPos: calculateNewPanelGridPos(dashboard),
+    datasource: null,
+    isNew: true,
+  };
+
+  dashboard.addPanel(newPanel);
+  return newPanel.id;
+}
+
 export function onCreateNewRow(dashboard: DashboardModel) {
   const newRow = {
     type: 'row',
-    title: t('dashboard.on-create-new-row.new-row.title.row-title', 'Row title'),
+    title: 'Row title',
     gridPos: { x: 0, y: 0 },
   };
 
@@ -76,7 +89,12 @@ export function onPasteCopiedPanel(dashboard: DashboardModel, panelPluginInfo?: 
   dashboard.addPanel(newPanel);
 }
 
-export function getCopiedPanelPlugin(panels: PanelPluginMeta[]): (PanelPluginMeta & PanelPluginInfo) | undefined {
+export function getCopiedPanelPlugin(): (PanelPluginMeta & PanelPluginInfo) | undefined {
+  const panels = chain(config.panels)
+    .filter({ hideFromList: false })
+    .map((item) => item)
+    .value();
+
   const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
   if (copiedPanelJson) {
     const copiedPanel = JSON.parse(copiedPanelJson);

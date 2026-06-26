@@ -1,26 +1,31 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { EmptySearchResult, useStyles2 } from '@grafana/ui';
 
-import { filterPluginList } from '../../state/util';
+import { filterPluginList, getAllPanelPluginMeta, getVizPluginMeta, getWidgetPluginMeta } from '../../state/util';
 
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
-import { type VizTypeChangeDetails } from './types';
+import { VizTypeChangeDetails } from './types';
 
 export interface Props {
   pluginId: string;
   searchQuery: string;
   onChange: (options: VizTypeChangeDetails) => void;
+  isWidget?: boolean;
   trackSearch?: (q: string, count: number) => void;
 }
 
-export function VizTypePicker({ pluginId, searchQuery, onChange, trackSearch }: Props) {
+export function VizTypePicker({ pluginId, searchQuery, onChange, isWidget = false, trackSearch }: Props) {
   const styles = useStyles2(getStyles);
-  const { value: pluginsList = [] } = useListedPanelPluginMetas();
+  const pluginsList = useMemo(() => {
+    if (config.featureToggles.vizAndWidgetSplit) {
+      return isWidget ? getWidgetPluginMeta() : getVizPluginMeta();
+    }
+    return getAllPanelPluginMeta();
+  }, [isWidget]);
 
   const filteredPluginTypes = useMemo(() => {
     const result = filterPluginList(pluginsList, searchQuery, pluginId);
@@ -31,27 +36,21 @@ export function VizTypePicker({ pluginId, searchQuery, onChange, trackSearch }: 
   }, [pluginsList, searchQuery, pluginId, trackSearch]);
 
   if (filteredPluginTypes.length === 0) {
-    return (
-      <EmptySearchResult>
-        <Trans i18nKey="panel.viz-type-picker.could-anything-matching-query">
-          Could not find anything matching your query
-        </Trans>
-      </EmptySearchResult>
-    );
+    return <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>;
   }
 
   return (
     <div className={styles.grid}>
-      {filteredPluginTypes.map((plugin, idx) => (
+      {filteredPluginTypes.map((plugin) => (
         <VizTypePickerPlugin
           disabled={false}
           key={plugin.id}
           isCurrent={plugin.id === pluginId}
           plugin={plugin}
-          onSelect={(withModKey) =>
+          onClick={(e) =>
             onChange({
               pluginId: plugin.id,
-              withModKey,
+              withModKey: e.metaKey || e.ctrlKey || e.altKey,
             })
           }
         />

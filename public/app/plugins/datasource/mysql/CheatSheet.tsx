@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 export function CheatSheet() {
@@ -52,26 +52,15 @@ export function CheatSheet() {
         <li>$__unixEpochGroup(column,&apos;5m&apos;) -&gt; column DIV 300 * 300</li>
         <li>$__unixEpochGroupAlias(column,&apos;5m&apos;) -&gt; column DIV 300 * 300 AS &quot;time&quot;</li>
       </ul>
-      <p>Example of group by and order by with $__timeGroupAlias:</p>
+      <p>Example of group by and order by with $__timeGroup:</p>
       <pre>
         <code>
-          SELECT
+          $__timeGroupAlias(timestamp_col, &apos;1h&apos;), sum(value_double) as value
           <br />
-          $__timeGroupAlias(time_date_time,&apos;5m&apos;),
+          FROM yourtable
           <br />
-          min(value_double),
-          <br />
-          &apos;min&apos; as metric
-          <br />
-          FROM my_data
-          <br />
-          WHERE
-          <br />
-          $__timeFilter(time_date_time)
-          <br />
-          GROUP BY time
-          <br />
-          ORDER BY time
+          GROUP BY 1<br />
+          ORDER BY 1
           <br />
         </code>
       </pre>

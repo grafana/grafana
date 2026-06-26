@@ -196,7 +196,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -251,7 +252,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -290,7 +292,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 11,
@@ -299,14 +302,21 @@
         "y": 0
       },
       "id": 6,
-      "options": {},
-      "content": "# Graph panel >> Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
-      "mode": "markdown",
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Graph panel >> Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
+        "mode": "markdown"
+      },
       "pluginVersion": "11.0.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -320,7 +330,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -375,7 +386,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ],\n        \"custom\": {\n          \"customStat\": 10\n        }\n      },\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 3600000\n          }\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {\n            \"pod\": \"A-pod\"\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1727107111901,\n          1727110711901,\n          1727114311901,\n          1727117911901,\n          1727121511901,\n          1727125111901\n        ],\n        [\n          1.907286825122581,\n          2.260951647569786,\n          1.887442338051216,\n          2.1526144400893514,\n          1.7287721375237766,\n          1.7262902137793208\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ],\n        \"custom\": {\n          \"customStat\": 10\n        }\n      },\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 3600000\n          }\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {\n            \"pod\": \"A-pod1\"\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1727107111901,\n          1727110711901,\n          1727114311901,\n          1727117911901,\n          1727121511901,\n          1727125111901\n        ],\n        [\n          1.907286825122581,\n          1.589539045095202,\n          1.5914283506847613,\n          1.8976990616650726,\n          1.758223085999124,\n          2.2294649594813816\n        ]\n      ]\n    }\n  },\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"meta\": {\n        \"typeVersion\": [\n          0,\n          0\n        ],\n        \"custom\": {\n          \"customStat\": 10\n        }\n      },\n      \"fields\": [\n        {\n          \"name\": \"time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"interval\": 3600000\n          }\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"labels\": {\n            \"pod\": \"A-pod2\"\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1727107111901,\n          1727110711901,\n          1727114311901,\n          1727117911901,\n          1727121511901,\n          1727125111901\n        ],\n        [\n          1.907286825122581,\n          2.0914263380328766,\n          1.8164545521094575,\n          1.621111084665713,\n          1.3902653996444705,\n          1.482803315949775\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
@@ -394,7 +406,9 @@
       "xaxis": {
         "mode": "series",
         "show": true,
-        "values": ["total"]
+        "values": [
+          "total"
+        ]
       },
       "yaxes": [
         {
@@ -416,7 +430,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 11,
@@ -438,7 +453,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -529,7 +545,9 @@
       "xaxis": {
         "mode": "series",
         "show": true,
-        "values": ["total"]
+        "values": [
+          "total"
+        ]
       },
       "yaxes": [
         {
@@ -551,7 +569,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 11,
@@ -573,7 +592,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -587,7 +607,8 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -642,7 +663,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -683,7 +705,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 11,
@@ -705,7 +728,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -716,7 +740,8 @@
     {
       "columns": [],
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fontSize": "100%",
       "gridPos": {
@@ -731,7 +756,9 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true,
@@ -754,7 +781,11 @@
         {
           "alias": "",
           "align": "right",
-          "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
           "decimals": 2,
           "pattern": "/.*/",
           "thresholds": [],
@@ -765,7 +796,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk_table"
@@ -785,7 +817,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 10,
@@ -807,7 +840,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -818,9 +852,14 @@
     {
       "colorBackground": false,
       "colorValue": true,
-      "colors": ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
+      "colors": [
+        "#299c46",
+        "rgba(237, 129, 40, 0.89)",
+        "#d44a3a"
+      ],
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "format": "areaF2",
       "gauge": {
@@ -871,7 +910,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -891,7 +931,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -937,7 +978,9 @@
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -949,7 +992,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -959,7 +1003,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 8,
@@ -981,7 +1026,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -991,7 +1037,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 10,
@@ -1008,7 +1055,9 @@
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -1021,7 +1070,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk_table"
@@ -1040,7 +1090,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 10,
@@ -1062,7 +1113,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -1073,9 +1125,14 @@
     {
       "circleMaxSize": 30,
       "circleMinSize": 2,
-      "colors": ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+      "colors": [
+        "rgba(245, 54, 54, 0.9)",
+        "rgba(237, 129, 40, 0.89)",
+        "rgba(50, 172, 45, 0.97)"
+      ],
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "decimals": 0,
       "esMetric": "Count",
@@ -1179,7 +1236,8 @@
         {
           "csvFileName": "flight_info_by_state.csv",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_file"
@@ -1197,7 +1255,9 @@
         {
           "id": "reduce",
           "options": {
-            "reducers": ["sum"]
+            "reducers": [
+              "sum"
+            ]
           }
         }
       ],
@@ -1208,7 +1268,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "gridPos": {
         "h": 10,
@@ -1230,7 +1291,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A"
         }
@@ -1241,7 +1303,11 @@
   ],
   "refresh": "",
   "schemaVersion": 39,
-  "tags": ["gdev", "migrations", "angular"],
+  "tags": [
+    "gdev",
+    "migrations",
+    "angular"
+  ],
   "templating": {
     "list": []
   },

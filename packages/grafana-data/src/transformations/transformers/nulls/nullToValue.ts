@@ -1,4 +1,4 @@
-import { type DataFrame, type Field } from '../../../types/dataFrame';
+import { DataFrame, Field } from '../../../types/dataFrame';
 
 export function nullToValue(frame: DataFrame) {
   return {

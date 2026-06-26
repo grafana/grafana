@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Badge, Stack } from '@grafana/ui';
-import { type OrgUser } from 'app/types/user';
+import { OrgUser } from 'app/types';
 
 import { RolePickerDrawer } from './RolePickerDrawer';
 
@@ -27,7 +26,6 @@ export const RolePickerBadges = ({ disabled, user }: Props) => {
       roles: user.roles,
     },
   });
-
   const { watch } = methods;
 
   const drawerControl = () => {
@@ -41,12 +39,7 @@ export const RolePickerBadges = ({ disabled, user }: Props) => {
       <Stack gap={1}>
         <Badge className={badgeStyle} color="blue" onClick={drawerControl} text={watch('role')} />
         {user.roles && user.roles.length > 0 && (
-          <Badge
-            className={badgeStyle}
-            color="blue"
-            onClick={drawerControl}
-            text={t('role-picker-drawer.user-count', '+{{numUsers}}', { numUsers: user.roles.length })}
-          />
+          <Badge className={badgeStyle} color="blue" onClick={drawerControl} text={`+${user.roles.length}`} />
         )}
       </Stack>
       {isDrawerOpen && (

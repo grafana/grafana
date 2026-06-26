@@ -1,7 +1,8 @@
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
 export function getDataSourceInstanceSetting(name: string, meta: DataSourcePluginMeta): DataSourceInstanceSettings {
   return {
+    id: 1,
     uid: name,
     type: '',
     name,

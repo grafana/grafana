@@ -44,9 +44,7 @@ func readContinueToken(next string) (continueToken, error) {
 	if sub[0] != "folder" {
 		return token, fmt.Errorf("expected folder UID in third slug")
 	}
-	if len(sub) > 1 {
-		token.folder = sub[1]
-	}
+	token.folder = sub[1]
 
 	// // Check if the folder filter is the same from the previous query
 	// if q.Requirements.Folder == nil {
@@ -61,5 +59,6 @@ func readContinueToken(next string) (continueToken, error) {
 }
 
 func (r *continueToken) String() string {
-	return fmt.Sprintf("org:%d/start:%d/folder:%s", r.orgId, r.id, r.folder)
+	return fmt.Sprintf("org:%d/start:%d/folder:%s",
+		r.orgId, r.id, r.folder)
 }

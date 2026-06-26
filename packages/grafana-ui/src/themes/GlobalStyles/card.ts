@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export function getCardStyles(theme: GrafanaTheme2) {
   return css({
@@ -21,7 +21,7 @@ export function getCardStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.secondary,
       boxShadow: 'none',
       padding: theme.spacing(2),
-      borderRadius: theme.shape.radius.default,
+      borderRadius: '4px',
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
@@ -158,7 +158,7 @@ export function getCardStyles(theme: GrafanaTheme2) {
       },
 
       '.card-item': {
-        borderRadius: theme.shape.radius.default,
+        borderRadius: '2px',
       },
 
       '.card-item-header': {

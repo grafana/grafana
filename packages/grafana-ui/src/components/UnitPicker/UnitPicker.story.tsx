@@ -1,15 +1,17 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
+import { action } from '@storybook/addon-actions';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { UnitPicker, type UnitPickerProps } from './UnitPicker';
+import { UnitPicker, UnitPickerProps } from './UnitPicker';
+import mdx from './UnitPicker.mdx';
 
 const meta: Meta<typeof UnitPicker> = {
-  title: 'Pickers/UnitPicker',
+  title: 'Pickers and Editors/UnitPicker',
   component: UnitPicker,
   parameters: {
     controls: {
       exclude: ['onChange', 'value'],
     },
+    docs: mdx,
   },
 };
 

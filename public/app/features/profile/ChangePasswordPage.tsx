@@ -1,8 +1,8 @@
-import { connect, type ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';
-import { type StoreState } from 'app/types/store';
+import { StoreState } from 'app/types';
 
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { changePassword, loadUser } from './state/actions';

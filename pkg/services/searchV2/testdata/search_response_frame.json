@@ -1,0 +1,155 @@
+{
+  "schema": {
+    "name": "Query results",
+    "refId": "Search",
+    "meta": {
+      "type": "search-results",
+      "custom": {
+        "count": 106,
+        "locationInfo": {
+          "yboVMzb7z": {
+            "name": "gdev dashboards",
+            "kind": "folder",
+            "url": "/dashboards/f/yboVMzb7z/gdev-dashboards"
+          }
+        },
+        "sortBy": "name_sort"
+      }
+    },
+    "fields": [
+      {
+        "name": "kind",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "uid",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "panel_type",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      },
+      {
+        "name": "url",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        },
+        "config": {
+          "links": [
+            {
+              "title": "link",
+              "url": "${__value.text}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "tags",
+        "type": "other",
+        "typeInfo": {
+          "frame": "json.RawMessage",
+          "nullable": true
+        }
+      },
+      {
+        "name": "ds_uid",
+        "type": "other",
+        "typeInfo": {
+          "frame": "json.RawMessage",
+          "nullable": false
+        }
+      },
+      {
+        "name": "location",
+        "type": "string",
+        "typeInfo": {
+          "frame": "string"
+        }
+      }
+    ]
+  },
+  "data": {
+    "values": [
+      [
+        "folder",
+        "dashboard",
+        "dashboard",
+        "dashboard"
+      ],
+      [
+        "ujaM1h6nz",
+        "7MeksYbmk",
+        "vmie2cmWz",
+        "xMsQdBfWz"
+      ],
+      [
+        "abc2",
+        "Alerting with TestData",
+        "Bar Gauge Demo",
+        "Bar Gauge Demo Unfilled"
+      ],
+      [
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "/dashboards/f/ujaM1h6nz/abc2",
+        "/d/7MeksYbmk/alerting-with-testdata",
+        "/d/vmie2cmWz/bar-gauge-demo",
+        "/d/xMsQdBfWz/bar-gauge-demo-unfilled"
+      ],
+      [
+        null,
+        [
+          "gdev",
+          "alerting"
+        ],
+        [
+          "gdev",
+          "demo"
+        ],
+        [
+          "gdev",
+          "demo"
+        ]
+      ],
+      [
+        [],
+        [
+          "datasource-1"
+        ],
+        [
+          "datasource-2",
+          "datasource-3",
+          "datasource-4"
+        ],
+        []
+      ],
+      [
+        "",
+        "yboVMzb7z",
+        "yboVMzb7z",
+        "yboVMzb7z"
+      ]
+    ]
+  }
+}

@@ -1,6 +1,7 @@
-import { type FetchError, isFetchError } from '@grafana/runtime';
+import { FetchError, isFetchError } from '@grafana/runtime';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
 
@@ -37,15 +38,13 @@ export interface OnCallConfigChecks {
   is_integration_chatops_connected: boolean;
 }
 
-export function getProxyApiUrl(path: string, pluginId: string) {
-  return `/api/plugins/${pluginId}/resources${path}`;
-}
+const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.OnCall}/resources${path}`;
 
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], { pluginId: string }>({
-      query: ({ pluginId }) => ({
-        url: getProxyApiUrl('/alert_receive_channels/', pluginId),
+    grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/alert_receive_channels/'),
         // legacy_grafana_alerting is necessary for OnCall.
         // We do NOT need to differentiate between these two on our side
         params: {
@@ -63,31 +62,31 @@ export const onCallApi = alertingApi.injectEndpoints({
       },
       providesTags: ['OnCallIntegrations'],
     }),
-    validateIntegrationName: build.query<boolean, { name: string; pluginId: string }>({
-      query: ({ name, pluginId }) => ({
-        url: getProxyApiUrl('/alert_receive_channels/validate_name/', pluginId),
+    validateIntegrationName: build.query<boolean, string>({
+      query: (name) => ({
+        url: getProxyApiUrl('/alert_receive_channels/validate_name/'),
         params: { verbal_name: name },
         showErrorAlert: false,
       }),
     }),
-    createIntegration: build.mutation<NewOnCallIntegrationDTO, CreateIntegrationDTO & { pluginId: string }>({
-      query: ({ pluginId, ...integration }) => ({
-        url: getProxyApiUrl('/alert_receive_channels/', pluginId),
+    createIntegration: build.mutation<NewOnCallIntegrationDTO, CreateIntegrationDTO>({
+      query: (integration) => ({
+        url: getProxyApiUrl('/alert_receive_channels/'),
         data: integration,
         method: 'POST',
         showErrorAlert: true,
       }),
       invalidatesTags: ['OnCallIntegrations'],
     }),
-    features: build.query<OnCallFeature[], { pluginId: string }>({
-      query: ({ pluginId }) => ({
-        url: getProxyApiUrl('/features/', pluginId),
+    features: build.query<OnCallFeature[], void>({
+      query: () => ({
+        url: getProxyApiUrl('/features/'),
         showErrorAlert: false,
       }),
     }),
-    onCallConfigChecks: build.query<OnCallConfigChecks, { pluginId: string }>({
-      query: ({ pluginId }) => ({
-        url: getProxyApiUrl('/organization/config-checks/', pluginId),
+    onCallConfigChecks: build.query<OnCallConfigChecks, void>({
+      query: () => ({
+        url: getProxyApiUrl('/organization/config-checks/'),
         showErrorAlert: false,
       }),
     }),
@@ -100,7 +99,7 @@ function isPaginatedResponse(
   return 'results' in response && Array.isArray(response.results);
 }
 
-export const {} = onCallApi;
+export const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
 
 export function isOnCallFetchError(error: unknown): error is FetchError<{ detail: string }> {
   return isFetchError(error) && 'detail' in error.data;

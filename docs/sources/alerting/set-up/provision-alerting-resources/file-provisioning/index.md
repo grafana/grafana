@@ -46,9 +46,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
   export_templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-notification-template-groups
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-templates
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-notification-template-groups
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-templates
 ---
 
 # Use configuration files to provision alerting resources
@@ -270,8 +270,8 @@ settings:
   url: https://discord/webhook
   # <string>
   avatar_url: https://my_avatar
-  # <bool>
-  use_discord_username: false
+  # <string>
+  use_discord_username: Grafana
   # <string>
   message: |
     {{ template "default.message" . }}
@@ -511,8 +511,6 @@ settings:
   # <string>
   endpointUrl: https://custom_url/api/chat.postMessage
   # <string>
-  color: {{ if eq .Status "firing" }}#D63232{{ else }}#36a64f{{ end }}
-  # <string>
   title: |
     {{ template "slack.default.title" . }}
   text: |
@@ -628,13 +626,6 @@ settings:
     clientKey: key in PEM format
     # <string>
     caCertificate: CA certificate in PEM format
-  hmacConfig:
-    #<string>
-    secret: secret-key
-    #<string>
-    header: X-Grafana-Alerting-Signature
-    #<string>
-    timestampHeader: X-Grafana-Alerting-Signature-Timestamp
 ```
 
 {{< /collapse >}}
@@ -658,19 +649,19 @@ settings:
 
 {{< /collapse >}}
 
-## Import notification template groups
+## Import templates
 
-Create or delete notification template groups using provisioning files in your Grafana instance(s).
+Create or delete templates using provisioning files in your Grafana instance(s).
 
-1. Find the notification template group in Grafana.
-1. [Export](ref:export_templates) a template group by copying the template content and name.
+1. Find the notification template in Grafana.
+1. [Export](ref:export_templates) a template by copying the template content and title.
 1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
 
 1. Restart your Grafana instance (or reload the provisioned files using the Admin API).
 
-Here is an example of a configuration file for creating notification template groups.
+Here is an example of a configuration file for creating templates.
 
 ```yaml
 # config file version
@@ -680,16 +671,16 @@ apiVersion: 1
 templates:
   # <int> organization ID, default = 1
   - orgId: 1
-    # <string, required> name of the template group, must be unique
+    # <string, required> name of the template, must be unique
     name: my_first_template
-    # <string, required> content of the template group
+    # <string, required> content of the template
     template: |
       {{ define "my_first_template" }}
         Custom notification message
       {{ end }}
 ```
 
-Here is an example of a configuration file for deleting notification template groups.
+Here is an example of a configuration file for deleting templates.
 
 ```yaml
 # config file version
@@ -699,7 +690,7 @@ apiVersion: 1
 deleteTemplates:
   # <int> organization ID, default = 1
   - orgId: 1
-    # <string, required> name of the template group, must be unique
+    # <string, required> name of the template, must be unique
     name: my_first_template
 ```
 
@@ -709,7 +700,11 @@ Create or reset the notification policy tree using provisioning files in your Gr
 
 In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
 
-{{< docs/shared lookup="alerts/warning-provisioning-tree.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{% admonition type="warning" %}}
+
+Since the policy tree is a single resource, provisioning it will overwrite a policy tree created through any other means.
+
+{{< /admonition >}}
 
 1. Find the notification policy tree in Grafana.
 1. [Export](ref:export_policies) and download a provisioning file for your notification policy tree.
@@ -730,7 +725,7 @@ policies:
   # <int> organization ID, default = 1
   - orgId: 1
     # <string> name of the contact point that should be used for this route
-    receiver: grafana-default
+    receiver: grafana-default-email
     # <list> The labels by which incoming alerts are grouped together. For example,
     #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
     #        be batched into a single group.
@@ -868,8 +863,8 @@ In alerting resources, most properties support template variable interpolation, 
 - Alert rule query model: `groups[].rules[].data.model`
 - Mute timings name: `muteTimes[].name`
 - Mute timings time intervals: `muteTimes[].time_intervals[]`
-- Notification template group name: `templates[].name`
-- Notification template group content: `templates[].template`
+- Notification template name: `templates[].name`
+- Notification template content: `templates[].template`
 
 Note for properties that support interpolation, you may unexpectedly substitute template variables when not intended. To avoid this, you can escape the `$variable` with `$$variable`.
 

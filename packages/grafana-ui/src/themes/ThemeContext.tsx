@@ -3,9 +3,9 @@ import memoize from 'micro-memoize';
 import { useContext } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme, type GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2, ThemeContext } from '@grafana/data';
 
-import { type Themeable, type Themeable2 } from '../types/theme';
+import { Themeable, Themeable2 } from '../types/theme';
 
 import { stylesFactory } from './stylesFactory';
 
@@ -18,7 +18,7 @@ type Subtract<T, K> = Omit<T, keyof K>;
 let ThemeContextMock: React.Context<GrafanaTheme2> | null = null;
 
 // Used by useStyles()
-const memoizedStyleCreators = new WeakMap();
+export const memoizedStyleCreators = new WeakMap();
 
 /** @deprecated use withTheme2 */
 /** @public */
@@ -41,7 +41,7 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
   return WithTheme as Hoisted;
 };
 
-/** @public */
+/** @alpha */
 export const withTheme2 = <P extends Themeable2, S extends {} = {}>(Component: React.ComponentType<P>) => {
   const WithTheme: React.FunctionComponent<Subtract<P, Themeable2>> = (props) => {
     /**
@@ -117,13 +117,6 @@ export function useStyles2<T extends unknown[], CSSReturnValue>(
   ...additionalArguments: T
 ): CSSReturnValue {
   const theme = useTheme2();
-
-  // Grafana ui can be bundled and used in older versions of Grafana where the theme doesn't have elevated background
-  // This can be removed post G12
-  if (!theme.colors.background.elevated) {
-    theme.colors.background.elevated =
-      theme.colors.mode === 'light' ? theme.colors.background.primary : theme.colors.background.secondary;
-  }
 
   let memoizedStyleCreator: typeof getStyles = memoizedStyleCreators.get(getStyles);
 

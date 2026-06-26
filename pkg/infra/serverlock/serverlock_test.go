@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -31,25 +30,22 @@ func createTestableServerLock(t *testing.T) *ServerLockService {
 	}
 }
 
-func TestIntegrationServerLock(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestServerLock(t *testing.T) {
 	sl := createTestableServerLock(t)
 	operationUID := "test-operation"
 
 	first, err := sl.getOrCreate(context.Background(), operationUID)
 	require.NoError(t, err)
-	require.NotZero(t, first.Id)
 
 	t.Run("trying to create three new row locks", func(t *testing.T) {
 		expectedLastExecution := first.LastExecution
 		var latest *serverLock
 
-		for range 3 {
+		for i := 0; i < 3; i++ {
 			latest, err = sl.getOrCreate(context.Background(), operationUID)
 			require.NoError(t, err)
-			assert.Equal(t, first.OperationUID, operationUID)
-			assert.Equal(t, first.Id, latest.Id)
+			assert.Equal(t, operationUID, first.OperationUID)
+			assert.Equal(t, int64(1), first.Id)
 		}
 
 		assert.Equal(t,
@@ -69,9 +65,7 @@ func TestIntegrationServerLock(t *testing.T) {
 	})
 }
 
-func TestIntegrationLockAndRelease(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestLockAndRelease(t *testing.T) {
 	operationUID := "test-operation-release"
 
 	t.Run("create lock and then release it", func(t *testing.T) {
@@ -120,7 +114,7 @@ func TestIntegrationLockAndRelease(t *testing.T) {
 			affectedRows, err := sess.Insert(&lock)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), affectedRows)
-			require.NotZero(t, lock.Id)
+			require.Equal(t, int64(1), lock.Id)
 			return nil
 		})
 		require.NoError(t, err)

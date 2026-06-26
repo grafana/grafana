@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export function getSlateStyles(theme: GrafanaTheme2) {
   return css({
@@ -24,9 +24,7 @@ export function getSlateStyles(theme: GrafanaTheme2) {
       backgroundImage: 'none',
       border: `1px solid ${theme.components.input.borderColor}`,
       borderRadius: theme.shape.radius.default,
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: 'all 0.3s',
-      },
+      transition: 'all 0.3s',
       lineHeight: '18px',
     },
 
@@ -69,10 +67,8 @@ export function getSlateStyles(theme: GrafanaTheme2) {
         display: 'block',
         whiteSpace: 'nowrap',
         cursor: 'pointer',
-        [theme.transitions.handleMotion('no-preference')]: {
-          transition:
-            'color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1)',
-        },
+        transition:
+          'color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1)',
       },
 
       '.typeahead-item__selected': {

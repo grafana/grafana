@@ -2,71 +2,44 @@ package team
 
 import (
 	"context"
-	"net/http"
 	"strconv"
 
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type TeamUIDCtxKey struct{}
-
 type Service interface {
-	CreateTeam(ctx context.Context, cmd *CreateTeamCommand) (Team, error)
+	CreateTeam(ctx context.Context, name, email string, orgID int64) (Team, error)
 	UpdateTeam(ctx context.Context, cmd *UpdateTeamCommand) error
 	DeleteTeam(ctx context.Context, cmd *DeleteTeamCommand) error
 	SearchTeams(ctx context.Context, query *SearchTeamsQuery) (SearchTeamQueryResult, error)
 	GetTeamByID(ctx context.Context, query *GetTeamByIDQuery) (*TeamDTO, error)
 	GetTeamsByUser(ctx context.Context, query *GetTeamsByUserQuery) ([]*TeamDTO, error)
-	GetTeamIDsByUser(ctx context.Context, query *GetTeamIDsByUserQuery) ([]int64, []string, error)
+	GetTeamIDsByUser(ctx context.Context, query *GetTeamIDsByUserQuery) ([]int64, error)
 	IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveUsersMemberships(tx context.Context, userID int64) error
-	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*TeamMemberDTO, error)
+	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*TeamMemberDTO, error)
 	GetTeamMembers(ctx context.Context, query *GetTeamMembersQuery) ([]*TeamMemberDTO, error)
 	RegisterDelete(query string)
 }
 
-func UIDToIDHandler(teamService Service) func(ctx context.Context, orgID int64, resourceID string) (string, error) {
-	return func(ctx context.Context, orgID int64, teamIDorUID string) (string, error) {
-		// if teamIDorUID is empty or is an integer, we assume it's a team ID, and we don't need to resolve it
-		_, err := strconv.ParseInt(teamIDorUID, 10, 64)
-		if teamIDorUID == "" || err == nil {
-			return teamIDorUID, nil
-		}
-		team, err := teamService.GetTeamByID(ctx, &GetTeamByIDQuery{UID: teamIDorUID, OrgID: orgID})
-		if err != nil {
-			return "", err
-		}
-
-		return strconv.FormatInt(team.ID, 10), err
-	}
-}
-
 func MiddlewareTeamUIDResolver(teamService Service, paramName string) web.Handler {
-	handler := UIDToIDHandler(teamService)
-
 	return func(c *contextmodel.ReqContext) {
-		// Get team id from request, fetch team and replace team UID with team ID
-		teamIDorUID := web.Params(c.Req)[paramName]
-		id, err := handler(c.Req.Context(), c.OrgID, teamIDorUID)
+		// Get team id from request, fetch team and replace teamId with team id
+		teamID := web.Params(c.Req)[paramName]
+		// if teamID is empty or is an integer, we assume it's a team id and we don't need to resolve it
+		_, err := strconv.ParseInt(teamID, 10, 64)
+		if teamID == "" || err == nil {
+			return
+		}
+
+		team, err := teamService.GetTeamByID(c.Req.Context(), &GetTeamByIDQuery{UID: teamID, OrgID: c.OrgID})
 		if err == nil {
 			gotParams := web.Params(c.Req)
-			gotParams[paramName] = id
+			gotParams[paramName] = strconv.FormatInt(team.ID, 10)
 			web.SetURLParams(c.Req, gotParams)
-
-			// Only set the UID in context if a UID was provided (not an ID)
-			_, parseErr := strconv.ParseInt(teamIDorUID, 10, 64)
-			if parseErr != nil {
-				ctx := context.WithValue(c.Req.Context(), TeamUIDCtxKey{}, teamIDorUID)
-				c.Req = c.Req.WithContext(ctx)
-			}
 		} else {
-			c.JsonApiErr(http.StatusNotFound, "Not found", nil)
+			c.JsonApiErr(404, "Not found", nil)
 		}
 	}
-}
-
-func TeamUIDFrom(ctx context.Context) (string, bool) {
-	uid, ok := ctx.Value(TeamUIDCtxKey{}).(string)
-	return uid, ok && uid != ""
 }

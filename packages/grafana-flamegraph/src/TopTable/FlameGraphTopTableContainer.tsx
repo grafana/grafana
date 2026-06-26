@@ -4,29 +4,28 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
-  type DataFrame,
-  type DataLinkClickEvent,
-  type Field,
+  DataFrame,
+  DataLinkClickEvent,
+  Field,
   FieldType,
-  type GrafanaTheme2,
+  GrafanaTheme2,
   MappingType,
-  escapeStringForRegex,
 } from '@grafana/data';
 import {
   IconButton,
   Table,
   TableCellDisplayMode,
-  type TableCustomCellOptions,
-  type TableFieldOptions,
-  type TableSortByFieldState,
+  TableCustomCellOptions,
+  TableFieldOptions,
+  TableSortByFieldState,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
-import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
-import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
+import { ColorScheme, ColorSchemeDiff, TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -54,7 +53,28 @@ const FlameGraphTopTableContainer = memo(
     onTableSort,
     colorScheme,
   }: Props) => {
-    const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const table = useMemo(() => {
+      // Group the data by label, we show only one row per label and sum the values
+      // TODO: should be by filename + funcName + linenumber?
+      let filteredTable: { [key: string]: TableData } = {};
+      for (let i = 0; i < data.data.length; i++) {
+        const value = data.getValue(i);
+        const valueRight = data.getValueRight(i);
+        const self = data.getSelf(i);
+        const label = data.getLabel(i);
+
+        // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
+        if (!matchedLabels || matchedLabels.has(label)) {
+          filteredTable[label] = filteredTable[label] || {};
+          filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
+          filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
+          filteredTable[label].totalRight = filteredTable[label].totalRight
+            ? filteredTable[label].totalRight + valueRight
+            : valueRight;
+        }
+      }
+      return filteredTable;
+    }, [data, matchedLabels]);
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
@@ -103,50 +123,6 @@ const FlameGraphTopTableContainer = memo(
 );
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
-
-function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
-  // Group the data by label, we show only one row per label and sum the values
-  // TODO: should be by filename + funcName + linenumber?
-  let filteredTable: { [key: string]: TableData } = Object.create(null);
-
-  // Track call stack to detect recursive calls
-  const callStack: string[] = [];
-
-  for (let i = 0; i < data.data.length; i++) {
-    const value = data.getValue(i);
-    const valueRight = data.getValueRight(i);
-    const self = data.getSelf(i);
-    const label = data.getLabel(i);
-    const level = data.getLevel(i);
-
-    // Maintain call stack based on level changes
-    while (callStack.length > level) {
-      callStack.pop();
-    }
-
-    // Check if this is a recursive call (same label already in call stack)
-    const isRecursive = callStack.some((entry) => entry === label);
-
-    // If user is doing text search we filter out labels in the same way we highlight them in flame graph.
-    if (!matchedLabels || matchedLabels.has(label)) {
-      filteredTable[label] = filteredTable[label] || {};
-      filteredTable[label].self = filteredTable[label].self ? filteredTable[label].self + self : self;
-
-      // Only add to total if this is not a recursive call
-      if (!isRecursive) {
-        filteredTable[label].total = filteredTable[label].total ? filteredTable[label].total + value : value;
-        filteredTable[label].totalRight = filteredTable[label].totalRight
-          ? filteredTable[label].totalRight + valueRight
-          : valueRight;
-      }
-    }
-
-    // Add current call to the stack
-    callStack.push(label);
-  }
-
-  return filteredTable;
-}
 
 function buildTableDataFrame(
   data: FlameGraphDataContainer,
@@ -334,7 +310,7 @@ type ActionCellProps = {
 function ActionCell(props: ActionCellProps) {
   const styles = getStylesActionCell();
   const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values[props.rowIndex];
-  const isSearched = props.search === `^${escapeStringForRegex(String(symbol))}$`;
+  const isSearched = props.search === symbol;
   const isSandwiched = props.sandwichItem === symbol;
 
   return (
@@ -388,7 +364,5 @@ const getStylesActionCell = () => {
     }),
   };
 };
-
-export { buildFilteredTable };
 
 export default FlameGraphTopTableContainer;

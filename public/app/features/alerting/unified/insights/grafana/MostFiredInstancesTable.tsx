@@ -1,23 +1,20 @@
-import { type Observable, map } from 'rxjs';
+import { css } from '@emotion/css';
+import { Observable, map } from 'rxjs';
 
-import { type DataFrame, type Field } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import {
-  type CustomTransformOperator,
+  CustomTransformOperator,
   PanelBuilders,
   SceneDataTransformer,
   SceneFlexItem,
   SceneQueryRunner,
 } from '@grafana/scenes';
-import { type DataSourceRef, TableCellDisplayMode } from '@grafana/schema';
-import { type CustomCellRendererProps, TextLink } from '@grafana/ui';
+import { DataSourceRef } from '@grafana/schema';
+import { Link, useStyles2 } from '@grafana/ui';
 
 import { PANEL_STYLES } from '../../home/Insights';
 import { createRelativeUrl } from '../../utils/url';
-import { InsightsMenuButton } from '../InsightsMenuButton';
-
-const RULE_UID_FIELD_NAME = 'ruleUID';
-const ALERT_NAME_FIELD_NAME = 'labels_alertname';
-const VALUE_FIELD_NAME = 'Value #A';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -25,23 +22,20 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
     queries: [
       {
         refId: 'A',
-        expr: `topk(10, sum by(${ALERT_NAME_FIELD_NAME}, ${RULE_UID_FIELD_NAME}) (count_over_time({from="state-history"} | json | current = \`Alerting\` [1w])))`,
+        expr: 'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))',
         instant: true,
       },
     ],
   });
 
-  const createRuleLink = (field: Field<string>): Field<string> => {
+  const createRuleLink = (field: Field<string>, frame: DataFrame) => {
     return {
       ...field,
-      config: {
-        custom: {
-          cellOptions: {
-            type: TableCellDisplayMode.Custom,
-            cellComponent: RuleLink,
-          },
-        },
-      },
+      values: field.values.map((value, index) => {
+        const ruleUIDs = frame.fields.find((field) => field.name === 'ruleUID');
+        const ruleUID = ruleUIDs?.values[index];
+        return <RuleLink key={value} value={value} ruleUID={ruleUID} />;
+      }),
     };
   };
 
@@ -53,10 +47,9 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
             ...frame,
             fields: frame.fields.map((field) => {
               //Transforming the column `labels_alertname` to show a link to the rule view page next to the alert name
-              if (field.name === ALERT_NAME_FIELD_NAME) {
-                return createRuleLink(field);
+              if (field.name === 'labels_alertname') {
+                return createRuleLink(field, frame);
               }
-
               return field;
             }),
           };
@@ -75,7 +68,7 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
           fields: {},
           sort: [
             {
-              field: VALUE_FIELD_NAME,
+              field: 'Value #A',
               desc: true,
             },
           ],
@@ -86,16 +79,15 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
         options: {
           excludeByName: {
             Time: true,
-            [RULE_UID_FIELD_NAME]: false,
+            ruleUID: true,
           },
           indexByName: {
-            [ALERT_NAME_FIELD_NAME]: 0,
-            [RULE_UID_FIELD_NAME]: 1,
-            [VALUE_FIELD_NAME]: 2,
+            labels_alertname: 0,
+            'Value #A': 1,
           },
           renameByName: {
-            [ALERT_NAME_FIELD_NAME]: 'Alert rule name',
-            [VALUE_FIELD_NAME]: 'Number of fires',
+            labels_alertname: 'Alert rule name',
+            'Value #A': 'Number of fires',
           },
         },
       },
@@ -109,24 +101,27 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
       .setDescription('The alert rule instances that have fired the most')
       .setData(transformation)
       .setNoValue('No new alerts fired last week')
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
-      .setOverrides((builder) =>
-        // Hide the rule UID field, if we omit it in a transformation the custom cell renderer will not work
-        builder
-          .matchFieldsWithName(RULE_UID_FIELD_NAME)
-          .overrideCustomFieldConfig('hideFrom', { viz: true, legend: false, tooltip: false })
-      )
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }
 
-function RuleLink({ value, frame, rowIndex }: CustomCellRendererProps) {
-  const ruleUIDs = frame.fields.find((field) => field.name === RULE_UID_FIELD_NAME);
-  const ruleUID = ruleUIDs?.values[rowIndex];
+export function RuleLink({ value, ruleUID }: { value: string; ruleUID: string }) {
+  const getStyles = (theme: GrafanaTheme2) => ({
+    link: css({
+      '& > a': {
+        color: theme.colors.text.link,
+      },
+    }),
+  });
+
+  const styles = useStyles2(getStyles);
 
   return (
-    <TextLink color="primary" external href={createRelativeUrl(`/alerting/grafana/${ruleUID}/view`)} inline={false}>
-      {String(value)}
-    </TextLink>
+    <div className={styles.link}>
+      <Link target="_blank" href={createRelativeUrl(`/alerting/grafana/${ruleUID}/view`)}>
+        {value}
+      </Link>
+    </div>
   );
 }

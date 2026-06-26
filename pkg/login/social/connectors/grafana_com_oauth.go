@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -23,10 +22,8 @@ var ExtraGrafanaComSettingKeys = map[string]ExtraKeyInfo{
 	allowedOrganizationsKey: {Type: String, DefaultValue: ""},
 }
 
-var (
-	_ social.SocialConnector = (*SocialGrafanaCom)(nil)
-	_ ssosettings.Reloadable = (*SocialGrafanaCom)(nil)
-)
+var _ social.SocialConnector = (*SocialGrafanaCom)(nil)
+var _ ssosettings.Reloadable = (*SocialGrafanaCom)(nil)
 
 type SocialGrafanaCom struct {
 	*SocialBase
@@ -44,20 +41,15 @@ func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapp
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
-	s := newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg)
-
-	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
-	if err != nil {
-		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GrafanaComProviderName, "error", err)
-	}
-
 	provider := &SocialGrafanaCom{
-		SocialBase:           s,
+		SocialBase:           newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg),
 		url:                  cfg.GrafanaComURL,
-		allowedOrganizations: allowedOrganizations,
+		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
 
-	ssoSettings.RegisterReloadable(social.GrafanaComProviderName, provider)
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+		ssoSettings.RegisterReloadable(social.GrafanaComProviderName, provider)
+	}
 
 	return provider
 }
@@ -85,14 +77,9 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, newSettings ssoModels.S
 }
 
 func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.GrafanaComProviderName, settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
-	}
-
-	allowedOrganizations, err := util.SplitStringWithError(newInfo.Extra[allowedOrganizationsKey])
-	if err != nil {
-		s.log.Error("Invalid auth configuration setting", "config", allowedOrganizationsKey, "provider", social.GrafanaComProviderName, "error", err)
 	}
 
 	// Override necessary settings
@@ -106,7 +93,7 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	s.updateInfo(ctx, social.GrafanaComProviderName, newInfo)
 
 	s.url = s.cfg.GrafanaComURL
-	s.allowedOrganizations = allowedOrganizations
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 
 	return nil
 }
@@ -146,6 +133,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
+
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
@@ -163,7 +151,7 @@ func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ 
 	}
 
 	if !s.info.SkipOrgRoleSync {
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), nil, identity.RoleType(data.Role))
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(&MappingConfiguration{strictRoleMapping: false}, nil, identity.RoleType(data.Role))
 	}
 
 	if !s.isOrganizationMember(data.Orgs) {

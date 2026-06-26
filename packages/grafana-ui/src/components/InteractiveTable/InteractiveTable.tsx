@@ -1,27 +1,26 @@
 import { css, cx } from '@emotion/css';
-import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo } from 'react';
+import { uniqueId } from 'lodash';
+import { Fragment, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import {
-  type HeaderGroup,
-  type PluginHook,
-  type Row,
-  type SortingRule,
-  type TableOptions,
+  HeaderGroup,
+  PluginHook,
+  Row,
+  SortingRule,
+  TableOptions,
   useExpanded,
   usePagination,
   useSortBy,
   useTable,
 } from 'react-table';
 
-import { type GrafanaTheme2, type IconName, isTruthy } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2, IconName, isTruthy } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Pagination } from '../Pagination/Pagination';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { type PopoverContent } from '../Tooltip/types';
+import { PopoverContent, Tooltip } from '../Tooltip';
 
-import { type Column } from './types';
+import { Column } from './types';
 import { EXPANDER_CELL_ID, getColumns } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -152,14 +151,6 @@ interface BaseProps<TableData extends object> {
    * Optional way to set how the table is sorted from the beginning. Must be memoized.
    */
   initialSortBy?: Array<SortingRule<TableData>>;
-  /**
-   * Disable the ability to remove sorting on columns (none -> asc -> desc -> asc)
-   */
-  disableSortRemove?: boolean;
-  /**
-   * Will automatically reset to the first page if the `data` prop is changed
-   */
-  autoResetPage?: boolean;
 }
 
 interface WithExpandableRow<TableData extends object> extends BaseProps<TableData> {
@@ -180,13 +171,8 @@ interface WithoutExpandableRow<TableData extends object> extends BaseProps<Table
 
 type Props<TableData extends object> = WithExpandableRow<TableData> | WithoutExpandableRow<TableData>;
 
-/**
- * The InteractiveTable is used to display and select data efficiently. It allows for the display and modification of detailed information.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-interactivetable--docs
- */
+/** @alpha */
 export function InteractiveTable<TableData extends object>({
-  autoResetPage,
   className,
   columns,
   data,
@@ -197,13 +183,12 @@ export function InteractiveTable<TableData extends object>({
   showExpandAll = false,
   fetchData,
   initialSortBy = [],
-  disableSortRemove,
 }: Props<TableData>) {
   const styles = useStyles2(getStyles);
   const tableColumns = useMemo(() => {
     return getColumns<TableData>(columns, showExpandAll);
   }, [columns, showExpandAll]);
-  const id = useId();
+  const id = useUniqueId();
   const getRowHTMLID = useCallback(
     (row: Row<TableData>) => {
       return `${id}-${row.id}`.replace(/\s/g, '');
@@ -225,12 +210,10 @@ export function InteractiveTable<TableData extends object>({
       columns: tableColumns,
       data,
       autoResetExpanded: false,
-      autoResetPage: !!autoResetPage, // If undefined, we want to treat this as false to prevent page reset by default
       autoResetSortBy: false,
       disableMultiSort: true,
       // If fetchData is provided, we disable client-side sorting
       manualSortBy: Boolean(fetchData),
-      disableSortRemove,
       getRowId,
       initialState: {
         hiddenColumns: [
@@ -278,11 +261,11 @@ export function InteractiveTable<TableData extends object>({
                   return (
                     <th
                       key={key}
-                      {...headerCellProps}
-                      className={cx(styles.header, column.widthClass, {
+                      className={cx(styles.header, {
                         [styles.disableGrow]: column.width === 0,
                         [styles.sortableHeader]: column.canSort,
                       })}
+                      {...headerCellProps}
                       {...(column.isSorted && { 'aria-sort': column.isSortedDesc ? 'descending' : 'ascending' })}
                     >
                       <ColumnHeader column={column} headerTooltip={headerTooltip} />
@@ -308,9 +291,8 @@ export function InteractiveTable<TableData extends object>({
                 <tr {...otherRowProps} className={cx(styles.row, isExpanded && styles.expandedRow)}>
                   {row.cells.map((cell) => {
                     const { key, ...otherCellProps } = cell.getCellProps();
-
                     return (
-                      <td key={key} {...otherCellProps} className={cx(styles.cell, cell.column.widthClass)}>
+                      <td className={styles.cell} key={key} {...otherCellProps}>
                         {cell.render('Cell', { __rowID: rowId })}
                       </td>
                     );
@@ -341,6 +323,10 @@ export function InteractiveTable<TableData extends object>({
   );
 }
 
+const useUniqueId = () => {
+  return useMemo(() => uniqueId('InteractiveTable'), []);
+};
+
 const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({
   sortIcon: css({
     position: 'absolute',
@@ -352,7 +338,7 @@ const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({
 });
 
 function ColumnHeader<T extends object>({
-  column: { canSort, render, isSorted, isSortedDesc, getSortByToggleProps, Header, id },
+  column: { canSort, render, isSorted, isSortedDesc, getSortByToggleProps },
   headerTooltip,
 }: {
   column: HeaderGroup<T>;
@@ -383,13 +369,7 @@ function ColumnHeader<T extends object>({
 
   if (canSort) {
     return (
-      <button
-        aria-label={t('grafana-ui.interactive-table.aria-label-sort-column', 'Sort column {{columnName}}', {
-          columnName: typeof Header === 'string' ? Header : id,
-        })}
-        type="button"
-        onClick={onClick}
-      >
+      <button type="button" onClick={onClick}>
         {children}
       </button>
     );

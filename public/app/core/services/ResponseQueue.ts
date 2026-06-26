@@ -1,9 +1,9 @@
-import { type Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
-import { type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
-import { type FetchQueue } from './FetchQueue';
+import { FetchQueue } from './FetchQueue';
 
 interface FetchWorkEntry {
   id: string;

@@ -6,14 +6,13 @@ import (
 	"strconv"
 )
 
-const defaultLogGroupLimit = int32(50)
+const defaultLogGroupLimit = int64(50)
 
 type LogGroupsRequest struct {
 	ResourceRequest
-	Limit                                   int32
+	Limit                                   int64
 	LogGroupNamePrefix, LogGroupNamePattern *string
 	ListAllLogGroups                        bool
-	NextToken                               *string
 }
 
 func (r LogGroupsRequest) IsTargetingAllAccounts() bool {
@@ -36,7 +35,6 @@ func ParseLogGroupsRequest(parameters url.Values) (LogGroupsRequest, error) {
 		LogGroupNamePrefix:  logGroupNamePrefix,
 		LogGroupNamePattern: logGroupPattern,
 		ListAllLogGroups:    parameters.Get("listAllLogGroups") == "true",
-		NextToken:           setIfNotEmptyString(parameters.Get("nextToken")),
 	}, nil
 }
 
@@ -47,11 +45,11 @@ func setIfNotEmptyString(paramValue string) *string {
 	return &paramValue
 }
 
-func getLimit(limit string) int32 {
+func getLimit(limit string) int64 {
 	logGroupLimit := defaultLogGroupLimit
-	intLimit, err := strconv.ParseInt(limit, 10, 32)
+	intLimit, err := strconv.ParseInt(limit, 10, 64)
 	if err == nil && intLimit > 0 {
-		logGroupLimit = int32(intLimit)
+		logGroupLimit = intLimit
 	}
 	return logGroupLimit
 }

@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { type GrafanaTheme2, toOption } from '@grafana/data';
-import { EditorRows, FlexItem } from '@grafana/plugin-ui';
+import { GrafanaTheme2, toOption } from '@grafana/data';
+import { EditorRows, FlexItem } from '@grafana/experimental';
 import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
-import { type LokiDatasource } from '../../datasource';
+import { LokiDatasource } from '../../datasource';
 import { binaryScalarDefs } from '../binaryScalarOperations';
-import { type LokiVisualQueryBinary } from '../types';
+import { LokiVisualQueryBinary } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 

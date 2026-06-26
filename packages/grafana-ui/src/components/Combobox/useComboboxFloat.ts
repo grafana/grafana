@@ -1,64 +1,42 @@
-import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
+import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
 import { useMemo, useRef, useState } from 'react';
 
-import { t } from '@grafana/i18n';
+import { measureText } from '../../utils';
 
-import { BOUNDARY_ELEMENT_ID } from '../../utils/floating';
-import { measureText } from '../../utils/measureText';
-
-import { NO_OPTIONS_I18N_KEY } from './MessageRows';
-import {
-  MENU_ITEM_DESCRIPTION_FONT_SIZE,
-  MENU_ITEM_FONT_SIZE,
-  MENU_ITEM_FONT_WEIGHT,
-  MENU_ITEM_PADDING,
-  MENU_OPTION_HEIGHT,
-  POPOVER_MAX_HEIGHT,
-} from './getComboboxStyles';
-import { type ComboboxOption } from './types';
+import { ComboboxOption } from './Combobox';
+import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from './getComboboxStyles';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 
-// Clearance around the popover to prevent it from being too close to the edge of the viewport
-const POPOVER_PADDING = 16;
+/**
+ * Used with Downshift to get the height of each item
+ */
+export function estimateSize() {
+  return 45;
+}
 
-const SCROLL_CONTAINER_PADDING = 8;
-
-// 16px svg width + 12px Icon padding
-const ICON_WIDTH = 28;
-
-// MessageRow uses Box padding={2} = theme.spacing(2) = 16px each side
-const MESSAGE_ROW_PADDING = 32;
-
-export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
+export const useComboboxFloat = (
+  items: Array<ComboboxOption<string | number>>,
+  range: { startIndex: number; endIndex: number } | null,
+  isOpen: boolean
+) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number }>({
-    width: 0,
-    height: 0,
-  }); // set initial values to prevent infinite size, briefly removing the list virtualization
+  const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
   // the order of middleware is important!
   const middleware = [
-    autoPlacement({
-      // see https://floating-ui.com/docs/autoplacement
-      allowedPlacements: ['bottom-start', 'bottom-end', 'top-start', 'top-end'],
-      boundary: document.getElementById(BOUNDARY_ELEMENT_ID) ?? undefined,
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
       crossAxis: true,
+      boundary: document.body,
     }),
     size({
-      apply({ availableWidth, availableHeight }) {
-        const preferredMaxWidth = availableWidth - POPOVER_PADDING;
-        const preferredMaxHeight = availableHeight - POPOVER_PADDING;
-
-        const width = Math.max(preferredMaxWidth, 0);
-        const height = Math.min(Math.max(preferredMaxHeight, MENU_OPTION_HEIGHT * 6), POPOVER_MAX_HEIGHT);
-
-        setPopoverMaxSize({ width, height });
+      apply({ availableWidth }) {
+        setPopoverMaxWidth(availableWidth);
       },
     }),
   ];
@@ -73,49 +51,27 @@ export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, 
   });
 
   const longestItemWidth = useMemo(() => {
-    let longestLabel = '';
-    let longestLabelIndex = -1;
-    let longestDescription = '';
-    // @todo sort by string length DESC
+    let longestItem = '';
     const itemsToLookAt = Math.min(items.length, WIDTH_CALCULATION_LIMIT_ITEMS);
 
     for (let i = 0; i < itemsToLookAt; i++) {
       const itemLabel = items[i].label ?? items[i].value.toString();
-      if (itemLabel.length > longestLabel.length) {
-        longestLabel = itemLabel;
-        longestLabelIndex = i;
-      }
-      const itemDescription = items[i].description ?? '';
-      if (itemDescription.length > longestDescription.length) {
-        longestDescription = itemDescription;
-      }
+      longestItem = itemLabel.length > longestItem.length ? itemLabel : longestItem;
     }
 
-    const labelWidth = measureText(longestLabel, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
-    const descriptionWidth = longestDescription
-      ? measureText(longestDescription, MENU_ITEM_DESCRIPTION_FONT_SIZE).width
-      : 0;
-    const iconSize = longestLabelIndex > -1 && items[longestLabelIndex].icon ? ICON_WIDTH : 0;
+    const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-    const textWidth = Math.max(labelWidth + iconSize, descriptionWidth);
-    const itemWidth = textWidth + SCROLL_CONTAINER_PADDING + MENU_ITEM_PADDING * 2 + scrollbarWidth;
-
-    const noOptionsText = t(NO_OPTIONS_I18N_KEY, 'No options found.');
-    const noOptionsWidth = measureText(noOptionsText, MENU_ITEM_FONT_SIZE).width + MESSAGE_ROW_PADDING + scrollbarWidth;
-
-    return Math.max(itemWidth, noOptionsWidth);
+    return size + MENU_ITEM_PADDING_X * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {
     ...floatingStyles,
     width: longestItemWidth,
-    maxWidth: popoverMaxSize.width,
+    maxWidth: popoverMaxWidth,
     minWidth: inputRef.current?.offsetWidth,
-
-    maxHeight: popoverMaxSize.height,
   };
 
-  return { inputRef, floatingRef, scrollRef, floatStyles };
+  return { inputRef, floatingRef, floatStyles };
 };
 
 // Creates a temporary div with a scrolling inner div to calculate the width of the scrollbar

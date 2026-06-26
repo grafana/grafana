@@ -7,14 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 var logger = log.NewNullLogger()
@@ -89,27 +88,6 @@ func TestCloudWatchQuery(t *testing.T) {
 			assert.Contains(t, deepLink, "label")
 		})
 
-		t.Run("includes id and it's a math expression query", func(t *testing.T) {
-			startTime := time.Now()
-			endTime := startTime.Add(2 * time.Hour)
-			query := &CloudWatchQuery{
-				RefId:            "A",
-				Region:           "us-east-1",
-				Statistic:        "Average",
-				Expression:       "SEARCH(someexpression)",
-				Period:           300,
-				Id:               "id1",
-				MatchExact:       true,
-				Label:            "${PROP('Namespace')}",
-				MetricQueryType:  MetricQueryTypeSearch,
-				MetricEditorMode: MetricEditorModeRaw,
-			}
-
-			deepLink, err := query.BuildDeepLink(startTime, endTime)
-			require.NoError(t, err)
-			assert.Contains(t, deepLink, "id%22%3A%22a%22")
-		})
-
 		t.Run("includes account id in case its a metric stat query and an account id is set", func(t *testing.T) {
 			startTime := time.Now()
 			endTime := startTime.Add(2 * time.Hour)
@@ -121,7 +99,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				Period:     300,
 				Id:         "id1",
 				MatchExact: true,
-				AccountId:  new("123456789"),
+				AccountId:  utils.Pointer("123456789"),
 				Label:      "${PROP('Namespace')}",
 				Dimensions: map[string][]string{
 					"InstanceId": {"i-12345678"},
@@ -143,7 +121,7 @@ func TestCloudWatchQuery(t *testing.T) {
 				Region:           "us-east-1",
 				Statistic:        "Average",
 				Expression:       "SEARCH(someexpression)",
-				AccountId:        new("123456789"),
+				AccountId:        utils.Pointer("123456789"),
 				Period:           300,
 				Id:               "id1",
 				MatchExact:       true,
@@ -294,10 +272,6 @@ func TestRequestParser(t *testing.T) {
 				QueryType:     "timeSeriesQuery",
 				Interval:      0,
 				RefID:         "A",
-				TimeRange: backend.TimeRange{
-					From: time.Now(),
-					To:   time.Now(),
-				},
 				JSON: json.RawMessage(`{
 				   "region":"us-east-1",
 				   "namespace":"ec2",
@@ -329,10 +303,6 @@ func TestRequestParser(t *testing.T) {
 				QueryType:     "timeSeriesQuery",
 				Interval:      0,
 				RefID:         "A",
-				TimeRange: backend.TimeRange{
-					From: time.Now(),
-					To:   time.Now(),
-				},
 				JSON: json.RawMessage(`{
 				   "region":"us-east-1",
 				   "namespace":"ec2",
@@ -390,7 +360,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "CPUUtilization", res.MetricName)
 		assert.Equal(t, "queryref1", res.Id)
 		assert.Empty(t, res.Expression)
-		assert.Equal(t, int32(600), res.Period)
+		assert.Equal(t, 600, res.Period)
 		assert.True(t, res.ReturnData)
 		assert.Len(t, res.Dimensions, 2)
 		assert.Len(t, res.Dimensions["InstanceId"], 1)
@@ -433,7 +403,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "CPUUtilization", res.MetricName)
 		assert.Equal(t, "queryref1", res.Id)
 		assert.Empty(t, res.Expression)
-		assert.Equal(t, int32(600), res.Period)
+		assert.Equal(t, 600, res.Period)
 		assert.True(t, res.ReturnData)
 		assert.Len(t, res.Dimensions, 2)
 		assert.Len(t, res.Dimensions["InstanceId"], 1)
@@ -457,8 +427,7 @@ func TestRequestParser(t *testing.T) {
 		_, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), "us-east-2", logger, false)
 		require.Error(t, err)
 
-		assert.Equal(t, `error parsing query "", json: cannot unmarshal number into Go value of type string
-json: cannot unmarshal number into Go value of type []string`, err.Error())
+		assert.Equal(t, `error parsing query "", failed to parse dimensions: unknown type as dimension value`, err.Error())
 	})
 }
 
@@ -488,7 +457,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		assert.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.Equal(t, int32(900), res[0].Period)
+		assert.Equal(t, 900, res[0].Period)
 	})
 
 	t.Run("Period is parsed correctly if not defined by user", func(t *testing.T) {
@@ -519,7 +488,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(60), res[0].Period)
+			assert.Equal(t, 60, res[0].Period)
 		})
 
 		t.Run("Time range is 1 day", func(t *testing.T) {
@@ -529,7 +498,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(60), res[0].Period)
+			assert.Equal(t, 60, res[0].Period)
 		})
 
 		t.Run("Time range is 2 days", func(t *testing.T) {
@@ -538,7 +507,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(300), res[0].Period)
+			assert.Equal(t, 300, res[0].Period)
 		})
 
 		t.Run("Time range is 7 days", func(t *testing.T) {
@@ -548,7 +517,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(900), res[0].Period)
+			assert.Equal(t, 900, res[0].Period)
 		})
 
 		t.Run("Time range is 30 days", func(t *testing.T) {
@@ -558,7 +527,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(3600), res[0].Period)
+			assert.Equal(t, 3600, res[0].Period)
 		})
 
 		t.Run("Time range is 90 days", func(t *testing.T) {
@@ -568,7 +537,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(21600), res[0].Period)
+			assert.Equal(t, 21600, res[0].Period)
 		})
 
 		t.Run("Time range is 1 year", func(t *testing.T) {
@@ -578,7 +547,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.Nil(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(21600), res[0].Period)
+			assert.Equal(t, 21600, res[0].Period)
 		})
 
 		t.Run("Time range is 2 years", func(t *testing.T) {
@@ -588,7 +557,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(86400), res[0].Period)
+			assert.Equal(t, 86400, res[0].Period)
 		})
 
 		t.Run("Time range is 2 days, but 16 days ago", func(t *testing.T) {
@@ -597,7 +566,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(300), res[0].Period)
+			assert.Equal(t, 300, res[0].Period)
 		})
 
 		t.Run("Time range is 2 days, but 90 days ago", func(t *testing.T) {
@@ -606,7 +575,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(3600), res[0].Period)
+			assert.Equal(t, 3600, res[0].Period)
 		})
 
 		t.Run("Time range is 2 days, but 456 days ago", func(t *testing.T) {
@@ -615,7 +584,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, int32(21600), res[0].Period)
+			assert.Equal(t, 21600, res[0].Period)
 		})
 	})
 	t.Run("returns error if period is invalid duration", func(t *testing.T) {
@@ -646,7 +615,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		assert.NoError(t, err)
 
 		require.Len(t, res, 1)
-		assert.Equal(t, int32(9900), res[0].Period)
+		assert.Equal(t, 9900, res[0].Period)
 	})
 }
 
@@ -954,19 +923,20 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			average := "Average"
+			false := false
 
 			queryToMigrate := metricsDataQuery{
 				CloudWatchMetricsQuery: dataquery.CloudWatchMetricsQuery{
-					Region:     "us-east-1",
-					Namespace:  "ec2",
-					MetricName: new("CPUUtilization"),
-					Alias:      new(tc.inputAlias),
+					Region:     utils.Pointer("us-east-1"),
+					Namespace:  utils.Pointer("ec2"),
+					MetricName: utils.Pointer("CPUUtilization"),
+					Alias:      utils.Pointer(tc.inputAlias),
 					Dimensions: &dataquery.Dimensions{
-						"InstanceId": dataquery.StringOrArrayOfString{ArrayOfString: []string{"test"}},
+						"InstanceId": []any{"test"},
 					},
 					Statistic: &average,
-					Period:    new("600"),
-					Hide:      aws.Bool(false),
+					Period:    utils.Pointer("600"),
+					Hide:      &false,
 				},
 			}
 
@@ -1003,7 +973,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		assert.Equal(t, true, res[0].ReturnData)
 		assert.Equal(t, "CPUUtilization", res[0].MetricName)
 		assert.Equal(t, "ec2", res[0].Namespace)
-		assert.Equal(t, int32(600), res[0].Period)
+		assert.Equal(t, 600, res[0].Period)
 		assert.Equal(t, "us-east-1", res[0].Region)
 		assert.Equal(t, "Average", res[0].Statistic)
 	})
@@ -1052,7 +1022,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		assert.Equal(t, true, res[0].ReturnData)
 		assert.Equal(t, "CPUUtilization", res[0].MetricName)
 		assert.Equal(t, "ec2", res[0].Namespace)
-		assert.Equal(t, int32(600), res[0].Period)
+		assert.Equal(t, 600, res[0].Period)
 		assert.Equal(t, "us-east-1", res[0].Region)
 		assert.Equal(t, "Average", res[0].Statistic)
 
@@ -1062,7 +1032,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		assert.Equal(t, true, res[1].ReturnData)
 		assert.Equal(t, "CPUUtilization", res[1].MetricName)
 		assert.Equal(t, "ec2", res[1].Namespace)
-		assert.Equal(t, int32(600), res[1].Period)
+		assert.Equal(t, 600, res[1].Period)
 		assert.Equal(t, "us-east-1", res[1].Region)
 		assert.Equal(t, "Average", res[1].Statistic)
 	})
@@ -1108,7 +1078,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 				assert.Equal(t, true, res[0].ReturnData)
 				assert.Equal(t, "CPUUtilization", res[0].MetricName)
 				assert.Equal(t, "ec2", res[0].Namespace)
-				assert.Equal(t, int32(600), res[0].Period)
+				assert.Equal(t, 600, res[0].Period)
 				assert.Equal(t, "us-east-1", res[0].Region)
 				assert.Equal(t, "Average", res[0].Statistic)
 			})
@@ -1215,39 +1185,12 @@ func Test_ParseMetricDataQueries_account_Id(t *testing.T) {
 }
 
 func Test_ParseMetricDataQueries_default_region(t *testing.T) {
-	t.Run("default region is used when when region is default", func(t *testing.T) {
-		query := []backend.DataQuery{
-			{
-				JSON: json.RawMessage(`{
-				   "refId":"ref1",
-				   "region":"default",
-				   "namespace":"ec2",
-				   "metricName":"CPUUtilization",
-				   "id": "",
-				   "expression": "",
-				   "dimensions":{
-					  "InstanceId":["test"],
-					  "InstanceType":["test2"]
-				   },
-				   "statistic":"Average",
-				   "period":"900",
-				   "hide":false
-				}`),
-			},
-		}
-
-		region := "us-east-2"
-		res, err := ParseMetricDataQueries(query, time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour), region, logger, false)
-		assert.NoError(t, err)
-		require.Len(t, res, 1)
-		require.NotNil(t, res[0])
-		assert.Equal(t, region, res[0].Region)
-	})
 	t.Run("default region is used when when region not set", func(t *testing.T) {
 		query := []backend.DataQuery{
 			{
 				JSON: json.RawMessage(`{
 				   "refId":"ref1",
+				   "region":"default",
 				   "namespace":"ec2",
 				   "metricName":"CPUUtilization",
 				   "id": "",
@@ -1353,8 +1296,7 @@ func TestGetEndpoint(t *testing.T) {
 	}
 	for _, ts := range testcases {
 		t.Run(fmt.Sprintf("should create correct endpoint for %s", ts), func(t *testing.T) {
-			actual, err := getEndpoint(ts.region)
-			assert.NoError(t, err)
+			actual := getEndpoint(ts.region)
 			assert.Equal(t, ts.expectedEndpoint, actual)
 		})
 	}

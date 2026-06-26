@@ -1,8 +1,8 @@
-import { useEffect, useRef, type RefObject, useState, useMemo } from 'react';
+import { useEffect, useRef, RefObject, useState, useMemo } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { type Bounds } from './utils';
+import { Bounds } from './utils';
 
 export interface State {
   isPanning: boolean;

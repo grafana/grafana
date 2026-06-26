@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
-import { type DataFrame, type GrafanaTheme2, type LinkModel } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';
 import { EdgeLabel } from './EdgeLabel';
@@ -13,16 +12,15 @@ import { Legend } from './Legend';
 import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
-import { type Config, defaultConfig, useLayout, type LayoutCache } from './layout';
-import { LayoutAlgorithm, type ZoomMode } from './panelcfg.gen';
-import { type EdgeDatumLayout, type NodeDatum, type NodesMarker } from './types';
+import { Config, defaultConfig, useLayout } from './layout';
+import { EdgeDatumLayout, NodeDatum, NodesMarker } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 import { useHighlight } from './useHighlight';
 import { usePanning } from './usePanning';
 import { useZoom } from './useZoom';
-import { processNodes, type Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
+import { processNodes, Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
@@ -72,14 +70,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     pointerEvents: 'none',
   }),
-  layoutAlgorithm: css({
-    label: 'layoutAlgorithm',
-    pointerEvents: 'all',
-    position: 'absolute',
-    top: '8px',
-    right: '8px',
-    zIndex: 1,
-  }),
   legend: css({
     label: 'legend',
     background: theme.colors.background.secondary,
@@ -98,6 +88,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     alignItems: 'center',
     position: 'absolute',
+    top: 0,
     right: 0,
     background: theme.colors.warning.main,
     color: theme.colors.warning.contrastText,
@@ -116,38 +107,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
 // interactions will be without any lag for most users.
 const defaultNodeCountLimit = 200;
 
-export const layeredLayoutThreshold = 500;
-
 interface Props {
   dataFrames: DataFrame[];
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[];
   nodeLimit?: number;
   panelId?: string;
-  zoomMode?: ZoomMode;
-  layoutAlgorithm?: LayoutAlgorithm;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, layoutAlgorithm }: Props) {
+export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId }: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
-
-  // Layout cache to avoid recalculating layouts
-  const layoutCacheRef = useRef<LayoutCache>({});
-
-  // Update the config when layoutAlgorithm changes via the panel options
-  useEffect(() => {
-    if (layoutAlgorithm) {
-      setConfig((prevConfig) => {
-        return {
-          ...prevConfig,
-          gridLayout: layoutAlgorithm === LayoutAlgorithm.Grid,
-          layoutAlgorithm,
-        };
-      });
-    }
-  }, [layoutAlgorithm]);
 
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
@@ -194,8 +165,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
     nodeCountLimit,
     width,
     focusedNodeId,
-    processed.hasFixedPositions,
-    layoutCacheRef.current
+    processed.hasFixedPositions
   );
 
   // If we move from grid to graph layout, and we have focused node lets get its position to center there. We want to
@@ -203,8 +173,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
   const focusPosition = useFocusPositionOnLayout(config, nodes, focusedNodeId);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
     bounds,
-    focusPosition,
-    zoomMode
+    focusPosition
   );
 
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(
@@ -228,47 +197,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
 
   const highlightId = useHighlight(focusedNodeId);
 
-  const handleLayoutChange = (cfg: Config) => {
-    if (cfg.layoutAlgorithm !== config.layoutAlgorithm) {
-      setFocusedNodeId(undefined);
-    }
-    setConfig(cfg);
-  };
-
-  // Clear the layout cache when data changes
-  useEffect(() => {
-    layoutCacheRef.current = {};
-  }, [firstNodesDataFrame, firstEdgesDataFrame]);
-
   return (
     <div ref={topLevelRef} className={styles.wrapper}>
       {loading ? (
         <div className={styles.loadingWrapper}>
-          <Trans i18nKey="nodeGraph.node-graph.computing-layout">Computing layout</Trans>&nbsp;
+          Computing layout&nbsp;
           <Spinner />
         </div>
       ) : null}
-
-      {!panelId && (
-        <div className={styles.layoutAlgorithm}>
-          <RadioButtonGroup
-            size="sm"
-            options={[
-              { label: 'Layered', value: LayoutAlgorithm.Layered },
-              { label: 'Force', value: LayoutAlgorithm.Force },
-              { label: 'Grid', value: LayoutAlgorithm.Grid },
-            ]}
-            value={config.gridLayout ? LayoutAlgorithm.Grid : config.layoutAlgorithm}
-            onChange={(value) => {
-              handleLayoutChange({
-                ...config,
-                gridLayout: value === LayoutAlgorithm.Grid,
-                layoutAlgorithm: value,
-              });
-            }}
-          />
-        </div>
-      )}
 
       {dataFrames.length && processed.nodes.length ? (
         <svg
@@ -289,8 +225,6 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
                 onMouseEnter={setEdgeHover}
                 onMouseLeave={clearEdgeHover}
                 svgIdNamespace={svgIdNamespace}
-                processedNodesLength={processed.nodes.length}
-                processedEdgesLength={processed.edges.length}
               />
             )}
             <Nodes
@@ -307,9 +241,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
           </g>
         </svg>
       ) : (
-        <div className={styles.noDataMsg}>
-          <Trans i18nKey="nodeGraph.node-graph.no-data">No data</Trans>
-        </div>
+        <div className={styles.noDataMsg}>No data</div>
       )}
 
       <div className={styles.viewControls}>
@@ -332,7 +264,12 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
         <div className={styles.viewControlsWrapper}>
           <ViewControls<Config>
             config={config}
-            onConfigChange={handleLayoutChange}
+            onConfigChange={(cfg) => {
+              if (cfg.gridLayout !== config.gridLayout) {
+                setFocusedNodeId(undefined);
+              }
+              setConfig(cfg);
+            }}
             onMinus={onStepDown}
             onPlus={onStepUp}
             scale={scale}
@@ -343,43 +280,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
       </div>
 
       {hiddenNodesCount > 0 && (
-        <div
-          className={styles.alert}
-          style={{ top: panelId ? '0px' : '40px' }} // panelId is undefined in Explore
-          aria-label={t('nodeGraph.node-graph.aria-label-nodes-hidden-warning', 'Nodes hidden warning')}
-        >
-          <Trans
-            i18nKey="nodeGraph.node-graph.hidden-nodes"
-            count={hiddenNodesCount}
-            tOptions={{
-              defaultValue_one: '<0></0> {{count}} nodes are hidden for performance reasons.',
-              defaultValue_other: '<0></0> {{count}} nodes are hidden for performance reasons.',
-            }}
-          >
-            <Icon size="sm" name={'info-circle'} /> {'{{count}}'} nodes are hidden for performance reasons.
-          </Trans>
-        </div>
-      )}
-
-      {config.layoutAlgorithm === LayoutAlgorithm.Layered && processed.nodes.length > layeredLayoutThreshold && (
-        <div
-          className={styles.alert}
-          style={{ top: panelId ? '30px' : '70px' }}
-          aria-label={t(
-            'nodeGraph.node-graph.aria-label-layered-layout-performance-warning',
-            'Layered layout performance warning'
-          )}
-        >
-          <Trans
-            i18nKey="nodeGraph.node-graph.processed-nodes"
-            count={processed.nodes.length}
-            tOptions={{
-              defaultValue_one: '<0></0> Layered layout may be slow with {{count}} nodes.',
-              defaultValue_other: '<0></0> Layered layout may be slow with {{count}} nodes.',
-            }}
-          >
-            <Icon size="sm" name={'exclamation-triangle'} /> Layered layout may be slow with {'{{count}}'} nodes.
-          </Trans>
+        <div className={styles.alert} aria-label={'Nodes hidden warning'}>
+          <Icon size="sm" name={'info-circle'} /> {hiddenNodesCount} nodes are hidden for performance reasons.
         </div>
       )}
 
@@ -444,29 +346,25 @@ interface EdgesProps {
   onClick: (event: MouseEvent<SVGElement>, link: EdgeDatumLayout) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
-  processedNodesLength: number;
-  processedEdgesLength: number;
 }
 const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
-      {props.edges.map((e, index) => {
-        return (
-          <Edge
-            key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}-${props.processedEdgesLength}-${index}`}
-            edge={e}
-            hovering={
-              (e.source as NodeDatum).id === props.nodeHoveringId ||
-              (e.target as NodeDatum).id === props.nodeHoveringId ||
-              props.edgeHoveringId === e.id
-            }
-            onClick={props.onClick}
-            onMouseEnter={props.onMouseEnter}
-            onMouseLeave={props.onMouseLeave}
-            svgIdNamespace={props.svgIdNamespace}
-          />
-        );
-      })}
+      {props.edges.map((e) => (
+        <Edge
+          key={e.id}
+          edge={e}
+          hovering={
+            (e.source as NodeDatum).id === props.nodeHoveringId ||
+            (e.target as NodeDatum).id === props.nodeHoveringId ||
+            props.edgeHoveringId === e.id
+          }
+          onClick={props.onClick}
+          onMouseEnter={props.onMouseEnter}
+          onMouseLeave={props.onMouseLeave}
+          svgIdNamespace={props.svgIdNamespace}
+        />
+      ))}
     </>
   );
 });
@@ -479,7 +377,7 @@ interface EdgeLabelsProps {
 const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   return (
     <>
-      {props.edges.map((e) => {
+      {props.edges.map((e, index) => {
         // We show the edge label in case user hovers over the edge directly or if they hover over node edge is
         // connected to.
         const shouldShow =
@@ -494,8 +392,8 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   );
 });
 
-function usePanAndZoom(bounds: Bounds, focus?: { x: number; y: number }, zoomMode?: ZoomMode) {
-  const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom({ zoomMode });
+function usePanAndZoom(bounds: Bounds, focus?: { x: number; y: number }) {
+  const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom();
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
     scale,
     bounds,

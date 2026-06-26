@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type CompletionItemGroup } from '../../types/completion';
+import { CompletionItemGroup } from '../../types';
 
 import { Typeahead } from './Typeahead';
 

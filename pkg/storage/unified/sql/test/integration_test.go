@@ -2,271 +2,382 @@ package test
 
 import (
 	"context"
-	"strconv"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/fullstorydev/grpchan"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/kv"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-// initMutex is a global lock to ensure that database initialization and migration
-// only happens once at a time across all concurrent integration tests in this package.
-// This prevents race conditions where multiple tests try to alter the same table simultaneously.
-var initMutex = &sync.Mutex{}
-
-// newTestBackend creates a fresh database and backend for a test.
-// It uses a mutex to ensure the entire initialization and migration
-// process is atomic and does not race with other parallel tests.
-func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int) resource.StorageBackend {
-	// Lock to ensure the entire init block is atomic.
-	initMutex.Lock()
-	// Unlock once the function returns the initialized backend.
-	defer initMutex.Unlock()
-
-	cfg := setting.NewCfg()
-	cfg.GRPCServer.Address = "localhost:0" // get a free address
-	cfg.GRPCServer.Network = "tcp"
-	registerer := prometheus.NewPedanticRegistry()
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	cfg.EnableSQLKVBackend = false
-	cfg.MaxFileIndexAge = 24 * time.Hour
-	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
-	cfg.DisablePruner = db.IsTestDbSQLite()
-	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
-	dbstore := db.InitTestDB(t)
-	dbSection := cfg.SectionWithEnvOverrides("database")
-	if isHA {
-		dbSection.Key("high_availability").SetValue("true")
-	} else {
-		dbSection.Key("high_availability").SetValue("false")
-	}
-	if maxOpenConn > 0 {
-		dbSection.Key("max_open_conn").SetValue(strconv.Itoa(maxOpenConn))
-	}
-	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
-	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
-	require.NoError(t, err)
-	require.NotNil(t, backend)
-	backendService, ok := backend.(services.Service)
-	require.True(t, ok)
-	err = services.StartAndAwaitRunning(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)), backendService)
-	require.NoError(t, err)
-	return backend
-}
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationStorageServer(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	t.Cleanup(db.CleanupTestDB)
-
-	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
-		return newTestBackend(t, true, 0, 0)
-	})
-}
-
-// TestStorageBackend is a test for the StorageBackend interface.
-func TestIntegrationSQLStorageBackend(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	t.Cleanup(db.CleanupTestDB)
-
-	t.Run("IsHA (polling notifier)", func(t *testing.T) {
-		if db.IsTestDbSQLite() {
-			t.Skip("sqlite not compatible with HA")
-		}
-
-		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, true, 0, 0)
-		}, nil)
-	})
-
-	t.Run("NotHA (in process notifier)", func(t *testing.T) {
-		if !db.IsTestDbSQLite() {
-			t.Skip("in-process notifier only used with sqlite")
-		}
-
-		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, false, 0, 0)
-		}, nil)
-	})
-}
-
-func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-	t.Cleanup(db.CleanupTestDB)
-
-	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, unitest.SQLKVBackendModeRVManager)
-	}
-
-	opts := &unitest.TestOptions{
-		SearchServerFactory: newTestResourceServerWithSearch,
-	}
-
-	t.Run("IsHA (polling notifier)", func(t *testing.T) {
-		if db.IsTestDbSQLite() {
-			t.Skip("sqlite not compatible with HA")
-		}
-
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, true, 0, 0)
-		}, newKvBackend, opts)
-	})
-
-	t.Run("NotHA (in process notifier)", func(t *testing.T) {
-		if !db.IsTestDbSQLite() {
-			t.Skip("in-process notifier only used with sqlite")
-		}
-
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
-			return newTestBackend(t, false, 0, 0)
-		}, newKvBackend, opts)
-	})
-}
-
-// newTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
-func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
+func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 	t.Helper()
 
-	// Create test config
+	dbstore := infraDB.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.EnableSearch = true
-	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
-	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
 
-	// Initialize document builders for playlists
-	docBuilders := &resource.TestDocumentBuilderSupplier{
-		GroupsResources: map[string]string{
-			"playlist.grafana.app": "playlists",
-		},
-	}
-
-	// Create search options
-	features := featuremgmt.WithFeatures()
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil, nil)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
 	require.NoError(t, err)
+	require.NotNil(t, eDB)
 
-	// Create ResourceServer with search enabled
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      backend,
-		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
-		Search:       searchOpts,
-		Reg:          nil,
+	ret, err := sql.NewBackend(sql.BackendOptions{
+		DBProvider: eDB,
 	})
 	require.NoError(t, err)
+	require.NotNil(t, ret)
 
-	return server
-}
-
-func TestIntegrationSearchAndStorage(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx := context.Background()
-
-	// Create a new bleve backend
-	searchBackend, err := search.NewBleveBackend(search.BleveOptions{
-		FileThreshold: 0,
-		Root:          t.TempDir(),
-	}, nil)
+	err = ret.Init(testutil.NewDefaultTestContext(t))
 	require.NoError(t, err)
-	require.NotNil(t, searchBackend)
-	t.Cleanup(searchBackend.Stop)
 
-	// Create a new resource backend
-	storage := newTestBackend(t, false, 0, 0)
-	require.NotNil(t, storage)
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:     ret,
+		Diagnostics: ret,
+		Lifecycle:   ret,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, server)
 
-	// Run the shared storage and search tests
-	unitest.RunTestSearchAndStorage(t, ctx, storage, searchBackend)
+	return ret, server
 }
 
-func TestClientServer(t *testing.T) {
-	if db.IsTestDbSQLite() {
+func TestIntegrationBackendHappyPath(t *testing.T) {
+	if infraDB.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	testUserA := &identity.StaticRequester{
+		Type:           claims.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true, // can do anything
+	}
+	ctx := identity.WithRequester(context.Background(), testUserA)
+	backend, server := newServer(t)
+
+	stream, err := backend.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
+	require.NoError(t, err)
+	var rv1, rv2, rv3, rv4, rv5 int64
+
+	t.Run("Add 3 resources", func(t *testing.T) {
+		rv1, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+		require.NoError(t, err)
+		require.Greater(t, rv1, int64(0))
+
+		rv2, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
+		require.NoError(t, err)
+		require.Greater(t, rv2, rv1)
+
+		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
+		require.NoError(t, err)
+		require.Greater(t, rv3, rv2)
+	})
+
+	t.Run("Update item2", func(t *testing.T) {
+		rv4, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
+		require.NoError(t, err)
+		require.Greater(t, rv4, rv3)
+	})
+
+	t.Run("Delete item1", func(t *testing.T) {
+		rv5, err = writeEvent(ctx, backend, "item1", resource.WatchEvent_DELETED)
+		require.NoError(t, err)
+		require.Greater(t, rv5, rv4)
+	})
+
+	t.Run("Read latest item 2", func(t *testing.T) {
+		resp := backend.ReadResource(ctx, &resource.ReadRequest{Key: resourceKey("item2")})
+		require.Nil(t, resp.Error)
+		require.Equal(t, rv4, resp.ResourceVersion)
+		require.Equal(t, "item2 MODIFIED", string(resp.Value))
+	})
+
+	t.Run("Read early version of item2", func(t *testing.T) {
+		resp := backend.ReadResource(ctx, &resource.ReadRequest{
+			Key:             resourceKey("item2"),
+			ResourceVersion: rv3, // item2 was created at rv2 and updated at rv4
+		})
+		require.Nil(t, resp.Error)
+		require.Equal(t, rv2, resp.ResourceVersion)
+		require.Equal(t, "item2 ADDED", string(resp.Value))
+	})
+
+	t.Run("PrepareList latest", func(t *testing.T) {
+		resp, err := server.List(ctx, &resource.ListRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: "namespace",
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		require.Len(t, resp.Items, 2)
+		require.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
+		require.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
+		require.Equal(t, rv5, resp.ResourceVersion)
+	})
+
+	t.Run("Watch events", func(t *testing.T) {
+		event := <-stream
+		require.Equal(t, "item1", event.Key.Name)
+		require.Equal(t, rv1, event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
+		event = <-stream
+		require.Equal(t, "item2", event.Key.Name)
+		require.Equal(t, rv2, event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
+
+		event = <-stream
+		require.Equal(t, "item3", event.Key.Name)
+		require.Equal(t, rv3, event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
+
+		event = <-stream
+		require.Equal(t, "item2", event.Key.Name)
+		require.Equal(t, rv4, event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_MODIFIED, event.Type)
+
+		event = <-stream
+		require.Equal(t, "item1", event.Key.Name)
+		require.Equal(t, rv5, event.ResourceVersion)
+		require.Equal(t, resource.WatchEvent_DELETED, event.Type)
+	})
+}
+
+func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
+	if infraDB.IsTestDbSQLite() {
+		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test")
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
+	backend, _ := newServer(t)
+
+	// Create a few resources before initing the watch
+	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
+
+	// Start the watch
+	stream, err := backend.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	// Create one more event
+	_, err = writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED)
+	require.NoError(t, err)
+	require.Equal(t, "item2", (<-stream).Key.Name)
+}
+
+func TestIntegrationBackendList(t *testing.T) {
+	if infraDB.IsTestDbSQLite() {
+		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	backend, server := newServer(t)
+
+	// Create a few resources before starting the watch
+	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
+	require.Greater(t, rv1, int64(0))
+	rv2, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_ADDED) // rv=2 - will be modified at rv=6
+	require.Greater(t, rv2, rv1)
+	rv3, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED) // rv=3 - will be deleted  at rv=7
+	require.Greater(t, rv3, rv2)
+	rv4, _ := writeEvent(ctx, backend, "item4", resource.WatchEvent_ADDED)
+	require.Greater(t, rv4, rv3)
+	rv5, _ := writeEvent(ctx, backend, "item5", resource.WatchEvent_ADDED)
+	require.Greater(t, rv5, rv4)
+	rv6, _ := writeEvent(ctx, backend, "item2", resource.WatchEvent_MODIFIED)
+	require.Greater(t, rv6, rv5)
+	rv7, _ := writeEvent(ctx, backend, "item3", resource.WatchEvent_DELETED)
+	require.Greater(t, rv7, rv6)
+	rv8, _ := writeEvent(ctx, backend, "item6", resource.WatchEvent_ADDED)
+	require.Greater(t, rv8, rv7)
+
+	t.Run("fetch all latest", func(t *testing.T) {
+		res, err := server.List(ctx, &resource.ListRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 5)
+		// should be sorted by key ASC
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[3].Value))
+		require.Equal(t, "item6 ADDED", string(res.Items[4].Value))
+
+		require.Empty(t, res.NextPageToken)
+	})
+
+	t.Run("list latest first page ", func(t *testing.T) {
+		res, err := server.List(ctx, &resource.ListRequest{
+			Limit: 3,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 3)
+		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		require.NoError(t, err)
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+		require.Equal(t, rv8, continueToken.ResourceVersion)
+	})
+
+	t.Run("list at revision", func(t *testing.T) {
+		res, err := server.List(ctx, &resource.ListRequest{
+			ResourceVersion: rv4,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 4)
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 ADDED", string(res.Items[1].Value))
+		require.Equal(t, "item3 ADDED", string(res.Items[2].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[3].Value))
+		require.Empty(t, res.NextPageToken)
+	})
+
+	t.Run("fetch first page at revision with limit", func(t *testing.T) {
+		res, err := server.List(ctx, &resource.ListRequest{
+			Limit:           3,
+			ResourceVersion: rv7,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 3)
+		t.Log(res.Items)
+		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
+		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+
+		continueToken, err := sql.GetContinueToken(res.NextPageToken)
+		require.NoError(t, err)
+		require.Equal(t, rv7, continueToken.ResourceVersion)
+	})
+
+	t.Run("fetch second page at revision", func(t *testing.T) {
+		continueToken := &sql.ContinueToken{
+			ResourceVersion: rv8,
+			StartOffset:     2,
+		}
+		res, err := server.List(ctx, &resource.ListRequest{
+			NextPageToken: continueToken.String(),
+			Limit:         2,
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Group:    "group",
+					Resource: "resource",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Items, 2)
+		t.Log(res.Items)
+		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
+		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
+
+		continueToken, err = sql.GetContinueToken(res.NextPageToken)
+		require.NoError(t, err)
+		require.Equal(t, rv8, continueToken.ResourceVersion)
+		require.Equal(t, int64(4), continueToken.StartOffset)
+	})
+}
+func TestClientServer(t *testing.T) {
+	if infraDB.IsTestDbSQLite() {
+		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
+	dbstore := infraDB.InitTestDB(t)
 
 	cfg := setting.NewCfg()
-	cfg.GRPCServer.Address = "localhost:0" // get a free address
-	cfg.GRPCServer.Network = "tcp"
+	cfg.GRPCServerAddress = "localhost:0" // get a free address
+	cfg.GRPCServerNetwork = "tcp"
 
 	features := featuremgmt.WithFeatures()
 
-	registerer := prometheus.NewPedanticRegistry()
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry())
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
-	require.NoError(t, err)
+	var client resource.ResourceStoreClient
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		grpcService.StopAsync()
-		_ = services.StopAndAwaitTerminated(ctx, grpcService)
-	})
-
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
-		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
-			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
-			return auth.Authenticate(ctx)
-		}),
-	)
-	require.NoError(t, err)
-	var client resourcepb.ResourceStoreClient
-
-	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-		Type:    types.TypeUser,
-		UserID:  1,
-		UserUID: "user-uid-1",
-		OrgID:   1,
-		Login:   "testuser",
-		Name:    "Test User",
+	// Test with an admin identity
+	clientCtx := identity.WithRequester(ctx, &identity.StaticRequester{
+		Type:           claims.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true, // can do anything
 	})
 
 	t.Run("Start and stop service", func(t *testing.T) {
-		err = services.StartAndAwaitRunning(ctx, grpcService)
-		require.NoError(t, err)
 		err = services.StartAndAwaitRunning(ctx, svc)
 		require.NoError(t, err)
-		require.NotEmpty(t, grpcService.GetAddress())
+		require.NotEmpty(t, svc.GetAddress())
 	})
 
 	t.Run("Create a client", func(t *testing.T) {
-		conn, err := unified.GrpcConn(grpcService.GetAddress(), prometheus.NewPedanticRegistry())
+		conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		require.NoError(t, err)
-		client = resource.NewLegacyResourceClient(conn, conn)
+		client, err = resource.NewGRPCResourceClient(tracing.NewNoopTracerService(), conn)
+		require.NoError(t, err)
 	})
 
 	t.Run("Create a resource", func(t *testing.T) {
@@ -279,7 +390,7 @@ func TestClientServer(t *testing.T) {
 			},
 			"spec": {}
 		}`)
-		resp, err := client.Create(clientCtx, &resourcepb.CreateRequest{
+		resp, err := client.Create(clientCtx, &resource.CreateRequest{
 			Key:   resourceKey("item1"),
 			Value: raw,
 		})
@@ -289,7 +400,7 @@ func TestClientServer(t *testing.T) {
 	})
 
 	t.Run("Read the resource", func(t *testing.T) {
-		resp, err := client.Read(clientCtx, &resourcepb.ReadRequest{
+		resp, err := client.Read(clientCtx, &resource.ReadRequest{
 			Key: resourceKey("item1"),
 		})
 		require.NoError(t, err)
@@ -303,164 +414,24 @@ func TestClientServer(t *testing.T) {
 	})
 }
 
-func resourceKey(name string) *resourcepb.ResourceKey {
-	return &resourcepb.ResourceKey{
+func writeEvent(ctx context.Context, store sql.Backend, name string, action resource.WatchEvent_Type) (int64, error) {
+	return store.WriteEvent(ctx, resource.WriteEvent{
+		Type:  action,
+		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),
+		Key: &resource.ResourceKey{
+			Namespace: "namespace",
+			Group:     "group",
+			Resource:  "resource",
+			Name:      name,
+		},
+	})
+}
+
+func resourceKey(name string) *resource.ResourceKey {
+	return &resource.ResourceKey{
 		Namespace: "namespace",
 		Group:     "group",
 		Resource:  "resource",
 		Name:      name,
-	}
-}
-
-func TestIntegrationSearchClientServer(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := db.InitTestDB(t)
-
-	cfg := setting.NewCfg()
-	cfg.GRPCServer.Address = "localhost:0" // get a free address
-	cfg.GRPCServer.Network = "tcp"
-	cfg.EnableSearch = true
-	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
-	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
-	cfg.DisablePruner = db.IsTestDbSQLite()
-
-	features := featuremgmt.WithFeatures()
-
-	// Initialize document builders for search
-	docBuilders := &resource.TestDocumentBuilderSupplier{
-		GroupsResources: map[string]string{
-			"playlist.grafana.app": "playlists",
-		},
-	}
-
-	registerer := prometheus.NewPedanticRegistry()
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
-	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
-	require.NoError(t, err)
-	backendService := backend.(services.Service)
-	require.NotNil(t, backendService)
-	require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
-
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
-	require.NoError(t, err)
-
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, grpcService,
-		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
-			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
-			return auth.Authenticate(ctx)
-		}),
-	)
-	require.NoError(t, err)
-
-	var client resource.SearchClient
-	// Use identity.WithRequester to set up proper auth context for gRPC client interceptors
-	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-		Type:    types.TypeUser,
-		UserID:  1,
-		UserUID: "user-uid-1",
-		OrgID:   1,
-		OrgRole: identity.RoleAdmin,
-		Login:   "testuser",
-		Name:    "Test User",
-	})
-
-	t.Run("Start service", func(t *testing.T) {
-		err = services.StartAndAwaitRunning(ctx, grpcService)
-		require.NoError(t, err)
-		err = services.StartAndAwaitRunning(ctx, svc)
-		require.NoError(t, err)
-		require.NotEmpty(t, grpcService.GetAddress())
-	})
-
-	t.Run("Create client", func(t *testing.T) {
-		conn, err := unified.GrpcConn(grpcService.GetAddress(), prometheus.NewPedanticRegistry())
-		require.NoError(t, err)
-		client = newTestSearchClient(conn)
-	})
-
-	t.Run("Check service is healthy", func(t *testing.T) {
-		resp, err := client.IsHealthy(clientCtx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-	})
-
-	t.Run("Search returns empty results for empty index", func(t *testing.T) {
-		resp, err := client.Search(clientCtx, &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{
-					Namespace: "namespace",
-					Group:     "playlist.grafana.app",
-					Resource:  "playlists",
-				},
-			},
-		})
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-	})
-
-	t.Run("GetStats returns stats", func(t *testing.T) {
-		resp, err := client.GetStats(clientCtx, &resourcepb.ResourceStatsRequest{
-			Namespace: "namespace",
-		})
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-	})
-
-	t.Run("RebuildIndexes triggers rebuild", func(t *testing.T) {
-		resp, err := client.RebuildIndexes(clientCtx, &resourcepb.RebuildIndexesRequest{
-			Namespace: "namespace",
-			Keys: []*resourcepb.ResourceKey{
-				{
-					Namespace: "namespace",
-					Group:     "playlist.grafana.app",
-					Resource:  "playlists",
-				},
-			},
-		})
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-	})
-
-	t.Run("CountManagedObjects returns counts", func(t *testing.T) {
-		resp, err := client.CountManagedObjects(clientCtx, &resourcepb.CountManagedObjectsRequest{
-			Namespace: "namespace",
-		})
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-	})
-
-	t.Run("ListManagedObjects returns list", func(t *testing.T) {
-		resp, err := client.ListManagedObjects(clientCtx, &resourcepb.ListManagedObjectsRequest{
-			Namespace: "namespace",
-		})
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-	})
-
-	t.Run("Stop the service", func(t *testing.T) {
-		err = services.StopAndAwaitTerminated(ctx, svc)
-		require.NoError(t, err)
-	})
-}
-
-var _ resource.SearchClient = (*testSearchClient)(nil)
-
-// testSearchClient implements resource.SearchClient without auth for testing purposes
-type testSearchClient struct {
-	resourcepb.ResourceIndexClient
-	resourcepb.ManagedObjectIndexClient
-	resourcepb.DiagnosticsClient
-}
-
-func newTestSearchClient(conn grpc.ClientConnInterface) *testSearchClient {
-	cci := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
-	return &testSearchClient{
-		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cci),
-		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cci),
-		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cci),
 	}
 }

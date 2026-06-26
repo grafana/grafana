@@ -1,17 +1,16 @@
-import { type FieldConfigSource, type PanelModel, type PanelTypeChangedHandler } from '@grafana/data';
+import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
 import {
   AxisPlacement,
   ScaleDistribution,
   VisibilityMode,
   HeatmapCellLayout,
   HeatmapCalculationMode,
-  type HeatmapCalculationOptions,
+  HeatmapCalculationOptions,
 } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
 
 import { colorSchemes } from './palettes';
-import { type Options, HeatmapColorMode } from './panelcfg.gen';
-import { defaultOptions } from './types';
+import { Options, defaultOptions, HeatmapColorMode } from './types';
 
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => {
@@ -59,7 +58,7 @@ export const heatmapChangedHandler: PanelTypeChangedHandler = (panel, prevPlugin
   return {};
 };
 
-function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
+export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
   const fieldConfig: FieldConfigSource = {
     defaults: {},
     overrides: [],

@@ -1,11 +1,10 @@
 import { cx, css } from '@emotion/css';
-import { type ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
+import { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { type IconName, isIconName, type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
-import { type TooltipPlacement } from '@grafana/ui/internal';
+import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 type CommonProps = {
   contentOutlineExpanded?: boolean;
@@ -65,10 +64,7 @@ export function ContentOutlineItemButton({
         <button
           className={styles.collapseButton}
           onClick={toggleCollapsed}
-          aria-label={t(
-            'explore.content-outline-item-button.body.aria-label-content-outline-item-collapse-button',
-            'Content outline item collapse button'
-          )}
+          aria-label="Content outline item collapse button"
           aria-expanded={!collapsed}
           aria-controls={sectionId}
         >
@@ -92,10 +88,6 @@ export function ContentOutlineItemButton({
       </button>
       {onRemove && (
         <Button
-          aria-label={t(
-            'explore.content-outline-item-button.body.aria-label-content-outline-item-delete-button',
-            'Delete item'
-          )}
           variant="destructive"
           className={styles.deleteButton}
           icon="times"
@@ -139,6 +131,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
       flexGrow: 1,
       gap: theme.spacing(0.25),
       width: '100%',
+      overflow: 'hidden',
     }),
     button: css({
       label: 'content-outline-item-button',

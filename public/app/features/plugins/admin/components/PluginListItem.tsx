@@ -1,18 +1,17 @@
 import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
-import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 
-import { type CatalogPlugin, PluginIconName } from '../types';
+import { CatalogPlugin, PluginIconName } from '../types';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
 
-const LOGO_SIZE = '48px';
+export const LOGO_SIZE = '48px';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -36,22 +35,11 @@ function PluginListItemComponent({ plugin, pathName }: Props) {
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>
-        <p>
-          <Trans i18nKey="plugins.plugin-list-item.label-author" values={{ author: plugin.orgName }}>
-            By {'{{author}}'}
-          </Trans>
-        </p>
+        <p>By {plugin.orgName}</p>
         <PluginListItemBadges plugin={plugin} />
       </div>
       <div className={styles.pluginType}>
-        {plugin.type && (
-          <Icon
-            name={PluginIconName[plugin.type]}
-            title={t('plugins.plugin-list-item.title-icon-plugin-type', '{{pluginType}} plugin', {
-              pluginType: plugin.type,
-            })}
-          />
-        )}
+        {plugin.type && <Icon name={PluginIconName[plugin.type]} title={`${plugin.type} plugin`} />}
       </div>
     </a>
   );
@@ -94,7 +82,7 @@ const PluginListItemSkeleton: SkeletonComponent = ({ rootProps }) => {
 export const PluginListItem = attachSkeleton(PluginListItemComponent, PluginListItemSkeleton);
 
 // Styles shared between the different type of list items
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'grid',
@@ -103,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
       gridAutoFlow: 'row',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.lg,
+      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(3),
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {

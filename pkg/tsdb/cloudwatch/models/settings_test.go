@@ -2,22 +2,18 @@ package models
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
-	settingCtx := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
+	settingCtx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
 		awsds.AllowedAuthProvidersEnvVarKeyName: "default,keys,credentials",
 		awsds.AssumeRoleEnabledEnvVarKeyName:    "false",
 		awsds.SessionDurationEnvVarKeyName:      "10m",
@@ -118,24 +114,6 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, time.Minute*30, s.LogsTimeout.Duration)
 	})
-	t.Run("Should set logsTimeout to default duration if it is empty string", func(t *testing.T) {
-		settings := backend.DataSourceInstanceSettings{
-			ID: 33,
-			JSONData: []byte(`{
-			"authType": "arn",
-			"assumeRoleArn": "arn:aws:iam::123456789012:role/grafana",
-			"logsTimeout": ""
-		  }`),
-			DecryptedSecureJSONData: map[string]string{
-				"accessKey": "AKIAIOSFODNN7EXAMPLE",
-				"secretKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-			},
-		}
-
-		s, err := LoadCloudWatchSettings(settingCtx, settings)
-		require.NoError(t, err)
-		assert.Equal(t, time.Minute*30, s.LogsTimeout.Duration)
-	})
 	t.Run("Should correctly parse logsTimeout duration string", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{
 			ID: 33,
@@ -206,10 +184,6 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 
 		_, err := LoadCloudWatchSettings(context.Background(), settings)
 		require.Error(t, err)
-		var sourceErr errorsource.Error
-		ok := errors.As(err, &sourceErr)
-		require.True(t, ok)
-		require.Equal(t, sourceErr.ErrorSource().String(), "downstream")
 	})
 	t.Run("Should throw error if logsTimeout is an invalid type", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{
@@ -230,7 +204,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 	})
 
 	t.Run("Should load settings from context", func(t *testing.T) {
-		settingCtx := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
+		settingCtx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
 			awsds.AllowedAuthProvidersEnvVarKeyName:  "foo , bar,baz",
 			awsds.AssumeRoleEnabledEnvVarKeyName:     "false",
 			awsds.SessionDurationEnvVarKeyName:       "10m",

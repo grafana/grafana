@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -43,8 +42,9 @@ func (t *TestCase) Value() string {
 }
 
 func TestIntegrationKVStore(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	kv := createTestableKVStore(t)
 
 	ctx := context.Background()
@@ -248,9 +248,7 @@ func TestIntegrationKVStore(t *testing.T) {
 	})
 }
 
-func TestIntegrationGetItems(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestGetItems(t *testing.T) {
 	kv := createTestableKVStore(t)
 
 	ctx := context.Background()

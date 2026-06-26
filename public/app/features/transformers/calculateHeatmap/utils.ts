@@ -1,12 +1,10 @@
-import { durationToMilliseconds, guessDecimals, isValidDuration, parseDuration, roundDecimals } from '@grafana/data';
-
-import { numberOrVariableValidator } from '../utils';
+import { guessDecimals, roundDecimals } from '@grafana/data';
 
 const { abs, pow } = Math;
 
-const fixedDec = new Map();
+export const fixedDec = new Map();
 
-function genIncrs(base: number, minExp: number, maxExp: number, mults: number[]) {
+export function genIncrs(base: number, minExp: number, maxExp: number, mults: number[]) {
   let incrs = [];
 
   let multDec = mults.map(guessDecimals);
@@ -32,13 +30,15 @@ const onlyWhole = (v: number) => v % 1 === 0;
 const allMults = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5];
 
 // ...0.01, 0.02, 0.025, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5...
-const decIncrs = genIncrs(10, -16, 0, allMults);
+export const decIncrs = genIncrs(10, -16, 0, allMults);
 
 // 1, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10, 20, 25, 30, 40, 50...
-const oneIncrs = genIncrs(10, 0, 16, allMults);
+export const oneIncrs = genIncrs(10, 0, 16, allMults);
 
 // 1, 2,      3, 4, 5, 10, 20, 25, 50...
-const wholeIncrs = oneIncrs.filter(onlyWhole);
+export const wholeIncrs = oneIncrs.filter(onlyWhole);
+
+export const numIncrs = decIncrs.concat(oneIncrs);
 
 export const niceLinearIncrs = decIncrs.concat(wholeIncrs);
 
@@ -117,26 +117,3 @@ export const niceTimeIncrs = [
   9 * year,
   10 * year,
 ];
-
-// convert a string to the number of milliseconds. valid inputs are a number, variable, or duration. duration in ms is supported.
-// value out will always be an integer, as ms is the lowest granularity for heatmaps
-export const convertDurationToMilliseconds = (duration: string): number | undefined => {
-  const isValidNumberOrVariable = numberOrVariableValidator(duration); // check if number only. if so, equals number of ms
-  if (isValidNumberOrVariable) {
-    const durationMs = Number.parseInt(duration, 10);
-    return Number.isNaN(durationMs) ? undefined : durationMs;
-  } else {
-    const validDuration = isValidDuration(duration); // check if non-ms duration. If so, convert value to number of ms
-    if (validDuration) {
-      return durationToMilliseconds(parseDuration(duration));
-    } else {
-      const match = duration.match(/(\d+)ms$/i);
-      if (match) {
-        const durationMs = Number.parseInt(match[1], 10);
-        return Number.isNaN(durationMs) ? undefined : durationMs;
-      } else {
-        return undefined;
-      }
-    }
-  }
-};

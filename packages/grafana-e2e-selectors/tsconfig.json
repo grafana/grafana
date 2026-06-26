@@ -1,13 +1,11 @@
 {
-  "extends": "../../scripts/tsconfig.base.json",
   "compilerOptions": {
-    "declaration": true,
-    "declarationDir": "./dist/types",
+    "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."],
-    "moduleResolution": "bundler"
+    "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],
+  "extends": "@grafana/tsconfig",
   "include": ["src/**/*.ts"]
 }

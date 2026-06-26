@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
 import { setEchoSrv } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
-import { type ExploreState } from 'app/types/explore';
+import { ExploreState } from 'app/types';
 
 import { createEmptyQueryResponse } from '../../state/utils';
 

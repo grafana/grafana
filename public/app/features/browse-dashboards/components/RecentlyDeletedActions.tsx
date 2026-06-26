@@ -1,33 +1,27 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
-import { buildNotificationButton } from 'app/core/components/AppNotifications/NotificationButton';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isRootFolderUID } from 'app/features/search/constants';
-import { useDispatch } from 'app/types/store';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 
-import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
-import { useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
+import appEvents from '../../../core/app_events';
+import { Trans } from '../../../core/internationalization';
+import { useDispatch } from '../../../types';
+import { ShowModalReactEvent } from '../../../types/events';
+import { useHardDeleteDashboardMutation, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
-import { useActionSelectionState } from '../state/hooks';
-import { clearFolders, setAllSelection } from '../state/slice';
-import { getRestoreNotificationData } from '../utils/notifications';
+import { clearFolders, setAllSelection, useActionSelectionState } from '../state';
 
+import { PermanentlyDeleteModal } from './PermanentlyDeleteModal';
 import { RestoreModal } from './RestoreModal';
 
 export function RecentlyDeletedActions() {
   const dispatch = useDispatch();
   const selectedItemsState = useActionSelectionState();
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
-  const [restoreDashboard] = useRestoreDashboardMutation();
-  const [isBulkRestoreLoading, setIsBulkRestoreLoading] = useState(false);
-  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+
+  const [restoreDashboard, { isLoading: isRestoreLoading }] = useRestoreDashboardMutation();
+  const [deleteDashboard, { isLoading: isDeleteLoading }] = useHardDeleteDashboardMutation();
 
   const selectedDashboards = useMemo(() => {
     return Object.entries(selectedItemsState.dashboard)
@@ -35,51 +29,24 @@ export function RecentlyDeletedActions() {
       .map(([uid]) => uid);
   }, [selectedItemsState.dashboard]);
 
-  const selectedDashboardOrigin = useMemo(() => {
-    if (!searchState.result || selectedDashboards.length === 0) {
-      return undefined;
-    }
-
-    let originCandidate: string | undefined;
+  const selectedDashboardOrigin: string[] = [];
+  if (searchState.result) {
     for (const selectedDashboard of selectedDashboards) {
       const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
-      if (index === -1) {
-        return undefined;
-      }
 
-      // Searcher reports root-parented items with the "general" UID, but the
-      // restore API doesn't accept it — convert back to "" so the dashboard
-      // is restored to the root.
+      // SQLSearcher changes the location from empty string to 'general' for items with no parent
+      // but the restore API doesn't work with 'general' folder UID, so we need to convert it back
+      // to an empty string
       const location = searchState.result.view.fields.location.values[index];
-      const fixedLocation = isRootFolderUID(location) ? '' : location;
+      const fixedLocation = location === GENERAL_FOLDER_UID ? '' : location;
+      selectedDashboardOrigin.push(fixedLocation);
+    }
+  }
 
-      if (originCandidate === undefined) {
-        originCandidate = fixedLocation;
-        continue;
-      }
+  const onActionComplete = () => {
+    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-      if (originCandidate !== fixedLocation) {
-        return undefined;
-      }
-    }
-
-    return originCandidate;
-  }, [selectedDashboards, searchState.result]);
-
-  const getErrorMessage = (error: unknown) => {
-    if (error instanceof Error) {
-      return error.message;
-    }
-    if (typeof error === 'string') {
-      return error;
-    }
-    if (error && typeof error === 'object' && 'message' in error) {
-      return String(error.message);
-    }
-    if (error) {
-      return JSON.stringify(error);
-    }
-    return '';
+    stateManager.doSearchWithDebounce();
   };
 
   const onRestore = async (restoreTarget: string) => {
@@ -88,61 +55,11 @@ export function RecentlyDeletedActions() {
       return;
     }
 
-    setIsBulkRestoreLoading(true);
-
-    const promises = selectedDashboards.map(async (uid) => {
-      const table = await deletedDashboardsCache.getAsTable();
-      const row = table.rows.find((r) => r.object.metadata.name === uid);
-      if (!row) {
-        console.warn(`Dashboard ${uid} not found in deleted items`);
-        return { uid, error: 'not_found' };
-      }
-
-      const deleteRV = row.object.metadata.resourceVersion;
-      if (!deleteRV) {
-        console.warn(`Dashboard ${uid} is missing a resourceVersion in the trash listing`);
-        return { uid, error: 'not_found' };
-      }
-      // The RV on a trash row is the delete event's RV, which points at the
-      // tombstone (and on some storage backends returns 404). Step back by one
-      // so the read resolves to the dashboard as it was just before delete.
-      const previousRV = (BigInt(deleteRV) - BigInt(1)).toString();
-
-      const api = await getDashboardAPI();
-      const dashboard = await api.getDashboard(uid, { resourceVersion: previousRV });
-
-      const copy = structuredClone(dashboard);
-      copy.metadata = {
-        ...copy.metadata,
-        annotations: { ...copy.metadata?.annotations, [AnnoKeyFolder]: restoreTarget },
-      };
-
-      return restoreDashboard({ dashboard: copy });
+    const promises = selectedDashboards.map((uid) => {
+      return restoreDashboard({ dashboardUID: uid, targetFolderUID: restoreTarget });
     });
 
-    const results = await Promise.allSettled(promises);
-
-    // Separate successful and failed restores
-    const successful: string[] = [];
-    const failed: Array<{ uid: string; error: string }> = [];
-
-    results.forEach((result, index) => {
-      const dashboardUid = selectedDashboards[index];
-      if (result.status === 'rejected') {
-        const errorMessage = getErrorMessage(result.reason);
-        if (errorMessage) {
-          failed.push({ uid: dashboardUid, error: errorMessage });
-        }
-      } else if (result.value.error) {
-        const errorMessage = getErrorMessage(result.value.error);
-        if (errorMessage) {
-          failed.push({ uid: dashboardUid, error: errorMessage });
-        }
-      } else if ('data' in result.value && result.value.data?.name) {
-        // Track the UID of successfully restored dashboards
-        successful.push(dashboardUid);
-      }
-    });
+    await Promise.all(promises);
 
     const parentUIDs = new Set<string | undefined>();
     for (const uid of selectedDashboards) {
@@ -150,35 +67,22 @@ export function RecentlyDeletedActions() {
       if (!foundItem) {
         continue;
       }
-      // Search API reports root-parented items with the "general" UID —
-      // convert that back to undefined.
-      const folderUID = isRootFolderUID(foundItem.location) ? undefined : foundItem.location;
+
+      // Search API returns items with no parent with a location of 'general', so we
+      // need to convert that back to undefined
+      const folderUID = foundItem.location === GENERAL_FOLDER_UID ? undefined : foundItem.location;
       parentUIDs.add(folderUID);
     }
     dispatch(clearFolders(Array.from(parentUIDs)));
-    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
-    deletedDashboardsCache.removeItems(successful);
-    await stateManager.doSearch();
+    onActionComplete();
+  };
 
-    const notificationData = getRestoreNotificationData(successful, failed, restoreTarget);
-    if (notificationData) {
-      if (notificationData.kind === 'action') {
-        const component = buildNotificationButton({
-          title: notificationData.data.title,
-          buttonLabel: notificationData.data.buttonLabel,
-          href: notificationData.data.targetUrl,
-        });
-        dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-      } else {
-        appEvents.publish({
-          type: notificationData.data.alertType,
-          payload: [notificationData.data.message],
-        });
-      }
-    }
-    setIsBulkRestoreLoading(false);
-    setIsRestoreModalOpen(false);
+  const onDelete = async () => {
+    const promises = selectedDashboards.map((uid) => deleteDashboard({ dashboardUID: uid }));
+
+    await Promise.all(promises);
+    onActionComplete();
   };
 
   const showRestoreModal = () => {
@@ -187,25 +91,45 @@ export function RecentlyDeletedActions() {
         dashboard: selectedDashboards.length,
       },
     });
-    setIsRestoreModalOpen(true);
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: RestoreModal,
+        props: {
+          selectedDashboards,
+          dashboardOrigin: selectedDashboardOrigin,
+          onConfirm: onRestore,
+          isLoading: isRestoreLoading,
+        },
+      })
+    );
+  };
+
+  const showDeleteModal = () => {
+    reportInteraction('grafana_delete_permanently_clicked', {
+      item_counts: {
+        dashboard: selectedDashboards.length,
+      },
+    });
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: PermanentlyDeleteModal,
+        props: {
+          selectedDashboards,
+          onConfirm: onDelete,
+          isLoading: isDeleteLoading,
+        },
+      })
+    );
   };
 
   return (
-    <>
-      <Stack gap={1}>
-        <Button onClick={showRestoreModal} variant="secondary">
-          <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
-        </Button>
-      </Stack>
-      {isRestoreModalOpen && (
-        <RestoreModal
-          onConfirm={onRestore}
-          onDismiss={() => setIsRestoreModalOpen(false)}
-          selectedDashboards={selectedDashboards}
-          originCandidate={selectedDashboardOrigin}
-          isLoading={isBulkRestoreLoading}
-        />
-      )}
-    </>
+    <Stack gap={1}>
+      <Button onClick={showRestoreModal} variant="secondary">
+        <Trans i18nKey="recently-deleted.buttons.restore">Restore</Trans>
+      </Button>
+      <Button onClick={showDeleteModal} variant="destructive">
+        <Trans i18nKey="recently-deleted.buttons.delete">Delete permanently</Trans>
+      </Button>
+    </Stack>
   );
 }

@@ -8,27 +8,16 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	alertingNotify "github.com/grafana/alerting/notify"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/util"
 )
-
-// ExtraConfigAuthz is the authorization interface for alertmanager import operations.
-type ExtraConfigAuthz interface {
-	AuthorizeCreate(ctx context.Context, user identity.Requester) error
-	AuthorizeUpdate(ctx context.Context, user identity.Requester, identifier string) error
-	AuthorizeDelete(ctx context.Context, user identity.Requester, identifier string) error
-	AuthorizePromote(ctx context.Context, user identity.Requester, result merge.MergeResult) error
-}
 
 var (
 	// ErrAlertmanagerReceiverInUse is primarily meant for when a receiver is used by a rule and is being deleted.
@@ -40,17 +29,6 @@ var (
 	ErrAlertmanagerTimeIntervalInUse = errutil.BadRequest("alerting.notifications.alertmanager.intervalInUse").MustTemplate("time interval [Name: {{ .Public.Interval }}] is used by rule: {{ .Error }}",
 		errutil.WithPublic(
 			"time interval [Name: {{ .Public.Interval }}] is used by rule",
-		))
-
-	msgAlertmanagerMultipleExtraConfigsUnsupported = "multiple extra configurations are not supported, found another configuration with identifier: {{ .Public.Identifier }}"
-	ErrAlertmanagerMultipleExtraConfigsUnsupported = errutil.Conflict("alerting.notifications.alertmanager.multipleExtraConfigsUnsupported").MustTemplate(
-		msgAlertmanagerMultipleExtraConfigsUnsupported,
-		errutil.WithPublic(msgAlertmanagerMultipleExtraConfigsUnsupported),
-	)
-
-	ErrIdentifierAlreadyExists = errutil.BadRequest("alerting.notifications.alertmanager.identifierAlreadyExists").MustTemplate("identifier [{{ .Public.Identifier }}] already used by existing managed routes",
-		errutil.WithPublic(
-			"Identifier [{{ .Public.Identifier }}] is already used by existing managed routes. Use another identifier or delete the existing route.",
 		))
 )
 
@@ -74,44 +52,6 @@ type configurationStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
-func (moa *MultiOrgAlertmanager) PrepareConfig(
-	ctx context.Context,
-	orgID int64,
-	cfg *models.AlertConfiguration,
-	onInvalid InvalidReceiversAction,
-) (alertingNotify.NotificationsConfiguration, error) {
-	prepared, err := Load([]byte(cfg.AlertmanagerConfiguration))
-	if err != nil {
-		return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to parse Alertmanager config: %w", err)
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if len(prepared.ExtraConfigs) > 0 && moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) && moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		if err := moa.Crypto.DecryptExtraConfigs(ctx, prepared); err != nil {
-			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
-		}
-		mergedConfig, _, err := merge.MergeExtraConfig(ctx, prepared)
-		if err != nil {
-			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to merge external configuration: %w", err)
-		}
-		prepared = &mergedConfig
-	}
-
-	// Add managed routes and extra route as managed route to the configuration.
-	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
-	// route
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if moa.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
-	}
-
-	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &prepared.AlertmanagerConfig, onInvalid, moa.featureManager); err != nil {
-		return alertingNotify.NotificationsConfiguration{}, err
-	}
-
-	return PostableAPIConfigToNotificationsConfiguration(*prepared, moa.limits)
-}
-
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
@@ -123,7 +63,7 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, 
 
 	previousConfig, cleanPermissionsErr := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
 
-	err = moa.saveAndApplyDefaultConfig(ctx, orgId, orgAM)
+	err = orgAM.SaveAndApplyDefaultConfig(ctx)
 	if err != nil {
 		return err
 	}
@@ -152,20 +92,20 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, 
 
 // ApplyConfig will apply the given alertmanager configuration for a given org.
 // Can be used to force regeneration of autogenerated routes.
-func (moa *MultiOrgAlertmanager) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) (bool, error) {
+func (moa *MultiOrgAlertmanager) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) error {
 	am, err := moa.AlertmanagerFor(orgId)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
 		if !errors.Is(err, ErrAlertmanagerNotReady) {
-			return false, err
+			return err
 		}
 	}
 
-	applied, err := moa.applyConfig(ctx, orgId, am, dbConfig)
+	err = am.ApplyConfig(ctx, dbConfig)
 	if err != nil {
-		return false, fmt.Errorf("failed to apply configuration: %w", err)
+		return fmt.Errorf("failed to apply configuration: %w", err)
 	}
-	return applied, nil
+	return nil
 }
 
 // GetAlertmanagerConfiguration returns the latest alertmanager configuration for a given org.
@@ -176,7 +116,22 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
 
-	return moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration, withAutogen)
+	cfg, err := moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration)
+	if err != nil {
+		return definitions.GettableUserConfig{}, err
+	}
+
+	if moa.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting) && withAutogen {
+		// We validate the notification settings in a similar way to when we POST.
+		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
+		// different than the config currently in-use.
+		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
+		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, org, &cfg.AlertmanagerConfig, true)
+		if err != nil {
+			return definitions.GettableUserConfig{}, err
+		}
+	}
+	return cfg, nil
 }
 
 // ActivateHistoricalConfiguration will set the current alertmanager configuration to a previous value based on the provided
@@ -202,13 +157,7 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 
 	previousConfig, cleanPermissionsErr := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
 
-	if len(cfg.ExtraConfigs) > 0 {
-		if err := moa.Crypto.EncryptExtraConfigs(ctx, cfg); err != nil {
-			return fmt.Errorf("failed to encrypt external configurations: %w", err)
-		}
-	}
-
-	if err := moa.saveAndApplyConfig(ctx, orgId, am, cfg); err != nil {
+	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
 		moa.logger.Error("Unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
 		return AlertmanagerConfigRejectedError{err}
 	}
@@ -242,7 +191,7 @@ func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx contex
 	gettableHistoricConfigs := make([]*definitions.GettableHistoricUserConfig, 0, len(configs))
 	for _, config := range configs {
 		appliedAt := strfmt.DateTime(time.Unix(config.LastApplied, 0).UTC())
-		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration, false)
+		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration)
 		if err != nil {
 			// If there are invalid records, skip them and return the valid ones.
 			moa.logger.Warn("Invalid configuration found in alert configuration history table", "id", config.ID, "orgID", org)
@@ -262,50 +211,21 @@ func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx contex
 	return gettableHistoricConfigs, nil
 }
 
-func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string, withAutogen bool) (definitions.GettableUserConfig, error) {
+func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string) (definitions.GettableUserConfig, error) {
 	cfg, err := Load([]byte(config))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
 	}
 
-	err = moa.Crypto.DecryptExtraConfigs(ctx, cfg)
-	if err != nil {
-		return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
-	}
-
-	alertmanagerConfig := cfg.AlertmanagerConfig
-
-	if withAutogen {
-		// We validate the notification settings in a similar way to when we POST.
-		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
-		// different than the config currently in-use.
-		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
-		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, &alertmanagerConfig, LogInvalidReceivers, moa.featureManager)
-		if err != nil {
-			return definitions.GettableUserConfig{}, err
-		}
-	}
-
 	result := definitions.GettableUserConfig{
-		TemplateFiles: v1.TemplatesToTemplateFiles(cfg.Templates),
+		TemplateFiles: cfg.TemplateFiles,
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-			Config: PostableApiAlertingConfigToAPI(alertmanagerConfig).Config,
+			Config: cfg.AlertmanagerConfig.Config,
 		},
-		ExtraConfigs: ExtraConfigsToAPI(cfg.ExtraConfigs),
 	}
-
-	// First we encrypt the secure settings.
-	// This is done to ensure that any secure settings incorrectly stored in Settings are encrypted and moved to
-	// SecureSettings. This can happen if an integration definition is updated to make a field secure.
-	if err := EncryptReceiverConfigSettings(alertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
-		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
-	}); err != nil {
-		return definitions.GettableUserConfig{}, fmt.Errorf("failed to encrypt receivers: %w", err)
-	}
-
-	for _, recv := range alertmanagerConfig.Receivers {
-		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.GrafanaManagedReceivers))
-		for _, pr := range recv.GrafanaManagedReceivers {
+	for _, recv := range cfg.AlertmanagerConfig.Receivers {
+		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
+		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
 				decryptedValue, err := moa.Crypto.getDecryptedSecret(pr, k)
@@ -321,7 +241,6 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 				UID:                   pr.UID,
 				Name:                  pr.Name,
 				Type:                  pr.Type,
-				Version:               pr.Version,
 				DisableResolveMessage: pr.DisableResolveMessage,
 				Settings:              pr.Settings,
 				SecureFields:          secureFields,
@@ -345,155 +264,104 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	return result, nil
 }
 
-// modifyAndApplyExtraConfiguration is a helper function that loads the current configuration,
-// applies a modification function to the ExtraConfigs, and saves the result.
-// If promote is true, the saved config is immediately promoted into the main Grafana config.
-func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
-	ctx context.Context,
-	org int64,
-	user identity.Requester,
-	authz ExtraConfigAuthz,
-	modifyFn func([]v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error),
-	dryRun bool,
-	promote bool,
-) (merge.MergeResult, error) {
-	currentCfg, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
-	if err != nil {
-		return merge.MergeResult{}, fmt.Errorf("failed to get current configuration: %w", err)
+func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
+	// We cannot add this validation to PostableUserConfig as that struct is used for both
+	// Grafana Alertmanager (where inhibition rules are not supported) and External Alertmanagers
+	// (including Mimir) where inhibition rules are supported.
+	if len(config.AlertmanagerConfig.InhibitRules) > 0 {
+		return errors.New("inhibition rules are not supported")
 	}
 
-	cfg, err := Load([]byte(currentCfg.AlertmanagerConfiguration))
+	// Get the last known working configuration
+	previousConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
-		return merge.MergeResult{}, fmt.Errorf("failed to unmarshal current alertmanager configuration: %w", err)
-	}
-
-	cfg.ExtraConfigs, err = modifyFn(cfg.ExtraConfigs)
-	if err != nil {
-		return merge.MergeResult{}, fmt.Errorf("failed to apply extra configuration: %w", err)
-	}
-
-	if len(cfg.ManagedRoutes) > 0 {
-		for _, c := range cfg.ExtraConfigs {
-			if _, ok := cfg.ManagedRoutes[c.Identifier]; ok {
-				return merge.MergeResult{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
-			}
+		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
+		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return fmt.Errorf("failed to get latest configuration %w", err)
 		}
 	}
+	cleanPermissionsErr := err
 
-	mergedConfig, mergeResult, err := merge.MergeExtraConfig(ctx, cfg)
-	if err != nil {
-		return merge.MergeResult{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
+	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
-	if promote {
-		if err := authz.AuthorizePromote(ctx, user, mergeResult); err != nil {
-			return merge.MergeResult{}, err
-		}
-		cfg = &mergedConfig
-	}
-	if dryRun {
-		moa.logger.Debug("Dry run: extra configuration validated successfully", "org", org)
-		return mergeResult, nil
+
+	if err := assignReceiverConfigsUIDs(config.AlertmanagerConfig.Receivers); err != nil {
+		return fmt.Errorf("failed to assign missing uids: %w", err)
 	}
 
 	am, err := moa.AlertmanagerFor(org)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
 		if !errors.Is(err, ErrAlertmanagerNotReady) {
-			return merge.MergeResult{}, err
+			return err
 		}
 	}
 
-	if err := moa.Crypto.EncryptExtraConfigs(ctx, cfg); err != nil {
-		return merge.MergeResult{}, fmt.Errorf("failed to encrypt external configurations: %w", err)
+	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
+		moa.logger.Error("Unable to save and apply alertmanager configuration", "error", err)
+		errReceiverDoesNotExist := ErrorReceiverDoesNotExist{}
+		if errors.As(err, &errReceiverDoesNotExist) {
+			return ErrAlertmanagerReceiverInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Receiver": errReceiverDoesNotExist.Reference}, Error: err})
+		}
+		errTimeIntervalDoesNotExist := ErrorTimeIntervalDoesNotExist{}
+		if errors.As(err, &errTimeIntervalDoesNotExist) {
+			return ErrAlertmanagerTimeIntervalInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Interval": errTimeIntervalDoesNotExist.Reference}, Error: err})
+		}
+		return AlertmanagerConfigRejectedError{err}
 	}
 
-	if err := moa.saveAndApplyConfig(ctx, org, am, cfg); err != nil {
-		moa.logger.Error("Unable to save and apply alertmanager configuration with extra config", "error", err, "org", org)
-		return merge.MergeResult{}, AlertmanagerConfigRejectedError{err}
+	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
+	// Failure should not prevent the default config from being applied.
+	if cleanPermissionsErr == nil {
+		cleanPermissionsErr = func() error {
+			newReceiverNames := make(sets.Set[string], len(config.AlertmanagerConfig.Receivers))
+			for _, r := range config.AlertmanagerConfig.Receivers {
+				newReceiverNames.Insert(r.Name)
+			}
+			return moa.cleanPermissions(ctx, org, previousConfig, newReceiverNames)
+		}()
+	}
+	if cleanPermissionsErr != nil {
+		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
 	}
 
-	moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "promoted", promote)
-	return mergeResult, nil
+	return nil
 }
 
-// SaveAndApplyExtraConfiguration adds or replaces an ExtraConfiguration while preserving the main AlertmanagerConfig.
-// If promote is true, the configuration is immediately promoted into the main config before saving.
-func (moa *MultiOrgAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace, dryRun, promote bool) (merge.MergeResult, error) {
-	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
-		if replace {
-			// When replacing all configs, authorize deletion for each config with a different identifier.
-			for _, c := range configs {
-				if c.Identifier != extraConfig.Identifier {
-					if err := authz.AuthorizeDelete(ctx, user, c.Identifier); err != nil {
-						return nil, err
+// assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.
+func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
+	seenUIDs := make(map[string]struct{})
+	// encrypt secure settings for storing them in DB
+	for _, r := range c {
+		switch r.Type() {
+		case definitions.GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				if gr.UID == "" {
+					retries := 5
+					for i := 0; i < retries; i++ {
+						gen := util.GenerateShortUID()
+						_, ok := seenUIDs[gen]
+						if !ok {
+							gr.UID = gen
+							break
+						}
+					}
+					if gr.UID == "" {
+						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
 					}
 				}
+				seenUIDs[gr.UID] = struct{}{}
 			}
-		} else {
-			// for now we validate that after the update there will be just one extra config.
-			for _, c := range configs {
-				if c.Identifier != extraConfig.Identifier {
-					return nil, ErrAlertmanagerMultipleExtraConfigsUnsupported.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
-				}
-			}
+		default:
 		}
-
-		isNew := true
-		for _, c := range configs {
-			if c.Identifier == extraConfig.Identifier {
-				isNew = false
-				break
-			}
-		}
-		if isNew {
-			if err := authz.AuthorizeCreate(ctx, user); err != nil {
-				return nil, err
-			}
-		} else {
-			if err := authz.AuthorizeUpdate(ctx, user, extraConfig.Identifier); err != nil {
-				return nil, err
-			}
-		}
-
-		return []v1.ExtraConfiguration{extraConfig}, nil
 	}
-
-	result, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, modifyFunc, dryRun, promote)
-	if err != nil {
-		return merge.MergeResult{}, err
-	}
-
-	if dryRun {
-		moa.logger.Info("Dry run: validated alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier)
-	} else {
-		moa.logger.Info("Applied alertmanager configuration with extra config", "org", org, "identifier", extraConfig.Identifier, "promoted", promote)
-	}
-	return result, nil
-}
-
-// DeleteExtraConfiguration deletes an ExtraConfiguration by its identifier while preserving the main AlertmanagerConfig.
-func (moa *MultiOrgAlertmanager) DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz ExtraConfigAuthz, identifier string) error {
-	modifyFunc := func(configs []v1.ExtraConfiguration) ([]v1.ExtraConfiguration, error) {
-		if err := authz.AuthorizeDelete(ctx, user, identifier); err != nil {
-			return nil, err
-		}
-		filtered := make([]v1.ExtraConfiguration, 0, len(configs))
-		for _, ec := range configs {
-			if ec.Identifier != identifier {
-				filtered = append(filtered, ec)
-			}
-		}
-		return filtered, nil
-	}
-
-	_, err := moa.modifyAndApplyExtraConfiguration(ctx, org, user, authz, modifyFunc, false, false)
-	return err
+	return nil
 }
 
 type provisioningStore interface {
 	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
-	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 }
@@ -520,7 +388,8 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		}
 	}
 
-	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, (&v1.TemplateGroup{}).ResourceType())
+	tmpl := definitions.NotificationTemplate{}
+	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, tmpl.ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
@@ -588,74 +457,4 @@ func extractReceiverNames(rawConfig string) (sets.Set[string], error) {
 	}
 
 	return receiverNames, nil
-}
-
-// applyConfig is a helper method for preparing the db onfiguration and then applying it to the given alertmanager.
-func (moa *MultiOrgAlertmanager) applyConfig(ctx context.Context, orgID int64, am Alertmanager, dbConfig *models.AlertConfiguration) (bool, error) {
-	cfg, err := moa.PrepareConfig(ctx, orgID, dbConfig, LogInvalidReceivers)
-	if err != nil {
-		return false, fmt.Errorf("unable to prepare configuration: %w", err)
-	}
-
-	changed, err := am.ApplyConfig(ctx, cfg)
-	if err != nil {
-		return false, fmt.Errorf("failed to apply configuration: %w", err)
-	}
-
-	if changed {
-		markConfigCmd := models.MarkConfigurationAsAppliedCmd{
-			OrgID:             orgID,
-			ConfigurationHash: dbConfig.ConfigurationHash,
-		}
-		err = moa.configStore.MarkConfigurationAsApplied(ctx, &markConfigCmd)
-		if err != nil {
-			return changed, fmt.Errorf("unable to mark configuration as applied: %w", err)
-		}
-	}
-	return changed, nil
-}
-
-func newSaveAMConfigCmd(cfg string, orgID int64, isDefault bool) *models.SaveAlertmanagerConfigurationCmd {
-	return &models.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: cfg,
-		Default:                   isDefault,
-		ConfigurationVersion:      fmt.Sprintf("v%d", models.AlertConfigurationVersion),
-		OrgID:                     orgID,
-		LastApplied:               time.Now().UTC().Unix(),
-	}
-}
-
-// saveAndApplyConfig saves a full legacy configuration blob to the database and applies the configuration to the Alertmanager.
-// This should not be generally used but exists to facilitate operations that rely on the legacy blob config:
-// - Create/Update ExtraConfig, whose storage currently piggybacks on PostableUserConfig.
-// - Config version history revert, which will eventually need to be replaced with per-resource version history.
-func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *v1.AMConfigV1) error {
-	moa.alertmanagersMtx.RLock()
-	defer moa.alertmanagersMtx.RUnlock()
-
-	cfgToSave, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
-	if err != nil {
-		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
-	}
-
-	return moa.saveAndApplyCmd(ctx, orgID, am, newSaveAMConfigCmd(string(cfgToSave), orgID, false), ErrorOnInvalidReceivers) // Rollback on error.
-}
-
-// saveAndApplyDefaultConfig is a helper method for resetting the configuration to default.
-// Caller should lock the alertmanagersMtx.
-func (moa *MultiOrgAlertmanager) saveAndApplyDefaultConfig(ctx context.Context, orgID int64, am Alertmanager) error {
-	return moa.saveAndApplyCmd(ctx, orgID, am, newSaveAMConfigCmd(moa.settings.UnifiedAlerting.DefaultConfiguration, orgID, true), LogInvalidReceivers)
-}
-
-// saveAndApplyCmd is a helper method for saving and applying a configuration.
-// Caller should lock the alertmanagersMtx.
-func (moa *MultiOrgAlertmanager) saveAndApplyCmd(ctx context.Context, orgID int64, am Alertmanager, cmd *models.SaveAlertmanagerConfigurationCmd, onInvalid InvalidReceiversAction) error {
-	return moa.configStore.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(dbConfig models.AlertConfiguration) error {
-		cfg, err := moa.PrepareConfig(ctx, orgID, &dbConfig, onInvalid)
-		if err != nil {
-			return err
-		}
-		_, err = am.ApplyConfig(ctx, cfg)
-		return err
-	})
 }

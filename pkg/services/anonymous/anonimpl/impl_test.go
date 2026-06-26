@@ -16,12 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -29,7 +27,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDeviceService_tag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 
 	type tagReq struct {
 		httpReq *http.Request
@@ -41,7 +41,6 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 		expectedAnonUICount int64
 		expectedKey         string
 		expectedDevice      *anonstore.Device
-		disableService      bool
 	}{
 		{
 			name: "no requests",
@@ -119,49 +118,20 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 			},
 			expectedAnonUICount: 2,
 		},
-		{
-			name: "when the service is disabled, read operations return empty",
-			req: []tagReq{
-				{
-					httpReq: &http.Request{
-						Header: http.Header{
-							"User-Agent":                            []string{"testdisabled"},
-							"X-Forwarded-For":                       []string{"10.33.33.3"},
-							http.CanonicalHeaderKey(deviceIDHeader): []string{"t35td154b13d1d"},
-						},
-					},
-					kind: anonymous.AnonDeviceUI,
-				},
-			},
-			disableService:      true,
-			expectedAnonUICount: 0,
-		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-
 			store := db.InitTestDB(t)
-
-			cfg := setting.NewCfg()
-			cfg.Anonymous.Enabled = !tc.disableService
-
-			anonService := ProvideAnonymousDeviceService(
-				&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(),
-				nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{},
-			)
+			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
+				&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 			for _, req := range tc.req {
-				err := anonService.TagDevice(ctx, req.httpReq, req.kind)
+				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
 				require.NoError(t, err)
-
-				t.Cleanup(func() {
-					anonService.untagDevice(ctx, nil, &authn.Request{HTTPRequest: req.httpReq}, nil)
-				})
 			}
 
-			devices, err := anonService.ListDevices(ctx, nil, nil)
+			devices, err := anonService.anonStore.ListDevices(context.Background(), nil, nil)
 			require.NoError(t, err)
 			require.Len(t, devices, int(tc.expectedAnonUICount))
 			if tc.expectedDevice != nil {
@@ -177,38 +147,19 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 				assert.Equal(t, tc.expectedDevice, devices[0])
 			}
 
-			// One minute is added to the end time as mysql 5.7 datetime type has a default precision of seconds and not milis.
-			to := time.Now().Add(time.Minute)
-			from := to.AddDate(0, 0, -1)
-
-			devicesCount, err := anonService.CountDevices(ctx, from, to)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedAnonUICount, devicesCount)
-
-			devicesFound, err := anonService.SearchDevices(ctx, &anonstore.SearchDeviceQuery{
-				From: from,
-				To:   to,
-			})
-			require.NoError(t, err)
-			if tc.expectedAnonUICount > 0 {
-				require.NotNil(t, devicesFound)
-				require.Equal(t, tc.expectedAnonUICount, devicesFound.TotalCount)
-			}
-
 			stats, err := anonService.usageStatFn(context.Background())
 			require.NoError(t, err)
 
-			if !tc.disableService {
-				assert.Equal(t, tc.expectedAnonUICount, stats["stats.anonymous.device.ui.count"].(int64), stats)
-			}
+			assert.Equal(t, tc.expectedAnonUICount, stats["stats.anonymous.device.ui.count"].(int64), stats)
 		})
 	}
 }
 
 // Ensure that the local cache prevents request from being tagged
 func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	store := db.InitTestDB(t)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
 		&authntest.FakeService{}, store, setting.NewCfg(), orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
@@ -241,7 +192,9 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 }
 
 func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 
 	fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC) // Fixed timestamp for testing
 
@@ -303,30 +256,10 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				UserAgent: "",
 			},
 		},
-		{
-			name: "device with IPv6 address and case-insensitive search",
-			insertDevices: []*anonstore.Device{
-				{
-					DeviceID: "32mdo31deeqwes",
-					ClientIP: "[2001:db8:3333:4444:cccc:DDDD:eeee:FFFF]:1000", // Using mixed-case to test case insensitivity
-				},
-			},
-			searchQuery: anonstore.SearchDeviceQuery{
-				Query: "CCCC", // Different case to test case insensitivity
-				Page:  1,
-				Limit: 50,
-				From:  fixedTime,
-				To:    fixedTime.Add(1 * time.Hour),
-			},
-			expectedCount: 1,
-			expectedDevice: &anonstore.Device{
-				DeviceID: "32mdo31deeqwes",
-				ClientIP: "[2001:db8:3333:4444:cccc:DDDD:eeee:FFFF]:1000",
-			},
-		}}
+	}
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.Anonymous.Enabled = true
+	cfg.AnonymousEnabled = true
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, &authntest.FakeService{}, store, cfg, orgtest.NewOrgServiceFake(), nil, actest.FakeAccessControl{}, &routing.RouteRegisterImpl{}, validator.FakeAnonUserLimitValidator{})
 
 	for _, tc := range testCases {
@@ -352,12 +285,13 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 }
 
 func TestIntegrationAnonDeviceService_DeviceLimitWithCache(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	// Setup test environment
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	cfg.Anonymous.DeviceLimit = 1 // Set device limit to 1 for testing
+	cfg.AnonymousDeviceLimit = 1 // Set device limit to 1 for testing
 	anonService := ProvideAnonymousDeviceService(
 		&usagestats.UsageStatsMock{},
 		&authntest.FakeService{},

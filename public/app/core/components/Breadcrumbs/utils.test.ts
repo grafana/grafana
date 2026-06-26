@@ -1,4 +1,4 @@
-import { type NavModelItem } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 
 import { buildBreadcrumbs } from './utils';
 
@@ -91,7 +91,10 @@ describe('breadcrumb utils', () => {
           url: '/my-parent-section',
         },
       };
-      expect(buildBreadcrumbs(sectionNav, pageNav, mockHomeNav)).toEqual([{ text: 'My page', href: '/my-page' }]);
+      expect(buildBreadcrumbs(sectionNav, pageNav, mockHomeNav)).toEqual([
+        { text: 'Home', href: '/home' },
+        { text: 'My page', href: '/my-page' },
+      ]);
     });
 
     it('matches the home nav ignoring query parameters', () => {
@@ -111,7 +114,10 @@ describe('breadcrumb utils', () => {
           url: '/my-parent-section',
         },
       };
-      expect(buildBreadcrumbs(sectionNav, pageNav, mockHomeNav)).toEqual([{ text: 'My page', href: '/my-page' }]);
+      expect(buildBreadcrumbs(sectionNav, pageNav, mockHomeNav)).toEqual([
+        { text: 'Home', href: '/home?orgId=1' },
+        { text: 'My page', href: '/my-page' },
+      ]);
     });
 
     it('does ignore duplicates', () => {

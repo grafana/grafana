@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { type MouseEvent } from 'react';
+import { MouseEvent } from 'react';
 
-import { type AnnotationEvent, type DateTimeInput, type GrafanaTheme2, type PanelProps } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { RenderUserContentAsHTML, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
 
-import { type Options } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 interface Props extends Pick<PanelProps<Options>, 'options'> {
   annotation: AnnotationEvent;
@@ -30,33 +29,18 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
   const showTimeStampEnd = timeEnd && timeEnd !== time && showTime;
 
   return (
-    // Plain-div row rather than <Card>: Card's grid layout puts Description on its
-    // own row and makes Heading span across columns, which the panel's single-row
-    // layout can't override cleanly. Visual styling kept close to a Card.
-    <div
-      role="button"
-      tabIndex={0}
-      className={styles.row}
-      onClick={(e) => {
-        if (e.target instanceof Element && e.target.closest('a')) {
-          return;
-        }
-        onItemClick();
-      }}
-      onKeyDown={(e) => {
-        if (e.target instanceof Element && e.target.closest('a')) {
-          return;
-        }
-
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onItemClick();
-        }
-      }}
-    >
-      <RenderUserContentAsHTML className={styles.heading} content={text} />
+    <Card className={styles.card} onClick={onItemClick}>
+      <Card.Heading>
+        <RenderUserContentAsHTML
+          className={styles.heading}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          content={text}
+        />
+      </Card.Heading>
       {showTimeStamp && (
-        <div className={styles.timestamp}>
+        <Card.Description className={styles.timestamp}>
           <TimeStamp formatDate={formatDate} time={time!} />
           {showTimeStampEnd && (
             <>
@@ -64,19 +48,19 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
               <TimeStamp formatDate={formatDate} time={timeEnd!} />{' '}
             </>
           )}
-        </div>
+        </Card.Description>
       )}
       {showAvatar && (
-        <div className={styles.meta}>
+        <Card.Meta className={styles.meta}>
           <Avatar email={email} login={login!} avatarUrl={avatarUrl} onClick={onLoginClick} />
-        </div>
+        </Card.Meta>
       )}
       {showTags && tags && (
-        <div className={styles.tagList}>
+        <Card.Tags>
           <TagList tags={tags} onClick={(tag) => onTagClick(tag, false)} />
-        </div>
+        </Card.Tags>
       )}
-    </div>
+    </Card>
   );
 };
 
@@ -95,10 +79,8 @@ const Avatar = ({ onClick, avatarUrl, login, email }: AvatarProps) => {
   };
   const tooltipContent = (
     <span>
-      <Trans i18nKey="annolist.annotation-list-item.tooltip-created-by">
-        Created by:
-        <br /> {{ email }}
-      </Trans>
+      Created by:
+      <br /> {email}
     </span>
   );
 
@@ -128,34 +110,17 @@ const TimeStamp = ({ time, formatDate }: TimeStampProps) => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    row: css({
-      display: 'grid',
-      gridTemplateColumns: 'minmax(0, max-content) 1fr auto auto',
-      alignItems: 'center',
-      gap: theme.spacing(1),
+    card: css({
+      gridTemplateAreas: `"Heading Description Meta Tags"`,
+      gridTemplateColumns: 'auto 1fr auto auto',
       padding: theme.spacing(1),
       margin: theme.spacing(0.5),
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      cursor: 'pointer',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-      '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
-      },
+      width: 'inherit',
     }),
     heading: css({
-      minWidth: 0,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-      color: theme.colors.text.primary,
-      fontSize: theme.typography.size.md,
-      fontWeight: theme.typography.fontWeightMedium,
       a: {
+        zIndex: 1,
+        position: 'relative',
         color: theme.colors.text.link,
         '&:hover': {
           textDecoration: 'underline',
@@ -164,13 +129,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     meta: css({
       margin: 0,
-      justifySelf: 'end',
+      position: 'relative',
+      justifyContent: 'end',
     }),
     timestamp: css({
       margin: 0,
-    }),
-    tagList: css({
-      justifySelf: 'end',
+      alignSelf: 'center',
     }),
     time: css({
       marginLeft: theme.spacing(1),

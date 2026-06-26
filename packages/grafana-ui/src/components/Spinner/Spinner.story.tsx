@@ -1,10 +1,12 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { type Props, Spinner } from './Spinner';
+import { Spinner } from '@grafana/ui';
+
+import { Props } from './Spinner';
 import mdx from './Spinner.mdx';
 
 const meta: Meta = {
-  title: 'Information/Spinner',
+  title: 'Visualizations/Spinner',
   component: Spinner,
   parameters: {
     docs: {

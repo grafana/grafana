@@ -1,7 +1,7 @@
 /**
  * The channel id is defined as:
  *
- *   ${scope}/${stream}/${path}
+ *   ${scope}/${namespace}/${path}
  *
  * The scope drives how the namespace is used and controlled
  *
@@ -12,7 +12,6 @@ export enum LiveChannelScope {
   Plugin = 'plugin', // namespace = plugin name (singleton works for apps too)
   Grafana = 'grafana', // namespace = feature
   Stream = 'stream', // namespace = id for the managed data stream
-  Watch = 'watch', // namespace = k8s group we will watch
 }
 
 /**
@@ -81,17 +80,17 @@ export interface LiveChannelStatusEvent {
    *
    * This will remain in the status until a new message is successfully received from the channel
    */
-  error?: unknown;
+  error?: any;
 }
 
 export interface LiveChannelJoinEvent {
   type: LiveChannelEventType.Join;
-  user: unknown; // @alpha -- experimental -- will be filled in when we improve the UI
+  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 export interface LiveChannelLeaveEvent {
   type: LiveChannelEventType.Leave;
-  user: unknown; // @alpha -- experimental -- will be filled in when we improve the UI
+  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 export interface LiveChannelMessageEvent<T> {
@@ -125,7 +124,7 @@ export function isLiveChannelMessageEvent<T>(evt: LiveChannelEvent<T>): evt is L
  * @alpha -- experimental
  */
 export interface LiveChannelPresenceStatus {
-  users: unknown; // @alpha -- experimental -- will be filled in when we improve the UI
+  users: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 /**
@@ -138,18 +137,15 @@ export type LiveChannelId = string;
  */
 export interface LiveChannelAddress {
   scope: LiveChannelScope;
-  stream: string; // depends on the scope
+  namespace: string; // depends on the scope
   path: string;
-
-  /** @deprecated use 'stream' instead.  */
-  namespace?: string;
 
   /**
    * Additional metadata passed to a channel.  The backend will propagate this JSON object to
    * each OnSubscribe and RunStream calls.  This value should be constant across multiple requests
    * to the same channel path
    */
-  data?: unknown;
+  data?: any;
 }
 
 /**
@@ -163,7 +159,7 @@ export function parseLiveChannelAddress(id?: string): LiveChannelAddress | undef
     if (parts.length >= 3) {
       return {
         scope: parts[0] as LiveChannelScope,
-        stream: parts[1],
+        namespace: parts[1],
         path: parts.slice(2).join('/'),
       };
     }
@@ -177,11 +173,7 @@ export function parseLiveChannelAddress(id?: string): LiveChannelAddress | undef
  * @alpha -- experimental
  */
 export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
-  // convert requested namespace into "stream" property
-  if (addr?.namespace && !addr?.stream?.length) {
-    addr.stream = addr.namespace;
-  }
-  return !!(addr?.path && addr.stream && addr.scope);
+  return !!(addr?.path && addr.namespace && addr.scope);
 }
 
 /**
@@ -190,21 +182,16 @@ export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is Li
  * @alpha -- experimental
  */
 export function toLiveChannelId(addr: LiveChannelAddress): LiveChannelId {
-  let { scope, stream, path, namespace } = addr;
-  if (!stream && namespace) {
-    stream = namespace;
-  }
-
-  if (!scope?.length) {
+  if (!addr.scope) {
     return '';
   }
-  let id: string = scope;
-  if (!stream?.length) {
+  let id: string = addr.scope;
+  if (!addr.namespace) {
     return id;
   }
-  id += '/' + stream; // or namespace
-  if (!path?.length) {
+  id += '/' + addr.namespace;
+  if (!addr.path) {
     return id;
   }
-  return id + '/' + path;
+  return id + '/' + addr.path;
 }

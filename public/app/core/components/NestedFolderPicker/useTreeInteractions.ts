@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import type * as React from 'react';
+import * as React from 'react';
 
-import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { type DashboardViewItem } from 'app/features/search/types';
+import { config } from '@grafana/runtime';
+import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { DashboardViewItem } from 'app/features/search/types';
 
 import { getDOMId } from './NestedFolderList';
 
@@ -26,6 +27,7 @@ export function useTreeInteractions({
   visible,
 }: TreeInteractionProps) {
   const [focusedItemIndex, setFocusedItemIndex] = useState(-1);
+  const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
 
   useEffect(() => {
     if (visible) {
@@ -45,7 +47,7 @@ export function useTreeInteractions({
 
   const handleKeyDown = useCallback(
     (ev: React.KeyboardEvent<HTMLInputElement>) => {
-      const foldersAreOpenable = !search;
+      const foldersAreOpenable = nestedFoldersEnabled && !search;
       switch (ev.key) {
         // Expand/collapse folder on right/left arrow keys
         case 'ArrowRight':
@@ -85,7 +87,7 @@ export function useTreeInteractions({
           break;
       }
     },
-    [focusedItemIndex, handleCloseOverlay, handleFolderExpand, handleFolderSelect, search, tree]
+    [focusedItemIndex, handleCloseOverlay, handleFolderExpand, handleFolderSelect, nestedFoldersEnabled, search, tree]
   );
 
   return {

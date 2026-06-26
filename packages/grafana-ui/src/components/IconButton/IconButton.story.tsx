@@ -1,16 +1,11 @@
 import { css } from '@emotion/css';
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { StoryFn, Meta } from '@storybook/react';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-import { type IconSize, type IconName } from '../../types/icon';
+import { useTheme2 } from '../../themes';
+import { IconSize, IconName } from '../../types';
 import { Stack } from '../Layout/Stack/Stack';
 
-import {
-  type BasePropsWithTooltip,
-  IconButton,
-  type IconButtonVariant,
-  type Props as IconButtonProps,
-} from './IconButton';
+import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
 
 interface ScenarioProps {
@@ -21,7 +16,7 @@ const defaultExcludes = ['ariaLabel', 'aria-label'];
 const additionalExcludes = ['size', 'name', 'variant', 'iconType'];
 
 const meta: Meta<typeof IconButton> = {
-  title: 'Inputs/IconButton',
+  title: 'Buttons/IconButton',
   component: IconButton,
   parameters: {
     docs: {

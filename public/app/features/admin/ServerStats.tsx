@@ -1,16 +1,15 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { config, type GrafanaBootConfig } from '@grafana/runtime';
-import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
-import { AccessControlAction } from 'app/types/accessControl';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config, GrafanaBootConfig } from '@grafana/runtime';
+import { LinkButton, useStyles2 } from '@grafana/ui';
+import { AccessControlAction } from 'app/types';
 
 import { contextSrv } from '../../core/services/context_srv';
 
 import { ServerStatsCard } from './ServerStatsCard';
-import { getServerStats, type ServerStat } from './state/apis';
+import { getServerStats, ServerStat } from './state/apis';
 
 export const ServerStats = () => {
   const [stats, setStats] = useState<ServerStat | null>(null);
@@ -35,21 +34,11 @@ export const ServerStats = () => {
 
   return (
     <>
-      <h2 className={styles.title}>
-        <Trans i18nKey="admin.server-settings.title">Instance statistics</Trans>
-      </h2>
+      <h2 className={styles.title}>Instance statistics</h2>
       {!isLoading && !stats ? (
-        <p className={styles.notFound}>
-          <Trans i18nKey="admin.server-settings.not-found">No stats found.</Trans>
-        </p>
+        <p className={styles.notFound}>No stats found.</p>
       ) : (
-        <Stack
-          gap={2}
-          direction={{
-            xs: 'column',
-            md: 'row',
-          }}
-        >
+        <div className={styles.row}>
           <ServerStatsCard
             isLoading={isLoading}
             content={[
@@ -60,19 +49,19 @@ export const ServerStats = () => {
             ]}
             footer={
               <LinkButton href={'/dashboards'} variant={'secondary'}>
-                <Trans i18nKey="admin.server-settings.dashboards-button">Manage dashboards</Trans>
+                Manage dashboards
               </LinkButton>
             }
           />
 
-          <Stack direction="column" gap={2}>
+          <div className={styles.doubleRow}>
             <ServerStatsCard
               isLoading={isLoading}
               content={[{ name: 'Data sources', value: stats?.datasources }]}
               footer={
                 hasAccessToDataSources && (
                   <LinkButton href={'/datasources'} variant={'secondary'}>
-                    <Trans i18nKey="admin.server-settings.data-sources-button">Manage data sources</Trans>
+                    Manage data sources
                   </LinkButton>
                 )
               }
@@ -82,11 +71,11 @@ export const ServerStats = () => {
               content={[{ name: 'Alerts', value: stats?.alerts }]}
               footer={
                 <LinkButton href={'/alerting/list'} variant={'secondary'}>
-                  <Trans i18nKey="admin.server-settings.alerts-button">Manage alerts</Trans>
+                  Manage alerts
                 </LinkButton>
               }
             />
-          </Stack>
+          </div>
           <ServerStatsCard
             isLoading={isLoading}
             content={[
@@ -99,12 +88,12 @@ export const ServerStats = () => {
             footer={
               hasAccessToAdminUsers && (
                 <LinkButton href={'/admin/users'} variant={'secondary'}>
-                  <Trans i18nKey="admin.server-settings.users-button">Manage users</Trans>
+                  Manage users
                 </LinkButton>
               )
             }
           />
-        </Stack>
+        </div>
       )}
     </>
   );
@@ -138,6 +127,27 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     title: css({
       marginBottom: theme.spacing(4),
+    }),
+    row: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      width: '100%',
+
+      '& > div:not(:last-of-type)': {
+        marginRight: theme.spacing(2),
+      },
+
+      '& > div': {
+        width: '33.3%',
+      },
+    }),
+    doubleRow: css({
+      display: 'flex',
+      flexDirection: 'column',
+
+      '& > div:first-of-type': {
+        marginBottom: theme.spacing(2),
+      },
     }),
     notFound: css({
       fontSize: theme.typography.h6.fontSize,

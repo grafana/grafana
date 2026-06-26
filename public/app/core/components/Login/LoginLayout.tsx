@@ -2,12 +2,11 @@ import { cx, css, keyframes } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
-import { type BrandingSettings } from '../Branding/types';
+import { BrandingSettings } from '../Branding/types';
 import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
@@ -45,9 +44,7 @@ export const LoginLayout = ({ children, branding, isChangingPassword }: React.Pr
             <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
             <div className={loginStyles.titleWrapper}>
               {isChangingPassword ? (
-                <h1 className={loginStyles.mainTitle}>
-                  <Trans i18nKey="login.layout.update-password">Update your password</Trans>
-                </h1>
+                <h1 className={loginStyles.mainTitle}>Update your password</h1>
               ) : (
                 <>
                   <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
@@ -150,14 +147,11 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'flex-start',
       zIndex: 1,
       minHeight: 320,
-      borderRadius: theme.shape.radius.lg,
+      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(2, 0),
       opacity: 0,
-      [theme.transitions.handleMotion('no-preference')]: {
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: 'opacity 0.5s ease-in-out',
-      },
-      [theme.transitions.handleMotion('reduce')]: {
-        opacity: 1,
       },
 
       [theme.breakpoints.up('sm')]: {

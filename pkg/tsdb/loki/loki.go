@@ -5,42 +5,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	neturl "net/url"
-	"path"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
-	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
-	schemas "github.com/grafana/schemads"
-)
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
-const (
-	flagLokiLogsDataplane         = "lokiLogsDataplane"
-	flagLokiRunQueriesInParallel  = "lokiRunQueriesInParallel"
-	flagLogQLScope                = "logQLScope"
-	flagLokiExperimentalStreaming = "lokiExperimentalStreaming"
-	flagDsAbstractionApp          = "dsAbstractionApp"
-	fromAlertHeaderName           = "FromAlert"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
 type Service struct {
 	im     instancemgmt.InstanceManager
-	tracer trace.Tracer
+	tracer tracing.Tracer
 	logger log.Logger
 }
 
@@ -50,12 +40,11 @@ var (
 	_ backend.CallResourceHandler = (*Service)(nil)
 )
 
-func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer) *Service {
-	logger := backend.NewLoggerWith("logger", "tsdb.loki")
+func ProvideService(httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, logger, tracer)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		tracer: tracer,
-		logger: logger,
+		logger: backend.NewLoggerWith("logger", "tsdb.loki"),
 	}
 }
 
@@ -65,6 +54,9 @@ var (
 	stagePrepareRequest  = "prepareRequest"
 	stageDatabaseRequest = "databaseRequest"
 	stageParseResponse   = "parseResponse"
+
+	dashboardTitleHeader = "X-Dashboard-Title"
+	panelTitleHeader     = "X-Panel-Title"
 )
 
 type datasourceInfo struct {
@@ -74,65 +66,42 @@ type datasourceInfo struct {
 	// open streams
 	streams   map[string]data.FrameJSONCache
 	streamsMu sync.RWMutex
-
-	schemaDatasource *schemas.SchemaDatasource
-	schemaProvider   *SchemaProvider
 }
 
 type QueryJSONModel struct {
 	dataquery.LokiDataQuery
-	Direction           *string             `json:"direction,omitempty"`
-	SupportingQueryType *string             `json:"supportingQueryType"`
-	Scopes              []scope.ScopeFilter `json:"scopes"`
+	Direction           *string `json:"direction,omitempty"`
+	SupportingQueryType *string `json:"supportingQueryType"`
 }
 
 type ResponseOpts struct {
-	logsDataplane bool
+	metricDataplane bool
+	logsDataplane   bool
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 	model := &QueryJSONModel{}
 	err := json.Unmarshal(raw, model)
-	if err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to parse query model: %w", err))
-	}
-	return model, nil
+	return model, err
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Logger, tracer trace.Tracer) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
-			return nil, backend.DownstreamError(fmt.Errorf("error reading settings: %w", err))
+			return nil, err
 		}
 		opts.ForwardHTTPHeaders = true
 
 		client, err := httpClientProvider.New(opts)
 		if err != nil {
-			return nil, backend.DownstreamError(fmt.Errorf("error creating http client: %w", err))
-		}
-
-		var schemaDs *schemas.SchemaDatasource
-		var schemaProv *SchemaProvider
-		grafCfg := config.GrafanaConfigFromContext(ctx)
-		if grafCfg != nil && grafCfg.FeatureToggles().IsEnabled(flagDsAbstractionApp) {
-			schemaProv = NewSchemaProvider(client, settings.URL, logger, tracer)
-			schemaDs = schemas.NewSchemaDatasource(
-				schemaProv,
-				schemaProv,
-				schemaProv,
-				nil,
-				schemaProv,
-				nil,
-			)
+			return nil, err
 		}
 
 		model := &datasourceInfo{
-			HTTPClient:       client,
-			URL:              settings.URL,
-			streams:          make(map[string]data.FrameJSONCache),
-			schemaDatasource: schemaDs,
-			schemaProvider:   schemaProv,
+			HTTPClient: client,
+			URL:        settings.URL,
+			streams:    make(map[string]data.FrameJSONCache),
 		}
 		return model, nil
 	}
@@ -148,66 +117,28 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
 }
 
-func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer trace.Tracer) error {
-	if strings.HasPrefix(req.Path, schemas.BaseResourcePath) && dsInfo.schemaDatasource != nil {
-		return dsInfo.schemaDatasource.CallResource(ctx, req, sender)
-	}
-
+func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) error {
 	url := req.URL
 
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
-
-	// Reject resource paths that escape the /loki/api/v1/ prefix. neturl.Parse
-	// decodes percent-encoded segments so this catches both raw and encoded "../".
-	parsed, perr := neturl.Parse(lokiURL)
-	if perr != nil {
-		return sender.Send(&backend.CallResourceResponse{Status: http.StatusBadRequest})
-	}
-	if cleaned := path.Clean(parsed.Path); cleaned != "/loki/api/v1" && !strings.HasPrefix(cleaned, "/loki/api/v1/") {
-		return sender.Send(&backend.CallResourceResponse{Status: http.StatusBadRequest})
-	}
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
 		attribute.String("url", lokiURL),
 	))
 	defer span.End()
 
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, false)
 
-	var rawLokiResponse RawLokiResponse
-	var err error
-
-	// suggestions is a resource endpoint that will return label and label value suggestions based
-	// on queries and the existing scope. By moving this to the backend we can use the logql parser to
-	// rewrite queries safely.
-	if req.Method == http.MethodPost && strings.EqualFold(req.Path, "suggestions") {
-		rawLokiResponse, err = GetSuggestions(ctx, api, req)
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			plog.FromContext(ctx).Error("Failed to get suggestions from loki", "err", err)
-			return err
-		}
-	} else {
-		rawLokiResponse, err = api.RawQuery(ctx, lokiURL)
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			plog.Error("Failed resource call from loki", "err", err, "url", lokiURL)
-			return err
-		}
+	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		plog.Error("Failed resource call from loki", "err", err, "url", lokiURL)
+		return err
 	}
-
 	respHeaders := map[string][]string{
 		"content-type": {"application/json"},
 	}
-
-	// frontend sets the X-Grafana-Cache with the desired response cache control value
-	if len(req.GetHTTPHeaders().Get("X-Grafana-Cache")) > 0 {
-		respHeaders["X-Grafana-Cache"] = []string{"y"}
-		respHeaders["Cache-Control"] = []string{req.GetHTTPHeaders().Get("X-Grafana-Cache")}
-	}
-
 	if rawLokiResponse.Encoding != "" {
 		respHeaders["content-encoding"] = []string{rawLokiResponse.Encoding}
 	}
@@ -220,47 +151,56 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	_, fromAlert := req.Headers[fromAlertHeaderName]
+	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	logger := s.logger.FromContext(ctx).With("fromAlert", fromAlert)
 	if err != nil {
-		logger.Debug("Failed to get data source info", "err", err)
-		return nil, err
-	}
-
-	responseOpts := ResponseOpts{
-		logsDataplane: isFeatureEnabled(ctx, flagLokiLogsDataplane),
-	}
-
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, isFeatureEnabled(ctx, flagLokiRunQueriesInParallel), isFeatureEnabled(ctx, flagLogQLScope))
-}
-
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger, runInParallel bool, logQLScopes bool) (*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
-
-	req, sqlKinds, sqlErrs := normalizeGrafanaSQLRequest(ctx, req, dsInfo)
-	for refID, e := range sqlErrs {
-		result.Responses[refID] = backend.DataResponse{
-			Error:       e,
-			ErrorSource: backend.ErrorSourceDownstream,
-		}
-	}
-	if len(req.Queries) == 0 {
-		if len(result.Responses) > 0 {
-			return result, nil
-		}
-		return result, fmt.Errorf("query contains no queries")
-	}
-
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
-
-	start := time.Now()
-	queries, err := parseQuery(req, logQLScopes)
-	if err != nil {
-		plog.Debug("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
+		logger.Error("Failed to get data source info", "err", err)
+		result := backend.NewQueryDataResponse()
 		return result, err
 	}
 
-	plog.Debug("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
+	responseOpts := ResponseOpts{
+		metricDataplane: isFeatureEnabled(ctx, featuremgmt.FlagLokiMetricDataplane),
+		logsDataplane:   isFeatureEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
+	}
+
+	if isFeatureEnabled(ctx, featuremgmt.FlagLokiSendDashboardPanelNames) {
+		s.applyHeaders(ctx, req)
+	}
+
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, isFeatureEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), isFeatureEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
+}
+
+func (s *Service) applyHeaders(ctx context.Context, req backend.ForwardHTTPHeaders) {
+	reqCtx := contexthandler.FromContext(ctx)
+	if req == nil || reqCtx == nil || reqCtx.Req == nil {
+		return
+	}
+
+	var hList = []string{dashboardTitleHeader, panelTitleHeader}
+
+	for _, hName := range hList {
+		hVal := reqCtx.Req.Header.Get(hName)
+		if hVal == "" {
+			continue
+		}
+		req.SetHTTPHeader(hName, hVal)
+	}
+}
+
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
+
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, requestStructuredMetadata)
+
+	start := time.Now()
+	queries, err := parseQuery(req)
+	if err != nil {
+		plog.Error("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
+		return result, err
+	}
+
+	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries", trace.WithAttributes(
 		attribute.Bool("runInParallel", runInParallel),
@@ -291,25 +231,10 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		}
 	}
 	plog.Debug("Executed queries", "duration", time.Since(start), "queriesLength", len(queries), "runInParallel", runInParallel)
-
-	for refID, kind := range sqlKinds {
-		dr, ok := result.Responses[refID]
-		if !ok || dr.Error != nil {
-			continue
-		}
-		switch kind {
-		case sqlKindMetric:
-			dr.Frames = flattenMetricsToTabular(dr.Frames, plog)
-		case sqlKindLog:
-			dr.Frames = flattenLogsToTabular(dr.Frames, responseOpts.logsDataplane, plog)
-		}
-		result.Responses[refID] = dr
-	}
-
 	return result, err
 }
 
-func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer trace.Tracer, plog log.Logger) backend.DataResponse {
+func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger) backend.DataResponse {
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries.runQuery", trace.WithAttributes(
 		attribute.Bool("runInParallel", runInParallel),
 		attribute.String("expr", query.Expr),
@@ -331,8 +256,7 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		errResp := backend.ErrorResponseWithErrorSource(err)
-		queryRes = &errResp
+		queryRes.Error = err
 	}
 
 	return *queryRes
@@ -342,19 +266,15 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) (*backend.DataResponse, error) {
 	res, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
-		plog.Debug("Error querying loki", "error", err)
+		plog.Error("Error querying loki", "error", err)
 		return res, err
 	}
 
 	for _, frame := range res.Frames {
-		// Skip frames without fields
-		if len(frame.Fields) < 2 {
-			continue
-		}
+		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
-		err = adjustFrame(frame, query, false, responseOpts.logsDataplane)
 		if err != nil {
-			plog.Debug("Error adjusting frame", "error", err)
+			plog.Error("Error adjusting frame", "error", err)
 			return res, err
 		}
 	}
@@ -365,17 +285,17 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
 	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to get data source info: %w", err))
+		return nil, err
 	}
 
 	instance, ok := i.(*datasourceInfo)
 	if !ok {
-		return nil, backend.DownstreamError(fmt.Errorf("failed to cast data source info"))
+		return nil, fmt.Errorf("failed to cast data source info")
 	}
 
 	return instance, nil
 }
 
 func isFeatureEnabled(ctx context.Context, feature string) bool {
-	return config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
+	return backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
 }

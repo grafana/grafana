@@ -1,18 +1,15 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
-import { connect, type ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
-import { applyFieldOverrides, type DataFrame, type GrafanaTheme2, type SplitOpen } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
-import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
-import { type StoreState } from 'app/types/store';
 
-import { NodeGraph } from '../../../plugins/panel/nodeGraph/NodeGraph';
-import { LayoutAlgorithm } from '../../../plugins/panel/nodeGraph/panelcfg.gen';
+import { NodeGraph } from '../../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
+import { StoreState } from '../../../types';
 import { useLinks } from '../utils/links';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -60,16 +57,12 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   const { nodes } = useCategorizeFrames(frames);
   const [collapsed, toggleCollapsed] = useToggle(true);
 
-  // Determine default layout algorithm based on node count
-  const nodeCount = nodes[0]?.length || 0;
-  const layoutAlgorithm = nodeCount > layeredLayoutThreshold ? LayoutAlgorithm.Force : LayoutAlgorithm.Layered;
-
   const toggled = () => {
     toggleCollapsed();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
       datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,
-      isExpanded: !collapsed,
+      isExpanded: !open,
     });
   };
 
@@ -83,22 +76,16 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       setTop(top);
     }
   }, [containerRef]);
-
   const height = windowHeight - top - 32;
 
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
-      <span className={styles.warningText}>
-        {' '}
-        <Trans i18nKey="explore.unconnected-node-graph-container.count-warning" values={{ numNodes: nodes[0].length }}>
-          ({'{{numNodes}}'} nodes, can be slow to load)
-        </Trans>
-      </span>
+      <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
     ) : null;
 
   return (
     <PanelChrome
-      title={t('explore.unconnected-node-graph-container.title-node-graph', 'Node graph')}
+      title={`Node graph`}
       titleItems={countWarning}
       // We allow collapsing this only when it is shown together with trace view.
       collapsible={!!withTraceView}
@@ -116,7 +103,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
               }
         }
       >
-        <NodeGraph dataFrames={frames} getLinks={getLinks} layoutAlgorithm={layoutAlgorithm} />
+        <NodeGraph dataFrames={frames} getLinks={getLinks} />
       </div>
     </PanelChrome>
   );

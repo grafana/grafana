@@ -1,9 +1,10 @@
 import { memo } from 'react';
 
-import { type Field, cacheFieldDisplayNames, type DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
-import { AxisPlacement, type VizLegendOptions } from '@grafana/schema';
-import { useTheme2, VizLayout, type VizLayoutLegendProps, VizLegend, type VizLegendItem } from '@grafana/ui';
-import { getDisplayValuesForCalcs } from '@grafana/ui/internal';
+import { cacheFieldDisplayNames, DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
+import { Field } from '@grafana/data/';
+import { AxisPlacement, VizLegendOptions } from '@grafana/schema';
+import { useTheme2, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem } from '@grafana/ui';
+import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 
 interface BarGaugeLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
@@ -50,7 +51,6 @@ export const BarGaugeLegend = memo(
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
           isSortable={true}
-          overflow={vizLayoutLegendProps.overflow}
         />
       </VizLayout.Legend>
     );

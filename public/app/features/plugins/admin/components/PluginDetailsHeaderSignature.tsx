@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 
-import { type CatalogPlugin } from '../types';
+import { CatalogPlugin } from '../types';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -32,7 +32,7 @@ export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElem
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',

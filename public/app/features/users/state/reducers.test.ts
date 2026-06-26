@@ -1,7 +1,6 @@
-import { type UsersState } from 'app/types/user';
-
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { getMockUsers, getFetchUsersMock } from '../mocks/userMocks';
+import { UsersState } from '../../../types';
+import { getMockUsers, getFetchUsersMock } from '../__mocks__/userMocks';
 
 import { initialState, searchQueryChanged, usersLoaded, usersReducer } from './reducers';
 

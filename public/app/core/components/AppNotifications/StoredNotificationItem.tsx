@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
-import { type ReactNode } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { ReactNode } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Checkbox, useTheme2 } from '@grafana/ui';
 
-type AlertVariant = 'success' | 'warning' | 'error' | 'info';
+export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props {
   children?: ReactNode;
@@ -33,15 +32,11 @@ export const StoredNotificationItem = ({
   const styles = getStyles(theme);
 
   return (
-    <Card noMargin className={className}>
+    <Card className={className} onClick={onClick}>
       <Card.Heading>{title}</Card.Heading>
       <Card.Description>{children}</Card.Description>
       <Card.Figure>
-        <Checkbox
-          onChange={onClick}
-          value={isSelected}
-          aria-label={t('notifications.select-notification', 'Select {{title}}', { title })}
-        />
+        <Checkbox onChange={onClick} tabIndex={-1} value={isSelected} />
       </Card.Figure>
       <Card.Tags className={styles.trace}>
         {traceId && <span>{`Trace ID: ${traceId}`}</span>}

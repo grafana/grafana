@@ -1,18 +1,16 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { action } from '@storybook/addon-actions';
+import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
-import { action } from 'storybook/actions';
 
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
+import { Segment, Icon, SegmentSection } from '@grafana/ui';
 
-import { Icon } from '../Icon/Icon';
-
-import { Segment, type SegmentSyncProps } from './Segment';
-import { SegmentSection } from './SegmentSection';
+import { SegmentSyncProps } from './Segment';
 
 const AddButton = (
   <span className="gf-form-label query-part">
-    <Icon aria-label="Add" name="plus-circle" />
+    <Icon name="plus-circle" />
   </span>
 );
 
@@ -60,7 +58,7 @@ export const ArrayOptions = () => {
 };
 
 const meta: Meta<typeof Segment> = {
-  title: 'Inputs/Segment',
+  title: 'Data Source/Segment/SegmentSync',
   component: Segment,
 };
 

@@ -1,54 +1,36 @@
-/* eslint-disable @grafana/i18n/no-untranslated-strings */
+/* eslint-disable @grafana/no-untranslated-strings */
 import { css, cx } from '@emotion/css';
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import * as React from 'react';
 
-import {
-  colorManipulator,
-  FieldColorModeId,
-  fieldColorModeRegistry,
-  type GrafanaTheme2,
-  type ThemeRichColor,
-  type ThemeVizHue,
-} from '@grafana/data';
+import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { allButtonVariants, Button } from '../Button/Button';
+import { allButtonVariants, Button } from '../Button';
 import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
-import { Combobox } from '../Combobox/Combobox';
 import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
-import { type BackgroundColor, type BorderColor, Box, type BoxShadow } from '../Layout/Box/Box';
+import { BackgroundColor, BorderColor, Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
-import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
+import { Select } from '../Select/Select';
 import { Switch } from '../Switch/Switch';
-import { Text, type TextProps } from '../Text/Text';
+import { Text, TextProps } from '../Text/Text';
 
 interface DemoBoxProps {
   bg?: BackgroundColor;
   border?: BorderColor;
-  scrollable?: boolean;
-  shadow?: BoxShadow;
   textColor?: TextProps['color'];
 }
 
-const DemoBox = ({ bg, border, children, shadow, scrollable }: React.PropsWithChildren<DemoBoxProps>) => {
-  const MaybeScroll = scrollable ? ScrollContainer : React.Fragment;
+const DemoBox = ({ bg, border, children }: React.PropsWithChildren<DemoBoxProps>) => {
   return (
-    <Box
-      backgroundColor={bg ? bg : undefined}
-      padding={2}
-      borderStyle={border ? 'solid' : undefined}
-      borderColor={border}
-      boxShadow={shadow}
-      borderRadius={'lg'}
-    >
-      <MaybeScroll>{children}</MaybeScroll>
+    <Box backgroundColor={bg ? bg : undefined} padding={2} borderStyle={border ? 'solid' : undefined}>
+      {children}
     </Box>
   );
 };
@@ -74,43 +56,14 @@ export const ThemeDemo = () => {
   const [boolValue, setBoolValue] = useState(false);
   const [selectValue, setSelectValue] = useState('Item 2');
   const t = useTheme2();
-  const inputId = useId();
-  const disabledInputId = useId();
-  const comboboxId = useId();
-  const radioId = useId();
-  const switchId = useId();
-  const switchTrueId = useId();
-  const switchDisabledId = useId();
-  const inlineId = useId();
-  const inlineDisabledId = useId();
-
-  const getColors = (mode: FieldColorModeId) => {
-    const modeInstance = fieldColorModeRegistry.get(mode);
-    if (!modeInstance || !modeInstance.getColors) {
-      return [];
-    }
-    return modeInstance.getColors(t).map((colorName) => t.visualization.getColorByName(colorName));
-  };
 
   const richColors = [
     t.colors.primary,
     t.colors.secondary,
-    t.colors.tertiary,
     t.colors.success,
     t.colors.error,
     t.colors.warning,
     t.colors.info,
-  ];
-
-  const vizColors = t.visualization.hues;
-
-  const classicPalette = getColors(FieldColorModeId.PaletteClassic);
-  const continuousPalettes = [
-    getColors(FieldColorModeId.ContinuousGrYlRd),
-    getColors(FieldColorModeId.ContinuousBlYlRd),
-    getColors(FieldColorModeId.ContinuousYlRd),
-    getColors(FieldColorModeId.ContinuousBlPu),
-    getColors(FieldColorModeId.ContinuousYlBl),
   ];
 
   const selectOptions = [
@@ -138,18 +91,12 @@ export const ThemeDemo = () => {
           <DemoBox bg="primary" border="weak">
             <DemoText>t.colors.background.primary is the main & preferred content </DemoText>
             <DemoBox bg="secondary" border="weak">
-              <DemoText>t.colors.background.secondary (Used for cards)</DemoText>
+              <DemoText>t.colors.background.secondary and t.colors.border.layer1</DemoText>
             </DemoBox>
-            <Box padding={4}>
-              <DemoText>t.colors.background.elevated</DemoText>
-              <DemoBox bg="elevated" border="weak" shadow="z3">
-                This elevated color should be used for menus and popovers.
-              </DemoBox>
-            </Box>
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Text colors" isOpen={true}>
-          <Stack justifyContent="flex-start" wrap="wrap">
+          <Stack justifyContent="flex-start">
             <DemoBox>
               <TextColors t={t} />
             </DemoBox>
@@ -162,8 +109,8 @@ export const ThemeDemo = () => {
           </Stack>
         </CollapsableSection>
         <CollapsableSection label="Rich colors" isOpen={true}>
-          <DemoBox bg="primary" scrollable>
-            <table className={colorsTableStyle(t)}>
+          <DemoBox bg="primary">
+            <table className={colorsTableStyle}>
               <thead>
                 <tr>
                   <td>name</td>
@@ -181,83 +128,39 @@ export const ThemeDemo = () => {
             </table>
           </DemoBox>
         </CollapsableSection>
-        <CollapsableSection label="Viz hues" isOpen={true}>
-          <DemoBox bg="primary" scrollable>
-            <table className={colorsTableStyle(t)}>
-              <thead>
-                <tr>
-                  <td>name</td>
-                  <td>super-light</td>
-                  <td>light</td>
-                  <td>primary</td>
-                  <td>semi-dark</td>
-                  <td>dark</td>
-                </tr>
-              </thead>
-              <tbody>
-                {vizColors.map((color) => (
-                  <VizHuesDemo key={color.name} color={color} theme={t} />
-                ))}
-              </tbody>
-            </table>
-          </DemoBox>
-        </CollapsableSection>
-        <CollapsableSection label="Palettes" isOpen={true}>
-          <DemoBox bg="primary" scrollable>
-            <Stack direction="column">
-              <Stack gap={0}>
-                {classicPalette.map((color) => {
-                  return <div style={{ backgroundColor: color, height: '40px', flex: 1 }} key={color} />;
-                })}
-              </Stack>
-              {continuousPalettes.map((palette, index) => (
-                <Stack key={index} gap={0}>
-                  <div
-                    style={{ background: `linear-gradient(90deg, ${palette.join(', ')} )`, height: '40px', flex: 1 }}
-                  />
-                </Stack>
-              ))}
-            </Stack>
-          </DemoBox>
-        </CollapsableSection>
         <CollapsableSection label="Forms" isOpen={true}>
           <DemoBox bg="primary">
             <Field label="Input label" description="Field description">
-              <Input id={inputId} placeholder="Placeholder" />
+              <Input placeholder="Placeholder" />
             </Field>
             <Field label="Input disabled" disabled>
-              <Input id={disabledInputId} placeholder="Placeholder" value="Disabled value" />
+              <Input placeholder="Placeholder" value="Disabled value" />
             </Field>
-            <Field label="Combobox">
-              <Combobox
-                id={comboboxId}
-                options={selectOptions}
-                value={selectValue}
-                onChange={(v) => setSelectValue(v?.value!)}
-              />
+            <Field label="Select">
+              <Select options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
             </Field>
             <Field label="Radio label">
-              <RadioButtonGroup id={radioId} options={radioOptions} value={radioValue} onChange={setRadioValue} />
+              <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />
             </Field>
             <Stack>
               <Field label="Switch">
-                <Switch id={switchId} value={boolValue} onChange={(e) => setBoolValue(e.currentTarget.checked)} />
+                <Switch value={boolValue} onChange={(e) => setBoolValue(e.currentTarget.checked)} />
               </Field>
               <Field label="Switch true">
-                <Switch id={switchTrueId} value={true} />
+                <Switch value={true} />
               </Field>
               <Field label="Switch false disabled" disabled={true}>
-                <Switch id={switchDisabledId} value={false} />
+                <Switch value={false} />
               </Field>
             </Stack>
             <Stack direction="column">
               <div>Inline forms</div>
               <InlineFieldRow>
                 <InlineField label="Label">
-                  <Input id={inlineId} placeholder="Placeholder" />
+                  <Input placeholder="Placeholder" />
                 </InlineField>
                 <InlineField label="Another Label" disabled>
-                  <Input id={inlineDisabledId} placeholder="Disabled" />
+                  <Input placeholder="Disabled" />
                 </InlineField>
               </InlineFieldRow>
             </Stack>
@@ -275,7 +178,7 @@ export const ThemeDemo = () => {
         <CollapsableSection label="Buttons" isOpen={true}>
           <DemoBox bg="primary">
             <Stack direction="column" gap={3}>
-              <Stack wrap="wrap">
+              <Stack>
                 {allButtonVariants.map((variant) => (
                   <Button variant={variant} key={variant}>
                     {variant}
@@ -285,7 +188,7 @@ export const ThemeDemo = () => {
                   Disabled
                 </Button>
               </Stack>
-              <Card noMargin>
+              <Card>
                 <Card.Heading>Button inside card</Card.Heading>
                 <Card.Actions>
                   {allButtonVariants.map((variant) => (
@@ -309,39 +212,12 @@ export const ThemeDemo = () => {
   );
 };
 
-interface VizHuesDemoProps {
-  color: ThemeVizHue;
-  theme: GrafanaTheme2;
-}
-
-function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
-  return (
-    <tr>
-      <td>{color.name}</td>
-      {color.shades.map((shade, index) => (
-        <td key={index}>
-          <div
-            className={css({
-              background: shade.color,
-              borderRadius: theme.shape.radius.default,
-              color: colorManipulator.getContrastRatio('#FFFFFF', shade.color) >= 4.5 ? '#FFFFFF' : '#000000',
-              padding: theme.spacing(1),
-            })}
-          >
-            {shade.color}
-          </div>
-        </td>
-      ))}
-    </tr>
-  );
-}
-
 interface RichColorDemoProps {
   theme: GrafanaTheme2;
   color: ThemeRichColor;
 }
 
-function RichColorDemo({ theme, color }: RichColorDemoProps) {
+export function RichColorDemo({ theme, color }: RichColorDemoProps) {
   return (
     <tr>
       <td>{color.name}</td>
@@ -351,7 +227,7 @@ function RichColorDemo({ theme, color }: RichColorDemoProps) {
             background: color.main,
             borderRadius: theme.shape.radius.default,
             color: color.contrastText,
-            padding: theme.spacing(1),
+            padding: '8px',
             fontWeight: 500,
           })}
         >
@@ -362,9 +238,9 @@ function RichColorDemo({ theme, color }: RichColorDemoProps) {
         <div
           className={css({
             background: color.shade,
-            color: theme.colors.getContrastText(color.shade, 4.5),
+            color: color.contrastText,
             borderRadius: theme.shape.radius.default,
-            padding: theme.spacing(1),
+            padding: '8px',
           })}
         >
           {color.shade}
@@ -375,7 +251,7 @@ function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css({
             background: color.transparent,
             borderRadius: theme.shape.radius.default,
-            padding: theme.spacing(1),
+            padding: '8px',
           })}
         >
           {color.shade}
@@ -387,7 +263,7 @@ function RichColorDemo({ theme, color }: RichColorDemoProps) {
             border: `1px solid ${color.border}`,
             color: color.text,
             borderRadius: theme.shape.radius.default,
-            padding: theme.spacing(1),
+            padding: '8px',
           })}
         >
           {color.text}
@@ -397,18 +273,16 @@ function RichColorDemo({ theme, color }: RichColorDemoProps) {
   );
 }
 
-const colorsTableStyle = (theme: GrafanaTheme2) =>
-  css({
+const colorsTableStyle = css({
+  textAlign: 'center',
+
+  td: {
+    padding: '8px',
     textAlign: 'center',
-    overflow: 'auto',
+  },
+});
 
-    td: {
-      padding: theme.spacing(1),
-      textAlign: 'center',
-    },
-  });
-
-function TextColors({ t }: { t: GrafanaTheme2 }) {
+export function TextColors({ t }: { t: GrafanaTheme2 }) {
   return (
     <>
       <DemoText color="primary">
@@ -427,22 +301,19 @@ function TextColors({ t }: { t: GrafanaTheme2 }) {
   );
 }
 
-function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
-  const t = useTheme2();
+export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
   const style = css({
-    padding: t.spacing(2),
-    borderRadius: t.shape.radius.default,
+    padding: '16px',
     boxShadow: shadow,
   });
   return <div className={style}>{name}</div>;
 }
 
-function ActionsDemo() {
+export function ActionsDemo() {
   const t = useTheme2();
 
   const item = css({
-    borderRadius: t.shape.radius.default,
-    padding: t.spacing(1),
+    padding: '8px',
     ':hover': {
       background: t.colors.action.hover,
     },

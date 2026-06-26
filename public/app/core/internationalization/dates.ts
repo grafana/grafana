@@ -1,20 +1,17 @@
+import '@formatjs/intl-durationformat/polyfill';
 import deepEqual from 'fast-deep-equal';
 import memoize from 'micro-memoize';
 
-import { getLanguage } from '@grafana/i18n/internal';
+import { getI18next } from './index';
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 
-const createDateTimeFormatter = deepMemoize((locale: string, options: Intl.DateTimeFormatOptions) => {
-  try {
-    return new Intl.DateTimeFormat(locale, options);
-  } catch {
-    return new Intl.DateTimeFormat('en-US', options);
-  }
+const createDateTimeFormatter = deepMemoize((language: string, options: Intl.DateTimeFormatOptions) => {
+  return new Intl.DateTimeFormat(language, options);
 });
 
-const createDurationFormatter = deepMemoize((locale: string, options: Intl.DurationFormatOptions) => {
-  return new Intl.DurationFormat(locale, options);
+const createDurationFormatter = deepMemoize((language: string, options: Intl.DurationFormatOptions) => {
+  return new Intl.DurationFormat(language, options);
 });
 
 export const formatDate = deepMemoize(
@@ -23,18 +20,17 @@ export const formatDate = deepMemoize(
       return formatDate(new Date(value), format);
     }
 
-    const currentLocale = getLanguage();
-
-    const dateFormatter = createDateTimeFormatter(currentLocale, format);
+    const i18n = getI18next();
+    const dateFormatter = createDateTimeFormatter(i18n.language, format);
     return dateFormatter.format(value);
   }
 );
 
 export const formatDuration = deepMemoize(
   (duration: Intl.DurationInput, options: Intl.DurationFormatOptions = {}): string => {
-    const currentLocale = getLanguage();
+    const i18n = getI18next();
 
-    const dateFormatter = createDurationFormatter(currentLocale, options);
+    const dateFormatter = createDurationFormatter(i18n.language, options);
     return dateFormatter.format(duration);
   }
 );

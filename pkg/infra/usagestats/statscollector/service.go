@@ -19,9 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -41,8 +39,6 @@ type Service struct {
 	features           *featuremgmt.FeatureManager
 	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
-	sandbox            sandbox.Sandbox
-	advisor            advisor.AdvisorStats
 
 	log log.Logger
 
@@ -62,8 +58,6 @@ func ProvideService(
 	features *featuremgmt.FeatureManager,
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
-	sandbox sandbox.Sandbox,
-	advisor advisor.AdvisorStats,
 ) *Service {
 	s := &Service{
 		cfg:                cfg,
@@ -75,10 +69,9 @@ func ProvideService(
 		features:           features,
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
-		sandbox:            sandbox,
-		advisor:            advisor,
-		startTime:          time.Now(),
-		log:                log.New("infra.usagestats.collector"),
+
+		startTime: time.Now(),
+		log:       log.New("infra.usagestats.collector"),
 	}
 
 	collectors := []usagestats.MetricsFunc{
@@ -153,7 +146,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.plugins.apps.count"] = s.appCount(ctx)
 	m["stats.plugins.panels.count"] = s.panelCount(ctx)
 	m["stats.plugins.datasources.count"] = s.dataSourceCount(ctx)
-	m["stats.plugins.sandboxed_plugins.count"] = s.sandboxCount(ctx)
 	m["stats.alerts.count"] = statsResult.Alerts
 	m["stats.active_users.count"] = statsResult.ActiveUsers
 	m["stats.active_admins.count"] = statsResult.ActiveAdmins
@@ -175,6 +167,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.snapshots.count"] = statsResult.Snapshots
 	m["stats.teams.count"] = statsResult.Teams
 	m["stats.total_auth_token.count"] = statsResult.AuthTokens
+	m["stats.dashboard_versions.count"] = statsResult.DashboardVersions
 	m["stats.annotations.count"] = statsResult.Annotations
 	m["stats.alert_rules.count"] = statsResult.AlertRules
 	m["stats.rule_groups.count"] = statsResult.RuleGroups
@@ -189,7 +182,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.active_data_keys.count"] = statsResult.ActiveDataKeys
 	m["stats.public_dashboards.count"] = statsResult.PublicDashboards
 	m["stats.correlations.count"] = statsResult.Correlations
-	m["stats.repositories.count"] = statsResult.Repositories
 	if statsResult.DatabaseCreatedTime != nil {
 		m["stats.database.created.time"] = statsResult.DatabaseCreatedTime.Unix()
 	}
@@ -217,15 +209,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
 
 	m["stats.uptime"] = int64(time.Since(s.startTime).Seconds())
-
-	report, err := s.advisor.ReportSummary(ctx)
-	if err != nil {
-		s.log.Error("Failed to get advisor usage stats", "error", err)
-	} else {
-		m["stats.plugins.advisor.outdated_plugins"] = report.PluginsOutdated
-		m["stats.plugins.advisor.deprecated_plugins"] = report.PluginsDeprecated
-		m["stats.plugins.advisor.unhealthy_datasources"] = report.DatasourcesUnhealthy
-	}
 
 	featureUsageStats := s.features.GetUsageStats(ctx)
 	for k, v := range featureUsageStats {
@@ -338,10 +321,12 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalActiveEditors.Set(float64(statsResult.ActiveEditors))
 	metrics.StatsTotalAdmins.Set(float64(statsResult.Admins))
 	metrics.StatsTotalActiveAdmins.Set(float64(statsResult.ActiveAdmins))
+	metrics.StatsTotalDashboardVersions.Set(float64(statsResult.DashboardVersions))
 	metrics.StatsTotalAnnotations.Set(float64(statsResult.Annotations))
 	metrics.StatsTotalAlertRules.Set(float64(statsResult.AlertRules))
 	metrics.StatsTotalRuleGroups.Set(float64(statsResult.RuleGroups))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsResult.LibraryPanels))
+	metrics.StatsTotalLibraryVariables.Set(float64(statsResult.LibraryVariables))
 
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsResult.ActiveDataKeys))
 	inactiveDataKeys := statsResult.DataKeys - statsResult.ActiveDataKeys
@@ -350,7 +335,6 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
 
 	metrics.MStatTotalCorrelations.Set(float64(statsResult.Correlations))
-	metrics.MStatTotalRepositories.Set(float64(statsResult.Repositories))
 
 	s.usageStats.SetReadyToReport(ctx)
 
@@ -376,13 +360,4 @@ func (s *Service) panelCount(ctx context.Context) int {
 
 func (s *Service) dataSourceCount(ctx context.Context) int {
 	return len(s.plugins.Plugins(ctx, plugins.TypeDataSource))
-}
-
-func (s *Service) sandboxCount(ctx context.Context) int {
-	ps, err := s.sandbox.Plugins(ctx)
-	if err != nil {
-		s.log.Error("Failed to get sandboxed plugin count", "error", err)
-		return 0
-	}
-	return len(ps)
 }

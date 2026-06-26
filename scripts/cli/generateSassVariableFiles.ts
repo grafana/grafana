@@ -2,10 +2,9 @@ import { writeFile } from 'node:fs/promises';
 import { resolve } from 'path';
 
 import { createTheme } from '@grafana/data';
-
-import { darkThemeVarsTemplate } from './themeTemplates/_variables.dark.scss.tmpl';
-import { lightThemeVarsTemplate } from './themeTemplates/_variables.light.scss.tmpl';
-import { commonThemeVarsTemplate } from './themeTemplates/_variables.scss.tmpl';
+import { darkThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.dark.scss.tmpl';
+import { lightThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.light.scss.tmpl';
+import { commonThemeVarsTemplate } from '@grafana/ui/src/themes/_variables.scss.tmpl';
 
 const darkThemeVariablesPath = resolve(__dirname, 'public', 'sass', '_variables.dark.generated.scss');
 const lightThemeVariablesPath = resolve(__dirname, 'public', 'sass', '_variables.light.generated.scss');

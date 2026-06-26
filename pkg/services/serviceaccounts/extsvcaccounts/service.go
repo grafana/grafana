@@ -36,10 +36,7 @@ type ExtSvcAccountsService struct {
 	enabled      bool
 }
 
-func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService,
-	secretsSvc secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
-	tracer tracing.Tracer,
-) *ExtSvcAccountsService {
+func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bus, db db.DB, features featuremgmt.FeatureToggles, reg prometheus.Registerer, saSvc *manager.ServiceAccountsService, secretsSvc secrets.Service, tracer tracing.Tracer) *ExtSvcAccountsService {
 	logger := log.New("serviceauth.extsvcaccounts")
 	esa := &ExtSvcAccountsService{
 		acSvc:        acSvc,
@@ -48,13 +45,12 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bu
 		saSvc:        saSvc,
 		skvStore:     kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 		tracer:       tracer,
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		enabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		enabled:      cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
 	if esa.enabled {
 		// Register the metrics
-		esa.metrics = newMetrics(reg)
+		esa.metrics = newMetrics(reg, esa.defaultOrgID, saSvc, logger)
 
 		// Register a listener to enable/disable service accounts
 		bus.AddEventListener(esa.handlePluginStateChanged)
@@ -292,8 +288,8 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		ctxLogger.Info("Create service account", "service", cmd.ExtSvcSlug, "orgID", cmd.OrgID)
 		sa, err := esa.saSvc.CreateServiceAccount(ctx, cmd.OrgID, &sa.CreateServiceAccountForm{
 			Name:       sa.ExtSvcPrefix + cmd.ExtSvcSlug,
-			Role:       new(identity.RoleNone),
-			IsDisabled: new(false),
+			Role:       newRole(identity.RoleNone),
+			IsDisabled: newBool(false),
 		})
 		if err != nil {
 			return 0, err
@@ -354,7 +350,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 	// Get credentials from store
 	credentials, err := esa.GetExtSvcCredentials(ctx, orgID, extSvcSlug)
 	if err != nil && !errors.Is(err, ErrCredentialsNotFound) {
-		if !errors.Is(err, satokengen.ErrInvalidApiKey) {
+		if !errors.Is(err, &satokengen.ErrInvalidApiKey{}) {
 			return "", err
 		}
 		ctxLogger.Warn("Invalid token found in store, recovering...", "service", extSvcSlug, "orgID", orgID)

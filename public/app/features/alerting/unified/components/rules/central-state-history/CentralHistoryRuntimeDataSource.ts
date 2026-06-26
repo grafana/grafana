@@ -1,18 +1,15 @@
 import { useEffect, useMemo } from 'react';
 
-import { type DataQueryRequest, type DataQueryResponse, type TestDataSourceResponse } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { getTemplateSrv } from '@grafana/runtime';
+import { DataQuery, DataQueryRequest, DataQueryResponse, TestDataSourceResponse } from '@grafana/data';
 import { RuntimeDataSource, sceneUtils } from '@grafana/scenes';
-import { type DataQuery } from '@grafana/schema';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dispatch } from 'app/store/store';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
-import { type DataSourceInformation } from '../../../home/Insights';
+import { DataSourceInformation } from '../../../home/Insights';
 
 import { LIMIT_EVENTS } from './EventListSceneObject';
-import { historyResultToDataFrame, toMatchersParam } from './utils';
+import { getStateFilterFromInQueryParams, getStateFilterToInQueryParams, historyResultToDataFrame } from './utils';
 
 const historyDataSourceUid = '__history_api_ds_uid__';
 const historyDataSourcePluginId = '__history_api_ds_pluginId__';
@@ -34,12 +31,6 @@ export function useRegisterHistoryRuntimeDataSource() {
   }, [ds]);
 }
 
-interface HistoryAPIQuery extends DataQuery {
-  labels?: string;
-  stateFrom?: string;
-  stateTo?: string;
-}
-
 /**
  * This class is a runtime datasource that fetches the events from the history api.
  * The events are grouped by alert instance and then converted to a DataFrame list.
@@ -47,43 +38,28 @@ interface HistoryAPIQuery extends DataQuery {
  * This allows us to filter the events by labels.
  * The result is a timeseries panel that shows the events for the selected time range and filtered by labels.
  */
-class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
+class HistoryAPIDatasource extends RuntimeDataSource {
   constructor(pluginId: string, uid: string) {
     super(uid, pluginId);
   }
 
-  async query(request: DataQueryRequest<HistoryAPIQuery>): Promise<DataQueryResponse> {
+  async query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
     const from = request.range.from.unix();
     const to = request.range.to.unix();
-    // get the query from the request
-    const query = request.targets[0]!;
 
-    const templateSrv = getTemplateSrv();
+    // Get the labels and states filters from the URL
+    const stateTo = getStateFilterToInQueryParams();
+    const stateFrom = getStateFilterFromInQueryParams();
 
-    // we get the labels, stateTo and stateFrom from the query variables
-    const labels = templateSrv.replace(query.labels ?? '', request.scopedVars);
-    const stateTo = templateSrv.replace(query.stateTo ?? '', request.scopedVars);
-    const stateFrom = templateSrv.replace(query.stateFrom ?? '', request.scopedVars);
-
-    const historyResult = await getHistory(
-      from,
-      to,
-      toMatchersParam(labels),
-      stateTo !== 'all' ? stateTo : undefined,
-      stateFrom !== 'all' ? stateFrom : undefined
-    );
+    const historyResult = await getHistory(from, to);
 
     return {
-      data: historyResultToDataFrame(historyResult, { labels }),
+      data: historyResultToDataFrame(historyResult, { stateTo, stateFrom }),
     };
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
-    return Promise.resolve({
-      status: 'success',
-      message: t('alerting.history-apidatasource.message.data-source-is-working', 'Data source is working'),
-      title: t('alerting.history-apidatasource.title.success', 'Success'),
-    });
+    return Promise.resolve({ status: 'success', message: 'Data source is working', title: 'Success' });
   }
 }
 
@@ -91,19 +67,15 @@ class HistoryAPIDatasource extends RuntimeDataSource<HistoryAPIQuery> {
  * Fetch the history events from the history api.
  * @param from the start time
  * @param to the end time
- * @param matchers optional PromQL selector string for backend filtering, e.g. `{severity=~"crit.*",env!="dev"}`
- * @returns the history events filtered by time and labels
+ * @returns the history events only filtered by time
  */
-export const getHistory = (from: number, to: number, matchers?: string, current?: string, previous?: string) => {
+export const getHistory = (from: number, to: number) => {
   return dispatch(
     stateHistoryApi.endpoints.getRuleHistory.initiate(
       {
         from: from,
         to: to,
         limit: LIMIT_EVENTS,
-        matchers: matchers,
-        current: current,
-        previous: previous,
       },
       {
         forceRefetch: Boolean(getTimeSrv().getAutoRefreshInteval().interval), // force refetch in case we are using the refresh option

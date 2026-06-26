@@ -3,19 +3,19 @@
   please then rebuild the markdown by doing the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
 
-  Refer to ./docs/README.md for more information about building docs.
+  Refer to ./docs/README.md for more information about building docs. 
 */
 
 interface Link {
   title: string;
   url: string;
 }
-interface TransformationInfo {
+export interface TransformationInfo {
   name: string;
   getHelperDocs: (imageRenderType?: ImageRenderType) => string;
   links?: Link[];
@@ -67,7 +67,6 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **All number fields** - Set the left side of a **Binary operation** to apply the calculation to all number fields.
 - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
-> **Note:** If a variable is used in this transformation, the default alias will be interpolated with the value of the variable. If you want an alias to be unaffected by variable changes, explicitly define the alias.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 In the example below, we added two fields together and named them Sum.
@@ -180,9 +179,6 @@ In the field mapping specify:
 | Color | Value mappings / Color | All values |
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
-
-> **Note:** When you use this transformation for thresholds, the visualization continues to use the panel's base threshold.
-
   `;
     },
   },
@@ -236,7 +232,7 @@ This transformation allows you to flexibly adapt your data types, ensuring compa
   },
   extractFields: {
     name: 'Extract fields',
-    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+    getHelperDocs: function () {
       return `
 Use this transformation to select a source of data and extract content from it in different formats. This transformation has the following fields:
 
@@ -244,12 +240,6 @@ Use this transformation to select a source of data and extract content from it i
 - **Format** - Choose one of the following:
   - **JSON** - Parse JSON content from the source.
   - **Key+value pairs** - Parse content in the format 'a=b' or 'c:d' from the source.
-  - **RegExp** - Parse content using a regular expression with [named capturing group(s)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) like \`/(?<NewField>.*)/\`.
-  ${buildImageContent(
-    '/media/docs/grafana/panels-visualizations/screenshot-regexp-detail-v11.3-2.png',
-    imageRenderType,
-    'Example of a regular expression'
-  )}
   - **Auto** - Discover fields automatically.
 - **Replace All Fields** - (Optional) Select this option to hide all other fields and display only your calculated field in the visualization.
 - **Keep Time** - (Optional) Available only if **Replace All Fields** is true. Keeps the time field in the output.
@@ -297,8 +287,8 @@ This transformation allows you to extract and format data in various ways. You c
     name: 'Lookup fields from resource',
     getHelperDocs: function () {
       return `
-Use this transformation to enrich a field value by looking up additional fields from an external source.
-
+Use this transformation to enrich a field value by looking up additional fields from an external source. 
+  
 This transformation has the following fields:
 
 - **Field** - Select a text field from your dataset.
@@ -369,11 +359,11 @@ This transformation is very useful if your data source does not natively filter 
 
 The available conditions for all fields are:
 
+- **Regex** - Match a regex expression.
 - **Is Null** - Match if the value is null.
 - **Is Not Null** - Match if the value is not null.
 - **Equal** - Match if the value is equal to the specified value.
-- **Not Equal** - Match if the value is not equal to the specified value.
-- **Regex** - Match a regex expression.
+- **Different** - Match if the value is different than the specified value.
 
 The available conditions for string fields are:
 
@@ -386,11 +376,7 @@ The available conditions for number fields are:
 - **Lower** - Match if the value is lower than the specified value.
 - **Greater or equal** - Match if the value is greater or equal.
 - **Lower or equal** - Match if the value is lower or equal.
-- **In between** - Match a range between a specified minimum and maximum, min and max included.
-
-The available conditions for time fields are:
-
-- **In between** - Match a range between a specified minimum and maximum. The min and max values will pre-populate with variables to filter by selected time.
+- **Range** - Match a range between a specified minimum and maximum, min and max included.
 
 Consider the following dataset:
 
@@ -451,7 +437,7 @@ Use this transformation to selectively remove parts of your query results. There
 
 #### Use a regular expression
 
-When you filter using a regular expression, field names that match the regular expression are included.
+When you filter using a regular expression, field names that match the regular expression are included. 
 
 For example, from the input data:
 
@@ -585,7 +571,7 @@ This transformation goes in two steps. First you specify one or multiple fields 
 | 2020-07-07 10:31:22 | **_server 3_** | 55              | OK            |
 | 2020-07-07 09:30:57 | **_server 3_** | 62              | Rebooting     |
 
-All rows with the same value of Server ID are grouped together. Optionally, you can add a count of how may values fall in the selected group.
+All rows with the same value of Server ID are grouped together.
 
 After choosing which field you want to group your data by, you can add various calculations on the other fields, and apply the calculation to each group of rows. For instance, we could want to calculate the average CPU temperature for each of those servers. So we can add the _mean_ calculation applied on the CPU Temperature field to get the following:
 
@@ -594,14 +580,6 @@ After choosing which field you want to group your data by, you can add various c
 | server 1  | 82                     |
 | server 2  | 88.6                   |
 | server 3  | 59.6                   |
-
-If you had added the count stat to the group by transformation, there would be an extra column showing that the count of each server from above was 3.
-
-| Server ID | CPU Temperature (mean) | Server ID (count) |
-| --------- | ---------------------- | ----------------- |
-| server 1  | 82                     | 3                 |
-| server 2  | 88.6                   | 3                 |
-| server 3  | 59.6                   | 3                 |
 
 And we can add more than one calculation. For instance:
 
@@ -660,7 +638,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
-
+    
   To calculate a statistic for a field, click the selection box next to it and select the **Calculate** option:
 
   ${buildImageContent(
@@ -708,16 +686,7 @@ Use this transformation to construct a matrix by specifying fields from your que
   | server 1 | 82 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>OK</td></tr></tbody></table> |
   | server 2 | 88.6 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>OK</td></tr></tbody></table> |
   | server 3 | 59.6 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>Rebooting</td></tr></tbody></table> |
-
-  #### Display options
-
-> **Note:** Display options are in public preview. To try out the new editor for this transformation, enable the \`groupToNestedTableV2\` feature toggle. To try out nested field overrides, enable \`nestedFramesFieldOverrides\`.
-
-  | Option                            | Description                                                                                                                |
-  | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-  | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default                                                   |
-  | Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. |
-  `;
+      `;
     },
     links: [
       {
@@ -1173,7 +1142,6 @@ Use this transformation to provide the flexibility to rename, reorder, or hide f
 
 Grafana displays a list of fields returned by the query, allowing you to perform the following actions:
 
-- **Set field order mode** - If the mode is **Manual**, you can change the field order by hovering the cursor over a field and dragging the field to its new position. If it's **Auto**, use the **OFF**, **ASC**, and **DESC** options to order by any labels on the field or by the field name. For any field that is sorted **ASC** or **DESC**, you can drag the option to set the priority of the sorting.
 - **Change field order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
 - **Hide or show a field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
 - **Rename fields** - Type a new name in the "Rename <field>" box to customize field names.
@@ -1241,11 +1209,30 @@ Use this transformation to address issues when a data source returns time series
 
 #### Available options
 
+##### Multi-frame time series
+
+Use this option to transform the time series data frame from the wide format to the long format. This is particularly helpful when your data source delivers time series information in a format that needs to be reshaped for optimal compatibility with your visualization.
+
+**Example: Converting from wide to long format**
+
+| Timestamp           | Value1 | Value2 |
+|---------------------|--------|--------|
+| 2023-01-01 00:00:00 | 10     | 20     |
+| 2023-01-01 01:00:00 | 15     | 25     |
+
+**Transformed to:**
+
+| Timestamp           | Variable | Value |
+|---------------------|----------|-------|
+| 2023-01-01 00:00:00 | Value1   | 10    |
+| 2023-01-01 00:00:00 | Value2   | 20    |
+| 2023-01-01 01:00:00 | Value1   | 15    |
+| 2023-01-01 01:00:00 | Value2   | 25    |
+
+
 ##### Wide time series
 
 Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization requires a wide format, this transformation simplifies the process.
-
-A wide time series combines data into a single frame with one shared, ascending time field. Time fields do not repeat and multiple values extend in separate columns.
 
 **Example: Converting from long to wide format**
 
@@ -1263,32 +1250,7 @@ A wide time series combines data into a single frame with one shared, ascending 
 | 2023-01-01 00:00:00 | 10     | 20     |
 | 2023-01-01 01:00:00 | 15     | 25     |
 
-##### Multi-frame time series
-
-Multi-frame time series break data into multiple frames that all contain two fields: a time field and a numeric value field. Time is always ascending. String values are represented as field labels.
-
-##### Long time series
-
-A long time series combines data into one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one.
-
-**Example: Converting to long format**
-
-| Value1 | Value2 |  Timestamp          |
-|--------|--------|---------------------|
-| 10     | 20     | 2023-01-03 00:00:00 |
-| 30     | 40     | 2023-01-02 00:00:00 |
-| 50     | 60     | 2023-01-01 00:00:00 |
-| 70     | 80     | 2023-01-01 00:00:00 |
-
-**Transformed to:**
-
-| Timestamp           | Value1 | Value2 |
-|---------------------|--------|--------|
-| 2023-01-01 00:00:00 | 70     | 80     |
-| 2023-01-01 01:00:00 | 50     | 60     |
-| 2023-01-02 01:00:00 | 30     | 40     |
-| 2023-01-03 01:00:00 | 10     | 20     |
-
+> **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
   `;
     },
     links: [
@@ -1490,6 +1452,7 @@ Here is the result after applying the Series to rows transformation.
 
 This transformation facilitates the consolidation of results from multiple time series queries, providing a streamlined and unified dataset for efficient analysis and visualization in a tabular format.
 
+> **Note:** This transformation is available in Grafana 7.1+.
   `;
     },
   },
@@ -1551,12 +1514,19 @@ ${buildImageContent(
   imageRenderType,
   'A select box showing available statistics that can be calculated.'
 )}
+
+
+> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
   `;
     },
     links: [
       {
         title: 'sparkline cell type',
         url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline',
+      },
+      {
+        title: 'configuration file',
+        url: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/',
       },
     ],
   },
@@ -1565,7 +1535,7 @@ ${buildImageContent(
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
-If you have multiple types, it will default to string type. You can select how empty cells should be represented.
+If you have multiple types it will default to string type.
 
 **Before Transformation:**
 
@@ -1590,78 +1560,39 @@ ${buildImageContent(
     },
   },
   regression: {
-    name: 'Trendline',
+    name: 'Regression analysis',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
 Use this transformation to create a new data frame containing values predicted by a statistical model. This is useful for finding a trend in chaotic data. It works by fitting a mathematical function to the data, using either linear or polynomial regression. The data frame can then be used in a visualization to display a trendline.
 
 There are two different models:
 
-- **Linear** - Fits a linear function to the data.
+- **Linear regression** - Fits a linear function to the data.
 ${buildImageContent(
   '/static/img/docs/transformations/linear-regression.png',
   imageRenderType,
   'A time series visualization with a straight line representing the linear function'
 )}
-- **Polynomial** - Fits a polynomial function to the data.
+- **Polynomial regression** - Fits a polynomial function to the data.
 ${buildImageContent(
   '/static/img/docs/transformations/polynomial-regression.png',
   imageRenderType,
   'A time series visualization with a curved line representing the polynomial function'
 )}
 
-> **Note:** This transformation was previously called regression analysis.
-  `;
-    },
-  },
-  smoothing: {
-    name: 'Smoothing',
-    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
-      return `
-Use this transformation to reduce noise in time series data through adaptive smoothing. This transformation creates smoother, cleaner visualizations while preserving all original time points and important trends and patterns in your data.
-
-The smoothing transformation uses the ASAP (Automatic Smoothing for Attention Prioritization) algorithm internally to generate a smoothed curve, which is then interpolated back onto all original time points. This ensures your visualization maintains continuous lines without gaps while reducing noise.
-
-#### Available options
-
-- **Resolution** - Controls smoothing intensity (1-1000). Lower values create more aggressive smoothing, while higher values preserve more detail. The output preserves all original time points.
-
-#### When to use smoothing
-
-This transformation is useful for:
-
-- Noisy time series data that obscures underlying trends
-- Clearer trend analysis and pattern recognition
-
-#### Example
-
-Consider noisy sensor data with thousands of points:
-
-**Before smoothing:**
-
-| Time                | Temperature |
-| ------------------- | ----------- |
-| 2020-07-07 10:00:00 | 23.1        |
-| 2020-07-07 10:00:01 | 23.3        |
-| 2020-07-07 10:00:02 | 22.9        |
-| 2020-07-07 10:00:03 | 23.2        |
-| ... (thousands more) | ...         |
-
-**After smoothing (Resolution: 100):**
-
-| Time                | Temperature (smoothed) |
-| ------------------- | ---------------------- |
-| 2020-07-07 10:00:00 | 23.1                   |
-| 2020-07-07 10:00:01 | 23.1                   |
-| 2020-07-07 10:00:02 | 23.0                   |
-| 2020-07-07 10:00:03 | 23.0                   |
-| ... (same count)    | ...                    |
-
-The transformation preserves all original time points while reducing noise, resulting in smoother curves that maintain continuous lines without gaps.
+> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
   `;
     },
   },
 };
+
+export function getLinkToDocs(): string {
+  return `
+  Go to the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
+  transformation documentation
+  </a> for more general documentation.
+  `;
+}
 
 function buildImageContent(source: string, imageRenderType: ImageRenderType, imageAltText: string) {
   return imageRenderType === 'shortcodeFigure'

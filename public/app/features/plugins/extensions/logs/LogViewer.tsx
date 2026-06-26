@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid';
-import { type ReactElement, useState } from 'react';
-import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
+import { ReactElement, useState } from 'react';
 
 import { sceneUtils, VizConfigBuilders } from '@grafana/scenes';
 import {
@@ -12,7 +11,7 @@ import {
 } from '@grafana/scenes-react';
 import { Page } from 'app/core/components/Page/Page';
 
-import { type LogFilter, LogViewFilters } from './LogViewFilters';
+import { LogFilter, LogViewFilters } from './LogViewFilters';
 import { ExtensionsLogDataSource } from './dataSource';
 import { createFilterTransformation } from './filterTransformation';
 import { log } from './log';
@@ -22,7 +21,7 @@ const DATASOURCE_REF = {
   type: 'grafana-extensionslog-datasource',
 };
 
-const logsViz = VizConfigBuilders.logs().setOption('wrapLogMessage', true).build();
+const logsViz = VizConfigBuilders.logs().build();
 
 sceneUtils.registerRuntimeDataSource({
   dataSource: new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log),
@@ -55,13 +54,9 @@ function LogViewScene(): ReactElement | null {
       navId="extensions"
       actions={<LogViewFilters provider={data} filteredProvider={filteredData} filter={filter} onChange={setFilter} />}
     >
-      <AutoSizer>
-        {({ height, width }: Size) => (
-          <VizGridLayout minHeight={height} minWidth={width}>
-            <VizPanel title="" viz={logsViz} dataProvider={filteredData} />
-          </VizGridLayout>
-        )}
-      </AutoSizer>
+      <VizGridLayout>
+        <VizPanel title="" viz={logsViz} dataProvider={filteredData} />
+      </VizGridLayout>
     </Page>
   );
 }

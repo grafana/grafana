@@ -1,5 +1,5 @@
 import { sci, toHex, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
-import { formattedValueToString } from './baseFormatters';
+import { formattedValueToString } from './valueFormats';
 
 describe('scientific formatting', () => {
   describe('sci', () => {

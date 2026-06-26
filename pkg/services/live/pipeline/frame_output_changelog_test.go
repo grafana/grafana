@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChangeLogOutput_NoPreviousFrame_SingleRow(t *testing.T) {
@@ -17,7 +16,7 @@ func TestChangeLogOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
 
-	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(ns string, channel string) (*data.Frame, bool, error) {
+	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		return nil, false, nil
 	})
 
@@ -54,7 +53,7 @@ func TestChangeLogOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
 
-	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(ns string, channel string) (*data.Frame, bool, error) {
+	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		return nil, false, nil
 	}).Times(1)
 

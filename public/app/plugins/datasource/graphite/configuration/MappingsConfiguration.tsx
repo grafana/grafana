@@ -1,4 +1,4 @@
-import { type ChangeEvent, useState, type JSX } from 'react';
+import { ChangeEvent, useState } from 'react';
 
 import { Box, Button, Icon, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 

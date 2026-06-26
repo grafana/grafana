@@ -1,14 +1,14 @@
-import { type ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { GenAIDashDescriptionButton } from '../../GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from '../../GenAI/GenAIDashTitleButton';
-import { type SaveDashboardFormProps } from '../types';
+import { SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
   title: string;
@@ -26,7 +26,7 @@ const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes
-  if (dashboard.uid?.length && clone.panels) {
+  if (dashboard.id > 0 && clone.panels) {
     clone.panels.forEach((panel) => {
       // @ts-expect-error
       if (panel.type === 'graph' && panel.alert) {
@@ -111,17 +111,10 @@ export const SaveDashboardAsForm = ({
               <Field
                 label={
                   <Stack justifyContent="space-between">
-<<<<<<< HEAD
                     <Label htmlFor="title">Название</Label>
                     {config.featureToggles.dashgpt && isNew && (
                       <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} />
                     )}
-=======
-                    <Label htmlFor="title">
-                      <Trans i18nKey="dashboard.save-dashboard-as-form.title">Title</Trans>
-                    </Label>
-                    {isNew && <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} />}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
                   </Stack>
                 }
                 invalid={!!errors.title}
@@ -130,14 +123,7 @@ export const SaveDashboardAsForm = ({
                 <Input
                   {...field}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => field.onChange(e.target.value)}
-<<<<<<< HEAD
                   aria-label="Сохранить поле заголовка дашборда"
-=======
-                  aria-label={t(
-                    'dashboard.save-dashboard-as-form.aria-label-save-dashboard-title-field',
-                    'Save dashboard title field'
-                  )}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
                   autoFocus
                 />
               </Field>
@@ -153,17 +139,10 @@ export const SaveDashboardAsForm = ({
               <Field
                 label={
                   <Stack justifyContent="space-between">
-<<<<<<< HEAD
                     <Label htmlFor="description">Описание</Label>
                     {config.featureToggles.dashgpt && isNew && (
                       <GenAIDashDescriptionButton onGenerate={(description) => field.onChange(description)} />
                     )}
-=======
-                    <Label htmlFor="description">
-                      <Trans i18nKey="dashboard.save-dashboard-as-form.description">Description</Trans>
-                    </Label>
-                    {isNew && <GenAIDashDescriptionButton onGenerate={(description) => field.onChange(description)} />}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
                   </Stack>
                 }
                 invalid={!!errors.description}
@@ -172,14 +151,7 @@ export const SaveDashboardAsForm = ({
                 <TextArea
                   {...field}
                   onChange={(e: ChangeEvent<HTMLTextAreaElement>) => field.onChange(e.target.value)}
-<<<<<<< HEAD
                   aria-label="Сохранить поле описания дашборда"
-=======
-                  aria-label={t(
-                    'dashboard.save-dashboard-as-form.aria-label-save-dashboard-description-field',
-                    'Save dashboard description field'
-                  )}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
                   autoFocus
                 />
               </Field>
@@ -187,13 +159,17 @@ export const SaveDashboardAsForm = ({
             control={control}
             name="description"
           />
-          <Field label={t('dashboard.save-dashboard-as-form.label-folder', 'Folder')}>
+          <Field label="Folder">
             <InputControl
               render={({ field: { ref, ...field } }) => (
                 <FolderPicker
                   {...field}
                   onChange={(uid: string | undefined, title: string | undefined) => field.onChange({ uid, title })}
                   value={field.value?.uid}
+                  // Old folder picker fields
+                  initialTitle={dashboard.meta.folderTitle}
+                  dashboardId={dashboard.id}
+                  enableCreateNew
                 />
               )}
               control={control}
@@ -201,34 +177,16 @@ export const SaveDashboardAsForm = ({
             />
           </Field>
           {!isNew && (
-<<<<<<< HEAD
             <Field label="Копировать теги">
-=======
-            <Field label={t('dashboard.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
               <Switch {...register('copyTags')} />
             </Field>
           )}
           <Stack>
             <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
-              <Trans i18nKey="dashboard.save-dashboard-as-form.cancel">Cancel</Trans>
+              Cancel
             </Button>
-<<<<<<< HEAD
             <Button disabled={isLoading} type="submit" aria-label="Save dashboard button">
               {isLoading ? 'Сохранение...' : 'Сохранить'}
-=======
-            <Button
-              disabled={isLoading}
-              type="submit"
-              aria-label={t(
-                'dashboard.save-dashboard-as-form.aria-label-save-dashboard-button',
-                'Save dashboard button'
-              )}
-            >
-              {isLoading
-                ? t('dashboard.save-dashboard-as-form.saving', 'Saving...')
-                : t('dashboard.save-dashboard-as-form.save', 'Save')}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             </Button>
           </Stack>
         </>

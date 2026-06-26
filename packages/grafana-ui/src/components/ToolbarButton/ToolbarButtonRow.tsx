@@ -2,12 +2,11 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { Children, forwardRef, type HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
+import { Children, forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, createRef } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes';
 import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';
@@ -17,11 +16,6 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   alignment?: 'left' | 'right';
 }
 
-/**
- * A container for multiple ToolbarButtons. Provides automatic overflow behaviour when the buttons no longer fit in the container.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-toolbarbuttonrow--docs
- */
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
     // null/undefined are valid react children so we need to filter them out to prevent unnecessary padding
@@ -93,7 +87,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
           <div ref={overflowRef} className={styles.overflowButton}>
             <ToolbarButton
               variant={showOverflowItems ? 'active' : 'default'}
-              tooltip={t('grafana-ui.toolbar-button-row.show-more', 'Show more items')}
+              tooltip="Show more items"
               onClick={() => setShowOverflowItems(!showOverflowItems)}
               icon="ellipsis-v"
               iconOnly

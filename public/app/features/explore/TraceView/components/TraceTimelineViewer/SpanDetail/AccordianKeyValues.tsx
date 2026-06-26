@@ -16,18 +16,18 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import type TNil from '../../types/TNil';
+import { TraceLink, TNil } from '../../types';
 
 import * as markers from './AccordianKeyValues.markers';
-import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
+import KeyValuesTable from './KeyValuesTable';
 
 import { alignIcon } from '.';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       textOverflow: 'ellipsis',
@@ -39,10 +39,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: '0.25em 0.1em',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-    }),
-    headerLabel: css({
-      width: '120px',
-      display: 'inline-block',
+      '&:hover': {
+        background: autoColor(theme, '#e8e8e8'),
+      },
     }),
     headerEmpty: css({
       label: 'headerEmpty',
@@ -69,6 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'summaryItem',
       display: 'inline',
       paddingRight: '0.5rem',
+      borderRight: `1px solid ${autoColor(theme, '#ddd')}`,
       '&:last-child': {
         paddingRight: 0,
         borderRight: 'none',
@@ -77,7 +77,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     summaryLabel: css({
       label: 'summaryLabel',
       color: autoColor(theme, '#777'),
-      paddingRight: '0.5rem',
+    }),
+    summaryDelim: css({
+      label: 'summaryDelim',
+      color: autoColor(theme, '#bbb'),
+      padding: '0 0.2em',
     }),
   };
 };
@@ -88,12 +92,9 @@ export type AccordianKeyValuesProps = {
   logName?: string;
   highContrast?: boolean;
   interactive?: boolean;
-  onlyValues?: boolean;
-  showSummary?: boolean;
-  showCountBadge?: boolean;
   isOpen: boolean;
   label: string | React.ReactNode;
-  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   onToggle?: null | (() => void);
 };
 
@@ -115,6 +116,7 @@ export function KeyValuesSummary({ data = null }: KeyValuesSummaryProps) {
         // `i` is necessary in the key because item.key can repeat
         <li className={styles.summaryItem} key={`${item.key}-${i}`}>
           <span className={styles.summaryLabel}>{item.key}</span>
+          <span className={styles.summaryDelim}>=</span>
           {String(item.value)}
         </li>
       ))}
@@ -131,9 +133,6 @@ export default function AccordianKeyValues({
   isOpen,
   label,
   linksGetter,
-  onlyValues = false,
-  showSummary = true,
-  showCountBadge = false,
   onToggle = null,
 }: AccordianKeyValuesProps) {
   const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
@@ -155,7 +154,7 @@ export default function AccordianKeyValues({
     };
   }
 
-  const showDataSummaryFields = showSummary && data.length > 0 && !isOpen;
+  const showDataSummaryFields = data.length > 0 && !isOpen;
 
   return (
     <div className={cx(className, styles.container)}>
@@ -168,9 +167,9 @@ export default function AccordianKeyValues({
         data-testid="AccordianKeyValues--header"
       >
         {arrow}
-        <strong data-test={markers.LABEL} className={styles.headerLabel}>
+        <strong data-test={markers.LABEL}>
           {label}
-          {showCountBadge ? <Counter value={data.length} variant="secondary" /> : null}
+          {showDataSummaryFields && ':'}
         </strong>
         {showDataSummaryFields && (
           <span className={css({ marginLeft: '0.7em' })}>
@@ -178,7 +177,7 @@ export default function AccordianKeyValues({
           </span>
         )}
       </div>
-      {isOpen && <KeyValuesTable data={tableFields} linksGetter={linksGetter} onlyValues={onlyValues} />}
+      {isOpen && <KeyValuesTable data={tableFields} linksGetter={linksGetter} />}
     </div>
   );
 }

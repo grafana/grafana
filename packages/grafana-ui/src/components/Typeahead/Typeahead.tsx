@@ -5,9 +5,9 @@ import * as React from 'react';
 import ReactDOM from 'react-dom';
 import { FixedSizeList } from 'react-window';
 
-import { type GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { GrafanaTheme2, ThemeContext } from '@grafana/data';
 
-import { type CompletionItem, type CompletionItemGroup, CompletionItemKind } from '../../types/completion';
+import { CompletionItem, CompletionItemGroup, CompletionItemKind } from '../../types/completion';
 import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from '../../utils/typeahead';
 
 import { TypeaheadInfo } from './TypeaheadInfo';

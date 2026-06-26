@@ -6,47 +6,28 @@
 package apistore
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resourcepb.ListRequest, storage.SelectionPredicate, error) {
+func toListRequest(k *resource.ResourceKey, opts storage.ListOptions) (*resource.ListRequest, storage.SelectionPredicate, error) {
 	predicate := opts.Predicate
-	req := &resourcepb.ListRequest{
+	req := &resource.ListRequest{
 		Limit: opts.Predicate.Limit,
-		Options: &resourcepb.ListOptions{
+		Options: &resource.ListOptions{
 			Key: k,
 		},
 		NextPageToken: predicate.Continue,
-	}
-
-	if opts.ResourceVersion != "" {
-		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
-		if err != nil {
-			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
-		}
-		req.ResourceVersion = rv
-	}
-
-	switch opts.ResourceVersionMatch {
-	case "":
-		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Unset
-	case metav1.ResourceVersionMatchNotOlderThan:
-		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
-	case metav1.ResourceVersionMatchExact:
-		req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_Exact
-	default:
-		return nil, predicate, apierrors.NewBadRequest(
-			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
-		)
 	}
 
 	if opts.Predicate.Label != nil && !opts.Predicate.Label.Empty() {
@@ -58,51 +39,7 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 		for _, r := range requirements {
 			v := r.Key()
 
-			// Parse the history/trash request from labels
-			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash {
-				if len(requirements) != 1 {
-					return nil, predicate, apierrors.NewBadRequest("single label supported with: " + v)
-				}
-				if r.Operator() != selection.Equals {
-					return nil, predicate, apierrors.NewBadRequest("only = operator supported with: " + v)
-				}
-
-				vals := r.Values().List()
-				if len(vals) != 1 {
-					return nil, predicate, apierrors.NewBadRequest("expecting single value for: " + v)
-				}
-
-				switch v {
-				case utils.LabelKeyGetTrash:
-					req.Source = resourcepb.ListRequest_TRASH
-					if vals[0] != "true" {
-						return nil, predicate, apierrors.NewBadRequest("expecting true for: " + v)
-					}
-				case utils.LabelKeyGetHistory:
-					req.Source = resourcepb.ListRequest_HISTORY
-					if opts.Predicate.Field == nil || opts.Predicate.Field.Empty() {
-						return nil, predicate, apierrors.NewBadRequest("metadata.name field selector required for history requests")
-					}
-
-					fieldRequirements := opts.Predicate.Field.Requirements()
-					if len(fieldRequirements) != 1 {
-						return nil, predicate, apierrors.NewBadRequest("only one field selector supported for history requests")
-					}
-
-					fieldReq := fieldRequirements[0]
-					if fieldReq.Field != "metadata.name" {
-						return nil, predicate, apierrors.NewBadRequest("metadata.name field selector required for history requests")
-					}
-
-					req.Options.Key.Name = fieldReq.Value
-				}
-
-				req.Options.Labels = nil
-				req.Options.Fields = nil
-				return req, storage.Everything, nil
-			}
-
-			req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{
+			req.Options.Labels = append(req.Options.Labels, &resource.Requirement{
 				Key:      v,
 				Operator: string(r.Operator()),
 				Values:   r.Values().List(),
@@ -113,13 +50,84 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 	if opts.Predicate.Field != nil && !opts.Predicate.Field.Empty() {
 		requirements := opts.Predicate.Field.Requirements()
 		for _, r := range requirements {
-			requirement := &resourcepb.Requirement{Key: r.Field, Operator: string(r.Operator)}
+			requirement := &resource.Requirement{Key: r.Field, Operator: string(r.Operator)}
 			if r.Value != "" {
 				requirement.Values = append(requirement.Values, r.Value)
 			}
-			req.Options.Fields = append(req.Options.Fields, requirement)
+			req.Options.Labels = append(req.Options.Labels, requirement)
 		}
 	}
 
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, predicate, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+		req.ResourceVersion = rv
+	}
+
+	switch opts.ResourceVersionMatch {
+	case "", metav1.ResourceVersionMatchNotOlderThan:
+		req.VersionMatch = resource.ResourceVersionMatch_NotOlderThan
+	case metav1.ResourceVersionMatchExact:
+		req.VersionMatch = resource.ResourceVersionMatch_Exact
+	default:
+		return nil, predicate, apierrors.NewBadRequest(
+			fmt.Sprintf("unsupported version match: %v", opts.ResourceVersionMatch),
+		)
+	}
+
 	return req, predicate, nil
+}
+
+func isUnchanged(codec runtime.Codec, obj runtime.Object, newObj runtime.Object) (bool, error) {
+	buf := new(bytes.Buffer)
+	if err := codec.Encode(obj, buf); err != nil {
+		return false, err
+	}
+
+	newBuf := new(bytes.Buffer)
+	if err := codec.Encode(newObj, newBuf); err != nil {
+		return false, err
+	}
+
+	return bytes.Equal(buf.Bytes(), newBuf.Bytes()), nil
+}
+
+func testKeyParser(val string) (*resource.ResourceKey, error) {
+	k, err := grafanaregistry.ParseKey(val)
+	if err != nil {
+		if strings.HasPrefix(val, "pods/") {
+			parts := strings.Split(val, "/")
+			if len(parts) == 2 {
+				err = nil
+				k = &grafanaregistry.Key{
+					Resource: parts[0], // pods
+					Name:     parts[1],
+				}
+			} else if len(parts) == 3 {
+				err = nil
+				k = &grafanaregistry.Key{
+					Resource:  parts[0], // pods
+					Namespace: parts[1],
+					Name:      parts[2],
+				}
+			}
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	if k.Group == "" {
+		k.Group = "example.apiserver.k8s.io"
+	}
+	if k.Resource == "" {
+		return nil, apierrors.NewInternalError(fmt.Errorf("missing resource in request"))
+	}
+	return &resource.ResourceKey{
+		Namespace: k.Namespace,
+		Group:     k.Group,
+		Resource:  k.Resource,
+		Name:      k.Name,
+	}, err
 }

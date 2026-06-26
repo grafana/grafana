@@ -33,7 +33,6 @@ export interface TraceSpanRow {
   parentSpanID: string | undefined;
   operationName: string;
   serviceName: string;
-  serviceNamespace?: string;
   serviceTags: TraceKeyValuePair[];
   // Millisecond epoch time
   startTime: number;

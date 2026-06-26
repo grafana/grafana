@@ -5,20 +5,19 @@ import { lastValueFrom } from 'rxjs';
 
 import {
   CoreApp,
-  type DataFrame,
-  type DataQueryRequest,
-  type DataSourceInstanceSettings,
-  type DataSourceJsonData,
+  DataFrame,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
   dateTime,
-  type TimeZone,
+  TimeZone,
 } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
-import { Trans } from '@grafana/i18n';
-import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { type Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
+import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
 import {
   defaultProfilingKeys,
@@ -28,9 +27,9 @@ import {
   scopedVarsFromTags,
   scopedVarsFromTrace,
 } from '../../../createSpanLink';
-import { type TraceSpan } from '../../types/trace';
+import { TraceSpan } from '../../types/trace';
 
-import { type TraceFlameGraphs } from '.';
+import { TraceFlameGraphs } from '.';
 
 export type SpanFlameGraphProps = {
   span: TraceSpan;
@@ -132,9 +131,6 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
               type: profilesDataSourceSettings.type,
               uid: profilesDataSourceSettings.uid,
             },
-            includeExemplars: false,
-            heatmapType: 'individual' as const,
-            includeHeatmap: false,
           },
         ],
       };
@@ -178,9 +174,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
 
   return (
     <div className={styles.flameGraph} ref={sizeRef}>
-      <div className={styles.flameGraphTitle}>
-        <Trans i18nKey="explore.span-flame-graph.flame-graph">Flame graph</Trans>
-      </div>
+      <div className={styles.flameGraphTitle}>Flame graph</div>
       <FlameGraph
         data={traceFlameGraphs[profileTagValue]}
         getTheme={() => config.theme2}

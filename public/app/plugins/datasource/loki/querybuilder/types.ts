@@ -1,9 +1,9 @@
 import {
-  type VisualQueryBinary,
-  type QueryBuilderLabelFilter,
-  type QueryBuilderOperation,
+  VisualQueryBinary,
+  QueryBuilderLabelFilter,
+  QueryBuilderOperation,
   BINARY_OPERATIONS_KEY,
-} from '@grafana/plugin-ui';
+} from '@grafana/experimental';
 
 /**
  * Visual query model
@@ -33,7 +33,7 @@ export enum LokiVisualQueryOperationCategory {
   Formats = 'Formats',
   LineFilters = 'Line filters',
   LabelFilters = 'Label filters',
-  BinaryOps = `${BINARY_OPERATIONS_KEY}`,
+  BinaryOps = BINARY_OPERATIONS_KEY,
 }
 
 export enum LokiOperationId {

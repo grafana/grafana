@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { PureComponent } from 'react';
 
-import { type LogLabelStatsModel, type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type IconSize, useStyles2 } from '@grafana/ui';
+import { LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
+import { stylesFactory, withTheme2, Themeable2 } from '@grafana/ui';
 
+//Components
 import { LogLabelStatsRow } from './LogLabelStatsRow';
 
 const STATS_ROW_LIMIT = 5;
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     logsStats: css({
       label: 'logs-stats',
@@ -42,14 +42,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: '5px 0px',
     }),
   };
-};
+});
 
-interface Props {
-  className?: string;
-  isValueActive?(value: string): Promise<boolean>;
-  include?(value: string): void;
-  exclude?(value: string): void;
-  iconSize?: IconSize;
+interface Props extends Themeable2 {
   stats: LogLabelStatsModel[];
   label: string;
   value: string;
@@ -57,9 +52,10 @@ interface Props {
   isLabel?: boolean;
 }
 
-export const LogLabelStats = ({ className, label, rowCount, stats, value, isLabel, ...rest }: Props) => {
-  const style = useStyles2(getStyles);
-  const rows = useMemo(() => {
+class UnThemedLogLabelStats extends PureComponent<Props> {
+  render() {
+    const { label, rowCount, stats, value, theme, isLabel } = this.props;
+    const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
     let activeRow = topRows.find((row) => row.value === value);
     let otherRows = stats.slice(STATS_ROW_LIMIT);
@@ -70,45 +66,32 @@ export const LogLabelStats = ({ className, label, rowCount, stats, value, isLabe
       activeRow = otherRows.find((row) => row.value === value);
       otherRows = otherRows.filter((row) => row.value !== value);
     }
-    return { topRows, otherRows, insertActiveRow, activeRow };
-  }, [stats, value]);
 
-  const otherCount = useMemo(() => rows.otherRows.reduce((sum, row) => sum + row.count, 0), [rows.otherRows]);
-  const topCount = useMemo(() => rows.topRows.reduce((sum, row) => sum + row.count, 0), [rows.topRows]);
-  const total = topCount + otherCount;
-  const otherProportion = otherCount / total;
+    const otherCount = otherRows.reduce((sum, row) => sum + row.count, 0);
+    const topCount = topRows.reduce((sum, row) => sum + row.count, 0);
+    const total = topCount + otherCount;
+    const otherProportion = otherCount / total;
 
-  return (
-    <div className={className ?? style.logsStats} data-testid="logLabelStats">
-      <div className={style.logsStatsHeader}>
-        <div className={style.logsStatsTitle}>
-          {isLabel
-            ? t(
-                'logs.un-themed-log-label-stats.label-log-stats',
-                '{{label}}: {{total}} of {{rowCount}} rows have that label',
-                {
-                  label,
-                  total,
-                  rowCount,
-                }
-              )
-            : t(
-                'logs.un-themed-log-label-stats.field-log-stats',
-                '{{label}}: {{total}} of {{rowCount}} rows have that field'
-              )}
+    return (
+      <div className={style.logsStats} data-testid="logLabelStats">
+        <div className={style.logsStatsHeader}>
+          <div className={style.logsStatsTitle}>
+            {label}: {total} of {rowCount} rows have that {isLabel ? 'label' : 'field'}
+          </div>
+        </div>
+        <div className={style.logsStatsBody}>
+          {topRows.map((stat) => (
+            <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
+          ))}
+          {insertActiveRow && activeRow && <LogLabelStatsRow key={activeRow.value} {...activeRow} active />}
+          {otherCount > 0 && (
+            <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
+          )}
         </div>
       </div>
-      <div className={style.logsStatsBody}>
-        {rows.topRows.map((stat) => (
-          <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} {...rest} />
-        ))}
-        {rows.insertActiveRow && rows.activeRow && (
-          <LogLabelStatsRow key={rows.activeRow.value} {...rows.activeRow} active {...rest} />
-        )}
-        {otherCount > 0 && (
-          <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
-        )}
-      </div>
-    </div>
-  );
-};
+    );
+  }
+}
+
+export const LogLabelStats = withTheme2(UnThemedLogLabelStats);
+LogLabelStats.displayName = 'LogLabelStats';

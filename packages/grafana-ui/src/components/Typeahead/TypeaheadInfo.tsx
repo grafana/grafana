@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
+import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { type CompletionItem } from '../../types/completion';
+import { CompletionItem } from '../../types';
 
 const getStyles = (theme: GrafanaTheme2, height: number, visible: boolean) => {
   return {

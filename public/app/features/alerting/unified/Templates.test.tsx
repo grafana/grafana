@@ -1,19 +1,18 @@
-import { type InitialEntry } from 'history/createMemoryHistory';
+import { InitialEntry } from 'history/createMemoryHistory';
 import * as React from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { type Props } from 'react-virtualized-auto-sizer';
+import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { type CodeEditor } from '@grafana/ui';
+import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { AccessControlAction } from 'app/types/accessControl';
+import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
+import { AccessControlAction } from 'app/types';
 
 import Templates from './Templates';
 import { grantUserPermissions } from './mocks';
-
-type CodeEditorProps = React.ComponentProps<typeof CodeEditor>;
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -44,7 +43,7 @@ jest.mock('@grafana/ui', () => ({
 const ui = {
   templateForm: byRole('form', { name: 'Template form' }),
   form: {
-    title: byLabelText(/Template group name/),
+    title: byLabelText(/Template name/),
     saveButton: byRole('button', { name: 'Save' }),
   },
 };
@@ -75,18 +74,15 @@ const setup = (initialEntries: InitialEntry[]) => {
   );
 };
 
-const slackTemplate = 'k8s-template%20with%20spaces-resource-name';
-const emailTemplate = 'k8s-custom-email-resource-name';
-
 describe('Templates routes', () => {
   it('allows duplication of template with spaces in name', async () => {
-    setup([navUrl.duplicate(slackTemplate)]);
+    setup([navUrl.duplicate('template%20with%20spaces')]);
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
 
   it('allows editing of template with spaces in name', async () => {
-    setup([navUrl.edit(slackTemplate)]);
+    setup([navUrl.edit('template%20with%20spaces')]);
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
@@ -97,11 +93,11 @@ describe('Templates routes', () => {
     const form = await ui.templateForm.find();
 
     expect(form).toBeInTheDocument();
-    expect(within(form).getByRole('textbox', { name: /Template group name/ })).toHaveValue('');
+    expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('');
   });
 
   it('should pass name validation when editing existing template', async () => {
-    const { user } = setup([navUrl.edit(emailTemplate)]);
+    const { user } = setup([navUrl.edit('custom-email')]);
 
     const titleElement = await ui.form.title.find();
     await waitFor(() => {
@@ -117,13 +113,28 @@ describe('Templates routes', () => {
     });
   });
 
+  it('should display error message when creating new template with duplicate name', async () => {
+    const { user } = setup([navUrl.new]);
+
+    const titleElement = await ui.form.title.find();
+    await user.type(titleElement, 'custom-email');
+
+    await user.click(ui.form.saveButton.get());
+
+    expect(screen.getByText('Another template with this name already exists')).toBeInTheDocument();
+  });
+});
+
+describe('Templates K8s API', () => {
+  testWithFeatureToggles(['alertingApiServer']);
+
   it('form edit renders with correct form values', async () => {
     setup([navUrl.edit('k8s-custom-email-resource-name')]);
 
     const form = await ui.templateForm.find();
 
     expect(form).toBeInTheDocument();
-    expect(within(form).getByRole('textbox', { name: /Template group name/ })).toHaveValue('custom-email');
+    expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('custom-email');
     expect(within(form).getAllByTestId('code-editor')[0]).toHaveValue(
       '{{ define "custom-email" }}  Custom email template {{ end }}'
     );
@@ -135,7 +146,7 @@ describe('Templates routes', () => {
     const form = await ui.templateForm.find();
 
     expect(form).toBeInTheDocument();
-    expect(within(form).getByRole('textbox', { name: /Template group name/ })).toHaveValue('custom-email (copy)');
+    expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('custom-email (copy)');
     expect(within(form).getAllByTestId('code-editor')[0]).toHaveTextContent(
       '{{ define "custom-email_NEW" }} Custom email template {{ end }}'
     );

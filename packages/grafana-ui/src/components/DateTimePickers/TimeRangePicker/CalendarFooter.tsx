@@ -1,9 +1,8 @@
-import { Trans } from '@grafana/i18n';
-
-import { Button } from '../../Button/Button';
+import { Trans } from '../../../utils/i18n';
+import { Button } from '../../Button';
 import { Stack } from '../../Layout/Stack/Stack';
 
-import { type TimePickerCalendarProps } from './TimePickerCalendar';
+import { TimePickerCalendarProps } from './TimePickerCalendar';
 
 export function Footer({ onClose, onApply }: TimePickerCalendarProps) {
   return (

@@ -1,5 +1,4 @@
-import { type AlertRule, type AlertRulesState } from 'app/features/alerting/unified/types/alerting';
-import { type StoreState } from 'app/types/store';
+import { AlertRule, AlertRulesState, NotificationChannelState, StoreState } from 'app/types';
 
 export const getSearchQuery = (state: AlertRulesState) => state.searchQuery;
 
@@ -9,4 +8,12 @@ export const getAlertRuleItems = (state: StoreState): AlertRule[] => {
   return state.alertRules.items.filter((item) => {
     return regex.test(item.name) || regex.test(item.stateText) || regex.test(item.info!);
   });
+};
+
+export const getNotificationChannel = (state: NotificationChannelState, channelId: number) => {
+  if (state.notificationChannel.id === channelId) {
+    return state.notificationChannel;
+  }
+
+  return null;
 };

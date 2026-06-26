@@ -1,4 +1,4 @@
-import { getSituation, type Situation } from './situation';
+import { getSituation, Situation } from './situation';
 
 // we use the `^` character as the cursor-marker in the string.
 function assertSituation(situation: string, expectedSituation: Situation | null) {
@@ -360,17 +360,6 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [
         { name: 'one', value: 'val1', op: '=' },
-        { name: 'two', value: 'val2', op: '!=' },
-        { name: 'three', value: 'val3', op: '=~' },
-        { name: 'four', value: 'val4', op: '!~' },
-      ],
-    });
-  });
-
-  it('identifies all labels from queries when cursor is at the beginning', () => {
-    assertSituation('{^,two!="val2",three=~"val3",four!~"val4"}', {
-      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
-      otherLabels: [
         { name: 'two', value: 'val2', op: '!=' },
         { name: 'three', value: 'val3', op: '=~' },
         { name: 'four', value: 'val4', op: '!~' },

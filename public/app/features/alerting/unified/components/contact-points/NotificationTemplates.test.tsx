@@ -1,7 +1,8 @@
 import { render, screen, within } from 'test/test-utils';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import { AccessControlAction } from 'app/types/accessControl';
+import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
+import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -73,40 +74,44 @@ describe('NotificationTemplates', () => {
     expect(within(provisionedRow).getByText('Provisioned')).toBeInTheDocument();
   });
 
-  it('Should render templates table with the correct rows', async () => {
-    renderWithProvider();
+  describe('k8s API', () => {
+    testWithFeatureToggles(['alertingApiServer']);
 
-    const slackRow = await screen.findByRole('row', { name: /slack-template/i });
-    expect(within(slackRow).getByRole('cell', { name: /slack-template/i })).toBeInTheDocument();
+    it('Should render templates table with the correct rows', async () => {
+      renderWithProvider();
 
-    const emailRow = await screen.findByRole('row', { name: /custom-email/i });
-    expect(within(emailRow).getByRole('cell', { name: /custom-email/i })).toBeInTheDocument();
+      const slackRow = await screen.findByRole('row', { name: /slack-template/i });
+      expect(within(slackRow).getByRole('cell', { name: /slack-template/i })).toBeInTheDocument();
 
-    const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
-    expect(within(provisionedRow).getByRole('cell', { name: /provisioned-template/i })).toBeInTheDocument();
-  });
+      const emailRow = await screen.findByRole('row', { name: /custom-email/i });
+      expect(within(emailRow).getByRole('cell', { name: /custom-email/i })).toBeInTheDocument();
 
-  it('Should provisioned badge for provisioned template', async () => {
-    renderWithProvider();
+      const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
+      expect(within(provisionedRow).getByRole('cell', { name: /provisioned-template/i })).toBeInTheDocument();
+    });
 
-    const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
-    expect(within(provisionedRow).getByText('Provisioned')).toBeInTheDocument();
-  });
+    it('Should provisioned badge for provisioned template', async () => {
+      renderWithProvider();
 
-  it('Should delete template', async () => {
-    const { user } = renderWithProvider();
+      const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
+      expect(within(provisionedRow).getByText('Provisioned')).toBeInTheDocument();
+    });
 
-    const emailRow = await screen.findByRole('row', { name: /custom-email/i });
-    const deleteEmailButton = within(emailRow).getByRole('button', { name: /delete template/i });
+    it('Should delete template', async () => {
+      const { user } = renderWithProvider();
 
-    await user.click(deleteEmailButton);
+      const emailRow = await screen.findByRole('row', { name: /custom-email/i });
+      const deleteEmailButton = within(emailRow).getByRole('button', { name: /delete template/i });
 
-    const confirmDeleteButton = await screen.findByRole('button', { name: /Yes, delete/i });
-    await user.click(confirmDeleteButton);
+      await user.click(deleteEmailButton);
 
-    expect(screen.queryByRole('row', { name: /custom-email/i })).not.toBeInTheDocument();
-    expect(await screen.findByRole('status', { name: 'Template deleted' })).toHaveTextContent(
-      'Template custom-email has been deleted'
-    );
+      const confirmDeleteButton = await screen.findByRole('button', { name: /Yes, delete/i });
+      await user.click(confirmDeleteButton);
+
+      expect(screen.queryByRole('row', { name: /custom-email/i })).not.toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: 'Template deleted' })).toHaveTextContent(
+        'Template custom-email has been deleted'
+      );
+    });
   });
 });

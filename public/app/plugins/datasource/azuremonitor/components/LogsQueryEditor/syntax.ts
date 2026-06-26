@@ -1,8 +1,8 @@
-import { type Grammar } from 'prismjs';
+import { Grammar } from 'prismjs';
 
-import { type CompletionItem } from '@grafana/ui';
+import { CompletionItem } from '@grafana/ui';
 
-const QUERY_COMMANDS: CompletionItem[] = [
+export const QUERY_COMMANDS: CompletionItem[] = [
   {
     label: 'fields',
     documentation: 'Retrieves the specified fields from log events',
@@ -25,7 +25,10 @@ const QUERY_COMMANDS: CompletionItem[] = [
   },
 ];
 
-const NUMERIC_OPERATORS = [
+export const COMPARISON_OPERATORS = ['=', '!=', '<', '<=', '>', '>='];
+export const ARITHMETIC_OPERATORS = ['+', '-', '*', '/', '^', '%'];
+
+export const NUMERIC_OPERATORS = [
   {
     label: 'abs',
     detail: 'abs(a)',
@@ -63,7 +66,7 @@ const NUMERIC_OPERATORS = [
   },
 ];
 
-const GENERAL_FUNCTIONS = [
+export const GENERAL_FUNCTIONS = [
   {
     label: 'ispresent',
     detail: 'ispresent(fieldname)',
@@ -76,7 +79,7 @@ const GENERAL_FUNCTIONS = [
   },
 ];
 
-const STRING_FUNCTIONS = [
+export const STRING_FUNCTIONS = [
   {
     label: 'isempty',
     detail: 'isempty(fieldname)',
@@ -143,7 +146,7 @@ const STRING_FUNCTIONS = [
   },
 ];
 
-const DATETIME_FUNCTIONS = [
+export const DATETIME_FUNCTIONS = [
   {
     label: 'bin',
     detail: 'bin(period)',
@@ -173,7 +176,7 @@ const DATETIME_FUNCTIONS = [
   },
 ];
 
-const IP_FUNCTIONS = [
+export const IP_FUNCTIONS = [
   {
     label: 'isValidIp',
     detail: 'isValidIp(fieldname)',
@@ -206,7 +209,31 @@ const IP_FUNCTIONS = [
   },
 ];
 
-const AGGREGATION_FUNCTIONS_STATS = [
+export const BOOLEAN_FUNCTIONS = [
+  {
+    label: 'ispresent',
+    detail: 'ispresent(fieldname)',
+    documentation: 'Returns true if the field exists.',
+  },
+  {
+    label: 'isempty',
+    detail: 'isempty(fieldname)',
+    documentation: 'Returns true if the field is missing or is an empty string.',
+  },
+  {
+    label: 'isblank',
+    detail: 'isblank(fieldname)',
+    documentation: 'Returns true if the field is missing, an empty string, or contains only white space.',
+  },
+  {
+    label: 'strcontains',
+    detail: 'strcontains(string1, string2)',
+    documentation: 'Returns 1 if string1 contains string2 and 0 otherwise.',
+  },
+  ...IP_FUNCTIONS,
+];
+
+export const AGGREGATION_FUNCTIONS_STATS = [
   {
     label: 'avg',
     detail: 'avg(NumericFieldname)',
@@ -249,7 +276,7 @@ const AGGREGATION_FUNCTIONS_STATS = [
   },
 ];
 
-const NON_AGGREGATION_FUNCS_STATS = [
+export const NON_AGGREGATION_FUNCS_STATS = [
   {
     label: 'earliest',
     detail: 'earliest(fieldname)',
@@ -274,10 +301,10 @@ const NON_AGGREGATION_FUNCS_STATS = [
   },
 ];
 
-const STATS_FUNCS = [...AGGREGATION_FUNCTIONS_STATS, ...NON_AGGREGATION_FUNCS_STATS];
+export const STATS_FUNCS = [...AGGREGATION_FUNCTIONS_STATS, ...NON_AGGREGATION_FUNCS_STATS];
 
-const KEYWORDS = ['as', 'like', 'by', 'in', 'desc', 'asc'];
-const FIELD_AND_FILTER_FUNCTIONS = [
+export const KEYWORDS = ['as', 'like', 'by', 'in', 'desc', 'asc'];
+export const FIELD_AND_FILTER_FUNCTIONS = [
   ...NUMERIC_OPERATORS,
   ...GENERAL_FUNCTIONS,
   ...STRING_FUNCTIONS,
@@ -285,7 +312,7 @@ const FIELD_AND_FILTER_FUNCTIONS = [
   ...IP_FUNCTIONS,
 ];
 
-const FUNCTIONS = [...FIELD_AND_FILTER_FUNCTIONS, ...STATS_FUNCS];
+export const FUNCTIONS = [...FIELD_AND_FILTER_FUNCTIONS, ...STATS_FUNCS];
 
 const tokenizer: Grammar = {
   comment: {

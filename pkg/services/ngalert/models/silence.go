@@ -1,9 +1,8 @@
 package models
 
 import (
-	"maps"
-
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"golang.org/x/exp/maps"
 
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type TNil from '../../types/TNil';
+import { TNil } from '../../index';
 
 // exported for tests
 export const ITEM_ALPHA = 0.8;

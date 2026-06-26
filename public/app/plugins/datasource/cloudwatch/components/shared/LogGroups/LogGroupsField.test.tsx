@@ -8,16 +8,9 @@ import {
   logGroupNamesVariable,
   setupMockedDataSource,
   setupMockedTemplateService,
-} from '../../../mocks/CloudWatchDataSource';
+} from '../../../__mocks__/CloudWatchDataSource';
 
 import { LogGroupsField } from './LogGroupsField';
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: () => ({
-    publish: jest.fn(),
-  }),
-}));
 
 const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 const originalDebounce = lodash.debounce;
@@ -35,8 +28,6 @@ describe('LogGroupSelection', () => {
       fn.cancel = () => {};
       return fn;
     });
-    // Re-mock isMonitoringAccount after resetAllMocks
-    defaultProps.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
   });
   afterEach(() => {
     config.featureToggles.cloudWatchCrossAccountQuerying = originalFeatureToggleValue;
@@ -47,7 +38,7 @@ describe('LogGroupSelection', () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
-      .mockResolvedValue({ results: [{ value: { arn: 'arn', name: 'loggroupname' } }] });
+      .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
     defaultProps.datasource.resources.templateSrv = setupMockedTemplateService();
     render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname']} />);
 
@@ -64,7 +55,7 @@ describe('LogGroupSelection', () => {
     defaultProps.datasource = setupMockedDataSource({ variables: [logGroupNamesVariable] }).datasource;
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
-      .mockResolvedValue({ results: [{ value: { arn: 'arn', name: 'loggroupname' } }] });
+      .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
     const varName = '$' + logGroupNamesVariable.name;
     render(<LogGroupsField {...defaultProps} legacyLogGroupNames={['loggroupname', varName]} />);
 
@@ -84,7 +75,7 @@ describe('LogGroupSelection', () => {
     config.featureToggles.cloudWatchCrossAccountQuerying = true;
     defaultProps.datasource.resources.getLogGroups = jest
       .fn()
-      .mockResolvedValue({ results: [{ value: { arn: 'arn', name: 'loggroupname' } }] });
+      .mockResolvedValue([{ value: { arn: 'arn', name: 'loggroupname' } }]);
     defaultProps.datasource.resources.templateSrv = setupMockedTemplateService();
     render(<LogGroupsField {...defaultProps} logGroups={[{ arn: 'arn', name: 'loggroupname' }]} />);
     await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());

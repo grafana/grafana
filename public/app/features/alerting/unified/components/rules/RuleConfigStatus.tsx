@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { config } from '@grafana/runtime/src';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui/src';
 
-import { type CombinedRule } from '../../../../../types/unified-alerting';
+import { CombinedRule } from '../../../../../types/unified-alerting';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
-import { rulerRuleType } from '../../utils/rules';
+import { isGrafanaRulerRule } from '../../utils/rules';
 
 interface RuleConfigStatusProps {
   rule: CombinedRule;
@@ -16,7 +15,7 @@ interface RuleConfigStatusProps {
 
 export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
   const styles = useStyles2(getStyles);
-  const isGrafanaManagedRule = rulerRuleType.grafana.rule(rule.rulerRule);
+  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
 
   const exceedsLimit = useMemo(() => {
     return isGrafanaManagedRule ? checkEvaluationIntervalGlobalLimit(rule.group.interval).exceedsLimit : false;
@@ -31,14 +30,9 @@ export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
       theme="error"
       content={
         <div>
-          <Trans
-            i18nKey="alerting.rule-config-status.tooltip-min-interval"
-            values={{ minInterval: config.unifiedAlerting.minInterval, ruleInterval: rule.group.interval }}
-          >
-            A minimum evaluation interval of <span className={styles.globalLimitValue}>{'{{minInterval}}'}</span> has
-            been configured in Grafana and will be used instead of the {'{{ruleInterval}}'} interval configured for the
-            Rule Group.
-          </Trans>
+          A minimum evaluation interval of{' '}
+          <span className={styles.globalLimitValue}>{config.unifiedAlerting.minInterval}</span> has been configured in
+          Grafana and will be used instead of the {rule.group.interval} interval configured for the Rule Group.
         </div>
       }
     >

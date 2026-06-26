@@ -3,11 +3,14 @@ package database_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // run tests with cleanup
@@ -45,9 +47,7 @@ type getUserPermissionsTestCase struct {
 	policyCount        int
 }
 
-func TestIntegrationAccessControlStore_GetUserPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	tests := []getUserPermissionsTestCase{
 		{
 			desc:               "should successfully get user, team and builtin permissions",
@@ -149,6 +149,17 @@ func TestIntegrationAccessControlStore_GetUserPermissions(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Len(t, permissions, tt.expected)
+
+			policies, err := database.GetAccessPolicies(context.Background(), user.OrgID, sql.GetSqlxSession(),
+				func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+					return strings.Split(scope, ":"), nil
+				})
+			require.NoError(t, err)
+			assert.Len(t, policies, tt.policyCount)
+
+			for idx, p := range policies {
+				fmt.Printf("POLICIES[%d] %+v\n", idx, p.Spec)
+			}
 		})
 	}
 }
@@ -161,9 +172,7 @@ type getTeamsPermissionsTestCase struct {
 	expected         int
 }
 
-func TestIntegrationAccessControlStore_GetTeamsPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
 	tests := []getTeamsPermissionsTestCase{
 		{
 			desc:  "should successfully get team permissions",
@@ -192,11 +201,7 @@ func TestIntegrationAccessControlStore_GetTeamsPermissions(t *testing.T) {
 
 			teams := make([]team.Team, 0)
 			for i := 0; i < len(tt.teamsPermissions); i++ {
-				teamCmd := team.CreateTeamCommand{
-					Name:  fmt.Sprintf("team-%v", i),
-					OrgID: tt.orgID,
-				}
-				team, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
+				team, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%v", i), "", tt.orgID)
 				require.NoError(t, err)
 				teams = append(teams, team)
 			}
@@ -235,146 +240,7 @@ func TestIntegrationAccessControlStore_GetTeamsPermissions(t *testing.T) {
 	}
 }
 
-func TestIntegrationAccessControlStore_ExcludeRedundantManagedPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	t.Run("GetUserPermissions excludes stale dashboard/folder actions from managed roles", func(t *testing.T) {
-		store, permissionStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
-		usr, _ := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
-
-		// Create permissions with both individual actions and action set actions.
-		// This simulates the state of a DB that had permissions before action sets
-		// were enabled by default: individual actions are stale (redundant), but
-		// action set permissions now also exist.
-		_, err := permissionStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: usr.ID}, rs.SetResourcePermissionCommand{
-			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:view", "dashboards:edit"},
-			Resource:          "dashboards",
-			ResourceAttribute: "uid",
-			ResourceID:        "dash-1",
-		}, nil)
-		require.NoError(t, err)
-
-		// Also add a folder permission with both individual and action set actions
-		_, err = permissionStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: usr.ID}, rs.SetResourcePermissionCommand{
-			Actions:           []string{"folders:read", "folders:write", "folders:view", "folders:edit"},
-			Resource:          "folders",
-			ResourceAttribute: "uid",
-			ResourceID:        "folder-1",
-		}, nil)
-		require.NoError(t, err)
-
-		// Add a non-dashboard/folder permission (should NOT be filtered)
-		_, err = permissionStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: usr.ID}, rs.SetResourcePermissionCommand{
-			Actions:           []string{"teams:read"},
-			Resource:          "teams",
-			ResourceAttribute: "id",
-			ResourceID:        "1",
-		}, nil)
-		require.NoError(t, err)
-
-		// Without filter: all 9 permissions should be returned (4 dashboard + 4 folder + 1 team)
-		allPerms, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
-			OrgID:                              1,
-			UserID:                             usr.ID,
-			ExcludeRedundantManagedPermissions: false,
-		})
-		require.NoError(t, err)
-		assert.Len(t, allPerms, 9)
-
-		// With filter: only action set permissions + non-dashboard/folder permissions
-		// Expected: dashboards:view, dashboards:edit, folders:view, folders:edit, teams:read = 5
-		filteredPerms, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
-			OrgID:                              1,
-			UserID:                             usr.ID,
-			ExcludeRedundantManagedPermissions: true,
-		})
-		require.NoError(t, err)
-		assert.Len(t, filteredPerms, 5)
-
-		// Verify only action sets and non-dashboard/folder permissions remain
-		filteredActions := make(map[string]bool)
-		for _, p := range filteredPerms {
-			filteredActions[p.Action] = true
-		}
-		assert.True(t, filteredActions["dashboards:view"], "dashboards:view should be kept")
-		assert.True(t, filteredActions["dashboards:edit"], "dashboards:edit should be kept")
-		assert.True(t, filteredActions["folders:view"], "folders:view should be kept")
-		assert.True(t, filteredActions["folders:edit"], "folders:edit should be kept")
-		assert.True(t, filteredActions["teams:read"], "teams:read should be kept")
-		assert.False(t, filteredActions["dashboards:read"], "dashboards:read should be excluded")
-		assert.False(t, filteredActions["dashboards:write"], "dashboards:write should be excluded")
-		assert.False(t, filteredActions["folders:read"], "folders:read should be excluded")
-		assert.False(t, filteredActions["folders:write"], "folders:write should be excluded")
-	})
-
-	t.Run("GetTeamsPermissions excludes stale dashboard/folder actions from managed roles", func(t *testing.T) {
-		store, permissionStore, _, teamSvc, _, _ := setupTestEnv(t)
-
-		teamCmd := team.CreateTeamCommand{
-			Name:  "test-team",
-			OrgID: 1,
-		}
-		createdTeam, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
-		require.NoError(t, err)
-
-		// Create team permissions with both individual and action set actions
-		_, err = permissionStore.SetTeamResourcePermission(context.Background(), 1, createdTeam.ID, rs.SetResourcePermissionCommand{
-			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:view", "dashboards:admin"},
-			Resource:          "dashboards",
-			ResourceAttribute: "uid",
-			ResourceID:        "dash-1",
-		}, nil)
-		require.NoError(t, err)
-
-		// Add a non-dashboard/folder permission
-		_, err = permissionStore.SetTeamResourcePermission(context.Background(), 1, createdTeam.ID, rs.SetResourcePermissionCommand{
-			Actions:           []string{"teams:read"},
-			Resource:          "teams",
-			ResourceAttribute: "id",
-			ResourceID:        "1",
-		}, nil)
-		require.NoError(t, err)
-
-		// Without filter: all 5 permissions (4 dashboard + 1 team)
-		allPerms, err := store.GetTeamsPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
-			TeamIDs:                            []int64{createdTeam.ID},
-			OrgID:                              1,
-			ExcludeRedundantManagedPermissions: false,
-		})
-		require.NoError(t, err)
-		totalCount := 0
-		for _, perms := range allPerms {
-			totalCount += len(perms)
-		}
-		assert.Equal(t, 5, totalCount)
-
-		// With filter: only action set + non-dashboard/folder (3 total: dashboards:view, dashboards:admin, teams:read)
-		filteredPerms, err := store.GetTeamsPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
-			TeamIDs:                            []int64{createdTeam.ID},
-			OrgID:                              1,
-			ExcludeRedundantManagedPermissions: true,
-		})
-		require.NoError(t, err)
-		filteredCount := 0
-		filteredActions := make(map[string]bool)
-		for _, perms := range filteredPerms {
-			filteredCount += len(perms)
-			for _, p := range perms {
-				filteredActions[p.Action] = true
-			}
-		}
-		assert.Equal(t, 3, filteredCount)
-		assert.True(t, filteredActions["dashboards:view"], "dashboards:view should be kept")
-		assert.True(t, filteredActions["dashboards:admin"], "dashboards:admin should be kept")
-		assert.True(t, filteredActions["teams:read"], "teams:read should be kept")
-		assert.False(t, filteredActions["dashboards:read"], "dashboards:read should be excluded")
-		assert.False(t, filteredActions["dashboards:write"], "dashboards:write should be excluded")
-	})
-}
-
-func TestIntegrationAccessControlStore_DeleteUserPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
 		user, _ := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
@@ -456,9 +322,7 @@ func TestIntegrationAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 }
 
-func TestIntegrationAccessControlStore_DeleteTeamPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 	t.Run("expect permissions related to team to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
 		user, team := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
@@ -538,11 +402,7 @@ func createUserAndTeam(t *testing.T, store db.DB, userSrv user.Service, teamSvc 
 	})
 	require.NoError(t, err)
 
-	teamCmd := team.CreateTeamCommand{
-		Name:  "team",
-		OrgID: orgID,
-	}
-	createdTeam, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
+	createdTeam, err := teamSvc.CreateTeam(context.Background(), "team", "", orgID)
 	require.NoError(t, err)
 
 	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -592,11 +452,7 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 			continue
 		}
 
-		teamCmd := team.CreateTeamCommand{
-			Name:  fmt.Sprintf("team%v", i+1),
-			OrgID: orgID,
-		}
-		createdTeam, err := svcs.teamSvc.CreateTeam(context.Background(), &teamCmd)
+		createdTeam, err := svcs.teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team%v", i+1), "", orgID)
 		require.NoError(t, err)
 
 		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -621,7 +477,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	cfg.AutoAssignOrgId = 1
 	acstore := database.ProvideService(sql)
 	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
-	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest(), nil)
+	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
@@ -632,15 +488,13 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 
 	userService, err := userimpl.ProvideService(
 		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService, sql
 }
 
 func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	ctx := context.Background()
 	readTeamPerm := func(teamID string) rs.SetResourcePermissionCommand {
 		return rs.SetResourcePermissionCommand{
@@ -772,7 +626,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{
 				ActionPrefix: "teams:",
-				UserID:       1,
+				TypedID:      identity.NewTypedID(claims.TypeUser, 1),
 			},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
@@ -915,9 +769,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 	}
 }
 
-func TestIntegrationAccessControlStore_GetUsersBasicRoles(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
 		name       string

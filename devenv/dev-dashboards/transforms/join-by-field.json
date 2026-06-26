@@ -43,7 +43,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -118,7 +119,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -169,7 +171,9 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true
@@ -229,7 +233,9 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true
@@ -269,7 +275,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -307,7 +314,9 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 0,
@@ -318,7 +327,8 @@
         {
           "csvContent": "OrderID,CustomerID,Time\n100,A,10000\n101,B,20000\n102,C,30000",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "Orders",
           "scenarioId": "csv_content"
@@ -326,7 +336,8 @@
         {
           "csvContent": "CustomerID,Name,Country\nA,Customer A,USA\nB,Customer B,Germany\nC,Customer C,Spain\nD,Customer D,Canada",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "refId": "Customers",
@@ -378,7 +389,9 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 1,
@@ -465,7 +478,9 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 0,
@@ -561,7 +576,9 @@
       "options": {
         "footer": {
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "frameIndex": 0,
@@ -593,7 +610,10 @@
     }
   ],
   "schemaVersion": 37,
-  "tags": ["gdev", "transform"],
+  "tags": [
+    "gdev",
+    "transform"
+  ],
   "templating": {
     "list": []
   },

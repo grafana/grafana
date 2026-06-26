@@ -2,8 +2,8 @@
 import { isNumber } from 'lodash';
 
 import { NullValueMode } from '../types/data';
-import { type Field, type FieldCalcs, FieldType } from '../types/dataFrame';
-import { Registry, type RegistryItem } from '../utils/Registry';
+import { Field, FieldCalcs, FieldType } from '../types/dataFrame';
+import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
   sum = 'sum',
@@ -17,7 +17,6 @@ export enum ReducerID {
   median = 'median',
   first = 'first',
   count = 'count',
-  countAll = 'countAll',
   range = 'range',
   diff = 'diff',
   diffperc = 'diffperc',
@@ -130,17 +129,6 @@ export enum ReducerID {
   p97 = 'p97',
   p98 = 'p98',
   p99 = 'p99',
-}
-
-export function getFieldTypeForReducer(id: ReducerID, fallback: FieldType): FieldType {
-  return id === ReducerID.count ||
-    id === ReducerID.distinctCount ||
-    id === ReducerID.changeCount ||
-    id === ReducerID.countAll
-    ? FieldType.number
-    : id === ReducerID.allIsNull || id === ReducerID.allIsZero
-      ? FieldType.boolean
-      : fallback;
 }
 
 export function isReducerID(id: string): id is ReducerID {
@@ -295,8 +283,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     id: ReducerID.median,
     name: 'Median',
     description: 'Median Value',
-    standard: false,
-    reduce: calculateMedian,
+    standard: true,
     aliasIds: ['median'],
     preservesUnits: true,
   },
@@ -331,15 +318,6 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     description: 'Number of values in response',
     emptyInputResult: 0,
     standard: true,
-    preservesUnits: false,
-  },
-  {
-    id: ReducerID.countAll,
-    name: 'Count all',
-    description: 'Number of values (including empty)',
-    emptyInputResult: 0,
-    standard: false,
-    reduce: (field: Field): FieldCalcs => ({ countAll: field.values.length }),
     preservesUnits: false,
   },
   {
@@ -527,7 +505,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
       }
 
       if (isNumberField) {
-        calcs.sum += currentValue || 0;
+        calcs.sum += currentValue;
         calcs.allIsNull = false;
         calcs.nonNullCount++;
 
@@ -540,9 +518,15 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
           if (calcs.lastNotNull! > currentValue) {
             // counter reset
             calcs.previousDeltaUp = false;
+            if (i === data.length - 1) {
+              // reset on last
+              calcs.delta += currentValue;
+            }
           } else {
             if (calcs.previousDeltaUp) {
               calcs.delta += step; // normal increment
+            } else {
+              calcs.delta += currentValue; // account for counter reset
             }
             calcs.previousDeltaUp = true;
           }
@@ -600,7 +584,6 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
     calcs.diffperc = (calcs.diff / calcs.firstNotNull) * 100;
   }
-
   return calcs;
 }
 
@@ -719,33 +702,4 @@ function calculatePercentile(field: Field, percentile: number, ignoreNulls: bool
   const sorted = data.slice().sort((a, b) => a - b);
   const index = Math.round((sorted.length - 1) * percentile);
   return sorted[index];
-}
-
-function calculateMedian(field: Field<number>, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  const numbers: number[] = [];
-
-  for (let i = 0; i < field.values.length; i++) {
-    let currentValue = field.values[i];
-
-    if (currentValue == null) {
-      if (ignoreNulls) {
-        continue;
-      }
-      if (nullAsZero) {
-        currentValue = 0;
-      }
-    }
-
-    numbers.push(currentValue);
-  }
-
-  numbers.sort((a, b) => a - b);
-
-  const mid = Math.floor(numbers.length / 2);
-
-  if (numbers.length % 2 === 0) {
-    return { median: (numbers[mid - 1] + numbers[mid]) / 2 };
-  } else {
-    return { median: numbers[mid] };
-  }
 }

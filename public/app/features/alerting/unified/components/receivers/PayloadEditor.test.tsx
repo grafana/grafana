@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { type Props } from 'react-virtualized-auto-sizer';
+import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { PayloadEditor, RESET_TO_DEFAULT } from './PayloadEditor';

@@ -1,11 +1,10 @@
 import * as React from 'react';
 
-import { t } from '@grafana/i18n';
 import { Drawer } from '@grafana/ui';
 
 import { RuleInspectorTabs } from '../rule-editor/RuleInspector';
 
-import { type ExportFormats, type ExportProvider } from './providers';
+import { ExportFormats, ExportProvider } from './providers';
 
 interface GrafanaExportDrawerProps {
   activeTab: ExportFormats;
@@ -28,17 +27,10 @@ export function GrafanaExportDrawer({
     label: provider.name,
     value: provider.exportFormat,
   }));
-  const subtitle =
-    formatProviders.length > 1
-      ? t(
-          'alerting.export.subtitle.formats',
-          'Select the format and download the file or copy the contents to clipboard'
-        )
-      : t('alerting.export.subtitle.one-format', 'Download the file or copy the contents to clipboard');
   return (
     <Drawer
       title={title}
-      subtitle={subtitle}
+      subtitle="Select the format and download the file or copy the contents to clipboard"
       tabs={
         <RuleInspectorTabs<ExportFormats> tabs={grafanaRulesTabs} setActiveTab={onTabChange} activeTab={activeTab} />
       }

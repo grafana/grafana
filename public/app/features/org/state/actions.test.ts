@@ -1,8 +1,8 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { OrgRole } from '@grafana/data';
-import { type BackendSrv } from '@grafana/runtime';
-import { updateConfigurationSubtitle } from 'app/core/reducers/navModel';
+import { BackendSrv } from '@grafana/runtime';
+import { updateConfigurationSubtitle } from 'app/core/actions';
+import { OrgRole } from 'app/types';
 
 import { updateOrganization, setUserOrganization, getUserOrganizations } from './actions';
 

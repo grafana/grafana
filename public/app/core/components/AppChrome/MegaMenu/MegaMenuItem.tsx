@@ -1,17 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
-import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
-import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
+import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { useStyles2, Text, IconButton, Icon, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Indent } from '../../Indent/Indent';
 
+import { FeatureHighlight } from './FeatureHighlight';
 import { MegaMenuItemText } from './MegaMenuItemText';
 import { hasChildMatch } from './utils';
 
@@ -22,37 +22,25 @@ interface Props {
   level?: number;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
-  /** Section-level only: children are being fetched, show placeholders instead of the empty message */
-  loadingChildren?: boolean;
-  /** Section-level only: fetching children failed, show an error instead of the empty message */
-  childrenLoadError?: boolean;
 }
 
 const MAX_DEPTH = 2;
 
-export function MegaMenuItem({
-  link,
-  activeItem,
-  level = 0,
-  onClick,
-  onPin,
-  isPinned,
-  loadingChildren,
-  childrenLoadError,
-}: Props) {
+export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPinned }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
   const location = useLocation();
+  const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${link.text}]`,
     Boolean(hasActiveChild)
   );
-  const showExpandButton =
-    level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage || loadingChildren || childrenLoadError);
+  const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
   const item = useRef<HTMLLIElement>(null);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const styles = useStyles2(getStyles);
 
@@ -89,14 +77,38 @@ export function MegaMenuItem({
   }
 
   function getIconName(isExpanded: boolean) {
-    return isExpanded ? 'angle-up' : 'angle-down';
+    if (isSingleTopNav) {
+      return isExpanded ? 'angle-up' : 'angle-down';
+    } else {
+      return isExpanded ? 'angle-down' : 'angle-right';
+    }
   }
+
+  const collapseIcon = (
+    <div className={styles.collapseButtonWrapper}>
+      {showExpandButton && (
+        <IconButton
+          aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
+          className={styles.collapseButton}
+          onClick={() => setSectionExpanded(!sectionExpanded)}
+          name={getIconName(Boolean(sectionExpanded))}
+          size="md"
+          variant="secondary"
+        />
+      )}
+    </div>
+  );
 
   return (
     <li ref={item} className={styles.listItem}>
-      <div className={styles.menuItem}>
+      <div
+        className={cx(styles.menuItem, {
+          [styles.menuItemWithIcon]: Boolean(level === 0 && iconElement),
+        })}
+      >
         {level !== 0 && <Indent level={level === MAX_DEPTH ? level - 1 : level} spacing={3} />}
         {level === MAX_DEPTH && <div className={styles.itemConnector} />}
+        {!isSingleTopNav && collapseIcon}
         <div className={styles.collapsibleSectionWrapper}>
           <MegaMenuItemText
             isActive={isActive}
@@ -108,7 +120,6 @@ export function MegaMenuItem({
             url={link.url}
             onPin={() => onPin(link)}
             isPinned={isPinned(link.url)}
-            itemName={link.text}
           >
             <div
               className={cx(styles.labelWrapper, {
@@ -116,35 +127,12 @@ export function MegaMenuItem({
                 [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
               })}
             >
-              {level === 0 && iconElement}
-              <Text truncate element="p">
-                {link.text}
-              </Text>
-              {link.isNew && <FeatureBadge featureState={FeatureState.new} />}
+              {level === 0 && iconElement && <FeatureHighlightWrapper>{iconElement}</FeatureHighlightWrapper>}
+              <Text truncate>{link.text}</Text>
             </div>
           </MegaMenuItemText>
         </div>
-        <div className={styles.collapseButtonWrapper}>
-          {showExpandButton && (
-            <IconButton
-              aria-label={
-                sectionExpanded
-                  ? t('navigation.megamenu-item.collapse-aria-label', 'Collapse section: {{sectionName}}', {
-                      sectionName: link.text,
-                    })
-                  : t('navigation.megamenu-item.expand-aria-label', 'Expand section: {{sectionName}}', {
-                      sectionName: link.text,
-                    })
-              }
-              aria-expanded={Boolean(sectionExpanded)}
-              className={styles.collapseButton}
-              onClick={() => setSectionExpanded(!sectionExpanded)}
-              name={getIconName(Boolean(sectionExpanded))}
-              size="md"
-              variant="secondary"
-            />
-          )}
-        </div>
+        {isSingleTopNav && collapseIcon}
       </div>
       {showExpandButton && sectionExpanded && (
         <ul className={styles.children}>
@@ -162,25 +150,6 @@ export function MegaMenuItem({
                   isPinned={isPinned}
                 />
               ))
-          ) : loadingChildren ? (
-            <Box
-              display="flex"
-              direction="column"
-              gap={0.5}
-              padding={1}
-              paddingLeft={6}
-              aria-live="polite"
-              aria-label={t('navigation.megamenu-item.loading-aria-label', 'Loading {{sectionName}}', {
-                sectionName: link.text,
-              })}
-            >
-              <Skeleton width={120} />
-              <Skeleton width={90} />
-            </Box>
-          ) : childrenLoadError ? (
-            <div className={styles.emptyMessage} aria-live="polite">
-              {t('navigation.megamenu-item.children-error', 'Failed to load items')}
-            </div>
           ) : (
             <div className={styles.emptyMessage} aria-live="polite">
               {link.emptyMessage}
@@ -207,9 +176,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   menuItem: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1.5),
+    gap: theme.spacing(1),
     height: theme.spacing(4),
+    paddingLeft: theme.spacing(0.5),
     position: 'relative',
+  }),
+  menuItemWithIcon: css({
+    paddingLeft: theme.spacing(0),
   }),
   collapseButtonWrapper: css({
     display: 'flex',
@@ -243,16 +216,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   labelWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1),
-    paddingLeft: theme.spacing(1),
+    gap: theme.spacing(2),
     minWidth: 0,
+    paddingLeft: theme.spacing(1),
+  }),
+  labelWrapperWithIcon: css({
+    paddingLeft: theme.spacing(0.5),
   }),
   hasActiveChild: css({
     color: theme.colors.text.primary,
-  }),
-  labelWrapperWithIcon: css({
-    minWidth: theme.spacing(7),
-    paddingLeft: theme.spacing(0.5),
   }),
   children: css({
     display: 'flex',

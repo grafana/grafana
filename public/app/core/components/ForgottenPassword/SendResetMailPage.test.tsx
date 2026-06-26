@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { SendResetMailPage } from './SendResetMailPage';
@@ -38,7 +38,7 @@ describe('VerifyEmail Page', () => {
   it('should pass validation checks for email field', async () => {
     render(<SendResetMailPage />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Send reset email' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send reset email' }));
     expect(await screen.findByText('Email or username is required')).toBeInTheDocument();
 
     await userEvent.type(screen.getByRole('textbox', { name: /User Enter your information/i }), 'test@gmail.com');
@@ -49,7 +49,7 @@ describe('VerifyEmail Page', () => {
     render(<SendResetMailPage />);
 
     await userEvent.type(screen.getByRole('textbox', { name: /User Enter your information/i }), 'test@gmail.com');
-    await userEvent.click(screen.getByRole('button', { name: 'Send reset email' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send reset email' }));
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith('/api/user/password/send-reset-email', {
         userOrEmail: 'test@gmail.com',

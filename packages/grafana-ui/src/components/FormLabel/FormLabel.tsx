@@ -1,9 +1,8 @@
 import classNames from 'classnames';
-import { type ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { type PopoverContent } from '../Tooltip/types';
+import { Tooltip, PopoverContent } from '../Tooltip';
 
 interface Props {
   children: ReactNode;
@@ -17,7 +16,7 @@ interface Props {
   interactive?: boolean;
 }
 
-const FormLabel = ({
+export const FormLabel = ({
   children,
   isFocused,
   isInvalid,
@@ -45,5 +44,4 @@ const FormLabel = ({
   );
 };
 
-/** @alias */
 export const InlineFormLabel = FormLabel;

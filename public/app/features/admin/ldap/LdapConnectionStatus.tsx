@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { Alert, type CellProps, type Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
-import { AppNotificationSeverity } from 'app/types/appNotifications';
-import { type LdapConnectionInfo, type LdapServerInfo } from 'app/types/ldap';
+import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
+import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
   ldapConnectionInfo: LdapConnectionInfo;
@@ -33,23 +31,13 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
         cell: (serverInfo: CellProps<ServerInfo>) => {
           return serverInfo.cell.value ? (
             <Stack justifyContent="end">
-              <Tooltip
-                content={t(
-                  'admin.ldap-connection-status.columns.content-connection-is-available',
-                  'Connection is available'
-                )}
-              >
+              <Tooltip content="Connection is available">
                 <Icon name="check" />
               </Tooltip>
             </Stack>
           ) : (
             <Stack justifyContent="end">
-              <Tooltip
-                content={t(
-                  'admin.ldap-connection-status.columns.content-connection-is-not-available',
-                  'Connection is not available'
-                )}
-              >
+              <Tooltip content="Connection is not available">
                 <Icon name="exclamation-triangle" />
               </Tooltip>
             </Stack>
@@ -66,7 +54,7 @@ export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
     <section>
       <Stack direction="column" gap={2}>
         <Text color="primary" element="h3">
-          <Trans i18nKey="admin.ldap-status.title">LDAP Connection</Trans>
+          LDAP Connection
         </Text>
         <InteractiveTable data={data} columns={columns} getRowId={(serverInfo) => serverInfo.host + serverInfo.port} />
         <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
@@ -79,7 +67,7 @@ interface LdapConnectionErrorProps {
   ldapConnectionInfo: LdapConnectionInfo;
 }
 
-const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
+export const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
   const hasError = ldapConnectionInfo.some((info) => info.error);
   if (!hasError) {
     return null;
@@ -95,7 +83,7 @@ const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
   const errorElements = connectionErrors.map((info, index) => (
     <div key={index}>
       <span style={{ fontWeight: 500 }}>
-        {`${info.host}:${info.port}`}
+        {info.host}:{info.port}
         <br />
       </span>
       <span>{info.error}</span>
@@ -109,10 +97,7 @@ const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
   ));
 
   return (
-    <Alert
-      title={t('admin.ldap-error-box.title-connection-error', 'Connection error')}
-      severity={AppNotificationSeverity.Error}
-    >
+    <Alert title="Connection error" severity={AppNotificationSeverity.Error}>
       {errorElements}
     </Alert>
   );

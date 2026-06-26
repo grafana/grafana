@@ -1,13 +1,12 @@
 import memoizeOne from 'memoize-one';
 
-import { type PanelPlugin } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { PanelPlugin } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-import { type PanelEditorTab, PanelEditorTabId } from '../types';
+import { PanelEditorTab, PanelEditorTabId } from '../types';
 
 export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin) => {
   const tabs: PanelEditorTab[] = [];
@@ -27,14 +26,14 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
 
     tabs.push({
       id: PanelEditorTabId.Query,
-      text: t('dashboard.get-panel-editor-tabs.text.query', 'Query'),
+      text: 'Query',
       icon: 'database',
       active: false,
     });
 
     tabs.push({
       id: PanelEditorTabId.Transform,
-      text: t('dashboard.get-panel-editor-tabs.text.transform-data', 'Transform data'),
+      text: 'Transform data',
       icon: 'process',
       active: false,
     });
@@ -43,7 +42,7 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
   if (shouldShowAlertingTab(plugin)) {
     tabs.push({
       id: PanelEditorTabId.Alert,
-      text: t('dashboard.get-panel-editor-tabs.text.alert', 'Alert'),
+      text: 'Alert',
       icon: 'bell',
       active: false,
     });
@@ -55,7 +54,7 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
   return tabs;
 });
 
-function shouldShowAlertingTab(plugin: PanelPlugin) {
+export function shouldShowAlertingTab(plugin: PanelPlugin) {
   const { unifiedAlertingEnabled = false } = getConfig();
   const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
   const isAlertingAvailable = unifiedAlertingEnabled && hasRuleReadPermissions;

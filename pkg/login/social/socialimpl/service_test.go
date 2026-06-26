@@ -1,10 +1,8 @@
 package socialimpl
 
 import (
-	"context"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
@@ -15,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	secretsfake "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -22,24 +21,33 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationSocialService_ProvideService(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestSocialService_ProvideService(t *testing.T) {
+	type testEnv struct {
+		features featuremgmt.FeatureToggles
+	}
 	testCases := []struct {
 		name                                string
-		setup                               func(t *testing.T)
+		setup                               func(t *testing.T, env *testEnv)
 		expectedSocialMapLength             int
 		expectedGenericOAuthSkipOrgRoleSync bool
 	}{
 		{
-			name:                                "should load all social connectors",
+			name:                                "should load only enabled social connectors when ssoSettingsApi is disabled",
+			setup:                               nil,
+			expectedSocialMapLength:             1,
+			expectedGenericOAuthSkipOrgRoleSync: false,
+		},
+		{
+			name: "should load all social connectors when ssoSettingsApi is enabled",
+			setup: func(t *testing.T, env *testEnv) {
+				env.features = featuremgmt.WithFeatures(featuremgmt.FlagSsoSettingsApi)
+			},
 			expectedSocialMapLength:             7,
 			expectedGenericOAuthSkipOrgRoleSync: false,
 		},
@@ -60,7 +68,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 	cfg.Raw = iniFile
 
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	sqlStore := db.InitTestDB(t)
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
@@ -78,58 +86,25 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
-
+			env := &testEnv{
+				features: featuremgmt.WithFeatures(),
+			}
 			if tc.setup != nil {
-				tc.setup(t)
+				tc.setup(t, env)
 			}
 
-			usageInsights := &usagestats.UsageStatsMock{}
-			supportBundle := supportbundlestest.NewFakeBundleService()
-
-			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), usageInsights, supportBundle, remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
-			require.Equal(t, tc.expectedSocialMapLength, len(socialService.GetOAuthProviders()))
+			socialService := ProvideService(cfg, env.features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
+			require.Equal(t, tc.expectedSocialMapLength, len(socialService.socialMap))
 
 			genericOAuthInfo := socialService.GetOAuthInfoProvider("generic_oauth")
 			if genericOAuthInfo != nil {
 				require.Equal(t, tc.expectedGenericOAuthSkipOrgRoleSync, genericOAuthInfo.SkipOrgRoleSync)
 			}
-
-			for name, enabled := range socialService.GetOAuthProviders() {
-				client, err := socialService.GetOAuthHttpClient(name)
-				if !enabled {
-					require.Error(t, err)
-					require.Nil(t, client)
-				} else {
-					require.NoError(t, err)
-					require.NotNil(t, client)
-				}
-			}
-
-			report, err := usageInsights.GetUsageReport(ctx)
-			require.NoError(t, err)
-			require.NotNil(t, report)
-			require.Len(t, report.Metrics, tc.expectedSocialMapLength)
-
-			require.Len(t, supportBundle.Collectors, tc.expectedSocialMapLength)
-
-			createdBundles := make(map[string]struct{}, 0)
-			for _, collector := range supportBundle.Collectors {
-				supportItem, err := collector.Fn(ctx)
-				require.NoError(t, err)
-				require.NotNil(t, supportItem)
-
-				createdBundles[supportItem.Filename] = struct{}{}
-			}
-
-			require.Len(t, createdBundles, tc.expectedSocialMapLength)
 		})
 	}
 }
 
-func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 	testCases := []struct {
 		name                        string
 		rawIniContent               string
@@ -146,15 +121,11 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 			enabled = false
 			client_id = grafanaNetClientId`,
 			expectedGrafanaComOAuthInfo: &social.OAuthInfo{
-				AuthStyle:            "inheader",
-				AuthUrl:              "/oauth2/authorize",
-				TokenUrl:             "/api/oauth2/token",
-				TokenExchangeTimeout: 15,
-				Enabled:              true,
-				ClientId:             "grafanaComClientId",
-				Extra: map[string]string{
-					"allowed_organizations": "",
-				},
+				AuthStyle: "inheader",
+				AuthUrl:   "/oauth2/authorize",
+				TokenUrl:  "/api/oauth2/token",
+				Enabled:   true,
+				ClientId:  "grafanaComClientId",
 			},
 		},
 		{
@@ -168,15 +139,11 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 			enabled = true
 			client_id = grafanaNetClientId`,
 			expectedGrafanaComOAuthInfo: &social.OAuthInfo{
-				AuthStyle:            "inheader",
-				AuthUrl:              "/oauth2/authorize",
-				TokenUrl:             "/api/oauth2/token",
-				TokenExchangeTimeout: 15,
-				Enabled:              true,
-				ClientId:             "grafanaNetClientId",
-				Extra: map[string]string{
-					"allowed_organizations": "",
-				},
+				AuthStyle: "inheader",
+				AuthUrl:   "/oauth2/authorize",
+				TokenUrl:  "/api/oauth2/token",
+				Enabled:   true,
+				ClientId:  "grafanaNetClientId",
 			},
 		},
 		{
@@ -190,15 +157,11 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 			enabled = true
 			client_id = grafanaNetClientId`,
 			expectedGrafanaComOAuthInfo: &social.OAuthInfo{
-				AuthStyle:            "inheader",
-				AuthUrl:              "/oauth2/authorize",
-				TokenUrl:             "/api/oauth2/token",
-				TokenExchangeTimeout: 15,
-				Enabled:              true,
-				ClientId:             "grafanaComClientId",
-				Extra: map[string]string{
-					"allowed_organizations": "",
-				},
+				AuthStyle: "inheader",
+				AuthUrl:   "/oauth2/authorize",
+				TokenUrl:  "/api/oauth2/token",
+				Enabled:   true,
+				ClientId:  "grafanaComClientId",
 			},
 		},
 		{
@@ -211,19 +174,27 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,
-			expectedGrafanaComOAuthInfo: &social.OAuthInfo{
-				AuthStyle:            "inheader",
-				AuthUrl:              "/oauth2/authorize",
-				TokenUrl:             "/api/oauth2/token",
-				TokenExchangeTimeout: 15,
-				Enabled:              false,
-				ClientId:             "grafanaComClientId",
-				Extra: map[string]string{
-					"allowed_organizations": "",
-				},
-			},
+			expectedGrafanaComOAuthInfo: nil,
 		},
 	}
+
+	cfg := setting.NewCfg()
+	secrets := secretsfake.NewMockService(t)
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+	sqlStore := db.InitTestDB(t)
+
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(
+		cfg,
+		sqlStore,
+		accessControl,
+		routing.NewRouteRegister(),
+		featuremgmt.WithFeatures(),
+		secrets,
+		&usagestats.UsageStatsMock{},
+		nil,
+		nil,
+		&licensing.OSSLicensingService{},
+	)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -233,45 +204,8 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 			cfg := setting.NewCfg()
 			cfg.Raw = iniFile
 
-			secrets := secretsfake.NewMockService(t)
-			accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			sqlStore := db.InitTestDB(t)
-
-			ssoSettingsSvc := ssosettingsimpl.ProvideService(
-				cfg,
-				sqlStore,
-				accessControl,
-				routing.NewRouteRegister(),
-				featuremgmt.WithFeatures(),
-				secrets,
-				&usagestats.UsageStatsMock{},
-				nil,
-				nil,
-				&licensing.OSSLicensingService{},
-			)
-
 			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
-
-			// Create a custom comparison that treats nil slices as equal to empty slices for the tests
-			opts := cmp.Options{
-				cmp.Transformer("normalizeSlice", func(s []string) []string {
-					if s == nil {
-						return []string{}
-					}
-					return s
-				}),
-				cmp.Transformer("normalizeMap", func(m map[string]string) map[string]string {
-					if m == nil {
-						return map[string]string{}
-					}
-					return m
-				}),
-			}
-
-			actual := socialService.GetOAuthInfoProvider("grafana_com")
-			if diff := cmp.Diff(tc.expectedGrafanaComOAuthInfo, actual, opts); diff != "" {
-				t.Errorf("OAuthInfo mismatch (-want +got):\n%s", diff)
-			}
+			require.EqualValues(t, tc.expectedGrafanaComOAuthInfo, socialService.GetOAuthInfoProvider("grafana_com"))
 		})
 	}
 }
@@ -284,11 +218,8 @@ icon = signin
 enabled = true
 allow_sign_up = false
 auto_login = true
-client_authentication = test_client_authentication
 client_id = test_client_id
 client_secret = test_client_secret
-managed_identity_client_id = test_managed_identity_client_id
-federated_credential_audience = test_federated_credential_audience
 scopes = ["openid", "profile", "email"]
 empty_scopes = false
 email_attribute_name = email:primary
@@ -326,41 +257,38 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 	require.NoError(t, err)
 
 	expectedOAuthInfo := &social.OAuthInfo{
-		Name:                        "OAuth",
-		Icon:                        "signin",
-		Enabled:                     true,
-		AllowSignup:                 false,
-		AutoLogin:                   true,
-		ClientAuthentication:        "test_client_authentication",
-		ClientId:                    "test_client_id",
-		ClientSecret:                "test_client_secret",
-		ManagedIdentityClientID:     "test_managed_identity_client_id",
-		FederatedCredentialAudience: "test_federated_credential_audience",
-		Scopes:                      []string{"openid", "profile", "email"},
-		EmptyScopes:                 false,
-		EmailAttributeName:          "email:primary",
-		EmailAttributePath:          "email",
-		RoleAttributePath:           "role",
-		RoleAttributeStrict:         true,
-		GroupsAttributePath:         "groups",
-		TeamIdsAttributePath:        "team_ids",
-		AuthUrl:                     "test_auth_url",
-		TokenUrl:                    "test_token_url",
-		ApiUrl:                      "test_api_url",
-		TeamsUrl:                    "test_teams_url",
-		AllowedDomains:              []string{"domain1.com"},
-		AllowedGroups:               []string{},
-		TlsSkipVerify:               true,
-		TlsClientCert:               "",
-		TlsClientKey:                "",
-		TlsClientCa:                 "",
-		UsePKCE:                     false,
-		AuthStyle:                   "",
-		AllowAssignGrafanaAdmin:     true,
-		UseRefreshToken:             true,
-		SkipOrgRoleSync:             true,
-		HostedDomain:                "test_hosted_domain",
-		SignoutRedirectUrl:          "https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com",
+		Name:                    "OAuth",
+		Icon:                    "signin",
+		Enabled:                 true,
+		AllowSignup:             false,
+		AutoLogin:               true,
+		ClientId:                "test_client_id",
+		ClientSecret:            "test_client_secret",
+		Scopes:                  []string{"openid", "profile", "email"},
+		EmptyScopes:             false,
+		EmailAttributeName:      "email:primary",
+		EmailAttributePath:      "email",
+		RoleAttributePath:       "role",
+		RoleAttributeStrict:     true,
+		GroupsAttributePath:     "groups",
+		TeamIdsAttributePath:    "team_ids",
+		AuthUrl:                 "test_auth_url",
+		TokenUrl:                "test_token_url",
+		ApiUrl:                  "test_api_url",
+		TeamsUrl:                "test_teams_url",
+		AllowedDomains:          []string{"domain1.com"},
+		AllowedGroups:           []string{},
+		TlsSkipVerify:           true,
+		TlsClientCert:           "",
+		TlsClientKey:            "",
+		TlsClientCa:             "",
+		UsePKCE:                 false,
+		AuthStyle:               "",
+		AllowAssignGrafanaAdmin: true,
+		UseRefreshToken:         true,
+		SkipOrgRoleSync:         true,
+		HostedDomain:            "test_hosted_domain",
+		SignoutRedirectUrl:      "https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com",
 		Extra: map[string]string{
 			"allowed_organizations":   "org1, org2",
 			"id_token_attribute_name": "id_token",

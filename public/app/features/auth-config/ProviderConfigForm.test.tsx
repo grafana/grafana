@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type JSX } from 'react';
+import { JSX } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 
 import { ProviderConfigForm } from './ProviderConfigForm';
-import { type SSOProvider } from './types';
+import { SSOProvider } from './types';
 import { emptySettings } from './utils/data';
 
 const putMock = jest.fn(() => Promise.resolve({}));
@@ -17,7 +17,6 @@ jest.mock('@grafana/runtime', () => ({
     delete: deleteMock,
   }),
   config: {
-    ...jest.requireActual('@grafana/runtime').config,
     panels: {
       test: {
         id: 'test',
@@ -53,16 +52,16 @@ const testConfig: SSOProvider = {
     clientId: '12345',
     clientSecret: 'abcde',
     enabled: true,
-    teamIds: '[]',
-    allowedOrganizations: '[]',
-    allowedDomains: '[]',
-    allowedGroups: '[]',
-    scopes: '[]',
-    orgMapping: '[]',
+    teamIds: '',
+    allowedOrganizations: '',
+    allowedDomains: '',
+    allowedGroups: '',
+    scopes: '',
+    orgMapping: '',
   },
 };
 
-jest.mock('app/core/services/context_srv', () => {
+jest.mock('app/core/core', () => {
   return {
     contextSrv: {
       isGrafanaAdmin: true,
@@ -148,21 +147,20 @@ describe('ProviderConfigForm', () => {
           settings: {
             allowAssignGrafanaAdmin: false,
             allowSignUp: false,
-            allowedDomains: '["grafana.com"]',
-            allowedOrganizations: '[]',
+            allowedDomains: 'grafana.com',
+            allowedOrganizations: '',
             autoLogin: true,
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
             enabled: true,
-            loginPrompt: '',
             name: 'GitHub',
             orgMapping: '["Group A:1:Editor","Group B:2:Admin"]',
             roleAttributePath: 'new-attribute-path',
             roleAttributeStrict: true,
-            scopes: '["user:email"]',
+            scopes: 'user:email',
             signoutRedirectUrl: '',
             skipOrgRoleSync: false,
-            teamIds: '[]',
+            teamIds: '',
             tlsClientCa: '',
             tlsClientCert: '',
             tlsClientKey: '',
@@ -199,26 +197,25 @@ describe('ProviderConfigForm', () => {
           settings: {
             allowAssignGrafanaAdmin: false,
             allowSignUp: false,
-            allowedDomains: '[]',
-            allowedOrganizations: '[]',
+            allowedDomains: '',
+            allowedOrganizations: '',
             autoLogin: true,
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
             enabled: false,
-            loginPrompt: '',
             name: 'GitHub',
             roleAttributePath: '',
             roleAttributeStrict: false,
-            scopes: '["user:email"]',
+            scopes: 'user:email',
             signoutRedirectUrl: '',
             skipOrgRoleSync: false,
-            teamIds: '[]',
+            teamIds: '',
             tlsClientCa: '',
             tlsClientCert: '',
             tlsClientKey: '',
             usePkce: false,
             useRefreshToken: false,
-            orgMapping: '[]',
+            orgMapping: '',
           },
         },
         { showErrorAlert: false }

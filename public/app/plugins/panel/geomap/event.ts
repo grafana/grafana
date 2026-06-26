@@ -1,8 +1,8 @@
-import { type FeatureLike } from 'ol/Feature';
+import { FeatureLike } from 'ol/Feature';
 
-import { type DataHoverPayload } from '@grafana/data';
+import { DataHoverPayload } from '@grafana/data';
 
-import { type MapLayerState } from './types';
+import { MapLayerState } from './types';
 
 export interface GeomapLayerHover {
   layer: MapLayerState;

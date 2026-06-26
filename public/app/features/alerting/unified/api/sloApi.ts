@@ -2,17 +2,17 @@ import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
 
-interface Label {
+export interface Label {
   key: string;
   value: string;
 }
 
-interface SloAlertingMetadata {
+export interface SloAlertingMetadata {
   annotations?: Label[];
   labels?: Label[];
 }
 
-interface SloAlerting {
+export interface SloAlerting {
   annotations?: Label[];
   fastBurn?: SloAlertingMetadata;
   labels?: Label[];

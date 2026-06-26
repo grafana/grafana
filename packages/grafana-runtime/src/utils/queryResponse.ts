@@ -1,23 +1,23 @@
 import {
-  type DataQueryResponse,
-  type KeyValue,
+  DataQueryResponse,
+  KeyValue,
   LoadingState,
-  type DataQueryError,
-  type TimeSeries,
-  type TableData,
+  DataQueryError,
+  TimeSeries,
+  TableData,
   toDataFrame,
-  type DataFrame,
-  type MetricFindValue,
+  DataFrame,
+  MetricFindValue,
   FieldType,
-  type DataQuery,
-  type DataFrameJSON,
+  DataQuery,
+  DataFrameJSON,
   dataFrameFromJSON,
-  type QueryResultMetaNotice,
+  QueryResultMetaNotice,
 } from '@grafana/data';
 
-import { type FetchError, type FetchResponse } from '../services';
+import { FetchError, FetchResponse } from '../services';
 
-import { type HealthCheckResultDetails } from './DataSourceWithBackend';
+import { HealthCheckResultDetails } from './DataSourceWithBackend';
 import { toDataQueryError } from './toDataQueryError';
 
 export const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };

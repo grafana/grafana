@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -27,8 +26,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlstore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dashStore := ProvideStore(sqlstore, cfg)
@@ -123,7 +123,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 				Key:       "strangesnapshotwithuserid0",
 				DeleteKey: "adeletekey",
-				DashboardCreateCommand: snapshot.DashboardCreateCommand{
+				DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
 					Dashboard: &common.Unstructured{Object: map[string]any{
 						"hello": "mupp",
 					}},
@@ -159,59 +159,10 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 	})
 }
 
-func TestIntegrationDashboardSnapshotDuplicateKey(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	sqlstore := db.InitTestDB(t)
-	dashStore := NewStore(sqlstore)
-
-	t.Run("inserting a snapshot with a duplicate key returns ErrDashboardSnapshotAlreadyExists", func(t *testing.T) {
-		first := dashboardsnapshots.CreateDashboardSnapshotCommand{
-			Key: "dupkey", DeleteKey: "del-a", UserID: 1000, OrgID: 1,
-		}
-		_, err := dashStore.CreateDashboardSnapshot(context.Background(), &first)
-		require.NoError(t, err)
-
-		second := dashboardsnapshots.CreateDashboardSnapshotCommand{
-			Key: "dupkey", DeleteKey: "del-b", UserID: 1000, OrgID: 1,
-		}
-		_, err = dashStore.CreateDashboardSnapshot(context.Background(), &second)
-		require.ErrorIs(t, err, dashboardsnapshots.ErrDashboardSnapshotAlreadyExists)
-	})
-
-	t.Run("inserting a snapshot with a duplicate delete_key returns ErrDashboardSnapshotAlreadyExists", func(t *testing.T) {
-		first := dashboardsnapshots.CreateDashboardSnapshotCommand{
-			Key: "key-a", DeleteKey: "dupdelete", UserID: 1000, OrgID: 1,
-		}
-
-		_, err := dashStore.CreateDashboardSnapshot(context.Background(), &first)
-		require.NoError(t, err)
-
-		second := dashboardsnapshots.CreateDashboardSnapshotCommand{
-			Key: "key-b", DeleteKey: "dupdelete", UserID: 1000, OrgID: 1,
-		}
-		_, err = dashStore.CreateDashboardSnapshot(context.Background(), &second)
-		require.ErrorIs(t, err, dashboardsnapshots.ErrDashboardSnapshotAlreadyExists)
-	})
-
-	t.Run("inserting snapshots with unique keys succeeds", func(t *testing.T) {
-		first := dashboardsnapshots.CreateDashboardSnapshotCommand{
-			Key: "unique-a", DeleteKey: "unique-del-a", UserID: 1000, OrgID: 1,
-		}
-		_, err := dashStore.CreateDashboardSnapshot(context.Background(), &first)
-		require.NoError(t, err)
-
-		second := dashboardsnapshots.CreateDashboardSnapshotCommand{
-			Key: "unique-b", DeleteKey: "unique-del-b", UserID: 1000, OrgID: 1,
-		}
-		_, err = dashStore.CreateDashboardSnapshot(context.Background(), &second)
-		require.NoError(t, err)
-	})
-}
-
 func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlstore := db.InitTestDB(t)
 	dashStore := NewStore(sqlstore)
 
@@ -252,7 +203,7 @@ func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key str
 	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
-		DashboardCreateCommand: snapshot.DashboardCreateCommand{
+		DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
 			Expires: expires,
 			Dashboard: &common.Unstructured{Object: map[string]any{
 				"hello": "mupp",

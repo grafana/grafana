@@ -1,6 +1,6 @@
 import { Chance } from 'chance';
 
-import { type DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 
 export function wellFormedDatasource(
   seed = 1,
@@ -9,6 +9,7 @@ export function wellFormedDatasource(
   const random = Chance(seed);
 
   return {
+    id: random.integer(),
     uid: random.guid(),
     type: random.word(),
     name: random.sentence({ words: 3 }),

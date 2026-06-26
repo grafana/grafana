@@ -1,6 +1,8 @@
 package serviceaccounts
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -8,8 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 )
-
-const ScopeServiceAccountRoot = "serviceaccounts"
 
 var (
 	ScopeAll = "serviceaccounts:*"
@@ -120,7 +120,6 @@ type SearchOrgServiceAccountsQuery struct {
 	Page         int
 	Limit        int
 	CountOnly    bool
-	CountTokens  bool
 	SignedInUser identity.Requester
 }
 
@@ -217,3 +216,16 @@ var AccessEvaluator = accesscontrol.EvalAny(
 	accesscontrol.EvalPermission(ActionRead),
 	accesscontrol.EvalPermission(ActionCreate),
 )
+
+func ExtSvcLoginPrefix(orgID int64) string {
+	return fmt.Sprintf("%s%d-%s", ServiceAccountPrefix, orgID, ExtSvcPrefix)
+}
+
+func IsExternalServiceAccount(login string) bool {
+	parts := strings.SplitAfter(login, "-")
+	if len(parts) < 4 {
+		return false
+	}
+
+	return parts[0] == ServiceAccountPrefix && parts[2] == ExtSvcPrefix
+}

@@ -1,12 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import renderer from 'react-test-renderer';
 
-import { type VariableModel } from '@grafana/data';
+import { VariableModel } from '@grafana/data';
 
-import { MetricFindQueryTypes } from '../dataquery.gen';
-import type CloudMonitoringDatasource from '../datasource';
-import { type CloudMonitoringVariableQuery } from '../types/types';
+import CloudMonitoringDatasource from '../datasource';
+import { MetricFindQueryTypes } from '../types/query';
+import { CloudMonitoringVariableQuery } from '../types/types';
 
-import { CloudMonitoringVariableQueryEditor, type Props } from './VariableQueryEditor';
+import { CloudMonitoringVariableQueryEditor, Props } from './VariableQueryEditor';
 
 jest.mock('../functions', () => ({
   getMetricTypes: () => ({ metricTypes: [], selectedMetricType: '' }),
@@ -39,10 +39,9 @@ const props: Props = {
 };
 
 describe('VariableQueryEditor', () => {
-  it('renders correctly', async () => {
-    const { container } = render(<CloudMonitoringVariableQueryEditor {...props} />);
-    await screen.findByText('Projects');
-    expect(container).toMatchSnapshot();
+  it('renders correctly', () => {
+    const tree = renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 
   describe('and a new variable is created', () => {
@@ -51,7 +50,7 @@ describe('VariableQueryEditor', () => {
         expect(query.selectedQueryType).toBe('projects');
         done();
       };
-      render(<CloudMonitoringVariableQueryEditor {...props} />);
+      renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
     });
   });
 
@@ -62,7 +61,7 @@ describe('VariableQueryEditor', () => {
         expect(query.selectedQueryType).toBe('labelKeys');
         done();
       };
-      render(<CloudMonitoringVariableQueryEditor {...props} />);
+      renderer.create(<CloudMonitoringVariableQueryEditor {...props} />).toJSON();
     });
   });
 });

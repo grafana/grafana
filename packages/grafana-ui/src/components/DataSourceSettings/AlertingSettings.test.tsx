@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import { AlertingSettings, type Props, type AlertingConfig } from './AlertingSettings';
+import { AlertingSettings } from '@grafana/ui';
+
+import { Props, AlertingConfig } from './AlertingSettings';
 
 const setup = () => {
   const onOptionsChange = jest.fn();
@@ -38,7 +40,7 @@ describe('Alerting Settings', () => {
   //see https://github.com/grafana/grafana/issues/51417
   it('should not show the option to select alertmanager data sources', () => {
     setup();
-    expect(screen.queryByText('Alertmanager data source')).not.toBeInTheDocument();
+    expect(screen.queryByText('Alertmanager data source')).toBeNull();
   });
 
   it('should show the option to manager alerts', () => {

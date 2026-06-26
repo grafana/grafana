@@ -58,8 +58,8 @@ func TestHTTPServer_GetDashboardPermissionList(t *testing.T) {
 			hs.DashboardService = svc
 			hs.dashboardPermissionsService = &actest.FakePermissionsService{
 				ExpectedPermissions: []accesscontrol.ResourcePermission{
-					{UserID: 1, UserLogin: "regular", IsManaged: true},
-					{UserID: 2, UserLogin: "hidden", IsManaged: true},
+					{UserId: 1, UserLogin: "regular", IsManaged: true},
+					{UserId: 2, UserLogin: "hidden", IsManaged: true},
 				},
 			}
 		})

@@ -1,13 +1,10 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { t } from '@grafana/i18n';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { useGetContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
-import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { EditReceiverView } from '../receivers/EditReceiverView';
 
@@ -23,15 +20,12 @@ const EditContactPoint = () => {
   } = useGetContactPoint({ name: contactPointName, alertmanager: selectedAlertmanager! });
 
   if (isLoading) {
-    return <LoadingPlaceholder text={t('alerting.edit-contact-point.text-loading', 'Loading...')} />;
+    return <LoadingPlaceholder text="Loading..." />;
   }
 
   if (error) {
     return (
-      <Alert
-        severity="error"
-        title={t('alerting.edit-contact-point.title-failed-to-fetch-contact-point', 'Failed to fetch contact point')}
-      >
+      <Alert severity="error" title="Failed to fetch contact point">
         {stringifyErrorLike(error)}
       </Alert>
     );
@@ -39,7 +33,7 @@ const EditContactPoint = () => {
 
   if (!contactPoint) {
     return (
-      <Alert severity="error" title={t('alerting.edit-contact-point.title-receiver-not-found', 'Receiver not found')}>
+      <Alert severity="error" title="Receiver not found">
         {'Sorry, this contact point does not seem to exist.'}
       </Alert>
     );
@@ -49,13 +43,11 @@ const EditContactPoint = () => {
 };
 
 function EditContactPointPage() {
-  const { navId, pageNav } = useContactPointsNav();
-
   return (
-    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
       <EditContactPoint />
     </AlertmanagerPageWrapper>
   );
 }
 
-export default withPageErrorBoundary(EditContactPointPage);
+export default withErrorBoundary(EditContactPointPage, { style: 'page' });

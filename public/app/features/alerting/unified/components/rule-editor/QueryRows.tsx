@@ -1,27 +1,23 @@
-import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
 import { PureComponent, useState } from 'react';
 
 import {
-  type DataSourceInstanceSettings,
-  LoadingState,
-  type PanelData,
-  type RelativeTimeRange,
+  DataQuery,
+  DataSourceInstanceSettings,
   getDataSourceRef,
+  LoadingState,
+  PanelData,
   rangeUtil,
+  RelativeTimeRange,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { getInstantFromDataQuery } from '../../utils/rule-form';
-
-import { type AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
+import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromCurrentCondition, errorFromPreviewData, getThresholdsForQueries } from './util';
 
 interface Props {
@@ -238,10 +234,7 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
 }
 
 function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
-  const isExpression = isExpressionQuery(item);
-  const isInstant = isExpression ? false : getInstantFromDataQuery(item);
-
-  const newQuery: Omit<AlertQuery, 'datasource'> = {
+  return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
@@ -252,12 +245,6 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
       datasource: getDataSourceRef(settings),
     },
   };
-
-  if (isInstant && !isExpressionQuery(item)) {
-    (newQuery as AlertQuery<AlertDataQuery>).model.instant = isInstant;
-  }
-
-  return newQuery;
 }
 
 interface DatasourceNotFoundProps {
@@ -283,26 +270,20 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
   return (
     <EmptyQueryWrapper>
       <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen collapsable={false}>
-        <Card noMargin>
-          <Card.Heading>
-            <Trans i18nKey="alerting.datasource-not-found.this-datasource-has-been-removed">
-              This datasource has been removed
-            </Trans>
-          </Card.Heading>
+        <Card>
+          <Card.Heading>This datasource has been removed</Card.Heading>
           <Card.Description>
-            <Trans i18nKey="alerting.datasource-not-found.card-description">
-              The datasource for this query was not found, it was either removed or is not installed correctly.
-            </Trans>
+            The datasource for this query was not found, it was either removed or is not installed correctly.
           </Card.Description>
           <Card.Figure>
             <Icon name="question-circle" />
           </Card.Figure>
           <Card.Actions>
             <Button key="update" variant="secondary" onClick={handleUpdateDatasource}>
-              <Trans i18nKey="alerting.datasource-not-found.update-datasource">Update datasource</Trans>
+              Update datasource
             </Button>
             <Button key="remove" variant="destructive" onClick={onRemoveQuery}>
-              <Trans i18nKey="alerting.datasource-not-found.remove-query">Remove query</Trans>
+              Remove query
             </Button>
           </Card.Actions>
           <Card.SecondaryActions>
@@ -313,7 +294,7 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
               fill="text"
               size="sm"
             >
-              <Trans i18nKey="alerting.datasource-not-found.show-details">Show details</Trans>
+              Show details
             </Button>
           </Card.SecondaryActions>
         </Card>

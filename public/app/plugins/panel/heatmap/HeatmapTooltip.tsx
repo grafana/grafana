@@ -1,48 +1,36 @@
-import { type ReactElement, useEffect, useRef, useState, type ReactNode } from 'react';
+import { ReactElement, useEffect, useRef, useState, ReactNode } from 'react';
 import * as React from 'react';
 import uPlot from 'uplot';
 
 import {
-  type ActionModel,
-  type Field,
+  ActionModel,
+  DataFrameType,
+  Field,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
-  type InterpolateFunction,
-  type LinkModel,
-  type PanelData,
+  InterpolateFunction,
+  LinkModel,
+  PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import {
-  VizTooltipColorIndicator,
-  VizTooltipColorPlacement,
-  TooltipDisplayMode,
-  type VizTooltipItem,
-  VizTooltipContent,
-  VizTooltipFooter,
-  VizTooltipHeader,
-  VizTooltipWrapper,
-  getFieldDisplayLinks,
-  isTooltipScrollable,
-  useTheme2,
-} from '@grafana/ui';
+import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
+import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
+import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
+import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
+import { ColorIndicator, ColorPlacement, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
-import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
+import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
-import { getFieldActions } from '../status-history/utils';
+import { getDataLinks, getFieldActions } from '../status-history/utils';
+import { isTooltipScrollable } from '../timeseries/utils';
 
-import { type HeatmapData } from './fields';
+import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
-import {
-  formatMilliseconds,
-  getFieldFromData,
-  getHoverCellColor,
-  getSparseCellMinMax,
-  isHeatmapSparse,
-} from './tooltip/utils';
+import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './tooltip/utils';
 
 interface HeatmapTooltipProps {
   mode: TooltipDisplayMode;
@@ -58,28 +46,16 @@ interface HeatmapTooltipProps {
   maxHeight?: number;
   maxWidth?: number;
   replaceVariables: InterpolateFunction;
-  canExecuteActions?: boolean;
 }
 
 export const HeatmapTooltip = (props: HeatmapTooltipProps) => {
   if (props.seriesIdx === 2) {
-    const dispValuesAndLinks = getDisplayValuesAndLinks(props.dataRef.current!.exemplars!, props.dataIdxs[2]!);
-
-    if (dispValuesAndLinks == null) {
-      return null;
-    }
-
-    const { displayValues, links } = dispValuesAndLinks;
-
     return (
-      <ExemplarTooltip
-        items={displayValues.map((dispVal) => ({
-          label: dispVal.name,
-          value: dispVal.valueString,
-        }))}
-        links={links}
-        maxHeight={props.maxHeight}
-        isPinned={props.isPinned}
+      <DataHoverView
+        data={props.dataRef.current!.exemplars}
+        rowIndex={props.dataIdxs[2]}
+        header={'Exemplar'}
+        padding={8}
       />
     );
   }
@@ -101,12 +77,13 @@ const HeatmapHoverCell = ({
   maxHeight,
   maxWidth,
   replaceVariables,
-  canExecuteActions,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
   const data = dataRef.current;
 
-  const [isSparse] = useState(() => isHeatmapSparse(data.heatmap));
+  const [isSparse] = useState(
+    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
+  );
 
   const xField = getFieldFromData(data.heatmap!, 'x', isSparse)!;
   const yField = getFieldFromData(data.heatmap!, 'y', isSparse)!;
@@ -280,8 +257,8 @@ const HeatmapHoverCell = ({
         label: getFieldDisplayName(countField, data.heatmap),
         value: data.display!(count),
         color: cellColor ?? '#FFF',
-        colorPlacement: VizTooltipColorPlacement.trailing,
-        colorIndicator: VizTooltipColorIndicator.value,
+        colorPlacement: ColorPlacement.trailing,
+        colorIndicator: ColorIndicator.value,
       },
       ...getContentLabels(),
       ...fromToInt,
@@ -307,8 +284,8 @@ const HeatmapHoverCell = ({
         label: val.label,
         value: val.value,
         color: val.color ?? '#FFF',
-        colorIndicator: VizTooltipColorIndicator.value,
-        colorPlacement: VizTooltipColorPlacement.trailing,
+        colorIndicator: ColorIndicator.value,
+        colorPlacement: ColorPlacement.trailing,
         isActive: val.isActive,
       });
     });
@@ -327,12 +304,10 @@ const HeatmapHoverCell = ({
       const hasLinks = (linksField.config.links?.length ?? 0) > 0;
 
       if (visible && hasLinks) {
-        links = getFieldDisplayLinks(linksField, xValueIdx);
+        links = getDataLinks(linksField, xValueIdx);
       }
 
-      actions = canExecuteActions
-        ? getFieldActions(data.series!, linksField, replaceVariables, xValueIdx, 'heatmap')
-        : [];
+      actions = getFieldActions(data.series!, linksField, replaceVariables);
     }
 
     footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;

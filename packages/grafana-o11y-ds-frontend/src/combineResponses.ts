@@ -1,12 +1,12 @@
 import {
-  type DataFrame,
+  DataFrame,
   DataFrameType,
-  type DataQueryResponse,
-  type DataQueryResponseData,
-  type Field,
+  DataQueryResponse,
+  DataQueryResponseData,
+  Field,
   FieldType,
-  type PanelData,
-  type QueryResultMetaStat,
+  PanelData,
+  QueryResultMetaStat,
   shallowCompare,
 } from '@grafana/data';
 

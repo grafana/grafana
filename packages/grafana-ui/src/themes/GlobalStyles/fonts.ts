@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export function getFontStyles(theme: GrafanaTheme2) {
   const grafanaPublicPath = typeof window !== 'undefined' && window.__grafana_public_path__;
@@ -55,24 +55,6 @@ export function getFontStyles(theme: GrafanaTheme2) {
         fontWeight: 500,
         fontDisplay: 'swap',
         src: `url('${fontRoot}inter/Inter-Medium.woff2') format('woff2')`,
-      },
-    },
-    {
-      '@font-face': {
-        fontFamily: 'Inter',
-        fontStyle: 'italic',
-        fontWeight: 400,
-        fontDisplay: 'swap',
-        src: `url('${fontRoot}inter/Inter-Italic.woff2') format('woff2')`,
-      },
-    },
-    {
-      '@font-face': {
-        fontFamily: 'Inter',
-        fontStyle: 'italic',
-        fontWeight: 500,
-        fontDisplay: 'swap',
-        src: `url('${fontRoot}inter/Inter-MediumItalic.woff2') format('woff2')`,
       },
     },
   ]);

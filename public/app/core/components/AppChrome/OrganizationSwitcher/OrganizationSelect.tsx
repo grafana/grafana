@@ -1,32 +1,21 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
-import { type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Icon, Select, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type UserOrg } from 'app/types/user';
+import { UserOrg } from 'app/types';
 
-import { type OrganizationBaseProps } from './types';
+import { OrganizationBaseProps } from './types';
 
 export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBaseProps) {
   const styles = useStyles2(getStyles);
-
-  const { orgId } = contextSrv.user;
-
-  const options = useMemo(
-    () =>
-      orgs.map((org) => ({
-        label: org.name,
-        description: org.role,
-        value: org,
-      })),
-    [orgs]
-  );
-
-  const selectedValue = useMemo(() => options.find((option) => option.value.orgId === orgId), [options, orgId]);
-
-  const [value, setValue] = useState<SelectableValue<UserOrg>>(() => selectedValue);
+  const { orgName: name, orgId, orgRole: role } = contextSrv.user;
+  const [value, setValue] = useState<SelectableValue<UserOrg>>(() => ({
+    label: name,
+    value: { role, orgId, name },
+    description: role,
+  }));
   const onChange = (option: SelectableValue<UserOrg>) => {
     setValue(option);
     onSelectChange(option);
@@ -34,12 +23,16 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
 
   return (
     <Select<UserOrg>
-      aria-label={t('navigation.org-switcher.aria-label', 'Change organization')}
+      aria-label="Change organization"
       width={'auto'}
       value={value}
       prefix={<Icon className="prefix-icon" name="building" />}
       className={styles.select}
-      options={options}
+      options={orgs.map((org) => ({
+        label: org.name,
+        description: org.role,
+        value: org,
+      }))}
       onChange={onChange}
     />
   );

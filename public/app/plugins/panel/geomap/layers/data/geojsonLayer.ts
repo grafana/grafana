@@ -1,15 +1,14 @@
-import { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
+import { FeatureLike } from 'ol/Feature';
+import Map from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
 import VectorSource from 'ol/source/Vector';
-import { type Style } from 'ol/style';
+import { Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
 
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
@@ -20,12 +19,12 @@ import {
   GeoJSONLineStyles,
   GeoJSONPointStyles,
   GeoJSONPolyStyles,
-  type StyleConfig,
-  type StyleConfigState,
-  type StyleConfigValues,
+  StyleConfig,
+  StyleConfigState,
+  StyleConfigValues,
 } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
-import { type FeatureRuleConfig, type FeatureStyleConfig } from '../../types';
+import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getPublicGeoJSONFiles } from '../../utils/utils';
@@ -73,16 +72,11 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     const config = { ...defaultOptions, ...options.config };
 
-    // Interpolate variables in the URL
-    const interpolatedUrl = getTemplateSrv().replace(config.src || '');
-    const isAbsoluteUrl = interpolatedUrl.startsWith('http');
-    const layerUrl = isAbsoluteUrl ? interpolatedUrl : `${window.__grafana_public_path__}${interpolatedUrl.replace(/^(public\/)/, '')}`;
-
     const source = new VectorSource({
-      url: layerUrl,
+      url: config.src,
       format: new GeoJSON(),
     });
 
@@ -108,11 +102,12 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         }
       }
     }
-
-    const s = await getStyleConfigState(config.style);
-    styles.push({
-      state: s,
-    });
+    if (true) {
+      const s = await getStyleConfigState(config.style);
+      styles.push({
+        state: s,
+      });
+    }
 
     const polyStyleStrings: string[] = Object.values(GeoJSONPolyStyles);
     const pointStyleStrings: string[] = Object.values(GeoJSONPointStyles);
@@ -200,7 +195,6 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
             settings: {
               options: getPublicGeoJSONFiles() ?? [],
               allowCustomValue: true,
-              supportVariables: true,
             },
             defaultValue: defaultOptions.src,
           })

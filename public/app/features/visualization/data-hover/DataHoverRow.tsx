@@ -1,6 +1,6 @@
-import { type FeatureLike } from 'ol/Feature';
+import { FeatureLike } from 'ol/Feature';
 
-import { ArrayDataFrame, type DataFrame } from '@grafana/data';
+import { ArrayDataFrame, DataFrame } from '@grafana/data';
 
 import { DataHoverView } from './DataHoverView';
 

@@ -1,24 +1,24 @@
 import { cloneDeep } from 'lodash';
 
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { type DimensionContext } from 'app/features/dimensions/context';
-import { HorizontalConstraint, type Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
+import { DimensionContext } from 'app/features/dimensions';
+import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
-import { type CanvasElementItem } from '../element';
-import { type CanvasFrameOptions } from '../frame';
+import { CanvasElementItem } from '../element';
+import { CanvasFrameOptions } from '../frame';
 import { canvasElementRegistry } from '../registry';
 
 import { ElementState } from './element';
-import { type RootElement } from './root';
-import { type Scene } from './scene';
+import { RootElement } from './root';
+import { Scene } from './scene';
 import { initMoveable } from './sceneAbleManagement';
 
 const DEFAULT_OFFSET = 10;
 const HORIZONTAL_OFFSET = 50;
 
-const frameItemDummy: CanvasElementItem = {
+export const frameItemDummy: CanvasElementItem = {
   id: 'frame',
   name: 'Frame',
   description: 'Frame',
@@ -28,8 +28,6 @@ const frameItemDummy: CanvasElementItem = {
   }),
 
   display: () => {
-    // never shown to end user
-    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     return <div>FRAME!</div>;
   },
 };
@@ -137,7 +135,7 @@ export class FrameState extends ElementState {
         if (shiftItemsOnDuplicate) {
           const { constraint, placement: oldPlacement } = element.options;
           const { vertical, horizontal } = constraint ?? {};
-          const placement: Placement = { ...oldPlacement };
+          const placement: Placement = { ...oldPlacement } ?? {};
 
           switch (vertical) {
             case VerticalConstraint.Top:
@@ -244,10 +242,10 @@ export class FrameState extends ElementState {
     }
   };
 
-  renderElement() {
+  render() {
     return (
       <div key={this.UID} ref={this.initElement}>
-        {this.elements.map((v) => v.renderElement())}
+        {this.elements.map((v) => v.render())}
       </div>
     );
   }

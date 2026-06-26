@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { type GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
-import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
+import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { Button, useTheme2 } from '@grafana/ui';
 
-import { type DerivedFieldConfig } from '../types';
+import { DerivedFieldConfig } from '../types';
 
 import { DebugSection } from './DebugSection';
 import { DerivedField } from './DerivedField';

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { Select, type SelectBaseProps } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
+import { SelectBaseProps } from '@grafana/ui/src/components/Select/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 type Props = Omit<SelectBaseProps<GrafanaAlertStateDecision>, 'options'> & {

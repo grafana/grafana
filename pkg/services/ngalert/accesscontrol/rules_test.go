@@ -2,7 +2,6 @@ package accesscontrol
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -15,16 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 func createAllCombinationsOfPermissions(permissions map[string][]string) []map[string][]string {
@@ -84,8 +83,8 @@ func getReceiverScopesForRules(rules models.RulesGroup) []string {
 	scopesMap := map[string]struct{}{}
 	var result []string
 	for _, rule := range rules {
-		if ns := rule.ContactPointRouting(); ns != nil {
-			scope := models.ScopeReceiversProvider.GetResourceScopeUID(legacy_storage.NameToUid(ns.Receiver))
+		for _, ns := range rule.NotificationSettings {
+			scope := ScopeReceiversProvider.GetResourceScopeUID(legacy_storage.NameToUid(ns.Receiver))
 			if _, ok := scopesMap[scope]; ok {
 				continue
 			}
@@ -110,33 +109,9 @@ func createUserWithPermissions(permissions map[string][]string) identity.Request
 	}}
 }
 
-func getShallowQueryDiffs(queries []models.AlertQuery) []cmputil.Diff {
-	result := make([]cmputil.Diff, 0, len(queries))
-	for i := range queries {
-		result = append(result, []cmputil.Diff{
-			{
-				Path: fmt.Sprintf("Data[%d].DatasourceUID", i),
-			},
-			{
-				Path: fmt.Sprintf("Data[%d].Model", i),
-			},
-			{
-				Path: fmt.Sprintf("Data[%d].RelativeTimeRange", i),
-			},
-			{
-				Path: fmt.Sprintf("Data[%d].RefID", i),
-			},
-			{
-				Path: fmt.Sprintf("Data[%d].QueryType", i),
-			},
-		}...)
-	}
-	return result
-}
-
 func TestAuthorizeRuleChanges(t *testing.T) {
 	groupKey := models.GenerateGroupKey(rand.Int63())
-	namespaceIdScope := folder.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
+	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
 	gen := models.RuleGen
 	genWithGroupKey := gen.With(gen.WithGroupKey(groupKey))
 
@@ -163,7 +138,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleRead: {
 						namespaceIdScope,
 					},
-					folder.ActionFoldersRead: {
+					dashboards.ActionFoldersRead: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery:                   getDatasourceScopesForRules(c.New),
@@ -172,7 +147,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "if there are rules to delete it should check delete action and NOT query for datasource",
+			name: "if there are rules to delete it should check delete action and query for datasource",
 			changes: func() *store.GroupDelta {
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
 				rules2 := genWithGroupKey.GenerateManyRef(1, 5)
@@ -191,17 +166,18 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleRead: {
 						namespaceIdScope,
 					},
-					folder.ActionFoldersRead: {
+					dashboards.ActionFoldersRead: {
 						namespaceIdScope,
 					},
 					ruleDelete: {
 						namespaceIdScope,
 					},
+					datasources.ActionQuery: getDatasourceScopesForRules(c.Delete),
 				}
 			},
 		},
 		{
-			name: "if there are rules with query updates within the same namespace it should check update action and access to datasource",
+			name: "if there are rules to update within the same namespace it should check update action and access to datasource",
 			changes: func() *store.GroupDelta {
 				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
@@ -213,7 +189,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
 						New:      cp,
-						Diff:     getShallowQueryDiffs(cp.Data),
+						Diff:     nil,
 					})
 				}
 
@@ -235,62 +211,13 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleRead: {
 						namespaceIdScope,
 					},
-					folder.ActionFoldersRead: {
+					dashboards.ActionFoldersRead: {
 						namespaceIdScope,
 					},
 					ruleUpdate: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery: scopes,
-				}
-			},
-		},
-		{
-			name: "if there are rules w/o query updates to update within the same namespace it should check update action",
-			changes: func() *store.GroupDelta {
-				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
-				rules := genWithGroupKey.GenerateManyRef(1, 5)
-				updates := make([]store.RuleDelta, 0, len(rules))
-
-				for _, rule := range rules {
-					cp := models.CopyRule(rule)
-					cp.IsPaused = !rule.IsPaused
-					cp.Title = rule.Title + " updated"
-					updates = append(updates, store.RuleDelta{
-						Existing: rule,
-						New:      cp,
-						Diff: []cmputil.Diff{
-							{
-								Path: "IsPaused",
-							},
-							{
-								Path: "Title",
-							},
-						},
-					})
-				}
-
-				return &store.GroupDelta{
-					GroupKey: groupKey,
-					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
-						groupKey: append(rules, rules1...),
-					},
-					New:    nil,
-					Update: updates,
-					Delete: nil,
-				}
-			},
-			permissions: func(c *store.GroupDelta) map[string][]string {
-				return map[string][]string{
-					ruleRead: {
-						namespaceIdScope,
-					},
-					folder.ActionFoldersRead: {
-						namespaceIdScope,
-					},
-					ruleUpdate: {
-						namespaceIdScope,
-					},
 				}
 			},
 		},
@@ -304,22 +231,11 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				updates := make([]store.RuleDelta, 0, len(rules))
 				for _, rule := range rules {
-					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
+					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(gen.GenerateQuery()))
 
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
 						New:      cp,
-						Diff: []cmputil.Diff{
-							{
-								Path: "OrgID",
-							},
-							{
-								Path: "NamespaceUID",
-							},
-							{
-								Path: "RuleGroup",
-							},
-						},
 					})
 				}
 
@@ -334,16 +250,23 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				deleteScopes := make([]string, 0, len(c.AffectedGroups))
+				dsScopes := getDatasourceScopesForRules(
+					mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+						return update.New
+					}),
+				)
+
+				var deleteScopes []string
 				for key := range c.AffectedGroups {
-					deleteScopes = append(deleteScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(key.NamespaceUID))
+					deleteScopes = append(deleteScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(key.NamespaceUID))
 				}
 
 				return map[string][]string{
 					ruleDelete: deleteScopes,
 					ruleCreate: {
-						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
+					datasources.ActionQuery: dsScopes,
 				}
 			},
 		},
@@ -365,87 +288,11 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 				for i := 0; i < toCopy; i++ {
 					rule := sourceGroup[0]
-					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
-
-					updates = append(updates, store.RuleDelta{
-						Existing: rule,
-						New:      cp,
-						Diff: []cmputil.Diff{
-							{
-								Path: "OrgID",
-							},
-							{
-								Path: "NamespaceUID",
-							},
-							{
-								Path: "RuleGroup",
-							},
-						},
-					})
-				}
-
-				return &store.GroupDelta{
-					GroupKey: targetGroupKey,
-					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
-						groupKey:       sourceGroup,
-						targetGroupKey: targetGroup,
-					},
-					New:    nil,
-					Update: updates,
-					Delete: nil,
-				}
-			},
-			permissions: func(c *store.GroupDelta) map[string][]string {
-				return map[string][]string{
-					ruleRead: {
-						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
-					},
-					folder.ActionFoldersRead: {
-						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
-					},
-					ruleUpdate: {
-						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
-					},
-				}
-			},
-		},
-		{
-			name: "if there are rules that are moved between groups in the same namespace AND the query is changed it should check update action and access to all groups (source+target) and datasources",
-			changes: func() *store.GroupDelta {
-				targetGroupKey := models.AlertRuleGroupKey{
-					OrgID:        groupKey.OrgID,
-					NamespaceUID: groupKey.NamespaceUID,
-					RuleGroup:    util.GenerateShortUID(),
-				}
-				sourceGroup := genWithGroupKey.GenerateManyRef(1, 5)
-				targetGroup := gen.With(gen.WithGroupKey(targetGroupKey)).GenerateManyRef(1, 5)
-
-				updates := make([]store.RuleDelta, 0, len(sourceGroup))
-				toCopy := len(sourceGroup)
-				if toCopy > 1 {
-					toCopy = rand.Intn(toCopy-1) + 1
-				}
-				for i := 0; i < toCopy; i++ {
-					rule := sourceGroup[0]
 					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(models.GenerateAlertQuery()))
 
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
 						New:      cp,
-						Diff: append(
-							[]cmputil.Diff{
-								{
-									Path: "OrgID",
-								},
-								{
-									Path: "NamespaceUID",
-								},
-								{
-									Path: "RuleGroup",
-								},
-							},
-							getShallowQueryDiffs(cp.Data)...,
-						),
 					})
 				}
 
@@ -469,13 +316,13 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				return map[string][]string{
 					ruleRead: {
-						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
-					folder.ActionFoldersRead: {
-						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+					dashboards.ActionFoldersRead: {
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
 					ruleUpdate: {
-						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
 					datasources.ActionQuery: dsScopes,
 				}
@@ -501,7 +348,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleRead: {
 						namespaceIdScope,
 					},
-					folder.ActionFoldersRead: {
+					dashboards.ActionFoldersRead: {
 						namespaceIdScope,
 					},
 					datasources.ActionQuery:                   getDatasourceScopesForRules(c.New),
@@ -520,17 +367,13 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				for _, rule := range rules {
 					cp := models.CopyRule(rule)
-					if cpr := cp.ContactPointRouting(); cpr != nil {
-						cpr.Receiver = "new-receiver"
+					for i := range cp.NotificationSettings {
+						cp.NotificationSettings[i].Receiver = "new-receiver"
 					}
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
 						New:      cp,
-						Diff: []cmputil.Diff{
-							{
-								Path: "NotificationSettings[0].Receiver",
-							},
-						},
+						Diff:     nil,
 					})
 				}
 
@@ -549,12 +392,15 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleRead: {
 						namespaceIdScope,
 					},
-					folder.ActionFoldersRead: {
+					dashboards.ActionFoldersRead: {
 						namespaceIdScope,
 					},
 					ruleUpdate: {
 						namespaceIdScope,
 					},
+					datasources.ActionQuery: getDatasourceScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+						return update.New
+					})),
 					accesscontrol.ActionAlertingReceiversRead: getReceiverScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
 						return update.New
 					})),
@@ -581,7 +427,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			})
 
-			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 			srv := NewRuleService(ac)
 			err := srv.AuthorizeRuleChanges(context.Background(), createUserWithPermissions(permissions), groupChanges)
 			require.NoError(t, err)
@@ -615,10 +461,10 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 	t.Run("should check only expressions", func(t *testing.T) {
 		permissions := map[string][]string{
 			ruleRead: {
-				folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID),
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID),
 			},
-			folder.ActionFoldersRead: {
-				folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID),
+			dashboards.ActionFoldersRead: {
+				dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID),
 			},
 			datasources.ActionQuery: scopes,
 		}
@@ -650,13 +496,13 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	t.Run("should succeed if user has access to all namespaces", func(t *testing.T) {
 		rules := models.RuleGen.GenerateManyRef(1, 5)
-		namespaceScopes := make([]string, 0, len(rules))
+		namespaceScopes := make([]string, 0)
 		for _, rule := range rules {
-			namespaceScopes = append(namespaceScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID))
+			namespaceScopes = append(namespaceScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID))
 		}
 		permissions := map[string][]string{
-			ruleRead:                 namespaceScopes,
-			folder.ActionFoldersRead: namespaceScopes,
+			ruleRead:                     namespaceScopes,
+			dashboards.ActionFoldersRead: namespaceScopes,
 		}
 		ac := &recordingAccessControlFake{}
 		svc := NewRuleService(ac)
@@ -670,7 +516,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	t.Run("should fail if user does not have access to namespace", func(t *testing.T) {
 		f := &folder.Folder{UID: "test-folder"}
 		gen := models.RuleGen
-		genWithFolder := gen.With(gen.WithNamespace(f.ToFolderReference()))
+		genWithFolder := gen.With(gen.WithNamespace(f))
 		rules := genWithFolder.GenerateManyRef(1, 5)
 
 		ac := &recordingAccessControlFake{}
@@ -693,8 +539,8 @@ func TestCanReadAllRules(t *testing.T) {
 	}{
 		{
 			permissions: map[string][]string{
-				ruleRead:                 {folder.ScopeFoldersProvider.GetResourceAllScope()},
-				folder.ActionFoldersRead: {folder.ScopeFoldersProvider.GetResourceAllScope()},
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
 			expected: true,
 		},
@@ -703,24 +549,24 @@ func TestCanReadAllRules(t *testing.T) {
 		},
 		{
 			permissions: map[string][]string{
-				ruleRead:                 {folder.ScopeFoldersProvider.GetResourceScopeUID("test")},
-				folder.ActionFoldersRead: {folder.ScopeFoldersProvider.GetResourceAllScope()},
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceScopeUID("test")},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
 		},
 		{
 			permissions: map[string][]string{
-				ruleRead:                 {folder.ScopeFoldersProvider.GetResourceAllScope()},
-				folder.ActionFoldersRead: {folder.ScopeFoldersProvider.GetResourceScopeUID("test")},
+				ruleRead:                     {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("test")},
 			},
 		},
 		{
 			permissions: map[string][]string{
-				ruleRead: {folder.ScopeFoldersProvider.GetResourceAllScope()},
+				ruleRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
 		},
 		{
 			permissions: map[string][]string{
-				folder.ActionFoldersRead: {folder.ScopeFoldersProvider.GetResourceAllScope()},
+				dashboards.ActionFoldersRead: {dashboards.ScopeFoldersProvider.GetResourceAllScope()},
 			},
 		},
 	}
@@ -729,307 +575,5 @@ func TestCanReadAllRules(t *testing.T) {
 		result, err := svc.CanReadAllRules(context.Background(), createUserWithPermissions(tc.permissions))
 		assert.NoError(t, err)
 		assert.Equalf(t, tc.expected, result, "permissions: %v", tc.permissions)
-	}
-}
-
-func TestHasAccessInFolder(t *testing.T) {
-	folderScope := func(uid string) string {
-		return folder.ScopeFoldersProvider.GetResourceScopeUID(uid)
-	}
-
-	testCases := []struct {
-		name           string
-		namespace      models.Namespaced
-		permissions    map[string][]string
-		expected       bool
-		expectEvaluate bool
-	}{
-		{
-			name: "with fullpath UIDs and permissions on target folder",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "folder1"},
-				FullpathUIDs:    "folder1",
-			},
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("folder1")},
-				folder.ActionFoldersRead: {folderScope("folder1")},
-			},
-			expected:       true,
-			expectEvaluate: false,
-		},
-		{
-			name: "with fullpath UIDs and permissions on parent folder",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "child"},
-				FullpathUIDs:    "parent/child",
-			},
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("parent")},
-				folder.ActionFoldersRead: {folderScope("parent")},
-			},
-			expected:       true,
-			expectEvaluate: false,
-		},
-		{
-			name: "with fullpath UIDs, ruleRead on parent and foldersRead on target",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "child"},
-				FullpathUIDs:    "parent/child",
-			},
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("parent")},
-				folder.ActionFoldersRead: {folderScope("child")},
-			},
-			expected:       true,
-			expectEvaluate: false,
-		},
-		{
-			name: "with fullpath UIDs, deeply nested folder with permission on root",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "leaf"},
-				FullpathUIDs:    "root/middle/leaf",
-			},
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("root")},
-				folder.ActionFoldersRead: {folderScope("root")},
-			},
-			expected:       true,
-			expectEvaluate: false,
-		},
-		{
-			name: "with fullpath UIDs, only ruleRead",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "folder1"},
-				FullpathUIDs:    "folder1",
-			},
-			permissions: map[string][]string{
-				ruleRead: {folderScope("folder1")},
-			},
-			expected:       false,
-			expectEvaluate: true,
-		},
-		{
-			name: "with fullpath UIDs, only foldersRead",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "folder1"},
-				FullpathUIDs:    "folder1",
-			},
-			permissions: map[string][]string{
-				folder.ActionFoldersRead: {folderScope("folder1")},
-			},
-			expected:       false,
-			expectEvaluate: true,
-		},
-		{
-			name: "with fullpath UIDs, no permissions",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "child"},
-				FullpathUIDs:    "parent/child",
-			},
-			permissions:    map[string][]string{},
-			expected:       false,
-			expectEvaluate: true,
-		},
-		{
-			name:      "without fullpath UIDs, user has permissions",
-			namespace: models.NewNamespaceUID("folder1"),
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("folder1")},
-				folder.ActionFoldersRead: {folderScope("folder1")},
-			},
-			expected:       true,
-			expectEvaluate: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ac := &recordingAccessControlFake{}
-			svc := NewRuleService(ac)
-
-			result, err := svc.HasAccessInFolder(context.Background(), createUserWithPermissions(tc.permissions), tc.namespace)
-			require.NoError(t, err)
-			assert.Equal(t, tc.expected, result)
-
-			if tc.expectEvaluate {
-				assert.NotEmpty(t, ac.EvaluateRecordings, "expected Evaluate to be called")
-			} else {
-				assert.Empty(t, ac.EvaluateRecordings, "expected no Evaluate call")
-			}
-		})
-	}
-}
-
-func TestAuthorizeAccessInFolder(t *testing.T) {
-	folderScope := func(uid string) string {
-		return folder.ScopeFoldersProvider.GetResourceScopeUID(uid)
-	}
-
-	testCases := []struct {
-		name           string
-		namespace      models.Namespaced
-		permissions    map[string][]string
-		expectErr      bool
-		expectEvaluate bool
-	}{
-		{
-			name: "with fullpath UIDs and user has permissions",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "child"},
-				FullpathUIDs:    "parent/child",
-			},
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("parent")},
-				folder.ActionFoldersRead: {folderScope("child")},
-			},
-			expectErr:      false,
-			expectEvaluate: false,
-		},
-		{
-			name:      "without fullpath UIDs, user has permissions",
-			namespace: models.NewNamespaceUID("folder1"),
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("folder1")},
-				folder.ActionFoldersRead: {folderScope("folder1")},
-			},
-			expectErr:      false,
-			expectEvaluate: true,
-		},
-		{
-			name: "with fullpath UIDs, user lacks permissions",
-			namespace: models.Namespace{
-				FolderReference: folder.FolderReference{UID: "child"},
-				FullpathUIDs:    "parent/child",
-			},
-			permissions:    map[string][]string{},
-			expectErr:      true,
-			expectEvaluate: true,
-		},
-		{
-			name:           "without fullpath UIDs, user lacks permissions",
-			namespace:      models.NewNamespaceUID("folder1"),
-			permissions:    map[string][]string{},
-			expectErr:      true,
-			expectEvaluate: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ac := &recordingAccessControlFake{}
-			svc := NewRuleService(ac)
-
-			err := svc.AuthorizeAccessInFolder(context.Background(), createUserWithPermissions(tc.permissions), tc.namespace)
-
-			if tc.expectErr {
-				require.Error(t, err)
-				require.ErrorIs(t, err, ErrAuthorizationBase)
-			} else {
-				require.NoError(t, err)
-			}
-
-			if tc.expectEvaluate {
-				assert.NotEmpty(t, ac.EvaluateRecordings, "expected Evaluate to be called")
-			} else {
-				assert.Empty(t, ac.EvaluateRecordings, "expected no Evaluate call")
-			}
-		})
-	}
-}
-
-// TestHasAccessInFolderWithScopeResolver verifies that when fullpath UIDs are not available,
-// the fallback to the scope resolver correctly handles folder hierarchy permissions.
-func TestHasAccessInFolderWithScopeResolver(t *testing.T) {
-	folderScope := func(uid string) string {
-		return folder.ScopeFoldersProvider.GetResourceScopeUID(uid)
-	}
-
-	// Set up folder service that returns parent folder for "child"
-	folderSvc := foldertest.NewFakeService()
-	folderSvc.ExpectedFolders = []*folder.Folder{
-		{UID: "parent", OrgID: 1, Title: "Parent"},
-	}
-
-	// Create real AccessControl with scope resolver
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(folderSvc))
-
-	svc := NewRuleService(ac)
-
-	testCases := []struct {
-		name        string
-		permissions map[string][]string
-		expected    bool
-	}{
-		{
-			name: "both permissions on parent folder",
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("parent")},
-				folder.ActionFoldersRead: {folderScope("parent")},
-			},
-			expected: true,
-		},
-		{
-			name: "both permissions on child folder",
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("child")},
-				folder.ActionFoldersRead: {folderScope("child")},
-			},
-			expected: true,
-		},
-		{
-			name: "split permissions - ruleRead on parent, foldersRead on child",
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("parent")},
-				folder.ActionFoldersRead: {folderScope("child")},
-			},
-			expected: true,
-		},
-		{
-			name: "split permissions - ruleRead on child, foldersRead on parent",
-			permissions: map[string][]string{
-				ruleRead:                 {folderScope("child")},
-				folder.ActionFoldersRead: {folderScope("parent")},
-			},
-			expected: true,
-		},
-		{
-			name: "only ruleRead permission",
-			permissions: map[string][]string{
-				ruleRead: {folderScope("parent")},
-			},
-			expected: false,
-		},
-		{
-			name: "only foldersRead permission",
-			permissions: map[string][]string{
-				folder.ActionFoldersRead: {folderScope("parent")},
-			},
-			expected: false,
-		},
-		{
-			name:        "no permissions",
-			permissions: map[string][]string{},
-			expected:    false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			usr := &user.SignedInUser{
-				UserID: 1,
-				OrgID:  1,
-				Permissions: map[int64]map[string][]string{
-					1: tc.permissions,
-				},
-			}
-
-			// Use namespace without fullpath - forces fallback to scope resolver
-			namespace := models.NewNamespaceUID("child")
-			result, err := svc.HasAccessInFolder(context.Background(), usr, namespace)
-
-			require.NoError(t, err)
-			assert.Equal(t, tc.expected, result)
-		})
 	}
 }

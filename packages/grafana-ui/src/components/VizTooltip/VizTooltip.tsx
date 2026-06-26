@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type Dimensions, type TimeZone } from '@grafana/data';
-import { type TooltipDisplayMode } from '@grafana/schema';
+import { Dimensions, TimeZone } from '@grafana/data';
+import { TooltipDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { Portal } from '../Portal/Portal';
 
 import { VizTooltipContainer } from './VizTooltipContainer';
 
-interface FlotPosition {
+export interface FlotPosition {
   pageX: number;
   pageY: number;
   x: number;
@@ -23,9 +23,9 @@ interface FlotPosition {
 // - key is the name of the dimension
 // - value is a tuple addressing which column and row from given dimension is active.
 //   If row is undefined, it means that we are not hovering over a datapoint
-type ActiveDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
+export type ActiveDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 
-interface VizTooltipContentProps<T extends Dimensions = any> {
+export interface VizTooltipContentProps<T extends Dimensions = any> {
   // Each dimension is described by array of fields representing it
   // I.e. for graph there are two dimensions: x and y axis:
   // { xAxis: [<array of time fields>], yAxis: [<array of value fields>]}
@@ -37,7 +37,7 @@ interface VizTooltipContentProps<T extends Dimensions = any> {
   mode: TooltipDisplayMode;
 }
 
-interface VizTooltipProps {
+export interface VizTooltipProps {
   /** Element used as tooltips content */
   content?: React.ReactElement;
 
@@ -57,7 +57,7 @@ interface VizTooltipProps {
 }
 
 /**
- * @alpha
+ * @public
  */
 export const VizTooltip = ({ content, position, offset }: VizTooltipProps) => {
   const styles = useStyles2(getStyles);

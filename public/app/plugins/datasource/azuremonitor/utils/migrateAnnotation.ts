@@ -1,7 +1,6 @@
-import { type AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 
-import { AzureQueryType } from '../dataquery.gen';
-import { type AzureMonitorQuery } from '../types/query';
+import { AzureMonitorQuery, AzureQueryType } from '../types';
 
 // The old Angular annotations editor put some properties (rawQuery, workspace, subscription)
 // on the root annotation object, rather than down in the 'targets' query value

@@ -1,13 +1,6 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
-import { type Dashboard } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { Dashboard } from '@grafana/schema/src/veneer/dashboard.types';
 
-import { type ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
-import { type LibraryElementDTO } from '../library-panels/types';
-
-// Dashboard JSON type for import
-export type DashboardJson = ExternalDashboard & Omit<Dashboard, 'panels'>;
+import { ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
 
 export type DeleteDashboardResponse = {
   id: number;
@@ -35,62 +28,4 @@ export interface PublicDashboardListWithPagination extends PublicDashboardListWi
   totalPages: number;
 }
 
-// Import-related types
-export enum DashboardSource {
-  Gcom = 0,
-  Json = 1,
-}
-
-export interface ImportDashboardDTO {
-  title: string;
-  uid: string;
-  gnetId: number | string;
-  constants: string[];
-  dataSources: DataSourceInstanceSettings[];
-  elements: LibraryElementDTO[];
-  folder: { uid: string; title?: string };
-}
-
-export enum InputType {
-  DataSource = 'datasource',
-  Constant = 'constant',
-  LibraryPanel = 'libraryPanel',
-}
-
-export enum LibraryPanelInputState {
-  New = 'new',
-  Exists = 'exists',
-  Different = 'different',
-}
-
-export interface DashboardInput {
-  name: string;
-  label: string;
-  description?: string;
-  info: string;
-  value: string;
-  type: InputType;
-}
-
-export interface DataSourceInput extends DashboardInput {
-  pluginId: string;
-  // A datasource on the importing instance whose name matches the original
-  // exported datasource name. Used to pre-select the import picker so users
-  // don't have to manually pick a same-named datasource.
-  matchedDatasource?: DatasourceSelection;
-}
-
-export interface LibraryPanelInput {
-  model: LibraryElementDTO;
-  state: LibraryPanelInputState;
-}
-
-export interface DashboardInputs {
-  dataSources: DataSourceInput[];
-  constants: DashboardInput[];
-  libraryPanels: LibraryPanelInput[];
-}
-
-export type DatasourceSelection = { uid: string; type: string; name?: string };
-
-export type ImportFormDataV2 = SaveDashboardCommand<DashboardV2Spec> & Record<string, unknown>;
+export type DashboardJson = ExternalDashboard & Omit<Dashboard, 'panels'>;

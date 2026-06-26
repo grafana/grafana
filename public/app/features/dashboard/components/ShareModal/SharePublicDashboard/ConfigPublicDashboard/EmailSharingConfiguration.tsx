@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useForm, Controller } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
 import { FieldSet, Button, ButtonGroup, Field, Input, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useAddRecipientMutation,
@@ -14,12 +14,12 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardAccessMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types';
 
-import { type PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
+import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
   shareType: PublicDashboardShareType;
@@ -190,8 +190,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
               <div className={styles.emailContainer}>
                 <Input
                   className={styles.emailInput}
-                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                  placeholder="me@example.com"
+                  placeholder="email"
                   autoCapitalize="none"
                   {...register('email', {
                     required: t('public-dashboard.email-sharing.input-required-email-text', 'Email is required'),

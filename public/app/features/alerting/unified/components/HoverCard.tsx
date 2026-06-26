@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { type Placement } from '@popperjs/core';
+import { Placement } from '@popperjs/core';
 import classnames from 'classnames';
-import { type ReactElement, type ReactNode, cloneElement, useRef } from 'react';
+import { cloneElement, ReactElement, ReactNode, useRef } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Popover as GrafanaPopover, PopoverController, Stack, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Popover as GrafanaPopover, PopoverController, useStyles2, Stack } from '@grafana/ui';
 
 export interface PopupCardProps {
-  children: ReactElement<Record<string, unknown>>;
+  children: ReactElement;
   header?: ReactNode;
   content: ReactElement;
   footer?: ReactNode;
@@ -17,10 +17,6 @@ export interface PopupCardProps {
   showAfter?: number;
   arrow?: boolean;
   showOn?: 'click' | 'hover';
-  disableBlur?: boolean;
-  isOpen?: boolean;
-  onClose?: () => void;
-  onToggle?: () => void;
 }
 
 export const PopupCard = ({
@@ -33,10 +29,6 @@ export const PopupCard = ({
   wrapperClassName,
   disabled = false,
   showOn = 'hover',
-  disableBlur = false,
-  isOpen,
-  onClose,
-  onToggle,
   ...rest
 }: PopupCardProps) => {
   const popoverRef = useRef<HTMLElement>(null);
@@ -60,37 +52,19 @@ export const PopupCard = ({
   return (
     <PopoverController content={body} hideAfter={100}>
       {(showPopper, hidePopper, popperProps) => {
-        // Use manual control if provided, otherwise use internal state
-        const isManuallyControlled = isOpen !== undefined;
-        const shouldShow = isManuallyControlled ? isOpen : popperProps.show;
-
-        const handleClose = () => {
-          if (onClose) {
-            onClose();
-          } else {
-            hidePopper();
-          }
-        };
-
-        const handleShow = () => {
-          if (!isManuallyControlled) {
-            showPopper();
-          }
-        };
-
         // support hover and click interaction
         const onClickProps = {
-          onClick: onToggle || (isManuallyControlled ? handleClose : showPopper),
+          onClick: showPopper,
         };
 
         const onHoverProps = {
-          onMouseLeave: handleClose,
-          onMouseEnter: handleShow,
+          onMouseLeave: hidePopper,
+          onMouseEnter: showPopper,
         };
 
         const blurFocusProps = {
-          onBlur: handleClose,
-          onFocus: handleShow,
+          onBlur: hidePopper,
+          onFocus: showPopper,
         };
 
         return (
@@ -98,29 +72,26 @@ export const PopupCard = ({
             {popoverRef.current && (
               <GrafanaPopover
                 {...popperProps}
-                show={shouldShow}
                 {...rest}
                 wrapperClassName={classnames(styles.popover, wrapperClassName)}
                 referenceElement={popoverRef.current}
                 renderArrow={arrow}
                 // @TODO
                 // if we want interaction with the content we should not pass blur / focus handlers but then clicking outside doesn't close the popper
-                {...(disableBlur ? {} : blurFocusProps)}
+                {...blurFocusProps}
                 // if we want hover interaction we have to make sure we add the leave / enter handlers
                 {...(showOnHover ? onHoverProps : {})}
-                hidePopper={handleClose}
               />
             )}
 
             {cloneElement(children, {
               ref: popoverRef,
-              onFocus: handleShow,
-              onBlur: disableBlur ? undefined : handleClose,
+              onFocus: showPopper,
+              onBlur: hidePopper,
               tabIndex: 0,
               // make sure we pass the correct interaction handlers here to the element we want to interact with
               ...(showOnHover ? onHoverProps : {}),
-              // Only add click handling if we have onToggle or not manually controlled
-              ...(showOnClick && (onToggle || !isManuallyControlled) ? onClickProps : {}),
+              ...(showOnClick ? onClickProps : {}),
             })}
           </>
         );
@@ -131,7 +102,7 @@ export const PopupCard = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   popover: css({
-    borderRadius: theme.shape.radius.lg,
+    borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,

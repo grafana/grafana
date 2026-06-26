@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { DynamicTable, type DynamicTableProps } from './DynamicTable';
+import { DynamicTable, DynamicTableProps } from './DynamicTable';
 
 export type DynamicTableWithGuidelinesProps<T> = Omit<DynamicTableProps<T>, 'renderPrefixHeader, renderPrefixCell'>;
 
@@ -41,7 +41,7 @@ export const DynamicTableWithGuidelines = <T extends object>({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   relative: css({
     position: 'relative',
     height: '100%',

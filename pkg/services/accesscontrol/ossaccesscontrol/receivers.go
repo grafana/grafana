@@ -3,7 +3,7 @@ package ossaccesscontrol
 import (
 	"context"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -13,7 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -22,30 +23,15 @@ import (
 )
 
 var ReceiversViewActions = []string{accesscontrol.ActionAlertingReceiversRead}
-var ReceiversEditActions = append(ReceiversViewActions, []string{accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversDelete, accesscontrol.ActionAlertingReceiversTestCreate}...)
-var ReceiversAdminActions = append(ReceiversEditActions, []string{accesscontrol.ActionAlertingReceiversReadSecrets, accesscontrol.ActionAlertingReceiversPermissionsRead, accesscontrol.ActionAlertingReceiversPermissionsWrite, accesscontrol.ActionAlertingReceiversUpdateProtected}...)
+var ReceiversEditActions = append(ReceiversViewActions, []string{accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversDelete}...)
+var ReceiversAdminActions = append(ReceiversEditActions, []string{accesscontrol.ActionAlertingReceiversReadSecrets, accesscontrol.ActionAlertingReceiversPermissionsRead, accesscontrol.ActionAlertingReceiversPermissionsWrite}...)
 
 // defaultPermissions returns the default permissions for a newly created receiver.
 func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 	return []accesscontrol.SetResourcePermissionCommand{
-		{BuiltinRole: string(org.RoleEditor), Permission: string(models.PermissionEdit)},
-		{BuiltinRole: string(org.RoleViewer), Permission: string(models.PermissionView)},
+		{BuiltinRole: string(org.RoleEditor), Permission: string(alertingac.ReceiverPermissionEdit)},
+		{BuiltinRole: string(org.RoleViewer), Permission: string(alertingac.ReceiverPermissionView)},
 	}
-}
-
-// ReceiverPermissionsRoleRegistrations returns the templated reader/writer fixed
-// roles for alerting receiver resource permissions
-// (fixed:receivers.permissions:reader and :writer). These mirror the roles
-// declared by ProvideReceiverPermissionsService through resourcepermissions.New;
-// the identity fields below must match the Options passed there.
-func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
-	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
-		Resource:       receiverPermissionsResource,
-		APIGroup:       accesscontrol.AlertingNotificationsApiGroup,
-		ReaderRoleName: receiverPermissionsReaderRoleName,
-		WriterRoleName: receiverPermissionsWriterRoleName,
-		RoleGroup:      models.AlertRolesGroup,
-	})
 }
 
 func ProvideReceiverPermissionsService(
@@ -54,12 +40,8 @@ func ProvideReceiverPermissionsService(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          receiverPermissionsResource,
-		APIGroup:          accesscontrol.AlertingNotificationsApiGroup,
+		Resource:          "receivers",
 		ResourceAttribute: "uid",
-		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
-			return models.ScopeReceiversProvider.GetResourceIDFromUID(resourceID), nil
-		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
 			Teams:           true,
@@ -67,13 +49,13 @@ func ProvideReceiverPermissionsService(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			string(models.PermissionView):  append([]string{}, ReceiversViewActions...),
-			string(models.PermissionEdit):  append([]string{}, ReceiversEditActions...),
-			string(models.PermissionAdmin): append([]string{}, ReceiversAdminActions...),
+			string(alertingac.ReceiverPermissionView):  append([]string{}, ReceiversViewActions...),
+			string(alertingac.ReceiverPermissionEdit):  append([]string{}, ReceiversEditActions...),
+			string(alertingac.ReceiverPermissionAdmin): append([]string{}, ReceiversAdminActions...),
 		},
-		ReaderRoleName: receiverPermissionsReaderRoleName,
-		WriterRoleName: receiverPermissionsWriterRoleName,
-		RoleGroup:      models.AlertRolesGroup,
+		ReaderRoleName: "Alerting receiver permission reader",
+		WriterRoleName: "Alerting receiver permission writer",
+		RoleGroup:      ngalert.AlertRolesGroup,
 	}
 
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
@@ -94,7 +76,7 @@ type ReceiverPermissionsService struct {
 // SetDefaultPermissions sets the default permissions for a newly created receiver.
 func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string) {
 	r.log.Debug("Setting default permissions for receiver", "receiver_uid", uid)
-	resourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(uid)
+	resourceId := alertingac.ScopeReceiversProvider.GetResourceIDFromUID(uid)
 	permissions := defaultPermissions()
 	clearCache := false
 	if user != nil && user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
@@ -103,7 +85,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 			r.log.Error("Could not make user admin", "receiver_uid", uid, "resource_id", resourceId, "id", user.GetID(), "error", err)
 		} else {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: string(models.PermissionAdmin),
+				UserID: userID, Permission: string(alertingac.ReceiverPermissionAdmin),
 			})
 			clearCache = true
 		}
@@ -124,7 +106,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 // permissions to read and write permissions for the receiver, as well as read permissions for users, service accounts, and teams.
 func copyPermissionUser(orgID int64) identity.Requester {
 	return accesscontrol.BackgroundUser("receiver_access_service", orgID, org.RoleAdmin, accesscontrol.ConcatPermissions(
-		accesscontrol.PermissionsForActions(ReceiversAdminActions, models.ScopeReceiversAll),
+		accesscontrol.PermissionsForActions(ReceiversAdminActions, alertingac.ScopeReceiversAll),
 		[]accesscontrol.Permission{ // Permissions needed for GetPermissions to return user, service account, and team permissions.
 			{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
@@ -139,8 +121,8 @@ func copyPermissionUser(orgID int64) identity.Requester {
 // name.
 func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error) {
 	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
-	oldResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(oldUID)
-	newResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(newUID)
+	oldResourceId := alertingac.ScopeReceiversProvider.GetResourceIDFromUID(oldUID)
+	newResourceId := alertingac.ScopeReceiversProvider.GetResourceIDFromUID(newUID)
 	currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldResourceId)
 	if err != nil {
 		return 0, err
@@ -168,7 +150,7 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 }
 
 func (r ReceiverPermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, uid string) error {
-	return r.Service.DeleteResourcePermissions(ctx, orgID, models.ScopeReceiversProvider.GetResourceIDFromUID(uid))
+	return r.Service.DeleteResourcePermissions(ctx, orgID, alertingac.ScopeReceiversProvider.GetResourceIDFromUID(uid))
 }
 
 // toSetResourcePermissionCommands converts a list of resource permissions to a list of set resource permission commands.
@@ -186,8 +168,8 @@ func (r ReceiverPermissionsService) toSetResourcePermissionCommands(permissions 
 		cmds = append(cmds, accesscontrol.SetResourcePermissionCommand{
 			Permission:  permission,
 			BuiltinRole: p.BuiltInRole,
-			TeamID:      p.TeamID,
-			UserID:      p.UserID,
+			TeamID:      p.TeamId,
+			UserID:      p.UserId,
 		})
 	}
 	return cmds

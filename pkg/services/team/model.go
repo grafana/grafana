@@ -16,20 +16,17 @@ var (
 	ErrLastTeamAdmin                        = errors.New("not allowed to remove last admin")
 	ErrNotAllowedToUpdateTeam               = errors.New("user not allowed to update team")
 	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("user not allowed to update team in another org")
-	ErrTeamMemberAlreadyAdded               = errors.New("user is already added to this team")
-	ErrMultipleTeamsFound                   = errors.New("multiple teams found with same deprecated internal ID")
-	ErrTeamUpdateConflict                   = errors.New("team update conflict: resource version does not match")
+
+	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
 )
 
 // Team model
 type Team struct {
-	ID            int64  `json:"id" xorm:"pk autoincr 'id'"`
-	UID           string `json:"uid" xorm:"uid"`
-	OrgID         int64  `json:"orgId" xorm:"org_id"`
-	Name          string `json:"name"`
-	Email         string `json:"email"`
-	ExternalUID   string `json:"externalUID" xorm:"external_uid"`
-	IsProvisioned bool   `json:"isProvisioned" xorm:"is_provisioned"`
+	ID    int64  `json:"id" xorm:"pk autoincr 'id'"`
+	UID   string `json:"uid" xorm:"uid"`
+	OrgID int64  `json:"orgId" xorm:"org_id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -39,20 +36,16 @@ type Team struct {
 // COMMANDS
 
 type CreateTeamCommand struct {
-	// required:true
-	Name          string `json:"name" binding:"Required"`
-	Email         string `json:"email"`
-	ExternalUID   string `json:"-"`
-	IsProvisioned bool   `json:"-"`
-	OrgID         int64  `json:"-"`
+	Name  string `json:"name" binding:"Required"`
+	Email string `json:"email"`
+	OrgID int64  `json:"-"`
 }
 
 type UpdateTeamCommand struct {
-	ID          int64  `json:"-"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	ExternalUID string `json:"-"`
-	OrgID       int64  `json:"-"`
+	ID    int64
+	Name  string
+	Email string
+	OrgID int64 `json:"-"`
 }
 
 type DeleteTeamCommand struct {
@@ -84,35 +77,24 @@ type GetTeamsByUserQuery struct {
 }
 
 type SearchTeamsQuery struct {
-	Query             string
-	Name              string
-	Limit             int
-	Page              int
-	OrgID             int64 `xorm:"org_id"`
-	SortOpts          []model.SortOption
-	TeamIds           []int64
-	UIDs              []string
-	SignedInUser      identity.Requester
-	HiddenUsers       map[string]struct{}
-	WithAccessControl bool
+	Query        string
+	Name         string
+	Limit        int
+	Page         int
+	OrgID        int64 `xorm:"org_id"`
+	SortOpts     []model.SortOption
+	TeamIds      []int64
+	SignedInUser identity.Requester
+	HiddenUsers  map[string]struct{}
 }
 
 type TeamDTO struct {
-	// @deprecated Use UID instead
-	// required: true
-	ID int64 `json:"id" xorm:"id"`
-	// required: true
-	UID string `json:"uid" xorm:"uid"`
-	// required: true
-	OrgID int64 `json:"orgId" xorm:"org_id"`
-	// required: true
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	ExternalUID string `json:"externalUID" xorm:"external_uid"`
-	// required: true
-	IsProvisioned bool   `json:"isProvisioned"`
-	AvatarURL     string `json:"avatarUrl"`
-	// required: true
+	ID            int64           `json:"id" xorm:"id"`
+	UID           string          `json:"uid" xorm:"uid"`
+	OrgID         int64           `json:"orgId" xorm:"org_id"`
+	Name          string          `json:"name"`
+	Email         string          `json:"email"`
+	AvatarURL     string          `json:"avatarUrl"`
 	MemberCount   int64           `json:"memberCount"`
 	Permission    PermissionType  `json:"permission"`
 	AccessControl map[string]bool `json:"accessControl"`
@@ -141,12 +123,11 @@ type SearchTeamQueryResult struct {
 
 // TeamMember model
 type TeamMember struct {
-	ID         int64  `xorm:"pk autoincr 'id'"`
-	UID        string `xorm:"uid"`
-	OrgID      int64  `xorm:"org_id"`
-	TeamID     int64  `xorm:"team_id"`
-	UserID     int64  `xorm:"user_id"`
-	External   bool   // Signals that the membership has been created by an external systems, such as LDAP
+	ID         int64 `xorm:"pk autoincr 'id'"`
+	OrgID      int64 `xorm:"org_id"`
+	TeamID     int64 `xorm:"team_id"`
+	UserID     int64 `xorm:"user_id"`
+	External   bool  // Signals that the membership has been created by an external systems, such as LDAP
 	Permission PermissionType
 
 	Created time.Time
@@ -157,7 +138,6 @@ type TeamMember struct {
 // COMMANDS
 
 type AddTeamMemberCommand struct {
-	// required:true
 	UserID     int64          `json:"userId" binding:"Required"`
 	Permission PermissionType `json:"-"`
 }
@@ -193,12 +173,10 @@ type GetTeamMembersQuery struct {
 // Projections and DTOs
 
 type TeamMemberDTO struct {
-	UID        string         `json:"uid" xorm:"uid"`
 	OrgID      int64          `json:"orgId" xorm:"org_id"`
 	TeamID     int64          `json:"teamId" xorm:"team_id"`
-	TeamUID    string         `json:"teamUID" xorm:"team_uid"`
+	TeamUID    string         `json:"teamUID" xorm:"uid"`
 	UserID     int64          `json:"userId" xorm:"user_id"`
-	UserUID    string         `json:"userUID" xorm:"user_uid"`
 	External   bool           `json:"-"`
 	AuthModule string         `json:"auth_module"`
 	Email      string         `json:"email"`

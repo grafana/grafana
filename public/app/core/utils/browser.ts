@@ -33,7 +33,7 @@ export function checkBrowserCompatibility() {
   return true;
 }
 
-function userAgentIsApple() {
+export function userAgentIsApple() {
   const appleRe = /(iPhone|iPad|Mac)/;
   return appleRe.test(navigator.platform);
 }

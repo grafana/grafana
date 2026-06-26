@@ -1,6 +1,6 @@
 import { Chance } from 'chance';
 
-import { type MigrateDataResponseItemDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { MigrateDataResponseItemDto } from '../api';
 
 export function wellFormedDatasourceMigrationItem(
   seed = 1,

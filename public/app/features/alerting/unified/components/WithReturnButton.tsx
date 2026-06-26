@@ -1,4 +1,4 @@
-import { type JSX, cloneElement, useCallback } from 'react';
+import { cloneElement, useCallback } from 'react';
 
 import { useReturnToPrevious } from '@grafana/runtime';
 

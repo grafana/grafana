@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -57,7 +56,7 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	// We don't want to measure DB initialization
 	b.ResetTimer()
 
-	for range b.N {
+	for i := 0; i < b.N; i++ {
 		getDSPermissions(b, ac, dataSources)
 	}
 }
@@ -141,7 +140,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 }
 
 func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
-	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
@@ -150,18 +149,15 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		qs, supportbundlestest.NewFakeBundleService(), nil)
+		qs, supportbundlestest.NewFakeBundleService())
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)
 	for i := 0; i < numberOfTeams; i++ {
 		// Create team
-		teamCmd := team.CreateTeamCommand{
-			Name:  fmt.Sprintf("%s%v", "team", i),
-			Email: fmt.Sprintf("%s%v@example.org", "team", i),
-			OrgID: 1,
-		}
-		team, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
+		teamName := fmt.Sprintf("%s%v", "team", i)
+		teamEmail := fmt.Sprintf("%s@example.org", teamName)
+		team, err := teamSvc.CreateTeam(context.Background(), teamName, teamEmail, 1)
 		require.NoError(b, err)
 		teamId := team.ID
 		teamIds = append(teamIds, teamId)

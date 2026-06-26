@@ -1,10 +1,9 @@
 import { cloneDeep } from 'lodash';
 
-import { type PanelModel, type FieldConfigSource, FieldMatcherID, ReducerID } from '@grafana/data';
+import { PanelModel, FieldConfigSource, FieldMatcherID, ReducerID } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel as PanelModelState } from 'app/features/dashboard/state/PanelModel';
+import { DashboardModel, PanelModel as PanelModelState } from 'app/features/dashboard/state';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { dataLayersToAnnotations } from 'app/features/dashboard-scene/serialization/dataLayersToAnnotations';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';

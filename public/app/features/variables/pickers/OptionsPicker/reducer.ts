@@ -1,17 +1,17 @@
 import uFuzzy from '@leeoniya/ufuzzy';
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString } from 'lodash';
 
-import { containsSearchFilter, type VariableOption, type VariableWithOptions } from '@grafana/data';
+import { containsSearchFilter, VariableOption, VariableWithOptions } from '@grafana/data';
 
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { ALL_VARIABLE_VALUE } from '../../constants';
 import { isMulti, isQuery } from '../../guard';
 
 // https://catonmat.net/my-favorite-regex :)
-const REGEXP_NON_ASCII = /[^ -~]/m;
+const REGEXP_NON_ASCII = /[^ -~]/gm;
 
-interface ToggleOption {
+export interface ToggleOption {
   option?: VariableOption;
   forceSelect: boolean;
   clearOthers: boolean;

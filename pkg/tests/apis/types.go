@@ -14,7 +14,8 @@ type AnyResource struct {
 
 type AnyResourceList struct {
 	metav1.TypeMeta `json:",inline"`
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []map[string]any `json:"items"`
+	Items []map[string]any `json:"items,omitempty"`
 }

@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { useCallback, useState } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { Button, ClipboardButton, TextArea, Stack, TextLink } from '@grafana/ui';
+import { Button, ClipboardButton, HorizontalGroup, TextArea, Stack } from '@grafana/ui';
 
-import { type SaveDashboardFormProps } from '../types';
+import { SaveDashboardFormProps } from '../types';
 
 export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveDashboardFormProps, 'isLoading'>) => {
   const [dashboardJSON, setDashboardJson] = useState(() => {
@@ -25,27 +24,23 @@ export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveD
     <>
       <Stack direction="column" gap={2}>
         <div>
-          <Trans i18nKey="dashboard.save-provisioned-dashboard-form.cannot-be-saved">
-            This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
-            the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
-          </Trans>
+          This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
+          the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
           <br />
           <i>
-            <Trans i18nKey="dashboard.save-provisioned-dashboard-form.see-docs">
-              See{' '}
-              <TextLink href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards" external>
-                documentation
-              </TextLink>{' '}
-              for more information about provisioning.
-            </Trans>
+            See{' '}
+            <a
+              className="external-link"
+              href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards"
+              target="_blank"
+              rel="noreferrer"
+            >
+              documentation
+            </a>{' '}
+            for more information about provisioning.
           </i>
           <br /> <br />
-          <Trans
-            i18nKey="dashboard.save-provisioned-dashboard-form.file-path"
-            values={{ filePath: dashboard.meta.provisionedExternalId }}
-          >
-            <strong>File path:</strong> {'{{filePath}}'}
-          </Trans>
+          <strong>File path: </strong> {dashboard.meta.provisionedExternalId}
         </div>
         <TextArea
           spellCheck={false}
@@ -55,19 +50,17 @@ export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveD
           }}
           className={styles.json}
         />
-        <Stack>
+        <HorizontalGroup>
           <Button variant="secondary" onClick={onCancel} fill="outline">
-            <Trans i18nKey="dashboard.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+            Cancel
           </Button>
           <ClipboardButton icon="copy" getText={() => dashboardJSON}>
-            <Trans i18nKey="dashboard.save-provisioned-dashboard-form.copy-json-to-clipboard">
-              Copy JSON to clipboard
-            </Trans>
+            Copy JSON to clipboard
           </ClipboardButton>
           <Button type="submit" onClick={saveToFile}>
-            <Trans i18nKey="dashboard.save-provisioned-dashboard-form.save-json-to-file">Save JSON to file</Trans>
+            Save JSON to file
           </Button>
-        </Stack>
+        </HorizontalGroup>
       </Stack>
     </>
   );

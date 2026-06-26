@@ -1,20 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { type AzureCredentials } from '@grafana/azure-sdk';
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { getCredentials, updateCredentials } from '../../credentials';
-import { type AzureMonitorDataSourceSettings } from '../../types/types';
+import { AzureDataSourceSettings, AzureCredentials } from '../../types';
 
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';
 import { DefaultSubscription } from './DefaultSubscription';
 
 export interface Props {
-  options: AzureMonitorDataSourceSettings;
-  updateOptions: (optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings) => void;
+  options: AzureDataSourceSettings;
+  updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
   getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
 }
 
@@ -27,7 +26,7 @@ export const MonitorConfig = (props: Props) => {
     if (!subscriptionId) {
       setSubscriptions([]);
     }
-    updateOptions((options: AzureMonitorDataSourceSettings) =>
+    updateOptions((options) =>
       updateCredentials({ ...options, jsonData: { ...options.jsonData, subscriptionId } }, credentials)
     );
   };
@@ -53,7 +52,7 @@ export const MonitorConfig = (props: Props) => {
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
-        userIdentityEnabled={config.azure.userIdentityEnabled && !!config.featureToggles.azureMonitorEnableUserAuth}
+        userIdentityEnabled={config.azure.userIdentityEnabled}
         credentials={credentials}
         azureCloudOptions={getAzureCloudOptions()}
         onCredentialsChange={onCredentialsChange}
@@ -75,3 +74,5 @@ export const MonitorConfig = (props: Props) => {
     </>
   );
 };
+
+export default MonitorConfig;

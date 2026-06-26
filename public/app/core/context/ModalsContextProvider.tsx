@@ -3,11 +3,11 @@ import * as React from 'react';
 
 import { textUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { ConfirmModal, type ConfirmModalProps, ModalsContext } from '@grafana/ui';
-import { type ModalsContextState } from '@grafana/ui/internal';
+import { ConfirmModal, ConfirmModalProps, ModalsContext } from '@grafana/ui';
+import { ModalsContextState } from '@grafana/ui/src/components/Modal/ModalsContext';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
-import { appEvents } from '../app_events';
+import appEvents from '../app_events';
 
 export interface Props {
   children: React.ReactNode;
@@ -87,6 +87,7 @@ function showConfirmModal({ payload }: ShowConfirmModalEvent, setState: (state: 
     text,
     text2htmlBind,
     yesText = 'Yes',
+    icon,
     title = 'Confirm',
     yesButtonVariant,
   } = payload;
@@ -95,8 +96,9 @@ function showConfirmModal({ payload }: ShowConfirmModalEvent, setState: (state: 
 
   const props: ConfirmModalProps = {
     confirmText: yesText,
-    confirmVariant: yesButtonVariant,
+    confirmButtonVariant: yesButtonVariant,
     confirmationText: confirmText,
+    icon,
     title,
     body: text,
     description: text2 && text2htmlBind ? textUtil.sanitize(text2) : text2,

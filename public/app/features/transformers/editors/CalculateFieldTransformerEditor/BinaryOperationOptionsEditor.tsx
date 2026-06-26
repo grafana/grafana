@@ -1,18 +1,11 @@
+import { BinaryOperationID, binaryOperators, FieldMatcherID, FieldType, SelectableValue } from '@grafana/data';
 import {
-  type BinaryOperationID,
-  binaryOperators,
-  FieldMatcherID,
-  FieldType,
-  type SelectableValue,
-} from '@grafana/data';
-import {
-  type BinaryValue,
-  type BinaryOptions,
+  BinaryValue,
+  BinaryOptions,
   CalculateFieldMode,
-  type CalculateFieldTransformerOptions,
+  CalculateFieldTransformerOptions,
   checkBinaryValueType,
-} from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
+} from '@grafana/data/src/transformations/transformers/calculateField';
 import { getFieldTypeIconName, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { LABEL_WIDTH } from './constants';
@@ -137,16 +130,10 @@ export const BinaryOperationOptionsEditor = (props: {
   return (
     <>
       <InlineFieldRow>
-        <InlineField
-          label={t('transformers.binary-operation-options-editor.label-operation', 'Operation')}
-          labelWidth={LABEL_WIDTH}
-        >
+        <InlineField label="Operation" labelWidth={LABEL_WIDTH}>
           <Select
             allowCustomValue={true}
-            placeholder={t(
-              'transformers.binary-operation-options-editor.placeholder-fields-or-number',
-              'Field(s) or number'
-            )}
+            placeholder="Field(s) or number"
             options={leftNames}
             className="min-width-18"
             value={JSON.stringify(binary?.left)}
@@ -164,10 +151,7 @@ export const BinaryOperationOptionsEditor = (props: {
         <InlineField>
           <Select
             allowCustomValue={true}
-            placeholder={t(
-              'transformers.binary-operation-options-editor.placeholder-field-or-number',
-              'Field or number'
-            )}
+            placeholder="Field or number"
             className="min-width-10"
             options={rightNames}
             value={JSON.stringify(binary?.right)}

@@ -1,14 +1,17 @@
+// Libraries
 import { memo } from 'react';
 
-import { type AnnotationQuery } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/plugin-ui';
+import { AnnotationQuery } from '@grafana/data';
+import { EditorField, EditorRow } from '@grafana/experimental';
 import { Input, Stack } from '@grafana/ui';
 
-import { type LokiQuery } from '../types';
+// Types
+import { getNormalizedLokiQuery } from '../queryUtils';
+import { LokiQuery, LokiQueryType } from '../types';
 
 import { LokiOptionFields } from './LokiOptionFields';
 import { LokiQueryField } from './LokiQueryField';
-import { type LokiQueryEditorProps } from './types';
+import { LokiQueryEditorProps } from './types';
 
 type Props = LokiQueryEditorProps & {
   annotation?: AnnotationQuery<LokiQuery>;
@@ -24,11 +27,17 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
   }
 
   const onChangeQuery = (query: LokiQuery) => {
+    // the current version of annotations only stores an optional boolean
+    // field `instant` to handle the instant/range switch.
+    // we need to maintain compatibility for now, so we do the same.
+    // we explicitly call `getNormalizedLokiQuery` to make sure `queryType`
+    // is set up correctly.
+    const instant = getNormalizedLokiQuery(query).queryType === LokiQueryType.Instant;
     onAnnotationChange({
       ...annotation,
       expr: query.expr,
       maxLines: query.maxLines,
-      queryType: 'range',
+      instant,
     });
   };
 
@@ -51,6 +60,7 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
           ExtraFieldElement={
             <LokiOptionFields
               lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
+              resolution={queryWithRefId.resolution || 1}
               query={queryWithRefId}
               onRunQuery={() => {}}
               onChange={onChangeQuery}

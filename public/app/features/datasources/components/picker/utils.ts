@@ -1,11 +1,11 @@
-import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   initLastUsedDatasourceKeyForDashboard,
   setLastUsedDatasourceKeyForDashboard,
 } from 'app/features/dashboard/utils/dashboard';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { type QueryGroupDataSource } from 'app/types/query';
+import { QueryGroupDataSource } from 'app/types';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
@@ -48,8 +48,7 @@ export function dataSourceLabel(
 export function getDataSourceCompareFn(
   current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined,
   recentlyUsedDataSources: string[],
-  dataSourceVariablesIDs: string[],
-  favoriteDatasources: string[] = []
+  dataSourceVariablesIDs: string[]
 ) {
   const cmpDataSources = (a: DataSourceInstanceSettings, b: DataSourceInstanceSettings) => {
     const nameA = a.name.toUpperCase();
@@ -62,19 +61,7 @@ export function getDataSourceCompareFn(
       return 1;
     }
 
-    // Sort favorite data sources after current but before recently used.
-    const aIsFavorite = favoriteDatasources.includes(a.uid);
-    const bIsFavorite = favoriteDatasources.includes(b.uid);
-    if (aIsFavorite && !bIsFavorite) {
-      return -1;
-    } else if (bIsFavorite && !aIsFavorite) {
-      return 1;
-    } else if (aIsFavorite && bIsFavorite) {
-      // If both are favorites, sort alphabetically by name.
-      return nameA < nameB ? -1 : 1;
-    }
-
-    // Sort recently used data sources by latest used, but after current and favorites.
+    // Sort recently used data sources by latest used, but after current.
     const aIndex = recentlyUsedDataSources.indexOf(a.uid);
     const bIndex = recentlyUsedDataSources.indexOf(b.uid);
     if (aIndex > -1 && aIndex > bIndex) {

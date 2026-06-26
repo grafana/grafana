@@ -1,8 +1,8 @@
 import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { INSTANCE_ID, PANEL_STYLES, overrideToFixedColor } from '../../home/Insights';
-import { InsightsMenuButton } from '../InsightsMenuButton';
+import { INSTANCE_ID, overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getGrafanaInstancesByStateScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
@@ -51,14 +51,12 @@ export function getGrafanaInstancesByStateScene(datasource: DataSourceRef, panel
           .overrideColor(overrideToFixedColor('normal'))
           .matchFieldsWithName('pending')
           .overrideColor(overrideToFixedColor('pending'))
-          .matchFieldsWithName('recovering')
-          .overrideColor(overrideToFixedColor('recovering'))
           .matchFieldsWithName('error')
           .overrideColor(overrideToFixedColor('error'))
           .matchFieldsWithName('nodata')
           .overrideColor(overrideToFixedColor('nodata'))
       )
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

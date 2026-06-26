@@ -1,28 +1,29 @@
-import { type AnyAction, createAction, type PayloadAction } from '@reduxjs/toolkit';
+import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
 import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
-import { combineLatest, identity, type Observable, of, type SubscriptionLike, type Unsubscribable } from 'rxjs';
+import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
-  type AbsoluteTimeRange,
-  type DataFrame,
+  AbsoluteTimeRange,
+  DataFrame,
   DataQueryErrorType,
-  type DataQueryResponse,
-  type DataSourceApi,
+  DataQueryResponse,
+  DataSourceApi,
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
   LoadingState,
   LogsVolumeType,
-  type QueryFixAction,
-  type ScopedVars,
-  type SupplementaryQueryType,
+  PanelEvents,
+  QueryFixAction,
+  ScopedVars,
+  SupplementaryQueryType,
+  toLegacyResponseData,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
-import { notifyApp } from 'app/core/reducers/appNotification';
+import { DataQuery } from '@grafana/schema';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -34,21 +35,23 @@ import {
   stopQueryState,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
-  type ExploreItemState,
-  type ExplorePanelData,
-  type ExploreState,
-  type QueryOptions,
-  type QueryTransaction,
-  type SupplementaryQueries,
-} from 'app/types/explore';
-import { createAsyncThunk, type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
+  createAsyncThunk,
+  ExploreItemState,
+  ExplorePanelData,
+  QueryTransaction,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types';
+import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
 
+import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData, decorateWithLogsResult } from '../utils/decorators';
@@ -63,7 +66,13 @@ import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
-import { createCacheKey, filterLogRowsByIndex, getCorrelationsData, getResultsFromCache } from './utils';
+import {
+  createCacheKey,
+  filterLogRowsByIndex,
+  getCorrelationsData,
+  getDatasourceUIDs,
+  getResultsFromCache,
+} from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -98,9 +107,6 @@ export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQu
 export interface ChangeQueriesPayload {
   exploreId: string;
   queries: DataQuery[];
-  options?: {
-    skipAutoImport?: boolean;
-  };
 }
 export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
@@ -112,18 +118,20 @@ export interface CancelQueriesPayload {
 }
 export const cancelQueriesAction = createAction<CancelQueriesPayload>('explore/cancelQueries');
 
-interface QueriesImportedPayload {
+export interface QueriesImportedPayload {
   exploreId: string;
   queries: DataQuery[];
 }
-const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
+export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
 export interface QueryStoreSubscriptionPayload {
   exploreId: string;
   querySubscription: Unsubscribable;
 }
 
-const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>('explore/queryStoreSubscription');
+export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
+  'explore/queryStoreSubscription'
+);
 
 const setSupplementaryQueryEnabledAction = createAction<{
   exploreId: string;
@@ -131,7 +139,7 @@ const setSupplementaryQueryEnabledAction = createAction<{
   enabled: boolean;
 }>('explore/setSupplementaryQueryEnabledAction');
 
-interface StoreSupplementaryQueryDataProvider {
+export interface StoreSupplementaryQueryDataProvider {
   exploreId: string;
   dataProvider?: Observable<DataQueryResponse>;
   type: SupplementaryQueryType;
@@ -145,7 +153,7 @@ export interface CleanSupplementaryQueryDataProvider {
 /**
  * Stores available supplementary query data provider after running the query. Used internally by runQueries().
  */
-const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
+export const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
   'explore/storeSupplementaryQueryDataProviderAction'
 );
 
@@ -157,7 +165,7 @@ export const cleanSupplementaryQueryAction = createAction<{ exploreId: string; t
   'explore/cleanSupplementaryQueryAction'
 );
 
-interface StoreSupplementaryQueryDataSubscriptionPayload {
+export interface StoreSupplementaryQueryDataSubscriptionPayload {
   exploreId: string;
   dataSubscription?: SubscriptionLike;
   type: SupplementaryQueryType;
@@ -198,7 +206,7 @@ export interface ChangeLoadingStatePayload {
   exploreId: string;
   loadingState: LoadingState;
 }
-const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
+export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
 
 export interface SetPausedStatePayload {
   exploreId: string;
@@ -232,20 +240,20 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
  * Adds query results to cache.
  * This is currently used to cache last 5 query results for log queries run from logs navigation (pagination).
  */
-interface AddResultsToCachePayload {
+export interface AddResultsToCachePayload {
   exploreId: string;
   cacheKey: string;
   queryResponse: ExplorePanelData;
 }
-const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
+export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
 
 /**
  *  Clears cache.
  */
-interface ClearCachePayload {
+export interface ClearCachePayload {
   exploreId: string;
 }
-const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
+export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 
 /**
  * Adds a query row after the row with the given index.
@@ -317,7 +325,7 @@ const getImportableQueries = async (
 
 export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
   'explore/changeQueries',
-  async ({ queries, exploreId, options }, { getState, dispatch }) => {
+  async ({ queries, exploreId }, { getState, dispatch }) => {
     let queriesImported = false;
     const oldQueries = getState().explore.panes[exploreId]!.queries;
     const rootUID = getState().explore.panes[exploreId]!.datasourceInstance?.uid;
@@ -332,13 +340,10 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     for (const newQuery of queries) {
       for (const oldQuery of oldQueries) {
         if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
-          // Skip automatic import if explicitly requested (e.g., query library replacement)
-          if (!options?.skipAutoImport) {
-            const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
-            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
-            await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
-            queriesImported = true;
-          }
+          const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
+          const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+          await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
+          queriesImported = true;
         }
 
         if (
@@ -346,7 +351,8 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
           newQuery.refId === oldQuery.refId &&
           newQuery.datasource?.uid !== oldQuery.datasource?.uid
         ) {
-          const correlations = await getCorrelationsFromStorage(dispatch, queries, rootUID);
+          const datasourceUIDs = getDatasourceUIDs(MIXED_DATASOURCE_NAME, queries);
+          const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
           dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
         }
       }
@@ -522,10 +528,7 @@ interface RunQueriesOptions {
 export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   'explore/runQueries',
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
-    // Running cancel queries when Explore is scanning will cancel the scanning state
-    if (!getState().explore?.panes[exploreId]?.scanning) {
-      dispatch(cancelQueries(exploreId));
-    }
+    dispatch(cancelQueries(exploreId));
 
     const { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks } = await getCorrelationsData(
       getState(),
@@ -655,12 +658,11 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
           // Keep scanning for results if this was the last scanning transaction
           if (exploreState!.scanning) {
-            console.log(data.series);
             if (data.state === LoadingState.Done && data.series.length === 0) {
               const range = getShiftedTimeRange(-1, exploreState!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
               dispatch(runQueries({ exploreId }));
-            } else if (data.series[0]?.length > 0 || data.state === LoadingState.Done) {
+            } else {
               // We can stop scanning if we have a result
               dispatch(scanStopAction({ exploreId }));
             }
@@ -1051,7 +1053,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
-      queriesChangedIndex: state.queriesChangedIndex + 1,
       queries,
     };
   }
@@ -1302,10 +1303,14 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   return state;
 };
 
-const processQueryResponse = (state: ExploreItemState, action: PayloadAction<QueryEndedPayload>): ExploreItemState => {
+export const processQueryResponse = (
+  state: ExploreItemState,
+  action: PayloadAction<QueryEndedPayload>
+): ExploreItemState => {
   const { response } = action.payload;
   const {
     request,
+    series,
     error,
     graphResult,
     logsResult,
@@ -1322,15 +1327,27 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
     if (error.type === DataQueryErrorType.Timeout || error.type === DataQueryErrorType.Cancelled) {
       return { ...state };
     }
+
+    // Send error to Angular editors
+    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
+      state.eventBridge.emit(PanelEvents.dataError, error);
+    }
   }
 
   if (!request) {
     return { ...state };
   }
 
+  // Send legacy data to Angular editors
+  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
+  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
+    const legacy = series.map((v) => toLegacyResponseData(v));
+    state.eventBridge.emit(PanelEvents.dataReceived, legacy);
+  }
+
   return {
     ...state,
-    queriesChangedIndexAtRun: state.queriesChangedIndex,
     queryResponse: response,
     graphResult,
     tableResult,

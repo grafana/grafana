@@ -53,7 +53,6 @@ $ docker-compose up -d
 ```
 
 Browse
-
 - http://grafana.loc/
 - http://prometheus.loc/
 

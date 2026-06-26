@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { connect, type ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { type StoreState } from 'app/types/store';
+
+import { StoreState } from '../../types';
 
 import { AnonUsersDevicesTable } from './Users/AnonUsersTable';
 import { fetchUsersAnonymousDevices, changeAnonUserSort, changeAnonPage, changeAnonQuery } from './state/actions';
@@ -59,28 +59,13 @@ const UserListAnonymousDevicesPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
-            placeholder={t(
-              'admin.user-list-anonymous-devices-page-un-connected.placeholder-search-devices-by-ip-address',
-              'Search devices by IP address.'
-            )}
+            placeholder="Search devices by IP address."
             autoFocus={true}
             value={query}
             onChange={changeAnonQuery}
           />
           <RadioButtonGroup
-<<<<<<< HEAD
             options={[{ label: 'Активные в течение последних 30 дней', value: true }]}
-=======
-            options={[
-              {
-                label: t(
-                  'admin.user-list-anonymous-devices-page-un-connected.label.active-last-days',
-                  'Active last 30 days'
-                ),
-                value: true,
-              },
-            ]}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             // onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
             value={filters.find((f) => f.name === 'activeLast30Days')?.value}
             className={styles.filter}
@@ -100,6 +85,14 @@ const UserListAnonymousDevicesPageUnConnected = ({
 };
 
 export const UserListAnonymousDevicesPageContent = connector(UserListAnonymousDevicesPageUnConnected);
+
+export function UserListAnonymousDevicesPage() {
+  return (
+    <Page navId="anonymous-users">
+      <UserListAnonymousDevicesPageContent />
+    </Page>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -133,3 +126,5 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+export default UserListAnonymousDevicesPage;

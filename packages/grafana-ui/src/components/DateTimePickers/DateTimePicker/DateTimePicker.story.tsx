@@ -1,8 +1,8 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { action } from '@storybook/addon-actions';
+import { StoryFn, Meta } from '@storybook/react';
 import { useState } from 'react';
-import { action } from 'storybook/actions';
 
-import { dateTime, type DateTime } from '@grafana/data';
+import { dateTime, DateTime } from '@grafana/data';
 
 import { DateTimePicker } from './DateTimePicker';
 import mdx from './DateTimePicker.mdx';
@@ -15,7 +15,7 @@ const minimumDate = new Date();
 minimumDate.setDate(minimumDate.getDate() - 7);
 
 const meta: Meta<typeof DateTimePicker> = {
-  title: 'Date time pickers/DateTimePicker',
+  title: 'Pickers and Editors/TimePickers/DateTimePicker',
   component: DateTimePicker,
   argTypes: {
     date: {

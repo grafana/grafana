@@ -3,62 +3,21 @@ package models
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"hash/fnv"
 	"slices"
 	"unsafe"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // GroupByAll is a special value defined by alertmanager that can be used in a Route's GroupBy field to aggregate by all possible labels.
 const GroupByAll = "..."
 
-// DefaultRoutingTreeName is the name the API uses for the default (root) routing tree in both
-// responses (e.g. the default entry in LIST) and as its stable identity for RBAC scopes.
-// The future canonical name is accepted on input via DefaultRoutingTreeNameAlias. A later change can flip this
-// to the alias once clients recognize it.
-const DefaultRoutingTreeName = "user-defined"
-
-// DefaultRoutingTreeNameAlias is the future canonical name for the default (root) routing tree.
-// It is accepted on API input as an alias for DefaultRoutingTreeName so newer clients can use it,
-// but it is not yet emitted in LIST responses or used as an RBAC identifier.
-const DefaultRoutingTreeNameAlias = "default"
-
-const NamedRouteLabel = "__grafana_managed_route__"
-
-// IsDefaultRoutingTreeName reports whether name refers to the default (root) routing tree,
-// accepting both the emitted name and the alias.
-func IsDefaultRoutingTreeName(name string) bool {
-	return name == DefaultRoutingTreeName || name == DefaultRoutingTreeNameAlias
-}
-
-// CanonicalizeRoutingTreeName maps the default-tree alias to the emitted default-tree name and
-// returns any other name unchanged. Used as a stable identity for RBAC scope, so both names resolve to the same
-// permission.
-func CanonicalizeRoutingTreeName(name string) string {
-	if name == DefaultRoutingTreeNameAlias {
-		return DefaultRoutingTreeName
-	}
-	return name
-}
-
-// NotificationSettingsType is an enum of the notification settings configurations a rule may have.
-// It is used by ListAlertRulesQuery to filter rules by the type of notification settings configured.
-type NotificationSettingsType string
-
-const (
-	NotificationSettingsTypeSimplifiedRouting NotificationSettingsType = "SimplifiedRouting"
-	NotificationSettingsTypeNamedRoutingTree  NotificationSettingsType = "NamedRoutingTree"
-)
-
 // DefaultNotificationSettingsGroupBy are the default required GroupBy fields for notification settings.
 var DefaultNotificationSettingsGroupBy = []string{FolderTitleLabel, model.AlertNameLabel}
 
-type ListContactPointRoutingsQuery struct {
+type ListNotificationSettingsQuery struct {
 	OrgID            int64
 	ReceiverName     string
 	TimeIntervalName string
@@ -67,93 +26,16 @@ type ListContactPointRoutingsQuery struct {
 // NotificationSettings represents the settings for sending notifications for a single AlertRule. It is used to
 // automatically generate labels and an associated matching route containing the given settings.
 type NotificationSettings struct {
-	ContactPointRouting *ContactPointRouting
-	PolicyRouting       *PolicyRouting
-}
-
-func NotificationSettingsFromContact(cpr ContactPointRouting) NotificationSettings {
-	return NotificationSettings{
-		ContactPointRouting: &cpr,
-	}
-}
-
-func NotificationSettingsFromPolicy(policy string) NotificationSettings {
-	return NotificationSettings{
-		PolicyRouting: &PolicyRouting{Policy: policy},
-	}
-}
-
-func (s *NotificationSettings) Validate() error {
-	if s == nil {
-		return nil
-	}
-	if s.PolicyRouting != nil && s.ContactPointRouting != nil {
-		return errors.New("only one of policy routing or contact point routing can be specified")
-	}
-	if s.ContactPointRouting != nil {
-		return s.ContactPointRouting.Validate()
-	}
-	if s.PolicyRouting != nil {
-		return s.PolicyRouting.Validate()
-	}
-	return nil
-}
-
-func (s *NotificationSettings) Equals(other *NotificationSettings) bool {
-	if s == nil || other == nil {
-		return s == nil && other == nil
-	}
-	if !s.ContactPointRouting.Equals(other.ContactPointRouting) {
-		return false
-	}
-	if !s.PolicyRouting.Equals(other.PolicyRouting) {
-		return false
-	}
-	return true
-}
-
-func (s *NotificationSettings) Fingerprint(features featuremgmt.FeatureToggles) data.Fingerprint {
-	if s == nil {
-		return data.Fingerprint(0)
-	}
-	if s.ContactPointRouting != nil {
-		return s.ContactPointRouting.Fingerprint(features)
-	}
-	if s.PolicyRouting != nil {
-		return s.PolicyRouting.Fingerprint(features)
-	}
-	return data.Fingerprint(0)
-}
-
-func (s *NotificationSettings) ToLabels(features featuremgmt.FeatureToggles) data.Labels {
-	if s == nil {
-		return make(data.Labels)
-	}
-	// NotificationSettings with both ContactPointRouting and PolicyRouting is invalid, however, if we somehow get into
-	// this state at a point when labels are required for alert routing, we let ContactPointRouting take precedence.
-	if s.ContactPointRouting != nil {
-		return s.ContactPointRouting.ToLabels(features)
-	}
-	if s.PolicyRouting != nil {
-		return s.PolicyRouting.ToLabels(features)
-	}
-	return make(data.Labels)
-}
-
-// ContactPointRouting sends to an autogenerated policy node with the given settings. Used for simplified
-// routing that sends directly to a contact point.
-type ContactPointRouting struct {
 	Receiver string `json:"receiver"`
 
-	GroupBy             []string        `json:"group_by,omitempty"`
-	GroupWait           *model.Duration `json:"group_wait,omitempty"`
-	GroupInterval       *model.Duration `json:"group_interval,omitempty"`
-	RepeatInterval      *model.Duration `json:"repeat_interval,omitempty"`
-	MuteTimeIntervals   []string        `json:"mute_time_intervals,omitempty"`
-	ActiveTimeIntervals []string        `json:"active_time_intervals,omitempty"`
+	GroupBy           []string        `json:"group_by,omitempty"`
+	GroupWait         *model.Duration `json:"group_wait,omitempty"`
+	GroupInterval     *model.Duration `json:"group_interval,omitempty"`
+	RepeatInterval    *model.Duration `json:"repeat_interval,omitempty"`
+	MuteTimeIntervals []string        `json:"mute_time_intervals,omitempty"`
 }
 
-func (s *ContactPointRouting) GetUID() string {
+func (s *NotificationSettings) GetUID() string {
 	return NameToUid(s.Receiver)
 }
 
@@ -164,19 +46,10 @@ func (s *ContactPointRouting) GetUID() string {
 //
 // To ensure consistent and valid generated routes, this should be used instead of GroupBy when generating fingerprints
 // or fingerprint-level routes.
-func (s *ContactPointRouting) NormalizedGroupBy() []string {
+func (s *NotificationSettings) NormalizedGroupBy() []string {
 	if len(s.GroupBy) == 0 {
 		// Inherit group from parent.
 		return nil
-	}
-
-	seen := make(map[string]struct{}, len(s.GroupBy))
-	deduped := make([]string, 0, len(s.GroupBy))
-	for _, lbl := range s.GroupBy {
-		if _, ok := seen[lbl]; !ok {
-			seen[lbl] = struct{}{}
-			deduped = append(deduped, lbl)
-		}
 	}
 
 	defaultGroupBySet := make(map[string]struct{}, len(DefaultNotificationSettingsGroupBy))
@@ -185,7 +58,7 @@ func (s *ContactPointRouting) NormalizedGroupBy() []string {
 	}
 
 	var customLabels []string
-	for _, lbl := range deduped {
+	for _, lbl := range s.GroupBy {
 		if lbl == GroupByAll {
 			return []string{GroupByAll}
 		}
@@ -206,7 +79,7 @@ func (s *ContactPointRouting) NormalizedGroupBy() []string {
 // It returns an error if any of the validation checks fail.
 // The receiver must be specified.
 // GroupWait, GroupInterval, RepeatInterval must be positive durations.
-func (s *ContactPointRouting) Validate() error {
+func (s *NotificationSettings) Validate() error {
 	if s.Receiver == "" {
 		return errors.New("receiver must be specified")
 	}
@@ -219,13 +92,6 @@ func (s *ContactPointRouting) Validate() error {
 	if s.RepeatInterval != nil && *s.RepeatInterval <= 0 {
 		return errors.New("repeat interval must be greater than zero")
 	}
-	seen := make(map[string]struct{}, len(s.GroupBy))
-	for _, g := range s.GroupBy {
-		if _, exists := seen[g]; exists {
-			return fmt.Errorf("duplicate value %q in group_by", g)
-		}
-		seen[g] = struct{}{}
-	}
 	return nil
 }
 
@@ -235,17 +101,17 @@ func (s *ContactPointRouting) Validate() error {
 //   - AutogeneratedRouteLabel: "true"
 //   - AutogeneratedRouteReceiverNameLabel: Receiver
 //   - AutogeneratedRouteSettingsHashLabel: Fingerprint (if the NotificationSettings are not all default)
-func (s *ContactPointRouting) ToLabels(features featuremgmt.FeatureToggles) data.Labels {
+func (s *NotificationSettings) ToLabels() data.Labels {
 	result := make(data.Labels, 3)
 	result[AutogeneratedRouteLabel] = "true"
 	result[AutogeneratedRouteReceiverNameLabel] = s.Receiver
 	if !s.IsAllDefault() {
-		result[AutogeneratedRouteSettingsHashLabel] = s.Fingerprint(features).String()
+		result[AutogeneratedRouteSettingsHashLabel] = s.Fingerprint().String()
 	}
 	return result
 }
 
-func (s *ContactPointRouting) Equals(other *ContactPointRouting) bool {
+func (s *NotificationSettings) Equals(other *NotificationSettings) bool {
 	durationEqual := func(d1, d2 *model.Duration) bool {
 		if d1 == nil || d2 == nil {
 			return d1 == d2
@@ -270,35 +136,27 @@ func (s *ContactPointRouting) Equals(other *ContactPointRouting) bool {
 	if !slices.Equal(s.MuteTimeIntervals, other.MuteTimeIntervals) {
 		return false
 	}
-	if !slices.Equal(s.ActiveTimeIntervals, other.ActiveTimeIntervals) {
-		return false
-	}
 	sGr := s.GroupBy
 	oGr := other.GroupBy
 	return slices.Equal(sGr, oGr)
 }
 
-// IsAllDefault checks if the ContactPointRouting object has all default values for optional fields (all except Receiver) .
-func (s *ContactPointRouting) IsAllDefault() bool {
-	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0 && len(s.ActiveTimeIntervals) == 0
+// IsAllDefault checks if the NotificationSettings object has all default values for optional fields (all except Receiver) .
+func (s *NotificationSettings) IsAllDefault() bool {
+	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0
 }
 
-// IsEmpty checks if the ContactPointRouting object is equal to the zero value (all fields are empty).
-func (s *ContactPointRouting) IsEmpty() bool {
-	return s.Receiver == "" && s.IsAllDefault()
-}
-
-// NewDefaultContactPointRouting creates a new default ContactPointRouting with the specified receiver.
-func NewDefaultContactPointRouting(receiver string) ContactPointRouting {
-	return ContactPointRouting{
+// NewDefaultNotificationSettings creates a new default NotificationSettings with the specified receiver.
+func NewDefaultNotificationSettings(receiver string) NotificationSettings {
+	return NotificationSettings{
 		Receiver: receiver,
 	}
 }
 
-// Fingerprint calculates a hash value to uniquely identify a ContactPointRouting by its attributes.
-// The hash is calculated by concatenating the strings and durations of the ContactPointRouting attributes
+// Fingerprint calculates a hash value to uniquely identify a NotificationSettings by its attributes.
+// The hash is calculated by concatenating the strings and durations of the NotificationSettings attributes
 // and using an invalid UTF-8 sequence as a separator.
-func (s *ContactPointRouting) Fingerprint(features featuremgmt.FeatureToggles) data.Fingerprint {
+func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 	h := fnv.New64()
 	tmp := make([]byte, 8)
 
@@ -328,61 +186,5 @@ func (s *ContactPointRouting) Fingerprint(features featuremgmt.FeatureToggles) d
 	for _, interval := range s.MuteTimeIntervals {
 		writeString(interval)
 	}
-	// Add a separator between the time intervals to avoid collisions
-	// when all settings are the same including interval names except for the interval type (mute vs active).
-	// Use new algorithm by default, unless feature flag is explicitly disabled
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features == nil || (features != nil && features.IsEnabledGlobally(featuremgmt.FlagAlertingUseNewSimplifiedRoutingHashAlgorithm)) {
-		_, _ = h.Write([]byte{255})
-	}
-	for _, interval := range s.ActiveTimeIntervals {
-		writeString(interval)
-	}
-
 	return data.Fingerprint(h.Sum64())
-}
-
-// PolicyRouting routes alerts based on a defined named notification policy.
-type PolicyRouting struct {
-	Policy string
-}
-
-func (s *PolicyRouting) Validate() error {
-	if s.Policy == "" {
-		return errors.New("policy must be specified")
-	}
-	if IsDefaultRoutingTreeName(s.Policy) {
-		return fmt.Errorf("policy routing should not explicitly point to the default tree: %q", DefaultRoutingTreeName)
-	}
-	return nil
-}
-
-func (s *PolicyRouting) IsDefault() bool {
-	return s.Policy == "" || IsDefaultRoutingTreeName(s.Policy)
-}
-
-func (s *PolicyRouting) Equals(other *PolicyRouting) bool {
-	if s == nil || other == nil {
-		return s == nil && other == nil
-	}
-	return s.Policy == other.Policy
-}
-
-func (s *PolicyRouting) Fingerprint(_ featuremgmt.FeatureToggles) data.Fingerprint {
-	h := fnv.New64()
-	_, _ = h.Write(unsafe.Slice(unsafe.StringData(s.Policy), len(s.Policy))) //nolint:gosec
-	return data.Fingerprint(h.Sum64())
-}
-
-func (s *PolicyRouting) ToLabels(features featuremgmt.FeatureToggles) data.Labels {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		return make(data.Labels)
-	}
-	if s.IsDefault() {
-		return make(data.Labels)
-	}
-	return data.Labels{
-		NamedRouteLabel: s.Policy,
-	}
 }

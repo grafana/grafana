@@ -1,13 +1,12 @@
-import { type AnyAction, createAction } from '@reduxjs/toolkit';
+import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { type DataSourcePluginMeta, type DataSourceSettings, type LayoutMode, LayoutModes } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type TestingStatus } from '@grafana/runtime';
-import { type DataSourcesState, type DataSourceSettingsState } from 'app/types/datasources';
+import { DataSourcePluginMeta, DataSourceSettings, LayoutMode, LayoutModes } from '@grafana/data';
+import { TestingStatus } from '@grafana/runtime';
+import { DataSourcesState, DataSourceSettingsState } from 'app/types';
 
-import { type GenericDataSourcePlugin } from '../types';
+import { GenericDataSourcePlugin } from '../types';
 
-import { type DataSourceTypesLoadedPayload } from './actions';
+import { DataSourceTypesLoadedPayload } from './actions';
 
 export const initialState: DataSourcesState = {
   dataSources: [],
@@ -35,10 +34,8 @@ export const dataSourcePluginsLoaded = createAction<DataSourceTypesLoadedPayload
 export const setDataSourcesSearchQuery = createAction<string>('dataSources/setDataSourcesSearchQuery');
 export const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
 export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/setDataSourceTypeSearchQuery');
-export const setNameAndVersion = createAction<{ name: string; version?: number }>('dataSources/setNameAndVersion');
-export const setDefaultAndVersion = createAction<{ isDefault: boolean; version?: number }>(
-  'dataSources/setDefaultAndVersion'
-);
+export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
+export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
 export const setIsSortAscending = createAction<boolean>('dataSources/setIsSortAscending');
 
 // Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
@@ -93,21 +90,14 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
     return { ...state, dataSourceMeta: action.payload };
   }
 
-  if (setNameAndVersion.match(action)) {
-    return {
-      ...state,
-      dataSource: {
-        ...state.dataSource,
-        name: action.payload.name,
-        version: action.payload.version,
-      },
-    };
+  if (setDataSourceName.match(action)) {
+    return { ...state, dataSource: { ...state.dataSource, name: action.payload } };
   }
 
-  if (setDefaultAndVersion.match(action)) {
+  if (setIsDefault.match(action)) {
     return {
       ...state,
-      dataSource: { ...state.dataSource, isDefault: action.payload.isDefault, version: action.payload.version },
+      dataSource: { ...state.dataSource, isDefault: action.payload },
     };
   }
 
@@ -156,10 +146,7 @@ export const dataSourceSettingsReducer = (
     return {
       ...state,
       testingStatus: {
-        message: t(
-          'datasources.data-source-settings-reducer.message.testing-could-couple-minutes',
-          'Testing... this could take up to a couple of minutes'
-        ),
+        message: 'Testing... this could take up to a couple of minutes',
         status: 'info',
       },
     };

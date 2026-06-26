@@ -1,7 +1,7 @@
-import { type DataSourceRef as CommonDataSourceRef, type DataSourceRef, type DataTopic } from '../common/common.gen';
-import * as raw from '../raw/dashboard/x/types.gen';
+import { DataSourceRef as CommonDataSourceRef, DataSourceRef, DataTopic } from '../common/common.gen';
+import * as raw from '../raw/dashboard/x/dashboard_types.gen';
 
-import { type DataQuery } from './common.types';
+import { DataQuery } from './common.types';
 
 export type { CommonDataSourceRef as DataSourceRef };
 
@@ -18,7 +18,6 @@ export enum VariableHide {
   dontHide,
   hideLabel,
   hideVariable,
-  inControlsMenu,
 }
 
 export interface VariableModel extends Omit<raw.VariableModel, 'datasource'> {
@@ -62,8 +61,6 @@ export interface DataTransformerConfig<TOptions = any> extends raw.DataTransform
   options: TOptions;
   topic?: DataTopic;
 }
-
-export interface TimeOption extends raw.TimeOption {}
 
 export interface TimePickerConfig extends raw.TimePickerConfig {}
 

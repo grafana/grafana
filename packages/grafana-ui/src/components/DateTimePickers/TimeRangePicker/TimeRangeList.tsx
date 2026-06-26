@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { useRef, type ReactNode } from 'react';
+import { useRef, ReactNode } from 'react';
 
-import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { TimeOption } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
+import { t } from '../../../utils/i18n';
 
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeOption } from './TimeRangeOption';
@@ -55,7 +55,6 @@ const Options = ({ options, value, onChange, title }: Props) => {
         onKeyDown={handleKeys}
         ref={localRef}
         aria-roledescription={t('time-picker.time-range.aria-role', 'Time range selection')}
-        className={styles.list}
       >
         {options.map((option, index) => (
           <TimeRangeOption
@@ -67,6 +66,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
           />
         ))}
       </ul>
+      <div className={styles.grow} />
     </>
   );
 };
@@ -91,8 +91,9 @@ const getStyles = () => ({
   }),
 });
 
-const getOptionsStyles = (theme: GrafanaTheme2) => ({
-  list: css({
-    padding: theme.spacing(0.5),
+const getOptionsStyles = () => ({
+  grow: css({
+    flexGrow: 1,
+    alignItems: 'flex-start',
   }),
 });

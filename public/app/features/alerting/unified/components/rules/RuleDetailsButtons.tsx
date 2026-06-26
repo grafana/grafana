@@ -1,17 +1,16 @@
-import { Fragment, type JSX } from 'react';
+import { Fragment } from 'react';
 
 import { textUtil } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { useReturnToPrevious } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
-import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { Annotation } from '../../utils/constants';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink } from '../../utils/misc';
-import { isFederatedRuleGroup, rulerRuleType } from '../../utils/rules';
+import { isFederatedRuleGroup, isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 
 interface Props {
   rule: CombinedRule;
@@ -49,7 +48,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
         target="_blank"
         href={createExploreLink(rulesSource, rule.query)}
       >
-        <Trans i18nKey="alerting.rule-details-buttons.see-graph">See graph</Trans>
+        See graph
       </LinkButton>
     );
   }
@@ -63,7 +62,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
         target="_blank"
         href={textUtil.sanitizeUrl(rule.annotations[Annotation.runbookURL])}
       >
-        <Trans i18nKey="alerting.rule-details-buttons.view-runbook">View runbook</Trans>
+        View runbook
       </LinkButton>
     );
   }
@@ -81,7 +80,7 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
             setReturnToPrevious(rule.name);
           }}
         >
-          <Trans i18nKey="alerting.rule-details-buttons.go-to-dashboard">Go to dashboard</Trans>
+          Go to dashboard
         </LinkButton>
       );
       const panelId = rule.annotations[Annotation.panelID];
@@ -97,22 +96,22 @@ const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
               setReturnToPrevious(rule.name);
             }}
           >
-            <Trans i18nKey="alerting.rule-details-buttons.go-to-panel">Go to panel</Trans>
+            Go to panel
           </LinkButton>
         );
       }
     }
   }
 
-  if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
+  if (isGrafanaAlertingRule(rule.rulerRule)) {
     buttons.push(
       <Fragment key="history">
         <Button
           size="sm"
           icon="history"
-          onClick={() => rulerRuleType.grafana.rule(rule.rulerRule) && showStateHistoryModal(rule.rulerRule)}
+          onClick={() => isGrafanaRulerRule(rule.rulerRule) && showStateHistoryModal(rule.rulerRule)}
         >
-          <Trans i18nKey="alerting.rule-details-buttons.show-state-history">Show state history</Trans>
+          Show state history
         </Button>
         {StateHistoryModal}
       </Fragment>

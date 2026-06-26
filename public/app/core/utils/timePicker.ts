@@ -1,13 +1,4 @@
-import { isString } from 'lodash';
-
-import {
-  type TimeRange,
-  toUtc,
-  type AbsoluteTimeRange,
-  type RawTimeRange,
-  dateTime,
-  type DateTime,
-} from '@grafana/data';
+import { TimeRange, toUtc, AbsoluteTimeRange, RawTimeRange } from '@grafana/data';
 
 type CopiedTimeRangeResult = { range: RawTimeRange; isError: false } | { range: string; isError: true };
 
@@ -66,10 +57,3 @@ export async function getCopiedTimeRange(): Promise<CopiedTimeRangeResult> {
     return { range: raw, isError: true };
   }
 }
-
-export const toUtcDateTimeIfIsoString = (value: string | DateTime): string | DateTime => {
-  if (isString(value) && value.includes('Z')) {
-    return dateTime(value).utc();
-  }
-  return value;
-};

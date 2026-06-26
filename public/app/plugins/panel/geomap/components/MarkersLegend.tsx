@@ -1,26 +1,20 @@
 import { css, cx } from '@emotion/css';
-import type BaseLayer from 'ol/layer/Base';
+import BaseLayer from 'ol/layer/Base';
 import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
-import {
-  getMinMaxAndDelta,
-  type DataFrame,
-  formattedValueToString,
-  getFieldColorModeForField,
-  type GrafanaTheme2,
-} from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { useStyles2, type VizLegendItem } from '@grafana/ui';
+import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
+import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
+import { useStyles2, VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
-import { type DimensionSupplier } from 'app/features/dimensions/types';
+import { config } from 'app/core/config';
+import { DimensionSupplier } from 'app/features/dimensions';
 
-import { type StyleConfigState } from '../style/types';
-import { type MapLayerState } from '../types';
+import { StyleConfigState } from '../style/types';
+import { MapLayerState } from '../types';
 
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;
@@ -65,9 +59,9 @@ export function MarkersLegend(props: MarkersLegendProps) {
         <div className={style.layerName}>{layerName}</div>
         <div className={cx(style.layerBody, style.fixedColorContainer)}>
           <SanitizedSVG
-            src={`${window.__grafana_public_path__}build/${symbol}`}
+            src={`public/${symbol}`}
             className={style.legendSymbol}
-            title={t('geomap.markers-legend.title-symbol', 'Symbol')}
+            title={'Symbol'}
             style={{ fill: color, opacity: opacity }}
           />
         </div>
@@ -84,7 +78,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
   if (colorMode.isContinuous && colorMode.getColors) {
     const colors = colorMode.getColors(config.theme2);
     const colorRange = getMinMaxAndDelta(colorField);
-    // TODO: explore showing mean on the gradient scale
+    // TODO: explore showing mean on the gradiant scale
     // const stats = reduceField({
     //   field: color.field!,
     //   reducers: [

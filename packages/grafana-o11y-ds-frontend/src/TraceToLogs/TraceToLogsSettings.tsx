@@ -2,12 +2,8 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 
-import {
-  type DataSourceJsonData,
-  type DataSourceInstanceSettings,
-  type DataSourcePluginOptionsEditorProps,
-} from '@grafana/data';
-import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
+import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { ConfigDescriptionLink, ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
@@ -84,7 +80,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     'grafana-opensearch-datasource', // external
     'grafana-falconlogscale-datasource', // external
     'googlecloud-logging-datasource', // external
-    'victoriametrics-logs-datasource', // external
   ];
 
   const traceToLogs = useMemo(
@@ -131,7 +126,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
                 datasourceUid: ds.uid,
               })
             }
-            onClear={() => updateTracesToLogs({ datasourceUid: undefined })}
           />
         </InlineField>
       </InlineFieldRow>

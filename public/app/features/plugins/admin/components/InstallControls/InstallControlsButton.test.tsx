@@ -5,8 +5,8 @@ import { PluginSignatureStatus } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getPluginsStateMock } from '../../mocks/mockHelpers';
-import { type CatalogPlugin, PluginStatus } from '../../types';
+import { getPluginsStateMock } from '../../__mocks__';
+import { CatalogPlugin, PluginStatus } from '../../types';
 
 import { InstallControlsButton } from './InstallControlsButton';
 
@@ -32,25 +32,48 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
+  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
-  managed: {
-    enabled: false,
-    strategy: undefined,
-  },
 };
 
+function setup(opts: { angularSupportEnabled: boolean; angularDetected: boolean }) {
+  config.angularSupportEnabled = opts.angularSupportEnabled;
+  render(
+    <TestProvider>
+      <InstallControlsButton
+        plugin={{ ...plugin, angularDetected: opts.angularDetected }}
+        pluginStatus={PluginStatus.INSTALL}
+      />
+    </TestProvider>
+  );
+}
+
 describe('InstallControlsButton', () => {
-  it('should not allow install if angular is detected', () => {
-    render(
-      <TestProvider>
-        <InstallControlsButton plugin={{ ...plugin, angularDetected: true }} pluginStatus={PluginStatus.INSTALL} />
-      </TestProvider>
-    );
-    const el = screen.getByRole('button');
-    expect(el).toHaveTextContent(/install/i);
-    expect(el).toBeVisible();
-    expect(el).toBeDisabled();
+  let oldAngularSupportEnabled = config.angularSupportEnabled;
+  afterAll(() => {
+    config.angularSupportEnabled = oldAngularSupportEnabled;
   });
+
+  describe.each([{ angularSupportEnabled: true }, { angularSupportEnabled: false }])(
+    'angular support is $angularSupportEnabled',
+    ({ angularSupportEnabled }) => {
+      it.each([
+        { angularDetected: true, expectEnabled: angularSupportEnabled },
+        { angularDetected: false, expectEnabled: true },
+      ])('angular detected is $angularDetected', ({ angularDetected, expectEnabled }) => {
+        setup({ angularSupportEnabled, angularDetected });
+
+        const el = screen.getByRole('button');
+        expect(el).toHaveTextContent(/install/i);
+        expect(el).toBeVisible();
+        if (expectEnabled) {
+          expect(el).toBeEnabled();
+        } else {
+          expect(el).toBeDisabled();
+        }
+      });
+    }
+  );
 
   it("should allow to uninstall a plugin even if it's unpublished", () => {
     render(
@@ -101,13 +124,16 @@ describe('InstallControlsButton', () => {
   });
 
   describe('update button on managed instance', () => {
+    const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
     const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
     beforeAll(() => {
+      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
     });
 
     afterAll(() => {
+      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
 
@@ -173,13 +199,16 @@ describe('InstallControlsButton', () => {
   });
 
   describe('uninstall button on managed instance', () => {
+    const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
     const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
     beforeAll(() => {
+      config.featureToggles.managedPluginsInstall = true;
       config.pluginAdminExternalManageEnabled = true;
     });
 
     afterAll(() => {
+      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
 
@@ -244,91 +273,11 @@ describe('InstallControlsButton', () => {
     });
   });
 
-  describe('marketplace plugin', () => {
-    it('should render a link to grafana.com installation tab instead of install button when not entitled', () => {
-      render(
-        <TestProvider>
-          <InstallControlsButton
-            plugin={{ ...plugin, distributionType: 'marketplace' }}
-            pluginStatus={PluginStatus.INSTALL}
-            entitlement={{ entitled: false, isLoading: false }}
-          />
-        </TestProvider>
-      );
-      const link = screen.getByRole('link');
-      expect(link).toHaveTextContent(/contact us/i);
-      expect(link).toHaveAttribute('href', expect.stringContaining('/plugins/test-plugin?tab=installation'));
-      expect(link).toHaveAttribute('target', '_blank');
-      expect(link).toHaveAttribute('aria-disabled', 'false');
-    });
-
-    it('should render a disabled contact us link with a spinner when entitlement is loading', () => {
-      render(
-        <TestProvider>
-          <InstallControlsButton
-            plugin={{ ...plugin, distributionType: 'marketplace' }}
-            pluginStatus={PluginStatus.INSTALL}
-            entitlement={{ entitled: false, isLoading: true }}
-          />
-        </TestProvider>
-      );
-      const link = screen.getByRole('link');
-      expect(link).toHaveTextContent(/contact us/i);
-      expect(link).toHaveAttribute('aria-disabled', 'true');
-      expect(link.querySelector('svg')).toBeInTheDocument();
-      expect(screen.queryByRole('button')).not.toBeInTheDocument();
-    });
-
-    it('should render the normal install button when the org is entitled', () => {
-      render(
-        <TestProvider>
-          <InstallControlsButton
-            plugin={{ ...plugin, distributionType: 'marketplace' }}
-            pluginStatus={PluginStatus.INSTALL}
-            entitlement={{ entitled: true, isLoading: false }}
-          />
-        </TestProvider>
-      );
-      const button = screen.getByRole('button');
-      expect(button).toHaveTextContent(/install/i);
-      expect(button).not.toBeDisabled();
-      expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    });
-
-    it('should not render marketplace link when distributionType is not set', () => {
-      render(
-        <TestProvider>
-          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.INSTALL} />
-        </TestProvider>
-      );
-      const button = screen.getByRole('button');
-      expect(button).toHaveTextContent(/install/i);
-      expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    });
-
-    it('should not render marketplace link for non-marketplace distribution types', () => {
-      render(
-        <TestProvider>
-          <InstallControlsButton
-            plugin={{ ...plugin, distributionType: 'catalog' }}
-            pluginStatus={PluginStatus.INSTALL}
-          />
-        </TestProvider>
-      );
-      const button = screen.getByRole('button');
-      expect(button).toHaveTextContent(/install/i);
-      expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    });
-  });
-
   describe('update button', () => {
     it('should be hidden when plugin is managed', () => {
       render(
         <TestProvider>
-          <InstallControlsButton
-            plugin={{ ...plugin, managed: { enabled: true } }}
-            pluginStatus={PluginStatus.UPDATE}
-          />
+          <InstallControlsButton plugin={{ ...plugin, isManaged: true }} pluginStatus={PluginStatus.UPDATE} />
         </TestProvider>
       );
       expect(screen.queryByText('Update')).not.toBeInTheDocument();

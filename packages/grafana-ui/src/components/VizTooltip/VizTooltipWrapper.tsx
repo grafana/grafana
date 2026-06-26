@@ -1,30 +1,24 @@
-import { css } from '@emotion/css';
-import clsx from 'clsx';
-import React, { type HTMLAttributes } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { HTMLAttributes } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
-/** @alpha */
-export interface VizTooltipWrapperProps extends HTMLAttributes<HTMLDivElement> {
+export interface Props extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-/** @alpha */
-export const VizTooltipWrapper = ({ children, className }: VizTooltipWrapperProps) => {
+export const VizTooltipWrapper = ({ children, className }: Props) => {
   const styles = useStyles2(getStyles);
-  return (
-    <div className={clsx(styles, className)} data-testid={selectors.components.Panels.Visualization.Tooltip.Wrapper}>
-      {children}
-    </div>
-  );
+
+  return <div className={cx(styles.wrapper, className)}>{children}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme2) =>
-  css({
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
     display: 'flex',
     flexDirection: 'column',
     fontSize: theme.typography.bodySmall.fontSize,
-  });
+  }),
+});

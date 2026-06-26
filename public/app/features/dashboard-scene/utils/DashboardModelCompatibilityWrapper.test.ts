@@ -1,12 +1,18 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, SceneQueryRunner, SceneTimeRange, VizPanel, SceneDataTransformer } from '@grafana/scenes';
+import {
+  behaviors,
+  SceneQueryRunner,
+  SceneTimeRange,
+  VizPanel,
+  SceneDataTransformer,
+  SceneDataLayerSet,
+} from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
@@ -26,7 +32,7 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.links).toEqual([NEW_LINK]);
     expect(wrapper.time.from).toBe('now-6h');
     expect(wrapper.timezone).toBe('America/New_York');
-    expect(wrapper.weekStart).toBe('saturday');
+    expect(wrapper.weekStart).toBe('friday');
     expect(wrapper.timepicker.refresh_intervals![0]).toEqual('5s');
     expect(wrapper.timepicker.hidden).toEqual(true);
     expect(wrapper.panels).toHaveLength(5);
@@ -102,21 +108,17 @@ describe('DashboardModelCompatibilityWrapper', () => {
   it('Checks if annotations are editable', () => {
     const { wrapper, scene } = setup();
 
-    expect(wrapper.canEditAnnotations()).toBe(false);
+    expect(wrapper.canEditAnnotations()).toBe(true);
     expect(wrapper.canEditAnnotations(scene.state.uid)).toBe(false);
 
     scene.setState({
       meta: {
         canEdit: false,
         canMakeEditable: false,
-        annotationsPermissions: {
-          dashboard: { canAdd: true, canEdit: true, canDelete: true },
-        },
       },
     });
 
-    expect(wrapper.canEditAnnotations()).toBe(true);
-    expect(wrapper.canEditAnnotations(scene.state.uid)).toBe(true);
+    expect(wrapper.canEditAnnotations()).toBe(false);
   });
 });
 
@@ -132,6 +134,11 @@ function setup() {
       canEdit: true,
       canMakeEditable: true,
       annotationsPermissions: {
+        organization: {
+          canEdit: true,
+          canAdd: true,
+          canDelete: true,
+        },
         dashboard: {
           canEdit: false,
           canAdd: false,
@@ -140,11 +147,11 @@ function setup() {
       },
     },
     $timeRange: new SceneTimeRange({
-      weekStart: 'saturday',
+      weekStart: 'friday',
       timeZone: 'America/New_York',
     }),
-    $data: new DashboardDataLayerSet({
-      annotationLayers: [
+    $data: new SceneDataLayerSet({
+      layers: [
         new DashboardAnnotationsDataLayer({
           key: `annotations-test`,
           query: {

@@ -27,9 +27,9 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{ // Not sure about preservering names...
-					time.Unix(5, 0), new(1.0),
+					time.Unix(5, 0), float64Pointer(1),
 				}, tp{
-					time.Unix(10, 0), new(1.0),
+					time.Unix(10, 0), float64Pointer(1),
 				}),
 			),
 		},
@@ -41,9 +41,9 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{ // Not sure about preservering names...
-					time.Unix(5, 0), new(100.0),
+					time.Unix(5, 0), float64Pointer(100),
 				}, tp{
-					time.Unix(10, 0), new(99.0),
+					time.Unix(10, 0), float64Pointer(99),
 				}),
 			),
 		},
@@ -55,9 +55,9 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{ // Not sure about preservering names...
-					time.Unix(5, 0), new(100.0),
+					time.Unix(5, 0), float64Pointer(100),
 				}, tp{
-					time.Unix(10, 0), new(99.0),
+					time.Unix(10, 0), float64Pointer(99),
 				}),
 			),
 		},
@@ -69,9 +69,9 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{ // Not sure about preservering names...
-					time.Unix(5, 0), new(4.0),
+					time.Unix(5, 0), float64Pointer(4),
 				}, tp{
-					time.Unix(10, 0), new(2.0),
+					time.Unix(10, 0), float64Pointer(2),
 				}),
 			),
 		},
@@ -83,9 +83,9 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", data.Labels{"id": "1"}, tp{
-					time.Unix(5, 0), new(9.0),
+					time.Unix(5, 0), float64Pointer(9),
 				}, tp{
-					time.Unix(10, 0), new(8.0),
+					time.Unix(10, 0), float64Pointer(8),
 				}),
 			),
 		},
@@ -97,9 +97,9 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", data.Labels{"id": "1"}, tp{
-					time.Unix(5, 0), new(9.0),
+					time.Unix(5, 0), float64Pointer(9),
 				}, tp{
-					time.Unix(10, 0), new(8.0),
+					time.Unix(10, 0), float64Pointer(8),
 				}),
 			),
 		},
@@ -111,14 +111,14 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", data.Labels{"sensor": "a", "turbine": "1"}, tp{
-					time.Unix(5, 0), new(6 * .5),
+					time.Unix(5, 0), float64Pointer(6 * .5),
 				}, tp{
-					time.Unix(10, 0), new(8 * .2),
+					time.Unix(10, 0), float64Pointer(8 * .2),
 				}),
 				makeSeries("", data.Labels{"sensor": "b", "turbine": "1"}, tp{
-					time.Unix(5, 0), new(10 * .5),
+					time.Unix(5, 0), float64Pointer(10 * .5),
 				}, tp{
-					time.Unix(10, 0), new(16 * .2),
+					time.Unix(10, 0), float64Pointer(16 * .2),
 				}),
 			),
 		},
@@ -130,16 +130,16 @@ func TestSeriesExpr(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", data.Labels{}, tp{
-						time.Unix(5, 0), new(1.0),
+						time.Unix(5, 0), float64Pointer(1),
 					}, tp{
-						time.Unix(10, 0), new(2.0),
+						time.Unix(10, 0), float64Pointer(2),
 					}),
 				),
 				"B": resultValuesNoErr(
 					makeSeries("efficiency", data.Labels{}, tp{
-						time.Unix(5, 0), new(3.0),
+						time.Unix(5, 0), float64Pointer(3),
 					}, tp{
-						time.Unix(9, 0), new(4.0),
+						time.Unix(9, 0), float64Pointer(4),
 					}),
 				),
 			},
@@ -148,7 +148,7 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{ // Not sure about preserving names...
-					time.Unix(5, 0), new(4.0),
+					time.Unix(5, 0), float64Pointer(4),
 				}),
 			),
 		},

@@ -1,17 +1,16 @@
 import { useState } from 'react';
-import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
+import { PopValueActionMeta, RemoveValueActionMeta } from 'react-select';
 
 import {
-  type DataSourceInstanceSettings,
-  type SelectableValue,
+  DataSourceInstanceSettings,
   getDataSourceUID,
   isUnsignedPluginSignature,
+  SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { type DataSourcePickerProps, getDataSourceSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
+import { getDataSourceSrv, DataSourcePickerState, DataSourcePickerProps } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ActionMeta, Stack, PluginSignatureBadge, MultiSelect } from '@grafana/ui';
 
 import { isDataSourceManagingAlerts } from '../../utils/datasource';
 
@@ -23,7 +22,7 @@ export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProp
 export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) => {
   const dataSourceSrv = getDataSourceSrv();
 
-  const [state, setState] = useState<{ error?: string }>();
+  const [state, setState] = useState<DataSourcePickerState>();
 
   const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
     if (actionMeta.action === 'clear' && props.onClear) {
@@ -122,22 +121,8 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       }));
 
     const groupedOptions = [
-      {
-        label: t(
-          'alerting.multiple-data-source-picker.get-data-source-options.grouped-options.label.data-sources-with-configured-alert-rules',
-          'Data sources with configured alert rules'
-        ),
-        options: alertManagingDs,
-        expanded: true,
-      },
-      {
-        label: t(
-          'alerting.multiple-data-source-picker.get-data-source-options.grouped-options.label.other-data-sources',
-          'Other data sources'
-        ),
-        options: nonAlertManagingDs,
-        expanded: true,
-      },
+      { label: 'Data sources with configured alert rules', options: alertManagingDs, expanded: true },
+      { label: 'Other data sources', options: nonAlertManagingDs, expanded: true },
     ];
 
     return groupedOptions;
@@ -177,10 +162,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
         openMenuOnFocus={openMenuOnFocus}
         maxMenuHeight={500}
         placeholder={placeholder}
-        noOptionsMessage={t(
-          'alerting.multiple-data-source-picker.noOptionsMessage-no-datasources-found',
-          'No datasources found'
-        )}
+        noOptionsMessage="No datasources found"
         value={value ?? []}
         invalid={Boolean(state?.error) || Boolean(props.invalid)}
         getOptionLabel={(o) => {

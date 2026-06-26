@@ -42,8 +42,7 @@ type (
 		aliasBy    string
 		parameters *dataquery.TimeSeriesList
 		// Processed properties
-		timeRange backend.TimeRange
-		params    url.Values
+		params url.Values
 	}
 	// cloudMonitoringSLO is used to build time series with a filter but for the SLO case
 	cloudMonitoringSLO struct {
@@ -51,8 +50,7 @@ type (
 		aliasBy    string
 		parameters *dataquery.SLOQuery
 		// Processed properties
-		timeRange backend.TimeRange
-		params    url.Values
+		params url.Values
 	}
 
 	// cloudMonitoringProm is used to build a promQL queries

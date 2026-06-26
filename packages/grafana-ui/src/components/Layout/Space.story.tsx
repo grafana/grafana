@@ -1,4 +1,4 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { SpacingTokenControl } from '../../utils/storybook/themeStorybookControls';
 
@@ -7,7 +7,7 @@ import { Space } from './Space';
 import mdx from './Space.mdx';
 
 const meta: Meta<typeof Space> = {
-  title: 'Layout/Space',
+  title: 'General/Layout/Space',
   component: Space,
   parameters: {
     docs: {

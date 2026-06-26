@@ -1,9 +1,9 @@
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { standardFieldConfigEditorRegistry } from '../field/standardFieldConfigEditorRegistry';
-import { type FieldConfigProperty, type FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { FieldConfigEditorBuilder } from '../utils/OptionsUIBuilders';
 
-import { type SetFieldConfigOptionsArgs } from './PanelPlugin';
+import { SetFieldConfigOptionsArgs } from './PanelPlugin';
 
 /**
  * Helper functionality to create a field config registry.
@@ -55,7 +55,7 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
       const customDefault = config.standardOptions[id]?.defaultValue;
       const customSettings = config.standardOptions[id]?.settings;
 
-      if (customHideFromDefaults !== undefined) {
+      if (customHideFromDefaults) {
         fieldConfigProp = {
           ...fieldConfigProp,
           hideFromDefaults: customHideFromDefaults,

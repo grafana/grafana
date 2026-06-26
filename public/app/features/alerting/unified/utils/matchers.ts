@@ -5,19 +5,12 @@
  * Please keep the references to other files here to a minimum, if we reference a file that uses GrafanaBootData from `window` the worker will fail to load.
  */
 
-import { chain, compact } from 'lodash';
+import { compact, uniqBy } from 'lodash';
 
-import { type LabelMatcher } from '@grafana/alerting/unstable';
-import { parseFlags } from '@grafana/data';
-import {
-  type Matcher,
-  MatcherOperator,
-  type ObjectMatcher,
-  type Route,
-} from 'app/plugins/datasource/alertmanager/types';
+import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
-import { type Labels } from '../../../../types/unified-alerting-dto';
-import { type MatcherFieldValue } from '../types/silence-form';
+import { Labels } from '../../../../types/unified-alerting-dto';
+import { MatcherFieldValue } from '../types/silence-form';
 
 import { isPrivateLabelKey } from './labels';
 
@@ -116,16 +109,11 @@ export function parsePromQLStyleMatcherLooseSafe(matcher: string): Matcher[] {
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
-  return (
-    chain(matcherPairs)
-      .map((m) => m.trim()) // trim spaces
-      .compact() // remove empty strings
-      .flatMap(parsePromQLStyleMatcherLooseSafe)
-      // Due to migration, old alert rules might have a duplicated alertname label
-      // To handle that case want to filter out duplicates and make sure there are only unique labels
-      .uniqBy('name')
-      .value()
-  );
+  const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x));
+
+  // Due to migration, old alert rules might have a duplicated alertname label
+  // To handle that case want to filter out duplicates and make sure there are only unique labels
+  return uniqBy(parsedMatchers, (matcher) => matcher.name);
 }
 
 export const getMatcherQueryParams = (labels: Labels) => {
@@ -194,13 +182,8 @@ export function quoteWithEscapeIfRequired(input: string) {
   return shouldQuote ? quoteWithEscape(input) : input;
 }
 
-export function unquoteIfRequired(input: string) {
-  return quoteWithEscapeIfRequired(unquoteWithUnescape(input));
-}
-
 export const encodeMatcher = ({ name, operator, value }: MatcherFieldValue) => {
   const encodedLabelName = quoteWithEscapeIfRequired(name);
-  // @TODO why not use quoteWithEscapeIfRequired?
   const encodedLabelValue = quoteWithEscape(value);
 
   return `${encodedLabelName}${operator}${encodedLabelValue}`;
@@ -234,8 +217,6 @@ export const matcherFormatter = {
   },
 } as const;
 
-export type MatcherFormatter = keyof typeof matcherFormatter;
-
 export function isPromQLStyleMatcher(input: string): boolean {
   return input.startsWith('{') && input.endsWith('}');
 }
@@ -259,33 +240,6 @@ function matcherToOperator(matcher: Matcher): MatcherOperator {
   }
 }
 
-export function convertObjectMatcherToAlertingPackageMatcher(matcher: ObjectMatcher): LabelMatcher {
-  const [label, type, value] = matcher;
+export type MatcherFormatter = keyof typeof matcherFormatter;
 
-  return {
-    label,
-    type,
-    value,
-  };
-}
-
-export function isValidRE2Regex(value: string): boolean {
-  // parseFlags converts RE2 inline flag groups like (?i), (?im), (?-i) to their JS flag equivalents,
-  // allowing new RegExp() to correctly validate patterns that use RE2-only flag syntax.
-  const { cleaned, flags } = parseFlags(value);
-  try {
-    new RegExp(cleaned, flags);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function labelsToMatchersParam(labels: Labels): string | undefined {
-  const entries = Object.entries(labels);
-  if (entries.length === 0) {
-    return undefined;
-  }
-  const parts = entries.map(([k, v]) => `${k}=${quoteWithEscape(v)}`);
-  return `{${parts.join(',')}}`;
-}
+export type Label = [string, string];

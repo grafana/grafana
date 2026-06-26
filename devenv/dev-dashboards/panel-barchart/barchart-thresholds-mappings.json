@@ -29,7 +29,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -112,7 +113,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -123,7 +125,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -230,7 +233,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -241,7 +245,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -311,7 +316,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"label\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"int64\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"thresholds\": {\n              \"mode\": \"absolute\",\n              \"steps\": [\n                {\n                  \"color\": \"green\",\n                  \"value\": null\n                },\n                {\n                  \"color\": \"#EAB839\",\n                  \"value\": 10\n                },\n                {\n                  \"color\": \"red\",\n                  \"value\": 15\n                },\n                {\n                  \"color\": \"#6ED0E0\",\n                  \"value\": 25\n                }\n              ]\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"x\",\n          \"a\",\n          \"b\",\n          \"c\"\n        ],\n        [\n          3,\n          10,\n          20,\n          30\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
@@ -323,7 +329,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -394,7 +401,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"label\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"int64\",\n            \"nullable\": true\n          },\n          \"config\": {\n            \"thresholds\": {\n              \"mode\": \"absolute\",\n              \"steps\": [\n                {\n                  \"color\": \"green\",\n                  \"value\": null\n                },\n                {\n                  \"color\": \"#EAB839\",\n                  \"value\": 10\n                },\n                {\n                  \"color\": \"red\",\n                  \"value\": 15\n                },\n                {\n                  \"color\": \"#6ED0E0\",\n                  \"value\": 25\n                }\n              ]\n            }\n          }\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"x\",\n          \"a\",\n          \"b\",\n          \"c\"\n        ],\n        [\n          3,\n          10,\n          20,\n          30\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
@@ -406,7 +414,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -522,7 +531,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -533,7 +543,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -662,7 +673,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -673,7 +685,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -749,14 +762,16 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "hide": false,
           "max": 30,
@@ -791,7 +806,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -921,7 +937,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -932,7 +949,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1006,7 +1024,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1017,7 +1036,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1091,7 +1111,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1102,7 +1123,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1176,7 +1198,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1187,7 +1210,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1291,7 +1315,8 @@
         {
           "csvContent": "label,value\nx,3\na,10\nb,20\nc,30",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1302,7 +1327,12 @@
     }
   ],
   "schemaVersion": 38,
-  "tags": ["gdev", "panel-tests", "barchart", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "barchart",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },

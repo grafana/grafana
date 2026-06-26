@@ -13,8 +13,10 @@
 // limitations under the License.
 
 import { uniq as _uniq } from 'lodash';
+import memoize from 'lru-memoize';
 
-import { type Trace } from '../types/trace';
+import { Trace } from '../types';
+import { getConfigValue } from '../utils/config/get-config';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 
@@ -149,3 +151,15 @@ export function computeTraceLink(linkPatterns: ProcessedLinkPattern[], trace: Tr
 
   return result;
 }
+
+const processedLinks = (getConfigValue('linkPatterns') || [])
+  .map(processLinkPattern)
+  .filter((link: ProcessedLinkPattern | null): link is ProcessedLinkPattern => Boolean(link));
+
+export const getTraceLinks: (trace: Trace | undefined) => TLinksRV = memoize(10)((trace: Trace | undefined) => {
+  const result: TLinksRV = [];
+  if (!trace) {
+    return result;
+  }
+  return computeTraceLink(processedLinks, trace);
+});

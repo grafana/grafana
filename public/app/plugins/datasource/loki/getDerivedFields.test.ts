@@ -122,7 +122,6 @@ describe('getDerivedFields', () => {
         matcherType: 'regex',
         name: 'trace1',
         url: 'http://localhost/${__value.raw}',
-        targetBlank: true,
       },
       {
         matcherRegex: 'trace3',
@@ -142,7 +141,6 @@ describe('getDerivedFields', () => {
     expect(trace1!.config.links![0]).toEqual({
       url: 'http://localhost/${__value.raw}',
       title: '',
-      targetBlank: true,
     });
 
     const trace3 = newFields.find((f) => f.name === 'trace3Name');
@@ -188,30 +186,6 @@ describe('getDerivedFields', () => {
     const trace1 = newFields.find((f) => f.name === 'trace1');
     expect(trace1!.values).toEqual([null, '1234', null]);
     expect(trace1!.config.links![0]).toEqual({
-      url: 'http://localhost/${__value.raw}',
-      title: '',
-    });
-  });
-
-  it('matches label keys using regex when matcherType is label', () => {
-    const df = createDataFrame({
-      fields: [
-        { name: 'labels', values: [{ traceId: 'abc' }, { traceID: 'xyz' }] },
-        { name: 'line', values: ['log1', 'log2'] },
-      ],
-    });
-    const newFields = getDerivedFields(df, [
-      {
-        matcherRegex: 'traceI(d|D)',
-        name: 'traceIdFromLabel',
-        url: 'http://localhost/${__value.raw}',
-        matcherType: 'label',
-      },
-    ]);
-    expect(newFields.length).toBe(1);
-    const traceId = newFields.find((f) => f.name === 'traceIdFromLabel');
-    expect(traceId!.values).toEqual(['abc', 'xyz']);
-    expect(traceId!.config.links![0]).toEqual({
       url: 'http://localhost/${__value.raw}',
       title: '',
     });

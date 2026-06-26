@@ -1,15 +1,12 @@
-import { type Meta, type StoryFn, type StoryObj } from '@storybook/react-webpack5';
+import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { useCallback, useMemo, useState } from 'react';
-import { type CellProps } from 'react-table';
 
-import { LinkButton } from '../Button/Button';
-import { Checkbox } from '../Forms/Checkbox';
+import { InteractiveTable, CellProps, LinkButton } from '@grafana/ui';
+
 import { Field } from '../Forms/Field';
-import { Icon } from '../Icon/Icon';
 import { Input } from '../Input/Input';
-import { Text } from '../Text/Text';
 
-import { type FetchDataArgs, InteractiveTable, type InteractiveTableHeaderTooltip } from './InteractiveTable';
+import { FetchDataArgs, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
@@ -106,7 +103,7 @@ const pageableData: CarData[] = [
 ];
 
 const meta: Meta<typeof InteractiveTable<CarData>> = {
-  title: 'Layout/InteractiveTable',
+  title: 'Experimental/InteractiveTable',
   component: InteractiveTable,
   parameters: {
     docs: {
@@ -298,55 +295,6 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
   }, []);
 
   return <InteractiveTable {...args} data={data} pageSize={15} fetchData={fetchData} />;
-};
-
-export const WithCustomHeader: TableStoryObj = {
-  args: {
-    columns: [
-      // React element header
-      {
-        id: 'checkbox',
-        header: (
-          <>
-            <label htmlFor="select-all" className="sr-only">
-              Select all rows
-            </label>
-            <Checkbox id="select-all" />
-          </>
-        ),
-        cell: () => <Checkbox aria-label="Select row" />,
-      },
-      // Function renderer header
-      {
-        id: 'firstName',
-        header: () => (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <Icon name="user" size="sm" />
-            <Text element="span">First Name</Text>
-          </span>
-        ),
-        sortType: 'string',
-      },
-      // String header
-      { id: 'lastName', header: 'Last name', sortType: 'string' },
-      { id: 'car', header: 'Car', sortType: 'string' },
-      { id: 'age', header: 'Age', sortType: 'number' },
-    ],
-    data: pageableData.slice(0, 10),
-    getRowId: (r) => r.id,
-  },
-};
-export const WithColumnWidths: TableStoryObj = {
-  args: {
-    columns: [
-      { id: 'firstName', header: 'First name (fixed 150px)', sortType: 'string', width: 150 },
-      { id: 'lastName', header: 'Last name (min 200px)', sortType: 'string', minWidth: 200 },
-      { id: 'car', header: 'Car (max 120px)', sortType: 'string', maxWidth: 120 },
-      { id: 'age', header: 'Age (80px)', width: 80 },
-    ],
-    data: pageableData.slice(0, 10),
-    getRowId: (r) => r.id,
-  },
 };
 
 export default meta;

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   useGetPublicDashboardQuery,
@@ -16,16 +16,16 @@ import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublic
 import {
   generatePublicDashboardUrl,
   isEmailSharingEnabled,
-  type PublicDashboard,
+  PublicDashboard,
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
-import { AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types';
 
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
-import { type SceneShareTabState, type ShareView } from '../../types';
+import { SceneShareTabState, ShareView } from '../../types';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';

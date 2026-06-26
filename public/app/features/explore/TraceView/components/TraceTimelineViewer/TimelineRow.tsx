@@ -52,7 +52,7 @@ export default function TimelineRow({ children, className = '', ...rest }: TTime
   );
 }
 
-function TimelineRowCell({ children, className = '', width, style = {}, ...rest }: TimelineRowCellProps) {
+export function TimelineRowCell({ children, className = '', width, style = {}, ...rest }: TimelineRowCellProps) {
   const widthPercent = `${width * 100}%`;
   const mergedStyle = { ...style, flexBasis: widthPercent, maxWidth: widthPercent };
   const styles = useStyles2(getStyles);

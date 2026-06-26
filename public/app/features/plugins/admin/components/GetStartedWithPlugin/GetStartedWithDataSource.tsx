@@ -1,16 +1,15 @@
 import { useCallback } from 'react';
 import * as React from 'react';
 
-import { type DataSourcePluginMeta } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { DataSourcePluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { ROUTES } from 'app/features/connections/constants';
-import { addDataSource } from 'app/features/datasources/state/actions';
-import { useDispatch } from 'app/types/store';
+import { addDataSource } from 'app/features/datasources/state';
+import { useDispatch } from 'app/types';
 
 import { isDataSourceEditor } from '../../permissions';
-import { type CatalogPlugin } from '../../types';
+import { CatalogPlugin } from '../../types';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -31,7 +30,8 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
     return null;
   }
 
-  const disabledButton = config.pluginAdminExternalManageEnabled && !plugin.isFullyInstalled;
+  const disabledButton =
+    config.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled && !plugin.isFullyInstalled;
 
   return (
     <Button
@@ -39,15 +39,10 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
       onClick={onAddDataSource}
       disabled={disabledButton}
       title={
-        disabledButton
-          ? t(
-              'plugins.get-started-with-data-source.title-button-disabled',
-              "The plugin isn't usable yet, it may take some time to complete the installation."
-            )
-          : undefined
+        disabledButton ? "The plugin isn't usable yet, it may take some time to complete the installation." : undefined
       }
     >
-      <Trans i18nKey="plugins.get-started-with-data-source.add-new-data-source">Add new data source</Trans>
+      Add new data source
     </Button>
   );
 }

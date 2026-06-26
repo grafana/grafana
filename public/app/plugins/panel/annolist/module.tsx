@@ -1,97 +1,93 @@
-import { type PanelModel, PanelPlugin } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 
 import { AnnoListPanel } from './AnnoListPanel';
-import { defaultOptions, type Options } from './panelcfg.gen';
+import { defaultOptions, Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(AnnoListPanel)
   .setPanelOptions((builder) => {
-    const category = [t('annolist.category-annotation-query', 'Annotation query')];
-    const displayCategory = [t('annolist.category-display', 'Display')];
-    const linkBehaviourCategory = [t('annolist.category-link-behaviour', 'Link behavior')];
     builder
       .addRadio({
-        category,
+        category: ['Annotation query'],
         path: 'onlyFromThisDashboard',
-        name: t('annolist.name-query-filter', 'Query filter'),
+        name: 'Query filter',
         defaultValue: defaultOptions.onlyFromThisDashboard,
         settings: {
           options: [
-            { value: false, label: t('annolist.query-filter-options.label-all-dashboards', 'All dashboards') },
-            { value: true, label: t('annolist.query-filter-options.label-this-dashboard', 'This dashboard') },
+            { value: false, label: 'All dashboards' },
+            { value: true, label: 'This dashboard' },
           ],
         },
       })
       .addRadio({
-        category,
+        category: ['Annotation query'],
         path: 'onlyInTimeRange',
-        name: t('annolist.name-time-range', 'Time range'),
+        name: 'Time range',
         defaultValue: defaultOptions.onlyInTimeRange,
         settings: {
           options: [
-            { value: false, label: t('annolist.time-range-options.label-none', 'None') },
-            { value: true, label: t('annolist.time-range-options.label-this-dashboard', 'This dashboard') },
+            { value: false, label: 'None' },
+            { value: true, label: 'This dashboard' },
           ],
         },
       })
       .addCustomEditor({
-        category,
+        category: ['Annotation query'],
         id: 'tags',
         path: 'tags',
-        name: t('annolist.name-tags', 'Tags'),
-        description: t('annolist.description-tags', 'Match annotation tags'),
+        name: 'Tags',
+        description: 'Match annotation tags',
         editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       })
       .addNumberInput({
-        category,
+        category: ['Annotation query'],
         path: 'limit',
-        name: t('annolist.name-limit', 'Limit'),
+        name: 'Limit',
         defaultValue: defaultOptions.limit,
       })
       .addBooleanSwitch({
-        category: displayCategory,
+        category: ['Display'],
         path: 'showUser',
-        name: t('annolist.name-show-user', 'Show user'),
+        name: 'Show user',
         defaultValue: defaultOptions.showUser,
       })
       .addBooleanSwitch({
-        category: displayCategory,
+        category: ['Display'],
         path: 'showTime',
-        name: t('annolist.name-show-time', 'Show time'),
+        name: 'Show time',
         defaultValue: defaultOptions.showTime,
       })
       .addBooleanSwitch({
-        category: displayCategory,
+        category: ['Display'],
         path: 'showTags',
-        name: t('annolist.name-show-tags', 'Show tags'),
+        name: 'Show tags',
         defaultValue: defaultOptions.showTags,
       })
       .addRadio({
-        category: linkBehaviourCategory,
+        category: ['Link behavior'],
         path: 'navigateToPanel',
-        name: t('annolist.name-link-target', 'Link target'),
+        name: 'Link target',
         defaultValue: defaultOptions.navigateToPanel,
         settings: {
           options: [
-            { value: true, label: t('annolist.link-target-options.label-panel', 'Panel') },
-            { value: false, label: t('annolist.link-target-options.label-dashboard', 'Dashboard') },
+            { value: true, label: 'Panel' },
+            { value: false, label: 'Dashboard' },
           ],
         },
       })
       .addTextInput({
-        category: linkBehaviourCategory,
+        category: ['Link behavior'],
         path: 'navigateBefore',
-        name: t('annolist.name-time-before', 'Time before'),
+        name: 'Time before',
         defaultValue: defaultOptions.navigateBefore,
         description: '',
       })
       .addTextInput({
-        category: linkBehaviourCategory,
+        category: ['Link behavior'],
         path: 'navigateAfter',
-        name: t('annolist.name-time-after', 'Time after'),
+        name: 'Time after',
         defaultValue: defaultOptions.navigateAfter,
         description: '',
       });

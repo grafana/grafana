@@ -1,4 +1,4 @@
-import { type Field, FieldType } from '../types/dataFrame';
+import { Field, FieldType } from '../types/dataFrame';
 
 import { getSeriesTimeStep, hasMsResolution } from './series';
 

@@ -4,7 +4,7 @@ import { CoreApp } from '@grafana/data';
 
 import { LokiQueryEditor } from './LokiQueryEditor';
 import { LokiQueryEditorForAlerting } from './LokiQueryEditorForAlerting';
-import { type LokiQueryEditorProps } from './types';
+import { LokiQueryEditorProps } from './types';
 
 export function LokiQueryEditorByApp(props: LokiQueryEditorProps) {
   const { app } = props;
@@ -18,3 +18,7 @@ export function LokiQueryEditorByApp(props: LokiQueryEditorProps) {
 }
 
 export default memo(LokiQueryEditorByApp);
+
+export const testIds = {
+  editor: 'loki-editor',
+};

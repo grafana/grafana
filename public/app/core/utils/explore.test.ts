@@ -1,16 +1,10 @@
-import {
-  type DataSourceApi,
-  dateTime,
-  type ExploreUrlState,
-  type GrafanaConfig,
-  locationUtil,
-  LogsSortOrder,
-  serializeStateToUrlParam,
-} from '@grafana/data';
-import { type DataQuery } from '@grafana/schema';
+import { DataSourceApi, dateTime, ExploreUrlState, GrafanaConfig, locationUtil, LogsSortOrder } from '@grafana/data';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
+import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
 
 import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
@@ -20,7 +14,7 @@ import {
   hasNonEmptyQuery,
   refreshIntervalToSortOrder,
   getExploreUrl,
-  type GetExploreUrlArguments,
+  GetExploreUrlArguments,
   getTimeRange,
   generateEmptyQuery,
 } from './explore';
@@ -173,7 +167,7 @@ describe('getExploreUrl', () => {
     afterAll(() => {
       // Reset locationUtil
       locationUtil.initialize({
-        config: window.grafanaBootData.settings,
+        config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });
@@ -249,35 +243,27 @@ describe('when buildQueryTransaction', () => {
   it('it should calculate interval based on time range', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
-    const from = dateTime('2023-01-01T12:00:00Z');
-    const to = dateTime('2023-01-02T12:00:00Z');
-    const range = { from, to, raw: { from: '1h', to: '1h' } };
+    const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
     const transaction = buildQueryTransaction('left', queries, queryOptions, range, false);
     expect(transaction.request.intervalMs).toEqual(60000);
   });
   it('it should calculate interval taking minInterval into account', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
-    const from = dateTime('2023-01-01T12:00:00Z');
-    const to = dateTime('2023-01-01T12:01:00Z');
-    const range = { from, to, raw: { from: '1h', to: '1h' } };
+    const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
     const transaction = buildQueryTransaction('left', queries, queryOptions, range, false);
     expect(transaction.request.intervalMs).toEqual(15000);
   });
   it('it should calculate interval taking maxDataPoints into account', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 10, minInterval: '15s' };
-    const from = dateTime('2023-01-01T12:00:00Z');
-    const to = dateTime('2023-01-02T12:00:00Z');
-    const range = { from, to, raw: { from: '1h', to: '1h' } };
+    const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
     const transaction = buildQueryTransaction('left', queries, queryOptions, range, false);
     expect(transaction.request.interval).toEqual('2h');
   });
   it('it should create a request with X-Cache-Skip set to true', () => {
     const queries = [{ refId: 'A' }];
-    const from = dateTime('2023-01-01T12:00:00Z');
-    const to = dateTime('2023-01-02T12:00:00Z');
-    const range = { from, to, raw: { from: '1h', to: '1h' } };
+    const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
     const transaction = buildQueryTransaction('left', queries, {}, range, false);
     expect(transaction.request.skipQueryCache).toBe(true);
   });

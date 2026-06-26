@@ -2,29 +2,28 @@ package sqltemplate
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 )
 
 // PostgreSQL is an implementation of Dialect for the PostgreSQL DMBS.
-var PostgreSQL = postgresql{}
+var PostgreSQL = postgresql{
+	rowLockingClauseMap: rowLockingClauseAll,
+	argPlaceholderFunc:  argFmtPositional,
+	name:                "postgres",
+}
 
+var _ Dialect = PostgreSQL
+
+// PostgreSQL-specific errors.
 var (
 	ErrPostgreSQLUnsupportedIdent = errors.New("identifiers in PostgreSQL cannot contain the character with code zero")
 )
 
-type postgresql struct{}
-
-func (p postgresql) DialectName() string {
-	return "postgres"
-}
-
-func (p postgresql) ArgPlaceholder(argNum int) string {
-	return fmt.Sprintf("$%d", argNum)
-}
-
-func (p postgresql) SelectFor(s ...string) (string, error) {
-	return rowLockingClauseAll.SelectFor(s...)
+type postgresql struct {
+	standardIdent
+	rowLockingClauseMap
+	argPlaceholderFunc
+	name
 }
 
 func (p postgresql) Ident(s string) (string, error) {
@@ -34,7 +33,7 @@ func (p postgresql) Ident(s string) (string, error) {
 		return "", ErrPostgreSQLUnsupportedIdent
 	}
 
-	return standardIdent(s)
+	return p.standardIdent.Ident(s)
 }
 
 func (postgresql) CurrentEpoch() string {

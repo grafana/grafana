@@ -18,27 +18,17 @@
 // THIS SOFTWARE.
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
+import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Button, ButtonGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Icon } from '@grafana/ui';
 
-import { ColorSchemeButton } from '../ColorSchemeButton';
-import { alignOptions } from '../FlameGraphHeader';
 import { PIXELS_PER_LEVEL } from '../constants';
-import {
-  type ClickedItemData,
-  type ColorScheme,
-  type ColorSchemeDiff,
-  type PaneView,
-  type SelectedView,
-  type ViewMode,
-  type TextAlign,
-} from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
 import FlameGraphCanvas from './FlameGraphCanvas';
-import { type GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
+import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
-import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
+import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -47,6 +37,7 @@ type Props = {
   matchedLabels?: Set<string>;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
+  style?: React.CSSProperties;
   onItemFocused: (data: ClickedItemData) => void;
   focusedItemData?: ClickedItemData;
   textAlign: TextAlign;
@@ -58,20 +49,10 @@ type Props = {
   showFlameGraphOnly?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   collapsing?: boolean;
+  selectedView: SelectedView;
   search: string;
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
-
-  // Legacy props
-  selectedView?: SelectedView;
-
-  // New UI props (when enableNewUI is true, renders toolbar with controls)
-  enableNewUI?: boolean;
-  viewMode?: ViewMode;
-  paneView?: PaneView;
-  onTextAlignChange?: (align: TextAlign) => void;
-  onColorSchemeChange?: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
-  isDiffMode?: boolean;
 };
 
 const FlameGraph = ({
@@ -92,20 +73,12 @@ const FlameGraph = ({
   showFlameGraphOnly,
   getExtraContextMenuButtons,
   collapsing,
+  selectedView,
   search,
   collapsedMap,
   setCollapsedMap,
-  selectedView,
-  enableNewUI,
-  viewMode,
-  paneView,
-  onTextAlignChange,
-  onColorSchemeChange,
-  isDiffMode,
 }: Props) => {
-  const isNewUI = enableNewUI === true;
-  const newStyles = useStyles2(getStylesNew);
-  const legacyStyles = getStylesLegacy();
+  const styles = getStyles();
 
   const [levels, setLevels] = useState<LevelItem[][]>();
   const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
@@ -162,110 +135,44 @@ const FlameGraph = ({
     collapsing,
     search,
     selectedView,
-    viewMode,
-    paneView,
   };
-  let canvas = null;
-
-  // Both style objects share sandwich/canvas styles, pick the right one based on mode.
-  const canvasStyles = isNewUI ? newStyles : legacyStyles;
-
-  if (levelsCallers?.length) {
-    canvas = (
-      <>
-        <div className={canvasStyles.sandwichCanvasWrapper}>
-          <div className={canvasStyles.sandwichMarker}>
-            Callers
-            <Icon className={canvasStyles.sandwichMarkerIcon} name={'arrow-down'} />
-          </div>
-          <FlameGraphCanvas
-            {...commonCanvasProps}
-            root={levelsCallers[levelsCallers.length - 1][0]}
-            depth={levelsCallers.length}
-            direction={'parents'}
-            // We do not support collapsing in sandwich view for now.
-            collapsing={false}
-          />
+  const canvas = levelsCallers ? (
+    <>
+      <div className={styles.sandwichCanvasWrapper}>
+        <div className={styles.sandwichMarker}>
+          Callers
+          <Icon className={styles.sandwichMarkerIcon} name={'arrow-down'} />
         </div>
-
-        <div className={canvasStyles.sandwichCanvasWrapper}>
-          <div className={cx(canvasStyles.sandwichMarker, canvasStyles.sandwichMarkerCalees)}>
-            <Icon className={canvasStyles.sandwichMarkerIcon} name={'arrow-up'} />
-            Callees
-          </div>
-          <FlameGraphCanvas
-            {...commonCanvasProps}
-            root={levels[0][0]}
-            depth={levels.length}
-            direction={'children'}
-            collapsing={false}
-          />
-        </div>
-      </>
-    );
-  } else if (levels?.length) {
-    canvas = (
-      <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
-    );
-  }
-
-  if (isNewUI) {
-    return (
-      <div className={newStyles.graph}>
-        <div className={newStyles.toolbar}>
-          <FlameGraphMetadata
-            data={data}
-            focusedItem={focusedItemData}
-            sandwichedLabel={sandwichItem}
-            totalTicks={totalViewTicks}
-            onFocusPillClick={onFocusPillClick}
-            onSandwichPillClick={onSandwichPillClick}
-          />
-          <div className={newStyles.controls}>
-            {onColorSchemeChange && (
-              <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode ?? false} />
-            )}
-            <ButtonGroup className={newStyles.buttonSpacing}>
-              <Button
-                variant={'secondary'}
-                fill={'outline'}
-                size={'sm'}
-                tooltip={'Expand all groups'}
-                onClick={() => {
-                  setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
-                }}
-                aria-label={'Expand all groups'}
-                icon={'angle-double-down'}
-              />
-              <Button
-                variant={'secondary'}
-                fill={'outline'}
-                size={'sm'}
-                tooltip={'Collapse all groups'}
-                onClick={() => {
-                  setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
-                }}
-                aria-label={'Collapse all groups'}
-                icon={'angle-double-up'}
-              />
-            </ButtonGroup>
-            {onTextAlignChange && (
-              <RadioButtonGroup<TextAlign>
-                size="sm"
-                options={alignOptions}
-                value={textAlign}
-                onChange={onTextAlignChange}
-              />
-            )}
-          </div>
-        </div>
-        {canvas}
+        <FlameGraphCanvas
+          {...commonCanvasProps}
+          root={levelsCallers[levelsCallers.length - 1][0]}
+          depth={levelsCallers.length}
+          direction={'parents'}
+          // We do not support collapsing in sandwich view for now.
+          collapsing={false}
+        />
       </div>
-    );
-  }
+
+      <div className={styles.sandwichCanvasWrapper}>
+        <div className={cx(styles.sandwichMarker, styles.sandwichMarkerCalees)}>
+          <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
+          Callees
+        </div>
+        <FlameGraphCanvas
+          {...commonCanvasProps}
+          root={levels[0][0]}
+          depth={levels.length}
+          direction={'children'}
+          collapsing={false}
+        />
+      </div>
+    </>
+  ) : (
+    <FlameGraphCanvas {...commonCanvasProps} root={levels[0][0]} depth={levels.length} direction={'children'} />
+  );
 
   return (
-    <div className={legacyStyles.graph}>
+    <div className={styles.graph}>
       <FlameGraphMetadata
         data={data}
         focusedItem={focusedItemData}
@@ -279,7 +186,7 @@ const FlameGraph = ({
   );
 };
 
-const getStylesLegacy = () => ({
+const getStyles = () => ({
   graph: css({
     label: 'graph',
     overflow: 'auto',
@@ -289,52 +196,7 @@ const getStylesLegacy = () => ({
   sandwichCanvasWrapper: css({
     label: 'sandwichCanvasWrapper',
     display: 'flex',
-    marginBottom: `${PIXELS_PER_LEVEL}px`,
-  }),
-  sandwichMarker: css({
-    label: 'sandwichMarker',
-    writingMode: 'vertical-lr',
-    transform: 'rotate(180deg)',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-  }),
-  sandwichMarkerCalees: css({
-    label: 'sandwichMarkerCalees',
-    textAlign: 'right',
-  }),
-  sandwichMarkerIcon: css({
-    label: 'sandwichMarkerIcon',
-    verticalAlign: 'baseline',
-  }),
-});
-
-const getStylesNew = (theme: GrafanaTheme2) => ({
-  graph: css({
-    label: 'graph',
-    overflow: 'auto',
-    flexGrow: 1,
-    flexBasis: '50%',
-  }),
-  toolbar: css({
-    label: 'toolbar',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  }),
-  controls: css({
-    label: 'controls',
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  buttonSpacing: css({
-    label: 'buttonSpacing',
-    marginRight: theme.spacing(1),
-  }),
-  sandwichCanvasWrapper: css({
-    label: 'sandwichCanvasWrapper',
-    display: 'flex',
-    marginBottom: `${PIXELS_PER_LEVEL}px`,
+    marginBottom: `${PIXELS_PER_LEVEL / window.devicePixelRatio}px`,
   }),
   sandwichMarker: css({
     label: 'sandwichMarker',

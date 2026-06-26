@@ -32,12 +32,15 @@
       },
       {
         "datasource": {
-          "type": "grafana-testdata-datasource"
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
         },
         "enable": true,
         "filter": {
           "exclude": false,
-          "ids": [1]
+          "ids": [
+            1
+          ]
         },
         "iconColor": "red",
         "name": "Red, only panel 1",
@@ -49,12 +52,15 @@
       },
       {
         "datasource": {
-          "type": "grafana-testdata-datasource"
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
         },
         "enable": true,
         "filter": {
           "exclude": true,
-          "ids": [1]
+          "ids": [
+            1
+          ]
         },
         "iconColor": "yellow",
         "name": "Yellow - all except 1",
@@ -66,12 +72,16 @@
       },
       {
         "datasource": {
-          "type": "grafana-testdata-datasource"
+          "type": "testdata",
+          "uid": "PD8C576611E62080A"
         },
         "enable": true,
         "filter": {
           "exclude": false,
-          "ids": [3, 4]
+          "ids": [
+            3,
+            4
+          ]
         },
         "iconColor": "dark-purple",
         "name": "Purple only panel 3+4",
@@ -92,7 +102,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -169,7 +180,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -246,7 +258,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -323,7 +336,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {

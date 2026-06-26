@@ -1,4 +1,4 @@
-import { type DataFrame, type QueryHint } from '@grafana/data';
+import { DataFrame, QueryHint } from '@grafana/data';
 
 import {
   isQueryWithLabelFilter,

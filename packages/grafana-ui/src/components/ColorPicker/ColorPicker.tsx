@@ -1,21 +1,15 @@
 import { css } from '@emotion/css';
-import {
-  type ComponentType,
-  createElement,
-  type PropsWithChildren,
-  type ReactNode,
-  type RefObject,
-  useRef,
-} from 'react';
+import { Component, createRef } from 'react';
+import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { withTheme2, stylesFactory } from '../../themes';
 import { closePopover } from '../../utils/closePopover';
 import { Popover } from '../Tooltip/Popover';
 import { PopoverController } from '../Tooltip/PopoverController';
 
-import { ColorPickerPopover, type ColorPickerProps } from './ColorPickerPopover';
+import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { ColorSwatch } from './ColorSwatch';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
@@ -26,83 +20,72 @@ import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
  * component as a custom trigger you will need to forward the reference to first HTMLElement child.
  */
 type ColorPickerTriggerRenderer = (props: {
-  // This should be a RefObject<HTMLElement> but due to how object refs are defined you cannot downcast from that
-  // to a specific type like RefObject<HTMLDivElement> even though it would be fine in runtime.
-  ref: RefObject<any>;
+  // This should be a React.RefObject<HTMLElement> but due to how object refs are defined you cannot downcast from that
+  // to a specific type like React.RefObject<HTMLDivElement> even though it would be fine in runtime.
+  ref: React.RefObject<any>;
   showColorPicker: () => void;
   hideColorPicker: () => void;
-  isOpen: boolean;
-}) => ReactNode;
+}) => React.ReactNode;
 
-const colorPickerFactory = <T extends ColorPickerProps>(
-  popover: ComponentType<PropsWithChildren<T>>,
+export const colorPickerFactory = <T extends ColorPickerProps>(
+  popover: React.ComponentType<React.PropsWithChildren<T>>,
   displayName = 'ColorPicker'
 ) => {
-  const ColorPickerComponent = (props: T & { children?: ColorPickerTriggerRenderer }) => {
-    const { children, onChange, color, id } = props;
-    const theme = useTheme2();
-    const pickerTriggerRef = useRef<any>(null);
-    const styles = getStyles(theme);
+  return class ColorPicker extends Component<T & { children?: ColorPickerTriggerRenderer }> {
+    static displayName = displayName;
+    pickerTriggerRef = createRef<any>();
 
-    const popoverElement = createElement(
-      popover,
-      {
-        ...props,
+    render() {
+      const { theme, children, onChange, color } = this.props;
+      const styles = getStyles(theme);
+      const popoverElement = React.createElement(popover, {
+        ...{ ...this.props, children: null },
         onChange,
-      },
-      null
-    );
+      });
+      return (
+        <PopoverController content={popoverElement} hideAfter={300}>
+          {(showPopper, hidePopper, popperProps) => {
+            return (
+              <>
+                {this.pickerTriggerRef.current && (
+                  <Popover
+                    {...popperProps}
+                    referenceElement={this.pickerTriggerRef.current}
+                    wrapperClassName={styles.colorPicker}
+                    onMouseLeave={hidePopper}
+                    onMouseEnter={showPopper}
+                    onKeyDown={(event) => closePopover(event, hidePopper)}
+                  />
+                )}
 
-    return (
-      <PopoverController content={popoverElement} hideAfter={300}>
-        {(showPopper, hidePopper, popperProps) => {
-          return (
-            <>
-              {pickerTriggerRef.current && (
-                <Popover
-                  {...popperProps}
-                  referenceElement={pickerTriggerRef.current}
-                  wrapperClassName={styles.colorPicker}
-                  onMouseLeave={hidePopper}
-                  onMouseEnter={showPopper}
-                  onKeyDown={(event) => closePopover(event, hidePopper)}
-                />
-              )}
-
-              {children ? (
-                children({
-                  ref: pickerTriggerRef,
-                  showColorPicker: showPopper,
-                  hideColorPicker: hidePopper,
-                  isOpen: popperProps.show,
-                })
-              ) : (
-                <ColorSwatch
-                  id={id}
-                  ref={pickerTriggerRef}
-                  onClick={showPopper}
-                  onMouseLeave={hidePopper}
-                  color={theme.visualization.getColorByName(color || '#000000')}
-                  aria-label={color}
-                />
-              )}
-            </>
-          );
-        }}
-      </PopoverController>
-    );
+                {children ? (
+                  children({
+                    ref: this.pickerTriggerRef,
+                    showColorPicker: showPopper,
+                    hideColorPicker: hidePopper,
+                  })
+                ) : (
+                  <ColorSwatch
+                    ref={this.pickerTriggerRef}
+                    onClick={showPopper}
+                    onMouseLeave={hidePopper}
+                    color={theme.visualization.getColorByName(color || '#000000')}
+                    aria-label={color}
+                  />
+                )}
+              </>
+            );
+          }}
+        </PopoverController>
+      );
+    }
   };
-
-  return ColorPickerComponent;
 };
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-colorpicker--docs
- */
-export const ColorPicker = colorPickerFactory(ColorPickerPopover, 'ColorPicker');
-export const SeriesColorPicker = colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker');
+export const ColorPicker = withTheme2(colorPickerFactory(ColorPickerPopover, 'ColorPicker'));
+export const SeriesColorPicker = withTheme2(colorPickerFactory(SeriesColorPickerPopover, 'SeriesColorPicker'));
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     colorPicker: css({
       position: 'absolute',
@@ -110,8 +93,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       maxWidth: '400px',
       fontSize: theme.typography.size.sm,
-      maxHeight: '100vh',
-      overflow: 'auto',
     }),
   };
-};
+});

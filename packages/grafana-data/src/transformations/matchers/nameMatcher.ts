@@ -1,7 +1,7 @@
 import { getFieldDisplayName } from '../../field/fieldState';
 import { stringToJsRegex } from '../../text/string';
-import { type DataFrame, type Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
-import { type FieldMatcher, type FieldMatcherInfo, type FrameMatcherInfo } from '../../types/transformations';
+import { DataFrame, Field, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
+import { FieldMatcher, FieldMatcherInfo, FrameMatcherInfo } from '../../types/transformations';
 
 import { FieldMatcherID, FrameMatcherID } from './ids';
 
@@ -104,20 +104,26 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
 // naming conventions need to get normalized. However, many existing setups
 // exist that would no longer match names if that changes.  This injects
 // fallback logic when the data frame has not type version specified
-function fieldNameFallback(fields: Set<string>) {
+export function fieldNameFallback(fields: Set<string>) {
   let fallback: FieldMatcher | undefined = undefined;
 
-  if (fields.has(TIME_SERIES_VALUE_FIELD_NAME)) {
-    fallback = (field: Field, frame: DataFrame) => {
-      return (
-        Boolean(field.labels) && // Value was reasonable when the name was set in labels or on the frame
-        field.labels?.__name__ === field.name
-      );
-    };
-  } else if (fields.has('Time') || fields.has('time')) {
-    fallback = (field: Field, frame: DataFrame) => {
-      return frame.meta?.typeVersion == null && field.type === FieldType.time;
-    };
+  // grafana-data does not have access to runtime so we are accessing the window object
+  // to get access to the feature toggle
+  // eslint-disable-next-line
+  const useMatcherFallback = (window as any)?.grafanaBootData?.settings?.featureToggles?.dataplaneFrontendFallback;
+  if (useMatcherFallback) {
+    if (fields.has(TIME_SERIES_VALUE_FIELD_NAME)) {
+      fallback = (field: Field, frame: DataFrame) => {
+        return (
+          Boolean(field.labels) && // Value was reasonable when the name was set in labels or on the frame
+          field.labels?.__name__ === field.name
+        );
+      };
+    } else if (fields.has('Time') || fields.has('time')) {
+      fallback = (field: Field, frame: DataFrame) => {
+        return frame.meta?.typeVersion == null && field.type === FieldType.time;
+      };
+    }
   }
 
   return fallback;

@@ -1,9 +1,9 @@
-import { type ReactNode, useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, TextArea } from '@grafana/ui';
 
-import { type DerivedFieldConfig } from '../types';
+import { DerivedFieldConfig } from '../types';
 
 type Props = {
   derivedFields?: DerivedFieldConfig[];

@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { Trans, t } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, IconButton, Input } from '@grafana/ui';
 
-import { type JSONPath } from '../types';
+import { JSONPath } from '../types';
 
 interface Props {
   options: JSONPath[];
@@ -14,7 +13,6 @@ interface Props {
 
 export function JSONPathEditor({ options, onChange }: Props) {
   const [paths, setPaths] = useState<JSONPath[]>(options);
-
   const tooltips = getTooltips();
   const style = getStyle();
 
@@ -53,18 +51,15 @@ export function JSONPathEditor({ options, onChange }: Props) {
         paths.map((path: JSONPath, key: number) => (
           <li key={key}>
             <InlineFieldRow>
-              <InlineField label={t('transformers.jsonpath-editor.label-field', 'Field')} tooltip={tooltips.field} grow>
+              <InlineField label="Field" tooltip={tooltips.field} grow>
                 <Input
                   onBlur={onBlur}
                   onChange={(event: React.SyntheticEvent<HTMLInputElement>) => onJSONPathChange(event, key, 'path')}
                   value={path.path}
-                  placeholder={t(
-                    'transformers.jsonpath-editor.placeholder-valid-objectvalue',
-                    'A valid json path, e.g. "object.value1" or "object.value2[0]"'
-                  )}
+                  placeholder='A valid json path, e.g. "object.value1" or "object.value2[0]"'
                 />
               </InlineField>
-              <InlineField label={t('transformers.jsonpath-editor.label-alias', 'Alias')} tooltip={tooltips.alias}>
+              <InlineField label="Alias" tooltip={tooltips.alias}>
                 <Input
                   width={12}
                   value={path.alias}
@@ -73,18 +68,14 @@ export function JSONPathEditor({ options, onChange }: Props) {
                 />
               </InlineField>
               <InlineField className={cx(style.removeIcon)}>
-                <IconButton
-                  onClick={() => removeJSONPath(key)}
-                  name={'trash-alt'}
-                  tooltip={t('transformers.jsonpath-editor.tooltip-remove-path', 'Remove path')}
-                />
+                <IconButton onClick={() => removeJSONPath(key)} name={'trash-alt'} tooltip="Remove path" />
               </InlineField>
             </InlineFieldRow>
           </li>
         ))}
       <InlineField>
         <Button icon={'plus'} onClick={() => addJSONPath()} variant={'secondary'}>
-          <Trans i18nKey="transformers.jsonpath-editor.add-path">Add path</Trans>
+          Add path
         </Button>
       </InlineField>
     </ol>
@@ -93,76 +84,26 @@ export function JSONPathEditor({ options, onChange }: Props) {
 
 const getTooltips = () => {
   const mapValidPaths = [
-    {
-      path: 'object',
-      description: t(
-        'transformers.get-tooltips.map-valid-paths.description.extract-fields-from-object',
-        '=> extract fields from object'
-      ),
-    },
-    {
-      path: 'object.value1',
-      description: (
-        <Trans
-          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value"
-          values={{ value: 'value1' }}
-        >
-          =&gt; extract <code>{'{{ value }}'}</code>
-        </Trans>
-      ),
-    },
-    {
-      path: 'object.value2',
-      description: (
-        <Trans
-          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value"
-          values={{ value: 'value2' }}
-        >
-          =&gt; extract <code>{'{{ value }}'}</code>
-        </Trans>
-      ),
-    },
-    {
-      path: 'object.value2[0]',
-      description: (
-        <Trans
-          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value-first-element"
-          values={{ value: 'value2' }}
-        >
-          =&gt; extract <code>{'{{ value }}'}</code> first element
-        </Trans>
-      ),
-    },
-    {
-      path: 'object.value2[1]',
-      description: (
-        <Trans
-          i18nKey="transformers.get-tooltips.map-valid-paths.description.extract-value-second-element"
-          values={{ value: 'value2' }}
-        >
-          =&gt; extract <code>{'{{ value }}'}</code> second element
-        </Trans>
-      ),
-    },
+    { path: 'object', description: '=> extract fields from object' },
+    { path: 'object.value1', description: '=> extract value1' },
+    { path: 'object.value2', description: '=> extract value2' },
+    { path: 'object.value2[0]', description: '=> extract value2 first element' },
+    { path: 'object.value2[1]', description: '=> extract value2 second element' },
   ];
 
   return {
     field: (
       <div>
-        <Trans i18nKey="transformers.get-tooltips.description">A valid path of an json object.</Trans>
+        A valid path of an json object.
         <div>
-          <strong>
-            <Trans i18nKey="transformers.get-tooltips.json-value">JSON Value:</Trans>
-          </strong>
+          <strong>JSON Value:</strong>
         </div>
         <pre>
           <code>
             {['{', '  "object": {', '    "value1": "hello world"', '    "value2": [1, 2, 3, 4]', '  }', '}'].join('\n')}
           </code>
         </pre>
-        <strong>
-          <Trans i18nKey="transformers.get-tooltips.valid-paths">Valid Paths:</Trans>
-        </strong>
+        <strong>Valid Paths:</strong>
         {mapValidPaths.map((value, key) => {
           return (
             <p key={key}>

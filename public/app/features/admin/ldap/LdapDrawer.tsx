@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import { type Dispatch, type SetStateAction, useEffect, useId, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useId, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   useStyles2,
   Button,
@@ -23,7 +22,8 @@ import {
   RadioButtonGroup,
   SecretInput,
 } from '@grafana/ui';
-import { type MapKeyCertConfigured, type LdapPayload } from 'app/types/ldap';
+import { t, Trans } from 'app/core/internationalization';
+import { LdapPayload, MapKeyCertConfigured } from 'app/types';
 
 import { GroupMappingComponent } from './LdapGroupMapping';
 
@@ -98,7 +98,7 @@ export const LdapDrawerComponent = ({
       <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">
         For a complete list of supported ciphers and TLS versions, refer to:
       </Trans>{' '}
-      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+      {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
       <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
         https://go.dev/src/crypto/tls/cipher_suites.go
       </TextLink>
@@ -144,7 +144,6 @@ export const LdapDrawerComponent = ({
         >
           <Input
             id="port"
-            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="389"
             type="number"
             {...register(`${serverConfig}.port`, { valueAsNumber: true })}
@@ -159,7 +158,6 @@ export const LdapDrawerComponent = ({
         >
           <Input
             id="timeout"
-            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="10"
             type="number"
             {...register(`${serverConfig}.timeout`, { valueAsNumber: true })}
@@ -413,8 +411,10 @@ export const LdapDrawerComponent = ({
                 <Field label={t('ldap-drawer.extra-security-section.client-cert-label', 'Client certificate path')}>
                   <Input
                     id="client-cert"
-                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                    placeholder="/path/to/client_cert.pem"
+                    placeholder={t(
+                      'ldap-drawer.extra-security-section.client-cert-placeholder',
+                      '/path/to/client_cert.pem'
+                    )}
                     type="text"
                     {...register(`${serverConfig}.client_cert`)}
                   />

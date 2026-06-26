@@ -1,0 +1,5 @@
+{
+   "status": "error",
+   "errorType": "bad_data",
+   "error": "invalid parameter \"start\": cannot parse \"\" to a valid timestamp"
+}

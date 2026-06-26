@@ -1,15 +1,14 @@
-//nolint:staticcheck // SA1019: Legacy envelope encryption migrator; intentionally uses deprecated secrets manager types.
 package migrator
 
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -26,7 +25,7 @@ func (s simpleSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secrets
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
 	}); err != nil {
-		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName, "error", err)
+		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
 
@@ -85,7 +84,7 @@ func (s b64Secret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows)
 	}); err != nil {
-		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName, "error", err)
+		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
 
@@ -156,7 +155,7 @@ func (s jsonSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows)
 	}); err != nil {
-		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName, "error", err)
+		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
 
@@ -220,7 +219,7 @@ func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secre
 	if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(selectSQL).Find(&results)
 	}); err != nil {
-		logger.Warn("Could not find any alert_configuration secret to re-encrypt", "error", err)
+		logger.Warn("Could not find any alert_configuration secret to re-encrypt")
 		return false
 	}
 
@@ -262,7 +261,7 @@ func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Secre
 				}
 			}
 
-			marshalled, err := legacy_storage.SerializeAlertmanagerConfig(*postableUserConfig)
+			marshalled, err := json.Marshal(postableUserConfig)
 			if err != nil {
 				logger.Warn("Could not marshal alert_configuration while re-encrypting it", "id", result.Id, "error", err)
 				return err
@@ -300,8 +299,9 @@ func (s ssoSettingsSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Se
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Find(&results)
 	})
+
 	if err != nil {
-		logger.Warn("Failed to fetch SSO settings to re-encrypt", "error", err)
+		logger.Warn("Failed to fetch SSO settings to re-encrypt", "err", err)
 		return false
 	}
 

@@ -1,10 +1,10 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { StoryFn, Meta } from '@storybook/react';
 
-import { LoadingPlaceholder, type LoadingPlaceholderProps } from './LoadingPlaceholder';
+import { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder';
 import mdx from './LoadingPlaceholder.mdx';
 
 const meta: Meta<typeof LoadingPlaceholder> = {
-  title: 'Information/LoadingPlaceholder',
+  title: 'General/LoadingPlaceholder',
   component: LoadingPlaceholder,
   parameters: {
     docs: {

@@ -1,13 +1,12 @@
-import { createSlice, createEntityAdapter, type Reducer, type AnyAction, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createEntityAdapter, Reducer, AnyAction, PayloadAction } from '@reduxjs/toolkit';
 
-import { type PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 
 import { STATE_PREFIX } from '../constants';
-import { type CatalogPlugin, type ReducerState, RequestStatus } from '../types';
+import { CatalogPlugin, ReducerState, RequestStatus } from '../types';
 
 import {
   fetchDetails,
-  fetchPluginInsights,
   install,
   uninstall,
   loadPluginDashboards,
@@ -62,10 +61,6 @@ const slice = createSlice({
       })
       // Fetch Details
       .addCase(fetchDetails.fulfilled, (state, action) => {
-        pluginsAdapter.updateOne(state.items, action.payload);
-      })
-      // Fetch Plugin Insights
-      .addCase(fetchPluginInsights.fulfilled, (state, action) => {
         pluginsAdapter.updateOne(state.items, action.payload);
       })
       // Install

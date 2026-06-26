@@ -6,9 +6,6 @@ import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 type NotFound struct{}
 
 // swagger:model
-type Gone struct{}
-
-// swagger:model
 type Ack struct{}
 
 // swagger:model

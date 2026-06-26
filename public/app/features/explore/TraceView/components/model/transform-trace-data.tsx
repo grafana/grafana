@@ -15,92 +15,20 @@
 import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
-import { type TraceKeyValuePair } from '@grafana/data';
+import { TraceKeyValuePair } from '@grafana/data';
 
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import {
-  type TraceResponse,
-  type Trace,
-  type TraceSpan,
-  type TraceProcess,
-  type SpanAggregation,
-} from '../types/trace';
+import { TraceSpan, Trace, TraceResponse, TraceProcess } from '../types';
 // @ts-ignore
-import type TreeNode from '../utils/TreeNode';
+import TreeNode from '../utils/TreeNode';
 import { getConfigValue } from '../utils/config/get-config';
-import { getServiceDisplayName } from '../utils/service-name';
 
 import { getTraceName } from './trace-viewer';
 
-function asTagArray(tags: unknown): TraceKeyValuePair[] {
-  return Array.isArray(tags) ? tags : [];
-}
-
-const AGGREGATION_PREFIX = 'aggregation.';
-
-/**
- * Detect a pruned (summary / preserved-outlier) span from its `aggregation.*` tags and
- * extract the values downstream rendering needs, so components don't repeat tag lookups.
- *
- * Returns undefined for normal spans (no `aggregation.is_summary` /
- * `aggregation.is_preserved_outlier`), leaving them unaffected.
- */
-function extractSpanAggregation(tags: TraceKeyValuePair[]): SpanAggregation | undefined {
-  const byKey = new Map<string, unknown>();
-  for (const tag of tags) {
-    if (typeof tag.key === 'string' && tag.key.startsWith(AGGREGATION_PREFIX)) {
-      byKey.set(tag.key, tag.value);
-    }
-  }
-
-  // is_summary / is_preserved_outlier are emitted as real booleans by the processor
-  // (PutBool in aggregation.go), so match strictly on `true` rather than coercing.
-  const isSummary = byKey.get('aggregation.is_summary') === true;
-  const isPreservedOutlier = byKey.get('aggregation.is_preserved_outlier') === true;
-  if (!isSummary && !isPreservedOutlier) {
-    return undefined;
-  }
-
-  const aggregation: SpanAggregation = { isSummary, isPreservedOutlier };
-
-  // span_count and duration_*_ns are int64 (PutInt); coerce defensively in case a data
-  // source surfaces them as numeric strings. duration_median_ns is conditional.
-  const numericFields = [
-    ['aggregation.span_count', 'spanCount'],
-    ['aggregation.duration_min_ns', 'durationMinNs'],
-    ['aggregation.duration_max_ns', 'durationMaxNs'],
-    ['aggregation.duration_avg_ns', 'durationAvgNs'],
-    ['aggregation.duration_median_ns', 'durationMedianNs'],
-  ] as const;
-  for (const [key, field] of numericFields) {
-    if (byKey.has(key)) {
-      // Accept real numbers and numeric strings only. Number() would coerce null/boolean/[]/''
-      // to a misleading 0 or 1, so restrict the input before coercing rather than relying on a
-      // NaN check alone (the tag value type is `any`).
-      const raw = byKey.get(key);
-      const value = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
-      if (!Number.isNaN(value)) {
-        aggregation[field] = value;
-      }
-    }
-  }
-
-  // summary_span_id is a string (PutStr) but the tag value type is `any`;
-  // Restrict to only accept a non-empty string; String() coercion would
-  // store a misleading "null"/"undefined"/"false"/"0" etc.
-  const summarySpanId = byKey.get('aggregation.summary_span_id');
-  if (typeof summarySpanId === 'string' && summarySpanId !== '') {
-    aggregation.summarySpanId = summarySpanId;
-  }
-
-  return aggregation;
-}
-
 // exported for tests
 export function deduplicateTags(tags: TraceKeyValuePair[]) {
-  const list = asTagArray(tags);
   const warningsHash: Map<string, string> = new Map<string, string>();
-  const dedupedTags: TraceKeyValuePair[] = list.reduce<TraceKeyValuePair[]>((uniqueTags, tag) => {
+  const dedupedTags: TraceKeyValuePair[] = tags.reduce<TraceKeyValuePair[]>((uniqueTags, tag) => {
     if (!uniqueTags.some((t) => t.key === tag.key && t.value === tag.value)) {
       uniqueTags.push(tag);
     } else {
@@ -114,7 +42,7 @@ export function deduplicateTags(tags: TraceKeyValuePair[]) {
 
 // exported for tests
 export function orderTags(tags: TraceKeyValuePair[], topPrefixes?: string[]) {
-  const orderedTags: TraceKeyValuePair[] = asTagArray(tags).slice();
+  const orderedTags: TraceKeyValuePair[] = tags?.slice() ?? [];
   const tp = (topPrefixes || []).map((p: string) => p.toLowerCase());
 
   orderedTags.sort((a, b) => {
@@ -218,14 +146,14 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     if (!span) {
       return;
     }
-    const svcKey = getServiceDisplayName(span.process);
-    svcCounts[svcKey] = (svcCounts[svcKey] || 0) + 1;
+    const { serviceName } = span.process;
+    svcCounts[serviceName] = (svcCounts[serviceName] || 0) + 1;
     span.relativeStartTime = span.startTime - traceStartTime;
     span.depth = depth - 1;
     span.hasChildren = node.children.length > 0;
     span.childSpanCount = node.children.length;
     span.warnings = span.warnings || [];
-    span.tags = asTagArray(span.tags);
+    span.tags = span.tags || [];
     span.references = span.references || [];
 
     span.childSpanIds = node.children
@@ -240,11 +168,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     const tagsInfo = deduplicateTags(span.tags);
     span.tags = orderTags(tagsInfo.dedupedTags, getConfigValue('topTagPrefixes'));
     span.warnings = span.warnings.concat(tagsInfo.warnings);
-
-    const aggregation = extractSpanAggregation(span.tags);
-    if (aggregation) {
-      span.aggregation = aggregation;
-    }
     span.references.forEach((ref, index) => {
       const refSpan = spanMap.get(ref.spanID);
       if (refSpan) {

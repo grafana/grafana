@@ -1,5 +1,6 @@
-import { t } from '@grafana/i18n';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+
+import { t } from '../../../../../core/internationalization';
 
 export const getAnyOneWithTheLinkShareOption = () => {
   return {

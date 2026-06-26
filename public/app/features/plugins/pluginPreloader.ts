@@ -1,38 +1,81 @@
-import type { AppPluginConfig } from '@grafana/data';
-import { getPluginSettings } from '@grafana/runtime/unstable';
-import { contextSrv } from 'app/core/services/context_srv';
+import type { PluginExtensionAddedLinkConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
+import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
+import type { AppPluginConfig } from '@grafana/runtime';
+import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { pluginImporter } from './importer/pluginImporter';
+import { PluginExtensionRegistries } from './extensions/registry/types';
+import { importPluginModule } from './plugin_loader';
 
-const preloadPromises = new Map<string, Promise<void>>();
-
-export const clearPreloadedPluginsCache = () => {
-  preloadPromises.clear();
+export type PluginPreloadResult = {
+  pluginId: string;
+  error?: unknown;
+  exposedComponentConfigs: PluginExtensionExposedComponentConfig[];
+  addedComponentConfigs?: PluginExtensionAddedComponentConfig[];
+  addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
 };
 
-export async function preloadPlugins(apps: AppPluginConfig[] = []) {
-  // Create preload promises for each app, reusing existing promises if already loading
-  const promises = apps.map((app) => {
-    if (!preloadPromises.has(app.id)) {
-      preloadPromises.set(app.id, preload(app));
-    }
-    return preloadPromises.get(app.id)!;
-  });
+export async function preloadPlugins(
+  apps: AppPluginConfig[] = [],
+  registries: PluginExtensionRegistries,
+  eventName = 'frontend_plugins_preload'
+) {
+  startMeasure(eventName);
+  const promises = apps.filter((config) => config.preload).map((config) => preload(config));
+  const preloadedPlugins = await Promise.all(promises);
 
-  await Promise.all(promises);
+  for (const preloadedPlugin of preloadedPlugins) {
+    if (preloadedPlugin.error) {
+      console.error(`[Plugins] Skip loading extensions for "${preloadedPlugin.pluginId}" due to an error.`);
+      continue;
+    }
+
+    registries.exposedComponentsRegistry.register({
+      pluginId: preloadedPlugin.pluginId,
+      configs: preloadedPlugin.exposedComponentConfigs,
+    });
+    registries.addedComponentsRegistry.register({
+      pluginId: preloadedPlugin.pluginId,
+      configs: preloadedPlugin.addedComponentConfigs || [],
+    });
+    registries.addedLinksRegistry.register({
+      pluginId: preloadedPlugin.pluginId,
+      configs: preloadedPlugin.addedLinkConfigs || [],
+    });
+  }
+
+  stopMeasure(eventName);
 }
 
-async function preload(config: AppPluginConfig): Promise<void> {
-  const showErrorAlert = contextSrv.user.orgRole !== '';
-
+async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
+  const { path, version, id: pluginId, loadingStrategy } = config;
   try {
-    const meta = await getPluginSettings(config.id, showErrorAlert);
-    await pluginImporter.importApp(meta);
-  } catch (error) {
-    if (!showErrorAlert) {
-      return;
-    }
+    startMeasure(`frontend_plugin_preload_${pluginId}`);
+    const { plugin } = await importPluginModule({
+      path,
+      version,
+      isAngular: config.angular.detected,
+      pluginId,
+      loadingStrategy,
+      moduleHash: config.moduleHash,
+    });
+    const { exposedComponentConfigs = [], addedComponentConfigs = [], addedLinkConfigs = [] } = plugin;
 
-    console.error(`[Plugins] Failed to preload plugin: ${config.path} (version: ${config.version})`, error);
+    // Fetching meta-information for the preloaded app plugin and caching it for later.
+    // (The function below returns a promise, but it's not awaited for a reason: we don't want to block the preload process, we would only like to cache the result for later.)
+    getPluginSettings(pluginId);
+
+    return { pluginId, exposedComponentConfigs, addedComponentConfigs, addedLinkConfigs };
+  } catch (error) {
+    console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
+    return {
+      pluginId,
+      error,
+      exposedComponentConfigs: [],
+      addedComponentConfigs: [],
+      addedLinkConfigs: [],
+    };
+  } finally {
+    stopMeasure(`frontend_plugin_preload_${pluginId}`);
   }
 }

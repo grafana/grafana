@@ -12,21 +12,14 @@ import {
 import { registerMockAPI } from '../fixtures/mswAPI';
 import { wellFormedDatasource } from '../fixtures/others';
 
-import { ResourcesTable, type ResourcesTableProps } from './ResourcesTable';
+import { ResourcesTable, ResourcesTableProps } from './ResourcesTable';
 
 setBackendSrv(backendSrv);
 
 function render(props: Partial<ResourcesTableProps>) {
   rtlRender(
     <TestProvider>
-      <ResourcesTable
-        onChangeSort={() => {}}
-        onChangePage={() => {}}
-        numberOfPages={10}
-        page={0}
-        resources={props.resources || []}
-        localPlugins={[]}
-      />
+      <ResourcesTable onChangePage={() => {}} numberOfPages={10} page={0} resources={props.resources || []} />
     </TestProvider>
   );
 }

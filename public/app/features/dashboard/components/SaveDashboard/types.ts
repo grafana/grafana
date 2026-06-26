@@ -1,8 +1,8 @@
-import { type Dashboard } from '@grafana/schema';
-import { type ObjectMeta } from 'app/features/apiserver/types';
-import { type CloneOptions, type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
-import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { Dashboard } from '@grafana/schema';
+import { ObjectMeta } from 'app/features/apiserver/types';
+import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
+import { SaveDashboardResponseDTO } from 'app/types';
 
 export interface SaveDashboardData {
   clone: Dashboard; // cloned copy
@@ -16,20 +16,10 @@ export interface SaveDashboardOptions extends CloneOptions {
   overwrite?: boolean;
   message?: string;
   makeEditable?: boolean;
-  // for schema v2 we need to pass the k8s metadata
-  k8s?: Partial<ObjectMeta>;
 }
 
-export interface SaveDashboardAsOptions {
-  saveAsCopy?: boolean;
-  isNew?: boolean;
-  copyTags?: boolean;
-  title?: string;
-  description?: string;
-}
-
-export interface SaveDashboardCommand<T> {
-  dashboard: T;
+export interface SaveDashboardCommand {
+  dashboard: Dashboard;
   message?: string;
   folderUid?: string;
   overwrite?: boolean;

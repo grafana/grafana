@@ -20,7 +20,7 @@ var (
 	ErrTransformationRegexReqExp     = errors.New("regex transformations require expression")
 	ErrCorrelationsQuotaFailed       = errors.New("error getting correlations quota")
 	ErrCorrelationsQuotaReached      = errors.New("correlations quota reached")
-	ErrConfigTypeDeprecated          = errors.New("config.type is deprecated; please move type to be sibling of config")
+	ErrInvalidConfigType             = errors.New("correlation contains non default value in config.type")
 )
 
 const (
@@ -110,15 +110,13 @@ type Correlation struct {
 	UID string `json:"uid" xorm:"pk 'uid'"`
 	// UID of the data source the correlation originates from
 	// example: d0oxYRg4z
-	SourceUID  string  `json:"sourceUID" xorm:"pk 'source_uid'"`
-	SourceType *string `json:"-" xorm:"source_type"`
+	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
 	// OrgID of the data source the correlation originates from
 	// Example: 1
 	OrgID int64 `json:"orgId" xorm:"pk 'org_id'"`
 	// UID of the data source the correlation points to
 	// example: PE1C5CBDA0504A6A3
-	TargetUID  *string `json:"targetUID" xorm:"target_uid"`
-	TargetType *string `json:"-" xorm:"target_type"`
+	TargetUID *string `json:"targetUID" xorm:"target_uid"`
 	// Label identifying the correlation
 	// example: My Label
 	Label string `json:"label" xorm:"label"`

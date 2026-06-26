@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
-import { Controller, type FieldError, useFormContext, useWatch } from 'react-hook-form';
+import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-form';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { type CorrelationExternal } from '@grafana/runtime';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { type CorrelationType } from '../types';
+import { CorrelationType, ExternalTypeTarget } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { assertIsQueryTypeError, type FormDTO } from './types';
+import { assertIsQueryTypeError, FormDTO } from './types';
 
 type CorrelationTypeOptions = {
   value: CorrelationType;
@@ -19,7 +18,7 @@ type CorrelationTypeOptions = {
   description: string;
 };
 
-const CORR_TYPES_SELECT: Record<CorrelationType, CorrelationTypeOptions> = {
+export const CORR_TYPES_SELECT: Record<CorrelationType, CorrelationTypeOptions> = {
   query: {
     value: 'query',
     label: 'Query',
@@ -77,10 +76,7 @@ export const ConfigureCorrelationTargetForm = () => {
                 value={correlationType}
                 onChange={(value) => onChange(value.value)}
                 options={Object.values(CORR_TYPES_SELECT)}
-                aria-label={t(
-                  'correlations.configure-correlation-target-form.aria-label-correlation-type',
-                  'Correlation type'
-                )}
+                aria-label="correlation type"
               />
             </Field>
           )}
@@ -150,7 +146,7 @@ export const ConfigureCorrelationTargetForm = () => {
                 },
               }}
               render={({ field: { onChange, value } }) => {
-                const castVal = value as CorrelationExternal['config']['target']; // the target under "query" type can contain anything a datasource query contains
+                const castVal = value as ExternalTypeTarget; // the target under "query" type can contain anything a datasource query contains
                 return (
                   <Field
                     label={t('correlations.target-form.target-label', 'Target')}

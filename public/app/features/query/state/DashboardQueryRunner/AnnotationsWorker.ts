@@ -1,8 +1,8 @@
 import { cloneDeep } from 'lodash';
-import { from, merge, type Observable, of } from 'rxjs';
+import { from, merge, Observable, of } from 'rxjs';
 import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
 
-import { type AnnotationQuery, type DataSourceApi } from '@grafana/data';
+import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
@@ -12,10 +12,10 @@ import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { getDashboardQueryRunner } from './DashboardQueryRunner';
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import {
-  type AnnotationQueryRunner,
-  type DashboardQueryRunnerOptions,
-  type DashboardQueryRunnerWorker,
-  type DashboardQueryRunnerWorkerResult,
+  AnnotationQueryRunner,
+  DashboardQueryRunnerOptions,
+  DashboardQueryRunnerWorker,
+  DashboardQueryRunnerWorkerResult,
 } from './types';
 import { emptyResult, handleDatasourceSrvError, translateQueryResult } from './utils';
 

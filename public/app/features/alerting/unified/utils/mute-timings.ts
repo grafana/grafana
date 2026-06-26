@@ -1,8 +1,8 @@
 import { isUndefined, omitBy } from 'lodash';
 
-import { type MuteTimeInterval, type TimeInterval, type TimeRange } from 'app/plugins/datasource/alertmanager/types';
+import { MuteTimeInterval, TimeInterval, TimeRange } from 'app/plugins/datasource/alertmanager/types';
 
-import { type MuteTimingFields, type MuteTimingIntervalFields } from '../types/mute-timing-form';
+import { MuteTimingFields, MuteTimingIntervalFields } from '../types/mute-timing-form';
 
 export const DAYS_OF_THE_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 

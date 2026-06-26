@@ -1,12 +1,12 @@
-import { type Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { type AnnotationEvent, type DataSourceApi } from '@grafana/data';
+import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 
 import { executeAnnotationQuery } from '../../../annotations/executeAnnotationQuery';
-import { type PanelModel } from '../../../dashboard/state/PanelModel';
+import { PanelModel } from '../../../dashboard/state';
 
-import { type AnnotationQueryRunner, type AnnotationQueryRunnerOptions } from './types';
+import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { handleAnnotationQueryRunnerError } from './utils';
 
 export class AnnotationsQueryRunner implements AnnotationQueryRunner {

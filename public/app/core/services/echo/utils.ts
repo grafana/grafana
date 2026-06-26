@@ -11,7 +11,7 @@ export function loadScript(url: string, async = false) {
 }
 
 /** @internal */
-const echoLogger = createLogger('EchoSrv');
+export const echoLogger = createLogger('EchoSrv');
 export const echoLog = echoLogger.logger;
 
 attachDebugger('echo', undefined, echoLogger);

@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 
-import { FALLBACK_COLOR, type GrafanaTheme2 } from '@grafana/data';
-import { type LineStyle } from '@grafana/schema';
+import { FALLBACK_COLOR, GrafanaTheme2 } from '@grafana/data';
+import { LineStyle } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
-import { VizTooltipColorIndicator as VizColorIndicatorEnum, DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR } from './types';
+import { ColorIndicator, DEFAULT_COLOR_INDICATOR } from './types';
 import { getColorIndicatorClass } from './utils';
 
 export enum ColorIndicatorPosition {
@@ -16,39 +16,34 @@ export enum ColorIndicatorPosition {
 
 interface Props {
   color?: string;
-  colorIndicator?: VizColorIndicatorEnum;
+  colorIndicator?: ColorIndicator;
   position?: ColorIndicatorPosition;
   lineStyle?: LineStyle;
-  isHollow?: boolean;
 }
 
 export type ColorIndicatorStyles = ReturnType<typeof getStyles>;
 
 export const VizTooltipColorIndicator = ({
   color = FALLBACK_COLOR,
-  colorIndicator = DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR,
+  colorIndicator = DEFAULT_COLOR_INDICATOR,
   position = ColorIndicatorPosition.Leading,
   lineStyle,
-  isHollow,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  if (colorIndicator === VizColorIndicatorEnum.series && !isHollow) {
+  if (colorIndicator === ColorIndicator.series) {
     return (
       <SeriesIcon
         color={color}
         lineStyle={lineStyle}
-        className={cx(
-          position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing,
-          styles.seriesIndicator
-        )}
+        className={position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing}
       />
     );
   }
 
   return (
-    <div
-      style={isHollow ? { border: `1px solid ${color}` } : { backgroundColor: color }}
+    <span
+      style={{ backgroundColor: color }}
       className={cx(
         position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing,
         getColorIndicatorClass(colorIndicator, styles)
@@ -64,16 +59,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   trailing: css({
     marginLeft: theme.spacing(0.5),
-  }),
-  seriesIndicator: css({
-    position: 'relative',
-    top: -2, // half the height of the color indicator, since the top is aligned with flex center.
-  }),
-  series: css({
-    width: '14px',
-    height: '4px',
-    borderRadius: theme.shape.radius.pill,
-    minWidth: '14px',
   }),
   value: css({
     width: '12px',

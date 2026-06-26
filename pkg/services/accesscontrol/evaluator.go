@@ -11,7 +11,7 @@ import (
 
 var logger = log.New("accesscontrol.evaluator")
 
-type CheckerFn func(action string, scopes ...string) (bool, error)
+type CheckerFn func(action string, scope string) (bool, error)
 
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
@@ -89,12 +89,18 @@ func (p permissionEvaluator) EvaluateCustom(fn CheckerFn) (bool, error) {
 		return fn(p.Action, "")
 	}
 
-	matches, err := fn(p.Action, p.Scopes...)
-	if err != nil {
-		return false, err
+	for _, target := range p.Scopes {
+		matches, err := fn(p.Action, target)
+		if err != nil {
+			return false, err
+		}
+
+		if matches {
+			return true, nil
+		}
 	}
 
-	return matches, nil
+	return false, nil
 }
 
 func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {

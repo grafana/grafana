@@ -3,14 +3,13 @@ import { useId, useState, useMemo, useEffect } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useForm, Controller } from 'react-hook-form';
 
-import { type DataLinkTransformationConfig, type ScopedVars } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { DataLinkTransformationConfig, ScopedVars } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, Modal, Select, Tooltip, Stack } from '@grafana/ui';
 
 import {
   getSupportedTransTypeDetails,
   getTransformOptions,
-  type TransformationFieldDetails,
+  TransformationFieldDetails,
 } from '../correlations/Forms/types';
 import { getTransformationVars } from '../correlations/transformations';
 
@@ -130,21 +129,15 @@ export const CorrelationTransformationAddModal = ({
   return (
     <Modal
       isOpen={true}
-      title={
-        transformationToEdit
-          ? t('explore.correlation-transformation-add-modal.title-edit', 'Edit transformation')
-          : t('explore.correlation-transformation-add-modal.title-add', 'Add transformation')
-      }
+      title={`${transformationToEdit ? 'Edit' : 'Add'} transformation`}
       onDismiss={onCancel}
       className={css({ width: '700px' })}
     >
       <p>
-        <Trans i18nKey="explore.correlation-transformation-add-modal.body">
-          A transformation extracts variables out of a single field. These variables will be available along with your
-          field variables.
-        </Trans>
+        A transformation extracts variables out of a single field. These variables will be available along with your
+        field variables.
       </p>
-      <Field label={t('explore.correlation-transformation-add-modal.label-field', 'Field')}>
+      <Field label="Field">
         <Controller
           control={control}
           render={({ field: { onChange, ref, ...field } }) => (
@@ -159,7 +152,7 @@ export const CorrelationTransformationAddModal = ({
               options={Object.entries(fieldList).map((entry) => {
                 return { label: entry[0], value: entry[0] };
               })}
-              aria-label={t('explore.correlation-transformation-add-modal.aria-label-field', 'Field')}
+              aria-label="field"
             />
           )}
           name={`field` as const}
@@ -175,7 +168,7 @@ export const CorrelationTransformationAddModal = ({
               autoEscape={false}
             />
           </pre>
-          <Field label={t('explore.correlation-transformation-add-modal.label-type', 'Type')}>
+          <Field label="Type">
             <Controller
               control={control}
               render={({ field: { onChange, ref, ...field } }) => (
@@ -190,7 +183,7 @@ export const CorrelationTransformationAddModal = ({
                     });
                   }}
                   options={getTransformOptions()}
-                  aria-label={t('explore.correlation-transformation-add-modal.aria-label-type', 'Type')}
+                  aria-label="type"
                 />
               )}
               name={`type` as const}
@@ -200,12 +193,9 @@ export const CorrelationTransformationAddModal = ({
             <Field
               label={
                 formFieldsVis.expressionDetails.helpText ? (
-                  <LabelWithTooltip
-                    label={t('explore.correlation-transformation-add-modal.label-expression', 'Expression')}
-                    tooltipText={formFieldsVis.expressionDetails.helpText}
-                  />
+                  <LabelWithTooltip label="Expression" tooltipText={formFieldsVis.expressionDetails.helpText} />
                 ) : (
-                  t('explore.correlation-transformation-add-modal.label-expression-without-tooltip', 'Expression')
+                  'Expression'
                 )
               }
               htmlFor={`${id}-expression`}
@@ -218,12 +208,9 @@ export const CorrelationTransformationAddModal = ({
             <Field
               label={
                 formFieldsVis.mapValueDetails.helpText ? (
-                  <LabelWithTooltip
-                    label={t('explore.correlation-transformation-add-modal.label-variable-name', 'Variable name')}
-                    tooltipText={formFieldsVis.mapValueDetails.helpText}
-                  />
+                  <LabelWithTooltip label="Variable Name" tooltipText={formFieldsVis.mapValueDetails.helpText} />
                 ) : (
-                  t('explore.correlation-transformation-add-modal.label-variable-name-without-tooltip', 'Variable name')
+                  'Variable Name'
                 )
               }
               htmlFor={`${id}-mapValue`}
@@ -233,9 +220,7 @@ export const CorrelationTransformationAddModal = ({
           )}
           {Object.entries(transformationVars).length > 0 && (
             <>
-              <Trans i18nKey="explore.correlation-transformation-add-modal.added-variables">
-                This transformation will add the following variables:
-              </Trans>
+              This transformation will add the following variables:
               <pre>
                 {Object.entries(transformationVars).map((entry) => {
                   return `\$\{${entry[0]}\} = ${entry[1]?.value}\n`;
@@ -247,12 +232,10 @@ export const CorrelationTransformationAddModal = ({
       )}
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onCancel} fill="outline">
-          <Trans i18nKey="explore.correlation-transformation-add-modal.cancel">Cancel</Trans>
+          Cancel
         </Button>
         <Button variant="primary" onClick={() => onSave(getValues())} disabled={!validToSave}>
-          {transformationToEdit
-            ? t('explore.correlation-transformation-add-modal.edit-transformation', 'Edit transformation')
-            : t('explore.correlation-transformation-add-modal.add-transformation', 'Add transformation to correlation')}
+          {transformationToEdit ? 'Edit transformation' : 'Add transformation to correlation'}
         </Button>
       </Modal.ButtonRow>
     </Modal>

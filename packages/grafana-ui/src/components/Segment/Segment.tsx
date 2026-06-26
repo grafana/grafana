@@ -1,16 +1,16 @@
 import { cx } from '@emotion/css';
-import { type HTMLProps } from 'react';
+import { isObject } from 'lodash';
+import { HTMLProps } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { InlineLabel } from '../Forms/InlineLabel';
-import { getLabelFromValue } from '../Select/utils';
 
 import { SegmentSelect } from './SegmentSelect';
 import { getSegmentStyles } from './styles';
-import { type SegmentProps } from './types';
+import { SegmentProps } from './types';
 import { useExpandableLabel } from './useExpandableLabel';
 
 export interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
@@ -20,9 +20,6 @@ export interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDi
   inputMinWidth?: number;
 }
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-segment--docs
- */
 export function Segment<T>({
   options,
   value,
@@ -44,7 +41,8 @@ export function Segment<T>({
   const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
-    const label = getLabelFromValue(value);
+    const label = isObject(value) ? value.label : value;
+    const labelAsString = label != null ? String(label) : undefined;
 
     return (
       <Label
@@ -61,7 +59,7 @@ export function Segment<T>({
                 className
               )}
             >
-              {label || placeholder}
+              {labelAsString || placeholder}
             </InlineLabel>
           )
         }
@@ -72,7 +70,7 @@ export function Segment<T>({
   return (
     <SegmentSelect
       {...rest}
-      value={value && typeof value !== 'object' ? { value } : value}
+      value={value && !isObject(value) ? { value } : value}
       placeholder={inputPlaceholder}
       options={options}
       width={width}

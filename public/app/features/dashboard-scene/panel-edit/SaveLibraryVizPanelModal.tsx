@@ -1,12 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
-import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 import { getConnectedDashboards } from 'app/features/library-panels/state/api';
 import { getModalStyles } from 'app/features/library-panels/styles';
 
-import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 
 interface Props {
   libraryPanel: LibraryPanelBehavior;
@@ -20,8 +19,8 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(libraryPanel.state.uid);
-    if (searchHits && searchHits.length > 0) {
-      return searchHits.map((dash) => dash.name);
+    if (searchHits.length > 0) {
+      return searchHits.map((dash) => dash.title);
     }
 
     return [];
@@ -50,46 +49,30 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
   const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 
   return (
-    <Modal title={title} onDismiss={onDismiss} isOpen={true}>
+    <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
-          <Trans
-            i18nKey="dashboard-scene.save-library-viz-panel-modal.affected-dashboards"
-            count={libraryPanel.state._loadedPanel?.meta?.connectedDashboards}
-            tOptions={{
-              defaultValue_one:
-                'This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:',
-              defaultValue_other:
-                'This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:',
-            }}
-          >
-            This update will affect <strong>{'{{count}}'} dashboards.</strong> The following dashboards using the panel
-            will be affected:
-          </Trans>
+          {'This update will affect '}
+          <strong>
+            {libraryPanel.state._loadedPanel?.meta?.connectedDashboards}{' '}
+            {libraryPanel.state._loadedPanel?.meta?.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}.
+          </strong>
+          The following dashboards using the panel will be affected:
         </p>
         <Input
           className={styles.dashboardSearch}
           prefix={<Icon name="search" />}
-          placeholder={t(
-            'dashboard-scene.save-library-viz-panel-modal.placeholder-search-affected-dashboards',
-            'Search affected dashboards'
-          )}
+          placeholder="Search affected dashboards"
           value={searchString}
           onChange={(e) => setSearchString(e.currentTarget.value)}
         />
         {dashState.loading ? (
-          <p>
-            <Trans i18nKey="dashboard-scene.save-library-viz-panel-modal.loading-connected-dashboards">
-              Loading connected dashboards...
-            </Trans>
-          </p>
+          <p>Loading connected dashboards...</p>
         ) : (
           <table className={styles.myTable}>
             <thead>
               <tr>
-                <th>
-                  <Trans i18nKey="dashboard-scene.save-library-viz-panel-modal.dashboard-name">Dashboard name</Trans>
-                </th>
+                <th>Dashboard name</th>
               </tr>
             </thead>
             <tbody>
@@ -103,11 +86,11 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
         )}
         <Modal.ButtonRow>
           <Button variant="secondary" onClick={onDismiss} fill="outline">
-            <Trans i18nKey="dashboard-scene.save-library-viz-panel-modal.cancel">Cancel</Trans>
+            Cancel
           </Button>
           {isUnsavedPrompt && (
             <Button variant="destructive" onClick={discardAndClose}>
-              <Trans i18nKey="dashboard-scene.save-library-viz-panel-modal.discard">Discard</Trans>
+              Discard
             </Button>
           )}
           <Button
@@ -115,7 +98,7 @@ export const SaveLibraryVizPanelModal = ({ libraryPanel, isUnsavedPrompt, onDism
               onConfirm();
             }}
           >
-            <Trans i18nKey="dashboard-scene.save-library-viz-panel-modal.update-all">Update all</Trans>
+            Update all
           </Button>
         </Modal.ButtonRow>
       </div>

@@ -1,19 +1,19 @@
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 
 import {
-  type ConfigOverrideRule,
-  type DynamicConfigValue,
+  ConfigOverrideRule,
+  DynamicConfigValue,
   FieldColorModeId,
-  type FieldConfig,
+  FieldConfig,
   FieldConfigProperty,
-  type FieldConfigSource,
+  FieldConfigSource,
   FieldMatcherID,
   fieldReducers,
   FieldType,
   NullValueMode,
-  type PanelTypeChangedHandler,
+  PanelTypeChangedHandler,
   ReducerID,
-  type Threshold,
+  Threshold,
   ThresholdsMode,
 } from '@grafana/data';
 import {
@@ -21,29 +21,29 @@ import {
   TooltipDisplayMode,
   AxisPlacement,
   GraphDrawStyle,
-  type GraphFieldConfig,
+  GraphFieldConfig,
   GraphGradientMode,
   GraphThresholdsStyleMode,
   LineInterpolation,
-  type LineStyle,
+  LineStyle,
   VisibilityMode,
   ScaleDistribution,
   StackingMode,
   SortOrder,
   GraphTransform,
-  type AnnotationQuery,
+  AnnotationQuery,
   ComparisonOperation,
 } from '@grafana/schema';
-import { type TimeRegionConfig } from 'app/core/utils/timeRegions';
+import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardAnnotationsDataLayer } from 'app/features/dashboard-scene/scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
-import { type GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { defaultGraphConfig } from './config';
-import { type Options } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 let dashboardRefreshDebouncer: ReturnType<typeof setTimeout> | null = null;
 
@@ -79,7 +79,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   return {};
 };
 
-function graphToTimeseriesOptions(angular: any): {
+export function graphToTimeseriesOptions(angular: any): {
   fieldConfig: FieldConfigSource;
   options: Options;
   annotations: AnnotationQuery[];

@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
-import type { JSX } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Card, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Card, Stack, useStyles2, Tooltip, Icon } from '@grafana/ui';
 
 interface StatItem {
   name: string;
@@ -22,7 +21,7 @@ export interface Props {
 export const ServerStatsCard = ({ content, footer, isLoading }: Props) => {
   const styles = useStyles2(getStyles);
   return (
-    <Card noMargin className={styles.container}>
+    <Card className={styles.container}>
       {content.map((item, index) => (
         <Stack key={index} justifyContent="space-between" alignItems="center">
           <Stack alignItems={'center'}>

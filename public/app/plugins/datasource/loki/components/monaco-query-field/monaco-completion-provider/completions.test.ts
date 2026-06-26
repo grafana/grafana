@@ -1,14 +1,14 @@
 import { dateTime } from '@grafana/data';
-import { type Monaco, type monacoTypes } from '@grafana/ui';
+import { Monaco, monacoTypes } from '@grafana/ui';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
-import { type LokiDatasource } from '../../../datasource';
-import { createLokiDatasource } from '../../../mocks/datasource';
+import { createLokiDatasource } from '../../../__mocks__/datasource';
+import { LokiDatasource } from '../../../datasource';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
 import { calculateRange } from './completionUtils';
 import { getAfterSelectorCompletions, getCompletions } from './completions';
-import { getSituation, type Label, type Situation } from './situation';
+import { getSituation, Label, Situation } from './situation';
 
 jest.mock('../../../querybuilder/operations', () => ({
   explainOperator: () => 'Operator docs',

@@ -14,6 +14,17 @@ export interface SyncInfo {
   nextSync: string;
 }
 
+export interface LdapUserSyncInfo {
+  nextSync?: string;
+  prevSync?: string;
+  status?: string;
+}
+
+export interface FailedUser {
+  Login: string;
+  Error: string;
+}
+
 export interface LdapRole {
   orgId: number;
   orgName: string;
@@ -53,14 +64,14 @@ export interface LdapServerInfo {
   error: string;
 }
 
-interface GroupMapping {
+export interface GroupMapping {
   group_dn?: string;
   org_id?: number;
   org_role?: string;
   grafana_admin?: boolean;
 }
 
-interface LdapAttributes {
+export interface LdapAttributes {
   email?: string;
   member_of?: string;
   name?: string;
@@ -68,7 +79,7 @@ interface LdapAttributes {
   username?: string;
 }
 
-interface LdapServerConfig {
+export interface LdapServerConfig {
   attributes: LdapAttributes;
   bind_dn: string;
   bind_password?: string;
@@ -108,11 +119,11 @@ export interface LdapState {
   ldapSsoSettings?: LdapServerConfig;
 }
 
-interface LdapConfig {
+export interface LdapConfig {
   servers: LdapServerConfig[];
 }
 
-interface LdapSettings {
+export interface LdapSettings {
   activeSyncEnabled: boolean;
   allowSignUp: boolean;
   config: LdapConfig;

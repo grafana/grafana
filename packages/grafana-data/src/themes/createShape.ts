@@ -1,9 +1,3 @@
-import { z } from 'zod';
-
-const DEFAULT_BORDER_RADIUS_SM = 4;
-const DEFAULT_BORDER_RADIUS_MD = 6;
-const DEFAULT_BORDER_RADIUS_LG = 10;
-
 /** @beta */
 export interface ThemeShape {
   /**
@@ -13,52 +7,22 @@ export interface ThemeShape {
   radius: Radii;
 }
 
-export interface Radii {
-  /**
-   * Use for most things (inputs, buttons, cards, panels, etc)
-   * Same as `md`
-   */
+interface Radii {
   default: string;
-  /**
-   * Use for most things (inputs, buttons, cards, panels, etc)
-   * Same as `default`
-   */
-  md: string;
-  /**
-   * Use for smaller things like chips, tags and badges
-   */
-  sm: string;
-  /**
-   * Use for large things, like modals and containers
-   */
-  lg: string;
-  /**
-   * Used to create maximum half circle sides (e.g. for pills)
-   */
   pill: string;
   circle: string;
 }
 
 /** @internal */
-export const ThemeShapeInputSchema = z.object({
-  borderRadiusSm: z.int().nonnegative().optional(),
-  borderRadius: z.int().nonnegative().optional(),
-  borderRadiusLg: z.int().nonnegative().optional(),
-});
+export interface ThemeShapeInput {
+  borderRadius?: number;
+}
 
-/** @internal */
-export type ThemeShapeInput = z.infer<typeof ThemeShapeInputSchema>;
+export function createShape(options: ThemeShapeInput): ThemeShape {
+  const baseBorderRadius = options.borderRadius ?? 2;
 
-export function createShape({
-  borderRadiusSm = DEFAULT_BORDER_RADIUS_SM,
-  borderRadius: borderRadiusMd = DEFAULT_BORDER_RADIUS_MD,
-  borderRadiusLg = DEFAULT_BORDER_RADIUS_LG,
-}: ThemeShapeInput): ThemeShape {
   const radius = {
-    default: `${borderRadiusMd}px`,
-    sm: `${borderRadiusSm}px`,
-    md: `${borderRadiusMd}px`,
-    lg: `${borderRadiusLg}px`,
+    default: '2px',
     pill: '9999px',
     circle: '100%',
   };
@@ -68,7 +32,7 @@ export function createShape({
    * @param amount
    */
   const borderRadius = (amount?: number) => {
-    const value = (amount ?? 1) * borderRadiusMd;
+    const value = (amount ?? 1) * baseBorderRadius;
     return `${value}px`;
   };
 

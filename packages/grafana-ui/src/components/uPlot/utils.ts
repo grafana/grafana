@@ -1,25 +1,21 @@
-import { type default as uPlot, type AlignedData, type Options, type PaddingSide } from 'uplot';
+import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
 
 import {
-  type DataFrame,
-  type DisplayProcessor,
-  type DisplayValue,
-  type Field,
+  DataFrame,
+  DisplayProcessor,
+  DisplayValue,
+  ensureTimeField,
+  Field,
   fieldReducers,
+  FieldType,
   getDisplayProcessor,
-  type GrafanaTheme2,
+  GrafanaTheme2,
   reduceField,
   ReducerID,
 } from '@grafana/data';
-import {
-  type BarAlignment,
-  GraphDrawStyle,
-  GraphTransform,
-  type LineInterpolation,
-  StackingMode,
-} from '@grafana/schema';
+import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
-import { attachDebugger } from '../../utils/debug';
+import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 
 import { buildScaleKey } from './internal';
@@ -201,7 +197,11 @@ export function preparePlotData2(
     let vals = field.values;
 
     if (i === 0) {
-      data[i] = vals;
+      if (field.type === FieldType.time) {
+        data[0] = ensureTimeField(field).values;
+      } else {
+        data[0] = vals;
+      }
       return;
     }
 
@@ -218,12 +218,14 @@ export function preparePlotData2(
       let firstVal = vals[firstValIdx];
       vals = Array(vals.length).fill(undefined);
       vals[firstValIdx] = firstVal;
-    } else if (custom.transform === GraphTransform.NegativeY) {
+    } else {
       vals = vals.slice();
 
-      for (let i = 0; i < vals.length; i++) {
-        if (vals[i] != null) {
-          vals[i] *= -1;
+      if (custom.transform === GraphTransform.NegativeY) {
+        for (let i = 0; i < vals.length; i++) {
+          if (vals[i] != null) {
+            vals[i] *= -1;
+          }
         }
       }
     }
@@ -464,7 +466,7 @@ export const getDisplayValuesForCalcs = (calcs: string[], field: Field, theme: G
 // Dev helpers
 
 /** @internal */
-const pluginLogger = createLogger('uPlot');
+export const pluginLogger = createLogger('uPlot');
 export const pluginLog = pluginLogger.logger;
 // pluginLogger.enable();
 attachDebugger('graphng', undefined, pluginLogger);

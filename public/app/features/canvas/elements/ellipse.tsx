@@ -1,28 +1,27 @@
 import { css } from '@emotion/css';
-import { useId } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { type DimensionContext } from 'app/features/dimensions/context';
+import { GrafanaTheme2, OneClickMode } from '@grafana/data';
+import { config } from 'app/core/config';
+import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import {
-  type CanvasElementItem,
-  type CanvasElementOptions,
-  type CanvasElementProps,
+  CanvasElementItem,
+  CanvasElementOptions,
+  CanvasElementProps,
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, type CanvasElementConfig, type CanvasElementData, VAlign } from '../types';
+import { Align, CanvasElementConfig, CanvasElementData, VAlign } from '../types';
 
 const Ellipse = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>) => {
   const { data } = props;
   const styles = getStyles(config.theme2, data);
 
   // uuid needed to avoid id conflicts when multiple elements are rendered
-  const uniqueId = useId();
+  const uniqueId = uuidv4();
 
   return (
     <div className={styles.container}>
@@ -107,6 +106,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       left: options?.placement?.left,
       rotation: options?.placement?.rotation ?? 0,
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -136,20 +136,20 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
   },
 
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.ellipse-item.category-ellipse', 'Ellipse')];
+    const category = ['Ellipse'];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: t('canvas.ellipse-item.name-text', 'Text'),
+        name: 'Text',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: t('canvas.ellipse-item.name-text-color', 'Text color'),
+        name: 'Text color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -157,12 +157,12 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       .addRadio({
         category,
         path: 'config.align',
-        name: t('canvas.ellipse-item.name-align-text', 'Align text'),
+        name: 'Align text',
         settings: {
           options: [
-            { value: Align.Left, label: t('canvas.ellipse-item.label.left', 'Left') },
-            { value: Align.Center, label: t('canvas.ellipse-item.label.center', 'Center') },
-            { value: Align.Right, label: t('canvas.ellipse-item.label.right', 'Right') },
+            { value: Align.Left, label: 'Left' },
+            { value: Align.Center, label: 'Center' },
+            { value: Align.Right, label: 'Right' },
           ],
         },
         defaultValue: Align.Left,
@@ -170,12 +170,12 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       .addRadio({
         category,
         path: 'config.valign',
-        name: t('canvas.ellipse-item.name-vertical-align', 'Vertical align'),
+        name: 'Vertical align',
         settings: {
           options: [
-            { value: VAlign.Top, label: t('canvas.ellipse-item.label.top', 'Top') },
-            { value: VAlign.Middle, label: t('canvas.ellipse-item.label.middle', 'Middle') },
-            { value: VAlign.Bottom, label: t('canvas.ellipse-item.label.bottom', 'Bottom') },
+            { value: VAlign.Top, label: 'Top' },
+            { value: VAlign.Middle, label: 'Middle' },
+            { value: VAlign.Bottom, label: 'Bottom' },
           ],
         },
         defaultValue: VAlign.Middle,
@@ -183,9 +183,9 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       .addNumberInput({
         category,
         path: 'config.size',
-        name: t('canvas.ellipse-item.name-text-size', 'Text size'),
+        name: 'Text size',
         settings: {
-          placeholder: t('canvas.ellipse-item.placeholder.auto', 'Auto'),
+          placeholder: 'Auto',
         },
       });
   },

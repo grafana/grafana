@@ -1,16 +1,14 @@
 import { css } from '@emotion/css';
-import { addDays } from 'date-fns/addDays';
-import { subDays } from 'date-fns/subDays';
+import { addDays, subDays } from 'date-fns';
 import { uniqueId } from 'lodash';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
-import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
-import { type KeyValueField } from '../../../api/templateApi';
+import { KeyValueField } from '../../../api/templateApi';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';
 import LabelsField from '../../rule-editor/labels/LabelsField';
 
@@ -82,18 +80,14 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   };
   const alertOptions: AlertOption[] = [
     {
-      label: t('alerting.generate-alert-data-modal.alert-options.label.firing', 'Firing'),
+      label: 'Firing',
       value: 'firing',
     },
-    { label: t('alerting.generate-alert-data-modal.alert-options.label.resolved', 'Resolved'), value: 'resolved' },
+    { label: 'Resolved', value: 'resolved' },
   ];
 
   return (
-    <Modal
-      onDismiss={onDismiss}
-      isOpen={isOpen}
-      title={t('alerting.generate-alert-data-modal.title-add-custom-alerts', 'Add custom alerts')}
-    >
+    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Add custom alerts'}>
       <FormProvider {...formMethods}>
         <form
           onSubmit={(e) => {
@@ -103,38 +97,35 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
             setStatus('firing');
           }}
         >
-          <Card noMargin>
-            <Stack direction="column" gap={1}>
-              <div className={styles.section}>
-                <AnnotationsStep />
-              </div>
-              <div className={styles.section}>
-                <LabelsField />
-              </div>
-              <div className={styles.flexWrapper}>
-                <RadioButtonGroup value={status} options={alertOptions} onChange={(value) => setStatus(value)} />
-                <Button
-                  onClick={onAdd}
-                  className={styles.onAddButton}
-                  icon="plus-circle"
-                  type="button"
-                  variant="secondary"
-                  disabled={!labelsOrAnnotationsAdded()}
-                >
-                  <Trans i18nKey="alerting.generate-alert-data-modal.add-alert-data">Add alert data</Trans>
-                </Button>
-              </div>
-            </Stack>
-          </Card>
-          <div className={styles.onSubmitWrapper} />
+          <>
+            <Card>
+              <Stack direction="column" gap={1}>
+                <div className={styles.section}>
+                  <AnnotationsStep />
+                </div>
+                <div className={styles.section}>
+                  <LabelsField />
+                </div>
+                <div className={styles.flexWrapper}>
+                  <RadioButtonGroup value={status} options={alertOptions} onChange={(value) => setStatus(value)} />
+                  <Button
+                    onClick={onAdd}
+                    className={styles.onAddButton}
+                    icon="plus-circle"
+                    type="button"
+                    variant="secondary"
+                    disabled={!labelsOrAnnotationsAdded()}
+                  >
+                    Add alert data
+                  </Button>
+                </div>
+              </Stack>
+            </Card>
+          </>
+          <div className={styles.onSubmitWrapper}></div>
           {alerts.length > 0 && (
             <Stack direction="column" gap={1}>
-              <h5>
-                <Trans i18nKey="alerting.generate-alert-data-modal.review-alert-payload">
-                  {' '}
-                  Review alert data to add to the payload:
-                </Trans>
-              </h5>
+              <h5> Review alert data to add to the payload:</h5>
               <pre className={styles.result} data-testid="payloadJSON">
                 {JSON.stringify(alerts, null, 2)}
               </pre>
@@ -143,9 +134,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
           <div className={styles.onSubmitWrapper}>
             <Modal.ButtonRow>
               <Button onClick={onSubmit} disabled={alerts.length === 0} className={styles.onSubmitButton}>
-                <Trans i18nKey="alerting.generate-alert-data-modal.add-alert-data-to-payload">
-                  Add alert data to payload
-                </Trans>
+                Add alert data to payload
               </Button>
             </Modal.ButtonRow>
           </div>

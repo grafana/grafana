@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { type DataFrame, DataTransformerID, getFrameDisplayName, type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Field, Select, Stack, Switch, useStyles2 } from '@grafana/ui';
+import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
+import { Field, HorizontalGroup, Select, Switch, VerticalGroup, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { t } from 'app/core/internationalization';
 import { DetailText } from 'app/features/inspector/DetailText';
-import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { getPanelInspectorStyles2 } from './styles';
 
@@ -14,14 +14,14 @@ interface Props {
   dataFrames: DataFrame[];
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
   selectedDataFrame: number | DataTransformerID;
+  downloadForExcel: boolean;
   onDataFrameChange: (item: SelectableValue<DataTransformerID | number>) => void;
+  toggleDownloadForExcel: () => void;
   data?: DataFrame[];
   hasTransformations?: boolean;
   formattedDataDescription?: string;
   onOptionsChange?: (options: GetDataOptions) => void;
   actions?: React.ReactNode;
-  excelCompatibilityMode: boolean;
-  toggleExcelCompatibilityMode: () => void;
 }
 
 export const InspectDataOptions = ({
@@ -35,8 +35,8 @@ export const InspectDataOptions = ({
   transformationOptions,
   selectedDataFrame,
   onDataFrameChange,
-  excelCompatibilityMode,
-  toggleExcelCompatibilityMode,
+  downloadForExcel,
+  toggleDownloadForExcel,
 }: Props) => {
   const styles = useStyles2(getPanelInspectorStyles2);
 
@@ -69,12 +69,21 @@ export const InspectDataOptions = ({
       parts.push(getFrameDisplayName(data[selectedDataFrame as number]));
     }
 
-    if (options.withTransforms) {
-      parts.push(t('dashboard.inspect-data.panel-transforms', 'Panel transforms'));
+    if (options.withTransforms || options.withFieldConfig) {
+      if (options.withTransforms) {
+        parts.push(t('dashboard.inspect-data.panel-transforms', 'Panel transforms'));
+      }
+
+      if (options.withTransforms && options.withFieldConfig) {
+      }
+
+      if (options.withFieldConfig) {
+        parts.push(t('dashboard.inspect-data.formatted', 'Formatted data'));
+      }
     }
 
-    if (options.withFieldConfig) {
-      parts.push(t('dashboard.inspect-data.formatted', 'Formatted data'));
+    if (downloadForExcel) {
+      parts.push(t('dashboard.inspect-data.excel-header', 'Excel header'));
     }
 
     return parts.join(', ');
@@ -91,7 +100,7 @@ export const InspectDataOptions = ({
         actions={actions}
       >
         <div className={styles.options} data-testid="dataOptions">
-          <Stack direction="column" gap={0}>
+          <VerticalGroup spacing="none">
             {data!.length > 1 && (
               <Field label={t('dashboard.inspect-data.dataframe-label', 'Show data frame')}>
                 <Select
@@ -104,7 +113,7 @@ export const InspectDataOptions = ({
               </Field>
             )}
 
-            <Stack>
+            <HorizontalGroup>
               {hasTransformations && onOptionsChange && (
                 <Field
                   label={t('dashboard.inspect-data.transformations-label', 'Apply panel transformations')}
@@ -138,20 +147,16 @@ export const InspectDataOptions = ({
                 </Field>
               )}
               <Field
-                label={t('dashboard.inspect-data.excel-compatibility-mode-label', 'Download for Excel')}
+                label={t('dashboard.inspect-data.download-excel-label', 'Download for Excel')}
                 description={t(
-                  'dashboard.inspect-data.excel-compatibility-mode-description',
-                  "Generates a CSV file that's compatible with most Excel versions"
+                  'dashboard.inspect-data.download-excel-description',
+                  'Adds header to CSV for use with Excel'
                 )}
               >
-                <Switch
-                  id="excel-compatibility-mode-toggle"
-                  value={excelCompatibilityMode}
-                  onChange={toggleExcelCompatibilityMode}
-                />
+                <Switch id="excel-toggle" value={downloadForExcel} onChange={toggleDownloadForExcel} />
               </Field>
-            </Stack>
-          </Stack>
+            </HorizontalGroup>
+          </VerticalGroup>
         </div>
       </QueryOperationRow>
     </div>

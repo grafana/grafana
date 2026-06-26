@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -10,10 +11,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,12 +23,16 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -94,6 +100,90 @@ func TestContextWithTimeoutFromRequest(t *testing.T) {
 }
 
 func TestAlertmanagerConfig(t *testing.T) {
+	sut := createSut(t)
+
+	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
+		rc := contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 12,
+			},
+		}
+		request := createAmConfigRequest(t, validConfig)
+
+		response := sut.RoutePostAlertingConfig(&rc, request)
+
+		require.Equal(t, 404, response.Status())
+		require.Contains(t, string(response.Body()), "Alertmanager does not exist for this organization")
+	})
+
+	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
+		rc := contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+		request := createAmConfigRequest(t, validConfig)
+
+		response := sut.RoutePostAlertingConfig(&rc, request)
+
+		require.Equal(t, 202, response.Status())
+	})
+
+	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
+		sut := createSut(t)
+		rc := contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 3, // Org 3 was initialized with broken config.
+			},
+		}
+		request := createAmConfigRequest(t, validConfig)
+
+		response := sut.RoutePostAlertingConfig(&rc, request)
+
+		require.Equal(t, 202, response.Status())
+	})
+
+	t.Run("assert config hash doesn't change when sending RouteGetAlertingConfig back to RoutePostAlertingConfig", func(t *testing.T) {
+		rc := contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+		request := createAmConfigRequest(t, validConfigWithSecureSetting)
+
+		r := sut.RoutePostAlertingConfig(&rc, request)
+		require.Equal(t, 202, r.Status())
+
+		getResponse := sut.RouteGetAlertingConfig(&rc)
+		require.Equal(t, 200, getResponse.Status())
+
+		body := getResponse.Body()
+		hash := md5.Sum(body)
+		postable, err := notifier.Load(body)
+		require.NoError(t, err)
+
+		r = sut.RoutePostAlertingConfig(&rc, *postable)
+		require.Equal(t, 202, r.Status())
+
+		getResponse = sut.RouteGetAlertingConfig(&rc)
+		require.Equal(t, 200, getResponse.Status())
+
+		newHash := md5.Sum(getResponse.Body())
+		require.Equal(t, hash, newHash)
+	})
+
 	t.Run("when objects are not provisioned", func(t *testing.T) {
 		t.Run("route from GET config has no provenance", func(t *testing.T) {
 			sut := createSut(t)
@@ -138,6 +228,9 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t)
 			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t, validConfig)
+
+			_ = sut.RoutePostAlertingConfig(rc, request)
 
 			response := sut.RouteGetAlertingConfig(rc)
 			body := asGettableUserConfig(t, response)
@@ -174,13 +267,7 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
 			2: {AlertmanagerConfiguration: validConfigWithoutAutogen, OrgID: 2},
 		}
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingUseNewSimplifiedRoutingHashAlgorithm)
-		sut.mam = notifier.NewTestMultiOrgAlertmanager(t,
-			notifier.WithOrgs([]int64{1, 2, 3}),
-			notifier.WithConfigs(configs),
-			notifier.WithDisabledOrgs(map[int64]struct{}{5: {}}),
-			notifier.WithFeatureToggles(ft),
-		)
+		sut.mam = createMultiOrgAlertmanager(t, configs)
 		return sut, configs
 	}
 
@@ -200,12 +287,37 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 		}
 	}
 
+	t.Run("route POST config", func(t *testing.T) {
+		t.Run("does not save autogen routes", func(t *testing.T) {
+			sut, configs := createSutForAutogen(t)
+			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t, validConfigWithAutogen)
+			response := sut.RoutePostAlertingConfig(rc, request)
+			require.Equal(t, 202, response.Status())
+
+			compare(t, validConfigWithoutAutogen, configs[1].AlertmanagerConfiguration)
+		})
+
+		t.Run("provenance guard ignores autogen routes", func(t *testing.T) {
+			sut := createSut(t)
+			rc := createRequestCtxInOrg(1)
+			request := createAmConfigRequest(t, validConfigWithoutAutogen)
+			_ = sut.RoutePostAlertingConfig(rc, request)
+
+			setRouteProvenance(t, 1, sut.mam.ProvStore)
+			request = createAmConfigRequest(t, validConfigWithAutogen)
+			request.AlertmanagerConfig.Route.Provenance = apimodels.Provenance(ngmodels.ProvenanceAPI)
+			response := sut.RoutePostAlertingConfig(rc, request)
+			require.Equal(t, 202, response.Status())
+		})
+	})
+
 	t.Run("route GET config", func(t *testing.T) {
 		t.Run("when admin return autogen routes", func(t *testing.T) {
 			sut, _ := createSutForAutogen(t)
 
 			rc := createRequestCtxInOrg(2)
-			rc.OrgRole = org.RoleAdmin
+			rc.SignedInUser.OrgRole = org.RoleAdmin
 
 			response := sut.RouteGetAlertingConfig(rc)
 			require.Equal(t, 200, response.Status())
@@ -226,11 +338,11 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 	})
 
 	t.Run("route GET status", func(t *testing.T) {
-		t.Run("return autogen routes", func(t *testing.T) { // Endpoint is admin-only.
+		t.Run("when admin return autogen routes", func(t *testing.T) {
 			sut, _ := createSutForAutogen(t)
 
 			rc := createRequestCtxInOrg(2)
-			rc.OrgRole = org.RoleAdmin
+			rc.SignedInUser.OrgRole = org.RoleAdmin
 
 			response := sut.RouteGetAMStatus(rc)
 			require.Equal(t, 200, response.Status())
@@ -247,6 +359,28 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			compare(t, validConfigWithAutogen, string(configBody))
+		})
+
+		t.Run("when not admin return no autogen routes", func(t *testing.T) {
+			sut, _ := createSutForAutogen(t)
+
+			rc := createRequestCtxInOrg(2)
+
+			response := sut.RouteGetAMStatus(rc)
+			require.Equal(t, 200, response.Status())
+
+			var status struct {
+				Config apimodels.PostableApiAlertingConfig `json:"config"`
+			}
+			err := json.Unmarshal(response.Body(), &status)
+			require.NoError(t, err)
+			configBody, err := json.Marshal(apimodels.PostableUserConfig{
+				TemplateFiles:      map[string]string{"a": "template"},
+				AlertmanagerConfig: status.Config,
+			})
+			require.NoError(t, err)
+
+			compare(t, validConfigWithoutAutogen, string(configBody))
 		})
 	})
 }
@@ -429,23 +563,70 @@ func createSut(t *testing.T) AlertmanagerSrv {
 		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
 		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
 	}
-	mam := notifier.NewTestMultiOrgAlertmanager(t,
-		notifier.WithOrgs([]int64{1, 2, 3}),
-		notifier.WithConfigs(configs),
-		notifier.WithDisabledOrgs(map[int64]struct{}{5: {}}),
-	)
+	mam := createMultiOrgAlertmanager(t, configs)
 	log := log.NewNopLogger()
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	ruleStore := ngfakes.NewRuleStore(t)
-	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
+	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()))
 	return AlertmanagerSrv{
 		mam:            mam,
 		crypto:         mam.Crypto,
 		ac:             ac,
 		log:            log,
 		featureManager: featuremgmt.WithFeatures(),
-		silenceSvc:     notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService, nil),
+		silenceSvc:     notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
 	}
+}
+
+func createAmConfigRequest(t *testing.T, config string) apimodels.PostableUserConfig {
+	t.Helper()
+
+	request := apimodels.PostableUserConfig{}
+	err := request.UnmarshalJSON([]byte(config))
+	require.NoError(t, err)
+
+	return request
+}
+
+func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertConfiguration) *notifier.MultiOrgAlertmanager {
+	t.Helper()
+
+	configStore := notifier.NewFakeConfigStore(t, configs)
+	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
+	provStore := ngfakes.NewFakeProvisioningStore()
+	tmpDir := t.TempDir()
+	kvStore := ngfakes.NewFakeKVStore(t)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	reg := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(reg)
+	decryptFn := secretsService.GetDecryptedValue
+	cfg := &setting.Cfg{
+		DataPath: tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 3 * time.Minute,
+			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+			DisabledOrgs:                   map[int64]struct{}{5: {}},
+		}, // do not poll in tests.
+	}
+
+	mam, err := notifier.NewMultiOrgAlertmanager(
+		cfg,
+		configStore,
+		orgStore,
+		kvStore,
+		provStore,
+		decryptFn,
+		m.GetMultiOrgAlertmanagerMetrics(),
+		nil,
+		ngfakes.NewFakeReceiverPermissionsService(),
+		log.New("testlogger"),
+		secretsService,
+		featuremgmt.WithManager(featuremgmt.FlagAlertingSimplifiedRouting),
+	)
+	require.NoError(t, err)
+	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
+	require.NoError(t, err)
+	return mam
 }
 
 var validConfig = `{
@@ -459,12 +640,11 @@ var validConfig = `{
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"uid": "receiver-uid",
+				"uid": "",
 				"name": "email receiver",
-				"version": "v1",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@example.com>"
+					"addresses": "<example@email.com>"
 				}
 			}]
 		}]
@@ -489,9 +669,8 @@ var validConfigWithoutAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "some email",
 				"type": "email",
-				"version": "v1",
 				"settings": {
-					"addresses": "<some@example.com>"
+					"addresses": "<some@email.com>"
 				}
 			}]
 		},{
@@ -499,9 +678,8 @@ var validConfigWithoutAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "other email",
 				"type": "email",
-				"version": "v1",
 				"settings": {
-					"addresses": "<other@example.com>"
+					"addresses": "<other@email.com>"
 				}
 			}]
 		}]
@@ -520,14 +698,14 @@ var validConfigWithAutogen = `{
 				"receiver": "some email",
 				"object_matchers": [["__grafana_autogenerated__", "=", "true"]],
 				"routes": [{
-					"receiver": "other email",
-					"group_by": ["grafana_folder", "alertname"],
-					"object_matchers": [["__grafana_receiver__", "=", "other email"]],
-					"continue": false
-				},{
 					"receiver": "some email",
 					"group_by": ["grafana_folder", "alertname"],
 					"object_matchers": [["__grafana_receiver__", "=", "some email"]],
+					"continue": false
+				},{
+					"receiver": "other email",
+					"group_by": ["grafana_folder", "alertname"],
+					"object_matchers": [["__grafana_receiver__", "=", "other email"]],
 					"continue": false
 				}]
 			},{
@@ -540,9 +718,8 @@ var validConfigWithAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "some email",
 				"type": "email",
-				"version": "v1",
 				"settings": {
-					"addresses": "<some@example.com>"
+					"addresses": "<some@email.com>"
 				}
 			}]
 		},{
@@ -550,9 +727,42 @@ var validConfigWithAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "other email",
 				"type": "email",
-				"version": "v1",
 				"settings": {
-					"addresses": "<other@example.com>"
+					"addresses": "<other@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var validConfigWithSecureSetting = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]},
+			{
+			"name": "slack",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "slack1",
+				"type": "slack",
+				"settings": {"text": "slack text"},
+				"secureSettings": {
+					"url": "secure url"
 				}
 			}]
 		}]
@@ -570,7 +780,6 @@ var brokenConfig = `
 			"grafana_managed_receiver_configs": [{
 				"uid": "abc",
 				"name": "default-email",
-				"version": "v1",
 				"type": "email",
 				"settings": {}
 			}]
@@ -606,7 +815,7 @@ func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisi
 // setTemplateProvenance marks a template as provisioned.
 func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &v1.TemplateGroup{Title: name}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(context.Background(), &apimodels.NotificationTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 

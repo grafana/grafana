@@ -1,97 +1,88 @@
-import { defaultsDeep } from 'lodash';
+import { ThresholdsMode, VisualizationSuggestionsBuilder } from '@grafana/data';
+import { SuggestionName } from 'app/types/suggestions';
 
-import {
-  FieldColorModeId,
-  type FieldConfigSource,
-  FieldType,
-  type VisualizationSuggestion,
-  type VisualizationSuggestionsSupplier,
-} from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type GraphFieldConfig } from '@grafana/ui';
-import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
+import { Options } from './panelcfg.gen';
 
-import { type Options } from './panelcfg.gen';
+export class GaugeSuggestionsSupplier {
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const { dataSummary } = builder;
 
-const MAX_PREVIEW_SERIES = 6;
-
-export const GAUGE_CARD_OPTIONS: VisualizationSuggestion<Options, GraphFieldConfig>['cardOptions'] = {
-  maxSeries: MAX_PREVIEW_SERIES,
-  previewModifier: (s) => {
-    if (s.options?.reduceOptions) {
-      s.options.reduceOptions.limit = 4;
+    if (!dataSummary.hasData || !dataSummary.hasNumberField) {
+      return;
     }
-    if (s.fieldConfig) {
-      s.fieldConfig.defaults.unit = 'short';
+
+    // for many fields / series this is probably not a good fit
+    if (dataSummary.numberFieldCount >= 50) {
+      return;
     }
-  },
-};
 
-const withDefaults = (
-  suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
-): VisualizationSuggestion<Options, GraphFieldConfig> =>
-  defaultsDeep(suggestion, {
-    options: {
-      barWidthFactor: 0.3,
-      showThresholdMarkers: false,
-    },
-    cardOptions: GAUGE_CARD_OPTIONS,
-  } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
-
-const MAX_GAUGES = 10;
-
-export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (dataSummary) => {
-  if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
-    return;
-  }
-
-  // for many fields / series this is probably not a good fit
-  if (dataSummary.fieldCountByType(FieldType.number) > MAX_GAUGES) {
-    return;
-  }
-
-  const fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>> = {
-    defaults: {},
-    overrides: [],
-  };
-
-  const suggestions: Array<VisualizationSuggestion<Options, GraphFieldConfig>> = [
-    {
-      name: t('gauge.suggestions.arc', 'Gauge'),
-      fieldConfig,
-      options: { shape: 'gauge' },
-    },
-    {
-      name: t('gauge.suggestions.circular', 'Circular gauge'),
-      fieldConfig,
-      options: { shape: 'circle' },
-    },
-  ];
-
-  const shouldUseRawValues =
-    dataSummary.hasFieldType(FieldType.string) &&
-    dataSummary.frameCount === 1 &&
-    dataSummary.rowCountTotal <= MAX_GAUGES;
-
-  const showSparkline =
-    !shouldUseRawValues && dataSummary.rowCountTotal > 1 && dataSummary.hasFieldType(FieldType.time);
-
-  return suggestions.map((s) => {
-    const suggestion = defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues);
-
-    suggestion.options = suggestion.options ?? {};
-    suggestion.options.sparkline = showSparkline;
-
-    if (shouldUseRawValues) {
-      suggestion.fieldConfig = suggestion.fieldConfig ?? {
-        defaults: {},
+    const list = builder.getListAppender<Options, {}>({
+      name: SuggestionName.Gauge,
+      pluginId: 'gauge',
+      options: {},
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 70, color: 'orange' },
+              { value: 85, color: 'red' },
+            ],
+            mode: ThresholdsMode.Percentage,
+          },
+          custom: {},
+        },
         overrides: [],
-      };
-      suggestion.fieldConfig.defaults.color = suggestion.fieldConfig.defaults.color ?? {
-        mode: FieldColorModeId.PaletteClassic,
-      };
-    }
+      },
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.options!.reduceOptions.values) {
+            s.options!.reduceOptions.limit = 2;
+          }
+        },
+      },
+    });
 
-    return suggestion;
-  });
-};
+    if (dataSummary.hasStringField && dataSummary.frameCount === 1 && dataSummary.rowCountTotal < 10) {
+      list.append({
+        name: SuggestionName.Gauge,
+        options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+          },
+        },
+      });
+      list.append({
+        name: SuggestionName.GaugeNoThresholds,
+        options: {
+          reduceOptions: {
+            values: true,
+            calcs: [],
+          },
+          showThresholdMarkers: false,
+        },
+      });
+    } else {
+      list.append({
+        name: SuggestionName.Gauge,
+        options: {
+          reduceOptions: {
+            values: false,
+            calcs: ['lastNotNull'],
+          },
+        },
+      });
+      list.append({
+        name: SuggestionName.GaugeNoThresholds,
+        options: {
+          reduceOptions: {
+            values: false,
+            calcs: ['lastNotNull'],
+          },
+          showThresholdMarkers: false,
+        },
+      });
+    }
+  }
+}

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -17,11 +18,22 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route GET /dashboards/uid/{uid}/permissions dashboards permissions getDashboardPermissionsListByUID
+// swagger:route GET /dashboards/uid/{uid}/permissions dashboard_permissions getDashboardPermissionsListByUID
 //
 // Gets all existing permissions for the given dashboard.
 //
-// Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access
+// Responses:
+// 200: getDashboardPermissionsListResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /dashboards/id/{DashboardID}/permissions dashboard_permissions getDashboardPermissionsListByID
+//
+// Gets all existing permissions for the given dashboard.
+//
+// Please refer to [updated API](#/dashboard_permissions/getDashboardPermissionsListByUID) instead
 //
 // Deprecated: true
 //
@@ -36,13 +48,17 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
+	var dashID int64
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
-		return response.Error(http.StatusBadRequest, "uid is required", nil)
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -73,9 +89,25 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
-// swagger:route POST /dashboards/uid/{uid}/permissions dashboards permissions updateDashboardPermissionsByUID
+// swagger:route POST /dashboards/uid/{uid}/permissions dashboard_permissions updateDashboardPermissionsByUID
 //
 // Updates permissions for a dashboard.
+//
+// This operation will remove existing permissions if they’re not included in the request.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route POST /dashboards/id/{DashboardID}/permissions dashboard_permissions updateDashboardPermissionsByID
+//
+// Updates permissions for a dashboard.
+//
+// Please refer to [updated API](#/dashboard_permissions/updateDashboardPermissionsByUID) instead
 //
 // This operation will remove existing permissions if they’re not included in the request.
 //
@@ -93,6 +125,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
+	var dashID int64
 	var err error
 	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
@@ -104,10 +137,13 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 
 	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
-		return response.Error(http.StatusBadRequest, "uid is required", nil)
+		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
+		if err != nil {
+			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
+		}
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID, "")
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
 	if rsp != nil {
 		return rsp
 	}
@@ -115,8 +151,8 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
-			OrgID:       c.GetOrgID(),
-			DashboardID: dash.ID,
+			OrgID:       c.SignedInUser.GetOrgID(),
+			DashboardID: dashID,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
 			Role:        item.Role,
@@ -176,10 +212,10 @@ func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Request
 			FolderID:       dashboard.FolderID, // nolint:staticcheck
 			Created:        p.Created,
 			Updated:        p.Updated,
-			UserID:         p.UserID,
+			UserID:         p.UserId,
 			UserLogin:      p.UserLogin,
 			UserEmail:      p.UserEmail,
-			TeamID:         p.TeamID,
+			TeamID:         p.TeamId,
 			TeamEmail:      p.TeamEmail,
 			Team:           p.Team,
 			Role:           role,

@@ -1,14 +1,12 @@
 import { useState } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Field, Modal, Space } from '@grafana/ui';
-import { MoveActionAvailableTargetWarning } from 'app/features/provisioning/components/Shared/MoveActionAvailableTargetWarning';
-import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
+import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { t, Trans } from 'app/core/internationalization';
 
-import { type DashboardTreeSelection } from '../../types';
+import { DashboardTreeSelection } from '../../types';
 
-import { AffectedFolderContents } from './AffectedFolderContents';
-import { getSelectedFolderUIDs } from './utils';
+import { DescendantCount } from './DescendantCount';
 
 export interface Props {
   isOpen: boolean;
@@ -20,8 +18,7 @@ export interface Props {
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
-
-  const selectedFolders = getSelectedFolderUIDs(selectedItems);
+  const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
   const onMove = async () => {
     if (moveTarget !== undefined) {
@@ -45,28 +42,16 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         />
       )}
 
-      <MoveActionAvailableTargetWarning />
+      <Text element="p">
+        <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
+      </Text>
 
-      <Space v={2} />
-
-      <AffectedFolderContents
-        selectedItems={selectedItems}
-        nonEmptyMessage={t('browse-dashboards.action.move-modal-folder-not-empty', '', {
-          count: selectedFolders.length,
-          defaultValue_one: 'Selected folder contains other resources that will be moved with it',
-          defaultValue_other: 'Selected folders contain other resources that will be moved with them',
-        })}
-      />
+      <DescendantCount selectedItems={selectedItems} />
 
       <Space v={3} />
 
-      <Field noMargin label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
-        <ProvisioningAwareFolderPicker
-          value={moveTarget}
-          excludeUIDs={selectedFolders}
-          onChange={setMoveTarget}
-          repositoryName={undefined} // is non-provisioned folder
-        />
+      <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
+        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
       </Field>
 
       <Modal.ButtonRow>

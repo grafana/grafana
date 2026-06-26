@@ -5,15 +5,14 @@ import { useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
-import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { dateTimeFormatISO, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
-import { type PreviewRuleRequest, type PreviewRuleResponse } from '../../types/preview';
-import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
+import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
@@ -38,17 +37,12 @@ export function PreviewRule(): React.ReactElement | null {
       <Stack>
         {allDataSourcesAvailable && (
           <Button disabled={!isPreviewAvailable} type="button" variant="primary" onClick={onPreview}>
-            <Trans i18nKey="alerting.preview-rule.preview-alerts">Preview alerts</Trans>
+            Preview alerts
           </Button>
         )}
         {!allDataSourcesAvailable && (
-          <Alert
-            title={t('alerting.preview-rule.title-preview-is-not-available', 'Preview is not available')}
-            severity="warning"
-          >
-            <Trans i18nKey="alerting.preview-rule.body-preview-is-not-available">
-              Cannot display the query preview. Some of the data sources used in the queries are not available.
-            </Trans>
+          <Alert title="Preview is not available" severity="warning">
+            Cannot display the query preview. Some of the data sources used in the queries are not available.
           </Alert>
         )}
       </Stack>

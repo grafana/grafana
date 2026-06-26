@@ -1,12 +1,12 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 
 import { EmptyState } from './EmptyState';
 import mdx from './EmptyState.mdx';
 
 const meta: Meta<typeof EmptyState> = {
-  title: 'Information/EmptyState',
+  title: 'General/EmptyState',
   component: EmptyState,
   parameters: {
     docs: {

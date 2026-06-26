@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
+import { Component } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
-  type EventBus,
+  EventBus,
   LegacyGraphHoverEvent,
   LegacyGraphHoverClearEvent,
   DataHoverEvent,
   DataHoverClearEvent,
-  type BusEventBase,
+  BusEventBase,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { CustomScrollbar } from '@grafana/ui';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
@@ -17,62 +16,64 @@ interface Props {
   eventBus: EventBus;
 }
 
-export const CursorView = ({ eventBus }: Props) => {
-  const [event, setEvent] = useState<BusEventBase>();
+interface State {
+  event?: BusEventBase;
+}
+export class CursorView extends Component<Props, State> {
+  subscription = new Subscription();
+  state: State = {};
 
-  useEffect(() => {
-    const subscription = new Subscription();
+  componentDidMount() {
+    const { eventBus } = this.props;
 
-    subscription.add(
+    this.subscription.add(
       eventBus.subscribe(DataHoverEvent, (event) => {
-        setEvent(event);
+        this.setState({ event });
       })
     );
 
-    subscription.add(
+    this.subscription.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
-        setEvent(event);
+        this.setState({ event });
       })
     );
 
-    subscription.add(
+    this.subscription.add(
       eventBus.subscribe(LegacyGraphHoverEvent, (event) => {
-        setEvent(event);
+        this.setState({ event });
       })
     );
 
-    subscription.add(
+    this.subscription.add(
       eventBus.subscribe(LegacyGraphHoverClearEvent, (event) => {
-        setEvent(event);
+        this.setState({ event });
       })
-    );
-
-    return () => subscription.unsubscribe();
-  }, [eventBus]);
-
-  if (!event) {
-    return (
-      <div>
-        <Trans i18nKey="debug.cursor-view.no-events-yet">No events yet</Trans>
-      </div>
     );
   }
 
-  const { type, payload, origin } = event;
-  return (
-    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-      <h3>event.origin: {(origin as any)?.path}</h3>
-      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-      <span>event.type: {type}</span>
-      {Boolean(payload) && (
-        <>
-          <pre>{JSON.stringify(payload.point, null, '  ')}</pre>
-          {payload.data && (
-            <DataHoverView data={payload.data} rowIndex={payload.rowIndex} columnIndex={payload.columnIndex} />
-          )}
-        </>
-      )}
-    </CustomScrollbar>
-  );
-};
+  componentWillUnmount() {
+    this.subscription.unsubscribe();
+  }
+
+  render() {
+    const { event } = this.state;
+    if (!event) {
+      return <div>no events yet</div>;
+    }
+    const { type, payload, origin } = event;
+    return (
+      <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+        <h3>Origin: {(origin as any)?.path}</h3>
+        <span>Type: {type}</span>
+        {Boolean(payload) && (
+          <>
+            <pre>{JSON.stringify(payload.point, null, '  ')}</pre>
+            {payload.data && (
+              <DataHoverView data={payload.data} rowIndex={payload.rowIndex} columnIndex={payload.columnIndex} />
+            )}
+          </>
+        )}
+      </CustomScrollbar>
+    );
+  }
+}

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 /** @deprecated */
 export const getPanelInspectorStyles = stylesFactory(() => {
@@ -27,7 +27,7 @@ export const getPanelInspectorStyles2 = (theme: GrafanaTheme2) => {
       display: 'flex',
       width: '100%',
       flexGrow: 0,
-      alignItems: 'flex-end',
+      alignItems: 'center',
       justifyContent: 'flex-end',
       marginBottom: theme.v1.spacing.sm,
     }),

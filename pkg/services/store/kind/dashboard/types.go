@@ -1,8 +1,6 @@
 package dashboard
 
-import "iter"
-
-type PanelSummaryInfo struct {
+type panelInfo struct {
 	ID            int64           `json:"id"`
 	Title         string          `json:"title"`
 	Description   string          `json:"description,omitempty"`
@@ -12,40 +10,23 @@ type PanelSummaryInfo struct {
 	Datasource    []DataSourceRef `json:"datasource,omitempty"`   // UIDs
 	Transformer   []string        `json:"transformer,omitempty"`  // ids of the transformation steps
 	// Rows define panels as sub objects
-	Collapsed []PanelSummaryInfo `json:"collapsed,omitempty"`
+	Collapsed []panelInfo `json:"collapsed,omitempty"`
 }
 
-type DashboardSummaryInfo struct {
-	UID           string             `json:"uid,omitempty"`
-	ID            int64              `json:"id,omitempty"` // internal ID
-	Title         string             `json:"title"`
-	Description   string             `json:"description,omitempty"`
-	Tags          []string           `json:"tags"`
-	TemplateVars  []string           `json:"templateVars,omitempty"` // the keys used
-	Datasource    []DataSourceRef    `json:"datasource,omitempty"`   // UIDs
-	Panels        []PanelSummaryInfo `json:"panels"`                 // nesed documents
-	SchemaVersion int64              `json:"schemaVersion"`
-	LinkCount     int64              `json:"linkCount"`
-	TimeFrom      string             `json:"timeFrom"`
-	TimeTo        string             `json:"timeTo"`
-	TimeZone      string             `json:"timezone"`
-	Refresh       string             `json:"refresh,omitempty"`
-	ReadOnly      bool               `json:"readOnly,omitempty"` // editable = false
-}
-
-func (d *DashboardSummaryInfo) PanelIterator() iter.Seq[PanelSummaryInfo] {
-	return func(yield func(PanelSummaryInfo) bool) {
-		for _, p := range d.Panels {
-			if len(p.Collapsed) > 0 {
-				for _, c := range p.Collapsed {
-					if !yield(c) { // NOTE, rows can only be one level deep!
-						return
-					}
-				}
-			}
-			if !yield(p) {
-				return
-			}
-		}
-	}
+type dashboardInfo struct {
+	UID           string          `json:"uid,omitempty"`
+	ID            int64           `json:"id,omitempty"` // internal ID
+	Title         string          `json:"title"`
+	Description   string          `json:"description,omitempty"`
+	Tags          []string        `json:"tags"`
+	TemplateVars  []string        `json:"templateVars,omitempty"` // the keys used
+	Datasource    []DataSourceRef `json:"datasource,omitempty"`   // UIDs
+	Panels        []panelInfo     `json:"panels"`                 // nesed documents
+	SchemaVersion int64           `json:"schemaVersion"`
+	LinkCount     int64           `json:"linkCount"`
+	TimeFrom      string          `json:"timeFrom"`
+	TimeTo        string          `json:"timeTo"`
+	TimeZone      string          `json:"timezone"`
+	Refresh       string          `json:"refresh,omitempty"`
+	ReadOnly      bool            `json:"readOnly,omitempty"` // editable = false
 }

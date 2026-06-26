@@ -2,19 +2,17 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
-import { AlertLabels } from '@grafana/alerting/unstable';
-import { type GrafanaTheme2, dateTime } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
-import { type MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
+import { dateTime, GrafanaTheme2 } from '@grafana/data';
+import { Alert, Badge, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
-import { isValidRE2Regex } from 'app/features/alerting/unified/utils/matchers';
-import { type AlertmanagerAlert, type Matcher, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, Matcher, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { isNullDate } from '../../utils/time';
-import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
+import { AlertLabels } from '../AlertLabels';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 
 import { AmAlertStateTag } from './AmAlertStateTag';
 
@@ -46,19 +44,11 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   const styles = useStyles2(getStyles);
   const columns = useColumns();
 
-  const regexOperators = new Set([MatcherOperator.regex, MatcherOperator.notRegex]);
-  const hasInvalidRegex = inputMatchers.some(
-    (matcher) => regexOperators.has(matcher.operator) && !isValidRE2Regex(matcher.value)
-  );
-
   // By default the form contains an empty matcher - with empty name and value and = operator
-  // We don't want to fetch previews for empty matchers as it results in all alerts returned,
-  // and we don't want to send invalid regexes to the backend.
-  const hasValidMatchers =
-    !hasInvalidRegex && Boolean(ruleUid || inputMatchers.some((matcher) => matcher.value && matcher.name));
+  // We don't want to fetch previews for empty matchers as it results in all alerts returned
+  const hasValidMatchers = ruleUid || inputMatchers.some((matcher) => matcher.value && matcher.name);
 
-  const [getAlertmanagerAlerts, { currentData: alerts = [], isFetching, isError: isBackendError }] = useLazyQuery();
-  const isError = isBackendError || hasInvalidRegex;
+  const [getAlertmanagerAlerts, { currentData: alerts = [], isFetching, isError }] = useLazyQuery();
 
   // We need to deep compare the matchers, as otherwise the preview API call is triggered on every render
   // of the component. This is because between react-hook-form's useFieldArray, and our parsing of the matchers,
@@ -66,8 +56,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   useDebouncedDeepCompare(
     () => {
       if (hasValidMatchers) {
-        // the inline "Preview not available" Alert below already surfaces the failure to the user.
-        getAlertmanagerAlerts({ amSourceName, filter: { matchers }, showErrorAlert: false });
+        getAlertmanagerAlerts({ amSourceName, filter: { matchers } });
       }
     },
     500,
@@ -76,13 +65,8 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
 
   if (isError) {
     return (
-      <Alert
-        title={t('alerting.silenced-instances-preview.title-preview-not-available', 'Preview not available')}
-        severity="error"
-      >
-        <Trans i18nKey="alerting.silenced-instances-preview.error-generating-preview">
-          Error occurred when generating preview of affected alerts. Are your matchers valid?
-        </Trans>
+      <Alert title="Preview not available" severity="error">
+        Error occurred when generating preview of affected alerts. Are your matchers valid?
       </Alert>
     );
   }
@@ -95,45 +79,14 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   return (
     <div>
       <h4 className={styles.title}>
-        <Trans i18nKey="alerting.silences.affected-instances">Affected alert instances</Trans>
-        <Tooltip
-          content={
-            <div>
-              <Trans i18nKey="alerting.silences.preview-affected-instances">
-                Preview the alert instances affected by this silence.
-              </Trans>
-              <br />
-              <Trans i18nKey="alerting.silences.only-firing-instances">
-                Only alert instances in the firing state are displayed.
-              </Trans>
-            </div>
-          }
-        >
-          <span>
-            &nbsp;
-            <Icon name="info-circle" size="sm" />
-          </span>
-        </Tooltip>
+        Affected alert rule instances
         {tableItemAlerts.length > 0 ? (
           <Badge className={styles.badge} color="blue" text={tableItemAlerts.length} />
         ) : null}
       </h4>
-      {!hasValidMatchers && (
-        <span>
-          <Trans i18nKey="alerting.silenced-instances-preview.valid-matcher-affected-alerts">
-            Add a valid matcher to see affected alerts
-          </Trans>
-        </span>
-      )}
+      {!hasValidMatchers && <span>Add a valid matcher to see affected alerts</span>}
 
-      {isFetching && (
-        <LoadingPlaceholder
-          text={t(
-            'alerting.silenced-instances-preview.text-loading-affected-alert-rule-instances',
-            'Loading affected alert rule instances...'
-          )}
-        />
-      )}
+      {isFetching && <LoadingPlaceholder text="Loading affected alert rule instances..." />}
       {!isFetching && !isError && hasValidMatchers && (
         <div className={styles.table}>
           {tableItemAlerts.length > 0 ? (
@@ -144,11 +97,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
               pagination={{ itemsPerPage: 10 }}
             />
           ) : (
-            <span>
-              <Trans i18nKey="alerting.silenced-instances-preview.no-firing-alert-instances-found">
-                No firing alert instances found
-              </Trans>
-            </span>
+            <span>No firing alert instances found</span>
           )}
         </div>
       )}
@@ -162,7 +111,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
   return [
     {
       id: 'state',
-      label: t('alerting.use-columns.label.state', 'State'),
+      label: 'State',
       renderCell: function renderStateTag({ data }) {
         return <AmAlertStateTag state={data.status.state} />;
       },
@@ -171,7 +120,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
     },
     {
       id: 'labels',
-      label: t('alerting.use-columns.label.labels', 'Labels'),
+      label: 'Labels',
       renderCell: function renderName({ data }) {
         return <AlertLabels labels={data.labels} size="sm" />;
       },
@@ -179,7 +128,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
     },
     {
       id: 'created',
-      label: t('alerting.use-columns.label.created', 'Created'),
+      label: 'Created',
       renderCell: function renderSummary({ data }) {
         return <>{isNullDate(data.startsAt) ? '-' : dateTime(data.startsAt).format('YYYY-MM-DD HH:mm:ss')}</>;
       },

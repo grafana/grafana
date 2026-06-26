@@ -1,7 +1,8 @@
 import { getDataSourceSrv } from '@grafana/runtime';
-import { type RichHistoryQuery } from 'app/types/explore';
 
-import { type RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
+import { RichHistoryQuery } from '../../types';
+
+import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 
 export const fromDTO = (dto: RichHistoryLocalStorageDTO): RichHistoryQuery => {
   const datasource = getDataSourceSrv().getInstanceSettings(dto.datasourceName);

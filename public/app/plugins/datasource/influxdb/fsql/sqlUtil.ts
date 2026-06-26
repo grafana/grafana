@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { createSelectClause, haveColumns, type SQLQuery } from '@grafana/sql';
+import { createSelectClause, haveColumns, SQLQuery } from '@grafana/sql';
 
 // remove identifier quoting from identifier to use in metadata queries
 export function unquoteIdentifier(value: string) {
@@ -90,7 +90,7 @@ export function quoteIdentifierIfNecessary(value: string) {
  * Validates the identifier from MySql and returns true if it
  * doesn't need to be escaped.
  */
-function isValidIdentifier(identifier: string): boolean {
+export function isValidIdentifier(identifier: string): boolean {
   const isValidName = /^[a-zA-Z_][a-zA-Z0-9_$]*$/g.test(identifier);
   const isReservedWord = RESERVED_WORDS.includes(identifier.toUpperCase());
   return !isReservedWord && isValidName;

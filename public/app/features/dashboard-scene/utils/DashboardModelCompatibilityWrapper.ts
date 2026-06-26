@@ -1,17 +1,10 @@
 import { Subscription } from 'rxjs';
 
-import {
-  type AnnotationQuery,
-  DashboardCursorSync,
-  dateTimeFormat,
-  type DateTimeInput,
-  EventBusSrv,
-} from '@grafana/data';
+import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, EventBusSrv } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { behaviors, sceneGraph, type SceneObject, VizPanel } from '@grafana/scenes';
+import { behaviors, SceneDataLayerSet, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 
-import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
@@ -37,6 +30,10 @@ export class DashboardModelCompatibilityWrapper {
         }
       })
     );
+  }
+
+  public get id(): number | null {
+    return this._scene.state.id ?? null;
   }
 
   public get uid() {
@@ -107,8 +104,8 @@ export class DashboardModelCompatibilityWrapper {
   public get annotations(): { list: AnnotationQuery[] } {
     const annotations: { list: AnnotationQuery[] } = { list: [] };
 
-    if (this._scene.state.$data instanceof DashboardDataLayerSet) {
-      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.annotationLayers);
+    if (this._scene.state.$data instanceof SceneDataLayerSet) {
+      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
     }
 
     return annotations;
@@ -160,7 +157,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   /**
-   * Mainly implemented to support Getting started panel's dismiss button.
+   * Mainly implemented to support Getting started panel's dissmis button.
    */
   public removePanel(panel: PanelModelCompatibilityWrapper) {
     const vizPanel = findVizPanelByKey(this._scene, getVizPanelKeyForPanelId(panel.id));
@@ -173,7 +170,15 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public canEditAnnotations(dashboardUID?: string) {
-    return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
+    if (!this._scene.canEditDashboard()) {
+      return false;
+    }
+
+    if (dashboardUID) {
+      return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
+    }
+
+    return Boolean(this._scene.state.meta.annotationsPermissions?.organization.canEdit);
   }
 
   public panelInitialized() {}

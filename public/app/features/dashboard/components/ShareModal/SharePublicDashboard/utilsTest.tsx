@@ -3,19 +3,22 @@ import { http, HttpResponse } from 'msw';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 
-import { DashboardInitPhase } from 'app/types/dashboard';
-
 import { configureStore } from '../../../../../store/configureStore';
-import { type DashboardModel } from '../../../state/DashboardModel';
+import { DashboardInitPhase } from '../../../../../types';
+import { DashboardModel, PanelModel } from '../../../state';
 import { createDashboardModelFixture } from '../../../state/__fixtures__/dashboardFixtures';
 import { ShareModal } from '../ShareModal';
 
-import type * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
-import { type PublicDashboard, PublicDashboardShareType } from './SharePublicDashboardUtils';
+import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
+import { PublicDashboard, PublicDashboardShareType } from './SharePublicDashboardUtils';
 
 export const mockDashboard: DashboardModel = createDashboardModelFixture({
   uid: 'mockDashboardUid',
   timezone: 'utc',
+});
+
+export const mockPanel = new PanelModel({
+  id: 'mockPanelId',
 });
 
 export const pubdashResponse: sharePublicDashboardUtils.PublicDashboard = {

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { type PanelData } from '@grafana/data';
-import { LinkButton } from '@grafana/ui';
+import { PanelData } from '@grafana/data';
+import { Icon } from '@grafana/ui';
 
-import { type AwsUrl, encodeUrl } from '../../../aws_url';
-import { type CloudWatchLogsQuery } from '../../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../../datasource';
+import { AwsUrl, encodeUrl } from '../../../aws_url';
+import { CloudWatchDatasource } from '../../../datasource';
+import { CloudWatchLogsQuery } from '../../../types';
 
 interface Props {
   query: CloudWatchLogsQuery;
@@ -45,8 +45,8 @@ export function CloudWatchLink({ panelData, query, datasource }: Props) {
   }, [panelData, prevPanelData, datasource, query]);
 
   return (
-    <LinkButton variant="secondary" icon="share-alt" href={href} target="_blank" rel="noopener noreferrer">
-      CloudWatch Logs Insights
-    </LinkButton>
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      <Icon name="share-alt" /> CloudWatch Logs Insights
+    </a>
   );
 }

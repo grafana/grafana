@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { FieldConfigMappingHandlerArgumentsEditor, type Props } from './FieldConfigMappingHandlerArgumentsEditor';
+import { FieldConfigMappingHandlerArgumentsEditor, Props } from './FieldConfigMappingHandlerArgumentsEditor';
 
 beforeEach(() => {
   jest.clearAllMocks();

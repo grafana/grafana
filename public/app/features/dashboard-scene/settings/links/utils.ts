@@ -1,9 +1,5 @@
-import { type IconName } from '@grafana/data';
-import { type DashboardLink } from '@grafana/schema';
-
-export function isLinkEditable(link: DashboardLink): boolean {
-  return link.origin === undefined;
-}
+import { IconName } from '@grafana/data';
+import { DashboardLink } from '@grafana/schema';
 
 export const NEW_LINK: DashboardLink = {
   icon: 'external link',

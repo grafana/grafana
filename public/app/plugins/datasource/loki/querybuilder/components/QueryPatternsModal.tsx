@@ -2,21 +2,16 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import { useMemo, useState } from 'react';
 
-import { type CoreApp, type GrafanaTheme2, getNextRefId } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
-import { Button, Collapse, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { DataQuery } from '@grafana/schema';
+import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 
-import { type LokiQuery } from '../../types';
+import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { operationDefinitions } from '../operations';
 import { buildVisualQueryFromString } from '../parsing';
-import {
-  LokiOperationId,
-  type LokiQueryPattern,
-  LokiQueryPatternType,
-  LokiVisualQueryOperationCategory,
-} from '../types';
+import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType, LokiVisualQueryOperationCategory } from '../types';
 
 import { QueryPattern } from './QueryPattern';
 
@@ -104,6 +99,7 @@ export const QueryPatternsModal = (props: Props) => {
             key={patternType}
             label={`${capitalize(patternType)} query starters`}
             isOpen={openTabs.includes(patternType)}
+            collapsible={true}
             onToggle={() =>
               setOpenTabs((tabs) =>
                 // close tab if it's already open, otherwise open it
@@ -111,7 +107,7 @@ export const QueryPatternsModal = (props: Props) => {
               )
             }
           >
-            <Stack wrap justifyContent="space-between">
+            <div className={styles.cardsContainer}>
               {lokiQueryModeller
                 .getQueryPatterns()
                 .filter((pattern) => pattern.type === patternType)
@@ -126,7 +122,7 @@ export const QueryPatternsModal = (props: Props) => {
                     setSelectedPatternName={setSelectedPatternName}
                   />
                 ))}
-            </Stack>
+            </div>
           </Collapse>
         );
       })}
@@ -139,6 +135,12 @@ export const QueryPatternsModal = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    cardsContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    }),
     spacing: css({
       marginBottom: theme.spacing(1),
     }),

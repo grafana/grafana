@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { type PageInfoItem } from '../../../../core/components/Page/types';
+import { PageInfoItem } from '../../../../core/components/Page/types';
 import { PluginActions } from '../components/PluginActions';
 import { PluginSubtitle } from '../components/PluginSubtitle';
-import { type CatalogPlugin } from '../types';
+import { CatalogPlugin } from '../types';
 
 import { usePluginInfo } from './usePluginInfo';
 

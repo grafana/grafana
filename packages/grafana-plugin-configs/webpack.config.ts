@@ -2,14 +2,12 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import path from 'path';
+// @ts-expect-error - there are no types for this package
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
-import TerserPlugin from 'terser-webpack-plugin';
-import webpack, { type Configuration, type Compiler } from 'webpack';
-import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
-import VirtualModulesPlugin from 'webpack-virtual-modules';
+import { Configuration } from 'webpack';
 
-import { DIST_DIR } from './constants.ts';
-import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.ts';
+import { DIST_DIR } from './constants';
+import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils';
 
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {
@@ -31,76 +29,24 @@ function skipFiles(f: string): boolean {
   return true;
 }
 
-class BuildModeWebpackPlugin {
-  apply(compiler: Compiler) {
-    compiler.hooks.compilation.tap('BuildModeWebpackPlugin', (compilation) => {
-      compilation.hooks.processAssets.tap(
-        {
-          name: 'BuildModeWebpackPlugin',
-          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
-        },
-        async () => {
-          const assets = compilation.getAssets();
-          for (const asset of assets) {
-            if (asset.name.endsWith('plugin.json')) {
-              const pluginJsonString = asset.source.source().toString();
-              const pluginJsonWithBuildMode = JSON.stringify(
-                {
-                  ...JSON.parse(pluginJsonString),
-                  buildMode: compilation.options.mode,
-                },
-                null,
-                4
-              );
-              compilation.updateAsset(asset.name, new webpack.sources.RawSource(pluginJsonWithBuildMode));
-            }
-          }
-        }
-      );
-    });
-  }
-}
-
-export type Env = {
-  [key: string]: true | string | Env;
-};
-
-const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuration> => {
-  const pluginJson = getPluginJson(pluginDir);
-  // Inject module
-  const virtualPublicPath = new VirtualModulesPlugin({
-    'node_modules/grafana-public-path.js': `
-  import amdMetaModule from 'amd-module';
-
-  __webpack_public_path__ =
-    amdMetaModule && amdMetaModule.uri
-      ? amdMetaModule.uri.slice(0, amdMetaModule.uri.lastIndexOf('/') + 1)
-      : 'public/plugins/${pluginJson.id}/';
-  `,
-  });
-
+const config = async (env: Record<string, unknown>): Promise<Configuration> => {
+  const pluginJson = getPluginJson();
   const baseConfig: Configuration = {
     cache: {
       type: 'filesystem',
       buildDependencies: {
-        config: [import.meta.filename],
+        config: [__filename],
       },
-      cacheDirectory: path.resolve(
-        import.meta.dirname,
-        '../../node_modules/.cache/webpack',
-        path.basename(process.cwd())
-      ),
+      cacheDirectory: path.resolve(__dirname, '../../node_modules/.cache/webpack', path.basename(process.cwd())),
     },
 
     context: process.cwd(),
 
     devtool: env.production ? 'source-map' : 'eval-source-map',
 
-    entry: await getEntries(pluginDir),
+    entry: await getEntries(),
 
     externals: [
-      // Required for dynamic publicPath resolution
-      { 'amd-module': 'module' },
       'lodash',
       'jquery',
       'moment',
@@ -112,18 +58,16 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
       'slate-plain-serializer',
       '@grafana/slate-react',
       'react',
-      'react/jsx-runtime',
-      'react/jsx-dev-runtime',
       'react-dom',
       'react-redux',
       'redux',
       'rxjs',
-      'rxjs/operators',
       'react-router',
       'd3',
-      /^@grafana\/ui/i,
-      /^@grafana\/runtime/i,
-      /^@grafana\/data/i,
+      'angular',
+      '@grafana/ui',
+      '@grafana/runtime',
+      '@grafana/data',
 
       // Mark legacy SDK imports as external if their name starts with the "grafana/" prefix
       ({ request }, callback) => {
@@ -143,26 +87,14 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
 
     module: {
       rules: [
-        // This must come first in the rules array otherwise it breaks sourcemaps.
-        {
-          test: /module\.tsx?$/,
-          use: [
-            {
-              loader: 'imports-loader',
-              options: {
-                imports: `side-effects grafana-public-path`,
-              },
-            },
-          ],
-        },
         {
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            loader: 'swc-loader',
+            loader: require.resolve('swc-loader'),
             options: {
               jsc: {
-                baseUrl: path.resolve(import.meta.dirname),
+                baseUrl: path.resolve(__dirname),
                 target: 'es2015',
                 loose: false,
                 parser: {
@@ -224,36 +156,13 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
       uniqueName: pluginJson.id,
     },
 
-    optimization: {
-      minimize: Boolean(env.production),
-      minimizer: [
-        new TerserPlugin({
-          terserOptions: {
-            format: {
-              comments: (_, { type, value }) => type === 'comment2' && value.trim().startsWith('[create-plugin]'),
-            },
-            compress: {
-              drop_console: ['log', 'info'],
-            },
-          },
-        }),
-      ],
-    },
-
     plugins: [
-      virtualPublicPath,
-      // Insert create plugin version information into the bundle so Grafana will load from cdn with script tags.
-      new webpack.BannerPlugin({
-        banner: '/* [create-plugin] version: 5.22.0 */',
-        raw: true,
-        entryOnly: true,
-      }),
       new CopyWebpackPlugin({
         patterns: [
           // To `compiler.options.output`
           { from: 'README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
-          { from: hasLicense(pluginDir) ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
+          { from: hasLicense() ? 'LICENSE' : '../../../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: 'CHANGELOG.md', to: '.', force: true },
           { from: '**/*.json', to: '.', filter: skipFiles }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
@@ -261,7 +170,6 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           { from: '**/*.html', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'img/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'libs/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
-          { from: 'schema/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
           { from: 'static/**/*', to: '.', noErrorOnMissing: true, filter: skipFiles }, // Optional
         ],
       }),
@@ -273,9 +181,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           rules: [
             {
               search: /\%VERSION\%/g,
-              replace: env.commit
-                ? `${getPackageJson(pluginDir).version}-${env.commit}`
-                : getPackageJson(pluginDir).version,
+              replace: env.commit ? `${getPackageJson().version}-${env.commit}` : getPackageJson().version,
             },
             {
               search: /\%TODAY\%/g,
@@ -288,8 +194,6 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           ],
         },
       ]),
-      // Add buildMode to plugin.json
-      new BuildModeWebpackPlugin(),
       ...(env.development
         ? [
             new ForkTsCheckerWebpackPlugin({
@@ -303,13 +207,11 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
               extensions: ['.ts', '.tsx'],
               lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
               cacheLocation: path.resolve(
-                import.meta.dirname,
+                __dirname,
                 '../../node_modules/.cache/eslint-webpack-plugin',
                 path.basename(process.cwd()),
                 '.eslintcache'
               ),
-              configType: 'flat',
-              failOnError: false,
             }),
           ]
         : []),
@@ -317,7 +219,6 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
-      conditionNames: ['@grafana-app/source', '...'],
       unsafeCache: true,
     },
 
@@ -327,11 +228,6 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],
     },
   };
-
-  if (env.stats) {
-    baseConfig.stats = 'normal';
-    baseConfig.plugins?.push(new BundleAnalyzerPlugin());
-  }
 
   return baseConfig;
 };

@@ -16,7 +16,7 @@ func BenchmarkAdaptiveChanBaseline(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := range b.N {
+	for i := 0; i < b.N; i++ {
 		in <- i
 		val := <-out
 		if val != i {
@@ -38,7 +38,7 @@ func BenchmarkAdaptiveChanWithStatsRead(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for range b.N {
+	for i := 0; i < b.N; i++ {
 		in <- 1
 		val := <-out
 		if val != 1 {
@@ -63,7 +63,7 @@ func BenchmarkGoChanBaseline(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for range b.N {
+	for i := 0; i < b.N; i++ {
 		c <- 1
 		val := <-c
 		if val != 1 {

@@ -7,12 +7,10 @@ import (
 	"fmt"
 	"net/http"
 
-	jose "github.com/go-jose/go-jose/v4"
-	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -47,16 +45,18 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	provider := &SocialOkta{
-		SocialBase: newSocialBaseWithCache(social.OktaProviderName, orgRoleMapper, info, features, cfg, cache),
+		SocialBase: newSocialBase(social.OktaProviderName, orgRoleMapper, info, features, cfg),
 	}
 
 	if info.UseRefreshToken {
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
+	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+		ssoSettings.RegisterReloadable(social.OktaProviderName, provider)
+	}
 
 	return provider
 }
@@ -77,20 +77,14 @@ func (s *SocialOkta) Validate(ctx context.Context, newSettings ssoModels.SSOSett
 		return err
 	}
 
-	err = validation.Validate(info, requester,
+	return validation.Validate(info, requester,
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
-		validation.RequiredUrlValidator(info.ApiUrl, "API URL"),
-		validation.ValidateIDTokenValidator)
-	if err != nil {
-		return err
-	}
-
-	return nil
+		validation.RequiredUrlValidator(info.ApiUrl, "API URL"))
 }
 
 func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
-	newInfo, err := CreateOAuthInfoFromKeyValuesWithLogging(s.log, social.OktaProviderName, settings.Settings)
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
@@ -123,35 +117,14 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 		return nil, fmt.Errorf("no id_token found")
 	}
 
-	idTokenString, ok := idToken.(string)
-	if !ok {
-		return nil, fmt.Errorf("id_token is not a string")
+	parsedToken, err := jwt.ParseSigned(idToken.(string))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
 
 	var claims OktaClaims
-	var err error
-
-	// If JWT validation is enabled, validate the signature
-	if s.info.ValidateIDToken && s.info.JwkSetURL != "" {
-		rawJSON, err := s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.info.JwkSetURL)
-		if err != nil {
-			return nil, fmt.Errorf("error validating id token signature: %w", err)
-		}
-
-		if err := json.Unmarshal(rawJSON, &claims); err != nil {
-			return nil, fmt.Errorf("error unmarshalling verified claims: %w", err)
-		}
-	} else {
-		// Otherwise, parse without signature validation (existing behavior)
-		parsedToken, parseErr := jwt.ParseSigned(idTokenString, []jose.SignatureAlgorithm{jose.HS256,
-			jose.HS384, jose.HS512, jose.RS256, jose.RS384, jose.RS512, jose.ES256, jose.ES384, jose.ES512})
-		if parseErr != nil {
-			return nil, fmt.Errorf("error parsing id token: %w", parseErr)
-		}
-
-		if err = parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-			return nil, fmt.Errorf("error getting claims from id token: %w", err)
-		}
+	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
 	email := claims.extractEmail()
@@ -232,4 +205,21 @@ func (s *SocialOkta) getGroups(data *OktaUserInfoJson) []string {
 		groups = data.Groups
 	}
 	return groups
+}
+
+// TODO: remove this in a separate PR and use the isGroupMember from the social.go
+func (s *SocialOkta) isGroupMember(groups []string) bool {
+	if len(s.info.AllowedGroups) == 0 {
+		return true
+	}
+
+	for _, allowedGroup := range s.info.AllowedGroups {
+		for _, group := range groups {
+			if group == allowedGroup {
+				return true
+			}
+		}
+	}
+
+	return false
 }

@@ -1,4 +1,6 @@
-import { type HighlightPart } from '../types/completion';
+import { last } from 'lodash';
+
+import { HighlightPart } from '../types';
 
 type FuzzyMatch = {
   /**
@@ -54,7 +56,7 @@ export function fuzzyMatch(stack: string, needle: string): FuzzyMatch {
     if (ranges.length === 0) {
       ranges.push({ start: letterIndex, end: letterIndex });
     } else {
-      const lastRange = ranges.at(-1)!;
+      const lastRange = last(ranges)!;
       if (letterIndex === lastRange.end + 1) {
         lastRange.end++;
       } else {

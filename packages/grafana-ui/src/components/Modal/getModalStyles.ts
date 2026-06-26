@@ -1,15 +1,17 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export const getModalStyles = (theme: GrafanaTheme2) => {
+  const borderRadius = theme.shape.radius.default;
+
   return {
     modal: css({
       position: 'fixed',
       zIndex: theme.zIndex.modal,
       background: theme.colors.background.primary,
       boxShadow: theme.shadows.z3,
-      borderRadius: theme.shape.radius.lg,
+      borderRadius,
       border: `1px solid ${theme.colors.border.weak}`,
       backgroundClip: 'padding-box',
       outline: 'none',
@@ -23,13 +25,6 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       maxHeight: '80%',
       display: 'flex',
       flexDirection: 'column',
-      // Centre the modal vertically on smaller height screens
-      // this allows us to fill the full height for maximum usability
-      ['@media (max-height: 750px)']: {
-        maxHeight: '100%',
-        top: '50%',
-        transform: 'translateY(-50%)',
-      },
     }),
     modalBackdrop: css({
       position: 'fixed',
@@ -39,6 +34,7 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       bottom: 0,
       left: 0,
       backgroundColor: theme.components.overlay.background,
+      backdropFilter: 'blur(1px)',
     }),
     modalHeader: css({
       label: 'modalHeader',
@@ -46,9 +42,6 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       minHeight: '42px',
       margin: theme.spacing(1, 2, 0, 2),
-      [theme.breakpoints.down('sm')]: {
-        margin: theme.spacing(0, 1, 0, 1),
-      },
     }),
     modalHeaderWithTabs: css({
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -78,28 +71,11 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
     }),
     modalContent: css({
       overflow: 'auto',
-      padding: theme.spacing(3, 3, 0, 3),
-      marginBottom: theme.spacing(2.5),
-      scrollbarWidth: 'thin',
+      padding: theme.spacing(3),
       width: '100%',
-
-      [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(1, 2, 0, 2),
-        marginBottom: theme.spacing(2),
-      },
-
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.accent.main}`,
-        outlineOffset: '-2px',
-      },
     }),
     modalButtonRow: css({
-      background: theme.colors.background.primary,
-      position: 'sticky',
-      bottom: 0,
-      paddingTop: theme.spacing(2),
-      paddingBottom: theme.spacing(0.5),
-      zIndex: 1,
+      paddingTop: theme.spacing(3),
     }),
   };
 };

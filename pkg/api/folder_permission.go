@@ -9,22 +9,18 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// swagger:route GET /folders/{folder_uid}/permissions folders permissions getFolderPermissionList
+// swagger:route GET /folders/{folder_uid}/permissions folder_permissions getFolderPermissionList
 //
 // Gets all existing permissions for the folder with the given `uid`.
-//
-// Deprecated: true
 //
 // Responses:
 // 200: getFolderPermissionListResponse
@@ -34,7 +30,7 @@ import (
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: &uid, SignedInUser: c.SignedInUser})
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: &uid, SignedInUser: c.SignedInUser})
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -71,7 +67,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, filteredACLs)
 }
 
-// swagger:route POST /folders/{folder_uid}/permissions folders permissions updateFolderPermissions
+// swagger:route POST /folders/{folder_uid}/permissions folder_permissions updateFolderPermissions
 //
 // Updates permissions for a folder. This operation will remove existing permissions if they’re not included in the request.
 //
@@ -91,22 +87,15 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.GetOrgID(), UID: &uid, SignedInUser: c.SignedInUser})
+	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
-	}
-
-	// Block permission changes for folders managed by provisioning,
-	// unless the provisioningFolderMetadata feature flag is enabled.
-	//nolint:staticcheck
-	if folder.ManagedBy == utils.ManagerKindRepo && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagProvisioningFolderMetadata) {
-		return response.Error(http.StatusForbidden, "Cannot update permissions for folders managed by provisioning.", nil)
 	}
 
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
-			OrgID:       c.GetOrgID(),
+			OrgID:       c.SignedInUser.GetOrgID(),
 			DashboardID: folder.ID, // nolint:staticcheck
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
@@ -125,7 +114,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 
 	items = append(items, hs.filterHiddenACL(c.SignedInUser, acl)...)
 
-	if err := hs.updateDashboardAccessControl(c.Req.Context(), c.GetOrgID(), folder.UID, true, items, acl); err != nil {
+	if err := hs.updateDashboardAccessControl(c.Req.Context(), c.SignedInUser.GetOrgID(), folder.UID, true, items, acl); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create permission", err)
 	}
 
@@ -164,12 +153,10 @@ func (hs *HTTPServer) getFolderACL(ctx context.Context, user identity.Requester,
 			FolderUID:      folder.ParentUID,
 			Created:        p.Created,
 			Updated:        p.Updated,
-			UserID:         p.UserID,
-			UserUID:        p.UserUID,
+			UserID:         p.UserId,
 			UserLogin:      p.UserLogin,
 			UserEmail:      p.UserEmail,
-			TeamID:         p.TeamID,
-			TeamUID:        p.TeamUID,
+			TeamID:         p.TeamId,
 			TeamEmail:      p.TeamEmail,
 			Team:           p.Team,
 			Role:           role,

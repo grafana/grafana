@@ -6,17 +6,12 @@ import (
 
 type CreateLoginAttemptCommand struct {
 	Username  string
-	IPAddress string
+	IpAddress string
 }
 
 type GetUserLoginAttemptCountQuery struct {
 	Username string
 	Since    time.Time
-}
-
-type GetIPLoginAttemptCountQuery struct {
-	IPAddress string
-	Since     time.Time
 }
 
 type DeleteOldLoginAttemptsCommand struct {

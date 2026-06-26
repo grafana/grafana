@@ -1,23 +1,11 @@
-import {
-  memo,
-  type FocusEvent,
-  type SyntheticEvent,
-  useCallback,
-  type ReactNode,
-  useMemo,
-  cloneElement,
-  isValidElement,
-  type MouseEvent,
-} from 'react';
+import { memo, FocusEvent, SyntheticEvent, useCallback } from 'react';
 
-import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type DataQuery } from '@grafana/schema';
-import { ClipboardButton, IconButton, type PopoverContent } from '@grafana/ui';
+import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, urlUtil } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
+import { ClipboardButton, IconButton, PopoverContent } from '@grafana/ui';
+import { getConfig } from 'app/core/config';
 
-import { handleOpenLogsContextClick } from '../utils';
-
-import { type LogRowStyles } from './getLogRowStyles';
+import { LogRowStyles } from './getLogRowStyles';
 
 interface Props {
   logText: string;
@@ -37,8 +25,7 @@ interface Props {
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
-  addonBefore?: ReactNode[];
-  addonAfter?: ReactNode[];
+  onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
 }
 
 export const LogRowMenuCell = memo(
@@ -56,20 +43,37 @@ export const LogRowMenuCell = memo(
     mouseIsOver,
     onBlur,
     getRowContextQuery,
-    addonBefore,
-    addonAfter,
   }: Props) => {
-    const shouldShowContextToggle = useMemo(
-      () => (showContextToggle ? showContextToggle(row) : false),
-      [row, showContextToggle]
-    );
+    const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
     const onLogRowClick = useCallback((e: SyntheticEvent) => {
       e.stopPropagation();
     }, []);
     const onShowContextClick = useCallback(
-      async (event: MouseEvent<HTMLElement>) => {
+      async (event: SyntheticEvent<HTMLButtonElement, MouseEvent>) => {
         event.stopPropagation();
-        handleOpenLogsContextClick(event, row, getRowContextQuery, onOpenContext);
+        // if ctrl or meta key is pressed, open query in new Explore tab
+        if (
+          getRowContextQuery &&
+          (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)
+        ) {
+          const win = window.open('about:blank');
+          // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
+          const query = await getRowContextQuery(row, undefined, false);
+          if (query && win) {
+            const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
+              left: JSON.stringify({
+                datasource: query.datasource,
+                queries: [query],
+                range: getDefaultTimeRange(),
+              }),
+            });
+            win.location = url;
+
+            return;
+          }
+          win?.close();
+        }
+        onOpenContext(row);
       },
       [onOpenContext, getRowContextQuery, row]
     );
@@ -86,21 +90,6 @@ export const LogRowMenuCell = memo(
       [onBlur]
     );
     const getLogText = useCallback(() => logText, [logText]);
-
-    const beforeContent = useMemo(() => {
-      if (!addonBefore) {
-        return null;
-      }
-      return addClickListenersToNode(addonBefore, row);
-    }, [addonBefore, row]);
-
-    const afterContent = useMemo(() => {
-      if (!addonAfter) {
-        return null;
-      }
-      return addClickListenersToNode(addonAfter, row);
-    }, [addonAfter, row]);
-
     return (
       // We keep this click listener here to prevent the row from being selected when clicking on the menu.
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
@@ -111,23 +100,22 @@ export const LogRowMenuCell = memo(
             size="md"
             name="gf-pin"
             onClick={() => onUnpinLine && onUnpinLine(row)}
-            tooltip={t('logs.log-row-menu-cell.tooltip-unpin-line', 'Unpin line')}
+            tooltip="Unpin line"
             tooltipPlacement="top"
-            aria-label={t('logs.log-row-menu-cell.aria-label-unpin-line', 'Unpin line')}
+            aria-label="Unpin line"
             tabIndex={0}
           />
         )}
         {mouseIsOver && (
           <>
-            {beforeContent}
             {shouldShowContextToggle && (
               <IconButton
                 size="md"
                 name="gf-show-context"
                 onClick={onShowContextClick}
-                tooltip={t('logs.log-row-menu-cell.tooltip-show-context', 'Show context')}
+                tooltip="Show context"
                 tooltipPlacement="top"
-                aria-label={t('logs.log-row-menu-cell.aria-label-show-context', 'Show context')}
+                aria-label="Show context"
                 tabIndex={0}
               />
             )}
@@ -138,7 +126,7 @@ export const LogRowMenuCell = memo(
               fill="text"
               size="md"
               getText={getLogText}
-              tooltip={t('logs.log-row-menu-cell.tooltip-copy-to-clipboard', 'Copy to clipboard')}
+              tooltip="Copy to clipboard"
               tooltipPlacement="top"
               tabIndex={0}
             />
@@ -148,9 +136,9 @@ export const LogRowMenuCell = memo(
                 size="md"
                 name="gf-pin"
                 onClick={() => onUnpinLine && onUnpinLine(row)}
-                tooltip={t('logs.log-row-menu-cell.tooltip-unpin-line', 'Unpin line')}
+                tooltip="Unpin line"
                 tooltipPlacement="top"
-                aria-label={t('logs.log-row-menu-cell.aria-label-unpin-line', 'Unpin line')}
+                aria-label="Unpin line"
                 tabIndex={0}
               />
             )}
@@ -162,14 +150,14 @@ export const LogRowMenuCell = memo(
                 onClick={() => onPinLine && onPinLine(row)}
                 tooltip={pinLineButtonTooltipTitle ?? 'Pin line'}
                 tooltipPlacement="top"
-                aria-label={t('logs.log-row-menu-cell.aria-label-pin-line', 'Pin line')}
+                aria-label="Pin line"
                 tabIndex={0}
               />
             )}
             {onPermalinkClick && row.rowId !== undefined && row.uid && (
               <IconButton
-                tooltip={t('logs.log-row-menu-cell.tooltip-copy-shortlink', 'Copy shortlink')}
-                aria-label={t('logs.log-row-menu-cell.aria-label-copy-shortlink', 'Copy shortlink')}
+                tooltip="Copy shortlink"
+                aria-label="Copy shortlink"
                 tooltipPlacement="top"
                 size="md"
                 name="share-alt"
@@ -177,32 +165,11 @@ export const LogRowMenuCell = memo(
                 tabIndex={0}
               />
             )}
-            {afterContent}
           </>
         )}
       </span>
     );
   }
 );
-
-type AddonOnClickListener = (event: MouseEvent<HTMLElement>, row: LogRowModel) => void | undefined;
-type ChildElementProps = Record<string, unknown> & { onClick: AddonOnClickListener };
-function addClickListenersToNode(nodes: ReactNode[], row: LogRowModel) {
-  return nodes.map((node, index) => {
-    if (isValidElement<ChildElementProps>(node)) {
-      const onClick = node.props.onClick;
-      if (!onClick) {
-        return node;
-      }
-      return cloneElement(node, {
-        onClick: (event: MouseEvent<HTMLElement>) => {
-          onClick(event, row);
-        },
-        key: index,
-      });
-    }
-    return node;
-  });
-}
 
 LogRowMenuCell.displayName = 'LogRowMenuCell';

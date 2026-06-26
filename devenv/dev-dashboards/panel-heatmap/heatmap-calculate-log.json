@@ -29,7 +29,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -103,7 +104,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "max": 500000,
           "min": 0.01,
@@ -808,7 +810,11 @@
     }
   ],
   "schemaVersion": 36,
-  "tags": ["gdev", "panel-tests", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },

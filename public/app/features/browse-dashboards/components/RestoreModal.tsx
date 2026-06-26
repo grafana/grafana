@@ -1,64 +1,36 @@
-import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, Space, Text, useStyles2 } from '@grafana/ui';
-import { getStatusFromError } from 'app/core/utils/errors';
+import { reportInteraction } from '@grafana/runtime';
+import { ConfirmModal, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
-import { useGetFolderQuery } from '../api/browseDashboardsAPI';
+import { Trans, t } from '../../../core/internationalization';
 
 export interface RestoreModalProps {
+  isOpen: boolean;
   onConfirm: (restoreTarget: string) => Promise<void>;
   onDismiss: () => void;
   selectedDashboards: string[];
-  originCandidate?: string;
+  dashboardOrigin: string[];
   isLoading: boolean;
-}
-
-// Derive the initial restore target before the user overrides it.
-function getAutoTarget(
-  originCandidate: string | undefined,
-  isFetching: boolean,
-  errorStatus?: number
-): string | undefined {
-  if (originCandidate === '') {
-    return '';
-  }
-
-  if (!originCandidate || isFetching) {
-    return undefined;
-  }
-
-  // Non-404 errors (e.g. 403) preserve selection — folder likely exists
-  return errorStatus === 404 ? undefined : originCandidate;
 }
 
 export const RestoreModal = ({
   onConfirm,
   onDismiss,
   selectedDashboards,
-  originCandidate,
+  dashboardOrigin,
   isLoading,
+  ...props
 }: RestoreModalProps) => {
-  const styles = useStyles2(getStyles);
-  const [userTarget, setUserTarget] = useState<string | undefined>();
+  const [restoreTarget, setRestoreTarget] = useState<string | undefined>(() => {
+    // Preselect the restore target and therefore enable the confirm button if all selected dashboards come from the same folder
+    return dashboardOrigin.length > 0 &&
+      dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
+      ? dashboardOrigin[0]
+      : undefined;
+  });
   const numberOfDashboards = selectedDashboards.length;
-  const { error: originError, isFetching } = useGetFolderQuery(
-    originCandidate
-      ? {
-          folderUID: originCandidate,
-          accesscontrol: false,
-          isLegacyCall: Boolean(config.featureToggles.foldersAppPlatformAPI),
-        }
-      : skipToken,
-    { refetchOnMountOrArgChange: true }
-  );
-  const autoTarget = getAutoTarget(originCandidate, isFetching, getStatusFromError(originError));
-  const restoreTarget = userTarget ?? autoTarget;
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {
@@ -77,56 +49,32 @@ export const RestoreModal = ({
       body={
         <>
           <Text element="p">
-            <Trans
-              i18nKey="recently-deleted.restore-modal.text"
-              count={numberOfDashboards}
-              tOptions={{
-                defaultValue_one: 'This action will restore {{numberOfDashboards}} dashboards.',
-                defaultValue_other: 'This action will restore {{numberOfDashboards}} dashboards.',
-              }}
-            >
+            <Trans i18nKey="recently-deleted.restore-modal.text" count={numberOfDashboards}>
               This action will restore {{ numberOfDashboards }} dashboards.
             </Trans>
           </Text>
           <Space v={3} />
           <Text element="p">
-            <Trans
-              i18nKey="recently-deleted.restore-modal.folder-picker-text"
-              count={numberOfDashboards}
-              tOptions={{
-                defaultValue_one: 'Please choose a folder where your dashboards will be restored.',
-                defaultValue_other: 'Please choose a folder where your dashboards will be restored.',
-              }}
-            >
+            <Trans i18nKey="recently-deleted.restore-modal.folder-picker-text" count={numberOfDashboards}>
               Please choose a folder where your dashboards will be restored.
             </Trans>
           </Text>
           <Space v={1} />
-          {/* Field wrapper resets font-size to 14px, preventing cascade from parent Text components */}
-          <div className={styles.field}>
-            <FolderPicker onChange={setUserTarget} value={restoreTarget} />
-          </div>
+          <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
         </>
+        // TODO: replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards)?
       }
       confirmText={
         isLoading
           ? t('recently-deleted.restore-modal.restore-loading', 'Restoring...')
           : t('recently-deleted.restore-modal.restore-button', 'Restore')
       }
-      confirmVariant="primary"
-      isOpen
+      confirmButtonVariant="primary"
       onDismiss={onDismiss}
       onConfirm={onRestore}
       title={t('recently-deleted.restore-modal.title', 'Restore Dashboards')}
-      disabled={restoreTarget === undefined || isLoading}
+      disabled={restoreTarget === undefined}
+      {...props}
     />
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    field: css({
-      fontSize: theme.typography.body.fontSize,
-    }),
-  };
 };

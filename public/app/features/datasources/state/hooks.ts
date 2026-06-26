@@ -1,21 +1,20 @@
 import { useEffect } from 'react';
 
-import { type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
-import { appEvents } from 'app/core/app_events';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
+import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { useDispatch, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
-import { type DataSourceRights } from '../types';
+import { DataSourceRights } from '../types';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import {
   initDataSourceSettings,
   testDataSource,
+  loadDataSource,
   loadDataSources,
   loadDataSourcePlugins,
   addDataSource,
@@ -59,6 +58,14 @@ export const useLoadDataSources = () => {
   return { isLoading, dataSources };
 };
 
+export const useLoadDataSource = (uid: string) => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(loadDataSource(uid));
+  }, [dispatch, uid]);
+};
+
 export const useLoadDataSourcePlugins = () => {
   const dispatch = useDispatch();
 
@@ -88,9 +95,10 @@ export const useDeleteLoadedDataSource = () => {
   return () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('datasources.use-delete-loaded-data-source.title.delete', 'Delete'),
+        title: 'Delete',
         text: `Are you sure you want to delete the "${name}" data source?`,
         yesText: 'Delete',
+        icon: 'trash-alt',
         onConfirm: () => dispatch(deleteLoadedDataSource()),
       })
     );

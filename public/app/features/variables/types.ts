@@ -1,16 +1,17 @@
-import { type ComponentType } from 'react';
+import { ComponentType } from 'react';
 
 import {
   BusEventWithPayload,
-  type DataQuery,
-  type DataSourceJsonData,
+  DataQuery,
+  DataSourceJsonData,
   LoadingState,
-  type QueryEditorProps,
-  type BaseVariableModel,
+  QueryEditorProps,
+  BaseVariableModel,
   VariableHide,
-  type TypedVariableModel,
+  TypedVariableModel,
 } from '@grafana/data';
-import { type TemplateSrv } from '@grafana/runtime';
+export { BaseVariableModel as VariableModel } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { NEW_VARIABLE_ID } from './constants';
 

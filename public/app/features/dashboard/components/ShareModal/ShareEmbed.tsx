@@ -1,39 +1,37 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
-import { type RawTimeRange, type TimeRange } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Button, ClipboardButton, Field, Label, Stack, Switch, TextArea } from '@grafana/ui';
+import { RawTimeRange, TimeRange } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Button, ClipboardButton, Field, Label, Modal, Stack, Switch, TextArea } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
-import { type ShareModalTabProps } from './types';
+import { ShareModalTabProps } from './types';
 import { buildIframeHtml, getTrackingSource } from './utils';
 
 interface Props extends Omit<ShareModalTabProps, 'panel' | 'dashboard'> {
-  panelId: string;
-  timeFrom?: string;
+  panel?: { timeFrom?: string; id: number };
   dashboard: { uid: string; time: RawTimeRange };
   range?: TimeRange;
   buildIframe?: typeof buildIframeHtml;
   onCancelClick?: () => void;
 }
 
-export function ShareEmbed({
-  panelId,
-  timeFrom,
-  dashboard,
-  range,
-  onCancelClick,
-  buildIframe = buildIframeHtml,
-}: Props) {
+export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe = buildIframeHtml }: Props) {
   const [useCurrentTimeRange, setUseCurrentTimeRange] = useState(true);
   const [selectedTheme, setSelectedTheme] = useState('current');
   const [iframeHtml, setIframeHtml] = useState('');
 
+  useEffectOnce(() => {
+    reportInteraction('grafana_dashboards_embed_share_viewed', { shareResource: getTrackingSource(panel) });
+  });
+
   useEffect(() => {
-    const newIframeHtml = buildIframe(useCurrentTimeRange, dashboard.uid, selectedTheme, panelId, timeFrom, range);
+    const newIframeHtml = buildIframe(useCurrentTimeRange, dashboard.uid, selectedTheme, panel, range);
     setIframeHtml(newIframeHtml);
-  }, [selectedTheme, useCurrentTimeRange, dashboard, panelId, timeFrom, range, buildIframe]);
+  }, [selectedTheme, useCurrentTimeRange, dashboard, panel, range, buildIframe]);
 
   const onIframeHtmlChange = (event: FormEvent<HTMLTextAreaElement>) => {
     setIframeHtml(event.currentTarget.value);
@@ -56,7 +54,7 @@ export function ShareEmbed({
         DashboardInteractions.embedSnippetCopy({
           currentTimeRange: useCurrentTimeRange,
           theme: selectedTheme,
-          shareResource: getTrackingSource(panelId),
+          shareResource: getTrackingSource(panel),
         });
       }}
     >
@@ -103,12 +101,16 @@ export function ShareEmbed({
           onChange={onIframeHtmlChange}
         />
       </Field>
-      <Stack gap={1} justifyContent={'start'}>
-        {clipboardButton}
-        <Button variant="secondary" fill="outline" onClick={onCancelClick}>
-          <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
-        </Button>
-      </Stack>
+      {config.featureToggles.newDashboardSharingComponent ? (
+        <Stack gap={1} justifyContent={'start'}>
+          {clipboardButton}
+          <Button variant="secondary" fill="outline" onClick={onCancelClick}>
+            <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
+          </Button>
+        </Stack>
+      ) : (
+        <Modal.ButtonRow>{clipboardButton}</Modal.ButtonRow>
+      )}
     </>
   );
 }

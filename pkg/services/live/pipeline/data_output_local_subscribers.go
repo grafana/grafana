@@ -26,7 +26,7 @@ func (out *LocalSubscribersDataOutput) Type() string {
 
 func (out *LocalSubscribersDataOutput) OutputData(_ context.Context, vars Vars, data []byte) ([]*ChannelData, error) {
 	channelID := vars.Channel
-	channel := orgchannel.PrependK8sNamespace(vars.NS, channelID)
+	channel := orgchannel.PrependOrgID(vars.OrgID, channelID)
 	pub := &centrifuge.Publication{
 		Data: data,
 	}

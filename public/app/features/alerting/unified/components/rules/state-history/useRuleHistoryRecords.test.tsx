@@ -1,6 +1,6 @@
-import { FieldType, createTheme } from '@grafana/data';
+import { createTheme, FieldType } from '@grafana/data';
 
-import { type LogRecord } from './common';
+import { LogRecord } from './common';
 import { logRecordsToDataFrame } from './useRuleHistoryRecords';
 
 describe('logRecordsToDataFrame', () => {
@@ -48,18 +48,16 @@ describe('logRecordsToDataFrame', () => {
     const frame = logRecordsToDataFrame(JSON.stringify(instanceLabels), records, [], theme);
 
     const stateField = frame.fields[1];
-    expect(stateField.config.mappings).toHaveLength(3);
+    expect(stateField.config.mappings).toHaveLength(1);
     expect(stateField.config.mappings![0].options).toMatchObject({
-      pattern: '/^normal/i',
-      result: { color: theme.colors.success.main },
-    });
-    expect(stateField.config.mappings![1].options).toMatchObject({
-      pattern: '/Alerting/',
-      result: { color: theme.colors.error.main },
-    });
-    expect(stateField.config.mappings![2].options).toMatchObject({
+      Alerting: {
+        color: theme.colors.error.main,
+      },
       Pending: {
         color: theme.colors.warning.main,
+      },
+      Normal: {
+        color: theme.colors.success.main,
       },
       NoData: {
         color: theme.colors.info.main,

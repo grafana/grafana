@@ -1,7 +1,7 @@
-import { type AnyAction, createAction } from '@reduxjs/toolkit';
+import { AnyAction, createAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
 
-import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
+import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
@@ -67,15 +67,15 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
   };
 }
 
-const initialState: NavIndex = {};
+export const initialState: NavIndex = {};
 
 export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
 // Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
 export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
 
-const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
+export const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
 
-const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
+export const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
   ...item,
   parentItem: {
     ...item.parentItem,
@@ -122,6 +122,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       teams: getItemWithNewSubTitle(state.teams, subTitle),
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),
       'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
+      apikeys: getItemWithNewSubTitle(state.apikeys, subTitle),
     };
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];

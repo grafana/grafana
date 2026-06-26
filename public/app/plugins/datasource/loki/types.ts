@@ -1,14 +1,19 @@
-import { type DataQuery, type DataQueryRequest, type DataSourceJsonData, type TimeRange } from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
 
 import {
-  type LokiDataQuery as LokiQueryFromSchema,
-  type LokiQueryType,
-  type SupportingQueryType,
-  type LokiQueryDirection,
+  LokiDataQuery as LokiQueryFromSchema,
+  LokiQueryType,
+  SupportingQueryType,
+  LokiQueryDirection,
 } from './dataquery.gen';
 
-// @todo import from core
-export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
+export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
+
+export enum LokiResultType {
+  Stream = 'streams',
+  Vector = 'vector',
+  Matrix = 'matrix',
+}
 
 export enum LabelType {
   Indexed = 'I',
@@ -25,6 +30,12 @@ export interface LokiQuery extends LokiQueryFromSchema {
   // the temporary fix (until this gets improved in the codegen), is to
   // override it here
   queryType?: LokiQueryType;
+
+  /**
+   * This is a property for the experimental query splitting feature.
+   * @experimental
+   */
+  splitDuration?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
@@ -32,6 +43,7 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
   keepCookies?: string[];
+  predefinedOperations?: string;
 }
 
 export interface LokiStreamResult {
@@ -54,7 +66,6 @@ export type DerivedFieldConfig = {
   urlDisplayLabel?: string;
   datasourceUid?: string;
   matcherType?: 'label' | 'regex';
-  targetBlank?: boolean;
 };
 
 export enum LokiVariableQueryType {
@@ -91,16 +102,6 @@ export interface ParserAndLabelKeysResult {
   hasLogfmt: boolean;
   hasPack: boolean;
   unwrapLabelKeys: string[];
-}
-
-export interface DetectedFieldsResult {
-  fields: Array<{
-    label: string;
-    type: 'bytes' | 'float' | 'int' | 'string' | 'duration';
-    cardinality: number;
-    parsers: Array<'logfmt' | 'json'> | null;
-  }>;
-  limit: number;
 }
 
 export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };

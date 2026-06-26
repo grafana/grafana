@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -14,25 +12,21 @@ import {
   TabContent,
   TabsBar,
   Text,
+  withErrorBoundary,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { AccessControlAction } from 'app/types';
 
-import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
-import {
-  useContactPointAbility,
-  useGlobalContactPointAbility,
-} from '../../hooks/abilities/alertmanager/useContactPointAbility';
-import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
-import { ContactPointAction, NotificationTemplateAction } from '../../hooks/abilities/types';
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
+import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 
 import { ContactPoint } from './ContactPoint';
 import { NotificationTemplates } from './NotificationTemplates';
@@ -41,7 +35,7 @@ import { GlobalConfigAlert } from './components/GlobalConfigAlert';
 import { useContactPointsWithStatus } from './useContactPoints';
 import { useContactPointsSearch } from './useContactPointsSearch';
 import { ALL_CONTACT_POINTS, useExportContactPoint } from './useExportContactPoint';
-import { type ContactPointWithMetadata } from './utils';
+import { ContactPointWithMetadata } from './utils';
 
 export enum ActiveTab {
   ContactPoints = 'contact_points',
@@ -57,10 +51,8 @@ const ContactPointsTab = () => {
   // If we're using the K8S API, then we don't need to fetch the policies info within the hook,
   // as we get metadata about this from the API
   const fetchPolicies = !shouldUseK8sApi(selectedAlertmanager!);
-  // User may have access to list contact points, but not permission to fetch the status endpoint.
-  // This is a pure RBAC check — it must not be gated on hasConfigurationAPI because status fetching
-  // is independent of which configuration API is available.
-  const fetchStatuses = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
+  // User may have access to list contact points, but not permission to fetch the status endpoint
+  const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
@@ -68,15 +60,19 @@ const ContactPointsTab = () => {
     fetchStatuses,
   });
 
-  const addContactPointAbility = useContactPointAbility({ action: ContactPointAction.Create });
-  const exportContactPointsAbility = useContactPointAbility({ action: ContactPointAction.BulkExport });
+  const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateContactPoint
+  );
+  const [exportContactPointsSupported, exportContactPointsAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.ExportContactPoint
+  );
 
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
   const search = queryParams.get('search');
 
   if (isLoading) {
-    return <LoadingPlaceholder text={t('alerting.contact-points-tab.text-loading', 'Loading...')} />;
+    return <LoadingPlaceholder text="Loading..." />;
   }
 
   const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
@@ -84,15 +80,15 @@ const ContactPointsTab = () => {
   if (contactPoints.length === 0) {
     return (
       <EmptyState
-        variant={addContactPointAbility.granted ? 'call-to-action' : 'not-found'}
+        variant={addContactPointAllowed ? 'call-to-action' : 'not-found'}
         button={
-          addContactPointAbility.granted && (
+          addContactPointAllowed && (
             <LinkButton
               href={makeAMLink('/alerting/notifications/receivers/new', selectedAlertmanager)}
               icon="plus"
               size="lg"
             >
-              <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
+              <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
             </LinkButton>
           )
         }
@@ -102,156 +98,115 @@ const ContactPointsTab = () => {
   }
 
   return (
-    <Stack direction="column" gap={1}>
+    <>
       {/* TODO we can add some additional info here with a ToggleTip */}
       <Stack direction="row" alignItems="end" justifyContent="space-between">
         <ContactPointsFilter />
 
         <Stack direction="row" gap={1}>
-          {isSupported(addContactPointAbility) && (
+          {addContactPointSupported && (
             <LinkButton
               icon="plus"
-              aria-label={t('alerting.contact-points-tab.aria-label-add-contact-point', 'add contact point')}
+              aria-label="add contact point"
               variant="primary"
               href="/alerting/notifications/receivers/new"
-              disabled={!addContactPointAbility.granted}
+              disabled={!addContactPointAllowed}
             >
-              <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
+              <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
             </LinkButton>
           )}
-          {isSupported(exportContactPointsAbility) && (
+          {exportContactPointsSupported && (
             <Button
               icon="download-alt"
               variant="secondary"
-              aria-label={t('alerting.contact-points-tab.aria-label-export-all', 'export all')}
-              disabled={!exportContactPointsAbility.granted}
+              aria-label="export all"
+              disabled={!exportContactPointsAllowed}
               onClick={() => showExportDrawer(ALL_CONTACT_POINTS)}
             >
-              <Trans i18nKey="alerting.contact-points-tab.export-all">Export all</Trans>
+              Export all
             </Button>
           )}
         </Stack>
       </Stack>
-      {error ? (
-        <Alert
-          title={t(
-            'alerting.contact-points-tab.title-failed-to-fetch-contact-points',
-            'Failed to fetch contact points'
-          )}
-        >
-          {stringifyErrorLike(error)}
-        </Alert>
-      ) : (
-        <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
-      )}
-
-      {/* Grafana managed Alertmanager does not support global config, Mimir and Cortex do */}
+      {error && <Alert title="Failed to fetch contact points">{stringifyErrorLike(error)}</Alert>}
+      {!error && <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />}
+      {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
       {ExportDrawer}
-    </Stack>
+    </>
   );
 };
 
 const NotificationTemplatesTab = () => {
-  const createTemplateAbility = useNotificationTemplateAbility({ action: NotificationTemplateAction.Create });
+  const [createTemplateSupported, createTemplateAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationTemplate
+  );
 
   return (
-    <Stack direction="column" gap={1}>
+    <>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Text variant="body" color="secondary">
-          <Trans i18nKey="alerting.notification-templates-tab.create-notification-templates-customize-notifications">
-            Create notification templates to customize your notifications.
-          </Trans>
+          Create notification templates to customize your notifications.
         </Text>
-        {isSupported(createTemplateAbility) && (
+        {createTemplateSupported && (
           <LinkButton
             icon="plus"
             variant="primary"
             href="/alerting/notifications/templates/new"
-            disabled={!createTemplateAbility.granted}
+            disabled={!createTemplateAllowed}
           >
-            <Trans i18nKey="alerting.notification-templates-tab.add-notification-template-group">
-              New notification template
-            </Trans>
+            Add notification template
           </LinkButton>
         )}
       </Stack>
       <NotificationTemplates />
-    </Stack>
+    </>
   );
 };
 
-const useTabQueryParam = (defaultTab: ActiveTab) => {
+const useTabQueryParam = () => {
   const [queryParams, setQueryParams] = useURLSearchParams();
   const param = useMemo(() => {
     const queryParam = queryParams.get('tab');
 
     if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
-      return defaultTab;
+      return ActiveTab.ContactPoints;
     }
 
-    return queryParam || defaultTab;
-  }, [defaultTab, queryParams]);
+    return queryParam || ActiveTab.ContactPoints;
+  }, [queryParams]);
 
   const setParam = (tab: ActiveTab) => setQueryParams({ tab });
+
   return [param, setParam] as const;
 };
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { granted: canViewContactPoints } = useContactPointAbility({ action: ContactPointAction.View });
-  const { granted: canCreateContactPoints } = useContactPointAbility({ action: ContactPointAction.Create });
-  const { granted: showTemplatesTab } = useNotificationTemplateAbility({ action: NotificationTemplateAction.View });
-
-  const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
-
-  // When V2 navigation is enabled, Templates has its own dedicated tab in the navigation,
-  // so we don't show local tabs here - just show the contact points content directly
-  const useV2Nav = config.featureToggles.alertingNavigationV2;
-
-  // Depending on permissions, user may not have access to all tabs,
-  // but we can default to picking the first one that they definitely _do_ have access to
-  const defaultTab = [
-    showContactPointsTab && ActiveTab.ContactPoints,
-    showTemplatesTab && ActiveTab.NotificationTemplates,
-  ].filter((tab) => !!tab)[0];
-
-  const [activeTab, setActiveTab] = useTabQueryParam(defaultTab);
+  const [activeTab, setActiveTab] = useTabQueryParam();
 
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
+  const [_, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
 
-  // V2 Navigation: No local tabs, just show contact points content
-  if (useV2Nav) {
-    return (
-      <>
-        <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
-        <ContactPointsTab />
-      </>
-    );
-  }
-
-  // Legacy Navigation: Show local tabs for Contact Points and Templates
   return (
     <>
-      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager!} />
       <Stack direction="column">
         <TabsBar>
-          {showContactPointsTab && (
-            <Tab
-              label={t('alerting.contact-points-page-contents.label-contact-points', 'Contact Points')}
-              active={showingContactPoints}
-              counter={contactPoints.length}
-              onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
-            />
-          )}
+          <Tab
+            label="Contact Points"
+            active={showingContactPoints}
+            counter={contactPoints.length}
+            onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
+          />
           {showTemplatesTab && (
             <Tab
-              label={t('alerting.contact-points-page-contents.label-notification-templates', 'Notification Templates')}
+              label="Notification Templates"
               active={showNotificationTemplates}
               onChangeTab={() => setActiveTab(ActiveTab.NotificationTemplates)}
             />
@@ -278,11 +233,6 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
-  if (pageItems.length === 0) {
-    const emptyMessage = t('alerting.contact-points.no-contact-points-found', 'No contact points found');
-    return <EmptyState variant="not-found" message={emptyMessage} />;
-  }
-
   return (
     <>
       {pageItems.map((contactPoint, index) => {
@@ -295,13 +245,11 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
 };
 
 function ContactPointsPage() {
-  const { navId, pageNav } = useContactPointsNav();
-
   return (
-    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
+    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
       <ContactPointsPageContents />
     </AlertmanagerPageWrapper>
   );
 }
 
-export default withPageErrorBoundary(ContactPointsPage);
+export default withErrorBoundary(ContactPointsPage, { style: 'page' });

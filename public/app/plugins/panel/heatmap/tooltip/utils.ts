@@ -1,7 +1,6 @@
-import { type DataFrame, DataFrameType, type Field } from '@grafana/data';
-import { isHeatmapCellsDense } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { DataFrame, Field } from '@grafana/data';
 
-import { type HeatmapData } from '../fields';
+import { HeatmapData } from '../fields';
 
 type BucketsMinMax = {
   xBucketMin: number;
@@ -92,14 +91,3 @@ export const getSparseCellMinMax = (data: HeatmapData, index: number): BucketsMi
     yBucketMax: yMax.values[index],
   };
 };
-
-/**
- * Determines if a heatmap DataFrame is sparse (has explicit yMin/yMax bounds).
- * Sparse heatmaps have HeatmapCells type and are not dense.
- */
-export function isHeatmapSparse(heatmap: DataFrame | undefined): boolean {
-  if (!heatmap) {
-    return false;
-  }
-  return heatmap.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(heatmap);
-}

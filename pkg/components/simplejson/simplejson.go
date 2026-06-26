@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"reflect"
 )
 
 // returns the current implementation version
@@ -118,23 +117,6 @@ func (j *Json) Interface() any {
 	return j.data
 }
 
-// Check if the underlying data is empty
-func (j *Json) IsEmpty() bool {
-	if j.data == nil {
-		return true
-	}
-	v := reflect.ValueOf(j.data)
-	switch v.Kind() {
-	case reflect.Slice, reflect.Array, reflect.Map, reflect.String:
-		if v.Len() == 0 {
-			return true
-		}
-	default:
-		return false
-	}
-	return false
-}
-
 // Encode returns its marshaled data as `[]byte`
 func (j *Json) Encode() ([]byte, error) {
 	return j.MarshalJSON()
@@ -175,7 +157,8 @@ func (j *Json) SetPath(branch []string, val any) {
 	}
 	curr := j.data.(map[string]any)
 
-	for _, b := range branch[:len(branch)-1] {
+	for i := 0; i < len(branch)-1; i++ {
+		b := branch[i]
 		// key exists?
 		if _, ok := curr[b]; !ok {
 			n := make(map[string]any)

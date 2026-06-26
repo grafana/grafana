@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { ItemValues } from './ItemValues';
-import { type RawListValue } from './RawListItem';
+import { RawListValue } from './RawListItem';
 import { RawPrometheusListItemEmptyValue } from './utils/getRawPrometheusListItemsFromDataFrame';
 
 const value1 = 'value 1';

@@ -1,11 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { type PropsWithChildren, useEffect, useMemo, useState } from 'react';
+import { PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
-import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   Button,
   Drawer,
@@ -18,6 +16,7 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,
@@ -25,11 +24,11 @@ import {
 } from 'app/features/alerting/unified/Analytics';
 import { templatesApi } from 'app/features/alerting/unified/api/templateApi';
 import {
-  type NotificationTemplate,
+  NotificationTemplate,
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
+import { NotificationChannelOption } from 'app/types';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
@@ -45,7 +44,6 @@ interface TemplatesPickerProps {
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
   const [showTemplates, setShowTemplates] = useState(false);
-
   const onClick = () => {
     setShowTemplates(true);
     trackEditInputWithTemplate();
@@ -56,31 +54,17 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
     <>
       <Button
         icon="edit"
-        tooltip={t('alerting.templates-picker.tooltip-edit', 'Edit {{name}} using existing notification templates.', {
-          name: option.label.toLowerCase(),
-        })}
+        tooltip={`Edit ${option.label.toLowerCase()} using existing templates.`}
         onClick={onClick}
         variant="secondary"
         size="sm"
       >
-        <Trans i18nKey="alerting.templates-picker.button-edit" values={{ name: option.label }}>
-          Edit {'{{name}}'}
-        </Trans>
+        {`Edit ${option.label}`}
       </Button>
 
       {showTemplates && (
-        <Drawer
-          title={t('alerting.templates-picker.title-drawer', 'Edit {{name}}', { name: option.label })}
-          size="md"
-          onClose={handleClose}
-        >
-          <TemplateSelector
-            onSelect={onSelect}
-            onClose={handleClose}
-            option={option}
-            valueInForm={valueInForm}
-            filterKind="grafana"
-          />
+        <Drawer title={`Edit ${option.label}`} size="md" onClose={handleClose}>
+          <TemplateSelector onSelect={onSelect} onClose={handleClose} option={option} valueInForm={valueInForm} />
         </Drawer>
       )}
     </>
@@ -127,10 +111,9 @@ interface TemplateSelectorProps {
   onClose: () => void;
   option: NotificationChannelOption;
   valueInForm: string;
-  filterKind?: TemplateGroupTemplateKind;
 }
 
-export function TemplateSelector({ onSelect, onClose, option, valueInForm, filterKind }: TemplateSelectorProps) {
+function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
   const valueInFormIsCustom = Boolean(valueInForm) && !matchesOnlyOneTemplate(valueInForm);
   const [template, setTemplate] = useState<SelectableValue<Template> | undefined>(undefined);
@@ -146,16 +129,10 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
-      label: t(
-        'alerting.template-selector.template-options.label.select-notification-template',
-        'Select notification template'
-      ),
-      ariaLabel: t(
-        'alerting.template-selector.template-options.ariaLabel.select-notification-template',
-        'Select notification template'
-      ),
+      label: 'Select existing template',
+      ariaLabel: 'Select existing template',
       value: 'Existing',
-      description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
+      description: `Select a single template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save will save your changes to the selected template.' : ''}`,
     },
     {
       label: `Enter custom ${option.label.toLowerCase()}`,
@@ -179,20 +156,12 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
     setTemplateOption(option);
   };
 
-  // Filter templates by kind
-  const filteredData = useMemo(() => {
-    if (!filterKind) {
-      return data;
-    }
-    return (data ?? []).filter((template) => template.kind === filterKind);
-  }, [data, filterKind]);
-
   const options = useMemo(() => {
-    if (!defaultTemplates || !filteredData || isLoading || error) {
+    if (!defaultTemplates || !data || isLoading || error) {
       return [];
     }
-    return getTemplateOptions(filteredData, defaultTemplates);
-  }, [filteredData, defaultTemplates, isLoading, error]);
+    return getTemplateOptions(data, defaultTemplates);
+  }, [data, defaultTemplates, isLoading, error]);
 
   const defaultTemplateValue = useMemo(() => {
     if (!options.length || !Boolean(valueInForm) || !matchesOnlyOneTemplate(valueInForm)) {
@@ -204,19 +173,11 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
   }, [options, valueInForm]);
 
   if (error) {
-    return (
-      <div>
-        <Trans i18nKey="alerting.template-selector.error-loading-templates">Error loading templates</Trans>
-      </div>
-    );
+    return <div>Error loading templates</div>;
   }
 
   if (isLoading || !data || !defaultTemplates) {
-    return (
-      <div>
-        <Trans i18nKey="alerting.template-selector.loading">Loading...</Trans>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
@@ -234,14 +195,8 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
             <Stack direction="row" gap={1} alignItems="center">
               <Select<Template>
                 data-testid="existing-templates-selector"
-                placeholder={t(
-                  'alerting.template-selector.existing-templates-selector-placeholder-choose-notification-template',
-                  'Choose notification template'
-                )}
-                aria-label={t(
-                  'alerting.template-selector.existing-templates-selector-aria-label-choose-notification-template',
-                  'Choose notification template'
-                )}
+                placeholder="Choose template"
+                aria-label="Choose template"
                 onChange={(value: SelectableValue<Template>, _) => {
                   setTemplate(value);
                 }}
@@ -250,11 +205,10 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
                 defaultValue={defaultTemplateValue}
               />
               <IconButton
-                tooltip={t(
-                  'alerting.template-selector.tooltip-copy',
-                  'Copy selected notification template to clipboard. You can use it in the custom tab.'
-                )}
-                onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
+                tooltip="Copy selected template to clipboard. You can use it in the custom tab."
+                onClick={() =>
+                  copyToClipboard(getUseTemplateText(template?.value?.name ?? defaultTemplateValue?.value?.name ?? ''))
+                }
                 name="copy"
               />
             </Stack>
@@ -278,7 +232,7 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
       </Stack>
       <div className={styles.actions}>
         <Button variant="secondary" onClick={onClose}>
-          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+          Cancel
         </Button>
         <Button
           variant="primary"
@@ -294,7 +248,7 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
             return onClose();
           }}
         >
-          <Trans i18nKey="common.save">Save</Trans>
+          Save
         </Button>
       </div>
     </Stack>
@@ -318,20 +272,8 @@ function OptionCustomfield({
       </Label>
       <TextArea
         id={id}
-        label={t('alerting.option-customfield.label-custom-template', 'Custom template')}
-        placeholder={
-          option.placeholder
-            ? t(
-                'alerting.option-customfield.placeholder-with-template',
-                'Enter plain text or reference a template, e.g. {{- currentTemplate}}',
-                { currentTemplate: option.placeholder }
-              )
-            : // if "option.placeholder" is not set, the placeholder displays the "default.message" template
-              t(
-                'alerting.option-customfield.placeholder',
-                'Enter plain text or reference a template, e.g. {{template "default.message" .}}'
-              )
-        }
+        label="Custom template"
+        placeholder={option.placeholder}
         onChange={(e) => onCustomTemplateChange(e.currentTarget.value)}
         defaultValue={initialValue}
       />
@@ -344,7 +286,6 @@ interface WrapWithTemplateSelectionProps extends PropsWithChildren {
   onSelectTemplate: (template: string) => void;
   option: NotificationChannelOption;
   name: string;
-  readOnly?: boolean;
 }
 export function WrapWithTemplateSelection({
   useTemplates,
@@ -352,24 +293,21 @@ export function WrapWithTemplateSelection({
   option,
   name,
   children,
-  readOnly = false,
 }: WrapWithTemplateSelectionProps) {
   const styles = useStyles2(getStyles);
   const { getValues } = useFormContext();
   const value = getValues(name) ?? '';
-  const showTemplatePicker = useTemplates && !readOnly;
   // if the placeholder does not contain a template, we don't need to show the template picker
   if (!option.placeholder.includes('{{ template ') || typeof value !== 'string') {
     return <>{children}</>;
   }
-
   // Otherwise, we can use templates on this field
   // if the value is empty, we only show the template picker
   if (!value) {
     return (
       <div className={styles.inputContainer}>
         <Stack direction="row" gap={1} alignItems="center">
-          {showTemplatePicker && (
+          {useTemplates && (
             <TemplatesPicker onSelect={onSelectTemplate} option={option} valueInForm={getValues(name) ?? ''} />
           )}
         </Stack>
@@ -382,19 +320,19 @@ export function WrapWithTemplateSelection({
       <div className={styles.inputContainer}>
         <Stack direction="row" gap={1} alignItems="center">
           <Text variant="bodySmall">{`Template: ${getTemplateName(value)}`}</Text>
-          {showTemplatePicker && (
+          {useTemplates && (
             <TemplatesPicker onSelect={onSelectTemplate} option={option} valueInForm={getValues(name) ?? ''} />
           )}
         </Stack>
       </div>
     );
   }
-  // custom template field
+  // custom template  field
   return (
     <div className={styles.inputContainer}>
       <Stack direction="row" gap={1} alignItems="center">
         {children}
-        {showTemplatePicker && (
+        {useTemplates && (
           <TemplatesPicker onSelect={onSelectTemplate} option={option} valueInForm={getValues(name) ?? ''} />
         )}
       </Stack>

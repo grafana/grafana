@@ -1,9 +1,8 @@
-import { Controller, type FieldArrayWithId, useFormContext } from 'react-hook-form';
+import { FieldArrayWithId, useFormContext, Controller } from 'react-hook-form';
 
-import { t } from '@grafana/i18n';
-import { Stack, Text } from '@grafana/ui';
+import { Text, Stack } from '@grafana/ui';
 
-import { type RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
 
 import CustomAnnotationHeaderField from './CustomAnnotationHeaderField';
@@ -13,19 +12,17 @@ const AnnotationHeaderField = ({
   annotations,
   annotation,
   index,
-  labelId,
 }: {
   annotationField: FieldArrayWithId<RuleFormValues, 'annotations', 'id'>;
   annotations: Array<{ key: string; value: string }>;
   annotation: Annotation;
   index: number;
-  labelId: string;
 }) => {
   const { control } = useFormContext<RuleFormValues>();
 
   return (
     <Stack direction="column" gap={0}>
-      <label htmlFor={labelId}>
+      <label>
         {
           <Controller
             name={`annotations.${index}.key`}
@@ -57,12 +54,7 @@ const AnnotationHeaderField = ({
               );
             }}
             control={control}
-            rules={{
-              required: {
-                value: !!annotations[index]?.value,
-                message: t('alerting.annotation-header-field.message.required', 'Required.'),
-              },
-            }}
+            rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
           />
         }
       </label>

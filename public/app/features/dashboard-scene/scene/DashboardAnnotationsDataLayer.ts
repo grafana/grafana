@@ -1,14 +1,14 @@
 import {
-  type AnnotationEvent,
+  AnnotationEvent,
   arrayToDataFrame,
   DataTopic,
   getDefaultTimeRange,
-  type PanelData,
-  type LoadingState,
+  PanelData,
+  LoadingState,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { dataLayers } from '@grafana/scenes';
-import { type AnnotationQuery } from '@grafana/schema';
+import { AnnotationQuery } from '@grafana/schema';
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 /**
@@ -42,7 +42,7 @@ export class DashboardAnnotationsDataLayer extends dataLayers.AnnotationsDataLay
         dataTopic: DataTopic.Annotations,
       };
 
-      stateUpdate.series = [df];
+      stateUpdate.annotations = [df];
 
       return stateUpdate;
     } else {

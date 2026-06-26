@@ -5,7 +5,7 @@ import {
   FieldType,
   LogRowContextQueryDirection,
   LogsSortOrder,
-  type SplitOpenOptions,
+  SplitOpenOptions,
 } from '@grafana/data';
 
 import { dataFrameToLogsModel } from '../../logsModel';
@@ -55,10 +55,34 @@ const dfAfter = createDataFrame({
   ],
 });
 
-let getRowContext = jest.fn();
+let uniqueRefIdCounter = 1;
+
+const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+  uniqueRefIdCounter += 1;
+  const refId = `refid_${uniqueRefIdCounter}`;
+  if (options.direction === LogRowContextQueryDirection.Forward) {
+    return {
+      data: [
+        {
+          refId,
+          ...dfBefore,
+        },
+      ],
+    };
+  } else {
+    return {
+      data: [
+        {
+          refId,
+          ...dfAfter,
+        },
+      ],
+    };
+  }
+});
 const dispatchMock = jest.fn();
-jest.mock('app/types/store', () => ({
-  ...jest.requireActual('app/types/store'),
+jest.mock('app/types', () => ({
+  ...jest.requireActual('app/types'),
   useDispatch: () => dispatchMock,
 }));
 
@@ -78,34 +102,9 @@ const timeZone = 'UTC';
 
 describe('LogRowContextModal', () => {
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
-  let uniqueRefIdCounter = 1;
 
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
-    uniqueRefIdCounter = 1;
-    getRowContext = jest.fn().mockImplementation(async (_, options) => {
-      uniqueRefIdCounter += 1;
-      const refId = `refid_${uniqueRefIdCounter}`;
-      if (options.direction === LogRowContextQueryDirection.Forward) {
-        return {
-          data: [
-            {
-              refId,
-              ...dfBefore,
-            },
-          ],
-        };
-      } else {
-        return {
-          data: [
-            {
-              refId,
-              ...dfAfter,
-            },
-          ],
-        };
-      }
-    });
   });
   afterEach(() => {
     window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;

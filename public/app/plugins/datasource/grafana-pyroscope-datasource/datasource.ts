@@ -1,31 +1,24 @@
 import Prism from 'prismjs';
-import { map, type Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import {
-  type AbstractQuery,
-  type AdHocVariableFilter,
+  AbstractQuery,
+  AdHocVariableFilter,
   CoreApp,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceGetTagKeysOptions,
-  type DataSourceGetTagValuesOptions,
-  type DataSourceInstanceSettings,
-  type MetricFindValue,
-  type ScopedVars,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  DataSourceInstanceSettings,
+  MetricFindValue,
+  ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { VariableSupport } from './VariableSupport';
 import { defaultGrafanaPyroscopeDataQuery, defaultPyroscopeQueryType } from './dataquery.gen';
-import { type PyroscopeDataSourceOptions, type Query, type ProfileTypeMessage } from './types';
-import {
-  addLabelToQuery,
-  formatLabelName,
-  extractLabelMatchers,
-  grammar,
-  toPromLikeExpr,
-  enrichDataFrameWithAssistantContentMapper,
-} from './utils';
+import { PyroscopeDataSourceOptions, Query, ProfileTypeMessage } from './types';
+import { addLabelToQuery, extractLabelMatchers, grammar, toPromLikeExpr } from './utils';
 
 export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeDataSourceOptions> {
   constructor(
@@ -52,12 +45,10 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
     if (!validTargets.length) {
       return of({ data: [] });
     }
-    return super
-      .query({
-        ...request,
-        targets: validTargets,
-      })
-      .pipe(map(enrichDataFrameWithAssistantContentMapper(request, this.name)));
+    return super.query({
+      ...request,
+      targets: validTargets,
+    });
   }
 
   async getProfileTypes(start: number, end: number): Promise<ProfileTypeMessage[]> {
@@ -101,8 +92,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
   private adhocFilterData(options: DataSourceGetTagKeysOptions<Query> | DataSourceGetTagValuesOptions<Query>) {
     const from = options.timeRange?.from.valueOf() ?? Date.now() - 1000 * 60 * 60 * 24;
     const to = options.timeRange?.to.valueOf() ?? Date.now();
-    const query =
-      '{' + options.filters.map((f) => `${formatLabelName(f.key)}${f.operator}"${f.value}"`).join(',') + '}';
+    const query = '{' + options.filters.map((f) => `${f.key}${f.operator}"${f.value}"`).join(',') + '}';
     return { from, to, query };
   }
 
@@ -131,9 +121,6 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
       queryType: 'both',
       profileTypeId: '',
       groupBy: [],
-      includeExemplars: false,
-      includeHeatmap: false,
-      heatmapType: 'individual',
     };
   }
 
@@ -158,7 +145,7 @@ export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeD
   }
 }
 
-const defaultQuery: Partial<Query> = {
+export const defaultQuery: Partial<Query> = {
   ...defaultGrafanaPyroscopeDataQuery,
   queryType: defaultPyroscopeQueryType,
 };

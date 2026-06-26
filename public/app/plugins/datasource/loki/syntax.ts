@@ -1,6 +1,6 @@
-import { type Grammar } from 'prismjs';
+import { Grammar } from 'prismjs';
 
-import { type CompletionItem } from '@grafana/ui';
+import { CompletionItem } from '@grafana/ui';
 
 export const AGGREGATION_OPERATORS: CompletionItem[] = [
   {
@@ -50,7 +50,7 @@ export const AGGREGATION_OPERATORS: CompletionItem[] = [
   },
 ];
 
-const PIPE_PARSERS: CompletionItem[] = [
+export const PIPE_PARSERS: CompletionItem[] = [
   {
     label: 'json',
     insertText: 'json',
@@ -81,7 +81,7 @@ const PIPE_PARSERS: CompletionItem[] = [
   },
 ];
 
-const PIPE_OPERATORS: CompletionItem[] = [
+export const PIPE_OPERATORS: CompletionItem[] = [
   {
     label: 'unwrap',
     insertText: 'unwrap',
@@ -278,5 +278,4 @@ export const lokiGrammar: Grammar = {
   punctuation: /[{}(),.]/,
 };
 
-/** @alias */
 export default lokiGrammar;

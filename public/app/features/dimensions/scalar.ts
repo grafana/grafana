@@ -1,7 +1,7 @@
-import { type DataFrame, type Field } from '@grafana/data';
-import { type ScalarDimensionConfig, ScalarDimensionMode } from '@grafana/schema';
+import { DataFrame, Field } from '@grafana/data';
+import { ScalarDimensionConfig, ScalarDimensionMode } from '@grafana/schema';
 
-import { type DimensionSupplier } from './types';
+import { DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
@@ -13,7 +13,10 @@ export function getScalarDimension(
 ): DimensionSupplier<number> {
   return getScalarDimensionForField(findField(frame, config?.field), config);
 }
-function getScalarDimensionForField(field: Field | undefined, cfg: ScalarDimensionConfig): DimensionSupplier<number> {
+export function getScalarDimensionForField(
+  field: Field | undefined,
+  cfg: ScalarDimensionConfig
+): DimensionSupplier<number> {
   if (!field) {
     const v = cfg.fixed ?? 0;
     return {

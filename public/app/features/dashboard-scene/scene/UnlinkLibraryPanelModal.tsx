@@ -1,12 +1,6 @@
-import {
-  type SceneComponentProps,
-  SceneObjectBase,
-  type SceneObjectRef,
-  type SceneObjectState,
-  type VizPanel,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { type ModalSceneObjectLike } from '../sharing/types';
+import { ModalSceneObjectLike } from '../sharing/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { UnlinkModal } from './UnlinkModal';

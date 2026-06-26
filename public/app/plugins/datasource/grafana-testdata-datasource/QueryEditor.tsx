@@ -1,27 +1,25 @@
-import { type FormEvent, useMemo } from 'react';
+import { FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { type QueryEditorProps, type SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
 
+import { RandomWalkEditor, StreamingClientEditor } from './components';
 import { CSVContentEditor } from './components/CSVContentEditor';
 import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
 import ErrorEditor from './components/ErrorEditor';
 import ErrorWithSourceQueryEditor from './components/ErrorWithSourceEditor';
-import FlakyQueryEditor from './components/FlakyQueryEditor';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
-import { RandomWalkEditor } from './components/RandomWalkEditor';
 import { RawFrameEditor } from './components/RawFrameEditor';
 import { SimulationQueryEditor } from './components/SimulationQueryEditor';
-import { StreamingClientEditor } from './components/StreamingClientEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
-import { type CSVWave, type NodesQuery, type TestDataDataQuery, TestDataQueryType, type USAQuery } from './dataquery';
-import { type TestDataDataSource } from './datasource';
+import { CSVWave, NodesQuery, TestDataDataQuery, TestDataQueryType, USAQuery } from './dataquery';
+import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
 const endpoints = [
@@ -119,9 +117,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case TestDataQueryType.Annotations:
         update.lines = 10;
         break;
-      case TestDataQueryType.Steps:
-        update.csvContent = 'a\nb\nc\n';
-        break;
       case TestDataQueryType.USA:
         update.usa = {
           mode: usaQueryModes[0].value,
@@ -129,14 +124,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         break;
       case TestDataQueryType.ErrorWithSource:
         update.errorSource = 'plugin';
-        break;
-      case TestDataQueryType.FlakyQuery:
-        update.errorProbability = 50;
-        update.errorStatusCode = 400;
-        update.errorSource = 'downstream';
-        update.errorMessage = 'Flaky query error';
-        update.queryDelay = '5s';
-        update.queryDelayVariability = 0;
     }
 
     onUpdate(update);
@@ -306,7 +293,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === TestDataQueryType.CSVContent && (
         <CSVContentEditor onChange={onUpdate} query={query} ds={datasource} />
       )}
-      {scenarioId === TestDataQueryType.Steps && <CSVContentEditor onChange={onUpdate} query={query} ds={datasource} />}
       {scenarioId === TestDataQueryType.Logs && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>
@@ -399,9 +385,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       )}
       {scenarioId === TestDataQueryType.ErrorWithSource && (
         <ErrorWithSourceQueryEditor onChange={onUpdate} query={query} ds={datasource} />
-      )}
-      {scenarioId === TestDataQueryType.FlakyQuery && (
-        <FlakyQueryEditor onChange={onUpdate} query={query} ds={datasource} />
       )}
 
       {description && <p>{description}</p>}

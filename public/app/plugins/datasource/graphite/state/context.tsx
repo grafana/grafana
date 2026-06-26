@@ -1,15 +1,15 @@
-import { type AnyAction } from '@reduxjs/toolkit';
-import { createContext, type Dispatch, type PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import { AnyAction } from '@reduxjs/toolkit';
+import { createContext, Dispatch, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { type QueryEditorProps } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { QueryEditorProps } from '@grafana/data';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 
-import { type GraphiteDatasource } from '../datasource';
-import { type GraphiteOptions, type GraphiteQuery } from '../types';
+import { GraphiteDatasource } from '../datasource';
+import { GraphiteOptions, GraphiteQuery } from '../types';
 
 import { actions } from './actions';
-import { createStore, type GraphiteQueryEditorState } from './store';
+import { createStore, GraphiteQueryEditorState } from './store';
 
 const DispatchContext = createContext<Dispatch<AnyAction>>({} as Dispatch<AnyAction>);
 const GraphiteStateContext = createContext<GraphiteQueryEditorState>({} as GraphiteQueryEditorState);
@@ -88,7 +88,7 @@ export const GraphiteQueryEditorContext = ({
   if (!state) {
     dispatch(
       actions.init({
-        target: { ...query },
+        target: query,
         datasource: datasource,
         range: range,
         templateSrv: getTemplateSrv(),

@@ -1,10 +1,10 @@
-import { type Meta } from '@storybook/react-webpack5';
+import { Meta } from '@storybook/react';
 
 import { FormattedValueDisplay } from './FormattedValueDisplay';
 import mdx from './FormattedValueDisplay.mdx';
 
 const meta: Meta<typeof FormattedValueDisplay> = {
-  title: 'Plugins/FormattedValueDisplay',
+  title: 'Visualizations/FormattedValueDisplay',
   component: FormattedValueDisplay,
   parameters: {
     docs: {

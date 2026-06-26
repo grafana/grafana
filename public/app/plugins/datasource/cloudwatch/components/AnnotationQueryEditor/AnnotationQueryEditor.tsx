@@ -1,14 +1,13 @@
-import { type ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 
-import { type QueryEditorProps } from '@grafana/data';
-import { EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect } from '@grafana/plugin-ui';
+import { QueryEditorProps } from '@grafana/data';
+import { EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect } from '@grafana/experimental';
 import { Alert, Input, Space } from '@grafana/ui';
 
-import { type MetricStat } from '../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../datasource';
+import { CloudWatchDatasource } from '../../datasource';
 import { isCloudWatchAnnotationQuery } from '../../guards';
 import { useRegions } from '../../hooks';
-import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
+import { CloudWatchJsonData, CloudWatchQuery, MetricStat } from '../../types';
 import { MetricStatEditor } from '../shared/MetricStatEditor/MetricStatEditor';
 
 export type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;

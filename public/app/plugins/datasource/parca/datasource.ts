@@ -1,14 +1,9 @@
-import { type Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
-import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  type ScopedVars,
-} from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { type ParcaDataSourceOptions, type Query, type ProfileTypeMessage } from './types';
+import { ParcaDataSourceOptions, Query, ProfileTypeMessage } from './types';
 
 export class ParcaDataSource extends DataSourceWithBackend<Query, ParcaDataSourceOptions> {
   constructor(

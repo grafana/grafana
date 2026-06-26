@@ -1,8 +1,8 @@
 import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { type DataSourceRef } from '@grafana/schema';
+import { DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
-import { InsightsMenuButton } from '../../InsightsMenuButton';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getMostFiredRulesScene(datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -43,7 +43,7 @@ export function getMostFiredRulesScene(datasource: DataSourceRef, panelTitle: st
       .setTitle(panelTitle)
       .setDescription('The alert rules that have fired the most')
       .setData(transformation)
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

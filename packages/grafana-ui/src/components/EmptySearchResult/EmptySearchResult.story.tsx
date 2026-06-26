@@ -1,10 +1,10 @@
-import { type Meta } from '@storybook/react-webpack5';
+import { Meta } from '@storybook/react';
 
 import { EmptySearchResult } from './EmptySearchResult';
 import mdx from './EmptySearchResult.mdx';
 
 const meta: Meta<typeof EmptySearchResult> = {
-  title: 'Information/Deprecated/EmptySearchResult',
+  title: 'Visualizations/EmptySearchResult',
   component: EmptySearchResult,
   parameters: {
     docs: {

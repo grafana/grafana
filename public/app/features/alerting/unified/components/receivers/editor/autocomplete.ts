@@ -1,13 +1,13 @@
 import { concat } from 'lodash';
-import type { IDisposable, IRange, Position, editor, languages } from 'monaco-editor/esm/vs/editor/editor.api';
+import type { languages, editor, Position, IRange, IDisposable } from 'monaco-editor/esm/vs/editor/editor.api';
 
 import type { Monaco } from '@grafana/ui';
 
-import { getAlertManagerSuggestions, getGomplateSuggestions } from './alertManagerSuggestions';
-import { type SuggestionDefinition } from './suggestionDefinition';
+import { getAlertManagerSuggestions } from './alertManagerSuggestions';
+import { SuggestionDefinition } from './suggestionDefinition';
 import {
-  getAlertSuggestions,
   getAlertsSuggestions,
+  getAlertSuggestions,
   getGlobalSuggestions,
   getKeyValueSuggestions,
   getSnippetsSuggestions,
@@ -49,19 +49,20 @@ export function registerGoTemplateAutocomplete(monaco: Monaco): IDisposable {
 }
 
 function isInsideGoExpression(model: editor.ITextModel, position: Position) {
-  // Need to trick findMatches into enabling multiline matches. One way to do this is to have \n in the regex.
-  const goSyntaxRegex = '\\{\\{(?:.|\\n)+?\\}\\}';
-  const matches = model.findMatches(goSyntaxRegex, model.getFullModelRange(), true, false, null, false);
+  const searchRange = {
+    startLineNumber: position.lineNumber,
+    endLineNumber: position.lineNumber,
+    startColumn: model.getLineMinColumn(position.lineNumber),
+    endColumn: model.getLineMaxColumn(position.lineNumber),
+  };
 
-  return matches.some((match) =>
-    match.range.containsPosition({
-      lineNumber: position.lineNumber,
-      column: position.column + 1, // Stricter check to avoid matching on the closing bracket.
-    })
-  );
+  const goSyntaxRegex = '\\{\\{[a-zA-Z0-9._() "]+\\}\\}';
+  const matches = model.findMatches(goSyntaxRegex, searchRange, true, false, null, true);
+
+  return matches.some((match) => match.range.containsPosition(position));
 }
 
-class CompletionProvider {
+export class CompletionProvider {
   constructor(
     private readonly monaco: Monaco,
     private readonly range: IRange
@@ -72,10 +73,7 @@ class CompletionProvider {
   };
 
   getFunctionsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
-    return this.getCompletionsFromDefinitions(
-      getAlertManagerSuggestions(this.monaco),
-      getGomplateSuggestions(this.monaco)
-    );
+    return this.getCompletionsFromDefinitions(getAlertManagerSuggestions(this.monaco));
   };
 
   getTemplateDataSuggestions = (wordContext: string): languages.ProviderResult<languages.CompletionList> => {

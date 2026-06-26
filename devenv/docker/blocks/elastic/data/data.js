@@ -150,8 +150,7 @@ function getRandomLogItem(counter, timestamp) {
     value: counter,
     metric: chooseRandomElement(['cpu', 'memory', 'latency']),
     description: "this is description",
-    slash: "Access to the path '\\\\tkasnpo\\KASNPO\\Files\\contacts.xml' is denied.",
-    url: "/foo/blah"
+    slash: "Access to the path '\\\\tkasnpo\\KASNPO\\Files\\contacts.xml' is denied."
   };
 }
 

@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { type DraggableProvided } from '@hello-pangea/dnd';
-import { type MouseEventHandler } from 'react';
+import { DraggableProvided } from '@hello-pangea/dnd';
+import { MouseEventHandler } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
-import { getFocusStyles } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -66,14 +65,13 @@ export const QueryOperationRowHeader = ({
             onClick={onRowToggle}
             aria-expanded={isContentVisible}
             aria-controls={id}
-            tabIndex={0}
           />
         )}
         {title && (
           // disabling the a11y rules here as the IconButton above handles keyboard interactions
           // this is just to provide a better experience for mouse users
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <div className={styles.titleWrapper} onClick={onRowToggle}>
+          <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
             <div className={cx(styles.title, disabled && styles.disabled)}>{title}</div>
           </div>
         )}
@@ -83,7 +81,7 @@ export const QueryOperationRowHeader = ({
       <Stack gap={1} alignItems="center">
         {actionsElement}
         {draggable && (
-          <div onMouseMove={reportDragMousePosition} className={styles.dragHandle} {...dragHandleProps}>
+          <div onMouseMove={reportDragMousePosition} {...dragHandleProps}>
             <Icon title={dragAndDropLabel} name="draggabledots" size="lg" className={styles.dragIcon} />
           </div>
         )}
@@ -114,12 +112,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     overflow: 'hidden',
-  }),
-  dragHandle: css({
-    borderRadius: theme.shape.radius.default,
-    '&:focus-visible': {
-      ...getFocusStyles(theme),
-    },
   }),
   dragIcon: css({
     cursor: 'grab',

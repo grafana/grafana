@@ -3,16 +3,10 @@ import { get as lodashGet } from 'lodash';
 import { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 
-import {
-  type DataFrame,
-  type GrafanaTheme2,
-  type NestedValueAccess,
-  type PanelOptionsEditorBuilder,
-  type PanelOptionsSupplier,
-  type StandardEditorContext,
-} from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
+import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { useStyles2 } from '@grafana/ui/src';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
@@ -20,9 +14,9 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { activePanelSubject, type InstanceState } from '../../CanvasPanel';
+import { activePanelSubject, InstanceState } from '../../CanvasPanel';
 import { addStandardCanvasEditorOptions } from '../../module';
-import { type Options } from '../../panelcfg.gen';
+import { Options } from '../../panelcfg.gen';
 import { InlineEditTabs } from '../../types';
 import { getElementTypes, onAddItem } from '../../utils';
 import { getConnectionEditor } from '../connectionEditor';
@@ -67,11 +61,7 @@ export function InlineEditBody() {
         if (element && !(element instanceof FrameState)) {
           builder.addNestedOptions(
             getElementEditor({
-              category: [
-                t('canvas.inline-edit-body.category-selected-element', 'Selected element ({{element}})', {
-                  element: element.options.name,
-                }),
-              ],
+              category: [`Selected element (${element.options.name})`],
               element,
               scene: state.scene,
             })
@@ -112,22 +102,14 @@ export function InlineEditBody() {
 
   return (
     <>
-      <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.renderElement())}</div>
+      <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
       <div style={topLevelItemsContainerStyle}>
-        <AddLayerButton
-          onChange={(sel) => onAddItem(sel, rootLayer)}
-          options={typeOptions}
-          label={t('canvas.inline-edit-body.label-add-item', 'Add item')}
-        />
+        <AddLayerButton onChange={(sel) => onAddItem(sel, rootLayer)} options={typeOptions} label={'Add item'} />
       </div>
       <div style={topLevelItemsContainerStyle}>
         <TabsEditor onTabChange={onTabChange} />
         {pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}
-        {noElementSelected && (
-          <div className={styles.selectElement}>
-            <Trans i18nKey="canvas.inline-edit-body.please-select-an-element">Please select an element</Trans>
-          </div>
-        )}
+        {noElementSelected && <div className={styles.selectElement}>Please select an element</div>}
       </div>
     </>
   );
@@ -137,7 +119,7 @@ export function InlineEditBody() {
 function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {
   return (
     <OptionsPaneCategory {...pane.props} key={pane.props.id}>
-      <div>{pane.items.map((v) => v.renderElement())}</div>
+      <div>{pane.items.map((v) => v.render())}</div>
       {pane.categories.map((c) => renderOptionsPaneCategoryDescriptor(c))}
     </OptionsPaneCategory>
   );
@@ -180,7 +162,7 @@ function getOptionsPaneCategoryDescriptor<T extends object>(
   };
 
   // Use the panel options loader
-  fillOptionsPaneItems('canvas-inline', supplier, access, getOptionsPaneCategory, context);
+  fillOptionsPaneItems(supplier, access, getOptionsPaneCategory, context);
   return root;
 }
 

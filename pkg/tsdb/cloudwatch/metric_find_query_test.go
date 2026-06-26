@@ -6,37 +6,41 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
-	resourcegroupstaggingapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
-
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQuery_InstanceAttributes(t *testing.T) {
-	origNewEC2API := NewEC2API
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		NewEC2API = origNewEC2API
+		NewEC2Client = origNewEC2Client
 	})
 
 	var cli oldEC2Client
 
-	NewEC2API = func(aws.Config) models.EC2APIProvider {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("Get instance ID", func(t *testing.T) {
 		const instanceID = "i-12345678"
 		cli = oldEC2Client{
-			reservations: []ec2types.Reservation{
+			reservations: []*ec2.Reservation{
 				{
-					Instances: []ec2types.Instance{
+					Instances: []*ec2.Instance{
 						{
 							InstanceId: aws.String(instanceID),
-							Tags: []ec2types.Tag{
+							Tags: []*ec2.Tag{
 								{
 									Key:   aws.String("Environment"),
 									Value: aws.String("production"),
@@ -48,16 +52,22 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			},
 		}
 
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
+		})
+
 		filterMap := map[string][]string{
 			"tag:Environment": {"production"},
 		}
 		filterJson, err := json.Marshal(filterMap)
 		require.NoError(t, err)
 
-		ds := newTestDatasource()
-		resp, err := ds.handleGetEc2InstanceAttribute(
+		executor := newExecutor(im, log.NewNullLogger())
+		resp, err := executor.handleGetEc2InstanceAttribute(
 			context.Background(),
-			url.Values{
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
 				"region":        []string{"us-east-1"},
 				"attributeName": []string{"InstanceId"},
 				"filters":       []string{string(filterJson)},
@@ -70,129 +80,55 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		}
 		assert.Equal(t, expResponse, resp)
 	})
-
-	t.Run("Get different types", func(t *testing.T) {
-		var expectedInt int32 = 3
-		var expectedBool = true
-		var expectedArn = "arn"
-		cli = oldEC2Client{
-			reservations: []ec2types.Reservation{
-				{
-					Instances: []ec2types.Instance{
-						{
-							AmiLaunchIndex: &expectedInt,
-							EbsOptimized:   &expectedBool,
-							IamInstanceProfile: &ec2types.IamInstanceProfile{
-								Arn: &expectedArn,
-							},
-						},
-					},
-				},
-			},
-		}
-
-		ds := newTestDatasource()
-
-		testcases := []struct {
-			name          string
-			attributeName string
-			expResponse   []suggestData
-		}{
-			{
-				"int field",
-				"AmiLaunchIndex",
-				[]suggestData{
-					{Text: "3", Value: "3", Label: "3"},
-				},
-			},
-			{
-				"bool field",
-				"EbsOptimized",
-				[]suggestData{
-					{Text: "true", Value: "true", Label: "true"},
-				},
-			},
-			{
-				"nested field",
-				"IamInstanceProfile.Arn",
-				[]suggestData{
-					{Text: expectedArn, Value: expectedArn, Label: expectedArn},
-				},
-			},
-			{
-				"nil field",
-				"InstanceLifecycle",
-				[]suggestData{},
-			},
-		}
-		for _, tc := range testcases {
-			t.Run(tc.name, func(t *testing.T) {
-				filterMap := map[string][]string{}
-				filterJson, err := json.Marshal(filterMap)
-				require.NoError(t, err)
-
-				resp, err := ds.handleGetEc2InstanceAttribute(
-					context.Background(),
-					url.Values{
-						"region":        []string{"us-east-1"},
-						"attributeName": []string{tc.attributeName},
-						"filters":       []string{string(filterJson)},
-					},
-				)
-				require.NoError(t, err)
-				assert.Equal(t, tc.expResponse, resp)
-			})
-		}
-	})
 }
 
 func TestQuery_EBSVolumeIDs(t *testing.T) {
-	origNewEC2API := NewEC2API
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		NewEC2API = origNewEC2API
+		NewEC2Client = origNewEC2Client
 	})
 
 	var cli oldEC2Client
 
-	NewEC2API = func(aws.Config) models.EC2APIProvider {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("", func(t *testing.T) {
 		cli = oldEC2Client{
-			reservations: []ec2types.Reservation{
+			reservations: []*ec2.Reservation{
 				{
-					Instances: []ec2types.Instance{
+					Instances: []*ec2.Instance{
 						{
 							InstanceId: aws.String("i-1"),
-							BlockDeviceMappings: []ec2types.InstanceBlockDeviceMapping{
-								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
-								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
 							},
 						},
 						{
 							InstanceId: aws.String("i-2"),
-							BlockDeviceMappings: []ec2types.InstanceBlockDeviceMapping{
-								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
-								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
 							},
 						},
 					},
 				},
 				{
-					Instances: []ec2types.Instance{
+					Instances: []*ec2.Instance{
 						{
 							InstanceId: aws.String("i-3"),
-							BlockDeviceMappings: []ec2types.InstanceBlockDeviceMapping{
-								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
-								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
 							},
 						},
 						{
 							InstanceId: aws.String("i-4"),
-							BlockDeviceMappings: []ec2types.InstanceBlockDeviceMapping{
-								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
-								{Ebs: &ec2types.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
 							},
 						},
 					},
@@ -200,10 +136,16 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 			},
 		}
 
-		ds := newTestDatasource()
-		resp, err := ds.handleGetEbsVolumeIds(
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
+		})
+
+		executor := newExecutor(im, log.NewNullLogger())
+		resp, err := executor.handleGetEbsVolumeIds(
 			context.Background(),
-			url.Values{
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
 				"region":     []string{"us-east-1"},
 				"instanceId": []string{"{i-1, i-2, i-3}"},
 			},
@@ -211,7 +153,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 		require.NoError(t, err)
 
 		expValues := []string{"vol-1-1", "vol-1-2", "vol-2-1", "vol-2-2", "vol-3-1", "vol-3-2"}
-		expResponse := make([]suggestData, 0, len(expValues))
+		expResponse := []suggestData{}
 		for _, value := range expValues {
 			expResponse = append(expResponse, suggestData{Text: value, Value: value, Label: value})
 		}
@@ -220,23 +162,23 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 }
 
 func TestQuery_ResourceARNs(t *testing.T) {
-	origNewRGTAClient := NewRGTAClient
+	origNewRGTAClient := newRGTAClient
 	t.Cleanup(func() {
-		NewRGTAClient = origNewRGTAClient
+		newRGTAClient = origNewRGTAClient
 	})
 
 	var cli fakeRGTAClient
 
-	NewRGTAClient = func(aws.Config) resourcegroupstaggingapi.GetResourcesAPIClient {
+	newRGTAClient = func(client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
 		return cli
 	}
 
 	t.Run("", func(t *testing.T) {
 		cli = fakeRGTAClient{
-			tagMapping: []resourcegroupstaggingapitypes.ResourceTagMapping{
+			tagMapping: []*resourcegroupstaggingapi.ResourceTagMapping{
 				{
 					ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567"),
-					Tags: []resourcegroupstaggingapitypes.Tag{
+					Tags: []*resourcegroupstaggingapi.Tag{
 						{
 							Key:   aws.String("Environment"),
 							Value: aws.String("production"),
@@ -245,7 +187,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 				{
 					ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321"),
-					Tags: []resourcegroupstaggingapitypes.Tag{
+					Tags: []*resourcegroupstaggingapi.Tag{
 						{
 							Key:   aws.String("Environment"),
 							Value: aws.String("production"),
@@ -255,16 +197,22 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			},
 		}
 
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
+		})
+
 		tagMap := map[string][]string{
 			"Environment": {"production"},
 		}
 		tagJson, err := json.Marshal(tagMap)
 		require.NoError(t, err)
 
-		ds := newTestDatasource()
-		resp, err := ds.handleGetResourceArns(
+		executor := newExecutor(im, log.NewNullLogger())
+		resp, err := executor.handleGetResourceArns(
 			context.Background(),
-			url.Values{
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
 				"region":       []string{"us-east-1"},
 				"resourceType": []string{"ec2:instance"},
 				"tags":         []string{string(tagJson)},
@@ -276,7 +224,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
 			"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
 		}
-		expResponse := make([]suggestData, 0, len(expValues))
+		expResponse := []suggestData{}
 		for _, value := range expValues {
 			expResponse = append(expResponse, suggestData{Text: value, Value: value, Label: value})
 		}

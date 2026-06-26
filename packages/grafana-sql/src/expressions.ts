@@ -2,26 +2,26 @@ export enum QueryEditorPropertyType {
   String = 'string',
 }
 
-interface QueryEditorProperty {
+export interface QueryEditorProperty {
   type: QueryEditorPropertyType;
   name?: string;
 }
 
-type QueryEditorOperatorType = string | boolean | number;
+export type QueryEditorOperatorType = string | boolean | number;
 type QueryEditorOperatorValueType = QueryEditorOperatorType | QueryEditorOperatorType[];
 
-interface QueryEditorOperator<T extends QueryEditorOperatorValueType> {
+export interface QueryEditorOperator<T extends QueryEditorOperatorValueType> {
   name?: string;
   value?: T;
 }
 
-interface QueryEditorOperatorExpression {
+export interface QueryEditorOperatorExpression {
   type: QueryEditorExpressionType.Operator;
   property: QueryEditorProperty;
   operator: QueryEditorOperator<QueryEditorOperatorValueType>;
 }
 
-interface QueryEditorArrayExpression {
+export interface QueryEditorArrayExpression {
   type: QueryEditorExpressionType.And | QueryEditorExpressionType.Or;
   expressions: QueryEditorExpression[] | QueryEditorArrayExpression[];
 }
@@ -41,7 +41,7 @@ export enum QueryEditorExpressionType {
   FunctionParameter = 'functionParameter',
 }
 
-type QueryEditorExpression =
+export type QueryEditorExpression =
   | QueryEditorArrayExpression
   | QueryEditorPropertyExpression
   | QueryEditorGroupByExpression

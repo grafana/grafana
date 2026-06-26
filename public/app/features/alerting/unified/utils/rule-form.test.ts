@@ -1,65 +1,22 @@
-import { type PromQuery } from '@grafana/prometheus';
+import { PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { type RuleWithLocation } from 'app/types/unified-alerting';
-import {
-  type AlertDataQuery,
-  type AlertQuery,
-  GrafanaAlertStateDecision,
-  type GrafanaRuleDefinition,
-  type RulerAlertingRuleDTO,
-  type RulerGrafanaRuleDTO,
-} from 'app/types/unified-alerting-dto';
+import { GrafanaAlertStateDecision, GrafanaRuleDefinition, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { EvalFunction } from '../../state/alertDef';
-import { mockDataSource, mockRuleWithLocation, mockRulerGrafanaRecordingRule } from '../mocks';
-import { getDefaultFormValues } from '../rule-editor/formDefaults';
-import { setupDataSources } from '../testSetup/datasources';
-import { type AlertManagerManualRouting, RuleFormType, type RuleFormValues } from '../types/rule-form';
+import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
 
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
+  MANUAL_ROUTING_KEY,
   alertingRulerRuleToRuleForm,
   cleanAnnotations,
   cleanLabels,
-  fixMissingRefIdsInExpressionModel,
-  folderFromDashboardMeta,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
-  getDefaultExpressions,
-  getInstantFromDataQuery,
+  getDefaultFormValues,
+  getDefautManualRouting,
   getNotificationSettingsForDTO,
-  rulerRuleToFormValues,
 } from './rule-form';
-
-describe('folderFromDashboardMeta', () => {
-  it('returns undefined when no folder metadata', () => {
-    expect(folderFromDashboardMeta({})).toBeUndefined();
-    expect(folderFromDashboardMeta({ folderUid: '', folderTitle: '' })).toBeUndefined();
-  });
-
-  it('returns folder uid and title for nested dashboards', () => {
-    expect(folderFromDashboardMeta({ folderUid: 'f1', folderTitle: 'Infra' })).toEqual({
-      uid: 'f1',
-      title: 'Infra',
-    });
-  });
-
-  it('returns root folder when only title is set (e.g. Dashboards)', () => {
-    expect(folderFromDashboardMeta({ folderUid: '', folderTitle: 'Dashboards' })).toEqual({
-      uid: '',
-      title: 'Dashboards',
-    });
-  });
-
-  it('uses uid as display title when title is missing but uid is set', () => {
-    expect(folderFromDashboardMeta({ folderUid: 'abc', folderTitle: '' })).toEqual({
-      uid: 'abc',
-      title: 'abc',
-    });
-  });
-});
 
 describe('formValuesToRulerGrafanaRuleDTO', () => {
   it('should correctly convert rule form values for grafana alerting rule', () => {
@@ -80,35 +37,6 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
     };
 
     expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
-  });
-
-  it('sets notification_settings.receiver only when manualRouting is true', () => {
-    const base: RuleFormValues = {
-      ...getDefaultFormValues(),
-      type: RuleFormType.grafana,
-      condition: 'A',
-      contactPoints: {
-        grafana: {
-          selectedContactPoint: 'team-receiver',
-          muteTimeIntervals: [],
-          activeTimeIntervals: [],
-          overrideGrouping: false,
-          overrideTimings: false,
-          groupBy: [],
-          groupWaitValue: '',
-          groupIntervalValue: '',
-          repeatIntervalValue: '',
-        },
-      },
-    };
-
-    // manualRouting false → no notification_settings
-    const dtoNoManual = formValuesToRulerGrafanaRuleDTO({ ...base, manualRouting: false });
-    expect(dtoNoManual.grafana_alert.notification_settings).toBeUndefined();
-
-    // manualRouting true → notification_settings.receiver present
-    const dtoManual = formValuesToRulerGrafanaRuleDTO({ ...base, manualRouting: true });
-    expect(dtoManual.grafana_alert.notification_settings?.receiver).toBe('team-receiver');
   });
 
   it('should not save both instant and range type queries', () => {
@@ -177,107 +105,10 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
     expect(alertingRulerRuleToRuleForm(rule)).toMatchSnapshot();
   });
 });
-
-describe('rulerRuleToFormValues', () => {
-  it('should convert grafana recording rule to form values', () => {
-    const mockRecordingRule = mockRulerGrafanaRecordingRule({
-      grafana_alert: {
-        uid: 'recording-rule-uid',
-        title: 'My Recording Rule',
-        namespace_uid: 'folder-uid',
-        rule_group: 'recording-group',
-        condition: 'A',
-        record: {
-          metric: 'my_metric',
-          from: 'A',
-          target_datasource_uid: 'target-ds-uid',
-        },
-        data: [
-          {
-            datasourceUid: 'prom-uid',
-            refId: 'A',
-            queryType: '',
-            model: { refId: 'A' },
-          },
-        ],
-        is_paused: false,
-      },
-      annotations: {
-        description: 'This is a recording rule',
-        summary: 'Recording rule summary',
-      },
-      labels: {
-        team: 'platform',
-        env: 'production',
-      },
-    });
-
-    const ruleWithLocation: RuleWithLocation = mockRuleWithLocation(mockRecordingRule, {
-      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-      namespace: 'Test Folder',
-      group: {
-        name: 'recording-group',
-        interval: '1m',
-        rules: [mockRecordingRule],
-      },
-    });
-
-    const result = rulerRuleToFormValues(ruleWithLocation);
-
-    expect(result).toMatchObject({
-      name: 'My Recording Rule',
-      type: RuleFormType.grafanaRecording,
-      group: 'recording-group',
-      evaluateEvery: '1m',
-      queries: [
-        {
-          datasourceUid: 'prom-uid',
-          refId: 'A',
-          queryType: '',
-          model: { refId: 'A' },
-        },
-      ],
-      condition: 'A',
-      annotations: [
-        { key: 'summary', value: 'Recording rule summary' },
-        { key: 'description', value: 'This is a recording rule' },
-        { key: 'runbook_url', value: '' },
-      ],
-      labels: [
-        { key: 'team', value: 'platform' },
-        { key: 'env', value: 'production' },
-        { key: '', value: '' }, // empty row added for form editing
-      ],
-      folder: { title: 'Test Folder', uid: 'folder-uid' },
-      isPaused: false,
-      metric: 'my_metric',
-      targetDatasourceUid: 'target-ds-uid',
-    });
-  });
-});
-
 describe('getContactPointsFromDTO', () => {
-  it('should return undefined when notification_settings has only policy (no receiver)', () => {
-    const ga: GrafanaRuleDefinition = {
-      uid: '123',
-      version: 1,
-      title: 'myalert',
-      namespace_uid: '123',
-      rule_group: 'my-group',
-      condition: 'A',
-      no_data_state: GrafanaAlertStateDecision.Alerting,
-      exec_err_state: GrafanaAlertStateDecision.Alerting,
-      data: [],
-      notification_settings: { policy: 'TestPolicy' },
-    };
-    const result = getContactPointsFromDTO(ga);
-    expect(result).toBeUndefined();
-  });
-
   it('should return undefined if notification_settings is not defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
-      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -302,7 +133,6 @@ describe('getContactPointsFromDTO', () => {
   it('should return routingSettings with correct props if notification_settings is defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
-      version: 1,
       title: 'myalert',
       namespace_uid: '123',
       rule_group: 'my-group',
@@ -320,7 +150,6 @@ describe('getContactPointsFromDTO', () => {
       notification_settings: {
         receiver: 'receiver',
         mute_time_intervals: ['mute_timing'],
-        active_time_intervals: ['active_timing'],
         group_by: ['group_by'],
         group_wait: 'group_wait',
         group_interval: 'group_interval',
@@ -333,7 +162,6 @@ describe('getContactPointsFromDTO', () => {
       [GRAFANA_RULES_SOURCE_NAME]: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
-        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -352,7 +180,6 @@ describe('getNotificationSettingsForDTO', () => {
       grafana: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
-        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -379,7 +206,6 @@ describe('getNotificationSettingsForDTO', () => {
       grafana: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
-        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -393,7 +219,6 @@ describe('getNotificationSettingsForDTO', () => {
     expect(result).toEqual({
       receiver: 'receiver',
       mute_time_intervals: ['mute_timing'],
-      active_time_intervals: ['active_timing'],
       group_by: ['group_by'],
       group_wait: 'group_wait',
       group_interval: 'group_interval',
@@ -402,179 +227,33 @@ describe('getNotificationSettingsForDTO', () => {
   });
 });
 
-describe('getNotificationSettingsForDTO with selectedPolicy', () => {
-  it('should return policy DTO when alertingPolicyRoutingSettings is ON and selectedPolicy is set', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: true,
-    });
-    const result = getNotificationSettingsForDTO(false, undefined, 'TestPolicy');
-    expect(result).toEqual({ policy: 'TestPolicy' });
-    jest.restoreAllMocks();
+describe('getDefautManualRouting', () => {
+  afterEach(() => {
+    window.localStorage.clear();
   });
 
-  it('should return policy DTO even when alertingPolicyRoutingSettings is OFF', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: false,
-    });
-    const result = getNotificationSettingsForDTO(false, undefined, 'TestPolicy');
-    expect(result).toEqual({ policy: 'TestPolicy' });
-    jest.restoreAllMocks();
+  it('returns false if the feature toggle is not enabled', () => {
+    config.featureToggles.alertingSimplifiedRouting = false;
+    expect(getDefautManualRouting()).toBe(false);
   });
 
-  it('should return undefined when selectedPolicy is not set (legacy label-only rule)', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: false,
-    });
-    const result = getNotificationSettingsForDTO(false, undefined, undefined);
-    expect(result).toBeUndefined();
-    jest.restoreAllMocks();
+  it('returns true if the feature toggle is enabled and localStorage is not set', () => {
+    config.featureToggles.alertingSimplifiedRouting = true;
+    expect(getDefautManualRouting()).toBe(true);
   });
 
-  it('should NOT return policy DTO when manualRouting is true even if selectedPolicy is set', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: true,
-    });
-    const result = getNotificationSettingsForDTO(true, undefined, 'TestPolicy');
-    expect(result).toBeUndefined();
-    jest.restoreAllMocks();
-  });
-});
-
-describe('rulerRuleToFormValues with policy routing', () => {
-  it('should set selectedPolicy and manualRouting=false when notification_settings.policy is defined', () => {
-    const rule: RulerGrafanaRuleDTO = {
-      for: '1m',
-      grafana_alert: {
-        uid: 'abc',
-        version: 1,
-        title: 'Policy rule',
-        namespace_uid: 'ns1',
-        rule_group: 'group1',
-        condition: 'A',
-        no_data_state: GrafanaAlertStateDecision.Alerting,
-        exec_err_state: GrafanaAlertStateDecision.Alerting,
-        data: [],
-        notification_settings: { policy: 'TestPolicy' },
-      },
-      annotations: {},
-      labels: {},
-    };
-    const ruleWithLocation: RuleWithLocation = {
-      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-      namespace: 'my-folder',
-      group: { name: 'group1', interval: '1m', rules: [rule] },
-      rule,
-    };
-    const result = rulerRuleToFormValues(ruleWithLocation);
-    expect(result.selectedPolicy).toBe('TestPolicy');
-    expect(result.manualRouting).toBe(false);
-    expect(result.contactPoints).toBeUndefined();
-  });
-});
-
-describe('rulerRuleToFormValues with legacy label migration', () => {
-  const makeLegacyLabelRule = (policyName: string): RuleWithLocation => {
-    const rule: RulerGrafanaRuleDTO = {
-      for: '1m',
-      grafana_alert: {
-        uid: 'abc',
-        version: 1,
-        title: 'Legacy rule',
-        namespace_uid: 'ns1',
-        rule_group: 'group1',
-        condition: 'A',
-        no_data_state: GrafanaAlertStateDecision.Alerting,
-        exec_err_state: GrafanaAlertStateDecision.Alerting,
-        data: [],
-      },
-      annotations: {},
-      labels: { __grafana_managed_route__: policyName },
-    };
-    return {
-      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-      namespace: 'my-folder',
-      group: { name: 'group1', interval: '1m', rules: [rule] },
-      rule,
-    };
-  };
-
-  it('should migrate legacy label to selectedPolicy when FF is ON', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: true,
-    });
-    const result = rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
-    expect(result.selectedPolicy).toBe('TestPolicy');
-    expect(result.manualRouting).toBe(false);
-    jest.restoreAllMocks();
+  it('returns false if the feature toggle is enabled and localStorage is set to "false"', () => {
+    config.featureToggles.alertingSimplifiedRouting = true;
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+    expect(getDefautManualRouting()).toBe(false);
   });
 
-  it('should NOT migrate legacy label when FF is OFF', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: false,
-    });
-    const result = rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
-    expect(result.selectedPolicy).toBeUndefined();
-    jest.restoreAllMocks();
-  });
-});
-
-describe('formValuesToRulerGrafanaRuleDTO label stripping', () => {
-  const baseValues = (): RuleFormValues => ({
-    ...getDefaultFormValues(),
-    condition: 'A',
-    type: RuleFormType.grafana,
-    labels: [
-      { key: '__grafana_managed_route__', value: 'TestPolicy' },
-      { key: 'env', value: 'prod' },
-    ],
-  });
-
-  it('should strip __grafana_managed_route__ label from payload when FF is ON', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: true,
-    });
-    const result = formValuesToRulerGrafanaRuleDTO(baseValues());
-    expect(result.labels).not.toHaveProperty('__grafana_managed_route__');
-    expect(result.labels).toHaveProperty('env', 'prod');
-    jest.restoreAllMocks();
-  });
-
-  it('should write notification_settings.policy (and strip the legacy label) for a policy-field rule when FF is OFF', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: false,
-    });
-    const values: RuleFormValues = {
-      ...getDefaultFormValues(),
-      condition: 'A',
-      type: RuleFormType.grafana,
-      manualRouting: false,
-      selectedPolicy: 'TestPolicy',
-      labels: [{ key: 'env', value: 'prod' }],
-    };
-    const result = formValuesToRulerGrafanaRuleDTO(values);
-    expect(result.grafana_alert.notification_settings).toEqual({ policy: 'TestPolicy' });
-    expect(result.labels).not.toHaveProperty('__grafana_managed_route__');
-    expect(result.labels).toHaveProperty('env', 'prod');
-    jest.restoreAllMocks();
-  });
-
-  it('should preserve __grafana_managed_route__ label in payload when FF is OFF', () => {
-    jest.replaceProperty(config, 'featureToggles', {
-      ...config.featureToggles,
-      alertingPolicyRoutingSettings: false,
-    });
-    const result = formValuesToRulerGrafanaRuleDTO(baseValues());
-    expect(result.labels).toHaveProperty('__grafana_managed_route__', 'TestPolicy');
-    expect(result.labels).toHaveProperty('env', 'prod');
-    jest.restoreAllMocks();
+  it('returns true if the feature toggle is enabled and localStorage is set to any value other than "false"', () => {
+    config.featureToggles.alertingSimplifiedRouting = true;
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+    expect(getDefautManualRouting()).toBe(true);
+    localStorage.removeItem(MANUAL_ROUTING_KEY);
+    expect(getDefautManualRouting()).toBe(true);
   });
 });
 
@@ -604,270 +283,5 @@ describe('cleanLabels', () => {
   it('should leave empty values', () => {
     const output = cleanLabels([{ key: 'key', value: '' }]);
     expect(output).toStrictEqual([{ key: 'key', value: '' }]);
-  });
-});
-
-describe('getInstantFromDataQuery', () => {
-  const query: AlertQuery<AlertDataQuery> = {
-    refId: 'Q',
-    datasourceUid: 'abc123',
-    queryType: '',
-    relativeTimeRange: {
-      from: 600,
-      to: 0,
-    },
-    model: {
-      refId: 'Q',
-    },
-  };
-
-  it('should return undefined if datasource UID is undefined', () => {
-    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'Mimir-cloud', uid: 'mimir-1' }));
-    const result = getInstantFromDataQuery({ ...query });
-    expect(result).toBeUndefined();
-  });
-
-  it('should return undefined if datasource type is not Prometheus or Loki', () => {
-    setupDataSources(mockDataSource({ type: DataSourceType.Alertmanager, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
-    expect(result).toBeUndefined();
-  });
-
-  it('should return true if datasource is Prometheus and instant is not defined', () => {
-    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
-
-    expect(result).toBe(true);
-  });
-
-  it('should return the value of instant if datasource is Prometheus and instant is defined', () => {
-    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa', model: { refId: 'f', instant: false } });
-    expect(result).toBe(false);
-  });
-
-  it('should return true if datasource is Loki and queryType is not defined', () => {
-    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
-    expect(result).toBe(true);
-  });
-
-  it('should return true if datasource is Loki and queryType is instant', () => {
-    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({
-      ...query,
-      datasourceUid: 'aa',
-      model: { refId: 'f', queryType: 'instant' },
-    });
-
-    expect(result).toBe(true);
-  });
-
-  it('should return false if datasource is Loki and queryType is not instant', () => {
-    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
-    const result = getInstantFromDataQuery({
-      ...query,
-      datasourceUid: 'aa',
-      model: { refId: 'f', queryType: 'range' },
-    });
-
-    expect(result).toBe(false);
-  });
-});
-
-function isExpressionQuery(model: unknown): model is ExpressionQuery {
-  return typeof model === 'object' && model !== null && 'type' in model;
-}
-
-describe('getDefaultExpressions', () => {
-  it('should create a reduce expression as the first query', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const reduceQuery = result[0];
-    const { model } = reduceQuery;
-
-    expect(reduceQuery.refId).toBe('B');
-    expect(reduceQuery.datasourceUid).toBe(ExpressionDatasourceUID);
-    expect(reduceQuery.queryType).toBe('expression');
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.type).toBe(ExpressionQueryType.reduce);
-    expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
-    expect(model.reducer).toBe('last');
-  });
-
-  it('should create reduce expression with proper conditions structure', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const reduceQuery = result[0];
-    const { model } = reduceQuery;
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.conditions).toHaveLength(1);
-    expect(model.expression).toBe('A');
-    expect(model.conditions?.[0]).toEqual({
-      type: 'query',
-      evaluator: {
-        params: [],
-        type: EvalFunction.IsAbove,
-      },
-      operator: {
-        type: 'and',
-      },
-      query: {
-        params: [],
-      },
-      reducer: {
-        params: [],
-        type: 'last',
-      },
-    });
-  });
-
-  it('should create a threshold expression as the second query', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const thresholdQuery = result[1];
-    const { model } = thresholdQuery;
-
-    expect(thresholdQuery.refId).toBe('C');
-    expect(thresholdQuery.datasourceUid).toBe(ExpressionDatasourceUID);
-    expect(thresholdQuery.queryType).toBe('expression');
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.type).toBe(ExpressionQueryType.threshold);
-    expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
-  });
-
-  it('should create threshold expression with proper conditions structure', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const thresholdQuery = result[1];
-    const { model } = thresholdQuery;
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.conditions).toHaveLength(1);
-    expect(model.conditions?.[0]).toEqual({
-      type: 'query',
-      evaluator: {
-        params: [0],
-        type: EvalFunction.IsAbove,
-      },
-      operator: {
-        type: 'and',
-      },
-      query: {
-        params: ['C'],
-      },
-      reducer: {
-        params: [],
-        type: 'last',
-      },
-    });
-  });
-
-  it('should reference the reduce expression in the threshold expression', () => {
-    const result = getDefaultExpressions('B', 'C');
-    const thresholdQuery = result[1];
-    const { model } = thresholdQuery;
-
-    if (!isExpressionQuery(model)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(model.expression).toBe('B');
-  });
-
-  it('should properly use different refIds throughout the structure', () => {
-    const result = getDefaultExpressions('X', 'Y');
-    const reduceModel = result[0].model;
-    const thresholdModel = result[1].model;
-
-    if (!isExpressionQuery(reduceModel) || !isExpressionQuery(thresholdModel)) {
-      throw new Error('Expected ExpressionQuery');
-    }
-
-    expect(result[0].refId).toBe('X');
-    expect(reduceModel.refId).toBe('X');
-    expect(reduceModel.conditions?.[0].query.params).toEqual([]);
-
-    expect(result[1].refId).toBe('Y');
-    expect(thresholdModel.refId).toBe('Y');
-    expect(thresholdModel.expression).toBe('X');
-  });
-});
-
-describe('fixMissingRefIdsInExpressionModel', () => {
-  it('should return non-Grafana managed rules unchanged', () => {
-    const cloudAlertingRule: RulerAlertingRuleDTO = {
-      alert: 'CloudAlert',
-      expr: 'up == 0',
-      for: '5m',
-      labels: { severity: 'critical' },
-      annotations: { summary: 'Instance down' },
-    };
-
-    const result = fixMissingRefIdsInExpressionModel(cloudAlertingRule);
-
-    expect(result).toEqual(cloudAlertingRule);
-    expect(result).toBe(cloudAlertingRule); // should be the exact same reference
-  });
-
-  it('should copy refId from query to model when model.refId is missing in Grafana managed rules', () => {
-    const ruleWithMissingRefId: RulerGrafanaRuleDTO = {
-      grafana_alert: {
-        uid: 'test-uid',
-        title: 'Test Alert',
-        namespace_uid: 'namespace-uid',
-        rule_group: 'test-group',
-        condition: 'B',
-        no_data_state: GrafanaAlertStateDecision.NoData,
-        exec_err_state: GrafanaAlertStateDecision.Alerting,
-        is_paused: false,
-        data: [
-          {
-            refId: 'A',
-            datasourceUid: 'datasource-uid',
-            queryType: '',
-            relativeTimeRange: { from: 600, to: 0 },
-            // @ts-ignore
-            model: {
-              // refId is missing here
-              datasource: {
-                type: 'grafana-testdata-datasource',
-                uid: 'PD8C576611E62080A',
-              },
-            },
-          },
-          {
-            refId: 'B',
-            datasourceUid: ExpressionDatasourceUID,
-            queryType: '',
-            // @ts-ignore
-            model: {
-              // refId is missing here
-              type: ExpressionQueryType.reduce,
-              expression: 'A',
-            },
-          },
-        ],
-      },
-      for: '5m',
-      labels: {},
-      annotations: {},
-    };
-
-    const result = fixMissingRefIdsInExpressionModel(ruleWithMissingRefId);
-
-    expect(result.grafana_alert.data[0].model.refId).toBe('A');
-    expect(result.grafana_alert.data[1].model.refId).toBe('B');
   });
 });

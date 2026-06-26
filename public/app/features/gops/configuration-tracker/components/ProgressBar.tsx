@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Text, useStyles2 } from '@grafana/ui';
 
 export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
@@ -18,9 +17,7 @@ export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; 
 export function StepsStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   return (
     <span>
-      <Trans i18nKey="gops.progress-bar.steps-status" values={{ stepsDone }}>
-        <Text color="success">{'{{stepsDone}}'}</Text> of {{ totalStepsToDo }}
-      </Trans>
+      <Text color="success">{stepsDone}</Text> of {totalStepsToDo}
     </span>
   );
 }

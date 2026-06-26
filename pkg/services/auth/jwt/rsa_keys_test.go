@@ -6,7 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v3"
 )
 
 var rsaKeys [3]*rsa.PrivateKey

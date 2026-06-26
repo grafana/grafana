@@ -1,8 +1,7 @@
-import { type AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
-import { type CloudWatchAnnotationQuery } from './dataquery.gen';
-import { type LegacyAnnotationQuery } from './types';
+import { CloudWatchAnnotationQuery, LegacyAnnotationQuery } from './types';
 
 const metricStatAnnotationQuery: CloudWatchAnnotationQuery = {
   queryMode: 'Annotations',

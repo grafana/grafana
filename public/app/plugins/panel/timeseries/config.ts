@@ -1,31 +1,30 @@
-/* istanbul ignore file */
 import {
   FieldColorModeId,
   FieldConfigProperty,
   FieldType,
   identityOverrideProcessor,
-  type SetFieldConfigOptionsArgs,
-  type Field,
+  SetFieldConfigOptionsArgs,
+  Field,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import {
   BarAlignment,
   GraphDrawStyle,
-  type GraphFieldConfig,
+  GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  type LineStyle,
+  LineStyle,
   VisibilityMode,
   StackingMode,
   GraphThresholdsStyleMode,
   GraphTransform,
 } from '@grafana/schema';
-import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
+
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Linear,
@@ -41,14 +40,13 @@ export const defaultGraphConfig: GraphFieldConfig = {
   axisGridShow: true,
   axisCenteredZero: false,
   axisBorderShow: false,
-  showValues: false,
 };
+
+const categoryStyles = ['Graph styles'];
 
 export type NullEditorSettings = { isTime: boolean };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFieldConfigOptionsArgs<GraphFieldConfig> {
-  const graphFieldOptions = getGraphFieldOptions();
-  const categoryStyles = [t('timeseries.config.get-graph-field-config.category-graph-styles', 'Graph styles')];
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -61,20 +59,12 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           mode: FieldColorModeId.PaletteClassic,
         },
       },
-      [FieldConfigProperty.Links]: {
-        settings: {
-          showOneClick: true,
-        },
-      },
-      [FieldConfigProperty.Actions]: {
-        hideFromDefaults: false,
-      },
     },
     useCustomConfig: (builder) => {
       builder
         .addRadio({
           path: 'drawStyle',
-          name: t('timeseries.config.get-graph-field-config.name-style', 'Style'),
+          name: 'Style',
           category: categoryStyles,
           defaultValue: cfg.drawStyle,
           settings: {
@@ -83,7 +73,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         })
         .addRadio({
           path: 'lineInterpolation',
-          name: t('timeseries.config.get-graph-field-config.name-line-interpolation', 'Line interpolation'),
+          name: 'Line interpolation',
           category: categoryStyles,
           defaultValue: cfg.lineInterpolation,
           settings: {
@@ -93,7 +83,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         })
         .addRadio({
           path: 'barAlignment',
-          name: t('timeseries.config.get-graph-field-config.name-bar-alignment', 'Bar alignment'),
+          name: 'Bar alignment',
           category: categoryStyles,
           defaultValue: cfg.barAlignment,
           settings: {
@@ -103,49 +93,46 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         })
         .addSliderInput({
           path: 'barWidthFactor',
-          name: t('timeseries.config.get-graph-field-config.name-bar-width-factor', 'Bar width factor'),
+          name: 'Bar width factor',
           category: categoryStyles,
           defaultValue: cfg.barWidthFactor,
           settings: {
             min: 0.1,
             max: 1.0,
             step: 0.1,
-            ariaLabelForHandle: t(
-              'timeseries.config.get-graph-field-config.aria-label-bar-width-factor',
-              'Bar width factor'
-            ),
+            ariaLabelForHandle: 'Bar width factor',
           },
           showIf: (config) => config.drawStyle === GraphDrawStyle.Bars,
         })
         .addSliderInput({
           path: 'lineWidth',
-          name: t('timeseries.config.get-graph-field-config.name-line-width', 'Line width'),
+          name: 'Line width',
           category: categoryStyles,
           defaultValue: cfg.lineWidth,
           settings: {
             min: 0,
             max: 10,
             step: 1,
-            ariaLabelForHandle: t('timeseries.config.get-graph-field-config.aria-label-line-width', 'Line width'),
+            ariaLabelForHandle: 'Line width',
           },
           showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         })
         .addSliderInput({
           path: 'fillOpacity',
-          name: t('timeseries.config.get-graph-field-config.name-fill-opacity', 'Fill opacity'),
+          name: 'Fill opacity',
           category: categoryStyles,
           defaultValue: cfg.fillOpacity,
           settings: {
             min: 0,
             max: 100,
             step: 1,
-            ariaLabelForHandle: t('timeseries.config.get-graph-field-config.aria-label-fill-opacity', 'Fill opacity'),
+            ariaLabelForHandle: 'Fill opacity',
           },
           showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         })
         .addRadio({
           path: 'gradientMode',
-          name: t('timeseries.config.get-graph-field-config.name-gradient-mode', 'Gradient mode'),
+          name: 'Gradient mode',
           category: categoryStyles,
           defaultValue: graphFieldOptions.fillGradient[0].value,
           settings: {
@@ -155,7 +142,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         })
         .addFieldNamePicker({
           path: 'fillBelowTo',
-          name: t('timeseries.config.get-graph-field-config.name-fill-below-to', 'Fill below to'),
+          name: 'Fill below to',
           category: categoryStyles,
           hideFromDefaults: true,
           settings: {
@@ -165,8 +152,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',
-          name: t('timeseries.config.get-graph-field-config.name-line-style', 'Line style'),
-          useFieldset: true,
+          name: 'Line style',
           category: categoryStyles,
           showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
           editor: LineStyleEditor,
@@ -177,8 +163,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         .addCustomEditor<NullEditorSettings, boolean>({
           id: 'spanNulls',
           path: 'spanNulls',
-          name: t('timeseries.config.get-graph-field-config.name-connect-nulls', 'Connect null values'),
-          useFieldset: true,
+          name: 'Connect null values',
           category: categoryStyles,
           defaultValue: false,
           editor: SpanNullsEditor,
@@ -191,9 +176,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         .addCustomEditor<NullEditorSettings, boolean>({
           id: 'insertNulls',
           path: 'insertNulls',
-          name: t('timeseries.config.get-graph-field-config.name-disconnect-values', 'Disconnect values'),
+          name: 'Disconnect values',
           category: categoryStyles,
-          useFieldset: true,
           defaultValue: false,
           editor: InsertNullsEditor,
           override: InsertNullsEditor,
@@ -204,7 +188,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         })
         .addRadio({
           path: 'showPoints',
-          name: t('timeseries.config.get-graph-field-config.name-show-points', 'Show points'),
+          name: 'Show points',
           category: categoryStyles,
           defaultValue: graphFieldOptions.showPoints[0].value,
           settings: {
@@ -212,23 +196,16 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
           },
           showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         })
-        .addBooleanSwitch({
-          path: 'showValues',
-          name: t('timeseries.config.get-graph-field-config.name-show-values', 'Show values'),
-          category: categoryStyles,
-          defaultValue: false,
-          showIf: (config) => config.showPoints !== VisibilityMode.Never || config.drawStyle === GraphDrawStyle.Points,
-        })
         .addSliderInput({
           path: 'pointSize',
-          name: t('timeseries.config.get-graph-field-config.name-point-size', 'Point size'),
+          name: 'Point size',
           category: categoryStyles,
           defaultValue: 5,
           settings: {
             min: 1,
             max: 40,
             step: 1,
-            ariaLabelForHandle: t('timeseries.config.get-graph-field-config.aria-label-point-size', 'Point size'),
+            ariaLabelForHandle: 'Point size',
           },
           showIf: (config) => config.showPoints !== VisibilityMode.Never || config.drawStyle === GraphDrawStyle.Points,
         });
@@ -237,25 +214,19 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
 
       builder.addSelect({
         category: categoryStyles,
-        name: t('timeseries.config.get-graph-field-config.name-transform', 'Transform'),
+        name: 'Transform',
         path: 'transform',
         settings: {
           options: [
             {
-              label: t('timeseries.config.get-graph-field-config.transform-options.label-constant', 'Constant'),
+              label: 'Constant',
               value: GraphTransform.Constant,
-              description: t(
-                'timeseries.config.get-graph-field-config.transform-options.description-constant',
-                'The first value will be shown as a constant line'
-              ),
+              description: 'The first value will be shown as a constant line',
             },
             {
-              label: t('timeseries.config.get-graph-field-config.transform-options.label-style', 'Negative Y'),
+              label: 'Negative Y',
               value: GraphTransform.NegativeY,
-              description: t(
-                'timeseries.config.get-graph-field-config.transform-options.description-style',
-                'Flip the results to negative values on the y axis'
-              ),
+              description: 'Flip the results to negative values on the y axis',
             },
           ],
           isClearable: true,
@@ -269,8 +240,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
       builder.addCustomEditor({
         id: 'thresholdsStyle',
         path: 'thresholdsStyle',
-        name: t('timeseries.config.get-graph-field-config.name-show-thresholds', 'Show thresholds'),
-        category: [t('timeseries.config.get-graph-field-config.category-thresholds', 'Thresholds')],
+        name: 'Show thresholds',
+        category: ['Thresholds'],
         defaultValue: { mode: GraphThresholdsStyleMode.Off },
         settings: {
           options: graphFieldOptions.thresholdsDisplayModes,

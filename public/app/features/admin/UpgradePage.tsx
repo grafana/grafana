@@ -2,18 +2,12 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { type GrafanaTheme2, type NavModel } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { type StoreState } from 'app/types/store';
-import checkmarkSvg from 'img/licensing/checkmark.svg';
-import customerSupportSvg from 'img/licensing/customer_support.svg';
-import handinhandSupportSvg from 'img/licensing/handinhand_support.svg';
-import pluginEnterpriseSvg from 'img/licensing/plugin_enterprise.svg';
-import slaSvg from 'img/licensing/sla.svg';
 
 import { getNavModel } from '../../core/selectors/navModel';
+import { StoreState } from '../../types';
 
 import { LicenseChrome } from './LicenseChrome';
 import { ServerStats } from './ServerStats';
@@ -47,9 +41,7 @@ export const UpgradeInfo = ({ editionNotice }: UpgradeInfoProps) => {
 
   return (
     <>
-      <h2 className={styles.title}>
-        <Trans i18nKey="admin.upgrade-info.title">Enterprise license</Trans>
-      </h2>
+      <h2 className={styles.title}>Enterprise license</h2>
       <LicenseChrome header="Grafana Enterprise" subheader="Get your free trial" editionNotice={editionNotice}>
         <div className={styles.column}>
           <FeatureInfo />
@@ -81,15 +73,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 const GetEnterprise = () => {
   return (
     <div style={{ marginTop: '40px', marginBottom: '30px' }}>
-      <h2 style={titleStyles}>
-        <Trans i18nKey="admin.get-enterprise.title">Get Grafana Enterprise</Trans>
-      </h2>
+      <h2 style={titleStyles}>Get Grafana Enterprise</h2>
       <CallToAction />
       <p style={{ paddingTop: '12px' }}>
-        <Trans i18nKey="admin.get-enterprise.description">
-          You can use the trial version for free for 30 days. We will remind you about it five days before the trial
-          period ends.
-        </Trans>
+        You can use the trial version for free for 30 days. We will remind you about it five days before the trial
+        period ends.
       </p>
     </div>
   );
@@ -102,7 +90,7 @@ const CallToAction = () => {
       size="lg"
       href="https://grafana.com/contact?about=grafana-enterprise&utm_source=grafana-upgrade-page"
     >
-      <Trans i18nKey="admin.get-enterprise.contact-us">Contact us and get a free trial</Trans>
+      Contact us and get a free trial
     </LinkButton>
   );
 };
@@ -110,44 +98,28 @@ const CallToAction = () => {
 const ServiceInfo = () => {
   return (
     <div>
-      <h4>
-        <Trans i18nKey="admin.get-enterprise.service-title">At your service</Trans>
-      </h4>
+      <h4>At your service</h4>
 
       <List>
-        <Item
-          title={t('admin.service-info.title-enterprise-plugins', 'Enterprise Plugins')}
-          image={pluginEnterpriseSvg}
-        />
-        <Item title={t('admin.service-info.title-critical-sla-hours', 'Critical SLA: 2 hours')} image={slaSvg} />
-        <Item
-          title={t('admin.service-info.title-unlimited-expert-support', 'Unlimited Expert Support')}
-          image={customerSupportSvg}
-        >
-          <Trans i18nKey="admin.service-info.year-round-support">24 × 7 × 365 support via</Trans>
+        <Item title="Enterprise Plugins" image="public/img/licensing/plugin_enterprise.svg" />
+        <Item title="Critical SLA: 2 hours" image="public/img/licensing/sla.svg" />
+        <Item title="Unlimited Expert Support" image="public/img/licensing/customer_support.svg">
+          24 x 7 x 365 support via
           <List nested={true}>
-            <Item title={t('admin.service-info.title-email', 'Email')} />
-            <Item title={t('admin.service-info.title-private-slack-channel', 'Private Slack channel')} />
-            <Item title={t('admin.service-info.title-phone', 'Phone')} />
+            <Item title="Email" />
+            <Item title="Private Slack channel" />
+            <Item title="Phone" />
           </List>
         </Item>
-        <Item
-          title={t(
-            'admin.service-info.title-handinhand-support-in-the-upgrade-process',
-            'Hand-in-hand support in the upgrade process'
-          )}
-          image={handinhandSupportSvg}
-        />
+        <Item title="Hand-in-hand support" image="public/img/licensing/handinhand_support.svg">
+          in the upgrade process
+        </Item>
       </List>
 
       <div style={{ marginTop: '20px' }}>
-        <strong>
-          <Trans i18nKey="admin.get-enterprise.included-heading">Also included:</Trans>
-        </strong>
+        <strong>Also included:</strong>
         <br />
-        <Trans i18nKey="admin.get-enterprise.included-description">
-          Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
-        </Trans>
+        Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.
       </div>
 
       <GetEnterprise />
@@ -158,9 +130,7 @@ const ServiceInfo = () => {
 const FeatureInfo = () => {
   return (
     <div style={{ paddingRight: '11px' }}>
-      <h4>
-        <Trans i18nKey="admin.get-enterprise.features-heading">Enhanced functionality</Trans>
-      </h4>
+      <h4>Enhanced functionality</h4>
       <FeatureListing />
     </div>
   );
@@ -169,34 +139,24 @@ const FeatureInfo = () => {
 const FeatureListing = () => {
   return (
     <List>
-      <Item title={t('admin.feature-listing.title-data-source-permissions', 'Data source permissions')} />
-      <Item title={t('admin.feature-listing.title-reporting', 'Reporting')} />
-      <Item title={t('admin.feature-listing.title-saml-authentication', 'SAML authentication')} />
-      <Item title={t('admin.feature-listing.title-enhanced-ldap-integration', 'Enhanced LDAP integration')} />
-      <Item title={t('admin.feature-listing.title-team-sync', 'Team Sync')}>
-        <Trans i18nKey="admin.get-enterprise.team-sync-details">LDAP, GitHub OAuth, Auth Proxy, Okta</Trans>
-      </Item>
-      <Item title={t('admin.feature-listing.title-custom-branding', 'Custom branding')} />
-      <Item title={t('admin.feature-listing.title-auditing', 'Auditing')} />
-      <Item title={t('admin.feature-listing.title-settings-updates-at-runtime', 'Settings updates at runtime')} />
-      <Item title={t('admin.feature-listing.title-grafana-usage-insights', 'Grafana usage insights')}>
+      <Item title="Data source permissions" />
+      <Item title="Reporting" />
+      <Item title="SAML authentication" />
+      <Item title="Enhanced LDAP integration" />
+      <Item title="Team Sync">LDAP, GitHub OAuth, Auth Proxy, Okta</Item>
+      <Item title="White labeling" />
+      <Item title="Auditing" />
+      <Item title="Settings updates at runtime" />
+      <Item title="Grafana usage insights">
         <List nested={true}>
-          <Item
-            title={t(
-              'admin.feature-listing.title-sort-dashboards-by-popularity-in-search',
-              'Sort dashboards by popularity in search'
-            )}
-          />
-          <Item title={t('admin.feature-listing.title-find-unused-dashboards', 'Find unused dashboards')} />
-          <Item title={t('admin.feature-listing.title-dashboard-usage-stats-drawer', 'Dashboard usage stats drawer')} />
-          <Item
-            title={t('admin.feature-listing.title-dashboard-presence-indicators', 'Dashboard presence indicators')}
-          />
+          <Item title="Sort dashboards by popularity in search" />
+          <Item title="Find unused dashboards" />
+          <Item title="Dashboard usage stats drawer" />
+          <Item title="Dashboard presence indicators" />
         </List>
       </Item>
-      <Item title={t('admin.feature-listing.title-enterprise-plugins', 'Enterprise plugins')}>
+      <Item title="Enterprise plugins">
         <List nested={true}>
-          {/* eslint-disable @grafana/i18n/no-untranslated-strings */}
           <Item title="Oracle" />
           <Item title="Splunk" />
           <Item title="Service Now" />
@@ -212,7 +172,6 @@ const FeatureListing = () => {
           <Item title="Salesforce" />
           <Item title="Snowflake" />
           <Item title="Wavefront" />
-          {/* eslint-enable @grafana/i18n/no-untranslated-strings */}
         </List>
       </Item>
     </List>
@@ -243,7 +202,7 @@ interface ItemProps {
 }
 
 const Item = ({ children, title, image }: React.PropsWithChildren<ItemProps>) => {
-  const imageUrl = image ? image : checkmarkSvg;
+  const imageUrl = image ? image : 'public/img/licensing/checkmark.svg';
   const itemStyle = css({
     display: 'flex',
 

@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 import {
   Button,
   FileDropzone,
+  HorizontalGroup,
   InlineField,
   InlineFieldRow,
-  Stack,
   Modal,
   QueryField,
   RadioButtonGroup,
@@ -15,8 +15,8 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { type JaegerDatasource } from '../datasource';
-import { type JaegerQuery, type JaegerQueryType } from '../types';
+import { JaegerDatasource } from '../datasource';
+import { JaegerQuery, JaegerQueryType } from '../types';
 
 import { SearchForm } from './SearchForm';
 
@@ -76,7 +76,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Query type" grow={true}>
-            <Stack gap={1} alignItems="center" justifyContent="space-between">
+            <HorizontalGroup spacing={'sm'} align={'center'} justify={'space-between'}>
               <RadioButtonGroup<JaegerQueryType>
                 options={[
                   { value: 'search', label: 'Search' },
@@ -101,7 +101,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
               >
                 Import trace
               </Button>
-            </Stack>
+            </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
         {renderEditorBody()}

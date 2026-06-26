@@ -15,7 +15,7 @@ const (
 )
 
 type Service interface {
-	Provide() (map[secrets.ProviderID]secrets.Provider, error) //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	Provide() (map[secrets.ProviderID]secrets.Provider, error)
 }
 
 func NormalizeProviderID(id secrets.ProviderID) secrets.ProviderID {

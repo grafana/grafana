@@ -1,39 +1,38 @@
-import { type ReplaySubject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 
-import { type AppPluginConfig, type IconName, type PluginExtensionAddedLinkConfig } from '@grafana/data';
-import { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } from '@grafana/data/internal';
+import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
+import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
-import * as errors from '../errors';
-import { isGrafanaDevMode } from '../utils';
-import { isAddedLinkMetaInfoMissing, isConfigureFnValid } from '../validators';
+import { isAddedLinkMetaInfoMissing, isGrafanaDevMode } from '../utils';
+import {
+  extensionPointEndsWithVersion,
+  isConfigureFnValid,
+  isGrafanaCoreExtensionPoint,
+  isLinkPathValid,
+} from '../validators';
 
-import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
-
-const logPrefix = 'Could not register link extension. Reason:';
+import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
 export type AddedLinkRegistryItem<Context extends object = object> = {
   pluginId: string;
   extensionPointId: string;
   title: string;
-  description?: string;
+  description: string;
   path?: string;
   onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   configure?: PluginAddedLinksConfigureFunc<Context>;
   icon?: IconName;
   category?: string;
-  group?: { name: string; icon?: IconName };
-  openInNewTab?: boolean;
 };
 
 export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginExtensionAddedLinkConfig> {
   constructor(
-    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<AddedLinkRegistryItem[]>>;
       initialState?: RegistryType<AddedLinkRegistryItem[]>;
     } = {}
   ) {
-    super(apps, options);
+    super(options);
   }
 
   mapToRegistry(
@@ -43,36 +42,44 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
     const { pluginId, configs } = item;
 
     for (const config of configs) {
-      const { path, title, description, configure, onClick, targets, openInNewTab } = config;
+      const { path, title, description, configure, onClick, targets } = config;
       const configLog = this.logger.child({
         path: path ?? '',
-        description: description ?? '',
+        description,
         title,
         pluginId,
         onClick: typeof onClick,
-        openInNewTab: openInNewTab ? 'true' : 'false',
       });
 
       if (!title) {
-        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
+        configLog.error(`Could not register added link. Reason: Title is missing.`);
+        continue;
+      }
+
+      if (!description) {
+        configLog.error(`Could not register added link. Reason: Description is missing.`);
         continue;
       }
 
       if (!isConfigureFnValid(configure)) {
-        configLog.error(`${logPrefix} ${errors.INVALID_CONFIGURE_FUNCTION}`);
+        configLog.error(`Could not register added link. Reason: configure is not a function.`);
         continue;
       }
 
       if (!path && !onClick) {
-        configLog.error(`${logPrefix} ${errors.INVALID_PATH_OR_ON_CLICK}`);
+        configLog.error(`Could not register added. Reason: Either "path" or "onClick" is required.`);
         continue;
       }
 
-      if (
-        pluginId !== 'grafana' &&
-        isGrafanaDevMode() &&
-        isAddedLinkMetaInfoMissing(pluginId, config, configLog, this.apps)
-      ) {
+      if (path && !isLinkPathValid(pluginId, path)) {
+        configLog.error(
+          `Could not register added link. Reason: The "path" is required and should start with "/a/${pluginId}/".`
+        );
+        continue;
+      }
+
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config, configLog)) {
+        configLog.warning(`Did not register links from plugin ${pluginId} due to missing meta information.`);
         continue;
       }
 
@@ -80,16 +87,22 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
       for (const extensionPointId of extensionPointIds) {
         const pointIdLog = configLog.child({ extensionPointId });
+
+        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
+          pointIdLog.warning(
+            `Added link "${config.title}: it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
+          );
+        }
+
         const { targets, ...registryItem } = config;
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const { category, group, ...rest } = registryItem as PluginExtensionAddedLinkConfig;
 
-        pointIdLog.debug('Added link extension successfully registered');
+        if (!(extensionPointId in registry)) {
+          registry[extensionPointId] = [];
+        }
 
-        // Creating a new array instead of pushing to get a new references
-        const slice = registry[extensionPointId] ?? [];
-        const result = { ...rest, category, group, pluginId, extensionPointId };
-        registry[extensionPointId] = slice.concat(result);
+        pointIdLog.debug(`Added link from '${pluginId}' to '${extensionPointId}'`);
+
+        registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
       }
     }
 
@@ -98,7 +111,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new AddedLinksRegistry(this.apps, {
+    return new AddedLinksRegistry({
       registrySubject: this.registrySubject,
     });
   }

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { type AriaRole, type ReactNode } from 'react';
+import { AriaRole, ReactNode } from 'react';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
@@ -38,11 +38,6 @@ interface Props {
   role?: AriaRole;
 }
 
-/**
- * The EmptyState component consists of a message and optionally an image, button, and additional information.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-emptystate--docs
- */
 export const EmptyState = ({
   button,
   children,
@@ -84,7 +79,6 @@ function getDefaultImageForVariant(variant: Props['variant']) {
       return <GrotNotFound width={300} />;
     }
     case 'completed': {
-      // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
       return <SVG src={GrotCompleted} width={300} />;
     }
     default: {

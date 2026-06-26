@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { useStyles2, Modal, Icon, Button, TextLink } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Modal, Icon, Button } from '@grafana/ui';
 
-import { type CardGridItem } from '../CardGrid/CardGrid';
+import { type CardGridItem } from '../CardGrid';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css({
@@ -65,7 +64,6 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
       className={styles.modal}
       contentClassName={styles.modalContent}
       title={<NoAccessModalHeader item={item} />}
-      ariaLabel={item.name}
       isOpen={isOpen}
       onDismiss={onDismiss}
     >
@@ -73,11 +71,16 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
         <div>
           {item.description && <div className={styles.description}>{item.description}</div>}
           <div>
-            <Trans i18nKey="connections.no-access-modal.links">Links</Trans>
+            Links
             <br />
-            <TextLink href={`https://grafana.com/grafana/plugins/${item.id}`} external>
+            <a
+              href={`https://grafana.com/grafana/plugins/${item.id}`}
+              title={`${item.name} on Grafana.com`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {item.name}
-            </TextLink>
+            </a>
           </div>
         </div>
         <div className={styles.bottomSection}>
@@ -86,29 +89,21 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
           </div>
           <div>
             <p>
-              <Trans i18nKey="connections.no-access-modal.editor-warning">
-                Editors cannot add new connections. You may check to see if it is already configured in{' '}
-                <TextLink href="/connections/datasources">Data sources</TextLink>.
-              </Trans>
+              Editors cannot add new connections. You may check to see if it is already configured in{' '}
+              <a href="/connections/datasources">Data sources</a>.
             </p>
-            <p>
-              <Trans i18nKey="connections.no-access-modal.connection-contact-grafana-admin">
-                To add a new connection, contact your Grafana admin.
-              </Trans>
-            </p>
+            <p>To add a new connection, contact your Grafana admin.</p>
           </div>
         </div>
         <div className={styles.actionsSection}>
-          <Button onClick={onDismiss}>
-            <Trans i18nKey="connections.no-access-modal.okay">Okay</Trans>
-          </Button>
+          <Button onClick={onDismiss}>Okay</Button>
         </div>
       </div>
     </Modal>
   );
 }
 
-function NoAccessModalHeader({ item }: { item: CardGridItem }) {
+export function NoAccessModalHeader({ item }: { item: CardGridItem }) {
   const styles = useStyles2(getStyles);
   return (
     <div>

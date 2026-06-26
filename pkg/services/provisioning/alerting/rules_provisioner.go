@@ -45,8 +45,7 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, group := range file.Groups {
-			ctx, u := identity.WithServiceIdentity(ctx, group.OrgID)
-
+			u := provisionerUser(group.OrgID)
 			folderUID, err := prov.getOrCreateFolderFullpath(ctx, group.FolderFullpath, group.OrgID)
 			if err != nil {
 				prov.logger.Error("failed to get or create folder", "folder", group.FolderFullpath, "org", group.OrgID, "err", err)
@@ -121,13 +120,11 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 	ctx context.Context, folderName string, orgID int64, parentUID *string) (string, error) {
-	ctx, user := identity.WithServiceIdentity(ctx, orgID)
-
 	cmd := &folder.GetFolderQuery{
 		Title:        &folderName,
 		ParentUID:    parentUID,
 		OrgID:        orgID,
-		SignedInUser: user,
+		SignedInUser: provisionerUser(orgID),
 	}
 
 	cmdResult, err := prov.folderService.Get(ctx, cmd)
@@ -147,7 +144,7 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 			createCmd.ParentUID = *parentUID
 		}
 
-		f, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, createCmd, "")
+		f, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, createCmd)
 		if err != nil {
 			return "", err
 		}
@@ -165,15 +162,9 @@ var provisionerUser = func(orgID int64) identity.Requester {
 		orgID,
 		org.RoleAdmin,
 		[]accesscontrol.Permission{
-			{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
-			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets},
-			{Action: accesscontrol.ActionAlertingProvisioningWrite},
-			{Action: accesscontrol.ActionAlertingReceiversCreate},
-			{Action: accesscontrol.ActionAlertingReceiversRead, Scope: alert_models.ScopeReceiversAll},
-			{Action: accesscontrol.ActionAlertingReceiversUpdate, Scope: alert_models.ScopeReceiversAll},
-			{Action: accesscontrol.ActionAlertingReceiversDelete, Scope: alert_models.ScopeReceiversAll},
-			// Required for updating protected fields in contact points
-			{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: alert_models.ScopeReceiversAll},
+			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets, Scope: dashboards.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingProvisioningWrite, Scope: dashboards.ScopeFoldersAll},
 		},
 	)
 }

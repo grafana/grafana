@@ -1,32 +1,21 @@
+import { produce } from 'immer';
 import { useEffect } from 'react';
-import { type Validate } from 'react-hook-form';
+import { Validate } from 'react-hook-form';
 
-import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
-import {
-  API_GROUP,
-  API_VERSION,
-  type TemplateGroup,
-  type TemplateGroupList,
-  type TemplateGroupTemplateKind,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { useDispatch } from 'app/types';
 
-import { type AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { useAsync } from '../../hooks/useAsync';
-import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
+import { templatesApi } from '../../api/templateApi';
 import {
-  addNotificationTemplateAction,
-  deleteNotificationTemplateAction,
-  updateNotificationTemplateAction,
-} from '../../reducers/alertmanager/notificationTemplates';
-import { KnownProvenance } from '../../types/knownProvenance';
-import { K8sAnnotations } from '../../utils/k8s/constants';
-import { getAnnotation, shouldUseK8sApi } from '../../utils/k8s/utils';
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup,
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList,
+} from '../../openapi/templatesApi.gen';
+import { updateAlertManagerConfigAction } from '../../state/actions';
+import { K8sAnnotations, PROVENANCE_NONE } from '../../utils/k8s/constants';
+import { getAnnotation, getK8sNamespace, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
-import { type TemplateFormValues } from '../receivers/TemplateForm';
-
-const apiVersion = `${API_GROUP}/${API_VERSION}`;
-const kind = 'TemplateGroup';
+import { TemplateFormValues } from '../receivers/TemplateForm';
 
 interface BaseAlertmanagerArgs {
   alertmanager: string;
@@ -38,25 +27,22 @@ export interface NotificationTemplate {
   content: string;
   provenance: string;
   missing?: boolean;
-  /** The kind/source of the template - 'grafana' for native templates, 'mimir' for external */
-  kind: TemplateGroupTemplateKind;
 }
 
 const { useGetAlertmanagerConfigurationQuery, useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
-
 const {
-  useListTemplateGroupQuery,
-  useLazyGetTemplateGroupQuery,
-  useCreateTemplateGroupMutation,
-  useReplaceTemplateGroupMutation,
-  useDeleteTemplateGroupMutation,
-} = notificationsAPIv0alpha1;
+  useListNamespacedTemplateGroupQuery,
+  useLazyReadNamespacedTemplateGroupQuery,
+  useCreateNamespacedTemplateGroupMutation,
+  useReplaceNamespacedTemplateGroupMutation,
+  useDeleteNamespacedTemplateGroupMutation,
+} = templatesApi;
 
 export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
-  const k8sApiTemplatesRequestState = useListTemplateGroupQuery(
-    {},
+  const k8sApiTemplatesRequestState = useListNamespacedTemplateGroupQuery(
+    { namespace: getK8sNamespace() },
     {
       skip: !k8sApiSupported,
       selectFromResult: (state) => ({
@@ -79,21 +65,22 @@ export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs)
   return k8sApiSupported ? k8sApiTemplatesRequestState : configApiTemplatesRequestState;
 }
 
-function templateGroupsToTemplates(templateGroups: TemplateGroupList): NotificationTemplate[] {
+function templateGroupsToTemplates(
+  templateGroups: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList
+): NotificationTemplate[] {
   return templateGroups.items.map((templateGroup) => templateGroupToTemplate(templateGroup));
 }
 
-function templateGroupToTemplate(templateGroup: TemplateGroup): NotificationTemplate {
-  const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? KnownProvenance.None;
-  // The generated types are missing the `kind` field, but the API returns it.
-  // We use a typed variable to safely access it without type assertions.
+function templateGroupToTemplate(
+  templateGroup: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup
+): NotificationTemplate {
+  const provenance = getAnnotation(templateGroup, K8sAnnotations.Provenance) ?? PROVENANCE_NONE;
   return {
     // K8s entities should always have a metadata.name property. The type is marked as optional because it's also used in other places
     uid: templateGroup.metadata.name ?? templateGroup.spec.title,
     title: templateGroup.spec.title,
     content: templateGroup.spec.content,
     provenance,
-    kind: templateGroup.spec.kind ?? 'grafana',
   };
 }
 
@@ -104,10 +91,9 @@ function amConfigToTemplates(config: AlertManagerCortexConfig): NotificationTemp
     uid: title,
     title,
     content,
-    // Undefined, null or empty string should be converted to KnownProvenance.None
-    provenance: (config.template_file_provenances ?? {})[title] || KnownProvenance.None,
+    // Undefined, null or empty string should be converted to PROVENANCE_NONE
+    provenance: (config.template_file_provenances ?? {})[title] || PROVENANCE_NONE,
     missing: !templates.includes(title),
-    kind: 'grafana', // Config API templates are always Grafana templates
   }));
 }
 
@@ -124,7 +110,7 @@ export function useGetNotificationTemplate({ alertmanager, uid }: GetTemplatePar
       // TODO set error and isError in case template is not found
     }),
   });
-  const [fetchTemplate, templateStatus] = useLazyGetTemplateGroupQuery({
+  const [fetchTemplate, templateStatus] = useLazyReadNamespacedTemplateGroupQuery({
     selectFromResult: (state) => {
       return {
         ...state,
@@ -141,7 +127,7 @@ export function useGetNotificationTemplate({ alertmanager, uid }: GetTemplatePar
   // What are pros and cons of each?
   useEffect(() => {
     if (k8sApiSupported) {
-      fetchTemplate({ name: uid });
+      fetchTemplate({ namespace: getK8sNamespace(), name: uid });
     } else {
       fetchAmConfig(alertmanager);
     }
@@ -160,28 +146,49 @@ interface CreateTemplateParams {
 }
 
 export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
-  const [createNamespacedTemplateGroup] = useCreateTemplateGroupMutation();
-  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const dispatch = useDispatch();
+
+  const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
+  const [createNamespacedTemplateGroup] = useCreateNamespacedTemplateGroupMutation();
 
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
-  const createUsingConfigFileApi = useAsync(({ templateValues }: CreateTemplateParams) => {
-    const action = addNotificationTemplateAction({ template: templateValues });
-    return updateAlertmanagerConfiguration(action);
-  });
+  async function createUsingConfigFileApi({ templateValues }: CreateTemplateParams) {
+    const amConfig = await fetchAmConfig(alertmanager).unwrap();
+    // wrap content in "define" if it's not already wrapped, in case user did not do it/
+    // it's not obvious that this is needed for template to work
+    const content = ensureDefine(templateValues.title, templateValues.content);
 
-  const createUsingK8sApi = useAsync(({ templateValues }: CreateTemplateParams) => {
+    const targetTemplateExists = amConfig.template_files?.[templateValues.title] !== undefined;
+    if (targetTemplateExists) {
+      throw new Error('target template already exists');
+    }
+
+    const updatedConfig = produce(amConfig, (draft) => {
+      draft.template_files[templateValues.title] = content;
+      draft.alertmanager_config.templates = [...(draft.alertmanager_config.templates ?? []), templateValues.title];
+    });
+
+    return dispatch(
+      updateAlertManagerConfigAction({
+        alertManagerSourceName: alertmanager,
+        newConfig: updatedConfig,
+        oldConfig: amConfig,
+      })
+    ).unwrap();
+  }
+
+  async function createUsingK8sApi({ templateValues }: CreateTemplateParams) {
     const content = ensureDefine(templateValues.title, templateValues.content);
 
     return createNamespacedTemplateGroup({
-      templateGroup: {
-        spec: { title: templateValues.title, content, kind: 'grafana' },
+      namespace: getK8sNamespace(),
+      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: {
+        spec: { title: templateValues.title, content },
         metadata: {},
-        apiVersion,
-        kind,
       },
     }).unwrap();
-  });
+  }
 
   return k8sApiSupported ? createUsingK8sApi : createUsingConfigFileApi;
 }
@@ -192,50 +199,90 @@ interface UpdateTemplateParams {
 }
 
 export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
-  const [replaceNamespacedTemplateGroup] = useReplaceTemplateGroupMutation();
-  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const dispatch = useDispatch();
+
+  const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
+  const [replaceNamespacedTemplateGroup] = useReplaceNamespacedTemplateGroupMutation();
 
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
-  const updateUsingConfigFileApi = useAsync(({ template, patch }: UpdateTemplateParams) => {
-    const action = updateNotificationTemplateAction({ name: template.title, template: patch });
-    return updateAlertmanagerConfiguration(action);
-  });
+  async function updateUsingConfigFileApi({ template, patch }: UpdateTemplateParams) {
+    const amConfig = await fetchAmConfig(alertmanager).unwrap();
+    // wrap content in "define" if it's not already wrapped, in case user did not do it/
+    // it's not obvious that this is needed for template to work
+    const content = ensureDefine(patch.title, patch.content);
 
-  const updateUsingK8sApi = useAsync(({ template, patch }: UpdateTemplateParams) => {
+    const originalName = template.title; // For ConfigFile API name is the same as uid
+    const nameChanged = originalName !== patch.title;
+
+    // TODO Maybe we could simplify or extract this logic
+    const updatedConfig = produce(amConfig, (draft) => {
+      if (nameChanged) {
+        delete draft.template_files[originalName];
+        draft.alertmanager_config.templates = draft.alertmanager_config.templates?.filter((t) => t !== originalName);
+      }
+
+      draft.template_files[patch.title] = content;
+      draft.alertmanager_config.templates = [...(draft.alertmanager_config.templates ?? []), patch.title];
+    });
+
+    return dispatch(
+      updateAlertManagerConfigAction({
+        alertManagerSourceName: alertmanager,
+        newConfig: updatedConfig,
+        oldConfig: amConfig,
+      })
+    ).unwrap();
+  }
+
+  async function updateUsingK8sApi({ template, patch }: UpdateTemplateParams) {
     const content = ensureDefine(patch.title, patch.content);
 
     return replaceNamespacedTemplateGroup({
+      namespace: getK8sNamespace(),
       name: template.uid,
-      templateGroup: {
-        spec: { title: patch.title, content, kind: template.kind },
+      comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroup: {
+        spec: { title: patch.title, content },
         metadata: { name: template.uid },
-        apiVersion,
-        kind,
       },
     }).unwrap();
-  });
+  }
 
   return k8sApiSupported ? updateUsingK8sApi : updateUsingConfigFileApi;
 }
 
 export function useDeleteNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
-  const [deleteNamespacedTemplateGroup] = useDeleteTemplateGroupMutation();
-  const [updateAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const dispatch = useDispatch();
+  const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
+  const [deleteNamespacedTemplateGroup] = useDeleteNamespacedTemplateGroupMutation();
 
-  const deleteUsingConfigAPI = useAsync(async ({ uid }: { uid: string }) => {
-    const action = deleteNotificationTemplateAction({ name: uid });
-    return updateAlertmanagerConfiguration(action);
-  });
+  async function deleteUsingConfigFileApi({ uid }: { uid: string }) {
+    const amConfig = await fetchAmConfig(alertmanager).unwrap();
 
-  const deleteUsingK8sApi = useAsync(({ uid }: { uid: string }) => {
+    const updatedConfig = produce(amConfig, (draft) => {
+      delete draft.template_files[uid];
+      draft.alertmanager_config.templates = draft.alertmanager_config.templates?.filter((t) => t !== uid);
+    });
+
+    return dispatch(
+      updateAlertManagerConfigAction({
+        alertManagerSourceName: alertmanager,
+        newConfig: updatedConfig,
+        oldConfig: amConfig,
+      })
+    ).unwrap();
+  }
+
+  async function deleteUsingK8sApi({ uid }: { uid: string }) {
     return deleteNamespacedTemplateGroup({
+      namespace: getK8sNamespace(),
       name: uid,
+      ioK8SApimachineryPkgApisMetaV1DeleteOptions: {},
     }).unwrap();
-  });
+  }
 
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
-  return k8sApiSupported ? deleteUsingK8sApi : deleteUsingConfigAPI;
+  return k8sApiSupported ? deleteUsingK8sApi : deleteUsingConfigFileApi;
 }
 
 interface ValidateNotificationTemplateParams {
@@ -281,7 +328,7 @@ export function useValidateNotificationTemplate({
 }
 
 interface NotificationTemplateMetadata {
-  provenance?: string;
+  isProvisioned: boolean;
 }
 
 export function useNotificationTemplateMetadata(
@@ -289,11 +336,11 @@ export function useNotificationTemplateMetadata(
 ): NotificationTemplateMetadata {
   if (!template) {
     return {
-      provenance: KnownProvenance.None,
+      isProvisioned: false,
     };
   }
 
   return {
-    provenance: template.provenance,
+    isProvisioned: Boolean(template.provenance) && template.provenance !== PROVENANCE_NONE,
   };
 }

@@ -34,6 +34,8 @@ type Service struct {
 	logger log.Logger
 }
 
+var logger = backend.NewLoggerWith("logger", "tsdb.pyroscope")
+
 // Return the file, line, and (full-path) function name of the caller
 func getRunContext() (string, int, string) {
 	pc := make([]uintptr, 10)
@@ -62,18 +64,15 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 }
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
-	// Constructed here (not as a package-level var) so it picks up Grafana's
-	// in-process logger override installed during coreplugin init.
-	logger := backend.NewLoggerWith("logger", "tsdb.pyroscope")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, logger)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		logger: logger,
 	}
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Logger) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return NewPyroscopeDatasource(ctx, *httpClientProvider, settings, logger)
+		return NewPyroscopeDatasource(ctx, *httpClientProvider, settings)
 	}
 }
 
@@ -88,10 +87,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	response, err := i.QueryData(ctx, req)
 	if err != nil {
-		return nil, backend.DownstreamErrorf("received error from Pyroscope while querying data: %s", err)
+		ctxLogger.Error("Received error from Pyroscope", "error", err, "function", logEntrypoint())
+	} else {
+		ctxLogger.Debug("All queries processed", "function", logEntrypoint())
 	}
-
-	ctxLogger.Debug("All queries processed", "function", logEntrypoint())
 	return response, err
 }
 
@@ -106,10 +105,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	err = i.CallResource(ctx, req, sender)
 	if err != nil {
-		return backend.DownstreamErrorf("received error from Pyroscope while calling resource: %w", err)
+		loggerWithContext.Error("Received error from Pyroscope", "error", err, "function", logEntrypoint())
+	} else {
+		loggerWithContext.Debug("Health check succeeded", "function", logEntrypoint())
 	}
-
-	loggerWithContext.Debug("Health check succeeded", "function", logEntrypoint())
 	return err
 }
 
@@ -124,10 +123,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	response, err := i.CheckHealth(ctx, req)
 	if err != nil {
-		return nil, backend.DownstreamErrorf("received error from Pyroscope while health checking: %w", err)
+		loggerWithContext.Error("Received error from Pyroscope", "error", err, "function", logEntrypoint())
+	} else {
+		loggerWithContext.Debug("Health check succeeded", "function", logEntrypoint())
 	}
-
-	loggerWithContext.Debug("Health check succeeded", "function", logEntrypoint())
 	return response, err
 }
 
@@ -142,10 +141,10 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 
 	response, err := i.SubscribeStream(ctx, req)
 	if err != nil {
-		return nil, backend.DownstreamErrorf("received error from Pyroscope while subscribing the stream: %w", err)
+		loggerWithContext.Error("Received error from Pyroscope", "error", err, "function", logEntrypoint())
+	} else {
+		loggerWithContext.Debug("Stream subscribed", "function", logEntrypoint())
 	}
-
-	loggerWithContext.Debug("Stream subscribed", "function", logEntrypoint())
 	return response, err
 }
 
@@ -160,10 +159,10 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 
 	err = i.RunStream(ctx, req, sender)
 	if err != nil {
-		return backend.DownstreamErrorf("received error from Pyroscope while trying to run the stream: %w", err)
+		loggerWithContext.Error("Received error from Pyroscope", "error", err, "function", logEntrypoint())
+	} else {
+		loggerWithContext.Debug("Stream run", "function", logEntrypoint())
 	}
-
-	loggerWithContext.Debug("Stream run", "function", logEntrypoint())
 	return err
 }
 
@@ -179,9 +178,9 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 
 	response, err := i.PublishStream(ctx, req)
 	if err != nil {
-		return nil, backend.DownstreamErrorf("received error from Pyroscope while publishing the stream: %w", err)
+		loggerWithContext.Error("Received error from Pyroscope", "error", err, "function", logEntrypoint())
+	} else {
+		loggerWithContext.Debug("Stream published", "function", logEntrypoint())
 	}
-
-	loggerWithContext.Debug("Stream published", "function", logEntrypoint())
 	return response, err
 }

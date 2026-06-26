@@ -1,39 +1,29 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { flatten, groupBy, mapValues, sortBy } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import * as React from 'react';
 
 import {
-  type AbsoluteTimeRange,
-  arrayToDataFrame,
-  type DataFrame,
-  type DataQueryResponse,
+  AbsoluteTimeRange,
+  DataFrame,
+  DataQueryResponse,
   DataTopic,
   dateTime,
-  type EventBus,
-  getFrameDisplayName,
-  type GrafanaTheme2,
+  EventBus,
+  GrafanaTheme2,
   LoadingState,
-  type LogRowModel,
-  shallowCompare,
-  type SplitOpen,
-  type TimeRange,
-  type TimeZone,
+  SplitOpen,
+  TimeRange,
+  TimeZone,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Button, InlineField, Alert, useStyles2, type SeriesVisibilityChangeMode } from '@grafana/ui';
+import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
-import {
-  mergeLogsVolumeDataFrames,
-  isLogsVolumeLimited,
-  getLogsVolumeMaximumRange,
-  getLogsVisibleRange,
-} from '../../logs/utils';
+import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
-import { isMaxBytesErrorResponse, isTimeoutErrorResponse } from './utils/logsVolumeResponse';
+import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -43,27 +33,24 @@ type Props = {
   width: number;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   onLoadLogsVolume: () => void;
-  onDisplayedSeriesChanged: (series: string[]) => void;
+  onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
-  toggleLegendRef?: React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>;
-  logs: LogRowModel[];
+  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
 };
 
-const VISIBLE_RANGE_FRAME_NAME = 'Visible range';
 export const LogsVolumePanelList = ({
   logsVolumeData,
   absoluteRange,
   onUpdateTimeRange,
   width,
   onLoadLogsVolume,
-  onDisplayedSeriesChanged,
+  onHiddenSeriesChanged,
   eventBus,
   splitOpen,
   timeZone,
   onClose,
   toggleLegendRef,
-  logs,
 }: Props) => {
   const {
     logVolumes,
@@ -73,7 +60,6 @@ export const LogsVolumePanelList = ({
   } = useMemo(() => {
     let maximumValue = -Infinity;
     const data = logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations);
-    // Loading frame from query splitting.
     const annotations =
       logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic === DataTopic.Annotations) || [];
     const sorted = sortBy(data || [], 'meta.custom.datasourceName');
@@ -84,41 +70,15 @@ export const LogsVolumePanelList = ({
       return mergedData.dataFrames;
     });
     const maximumRange = getLogsVolumeMaximumRange(flatten(Object.values(logVolumes)));
-
-    // No loading frame, show visible range
-    if (!annotations.length && logs.length) {
-      const { start, end } = getLogsVisibleRange(logs);
-      if (start > 0 && end > 0) {
-        const frame = arrayToDataFrame([
-          {
-            color: 'rgba(58, 113, 255, 0.3)',
-            isRegion: true,
-            text: t(
-              'explore.logs-volume-panel-list.visible-range-description',
-              'Range from oldest to newest logs in display'
-            ),
-            time: start,
-            timeEnd: end,
-          },
-        ]);
-        frame.name = VISIBLE_RANGE_FRAME_NAME;
-        frame.meta = {
-          dataTopic: DataTopic.Annotations,
-        };
-        annotations.push(frame);
-      }
-    }
-
     return {
       maximumValue,
       maximumRange,
       logVolumes,
       annotations,
     };
-  }, [logs, logsVolumeData?.data]);
+  }, [logsVolumeData]);
 
   const styles = useStyles2(getStyles);
-  const lokiShardSplittingEnabled = useBooleanFlagValue('lokiShardSplitting', false);
 
   const numberOfLogVolumes = Object.keys(logVolumes).length;
 
@@ -127,57 +87,25 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  const canShowPartialData = lokiShardSplittingEnabled && logsVolumeData && logsVolumeData.data.length > 0;
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
-  const maxBytesError = isMaxBytesErrorResponse(logsVolumeData);
-  const queryTooLargeError = timeoutError || maxBytesError;
+
   const from = dateTime(Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from));
   const to = dateTime(Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to));
   const visibleRange: TimeRange = { from, to, raw: { from, to } };
 
-  const handleHiddenSeriesChanged = useCallback(
-    (hiddenSeries: string[]) => {
-      // Not supported
-      if (numberOfLogVolumes > 1) {
-        return;
-      }
-      const allLevels = [
-        ...new Set(
-          Object.values(logVolumes)
-            .map((series) => series.map((dataFrame) => getFrameDisplayName(dataFrame)))
-            .flat()
-        ),
-      ];
-      const displayedLevels = allLevels.filter((level) => !hiddenSeries.includes(level));
-      onDisplayedSeriesChanged(shallowCompare(allLevels, displayedLevels) ? [] : displayedLevels);
-    },
-    [logVolumes, numberOfLogVolumes, onDisplayedSeriesChanged]
-  );
-
   if (logsVolumeData?.state === LoadingState.Loading) {
-    return (
-      <span>
-        <Trans i18nKey="explore.logs-volume-panel-list.loading">Loading...</Trans>
-      </span>
-    );
-  } else if (queryTooLargeError && !canShowPartialData) {
+    return <span>Loading...</span>;
+  } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title={t('explore.logs-volume-panel-list.title-unable-to-show-log-volume', 'Unable to show log volume')}
+        title="Unable to show log volume"
         // Using info to avoid users thinking that the actual query has failed.
         message={
           <>
             <p>
-              {timeoutError && (
-                <Trans i18nKey="explore.logs.logs-volume.much-data">
-                  The query is trying to access too much data. Try one or more of the following:
-                </Trans>
-              )}
-              {maxBytesError && (
-                <Trans i18nKey="explore.logs.logs-volume.max-bytes-error">
-                  The query would read too many bytes. Try one or more of the following:
-                </Trans>
-              )}
+              <Trans i18nKey="explore.logs.logs-volume.much-data">
+                The query is trying to access too much data. Try one or more of the following:
+              </Trans>
             </p>
             <ul>
               <li>
@@ -199,28 +127,15 @@ export const LogsVolumePanelList = ({
         onRemove={onClose}
       />
     );
-  } else if (logsVolumeData?.error !== undefined && !canShowPartialData) {
-    return (
-      <SupplementaryResultError
-        error={logsVolumeData.error}
-        title={t(
-          'explore.logs-volume-panel-list.title-failed-volume-query',
-          'Failed to load log volume for this query'
-        )}
-      />
-    );
+  } else if (logsVolumeData?.error !== undefined) {
+    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
 
   if (numberOfLogVolumes === 0 && logsVolumeData?.state !== LoadingState.Streaming) {
     return (
       <div className={styles.alertContainer}>
-        <Alert
-          severity="info"
-          title={t('explore.logs-volume-panel-list.title-no-logs-volume-available', 'No logs volume available')}
-        >
-          <Trans i18nKey="explore.logs-volumne-panel-list.body-no-logs-volume-available">
-            No volume information available for the current queries and time range.
-          </Trans>
+        <Alert severity="info" title="No logs volume available">
+          No volume information available for the current queries and time range.
         </Alert>
       </div>
     );
@@ -228,28 +143,6 @@ export const LogsVolumePanelList = ({
 
   return (
     <div className={styles.listContainer}>
-      {queryTooLargeError && canShowPartialData && (
-        <SupplementaryResultError
-          title={t('explore.logs-volume-panel-list.title-showing-partial-data', 'Showing partial data')}
-          message={
-            timeoutError
-              ? t(
-                  'explore.logs-volume-panel-list.message-showing-partial-data-timeout',
-                  'The query is trying to access too much data and some sharded requests could not be completed. '
-                )
-              : t(
-                  'explore.logs-volume-panel-list.message-showing-partial-data-max-bytes',
-                  'The query would read too many bytes and some sharded requests could not be completed. '
-                ) +
-                t(
-                  'explore.logs-volume-panel.partial-data-tips',
-                  'Try decreasing the time range or adding more labels to your query.'
-                )
-          }
-          severity="info"
-          dismissable
-        />
-      )}
       {Object.keys(logVolumes).map((name, index) => {
         return (
           <LogsVolumePanel
@@ -264,7 +157,7 @@ export const LogsVolumePanelList = ({
             splitOpen={splitOpen}
             onLoadLogsVolume={onLoadLogsVolume}
             // TODO: Support filtering level from multiple log levels
-            onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : handleHiddenSeriesChanged}
+            onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
             eventBus={eventBus}
             annotations={annotations}
           />
@@ -272,18 +165,8 @@ export const LogsVolumePanelList = ({
       })}
       {containsZoomed && (
         <div className={styles.extraInfoContainer}>
-          <InlineField
-            label={t('explore.logs-volume-panel-list.label-reload-log-volume', 'Reload log volume')}
-            transparent
-          >
-            <Button
-              aria-label={t('explore.logs-volume-panel-list.aria-label-reload-log-volume', 'Reload log volume')}
-              size="xs"
-              icon="sync"
-              variant="secondary"
-              onClick={onLoadLogsVolume}
-              id="reload-volume"
-            />
+          <InlineField label="Reload log volume" transparent>
+            <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
           </InlineField>
         </div>
       )}

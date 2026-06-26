@@ -1,8 +1,9 @@
-import { getThemeById } from '@grafana/data/internal';
-import { config, ThemeChangedEvent } from '@grafana/runtime';
+import { getThemeById } from '@grafana/data/src/themes/registry';
+import { ThemeChangedEvent } from '@grafana/runtime';
 
-import { appEvents } from '../app_events';
-import { contextSrv } from '../services/context_srv';
+import appEvents from '../app_events';
+import { config } from '../config';
+import { contextSrv } from '../core';
 
 import { PreferencesService } from './PreferencesService';
 
@@ -45,8 +46,11 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
 
   // Persist new theme
   const service = new PreferencesService('user');
-  await service.patch({
-    theme: themeId,
+  const currentPref = await service.load();
+
+  await service.update({
+    ...currentPref,
+    theme: newTheme.colors.mode,
   });
 }
 

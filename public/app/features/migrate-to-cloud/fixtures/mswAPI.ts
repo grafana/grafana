@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { type SetupServer, setupServer } from 'msw/node';
+import { SetupServer, setupServer } from 'msw/node';
 
 import { validCloudMigrationToken } from './tokens';
 

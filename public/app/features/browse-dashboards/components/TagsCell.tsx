@@ -1,16 +1,12 @@
 import { css } from '@emotion/css';
-import { type CellProps } from 'react-table';
+import { CellProps } from 'react-table';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { TagList, useStyles2 } from '@grafana/ui';
 
-import { type DashboardsTreeItem } from '../types';
+import { DashboardsTreeItem } from '../types';
 
-interface TagsCellProps extends CellProps<DashboardsTreeItem, unknown> {
-  onTagClick?: (tag: string) => void;
-}
-
-export function TagsCell({ row: { original: data }, onTagClick }: TagsCellProps) {
+export function TagsCell({ row: { original: data } }: CellProps<DashboardsTreeItem, unknown>) {
   const styles = useStyles2(getStyles);
   const item = data.item;
 
@@ -26,7 +22,7 @@ export function TagsCell({ row: { original: data }, onTagClick }: TagsCellProps)
     return null;
   }
 
-  return <TagList className={styles.tagList} tags={item.tags} onClick={onTagClick} />;
+  return <TagList className={styles.tagList} tags={item.tags} />;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -35,7 +31,6 @@ function getStyles(theme: GrafanaTheme2) {
     tagList: css({
       justifyContent: 'flex-start',
       flexWrap: 'nowrap',
-      overflowX: 'auto',
     }),
   };
 }

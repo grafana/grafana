@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	libraryelementsmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/web"
@@ -25,17 +23,15 @@ type ImportDashboardAPI struct {
 	quotaService           QuotaService
 	pluginStore            pluginstore.Store
 	ac                     accesscontrol.AccessControl
-	features               featuremgmt.FeatureToggles
 }
 
 func New(dashboardImportService dashboardimport.Service, quotaService QuotaService,
-	pluginStore pluginstore.Store, ac accesscontrol.AccessControl, features featuremgmt.FeatureToggles) *ImportDashboardAPI {
+	pluginStore pluginstore.Store, ac accesscontrol.AccessControl) *ImportDashboardAPI {
 	return &ImportDashboardAPI{
 		dashboardImportService: dashboardImportService,
 		quotaService:           quotaService,
 		pluginStore:            pluginStore,
 		ac:                     ac,
-		features:               features,
 	}
 }
 
@@ -47,47 +43,7 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 			authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
 			routing.Wrap(api.ImportDashboard),
 		)
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if api.features.IsEnabledGlobally(featuremgmt.FlagDashboardLibrary) || api.features.IsEnabledGlobally(featuremgmt.FlagSuggestedDashboards) || api.features.IsEnabledGlobally(featuremgmt.FlagDashboardTemplates) {
-			route.Post(
-				"/interpolate",
-				authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
-				routing.Wrap(api.InterpolateDashboard),
-			)
-		}
 	}, middleware.ReqSignedIn)
-}
-
-// swagger:route POST /dashboards/interpolate dashboards interpolateDashboard
-//
-// Interpolate dashboard. This is an experimental endpoint under dashboardLibrary or suggestedDashboards feature flags and is subject to change.
-//
-// Responses:
-// 200: interpolateDashboardResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 422: unprocessableEntityError
-// 500: internalServerError
-func (api *ImportDashboardAPI) InterpolateDashboard(c *contextmodel.ReqContext) response.Response {
-	req := dashboardimport.ImportDashboardRequest{}
-	if err := web.Bind(c.Req, &req); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	if req.PluginId == "" && req.Dashboard == nil {
-		return response.Error(http.StatusUnprocessableEntity, "pluginId or dashboard must be set", nil)
-	}
-
-	resp, err := api.dashboardImportService.InterpolateDashboard(c.Req.Context(), &req)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to interpolate dashboard", err)
-	}
-
-	resp.Del("__elements")
-	resp.Del("__inputs")
-	resp.Del("__requires")
-
-	return response.JSON(http.StatusOK, resp)
 }
 
 // swagger:route POST /dashboards/import dashboards importDashboard
@@ -126,9 +82,6 @@ func (api *ImportDashboardAPI) ImportDashboard(c *contextmodel.ReqContext) respo
 		if errors.Is(err, utils.ErrDashboardInputMissing) {
 			return response.Error(http.StatusBadRequest, err.Error(), err)
 		}
-		if errors.Is(err, libraryelementsmodel.ErrLibraryElementInsufficientPermissions) {
-			return response.Error(http.StatusForbidden, err.Error(), err)
-		}
 		return apierrors.ToDashboardErrorResponse(c.Req.Context(), api.pluginStore, err)
 	}
 
@@ -156,10 +109,4 @@ type ImportDashboardParams struct {
 type ImportDashboardResponse struct {
 	// in: body
 	Body dashboardimport.ImportDashboardResponse `json:"body"`
-}
-
-// swagger:response interpolateDashboardResponse
-type InterpolateDashboardResponse struct {
-	// in: body
-	Body interface{} `json:"body"`
 }

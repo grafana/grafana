@@ -1,45 +1,35 @@
-import { memo } from 'react';
+import { PureComponent } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
-import { LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
-import { type Team } from 'app/types/teams';
+import { LoadingPlaceholder } from '@grafana/ui';
+import { Team } from 'app/types';
 
 export interface Props {
   teams: Team[];
   isLoading: boolean;
 }
 
-export const UserTeams = memo<Props>(({ isLoading, teams }) => {
-  if (isLoading) {
-    return <LoadingPlaceholder text={t('profile.user-teams.text-loading-teams', 'Loading teams...')} />;
-  }
+export class UserTeams extends PureComponent<Props> {
+  render() {
+    const { isLoading, teams } = this.props;
 
-  if (teams.length === 0) {
-    return null;
-  }
+    if (isLoading) {
+      return <LoadingPlaceholder text="Loading teams..." />;
+    }
 
-  return (
-    <div>
-      <h3 className="page-sub-heading">
-        <Trans i18nKey="profile.user-teams.teams">Teams</Trans>
-      </h3>
-      <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
-        <table
-          className="filter-table form-inline"
-          aria-label={t('profile.user-teams.aria-label-user-teams-table', 'User teams table')}
-        >
+    if (teams.length === 0) {
+      return null;
+    }
+
+    return (
+      <div>
+        <h3 className="page-sub-heading">Teams</h3>
+        <table className="filter-table form-inline" aria-label="User teams table">
           <thead>
             <tr>
               <th />
-              <th>
-                <Trans i18nKey="profile.user-teams.name">Name</Trans>
-              </th>
-              <th>
-                <Trans i18nKey="profile.user-teams.email">Email</Trans>
-              </th>
-              <th>
-                <Trans i18nKey="profile.user-teams.members">Members</Trans>
-              </th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Members</th>
             </tr>
           </thead>
           <tbody>
@@ -57,9 +47,9 @@ export const UserTeams = memo<Props>(({ isLoading, teams }) => {
             })}
           </tbody>
         </table>
-      </ScrollContainer>
-    </div>
-  );
-});
+      </div>
+    );
+  }
+}
 
-UserTeams.displayName = 'UserTeams';
+export default UserTeams;

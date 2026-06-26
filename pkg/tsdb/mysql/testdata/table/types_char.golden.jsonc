@@ -45,7 +45,8 @@
             "name": "vcnn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {
@@ -60,7 +61,8 @@
             "name": "cnn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {
@@ -75,7 +77,8 @@
             "name": "ttnn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {
@@ -90,7 +93,8 @@
             "name": "tnn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {
@@ -105,7 +109,8 @@
             "name": "mtnn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {
@@ -120,7 +125,8 @@
             "name": "ltnn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {
@@ -135,7 +141,8 @@
             "name": "enn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {
@@ -150,7 +157,8 @@
             "name": "snn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           }
         ]

@@ -1,4 +1,4 @@
-import { type VariableOption } from '@grafana/data';
+import { VariableOption } from '@grafana/data';
 
 import { alignCurrentWithMulti } from './multiOptions';
 

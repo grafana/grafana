@@ -1,18 +1,16 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
-import { type CSSProperties } from 'react';
+import { CSSProperties } from 'react';
 
-import { type LinkModel } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type ColorDimensionConfig, type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
+import { LinkModel, OneClickMode } from '@grafana/data';
+import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
-import { type DimensionContext } from 'app/features/dimensions/context';
-import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
-import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';
-import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
-import { type LineConfig } from 'app/plugins/panel/canvas/panelcfg.gen';
+import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions/context';
+import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+import { LineConfig } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { type CanvasElementItem, type CanvasElementOptions, type CanvasElementProps, defaultBgColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
 export interface IconConfig {
   path?: ResourceDimensionConfig;
@@ -35,7 +33,7 @@ const svgStrokePathClass = css({
   },
 });
 
-function IconDisplay(props: CanvasElementProps<IconConfig, IconData>) {
+export function IconDisplay(props: CanvasElementProps<IconConfig, IconData>) {
   const { data } = props;
   if (!data?.path) {
     return null;
@@ -82,6 +80,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       left: options?.placement?.left ?? 100,
       rotation: options?.placement?.rotation ?? 0,
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -114,13 +113,13 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.icon-item.category-icon', 'Icon')];
+    const category = ['Icon'];
     builder
       .addCustomEditor({
         category,
         id: 'iconSelector',
         path: 'config.path',
-        name: t('canvas.icon-item.name-svg-path', 'SVG Path'),
+        name: 'SVG Path',
         editor: ResourceDimensionEditor,
         settings: {
           resourceType: 'icon',
@@ -131,7 +130,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         category,
         id: 'config.fill',
         path: 'config.fill',
-        name: t('canvas.icon-item.name-fill-color', 'Fill color'),
+        name: 'Fill color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {

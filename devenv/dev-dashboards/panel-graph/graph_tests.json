@@ -22,9 +22,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -110,9 +108,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -198,9 +194,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -286,9 +280,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -390,9 +382,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -505,9 +495,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -593,9 +581,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -697,9 +683,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -823,9 +807,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 1,
@@ -950,9 +932,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "editable": true,
       "error": false,
       "fill": 0,
@@ -1069,9 +1049,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": 3,
       "fill": 1,
       "gridPos": {
@@ -1156,9 +1134,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": 3,
       "fill": 1,
       "gridPos": {
@@ -1261,9 +1237,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": 3,
       "fill": 1,
       "gridPos": {
@@ -1402,9 +1376,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": 3,
       "fill": 1,
       "gridPos": {
@@ -1508,9 +1480,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "decimals": 3,
       "fill": 1,
       "gridPos": {
@@ -1669,7 +1639,8 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "browser",
   "title": "Panel Tests - Graph",

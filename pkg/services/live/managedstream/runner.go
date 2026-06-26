@@ -35,10 +35,10 @@ var (
 // 	* Can use in-memory managed stream for plugins with local subscribers publish, use HA-managed stream for HTTP/WS
 // 	* Eventually maintain a single connection with a plugin over a channel leader selection.
 
-// Runner keeps Stream per Grafana live "namespace", which lives inside a scope.
+// Runner keeps NamespaceStream per namespace.
 type Runner struct {
 	mu             sync.RWMutex
-	streams        map[string]map[string]*Stream
+	streams        map[int64]map[string]*NamespaceStream
 	publisher      model.ChannelPublisher
 	localPublisher LocalPublisher
 	frameCache     FrameCache
@@ -53,13 +53,13 @@ func NewRunner(publisher model.ChannelPublisher, localPublisher LocalPublisher, 
 	return &Runner{
 		publisher:      publisher,
 		localPublisher: localPublisher,
-		streams:        map[string]map[string]*Stream{},
+		streams:        map[int64]map[string]*NamespaceStream{},
 		frameCache:     frameCache,
 	}
 }
 
-func (r *Runner) GetManagedChannels(ns string) ([]*ManagedChannel, error) {
-	activeChannels, err := r.frameCache.GetActiveChannels(ns)
+func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
+	activeChannels, err := r.frameCache.GetActiveChannels(orgID)
 	if err != nil {
 		return []*ManagedChannel{}, fmt.Errorf("error getting active managed stream paths: %v", err)
 	}
@@ -72,9 +72,7 @@ func (r *Runner) GetManagedChannels(ns string) ([]*ManagedChannel, error) {
 		// Enrich with minute rate.
 		channel, _ := live.ParseChannel(managedChannel.Channel)
 		prefix := channel.Scope + "/" + channel.Namespace
-		r.mu.RLock()
-		namespaceStream, ok := r.streams[ns][prefix]
-		r.mu.RUnlock()
+		namespaceStream, ok := r.streams[orgID][prefix]
 		if ok {
 			managedChannel.MinuteRate = namespaceStream.minuteRate(channel.Path)
 		}
@@ -117,27 +115,27 @@ func (r *Runner) GetManagedChannels(ns string) ([]*ManagedChannel, error) {
 
 // GetOrCreateStream -- for now this will create new manager for each key.
 // Eventually, the stream behavior will need to be configured explicitly
-func (r *Runner) GetOrCreateStream(ns string, scope string, stream string) (*Stream, error) {
+func (r *Runner) GetOrCreateStream(orgID int64, scope string, namespace string) (*NamespaceStream, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	_, ok := r.streams[ns]
+	_, ok := r.streams[orgID]
 	if !ok {
-		r.streams[ns] = map[string]*Stream{}
+		r.streams[orgID] = map[string]*NamespaceStream{}
 	}
-	prefix := scope + "/" + stream
-	s, ok := r.streams[ns][prefix]
+	prefix := scope + "/" + namespace
+	s, ok := r.streams[orgID][prefix]
 	if !ok {
-		s = NewStream(ns, scope, stream, r.publisher, r.localPublisher, r.frameCache)
-		r.streams[ns][prefix] = s
+		s = NewNamespaceStream(orgID, scope, namespace, r.publisher, r.localPublisher, r.frameCache)
+		r.streams[orgID][prefix] = s
 	}
 	return s, nil
 }
 
-// Stream holds the state of a managed stream.
-type Stream struct {
-	ns             string // k8s namespace, maps to org id / stack id in grafana
+// NamespaceStream holds the state of a managed stream.
+type NamespaceStream struct {
+	orgID          int64
 	scope          string
-	stream         string // within a scope, maps to the Grafana live "namespace"
+	namespace      string
 	publisher      model.ChannelPublisher
 	localPublisher LocalPublisher
 	frameCache     FrameCache
@@ -157,12 +155,12 @@ type ManagedChannel struct {
 	Data       json.RawMessage `json:"data"`
 }
 
-// NewStream creates new NewStream.
-func NewStream(ns string, scope string, stream string, publisher model.ChannelPublisher, localPublisher LocalPublisher, schemaUpdater FrameCache) *Stream {
-	return &Stream{
-		ns:             ns,
+// NewNamespaceStream creates new NamespaceStream.
+func NewNamespaceStream(orgID int64, scope string, namespace string, publisher model.ChannelPublisher, localPublisher LocalPublisher, schemaUpdater FrameCache) *NamespaceStream {
+	return &NamespaceStream{
+		orgID:          orgID,
 		scope:          scope,
-		stream:         stream,
+		namespace:      namespace,
 		publisher:      publisher,
 		localPublisher: localPublisher,
 		frameCache:     schemaUpdater,
@@ -173,16 +171,16 @@ func NewStream(ns string, scope string, stream string, publisher model.ChannelPu
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
 // * Saves the entire frame to cache.
 // * If schema has been changed sends entire frame to channel, otherwise only data.
-func (s *Stream) Push(ctx context.Context, path string, frame *data.Frame) error {
+func (s *NamespaceStream) Push(ctx context.Context, path string, frame *data.Frame) error {
 	jsonFrameCache, err := data.FrameToJSONCache(frame)
 	if err != nil {
 		return err
 	}
 
 	// The channel this will be posted into.
-	channel := live.Channel{Scope: s.scope, Namespace: s.stream, Path: path}.String()
+	channel := live.Channel{Scope: s.scope, Namespace: s.namespace, Path: path}.String()
 
-	isUpdated, err := s.frameCache.Update(ctx, s.ns, channel, jsonFrameCache)
+	isUpdated, err := s.frameCache.Update(ctx, s.orgID, channel, jsonFrameCache)
 	if err != nil {
 		logger.Error("Error updating managed stream schema", "error", err)
 		return err
@@ -199,12 +197,12 @@ func (s *Stream) Push(ctx context.Context, path string, frame *data.Frame) error
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	s.incRate(path, time.Now().Unix())
 	if s.scope == live.ScopeDatasource || s.scope == live.ScopePlugin {
-		return s.localPublisher.PublishLocal(orgchannel.PrependK8sNamespace(s.ns, channel), frameJSON)
+		return s.localPublisher.PublishLocal(orgchannel.PrependOrgID(s.orgID, channel), frameJSON)
 	}
-	return s.publisher(s.ns, channel, frameJSON)
+	return s.publisher(s.orgID, channel, frameJSON)
 }
 
-func (s *Stream) incRate(path string, nowUnix int64) {
+func (s *NamespaceStream) incRate(path string, nowUnix int64) {
 	s.rateMu.Lock()
 	pathRate, ok := s.rates[path]
 	if !ok {
@@ -221,7 +219,7 @@ func (s *Stream) incRate(path string, nowUnix int64) {
 	s.rateMu.Unlock()
 }
 
-func (s *Stream) minuteRate(path string) int64 {
+func (s *NamespaceStream) minuteRate(path string) int64 {
 	var total int64
 	s.rateMu.RLock()
 	defer s.rateMu.RUnlock()
@@ -237,13 +235,13 @@ func (s *Stream) minuteRate(path string) int64 {
 	return total
 }
 
-func (s *Stream) GetHandlerForPath(_ string) (model.ChannelHandler, error) {
+func (s *NamespaceStream) GetHandlerForPath(_ string) (model.ChannelHandler, error) {
 	return s, nil
 }
 
-func (s *Stream) OnSubscribe(ctx context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *NamespaceStream) OnSubscribe(ctx context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := model.SubscribeReply{}
-	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.GetNamespace(), e.Channel)
+	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.GetOrgID(), e.Channel)
 	if err != nil {
 		return reply, 0, err
 	}
@@ -253,6 +251,6 @@ func (s *Stream) OnSubscribe(ctx context.Context, u identity.Requester, e model.
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
-func (s *Stream) OnPublish(_ context.Context, _ identity.Requester, _ model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+func (s *NamespaceStream) OnPublish(_ context.Context, _ identity.Requester, _ model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
 	return model.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }

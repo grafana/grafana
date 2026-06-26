@@ -1,34 +1,26 @@
 import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
-import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
-function useGetOnCallIntegrations() {
-  const { pluginId, installed: onCallPluginInstalled } = useIrmPlugin(SupportedPlugin.OnCall);
+export function useGetOnCallIntegrations() {
+  const { installed: onCallPluginInstalled } = usePluginBridge(SupportedPlugin.OnCall);
 
-  const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(
-    { pluginId },
-    {
-      skip: !onCallPluginInstalled,
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
+  const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
+    skip: !onCallPluginInstalled,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  });
 
   return onCallIntegrations ?? [];
 }
 
 function useGetOnCallConfigurationChecks() {
-  const { pluginId } = useIrmPlugin(SupportedPlugin.OnCall);
-
-  const { data: onCallConfigChecks, isLoading } = onCallApi.endpoints.onCallConfigChecks.useQuery(
-    { pluginId },
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
+  const { data: onCallConfigChecks, isLoading } = onCallApi.endpoints.onCallConfigChecks.useQuery(undefined, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  });
 
   return {
     isLoading,

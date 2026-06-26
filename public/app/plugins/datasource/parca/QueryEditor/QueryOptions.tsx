@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useToggle } from 'react-use';
 
-import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2, RadioButtonGroup, Field, clearButtonStyles, Button } from '@grafana/ui';
 
-import { type Query } from '../types';
+import { Query } from '../types';
 
 import { Stack } from './Stack';
 

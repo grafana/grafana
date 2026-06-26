@@ -24,7 +24,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -103,7 +104,8 @@
         {
           "csvContent": "Name,Stat1\nStockholm, 10\nNew York, 19\nLondon, 10\nNegative, 15\nLong value, 15",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -114,7 +116,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -193,7 +196,8 @@
         {
           "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, 5\nLong value, 15,10",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -204,7 +208,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -283,7 +288,8 @@
         {
           "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, 5\nLong value, 15,10",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -294,7 +300,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -373,7 +380,8 @@
         {
           "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, 5\nLong value, 15,10",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -384,7 +392,12 @@
     }
   ],
   "schemaVersion": 39,
-  "tags": ["gdev", "panel-tests", "barchart", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "barchart",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },

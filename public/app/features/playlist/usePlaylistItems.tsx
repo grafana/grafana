@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { type DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
+import { DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
 
-import { type PlaylistItemUI } from './types';
-import { loadDashboards } from './utils';
+import { loadDashboards } from './api';
+import { PlaylistItem } from './types';
 
-export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
-  const [items, setItems] = useState<PlaylistItemUI[]>(playlistItems ?? []);
+export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
+  const [items, setItems] = useState<PlaylistItem[]>(playlistItems ?? []);
 
   // Attach dashboards if any were missing
   useAsync(async () => {
@@ -43,7 +43,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
         return;
       }
 
-      const newItem: PlaylistItemUI = {
+      const newItem: PlaylistItem = {
         type: 'dashboard_by_tag',
         value: tag,
       };

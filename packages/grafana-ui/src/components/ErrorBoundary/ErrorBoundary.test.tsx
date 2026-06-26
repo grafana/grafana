@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { type FC } from 'react';
+import { FC } from 'react';
 
 import { faro } from '@grafana/faro-web-sdk';
 
@@ -67,7 +67,6 @@ describe('ErrorBoundary', () => {
 
     await screen.findByText(problem.message);
     expect(renderCount).toBeGreaterThan(0);
-    // eslint-disable-next-line testing-library/render-result-naming-convention
     const oldRenderCount = renderCount;
 
     rerender(

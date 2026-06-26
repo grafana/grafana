@@ -4,7 +4,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -18,12 +17,11 @@ var (
 // fixtures that insert DashboardVersions directly into a database which must be
 // refactored first.
 type DashboardVersion struct {
-	ID            int64  `json:"id" xorm:"pk autoincr 'id'" db:"id"`
-	DashboardID   int64  `json:"dashboardId"  xorm:"dashboard_id" db:"dashboard_id"`
-	ParentVersion int    `json:"parentVersion" db:"parent_version"`
-	RestoredFrom  int    `json:"restoredFrom" db:"restored_from"`
-	Version       int    `json:"version" db:"version"`
-	APIVersion    string `json:"apiVersion" xorm:"api_version" db:"api_version"`
+	ID            int64 `json:"id" xorm:"pk autoincr 'id'" db:"id"`
+	DashboardID   int64 `json:"dashboardId"  xorm:"dashboard_id" db:"dashboard_id"`
+	ParentVersion int   `json:"parentVersion" db:"parent_version"`
+	RestoredFrom  int   `json:"restoredFrom" db:"restored_from"`
+	Version       int   `json:"version" db:"version"`
 
 	Created   time.Time `json:"created" db:"created"`
 	CreatedBy int64     `json:"createdBy" db:"created_by"`
@@ -54,32 +52,20 @@ type GetDashboardVersionQuery struct {
 	DashboardID  int64
 	DashboardUID string
 	OrgID        int64
-	Version      int64
+	Version      int
 }
 
-// RestoreVersionCommand is used to restore a dashboard version.
-// Only one of DashboardID and DashboardUID are required.
-type RestoreVersionCommand struct {
-	Requester    identity.Requester
-	DashboardUID string
-	DashboardID  int64
-	Version      int64
+type DeleteExpiredVersionsCommand struct {
+	DeletedRows int64
 }
 
 type ListDashboardVersionsQuery struct {
-	DashboardID   int64
-	DashboardUID  string
-	OrgID         int64
-	Limit         int
-	Start         int
-	ContinueToken string
+	DashboardID  int64
+	DashboardUID string
+	OrgID        int64
+	Limit        int
+	Start        int
 }
-
-type DashboardVersionResponse struct {
-	ContinueToken string                 `json:"continueToken"`
-	Versions      []*DashboardVersionDTO `json:"versions"`
-}
-
 type DashboardVersionDTO struct {
 	ID            int64            `json:"id"`
 	DashboardID   int64            `json:"dashboardId"`
@@ -107,9 +93,4 @@ type DashboardVersionMeta struct {
 	Message       string           `json:"message"`
 	Data          *simplejson.Json `json:"data"`
 	CreatedBy     string           `json:"createdBy"`
-}
-
-type DashboardVersionResponseMeta struct {
-	ContinueToken string                 `json:"continueToken"`
-	Versions      []DashboardVersionMeta `json:"versions"`
 }

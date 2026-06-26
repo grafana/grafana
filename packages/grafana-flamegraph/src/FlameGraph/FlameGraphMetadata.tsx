@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { memo, type ReactNode } from 'react';
+import { memo, ReactNode } from 'react';
 
-import { getValueFormat, type GrafanaTheme2 } from '@grafana/data';
-import { Icon, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-import { type ClickedItemData } from '../types';
+import { ClickedItemData } from '../types';
 
-import { type FlameGraphDataContainer } from './dataTransform';
+import { FlameGraphDataContainer } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -42,50 +42,43 @@ const FlameGraphMetadata = memo(
 
     if (sandwichedLabel) {
       parts.push(
-        <Tooltip key={'sandwich'} content={sandwichedLabel} placement="top">
-          <div>
-            <Icon size={'sm'} name={'angle-right'} />
-            <div className={styles.metadataPill}>
-              <Icon size={'sm'} name={'gf-show-context'} />{' '}
-              <span className={styles.metadataPillName}>
-                {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
-              </span>
-              <IconButton
-                className={styles.pillCloseButton}
-                name={'times'}
-                size={'sm'}
-                onClick={onSandwichPillClick}
-                tooltip={'Remove sandwich view'}
-                aria-label={'Remove sandwich view'}
-              />
-            </div>
+        <span key={'sandwich'}>
+          <Icon size={'sm'} name={'angle-right'} />
+          <div className={styles.metadataPill}>
+            <Icon size={'sm'} name={'gf-show-context'} />{' '}
+            <span className={styles.metadataPillName}>
+              {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
+            </span>
+            <IconButton
+              className={styles.pillCloseButton}
+              name={'times'}
+              size={'sm'}
+              onClick={onSandwichPillClick}
+              tooltip={'Remove sandwich view'}
+              aria-label={'Remove sandwich view'}
+            />
           </div>
-        </Tooltip>
+        </span>
       );
     }
 
     if (focusedItem) {
-      const percentValue = totalTicks > 0 ? Math.round(10000 * (focusedItem.item.value / totalTicks)) / 100 : 0;
-      const iconName = percentValue > 0 ? 'eye' : 'exclamation-circle';
-
+      const percentValue = Math.round(10000 * (focusedItem.item.value / totalTicks)) / 100;
       parts.push(
-        <Tooltip key={'focus'} content={focusedItem.label} placement="top">
-          <div>
-            <Icon size={'sm'} name={'angle-right'} />
-            <div className={styles.metadataPill}>
-              <Icon size={'sm'} name={iconName} />
-              &nbsp;{percentValue}% of total
-              <IconButton
-                className={styles.pillCloseButton}
-                name={'times'}
-                size={'sm'}
-                onClick={onFocusPillClick}
-                tooltip={'Remove focus'}
-                aria-label={'Remove focus'}
-              />
-            </div>
+        <span key={'focus'}>
+          <Icon size={'sm'} name={'angle-right'} />
+          <div className={styles.metadataPill}>
+            <Icon size={'sm'} name={'eye'} /> {percentValue}% of total
+            <IconButton
+              className={styles.pillCloseButton}
+              name={'times'}
+              size={'sm'}
+              onClick={onFocusPillClick}
+              tooltip={'Remove focus'}
+              aria-label={'Remove focus'}
+            />
           </div>
-        </Tooltip>
+        </span>
       );
     }
 
@@ -114,10 +107,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(0, 0.5),
   }),
   metadata: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
     margin: '8px 0',
+    textAlign: 'center',
   }),
   metadataPillName: css({
     label: 'metadataPillName',

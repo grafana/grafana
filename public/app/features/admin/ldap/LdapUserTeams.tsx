@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { type Column, InteractiveTable, type CellProps } from '@grafana/ui';
-import { type LdapTeam } from 'app/types/ldap';
+import { Column, InteractiveTable, CellProps } from '@grafana/ui';
+import { LdapTeam } from 'app/types';
 
 interface Props {
   teams: LdapTeam[];

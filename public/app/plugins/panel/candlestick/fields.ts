@@ -1,19 +1,18 @@
 import {
-  type DataFrame,
-  type Field,
+  DataFrame,
+  Field,
   FieldType,
   getFieldDisplayName,
-  type GrafanaTheme2,
+  GrafanaTheme2,
   outerJoinDataFrames,
-  type TimeRange,
+  TimeRange,
 } from '@grafana/data';
-import { maybeSortFrame } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
-import { findField } from 'app/features/dimensions/utils';
+import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { findField } from 'app/features/dimensions';
 
 import { prepareGraphableFields } from '../timeseries/utils';
 
-import { type Options, type CandlestickFieldMap, VizDisplayMode } from './panelcfg.gen';
+import { Options, CandlestickFieldMap, VizDisplayMode } from './types';
 
 export interface FieldPickerInfo {
   /** property name */
@@ -29,39 +28,37 @@ export interface FieldPickerInfo {
   description: string;
 }
 
-export const getCandlestickFieldsInfo: () => Record<keyof CandlestickFieldMap, FieldPickerInfo> = () => {
-  return {
-    open: {
-      key: 'open',
-      name: t('candlestick.name-open', 'Open'),
-      defaults: ['open', 'o'],
-      description: t('candlestick.description-open', 'Value at the start of the period'),
-    },
-    high: {
-      key: 'high',
-      name: t('candlestick.name-high', 'High'),
-      defaults: ['high', 'h', 'max'],
-      description: t('candlestick.description-high', 'Maximum value within the period'),
-    },
-    low: {
-      key: 'low',
-      name: t('candlestick.name-low', 'Low'),
-      defaults: ['low', 'l', 'min'],
-      description: t('candlestick.description-low', 'Minimum value within the period'),
-    },
-    close: {
-      key: 'close',
-      name: t('candlestick.name-close', 'Close'),
-      defaults: ['close', 'c'],
-      description: t('candlestick.description-close', 'Value at the end of the period'),
-    },
-    volume: {
-      key: 'volume',
-      name: t('candlestick.name-volume', 'Volume'),
-      defaults: ['volume', 'v'],
-      description: t('candlestick.description-volume', 'Sample count within the period'),
-    },
-  };
+export const candlestickFieldsInfo: Record<keyof CandlestickFieldMap, FieldPickerInfo> = {
+  open: {
+    key: 'open',
+    name: 'Open',
+    defaults: ['open', 'o'],
+    description: 'Value at the start of the period',
+  },
+  high: {
+    key: 'high',
+    name: 'High',
+    defaults: ['high', 'h', 'max'],
+    description: 'Maximum value within the period',
+  },
+  low: {
+    key: 'low',
+    name: 'Low',
+    defaults: ['low', 'l', 'min'],
+    description: 'Minimum value within the period',
+  },
+  close: {
+    key: 'close',
+    name: 'Close',
+    defaults: ['close', 'c'],
+    description: 'Value at the end of the period',
+  },
+  volume: {
+    key: 'volume',
+    name: 'Volume',
+    defaults: ['volume', 'v'],
+    description: 'Sample count within the period',
+  },
 };
 
 export interface CandlestickData {
@@ -106,7 +103,6 @@ export function prepareCandlestickFields(
   if (!series?.length) {
     return null;
   }
-  const candlestickFieldsInfo = getCandlestickFieldsInfo();
 
   // All fields
   const fieldMap = options.fields ?? {};

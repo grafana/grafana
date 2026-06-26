@@ -1,9 +1,9 @@
 import { of } from 'rxjs';
 
-import { dateTime, type CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
+import { CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
+import { dateTime } from '@grafana/data/src/datetime/moment_wrapper';
 import { toDataQueryResponse } from '@grafana/runtime';
 
-import { MetricQueryType, MetricEditorMode, type CloudWatchMetricsQuery } from '../dataquery.gen';
 import {
   namespaceVariable,
   metricVariable,
@@ -12,10 +12,11 @@ import {
   dimensionVariable,
   periodIntervalVariable,
   accountIdVariable,
-} from '../mocks/CloudWatchDataSource';
-import { initialVariableModelState } from '../mocks/CloudWatchVariables';
-import { setupMockedMetricsQueryRunner } from '../mocks/MetricsQueryRunner';
-import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../mocks/queries';
+} from '../__mocks__/CloudWatchDataSource';
+import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
+import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
+import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
+import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -255,36 +256,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
-      it('should append -metrics to the request id', async () => {
-        const queries: CloudWatchMetricsQuery[] = [
-          {
-            id: '',
-            metricQueryType: MetricQueryType.Search,
-            metricEditorMode: MetricEditorMode.Builder,
-            queryMode: 'Metrics',
-            refId: 'A',
-            region: 'us-east-1',
-            namespace: 'AWS/EC2',
-            metricName: 'CPUUtilization',
-            dimensions: {
-              InstanceId: 'i-12345678',
-            },
-            statistic: 'Average',
-            period: '[[period]]',
-          },
-        ];
-
-        const { runner, queryMock, request } = setupMockedMetricsQueryRunner({
-          // DataSourceWithBackend runs toDataQueryResponse({response from CW backend})
-          response: toDataQueryResponse(resultsFromBEQuery),
-          variables: [periodIntervalVariable],
-        });
-
-        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith(() => {
-          expect(queryMock.mock.calls[0][0].requestId).toEqual('mockId-metrics');
-        });
-      });
-
       it('should return series list', async () => {
         const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
           // DataSourceWithBackend runs toDataQueryResponse({response from CW backend})
@@ -485,64 +456,26 @@ describe('CloudWatchMetricsQueryRunner', () => {
     });
   });
 
-  describe('interpolateMetricsQueryVariables', () => {
-    it('interpolates values correctly', () => {
-      const testQuery = {
-        id: 'a',
-        refId: 'a',
-        region: 'us-east-2',
-        namespace: '',
-        expression: 'ABS($datasource)',
-        sqlExpression: 'select SUM(CPUUtilization) from $datasource',
-        dimensions: { InstanceId: '$dimension' },
-        statistic: '',
-      };
-      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable] });
-      const result = runner.interpolateMetricsQueryVariables(testQuery, {
-        datasource: { text: 'foo', value: 'foo' },
-        dimension: { text: 'foo', value: 'foo' },
-      });
-      expect(result).toMatchObject({
-        alias: '',
-        metricName: '',
-        namespace: '',
-        period: '',
-        sqlExpression: 'select SUM(CPUUtilization) from foo',
-        expression: 'ABS(foo)',
-        dimensions: { InstanceId: ['foo'] },
-        statistic: '',
-        id: 'a',
-        accountId: undefined,
-        region: 'us-east-2',
-        refId: 'a',
-      });
-    });
-
-    it('interpolates accountId when present', () => {
+  describe('template variable interpolation', () => {
+    it('replaceMetricQueryVars interpolates account id if its part of the query', async () => {
       const { runner } = setupMockedMetricsQueryRunner({
         variables: [accountIdVariable],
       });
 
-      const result = runner.interpolateMetricsQueryVariables(
-        { ...validMetricSearchBuilderQuery, accountId: '$accountId' },
-        {}
-      );
+      const result = runner.replaceMetricQueryVars({ ...validMetricSearchBuilderQuery, accountId: '$accountId' }, {});
       expect(result.accountId).toBe(accountIdVariable.current.value);
     });
 
-    it('leaves accountId undefined when not specified', () => {
+    it('replaceMetricQueryVars should not change account id if its not part of the query', async () => {
       const { runner } = setupMockedMetricsQueryRunner({
         variables: [accountIdVariable],
       });
 
-      const result = runner.interpolateMetricsQueryVariables(
-        { ...validMetricSearchBuilderQuery, accountId: undefined },
-        {}
-      );
+      const result = runner.replaceMetricQueryVars({ ...validMetricSearchBuilderQuery, accountId: undefined }, {});
       expect(result.accountId).toBeUndefined();
     });
 
-    it('interpolates SQL expression variables via handleMetricQueries', async () => {
+    it('interpolates variables correctly', async () => {
       const { runner, queryMock, request } = setupMockedMetricsQueryRunner({
         variables: [namespaceVariable, metricVariable, limitVariable],
       });
@@ -912,6 +845,33 @@ describe('CloudWatchMetricsQueryRunner', () => {
         'CloudWatch templating error',
         'Multi template variables are not supported for region'
       );
+    });
+  });
+  describe('interpolateMetricsQueryVariables', () => {
+    it('interpolates values correctly', () => {
+      const testQuery = {
+        id: 'a',
+        refId: 'a',
+        region: 'us-east-2',
+        namespace: '',
+        expression: 'ABS($datasource)',
+        sqlExpression: 'select SUM(CPUUtilization) from $datasource',
+        dimensions: { InstanceId: '$dimension' },
+      };
+      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable] });
+      const result = runner.interpolateMetricsQueryVariables(testQuery, {
+        datasource: { text: 'foo', value: 'foo' },
+        dimension: { text: 'foo', value: 'foo' },
+      });
+      expect(result).toStrictEqual({
+        alias: '',
+        metricName: '',
+        namespace: '',
+        period: '',
+        sqlExpression: 'select SUM(CPUUtilization) from foo',
+        expression: 'ABS(foo)',
+        dimensions: { InstanceId: ['foo'] },
+      });
     });
   });
 

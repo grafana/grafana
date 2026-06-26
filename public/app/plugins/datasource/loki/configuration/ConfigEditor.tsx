@@ -1,4 +1,6 @@
-import { type DataSourcePluginOptionsEditorProps, type DataSourceSettings } from '@grafana/data';
+import { useCallback } from 'react';
+
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import {
   ConfigSection,
   DataSourceDescription,
@@ -6,11 +8,11 @@ import {
   Auth,
   convertLegacyAuthProps,
   AdvancedHttpSettings,
-} from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
+} from '@grafana/experimental';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Divider, SecureSocksProxySettings, Stack } from '@grafana/ui';
 
-import { type LokiOptions } from '../types';
+import { LokiOptions } from '../types';
 
 import { AlertingSettings } from './AlertingSettings';
 import { DerivedFields } from './DerivedFields';
@@ -19,7 +21,7 @@ import { QuerySettings } from './QuerySettings';
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
 const makeJsonUpdater =
-  <T,>(field: keyof LokiOptions) =>
+  <T extends any>(field: keyof LokiOptions) =>
   (options: DataSourceSettings<LokiOptions>, value: T): DataSourceSettings<LokiOptions> => {
     return {
       ...options,
@@ -31,10 +33,20 @@ const makeJsonUpdater =
   };
 
 const setMaxLines = makeJsonUpdater('maxLines');
+const setPredefinedOperations = makeJsonUpdater('predefinedOperations');
 const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  const updatePredefinedOperations = useCallback(
+    (value: string) => {
+      reportInteraction('grafana_loki_predefined_operations_changed', { value });
+      onOptionsChange(setPredefinedOperations(options, value));
+    },
+    [options, onOptionsChange]
+  );
+
   return (
     <>
       <DataSourceDescription
@@ -67,6 +79,8 @@ export const ConfigEditor = (props: Props) => {
           <QuerySettings
             maxLines={options.jsonData.maxLines || ''}
             onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
+            predefinedOperations={options.jsonData.predefinedOperations || ''}
+            onPredefinedOperationsChange={updatePredefinedOperations}
           />
           <DerivedFields
             fields={options.jsonData.derivedFields}

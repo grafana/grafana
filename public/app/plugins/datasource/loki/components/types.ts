@@ -1,6 +1,6 @@
-import { type QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 
-import { type LokiDatasource } from '../datasource';
-import { type LokiOptions, type LokiQuery } from '../types';
+import { LokiDatasource } from '../datasource';
+import { LokiOptions, LokiQuery } from '../types';
 
 export type LokiQueryEditorProps = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions>;

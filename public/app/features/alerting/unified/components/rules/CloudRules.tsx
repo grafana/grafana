@@ -1,34 +1,20 @@
 import { css } from '@emotion/css';
+import pluralize from 'pluralize';
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import {
-  Badge,
-  LinkButton,
-  LoadingPlaceholder,
-  Pagination,
-  Spinner,
-  Stack,
-  Text,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { LinkButton, LoadingPlaceholder, Pagination, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
-import { useImportEntrypointState } from '../../hooks/useImportEntrypointState';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
 import { isAsyncRequestStatePending } from '../../utils/redux';
-import { createRelativeUrl } from '../../utils/url';
 
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
@@ -41,16 +27,21 @@ interface Props {
 export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const styles = useStyles2(getStyles);
 
+  const dsConfigs = useUnifiedAlertingSelector((state) => state.dataSources);
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
-    () => rulesDataSources.filter((ds) => isAsyncRequestStatePending(promRules[ds.name])),
-    [promRules, rulesDataSources]
+    () =>
+      rulesDataSources.filter(
+        (ds) => isAsyncRequestStatePending(promRules[ds.name]) || isAsyncRequestStatePending(dsConfigs[ds.name])
+      ),
+    [promRules, dsConfigs, rulesDataSources]
   );
 
   const hasSomeResults = rulesDataSources.some((ds) => Boolean(promRules[ds.name]?.result?.length));
+
   const hasDataSourcesConfigured = rulesDataSources.length > 0;
   const hasDataSourcesLoading = dataSourcesLoading.length > 0;
   const hasNamespaces = namespaces.length > 0;
@@ -61,66 +52,39 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
-
-  const canMigrateToGMA =
-    hasDataSourcesConfigured &&
-    config.featureToggles.alertingMigrationUI &&
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
-    contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
-
   return (
     <section className={styles.wrapper}>
-      <Stack gap={2} direction="column">
-        <div className={styles.sectionHeader}>
-          <div className={styles.headerRow}>
-            <Text element="h2" variant="h5">
-              <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
-            </Text>
-            {dataSourcesLoading.length ? (
-              <LoadingPlaceholder
-                className={styles.loader}
-                text={t('alerting.list-view.section.loading-rules', '', {
-                  count: dataSourcesLoading.length,
-                  defaultValue_one: 'Loading rules from {{count}} sources',
-                  defaultValue_other: 'Loading rules from {{count}} sources',
-                })}
-              />
-            ) : (
-              <div />
-            )}
-            <Stack gap={1}>
-              {canMigrateToGMA && hasSomeResults && (
-                <MigrateToGMAButton disabled={importDisabled} disabledReason={importDisabledReason} />
-              )}
-              <CreateRecordingRuleButton />
-            </Stack>
-          </div>
+      <div className={styles.sectionHeader}>
+        <div className={styles.headerRow}>
+          <Text element="h2" variant="h5">
+            <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
+          </Text>
+          {dataSourcesLoading.length ? (
+            <LoadingPlaceholder
+              className={styles.loader}
+              text={`Loading rules from ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
+            />
+          ) : (
+            <div />
+          )}
+          <CreateRecordingRuleButton />
         </div>
-      </Stack>
+      </div>
 
-      {pageItems.map(({ group, namespace }) => (
-        <RulesGroup
-          group={group}
-          key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
-          namespace={namespace}
-          expandAll={expandAll}
-          viewMode={'grouped'}
-        />
-      ))}
+      {pageItems.map(({ group, namespace }) => {
+        return (
+          <RulesGroup
+            group={group}
+            key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
+            namespace={namespace}
+            expandAll={expandAll}
+            viewMode={'grouped'}
+          />
+        );
+      })}
 
-      {!hasDataSourcesConfigured && (
-        <p>
-          <Trans i18nKey="alerting.list-view.no-prom-or-loki-rules">
-            There are no Prometheus or Loki data sources configured
-          </Trans>
-        </p>
-      )}
-      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && (
-        <p>
-          <Trans i18nKey="alerting.list-view.no-rules">No rules found.</Trans>
-        </p>
-      )}
+      {!hasDataSourcesConfigured && <p>There are no Prometheus or Loki data sources configured.</p>}
+      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && <p>No rules found.</p>}
       {!hasSomeResults && hasDataSourcesLoading && <Spinner size="xl" className={styles.spinner} />}
 
       <Pagination
@@ -159,8 +123,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function CreateRecordingRuleButton() {
+export function CreateRecordingRuleButton() {
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+
   const location = useLocation();
 
   const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
@@ -172,49 +137,13 @@ function CreateRecordingRuleButton() {
         href={urlUtil.renderUrl(`alerting/new/recording`, {
           returnTo: location.pathname + location.search,
         })}
+        tooltip="Create new Data source-managed recording rule"
         icon="plus"
         variant="secondary"
       >
-        <Trans i18nKey="alerting.list-view.empty.new-ds-managed-recording-rule">
-          New data source-managed recording rule
-        </Trans>
+        New recording rule
       </LinkButton>
     );
   }
   return null;
-}
-
-interface MigrateToGMAButtonProps {
-  disabled: boolean;
-  disabledReason?: string;
-}
-
-function MigrateToGMAButton({ disabled, disabledReason }: MigrateToGMAButtonProps) {
-  const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
-
-  const button = (
-    <LinkButton variant="secondary" href={importUrl} icon="arrow-up" disabled={disabled}>
-      <Stack direction="row" gap={1} alignItems="center">
-        <Trans i18nKey="alerting.rule-list.import-to-gma.text">Import to Grafana-managed rules</Trans>
-        <Badge
-          text={t('alerting.rule-list.import-to-gma.new-badge', 'New!')}
-          aria-label={t('alerting.migrate-to-gmabutton.aria-label-new', 'new')}
-          color="blue"
-          icon="rocket"
-        />
-      </Stack>
-    </LinkButton>
-  );
-
-  // LinkButton applies `pointer-events: none` when disabled, which suppresses tooltip hover.
-  // Wrap in a span so the Tooltip's hover handlers attach to an element that still receives events.
-  if (disabled && disabledReason) {
-    return (
-      <Tooltip content={disabledReason}>
-        <span>{button}</span>
-      </Tooltip>
-    );
-  }
-
-  return button;
 }

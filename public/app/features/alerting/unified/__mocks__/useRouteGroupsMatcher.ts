@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 
-import { type Labels } from '@grafana/data';
+import { Labels } from '@grafana/data';
 
-import { type AlertmanagerGroup, type RouteWithID } from '../../../../plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, RouteWithID } from '../../../../plugins/datasource/alertmanager/types';
 import { routeGroupsMatcher } from '../routeGroupsMatcher';
 
 export function useRouteGroupsMatcher() {
@@ -10,9 +10,9 @@ export function useRouteGroupsMatcher() {
     return routeGroupsMatcher.getRouteGroupsMap(route, groups);
   }, []);
 
-  const matchInstancesToRoutes = useCallback(async (rootRoute: RouteWithID, instancesToMatch: Labels[]) => {
-    return routeGroupsMatcher.matchInstancesToRoutes(rootRoute, instancesToMatch);
+  const matchInstancesToRoute = useCallback(async (rootRoute: RouteWithID, instancesToMatch: Labels[]) => {
+    return routeGroupsMatcher.matchInstancesToRoute(rootRoute, instancesToMatch);
   }, []);
 
-  return { getRouteGroupsMap, matchInstancesToRoutes };
+  return { getRouteGroupsMap, matchInstancesToRoute };
 }

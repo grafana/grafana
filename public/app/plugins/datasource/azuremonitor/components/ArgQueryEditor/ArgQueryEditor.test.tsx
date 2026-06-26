@@ -1,12 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { mockComboboxRect } from '@grafana/test-utils';
-
-import { ARGScope } from '../../dataquery.gen';
+import createMockDatasource from '../../__mocks__/datasource';
+import createMockQuery from '../../__mocks__/query';
 import { selectors } from '../../e2e/selectors';
-import createMockDatasource from '../../mocks/datasource';
-import createMockQuery from '../../mocks/query';
 
 import ArgQueryEditor from './ArgQueryEditor';
 
@@ -33,40 +30,11 @@ const defaultProps = {
 };
 
 describe('ArgQueryEditor', () => {
-  beforeAll(() => {
-    mockComboboxRect();
-  });
   it('should render', async () => {
     render(<ArgQueryEditor {...defaultProps} />);
     expect(
       await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.container.input)
     ).toBeInTheDocument();
-  });
-
-  it('should change the scope to directory', async () => {
-    const datasource = createMockDatasource({
-      getSubscriptions: jest.fn().mockResolvedValue([{ value: 'foo' }]),
-    });
-    const onChange = jest.fn();
-    render(<ArgQueryEditor {...defaultProps} datasource={datasource} onChange={onChange} />);
-    expect(await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.scope.input)).toBeInTheDocument();
-
-    const scopeSelector = screen.getByTestId(selectors.components.queryEditor.argsQueryEditor.scope.input);
-
-    await userEvent.click(scopeSelector);
-    const directoryOption = await screen.findByRole('option', { name: 'Directory' });
-    await userEvent.click(directoryOption);
-
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        azureResourceGraph: {
-          query: 'Resources | summarize count()',
-          resultFormat: 'table',
-          scope: ARGScope.Directory,
-        },
-        subscriptions: [],
-      })
-    );
   });
 
   it('should select a subscription from the fetched array', async () => {
@@ -197,7 +165,7 @@ describe('ArgQueryEditor', () => {
     );
     expect(await waitFor(() => screen.findByText('foo'))).toBeInTheDocument();
 
-    const clear = screen.getByLabelText('Clear value');
+    const clear = screen.getByLabelText('select-clear-value');
     await userEvent.click(clear);
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: [] }));

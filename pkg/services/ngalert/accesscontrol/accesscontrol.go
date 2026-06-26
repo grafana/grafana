@@ -1,15 +1,11 @@
 package accesscontrol
 
 import (
-	"context"
-	"fmt"
+	"golang.org/x/net/context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
-
-var logger = log.New("ngalert.accesscontrol")
 
 type genericService struct {
 	ac accesscontrol.AccessControl
@@ -24,8 +20,7 @@ func (r genericService) HasAccess(ctx context.Context, user identity.Requester, 
 func (r genericService) HasAccessOrError(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator, action func() string) error {
 	has, err := r.HasAccess(ctx, user, evaluator)
 	if err != nil {
-		logger.Error("Access control evaluation failed", "error", err, "action", action())
-		return fmt.Errorf("%w: %w", NewAuthorizationErrorWithPermissions(action(), evaluator), err)
+		return err
 	}
 	if !has {
 		return NewAuthorizationErrorWithPermissions(action(), evaluator)

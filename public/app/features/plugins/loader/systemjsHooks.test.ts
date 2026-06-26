@@ -1,13 +1,13 @@
 import { config } from '@grafana/runtime';
 
-jest.mock('./pluginInfoCache', () => ({
-  resolvePluginUrlWithCache: (url: string) => `${url}?_cache=1234`,
+jest.mock('./cache', () => ({
+  resolveWithCache: (url: string) => `${url}?_cache=1234`,
 }));
 
 import { server } from './pluginLoader.mock';
 import { SystemJS } from './systemjs';
 import { decorateSystemJSFetch, decorateSystemJSResolve, getLoadPluginCssUrl } from './systemjsHooks';
-import { type SystemJSWithLoaderHooks } from './types';
+import { SystemJSWithLoaderHooks } from './types';
 
 describe('SystemJS Loader Hooks', () => {
   const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;

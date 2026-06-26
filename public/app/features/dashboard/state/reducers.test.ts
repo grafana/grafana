@@ -1,4 +1,4 @@
-import { DashboardInitPhase, type DashboardState } from 'app/types/dashboard';
+import { DashboardInitPhase, DashboardState } from 'app/types';
 
 import { createDashboardModelFixture, createPanelSaveModel } from './__fixtures__/dashboardFixtures';
 import {

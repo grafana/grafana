@@ -95,9 +95,9 @@ func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPo
 	}
 	// As the values are not encrypted when coming from disk files,
 	// we can simply return the fallback for validation.
-	err := provisioning.ValidateContactPoint(context.Background(), &cp, func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+	err := provisioning.ValidateContactPoint(context.Background(), cp, func(_ context.Context, _ map[string][]byte, _, fallback string) string {
 		return fallback
-	}, nil)
+	})
 	if err != nil {
 		return definitions.EmbeddedContactPoint{}, err
 	}

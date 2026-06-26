@@ -1,10 +1,10 @@
-import { render, screen } from 'test/test-utils';
+import { screen, render } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { SupportedPlugin } from '../types/pluginBridges';
 
-import { PluginBridge, createBridgeURL } from './PluginBridge';
+import { createBridgeURL, PluginBridge } from './PluginBridge';
 const NON_EXISTING_PLUGIN = '__does_not_exist__';
 setupMswServer();
 

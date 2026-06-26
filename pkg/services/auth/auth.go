@@ -20,10 +20,9 @@ const (
 
 // Typed errors
 var (
-	ErrUserTokenNotFound            = errors.New("user token not found")
-	ErrInvalidSessionToken          = usertoken.ErrInvalidSessionToken
-	ErrExternalSessionNotFound      = errors.New("external session not found")
-	ErrExternalSessionTokenNotFound = errors.New("session token was nil")
+	ErrUserTokenNotFound       = errors.New("user token not found")
+	ErrInvalidSessionToken     = usertoken.ErrInvalidSessionToken
+	ErrExternalSessionNotFound = errors.New("external session not found")
 )
 
 type (
@@ -75,15 +74,12 @@ type CreateTokenCommand struct {
 }
 
 // UserTokenService are used for generating and validating user tokens
-//
-//go:generate mockery --name UserTokenService --structname MockUserAuthTokenService --outpkg authtest --filename auth_token_service_mock.go --output ./authtest/
 type UserTokenService interface {
 	CreateToken(ctx context.Context, cmd *CreateTokenCommand) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
 	GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*UserToken, error)
-	GetExternalSession(ctx context.Context, externalSessionID int64) (*ExternalSession, error)
+	GetExternalSession(ctx context.Context, extSessionID int64) (*ExternalSession, error)
 	FindExternalSessions(ctx context.Context, query *ListExternalSessionQuery) ([]*ExternalSession, error)
-	UpdateExternalSession(ctx context.Context, externalSessionID int64, cmd *UpdateExternalSessionCommand) error
 
 	// RotateToken will always rotate a valid token
 	RotateToken(ctx context.Context, cmd RotateCommand) (*UserToken, error)

@@ -1,20 +1,15 @@
+import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { Box, Stack } from '@grafana/ui';
 
-import { type LogGroup, type LogGroupClass, LogsQueryLanguage, type LogsQueryScope } from '../../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../../datasource';
-import { useAccountOptions, useIsMonitoringAccount } from '../../../hooks';
-import { type DescribeLogGroupsRequest } from '../../../resources/types';
+import { CloudWatchDatasource } from '../../../datasource';
+import { useAccountOptions } from '../../../hooks';
+import { DescribeLogGroupsRequest } from '../../../resources/types';
+import { LogGroup } from '../../../types';
 import { isTemplateVariable } from '../../../utils/templateVariableUtils';
 
-import { AccountsSelector } from './AccountsSelector';
 import { LegacyLogGroupSelection } from './LegacyLogGroupNamesSelection';
-import { LogGroupClassSelector } from './LogGroupClassSelector';
-import { LogGroupPrefixInput } from './LogGroupPrefixInput';
-import { LogGroupQueryScopeSelector } from './LogGroupQueryScopeSelector';
 import { LogGroupsSelector } from './LogGroupsSelector';
 import { SelectedLogGroups } from './SelectedLogGroups';
 
@@ -26,18 +21,17 @@ type Props = {
   region: string;
   maxNoOfVisibleLogGroups?: number;
   onBeforeOpen?: () => void;
-  showQueryScopeSelector?: boolean;
-  queryLanguage?: LogsQueryLanguage;
-  logsQueryScope?: LogsQueryScope;
-  onLogsQueryScopeChange?: (scope: LogsQueryScope) => void;
-  logGroupPrefixes?: string[];
-  onLogGroupPrefixesChange?: (prefixes: string[]) => void;
-  logGroupClass?: LogGroupClass;
-  onLogGroupClassChange?: (logGroupClass: LogGroupClass) => void;
-  selectedAccountIds?: string[];
-  onSelectedAccountIdsChange?: (accountIds: string[]) => void;
 };
 
+const logGroupStyles = css({
+  display: 'flex',
+  flexDirection: 'column',
+  marginTop: 8,
+  '& div:first-child': {
+    marginBottom: 8,
+  },
+});
+// used in Config Editor and in Log Query Editor
 export const LogGroupsField = ({
   datasource,
   onChange,
@@ -46,30 +40,16 @@ export const LogGroupsField = ({
   region,
   maxNoOfVisibleLogGroups,
   onBeforeOpen,
-  showQueryScopeSelector,
-  queryLanguage,
-  logsQueryScope,
-  onLogsQueryScopeChange,
-  logGroupPrefixes,
-  onLogGroupPrefixesChange,
-  logGroupClass,
-  onLogGroupClassChange,
-  selectedAccountIds,
-  onSelectedAccountIdsChange,
 }: Props) => {
   const accountState = useAccountOptions(datasource?.resources, region);
-  const isMonitoringAccount = useIsMonitoringAccount(datasource?.resources, region);
   const [loadingLogGroupsStarted, setLoadingLogGroupsStarted] = useState(false);
-
-  const effectiveScope = logsQueryScope ?? 'logGroupName';
-  const shouldShowQueryScopeSelector =
-    showQueryScopeSelector ?? (queryLanguage === LogsQueryLanguage.CWLI || queryLanguage === undefined);
 
   useEffect(() => {
     // If log group names are stored in the query model, make a new DescribeLogGroups request for each log group to load the arn. Then update the query model.
     if (datasource && !loadingLogGroupsStarted && !logGroups?.length && legacyLogGroupNames?.length) {
       setLoadingLogGroupsStarted(true);
 
+      // there's no need to migrate variables, they will be taken care of in the logs query runner
       const variables = legacyLogGroupNames.filter((lgn) => isTemplateVariable(datasource.resources.templateSrv, lgn));
       const legacyLogGroupNameValues = legacyLogGroupNames.filter(
         (lgn) => !isTemplateVariable(datasource.resources.templateSrv, lgn)
@@ -82,7 +62,7 @@ export const LogGroupsField = ({
       )
         .then((results) => {
           const logGroups = results.flatMap((r) =>
-            r.results.map((lg) => ({
+            r.map((lg) => ({
               arn: lg.value.arn,
               name: lg.value.name,
               accountId: lg.accountId,
@@ -97,11 +77,11 @@ export const LogGroupsField = ({
     }
   }, [datasource, legacyLogGroupNames, logGroups, onChange, region, loadingLogGroupsStarted]);
 
-  const renderLogGroupNameMode = () => (
-    <Stack direction="column" gap={1}>
+  return (
+    <div className={logGroupStyles}>
       <LogGroupsSelector
         fetchLogGroups={async (params: Partial<DescribeLogGroupsRequest>) =>
-          datasource?.resources.getLogGroups({ region: region, ...params }) ?? { results: [] }
+          datasource?.resources.getLogGroups({ region: region, ...params }) ?? []
         }
         onChange={onChange}
         accountOptions={accountState.value}
@@ -113,87 +93,24 @@ export const LogGroupsField = ({
         selectedLogGroups={logGroups ?? []}
         onChange={onChange}
         maxNoOfVisibleLogGroups={maxNoOfVisibleLogGroups}
-      />
-    </Stack>
-  );
-
-  const renderPrefixFields = () => (
-    <Stack direction="row" gap={2} wrap="wrap" alignItems="flex-start">
-      <LogGroupPrefixInput
-        prefixes={logGroupPrefixes ?? []}
-        onChange={onLogGroupPrefixesChange ?? (() => {})}
-        variables={datasource?.getVariables()}
-      />
-      <LogGroupClassSelector value={logGroupClass} onChange={onLogGroupClassChange ?? (() => {})} />
-      {isMonitoringAccount && (
-        <AccountsSelector
-          accountOptions={accountState.value ?? []}
-          selectedAccountIds={selectedAccountIds}
-          onChange={onSelectedAccountIdsChange ?? (() => {})}
-        />
-      )}
-    </Stack>
-  );
-
-  const renderAllLogGroupsFields = () => (
-    <Stack direction="row" gap={2} wrap="wrap" alignItems="flex-start">
-      <LogGroupClassSelector value={logGroupClass} onChange={onLogGroupClassChange ?? (() => {})} />
-      {isMonitoringAccount && (
-        <AccountsSelector
-          accountOptions={accountState.value ?? []}
-          selectedAccountIds={selectedAccountIds}
-          onChange={onSelectedAccountIdsChange ?? (() => {})}
-        />
-      )}
-    </Stack>
-  );
-
-  if (!shouldShowQueryScopeSelector) {
-    return (
-      <Box marginTop={1} marginBottom={1}>
-        {renderLogGroupNameMode()}
-      </Box>
-    );
-  }
-
-  return (
-    <Box marginTop={1} marginBottom={1}>
-      <Stack direction="column" gap={1}>
-        <EditorRow>
-          <EditorField label="Query scope">
-            <LogGroupQueryScopeSelector value={effectiveScope} onChange={onLogsQueryScopeChange ?? (() => {})} />
-          </EditorField>
-        </EditorRow>
-
-        {effectiveScope === 'logGroupName' && renderLogGroupNameMode()}
-        {effectiveScope === 'namePrefix' && renderPrefixFields()}
-        {effectiveScope === 'allLogGroups' && renderAllLogGroupsFields()}
-      </Stack>
-    </Box>
+      ></SelectedLogGroups>
+    </div>
   );
 };
 
+// We had to bring back the Legacy Log Group selector to support due to an issue where GovClouds do not support the new Log Group API
+// when that is fixed we can get rid of this wrapper component and just export the LogGroupsField
 type WrapperProps = {
   datasource: CloudWatchDatasource;
   onChange: (logGroups: LogGroup[]) => void;
-  legacyLogGroupNames?: string[];
+  legacyLogGroupNames?: string[]; // will need this for a while for migration purposes
   logGroups?: LogGroup[];
   region: string;
   maxNoOfVisibleLogGroups?: number;
   onBeforeOpen?: () => void;
-  showQueryScopeSelector?: boolean;
 
+  // Legacy Props, can remove once we remove support for Legacy Log Group Selector
   legacyOnChange: (logGroups: string[]) => void;
-
-  queryLanguage?: LogsQueryLanguage;
-  logsQueryScope?: LogsQueryScope;
-  onLogsQueryScopeChange?: (scope: LogsQueryScope) => void;
-  logGroupPrefixes?: string[];
-  onLogGroupPrefixesChange?: (prefixes: string[]) => void;
-  logGroupClass?: LogGroupClass;
-  onLogGroupClassChange?: (logGroupClass: LogGroupClass) => void;
-  selectedAccountIds?: string[];
-  onSelectedAccountIdsChange?: (accountIds: string[]) => void;
 };
 
 export const LogGroupsFieldWrapper = (props: WrapperProps) => {

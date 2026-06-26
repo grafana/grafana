@@ -1,4 +1,4 @@
-import { type RAQBFieldTypes, type SQLSelectableValue } from '@grafana/sql';
+import { RAQBFieldTypes, SQLSelectableValue } from '@grafana/sql';
 
 export function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   const fields: SQLSelectableValue[] = [];
@@ -54,7 +54,7 @@ export function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   return fields;
 }
 
-function mapColumnTypeToIcon(type: string) {
+export function mapColumnTypeToIcon(type: string) {
   switch (type) {
     case 'TIME':
     case 'DATETIME':

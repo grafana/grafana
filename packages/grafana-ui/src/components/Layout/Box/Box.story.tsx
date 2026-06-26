@@ -1,17 +1,10 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 import { Text } from '../../Text/Text';
 import { Stack } from '../Stack/Stack';
 
-import {
-  Box,
-  type BackgroundColor,
-  type BorderColor,
-  type BorderStyle,
-  type BorderRadius,
-  type BoxShadow,
-} from './Box';
+import { Box, BackgroundColor, BorderColor, BorderStyle, BorderRadius, BoxShadow } from './Box';
 import mdx from './Box.mdx';
 
 const backgroundOptions: BackgroundColor[] = ['primary', 'secondary', 'canvas', 'error', 'success', 'warning', 'info'];
@@ -30,7 +23,7 @@ const borderRadiusOptions: BorderRadius[] = ['default', 'pill', 'circle'];
 const boxShadowOptions: BoxShadow[] = ['z1', 'z2', 'z3'];
 
 const meta: Meta<typeof Box> = {
-  title: 'Layout/Box',
+  title: 'General/Layout/Box',
   component: Box,
   parameters: {
     docs: {

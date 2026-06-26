@@ -1,6 +1,6 @@
-import { memo, useRef, useEffect } from 'react';
+import { PureComponent, createRef } from 'react';
 
-import { JsonExplorer, type JsonExplorerConfig } from './json_explorer/json_explorer'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
+import { JsonExplorer, JsonExplorerConfig } from './json_explorer/json_explorer'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
 
 interface Props {
   className?: string;
@@ -10,32 +10,45 @@ interface Props {
   onDidRender?: (formattedJson: {}) => void;
 }
 
-export const JSONFormatter = memo<Props>(
-  ({ className, json, config = { animateOpen: true }, open = 3, onDidRender }) => {
-    const wrapperRef = useRef<HTMLDivElement>(null);
+export class JSONFormatter extends PureComponent<Props> {
+  private wrapperRef = createRef<HTMLDivElement>();
 
-    useEffect(() => {
-      const wrapperEl = wrapperRef.current;
-      if (!wrapperEl) {
-        return;
-      }
+  static defaultProps = {
+    open: 3,
+    config: {
+      animateOpen: true,
+    },
+  };
 
-      const formatter = new JsonExplorer(json, open, config);
-      const hasChildren = wrapperEl.hasChildNodes();
-
-      if (hasChildren && wrapperEl.lastChild) {
-        wrapperEl.replaceChild(formatter.render(), wrapperEl.lastChild);
-      } else {
-        wrapperEl.appendChild(formatter.render());
-      }
-
-      if (onDidRender) {
-        onDidRender(formatter.json);
-      }
-    }, [json, config, open, onDidRender]);
-
-    return <div className={className} ref={wrapperRef} />;
+  componentDidMount() {
+    this.renderJson();
   }
-);
 
-JSONFormatter.displayName = 'JSONFormatter';
+  componentDidUpdate() {
+    this.renderJson();
+  }
+
+  renderJson = () => {
+    const { json, config, open, onDidRender } = this.props;
+    const wrapperEl = this.wrapperRef.current;
+    const formatter = new JsonExplorer(json, open, config);
+    // @ts-ignore
+    const hasChildren: boolean = wrapperEl.hasChildNodes();
+    if (hasChildren) {
+      // @ts-ignore
+      wrapperEl.replaceChild(formatter.render(), wrapperEl.lastChild);
+    } else {
+      // @ts-ignore
+      wrapperEl.appendChild(formatter.render());
+    }
+
+    if (onDidRender) {
+      onDidRender(formatter.json);
+    }
+  };
+
+  render() {
+    const { className } = this.props;
+    return <div className={className} ref={this.wrapperRef} />;
+  }
+}

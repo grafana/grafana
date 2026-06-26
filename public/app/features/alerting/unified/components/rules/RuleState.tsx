@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { type CombinedRule } from 'app/types/unified-alerting';
+import { Trans } from 'app/core/internationalization';
+import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { getFirstActiveAt, prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import { getFirstActiveAt, isAlertingRule, isGrafanaRecordingRule, isRecordingRule } from '../../utils/rules';
 import { StateTag } from '../StateTag';
 
 import { AlertStateTag } from './AlertStateTag';
@@ -21,19 +21,12 @@ interface Props {
 
 export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => {
   const style = useStyles2(getStyle);
-
   const { promRule, rulerRule } = rule;
   // return how long the rule has been in its firing state, if any
   const RecordingRuleState = () => {
-    if (isPaused && rulerRuleType.grafana.recordingRule(rulerRule)) {
+    if (isPaused && isGrafanaRecordingRule(rulerRule)) {
       return (
-        <Tooltip
-          content={t(
-            'alerting.rule-state.recording-rule-state.content-recording-rule-evaluation-is-currently-paused',
-            'Recording rule evaluation is currently paused'
-          )}
-          placement="top"
-        >
+        <Tooltip content={'Recording rule evaluation is currently paused'} placement="top">
           <StateTag state="warning">
             <Icon name="pause" size="xs" />
             <Trans i18nKey="alerting.rule-state.paused">Paused</Trans>
@@ -46,7 +39,8 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
   };
   const forTime = useMemo(() => {
     if (
-      prometheusRuleType.alertingRule(promRule) &&
+      promRule &&
+      isAlertingRule(promRule) &&
       promRule.alerts?.length &&
       promRule.state !== PromAlertingRuleState.Inactive
     ) {
@@ -57,20 +51,14 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
       if (firstActiveAt) {
         return (
           <span title={String(firstActiveAt)} className={style.for}>
-            <Trans
-              i18nKey="alerting.rule-state.for"
-              values={{
-                duration: intervalToAbbreviatedDurationString(
-                  {
-                    start: firstActiveAt,
-                    end: new Date(),
-                  },
-                  false
-                ),
-              }}
-            >
-              for {'{{duration}}'}
-            </Trans>{' '}
+            for{' '}
+            {intervalToAbbreviatedDurationString(
+              {
+                start: firstActiveAt,
+                end: new Date(),
+              },
+              false
+            )}
           </span>
         );
       }
@@ -92,17 +80,17 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
         <Trans i18nKey="alerting.rule-state.creating">Creating</Trans>
       </Stack>
     );
-  } else if (prometheusRuleType.alertingRule(promRule)) {
+  } else if (promRule && isAlertingRule(promRule)) {
     return (
       <Stack gap={1}>
         <AlertStateTag state={promRule.state} isPaused={isPaused} />
         {!isPaused && forTime}
       </Stack>
     );
-  } else if (promRule && prometheusRuleType.recordingRule(promRule)) {
+  } else if (promRule && isRecordingRule(promRule)) {
     return <RecordingRuleState />;
   }
-  return <Trans i18nKey="alerting.rule-state.na">n/a</Trans>;
+  return <>n/a</>;
 };
 
 const getStyle = (theme: GrafanaTheme2) => ({

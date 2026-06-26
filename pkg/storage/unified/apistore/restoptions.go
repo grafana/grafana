@@ -3,11 +3,13 @@
 package apistore
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
+	"gocloud.dev/blob/fileblob"
+	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -17,119 +19,83 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
-type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
+// This is a copy of the original flag, as we are not allowed to import grafana core.
+const bigObjectSupportFlag = "unifiedStorageBigObjectsSupport"
 
 type RESTOptionsGetter struct {
-	client         resource.ResourceClient
-	secrets        secret.InlineSecureValueSupport
-	original       storagebackend.Config
-	configProvider RestConfigProvider
-
-	// Each group+resource may need custom options
-	options map[string]StorageOptions
+	client   resource.ResourceClient
+	original storagebackend.Config
+	// As we are not allowed to import the feature management directly, we pass a map of enabled features.
+	features map[string]any
 }
 
-func NewRESTOptionsGetterForClient(
-	client resource.ResourceClient,
-	secrets secret.InlineSecureValueSupport,
-	original storagebackend.Config,
-	configProvider RestConfigProvider,
-) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config, features map[string]any) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		client:         client,
-		secrets:        secrets,
-		original:       original,
-		options:        make(map[string]StorageOptions),
-		configProvider: configProvider,
+		client:   client,
+		original: original,
+		features: features,
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, secrets secret.InlineSecureValueSupport) (*RESTOptionsGetter, error) {
-	// Create BadgerDB with in-memory mode
-	db, err := badger.Open(badger.DefaultOptions("").
-		WithInMemory(true).
-		WithMemTableSize(256 << 10).  // 256KB memtable size
-		WithValueThreshold(16 << 10). // 16KB threshold for storing values in LSM vs value log
-		WithNumMemtables(2).          // Keep only 2 memtables in memory
-		WithLogger(nil))
-	if err != nil {
-		return nil, err
-	}
-
-	kv := resource.NewBadgerKV(db)
-	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore:       kv,
-		Log:           log.New(),
-		DisablePruner: true,
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, features map[string]any) (*RESTOptionsGetter, error) {
+	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
+		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
-		secrets,
 		originalStorageConfig,
-		nil,
+		features,
 	), nil
 }
 
 // Optionally, this constructor allows specifying directories
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
-func NewRESTOptionsGetterForFileXX(path string,
+func NewRESTOptionsGetterForFile(path string,
 	originalStorageConfig storagebackend.Config,
 	features map[string]any) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
 
-	db, err := badger.Open(badger.DefaultOptions(filepath.Join(path, "badger")).
-		WithLogger(nil))
-	if err != nil {
-		return nil, err
-	}
-
-	kv := resource.NewBadgerKV(db)
-	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore: kv,
-		Log:     log.New(),
+	bucket, err := fileblob.OpenBucket(filepath.Join(path, "resource"), &fileblob.Options{
+		CreateDir: true,
+		Metadata:  fileblob.MetadataDontWrite, // skip
 	})
 	if err != nil {
 		return nil, err
 	}
-
+	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
+		Bucket: bucket,
+	})
+	if err != nil {
+		return nil, err
+	}
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
-		nil, // secrets
 		originalStorageConfig,
-		nil,
+		features,
 	), nil
-}
-
-func (r *RESTOptionsGetter) RegisterOptions(gr schema.GroupResource, opts StorageOptions) {
-	r.options[gr.String()] = opts
 }
 
 // TODO: The RESTOptionsGetter interface added a new example object parameter to help determine the default
@@ -165,17 +131,19 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			opts := r.options[resource.String()]
-			opts.SecureValues = r.secrets
+			if _, enabled := r.features[bigObjectSupportFlag]; enabled {
+				return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
+					trigger, indexers, LargeObjectSupportEnabled)
+			}
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
-				trigger, indexers, r.configProvider, opts)
+				trigger, indexers, LargeObjectSupportDisabled)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
 		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
 		ResourcePrefix:            "/group/" + resource.Group + "/resource/" + resource.Resource,
 		CountMetricPollPeriod:     1 * time.Second,
-		StorageObjectCountTracker: storageConfig.StorageObjectCountTracker,
+		StorageObjectCountTracker: storageConfig.Config.StorageObjectCountTracker,
 	}
 
 	return ret, nil

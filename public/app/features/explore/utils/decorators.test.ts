@@ -1,23 +1,19 @@
 import { lastValueFrom } from 'rxjs';
 
 import {
-  type DataFrame,
+  DataFrame,
   FieldType,
   LoadingState,
-  type PanelData,
+  PanelData,
   getDefaultTimeRange,
   toDataFrame,
-  type DataSourceApi,
-  type DataSourceInstanceSettings,
-  type PanelPluginMeta,
-  standardTransformersRegistry,
+  DataSourceApi,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
-import { joinByFieldTransformer, mergeTransformer } from '@grafana/data/internal';
-import { type CorrelationData } from '@grafana/runtime';
-import { setPanelPluginMetas } from '@grafana/runtime/internal';
-import { type DataSourceJsonData, type DataQuery } from '@grafana/schema';
+import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
-import { type ExplorePanelData } from 'app/types/explore';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
+import { ExplorePanelData } from 'app/types';
 
 import {
   decorateWithCorrelations,
@@ -33,19 +29,14 @@ jest.mock('@grafana/data', () => ({
   dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
 
-beforeAll(() => {
-  standardTransformersRegistry.setInit(() =>
-    [joinByFieldTransformer, mergeTransformer].map((t) => ({
-      id: t.id,
-      aliasIds: t.aliasIds,
-      name: t.name,
-      transformation: () => Promise.resolve(t),
-      description: t.description,
-      editor: () => null,
-      imageDark: '',
-      imageLight: '',
-    }))
-  );
+jest.mock('../../plugins/importPanelPlugin', () => {
+  const actual = jest.requireActual('../../plugins/importPanelPlugin');
+  return {
+    ...actual,
+    hasPanelPlugin: (id: string) => {
+      return id === 'someCustomPanelPlugin';
+    },
+  };
 });
 
 const getTestContext = () => {
@@ -135,13 +126,14 @@ const datasource = {
 
 const datasourceInstance = {
   name: datasource.name,
+  id: 1,
   uid: datasource.uid,
   type: datasource.type,
   jsonData: {},
 } as DataSourceInstanceSettings<DataSourceJsonData>;
 
 describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
-  it('should correctly classify the dataFrames', async () => {
+  it('should correctly classify the dataFrames', () => {
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const series = [table, logs, timeSeries, emptyTable, flameGraph];
     const timeRange = getDefaultTimeRange();
@@ -151,7 +143,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       timeRange,
     };
 
-    expect(await decorateWithFrameTypeMetadata(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,
       state: LoadingState.Done,
       timeRange,
@@ -170,7 +162,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
     });
   });
 
-  it('should handle empty array', async () => {
+  it('should handle empty array', () => {
     const series: DataFrame[] = [];
     const timeRange = getDefaultTimeRange();
     const panelData: PanelData = {
@@ -179,7 +171,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       timeRange,
     };
 
-    expect(await decorateWithFrameTypeMetadata(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [],
       state: LoadingState.Done,
       timeRange: timeRange,
@@ -198,7 +190,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
     });
   });
 
-  it('should return frames even if there is an error', async () => {
+  it('should return frames even if there is an error', () => {
     const { timeSeries, logs, table } = getTestContext();
     const series: DataFrame[] = [timeSeries, logs, table];
     const timeRange = getDefaultTimeRange();
@@ -209,7 +201,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       timeRange,
     };
 
-    expect(await decorateWithFrameTypeMetadata(panelData)).toEqual({
+    expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series: [timeSeries, logs, table],
       error: {},
       state: LoadingState.Error,
@@ -367,11 +359,7 @@ describe('decorateWithLogsResult', () => {
 });
 
 describe('decorateWithCustomFrames', () => {
-  beforeEach(() => {
-    setPanelPluginMetas({});
-  });
-
-  it('returns empty array if no custom frames', async () => {
+  it('returns empty array if no custom frames', () => {
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const series = [table, logs, timeSeries, emptyTable, flameGraph];
     const timeRange = getDefaultTimeRange();
@@ -381,10 +369,9 @@ describe('decorateWithCustomFrames', () => {
       timeRange,
     };
 
-    expect((await decorateWithFrameTypeMetadata(panelData)).customFrames).toEqual([]);
+    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([]);
   });
-  it('returns data if we have custom frames', async () => {
-    setPanelPluginMetas({ someCustomPanelPlugin: { id: 'someCustomPanelPlugin' } as PanelPluginMeta });
+  it('returns data if we have custom frames', () => {
     const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
     const customFrame = toDataFrame({
       name: 'custom-panel',
@@ -401,7 +388,7 @@ describe('decorateWithCustomFrames', () => {
       timeRange,
     };
 
-    expect((await decorateWithFrameTypeMetadata(panelData)).customFrames).toEqual([customFrame]);
+    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([customFrame]);
   });
 });
 

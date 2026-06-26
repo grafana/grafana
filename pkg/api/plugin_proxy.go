@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -44,7 +43,7 @@ func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 		return
 	}
 
-	query := pluginsettings.GetByPluginIDArgs{OrgID: c.GetOrgID(), PluginID: plugin.ID}
+	query := pluginsettings.GetByPluginIDArgs{OrgID: c.SignedInUser.GetOrgID(), PluginID: plugin.ID}
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to fetch plugin settings", err)
@@ -52,15 +51,7 @@ func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 	}
 
 	proxyPath := getProxyPath(c)
-
-	secureJsonData := func(ctx context.Context) (map[string]string, error) {
-		return hs.SecretsService.DecryptJsonData(ctx, ps.SecureJSONData)
-	}
-
-	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes,
-		c.Req, c.Resp, c.SignedInUser,
-		proxyPath, hs.Cfg.DataProxyLogging, hs.Cfg.SendUserHeader,
-		secureJsonData, hs.tracer, pluginProxyTransport, hs.AccessControl, hs.Features)
+	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes, c, proxyPath, hs.Cfg, hs.SecretsService, hs.tracer, pluginProxyTransport, hs.AccessControl, hs.Features)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to create plugin proxy", err)
 		return

@@ -1,11 +1,9 @@
 import { useContext } from 'react';
 
-import { type KeyValue } from '../../types/data';
+import { Context, PluginContextType } from './PluginContext';
 
-import { PluginContext, type PluginContextType } from './PluginContext';
-
-export function usePluginContext<T extends KeyValue = KeyValue>(): PluginContextType<T> | null {
-  const context = useContext(PluginContext);
+export function usePluginContext(): PluginContextType | null {
+  const context = useContext(Context);
 
   // The extensions hooks (e.g. `usePluginLinks()`) are using this hook to check
   // if they are inside a plugin or not (core Grafana), so we should be able to return an empty state as well (`null`).
@@ -13,6 +11,5 @@ export function usePluginContext<T extends KeyValue = KeyValue>(): PluginContext
     return null;
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return context as PluginContextType<T>;
+  return context;
 }

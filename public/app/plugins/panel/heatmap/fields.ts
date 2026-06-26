@@ -1,25 +1,21 @@
 import {
   cacheFieldDisplayNames,
-  type DataFrame,
+  DataFrame,
   DataFrameType,
-  type Field,
+  Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getLinksSupplier,
-  type GrafanaTheme2,
-  type InterpolateFunction,
+  GrafanaTheme2,
+  InterpolateFunction,
   outerJoinDataFrames,
-  type TimeRange,
-  type ValueFormatter,
+  TimeRange,
+  ValueFormatter,
 } from '@grafana/data';
 import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
-import {
-  HeatmapCalculationMode,
-  type HeatmapCalculationOptions,
-  HeatmapCellLayout,
-  ScaleDistribution,
-} from '@grafana/schema';
+import { config } from '@grafana/runtime';
+import { HeatmapCellLayout } from '@grafana/schema';
 import {
   calculateHeatmapFromData,
   isHeatmapCellsDense,
@@ -27,7 +23,7 @@ import {
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { type CellValues, type Options } from './panelcfg.gen';
+import { CellValues, Options } from './types';
 import { boundedMinMax, valuesToFills } from './utils';
 
 export interface HeatmapData {
@@ -89,11 +85,6 @@ export function prepareHeatmapData({
   replaceVariables = (v) => v,
   timeRange,
 }: PrepareHeatmapDataOptions): HeatmapData {
-  // exclude empty frames
-  frames = frames.filter(
-    (frame) => frame.length > 0 && frame.fields.length > 0 && frame.fields.every((field) => field.values.length > 0)
-  );
-
   if (!frames?.length) {
     return {};
   }
@@ -107,16 +98,36 @@ export function prepareHeatmapData({
   });
 
   if (options.calculate) {
-    // if calculate is true, we need to have the default values for the calculation if they don't exist
-    let calculation = getCalculationObjectWithDefaults(options.calculation);
+    if (config.featureToggles.transformationsVariableSupport) {
+      const optionsCopy = {
+        ...options,
+        calculation: {
+          xBuckets: { ...options.calculation?.xBuckets } ?? undefined,
+          yBuckets: { ...options.calculation?.yBuckets } ?? undefined,
+        },
+      };
 
-    calculation.xBuckets.value = replaceVariables(calculation.xBuckets.value ?? '');
-    calculation.yBuckets.value = replaceVariables(calculation.yBuckets.value ?? '');
+      if (optionsCopy.calculation?.xBuckets?.value && replaceVariables !== undefined) {
+        optionsCopy.calculation.xBuckets.value = replaceVariables(optionsCopy.calculation.xBuckets.value);
+      }
+
+      if (optionsCopy.calculation?.yBuckets?.value && replaceVariables !== undefined) {
+        optionsCopy.calculation.yBuckets.value = replaceVariables(optionsCopy.calculation.yBuckets.value);
+      }
+
+      return getDenseHeatmapData(
+        calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
+        exemplars,
+        optionsCopy,
+        palette,
+        theme
+      );
+    }
 
     return getDenseHeatmapData(
-      calculateHeatmapFromData(frames, { ...calculation, timeRange }),
+      calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
       exemplars,
-      { ...options, calculation },
+      options,
       palette,
       theme
     );
@@ -195,23 +206,6 @@ export function prepareHeatmapData({
     series: rowsHeatmap,
   };
 }
-
-const getCalculationObjectWithDefaults = (calculation?: HeatmapCalculationOptions) => {
-  return {
-    xBuckets: {
-      ...calculation?.xBuckets,
-      mode: calculation?.xBuckets?.mode ?? HeatmapCalculationMode.Size,
-    },
-    yBuckets: {
-      ...calculation?.yBuckets,
-      mode: calculation?.yBuckets?.mode ?? HeatmapCalculationMode.Size,
-      scale: {
-        ...calculation?.yBuckets?.scale,
-        type: calculation?.yBuckets?.scale?.type ?? ScaleDistribution.Linear,
-      },
-    },
-  };
-};
 
 const getSparseHeatmapData = (
   frame: DataFrame,

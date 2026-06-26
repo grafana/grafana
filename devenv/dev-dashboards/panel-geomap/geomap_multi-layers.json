@@ -29,7 +29,10 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -319,7 +322,10 @@
       "type": "geomap"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -431,7 +437,11 @@
     }
   ],
   "schemaVersion": 36,
-  "tags": ["gdev", "panel-tests", "geomap"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "geomap"
+  ],
   "templating": {
     "list": []
   },

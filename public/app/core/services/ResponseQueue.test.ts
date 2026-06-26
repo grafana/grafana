@@ -1,11 +1,11 @@
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
 
-import { type BackendSrvRequest } from '@grafana/runtime';
+import { BackendSrvRequest } from '@grafana/runtime';
 
-import { type FetchQueue, type FetchQueueUpdate } from './FetchQueue';
+import { FetchQueue, FetchQueueUpdate } from './FetchQueue';
+import { subscribeTester } from './FetchQueue.test';
 import { ResponseQueue } from './ResponseQueue';
-import { subscribeTester } from './mocks/subscribeTester';
 
 const getTestContext = () => {
   const id = 'id';

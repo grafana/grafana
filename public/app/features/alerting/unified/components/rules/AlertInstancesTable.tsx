@@ -1,16 +1,15 @@
-import * as React from 'react';
 import { useMemo } from 'react';
+import * as React from 'react';
 
-import { AlertLabels } from '@grafana/alerting/unstable';
-import { dateTime } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
+import { PluginExtensionPoints, dateTime, findCommonLabels } from '@grafana/data';
+import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
-import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
+import { AlertLabels } from '../AlertLabels';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { AlertInstanceExtensionPoint } from '../extensions/AlertInstanceExtensionPoint';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
-import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
 import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
@@ -18,73 +17,35 @@ interface Props {
   instances: Alert[];
   pagination?: PaginationProps;
   footerRow?: React.ReactNode;
-  showNotificationColumn?: boolean;
+}
+
+interface AlertWithCommonLabels extends Alert {
+  commonLabels?: Record<string, string>;
 }
 
 interface RuleAndAlert {
   rule?: CombinedRule;
-  alert: Alert;
+  alert: AlertWithCommonLabels;
 }
 
 type AlertTableColumnProps = DynamicTableColumnProps<RuleAndAlert>;
 type AlertTableItemProps = DynamicTableItemProps<RuleAndAlert>;
 
-export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, showNotificationColumn }: Props) => {
+export const AlertInstancesTable = ({ rule, instances, pagination, footerRow }: Props) => {
+  const commonLabels = useMemo(() => {
+    // only compute the common labels if we have more than 1 instance, if we don't then that single instance
+    // will have the complete set of common labels and no unique ones
+    return instances.length > 1 ? findCommonLabels(instances.map((instance) => instance.labels)) : {};
+  }, [instances]);
+
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
-        data: { rule, alert: instance },
+        data: { rule, alert: { ...instance, commonLabels } },
         id: alertInstanceKey(instance),
       })),
-    [instances, rule]
+    [commonLabels, instances, rule]
   );
-
-  const columns: AlertTableColumnProps[] = [
-    {
-      id: 'state',
-      label: t('alerting.alert-instances-table.state', 'State'),
-      // eslint-disable-next-line react/display-name
-      renderCell: ({
-        data: {
-          alert: { state },
-        },
-      }) => <AlertStateTag state={state} />,
-      size: '95px',
-    },
-    {
-      id: 'labels',
-      label: t('alerting.alert-instances-table.labels', 'Labels'),
-      // eslint-disable-next-line react/display-name
-      renderCell: ({
-        data: {
-          alert: { labels },
-        },
-      }) => <AlertLabels labels={labels} labelSets={instances.map((i) => i.labels)} displayCommonLabels size="sm" />,
-    },
-    {
-      id: 'created',
-      label: t('alerting.alert-instances-table.created', 'Created'),
-      // eslint-disable-next-line react/display-name
-      renderCell: ({
-        data: {
-          alert: { activeAt },
-        },
-      }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
-      size: '150px',
-    },
-    ...(showNotificationColumn
-      ? [
-          {
-            id: 'actions',
-            label: t('alerting.alert-instances-table.destination', 'Destination'),
-            renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
-              <AlertInstanceNotificationAction rule={rule} instance={alert} />
-            ),
-            size: '120px',
-          } satisfies AlertTableColumnProps,
-        ]
-      : []),
-  ];
 
   return (
     <DynamicTable
@@ -97,3 +58,51 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
     />
   );
 };
+
+const columns: AlertTableColumnProps[] = [
+  {
+    id: 'state',
+    label: 'State',
+    // eslint-disable-next-line react/display-name
+    renderCell: ({
+      data: {
+        alert: { state },
+      },
+    }) => <AlertStateTag state={state} />,
+    size: '80px',
+  },
+  {
+    id: 'labels',
+    label: 'Labels',
+    // eslint-disable-next-line react/display-name
+    renderCell: ({
+      data: {
+        alert: { labels, commonLabels },
+      },
+    }) => <AlertLabels labels={labels} commonLabels={commonLabels} size="sm" />,
+  },
+  {
+    id: 'created',
+    label: 'Created',
+    // eslint-disable-next-line react/display-name
+    renderCell: ({
+      data: {
+        alert: { activeAt },
+      },
+    }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
+    size: '150px',
+  },
+  {
+    id: 'actions',
+    label: '',
+    renderCell: ({ data: { alert, rule } }) => (
+      <AlertInstanceExtensionPoint
+        rule={rule}
+        instance={alert}
+        extensionPointId={PluginExtensionPoints.AlertInstanceAction}
+        key="alert-instance-extension-point"
+      />
+    ),
+    size: '40px',
+  },
+];

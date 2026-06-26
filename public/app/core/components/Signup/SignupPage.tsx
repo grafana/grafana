@@ -1,11 +1,10 @@
 import { useForm } from 'react-hook-form';
 
-import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
@@ -67,14 +66,10 @@ export const SignupPage = ({ queryParams }: Props) => {
     <LoginLayout>
       <InnerBox>
         <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
-          <Field label={t('sign-up.user-name-label', 'Your name')}>
-            <Input
-              id="user-name"
-              {...register('name')}
-              placeholder={t('sign-up.user-name-placeholder', '(optional)')}
-            />
+          <Field label="Your name">
+            <Input id="user-name" {...register('name')} placeholder="(optional)" />
           </Field>
-          <Field label={t('sign-up.email-label', 'Email')} invalid={!!errors.email} error={errors.email?.message}>
+          <Field label="Email" invalid={!!errors.email} error={errors.email?.message}>
             <Input
               id="email"
               {...register('email', {
@@ -85,23 +80,20 @@ export const SignupPage = ({ queryParams }: Props) => {
                 },
               })}
               type="email"
+              placeholder="Email"
             />
           </Field>
           {!getConfig().autoAssignOrg && (
-            <Field label={t('sign-up.org-name-label', 'Org. name')}>
-              <Input id="org-name" {...register('orgName')} />
+            <Field label="Org. name">
+              <Input id="org-name" {...register('orgName')} placeholder="Org. name" />
             </Field>
           )}
           {getConfig().verifyEmailEnabled && (
-            <Field label={t('sign-up.verification-code-label', 'Email verification code (sent to your email)')}>
-              <Input id="verification-code" {...register('code')} />
+            <Field label="Email verification code (sent to your email)">
+              <Input id="verification-code" {...register('code')} placeholder="Code" />
             </Field>
           )}
-          <Field
-            label={t('sign-up.password-label', 'Password')}
-            invalid={!!errors.password}
-            error={errors?.password?.message}
-          >
+          <Field label="Password" invalid={!!errors.password} error={errors?.password?.message}>
             <PasswordField
               id="new-password"
               autoFocus
@@ -109,11 +101,7 @@ export const SignupPage = ({ queryParams }: Props) => {
               {...register('password', { required: 'Password is required' })}
             />
           </Field>
-          <Field
-            label={t('sign-up.confirm-password-label', 'Confirm password')}
-            invalid={!!errors.confirm}
-            error={errors?.confirm?.message}
-          >
+          <Field label="Confirm password" invalid={!!errors.confirm} error={errors?.confirm?.message}>
             <PasswordField
               id="confirm-new-password"
               autoComplete="new-password"
@@ -125,11 +113,9 @@ export const SignupPage = ({ queryParams }: Props) => {
           </Field>
 
           <Stack>
-            <Button type="submit">
-              <Trans i18nKey="sign-up.submit-button">Submit</Trans>
-            </Button>
+            <Button type="submit">Submit</Button>
             <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
-              <Trans i18nKey="sign-up.back-button">Back to login</Trans>
+              Back to login
             </LinkButton>
           </Stack>
         </form>

@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Spinner, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { Spinner, useStyles2 } from '@grafana/ui/src';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { type ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
-import { useSelector } from 'app/types/store';
+import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
+import { useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../../../../plugins/admin/components/HorizontalGroup';
 
@@ -22,7 +21,7 @@ export const Loader = () => {
   return (
     <HorizontalGroup className={styles.loadingContainer}>
       <>
-        <Trans i18nKey="dashboard.share-public-dashboard-loader.loading-configuration">Loading configuration</Trans>
+        Loading configuration
         <Spinner size="lg" className={styles.spinner} />
       </>
     </HorizontalGroup>

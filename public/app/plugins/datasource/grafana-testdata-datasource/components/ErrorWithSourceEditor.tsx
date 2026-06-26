@@ -1,6 +1,6 @@
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
-import { type EditorProps } from '../QueryEditor';
+import { EditorProps } from '../QueryEditor';
 
 const OPTIONS = [
   {

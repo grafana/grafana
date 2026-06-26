@@ -1,7 +1,7 @@
 import pluralize from 'pluralize';
 
 import { useStyles2 } from '@grafana/ui';
-import { type AlertState, type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 import { getNotificationsTextColors } from '../../styles/notifications';
 

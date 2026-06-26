@@ -1,130 +1,94 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 
-import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
+import { TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTransformationContent } from 'app/features/transformers/docs/getTransformationContent';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 
-jest.mock('app/features/transformers/docs/getTransformationContent', () => ({
-  getTransformationContent: jest.fn(),
-}));
+// Mock the onCloseClick function
+const mockOnCloseClick = jest.fn();
 
-const mockGetTransformationContent = jest.mocked(getTransformationContent);
+const standardTransformers: Array<TransformerRegistryItem<null>> = getStandardTransformers();
 
-const mockTransformationInfo: DataTransformerInfo = {
-  id: 'test-transform',
-  name: 'Test Transform',
-  operator: jest.fn(),
-};
-
-const mockTransformer: TransformerRegistryItem<null> = {
-  id: 'test-transform',
-  name: 'Test Transform',
-  transformation: () => Promise.resolve(mockTransformationInfo),
-  editor: () => null,
-  imageDark: '',
-  imageLight: '',
-};
+const singleTestTransformer: TransformerRegistryItem<null> = standardTransformers[0];
 
 describe('TransformationEditorHelpDisplay', () => {
-  let mockOnCloseClick: jest.Mock;
+  it('renders the modal with the correct title and content', () => {
+    // Test each transformer
+    standardTransformers.forEach((transformer) => {
+      const { unmount } = render(
+        <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={transformer} />
+      );
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockOnCloseClick = jest.fn();
-    mockGetTransformationContent.mockResolvedValue({
-      name: 'Test Transform',
-      helperDocs: 'Test help content',
+      // Check if the modal title is rendered with the correct text
+      expect(screen.getByText(`Transformation help`)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.General.subtitle)).toBeInTheDocument();
+
+      // Unmount the component to clean up
+      unmount();
     });
+  });
+
+  it('calls onCloseClick when the modal is dismissed', () => {
+    render(
+      <TransformationEditorHelpDisplay
+        isOpen={true}
+        onCloseClick={mockOnCloseClick}
+        transformer={singleTestTransformer}
+      />
+    );
+
+    // Find and click the modal's close button
+    const closeButton = screen.getByTestId('data-testid Drawer close');
+    fireEvent.click(closeButton);
+
+    // Ensure that the onCloseClick function was called with the correct argument
+    expect(mockOnCloseClick).toHaveBeenCalledWith(false);
   });
 
   it('does not render when isOpen is false', () => {
     render(
-      <TransformationEditorHelpDisplay isOpen={false} onCloseClick={mockOnCloseClick} transformer={mockTransformer} />
+      <TransformationEditorHelpDisplay
+        isOpen={false}
+        onCloseClick={mockOnCloseClick}
+        transformer={singleTestTransformer}
+      />
     );
 
-    expect(screen.queryByText('Transformation help')).not.toBeInTheDocument();
-    expect(mockGetTransformationContent).not.toHaveBeenCalled();
+    // Ensure that the modal is not rendered
+    expect(screen.queryByText(`Transformation help`)).toBeNull();
   });
 
-  it('renders the drawer with the correct title and subtitle when open', async () => {
-    render(
-      <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={mockTransformer} />
-    );
-
-    expect(screen.getByText('Test Transform')).toBeInTheDocument();
-    expect(screen.getByTestId(selectors.components.Drawer.General.subtitle)).toBeInTheDocument();
-    await screen.findByText('Test help content');
-  });
-
-  it('fetches help content when opened', async () => {
-    render(
-      <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={mockTransformer} />
-    );
-
-    expect(mockGetTransformationContent).toHaveBeenCalledWith('test-transform');
-    await screen.findByText('Test help content');
-  });
-
-  it('shows fallback content when fetch fails', async () => {
-    mockGetTransformationContent.mockRejectedValue(new Error('Network error'));
+  it('renders a default message when help content is not provided', () => {
+    const transformerWithoutHelp = { ...singleTestTransformer, help: undefined };
 
     render(
-      <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={mockTransformer} />
+      <TransformationEditorHelpDisplay
+        isOpen={true}
+        onCloseClick={mockOnCloseClick}
+        transformer={transformerWithoutHelp}
+      />
     );
 
-    await waitFor(() => {
-      expect(screen.getByRole('link', { name: /transformation documentation/i })).toBeInTheDocument();
-    });
+    // Check if the default message is rendered when help content is not provided
+    expect(screen.getByText('transformation documentation')).toBeInTheDocument();
   });
 
-  it('calls onCloseClick with false when the drawer is dismissed', async () => {
+  it('renders with custom help content when provided', () => {
+    const customHelpContent = 'Custom help content for testing';
+
+    const transformerWithCustomHelp = { ...singleTestTransformer, help: customHelpContent };
+
     render(
-      <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={mockTransformer} />
+      <TransformationEditorHelpDisplay
+        isOpen={true}
+        onCloseClick={mockOnCloseClick}
+        transformer={transformerWithCustomHelp}
+      />
     );
 
-    await userEvent.click(screen.getByTestId(selectors.components.Drawer.General.close));
-
-    expect(mockOnCloseClick).toHaveBeenCalledWith(false);
-  });
-
-  it('does not apply stale content when transformer changes before fetch resolves', async () => {
-    let resolveFirstFetch: (value: { name: string; helperDocs: string }) => void;
-    const firstFetch = new Promise<{ name: string; helperDocs: string }>((res) => {
-      resolveFirstFetch = res;
-    });
-
-    mockGetTransformationContent
-      .mockReturnValueOnce(firstFetch)
-      .mockResolvedValueOnce({ name: 'Second', helperDocs: 'Content for second transformer' });
-
-    const secondTransformer: TransformerRegistryItem<null> = {
-      ...mockTransformer,
-      id: 'second-transform',
-      name: 'Second Transform',
-      transformation: () =>
-        Promise.resolve({ ...mockTransformationInfo, id: 'second-transform', name: 'Second Transform' }),
-    };
-
-    const { rerender } = render(
-      <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={mockTransformer} />
-    );
-
-    rerender(
-      <TransformationEditorHelpDisplay isOpen={true} onCloseClick={mockOnCloseClick} transformer={secondTransformer} />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Content for second transformer')).toBeInTheDocument();
-    });
-
-    // Resolve the first (now-cancelled) fetch after the second has already settled
-    resolveFirstFetch!({ name: 'First', helperDocs: 'Stale content from first transformer' });
-
-    await waitFor(() => {
-      expect(screen.queryByText('Stale content from first transformer')).not.toBeInTheDocument();
-    });
+    // Check if the custom help content is rendered
+    expect(screen.getByText(customHelpContent)).toBeInTheDocument();
   });
 });

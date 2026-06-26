@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type DataFrameView, type GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
-import { TextLink, useStyles2 } from '@grafana/ui';
-import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
+import { DataFrameView, GrafanaTheme2, textUtil, dateTimeFormat } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+import { attachSkeleton, SkeletonComponent } from '@grafana/ui/src/unstable';
 
-import { type NewsItem } from '../types';
+import { NewsItem } from '../types';
 
 interface NewsItemProps {
   width: number;
@@ -16,10 +15,10 @@ interface NewsItemProps {
 }
 
 function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
-  const titleId = useId();
   const styles = useStyles2(getStyles);
   const useWideLayout = width > 600;
   const newsItem = data.get(index);
+  const titleId = encodeURI(newsItem.title);
 
   return (
     <article aria-labelledby={titleId} className={cx(styles.item, useWideLayout && styles.itemWide)}>
@@ -39,12 +38,11 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
         <time className={styles.date} dateTime={dateTimeFormat(newsItem.date, { format: 'MMM DD' })}>
           {dateTimeFormat(newsItem.date, { format: 'MMM DD' })}{' '}
         </time>
-
-        <h1 className={styles.title} id={titleId}>
-          <TextLink href={textUtil.sanitizeUrl(newsItem.link)} external inline={false}>
+        <a className={styles.link} href={textUtil.sanitizeUrl(newsItem.link)} target="_blank" rel="noopener noreferrer">
+          <h3 className={styles.title} id={titleId}>
             {newsItem.title}
-          </TextLink>
-        </h1>
+          </h3>
+        </a>
         <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(newsItem.content) }} />
       </div>
     </article>
@@ -108,7 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(1),
     '> img': {
       width: '100%',
-      borderRadius: `${theme.shape.radius.lg} ${theme.shape.radius.lg} 0 0`,
+      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
     },
   }),
   socialImageWide: css({
@@ -116,11 +114,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: 0,
     '> img': {
       width: '250px',
-      borderRadius: theme.shape.radius.lg,
+      borderRadius: theme.shape.radius.default,
+    },
+  }),
+  link: css({
+    color: theme.colors.text.link,
+    display: 'inline-block',
+
+    '&:hover': {
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
     },
   }),
   title: css({
-    ...theme.typography.h3,
     fontSize: '16px',
     marginBottom: theme.spacing(0.5),
   }),
@@ -133,6 +139,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   date: css({
     marginBottom: theme.spacing(0.5),
     fontWeight: 500,
+    borderRadius: `0 0 0 ${theme.shape.radius.default}`,
     color: theme.colors.text.secondary,
   }),
 });

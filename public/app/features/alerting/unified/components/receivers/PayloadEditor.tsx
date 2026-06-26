@@ -1,14 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
-import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, Dropdown, Menu, Stack, Toggletip, useStyles2 } from '@grafana/ui';
-import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
+import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
-import { EditorColumnHeader } from '../EditorColumnHeader';
+import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 
 import { AlertInstanceModalSelector } from './AlertInstanceModalSelector';
 import { AlertTemplatePreviewData } from './TemplateData';
@@ -85,22 +84,19 @@ export function PayloadEditor({
     <>
       <div className={cx(styles.wrapper, className)}>
         <EditorColumnHeader
-          label={t('alerting.payload-editor.label-payload', 'Payload')}
+          label="Payload"
           actions={
             <Stack direction="row" alignItems="center" gap={0.5}>
               <Dropdown
                 overlay={
                   <Menu>
                     <Menu.Item
-                      label={t(
-                        'alerting.payload-editor.label-use-existing-alert-instances',
-                        'Use existing alert instances'
-                      )}
+                      label="Use existing alert instances"
                       disabled={errorInPayloadJson}
                       onClick={onOpenAlertSelectorModal}
                     />
                     <Menu.Item
-                      label={t('alerting.payload-editor.label-add-custom-alert-instance', 'Add custom alert instance')}
+                      label="Add custom alert instance"
                       disabled={errorInPayloadJson}
                       onClick={onOpenEditAlertModal}
                     />
@@ -110,12 +106,12 @@ export function PayloadEditor({
                 }
               >
                 <Button variant="secondary" size="sm" icon="angle-down">
-                  <Trans i18nKey="alerting.payload-editor.edit-payload">Edit payload</Trans>
+                  Edit payload
                 </Button>
               </Dropdown>
               <Toggletip content={<AlertTemplateDataTable />} placement="top" fitContent>
                 <Button variant="secondary" fill="outline" size="sm" icon="question-circle">
-                  <Trans i18nKey="alerting.payload-editor.reference">Reference</Trans>
+                  Reference
                 </Button>
               </Toggletip>
             </Stack>
@@ -124,7 +120,7 @@ export function PayloadEditor({
 
         <div className={styles.editorWrapper}>
           <AutoSizer>
-            {({ width, height }: Size) => (
+            {({ width, height }) => (
               <CodeEditor
                 containerStyles={styles.editorContainer}
                 width={width}

@@ -1,14 +1,14 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useEffect, useReducer } from 'react';
 
-import { type TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 
 import { testIds } from '../../components/LokiQueryEditor';
-import { type LokiDatasource } from '../../datasource';
-import { type LokiQuery } from '../../types';
+import { LokiDatasource } from '../../datasource';
+import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { type LokiVisualQuery } from '../types';
+import { LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { QueryPreview } from './QueryPreview';
@@ -22,7 +22,7 @@ export interface Props {
   timeRange?: TimeRange;
 }
 
-interface State {
+export interface State {
   visQuery?: LokiVisualQuery;
   expr: string;
 }

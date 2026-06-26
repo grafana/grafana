@@ -5,9 +5,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
@@ -39,20 +39,20 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 	}
 
 	if pCtx.DataSourceInstanceSettings != nil {
-		// NOTE: something is structurally awkward if we have to decode the settings JSON again here
 		settings := pCtx.DataSourceInstanceSettings
 		jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
 		if err != nil {
 			return err
 		}
 
-		ds := datasourcesV0.DataSource{
-			Spec: datasourcesV0.UnstructuredSpec{
-				Object: map[string]any{"jsonData": jsonDataBytes.MustMap()},
-			},
+		ds := &datasources.DataSource{
+			ID:       settings.ID,
+			OrgID:    pCtx.OrgID,
+			JsonData: jsonDataBytes,
+			Updated:  settings.Updated,
 		}
 
-		allowedCookies = ds.Spec.KeepCookies()
+		allowedCookies = ds.AllowedCookies()
 	}
 
 	proxyutil.ClearCookieHeader(reqCtx.Req, allowedCookies, m.skipCookiesNames)

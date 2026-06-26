@@ -15,7 +15,6 @@ const (
 	KVNamespace             = "alertmanager"
 	NotificationLogFilename = "notifications"
 	SilencesFilename        = "silences"
-	FlushLogFilename        = "flushes"
 )
 
 // FileStore is in charge of persisting the alertmanager files to the database.
@@ -41,10 +40,6 @@ func (fileStore *FileStore) GetSilences(ctx context.Context) (string, error) {
 
 func (fileStore *FileStore) GetNotificationLog(ctx context.Context) (string, error) {
 	return fileStore.contentFor(ctx, NotificationLogFilename)
-}
-
-func (fileStore *FileStore) GetFlushLog(ctx context.Context) (string, error) {
-	return fileStore.contentFor(ctx, FlushLogFilename)
 }
 
 // contentFor returns the content for the given Alertmanager kvstore key.
@@ -77,11 +72,6 @@ func (fileStore *FileStore) SaveSilences(ctx context.Context, st alertingNotify.
 // SaveNotificationLog saves the notification log to the database and returns the size of the unencoded state.
 func (fileStore *FileStore) SaveNotificationLog(ctx context.Context, st alertingNotify.State) (int64, error) {
 	return fileStore.persist(ctx, NotificationLogFilename, st)
-}
-
-// SaveFlushLog saves the flush log to the database and returns the size of the unencoded state.
-func (fileStore *FileStore) SaveFlushLog(ctx context.Context, st alertingNotify.State) (int64, error) {
-	return fileStore.persist(ctx, FlushLogFilename, st)
 }
 
 // persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.

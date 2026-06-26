@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -31,8 +30,7 @@ import (
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	utilflowcontrol "k8s.io/apiserver/pkg/util/flowcontrol"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
-
-	"github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"k8s.io/utils/ptr"
 )
 
 func RunTestWatch(ctx context.Context, t *testing.T, store storage.Interface) {
@@ -166,7 +164,7 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 						t.Fatalf("GuaranteedUpdate failed: %v", err)
 					}
 				} else {
-					err := store.Delete(ctx, key, out, nil, storage.ValidateAllObjectFunc, nil, storage.DeleteOptions{})
+					err := store.Delete(ctx, key, out, nil, storage.ValidateAllObjectFunc, nil)
 					if err != nil {
 						t.Fatalf("Delete failed: %v", err)
 					}
@@ -283,7 +281,7 @@ func RunTestDeleteTriggerWatch(ctx context.Context, t *testing.T, store storage.
 	if err != nil {
 		t.Fatalf("Watch failed: %v", err)
 	}
-	if err := store.Delete(ctx, key, &example.Pod{}, nil, storage.ValidateAllObjectFunc, nil, storage.DeleteOptions{}); err != nil {
+	if err := store.Delete(ctx, key, &example.Pod{}, nil, storage.ValidateAllObjectFunc, nil); err != nil {
 		t.Fatalf("Delete failed: %v", err)
 	}
 	testCheckEventType(t, w, watch.Deleted)
@@ -321,7 +319,7 @@ func RunTestDelayedWatchDelivery(ctx context.Context, t *testing.T, store storag
 	// closed (as otherwise events would have to be dropped).
 	// For now, this number is smallest for Cacher and it equals 21 for it.
 	totalPods := 21
-	for i := range totalPods {
+	for i := 0; i < totalPods; i++ {
 		out := &example.Pod{}
 		pod := &example.Pod{
 			ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns"},
@@ -439,7 +437,7 @@ func RunTestWatcherTimeout(ctx context.Context, t *testing.T, store storage.Inte
 
 	// Create a number of watchers that will not be reading any result.
 	nonReadingWatchers := 50
-	for range nonReadingWatchers {
+	for i := 0; i < nonReadingWatchers; i++ {
 		watcher, err := store.Watch(ctx, KeyFunc("test-ns", ""), options)
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
@@ -463,7 +461,7 @@ func RunTestWatcherTimeout(ctx context.Context, t *testing.T, store storage.Inte
 	// Create more events to ensure that we're not blocking other watchers
 	// forever.
 	startTime := time.Now()
-	for i := range 22 {
+	for i := 0; i < 22; i++ {
 		out := &example.Pod{}
 		pod := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns"}}
 		if err := store.Create(ctx, computePodKey(pod), pod, out, 0); err != nil {
@@ -487,7 +485,7 @@ func RunTestWatchDeleteEventObjectHaveLatestRV(ctx context.Context, t *testing.T
 	}
 
 	deletedObj := &example.Pod{}
-	if err := store.Delete(ctx, key, deletedObj, &storage.Preconditions{}, storage.ValidateAllObjectFunc, nil, storage.DeleteOptions{}); err != nil {
+	if err := store.Delete(ctx, key, deletedObj, &storage.Preconditions{}, storage.ValidateAllObjectFunc, nil); err != nil {
 		t.Fatalf("Delete failed: %v", err)
 	}
 
@@ -683,7 +681,7 @@ func RunTestClusterScopedWatch(ctx context.Context, t *testing.T, store storage.
 			currentObjs := map[string]*example.Pod{}
 			for _, watchTest := range tt.watchTests {
 				out := &example.Pod{}
-				key := "pods/ns-1/" + watchTest.obj.Name
+				key := "pods/" + watchTest.obj.Name
 				err := store.GuaranteedUpdate(ctx, key, out, true, nil, storage.SimpleUpdate(
 					func(runtime.Object) (runtime.Object, error) {
 						obj := watchTest.obj.DeepCopy()
@@ -1133,7 +1131,7 @@ func RunTestOptionalWatchBookmarksWithCorrectResourceVersion(ctx context.Context
 
 	go func() {
 		defer wg.Done()
-		for i := range 100 {
+		for i := 0; i < 100; i++ {
 			select {
 			case <-done:
 				return
@@ -1197,7 +1195,7 @@ func RunTestOptionalWatchBookmarksWithCorrectResourceVersion(ctx context.Context
 // In that case we expect a watch request to be established.
 func RunSendInitialEventsBackwardCompatibility(ctx context.Context, t *testing.T, store storage.Interface) {
 	opts := storage.ListOptions{Predicate: storage.Everything}
-	opts.SendInitialEvents = new(true)
+	opts.SendInitialEvents = ptr.To(true)
 	w, err := store.Watch(ctx, KeyFunc("", ""), opts)
 	require.NoError(t, err)
 	w.Stop()
@@ -1219,7 +1217,7 @@ func RunSendInitialEventsBackwardCompatibility(ctx context.Context, t *testing.T
 func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interface) {
 	trueVal, falseVal := true, false
 	addEventsFromCreatedPods := func(createdInitialPods []*example.Pod) []watch.Event {
-		ret := make([]watch.Event, 0, len(createdInitialPods))
+		var ret []watch.Event
 		for _, createdPod := range createdInitialPods {
 			ret = append(ret, watch.Event{Type: watch.Added, Object: createdPod})
 		}
@@ -1454,20 +1452,7 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 			}
 
 			if scenario.useCurrentRV {
-				// Get the most recent RV for this namespace
-				out := &example.PodList{}
-				if err := store.GetList(ctx, KeyFunc(ns, ""), storage.ListOptions{
-					Predicate: storage.SelectionPredicate{
-						GetAttrs: generic.GetAttrs,
-						Label:    labels.Everything(),
-						Field:    fields.Everything(),
-						Limit:    1,
-					},
-				}, out); err != nil {
-					t.Fatalf("Unable to get list: %v", err)
-				}
-
-				currentStorageRV, err := strconv.ParseInt(out.ResourceVersion, 10, 64)
+				currentStorageRV, err := storage.GetCurrentResourceVersionFromStorage(ctx, store, func() runtime.Object { return &example.PodList{} }, KeyFunc("", ""), "")
 				require.NoError(t, err)
 				scenario.resourceVersion = fmt.Sprintf("%d", currentStorageRV)
 			}
@@ -1592,8 +1577,8 @@ func namespacedScopedNodeNameAttrFunc(obj runtime.Object) (labels.Set, fields.Se
 	pod := obj.(*example.Pod)
 	return nil, fields.Set{
 		"spec.nodeName":      pod.Spec.NodeName,
-		"metadata.name":      pod.Name,
-		"metadata.namespace": pod.Namespace,
+		"metadata.name":      pod.ObjectMeta.Name,
+		"metadata.namespace": pod.ObjectMeta.Namespace,
 	}, nil
 }
 
@@ -1601,20 +1586,20 @@ func clusterScopedNodeNameAttrFunc(obj runtime.Object) (labels.Set, fields.Set, 
 	pod := obj.(*example.Pod)
 	return nil, fields.Set{
 		"spec.nodeName": pod.Spec.NodeName,
-		"metadata.name": pod.Name,
+		"metadata.name": pod.ObjectMeta.Name,
 	}, nil
 }
 
 func basePod(podName string) *example.Pod {
-	return baseNamespacedPod(podName, "ns-1")
+	return baseNamespacedPod(podName, "")
 }
 
 func basePodUpdated(podName string) *example.Pod {
-	return baseNamespacedPodUpdated(podName, "ns-1")
+	return baseNamespacedPodUpdated(podName, "")
 }
 
 func basePodAssigned(podName, nodeName string) *example.Pod {
-	return baseNamespacedPodAssigned(podName, "ns-1", nodeName)
+	return baseNamespacedPodAssigned(podName, "", nodeName)
 }
 
 func baseNamespacedPod(podName, namespace string) *example.Pod {

@@ -7,22 +7,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@v4
-      with:
-        node-version-file: .nvmrc
-    - uses: actions/setup-go@v6
+    - uses: actions/setup-go@v4
       with:
         go-version-file: go.mod
     - name: Bump versions
-      shell: bash
-      env:
-        VERSION: ${{ inputs.version }}
-      run: |
-        yarn install
-        npm version "$VERSION" --no-git-tag-version
-        yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
-        yarn install
-        yarn prettier:write
+      uses: dagger/dagger-for-github@v5
+      with:
+        verb: run
+        args: go run ./pkg/build/actions/bump-version -version=${{ inputs.version }}
     - name: make gen-cue
       shell: bash
       run: make gen-cue

@@ -1,19 +1,20 @@
-import { type PropsWithChildren, useState } from 'react';
+import { PropsWithChildren, useState } from 'react';
 
 import { QueriesDrawerContext, Tabs } from './QueriesDrawerContext';
 
 type Props = {
   setDrawerOpened?: (value: boolean) => {};
-  queryLibraryEnabled?: boolean;
+  queryLibraryAvailable?: boolean;
 } & PropsWithChildren;
 
 export function QueriesDrawerContextProviderMock(props: Props) {
-  const [selectedTab, setSelectedTab] = useState<Tabs>(Tabs.RichHistory);
+  const [selectedTab, setSelectedTab] = useState<Tabs>(Tabs.QueryLibrary);
   const [drawerOpened, setDrawerOpened] = useState<boolean>(false);
 
   return (
     <QueriesDrawerContext.Provider
       value={{
+        queryLibraryAvailable: props.queryLibraryAvailable || false,
         selectedTab,
         setSelectedTab,
         drawerOpened,

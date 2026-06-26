@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { type HTMLProps } from 'react';
+import { HTMLProps } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
 enum Orientation {
   Horizontal,
@@ -24,7 +24,7 @@ export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | '
   wrap?: boolean;
 }
 
-interface ContainerProps {
+export interface ContainerProps {
   padding?: Spacing;
   margin?: Spacing;
   grow?: number;
@@ -33,8 +33,6 @@ interface ContainerProps {
 
 /**
  * @deprecated use Stack component instead
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-deprecated-groups--docs
  */
 export const Layout = ({
   children,

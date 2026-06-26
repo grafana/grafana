@@ -13,7 +13,7 @@ export const changeDatasource = async (name: string) => {
 };
 
 export const inputQuery = async (query: string, exploreId = 'left') => {
-  const input = await withinExplore(exploreId).findByRole('textbox', { name: 'query' });
+  const input = withinExplore(exploreId).getByRole('textbox', { name: 'query' });
   await userEvent.clear(input);
   await userEvent.type(input, query);
 };
@@ -26,41 +26,38 @@ export const runQuery = async (exploreId = 'left') => {
 };
 
 export const openQueryHistory = async () => {
-  let button = screen.queryByRole('button', { name: 'Query history' });
-  if (button) {
-    await userEvent.click(button);
-    expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
-  } else {
-    button = screen.getByRole('button', { name: 'Open query library or query history' });
-    await userEvent.click(button);
-    button = await screen.findByRole('menuitem', { name: 'Query history' });
-    await userEvent.click(button);
-    expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
-  }
+  const explore = withinExplore('left');
+  const button = explore.getByRole('button', { name: 'Query history' });
+  await userEvent.click(button);
+  expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
 
 export const openQueryLibrary = async () => {
-  const button = screen.getByRole('button', { name: 'Add from saved queries' });
+  const explore = withinExplore('left');
+  const button = explore.getByRole('button', { name: 'Query library' });
   await userEvent.click(button);
   await waitFor(async () => {
-    screen.getByRole('dialog', {
-      name: /Saved queries/,
+    screen.getByRole('tab', {
+      name: /query library/i,
     });
   });
 };
 
+export const switchToQueryHistory = async () => {
+  const tab = screen.getByRole('tab', {
+    name: /query history/i,
+  });
+  await userEvent.click(tab);
+};
+
 export const addQueryHistoryToQueryLibrary = async () => {
-  const button = withinQueryHistory().getByRole('button', { name: /Save query/i });
+  const button = withinQueryHistory().getByRole('button', { name: /add to library/i });
   await userEvent.click(button);
 };
 
-export const submitAddToQueryLibrary = async ({ title }: { title: string }) => {
-  const container = screen.getByRole('dialog', {
-    name: /Saved queries/i,
-  });
-
-  const input = within(container).getByRole('textbox', { name: /title/i });
-  await userEvent.type(input, title);
+export const submitAddToQueryLibrary = async ({ description }: { description: string }) => {
+  const input = within(screen.getByRole('dialog')).getByLabelText('Description');
+  await userEvent.type(input, description);
   const saveButton = screen.getByRole('button', {
     name: /^save$/i,
   });
@@ -87,6 +84,10 @@ export const selectStarredTabFirst = async () => {
 export const selectOnlyActiveDataSource = async () => {
   const checkbox = withinQueryHistory().getByLabelText(/Only show queries for data source currently active.*/);
   await userEvent.click(checkbox);
+};
+
+export const starQueryHistory = async (queryIndex: number) => {
+  await invokeAction(queryIndex, 'Star query');
 };
 
 export const commentQueryHistory = async (queryIndex: number, comment: string) => {

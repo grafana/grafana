@@ -9,31 +9,21 @@ import (
 )
 
 const (
-	fullStatePath                = "/api/v1/grafana/full_state"
 	grafanaAlertmanagerStatePath = "/api/v1/grafana/state"
 )
 
-// UserState is used for both Grafana state and Mimir full state.
-type UserState struct {
+type UserGrafanaState struct {
 	State string `json:"state"`
 }
 
-func (mc *Mimir) GetFullState(ctx context.Context) (*UserState, error) {
-	return mc.getState(ctx, fullStatePath)
-}
-
-func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserState, error) {
-	return mc.getState(ctx, grafanaAlertmanagerStatePath)
-}
-
-func (mc *Mimir) getState(ctx context.Context, path string) (*UserState, error) {
-	gs := &UserState{}
+func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error) {
+	gs := &UserGrafanaState{}
 	response := successResponse{
 		Data: gs,
 	}
 	// nolint:bodyclose
 	// closed within `do`
-	_, err := mc.do(ctx, path, http.MethodGet, nil, &response)
+	_, err := mc.do(ctx, grafanaAlertmanagerStatePath, http.MethodGet, nil, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +36,7 @@ func (mc *Mimir) getState(ctx context.Context, path string) (*UserState, error) 
 }
 
 func (mc *Mimir) CreateGrafanaAlertmanagerState(ctx context.Context, state string) error {
-	payload, err := json.Marshal(&UserState{
+	payload, err := json.Marshal(&UserGrafanaState{
 		State: state,
 	})
 	if err != nil {

@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
-import type { JSX } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Tooltip } from '../Tooltip';
 
 import { TitleItem } from './TitleItem';
 

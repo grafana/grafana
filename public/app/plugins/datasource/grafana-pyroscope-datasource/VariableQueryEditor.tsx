@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
-import { type QueryEditorProps, type SelectableValue, type TimeRange } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, TimeRange } from '@grafana/data';
 import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';
 
 import { ProfileTypesCascader, useProfileTypes } from './QueryEditor/ProfileTypesCascader';
-import { type PyroscopeDataSource } from './datasource';
-import { type Query, type VariableQuery } from './types';
+import { PyroscopeDataSource } from './datasource';
+import { Query, VariableQuery } from './types';
 
 export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource, Query, {}, VariableQuery>) {
   return (

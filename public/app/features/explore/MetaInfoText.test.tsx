@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { MetaInfoText, type MetaItemProps } from './MetaInfoText';
+import { MetaInfoText, MetaItemProps } from './MetaInfoText';
 describe('MetaInfoText', () => {
   it('should render component and items', () => {
     const items: MetaItemProps[] = [

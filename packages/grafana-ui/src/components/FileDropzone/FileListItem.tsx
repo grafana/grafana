@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 
-import { formattedValueToString, getValueFormat, type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { trimFileName } from '../../utils/file';
-import { Button } from '../Button/Button';
+import { Trans } from '../../utils/i18n';
+import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 
-import { type DropzoneFile } from './FileDropzone';
+import { DropzoneFile } from './FileDropzone';
 
 export const REMOVE_FILE = 'Remove file';
 export interface FileListItemProps {
@@ -17,11 +17,6 @@ export interface FileListItemProps {
   removeFile?: (file: DropzoneFile) => void;
 }
 
-/**
- * A FileListItem component used for the FileDropzone component to show uploaded files.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-filelistitem--docs
- */
 export function FileListItem({ file: customFile, removeFile }: FileListItemProps) {
   const styles = useStyles2(getStyles);
   const { file, progress, error, abortUpload, retryUpload } = customFile;
@@ -31,14 +26,7 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
       return (
         <>
           <span className={styles.error}>{error.message}</span>
-          {retryUpload && (
-            <IconButton
-              name="sync"
-              tooltip={t('grafana-ui.file-dropzone.item-retry', 'Retry')}
-              tooltipPlacement="top"
-              onClick={retryUpload}
-            />
-          )}
+          {retryUpload && <IconButton name="sync" tooltip="Retry" tooltipPlacement="top" onClick={retryUpload} />}
           {removeFile && (
             <IconButton
               className={retryUpload ? styles.marginLeft : ''}

@@ -1,14 +1,11 @@
-import { type ComponentProps } from 'react';
-
-import { Button, type IconName, LinkButton, type Tooltip } from '@grafana/ui';
-
-type TooltipProps = ComponentProps<typeof Tooltip>;
+import { IconName, Tooltip, LinkButton, Button } from '@grafana/ui';
+import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 interface Props {
-  tooltip: TooltipProps['content'];
+  tooltip: PopoverContent;
   icon: IconName;
   className?: string;
-  tooltipPlacement?: TooltipProps['placement'];
+  tooltipPlacement?: TooltipPlacement;
   to?: string;
   target?: string;
   onClick?: () => void;
@@ -27,32 +24,32 @@ export const ActionIcon = ({
 }: Props) => {
   const ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
 
-  return to ? (
-    <LinkButton
-      tooltip={tooltip}
-      tooltipPlacement={tooltipPlacement}
-      variant="secondary"
-      fill="text"
-      icon={icon}
-      href={to}
-      size="sm"
-      target={target}
-      {...rest}
-      aria-label={ariaLabel}
-    />
-  ) : (
-    <Button
-      tooltip={tooltip}
-      tooltipPlacement={tooltipPlacement}
-      className={className}
-      variant="secondary"
-      fill="text"
-      size="sm"
-      icon={icon}
-      type="button"
-      onClick={onClick}
-      {...rest}
-      aria-label={ariaLabel}
-    />
+  return (
+    <Tooltip content={tooltip} placement={tooltipPlacement}>
+      {to ? (
+        <LinkButton
+          variant="secondary"
+          fill="text"
+          icon={icon}
+          href={to}
+          size="sm"
+          target={target}
+          {...rest}
+          aria-label={ariaLabel}
+        />
+      ) : (
+        <Button
+          className={className}
+          variant="secondary"
+          fill="text"
+          size="sm"
+          icon={icon}
+          type="button"
+          onClick={onClick}
+          {...rest}
+          aria-label={ariaLabel}
+        />
+      )}
+    </Tooltip>
   );
 };

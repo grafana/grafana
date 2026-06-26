@@ -1,20 +1,21 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { getDefaultTimeRange, LoadingState, type PanelData, store } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 
+import store from '../../../../../core/store';
 import { PanelModel } from '../../../state/PanelModel';
 import { DisplayMode } from '../types';
 
 export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
 
-const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
+export const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
   isPanelOptionsVisible: true,
   rightPaneSize: 400,
   topPaneSize: 0.45,
   mode: DisplayMode.Fill,
 };
 
-interface PanelEditorUIState {
+export interface PanelEditorUIState {
   /* Visualization options pane visibility */
   isPanelOptionsVisible: boolean;
   /* Pixels or percentage */
@@ -87,6 +88,9 @@ const pluginsSlice = createSlice({
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;
     },
+    setDiscardChanges: (state, action: PayloadAction<boolean>) => {
+      state.shouldDiscardChanges = action.payload;
+    },
     setPanelEditorUIState: (state, action: PayloadAction<Partial<PanelEditorUIState>>) => {
       state.ui = { ...state.ui, ...action.payload };
       // Close viz picker if closing options pane
@@ -117,12 +121,15 @@ const pluginsSlice = createSlice({
 
 export const {
   updateEditorInitState,
-
+  setEditorPanelData,
+  setDiscardChanges,
   closeEditor,
+  setPanelEditorUIState,
   toggleVizPicker,
+  toggleTableView,
 } = pluginsSlice.actions;
 
-const panelEditorReducer = pluginsSlice.reducer;
+export const panelEditorReducer = pluginsSlice.reducer;
 
 export default {
   panelEditor: panelEditorReducer,

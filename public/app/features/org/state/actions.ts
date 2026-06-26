@@ -1,7 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { updateConfigurationSubtitle } from 'app/core/reducers/navModel';
-import { type ThunkResult } from 'app/types/store';
-import { type UserOrg } from 'app/types/user';
+import { updateConfigurationSubtitle } from 'app/core/actions';
+import { ThunkResult } from 'app/types';
 
 import { organizationLoaded, userOrganizationsLoaded } from './reducers';
 
@@ -55,9 +54,9 @@ export function createOrganization(
 
 export function getUserOrganizations(
   dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
-): ThunkResult<Promise<UserOrg[]>> {
+): ThunkResult<any> {
   return async (dispatch) => {
-    const result = await dependencies.getBackendSrv().get<UserOrg[]>('/api/user/orgs');
+    const result = await dependencies.getBackendSrv().get('/api/user/orgs');
     dispatch(userOrganizationsLoaded(result));
 
     return result;

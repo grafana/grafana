@@ -17,9 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// maxPreAuthFormBodySize caps pre-auth form-shaped request bodies (signup, password reset, invite completion, login).
-const maxPreAuthFormBodySize = 100 * 1024 // 100 KiB
-
 // GET /api/user/signup/options
 func (hs *HTTPServer) GetSignUpOptions(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -30,8 +27,6 @@ func (hs *HTTPServer) GetSignUpOptions(c *contextmodel.ReqContext) response.Resp
 
 // POST /api/user/signup
 func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
-	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
-
 	form := dtos.SignUpForm{}
 	var err error
 	if err = web.Bind(c.Req, &form); err != nil {
@@ -52,7 +47,7 @@ func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusUnprocessableEntity, "User with same email address already exists", nil)
 	}
 
-	userID, err := identity.UserIdentifier(c.GetID())
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
 	if err != nil {
 		hs.log.Debug("Failed to parse user id", "err", err)
 	}
@@ -85,8 +80,6 @@ func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response {
-	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
-
 	form := dtos.SignUpStep2Form{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

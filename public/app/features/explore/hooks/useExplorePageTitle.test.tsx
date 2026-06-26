@@ -3,7 +3,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { setDataSourceSrv } from '@grafana/runtime';
-import { type DataSourceRef } from '@grafana/schema';
+import { DataSourceRef } from '@grafana/schema';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 
 import { makeDatasourceSetup } from '../spec/helper/setup';
@@ -18,7 +18,6 @@ describe('useExplorePageTitle', () => {
     ];
 
     setDataSourceSrv({
-      registerRuntimeDataSource: jest.fn(),
       get(datasource?: string | DataSourceRef | null) {
         let ds;
         if (!datasource) {
@@ -73,7 +72,6 @@ describe('useExplorePageTitle', () => {
     ];
 
     setDataSourceSrv({
-      registerRuntimeDataSource: jest.fn(),
       get(datasource?: string | DataSourceRef | null) {
         let ds;
         if (!datasource) {

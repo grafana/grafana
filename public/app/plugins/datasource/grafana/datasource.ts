@@ -1,39 +1,38 @@
 import { isString } from 'lodash';
-import { from, merge, type Observable, of } from 'rxjs';
+import { from, merge, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
-  type AnnotationQuery,
-  type AnnotationQueryRequest,
+  AnnotationQuery,
+  AnnotationQueryRequest,
   DataFrameView,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceInstanceSettings,
-  type Scope,
-  type TestDataSourceResponse,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  TestDataSourceResponse,
   isValidLiveChannelAddress,
   MutableDataFrame,
   parseLiveChannelAddress,
+  toDataFrame,
   dataFrameFromJSON,
   LoadingState,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
+  getBackendSrv,
   getDataSourceSrv,
   getGrafanaLiveSrv,
   getTemplateSrv,
-  type StreamingFrameOptions,
+  StreamingFrameOptions,
 } from '@grafana/runtime';
-import { type DataSourceRef } from '@grafana/schema';
-import { annotationServer } from 'app/features/annotations/api';
+import { DataSourceRef } from '@grafana/schema';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
-import { randomWalk } from './randomWalk';
 import { doTimeRegionQuery } from './timeRegions';
-import { type GrafanaAnnotationQuery, GrafanaAnnotationType, type GrafanaQuery, GrafanaQueryType } from './types';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
 
 let counter = 100;
 
@@ -85,15 +84,12 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     for (const target of request.targets) {
       if (target.queryType === GrafanaQueryType.Annotations) {
         return from(
-          this.getAnnotations(
-            {
-              range: request.range,
-              rangeRaw: request.range.raw,
-              annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
-              dashboard: getDashboardSrv().getCurrent(),
-            },
-            request.scopes
-          )
+          this.getAnnotations({
+            range: request.range,
+            rangeRaw: request.range.raw,
+            annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
+            dashboard: getDashboardSrv().getCurrent(),
+          })
         );
       }
       if (target.hide) {
@@ -112,7 +108,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         continue;
       }
       if (target.queryType === GrafanaQueryType.TimeRegions) {
-        const frame = doTimeRegionQuery('', target.timeRegion!, request.range);
+        const frame = doTimeRegionQuery('', target.timeRegion!, request.range, request.timezone);
         results.push(
           of({
             data: frame ? [frame] : [],
@@ -147,15 +143,10 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
             buffer,
           })
         );
-      } else if (target.queryType === GrafanaQueryType.RandomWalk || !target.queryType) {
-        results.push(
-          of({
-            key: target.refId,
-            data: randomWalk(target, request),
-            state: LoadingState.Done,
-          })
-        );
       } else {
+        if (!target.queryType) {
+          target.queryType = GrafanaQueryType.RandomWalk;
+        }
         targets.push(target);
       }
     }
@@ -189,7 +180,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         },
       ],
       maxDataPoints,
-    } as DataQueryRequest<GrafanaQuery>).pipe(
+    } as any).pipe(
       map((v) => {
         const frame = v.data[0] ?? new MutableDataFrame();
         return new DataFrameView<FileElement>(frame);
@@ -201,13 +192,15 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     return Promise.resolve([]);
   }
 
-  async getAnnotations(
-    options: AnnotationQueryRequest<GrafanaQuery>,
-    requestScopes?: Scope[]
-  ): Promise<DataQueryResponse> {
+  async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
     const query = options.annotation.target as GrafanaQuery;
     if (query?.queryType === GrafanaQueryType.TimeRegions) {
-      const frame = doTimeRegionQuery(options.annotation.name, query.timeRegion!, options.range);
+      const frame = doTimeRegionQuery(
+        options.annotation.name,
+        query.timeRegion!,
+        options.range,
+        getDashboardSrv().getCurrent()?.timezone // Annotation queries don't include the timezone
+      );
       return Promise.resolve({ data: frame ? [frame] : [] });
     }
 
@@ -219,7 +212,6 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       limit: target.limit,
       tags: target.tags,
       matchAny: target.matchAny,
-      scopes: requestScopes && requestScopes?.length > 0 ? requestScopes.map((s) => s.metadata.name) : undefined,
     };
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
@@ -254,11 +246,12 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       params.tags = tags;
     }
 
-    const df = await annotationServer().query(
+    const annotations = await getBackendSrv().get(
+      '/api/annotations',
       params,
       `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.uid}`
     );
-    return { data: [df] };
+    return { data: [toDataFrame(annotations)] };
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {

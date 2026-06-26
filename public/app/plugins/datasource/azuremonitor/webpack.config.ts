@@ -1,13 +1,13 @@
 import type { Configuration } from 'webpack';
 import { merge } from 'webpack-merge';
 
-import grafanaConfig, { type Env } from '@grafana/plugin-configs/webpack.config.ts';
+import grafanaConfig from '@grafana/plugin-configs/webpack.config';
 
-const config = async (env: Env): Promise<Configuration> => {
-  const baseConfig = await grafanaConfig(env, import.meta.dirname);
+const config = async (env: Record<string, unknown>): Promise<Configuration> => {
+  const baseConfig = await grafanaConfig(env);
 
   return merge(baseConfig, {
-    externals: ['@kusto/monaco-kusto', 'i18next'],
+    externals: ['@kusto/monaco-kusto'],
   });
 };
 

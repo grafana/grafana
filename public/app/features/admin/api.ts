@@ -1,9 +1,8 @@
-import { type UrlQueryValue } from '@grafana/data';
+import { UrlQueryValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type OrgUser } from 'app/types/user';
+import { OrgUser, AccessControlAction } from 'app/types';
 
 const perPage = 30;
 
@@ -20,10 +19,7 @@ export const getOrgUsers = async (orgId: UrlQueryValue, page: number) => {
 
 export const getUsersRoles = async (orgId: number, users: OrgUser[]) => {
   const userIds = users.map((u) => u.userId);
-  const roles = await getBackendSrv().post(`/api/access-control/users/roles/search?includeMapped=true`, {
-    userIds,
-    orgId,
-  });
+  const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
   users.forEach((u) => {
     u.roles = roles ? roles[u.userId] || [] : [];
   });

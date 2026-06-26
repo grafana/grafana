@@ -1,9 +1,7 @@
-import { Fragment } from 'react';
-
-import { type CanvasFrameOptions } from '../frame';
+import { CanvasFrameOptions } from '../frame';
 
 import { FrameState } from './frame';
-import { type Scene } from './scene';
+import { Scene } from './scene';
 
 export class RootElement extends FrameState {
   constructor(
@@ -43,7 +41,7 @@ export class RootElement extends FrameState {
     this.div = target;
   };
 
-  renderElement() {
+  render() {
     return (
       <div
         onContextMenu={(event) => event.preventDefault()}
@@ -51,9 +49,7 @@ export class RootElement extends FrameState {
         ref={this.setRootRef}
         style={{ ...this.sizeStyle, ...this.dataStyle }}
       >
-        {this.elements.map((v) => (
-          <Fragment key={v.UID}>{v.renderElement()}</Fragment>
-        ))}
+        {this.elements.map((v) => v.render())}
       </div>
     );
   }

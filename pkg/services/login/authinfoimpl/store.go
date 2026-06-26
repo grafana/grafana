@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -17,24 +16,18 @@ var GetTime = time.Now
 
 type Store struct {
 	sqlStore       db.DB
-	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsService secrets.Service
 	logger         log.Logger
 }
 
-func ProvideStore(sqlStore db.DB,
-	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
-) (login.Store, error) {
+func ProvideStore(sqlStore db.DB, secretsService secrets.Service) login.Store {
 	store := &Store{
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		logger:         log.New("login.authinfo.store"),
 	}
 
-	if err := store.authInfoUserUIDMigration(); err != nil {
-		return nil, err
-	}
-
-	return store, nil
+	return store
 }
 
 // GetAuthInfo returns the auth info for a user
@@ -89,7 +82,7 @@ func (s *Store) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) 
 	return userAuth, nil
 }
 
-func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+func (s *Store) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	userAuths := []login.UserAuth{}
 	params := make([]interface{}, 0, len(query.UserIDs))
 	for _, id := range query.UserIDs {
@@ -99,6 +92,7 @@ func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUs
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table("user_auth").In("user_id", params).OrderBy("created").Find(&userAuths)
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -112,37 +106,12 @@ func (s *Store) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUs
 	return labelMap, nil
 }
 
-// GetUserAuthModules returns all auth modules a user has used ordered by most recently used first.
-func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string, error) {
-	rows := make([]struct {
-		AuthModule string `xorm:"auth_module"`
-	}, 0)
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Table("user_auth").Where("user_id = ?", userID).Desc("created").Cols("auth_module").Find(&rows)
-	})
-	if err != nil {
-		return nil, err
-	}
-	modules := make([]string, 0, len(rows))
-	seen := make(map[string]struct{}, len(rows))
-	for _, r := range rows {
-		if _, ok := seen[r.AuthModule]; ok {
-			continue
-		}
-		seen[r.AuthModule] = struct{}{}
-		modules = append(modules, r.AuthModule)
-	}
-	return modules, nil
-}
-
 func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
-		UserId:      cmd.UserId,
-		UserUID:     cmd.UserUID,
-		AuthModule:  cmd.AuthModule,
-		AuthId:      cmd.AuthId,
-		ExternalUID: cmd.ExternalUID,
-		Created:     GetTime(),
+		UserId:     cmd.UserId,
+		AuthModule: cmd.AuthModule,
+		AuthId:     cmd.AuthId,
+		Created:    GetTime(),
 	}
 
 	if cmd.OAuthToken != nil {
@@ -182,11 +151,10 @@ func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) 
 
 func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	authUser := &login.UserAuth{
-		UserId:      cmd.UserId,
-		AuthModule:  cmd.AuthModule,
-		AuthId:      cmd.AuthId,
-		Created:     GetTime(),
-		ExternalUID: cmd.ExternalUID,
+		UserId:     cmd.UserId,
+		AuthModule: cmd.AuthModule,
+		AuthId:     cmd.AuthId,
+		Created:    GetTime(),
 	}
 
 	if cmd.OAuthToken != nil {
@@ -219,9 +187,7 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 	}
 
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		upd, err := sess.MustCols("o_auth_expiry", "o_auth_access_token", "o_auth_refresh_token", "o_auth_id_token", "o_auth_token_type").
-			Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).
-			Update(authUser)
+		upd, err := sess.MustCols("o_auth_expiry").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
 
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 
@@ -232,6 +198,7 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 				"SELECT id FROM user_auth WHERE user_id = ? AND auth_module = ? AND auth_id = ?",
 				cmd.UserId, cmd.AuthModule, cmd.AuthId,
 			).Get(&id)
+
 			if err != nil {
 				return err
 			}
@@ -253,7 +220,7 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 
 func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		rawSQL := "DELETE FROM user_auth WHERE user_id = ?"
+		var rawSQL = "DELETE FROM user_auth WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
@@ -284,25 +251,4 @@ func (s *Store) encryptAndEncode(str string) (string, error) {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(encrypted), nil
-}
-
-// authInfoUserUIDMigration ensures that all auth_info user_uids are set.
-// To protect against upgrade / downgrade we need to run this for a couple of releases.
-func (s *Store) authInfoUserUIDMigration() error {
-	return s.sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		switch s.sqlStore.GetDBType() {
-		case migrator.SQLite:
-			_, err := sess.Exec("UPDATE user_auth SET user_uid = (SELECT uid FROM user WHERE user.id = user_auth.user_id) WHERE user_id IN (SELECT id FROM user) AND user_uid IS NULL;")
-			return err
-		case migrator.Postgres:
-			_, err := sess.Exec("UPDATE user_auth SET user_uid = u.uid FROM \"user\" u WHERE u.id = user_auth.user_id AND user_auth.user_uid IS NULL")
-			return err
-		case migrator.MySQL:
-			_, err := sess.Exec("UPDATE user_auth INNER JOIN user ON user_auth.user_id = user.id SET user_auth.user_uid = user.uid WHERE user_auth.user_uid IS NULL")
-			return err
-		default:
-			// this branch should be unreachable
-			return nil
-		}
-	})
 }

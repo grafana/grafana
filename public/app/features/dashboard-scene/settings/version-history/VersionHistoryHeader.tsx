@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 type VersionHistoryHeaderProps = {
@@ -22,21 +21,10 @@ export const VersionHistoryHeader = ({
 
   return (
     <h3 className={styles.header}>
-      <IconButton
-        name="arrow-left"
-        size="xl"
-        onClick={onClick}
-        tooltip={t('dashboard-scene.version-history-header.tooltip-reset-version', 'Reset version')}
-      />
+      <IconButton name="arrow-left" size="xl" onClick={onClick} tooltip="Reset version" />
       <span>
-        <Trans i18nKey="dashboard-scene.version-history-header.compare-versions">
-          Comparing {{ baseVersion }} <Icon name="arrows-h" /> {{ newVersion }}
-        </Trans>{' '}
-        {isNewLatest && (
-          <cite className="muted">
-            <Trans i18nKey="dashboard-scene.version-history-header.latest">(Latest)</Trans>
-          </cite>
-        )}
+        Comparing {baseVersion} <Icon name="arrows-h" /> {newVersion}{' '}
+        {isNewLatest && <cite className="muted">(Latest)</cite>}
       </span>
     </h3>
   );

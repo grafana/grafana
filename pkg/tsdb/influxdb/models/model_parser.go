@@ -1,26 +1,18 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/influxdata/influxql"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/simplejson"
-)
-
-var (
-	ErrInvalidQuery = errors.New("invalid InfluxDB query")
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type InfluxdbQueryParser struct{}
 
-func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
+func QueryParse(query backend.DataQuery) (*Query, error) {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't unmarshal query")
@@ -37,24 +29,19 @@ func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
 	measurement := model.Get("measurement").MustString("")
 	resultFormat := model.Get("resultFormat").MustString("")
 
-	adhocFilters, err := parseAdhocFilters(model.Get("adhocFilters").MustArray())
-	if err != nil {
-		return nil, errors.Join(ErrInvalidQuery, err)
-	}
-
 	tags, err := parseTags(model)
 	if err != nil {
-		return nil, errors.Join(ErrInvalidQuery, err)
+		return nil, err
 	}
 
 	groupBys, err := parseGroupBy(model)
 	if err != nil {
-		return nil, errors.Join(ErrInvalidQuery, err)
+		return nil, err
 	}
 
 	selects, err := parseSelects(model)
 	if err != nil {
-		return nil, errors.Join(ErrInvalidQuery, err)
+		return nil, err
 	}
 
 	interval := query.Interval
@@ -64,14 +51,6 @@ func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
 
 	if interval < minInterval {
 		interval = minInterval
-	}
-
-	var statement influxql.Statement
-	if useRawQuery {
-		statement, err = influxql.ParseStatement(rawQuery)
-		if err != nil {
-			logger.Debug(fmt.Sprintf("Couldn't parse raw query: %v", err), "rawQuery", rawQuery)
-		}
 	}
 
 	return &Query{
@@ -89,8 +68,6 @@ func QueryParse(query backend.DataQuery, logger log.Logger) (*Query, error) {
 		Slimit:       slimit,
 		OrderByTime:  orderByTime,
 		ResultFormat: resultFormat,
-		Statement:    statement,
-		AdhocFilters: adhocFilters,
 	}, nil
 }
 
@@ -115,38 +92,6 @@ func parseSelects(model *simplejson.Json) ([]*Select, error) {
 		result = append(result, &parts)
 	}
 
-	return result, nil
-}
-
-func parseAdhocFilters(adhocFilters []any) ([]*Tag, error) {
-	result := make([]*Tag, 0, len(adhocFilters))
-	for _, t := range adhocFilters {
-		tagJson := simplejson.NewFromAny(t)
-		tag := &Tag{}
-		var err error
-
-		tag.Key, err = tagJson.Get("key").String()
-		if err != nil {
-			return nil, err
-		}
-
-		tag.Value, err = tagJson.Get("value").String()
-		if err != nil {
-			return nil, err
-		}
-
-		operator, err := tagJson.Get("operator").String()
-		if err == nil {
-			tag.Operator = operator
-		}
-
-		condition, err := tagJson.Get("condition").String()
-		if err == nil {
-			tag.Condition = condition
-		}
-
-		result = append(result, tag)
-	}
 	return result, nil
 }
 

@@ -1,5 +1,4 @@
-import type { JSX } from 'react';
-interface ToggletipContentProps {
+export interface ToggletipContentProps {
   /**
    * @deprecated
    * This prop is deprecated and no longer has any effect as popper position updates automatically.

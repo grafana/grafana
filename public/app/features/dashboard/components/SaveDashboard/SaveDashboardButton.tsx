@@ -1,20 +1,17 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, type ButtonVariant, type ComponentSize, ModalsController } from '@grafana/ui';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Button, ButtonVariant, ComponentSize, ModalsController } from '@grafana/ui';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
-interface Props {
+interface SaveDashboardButtonProps {
   dashboard: DashboardModel;
   onSaveSuccess?: () => void;
   size?: ComponentSize;
   onClick?: () => void;
-  variant?: ButtonVariant;
 }
 
-<<<<<<< HEAD
 export const SaveDashboardButton = ({ dashboard, onSaveSuccess, size }: SaveDashboardButtonProps) => {
   return (
     <ModalsController>
@@ -41,8 +38,6 @@ export const SaveDashboardButton = ({ dashboard, onSaveSuccess, size }: SaveDash
 
 type Props = SaveDashboardButtonProps & { variant?: ButtonVariant };
 
-=======
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 export const SaveDashboardAsButton = ({ dashboard, onClick, onSaveSuccess, variant, size }: Props) => {
   return (
     <ModalsController>
@@ -61,9 +56,9 @@ export const SaveDashboardAsButton = ({ dashboard, onClick, onSaveSuccess, varia
               });
             }}
             variant={variant}
-            data-testid={selectors.pages.Dashboard.Settings.General.saveAsDashBoard}
+            aria-label={selectors.pages.Dashboard.Settings.General.saveAsDashBoard}
           >
-            <Trans i18nKey="dashboard.save-dashboard-as-button.save-as">Save as</Trans>
+            Save as
           </Button>
         );
       }}

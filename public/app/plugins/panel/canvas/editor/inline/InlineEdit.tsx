@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { type SyntheticEvent, useEffect, useRef, useState } from 'react';
-import Draggable, { type DraggableEventHandler } from 'react-draggable';
-import { Resizable, type ResizeCallbackData } from 'react-resizable';
+import { SyntheticEvent, useEffect, useRef, useState } from 'react';
+import Draggable, { DraggableEventHandler } from 'react-draggable';
+import { Resizable, ResizeCallbackData } from 'react-resizable';
 
-import { type Dimensions2D, type GrafanaTheme2, store } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Portal, useStyles2 } from '@grafana/ui';
-import { type Scene } from 'app/features/canvas/runtime/scene';
+import store from 'app/core/store';
+import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { InlineEditBody } from './InlineEditBody';
 
@@ -74,7 +74,7 @@ export function InlineEdit({ onClose, id, scene }: Props) {
   return (
     <Portal>
       <div className={styles.draggableWrapper}>
-        <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: placement.y }} nodeRef={ref}>
+        <Draggable handle="strong" onStop={onDragStop} position={{ x: placement.x, y: placement.y }}>
           <Resizable height={measurements.height} width={measurements.width} onResize={onResizeStop}>
             <div
               className={styles.inlineEditorContainer}
@@ -83,15 +83,13 @@ export function InlineEdit({ onClose, id, scene }: Props) {
             >
               <strong className={styles.inlineEditorHeader}>
                 <div className={styles.placeholder} />
-                <div>
-                  <Trans i18nKey="canvas.inline-edit.canvas-inline-editor">Canvas Inline Editor</Trans>
-                </div>
+                <div>Canvas Inline Editor</div>
                 <IconButton
                   name="times"
                   size="xl"
                   className={styles.inlineEditorClose}
                   onClick={onClose}
-                  tooltip={t('canvas.inline-edit.tooltip-close-inline-editor', 'Close inline editor')}
+                  tooltip="Close inline editor"
                 />
               </strong>
               <div className={styles.inlineEditorContentWrapper}>

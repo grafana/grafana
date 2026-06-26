@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Stack, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
+import { HorizontalGroup, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { QueryValidator, type QueryValidatorProps } from './QueryValidator';
+import { QueryValidator, QueryValidatorProps } from './QueryValidator';
 
 interface QueryToolboxProps extends Omit<QueryValidatorProps, 'onValidate'> {
   showTools?: boolean;
@@ -70,7 +69,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
       </div>
       {showTools && (
         <div>
-          <Stack gap={1}>
+          <HorizontalGroup spacing="sm">
             {onFormatCode && (
               <IconButton
                 onClick={() => {
@@ -81,7 +80,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
                 }}
                 name="brackets-curly"
                 size="xs"
-                tooltip={t('grafana-sql.components.query-toolbox.tooltip-format-query', 'Format query')}
+                tooltip="Format query"
               />
             )}
             {onExpand && (
@@ -96,22 +95,13 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
                 }}
                 name={isExpanded ? 'angle-up' : 'angle-down'}
                 size="xs"
-                tooltip={
-                  isExpanded
-                    ? t('grafana-sql.components.query-toolbox.tooltip-collapse', 'Collapse editor')
-                    : t('grafana-sql.components.query-toolbox.tooltip-expand', 'Expand editor')
-                }
+                tooltip={isExpanded ? 'Collapse editor' : 'Expand editor'}
               />
             )}
-            <Tooltip
-              content={t(
-                'grafana-sql.components.query-toolbox.content-hit-ctrlcmdreturn-to-run-query',
-                'Hit CTRL/CMD+Return to run query'
-              )}
-            >
+            <Tooltip content="Hit CTRL/CMD+Return to run query">
               <Icon className={styles.hint} name="keyboard" />
             </Tooltip>
-          </Stack>
+          </HorizontalGroup>
         </div>
       )}
     </div>

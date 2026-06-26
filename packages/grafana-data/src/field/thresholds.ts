@@ -1,6 +1,6 @@
-import { type Field } from '../types/dataFrame';
+import { Field } from '../types/dataFrame';
 import { FALLBACK_COLOR } from '../types/fieldColor';
-import { type Threshold, ThresholdsMode } from '../types/thresholds';
+import { Threshold, ThresholdsMode } from '../types/thresholds';
 
 export const fallBackThreshold: Threshold = { value: 0, color: FALLBACK_COLOR };
 

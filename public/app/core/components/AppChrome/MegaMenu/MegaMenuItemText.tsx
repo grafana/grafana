@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
+import { t } from 'app/core/internationalization';
 
 export interface Props {
   children: React.ReactNode;
@@ -15,12 +15,10 @@ export interface Props {
   url: string;
   onPin: (id?: string) => void;
   isPinned?: boolean;
-  itemName: string;
 }
 
-export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned, itemName }: Props) {
+export function MegaMenuItemText({ children, isActive, onClick, target, url, onPin, isPinned }: Props) {
   const theme = useTheme2();
-
   const styles = getStyles(theme, isActive);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
 
@@ -36,7 +34,12 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
   );
 
   return (
-    <div className={cx(styles.wrapper, isActive && styles.wrapperActive)}>
+    <div
+      className={cx(styles.wrapper, {
+        [styles.wrapperActive]: isActive,
+        [styles.wrapperBookmark]: config.featureToggles.pinNavItems,
+      })}
+    >
       <LinkComponent
         data-testid={selectors.components.NavMenu.item}
         className={styles.container}
@@ -47,14 +50,17 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {contextSrv.isSignedIn && url && url !== '/bookmarks' && (
+      {config.featureToggles.pinNavItems && url && url !== '/bookmarks' && (
         <IconButton
           name="bookmark"
           className={'pin-icon'}
           iconType={isPinned ? 'solid' : 'default'}
           onClick={() => onPin(url)}
-          aria-pressed={isPinned}
-          tooltip={t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', { itemName })}
+          aria-label={
+            isPinned
+              ? t('navigation.item.remove-bookmark', 'Remove from Bookmarks')
+              : t('navigation.item.add-bookmark', 'Add to Bookmarks')
+          }
         />
       )}
     </div>
@@ -69,6 +75,8 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     justifyContent: 'space-between',
     width: '100%',
     height: '100%',
+  }),
+  wrapperBookmark: css({
     '.pin-icon': {
       visibility: 'hidden',
     },
@@ -82,11 +90,10 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     },
   }),
   wrapperActive: css({
-    backgroundColor: theme.colors.action.selected,
+    backgroundColor: theme.colors.background.secondary,
     borderTopRightRadius: theme.shape.radius.default,
     borderBottomRightRadius: theme.shape.radius.default,
     position: 'relative',
-    color: theme.colors.text.primary,
 
     '&::before': {
       backgroundImage: theme.colors.gradients.brandVertical,
@@ -96,8 +103,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       height: '100%',
       position: 'absolute',
       transform: 'translateX(-50%)',
-      left: 0,
-      width: theme.spacing(0.25),
+      width: theme.spacing(0.5),
     },
   }),
   container: css({
@@ -107,15 +113,16 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     position: 'relative',
     width: '100%',
 
-    '&:hover span, &:focus-visible span': {
+    '&:hover, &:focus-visible': {
       color: theme.colors.text.primary,
       textDecoration: 'underline',
     },
 
     '&:focus-visible': {
       boxShadow: 'none',
-      outline: `2px solid ${theme.colors.accent.main}`,
+      outline: `2px solid ${theme.colors.primary.main}`,
       outlineOffset: '-2px',
+      transition: 'none',
     },
   }),
   linkContent: css({

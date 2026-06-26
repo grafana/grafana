@@ -1,9 +1,9 @@
 import { Subject } from 'rxjs';
 
-import { type DataQueryResponse, FieldType, LiveChannelScope, StreamingDataFrame } from '@grafana/data';
-import { type BackendSrv } from '@grafana/runtime';
+import { DataQueryResponse, FieldType, LiveChannelScope, StreamingDataFrame } from '@grafana/data';
+import { BackendSrv } from '@grafana/runtime';
 
-import { type CentrifugeSrv, type StreamingDataQueryResponse } from './centrifuge/service';
+import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
 import { StreamingResponseDataType } from './data/utils';
 import { GrafanaLiveService } from './live';
 
@@ -21,7 +21,7 @@ describe('GrafanaLiveService', () => {
   const liveDataStreamOptions = {
     addr: {
       scope: LiveChannelScope.Grafana,
-      stream: ' abc',
+      namespace: ' abc',
       path: 'abc',
     },
   };

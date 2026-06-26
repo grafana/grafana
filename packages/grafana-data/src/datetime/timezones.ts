@@ -1,7 +1,7 @@
 import { memoize } from 'lodash';
 import moment from 'moment-timezone';
 
-import { type TimeZone } from '@grafana/schema';
+import { TimeZone } from '../types/time';
 
 import { getTimeZone } from './common';
 
@@ -11,9 +11,6 @@ export enum InternalTimeZones {
   utc = 'utc',
 }
 
-/**
- * @deprecated
- */
 export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   switch (getTimeZone({ timeZone })) {
     case 'browser':
@@ -429,7 +426,7 @@ const countryByCode: Record<string, string> = {
 };
 
 const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
-  return moment.tz.countries().reduce<Record<string, TimeZoneCountry[]>>((all, code) => {
+  return moment.tz.countries().reduce((all: Record<string, TimeZoneCountry[]>, code) => {
     const timeZones = moment.tz.zonesForCountry(code);
     return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
       if (!all[timeZone]) {

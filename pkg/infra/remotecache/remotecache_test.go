@@ -15,14 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore db.DB) CacheStorage {
+func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) CacheStorage {
 	t.Helper()
 
 	cfg := &setting.Cfg{
@@ -34,9 +33,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore 
 	return dc
 }
 
-func TestIntegrationCachedBasedOnConfig(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestCachedBasedOnConfig(t *testing.T) {
 	db, cfg := sqlstore.InitTestDB(t)
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",
@@ -48,7 +45,7 @@ func TestIntegrationCachedBasedOnConfig(t *testing.T) {
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheSettings{Name: "invalid"}, nil, nil)
+	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil, nil)
 	assert.Equal(t, err, ErrInvalidCacheType)
 }
 
@@ -97,7 +94,7 @@ func TestCollectUsageStats(t *testing.T) {
 		"stats.remote_cache.encrypt_enabled.count": 1,
 	}
 	cfg := setting.NewCfg()
-	cfg.RemoteCacheOptions = &setting.RemoteCacheSettings{Name: redisCacheType, Encryption: true}
+	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: redisCacheType, Encryption: true}
 
 	remoteCache := &RemoteCache{
 		Cfg: cfg,

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useReducer, useRef } from 'react';
+import { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2, LoadingState } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EmptyState, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
-import { type LibraryElementDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
 
 import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';
@@ -21,6 +21,7 @@ interface LibraryPanelViewProps {
   panelFilter?: string[];
   folderFilter?: string[];
   perPage?: number;
+  isWidget?: boolean;
 }
 
 export const LibraryPanelsView = ({
@@ -32,6 +33,7 @@ export const LibraryPanelsView = ({
   showSecondaryActions,
   currentPanelId: currentPanel,
   perPage: propsPerPage = 40,
+  isWidget,
 }: LibraryPanelViewProps) => {
   const styles = useStyles2(getPanelViewStyles);
   const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
@@ -43,20 +45,8 @@ export const LibraryPanelsView = ({
     }
   );
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
-  const abortControllerRef = useRef<AbortController | undefined>(undefined);
-
   useDebounce(
-    () => {
-      // Abort previous request if it exists
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      // Create new AbortController for this request
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-
-      // Start search with abort controller
+    () =>
       asyncDispatch(
         searchForLibraryPanels({
           searchString,
@@ -66,23 +56,12 @@ export const LibraryPanelsView = ({
           page,
           perPage,
           currentPanelId,
-        }),
-        abortController
-      );
-    },
+          isWidget,
+        })
+      ),
     300,
     [searchString, sortDirection, panelFilter, folderFilter, page, asyncDispatch]
   );
-
-  // Cleanup: abort any pending request on unmount
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
-
   const onDelete = ({ uid }: LibraryElementDTO) =>
     asyncDispatch(
       deleteLibraryPanel(uid, {

@@ -1,14 +1,13 @@
 import { css } from '@emotion/css';
 
-import { type AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
+import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
 
 import { MoveDirection } from '../AnnotationsEditView';
-
-import { ListNewButton } from './ListNewButton';
 
 type Props = {
   annotations: AnnotationQuery[];
@@ -27,23 +26,11 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
 
   const getAnnotationName = (anno: AnnotationQuery) => {
     if (anno.enable === false) {
-      return (
-        <em className="muted">
-          <Trans i18nKey="dashboard-scene.annotation-settings-list.disabled" values={{ annoName: anno.name }}>
-            (Disabled) {'{{annoName}}'}
-          </Trans>
-        </em>
-      );
+      return <em className="muted">(Disabled) &nbsp; {anno.name}</em>;
     }
 
     if (anno.builtIn) {
-      return (
-        <em className="muted">
-          <Trans i18nKey="dashboard-scene.annotation-settings-list.built-in" values={{ annoName: anno.name }}>
-            {'{{annoName}}'} (Built-in)
-          </Trans>
-        </em>
-      );
+      return <em className="muted">{anno.name} &nbsp; (Built-in)</em>;
     }
 
     return <>{anno.name}</>;
@@ -57,12 +44,8 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
           <table role="grid" className="filter-table filter-table--hover">
             <thead>
               <tr>
-                <th>
-                  <Trans i18nKey="dashboard-scene.annotation-settings-list.query-name">Query name</Trans>
-                </th>
-                <th>
-                  <Trans i18nKey="dashboard-scene.annotation-settings-list.data-source">Data source</Trans>
-                </th>
+                <th>Query name</th>
+                <th>Data source</th>
                 <th colSpan={3}></th>
               </tr>
             </thead>
@@ -87,11 +70,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
                     {idx !== 0 && (
-                      <IconButton
-                        name="arrow-up"
-                        onClick={() => onMove(idx, MoveDirection.UP)}
-                        tooltip={t('dashboard-scene.annotation-settings-list.tooltip-move-up', 'Move up')}
-                      />
+                      <IconButton name="arrow-up" onClick={() => onMove(idx, MoveDirection.UP)} tooltip="Move up" />
                     )}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
@@ -99,7 +78,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                       <IconButton
                         name="arrow-down"
                         onClick={() => onMove(idx, MoveDirection.DOWN)}
-                        tooltip={t('dashboard-scene.annotation-settings-list.tooltip-move-down', 'Move down')}
+                        tooltip="Move down"
                       />
                     ) : null}
                   </td>
@@ -108,11 +87,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                       <DeleteButton
                         size="sm"
                         onConfirm={() => onDelete(idx)}
-                        aria-label={t(
-                          'dashboard-scene.annotation-settings-list.delete-aria-label',
-                          'Delete query with title "{{title}}"',
-                          { title: annotation.name }
-                        )}
+                        aria-label={`Delete query with title "${annotation.name}"`}
                       />
                     )}
                   </td>
@@ -161,7 +136,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
           data-testid={selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2}
           onClick={onNew}
         >
-          <Trans i18nKey="dashboard-scene.annotation-settings-list.new-query">New query</Trans>
+          New query
         </ListNewButton>
       )}
     </Stack>

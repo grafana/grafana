@@ -1,12 +1,13 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { RefreshPicker } from './RefreshPicker';
+import { RefreshPicker } from '@grafana/ui';
+
 import mdx from './RefreshPicker.mdx';
 
 const meta: Meta<typeof RefreshPicker> = {
-  title: 'Pickers/RefreshPicker',
+  title: 'Pickers and Editors/RefreshPicker',
   component: RefreshPicker,
   parameters: {
     docs: {
@@ -20,7 +21,7 @@ const meta: Meta<typeof RefreshPicker> = {
     isLoading: false,
     isLive: false,
     width: 'auto',
-    text: 'Refresh time picker',
+    text: 'Run query',
     tooltip: 'My tooltip text goes here',
     value: '1h',
     primary: false,
@@ -40,7 +41,20 @@ export const Examples: StoryFn<typeof RefreshPicker> = (args) => {
     action('onRefresh fired')();
   };
 
-  return <RefreshPicker {...args} onIntervalChanged={onIntervalChanged} onRefresh={onRefresh} />;
+  return (
+    <RefreshPicker
+      tooltip={args.tooltip}
+      value={args.value}
+      text={args.text}
+      isLoading={args.isLoading}
+      intervals={args.intervals}
+      width={args.width}
+      onIntervalChanged={onIntervalChanged}
+      onRefresh={onRefresh}
+      noIntervalPicker={args.noIntervalPicker}
+      primary={args.primary}
+    />
+  );
 };
 
 export default meta;

@@ -1,6 +1,6 @@
-import { type BaseVariableModel } from '@grafana/data';
+import { VariableModel } from '../types';
 
-export interface VariablePickerProps<Model extends BaseVariableModel = BaseVariableModel> {
+export interface VariablePickerProps<Model extends VariableModel = VariableModel> {
   variable: Model;
   readOnly: boolean;
   onVariableChange?: (variable: Model) => void;

@@ -77,6 +77,22 @@ export function getValuePreview(object: object, value: string): string {
 }
 
 /*
+ * Generates inline preview for a JavaScript object
+ */
+let value = '';
+export function getPreview(obj: object): string {
+  if (isObject(obj)) {
+    value = getObjectName(obj);
+    if (Array.isArray(obj)) {
+      value += '[' + obj.length + ']';
+    }
+  } else {
+    value = getValuePreview(obj, obj.toString());
+  }
+  return value;
+}
+
+/*
  * Generates a prefixed CSS class name
  */
 export function cssClass(className: string): string {

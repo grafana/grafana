@@ -1,10 +1,10 @@
 import { isEqual } from 'lodash';
 import { useMemo, useState } from 'react';
 
-import { EditorList } from '@grafana/plugin-ui';
+import { EditorList } from '@grafana/experimental';
 
-import { type Dimensions as DimensionsType, type MetricStat } from '../../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../../datasource';
+import { CloudWatchDatasource } from '../../../datasource';
+import { Dimensions as DimensionsType, MetricStat } from '../../../types';
 
 import { FilterItem } from './FilterItem';
 

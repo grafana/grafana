@@ -1,7 +1,5 @@
-import { t } from '@grafana/i18n';
-
-import { type ComponentSize } from '../../types/size';
-import { Button } from '../Button/Button';
+import { ComponentSize } from '../../types/size';
+import { Button } from '../Button';
 
 import { ConfirmButton } from './ConfirmButton';
 
@@ -20,19 +18,14 @@ export interface Props {
 export const DeleteButton = ({ size, disabled, onConfirm, 'aria-label': ariaLabel, closeOnConfirm }: Props) => {
   return (
     <ConfirmButton
-      confirmText={t('grafana-ui.confirm-button.confirmText-delete', 'Delete')}
+      confirmText="Delete"
       confirmVariant="destructive"
       size={size || 'md'}
       disabled={disabled}
       onConfirm={onConfirm}
       closeOnConfirm={closeOnConfirm}
     >
-      <Button
-        aria-label={ariaLabel ?? t('grafana-ui.confirm-button.aria-label-delete', 'Delete')}
-        variant="destructive"
-        icon="times"
-        size={size || 'sm'}
-      />
+      <Button aria-label={ariaLabel} variant="destructive" icon="times" size={size || 'sm'} />
     </ConfirmButton>
   );
 };

@@ -1,7 +1,6 @@
-import { type AlertRulesState } from 'app/features/alerting/unified/types/alerting';
-import { type StoreState } from 'app/types/store';
+import { AlertRulesState, StoreState } from 'app/types';
 
-import { getAlertRuleItems, getSearchQuery } from './selectors';
+import { getSearchQuery, getAlertRuleItems } from './selectors';
 
 describe('Get search query', () => {
   it('should get search query', () => {

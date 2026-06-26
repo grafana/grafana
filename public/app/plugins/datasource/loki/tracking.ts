@@ -1,8 +1,7 @@
-import { CoreApp, type DashboardLoadedEvent, type DataQueryRequest, type DataQueryResponse } from '@grafana/data';
-import { QueryEditorMode } from '@grafana/plugin-ui';
+import { CoreApp, DashboardLoadedEvent, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { QueryEditorMode } from '@grafana/experimental';
 import { reportInteraction, config } from '@grafana/runtime';
 
-import { LokiQueryType } from './dataquery.gen';
 import {
   REF_ID_STARTER_ANNOTATION,
   REF_ID_DATA_SAMPLES,
@@ -13,7 +12,7 @@ import {
 import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, obfuscate } from './queryUtils';
 import { variableRegex } from './querybuilder/parsingUtils';
-import { type LokiGroupedRequest, type LokiQuery } from './types';
+import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 
 type LokiOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
@@ -52,6 +51,10 @@ type LokiOnDashboardLoadedTrackingEvent = {
 
   /* The number of Loki queries with changed legend present in the dashboard*/
   queries_with_changed_legend_count: number;
+};
+
+export type LokiTrackingSettings = {
+  predefinedOperations?: string;
 };
 
 export const onDashboardLoadedHandler = ({
@@ -155,6 +158,7 @@ export function trackQuery(
   response: DataQueryResponse,
   request: DataQueryRequest<LokiQuery>,
   startTime: Date,
+  trackingSettings: LokiTrackingSettings = {},
   extraPayload: Record<string, unknown> = {}
 ): void {
   // We only want to track usage for these specific apps
@@ -189,6 +193,9 @@ export function trackQuery(
       time_taken: Date.now() - startTime.getTime(),
       bytes_processed: totalBytes,
       is_split: false,
+      predefined_operations_applied: trackingSettings.predefinedOperations
+        ? query.expr.includes(trackingSettings.predefinedOperations)
+        : 'n/a',
       ...extraPayload,
     });
   }
@@ -198,7 +205,8 @@ export function trackGroupedQueries(
   response: DataQueryResponse,
   groupedRequests: LokiGroupedRequest[],
   originalRequest: DataQueryRequest<LokiQuery>,
-  startTime: Date
+  startTime: Date,
+  trackingSettings: LokiTrackingSettings = {}
 ): void {
   const splittingPayload = {
     split_query_group_count: groupedRequests.length,
@@ -211,7 +219,7 @@ export function trackGroupedQueries(
 
   for (const group of groupedRequests) {
     const split_query_partition_size = group.partition.length;
-    trackQuery(response, group.request, startTime, {
+    trackQuery(response, group.request, startTime, trackingSettings, {
       ...splittingPayload,
       split_query_partition_size,
     });

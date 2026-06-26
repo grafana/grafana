@@ -1,13 +1,13 @@
 import { getActiveThreshold } from '../field/thresholds';
 import { stringToJsRegex } from '../text/string';
-import { type ThresholdsConfig } from '../types/thresholds';
+import { ThresholdsConfig } from '../types/thresholds';
 import {
   MappingType,
   SpecialValueMatch,
-  type SpecialValueOptions,
-  type ValueMap,
-  type ValueMapping,
-  type ValueMappingResult,
+  SpecialValueOptions,
+  ValueMap,
+  ValueMapping,
+  ValueMappingResult,
 } from '../types/valueMapping';
 
 export function getValueMappingResult(valueMappings: ValueMapping[], value: any): ValueMappingResult | null {
@@ -35,17 +35,13 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
           continue;
         }
 
-        const from = vm.options.from ?? -Infinity;
-
-        const isNumFrom = !isNaN(from);
-        if (isNumFrom && valueAsNumber < from) {
+        const isNumFrom = !isNaN(vm.options.from!);
+        if (isNumFrom && valueAsNumber < vm.options.from!) {
           continue;
         }
 
-        const to = vm.options.to ?? Infinity;
-
-        const isNumTo = !isNaN(to);
-        if (isNumTo && valueAsNumber > to) {
+        const isNumTo = !isNaN(vm.options.to!);
+        if (isNumTo && valueAsNumber > vm.options.to!) {
           continue;
         }
 
@@ -131,6 +127,7 @@ export enum LegacyMappingType {
 }
 
 /**
+ * @alpha
  * Converts the old Angular value mappings to new react style
  */
 export function convertOldAngularValueMappings(panel: any, migratedThresholds?: ThresholdsConfig): ValueMapping[] {

@@ -1,1 +1,0 @@
-SELECT MAX(updated) FROM {{ .Ident .StarTable }}

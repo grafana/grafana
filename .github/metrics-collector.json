@@ -1,0 +1,32 @@
+{
+  "queries": [
+    {
+      "name": "type_bug",
+      "query": "label:\"type/bug\" is:issue is:open"
+    },
+    {
+      "name": "type_docs",
+      "query": "label:\"type/docs\" is:issue is:open"
+    },
+    {
+      "name": "needs_investigation",
+      "query": "label:\"needs investigation\" is:issue is:open"
+    },
+    {
+      "name": "needs_more_info",
+      "query": "label:\"needs more info\" is:issue is:open"
+    },
+    {
+      "name": "triage_needs_confirmation",
+      "query": "label:\"triage/needs-confirmation\" is:issue is:open"
+    },
+    {
+      "name": "unlabeled",
+      "query": "is:open is:issue no:label"
+    },
+    {
+      "name": "open_prs",
+      "query": "is:open is:pull-request"
+    }
+  ]
+}

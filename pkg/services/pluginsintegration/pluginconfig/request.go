@@ -9,14 +9,11 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana/pkg/plugins/auth"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/plugins/auth"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
@@ -26,16 +23,12 @@ type PluginRequestConfigProvider interface {
 }
 
 type RequestConfigProvider struct {
-	cfg         *PluginInstanceCfg
-	ssoSettings pluginsso.SettingsProvider
-	logger      log.Logger
+	cfg *PluginInstanceCfg
 }
 
-func NewRequestConfigProvider(cfg *PluginInstanceCfg, ssoSettings pluginsso.SettingsProvider) *RequestConfigProvider {
+func NewRequestConfigProvider(cfg *PluginInstanceCfg) *RequestConfigProvider {
 	return &RequestConfigProvider{
-		cfg:         cfg,
-		ssoSettings: ssoSettings,
-		logger:      log.New("pluginrequestconfig"),
+		cfg: cfg,
 	}
 }
 
@@ -64,9 +57,6 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
 		if !s.cfg.AWSAssumeRoleEnabled {
 			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
-		}
-		if s.cfg.AWSPerDatasourceHTTPProxyEnabled {
-			m[awsds.PerDatasourceHTTPProxyEnabledEnvVarKeyName] = "true"
 		}
 		if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 			m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
@@ -99,19 +89,8 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if s.cfg.AzureAuthEnabled {
 		m[azsettings.AzureAuthEnabled] = strconv.FormatBool(s.cfg.AzureAuthEnabled)
 	}
-
 	azureSettings := s.cfg.Azure
-	if azureSettings == nil {
-		azureSettings = &azsettings.AzureSettings{}
-	}
-
-	if slices.Contains(azureSettings.ForwardSettingsPlugins, pluginID) {
-		azureAdSettings, err := s.ssoSettings.GetForProvider(ctx, social.AzureADProviderName)
-		if err != nil {
-			s.logger.Error("Failed to get SSO settings", "error", err)
-		}
-		azureSettings = mergeAzureSettings(azureSettings, azureAdSettings)
-
+	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
@@ -136,20 +115,11 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
 					m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
 				}
-				if azureSettings.UserIdentityTokenEndpoint.ClientAuthentication != "" {
-					m[azsettings.UserIdentityClientAuthentication] = azureSettings.UserIdentityTokenEndpoint.ClientAuthentication
-				}
 				if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
 					m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
 				}
 				if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
 					m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
-				}
-				if azureSettings.UserIdentityTokenEndpoint.ManagedIdentityClientId != "" {
-					m[azsettings.UserIdentityManagedIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ManagedIdentityClientId
-				}
-				if azureSettings.UserIdentityTokenEndpoint.FederatedCredentialAudience != "" {
-					m[azsettings.UserIdentityFederatedCredentialAudience] = azureSettings.UserIdentityTokenEndpoint.FederatedCredentialAudience
 				}
 				if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
 					m[azsettings.UserIdentityAssertion] = "username"
@@ -200,8 +170,6 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if externalService != nil {
 		m[backend.AppClientSecret] = externalService.ClientSecret
 	}
-
-	m[backend.LiveClientQueueMaxSize] = strconv.Itoa(s.cfg.LiveClientQueueMaxSize)
 
 	return m
 }

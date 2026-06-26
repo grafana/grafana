@@ -1,10 +1,12 @@
-import { type DataFrame, type DataQuery, type DataQueryError, type DataTopic } from '@grafana/data';
+import { DataFrame, DataQuery, DataQueryError, DataTopic } from '@grafana/data';
+
+export const SHARED_DASHBOARD_QUERY = '-- Dashboard --';
+export const DASHBOARD_DATASOURCE_PLUGIN_ID = 'dashboard';
 
 export interface DashboardQuery extends DataQuery {
   panelId?: number;
   withTransforms?: boolean;
   topic?: DataTopic;
-  adHocFiltersEnabled?: boolean;
 }
 
 export type ResultInfo = {

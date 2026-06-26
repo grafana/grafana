@@ -1,7 +1,6 @@
-import { type ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 import { locationUtil } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Modal, Stack } from '@grafana/ui';
 
@@ -22,21 +21,17 @@ export function ConfirmNavigationModal(props: Props): ReactElement {
   return (
     <Modal title={title} isOpen onDismiss={onDismiss}>
       <Stack direction="column" gap={1}>
-        <p>
-          <Trans i18nKey="explore.confirm-navigation-modal.new-tab">
-            Do you want to proceed in the current tab or open a new tab?
-          </Trans>
-        </p>
+        <p>Do you want to proceed in the current tab or open a new tab?</p>
       </Stack>
       <Modal.ButtonRow>
         <Button onClick={onDismiss} fill="outline" variant="secondary">
-          <Trans i18nKey="explore.confirm-navigation-modal.cancel">Cancel</Trans>
+          Cancel
         </Button>
         <Button type="submit" variant="secondary" onClick={openInNewTab} icon="external-link-alt">
-          <Trans i18nKey="explore.confirm-navigation-modal.open-in-new-tab">Open in new tab</Trans>
+          Open in new tab
         </Button>
         <Button type="submit" variant="primary" onClick={openInCurrentTab} icon="apps">
-          <Trans i18nKey="explore.confirm-navigation-modal.open">Open</Trans>
+          Open
         </Button>
       </Modal.ButtonRow>
     </Modal>

@@ -1,20 +1,20 @@
-import { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
+import { FeatureLike } from 'ol/Feature';
+import Map from 'ol/Map';
 import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 
 import {
-  type MapLayerRegistryItem,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
+  MapLayerRegistryItem,
+  PanelData,
+  GrafanaTheme2,
+  EventBus,
+  PluginState,
   FieldType,
-  type Field,
-  type MapLayerOptions,
+  Field,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { findField } from 'app/features/dimensions/utils';
+import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema';
+import { findField } from 'app/features/dimensions';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -38,7 +38,18 @@ const defaultOptions: PhotoConfig = {
   color: 'rgb(200, 200, 200)',
 };
 
-const PHOTOS_LAYER_ID = 'photos';
+export const PHOTOS_LAYER_ID = 'photos';
+
+// Used by default when nothing is configured
+export const defaultPhotosConfig: MapLayerOptions<PhotoConfig> = {
+  type: PHOTOS_LAYER_ID,
+  name: '', // will get replaced
+  config: defaultOptions,
+  location: {
+    mode: FrameGeometrySourceMode.Auto,
+  },
+  tooltip: true,
+};
 
 // TODO Find a way to use SVG scaled to behave like a png, currently using base64 conversion
 //const unknownImageSVG = '../../../../../public/img/icons/unicons/question-circle.svg';
@@ -58,6 +69,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
   isBaseMap: false,
   showLocation: true,
   hideOpacity: true,
+  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -65,7 +77,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<PhotoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: Map, options: MapLayerOptions<PhotoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -93,7 +105,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           radius: config.radius,
           crop: config.crop,
           kind: config.kind,
-          shadow: 0,
+          shadow: false,
           stroke: new Stroke({
             width: 0,
             color: 'rgba(0,0,0,0)',
@@ -112,7 +124,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           radius: config.radius,
           crop: false,
           kind: config.kind,
-          shadow: config.shadow ? 2 : 0,
+          shadow: config.shadow,
           stroke: new Stroke({
             width: config.border ?? 0,
             color: theme.visualization.getColorByName(config.color),
@@ -128,7 +140,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           radius: config.radius,
           crop: false,
           kind: config.kind,
-          shadow: 0,
+          shadow: false,
           stroke: new Stroke({
             width: 0,
             color: 'rgba(0,0,0,0)',
@@ -183,7 +195,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
             name: 'Image Source field',
             settings: {
               filter: (f: Field) => f.type === FieldType.string,
-              noFieldsMessage: t('geomap.photos-layer.noFieldsMessage-no-string-fields', 'No string fields found'),
+              noFieldsMessage: 'No string fields found',
             },
           })
           .addRadio({

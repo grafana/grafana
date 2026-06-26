@@ -1,35 +1,29 @@
 import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef, useMemo } from 'react';
+import { createRef } from 'react';
 
 import {
-  type Field,
-  type LinkModel,
+  Field,
+  LinkModel,
   FieldType,
-  type GrafanaTheme2,
+  GrafanaTheme2,
   formattedValueToString,
   getFieldDisplayName,
-  type ScopedVars,
-  type ValueLinkConfig,
-  type ActionModel,
-} from '@grafana/data';
-import {
-  CloseButton,
-  Portal,
-  type VizTooltipItem,
-  VizTooltipContainer,
-  VizTooltipContent,
-  VizTooltipFooter,
-  VizTooltipHeader,
-  getFieldDisplayLinks,
-  usePanelContext,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+  ScopedVars,
+  ValueLinkConfig,
+} from '@grafana/data/src';
+import { ActionModel } from '@grafana/data/src/types/action';
+import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
+import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
+import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
+import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
+import { CloseButton } from '@grafana/ui/src/components/uPlot/plugins/CloseButton';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
-import { type Scene } from 'app/features/canvas/runtime/scene';
+import { Scene } from 'app/features/canvas/runtime/scene';
 
+import { getDataLinks } from '../../status-history/utils';
 import { getElementFields, getRowIndex } from '../utils';
 
 interface Props {
@@ -37,13 +31,10 @@ interface Props {
 }
 
 export const CanvasTooltip = ({ scene }: Props) => {
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { canExecuteActions } = usePanelContext();
-  const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
   const onClose = () => {
-    if (scene?.tooltipCallback && scene.tooltipPayload) {
+    if (scene?.tooltipCallback && scene.tooltip) {
       scene.tooltipCallback(undefined);
     }
   };
@@ -52,18 +43,18 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const { overlayProps } = useOverlay({ onClose: onClose, isDismissable: true }, ref);
   const { dialogProps } = useDialog({}, ref);
 
-  const element = scene.tooltipPayload?.element;
+  const element = scene.tooltip?.element;
   if (!element) {
     return <></>;
   }
 
   // Retrieve timestamp of the last data point if available
-  const timeField = scene.data?.series[0]?.fields?.find((field) => field.type === FieldType.time);
+  const timeField = scene.data?.series[0].fields?.find((field) => field.type === FieldType.time);
   const lastTimeValue = timeField?.values[timeField.values.length - 1];
   const shouldDisplayTimeContentItem =
     timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
 
-  const headerItem: VizTooltipItem = {
+  const headerItem: VizTooltipItem | null = {
     label: element.getName(),
     value: '',
   };
@@ -83,6 +74,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       : []),
   ];
 
+  // NOTE: almost identical to getDataLinks() helper
   const links: Array<LinkModel<Field>> = [];
 
   if ((element.options.links?.length ?? 0) > 0 && element.getLinks) {
@@ -96,10 +88,11 @@ export const CanvasTooltip = ({ scene }: Props) => {
       }
     });
   }
+  // ---------
 
   if (scene.data?.series) {
     getElementFields(scene.data?.series, element.options).forEach((field) => {
-      links.push(...getFieldDisplayLinks(field, getRowIndex(element.data.field, scene)));
+      links.push(...getDataLinks(field, getRowIndex(element.data.field, scene)));
     });
   }
 
@@ -109,7 +102,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const elementHasActions = (element.options.actions?.length ?? 0) > 0;
   const frames = scene.data?.series;
 
-  if (elementHasActions && frames && userCanExecuteActions) {
+  if (elementHasActions && frames) {
     const defaultField = getActionsDefaultField(element.options.links ?? [], element.options.actions ?? []);
     const scopedVars: ScopedVars = {
       __dataContext: {
@@ -130,8 +123,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       scopedVars,
       scene.panel.props.replaceVariables!,
       element.options.actions ?? [],
-      config,
-      'canvas'
+      config
     );
 
     actionsModel.forEach((action) => {
@@ -145,18 +137,18 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
   return (
     <>
-      {scene.tooltipPayload?.element && scene.tooltipPayload.anchorPoint && (
-        <Portal zIndex={theme.zIndex.tooltip}>
+      {scene.tooltip?.element && scene.tooltip.anchorPoint && (
+        <Portal>
           <VizTooltipContainer
-            className={cx(styles.tooltipWrapper, scene.tooltipPayload.isOpen && styles.pinned)}
-            position={{ x: scene.tooltipPayload.anchorPoint.x, y: scene.tooltipPayload.anchorPoint.y }}
+            className={cx(styles.tooltipWrapper, scene.tooltip.isOpen && styles.pinned)}
+            position={{ x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y }}
             offset={{ x: 5, y: 0 }}
-            allowPointerEvents={scene.tooltipPayload.isOpen}
+            allowPointerEvents={scene.tooltip.isOpen}
           >
             <section ref={ref} {...overlayProps} {...dialogProps}>
-              {scene.tooltipPayload.isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
-              <VizTooltipHeader item={headerItem} isPinned={scene.tooltipPayload.isOpen!} />
-              {element.data.text && <VizTooltipContent items={contentItems} isPinned={scene.tooltipPayload.isOpen!} />}
+              {scene.tooltip.isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
+              <VizTooltipHeader item={headerItem} isPinned={scene.tooltip.isOpen!} />
+              {element.data.text && <VizTooltipContent items={contentItems} isPinned={scene.tooltip.isOpen!} />}
               {(links.length > 0 || actions.length > 0) && <VizTooltipFooter dataLinks={links} actions={actions} />}
             </section>
           </VizTooltipContainer>
@@ -174,6 +166,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
+    zIndex: theme.zIndex.portal,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',

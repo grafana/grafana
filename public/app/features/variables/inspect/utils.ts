@@ -1,25 +1,26 @@
-import { type BaseVariableModel, DataLinkBuiltInVars } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type Graph } from 'app/core/utils/dag';
+import { DataLinkBuiltInVars } from '@grafana/data';
+import { Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
-import { type DashboardModel } from '../../dashboard/state/DashboardModel';
-import { PanelModel } from '../../dashboard/state/PanelModel';
+import { DashboardModel, PanelModel } from '../../dashboard/state';
 import { variableAdapters } from '../adapters';
 import { isAdHoc } from '../guard';
+import { VariableModel } from '../types';
 import { containsVariable, variableRegex, variableRegexExec } from '../utils';
 
-import {
-  type GraphEdge,
-  type GraphNode,
-  type UsagesToNetwork,
-  type VariableUsages,
-  type VariableUsageTree,
-} from './types';
+export interface GraphNode {
+  id: string;
+  label: string;
+}
 
-export const createDependencyNodes = (variables: BaseVariableModel[]): GraphNode[] => {
+export interface GraphEdge {
+  from: string;
+  to: string;
+}
+
+export const createDependencyNodes = (variables: VariableModel[]): GraphNode[] => {
   const nodes: GraphNode[] = [];
 
   for (const variable of variables) {
@@ -33,7 +34,7 @@ export const filterNodesWithDependencies = (nodes: GraphNode[], edges: GraphEdge
   return nodes.filter((node) => edges.some((edge) => edge.from === node.id || edge.to === node.id));
 };
 
-export const createDependencyEdges = (variables: BaseVariableModel[]): GraphEdge[] => {
+export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] => {
   const edges: GraphEdge[] = [];
 
   for (const variable of variables) {
@@ -68,7 +69,7 @@ export function getVariableName(expression: string) {
   return variableName;
 }
 
-export const getUnknownVariableStrings = (variables: BaseVariableModel[], model: DashboardModel) => {
+export const getUnknownVariableStrings = (variables: VariableModel[], model: DashboardModel) => {
   variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
@@ -123,7 +124,7 @@ const validVariableNames: Record<string, RegExp[]> = {
 };
 
 export const getPropsWithVariable = (variableId: string, parent: { key: string; value: any }, result: any) => {
-  const stringValues = Object.keys(parent.value).reduce<Record<string, string>>((all, key) => {
+  const stringValues = Object.keys(parent.value).reduce<Record<string, any>>((all, key) => {
     const value = parent.value[key];
     if (!value || typeof value !== 'string') {
       return all;
@@ -149,7 +150,7 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
     return all;
   }, {});
 
-  const objectValues = Object.keys(parent.value).reduce<Record<string, object>>((all, key) => {
+  const objectValues = Object.keys(parent.value).reduce<Record<string, any>>((all, key) => {
     const value = parent.value[key];
     if (value && typeof value === 'object' && Object.keys(value).length) {
       let id = value.title || value.name || value.id || key;
@@ -181,15 +182,22 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
   return result;
 };
 
-export const createUsagesNetwork = (
-  variables: BaseVariableModel[],
-  dashboard: DashboardModel | null
-): VariableUsages => {
+export interface VariableUsageTree {
+  variable: VariableModel;
+  tree: any;
+}
+
+export interface VariableUsages {
+  unUsed: VariableModel[];
+  usages: VariableUsageTree[];
+}
+
+export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
   if (!dashboard) {
     return { unUsed: [], usages: [] };
   }
 
-  const unUsed: BaseVariableModel[] = [];
+  const unUsed: VariableModel[] = [];
   let usages: VariableUsageTree[] = [];
   const model = dashboard.getSaveModelCloneOld();
 
@@ -209,7 +217,7 @@ export const createUsagesNetwork = (
 };
 
 export async function getUnknownsNetwork(
-  variables: BaseVariableModel[],
+  variables: VariableModel[],
   dashboard: DashboardModel | null
 ): Promise<UsagesToNetwork[]> {
   return new Promise((resolve, reject) => {
@@ -225,7 +233,7 @@ export async function getUnknownsNetwork(
   });
 }
 
-function createUnknownsNetwork(variables: BaseVariableModel[], dashboard: DashboardModel | null): VariableUsageTree[] {
+function createUnknownsNetwork(variables: VariableModel[], dashboard: DashboardModel | null): VariableUsageTree[] {
   if (!dashboard) {
     return [];
   }
@@ -237,7 +245,7 @@ function createUnknownsNetwork(variables: BaseVariableModel[], dashboard: Dashbo
   for (const unknownVariable of unknownVariables) {
     const props = getPropsWithVariable(unknownVariable, { key: 'model', value: model }, {});
     if (Object.keys(props).length) {
-      const variable = { id: unknownVariable, name: unknownVariable } as unknown as BaseVariableModel;
+      const variable = { id: unknownVariable, name: unknownVariable } as unknown as VariableModel;
       unknown.push({ variable, tree: props });
     }
   }
@@ -282,6 +290,13 @@ export function getDependentPanels(variables: string[], panelsByVarUsage: Record
   return new Set(thePanels);
 }
 
+export interface UsagesToNetwork {
+  variable: VariableModel;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  showGraph: boolean;
+}
+
 export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value: any }): UsagesToNetwork => {
   const { id, value } = parent;
   const { nodes, edges } = usage;
@@ -316,9 +331,7 @@ export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToN
     const { variable, tree } = usage;
     const result: UsagesToNetwork = {
       variable,
-      nodes: [
-        { id: 'dashboard', label: t('variables.transform-usages-to-network.result.label.dashboard', 'dashboard') },
-      ],
+      nodes: [{ id: 'dashboard', label: 'dashboard' }],
       edges: [],
       showGraph: false,
     };

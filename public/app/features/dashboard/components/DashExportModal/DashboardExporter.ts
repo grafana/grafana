@@ -1,25 +1,24 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
+import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import config from 'app/core/config';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegex } from 'app/features/variables/utils';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
-import { type DashboardJson } from '../../../manage-dashboards/types';
+import { DashboardJson } from '../../../manage-dashboards/types';
 import { isConstant } from '../../../variables/guard';
-import { type DashboardModel } from '../../state/DashboardModel';
-import { type GridPos } from '../../state/PanelModel';
+import { DashboardModel } from '../../state/DashboardModel';
+import { GridPos } from '../../state/PanelModel';
 
-interface InputUsage {
+export interface InputUsage {
   libraryPanels?: LibraryPanel[];
 }
 
-interface LibraryPanel {
+export interface LibraryPanel {
   name: string;
   uid: string;
 }
@@ -88,6 +87,7 @@ export class DashboardExporter {
     dashboard.cleanUpRepeats();
 
     const saveModel = dashboard.getSaveModelCloneOld();
+    saveModel.id = null;
 
     // undo repeat cleanup
     dashboard.processRepeats();
@@ -180,7 +180,7 @@ export class DashboardExporter {
           }
         }
 
-        const panelDef = await getPanelPluginMeta(panel.type);
+        const panelDef: PanelPluginMeta = config.panels[panel.type];
         if (panelDef) {
           requires['panel' + panelDef.id] = {
             type: 'panel',

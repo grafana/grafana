@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import Combokeys from 'combokeys';
-import type * as React from 'react';
+import * as React from 'react';
 
 import keyboardMappings from './keyboard-mappings';
 
-type CombokeysHandler =
+export type CombokeysHandler =
   | (() => void)
   | ((event: React.KeyboardEvent) => void)
   | ((event: React.KeyboardEvent, s: string) => void);
@@ -45,4 +45,9 @@ export function merge(callbacks: ShortcutCallbacks) {
       inst.bind(keyboardMappings[name].binding, keysHandler);
     }
   });
+}
+
+export function reset() {
+  const combokeys = getInstance();
+  combokeys.reset();
 }

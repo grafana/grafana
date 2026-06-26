@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export function getDashDiffStyles(theme: GrafanaTheme2) {
   return css({
@@ -142,7 +142,7 @@ export function getDashDiffStyles(theme: GrafanaTheme2) {
 
     '.diff-label': {
       backgroundColor: theme.colors.action.hover,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: '3px',
       color: theme.colors.text.primary,
       display: 'inline',
       fontSize: `${theme.typography.fontSize}px`,

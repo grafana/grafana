@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import { type ReactNode, useState } from 'react';
+import { ReactNode, useState } from 'react';
 
-import { type DataQuery, type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -16,6 +15,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   renderExtras?: () => ReactNode;
   onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
   onChange: (query: TQuery) => void;
+  onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
   alerting?: boolean;
   hideRefId?: boolean;
@@ -89,9 +89,10 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         {!hideRefId && !isEditing && (
           <button
             className={styles.queryNameWrapper}
-            data-testid={selectors.components.QueryEditorRow.title(query.refId)}
-            title={t('query.query-editor-row-header.query-name-div-title-edit-query-name', 'Edit query name')}
+            aria-label={selectors.components.QueryEditorRow.title(query.refId)}
+            title="Edit query name"
             onClick={onEditQuery}
+            data-testid="query-name-div"
             type="button"
           >
             <span className={styles.queryName}>{query.refId}</span>
@@ -118,11 +119,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         )}
         {renderDataSource(props, styles)}
         {renderExtras && <div className={styles.itemWrapper}>{renderExtras()}</div>}
-        {hidden && (
-          <em className={styles.contextInfo}>
-            <Trans i18nKey="query.query-editor-row-header.hidden">Hidden</Trans>
-          </em>
-        )}
+        {hidden && <em className={styles.contextInfo}>Hidden</em>}
       </div>
 
       {collapsedText && <div className={styles.collapsedText}>{collapsedText}</div>}
@@ -142,13 +139,7 @@ const renderDataSource = <TQuery extends DataQuery>(
 
   return (
     <div className={styles.itemWrapper}>
-      <DataSourcePicker
-        dashboard={true}
-        variables={true}
-        alerting={alerting}
-        current={dataSource.name}
-        onChange={onChangeDataSource}
-      />
+      <DataSourcePicker variables={true} alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />
     </div>
   );
 };
@@ -179,7 +170,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus': {
-        border: `2px solid ${theme.colors.accent.border}`,
+        border: `2px solid ${theme.colors.primary.border}`,
       },
 
       '&:hover, &:focus': {
@@ -190,7 +181,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     queryName: css({
       fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.accent.text,
+      color: theme.colors.primary.text,
       cursor: 'pointer',
       overflow: 'hidden',
       marginLeft: theme.spacing(0.5),

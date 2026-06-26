@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { GraphPeriod, type Props } from './GraphPeriod';
+import { GraphPeriod, Props } from './GraphPeriod';
 
 const props: Props = {
   onChange: jest.fn(),

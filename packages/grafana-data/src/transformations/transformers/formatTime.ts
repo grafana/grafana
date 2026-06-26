@@ -1,12 +1,12 @@
 import { map } from 'rxjs/operators';
 
-import { type TimeZone } from '@grafana/schema';
+import { TimeZone } from '@grafana/schema';
 
 import { cacheFieldDisplayNames } from '../../field/fieldState';
-import { type DataFrame } from '../../types/dataFrame';
+import { DataFrame } from '../../types/dataFrame';
 import {
-  type DataTransformContext,
-  type DataTransformerInfo,
+  DataTransformContext,
+  DataTransformerInfo,
   TransformationApplicabilityLevels,
 } from '../../types/transformations';
 

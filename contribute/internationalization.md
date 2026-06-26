@@ -2,7 +2,7 @@
 
 Grafana uses the [i18next](https://www.i18next.com/) framework for managing translating phrases in the Grafana frontend.
 
-## tl;dr
+## TL;DR
 
 **Note:** We don't currently accept contributions for translations. Please don't submit pull requests translating `grafana.json` files - they will be rejected. We do accept contributions to mark up phrases for translation.
 
@@ -17,10 +17,10 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 
 ### JSX
 
-1. For JSX children, use the `<Trans />` component from `@grafana/i18n` with the `i18nKey`, ensuring it conforms to the following guidelines, with the default English translation. For example:
+1. For JSX children, use the `<Trans />` component from `app/core/internationalization` with the `i18nKey`, ensuring it conforms to the following guidelines, with the default English translation. For example:
 
 ```jsx
-import { Trans } from '@grafana/i18n';
+import { Trans } from 'app/core/internationalization';
 
 const SearchTitle = ({ term }) => <Trans i18nKey="search-page.results-title">Results for {{ term }}</Trans>;
 ```
@@ -32,7 +32,7 @@ There may be cases where you need to interpolate variables inside other componen
 If the nested component is displaying the variable only (e.g. to add emphasis or color), the best solution is to create a new wrapping component:
 
 ```jsx
-import { Trans } from '@grafana/i18n';
+import { Trans } from 'app/core/internationalization';
 import { Text } from '@grafana/ui';
 
 const SearchTerm = ({ term }) => <Text color="success">{term}</Text>;
@@ -47,7 +47,7 @@ const SearchTitle = ({ term }) => (
 However there are also cases where the nested component might be displaying additional text which also needs to be translated. In this case, you can use the `values` prop to explicitly pass variables to the translation, and reference them as templated strings in the markup. For example:
 
 ```jsx
-import { Trans } from '@grafana/i18n';
+import { Trans } from 'app/core/internationalization';
 import { Text } from '@grafana/ui';
 
 const SearchTitle = ({ term }) => (
@@ -75,7 +75,7 @@ const ErrorMessage = ({ id, message }) => <Trans i18nKey={`errors.${id}`}>There 
 Sometimes you may need to translate a string cannot be represented in JSX, such as `placeholder` props. Use the `t` macro for this.
 
 ```jsx
-import { t } from "@grafana/i18n"
+import { t } from "app/core/internationalization"
 
 const placeholder = t('form.username-placeholder','Username');
 
@@ -146,7 +146,7 @@ Refer to the [i18next](https://www.i18next.com/) and [react-i18next](https://rea
 For fixed phrases:
 
 ```jsx
-import { Trans } from '@grafana/i18n';
+import { Trans } from 'app/core/internationalization';
 
 <Trans i18nKey="page.greeting">Hello user!</Trans>;
 ```
@@ -154,7 +154,7 @@ import { Trans } from '@grafana/i18n';
 To interpolate a variable, include it as an object child. It's a weird syntax, but `Trans` will do its magic to make it work:
 
 ```jsx
-import { Trans } from '@grafana/i18n';
+import { Trans } from 'app/core/internationalization';
 
 <Trans i18nKey="page.greeting">Hello {{ name: user.name }}!</Trans>;
 
@@ -165,7 +165,7 @@ const userName = user.name;
 Variables must be strings (or, must support calling `.toString()`, which we almost never want). For example:
 
 ```jsx
-import { Trans } from '@grafana/i18n';
+import { Trans } from 'app/core/internationalization';
 
 // This will not work
 const userName = <strong>user.name</strong>;
@@ -183,7 +183,7 @@ const userName = user.name;
 Both HTML tags and React components can be included in a phase. The `Trans` function handles interpolating for its children.
 
 ```js
-import { Trans } from "@grafana/i18n"
+import { Trans } from "app/core/internationalization"
 
 <Trans i18nKey="page.explainer">
   Click <button>here</button> to <a href="https://grafana.com">learn more.</a>
@@ -199,40 +199,23 @@ import { Trans } from "@grafana/i18n"
 
 ### Plurals
 
-Plurals require special handling to make sure they can be translated according to the rules of each locale (which may be more complex than you think). Use either the `<Trans />` component or the `t` function, providing a separate singular form alongside the `count` prop. For example:
+Plurals require special handling to make sure they can be translated according to the rules of each locale (which may be more complex than you think). Use either the `<Trans />` component or the `t` function, with the `count` prop to provide a singular form. For example:
 
-#### `Trans`
+```js
+import { Trans } from 'app/core/internationalization';
 
-```tsx
-import { Trans } from '@grafana/i18n';
-
-<Trans
-  i18nKey="inbox.heading"
-  count={messages.length}
-  tOptions={{
-    defaultValue_one: 'You got {{count}} message',
-  }}
->
+<Trans i18nKey="inbox.heading" count={messages.length}>
   You got {{ count: messages.length }} messages
 </Trans>;
 ```
 
-#### `t`
+```js
+import { t } from 'app/core/internationalization';
 
-```ts
-import { t } from '@grafana/i18n';
-
-const translatedString = t(
-  'inbox.heading',
-  'You got {{count}} messages',
-  {
-    count: messages.length
-    defaultValue_one: 'You got {{count}} message',
-  }
-);
+const translatedString = t('inbox.heading', 'You got {{count}} messages', { count: messages.length });
 ```
 
-Once extracted with `yarn i18n-extract`, you'll see your updated strings in the [English `grafana.json` message catalog](../public/locales/en-US/grafana.json). Refer to the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+Once extracted with `make i18n-extract` you need to manually edit the [English `grafana.json` message catalog](../public/locales/en-US/grafana.json) to correct the plural forms. Refer to the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
 
 ```json
 {

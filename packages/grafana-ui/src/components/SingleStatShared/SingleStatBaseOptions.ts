@@ -1,22 +1,22 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, identity, isNumber, omit, pickBy } from 'lodash';
 
 import {
   convertOldAngularValueMappings,
   FieldColorModeId,
-  type FieldConfig,
+  FieldConfig,
   fieldReducers,
-  type PanelModel,
-  type ReduceDataOptions,
+  PanelModel,
+  ReduceDataOptions,
   ReducerID,
   sortThresholds,
-  type Threshold,
-  type ThresholdsConfig,
+  Threshold,
+  ThresholdsConfig,
   ThresholdsMode,
   validateFieldConfig,
-  type ValueMapping,
+  ValueMapping,
   VizOrientation,
 } from '@grafana/data';
-import { LegendDisplayMode, type OptionsWithLegend, type OptionsWithTextFormatting } from '@grafana/schema';
+import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
@@ -39,7 +39,7 @@ export function sharedSingleStatPanelChangedHandler(
   };
 
   // Migrating from angular singlestat
-  if ((prevPluginId === 'singlestat' || prevPluginId === 'grafana-singlestat-panel') && prevOptions.angular) {
+  if (prevPluginId === 'singlestat' && prevOptions.angular) {
     return migrateFromAngularSinglestat(panel, prevOptions);
   } else if (prevPluginId === 'graph') {
     // Migrating from Graph panel
@@ -101,7 +101,7 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
       }
 
       if (legendConfig.values) {
-        const enabledLegendValues = Object.fromEntries(Object.entries(legendConfig).filter(([, v]) => v));
+        const enabledLegendValues = pickBy(legendConfig, identity);
         options.legend.calcs = getReducersFromLegend(enabledLegendValues);
       }
 
@@ -117,12 +117,12 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
 function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
   const prevPanel = prevOptions.angular;
   const reducer = fieldReducers.getIfExists(prevPanel.valueName);
-  const options: SingleStatBaseOptions = {
+  const options = {
     reduceOptions: {
       calcs: [reducer ? reducer.id : ReducerID.mean],
     },
     orientation: VizOrientation.Horizontal,
-  };
+  } as any;
 
   const defaults: FieldConfig = {};
 
@@ -188,16 +188,11 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
 export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBaseOptions>): SingleStatBaseOptions {
   if (!panel.options) {
     // This happens on the first load or when migrating from angular
-    return {
-      reduceOptions: {
-        calcs: [ReducerID.mean],
-      },
-      orientation: VizOrientation.Horizontal,
-    };
+    return {} as any;
   }
 
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
-  let options: any = panel.options;
+  let options = panel.options as any;
 
   if (previousVersion < 6.2) {
     options = migrateFromValueOptions(options);
@@ -288,17 +283,17 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     const config = panel.fieldConfig?.defaults;
     let unit = config?.unit;
     if (unit === 'percent') {
-      if (typeof config.min !== 'number') {
+      if (!isNumber(config.min)) {
         config.min = 0;
       }
-      if (typeof config.max !== 'number') {
+      if (!isNumber(config.max)) {
         config.max = 100;
       }
     } else if (unit === 'percentunit') {
-      if (typeof config.min !== 'number') {
+      if (!isNumber(config.min)) {
         config.min = 0;
       }
-      if (typeof config.max !== 'number') {
+      if (!isNumber(config.max)) {
         config.max = 1;
       }
     }
@@ -307,7 +302,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
   return options;
 }
 
-function moveThresholdsAndMappingsToField(old: any) {
+export function moveThresholdsAndMappingsToField(old: any) {
   const { fieldOptions } = old;
 
   if (!fieldOptions) {
@@ -341,7 +336,7 @@ function moveThresholdsAndMappingsToField(old: any) {
  * Moves valueMappings and thresholds from root to new fieldOptions object
  * Renames valueOptions to to defaults and moves it under fieldOptions
  */
-function migrateFromValueOptions(old: any) {
+export function migrateFromValueOptions(old: any) {
   const { valueOptions } = old;
   if (!valueOptions) {
     return old;
@@ -373,19 +368,10 @@ function migrateFromValueOptions(old: any) {
     fieldOptions,
   };
 
-  const {
-    valueMappings: _vm,
-    thresholds: _th,
-    valueOptions: _vo,
-    minValue: _min,
-    maxValue: _mx,
-    ...cleanedOptions
-  } = newOptions;
-
-  return cleanedOptions;
+  return omit(newOptions, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
 }
 
-function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {
+export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {
   if (!thresholds || !thresholds.length) {
     return undefined;
   }

@@ -1,4 +1,4 @@
-import type * as H from 'history';
+import * as H from 'history';
 import { useEffect } from 'react';
 
 import { locationService } from '@grafana/runtime';

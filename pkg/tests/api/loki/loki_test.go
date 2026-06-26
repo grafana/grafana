@@ -15,9 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -25,14 +27,22 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationLoki(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
+		DisableAnonymous:     true,
+		EnableFeatureToggles: []string{featuremgmt.FlagLokiSendDashboardPanelNames},
 	})
 
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
+
+	u := testinfra.CreateUser(t, testEnv.SQLStore, testEnv.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
 
 	var outgoingRequest *http.Request
 	outgoingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +62,7 @@ func TestIntegrationLoki(t *testing.T) {
 
 	uid := "loki"
 	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgID:          1,
+		OrgID:          u.OrgID,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "Loki",
 		Type:           datasources.DS_LOKI,

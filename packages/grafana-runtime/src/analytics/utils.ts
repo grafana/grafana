@@ -3,11 +3,11 @@ import { locationService } from '../services';
 import { getEchoSrv, EchoEventType } from '../services/EchoSrv';
 
 import {
-  type ExperimentViewEchoEvent,
-  type InteractionEchoEvent,
-  type MetaAnalyticsEvent,
-  type MetaAnalyticsEventPayload,
-  type PageviewEchoEvent,
+  ExperimentViewEchoEvent,
+  InteractionEchoEvent,
+  MetaAnalyticsEvent,
+  MetaAnalyticsEventPayload,
+  PageviewEchoEvent,
 } from './types';
 
 /**
@@ -22,9 +22,6 @@ export const reportMetaAnalytics = (payload: MetaAnalyticsEventPayload) => {
   });
 };
 
-export const MAX_PAGE_URL_LENGTH = 2048;
-export const TRUNCATION_MARKER = '[url too long]';
-
 /**
  * Helper function to report pageview events to the {@link EchoSrv}.
  *
@@ -32,11 +29,7 @@ export const TRUNCATION_MARKER = '[url too long]';
  */
 export const reportPageview = () => {
   const location = locationService.getLocation();
-  const fullPage = `${config.appSubUrl ?? ''}${location.pathname}${location.search}${location.hash}`;
-  const page =
-    fullPage.length > MAX_PAGE_URL_LENGTH
-      ? `${fullPage.substring(0, MAX_PAGE_URL_LENGTH - TRUNCATION_MARKER.length)}${TRUNCATION_MARKER}`
-      : fullPage;
+  const page = `${config.appSubUrl ?? ''}${location.pathname}${location.search}${location.hash}`;
   getEchoSrv().addEvent<PageviewEchoEvent>({
     type: EchoEventType.Pageview,
     payload: {
@@ -48,17 +41,9 @@ export const reportPageview = () => {
 /**
  * Helper function to report interaction events to the {@link EchoSrv}.
  *
- * @param options.silent - If true, the event is dispatched to EchoSrv subscribers
- * but not forwarded to analytics backends. Use for high-frequency UI signals
- * that downstream subscribers care about but shouldn't pollute the analytics stream.
- *
  * @public
  */
-export const reportInteraction = (
-  interactionName: string,
-  properties?: Record<string, unknown>,
-  options?: { silent?: boolean }
-) => {
+export const reportInteraction = (interactionName: string, properties?: Record<string, unknown>) => {
   // get static reporting context and append it to properties
   if (config.reportingStaticContext && config.reportingStaticContext instanceof Object) {
     properties = { ...properties, ...config.reportingStaticContext };
@@ -68,7 +53,6 @@ export const reportInteraction = (
     payload: {
       interactionName,
       properties,
-      silent: options?.silent,
     },
   });
 };

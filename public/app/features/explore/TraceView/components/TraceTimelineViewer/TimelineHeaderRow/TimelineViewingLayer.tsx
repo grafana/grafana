@@ -17,13 +17,12 @@ import * as React from 'react';
 
 import { stylesFactory } from '@grafana/ui';
 
-import type TNil from '../../types/TNil';
-import DraggableManager from '../../utils/DraggableManager/DraggableManager';
-import { type DraggableBounds, type DraggingUpdate } from '../../utils/DraggableManager/types';
-import { type TUpdateViewRangeTimeFunction, type ViewRangeTime, type ViewRangeTimeUpdate } from '../types';
+import { TNil } from '../../types';
+import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
+import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 
 // exported for testing
-const getStyles = stylesFactory(() => {
+export const getStyles = stylesFactory(() => {
   return {
     TimelineViewingLayer: css({
       label: 'TimelineViewingLayer',

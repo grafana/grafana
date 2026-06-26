@@ -3,8 +3,8 @@ import { createDashboardModelFixture, createPanelSaveModel } from '../../state/_
 
 import {
   orderProperties,
-  type JSONArray,
-  type JSONValue,
+  JSONArray,
+  JSONValue,
   isObject,
   getDashboardStringDiff,
   removeEmptyFields,

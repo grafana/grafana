@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, InternalTimeZones, type StandardEditorProps } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type OptionsWithTimezones } from '@grafana/schema';
+import { GrafanaTheme2, InternalTimeZones, StandardEditorProps } from '@grafana/data';
+import { OptionsWithTimezones } from '@grafana/schema';
 import { IconButton, TimeZonePicker, useStyles2 } from '@grafana/ui';
 
 type Props = StandardEditorProps<string[], unknown, OptionsWithTimezones>;
@@ -44,17 +43,9 @@ export const TimezonesEditor = ({ value, onChange }: Props) => {
             value={tz ?? InternalTimeZones.default}
           />
           {idx === value.length - 1 ? (
-            <IconButton
-              name="plus"
-              onClick={addTimezone}
-              tooltip={t('timeseries.timezones-editor.tooltip-add-timezone', 'Add timezone')}
-            />
+            <IconButton name="plus" onClick={addTimezone} tooltip="Add timezone" />
           ) : (
-            <IconButton
-              name="times"
-              onClick={() => removeTimezone(idx)}
-              tooltip={t('timeseries.timezones-editor.tooltip-remove-timezone', 'Remove timezone')}
-            />
+            <IconButton name="times" onClick={() => removeTimezone(idx)} tooltip="Remove timezone" />
           )}
         </li>
       ))}

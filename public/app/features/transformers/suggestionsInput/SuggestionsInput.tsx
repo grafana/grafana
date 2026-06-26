@@ -1,19 +1,12 @@
 import { css } from '@emotion/css';
-import { autoUpdate, useFloating } from '@floating-ui/react';
-import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
-import {
-  FieldValidationMessage,
-  floatingUtils,
-  Input,
-  Portal,
-  ScrollContainer,
-  TextArea,
-  useTheme2,
-} from '@grafana/ui';
-import { DataLinkSuggestions } from '@grafana/ui/internal';
+import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
+import { CustomScrollbar, FieldValidationMessage, Portal, TextArea, useTheme2 } from '@grafana/ui';
+import { DataLinkSuggestions } from '@grafana/ui/src/components/DataLinks/DataLinkSuggestions';
+import { Input } from '@grafana/ui/src/components/Input/Input';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 const ERROR_TOOLTIP_OFFSET = 8;
@@ -34,7 +27,6 @@ interface SuggestionsInputProps {
   type?: HTMLElementType;
   style?: React.CSSProperties;
   autoFocus?: boolean;
-  id?: string;
 }
 
 const getStyles = (theme: GrafanaTheme2, inputHeight: number) => {
@@ -64,33 +56,34 @@ export const SuggestionsInput = ({
   invalid,
   type = HTMLElementType.InputElement,
   style,
-  id,
   autoFocus = false,
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [variableValue, setVariableValue] = useState<string>(value.toString());
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(0);
   const [startPos, setStartPos] = useState<number>(0);
-  const placement = 'bottom-start';
 
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | undefined>(undefined);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo(0, scrollTop);
-  }, [scrollTop]);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>();
 
   // the order of middleware is important!
-  const middleware = floatingUtils.getPositioningMiddleware(placement);
+  const middleware = [
+    flip({
+      fallbackAxisSideDirection: 'start',
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
 
   const { refs, floatingStyles } = useFloating({
     open: showingSuggestions,
-    placement,
+    placement: 'bottom-start',
     onOpenChange: setShowingSuggestions,
     middleware,
     whileElementsMounted: autoUpdate,
@@ -189,7 +182,6 @@ export const SuggestionsInput = ({
     onChange: onValueChanged,
     onBlur: onBlur,
     onKeyDown: onKeyDown,
-    id,
   };
 
   return (
@@ -197,10 +189,10 @@ export const SuggestionsInput = ({
       {showingSuggestions && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.suggestionsWrapper}>
-            <ScrollContainer
-              maxHeight="300px"
-              onScroll={(event) => setScrollTop(event.currentTarget.scrollTop ?? 0)}
-              ref={scrollRef}
+            <CustomScrollbar
+              scrollTop={scrollTop}
+              autoHeightMax="300px"
+              setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
             >
               {/* This suggestion component has a specialized name,
                     but is rather generalistic in implementation,
@@ -213,7 +205,7 @@ export const SuggestionsInput = ({
                 onClose={() => setShowingSuggestions(false)}
                 activeIndex={suggestionsIndex}
               />
-            </ScrollContainer>
+            </CustomScrollbar>
           </div>
         </Portal>
       )}

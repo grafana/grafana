@@ -1,13 +1,13 @@
-import { type DataSourceApi } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { DataSourceApi } from '@grafana/data';
 import {
-  type SceneComponentProps,
+  SceneComponentProps,
   sceneGraph,
   SceneObjectBase,
-  type SceneObjectState,
-  type SceneObjectRef,
-  type VizPanel,
+  SceneObjectState,
+  SceneObjectRef,
+  VizPanel,
 } from '@grafana/scenes';
+import { t } from 'app/core/internationalization';
 import { InspectTab } from 'app/features/inspector/types';
 
 export interface InspectMetaDataTabState extends SceneObjectState {

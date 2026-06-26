@@ -1,4 +1,4 @@
-import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
+import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { v1Migrator } from './v1';
 

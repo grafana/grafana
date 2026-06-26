@@ -3,34 +3,30 @@ import classnames from 'classnames';
 import { debounce } from 'lodash';
 import { PureComponent } from 'react';
 import * as React from 'react';
-import { type Value } from 'slate';
+import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
-import { Editor, type EventHook, type Plugin } from 'slate-react';
+import { Editor, EventHook, Plugin } from 'slate-react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { ClearPlugin } from '../../slate-plugins/clear';
-import { ClipboardPlugin } from '../../slate-plugins/clipboard';
-import { IndentationPlugin } from '../../slate-plugins/indentation';
-import { NewlinePlugin } from '../../slate-plugins/newline';
-import { RunnerPlugin } from '../../slate-plugins/runner';
-import { SelectionShortcutsPlugin } from '../../slate-plugins/selection_shortcuts';
-import { SuggestionsPlugin } from '../../slate-plugins/suggestions';
-import { withTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
 import {
-  type CompletionItemGroup,
-  type SuggestionsState,
-  type TypeaheadInput,
-  type TypeaheadOutput,
-} from '../../types/completion';
-import { type Themeable2 } from '../../types/theme';
+  ClearPlugin,
+  NewlinePlugin,
+  SelectionShortcutsPlugin,
+  IndentationPlugin,
+  ClipboardPlugin,
+  RunnerPlugin,
+  SuggestionsPlugin,
+} from '../../slate-plugins';
+import { withTheme2 } from '../../themes';
+import { getFocusStyles } from '../../themes/mixins';
+import { CompletionItemGroup, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../../types/completion';
+import { Themeable2 } from '../../types/theme';
 import { makeValue, SCHEMA } from '../../utils/slate';
 
 export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
-  ['aria-labelledby']?: string;
   cleanText?: (text: string) => string;
   disabled?: boolean;
   // We have both value and local state. This is usually an antipattern but we need to keep local state
@@ -59,6 +55,12 @@ export interface QueryFieldState {
   value: Value;
 }
 
+/**
+ * Renders an editor field.
+ * Pass initial value as initialQuery and listen to changes in props.onValueChanged.
+ * This component can only process strings. Internally it uses Slate Value.
+ * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
+ */
 export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFieldState> {
   plugins: Array<Plugin<Editor>>;
   runOnChangeDebounced: Function;
@@ -207,7 +209,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   }
 
   render() {
-    const { disabled, theme, ['aria-labelledby']: ariaLabelledby } = this.props;
+    const { disabled, theme } = this.props;
     const wrapperClassName = classnames('slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
@@ -217,15 +219,13 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
       <div className={cx(wrapperClassName, styles.wrapper)}>
         <div className="slate-query-field" data-testid={selectors.components.QueryField.container}>
           <Editor
-            ref={(editor) => {
-              this.editor = editor;
-            }}
-            aria-labelledby={ariaLabelledby}
+            ref={(editor) => (this.editor = editor!)}
             schema={SCHEMA}
             autoCorrect={false}
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
             onClick={this.props.onClick}
+            // onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);
             }}
@@ -240,16 +240,6 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   }
 }
 
-/**
- * Renders an editor field.
- * Pass initial value as initialQuery and listen to changes in props.onValueChanged.
- * This component can only process strings. Internally it uses Slate Value.
- * Implement props.onTypeahead to use suggestions.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-queryfield--docs
- *
- * @deprecated
- */
 export const QueryField = withTheme2(UnThemedQueryField);
 
 const getStyles = (theme: GrafanaTheme2) => {

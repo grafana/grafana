@@ -1,4 +1,4 @@
-import { type DataSourceApi, VariableSupportType } from '@grafana/data';
+import { DataSourceApi, VariableSupportType } from '@grafana/data';
 
 import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
 import { getVariableQueryEditor, StandardVariableQueryEditor } from './getVariableQueryEditor';

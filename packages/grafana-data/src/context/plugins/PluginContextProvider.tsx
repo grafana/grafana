@@ -1,8 +1,8 @@
-import { type PropsWithChildren, type ReactElement } from 'react';
+import { PropsWithChildren, ReactElement } from 'react';
 
-import { type PluginMeta } from '../../types/plugin';
+import { PluginMeta } from '../../types/plugin';
 
-import { PluginContext } from './PluginContext';
+import { Context } from './PluginContext';
 
 export type PluginContextProviderProps = {
   meta: PluginMeta;
@@ -10,5 +10,5 @@ export type PluginContextProviderProps = {
 
 export function PluginContextProvider(props: PropsWithChildren<PluginContextProviderProps>): ReactElement {
   const { children, ...rest } = props;
-  return <PluginContext.Provider value={rest}>{children}</PluginContext.Provider>;
+  return <Context.Provider value={rest}>{children}</Context.Provider>;
 }

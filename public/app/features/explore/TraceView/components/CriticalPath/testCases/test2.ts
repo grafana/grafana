@@ -29,8 +29,7 @@
                                                          |
 Here ++++++ is critical path                             |
 */
-import transformTraceData from '../../model/transform-trace-data';
-import { type TraceResponse } from '../../types/trace';
+import { TraceResponse, transformTraceData } from '../../index';
 
 const happyTrace: TraceResponse = {
   traceID: 'trace-123',

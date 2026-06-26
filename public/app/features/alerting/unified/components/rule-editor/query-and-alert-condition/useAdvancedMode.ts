@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 
 import { ReducerID } from '@grafana/data';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import { type ExpressionQuery } from 'app/features/expressions/types';
-import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
+import { ExpressionQuery } from 'app/features/expressions/types';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { areQueriesTransformableToSimpleCondition } from '../../../rule-editor/formProcessing';
-import { type SimpleCondition } from '../../../types/rule-form';
+import { SimplifiedEditor } from '../../../types/rule-form';
 
-import { getSimpleConditionFromExpressions } from './SimpleCondition';
+import { areQueriesTransformableToSimpleCondition } from './QueryAndExpressionsStep';
+import { getSimpleConditionFromExpressions, SimpleCondition } from './SimpleCondition';
 
 function initializeSimpleCondition(
   isGrafanaAlertingType: boolean,
@@ -27,31 +27,49 @@ function initializeSimpleCondition(
     };
   }
 }
-export function determineAdvancedMode(simplifiedQueryEditor: boolean | undefined, isGrafanaAlertingType: boolean) {
-  return simplifiedQueryEditor === false || !isGrafanaAlertingType;
+export function determineAdvancedMode(
+  editorSettings: SimplifiedEditor | undefined,
+  isGrafanaAlertingType: boolean,
+  isNewFromQueryParams: boolean,
+  dataQueries: Array<AlertQuery<ExpressionQuery | AlertDataQuery>>,
+  expressionQueries: Array<AlertQuery<ExpressionQuery>>
+) {
+  const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
+  return (
+    Boolean(editorSettings?.simplifiedQueryEditor) === false ||
+    !isGrafanaAlertingType ||
+    (isNewFromQueryParams && !queryParamsAreTransformable)
+  );
 }
 
 /*
-  This hook is used mantain the state of the advanced mode, and the simple condition,
+  This hook is used mantain the state of the advanced mode, and the simple condition, 
   depending on the editor settings, the alert type, and the queries.
    */
 export const useAdvancedMode = (
-  simplifiedQueryEditor: boolean | undefined,
+  editorSettings: SimplifiedEditor | undefined,
   isGrafanaAlertingType: boolean,
+  isNewFromQueryParams: boolean,
   dataQueries: Array<AlertQuery<ExpressionQuery | AlertDataQuery>>,
   expressionQueries: Array<AlertQuery<ExpressionQuery>>
 ) => {
-  const isAdvancedMode = determineAdvancedMode(simplifiedQueryEditor, isGrafanaAlertingType);
+  const isAdvancedMode = determineAdvancedMode(
+    editorSettings,
+    isGrafanaAlertingType,
+    isNewFromQueryParams,
+    dataQueries,
+    expressionQueries
+  );
 
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
     initializeSimpleCondition(isGrafanaAlertingType, dataQueries, expressionQueries)
   );
 
   useEffect(() => {
-    if (isGrafanaAlertingType && !isAdvancedMode) {
+    if (!isAdvancedMode && isGrafanaAlertingType) {
       setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
     }
   }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType]);
 
-  return { simpleCondition, setSimpleCondition };
+  return { isAdvancedMode, simpleCondition, setSimpleCondition };
 };

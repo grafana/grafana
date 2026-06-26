@@ -1,17 +1,11 @@
-import { from, type Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import {
-  CustomVariableSupport,
-  type DataQueryRequest,
-  type MetricFindValue,
-  type ScopedVars,
-  type TimeRange,
-} from '@grafana/data';
+import { CustomVariableSupport, DataQueryRequest, MetricFindValue, ScopedVars, TimeRange } from '@grafana/data';
 
 import { LokiVariableQueryEditor } from './components/VariableQueryEditor';
-import { type LokiDatasource } from './datasource';
-import { type LokiVariableQuery } from './types';
+import { LokiDatasource } from './datasource';
+import { LokiVariableQuery } from './types';
 
 export class LokiVariableSupport extends CustomVariableSupport<LokiDatasource, LokiVariableQuery> {
   editor = LokiVariableQueryEditor;

@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export function getGlobalStyles(theme: GrafanaTheme2) {
   return css({
@@ -157,7 +157,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             '&.rc-tree-checkbox-indeterminate.rc-tree-checkbox-disabled': {
               position: 'relative',
               background: '#ccc',
-              borderRadius: theme.shape.radius.default,
+              borderRadius: '3px',
               '&::after': {
                 position: 'absolute',
                 top: '5px',

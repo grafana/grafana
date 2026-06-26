@@ -73,7 +73,6 @@ composableKinds: PanelCfg: {
 					path:        ConnectionPath
 					color?:      ui.ColorDimensionConfig
 					size?:       ui.ScaleDimensionConfig
-					direction?:  ui.DirectionDimensionConfig
 					vertices?: [...ConnectionCoordinates]
 					sourceOriginal?: ConnectionCoordinates
 					targetOriginal?: ConnectionCoordinates
@@ -89,10 +88,6 @@ composableKinds: PanelCfg: {
 					border?:     LineConfig
 					connections?: [...CanvasConnection]
 				} @cuetsy(kind="interface")
-				CanvasTooltip: {
-					mode:                ui.TooltipDisplayMode
-					disableForOneClick?: bool
-				} @cuetsy(kind="interface")
 
 				Options: {
 					// Enable inline editing
@@ -101,8 +96,8 @@ composableKinds: PanelCfg: {
 					showAdvancedTypes: bool | *true
 					// Enable pan and zoom
 					panZoom: bool | *true
-					// Zoom to content
-					zoomToContent: bool | *true
+					// Enable infinite pan
+					infinitePan: bool | *true
 					// The root element of canvas (frame), where all canvas elements are nested
 					// TODO: Figure out how to define a default value for this
 					root: {
@@ -113,8 +108,6 @@ composableKinds: PanelCfg: {
 						// The list of canvas elements attached to the root element
 						elements: [...CanvasElementOptions]
 					} @cuetsy(kind="interface")
-					// Controls tooltip options
-					tooltip: CanvasTooltip
 				} @cuetsy(kind="interface")
 			}
 		}]

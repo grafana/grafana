@@ -14,7 +14,7 @@
 
 // See https://github.com/jaegertracing/jaeger-ui/issues/115 for details.
 
-import { type TraceSpanReference } from '../types/trace';
+import { TraceSpanReference } from '../types/trace';
 
 const references: TraceSpanReference[] = [
   {

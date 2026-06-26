@@ -1,20 +1,11 @@
 import { useContext } from 'react';
 
-import { type PluginPageProps } from '@grafana/runtime';
+import { PluginPageProps } from '@grafana/runtime';
 import { PluginPageContext } from 'app/features/plugins/components/PluginPageContext';
 
 import { Page } from './Page';
 
-export function PluginPage({
-  actions,
-  children,
-  info,
-  pageNav,
-  layout,
-  renderTitle,
-  subTitle,
-  background,
-}: PluginPageProps) {
+export function PluginPage({ actions, children, info, pageNav, layout, renderTitle, subTitle }: PluginPageProps) {
   const context = useContext(PluginPageContext);
 
   return (
@@ -26,7 +17,6 @@ export function PluginPage({
       renderTitle={renderTitle}
       info={info}
       subTitle={subTitle}
-      background={background}
     >
       <Page.Contents>{children}</Page.Contents>
     </Page>

@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type ScalarDimensionConfig } from '@grafana/schema';
+import { GrafanaTheme2, OneClickMode } from '@grafana/data';
+import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { type DimensionContext } from 'app/features/dimensions/context';
-import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
+import { DimensionContext } from 'app/features/dimensions';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
-import { type CanvasElementItem, type CanvasElementOptions, type CanvasElementProps, defaultBgColor } from '../element';
+import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 
 interface DroneTopData {
   bRightRotorRPM?: number;
@@ -99,6 +98,7 @@ export const droneTopItem: CanvasElementItem = {
         fixed: 'transparent',
       },
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -126,41 +126,41 @@ export const droneTopItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.drone-top-item.category-drone-top', 'Drone Top')];
+    const category = ['Drone Top'];
     builder
       .addCustomEditor({
         category,
         id: 'yawAngle',
         path: 'config.yawAngle',
-        name: t('canvas.drone-top-item.name-yaw-angle', 'Yaw Angle'),
+        name: 'Yaw Angle',
         editor: ScalarDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'fRightRotorRPM',
         path: 'config.fRightRotorRPM',
-        name: t('canvas.drone-top-item.name-front-right-rotor-rpm', 'Front Right Rotor RPM'),
+        name: 'Front Right Rotor RPM',
         editor: ScalarDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'fLeftRotorRPM',
         path: 'config.fLeftRotorRPM',
-        name: t('canvas.drone-top-item.name-front-left-rotor-rpm', 'Front Left Rotor RPM'),
+        name: 'Front Left Rotor RPM',
         editor: ScalarDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'bRightRotorRPM',
         path: 'config.bRightRotorRPM',
-        name: t('canvas.drone-top-item.name-back-right-rotor-rpm', 'Back Right Rotor RPM'),
+        name: 'Back Right Rotor RPM',
         editor: ScalarDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'bLeftRotorRPM',
         path: 'config.bLeftRotorRPM',
-        name: t('canvas.drone-top-item.name-back-left-rotor-rpm', 'Back Left Rotor RPM'),
+        name: 'Back Left Rotor RPM',
         editor: ScalarDimensionEditor,
       });
   },

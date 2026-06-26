@@ -1,4 +1,5 @@
-import { type Unsubscribable, type Observable } from 'rxjs';
+import { IScope } from 'angular';
+import { Unsubscribable, Observable } from 'rxjs';
 
 /**
  * @alpha
@@ -128,17 +129,17 @@ export interface LegacyEmitter {
   /**
    * @deprecated use $on
    */
-  on<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>): void;
+  on<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>, scope?: IScope): void;
 
   /**
    * @deprecated use $on
    */
-  off<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>): void;
+  off<T>(event: AppEvent<T> | string, handler: (payload?: T) => void): void;
 }
 
 /** @public */
 export interface LegacyEventHandler<T> {
-  (payload?: T): void;
+  (payload: T): void;
   wrapper?: (event: BusEvent) => void;
 }
 

@@ -16,6 +16,10 @@ func NewStarServiceFake() *FakeStarService {
 	return &FakeStarService{}
 }
 
+func (f *FakeStarService) IsStarredByUser(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
+	return true, f.ExpectedError
+}
+
 func (f *FakeStarService) Add(ctx context.Context, cmd *star.StarDashboardCommand) error {
 	return f.ExpectedError
 }

@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { memo, useId } from 'react';
+import { memo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
+import { GrafanaTheme2, TimeOption } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
@@ -13,37 +14,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       flexDirection: 'row-reverse',
       justifyContent: 'space-between',
-      position: 'relative',
+    }),
+    selected: css({
+      background: theme.colors.action.selected,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
     radio: css({
       opacity: 0,
       width: '0 !important',
+
       '&:focus-visible + label': getFocusStyles(theme),
     }),
     label: css({
       cursor: 'pointer',
       flex: 1,
-      padding: theme.spacing(1),
-      borderRadius: theme.shape.radius.default,
+      padding: '7px 9px 7px 9px',
 
       '&:hover': {
         background: theme.colors.action.hover,
         cursor: 'pointer',
-      },
-    }),
-    labelSelected: css({
-      background: theme.colors.action.selected,
-
-      '&::before': {
-        backgroundImage: theme.colors.gradients.brandVertical,
-        borderRadius: theme.shape.radius.default,
-        content: '" "',
-        display: 'block',
-        height: '100%',
-        position: 'absolute',
-        width: theme.spacing(0.5),
-        left: 0,
-        top: 0,
       },
     }),
   };
@@ -62,10 +51,10 @@ interface Props {
 export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
   const styles = useStyles2(getStyles);
   // In case there are more of the same timerange in the list
-  const id = useId();
+  const id = uuidv4();
 
   return (
-    <li className={styles.container}>
+    <li className={cx(styles.container, selected && styles.selected)}>
       <input
         className={styles.radio}
         checked={selected}
@@ -76,7 +65,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
         id={id}
         onChange={() => onSelect(value)}
       />
-      <label className={cx(styles.label, selected && styles.labelSelected)} htmlFor={id}>
+      <label className={styles.label} htmlFor={id}>
         {value.display}
       </label>
     </li>

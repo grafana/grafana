@@ -9,16 +9,15 @@ import (
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
-
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"xorm.io/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMigrations(t *testing.T) {
@@ -35,7 +34,7 @@ func TestMigrations(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			t.Logf("failed to close xorm engine: %v", err)
+			fmt.Printf("failed to close xorm engine: %v", err)
 		}
 	})
 
@@ -72,10 +71,11 @@ func TestMigrations(t *testing.T) {
 }
 
 func TestIntegrationMigrationLock(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	dbType := sqlutil.GetTestDBType()
-	// skip for SQLite since there is no database locking (only migrator locking)
 	if dbType == SQLite {
 		t.Skip()
 	}
@@ -90,7 +90,7 @@ func TestIntegrationMigrationLock(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			t.Logf("failed to close xorm engine: %v", err)
+			fmt.Printf("failed to close xorm engine: %v", err)
 		}
 	})
 
@@ -101,7 +101,7 @@ func TestIntegrationMigrationLock(t *testing.T) {
 		sess.Close()
 	})
 
-	key, err := GenerateAdvisoryLockID("test")
+	key, err := database.GenerateAdvisoryLockId("test")
 	require.NoError(t, err)
 
 	cfg := LockCfg{
@@ -201,7 +201,7 @@ func TestMigratorLocking(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			t.Logf("failed to close xorm engine: %v", err)
+			fmt.Printf("failed to close xorm engine: %v", err)
 		}
 	})
 
@@ -248,7 +248,7 @@ func TestDatabaseLocking(t *testing.T) {
 
 	t.Cleanup(func() {
 		if err := x.Close(); err != nil {
-			t.Logf("failed to close xorm engine: %v", err)
+			fmt.Printf("failed to close xorm engine: %v", err)
 		}
 	})
 

@@ -1,6 +1,5 @@
-import { getWrapper, renderHook, waitFor } from 'test/test-utils';
+import { renderHook, waitFor, getWrapper } from 'test/test-utils';
 
-import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import {
@@ -9,6 +8,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { option } from 'app/features/alerting/unified/utils/notifier-types';
+import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
 import { ReceiverTypes } from './onCall';
 import { OnCallIntegrationSetting, OnCallIntegrationType, useOnCallIntegration } from './useOnCallIntegration';
@@ -28,7 +28,7 @@ describe('useOnCallIntegration', () => {
     ]);
   });
   afterEach(() => {
-    invalidateCachedPromisesCache();
+    clearPluginSettingsCache();
   });
 
   describe('When OnCall Alerting V2 integration enabled', () => {
@@ -70,16 +70,16 @@ describe('useOnCallIntegration', () => {
       const { onCallFormValidators } = result.current;
 
       const gfValidationResult = await waitFor(() => onCallFormValidators.integration_name('grafana-integration'));
-      expect(gfValidationResult).toBe('Integration of this name already exists in IRM');
+      expect(gfValidationResult).toBe('Integration of this name already exists in OnCall');
 
       const amValidationResult = await waitFor(() => onCallFormValidators.integration_name('alertmanager-integration'));
-      expect(amValidationResult).toBe('Integration of this name already exists in IRM');
+      expect(amValidationResult).toBe('Integration of this name already exists in OnCall');
 
       // ULR validator should check if the provided URL already exists
       expect(onCallFormValidators.url('https://oncall.com/grafana-integration')).toBe(true);
 
       expect(onCallFormValidators.url('https://oncall.com/alertmanager-integration')).toBe(
-        'Selection of existing IRM integration is required'
+        'Selection of existing OnCall integration is required'
       );
     });
 
@@ -94,79 +94,23 @@ describe('useOnCallIntegration', () => {
         name: 'Grafana OnCall',
         type: 'oncall',
         options: [option('url', 'Grafana OnCall', 'Grafana OnCall', { element: 'input' })],
-        versions: [
-          {
-            version: 'v1',
-            label: 'v1',
-            description: 'Version 1',
-            options: [option('url', 'Grafana OnCall', 'Grafana OnCall', { element: 'input' })],
-          },
-        ],
-        currentVersion: 'v1',
         description: '',
         heading: '',
       });
 
-      // Verify options are enhanced
-      const options = notifier.options ?? [];
-      expect(options).toHaveLength(3);
-      expect(options[0].propertyName).toBe(OnCallIntegrationSetting.IntegrationType);
-      expect(options[1].propertyName).toBe(OnCallIntegrationSetting.IntegrationName);
-      expect(options[2].propertyName).toBe('url');
+      expect(notifier.options).toHaveLength(3);
+      expect(notifier.options[0].propertyName).toBe(OnCallIntegrationSetting.IntegrationType);
+      expect(notifier.options[1].propertyName).toBe(OnCallIntegrationSetting.IntegrationName);
+      expect(notifier.options[2].propertyName).toBe('url');
 
-      expect(options[0].element).toBe('radio');
-      expect(options[2].element).toBe('select');
+      expect(notifier.options[0].element).toBe('radio');
+      expect(notifier.options[2].element).toBe('select');
 
-      expect(options[2].selectOptions).toHaveLength(1);
-      expect(options[2].selectOptions![0]).toMatchObject({
+      expect(notifier.options[2].selectOptions).toHaveLength(1);
+      expect(notifier.options[2].selectOptions![0]).toMatchObject({
         label: 'grafana-integration',
         value: 'https://oncall.com/grafana-integration',
       });
-
-      // Verify versions[].options are also enhanced
-      expect(notifier.versions).toHaveLength(1);
-      expect(notifier.versions![0].options).toHaveLength(3);
-      expect(notifier.versions![0].options[0].propertyName).toBe(OnCallIntegrationSetting.IntegrationType);
-      expect(notifier.versions![0].options[1].propertyName).toBe(OnCallIntegrationSetting.IntegrationName);
-      expect(notifier.versions![0].options[2].propertyName).toBe('url');
-
-      expect(notifier.versions![0].options[0].element).toBe('radio');
-      expect(notifier.versions![0].options[2].element).toBe('select');
-    });
-
-    it('should enhance only versions[].options when notifier has no top-level options', async () => {
-      const { result } = renderHook(() => useOnCallIntegration(), { wrapper: wrapper() });
-
-      await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
-
-      const { extendOnCallNotifierFeatures } = result.current;
-
-      const notifier = extendOnCallNotifierFeatures({
-        name: 'Grafana OnCall',
-        type: 'oncall',
-        // No top-level options (new k8s API shape)
-        versions: [
-          {
-            version: 'v1',
-            label: 'v1',
-            description: 'Version 1',
-            options: [option('url', 'Grafana OnCall', 'Grafana OnCall', { element: 'input' })],
-          },
-        ],
-        currentVersion: 'v1',
-        description: '',
-        heading: '',
-      });
-
-      // Top-level options should remain undefined
-      expect(notifier.options).toBeUndefined();
-
-      // Versions[].options should still be enhanced
-      expect(notifier.versions).toHaveLength(1);
-      expect(notifier.versions![0].options).toHaveLength(3);
-      expect(notifier.versions![0].options[0].propertyName).toBe(OnCallIntegrationSetting.IntegrationType);
-      expect(notifier.versions![0].options[1].propertyName).toBe(OnCallIntegrationSetting.IntegrationName);
-      expect(notifier.versions![0].options[2].propertyName).toBe('url');
     });
   });
 
@@ -218,9 +162,8 @@ describe('useOnCallIntegration', () => {
         heading: '',
       });
 
-      const options = notifier.options ?? [];
-      expect(options).toHaveLength(1);
-      expect(options[0].propertyName).toBe('url');
+      expect(notifier.options).toHaveLength(1);
+      expect(notifier.options[0].propertyName).toBe('url');
     });
   });
 
@@ -271,9 +214,8 @@ describe('useOnCallIntegration', () => {
         heading: '',
       });
 
-      const options = notifier.options ?? [];
-      expect(options).toHaveLength(1);
-      expect(options[0].propertyName).toBe('url');
+      expect(notifier.options).toHaveLength(1);
+      expect(notifier.options[0].propertyName).toBe('url');
     });
   });
 });

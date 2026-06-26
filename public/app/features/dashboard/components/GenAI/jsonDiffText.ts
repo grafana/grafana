@@ -1,8 +1,8 @@
 import { createTwoFilesPatch } from 'diff';
 
-import { type Dashboard } from '@grafana/schema';
+import { Dashboard } from '@grafana/schema';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state';
 
 export type JSONValue = null | boolean | number | string | JSONArray | JSONObject;
 
@@ -36,7 +36,7 @@ export function isObject(obj: JSONValue): obj is JSONObject {
   return typeof obj === 'object' && !Array.isArray(obj) && obj !== null;
 }
 
-function orderObjectProperties(obj1: JSONObject, obj2: JSONObject) {
+export function orderObjectProperties(obj1: JSONObject, obj2: JSONObject) {
   const orderedProperties = Object.keys(obj1);
   const orderedObj2: Record<string, JSONValue> = {};
 
@@ -56,7 +56,7 @@ function orderObjectProperties(obj1: JSONObject, obj2: JSONObject) {
   return orderedObj2;
 }
 
-function orderArrayProperties(obj1: JSONArray, obj2: JSONArray) {
+export function orderArrayProperties(obj1: JSONArray, obj2: JSONArray) {
   const orderedObj2: JSONValue[] = new Array(obj1.length).fill(undefined);
 
   const unseen1 = new Set<number>([...Array(obj1.length).keys()]);
@@ -91,7 +91,7 @@ function orderArrayProperties(obj1: JSONArray, obj2: JSONArray) {
 // Similarity is simply measured by number of k:v pairs in fair
 // O(n^2), which is more or less unavoidable
 // Can be made a better match by using levenshtein distance and Hungarian matching
-function fillBySimilarity(
+export function fillBySimilarity(
   // TODO: Investigate not using any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   obj1: any[],

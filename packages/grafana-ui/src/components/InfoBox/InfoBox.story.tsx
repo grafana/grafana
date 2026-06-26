@@ -1,15 +1,13 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { FeatureState } from '@grafana/data';
+import { InfoBox, FeatureInfoBox, VerticalGroup } from '@grafana/ui';
 
-import { Stack } from '../Layout/Stack/Stack';
-
-import { FeatureInfoBox, type FeatureInfoBoxProps } from './FeatureInfoBox';
-import { InfoBox } from './InfoBox';
+import { FeatureInfoBoxProps } from './FeatureInfoBox';
 import mdx from './InfoBox.mdx';
 
 const meta: Meta = {
-  title: 'Information/Deprecated/InfoBox',
+  title: 'Layout/InfoBox',
   component: InfoBox,
   decorators: [],
   parameters: {
@@ -48,10 +46,10 @@ const defaultProps: FeatureInfoBoxProps = {
 
 const InfoBoxTemplate: StoryFn<typeof InfoBox> = (args) => {
   return (
-    <Stack direction="column">
+    <VerticalGroup>
       <div>Deprecrated component, use Alert with info severity</div>
       <InfoBox {...args} />
-    </Stack>
+    </VerticalGroup>
   );
 };
 export const infoBox = InfoBoxTemplate.bind({});
@@ -59,10 +57,10 @@ infoBox.args = defaultProps;
 
 const FeatureInfoBoxTemplate: StoryFn<typeof FeatureInfoBox> = (args) => {
   return (
-    <Stack direction="column">
+    <VerticalGroup>
       <div>Deprecrated component, use Alert with info severity</div>
       <FeatureInfoBox {...args} />
-    </Stack>
+    </VerticalGroup>
   );
 };
 

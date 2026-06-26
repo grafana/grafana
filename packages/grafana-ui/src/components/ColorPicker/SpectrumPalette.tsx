@@ -1,26 +1,22 @@
 import { css } from '@emotion/css';
-import { useId, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RgbaStringColorPicker } from 'react-colorful';
 import { useThrottleFn } from 'react-use';
 import tinycolor from 'tinycolor2';
 
-import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { Field } from '../Forms/Field';
-import { Stack } from '../Layout/Stack/Stack';
+import { useStyles2, useTheme2 } from '../../themes';
 
 import ColorInput from './ColorInput';
 
-interface SpectrumPaletteProps {
+export interface SpectrumPaletteProps {
   color: string;
   onChange: (color: string) => void;
 }
 
 const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
   const [currentColor, setColor] = useState(color);
-  const colorInputId = useId();
 
   useThrottleFn(
     (c) => {
@@ -40,16 +36,17 @@ const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
   }, [currentColor, theme, color]);
 
   return (
-    <Stack direction="column" grow={1} gap={2}>
+    <div className={styles.wrapper}>
       <RgbaStringColorPicker className={styles.root} color={rgbaString} onChange={setColor} />
-      <Field noMargin label={t('grafana-ui.color-picker.input-label', 'RGBA value')}>
-        <ColorInput id={colorInputId} color={rgbaString} onChange={setColor} />
-      </Field>
-    </Stack>
+      <ColorInput theme={theme} color={rgbaString} onChange={setColor} className={styles.colorInput} />
+    </div>
   );
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    flexGrow: 1,
+  }),
   root: css({
     '&.react-colorful': {
       width: 'auto',
@@ -71,6 +68,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
         width: theme.spacing(2),
       },
     },
+  }),
+  colorInput: css({
+    marginTop: theme.spacing(2),
   }),
 });
 

@@ -1,7 +1,7 @@
 // Temporary place to collect phrases we reuse between new and old browse/search
 // TODO: remove this when new Browse Dashboards UI is no longer feature flagged
 
-import { t } from '@grafana/i18n';
+import { t } from 'app/core/internationalization';
 
 export function getSearchPlaceholder(includePanels = false) {
   return includePanels
@@ -13,16 +13,12 @@ export function getNewDashboardPhrase() {
   return t('search.dashboard-actions.new-dashboard', 'New dashboard');
 }
 
-export function getNewTemplateDashboardPhrase() {
-  return t('search.dashboard-actions.new-template-dashboard', 'Use template');
-}
-
 export function getNewFolderPhrase() {
   return t('search.dashboard-actions.new-folder', 'New folder');
 }
 
 export function getImportPhrase() {
-  return t('search.dashboard-actions.import', 'Import dashboard');
+  return t('search.dashboard-actions.import', 'Import');
 }
 
 export function getNewPhrase() {

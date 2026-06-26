@@ -2,141 +2,94 @@ package identity
 
 import (
 	"fmt"
-	"strconv"
 
 	authnlib "github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/claims"
 )
 
-var _ Requester = (*StaticRequester)(nil)
+var _ Requester = &StaticRequester{}
 
 // StaticRequester allows creating requester values explicitly.
 // It is helpful in tests!
 // This is mostly copied from:
 // https://github.com/grafana/grafana/blob/v11.0.0/pkg/services/user/identity.go#L16
 type StaticRequester struct {
-	Type            claims.IdentityType
-	UserID          int64
-	UserUID         string
-	OrgID           int64
-	OrgName         string
-	OrgRole         RoleType
-	Login           string
-	Name            string
-	Email           string
-	EmailVerified   bool
-	AuthID          string
-	AuthenticatedBy string
-	Namespace       string
-	IsGrafanaAdmin  bool
+	Type                       claims.IdentityType
+	UserID                     int64
+	UserUID                    string
+	OrgID                      int64
+	OrgName                    string
+	OrgRole                    RoleType
+	Login                      string
+	Name                       string
+	DisplayName                string
+	Email                      string
+	EmailVerified              bool
+	AuthID                     string
+	AuthenticatedBy            string
+	AllowedKubernetesNamespace string
+	IsGrafanaAdmin             bool
 	// Permissions grouped by orgID and actions
-	Permissions       map[int64]map[string][]string
-	AccessToken       string
-	IDToken           string
-	IDTokenClaims     *authnlib.Claims[authnlib.IDTokenClaims]
-	AccessTokenClaims *authnlib.Claims[authnlib.AccessTokenClaims]
-	Groups            []string
-	ExternalGroups    []string
-	CacheKey          string
+	Permissions   map[int64]map[string][]string
+	IDToken       string
+	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims]
+	CacheKey      string
 }
 
-// GetID returns typed id for the entity
-func (u *StaticRequester) GetID() string {
-	return claims.NewTypeID(u.Type, strconv.FormatInt(u.UserID, 10))
+// Access implements Requester.
+func (u *StaticRequester) GetAccess() claims.AccessClaims {
+	return &IDClaimsWrapper{Source: u}
 }
 
+// Identity implements Requester.
+func (u *StaticRequester) GetIdentity() claims.IdentityClaims {
+	if u.IDTokenClaims != nil {
+		return authnlib.NewIdentityClaims(*u.IDTokenClaims)
+	}
+	return &IDClaimsWrapper{Source: u}
+}
+
+// GetRawIdentifier implements Requester.
 func (u *StaticRequester) GetUID() string {
-	return claims.NewTypeID(u.Type, u.UserUID)
+	return fmt.Sprintf("%s:%s", u.Type, u.UserUID)
 }
 
-func (u *StaticRequester) GetIdentifier() string {
-	return u.UserUID
-}
-
-func (u *StaticRequester) GetIdentityType() claims.IdentityType {
-	return u.Type
-}
-
-func (u *StaticRequester) GetSubject() string {
-	return claims.NewTypeID(u.Type, strconv.FormatInt(u.UserID, 10))
-}
-
-func (u *StaticRequester) GetAudience() []string {
-	return []string{fmt.Sprintf("org:%d", u.OrgID)}
-}
-
-func (u *StaticRequester) GetTokenPermissions() []string {
-	if u.AccessTokenClaims != nil {
-		return u.AccessTokenClaims.Rest.Permissions
-	}
-	return []string{}
-}
-
-func (u *StaticRequester) GetTokenDelegatedPermissions() []string {
-	if u.AccessTokenClaims != nil {
-		return u.AccessTokenClaims.Rest.DelegatedPermissions
-	}
-	return []string{}
-}
-
-func (u *StaticRequester) GetEmail() string {
-	return u.Email
-}
-
-func (u *StaticRequester) GetEmailVerified() bool {
-	return u.EmailVerified
-}
-
-func (u *StaticRequester) GetUsername() string {
-	return u.Login
-}
-
+// GetRawIdentifier implements Requester.
 func (u *StaticRequester) GetRawIdentifier() string {
 	return u.UserUID
 }
 
+// GetInternalID implements Requester.
 func (u *StaticRequester) GetInternalID() (int64, error) {
 	return u.UserID, nil
 }
 
+// GetIdentityType implements Requester.
+func (u *StaticRequester) GetIdentityType() claims.IdentityType {
+	return u.Type
+}
+
+// IsIdentityType implements Requester.
 func (u *StaticRequester) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(u.GetIdentityType(), expected...)
 }
 
+// GetExtra implements Requester.
 func (u *StaticRequester) GetExtra() map[string][]string {
 	if u.IDToken != "" {
 		return map[string][]string{"id-token": {u.IDToken}}
 	}
-
-	result := map[string][]string{}
-	if u.AccessTokenClaims != nil && u.AccessTokenClaims.Rest.ServiceIdentity != "" {
-		result[authnlib.ServiceIdentityKey] = []string{u.AccessTokenClaims.Rest.ServiceIdentity}
-	}
-	return result
+	return map[string][]string{}
 }
 
+// GetGroups implements Requester.
 func (u *StaticRequester) GetGroups() []string {
-	if u.Groups != nil {
-		return u.Groups
-	}
-	if u.IDTokenClaims != nil {
-		return []string{} // TODO: the ID token may have the groups
-	}
-	return []string{} // TODO
+	return []string{}
 }
 
-func (u *StaticRequester) GetExternalGroups() []string {
-	return u.ExternalGroups
-}
-
+// GetName implements Requester.
 func (u *StaticRequester) GetName() string {
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
+	return u.DisplayName
 }
 
 func (u *StaticRequester) HasRole(role RoleType) bool {
@@ -213,12 +166,17 @@ func (u *StaticRequester) HasUniqueId() bool {
 	return u.UserID > 0
 }
 
+// GetID returns typed id for the entity
+func (u *StaticRequester) GetID() string {
+	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
+}
+
 func (u *StaticRequester) GetAuthID() string {
 	return u.AuthID
 }
 
-func (u *StaticRequester) GetNamespace() string {
-	return u.Namespace
+func (u *StaticRequester) GetAllowedKubernetesNamespace() string {
+	return u.AllowedKubernetesNamespace
 }
 
 func (u *StaticRequester) GetAuthenticatedBy() string {
@@ -239,6 +197,12 @@ func (u *StaticRequester) IsNil() bool {
 	return u == nil
 }
 
+// GetEmail returns the email of the active entity
+// Can be empty.
+func (u *StaticRequester) GetEmail() string {
+	return u.Email
+}
+
 func (u *StaticRequester) IsEmailVerified() bool {
 	return u.EmailVerified
 }
@@ -247,10 +211,25 @@ func (u *StaticRequester) GetCacheKey() string {
 	return u.CacheKey
 }
 
-func (u *StaticRequester) GetAccessToken() string {
-	return u.AccessToken
+// GetDisplayName returns the display name of the active entity
+// The display name is the name if it is set, otherwise the login or email
+func (u *StaticRequester) GetDisplayName() string {
+	if u.DisplayName != "" {
+		return u.DisplayName
+	}
+	if u.Name != "" {
+		return u.Name
+	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 func (u *StaticRequester) GetIDToken() string {
 	return u.IDToken
+}
+
+func (u *StaticRequester) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
+	return u.IDTokenClaims
 }

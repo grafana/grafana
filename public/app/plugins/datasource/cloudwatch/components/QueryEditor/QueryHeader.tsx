@@ -1,17 +1,15 @@
-import type { JSX } from 'react';
-
-import { CoreApp, LoadingState, type QueryEditorProps, type SelectableValue } from '@grafana/data';
-import { EditorHeader, InlineSelect, FlexItem } from '@grafana/plugin-ui';
+import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { EditorHeader, InlineSelect, FlexItem } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Badge, Button } from '@grafana/ui';
 
-import { type CloudWatchQueryMode } from '../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../datasource';
+import { CloudWatchDatasource } from '../../datasource';
+import { DEFAULT_LOGS_QUERY_STRING } from '../../defaultQueries';
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import { useIsMonitoringAccount, useRegions } from '../../hooks';
-import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
+import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode, MetricQueryType } from '../../types';
 
-interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   extraHeaderElementLeft?: JSX.Element;
   extraHeaderElementRight?: JSX.Element;
   dataIsStale: boolean;
@@ -39,24 +37,37 @@ const QueryHeader = ({
 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
     if (value && value !== queryMode) {
+      // reset expression to a default string when the query mode changes
+      let expression = '';
+      if (value === 'Logs') {
+        expression = DEFAULT_LOGS_QUERY_STRING;
+      }
       onChange({
         ...datasource.getDefaultQuery(CoreApp.Unknown),
         ...query,
+        expression,
         queryMode: value,
-        expression: '',
       });
     }
   };
   const onRegionChange = async (region: string) => {
     if (config.featureToggles.cloudWatchCrossAccountQuerying && isCloudWatchMetricsQuery(query)) {
       const isMonitoringAccount = await datasource.resources.isMonitoringAccount(region);
-      onChange({ ...query, logGroups: [], region, accountId: isMonitoringAccount ? query.accountId : undefined });
+      onChange({ ...query, region, accountId: isMonitoringAccount ? query.accountId : undefined });
     } else {
-      onChange({ ...query, logGroups: [], region });
+      onChange({ ...query, region });
     }
   };
+  const metricInsightsCrossAccountEnabled = config.featureToggles.cloudwatchMetricInsightsCrossAccount;
 
-  const shouldDisplayMonitoringBadge = config.featureToggles.cloudWatchCrossAccountQuerying && isMonitoringAccount;
+  const shouldDisplayMonitoringBadge =
+    config.featureToggles.cloudWatchCrossAccountQuerying &&
+    isMonitoringAccount &&
+    (query.queryMode === 'Logs' ||
+      (isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Search) ||
+      (metricInsightsCrossAccountEnabled &&
+        isCloudWatchMetricsQuery(query) &&
+        query.metricQueryType === MetricQueryType.Insights));
 
   return (
     <>

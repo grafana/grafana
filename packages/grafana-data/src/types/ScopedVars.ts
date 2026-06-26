@@ -1,5 +1,5 @@
-import { type DataFrame, type Field } from './dataFrame';
-import { type DisplayValue } from './displayValue';
+import { DataFrame, Field } from './dataFrame';
+import { DisplayValue } from './displayValue';
 
 export interface ScopedVar<T = any> {
   text?: any;

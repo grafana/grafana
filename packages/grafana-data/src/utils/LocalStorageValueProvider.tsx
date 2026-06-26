@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { store } from './store';
 
-interface Props<T> {
+export interface Props<T> {
   storageKey: string;
   defaultValue: T;
   children: (value: T, onSaveToStore: (value: T) => void, onDeleteFromStore: () => void) => React.ReactNode;

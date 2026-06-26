@@ -1,9 +1,9 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { StoryFn, Meta } from '@storybook/react';
 
-import { ButtonCascader } from './ButtonCascader';
+import { ButtonCascader } from '@grafana/ui';
 
 const meta: Meta<typeof ButtonCascader> = {
-  title: 'Inputs/ButtonCascader',
+  title: 'Forms/Cascader/ButtonCascader',
   component: ButtonCascader,
   parameters: {
     controls: {

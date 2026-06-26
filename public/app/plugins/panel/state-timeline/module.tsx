@@ -5,19 +5,17 @@ import {
   identityOverrideProcessor,
   PanelPlugin,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { AxisPlacement, VisibilityMode } from '@grafana/schema';
+import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
-import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { InsertNullsEditor } from '../timeseries/InsertNullsEditor';
 import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
-import { type NullEditorSettings } from '../timeseries/config';
+import { NullEditorSettings } from '../timeseries/config';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { defaultFieldConfig, defaultOptions, type FieldConfig, type Options } from './panelcfg.gen';
+import { defaultFieldConfig, defaultOptions, FieldConfig, Options } from './panelcfg.gen';
+import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
@@ -31,22 +29,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           mode: FieldColorModeId.ContinuousGrYlRd,
         },
       },
-      [FieldConfigProperty.Links]: {
-        settings: {
-          showOneClick: true,
-        },
-      },
-      [FieldConfigProperty.Actions]: {
-        hideFromDefaults: false,
-      },
     },
     useCustomConfig: (builder) => {
-      const category = [t('state-timeline.category-state-timeline', 'State timeline')];
       builder
         .addSliderInput({
           path: 'lineWidth',
-          name: t('state-timeline.name-line-width', 'Line width'),
-          category,
+          name: 'Line width',
           defaultValue: defaultFieldConfig.lineWidth,
           settings: {
             min: 0,
@@ -56,8 +44,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         })
         .addSliderInput({
           path: 'fillOpacity',
-          name: t('state-timeline.name-fill-opacity', 'Fill opacity'),
-          category,
+          name: 'Fill opacity',
           defaultValue: defaultFieldConfig.fillOpacity,
           settings: {
             min: 0,
@@ -68,8 +55,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         .addCustomEditor<NullEditorSettings, boolean>({
           id: 'spanNulls',
           path: 'spanNulls',
-          name: t('state-timeline.name-connect-null-values', 'Connect null values'),
-          category,
+          name: 'Connect null values',
           defaultValue: false,
           editor: SpanNullsEditor,
           override: SpanNullsEditor,
@@ -80,8 +66,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         .addCustomEditor<NullEditorSettings, boolean>({
           id: 'insertNulls',
           path: 'insertNulls',
-          name: t('state-timeline.name-disconnect-values', 'Disconnect values'),
-          category,
+          name: 'Disconnect values',
           defaultValue: false,
           editor: InsertNullsEditor,
           override: InsertNullsEditor,
@@ -91,52 +76,42 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         });
 
       commonOptionsBuilder.addHideFrom(builder);
-      commonOptionsBuilder.addAxisPlacement(
-        builder,
-        (placement) => placement === AxisPlacement.Auto || placement === AxisPlacement.Hidden
-      );
-      commonOptionsBuilder.addAxisWidth(builder);
     },
   })
   .setPanelOptions((builder) => {
-    const category = [t('state-timeline.category-state-timeline', 'State timeline')];
     builder
       .addBooleanSwitch({
         path: 'mergeValues',
-        name: t('state-timeline.name-merge-equal-consecutive-values', 'Merge equal consecutive values'),
-        category,
+        name: 'Merge equal consecutive values',
         defaultValue: defaultOptions.mergeValues,
       })
       .addRadio({
         path: 'showValue',
-        name: t('state-timeline.name-show-values', 'Show values'),
-        category,
+        name: 'Show values',
         settings: {
           options: [
-            { value: VisibilityMode.Auto, label: t('state-timeline.show-values-options.label-auto', 'Auto') },
-            { value: VisibilityMode.Always, label: t('state-timeline.show-values-options.label-always', 'Always') },
-            { value: VisibilityMode.Never, label: t('state-timeline.show-values-options.label-never', 'Never') },
+            { value: VisibilityMode.Auto, label: 'Auto' },
+            { value: VisibilityMode.Always, label: 'Always' },
+            { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
         defaultValue: defaultOptions.showValue,
       })
       .addRadio({
         path: 'alignValue',
-        name: t('state-timeline.name-align-values', 'Align values'),
-        category,
+        name: 'Align values',
         settings: {
           options: [
-            { value: 'left', label: t('state-timeline.align-values-options.label-left', 'Left') },
-            { value: 'center', label: t('state-timeline.align-values-options.label-center', 'Center') },
-            { value: 'right', label: t('state-timeline.align-values-options.label-right', 'Right') },
+            { value: 'left', label: 'Left' },
+            { value: 'center', label: 'Center' },
+            { value: 'right', label: 'Right' },
           ],
         },
         defaultValue: defaultOptions.alignValue,
       })
       .addSliderInput({
         path: 'rowHeight',
-        name: t('state-timeline.name-row-height', 'Row height'),
-        category,
+        name: 'Row height',
         settings: {
           min: 0,
           max: 1,
@@ -146,8 +121,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       })
       .addNumberInput({
         path: 'perPage',
-        name: t('state-timeline.name-page-size', 'Page size (enable pagination)'),
-        category,
+        name: 'Page size (enable pagination)',
         settings: {
           min: 1,
           step: 1,
@@ -155,35 +129,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
         },
       });
 
-    commonOptionsBuilder.addLegendOptions(builder, false, true);
+    commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder);
-    addAnnotationOptions(builder);
   })
-  .setSuggestionsSupplier(
-    showDefaultSuggestion((ds) => {
-      if (!ds.hasData) {
-        return;
-      }
-
-      // This panel needs a time field and a string or number field
-      if (
-        !ds.hasFieldType(FieldType.time) ||
-        (!ds.hasFieldType(FieldType.string) && !ds.hasFieldType(FieldType.number))
-      ) {
-        return;
-      }
-
-      // If there are many series then they won't fit on y-axis so this panel is not good fit
-      if (ds.fieldCountByType(FieldType.number) >= 30) {
-        return;
-      }
-
-      // Probably better ways to filter out this by inspecting the types of string values so view this as temporary
-      if (ds.hasPreferredVisualisationType('logs')) {
-        return;
-      }
-
-      return true;
-    })
-  )
+  .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier())
   .setDataSupport({ annotations: true });

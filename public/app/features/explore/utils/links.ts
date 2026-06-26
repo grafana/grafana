@@ -2,35 +2,32 @@ import { first, uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
-  type Field,
-  type LinkModel,
-  type TimeRange,
+  Field,
+  LinkModel,
+  TimeRange,
   mapInternalLinkToExplore,
-  type InterpolateFunction,
-  type ScopedVars,
-  type DataFrame,
+  InterpolateFunction,
+  ScopedVars,
+  DataFrame,
   getFieldDisplayValuesProxy,
-  type SplitOpen,
-  type DataLink,
-  type DisplayValue,
+  SplitOpen,
+  DataLink,
+  DisplayValue,
   DataLinkConfigOrigin,
   CoreApp,
-  type SplitOpenOptions,
-  type DataLinkPostProcessor,
-  type ExploreUrlState,
+  SplitOpenOptions,
+  DataLinkPostProcessor,
+  ExploreUrlState,
   urlUtil,
-  DataFrameType,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { getTemplateSrv, reportInteraction, type VariableInterpolation } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
+import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
-import { parseDataplaneLogsFrame } from 'app/features/logs/logsFrame';
-import { type ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 
 type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 
@@ -119,7 +116,7 @@ export const getFieldLinksForExplore = (options: {
     value: {
       raw: field.values[rowIndex],
     },
-    text: t('explore.get-field-links-for-explore.text.raw-value', 'Raw value'),
+    text: 'Raw value',
   };
 
   let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = undefined;
@@ -137,20 +134,8 @@ export const getFieldLinksForExplore = (options: {
         refId: dataFrame.refId,
         fields: fieldDisplayValuesProxy,
       },
-      text: t('explore.get-field-links-for-explore.text.data', 'Data'),
+      text: 'Data',
     };
-
-    if (dataFrame.meta?.type === DataFrameType.LogLines) {
-      const dataPlane = parseDataplaneLogsFrame(dataFrame);
-      const labels = dataPlane?.getLogFrameLabels();
-      if (labels != null) {
-        Object.entries(labels[rowIndex]).forEach((value) => {
-          scopedVars[value[0]] = {
-            value: value[1],
-          };
-        });
-      }
-    }
 
     dataFrame.fields.forEach((f) => {
       if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
@@ -212,7 +197,7 @@ export const getFieldLinksForExplore = (options: {
           if (!linkModel.title) {
             linkModel.title = getTitleFromHref(linkModel.href);
           }
-          linkModel.target = linkModel.target ?? '_blank';
+          linkModel.target = '_blank';
           return { ...linkModel, variables: variables };
         } else {
           const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
@@ -249,7 +234,7 @@ export const getFieldLinksForExplore = (options: {
 /**
  * @internal
  */
-function getTitleFromHref(href: string): string {
+export function getTitleFromHref(href: string): string {
   // The URL constructor needs the url to have protocol
   if (href.indexOf('://') < 0) {
     // Doesn't really matter what protocol we use.

@@ -15,7 +15,7 @@ export interface Feed {
   items: FeedItem[];
 }
 
-interface FeedItem {
+export interface FeedItem {
   title: string;
   link: string;
   pubDate?: string;

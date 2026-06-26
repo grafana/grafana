@@ -3,13 +3,11 @@ package api
 import (
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -35,7 +33,7 @@ func errorToResponse(err error) response.Response {
 		return response.Err(err)
 	}
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
-		return ErrResp(http.StatusNotFound, err, "")
+		return ErrResp(404, err, "")
 	}
 	if errors.Is(err, errUnexpectedDatasourceType) {
 		return ErrResp(400, err, "")
@@ -43,11 +41,5 @@ func errorToResponse(err error) response.Response {
 	if errors.Is(err, errFolderAccess) {
 		return toNamespaceErrorResponse(err)
 	}
-	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
-		return ErrResp(http.StatusForbidden, err, "")
-	}
-	if errors.Is(err, models.ErrQuotaReached) {
-		return ErrResp(http.StatusForbidden, err, "")
-	}
-	return ErrResp(http.StatusInternalServerError, err, "")
+	return ErrResp(500, err, "")
 }

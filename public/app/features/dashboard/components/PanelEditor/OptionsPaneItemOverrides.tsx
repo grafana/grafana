@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
-import { type OptionPaneItemOverrideInfo } from './types';
+import { OptionPaneItemOverrideInfo } from './types';
 
 export interface Props {
   overrides: OptionPaneItemOverrideInfo[];
@@ -16,10 +16,7 @@ export function OptionsPaneItemOverrides({ overrides }: Props) {
     <div className={styles.wrapper}>
       {overrides.map((override, index) => (
         <Tooltip content={override.tooltip} key={index.toString()} placement="top">
-          <div>
-            <div aria-hidden="true" className={styles[override.type]} />
-            <span className="sr-only">{override.description}</span>
-          </div>
+          <div aria-label={override.description} className={styles[override.type]} />
         </Tooltip>
       ))}
     </div>

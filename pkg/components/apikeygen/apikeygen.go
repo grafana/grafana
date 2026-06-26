@@ -3,10 +3,12 @@ package apikeygen
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 
-	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var ErrInvalidApiKey = errors.New("invalid API key")
 
 type KeyGenResult struct {
 	HashedKey    string
@@ -48,13 +50,13 @@ func New(orgId int64, name string) (KeyGenResult, error) {
 func Decode(keyString string) (*ApiKeyJson, error) {
 	jsonString, err := base64.StdEncoding.DecodeString(keyString)
 	if err != nil {
-		return nil, satokengen.ErrInvalidApiKey
+		return nil, ErrInvalidApiKey
 	}
 
 	var keyObj ApiKeyJson
 	err = json.Unmarshal(jsonString, &keyObj)
 	if err != nil {
-		return nil, satokengen.ErrInvalidApiKey
+		return nil, ErrInvalidApiKey
 	}
 
 	return &keyObj, nil

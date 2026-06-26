@@ -1,27 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`SelectOption renders correctly 1`] = `
-<div>
+<div
+  aria-disabled={false}
+  className="css-0"
+  id=""
+  onClick={[MockFunction]}
+  onMouseMove={[MockFunction]}
+  onMouseOver={[MockFunction]}
+  tabIndex={1}
+>
   <div
-    aria-disabled="false"
-    class="css-0"
-    id=""
-    tabindex="1"
+    className="gf-form-select-box__desc-option"
   >
+    <img
+      alt=""
+      className="gf-form-select-box__desc-option__img"
+      src="url/to/avatar"
+    />
     <div
-      class="gf-form-select-box__desc-option"
+      className="gf-form-select-box__desc-option__body"
     >
-      <img
-        alt=""
-        class="gf-form-select-box__desc-option__img"
-        src="url/to/avatar"
-      />
-      <div
-        class="gf-form-select-box__desc-option__body"
-      >
-        <div>
-          Model title
-        </div>
+      <div>
+        Model title
       </div>
     </div>
   </div>

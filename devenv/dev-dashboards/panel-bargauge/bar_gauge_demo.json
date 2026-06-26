@@ -19,9 +19,7 @@
   "links": [],
   "panels": [
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -151,9 +149,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 10,
         "w": 16,
@@ -235,9 +231,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 10,
         "w": 6,
@@ -334,9 +328,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 22,
         "w": 2,
@@ -383,9 +375,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 12,
         "w": 22,
@@ -519,9 +509,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 8,
         "w": 24,
@@ -666,7 +654,8 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["2s", "5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    "refresh_intervals": ["2s", "5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
   },
   "timezone": "",
   "title": "Bar Gauge Demo",

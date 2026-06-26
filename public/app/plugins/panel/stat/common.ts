@@ -2,32 +2,28 @@
 
 import {
   escapeStringForRegex,
-  type FieldOverrideContext,
+  FieldOverrideContext,
   getFieldDisplayName,
-  type PanelOptionsEditorBuilder,
+  PanelOptionsEditorBuilder,
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
+import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
   includeFieldMatcher = true
 ) {
-  const valueOptionsCategory = [t('stat.add-standard-data-reduce-options.category-value-options', 'Value options')];
+  const valueOptionsCategory = ['Value options'];
 
   builder.addRadio({
     path: 'reduceOptions.values',
-    name: t('stat.add-standard-data-reduce-options.name-show', 'Show'),
-    description: t(
-      'stat.add-standard-data-reduce-options.description-show',
-      'Calculate a single value per column or series or show each row'
-    ),
+    name: 'Show',
+    description: 'Calculate a single value per column or series or show each row',
     settings: {
       options: [
-        { value: false, label: t('stat.add-standard-data-reduce-options.show-options.label-calculate', 'Calculate') },
-        { value: true, label: t('stat.add-standard-data-reduce-options.show-options.label-all-values', 'All values') },
+        { value: false, label: 'Calculate' },
+        { value: true, label: 'All values' },
       ],
     },
     category: valueOptionsCategory,
@@ -36,8 +32,8 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
 
   builder.addNumberInput({
     path: 'reduceOptions.limit',
-    name: t('stat.add-standard-data-reduce-options.name-limit', 'Limit'),
-    description: t('stat.add-standard-data-reduce-options.description-limit', 'Max number of rows to display'),
+    name: 'Limit',
+    description: 'Max number of rows to display',
     category: valueOptionsCategory,
     settings: {
       placeholder: '25',
@@ -51,11 +47,8 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder.addCustomEditor({
     id: 'reduceOptions.calcs',
     path: 'reduceOptions.calcs',
-    name: t('stat.add-standard-data-reduce-options.name-calculation', 'Calculation'),
-    description: t(
-      'stat.add-standard-data-reduce-options.description-calculation',
-      'Choose a reducer function / calculation'
-    ),
+    name: 'Calculation',
+    description: 'Choose a reducer function / calculation',
     category: valueOptionsCategory,
     editor: standardEditorsRegistry.get('stats-picker').editor,
     // TODO: Get ReducerID from generated schema one day?
@@ -67,25 +60,16 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   if (includeFieldMatcher) {
     builder.addSelect({
       path: 'reduceOptions.fields',
-      name: t('stat.add-standard-data-reduce-options.name-fields', 'Fields'),
-      description: t(
-        'stat.add-standard-data-reduce-options.description-fields',
-        'Select the fields that should be included in the panel'
-      ),
+      name: 'Fields',
+      description: 'Select the fields that should be included in the panel',
       category: valueOptionsCategory,
       settings: {
         allowCustomValue: true,
         options: [],
         getOptions: async (context: FieldOverrideContext) => {
           const options = [
-            {
-              value: '',
-              label: t('stat.add-standard-data-reduce-options.fields-options.label-numeric-fields', 'Numeric Fields'),
-            },
-            {
-              value: '/.*/',
-              label: t('stat.add-standard-data-reduce-options.fields-options.label-all-fields', 'All Fields'),
-            },
+            { value: '', label: 'Numeric Fields' },
+            { value: '/.*/', label: 'All Fields' },
           ];
           if (context && context.data) {
             for (const frame of context.data) {
@@ -110,20 +94,14 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
 ) {
   builder.addRadio({
     path: 'orientation',
-    name: t('stat.add-orientation-option.name-orientation', 'Orientation'),
-    description: t('stat.add-orientation-option.description-orientation', 'Layout orientation'),
+    name: 'Orientation',
+    description: 'Layout orientation',
     category,
     settings: {
       options: [
-        { value: VizOrientation.Auto, label: t('stat.add-orientation-option.orientation-options.label-auto', 'Auto') },
-        {
-          value: VizOrientation.Horizontal,
-          label: t('stat.add-orientation-option.orientation-options.label-horizontal', 'Horizontal'),
-        },
-        {
-          value: VizOrientation.Vertical,
-          label: t('stat.add-orientation-option.orientation-options.label-vertical', 'Vertical'),
-        },
+        { value: VizOrientation.Auto, label: 'Auto' },
+        { value: VizOrientation.Horizontal, label: 'Horizontal' },
+        { value: VizOrientation.Vertical, label: 'Vertical' },
       ],
     },
     defaultValue: VizOrientation.Auto,

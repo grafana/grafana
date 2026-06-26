@@ -1,10 +1,10 @@
 import { cloneDeep } from 'lodash';
 
-import { type MetricFindValue, type QueryVariableModel, VariableSort } from '@grafana/data';
+import { MetricFindValue, QueryVariableModel, VariableSort } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getVariableTestContext } from '../state/helpers';
-import { type VariablesState } from '../state/types';
+import { VariablesState } from '../state/types';
 import { toVariablePayload } from '../utils';
 
 import { createQueryVariableAdapter } from './adapter';

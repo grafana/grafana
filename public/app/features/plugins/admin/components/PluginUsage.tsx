@@ -1,16 +1,15 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
-import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
-import { type GrafanaTheme2, type PluginMeta, PluginType } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Spinner, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, PluginMeta, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type SearchQuery } from 'app/features/search/service/types';
+import { getGrafanaSearcher, SearchQuery } from 'app/features/search/service';
 
 type Props = {
   plugin: PluginMeta;
@@ -43,15 +42,10 @@ export function PluginUsage({ plugin }: Props) {
     return (
       <div className={styles.wrap}>
         <div className={styles.info}>
-          <Trans
-            i18nKey="plugins.plugin-usage.num-usages"
-            values={{ pluginName: plugin.name, numUsages: found.totalRows }}
-          >
-            {'{{pluginName}}'} is used <b>{'{{numUsages}}'}</b> times.
-          </Trans>
+          {plugin.name} is used <b>{found.totalRows}</b> times.
         </div>
         <AutoSizer>
-          {({ width, height }: Size) => {
+          {({ width, height }) => {
             return (
               <SearchResultsTable
                 response={found}
@@ -60,8 +54,6 @@ export function PluginUsage({ plugin }: Props) {
                 clearSelection={() => {}}
                 keyboardEvents={of()}
                 onTagSelected={() => {}}
-                trackingSource="PluginDetailsPage_PluginUsage"
-                onClickItem={() => {}}
               />
             );
           }}
@@ -74,11 +66,17 @@ export function PluginUsage({ plugin }: Props) {
     return <Spinner />;
   }
 
+  if (!config.featureToggles.panelTitleSearch) {
+    return (
+      <Alert title="Missing feature toggle: panelTitleSearch">
+        Plugin usage requires the new search index to find usage across dashboards
+      </Alert>
+    );
+  }
+
   return (
     <EmptyListCTA
-      title={t('plugins.plugin-usage.title-not-used-yet', '{{pluginName}} is not used in any dashboards yet', {
-        pluginName: plugin.name,
-      })}
+      title={`${plugin.name} is not used in any dashboards yet`}
       buttonIcon="plus"
       buttonTitle="Create Dashboard"
       buttonLink={`dashboard/new?panelType=${plugin.id}&editPanel=1`}
@@ -86,11 +84,11 @@ export function PluginUsage({ plugin }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrap: css({
       width: '100%',
-      height: '90%',
+      height: '100%',
     }),
     info: css({
       paddingBottom: '30px',

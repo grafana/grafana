@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -13,14 +15,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
 // ScheduleService is an interface for a service that schedules the evaluation
@@ -29,9 +30,10 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
-	// Status returns the status of a rule's last evaluation.
-	Status(ctx context.Context, key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool)
 }
+
+// retryDelay represents how long to wait between each failed rule evaluation.
+const retryDelay = 1 * time.Second
 
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 //
@@ -47,16 +49,7 @@ type RulesStore interface {
 }
 
 type RecordingWriter interface {
-	WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
-}
-
-// AlertRuleStopReasonProvider is an interface for determining the reason why an alert rule was stopped.
-type AlertRuleStopReasonProvider interface {
-	// FindReason returns two values:
-	// 1. The first value is the reason for stopping the alert rule (error type).
-	// 2. The second value is an error indicating any issues that occurred while determining the stop reason.
-	//	  If this is non-nil, the scheduler uses the default reason.
-	FindReason(ctx context.Context, logger log.Logger, key ngmodels.AlertRuleKeyWithGroup) (error, error)
+	Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
 }
 
 type schedule struct {
@@ -66,7 +59,7 @@ type schedule struct {
 	// each rule gets its own channel and routine
 	registry ruleRegistry
 
-	retryConfig RetryConfig
+	maxAttempts int64
 
 	clock clock.Clock
 
@@ -80,14 +73,11 @@ type schedule struct {
 	// message from stopApplied is handled.
 	stopAppliedFunc func(ngmodels.AlertRuleKey)
 
-	ruleStopReasonProvider AlertRuleStopReasonProvider
-
 	log log.Logger
 
 	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore         RulesStore
-	ruleSequenceStore RuleSequenceStore
+	ruleStore RulesStore
 
 	stateManager *state.Manager
 
@@ -107,82 +97,65 @@ type schedule struct {
 	// last evaluated.
 	schedulableAlertRules alertRulesRegistry
 
-	tracer          tracing.Tracer
-	featureToggles  featuremgmt.FeatureToggles
-	recordingWriter RecordingWriter
-}
+	tracer tracing.Tracer
 
-// RetryConfig configures the exponential backoff for alert rule and recording rule evaluations.
-type RetryConfig struct {
-	MaxAttempts         int64
-	InitialRetryDelay   time.Duration
-	MaxRetryDelay       time.Duration
-	RandomizationFactor float64
+	recordingWriter RecordingWriter
 }
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	RetryConfig            RetryConfig
-	BaseInterval           time.Duration
-	C                      clock.Clock
-	MinRuleInterval        time.Duration
-	DisableGrafanaFolder   bool
-	RecordingRulesCfg      setting.RecordingRuleSettings
-	AppURL                 *url.URL
-	JitterEvaluations      JitterStrategy
-	EvaluatorFactory       eval.EvaluatorFactory
-	RuleStore              RulesStore
-	RuleSequenceStore      RuleSequenceStore
-	Metrics                *metrics.Scheduler
-	AlertSender            AlertsSender
-	Tracer                 tracing.Tracer
-	Log                    log.Logger
-	RecordingWriter        RecordingWriter
-	RuleStopReasonProvider AlertRuleStopReasonProvider
-	FeatureToggles         featuremgmt.FeatureToggles
+	MaxAttempts          int64
+	BaseInterval         time.Duration
+	C                    clock.Clock
+	MinRuleInterval      time.Duration
+	DisableGrafanaFolder bool
+	RecordingRulesCfg    setting.RecordingRuleSettings
+	AppURL               *url.URL
+	JitterEvaluations    JitterStrategy
+	EvaluatorFactory     eval.EvaluatorFactory
+	RuleStore            RulesStore
+	Metrics              *metrics.Scheduler
+	AlertSender          AlertsSender
+	Tracer               tracing.Tracer
+	Log                  log.Logger
+	RecordingWriter      RecordingWriter
 }
 
 // NewScheduler returns a new scheduler.
 func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	const minMaxAttempts = int64(1)
-	if cfg.RetryConfig.MaxAttempts < minMaxAttempts {
-		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.RetryConfig.MaxAttempts, "actual", minMaxAttempts)
-		cfg.RetryConfig.MaxAttempts = minMaxAttempts
-	}
-	if cfg.RuleSequenceStore == nil {
-		cfg.RuleSequenceStore = &NoopRuleSequenceStore{}
+	if cfg.MaxAttempts < minMaxAttempts {
+		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.MaxAttempts, "actual", minMaxAttempts)
+		cfg.MaxAttempts = minMaxAttempts
 	}
 
 	sch := schedule{
-		registry:               newRuleRegistry(),
-		retryConfig:            cfg.RetryConfig,
-		clock:                  cfg.C,
-		baseInterval:           cfg.BaseInterval,
-		log:                    cfg.Log,
-		evaluatorFactory:       cfg.EvaluatorFactory,
-		ruleStore:              cfg.RuleStore,
-		ruleSequenceStore:      cfg.RuleSequenceStore,
-		metrics:                cfg.Metrics,
-		appURL:                 cfg.AppURL,
-		disableGrafanaFolder:   cfg.DisableGrafanaFolder,
-		jitterEvaluations:      cfg.JitterEvaluations,
-		rrCfg:                  cfg.RecordingRulesCfg,
-		stateManager:           stateManager,
-		minRuleInterval:        cfg.MinRuleInterval,
-		schedulableAlertRules:  alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
-		alertsSender:           cfg.AlertSender,
-		tracer:                 cfg.Tracer,
-		recordingWriter:        cfg.RecordingWriter,
-		ruleStopReasonProvider: cfg.RuleStopReasonProvider,
-		featureToggles:         cfg.FeatureToggles,
+		registry:              newRuleRegistry(),
+		maxAttempts:           cfg.MaxAttempts,
+		clock:                 cfg.C,
+		baseInterval:          cfg.BaseInterval,
+		log:                   cfg.Log,
+		evaluatorFactory:      cfg.EvaluatorFactory,
+		ruleStore:             cfg.RuleStore,
+		metrics:               cfg.Metrics,
+		appURL:                cfg.AppURL,
+		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
+		jitterEvaluations:     cfg.JitterEvaluations,
+		rrCfg:                 cfg.RecordingRulesCfg,
+		stateManager:          stateManager,
+		minRuleInterval:       cfg.MinRuleInterval,
+		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
+		alertsSender:          cfg.AlertSender,
+		tracer:                cfg.Tracer,
+		recordingWriter:       cfg.RecordingWriter,
 	}
 
 	return &sch
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.retryConfig.MaxAttempts)
-	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker, sch.log)
+	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.maxAttempts)
+	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
 	defer t.Stop()
 
 	if err := sch.schedulePeriodic(ctx, t); err != nil {
@@ -199,7 +172,7 @@ func (sch *schedule) Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]stri
 }
 
 // Status fetches the health of a given scheduled rule, by key.
-func (sch *schedule) Status(_ context.Context, key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
+func (sch *schedule) Status(key ngmodels.AlertRuleKey) (ngmodels.RuleStatus, bool) {
 	if rule, ok := sch.registry.get(key); ok {
 		return rule.Status(), true
 	}
@@ -207,13 +180,12 @@ func (sch *schedule) Status(_ context.Context, key ngmodels.AlertRuleKey) (ngmod
 }
 
 // deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
-func (sch *schedule) deleteAlertRule(ctx context.Context, keys ...ngmodels.AlertRuleKey) {
+func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 	for _, key := range keys {
 		// It can happen that the scheduler has deleted the alert rule before the
 		// Ruler API has called DeleteAlertRule. This can happen as requests to
 		// the Ruler API do not hold an exclusive lock over all scheduler operations.
-		_, ok := sch.schedulableAlertRules.del(key)
-		if !ok {
+		if _, ok := sch.schedulableAlertRules.del(key); !ok {
 			sch.log.Info("Alert rule cannot be removed from the scheduler as it is not scheduled", key.LogContext()...)
 		}
 		// Delete the rule routine
@@ -222,33 +194,12 @@ func (sch *schedule) deleteAlertRule(ctx context.Context, keys ...ngmodels.Alert
 			sch.log.Info("Alert rule cannot be stopped as it is not running", key.LogContext()...)
 			continue
 		}
-
 		// stop rule evaluation
-		reason := sch.getRuleStopReason(ctx, ruleRoutine.Identifier())
-		ruleRoutine.Stop(reason)
+		ruleRoutine.Stop(errRuleDeleted)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
 	sch.updateRulesMetrics(alertRules)
-}
-
-func (sch *schedule) getRuleStopReason(ctx context.Context, key ngmodels.AlertRuleKeyWithGroup) error {
-	// If the ruleStopReasonProvider is defined, we will use it to get the reason why the
-	// alert rule was stopped. If it returns an error, we will use the default reason.
-	if sch.ruleStopReasonProvider == nil {
-		return errRuleDeleted
-	}
-
-	stopReason, err := sch.ruleStopReasonProvider.FindReason(ctx, sch.log, key)
-	if err != nil {
-		sch.log.New(key.LogContext()...).Error("Failed to get stop reason", "error", err)
-		return errRuleDeleted
-	}
-	if stopReason == nil {
-		return errRuleDeleted
-	}
-
-	return stopReason
 }
 
 func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
@@ -269,7 +220,6 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 		case <-ctx.Done():
 			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
-			sch.metrics.ResetOnStop()
 			return waitErr
 		}
 	}
@@ -310,40 +260,27 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
 	restartedRules := make([]Rule, 0)
 	missingFolder := make(map[string][]string)
-
 	ruleFactory := newRuleFactory(
 		sch.appURL,
 		sch.disableGrafanaFolder,
-		sch.retryConfig,
+		sch.maxAttempts,
 		sch.alertsSender,
 		sch.stateManager,
 		sch.evaluatorFactory,
+		&sch.schedulableAlertRules,
 		sch.clock,
 		sch.rrCfg,
 		sch.metrics,
 		sch.log,
 		sch.tracer,
-		sch.featureToggles,
 		sch.recordingWriter,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
 	)
 	for _, item := range alertRules {
+		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, item, ruleFactory)
 		key := item.GetKey()
 		logger := sch.log.FromContext(ctx).New(key.LogContext()...)
-
-		var folderTitle string
-		if !sch.disableGrafanaFolder {
-			title, ok := folderTitles[item.GetFolderKey()]
-			if ok {
-				folderTitle = title
-			} else {
-				missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
-			}
-		}
-
-		rf := ruleWithFolder{rule: item, folderTitle: folderTitle}
-		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, rf, ruleFactory)
 
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
@@ -358,7 +295,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 			logger.Debug("Rule restarted because type changed", "old", ruleRoutine.Type(), "new", item.Type())
 			restartedRules = append(restartedRules, ruleRoutine)
 			sch.registry.del(key)
-			ruleRoutine, newRoutine = sch.registry.getOrCreate(ctx, rf, ruleFactory)
+			ruleRoutine, newRoutine = sch.registry.getOrCreate(ctx, item, ruleFactory)
 		}
 
 		if newRoutine && !invalidInterval {
@@ -378,6 +315,16 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		offset := jitterOffsetInTicks(item, sch.baseInterval, sch.jitterEvaluations)
 		isReadyToRun := item.IntervalSeconds != 0 && (tickNum%itemFrequency)-offset == 0
 
+		var folderTitle string
+		if !sch.disableGrafanaFolder {
+			title, ok := folderTitles[item.GetFolderKey()]
+			if ok {
+				folderTitle = title
+			} else {
+				missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
+			}
+		}
+
 		if isReadyToRun {
 			logger.Debug("Rule is ready to run on the current tick", "tick", tick, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine, Evaluation: Evaluation{
@@ -389,12 +336,12 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
 			logger.Debug("Rule has been updated. Notifying evaluation routine")
-			go func(routine Rule, rule *ngmodels.AlertRule, folder string) {
-				routine.Update(&Evaluation{
-					rule:        rule,
-					folderTitle: folder,
+			go func(routine Rule, rule *ngmodels.AlertRule) {
+				routine.Update(RuleVersionAndPauseStatus{
+					Fingerprint: ruleWithFolder{rule: rule, folderTitle: folderTitle}.Fingerprint(),
+					IsPaused:    rule.IsPaused,
 				})
-			}(ruleRoutine, item, folderTitle)
+			}(ruleRoutine, item)
 			updatedRules = append(updatedRules, ngmodels.AlertRuleKeyWithVersion{
 				Version:      item.Version,
 				AlertRuleKey: item.GetKey(),
@@ -409,14 +356,31 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
 	}
 
-	// jitter the start time based on the base interval and total scheduled items
-	var step int64
+	var step int64 = 0
 	if len(readyToRun) > 0 {
 		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
 	}
 
-	sequences := sch.buildSequences(readyToRun, sch.runJobFn)
-	sch.runSequences(sequences, step)
+	slices.SortFunc(readyToRun, func(a, b readyToRunItem) int {
+		return strings.Compare(a.rule.UID, b.rule.UID)
+	})
+	for i := range readyToRun {
+		item := readyToRun[i]
+
+		time.AfterFunc(time.Duration(int64(i)*step), func() {
+			key := item.rule.GetKey()
+			success, dropped := item.ruleRoutine.Eval(&item.Evaluation)
+			if !success {
+				sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
+				return
+			}
+			if dropped != nil {
+				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick, "droppedTick", dropped.scheduledAt)...)
+				orgID := fmt.Sprint(key.OrgID)
+				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
+			}
+		})
+	}
 
 	// Stop old routines for rules that got restarted.
 	for _, oldRoutine := range restartedRules {
@@ -428,33 +392,6 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	for key := range registeredDefinitions {
 		toDelete = append(toDelete, key)
 	}
-	sch.deleteAlertRule(ctx, toDelete...)
-
+	sch.deleteAlertRule(toDelete...)
 	return readyToRun, registeredDefinitions, updatedRules
-}
-
-// runJobFn sends the scheduled evaluation to the evaluation routine, optionally with a previous item to log the trigger source.
-func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func() {
-	return func() {
-		if len(prev) > 0 {
-			sch.log.Debug("Rule evaluation triggered by previous rule", append(next.rule.GetKey().LogContext(), "previousRule", prev[0].rule.UID)...)
-		}
-		key := next.rule.GetKey()
-		success, dropped := next.ruleRoutine.Eval(&next.Evaluation)
-		if !success {
-			sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", next.scheduledAt)...)
-			return
-		}
-		if dropped != nil {
-			sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", next.scheduledAt, "droppedTick", dropped.scheduledAt)...)
-			orgID := fmt.Sprint(key.OrgID)
-			sch.metrics.EvaluationMissed.WithLabelValues(orgID, next.rule.Title).Inc()
-		}
-	}
-}
-
-func (sch *schedule) runSequences(sequences []sequence, step int64) {
-	for i := range sequences {
-		time.AfterFunc(time.Duration(int64(i)*step), sch.runJobFn(readyToRunItem(sequences[i])))
-	}
 }

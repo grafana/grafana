@@ -1,4 +1,4 @@
-import { type LokiVariableQuery, LokiVariableQueryType } from '../types';
+import { LokiVariableQuery, LokiVariableQueryType } from '../types';
 
 import { migrateVariableQuery } from './variableQueryMigrations';
 

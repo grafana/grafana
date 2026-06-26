@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
@@ -37,20 +37,6 @@ type ldapTestCase struct {
 	expectDisable       bool
 }
 
-func TestLDAP_AuthenticateProxy_Disabled(t *testing.T) {
-	c := ProvideLDAP(
-		setting.NewCfg(),
-		&service.LDAPFakeService{ExpectedEnabled: false},
-		&usertest.FakeUserService{},
-		&authinfotest.FakeService{},
-		tracing.InitializeTracerForTest(),
-	)
-
-	identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, "test", nil)
-	assert.NoError(t, err)
-	assert.Nil(t, identity)
-}
-
 func TestLDAP_AuthenticateProxy(t *testing.T) {
 	tests := []ldapTestCase{
 		{
@@ -73,7 +59,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 				Email:           "test@test.com",
 				AuthenticatedBy: login.LDAPAuthModule,
 				AuthID:          "123",
-				ExternalGroups:  []string{"1", "2"},
+				Groups:          []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					SyncTeams:       true,
@@ -82,8 +68,8 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 					SyncOrgRoles:    true,
 					SyncPermissions: true,
 					LookUpParams: login.UserLookupParams{
-						Email: new("test@test.com"),
-						Login: new("test"),
+						Email: strPtr("test@test.com"),
+						Login: strPtr("test"),
 					},
 				},
 			},
@@ -119,20 +105,6 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 	}
 }
 
-func TestLDAP_AuthenticatePassword_Disabled(t *testing.T) {
-	c := ProvideLDAP(
-		setting.NewCfg(),
-		&service.LDAPFakeService{ExpectedEnabled: false},
-		&usertest.FakeUserService{},
-		&authinfotest.FakeService{},
-		tracing.InitializeTracerForTest(),
-	)
-
-	identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, "test", "password")
-	assert.NoError(t, err)
-	assert.Nil(t, identity)
-}
-
 func TestLDAP_AuthenticatePassword(t *testing.T) {
 	tests := []ldapTestCase{
 		{
@@ -156,7 +128,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 				Email:           "test@test.com",
 				AuthenticatedBy: login.LDAPAuthModule,
 				AuthID:          "123",
-				ExternalGroups:  []string{"1", "2"},
+				Groups:          []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					SyncTeams:       true,
@@ -165,8 +137,8 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 					SyncOrgRoles:    true,
 					SyncPermissions: true,
 					LookUpParams: login.UserLookupParams{
-						Email: new("test@test.com"),
-						Login: new("test"),
+						Email: strPtr("test@test.com"),
+						Login: strPtr("test"),
 					},
 				},
 			},
@@ -225,13 +197,17 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 		ExpectedError:    tt.expectedAuthInfoErr,
 	}
 
-	c := ProvideLDAP(
-		setting.NewCfg(),
-		&service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr, ExpectedEnabled: true},
-		userService,
-		authInfoService,
-		tracing.InitializeTracerForTest(),
-	)
+	c := &LDAP{
+		cfg:             setting.NewCfg(),
+		logger:          log.New("authn.ldap.test"),
+		service:         &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr},
+		userService:     userService,
+		authInfoService: authInfoService,
+	}
 
 	return c
+}
+
+func strPtr(s string) *string {
+	return &s
 }

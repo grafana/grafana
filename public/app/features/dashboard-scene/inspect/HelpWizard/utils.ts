@@ -2,25 +2,25 @@ import { cloneDeep } from 'lodash';
 
 import {
   dateTimeFormat,
-  type TimeRange,
-  type PanelData,
-  type DataTransformerConfig,
-  type DataFrameJSON,
+  TimeRange,
+  PanelData,
+  DataTransformerConfig,
+  DataFrameJSON,
   LoadingState,
   dataFrameToJSON,
   DataTopic,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { type VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
 import { getQueryRunnerFor, isLibraryPanel } from '../../utils/utils';
 
-import { type Randomize, randomizeData } from './randomizer';
+import { Randomize, randomizeData } from './randomizer';
 
-function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
+export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   const frames: DataFrameJSON[] = [];
   if (data?.series) {
     for (const f of data.series) {
@@ -149,7 +149,6 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
   }
 
   if (annotationsCount > 0) {
-    const DEBUG_DASHBOARD_TITLE_DO_NOT_TRANSLATE = 'Annotations';
     dashboard.panels.push({
       id: 7,
       gridPos: {
@@ -159,7 +158,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
         y: 20,
       },
       type: 'table',
-      title: DEBUG_DASHBOARD_TITLE_DO_NOT_TRANSLATE,
+      title: 'Annotations',
       datasource: {
         type: 'datasource',
         uid: '-- Dashboard --',

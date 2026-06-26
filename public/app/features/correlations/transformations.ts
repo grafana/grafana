@@ -1,6 +1,6 @@
 import logfmt from 'logfmt';
 
-import { type ScopedVars, type DataLinkTransformationConfig, SupportedTransformationType } from '@grafana/data';
+import { ScopedVars, DataLinkTransformationConfig, SupportedTransformationType } from '@grafana/data';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 export const getTransformationVars = (
@@ -22,7 +22,7 @@ export const getTransformationVars = (
         transformVal[transformation.mapValue || fieldName] = match[1] || match[0];
       }
     }
-  } else if (transformation.type === SupportedTransformationType.Logfmt && fieldValue !== undefined) {
+  } else if (transformation.type === SupportedTransformationType.Logfmt) {
     transformVal = logfmt.parse(fieldValue);
   }
 

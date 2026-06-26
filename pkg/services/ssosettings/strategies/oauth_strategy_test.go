@@ -19,12 +19,8 @@ var (
 	enabled = true
 	allow_sign_up = false
 	auto_login = true
-	client_authentication = test_client_authentication
 	client_id = test_client_id
 	client_secret = test_client_secret
-	managed_identity_client_id = test_managed_identity_client_id
-	federated_credential_audience = test_federated_credential_audience
-	workload_identity_token_file = test_workload_identity_token_file
 	scopes = openid, profile, email
 	empty_scopes = false
 	email_attribute_name = email:primary
@@ -39,7 +35,6 @@ var (
 	auth_style = inheader
 	auth_url = test_auth_url
 	token_url = test_token_url
-	token_exchange_timeout = 30
 	api_url = test_api_url
 	teams_url = test_teams_url
 	allowed_domains = domain1.com
@@ -59,57 +54,48 @@ var (
 	signout_redirect_url = test_signout_redirect_url
 	org_attribute_path = groups
 	org_mapping = Group1:*:Editor
-	login_prompt = select_account
 	`
 
 	expectedOAuthInfo = map[string]any{
-		"name":                          "OAuth",
-		"icon":                          "signin",
-		"enabled":                       true,
-		"allow_sign_up":                 false,
-		"auto_login":                    true,
-		"client_authentication":         "test_client_authentication",
-		"client_id":                     "test_client_id",
-		"client_secret":                 "test_client_secret",
-		"managed_identity_client_id":    "test_managed_identity_client_id",
-		"federated_credential_audience": "test_federated_credential_audience",
-		"workload_identity_token_file":  "test_workload_identity_token_file",
-		"scopes":                        "openid, profile, email",
-		"empty_scopes":                  false,
-		"email_attribute_name":          "email:primary",
-		"email_attribute_path":          "email",
-		"role_attribute_path":           "role",
-		"role_attribute_strict":         true,
-		"groups_attribute_path":         "groups",
-		"team_ids_attribute_path":       "team_ids",
-		"auth_url":                      "test_auth_url",
-		"token_url":                     "test_token_url",
-		"token_exchange_timeout":        30,
-		"api_url":                       "test_api_url",
-		"teams_url":                     "test_teams_url",
-		"allowed_domains":               "domain1.com",
-		"allowed_groups":                "",
-		"tls_skip_verify_insecure":      true,
-		"tls_client_cert":               "",
-		"tls_client_key":                "",
-		"tls_client_ca":                 "",
-		"use_pkce":                      false,
-		"auth_style":                    "inheader",
-		"allow_assign_grafana_admin":    true,
-		"use_refresh_token":             true,
-		"hosted_domain":                 "test_hosted_domain",
-		"skip_org_role_sync":            true,
-		"signout_redirect_url":          "test_signout_redirect_url",
-		"allowed_organizations":         "org1, org2",
-		"id_token_attribute_name":       "id_token",
-		"login_attribute_path":          "login",
-		"name_attribute_path":           "name",
-		"team_ids":                      "first, second",
-		"org_attribute_path":            "groups",
-		"org_mapping":                   "Group1:*:Editor",
-		"login_prompt":                  "select_account",
-		"jwk_set_url":                   "",
-		"validate_id_token":             false,
+		"name":                       "OAuth",
+		"icon":                       "signin",
+		"enabled":                    true,
+		"allow_sign_up":              false,
+		"auto_login":                 true,
+		"client_id":                  "test_client_id",
+		"client_secret":              "test_client_secret",
+		"scopes":                     "openid, profile, email",
+		"empty_scopes":               false,
+		"email_attribute_name":       "email:primary",
+		"email_attribute_path":       "email",
+		"role_attribute_path":        "role",
+		"role_attribute_strict":      true,
+		"groups_attribute_path":      "groups",
+		"team_ids_attribute_path":    "team_ids",
+		"auth_url":                   "test_auth_url",
+		"token_url":                  "test_token_url",
+		"api_url":                    "test_api_url",
+		"teams_url":                  "test_teams_url",
+		"allowed_domains":            "domain1.com",
+		"allowed_groups":             "",
+		"tls_skip_verify_insecure":   true,
+		"tls_client_cert":            "",
+		"tls_client_key":             "",
+		"tls_client_ca":              "",
+		"use_pkce":                   false,
+		"auth_style":                 "inheader",
+		"allow_assign_grafana_admin": true,
+		"use_refresh_token":          true,
+		"hosted_domain":              "test_hosted_domain",
+		"skip_org_role_sync":         true,
+		"signout_redirect_url":       "test_signout_redirect_url",
+		"allowed_organizations":      "org1, org2",
+		"id_token_attribute_name":    "id_token",
+		"login_attribute_path":       "login",
+		"name_attribute_path":        "name",
+		"team_ids":                   "first, second",
+		"org_attribute_path":         "groups",
+		"org_mapping":                "Group1:*:Editor",
 	}
 )
 
@@ -133,8 +119,6 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	[auth.azuread]
 	force_use_graph_api = true
 	allowed_organizations = org1, org2
-	workload_identity_token_file = azuread_token_file
-	domain_hint = my-domain
 
 	[auth.github]
 	team_ids = first, second
@@ -169,8 +153,6 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 
 		require.Equal(t, true, result["force_use_graph_api"])
 		require.Equal(t, "org1, org2", result["allowed_organizations"])
-		require.Equal(t, "azuread_token_file", result["workload_identity_token_file"])
-		require.Equal(t, "my-domain", result["domain_hint"])
 	})
 
 	t.Run(social.GitHubProviderName, func(t *testing.T) {
@@ -207,52 +189,6 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	})
 }
 
-func TestGetProviderConfig_TokenExchangeTimeout(t *testing.T) {
-	testCases := []struct {
-		name            string
-		iniValue        string
-		expectedTimeout int
-	}{
-		{
-			name:            "should default to 15 when not set",
-			iniValue:        "",
-			expectedTimeout: 15,
-		},
-		{
-			name:            "should parse integer seconds correctly",
-			iniValue:        "token_exchange_timeout = 30",
-			expectedTimeout: 30,
-		},
-		{
-			name:            "should parse large timeout value",
-			iniValue:        "token_exchange_timeout = 120",
-			expectedTimeout: 120,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			iniContent := `
-			[auth.generic_oauth]
-			enabled = true
-			` + tc.iniValue
-
-			iniFile, err := ini.Load([]byte(iniContent))
-			require.NoError(t, err)
-
-			cfg := setting.NewCfg()
-			cfg.Raw = iniFile
-
-			strategy := NewOAuthStrategy(cfg)
-
-			result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
-			require.NoError(t, err)
-
-			require.Equal(t, tc.expectedTimeout, result["token_exchange_timeout"])
-		})
-	}
-}
-
 // TestGetProviderConfig_GrafanaComGrafanaNet tests that the connector is setup using the correct section and it supports
 // the legacy settings for the provider (auth.grafananet section). The test cases are based on the current behavior of the
 // SocialService's ProvideService method (TestSocialService_ProvideService_GrafanaComGrafanaNet).
@@ -268,7 +204,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = true
 			client_id = grafanaComClientId
-
+			
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,
@@ -283,7 +219,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = false
 			client_id = grafanaComClientId
-
+			
 			[auth.grafananet]
 			enabled = true
 			client_id = grafanaNetClientId`,
@@ -298,7 +234,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = true
 			client_id = grafanaComClientId
-
+			
 			[auth.grafananet]
 			enabled = true
 			client_id = grafanaNetClientId`,
@@ -313,7 +249,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = false
 			client_id = grafanaComClientId
-
+			
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,

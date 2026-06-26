@@ -1,66 +1,45 @@
 import { css, cx } from '@emotion/css';
-import { type AnchorHTMLAttributes, type ButtonHTMLAttributes } from 'react';
+import { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, textUtil, type ThemeRichColor } from '@grafana/data';
+import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { type IconName, type IconSize, type IconType } from '../../types/icon';
-import { type ComponentSize } from '../../types/size';
+import { useTheme2 } from '../../themes';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { ComponentSize, IconSize, IconType } from '../../types';
+import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
+import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
-export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'accent', 'destructive', 'success'];
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
+export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
-type BaseProps = {
+type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
-  icon?: IconName | React.ReactElement<IconElementProps>;
+  icon?: IconName | React.ReactElement;
   className?: string;
+  children?: React.ReactNode;
   fullWidth?: boolean;
   type?: string;
+  /** Tooltip content to display on hover */
   tooltip?: PopoverContent;
-  tooltipPlacement?: TooltipPlacement;
-  /** Position of the icon */
-  iconPlacement?: 'left' | 'right';
-};
-
-// either aria-label or tooltip is required for buttons without children
-type NoChildrenAriaLabel = BaseProps & {
-  children?: never;
-  'aria-label': string;
-};
-type NoChildrenTooltip = BaseProps & {
-  children?: never;
-  tooltip: PopoverContent;
+  /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
 };
-
-type BasePropsWithChildren = BaseProps & {
-  children: React.ReactNode;
-};
-
-type CommonProps = BasePropsWithChildren | NoChildrenTooltip | NoChildrenAriaLabel;
 
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-button--docs
- */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      'aria-label': ariaLabel,
+      variant = 'primary',
       size = 'md',
       fill = 'solid',
-      variant = fill === 'text' ? 'accent' : 'primary',
       icon,
       fullWidth,
       children,
@@ -69,7 +48,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       tooltip,
       disabled,
       tooltipPlacement,
-      iconPlacement = 'left',
       onClick,
       ...otherProps
     },
@@ -95,8 +73,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const hasTooltip = Boolean(tooltip);
 
-    const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
-
     // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
@@ -110,11 +86,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-disabled={hasTooltip && disabled}
         disabled={!hasTooltip && disabled}
         ref={tooltip ? undefined : ref}
-        aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
       >
-        {iconPlacement === 'left' && iconComponent}
+        <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
-        {iconPlacement === 'right' && iconComponent}
       </button>
     );
 
@@ -132,17 +106,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button';
 
-export type ButtonLinkProps = ButtonProps & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'aria-label'>;
+export type ButtonLinkProps = CommonProps &
+  ButtonHTMLAttributes<HTMLButtonElement> &
+  AnchorHTMLAttributes<HTMLAnchorElement>;
 
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   (
     {
-      'aria-label': ariaLabel,
       variant = 'primary',
       size = 'md',
       fill = 'solid',
       icon,
-      iconPlacement = 'left',
       fullWidth,
       children,
       className,
@@ -151,13 +125,10 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       disabled,
       tooltip,
       tooltipPlacement,
-      href,
       ...otherProps
     },
     ref
   ) => {
-    const sanitizedHref = href ? textUtil.sanitizeUrl(href) : href;
-
     const theme = useTheme2();
     const styles = getButtonStyles({
       theme,
@@ -178,22 +149,17 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       className
     );
 
-    const iconComponent = icon && <IconRenderer icon={icon} size={size} className={styles.icon} />;
-
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <a
         className={linkButtonStyles}
         {...otherProps}
-        href={sanitizedHref}
         tabIndex={disabled ? -1 : 0}
         aria-disabled={disabled}
         ref={tooltip ? undefined : ref}
-        aria-label={ariaLabel ?? (!children && typeof tooltip === 'string' ? tooltip : undefined)}
       >
-        {iconPlacement === 'left' && iconComponent}
+        <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
-        {iconPlacement === 'right' && iconComponent}
       </a>
     );
 
@@ -211,13 +177,8 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
 LinkButton.displayName = 'LinkButton';
 
-type IconElementProps = {
-  className?: string;
-  size?: IconSize;
-};
-
 interface IconRendererProps {
-  icon?: IconName | React.ReactElement<IconElementProps>;
+  icon?: IconName | React.ReactElement<{ className?: string; size?: IconSize }>;
   size?: IconSize;
   className?: string;
   iconType?: IconType;
@@ -250,7 +211,7 @@ export const getButtonStyles = (props: StyleProps) => {
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme);
   const variantStyles = getPropertiesForVariant(theme, variant, fill);
   const disabledStyles = getPropertiesForDisabled(theme, variant, fill);
-  const focusStyle = getButtonFocusStyles(theme);
+  const focusStyle = getFocusStyles(theme);
   const paddingMinusBorder = theme.spacing.gridSize * padding - 1;
 
   return {
@@ -258,7 +219,6 @@ export const getButtonStyles = (props: StyleProps) => {
       label: 'button',
       display: 'inline-flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
       fontSize: fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       fontFamily: theme.typography.fontFamily,
@@ -279,17 +239,9 @@ export const getButtonStyles = (props: StyleProps) => {
       ...variantStyles,
       ':disabled': disabledStyles,
       '&[disabled]': disabledStyles,
-
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
     }),
     disabled: css(disabledStyles, {
       '&:hover': css(disabledStyles),
-      '&:focus': css(disabledStyles),
-      '&:focus-visible': css(disabledStyles),
     }),
     img: css({
       width: '16px',
@@ -302,7 +254,9 @@ export const getButtonStyles = (props: StyleProps) => {
           marginRight: theme.spacing(-padding / 2),
           marginLeft: theme.spacing(-padding / 2),
         })
-      : undefined,
+      : css({
+          marginRight: theme.spacing(padding / 2),
+        }),
     content: css({
       display: 'flex',
       flexDirection: 'row',
@@ -314,18 +268,12 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-export function getActiveButtonStyles(color: ThemeRichColor, fill: ButtonFill) {
-  return {
-    background: fill === 'solid' ? color.main : 'transparent',
-  };
-}
-
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
 
-  // Secondary button has some special rules as we lack the color token to
+  // Secondary button has some special rules as we lack theem color token to
   // specify border color for normal button vs border color for outline button
   if (color.name === 'secondary') {
     borderColor = color.border;
@@ -338,15 +286,14 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: `1px solid ${outlineBorderColor}`,
+      transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+        duration: theme.transitions.duration.short,
+      }),
 
-      '&:hover, &:focus': {
+      '&:hover': {
         background: color.transparent,
         borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
         color: color.text,
-      },
-
-      '&:active': {
-        ...getActiveButtonStyles(color, fill),
       },
     };
   }
@@ -356,15 +303,18 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: '1px solid transparent',
+      transition: theme.transitions.create(['background-color', 'color'], {
+        duration: theme.transitions.duration.short,
+      }),
 
-      '&:hover, &:focus': {
-        background: color.transparent,
-        textDecoration: 'none',
+      '&:focus': {
         outline: 'none',
+        textDecoration: 'none',
       },
 
-      '&:active': {
-        ...getActiveButtonStyles(color, fill),
+      '&:hover': {
+        background: color.transparent,
+        textDecoration: 'none',
       },
     };
   }
@@ -373,21 +323,15 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     background: color.main,
     color: color.contrastText,
     border: `1px solid ${borderColor}`,
+    transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+      duration: theme.transitions.duration.short,
+    }),
 
     '&:hover': {
       background: color.shade,
       color: color.contrastText,
       boxShadow: theme.shadows.z1,
       borderColor: hoverBorderColor,
-    },
-
-    '&:focus': {
-      background: color.shade,
-      color: color.contrastText,
-    },
-
-    '&:active': {
-      ...getActiveButtonStyles(color, fill),
     },
   };
 }
@@ -398,7 +342,6 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     boxShadow: 'none',
     color: theme.colors.text.disabled,
     transition: 'none',
-    background: theme.colors.action.disabledBackground,
   };
 
   if (fill === 'text') {
@@ -436,9 +379,6 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
     case 'success':
       return getButtonVariantStyles(theme, theme.colors.success, fill);
 
-    case 'accent':
-      return getButtonVariantStyles(theme, theme.colors.accent, fill);
-
     case 'primary':
     default:
       return getButtonVariantStyles(theme, theme.colors.primary, fill);
@@ -451,5 +391,21 @@ export const clearButtonStyles = (theme: GrafanaTheme2) => {
     color: theme.colors.text.primary,
     border: 'none',
     padding: 0,
+  });
+};
+
+export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
+  return css({
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    fontFamily: 'inherit',
+    color: 'inherit',
+    height: '100%',
+    cursor: 'context-menu',
+    '&:hover': {
+      background: 'transparent',
+      color: 'inherit',
+    },
   });
 };

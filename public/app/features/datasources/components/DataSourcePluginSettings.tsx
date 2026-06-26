@@ -1,36 +1,87 @@
-import { createElement, memo } from 'react';
+import { cloneDeep } from 'lodash';
+import { createElement, PureComponent } from 'react';
 
-import { type DataSourceConfigValidationAPI, type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
-import { writableProxy } from 'app/features/plugins/extensions/utils';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 
-import { type GenericDataSourcePlugin } from '../types';
+import { GenericDataSourcePlugin } from '../types';
 
 export interface Props {
   plugin: GenericDataSourcePlugin;
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
   onModelChange: (dataSource: DataSourceSettings) => void;
-  validation?: DataSourceConfigValidationAPI;
 }
 
-export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChange, validation }: Props) => {
-  if (!plugin) {
-    return null;
+export class DataSourcePluginSettings extends PureComponent<Props> {
+  element: HTMLDivElement | null = null;
+  component?: AngularComponent;
+  scopeProps: {
+    ctrl: { datasourceMeta: DataSourcePluginMeta; current: DataSourceSettings };
+    onModelChanged: (dataSource: DataSourceSettings) => void;
+  };
+
+  constructor(props: Props) {
+    super(props);
+
+    this.scopeProps = {
+      ctrl: { datasourceMeta: props.dataSourceMeta, current: cloneDeep(props.dataSource) },
+      onModelChanged: this.onModelChanged,
+    };
+    this.onModelChanged = this.onModelChanged.bind(this);
   }
 
-  return (
-    <div>
-      {plugin.components.ConfigEditor &&
-        createElement(plugin.components.ConfigEditor, {
-          options: writableProxy(dataSource, {
-            source: 'datasource',
-            pluginId: plugin.meta?.id,
-            pluginVersion: plugin.meta?.info?.version,
-          }),
-          onOptionsChange: onModelChange,
-          validation,
-        })}
-    </div>
-  );
-});
-DataSourcePluginSettings.displayName = 'DataSourcePluginSettings';
+  componentDidMount() {
+    const { plugin } = this.props;
+
+    if (!this.element) {
+      return;
+    }
+
+    if (!plugin.components.ConfigEditor) {
+      // React editor is not specified, let's render angular editor
+      // How to approach this better? Introduce ReactDataSourcePlugin interface and typeguard it here?
+      const loader = getAngularLoader();
+      const template = '<plugin-component type="datasource-config-ctrl" />';
+
+      this.component = loader.load(this.element, this.scopeProps, template);
+    }
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    const { plugin } = this.props;
+    if (!plugin.components.ConfigEditor && this.props.dataSource !== prevProps.dataSource) {
+      this.scopeProps.ctrl.current = cloneDeep(this.props.dataSource);
+
+      this.component?.digest();
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.component) {
+      this.component.destroy();
+    }
+  }
+
+  onModelChanged = (dataSource: DataSourceSettings) => {
+    this.props.onModelChange(dataSource);
+  };
+
+  render() {
+    const { plugin, dataSource } = this.props;
+
+    if (!plugin) {
+      return null;
+    }
+
+    return (
+      <div ref={(element) => (this.element = element)}>
+        {plugin.components.ConfigEditor &&
+          createElement(plugin.components.ConfigEditor, {
+            options: dataSource,
+            onOptionsChange: this.onModelChanged,
+          })}
+      </div>
+    );
+  }
+}

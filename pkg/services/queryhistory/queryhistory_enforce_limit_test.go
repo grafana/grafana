@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationEnforceRowLimitInQueryHistory(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "Enforce limit for query_history",
 		func(t *testing.T, sc scenarioContext) {
 			limit := 0

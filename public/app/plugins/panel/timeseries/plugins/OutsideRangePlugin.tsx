@@ -1,43 +1,31 @@
-import { useLayoutEffect, useState, useCallback, memo } from 'react';
-import type uPlot from 'uplot';
+import { useLayoutEffect, useRef, useState } from 'react';
+import uPlot, { TypedArray, Scale } from 'uplot';
 
-import { type AbsoluteTimeRange } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { type UPlotConfigBuilder, Button } from '@grafana/ui';
+import { AbsoluteTimeRange } from '@grafana/data';
+import { UPlotConfigBuilder, Button } from '@grafana/ui';
 
 interface ThresholdControlsPluginProps {
   config: UPlotConfigBuilder;
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
-export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
-  const [data, setData] = useState<uPlot['data']>([]);
-  const [timeRange, setTimeRange] = useState<uPlot['scales']['x']>();
+export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
+  const plotInstance = useRef<uPlot>();
+  const [timevalues, setTimeValues] = useState<number[] | TypedArray>([]);
+  const [timeRange, setTimeRange] = useState<Scale | undefined>();
 
   useLayoutEffect(() => {
+    config.addHook('init', (u) => {
+      plotInstance.current = u;
+    });
+
     config.addHook('setScale', (u) => {
-      setData(u.data ?? []);
-      setTimeRange(u.scales['x']);
+      setTimeValues(u.data?.[0] ?? []);
+      setTimeRange(u.scales['x'] ?? undefined);
     });
   }, [config]);
 
-  /**
-   * returns true if all non-time series are null at the given index
-   */
-  const allValuesNullAtIndex = useCallback(
-    (idx: number): boolean => {
-      for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
-        if (data[seriesIdx][idx] != null) {
-          return false;
-        }
-      }
-      return true;
-    },
-    [data]
-  );
-
-  const timeValues = data[0];
-  if (!timeValues || timeValues.length < 1 || !onChangeTimeRange) {
+  if (timevalues.length < 2 || !onChangeTimeRange) {
     return null;
   }
 
@@ -47,35 +35,28 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
 
   // Time values are always sorted for uPlot to work
   let i = 0,
-    j = timeValues.length - 1;
+    j = timevalues.length - 1;
 
-  while (i <= j && allValuesNullAtIndex(i)) {
+  while (i <= j && timevalues[i] == null) {
     i++;
   }
 
-  while (j >= 0 && allValuesNullAtIndex(j)) {
+  while (j >= 0 && timevalues[j] == null) {
     j--;
   }
 
-  // never found any non null values
-  if (allValuesNullAtIndex(i) || allValuesNullAtIndex(j)) {
+  const first = timevalues[i];
+  const last = timevalues[j];
+  const fromX = timeRange.min;
+  const toX = timeRange.max;
+
+  if (first == null || last == null) {
     return null;
   }
-
-  let first = timeValues[i];
-  let last = timeValues[j];
 
   // (StartA <= EndB) and (EndA >= StartB)
-  if (first <= timeRange.max && last >= timeRange.min) {
+  if (first <= toX && last >= fromX) {
     return null;
-  }
-
-  // if only one point is outside the range, we will use a timerange which
-  // is of the same width as the current timerange around the point.
-  if (first === last) {
-    const delta = timeRange.max - timeRange.min;
-    first -= delta / 2;
-    last += delta / 2;
   }
 
   return (
@@ -89,19 +70,17 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
       }}
     >
       <div>
-        <div>
-          <Trans i18nKey="timeseries.outside-range-plugin.data-outside-time-range">Data outside time range</Trans>
-        </div>
+        <div>Data outside time range</div>
         <Button
           onClick={(v) => onChangeTimeRange({ from: first, to: last })}
           variant="secondary"
           data-testid="time-series-zoom-to-data"
         >
-          <Trans i18nKey="timeseries.outside-range-plugin.zoom-to-data">Zoom to data</Trans>
+          Zoom to data
         </Button>
       </div>
     </div>
   );
-});
+};
 
 OutsideRangePlugin.displayName = 'OutsideRangePlugin';

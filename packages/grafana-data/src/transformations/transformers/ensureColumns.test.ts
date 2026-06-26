@@ -42,10 +42,7 @@ describe('ensureColumns transformer', () => {
       options: {},
     };
 
-    const data = [
-      { refId: 'A', ...seriesA },
-      { refId: 'B', ...seriesBC },
-    ];
+    const data = [seriesA, seriesBC];
 
     await expect(transformDataFrame([cfg], data)).toEmitValuesWith((received) => {
       const filtered = received[0];
@@ -112,7 +109,6 @@ describe('ensureColumns transformer', () => {
             },
           ],
           "length": 2,
-          "refId": "joinByField-A-B",
         }
       `);
     });

@@ -1,4 +1,4 @@
-import { type LanguageDefinition } from './register';
+import { LanguageDefinition } from './register';
 
 export const GO_TEMPLATE_LANGUAGE_ID = 'go-template';
 

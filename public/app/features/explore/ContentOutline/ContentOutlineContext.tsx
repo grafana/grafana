@@ -1,8 +1,8 @@
 import { uniqueId } from 'lodash';
-import { useState, useContext, createContext, type ReactNode, useCallback, useRef, useEffect } from 'react';
-import { type SetOptional } from 'type-fest';
+import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
+import { SetOptional } from 'type-fest';
 
-import { type ContentOutlineItemBaseProps, type ITEM_TYPES } from './ContentOutlineItem';
+import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 
 export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
   id: string;
@@ -13,7 +13,7 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
 
 type RegisterFunction = (outlineItem: SetOptional<ContentOutlineItemContextProps, 'id'>) => string;
 
-interface ContentOutlineContextProps {
+export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
   register: RegisterFunction;
   unregister: (id: string) => void;
@@ -38,7 +38,7 @@ interface ParentlessItems {
   [panelId: string]: ContentOutlineItemContextProps[];
 }
 
-const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
+export const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
 export function ContentOutlineContextProvider({ children, refreshDependencies }: ContentOutlineContextProviderProps) {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);

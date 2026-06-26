@@ -4,31 +4,31 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceApi,
-  type DataSourceJsonData,
-  type DataSourcePluginMeta,
-  type DataSourceWithSupplementaryQueriesSupport,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourcePluginMeta,
+  DataSourceWithSupplementaryQueriesSupport,
   LoadingState,
   MutableDataFrame,
-  type RawTimeRange,
+  RawTimeRange,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { type DataQuery, type DataSourceRef } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
-import { type ExploreItemState } from 'app/types/explore';
-import { createAsyncThunk, type StoreState, type ThunkDispatch } from 'app/types/store';
+import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import * as richHistory from '../../../core/utils/richHistory';
 import { configureStore } from '../../../store/configureStore';
-import { setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
-import { makeLogs } from '../mocks/makeLogs';
+import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { makeLogs } from '../__mocks__/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
 import { saveCorrelationsAction } from './explorePane';
+import { createDefaultInitialState } from './helpers';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -46,11 +46,10 @@ import {
   cleanSupplementaryQueryDataProviderAction,
   clearLogs,
   queryStreamUpdatedAction,
-  type QueryEndedPayload,
+  QueryEndedPayload,
   changeQueries,
 } from './query';
 import * as actions from './query';
-import { createDefaultInitialState } from './testHelpers';
 import { makeExplorePaneState } from './utils';
 
 jest.mock('app/features/logs/logsModel');
@@ -164,7 +163,6 @@ describe('runQueries', () => {
   beforeEach(() => {
     config.queryHistoryEnabled = false;
     jest.clearAllMocks();
-    jest.useRealTimers();
   });
 
   it('should pass dataFrames to state even if there is error in response', async () => {
@@ -197,24 +195,21 @@ describe('runQueries', () => {
   });
 
   it('should set state to done if query completes without emitting', async () => {
-    jest.useFakeTimers();
     const { dispatch, getState } = setupTests();
     const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
     jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
     await dispatch(runQueries({ exploreId: 'left' }));
-    await jest.advanceTimersByTimeAsync(500);
+    await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore.panes.left!.queryResponse.state).toBe(LoadingState.Done);
   });
 
   it('shows results only after correlations are loaded', async () => {
-    jest.useFakeTimers();
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
     await dispatch(runQueries({ exploreId: 'left' }));
     expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
     await dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
-    await jest.advanceTimersByTimeAsync(500);
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
   });
 
@@ -237,7 +232,7 @@ describe('runQueries', () => {
   });
 
   /* the next two tests are for ensuring the query datasource's filterQuery function stops queries
-    from being saved to rich history. We do that by setting a fake datasource in this test (datasources[0])
+    from being saved to rich history. We do that by setting a fake datasource in this test (datasources[0]) 
     to filter queries off their key value
 
     datasources[1] does not have filterQuery defined
@@ -328,7 +323,7 @@ describe('running queries', () => {
       cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
     ]);
   });
-  it('should cancel running queries when a new query is issued', async () => {
+  it('should cancel running query when a new query is issued', async () => {
     const initialState = {
       ...makeExplorePaneState(),
     };
@@ -337,23 +332,6 @@ describe('running queries', () => {
       .whenThunkIsDispatched({ exploreId });
 
     expect(dispatchedActions).toContainEqual(cancelQueriesAction({ exploreId }));
-  });
-  it('should not cancel running queries when scanning', async () => {
-    const initialState = {
-      ...makeExplorePaneState(),
-      explore: {
-        panes: {
-          [exploreId]: {
-            scanning: true,
-          },
-        },
-      },
-    };
-    const dispatchedActions = await thunkTester(initialState)
-      .givenThunk(runQueries)
-      .whenThunkIsDispatched({ exploreId });
-
-    expect(dispatchedActions).not.toContainEqual(cancelQueriesAction({ exploreId }));
   });
 });
 
@@ -424,36 +402,6 @@ describe('changeQueries', () => {
         })
       );
 
-      expect(actions.changeQueriesAction).toHaveBeenCalled();
-      expect(actions.importQueries).not.toHaveBeenCalled();
-    });
-
-    it('should not import queries when skipAutoImport is true', async () => {
-      jest.spyOn(actions, 'importQueries');
-      jest.spyOn(actions, 'changeQueriesAction');
-
-      const { dispatch } = configureStore({
-        ...defaultInitialState,
-        explore: {
-          panes: {
-            left: {
-              ...defaultInitialState.explore.panes.left,
-              datasourceInstance: datasources[0],
-              queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
-            },
-          },
-        },
-      } as unknown as Partial<StoreState>);
-
-      await dispatch(
-        changeQueries({
-          queries: [{ refId: 'A', datasource: datasources[0].getRef(), queryType: 'someValue' }],
-          exploreId: 'left',
-          options: {
-            skipAutoImport: true,
-          },
-        })
-      );
       expect(actions.changeQueriesAction).toHaveBeenCalled();
       expect(actions.importQueries).not.toHaveBeenCalled();
     });

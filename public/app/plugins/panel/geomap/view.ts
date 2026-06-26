@@ -1,4 +1,4 @@
-import { Registry, type RegistryItem } from '@grafana/data';
+import { Registry, RegistryItem } from '@grafana/data';
 
 interface MapCenterItems extends RegistryItem {
   lat?: number;

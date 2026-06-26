@@ -1,23 +1,17 @@
-import { type DataFrame } from '@grafana/data';
-import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
+import { DataFrame } from '@grafana/data';
+import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 
-import { type DimensionSupplier } from './types';
+import { DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
 // Resource dimension
 //---------------------------------------------------------
-export function getPublicOrAbsoluteUrl(path: unknown): string {
-  if (!path || typeof path !== 'string') {
+export function getPublicOrAbsoluteUrl(v: string): string {
+  if (!v) {
     return '';
   }
-
-  // NOTE: The value of `path` could be either an URL string or a relative
-  //       path to a Grafana CDN asset served from the CDN.
-  const isUrl = path.indexOf(':/') > 0;
-  const publicPath = window.__grafana_public_path__ || '/';
-
-  return isUrl ? path : `${publicPath}build/${path}`;
+  return v.indexOf(':/') > 0 ? v : window.__grafana_public_path__ + v;
 }
 
 export function getResourceDimension(
@@ -56,30 +50,18 @@ export function getResourceDimension(
   }
 
   // mode === ResourceDimensionMode.Field case
-  const getImageOrIcon = (value: unknown): string => {
-    if (typeof value !== 'string' && typeof value !== 'number') {
-      return '';
-    }
-
-    let url = typeof value === 'string' ? value : '';
+  const getIcon = (value: string): string => {
     if (field && field.display) {
-      const displayValue = field.display(value);
-      if (displayValue.icon) {
-        url = displayValue.icon;
-      }
+      const icon = field.display(value).icon;
+      return getPublicOrAbsoluteUrl(icon ?? '');
     }
 
-    const noIconFound = !url;
-    if (noIconFound) {
-      return '';
-    }
-
-    return getPublicOrAbsoluteUrl(url);
+    return '';
   };
 
   return {
     field,
-    get: (index: number): string => getImageOrIcon(field.values[index]),
-    value: () => getImageOrIcon(getLastNotNullFieldValue(field)),
+    get: (index: number): string => getIcon(field.values[index]),
+    value: () => getIcon(getLastNotNullFieldValue(field)),
   };
 }

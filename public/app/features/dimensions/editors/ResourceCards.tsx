@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
-import { memo, type CSSProperties } from 'react';
+import { memo, CSSProperties } from 'react';
 import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
-import { type ResourceItem } from './FolderPickerTab';
+import { ResourceItem } from './FolderPickerTab';
 
 interface CellProps {
   columnIndex: number;
@@ -49,7 +49,7 @@ const MemoizedCell = memo(function Cell(props: CellProps) {
           ) : (
             <img src={card.imgUrl} alt="" className={styles.img} />
           )}
-          <span className={styles.text}>{card.label.slice(0, -4)}</span>
+          <h6 className={styles.text}>{card.label.slice(0, -4)}</h6>
         </div>
       )}
     </div>
@@ -125,7 +125,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fill: theme.colors.text.primary,
   }),
   text: css({
-    ...theme.typography.h6,
     color: theme.colors.text.primary,
     whiteSpace: 'nowrap',
     fontSize: '12px',

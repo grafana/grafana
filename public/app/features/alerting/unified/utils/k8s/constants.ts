@@ -4,6 +4,9 @@
  * */
 export const PROVENANCE_ANNOTATION = 'grafana.com/provenance';
 
+/** Value of {@link PROVENANCE_ANNOTATION} given for entities that were not provisioned */
+export const PROVENANCE_NONE = 'none';
+
 export enum K8sAnnotations {
   Provenance = 'grafana.com/provenance',
 
@@ -18,19 +21,4 @@ export enum K8sAnnotations {
   AccessAdmin = 'grafana.com/access/canAdmin',
   /** Annotation key that indicates that the calling user is able to delete this entity */
   AccessDelete = 'grafana.com/access/canDelete',
-  /** Annotation key that indicates that the calling user is able to modify protected fields of this entity */
-  AccessModifyProtected = 'grafana.com/access/canModifyProtected',
-  /** Annotation key that indicates that the calling user is able to test this entity */
-  AccessTest = 'grafana.com/access/canTest',
-
-  /** Annotation key that indicates whether this entity can be used in routes and rules */
-  CanUse = 'grafana.com/canUse',
 }
-
-/**
- * Special name that the K8S API expects to see/user for the root route in notification policies
- */
-export const ROOT_ROUTE_NAME = 'user-defined';
-
-/** Resource type identifier for notification policy routes, used with the permissions API */
-export const ROUTES_RESOURCE_TYPE = 'routingtrees';

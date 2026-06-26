@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type LogGroup } from '../../../dataquery.gen';
+import { LogGroup } from '../../../types';
 
 import { SelectedLogGroups } from './SelectedLogGroups';
 

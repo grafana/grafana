@@ -1,10 +1,10 @@
-import { type ComponentType } from 'react';
-import { type Observable } from 'rxjs';
+import { ComponentType } from 'react';
+import { Observable } from 'rxjs';
 
-import { type AnnotationQuery as SchemaAnnotationQuery, type DataQuery } from '@grafana/schema';
+import { AnnotationQuery as SchemaAnnotationQuery, DataQuery } from '@grafana/schema';
 
-import { type DataFrame } from './dataFrame';
-import { type QueryEditorProps } from './datasource';
+import { DataFrame } from './dataFrame';
+import { QueryEditorProps } from './datasource';
 
 /**
  * This JSON object is stored in the dashboard json model.
@@ -30,7 +30,6 @@ export interface AnnotationEvent {
   dashboardUID?: string | null;
   panelId?: number;
   userId?: number;
-  userUID?: string;
   login?: string;
   email?: string;
   avatarUrl?: string;
@@ -50,7 +49,6 @@ export interface AnnotationEvent {
 }
 
 export interface AnnotationEventUIModel {
-  // @todo this is actually a number, and sending a string will break the API response! https://github.com/grafana/grafana/issues/120097
   id?: string;
   from: number;
   to: number;

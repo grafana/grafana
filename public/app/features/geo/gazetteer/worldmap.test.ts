@@ -4,18 +4,22 @@ import countriesJSON from '../../../../gazetteer/countries.json';
 
 import { getGazetteer } from './gazetteer';
 
-const backendResults: Record<string, string> | Array<Record<string, unknown>> = countriesJSON;
+let backendResults: Record<string, string> | Array<Record<string, unknown>> = { hello: 'world' };
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    get: jest.fn().mockResolvedValue(backendResults),
+  }),
+}));
 
 describe('Placename lookup from worldmap format', () => {
   beforeEach(() => {
-    jest.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: jest.fn().mockResolvedValue(backendResults),
-    } as unknown as Response);
+    backendResults = { hello: 'world' };
   });
 
   it('unified worldmap config', async () => {
+    backendResults = countriesJSON;
     const gaz = await getGazetteer('countries');
     expect(gaz.error).toBeUndefined();
     expect(toLonLat(gaz.find('US')?.point()?.getCoordinates()!)).toMatchInlineSnapshot(`

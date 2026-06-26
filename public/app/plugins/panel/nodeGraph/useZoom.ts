@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ZoomMode } from './panelcfg.gen';
-
-const defaultOptions: Required<Options> = {
-  stepUp: (s) => s * 1.5,
+const defaultOptions: Options = {
   stepDown: (s) => s / 1.5,
+  stepUp: (s) => s * 1.5,
   min: 0.13,
   max: 2.25,
-  zoomMode: ZoomMode.Cooperative,
 };
 
 interface Options {
   /**
    * Allows you to specify how the step up will be handled so you can do fractional steps based on previous value.
    */
-  stepUp?: (scale: number) => number;
-  stepDown?: (scale: number) => number;
+  stepUp: (scale: number) => number;
+  stepDown: (scale: number) => number;
 
   /**
    * Set max and min values. If stepUp/down overshoots these bounds this will return min or max but internal scale value
@@ -23,11 +20,6 @@ interface Options {
    */
   min?: number;
   max?: number;
-
-  /**
-   * Sets how to handle zoom events when user is interacting with the page
-   */
-  zoomMode?: ZoomMode;
 }
 
 /**
@@ -35,11 +27,7 @@ interface Options {
  * 'transform: scale'. It returns handler for manual buttons with zoom in/zoom out function and a ref that can be
  * used to zoom in/out with mouse wheel.
  */
-export function useZoom(options: Options = defaultOptions) {
-  const { min, max, zoomMode } = { ...defaultOptions, ...options };
-  const stepUp = options.stepUp ?? defaultOptions.stepUp;
-  const stepDown = options.stepDown ?? defaultOptions.stepDown;
-
+export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
   const ref = useRef<HTMLElement | null>(null);
   const [scale, setScale] = useState(1);
 
@@ -61,7 +49,7 @@ export function useZoom(options: Options = defaultOptions) {
 
       // Only do this with special key pressed similar to how google maps work.
       // TODO: I would guess this won't work very well with touch right now
-      if (wheelEvent.ctrlKey || wheelEvent.metaKey || zoomMode === ZoomMode.Greedy) {
+      if (wheelEvent.ctrlKey || wheelEvent.metaKey) {
         wheelEvent.preventDefault();
 
         setScale(Math.min(Math.max(min ?? -Infinity, scale + Math.min(wheelEvent.deltaY, 2) * -0.01), max ?? Infinity));
@@ -75,7 +63,7 @@ export function useZoom(options: Options = defaultOptions) {
         }
       }
     },
-    [min, max, scale, zoomMode]
+    [min, max, scale]
   );
 
   useEffect(() => {

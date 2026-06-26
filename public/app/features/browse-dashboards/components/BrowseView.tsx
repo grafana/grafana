@@ -1,37 +1,23 @@
-import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { CallToActionCard, EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { type DashboardViewItem } from 'app/features/search/types';
-import { useDispatch, useSelector } from 'app/types/store';
+import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
+import { DashboardViewItem } from 'app/features/search/types';
+import { useDispatch } from 'app/types';
 
-import { PAGE_SIZE } from '../api/constants';
-import { canSelectItems } from '../permissions';
-import { fetchNextChildrenPage } from '../state/actions';
+import { PAGE_SIZE } from '../api/services';
 import {
-  rootItemsSelector,
-  useBrowseLoadingStatus,
-  useCheckboxSelectionState,
-  useChildrenByParentUIDState,
   useFlatTreeState,
+  useCheckboxSelectionState,
+  setFolderOpenState,
+  setItemSelectionState,
+  useChildrenByParentUIDState,
+  setAllSelection,
+  useBrowseLoadingStatus,
   useLoadNextChildrenPage,
-} from '../state/hooks';
-import { setAllSelection, setFolderOpenState, setItemSelectionState } from '../state/slice';
-import {
-  type BrowseDashboardsPermissions,
-  type BrowseDashboardsState,
-  type DashboardTreeSelection,
-  SelectionState,
-} from '../types';
+  fetchNextChildrenPage,
+} from '../state';
+import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -39,48 +25,15 @@ interface BrowseViewProps {
   height: number;
   width: number;
   folderUID: string | undefined;
-  permissions: BrowseDashboardsPermissions;
-  isReadOnlyRepo?: boolean;
-  isProvisionedFolder?: boolean;
+  canSelect: boolean;
 }
 
-export function BrowseView({
-  folderUID,
-  width,
-  height,
-  permissions,
-  isReadOnlyRepo,
-  isProvisionedFolder,
-}: BrowseViewProps) {
+export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
-  const canSelect = canSelectItems(permissions);
-  const provisioningEnabled = config.featureToggles.provisioning;
-  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
-  const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
-  const rootItems = useSelector(rootItemsSelector);
-
-  const [, stateManager] = useSearchStateManager();
-
-  const excludeUIDs = useMemo(() => {
-    if (isProvisionedInstance || !provisioningEnabled) {
-      return [];
-    }
-    if (provisioningEnabled) {
-      // if only one repo folder and no local folders, then don't exclude it from selection
-      if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
-        return [];
-      }
-      // loop through settingsData to find all available repo name, and exclude them from select all action
-      // repo root folder is not actionable on browse dashboards page
-      return settingsData?.items.map((repo) => repo.name);
-    }
-
-    return [];
-  }, [isProvisionedInstance, settingsData, provisioningEnabled, rootItems]);
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
@@ -98,13 +51,6 @@ export function BrowseView({
       dispatch(setItemSelectionState({ item, isSelected }));
     },
     [dispatch]
-  );
-
-  const handleTagClick = useCallback(
-    (tag: string) => {
-      stateManager.onAddTag(tag);
-    },
-    [stateManager]
   );
 
   const isSelected = useCallback(
@@ -151,42 +97,25 @@ export function BrowseView({
     [selectedItems, childrenByParentUID]
   );
 
-  const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
-  const showReadme = provisioningReadmesEnabled && isProvisionedFolder && folderUID;
-  const styles = useStyles2(getStyles);
-
-  const flatTreeWithReadme = useMemo(() => {
-    if (!showReadme || flatTree.length === 0) {
-      return flatTree;
-    }
-
-    return [
-      ...flatTree,
-      {
-        item: { kind: 'ui' as const, uiKind: 'readme' as const, uid: `folder-readme-${folderUID}` },
-        level: 0,
-        isOpen: false,
-      },
-    ];
-  }, [flatTree, showReadme, folderUID]);
-
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
-      const treeItem = flatTreeWithReadme[itemIndex];
+      const treeItem = flatTree[itemIndex];
       if (!treeItem) {
         return false;
       }
       const item = treeItem.item;
-      return !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
+      const result = !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
+
+      return result;
     },
-    [flatTreeWithReadme]
+    [flatTree]
   );
 
   const handleLoadMore = useLoadNextChildrenPage();
 
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (
-      <div className={styles.emptyState} style={{ width }}>
+      <div style={{ width }}>
         {canSelect ? (
           <EmptyState
             variant="call-to-action"
@@ -195,7 +124,6 @@ export function BrowseView({
                 href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
                 icon="plus"
                 size="lg"
-                disabled={isReadOnlyRepo}
               >
                 <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
               </LinkButton>
@@ -206,7 +134,7 @@ export function BrowseView({
                 : t('browse-dashboards.empty-state.title', "You haven't created any dashboards yet")
             }
           >
-            {folderUID && !isReadOnlyRepo && (
+            {folderUID && (
               <Trans i18nKey="browse-dashboards.empty-state.pro-tip">
                 Add/move dashboards to your folder at{' '}
                 <TextLink external={false} href="/dashboards">
@@ -216,33 +144,24 @@ export function BrowseView({
             )}
           </EmptyState>
         ) : (
-          <CallToActionCard
-            callToActionElement={
-              <span>
-                <Trans i18nKey="browse-dashboards.browse-view.this-folder-is-empty">This folder is empty</Trans>
-              </span>
-            }
-          />
+          <CallToActionCard callToActionElement={<span>This folder is empty</span>} />
         )}
-        {showReadme && <FolderReadmePanel folderUID={folderUID} />}
       </div>
     );
   }
 
   return (
     <DashboardsTree
-      permissions={permissions}
-      items={flatTreeWithReadme}
-      folderUID={folderUID}
+      canSelect={canSelect}
+      items={flatTree}
       width={width}
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID, excludeUIDs }))}
+      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID }))}
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
-      onTagClick={handleTagClick}
     />
   );
 }
@@ -266,11 +185,3 @@ function hasSelectedDescendants(
     return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
   });
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  emptyState: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(2),
-  }),
-});

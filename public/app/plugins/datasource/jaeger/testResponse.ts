@@ -1,6 +1,6 @@
-import { type FieldDTO } from '@grafana/data';
+import { FieldDTO } from '@grafana/data';
 
-import { type TraceResponse } from './types';
+import { TraceResponse } from './types';
 
 export const testResponse: TraceResponse = {
   traceID: '3fa414edcef6ad90',

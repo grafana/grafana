@@ -1,18 +1,18 @@
 import { mergeWith, isArray, isObject, unset, isEqual } from 'lodash';
 
-import { type FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
+import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { fieldColorModeRegistry } from '../field/fieldColor';
-import { type FieldColorConfigSettings } from '../field/overrides/processors';
+import { FieldColorConfigSettings } from '../field/overrides/processors';
 import { FieldColorModeId } from '../types/fieldColor';
 import {
-  type ConfigOverrideRule,
-  type DynamicConfigValue,
+  ConfigOverrideRule,
+  DynamicConfigValue,
   FieldConfigProperty,
-  type FieldConfigSource,
+  FieldConfigSource,
 } from '../types/fieldOverrides';
-import { type ThresholdsConfig, ThresholdsMode } from '../types/thresholds';
+import { ThresholdsConfig, ThresholdsMode } from '../types/thresholds';
 
-import { type PanelPlugin } from './PanelPlugin';
+import { PanelPlugin } from './PanelPlugin';
 
 interface Props {
   plugin: PanelPlugin;

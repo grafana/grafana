@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type TraceSpan } from '../../types/trace';
+import { TraceSpan } from '../../types';
 
 /**
  * Removes child spans whose refType is FOLLOWS_FROM and their descendants.

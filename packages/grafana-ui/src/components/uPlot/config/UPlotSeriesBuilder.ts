@@ -1,23 +1,23 @@
-import uPlot, { type Series } from 'uplot';
+import uPlot, { Series } from 'uplot';
 
 import {
   colorManipulator,
-  type DataFrameFieldIndex,
+  DataFrameFieldIndex,
   FALLBACK_COLOR,
-  type FieldColorMode,
+  FieldColorMode,
   FieldColorModeId,
-  type GrafanaTheme2,
-  type ThresholdsConfig,
+  GrafanaTheme2,
+  ThresholdsConfig,
 } from '@grafana/data';
 import {
   BarAlignment,
-  type BarConfig,
+  BarConfig,
   GraphDrawStyle,
-  type FillConfig,
+  FillConfig,
   GraphGradientMode,
-  type LineConfig,
+  LineConfig,
   LineInterpolation,
-  type PointsConfig,
+  PointsConfig,
   VisibilityMode,
 } from '@grafana/schema';
 
@@ -49,7 +49,6 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   dataFrameFieldIndex?: DataFrameFieldIndex;
   theme: GrafanaTheme2;
   value?: uPlot.Series.Value;
-  showValues?: boolean;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {

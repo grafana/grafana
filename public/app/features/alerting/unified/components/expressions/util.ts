@@ -1,7 +1,7 @@
 import { dropRight, last } from 'lodash';
 
-import { type DataFrame, type Labels, roundDecimals } from '@grafana/data';
-import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { DataFrame, Labels, roundDecimals } from '@grafana/data';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { isCloudRulesSource } from '../../utils/datasource';
 
@@ -15,29 +15,20 @@ import { isCloudRulesSource } from '../../utils/datasource';
  */
 
 const getSeriesName = (frame: DataFrame): string | undefined => {
-  const firstField = frame.fields.at(0);
+  const firstField = frame.fields[0];
 
   const displayNameFromDS = firstField?.config?.displayNameFromDS;
   return displayNameFromDS ?? frame.name ?? firstField?.labels?.__name__;
 };
 
 const getSeriesValue = (frame: DataFrame) => {
-  return frame.fields.at(0)?.values.at(0);
-};
+  const value = frame.fields[0]?.values[0];
 
-const smallNumberFormatter = new Intl.NumberFormat(undefined, {
-  maximumSignificantDigits: 5,
-});
-
-const formatSeriesValue = (value: unknown): string => {
-  if (Number.isFinite(value) && typeof value === 'number') {
-    const absValue = Math.abs(value);
-    if (absValue < 1) {
-      return smallNumberFormatter.format(value);
-    }
-    return roundDecimals(value, 5).toString(10);
+  if (Number.isFinite(value)) {
+    return roundDecimals(value, 5);
   }
-  return String(value);
+
+  return value;
 };
 
 const getSeriesLabels = (frame: DataFrame): Record<string, string> => {
@@ -112,6 +103,5 @@ export {
   getSeriesLabels,
   getSeriesName,
   getSeriesValue,
-  formatSeriesValue,
   isEmptySeries,
 };

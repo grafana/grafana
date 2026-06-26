@@ -1,19 +1,16 @@
-import { type ReplaySubject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 
-import { type AppPluginConfig, type PluginExtensionExposedComponentConfig } from '@grafana/data';
+import { PluginExtensionExposedComponentConfig } from '@grafana/data';
 
-import * as errors from '../errors';
-import { isGrafanaDevMode } from '../utils';
-import { isExposedComponentMetaInfoMissing } from '../validators';
+import { isExposedComponentMetaInfoMissing, isGrafanaDevMode } from '../utils';
+import { extensionPointEndsWithVersion } from '../validators';
 
-import { Registry, type RegistryType, type PluginExtensionConfigs } from './Registry';
-
-const logPrefix = 'Could not register exposed component. Reason:';
+import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
 
 export type ExposedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description?: string;
+  description: string;
   component: React.ComponentType<Props>;
 };
 
@@ -22,13 +19,12 @@ export class ExposedComponentsRegistry extends Registry<
   PluginExtensionExposedComponentConfig
 > {
   constructor(
-    apps: AppPluginConfig[],
     options: {
       registrySubject?: ReplaySubject<RegistryType<ExposedComponentRegistryItem>>;
       initialState?: RegistryType<ExposedComponentRegistryItem>;
     } = {}
   ) {
-    super(apps, options);
+    super(options);
   }
 
   mapToRegistry(
@@ -43,35 +39,50 @@ export class ExposedComponentsRegistry extends Registry<
       const { id, description, title } = config;
       const pointIdLog = this.logger.child({
         extensionPointId: id,
-        description: description ?? '',
+        description,
         title,
         pluginId,
       });
 
       if (!id.startsWith(pluginId)) {
-        pointIdLog.error(`${logPrefix} ${errors.INVALID_EXPOSED_COMPONENT_ID}`);
+        pointIdLog.error(
+          `Could not register exposed component with '${id}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
+        );
         continue;
       }
 
+      if (!extensionPointEndsWithVersion(id)) {
+        pointIdLog.error(
+          `Exposed component does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+        );
+      }
+
       if (registry[id]) {
-        pointIdLog.error(`${logPrefix} ${errors.EXPOSED_COMPONENT_ALREADY_EXISTS}`);
+        pointIdLog.error(
+          `Could not register exposed component with '${id}'. Reason: An exposed component with the same id already exists.`
+        );
         continue;
       }
 
       if (!title) {
-        pointIdLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
+        pointIdLog.error(`Could not register exposed component with id '${id}'. Reason: Title is missing.`);
+        continue;
+      }
+
+      if (!description) {
+        pointIdLog.error(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
         continue;
       }
 
       if (
         pluginId !== 'grafana' &&
         isGrafanaDevMode() &&
-        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog, this.apps)
+        isExposedComponentMetaInfoMissing(pluginId, config, pointIdLog)
       ) {
         continue;
       }
 
-      pointIdLog.debug('Exposed component extension successfully registered');
+      pointIdLog.debug(`Exposed component from '${pluginId}' to '${id}'`);
 
       registry[id] = { ...config, pluginId };
     }
@@ -81,7 +92,7 @@ export class ExposedComponentsRegistry extends Registry<
 
   // Returns a read-only version of the registry.
   readOnly() {
-    return new ExposedComponentsRegistry(this.apps, {
+    return new ExposedComponentsRegistry({
       registrySubject: this.registrySubject,
     });
   }

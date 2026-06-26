@@ -1,122 +1,99 @@
-import { defaultsDeep } from 'lodash';
-
-import {
-  FieldType,
-  type VisualizationSuggestion,
-  type VisualizationSuggestionsSupplier,
-  VizOrientation,
-} from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
 import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
+import { SuggestionName } from 'app/types/suggestions';
 
-import { type FieldConfig, type Options } from './panelcfg.gen';
+import { FieldConfig, Options } from './panelcfg.gen';
 
-const MAX_PREVIEW_SERIES = 8;
-
-export const BARCHART_CARD_OPTIONS: VisualizationSuggestion<Options, FieldConfig>['cardOptions'] = {
-  maxSeries: MAX_PREVIEW_SERIES,
-  previewModifier: (s) => {
-    s.options!.barWidth = 0.8;
-    s.fieldConfig!.defaults!.custom!.hideFrom = { tooltip: false, legend: true, viz: false };
-  },
-};
-
-const withDefaults = (suggestion: VisualizationSuggestion<Options, FieldConfig>) =>
-  defaultsDeep(suggestion, {
-    options: {
-      showValue: VisibilityMode.Never,
-      legend: {
-        calcs: [],
-        displayMode: LegendDisplayMode.List,
-        showLegend: true,
-        placement: 'right',
+export class BarChartSuggestionsSupplier {
+  getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
+    return builder.getListAppender<Options, FieldConfig>({
+      name: SuggestionName.BarChart,
+      pluginId: 'barchart',
+      options: {
+        showValue: VisibilityMode.Never,
+        legend: {
+          calcs: [],
+          displayMode: LegendDisplayMode.List,
+          showLegend: true,
+          placement: 'right',
+        },
       },
-    },
-    fieldConfig: {
-      defaults: {
-        unit: 'short',
-        custom: {},
+      fieldConfig: {
+        defaults: {
+          unit: 'short',
+          custom: {},
+        },
+        overrides: [],
       },
-      overrides: [],
-    },
-    cardOptions: BARCHART_CARD_OPTIONS,
-  } satisfies VisualizationSuggestion<Options, FieldConfig>);
-
-export const barchartSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, FieldConfig> = (dataSummary) => {
-  if (dataSummary.frameCount !== 1) {
-    return;
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.barWidth = 0.8;
+        },
+      },
+    });
   }
 
-  if (!dataSummary.hasFieldType(FieldType.number) || !dataSummary.hasFieldType(FieldType.string)) {
-    return;
-  }
+  getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
+    const list = this.getListWithDefaults(builder);
+    const { dataSummary } = builder;
 
-  // if you have this many rows barchart might not be a good fit
-  if (dataSummary.rowCountTotal > 50) {
-    return;
-  }
+    if (dataSummary.frameCount !== 1) {
+      return;
+    }
 
-  const result: Array<VisualizationSuggestion<Options, FieldConfig>> = [
-    {
-      name: t('barchart.suggestions.vertical', 'Bar chart'),
-    },
-  ];
+    if (!dataSummary.hasNumberField || !dataSummary.hasStringField) {
+      return;
+    }
 
-  if (dataSummary.fieldCountByType(FieldType.number) > 1) {
-    result.push(
-      {
-        name: t('barchart.suggestions.vert-stacked', 'Bar chart - stacked'),
+    // if you have this many rows barchart might not be a good fit
+    if (dataSummary.rowCountTotal > 50) {
+      return;
+    }
+
+    // Vertical bars
+    list.append({
+      name: SuggestionName.BarChart,
+    });
+
+    if (dataSummary.numberFieldCount > 1) {
+      list.append({
+        name: SuggestionName.BarChartStacked,
         options: {
           stacking: StackingMode.Normal,
         },
-      },
-      {
-        name: t('barchart.suggestions.vert-stacked-percent', 'Bar chart - stacked by percentage'),
+      });
+      list.append({
+        name: SuggestionName.BarChartStackedPercent,
         options: {
           stacking: StackingMode.Percent,
         },
-        fieldConfig: {
-          overrides: [],
-          defaults: {
-            unit: 'percentunit',
-          },
-        },
-      }
-    );
-  }
+      });
+    }
 
-  // horizontal bars
-  result.push({
-    name: t('barchart.suggestions.horizontal', 'Horizontal bar chart'),
-    options: {
-      orientation: VizOrientation.Horizontal,
-    },
-  });
-
-  if (dataSummary.fieldCountByType(FieldType.number) > 1) {
-    result.push(
-      {
-        name: t('barchart.suggestions.hz-stacked', 'Horizontal bar chart - stacked'),
-        options: {
-          orientation: VizOrientation.Horizontal,
-          stacking: StackingMode.Normal,
-        },
+    // horizontal bars
+    list.append({
+      name: SuggestionName.BarChartHorizontal,
+      options: {
+        orientation: VizOrientation.Horizontal,
       },
-      {
-        name: t('barchart.suggestions.hz-stacked-percent', 'Horizontal bar chart - stacked by percentage'),
+    });
+
+    if (dataSummary.numberFieldCount > 1) {
+      list.append({
+        name: SuggestionName.BarChartHorizontalStacked,
+        options: {
+          stacking: StackingMode.Normal,
+          orientation: VizOrientation.Horizontal,
+        },
+      });
+
+      list.append({
+        name: SuggestionName.BarChartHorizontalStackedPercent,
         options: {
           orientation: VizOrientation.Horizontal,
           stacking: StackingMode.Percent,
         },
-        fieldConfig: {
-          overrides: [],
-          defaults: {
-            unit: 'percentunit',
-          },
-        },
-      }
-    );
+      });
+    }
   }
-
-  return result.map(withDefaults);
-};
+}

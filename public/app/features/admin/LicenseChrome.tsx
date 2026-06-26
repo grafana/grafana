@@ -1,41 +1,30 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import grafanaIconSvg from 'img/grafana_icon.svg';
-import headerDarkSvg from 'img/licensing/header_dark.svg';
-import headerLightSvg from 'img/licensing/header_light.svg';
 
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const backgroundUrl = theme.isDark ? headerDarkSvg : headerLightSvg;
+  const backgroundUrl = theme.isDark ? 'public/img/licensing/header_dark.svg' : 'public/img/licensing/header_light.svg';
   const footerBg = theme.isDark ? theme.v1.palette.dark9 : theme.v1.palette.gray6;
 
   return {
     container: css({
-      padding: theme.spacing(4),
+      padding: '36px 79px',
       background: theme.components.panel.background,
-      '&:last-child': {
-        borderBottomLeftRadius: theme.shape.radius.lg,
-        borderBottomRightRadius: theme.shape.radius.lg,
-      },
     }),
     footer: css({
       textAlign: 'center',
       padding: theme.spacing(2),
       background: footerBg,
-      borderBottomLeftRadius: theme.shape.radius.lg,
-      borderBottomRightRadius: theme.shape.radius.lg,
     }),
     header: css({
       height: '137px',
-      padding: theme.spacing(4, 0, 0, 4),
+      padding: '40px 0 0 79px',
       position: 'relative',
       background: `url('${backgroundUrl}') right`,
-      borderTopLeftRadius: theme.shape.radius.lg,
-      borderTopRightRadius: theme.shape.radius.lg,
     }),
   };
 };
@@ -63,11 +52,11 @@ export function LicenseChrome({ header, editionNotice, subheader, children }: Pr
             background: '#0A1C36',
             position: 'absolute',
             top: '19px',
-            right: '5%',
+            left: '71%',
           }}
         >
           <img
-            src={grafanaIconSvg}
+            src="public/img/grafana_icon.svg"
             alt="Grafana"
             width="80px"
             style={{ position: 'absolute', left: '23px', top: '20px' }}
@@ -87,7 +76,7 @@ interface CircleProps {
   style?: React.CSSProperties;
 }
 
-const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
+export const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
   const theme = useTheme2();
   return (
     <div

@@ -1,25 +1,19 @@
 import * as React from 'react';
 
-import { Box } from '@grafana/ui';
-
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import { type OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 
 export interface OptionsPaneCategoryDescriptorProps {
   id: string;
   title: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
-  forceOpen?: boolean;
+  forceOpen?: number;
   className?: string;
   isNested?: boolean;
   itemsCount?: number;
   customRender?: () => React.ReactNode;
   sandboxId?: string;
-  /**
-   * When set will disable category and show tooltip with disabledText on
-   */
-  disabledText?: string | React.ReactElement;
 }
 
 /**
@@ -58,23 +52,15 @@ export class OptionsPaneCategoryDescriptor {
     return sub;
   }
 
-  renderElement(searchQuery?: string) {
+  render(searchQuery?: string) {
     if (this.props.customRender) {
       return this.props.customRender();
     }
 
-    if (this.props.title === '') {
-      return (
-        <Box padding={2} paddingBottom={1} key={this.props.title}>
-          {this.items.map((item) => item.renderElement(searchQuery))}
-        </Box>
-      );
-    }
-
     return (
       <OptionsPaneCategory key={this.props.title} {...this.props}>
-        {this.items.map((item) => item.renderElement(searchQuery))}
-        {this.categories.map((category) => category.renderElement(searchQuery))}
+        {this.items.map((item) => item.render(searchQuery))}
+        {this.categories.map((category) => category.render(searchQuery))}
       </OptionsPaneCategory>
     );
   }

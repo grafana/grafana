@@ -1,102 +1,59 @@
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-import { type Dashboard } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { appEvents } from 'app/core/app_events';
+import { locationService, reportInteraction } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
+import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import {
-  type SaveDashboardAsOptions,
-  type SaveDashboardOptions,
-} from 'app/features/dashboard/components/SaveDashboard/types';
+import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
-import { type DashboardScene } from '../scene/DashboardScene';
-import { DashboardInteractions } from '../utils/interactions';
-import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
+import { DashboardScene } from '../scene/DashboardScene';
 
 export function useSaveDashboard(isCopy = false) {
+  const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
 
   const [state, onSaveDashboard] = useAsyncFn(
-    async (
-      scene: DashboardScene,
-      options: SaveDashboardOptions &
-        SaveDashboardAsOptions & {
-          // When provided, will take precedence over the scene's save model
-          rawDashboardJSON?: Dashboard | DashboardV2Spec;
-        }
-    ) => {
+    async (scene: DashboardScene, saveModel: Dashboard, options: SaveDashboardOptions) => {
       {
-        let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
-
-        if (options.saveAsCopy) {
-          saveModel = scene.getSaveAsModel({
-            isNew: options.isNew,
-            title: options.title,
-            description: options.description,
-            copyTags: options.copyTags,
-          });
-        }
-
         const result = await saveDashboardRtkQuery({
           dashboard: saveModel,
           folderUid: options.folderUid,
           message: options.message,
           overwrite: options.overwrite,
           showErrorAlert: false,
-          k8s: options.k8s,
+          k8s: undefined, // TODO?  pass the original metadata
         });
 
         if ('error' in result) {
           throw result.error;
         }
 
-        // result.data is readonly so spreading to allow for slug edits
-        const resultData: typeof result.data = { ...result.data };
-
-        // TODO: use slug from response once implemented
-        // reuse existing slug to avoid "Unsaved changes" modal after save
-        //   due to slugify logic difference between frontend and backend
-        if (!result.data.slug && scene.state.meta.slug) {
-          const slug = scene.state.meta.slug;
-          resultData.slug = slug;
-          resultData.url = `${result.data.url}/${slug}`;
-        }
-
-        // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0).
-        const diffCount = scene.getDashboardChanges().diffCount;
-
+        const resultData = result.data;
         scene.saveCompleted(saveModel, resultData, options.folderUid);
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
-<<<<<<< HEAD
         notifyApp.success('Дашборд сохранен');
-=======
-        notifyApp.success(t('dashboard-scene.use-save-dashboard.message-dashboard-saved', 'Dashboard saved'));
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 
+        //Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(resultData.uid);
 
         if (isCopy) {
-          DashboardInteractions.dashboardCopied({
-            name: saveModel.title || '',
+          reportInteraction('grafana_dashboard_copied', {
+            name: saveModel.title,
             url: resultData.url,
-            diff_count: diffCount,
           });
         } else {
-          trackDashboardSceneCreatedOrSaved(!!options.isNew, scene, {
-            name: saveModel.title || '',
-            url: resultData.url || '',
-            diff_count: diffCount,
-            transformation_counts: scene.getTransformationCounts(saveModel),
-            expression_counts: scene.getExpressionCounts(saveModel),
+          reportInteraction(`grafana_dashboard_${resultData.uid ? 'saved' : 'created'}`, {
+            name: saveModel.title,
+            url: resultData.url,
           });
         }
 
@@ -109,10 +66,20 @@ export function useSaveDashboard(isCopy = false) {
           });
         }
 
+        if (scene.state.meta.isStarred) {
+          dispatch(
+            updateDashboardName({
+              id: resultData.uid,
+              title: scene.state.title,
+              url: newUrl,
+            })
+          );
+        }
+
         return result.data;
       }
     },
-    [notifyApp]
+    [dispatch, notifyApp]
   );
 
   return { state, onSaveDashboard };

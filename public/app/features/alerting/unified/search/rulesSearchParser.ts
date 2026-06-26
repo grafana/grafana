@@ -1,22 +1,16 @@
-import { type MergeExclusive } from 'type-fest';
-
-import {
-  PromAlertingRuleState,
-  type PromRuleType,
-  isPromAlertingRuleState,
-} from '../../../../types/unified-alerting-dto';
-import { getRuleHealth, getRuleSource, isPromRuleType } from '../utils/rules';
+import { isPromAlertingRuleState, PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
+import { getRuleHealth, isPromRuleType } from '../utils/rules';
 
 import * as terms from './search.terms';
 import {
-  type FilterExpr,
-  FilterSupportedTerm,
-  type QueryFilterMapper,
   applyFiltersToQuery,
+  FilterExpr,
+  FilterSupportedTerm,
   parseQueryToFilter,
+  QueryFilterMapper,
 } from './searchParser';
 
-interface RulesFilterBase {
+export interface RulesFilter {
   freeFormWords: string[];
   namespace?: string;
   groupName?: string;
@@ -28,12 +22,8 @@ interface RulesFilterBase {
   ruleHealth?: RuleHealth;
   dashboardUid?: string;
   plugins?: 'hide';
-  ruleSource?: RuleSource;
+  contactPoint?: string | null;
 }
-
-/** contactPoint and policy are mutually exclusive routing filters — only one may be set at a time. */
-export type RulesFilter = RulesFilterBase &
-  MergeExclusive<{ contactPoint?: string | null }, { policy?: string | null }>;
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
   FilterSupportedTerm.dataSource,
@@ -47,8 +37,6 @@ const filterSupportedTerms: FilterSupportedTerm[] = [
   FilterSupportedTerm.dashboard,
   FilterSupportedTerm.plugins,
   FilterSupportedTerm.contactPoint,
-  FilterSupportedTerm.source,
-  FilterSupportedTerm.policy,
 ];
 
 export enum RuleHealth {
@@ -58,59 +46,28 @@ export enum RuleHealth {
   Unknown = 'unknown',
 }
 
-export enum RuleSource {
-  Grafana = 'grafana',
-  DataSource = 'datasource',
-}
-
-/**
- * Constructs the mutually exclusive routing portion of a RulesFilter.
- * Each branch returns only one of the two fields, which TypeScript can
- * verify statically — no type assertion needed.
- * policy takes precedence when both are provided.
- */
-export function buildRoutingFilter(
-  contactPoint: string | undefined,
-  policy: string | undefined
-): MergeExclusive<{ contactPoint?: string }, { policy?: string }> {
-  if (policy) {
-    return { policy };
-  }
-  return { contactPoint };
-}
-
 // Define how to map parsed tokens into the filter object
 export function getSearchFilterFromQuery(query: string): RulesFilter {
-  const baseFilter: RulesFilterBase = {
-    labels: [],
-    freeFormWords: [],
-    dataSourceNames: [],
-  };
-
-  let parsedContactPoint: string | undefined;
-  let parsedPolicy: string | undefined;
+  const filter: RulesFilter = { labels: [], freeFormWords: [], dataSourceNames: [] };
 
   const tokenToFilterMap: QueryFilterMapper = {
-    [terms.DataSourceToken]: (value) => baseFilter.dataSourceNames.push(value),
-    [terms.NameSpaceToken]: (value) => (baseFilter.namespace = value),
-    [terms.GroupToken]: (value) => (baseFilter.groupName = value),
-    [terms.RuleToken]: (value) => (baseFilter.ruleName = value),
-    [terms.LabelToken]: (value) => baseFilter.labels.push(value),
-    [terms.StateToken]: (value) => (baseFilter.ruleState = parseStateToken(value)),
-    [terms.TypeToken]: (value) => (isPromRuleType(value) ? (baseFilter.ruleType = value) : undefined),
-    [terms.HealthToken]: (value) => (baseFilter.ruleHealth = getRuleHealth(value)),
-    [terms.DashboardToken]: (value) => (baseFilter.dashboardUid = value),
-    [terms.PluginsToken]: (value) => (baseFilter.plugins = value === 'hide' ? value : undefined),
-    [terms.ContactPointToken]: (value) => (parsedContactPoint = value),
-    [terms.RuleSourceToken]: (value) => (baseFilter.ruleSource = getRuleSource(value)),
-    [terms.PolicyToken]: (value) => (parsedPolicy = value),
-    [terms.FreeFormExpression]: (value) => baseFilter.freeFormWords.push(value),
+    [terms.DataSourceToken]: (value) => filter.dataSourceNames.push(value),
+    [terms.NameSpaceToken]: (value) => (filter.namespace = value),
+    [terms.GroupToken]: (value) => (filter.groupName = value),
+    [terms.RuleToken]: (value) => (filter.ruleName = value),
+    [terms.LabelToken]: (value) => filter.labels.push(value),
+    [terms.StateToken]: (value) => (filter.ruleState = parseStateToken(value)),
+    [terms.TypeToken]: (value) => (isPromRuleType(value) ? (filter.ruleType = value) : undefined),
+    [terms.HealthToken]: (value) => (filter.ruleHealth = getRuleHealth(value)),
+    [terms.DashboardToken]: (value) => (filter.dashboardUid = value),
+    [terms.PluginsToken]: (value) => (filter.plugins = value === 'hide' ? value : undefined),
+    [terms.ContactPointToken]: (value) => (filter.contactPoint = value),
+    [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
   };
 
   parseQueryToFilter(query, filterSupportedTerms, tokenToFilterMap);
 
-  // policy wins if both tokens appear in the query (e.g. manually typed URL)
-  return { ...baseFilter, ...buildRoutingFilter(parsedContactPoint, parsedPolicy) };
+  return filter;
 }
 
 // Reverse of the previous function
@@ -150,17 +107,11 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   if (filter.plugins) {
     filterStateArray.push({ type: terms.PluginsToken, value: filter.plugins });
   }
-  if (filter.ruleSource) {
-    filterStateArray.push({ type: terms.RuleSourceToken, value: filter.ruleSource });
-  }
   if (filter.freeFormWords) {
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
   }
-  if (filter.contactPoint && !filter.policy) {
+  if (filter.contactPoint) {
     filterStateArray.push({ type: terms.ContactPointToken, value: filter.contactPoint });
-  }
-  if (filter.policy) {
-    filterStateArray.push({ type: terms.PolicyToken, value: filter.policy });
   }
 
   return applyFiltersToQuery(query, filterSupportedTerms, filterStateArray);

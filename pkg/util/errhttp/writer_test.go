@@ -14,17 +14,15 @@ import (
 
 func TestWrite(t *testing.T) {
 	// Error without k8s context
-	recorder, returnedStatusCode := doError(t, context.Background())
+	recorder := doError(t, context.Background())
 	assert.Equal(t, http.StatusGatewayTimeout, recorder.Code)
-	assert.Equal(t, http.StatusGatewayTimeout, returnedStatusCode)
 	assert.JSONEq(t, `{"message": "Timeout", "messageId": "test.thisIsExpected", "statusCode": 504}`, recorder.Body.String())
 
 	// Another request, but within the k8s framework
-	recorder, returnedStatusCode = doError(t, request.WithRequestInfo(context.Background(), &request.RequestInfo{
+	recorder = doError(t, request.WithRequestInfo(context.Background(), &request.RequestInfo{
 		APIGroup: "TestGroup",
 	}))
 	assert.Equal(t, http.StatusGatewayTimeout, recorder.Code)
-	assert.Equal(t, http.StatusGatewayTimeout, returnedStatusCode)
 	assert.JSONEq(t, `{
 		"status": "Failure",
 		"reason": "Timeout",
@@ -35,19 +33,18 @@ func TestWrite(t *testing.T) {
 	  }`, recorder.Body.String())
 }
 
-func doError(t *testing.T, ctx context.Context) (*httptest.ResponseRecorder, int) {
+func doError(t *testing.T, ctx context.Context) *httptest.ResponseRecorder {
 	t.Helper()
 
 	const msgID = "test.thisIsExpected"
 	base := errutil.Timeout(msgID)
-	var statusCode int
 	handler := func(writer http.ResponseWriter, _ *http.Request) {
-		statusCode = Write(ctx, base.Errorf("got expected error"), writer)
+		Write(ctx, base.Errorf("got expected error"), writer)
 	}
 
 	req := httptest.NewRequest("GET", "http://localhost:3000/fake", nil)
 	recorder := httptest.NewRecorder()
 
 	handler(recorder, req)
-	return recorder, statusCode
+	return recorder
 }

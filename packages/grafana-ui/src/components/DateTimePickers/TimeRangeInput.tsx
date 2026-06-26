@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
-import { type FormEvent, type MouseEvent, useState } from 'react';
+import { useOverlay } from '@react-aria/overlays';
+import { createRef, FormEvent, MouseEvent, useState } from 'react';
 
-import { dateTime, getDefaultTimeRange, type GrafanaTheme2, type TimeRange, type TimeZone } from '@grafana/data';
+import { dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -12,8 +13,8 @@ import { getInputStyles } from '../Input/Input';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { TimeRangeLabel } from './TimeRangePicker/TimeRangeLabel';
-import { type WeekStart } from './WeekStartPicker';
-import { getQuickOptions } from './options';
+import { WeekStart } from './WeekStartPicker';
+import { quickOptions } from './options';
 import { isValidTimeRange } from './utils';
 
 export interface TimeRangeInputProps {
@@ -36,11 +37,6 @@ export interface TimeRangeInputProps {
 
 const noop = () => {};
 
-/**
- * A variant of TimeRangePicker for use in forms.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timerangeinput--docs
- */
 export const TimeRangeInput = ({
   value,
   onChange,
@@ -83,21 +79,22 @@ export const TimeRangeInput = ({
     onChange({ from, to, raw: { from, to } });
   };
 
-  const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement: 'bottom-start',
-    strategy: 'fixed',
-  });
+  const overlayRef = createRef<HTMLElement>();
+  const buttonRef = createRef<HTMLButtonElement>();
 
-  const dismiss = useDismiss(context, {
-    bubbles: {
-      outsidePress: false,
+  const { dialogProps } = useDialog({}, overlayRef);
+
+  const { overlayProps } = useOverlay(
+    {
+      onClose,
+      isDismissable: true,
+      isOpen,
+      shouldCloseOnInteractOutside: (element) => {
+        return !buttonRef.current?.contains(element);
+      },
     },
-  });
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss]);
-
+    overlayRef
+  );
   return (
     <div className={styles.container}>
       <button
@@ -105,8 +102,7 @@ export const TimeRangeInput = ({
         className={styles.pickerInput}
         data-testid={selectors.components.TimePicker.openButton}
         onClick={onOpen}
-        ref={refs.setReference}
-        {...getReferenceProps()}
+        ref={buttonRef}
       >
         {showIcon && <Icon name="clock-nine" size={'sm'} className={styles.icon} />}
 
@@ -123,12 +119,12 @@ export const TimeRangeInput = ({
       </button>
       {isOpen && (
         <FocusScope contain autoFocus restoreFocus>
-          <section className={styles.content} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
+          <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
             <TimePickerContent
               timeZone={timeZone}
               value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
               onChange={onRangeChange}
-              quickOptions={getQuickOptions()}
+              quickOptions={quickOptions}
               onChangeTimeZone={onChangeTimeZone}
               className={styles.content}
               hideTimeZone={hideTimeZone}
@@ -154,7 +150,7 @@ const getStyles = (theme: GrafanaTheme2, disabled = false) => {
       marginLeft: 0,
       position: 'absolute',
       top: '116%',
-      zIndex: theme.zIndex.modal,
+      zIndex: theme.zIndex.dropdown,
     }),
     pickerInput: cx(
       inputStyles.input,

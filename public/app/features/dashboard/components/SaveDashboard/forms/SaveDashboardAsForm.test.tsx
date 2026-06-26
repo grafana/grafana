@@ -1,10 +1,11 @@
+import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render, screen } from 'test/test-utils';
 
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { DashboardModel } from 'app/features/dashboard/state';
+import * as api from 'app/features/manage-dashboards/state/actions';
+import { SaveDashboardResponseDTO } from 'app/types';
 
-import { SaveDashboardAsForm, type SaveDashboardAsFormProps } from './SaveDashboardAsForm';
+import { SaveDashboardAsForm, SaveDashboardAsFormProps } from './SaveDashboardAsForm';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({}));
 jest.mock('app/features/expressions/ExpressionDatasource', () => ({}));
@@ -14,6 +15,8 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
   },
 }));
 
+jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
+
 const prepareDashboardMock = (panel: object) => {
   const json = {
     title: 'name',
@@ -22,7 +25,7 @@ const prepareDashboardMock = (panel: object) => {
   };
 
   return {
-    uid: 'abc',
+    id: 5,
     meta: {},
     ...json,
     getSaveModelClone: () => json,
@@ -53,6 +56,7 @@ const renderAndSubmitForm = async (
 describe('SaveDashboardAsForm', () => {
   describe('default values', () => {
     it('applies default dashboard properties', async () => {
+      jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
       const spy = jest.fn();
 
       await renderAndSubmitForm(prepareDashboardMock({}), spy, {
@@ -68,6 +72,7 @@ describe('SaveDashboardAsForm', () => {
     });
 
     it("appends 'Copy' to the name when the dashboard isnt new", async () => {
+      jest.spyOn(api, 'searchFolders').mockResolvedValue([]);
       const spy = jest.fn();
 
       await renderAndSubmitForm(prepareDashboardMock({}), spy, {

@@ -7,7 +7,7 @@ export interface ExportProvider<TFormat> {
   formatter?: (raw: string) => string;
 }
 
-const JsonExportProvider: ExportProvider<'json'> = {
+export const JsonExportProvider: ExportProvider<'json'> = {
   name: 'JSON',
   exportFormat: 'json',
   type: 'file',
@@ -20,7 +20,7 @@ const JsonExportProvider: ExportProvider<'json'> = {
   },
 };
 
-const YamlExportProvider: ExportProvider<'yaml'> = {
+export const YamlExportProvider: ExportProvider<'yaml'> = {
   name: 'YAML',
   exportFormat: 'yaml',
   type: 'file',
@@ -37,5 +37,7 @@ export const allGrafanaExportProviders = {
   [YamlExportProvider.exportFormat]: YamlExportProvider,
   [HclExportProvider.exportFormat]: HclExportProvider,
 } as const;
+
+export const jsonAndYamlGrafanaExportProviders = [JsonExportProvider, YamlExportProvider];
 
 export type ExportFormats = keyof typeof allGrafanaExportProviders;

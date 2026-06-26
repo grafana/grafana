@@ -1,4 +1,4 @@
-import { type SerializedError } from '@reduxjs/toolkit';
+import { SerializedError } from '@reduxjs/toolkit';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 

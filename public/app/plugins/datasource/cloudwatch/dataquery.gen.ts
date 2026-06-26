@@ -8,8 +8,6 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-// Generated from public/app/plugins/datasource/cloudwatch/dataquery.cue file.
-
 import * as common from '@grafana/schema';
 
 export interface MetricStat {
@@ -218,27 +216,6 @@ export interface QueryEditorArrayExpression {
 
 export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
 
-export enum LogsMode {
-  Anomalies = 'Anomalies',
-  Insights = 'Insights',
-}
-
-export enum LogsQueryLanguage {
-  CWLI = 'CWLI',
-  PPL = 'PPL',
-  SQL = 'SQL',
-}
-
-/**
- * Log group selection scope - determines how log groups are selected for the query
- */
-export type LogsQueryScope = ('logGroupName' | 'namePrefix' | 'allLogGroups');
-
-/**
- * Log group class filter
- */
-export type LogGroupClass = ('STANDARD' | 'INFREQUENT_ACCESS');
-
 /**
  * Shape of a CloudWatch Logs query
  */
@@ -249,37 +226,13 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
   expression?: string;
   id: string;
   /**
-   * Data sources to query
-   */
-  logDataSources?: Array<LogDataSource>;
-  /**
-   * Log group class filter for namePrefix and allLogGroups scope modes
-   */
-  logGroupClass?: LogGroupClass;
-  /**
    * @deprecated use logGroups
    */
   logGroupNames?: Array<string>;
   /**
-   * Log group name prefixes for namePrefix scope mode (max 5)
-   */
-  logGroupPrefixes?: Array<string>;
-  /**
    * Log groups to query
    */
   logGroups?: Array<LogGroup>;
-  /**
-   * Whether a query is a Logs Insights or Log Anomalies query
-   */
-  logsMode?: LogsMode;
-  /**
-   * Log group selection scope - determines how log groups are selected for the query
-   */
-  logsQueryScope?: LogsQueryScope;
-  /**
-   * Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
-   */
-  queryLanguage?: LogsQueryLanguage;
   /**
    * Whether a query is a Metrics, Logs, or Annotations query
    */
@@ -289,50 +242,16 @@ export interface CloudWatchLogsQuery extends common.DataQuery {
    */
   region: string;
   /**
-   * Selected account IDs for cross-account queries (max 20)
-   */
-  selectedAccountIds?: Array<string>;
-  /**
    * Fields to group the results by, this field is automatically populated whenever the query is updated
    */
   statsGroups?: Array<string>;
 }
 
 export const defaultCloudWatchLogsQuery: Partial<CloudWatchLogsQuery> = {
-  logDataSources: [],
   logGroupNames: [],
-  logGroupPrefixes: [],
   logGroups: [],
-  selectedAccountIds: [],
   statsGroups: [],
 };
-
-/**
- * Shape of a Cloudwatch Log Anomalies query
- */
-export interface CloudWatchLogsAnomaliesQuery extends common.DataQuery {
-  /**
-   * Used to filter only the anomalies found by a certain anomaly detector
-   */
-  anomalyDetectionARN?: string;
-  id: string;
-  /**
-   * Whether a query is a Logs Insights or Log Anomalies query
-   */
-  logsMode?: LogsMode;
-  /**
-   * Whether a query is a Metrics, Logs or Annotations query
-   */
-  queryMode?: CloudWatchQueryMode;
-  /**
-   * AWS region to query for the logs
-   */
-  region: string;
-  /**
-   * Filter to return only anomalies that are 'SUPPRESSED', 'UNSUPPRESSED', or 'ALL' (default)
-   */
-  suppressionState?: string;
-}
 
 export interface LogGroup {
   /**
@@ -351,17 +270,6 @@ export interface LogGroup {
    * Name of the log group
    */
   name: string;
-}
-
-export interface LogDataSource {
-  /**
-   * Name of the data source
-   */
-  name: string;
-  /**
-   * Type of the data source
-   */
-  type: string;
 }
 
 /**

@@ -1,40 +1,40 @@
 import { cloneDeep, defaultsDeep, isArray, isEqual } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
-  type DataConfigSource,
-  type DataFrameDTO,
-  type DataLink,
-  type DataQuery,
-  type DataTransformerConfig,
+  DataConfigSource,
+  DataFrameDTO,
+  DataLink,
+  DataQuery,
+  DataTransformerConfig,
   EventBusSrv,
-  type FieldConfigSource,
-  type PanelPlugin,
-  type PanelPluginDataSupport,
-  type ScopedVars,
-  type PanelModel as IPanelModel,
-  type DataSourceRef,
+  FieldConfigSource,
+  PanelPlugin,
+  PanelPluginDataSupport,
+  ScopedVars,
+  PanelModel as IPanelModel,
+  DataSourceRef,
   CoreApp,
   filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
   isStandardFieldProp,
   restoreCustomOverrideRules,
   getNextRefId,
-  generateUUID,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
-import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
+import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
   RenderEvent,
 } from 'app/types/events';
-import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { type TimeOverrideResult } from '../utils/panel';
+import { TimeOverrideResult } from '../utils/panel';
 
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
@@ -49,7 +49,6 @@ export interface GridPos {
 type RunPanelQueryOptions = {
   dashboardUID: string;
   dashboardTimezone: string;
-  dashboardTitle: string;
   timeData: TimeOverrideResult;
   width: number;
   publicDashboardAccessToken?: string;
@@ -134,6 +133,15 @@ const defaults: any = {
   title: '',
 };
 
+export const explicitlyControlledMigrationPanels = [
+  'graph',
+  'table-old',
+  'grafana-piechart-panel',
+  'grafana-worldmap-panel',
+  'singlestat',
+  'grafana-singlestat-panel',
+];
+
 export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',
   'table-old': 'table',
@@ -141,7 +149,10 @@ export const autoMigrateAngular: Record<string, string> = {
   'grafana-singlestat-panel': 'stat',
   'grafana-piechart-panel': 'piechart',
   'grafana-worldmap-panel': 'geomap',
-  'natel-discrete-panel': 'state-timeline',
+};
+
+export const autoMigrateRemovedPanelPlugins: Record<string, string> = {
+  'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
@@ -170,7 +181,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: boolean;
-  timeCompare?: string;
   declare options: {
     [key: string]: any;
   };
@@ -219,7 +229,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.key = generateUUID();
+    this.key = uuidv4();
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -264,7 +274,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   generateNewKey() {
-    this.key = generateUUID();
+    this.key = uuidv4();
   }
 
   ensureQueryIds() {
@@ -365,15 +375,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width, dashboardTitle }: RunPanelQueryOptions) {
+  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
-      panelName: this.title,
       panelPluginId: this.type,
       dashboardUID: dashboardUID,
-      dashboardTitle: dashboardTitle,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
@@ -459,7 +467,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     if (plugin.onPanelMigration) {
-      if (version !== this.pluginVersion || plugin.shouldMigrate?.(this)) {
+      if (version !== this.pluginVersion) {
         const newPanelOptions = plugin.onPanelMigration(this);
         this.options = await newPanelOptions;
         this.pluginVersion = version;
@@ -510,8 +518,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const oldOptions = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const angularId = this.autoMigrateFrom || oldPluginId;
-    const wasAngular = Boolean(autoMigrateAngular[angularId]);
+    const wasAngular = this.isAngularPlugin() || Boolean(autoMigrateAngular[oldPluginId]);
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,
@@ -620,6 +627,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     return this.title && this.title.length > 0;
   }
 
+  isAngularPlugin(): boolean {
+    return (
+      (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angular?.detected ?? false)
+    );
+  }
+
   destroy() {
     this.events.removeAllListeners();
 
@@ -693,7 +706,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 }
 
-function getPluginVersion(plugin: PanelPlugin): string {
+export function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
 }
 

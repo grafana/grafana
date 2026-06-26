@@ -1,6 +1,6 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { DatePickerWithInput } from './DatePickerWithInput';
 import mdx from './DatePickerWithInput.mdx';
@@ -13,7 +13,7 @@ const minimumDate = new Date();
 minimumDate.setMonth(minimumDate.getMonth() - 1);
 
 const meta: Meta<typeof DatePickerWithInput> = {
-  title: 'Date time pickers/DatePickerWithInput',
+  title: 'Pickers and Editors/TimePickers/DatePickerWithInput',
   component: DatePickerWithInput,
   parameters: {
     docs: {

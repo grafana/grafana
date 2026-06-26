@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
@@ -38,16 +36,16 @@ func TestCDKBlobStore(t *testing.T) {
 
 	t.Run("can write then read a blob", func(t *testing.T) {
 		raw := []byte(`{"hello": "world"}`)
-		key := &resourcepb.ResourceKey{
+		key := &ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything
 			Namespace: "default",
 			Name:      "fdgsv37qslr0ga",
 		}
 
-		rsp, err := store.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{
+		rsp, err := store.PutResourceBlob(ctx, &PutBlobRequest{
 			Resource:    key,
-			Method:      resourcepb.PutBlobRequest_GRPC,
+			Method:      PutBlobRequest_GRPC,
 			ContentType: "application/json",
 			Value:       raw,
 		})

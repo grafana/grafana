@@ -1,14 +1,13 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { locationUtil, type NavModelItem } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type SceneObject, type SceneObjectState } from '@grafana/scenes';
+import { locationUtil, NavModelItem } from '@grafana/data';
+import { SceneObject, SceneObjectState } from '@grafana/scenes';
+import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { useSelector } from 'app/types/store';
+import { AccessControlAction, useSelector } from 'app/types';
 
-import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 
 import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
@@ -36,7 +35,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
   const dashboardPageNav = dashboard.getPageNav(location, navIndex);
 
   const pageNav: NavModelItem = {
-    text: t('dashboard-scene.use-dashboard-edit-page-nav.page-nav.text.settings', 'Settings'),
+    text: 'Settings',
     url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
     children: [],
     parentItem: dashboardPageNav,
@@ -65,7 +64,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if ((dashboard.state.uid || dashboard.state.meta.isDashboardTemplate) && dashboard.state.meta.canSave) {
+  if (dashboard.state.id && dashboard.state.meta.canSave) {
     pageNav.children!.push({
       text: t('dashboard-settings.versions.title', 'Versions'),
       url: locationUtil.getUrlForPartial(location, { editview: 'versions', editIndex: null }),
@@ -73,7 +72,7 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     });
   }
 
-  if (dashboard.state.uid && dashboard.state.meta.canAdmin) {
+  if (dashboard.state.id && dashboard.state.meta.canAdmin) {
     if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pageNav.children!.push({
         text: t('dashboard-settings.permissions.title', 'Permissions'),

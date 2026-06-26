@@ -159,17 +159,16 @@ func staticHandler(ctx *web.Context, log log.Logger, opt StaticOptions) bool {
 	if fi.IsDir() {
 		// Redirect if missing trailing slash.
 		if !strings.HasSuffix(ctx.Req.URL.Path, "/") {
-			redirectPath := path.Clean(ctx.Req.URL.Path)
-			redirectPath = fmt.Sprintf("%s/", redirectPath)
-			if !strings.HasPrefix(redirectPath, "/") {
+			path := fmt.Sprintf("%s/", ctx.Req.URL.Path)
+			if !strings.HasPrefix(path, "/") {
 				// Disambiguate that it's a path relative to this server
-				redirectPath = fmt.Sprintf("/%s", redirectPath)
+				path = fmt.Sprintf("/%s", path)
 			} else {
 				// A string starting with // or /\ is interpreted by browsers as a URL, and not a server relative path
 				rePrefix := regexp.MustCompile(`^(?:/\\|/+)`)
-				redirectPath = rePrefix.ReplaceAllString(redirectPath, "/")
+				path = rePrefix.ReplaceAllString(path, "/")
 			}
-			http.Redirect(ctx.Resp, ctx.Req, redirectPath, http.StatusFound)
+			http.Redirect(ctx.Resp, ctx.Req, path, http.StatusFound)
 			return true
 		}
 

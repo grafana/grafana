@@ -1,10 +1,10 @@
-import { from, type Observable, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import { type AnnotationEvent, type DataSourceApi } from '@grafana/data';
+import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 import { shouldUseLegacyRunner } from 'app/features/annotations/standardAnnotationSupport';
 
-import { type AnnotationQueryRunner, type AnnotationQueryRunnerOptions } from './types';
+import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { handleAnnotationQueryRunnerError } from './utils';
 
 export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
@@ -25,17 +25,8 @@ export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
       return of([]);
     }
 
-    if (datasource?.annotationQuery === undefined) {
-      console.warn('datasource does not have an annotation query');
-      return of([]);
-    }
-
-    const annotationQuery = datasource.annotationQuery({ range, rangeRaw: range.raw, annotation, dashboard });
-    if (annotationQuery === undefined) {
-      console.warn('datasource does not have an annotation query');
-      return of([]);
-    }
-
-    return from(annotationQuery).pipe(catchError(handleAnnotationQueryRunnerError));
+    return from(datasource!.annotationQuery!({ range, rangeRaw: range.raw, annotation, dashboard })).pipe(
+      catchError(handleAnnotationQueryRunnerError)
+    );
   }
 }

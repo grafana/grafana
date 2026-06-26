@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/plugin-ui';
+import { SelectableValue } from '@grafana/data';
+import { EditorField } from '@grafana/experimental';
 import { RadioButtonGroup } from '@grafana/ui';
 
-import { PreprocessorType, type TimeSeriesList, MetricKind, ValueTypes } from '../dataquery.gen';
 import { getAlignmentPickerData } from '../functions';
-import { type MetricDescriptor } from '../types/types';
+import { PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 const NONE_OPTION = { label: 'None', value: PreprocessorType.None };
 

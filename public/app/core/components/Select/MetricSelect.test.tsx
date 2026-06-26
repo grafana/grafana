@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { select, openMenu } from 'react-select-event';
 
-import { MetricSelect, type Props } from './MetricSelect';
+import { MetricSelect, Props } from './MetricSelect';
 
 const props: Props = {
   isSearchable: false,

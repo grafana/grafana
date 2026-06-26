@@ -8,8 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"xorm.io/xorm"
 )
 
 type PostgresDialect struct {
@@ -18,8 +17,8 @@ type PostgresDialect struct {
 
 func NewPostgresDialect() Dialect {
 	d := PostgresDialect{}
-	d.dialect = &d
-	d.driverName = Postgres
+	d.BaseDialect.dialect = &d
+	d.BaseDialect.driverName = Postgres
 	return &d
 }
 
@@ -31,23 +30,12 @@ func (db *PostgresDialect) Quote(name string) string {
 	return "\"" + name + "\""
 }
 
-func (db *PostgresDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
-	param := pattern
-	if wildcardBefore {
-		param = "%" + param
-	}
-	if wildcardAfter {
-		param = param + "%"
-	}
-	return fmt.Sprintf("%s ILIKE ?", column), param
+func (db *PostgresDialect) LikeStr() string {
+	return "ILIKE"
 }
 
 func (db *PostgresDialect) AutoIncrStr() string {
 	return ""
-}
-
-func (db *PostgresDialect) BooleanValue(value bool) any {
-	return value
 }
 
 func (db *PostgresDialect) BooleanStr(value bool) string {
@@ -86,7 +74,7 @@ func (db *PostgresDialect) SQLType(c *Column) string {
 	case DB_NVarchar:
 		res = DB_Varchar
 	case DB_Uuid:
-		return DB_Uuid // do not add the length options
+		res = DB_Uuid
 	case DB_Blob, DB_TinyBlob, DB_MediumBlob, DB_LongBlob:
 		return DB_Bytea
 	case DB_Double:
@@ -121,7 +109,7 @@ func (db *PostgresDialect) DropIndexSQL(tableName string, index *Index) string {
 }
 
 func (db *PostgresDialect) UpdateTableSQL(tableName string, columns []*Column) string {
-	statements := make([]string, 0, len(columns))
+	var statements = []string{}
 
 	for _, col := range columns {
 		statements = append(statements, "ALTER "+db.Quote(col.Name)+" TYPE "+db.SQLType(col))
@@ -148,7 +136,7 @@ func (db *PostgresDialect) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *PostgresDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.Dialect().GetTables()
+	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
 	}
@@ -346,7 +334,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 
 func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
-		parsedDSN, err := pq.ParseURL(dsn) // nolint:staticcheck
+		parsedDSN, err := pq.ParseURL(dsn)
 		if err != nil {
 			return "", err
 		}

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { type PropsWithChildren, type ReactNode } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { Spacer } from '../../components/Spacer';
 
@@ -30,7 +30,7 @@ export const ListSection = ({
     <li className={styles.wrapper} role="treeitem" aria-selected="false">
       <div className={styles.sectionTitle}>
         <Stack alignItems="center">
-          <Stack alignItems="center" gap={0.5}>
+          <Stack alignItems="center" gap={1}>
             <IconButton
               name={isCollapsed ? 'angle-right' : 'angle-down'}
               onClick={toggleCollapsed}
@@ -61,55 +61,35 @@ export const ListSection = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   groupItemsWrapper: css({
     position: 'relative',
+    borderRadius: theme.shape.radius.default,
+    border: `solid 1px ${theme.colors.border.weak}`,
+    borderBottom: 'none',
 
-    // Continuous folder guide line — runs alongside every direct child (groups and ungrouped
-    // rules), so siblings clearly belong to the same folder regardless of their type.
+    marginLeft: theme.spacing(3),
+
     '&:before': {
       content: "''",
       position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: theme.spacing(2.5),
+      height: '100%',
+
       borderLeft: `solid 1px ${theme.colors.border.weak}`,
-    },
 
-    // Direct LI children are ungrouped rules at the folder level. Align their content with
-    // the group headers (paddingLeft matches ListGroup headerWrapper) so they read as
-    // siblings of the groups, not as nested rule rows.
-    '> li[role=treeitem]': {
-      listStyle: 'none',
-      paddingLeft: theme.spacing(4),
-    },
-
-    // LIs nested inside a group (rules inside an expanded ListGroup): keep the deeper
-    // indentation and per-row guide line. We can't pass classNames into rendered list
-    // items individually, so target them via descendant selector.
-    'div[role=treeitem] li[role=treeitem]': {
-      listStyle: 'none',
-      position: 'relative',
-      paddingLeft: theme.spacing(6.5),
-
-      '&:before': {
-        content: "''",
-        position: 'absolute',
-        height: '100%',
-
-        marginLeft: theme.spacing(-1.5),
-        marginTop: theme.spacing(-1),
-        borderLeft: `solid 1px ${theme.colors.border.weak}`,
-      },
+      marginTop: 0,
+      marginLeft: `-${theme.spacing(2.5)}`,
     },
   }),
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
+
+    gap: theme.spacing(1),
   }),
   sectionTitle: css({
-    padding: theme.spacing(1, 1.5),
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
 
-    '&:hover': {
-      background: theme.colors.action.hover,
-      borderRadius: theme.shape.radius.default,
-    },
+    background: theme.colors.background.secondary,
+
+    border: `solid 1px ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
   }),
 });

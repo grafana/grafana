@@ -2,8 +2,6 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import { selectors } from '@grafana/e2e-selectors';
-
 interface XYCanvasProps {
   top: number; // css pxls
   left: number; // css pxls
@@ -23,9 +21,5 @@ export const XYCanvas = ({ children, left, top }: React.PropsWithChildren<XYCanv
     });
   }, [left, top]);
 
-  return (
-    <div data-testid={selectors.components.UPlotChart.xyCanvas} className={className}>
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 };

@@ -1,33 +1,22 @@
-import { type SelectableValue } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { SelectableValue } from '@grafana/data';
 
 import { SelectBase } from './SelectBase';
-import { SelectContainer, type SelectContainerProps } from './SelectContainer';
+import { SelectContainer, SelectContainerProps } from './SelectContainer';
 import {
-  type SelectCommonProps,
-  type MultiSelectCommonProps,
-  type SelectAsyncProps,
-  type VirtualizedSelectProps,
-  type VirtualizedSelectAsyncProps,
+  SelectCommonProps,
+  MultiSelectCommonProps,
+  SelectAsyncProps,
+  VirtualizedSelectProps,
+  VirtualizedSelectAsyncProps,
 } from './types';
 
-/**
- * @deprecated Use Combobox component instead
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
- */
 export function Select<T, Rest = {}>(props: SelectCommonProps<T> & Rest) {
   return <SelectBase {...props} />;
 }
 
-/**
- * @deprecated Use Combobox component instead
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
- */
 export function MultiSelect<T, Rest = {}>(props: MultiSelectCommonProps<T> & Rest) {
   // @ts-ignore
-  return <SelectBase data-testid={selectors.components.MultiSelect.container} {...props} isMulti />;
+  return <SelectBase {...props} isMulti />;
 }
 
 export interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {
@@ -35,29 +24,14 @@ export interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options
   value?: T | SelectableValue<T> | null;
 }
 
-/**
- * @deprecated Use Combobox component instead
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
- */
 export function AsyncSelect<T, Rest = {}>(props: AsyncSelectProps<T> & Rest) {
   return <SelectBase {...props} />;
 }
 
-/**
- * @deprecated Use Combobox component instead - it's virtualised by default!
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
- */
 export function VirtualizedSelect<T, Rest = {}>(props: VirtualizedSelectProps<T> & Rest) {
   return <SelectBase virtualized {...props} />;
 }
 
-/**
- * @deprecated Use Combobox component instead - it's virtualised by default!
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
- */
 export function AsyncVirtualizedSelect<T, Rest = {}>(props: VirtualizedSelectAsyncProps<T> & Rest) {
   return <SelectBase virtualized {...props} />;
 }
@@ -67,14 +41,9 @@ interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'opti
   value?: Array<SelectableValue<T>>;
 }
 
-/**
- * @deprecated Use Combobox component instead
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-deprecated-select--docs
- */
 export function AsyncMultiSelect<T, Rest = {}>(props: AsyncMultiSelectProps<T> & Rest) {
   // @ts-ignore
-  return <SelectBase data-testid={selectors.components.MultiSelect.container} {...props} isMulti />;
+  return <SelectBase {...props} isMulti />;
 }
 
 export { SelectContainer, type SelectContainerProps };

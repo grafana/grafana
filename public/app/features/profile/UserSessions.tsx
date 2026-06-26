@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { t } from 'i18next';
+import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, LoadingPlaceholder, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
-import { type UserSession } from 'app/types/user';
+import { UserSession } from 'app/types';
 
 interface Props {
   sessions: UserSession[];
@@ -14,23 +15,20 @@ interface Props {
   revokeUserSession: (tokenId: number) => void;
 }
 
-const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession }) => {
-  const styles = useStyles2(getStyles);
+class UserSessions extends PureComponent<Props> {
+  render() {
+    const { isLoading, sessions, revokeUserSession } = this.props;
+    const styles = getStyles();
 
-  if (isLoading) {
-    return <LoadingPlaceholder text={<Trans i18nKey="user-sessions.loading">Loading sessions...</Trans>} />;
-  }
+    if (isLoading) {
+      return <LoadingPlaceholder text={<Trans i18nKey="user-sessions.loading">Loading sessions...</Trans>} />;
+    }
 
-  return (
-    <div className={styles.wrapper}>
-      {sessions.length > 0 && (
-        <>
-          <div className="page-sub-heading">
-            <Text variant="h3" element="h2">
-              <Trans i18nKey="profile.user-sessions.sessions">Sessions</Trans>
-            </Text>
-          </div>
-          <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
+    return (
+      <div className={styles.wrapper}>
+        {sessions.length > 0 && (
+          <>
+            <h3 className="page-sub-heading">Sessions</h3>
             <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.sessionsTable}>
               <thead>
                 <tr>
@@ -56,22 +54,11 @@ const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession }) =>
               <tbody>
                 {sessions.map((session: UserSession, index) => (
                   <tr key={index}>
-                    {session.isActive ? (
-                      <td>
-                        <Trans i18nKey="profile.user-sessions.now">Now</Trans>
-                      </td>
-                    ) : (
-                      <td>{session.seenAt}</td>
-                    )}
+                    {session.isActive ? <td>Now</td> : <td>{session.seenAt}</td>}
                     <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                     <td>{session.clientIp}</td>
                     <td>
-                      <Trans
-                        i18nKey="profile.user-sessions.browser-details"
-                        values={{ browser: session.browser, os: session.os, osVersion: session.osVersion }}
-                      >
-                        {'{{browser}}'} on {'{{os}}'} {'{{osVersion}}'}
-                      </Trans>
+                      {session.browser} on {session.os} {session.osVersion}
                     </td>
                     <td>
                       {session.authModule && <TagBadge label={session.authModule} removeIcon={false} count={0} />}
@@ -91,14 +78,12 @@ const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession }) =>
                 ))}
               </tbody>
             </table>
-          </ScrollContainer>
-        </>
-      )}
-    </div>
-  );
-});
-
-UserSessions.displayName = 'UserSessions';
+          </>
+        )}
+      </div>
+    );
+  }
+}
 
 const getStyles = () => ({
   wrapper: css({

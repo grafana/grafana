@@ -1,19 +1,20 @@
 import {
-  type DataFrame,
-  type Field,
+  DataFrame,
+  Field,
   FieldType,
   getDisplayProcessor,
-  type GrafanaTheme2,
+  GrafanaTheme2,
   isBooleanUnit,
-  type TimeRange,
+  TimeRange,
   cacheFieldDisplayNames,
-  applyNullInsertThreshold,
-  nullToValue,
 } from '@grafana/data';
-import { convertFieldType } from '@grafana/data/internal';
-import { type GraphFieldConfig, LineInterpolation } from '@grafana/schema';
-import { type AdHocFilterItem } from '@grafana/ui';
-import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
+import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
+import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
+import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
+
+import { HeatmapTooltip } from '../heatmap/panelcfg.gen';
 
 type ScaleKey = string;
 
@@ -35,7 +36,7 @@ function reEnumFields(frames: DataFrame[]): DataFrame[] {
             allTextsByKey.set(scaleKey, allTexts);
           }
 
-          let idxs: number[] = field.values.slice();
+          let idxs: number[] = field.values.toArray().slice();
           let txts = field.config.type!.enum!.text!;
 
           // by-reference incrementing
@@ -136,7 +137,7 @@ export function prepareGraphableFields(
 
     const frameFields = nullToValue(nulledFrame).fields;
 
-    for (let fieldIdx = 0; fieldIdx < (frameFields?.length || 0); fieldIdx++) {
+    for (let fieldIdx = 0; fieldIdx < frameFields?.length ?? 0; fieldIdx++) {
       const field = frameFields[fieldIdx];
 
       switch (field.type) {
@@ -146,27 +147,14 @@ export function prepareGraphableFields(
           break;
         case FieldType.number:
           hasValueField = useNumericX ? fieldIdx > 0 : true;
-
-          // we need to make sure all values in the array are numbers or null
-          // so, check all values and if we encounter a bad one, copy the array and
-          // replace all further-occuring non-numbers with null to make safe values array
-          let values = field.values;
-          let safeValues: unknown[] | undefined = undefined;
-
-          for (let i = 0; i < values.length; i++) {
-            let v = values[i];
-
-            if (!(Number.isFinite(v) || v == null)) {
-              safeValues ??= values.slice();
-              safeValues[i] = null;
-            }
-          }
-
-          safeValues ??= values;
-
           copy = {
             ...field,
-            values: safeValues,
+            values: field.values.map((v) => {
+              if (!(Number.isFinite(v) || v == null)) {
+                return null;
+              }
+              return v;
+            }),
           };
 
           fields.push(copy);
@@ -188,12 +176,12 @@ export function prepareGraphableFields(
             ...field.config,
             max: 1,
             min: 0,
-            custom: { ...custom },
+            custom,
           };
 
           // smooth and linear do not make sense
-          if (config.custom.lineInterpolation !== LineInterpolation.StepBefore) {
-            config.custom.lineInterpolation = LineInterpolation.StepAfter;
+          if (custom.lineInterpolation !== LineInterpolation.StepBefore) {
+            custom.lineInterpolation = LineInterpolation.StepAfter;
           }
 
           copy = {
@@ -254,81 +242,20 @@ const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) 
 
 export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
-
-  const updateFieldDisplay = (field: Field, idx: number) => {
-    field.state = { ...field.state, seriesIndex: idx };
-    field.display = getDisplayProcessor({ field, theme });
-  };
-
-  const shouldProcessField = (field: Field, fieldIdx: number) => {
-    return (
-      fieldIdx !== skipFieldIdx &&
-      (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
-    );
-  };
-
-  // Pre-pass to group main frames by refId
-  const mainFramesByRefId = new Map<string, DataFrame[]>();
-  for (const frame of frames) {
-    if (!frame.meta?.timeCompare?.isTimeShiftQuery && frame.refId) {
-      if (!mainFramesByRefId.has(frame.refId)) {
-        mainFramesByRefId.set(frame.refId, []);
+  frames.forEach((frame) => {
+    frame.fields.forEach((field, fieldIdx) => {
+      if (
+        fieldIdx !== skipFieldIdx &&
+        (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
+      ) {
+        field.state = {
+          ...field.state,
+          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
+        };
+        field.display = getDisplayProcessor({ field, theme });
       }
-      mainFramesByRefId.get(frame.refId)!.push(frame);
-    }
-  }
-
-  // Counter for comparison indices per baseRefId
-  const compareIndicesByRefId = new Map<string, number>();
-
-  for (const frame of frames) {
-    const isCompareFrame = frame.meta?.timeCompare?.isTimeShiftQuery;
-
-    if (isCompareFrame) {
-      const baseRefId = frame.refId?.replace('-compare', '');
-
-      if (baseRefId) {
-        // Get and increment the comparison index
-        let compareIndex = compareIndicesByRefId.get(baseRefId) ?? 0;
-        compareIndicesByRefId.set(baseRefId, compareIndex + 1);
-
-        // Get the matching main frame using the index
-        const mainFrames = mainFramesByRefId.get(baseRefId);
-        const mainFrame = mainFrames?.[compareIndex];
-
-        if (mainFrame && mainFrame.fields.length === frame.fields.length) {
-          // Match series indices with main frame
-          frame.fields.forEach((field, fieldIdx) => {
-            if (shouldProcessField(field, fieldIdx)) {
-              const mainField = mainFrame.fields[fieldIdx];
-              updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
-            }
-          });
-        } else {
-          // Fallback
-          frame.fields.forEach((field, fieldIdx) => {
-            if (shouldProcessField(field, fieldIdx)) {
-              updateFieldDisplay(field, seriesIndex++);
-            }
-          });
-        }
-      } else {
-        // Fallback when no baseRefId
-        frame.fields.forEach((field, fieldIdx) => {
-          if (shouldProcessField(field, fieldIdx)) {
-            updateFieldDisplay(field, seriesIndex++);
-          }
-        });
-      }
-    } else {
-      // Main frames
-      frame.fields.forEach((field, fieldIdx) => {
-        if (shouldProcessField(field, fieldIdx)) {
-          updateFieldDisplay(field, seriesIndex++);
-        }
-      });
-    }
-  }
+    });
+  });
 };
 
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {
@@ -338,27 +265,6 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
 }
 
-export function getGroupedFilters(
-  frame: DataFrame,
-  seriesIdx: number,
-  getFiltersBasedOnGrouping: (filters: AdHocFilterItem[]) => AdHocFilterItem[]
-) {
-  const groupingFilters: AdHocFilterItem[] = [];
-  const xField = frame.fields[seriesIdx];
-
-  if (xField && xField.labels && xField.config.filterable) {
-    const seriesFilters: AdHocFilterItem[] = [];
-
-    Object.entries(xField.labels).forEach(([key, value]) => {
-      seriesFilters.push({
-        key,
-        operator: FILTER_FOR_OPERATOR,
-        value,
-      });
-    });
-
-    groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
-  }
-
-  return groupingFilters;
-}
+export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapTooltip) => {
+  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
+};

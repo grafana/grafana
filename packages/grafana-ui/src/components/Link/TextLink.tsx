@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { type AnchorHTMLAttributes, forwardRef } from 'react';
+import { AnchorHTMLAttributes, forwardRef } from 'react';
 
-import { type GrafanaTheme2, locationUtil, textUtil, type ThemeTypographyVariantTypes } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-import { type IconName, type IconSize } from '../../types/icon';
+import { useTheme2 } from '../../themes';
+import { IconName, IconSize } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { customWeight } from '../Text/utils';
 
@@ -43,11 +43,6 @@ const svgSizes: {
   bodySmall: 'xs',
 };
 
-/**
- * The TextLink component renders an anchor tag `<a>` that takes users to another page, external or internal to Grafana.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/foundations-textlink--docs
- */
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
   (
     { href, color = 'link', external = false, inline = true, variant = 'body', weight, icon, children, ...rest },
@@ -61,9 +56,9 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
 
     if (external) {
       return (
-        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles.wrapper}>
+        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles}>
           {children}
-          <Icon className={styles.icon} size={svgSizes[variant] || 'md'} name={externalIcon} />
+          <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
         </a>
       );
     }
@@ -71,9 +66,9 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     const strippedUrl = locationUtil.stripBaseFromUrl(validUrl);
 
     return (
-      <Link ref={ref} href={strippedUrl} {...rest} className={styles.wrapper}>
+      <Link ref={ref} href={strippedUrl} {...rest} className={styles}>
         {children}
-        {icon && <Icon className={styles.icon} name={icon} size={svgSizes[variant] || 'md'} />}
+        {icon && <Icon name={icon} size={svgSizes[variant] || 'md'} />}
       </Link>
     );
   }
@@ -81,41 +76,38 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
 
 TextLink.displayName = 'TextLink';
 
-const getLinkStyles = (
+export const getLinkStyles = (
   theme: GrafanaTheme2,
   inline: boolean,
   variant?: keyof ThemeTypographyVariantTypes,
   weight?: TextLinkProps['weight'],
   color?: TextLinkProps['color']
 ) => {
-  return {
-    icon: css({
-      marginLeft: '0.25em',
-      verticalAlign: 'text-bottom',
-    }),
-    wrapper: css([
-      variant && {
-        ...theme.typography[variant],
-      },
-      weight && {
-        fontWeight: customWeight(weight, theme),
-      },
-      color && {
-        color: theme.colors.text[color],
-      },
-      {
-        textDecoration: 'none',
-        '&:hover': {
-          textDecoration: 'underline',
-          color: theme.colors.text.link,
-        },
-      },
-      inline && {
+  return css([
+    variant && {
+      ...theme.typography[variant],
+    },
+    weight && {
+      fontWeight: customWeight(weight, theme),
+    },
+    color && {
+      color: theme.colors.text[color],
+    },
+    {
+      alignItems: 'center',
+      gap: '0.25em',
+      display: 'inline-flex',
+      textDecoration: 'none',
+      '&:hover': {
         textDecoration: 'underline',
-        '&:hover': {
-          textDecoration: 'none',
-        },
+        color: theme.colors.text.link,
       },
-    ]),
-  };
+    },
+    inline && {
+      textDecoration: 'underline',
+      '&:hover': {
+        textDecoration: 'none',
+      },
+    },
+  ]);
 };

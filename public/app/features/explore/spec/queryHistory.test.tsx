@@ -1,15 +1,12 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { type ReactNode } from 'react';
-import { type Props } from 'react-virtualized-auto-sizer';
+import { Props } from 'react-virtualized-auto-sizer';
 
-import { EventBusSrv, serializeStateToUrlParam, store } from '@grafana/data';
+import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { DataQuery } from '@grafana/schema';
+import store from 'app/core/store';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import * as localStorage from '../../../core/history/RichHistoryLocalStorage';
-import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
 
 import {
   assertDataSourceFilterVisibility,
@@ -39,10 +36,6 @@ import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 const reportInteractionMock = jest.fn();
 const testEventBus = new EventBusSrv();
 
-const OpenFeatureWrapper = ({ children }: { children: ReactNode }) => (
-  <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>
-);
-
 interface MockQuery extends DataQuery {
   expr: string;
 }
@@ -53,17 +46,13 @@ jest.mock('@grafana/runtime', () => ({
     reportInteractionMock(...args);
   },
   getAppEvents: () => testEventBus,
-  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
-jest.mock('app/core/services/context_srv', () => ({
+jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: () => true,
     isSignedIn: true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
-    user: {
-      isSignedIn: true,
-    },
   },
 }));
 
@@ -107,10 +96,7 @@ describe('Explore: Query History', () => {
 
   it('adds new query history items after the query is run.', async () => {
     // when Explore is opened
-    const { datasources, unmount } = setupExplore({
-      withAppChrome: true,
-      provider: OpenFeatureWrapper,
-    });
+    const { datasources, unmount } = setupExplore();
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
 
@@ -126,7 +112,7 @@ describe('Explore: Query History', () => {
     unmount();
 
     tearDown({ clearLocalStorage: false });
-    setupExplore({ clearLocalStorage: false, withAppChrome: true, provider: OpenFeatureWrapper });
+    setupExplore({ clearLocalStorage: false });
     await waitForExplore();
 
     // previously added query is in query history
@@ -135,7 +121,6 @@ describe('Explore: Query History', () => {
 
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
       queryHistoryEnabled: false,
-      selectedTab: Tabs.RichHistory,
     });
   });
 
@@ -148,11 +133,7 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({
-      urlParams,
-      withAppChrome: true,
-      provider: OpenFeatureWrapper,
-    });
+    const { datasources } = setupExplore({ urlParams });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
@@ -171,11 +152,7 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({
-      urlParams,
-      withAppChrome: true,
-      provider: OpenFeatureWrapper,
-    });
+    const { datasources } = setupExplore({ urlParams });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
@@ -201,16 +178,12 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({
-      urlParams,
-      withAppChrome: true,
-      provider: OpenFeatureWrapper,
-    });
+    const { datasources } = setupExplore({ urlParams });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
 
-    jest.spyOn(localStorage, 'cleanUpUnstarredQuery').mockImplementationOnce((queries) => {
+    jest.spyOn(localStorage, 'checkLimits').mockImplementationOnce((queries) => {
       return { queriesToKeep: queries, limitExceeded: true };
     });
 
@@ -228,11 +201,7 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({
-      urlParams,
-      withAppChrome: true,
-      provider: OpenFeatureWrapper,
-    });
+    const { datasources } = setupExplore({ urlParams });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
@@ -250,11 +219,7 @@ describe('Explore: Query History', () => {
       }),
     };
 
-    const { datasources } = setupExplore({
-      urlParams,
-      withAppChrome: true,
-      provider: OpenFeatureWrapper,
-    });
+    const { datasources } = setupExplore({ urlParams });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
 
     await waitForExplore();
@@ -272,10 +237,7 @@ describe('Explore: Query History', () => {
 
   it('updates query history settings', async () => {
     // open settings page
-    setupExplore({
-      withAppChrome: true,
-      provider: OpenFeatureWrapper,
-    });
+    setupExplore();
     await waitForExplore();
     await openQueryHistory();
 
@@ -304,8 +266,6 @@ describe('Explore: Query History', () => {
         queryHistory: [{ datasourceUid: 'loki', queries: [mockQuery] }],
         totalCount: 2,
       },
-      withAppChrome: true,
-      provider: OpenFeatureWrapper,
     });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();

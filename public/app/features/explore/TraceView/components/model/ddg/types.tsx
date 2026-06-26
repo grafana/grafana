@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type PathElem from './PathElem';
+import PathElem from './PathElem';
+
+export { default as PathElem } from './PathElem';
 
 export type TDdgService = {
   name: string;

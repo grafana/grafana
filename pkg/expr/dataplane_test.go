@@ -6,24 +6,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/dataplane/examples"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/expr/metrics"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestPassThroughDataplaneExamples(t *testing.T) {
@@ -32,7 +31,7 @@ func TestPassThroughDataplaneExamples(t *testing.T) {
 
 	validExamples, err := es.Filter(examples.FilterOptions{
 		Version: data.FrameTypeVersion{0, 1},
-		Valid:   new(true),
+		Valid:   util.Pointer(true),
 	})
 	require.NoError(t, err)
 
@@ -65,12 +64,11 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 			&datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{},
 			nil, pluginconfig.NewFakePluginRequestConfigProvider()),
 		tracer:  tracing.InitializeTracerForTest(),
-		metrics: metrics.NewSSEMetrics(nil),
+		metrics: newMetrics(nil),
 		converter: &ResultConverter{
 			Features: features,
 			Tracer:   tracing.InitializeTracerForTest(),
 		},
-		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 	}
 	queries := []Query{{
 		RefID: "A",
@@ -91,7 +89,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		User:    &user.SignedInUser{},
 	}
 
-	pl, err := s.BuildPipeline(t.Context(), req)
+	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
@@ -164,7 +162,7 @@ func TestShouldUseDataplane(t *testing.T) {
 
 		validExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   new(true),
+			Valid:   util.Pointer(true),
 		})
 		require.NoError(t, err)
 
@@ -186,9 +184,9 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 
 		validNoDataNumericExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   new(true),
+			Valid:   util.Pointer(true),
 			Kind:    data.KindNumeric,
-			NoData:  new(true),
+			NoData:  util.Pointer(true),
 		})
 		require.NoError(t, err)
 
@@ -207,9 +205,9 @@ func TestHandleDataplaneNumeric(t *testing.T) {
 
 		numericExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   new(true),
+			Valid:   util.Pointer(true),
 			Kind:    data.KindNumeric,
-			NoData:  new(false),
+			NoData:  util.Pointer(false),
 		})
 		require.NoError(t, err)
 
@@ -230,9 +228,9 @@ func TestHandleDataplaneTS(t *testing.T) {
 
 		validNoDataTSExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   new(true),
+			Valid:   util.Pointer(true),
 			Kind:    data.KindTimeSeries,
-			NoData:  new(true),
+			NoData:  util.Pointer(true),
 		})
 		require.NoError(t, err)
 
@@ -250,9 +248,9 @@ func TestHandleDataplaneTS(t *testing.T) {
 
 		tsExamples, err := es.Filter(examples.FilterOptions{
 			Version: data.FrameTypeVersion{0, 1},
-			Valid:   new(true),
+			Valid:   util.Pointer(true),
 			Kind:    data.KindTimeSeries,
-			NoData:  new(false),
+			NoData:  util.Pointer(false),
 		})
 		require.NoError(t, err)
 

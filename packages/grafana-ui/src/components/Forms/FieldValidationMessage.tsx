@@ -1,26 +1,19 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
 export interface FieldValidationMessageProps {
   /** Override component style */
   className?: string;
   horizontal?: boolean;
-  id?: string;
 }
 
-/**
- * Component for displaying a validation error message under an element.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-fieldvalidationmessage--docs
- */
 export const FieldValidationMessage = ({
   children,
-  id,
   horizontal,
   className,
 }: React.PropsWithChildren<FieldValidationMessageProps>) => {
@@ -28,34 +21,34 @@ export const FieldValidationMessage = ({
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
 
   return (
-    <div id={id} role="alert" aria-live="polite" className={cssName}>
-      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-circle" />
+    <div role="alert" className={cssName}>
+      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-triangle" />
       {children}
     </div>
   );
 };
 
-const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
-  const baseStyle = css({
-    fontSize: theme.typography.size.sm,
-    fontWeight: theme.typography.fontWeightMedium,
-    padding: theme.spacing(0.5, 1),
-    color: theme.colors.error.contrastText,
-    background: theme.colors.error.main,
-    borderRadius: theme.shape.radius.lg,
-    position: 'relative',
-    display: 'inline-block',
-    alignSelf: 'flex-start',
+export const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
+  const baseStyle = `
+      font-size: ${theme.typography.size.sm};
+      font-weight: ${theme.typography.fontWeightMedium};
+      padding: ${theme.spacing(0.5, 1)};
+      color: ${theme.colors.error.contrastText};
+      background: ${theme.colors.error.main};
+      border-radius: ${theme.shape.radius.default};
+      position: relative;
+      display: inline-block;
+      align-self: flex-start;
 
-    a: {
-      color: theme.colors.error.contrastText,
-      textDecoration: 'underline',
+      a {
+        color: ${theme.colors.error.contrastText};
+        text-decoration: underline;
+      }
 
-      '&:hover': {
-        textDecoration: 'none',
-      },
-    },
-  });
+      a:hover {
+        text-decoration: none;
+      }
+    `;
 
   return {
     vertical: css(baseStyle, {

@@ -1,10 +1,10 @@
 import { cloneDeep } from 'lodash';
 
-import { type ConstantVariableModel } from '@grafana/data';
+import { ConstantVariableModel } from '@grafana/data';
 
 import { dispatch } from '../../../store/store';
-import { type VariableAdapter } from '../adapters';
-import { optionPickerFactory } from '../pickers/OptionsPicker/OptionsPicker';
+import { VariableAdapter } from '../adapters';
+import { optionPickerFactory } from '../pickers';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { toKeyedVariableIdentifier } from '../utils';
 

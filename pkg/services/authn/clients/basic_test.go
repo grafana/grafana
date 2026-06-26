@@ -5,9 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
-
-	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"

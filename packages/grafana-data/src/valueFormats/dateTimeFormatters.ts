@@ -1,11 +1,10 @@
 import { localTimeFormat, systemDateFormats } from '../datetime/formats';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '../datetime/formatter';
 import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrapper';
-import { type DecimalCount } from '../types/displayValue';
-import { type TimeZone } from '../types/time';
-import { type FormattedValue, type ValueFormatter } from '../types/valueFormats';
+import { DecimalCount } from '../types/displayValue';
+import { TimeZone } from '../types/time';
 
-import { toFixed, toFixedScaled } from './baseFormatters';
+import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
 
 interface IntervalsInSeconds {
   [interval: string]: number;

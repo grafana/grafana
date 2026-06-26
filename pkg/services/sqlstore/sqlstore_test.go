@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -25,8 +24,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	store, _ := InitTestDB(t)
 
 	testCases := []struct {
@@ -79,30 +76,42 @@ func TestInitEngine_ParseTimeInConnectionString(t *testing.T) {
 		name               string
 		connectionString   string
 		dbType             string
+		featureEnabled     bool
 		expectedConnection string
 	}{
 		{
 			name:               "MySQL with parseTime already present",
 			connectionString:   "mysql://user:password@localhost:3306/alreadypresent?parseTime=false",
 			dbType:             "mysql",
-			expectedConnection: "user:password@tcp(localhost:3306)/alreadypresent?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode=ANSI_QUOTES&parseTime=false",
+			featureEnabled:     true,
+			expectedConnection: "user:password@tcp(localhost:3306)/alreadypresent?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=false",
 		},
 		{
 			name:               "MySQL with feature enabled",
 			connectionString:   "mysql://user:password@localhost:3306/existingparams?charset=utf8",
 			dbType:             "mysql",
-			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode=ANSI_QUOTES&charset=utf8",
+			featureEnabled:     true,
+			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&charset=utf8&parseTime=true",
 		},
 		{
 			name:               "MySQL with feature enabled",
 			connectionString:   "mysql://user:password@localhost:3306/existingparams?charset=utf8",
 			dbType:             "mysqlWithHooks",
-			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode=ANSI_QUOTES&charset=utf8",
+			featureEnabled:     true,
+			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&charset=utf8&parseTime=true",
+		},
+		{
+			name:               "MySQL with feature disabled",
+			connectionString:   "mysql://user:password@localhost:3306/disabled",
+			dbType:             "mysql",
+			featureEnabled:     false,
+			expectedConnection: "user:password@tcp(localhost:3306)/disabled?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 		},
 		{
 			name:               "Postgres",
 			connectionString:   "postgres://username:password@localhost:5432/mydatabase",
 			dbType:             "postgres",
+			featureEnabled:     true,
 			expectedConnection: "user=username host=localhost port=5432 dbname=mydatabase sslmode='' sslcert='' sslkey='' sslrootcert='' password=password",
 		},
 	}
@@ -115,6 +124,9 @@ func TestInitEngine_ParseTimeInConnectionString(t *testing.T) {
 			require.NoError(t, err)
 
 			ftMgr := featuremgmt.WithFeatures()
+			if tt.featureEnabled {
+				ftMgr = featuremgmt.WithFeatures(featuremgmt.FlagMysqlParseTime)
+			}
 
 			ss := &SQLStore{
 				cfg: &setting.Cfg{

@@ -1,10 +1,10 @@
 import {
-  type EchoBackend,
+  EchoBackend,
   EchoEventType,
-  type InteractionEchoEvent,
+  InteractionEchoEvent,
   isInteractionEvent,
   isPageviewEvent,
-  type PageviewEchoEvent,
+  PageviewEchoEvent,
 } from '@grafana/runtime';
 
 interface ApplicationInsights {
@@ -23,7 +23,6 @@ declare global {
 export interface ApplicationInsightsBackendOptions {
   connectionString: string;
   endpointUrl?: string;
-  autoRouteTracking?: boolean;
 }
 
 export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent, ApplicationInsightsBackendOptions> {
@@ -34,7 +33,6 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
       config: {
         connectionString: options.connectionString,
         endpointUrl: options.endpointUrl,
-        enableAutoRouteTracking: options.autoRouteTracking,
       },
     };
 

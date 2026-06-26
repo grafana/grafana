@@ -1,16 +1,16 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { INSTANCE_ID, PANEL_STYLES, overrideToFixedColor } from '../../home/Insights';
-import { InsightsMenuButton } from '../InsightsMenuButton';
+import { INSTANCE_ID, overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
+import { InsightsRatingModal } from '../RatingModal';
 
 export function getNotificationsScene(datasource: DataSourceRef, panelTitle: string) {
   const exprA = INSTANCE_ID
-    ? `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second{stack_id="${INSTANCE_ID}"}) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second{stack_id="${INSTANCE_ID}"})`
+    ? `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second{id="${INSTANCE_ID}"}) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second{id="${INSTANCE_ID}"})`
     : `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)`;
 
   const exprB = INSTANCE_ID
-    ? `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second{stack_id="${INSTANCE_ID}"})`
+    ? `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second{id="${INSTANCE_ID}"})`
     : `sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)`;
 
   const query = new SceneQueryRunner({
@@ -18,13 +18,13 @@ export function getNotificationsScene(datasource: DataSourceRef, panelTitle: str
     queries: [
       {
         refId: 'A',
-        expr: exprA,
+        exprA,
         range: true,
         legendFormat: 'success',
       },
       {
         refId: 'B',
-        expr: exprB,
+        exprB,
         range: true,
         legendFormat: 'failed',
       },
@@ -46,7 +46,7 @@ export function getNotificationsScene(datasource: DataSourceRef, panelTitle: str
           .matchFieldsWithName('failed')
           .overrideColor(overrideToFixedColor('failed'))
       )
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

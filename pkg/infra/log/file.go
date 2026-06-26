@@ -229,7 +229,7 @@ func (w *FileLogWriter) deleteOldLog() {
 
 		if !info.IsDir() && info.ModTime().Unix() < (time.Now().Unix()-60*60*24*w.Maxdays) &&
 			strings.HasPrefix(filepath.Base(path), filepath.Base(w.Filename)) {
-			returnErr = os.Remove(path) // #nosec G122 -- log rotation on operator-controlled directory
+			returnErr = os.Remove(path)
 			return
 		}
 		return

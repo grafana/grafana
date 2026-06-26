@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
+	"xorm.io/core"
 )
 
 // Statement save all the sql info for executing SQL
@@ -201,13 +201,6 @@ func (statement *Statement) In(column string, args ...any) *Statement {
 	return statement
 }
 
-// OrIn generate "Where column IN (?) " statement
-func (statement *Statement) OrIn(column string, args ...any) *Statement {
-	in := builder.In(statement.Engine.Quote(column), args...)
-	statement.cond = statement.cond.Or(in)
-	return statement
-}
-
 // NotIn generate "Where column NOT IN (?) " statement
 func (statement *Statement) NotIn(column string, args ...any) *Statement {
 	notIn := builder.NotIn(statement.Engine.Quote(column), args...)
@@ -274,6 +267,10 @@ func (statement *Statement) buildUpdates(bean any,
 			continue
 		}
 
+		if col.MapType == core.ONLYFROMDB {
+			continue
+		}
+
 		if statement.incrColumns.isColExist(col.Name) {
 			continue
 		} else if statement.decrColumns.isColExist(col.Name) {
@@ -323,11 +320,7 @@ func (statement *Statement) buildUpdates(bean any,
 				if err != nil {
 					engine.logger.Error(err)
 				} else {
-					if col.SQLType.IsText() {
-						val = string(data)
-					} else {
-						val = data
-					}
+					val = data
 				}
 				goto APPEND
 			}
@@ -338,16 +331,12 @@ func (statement *Statement) buildUpdates(bean any,
 			if err != nil {
 				engine.logger.Error(err)
 			} else {
-				if col.SQLType.IsText() {
-					val = string(data)
-				} else {
-					val = data
-				}
+				val = data
 			}
 			goto APPEND
 		}
 
-		if fieldType.Kind() == reflect.Pointer {
+		if fieldType.Kind() == reflect.Ptr {
 			if fieldValue.IsNil() {
 				if includeNil {
 					args = append(args, nil)
@@ -816,6 +805,10 @@ func (statement *Statement) genColumnStr() string {
 		}
 
 		if len(statement.columnMap) > 0 && !statement.columnMap.contain(col.Name) {
+			continue
+		}
+
+		if col.MapType == core.ONLYTODB {
 			continue
 		}
 

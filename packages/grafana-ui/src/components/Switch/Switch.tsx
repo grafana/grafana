@@ -1,12 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef, type HTMLProps, useId } from 'react';
+import { uniqueId } from 'lodash';
+import { forwardRef, HTMLProps, useRef } from 'react';
 
-import { type GrafanaTheme2, deprecationWarning } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
@@ -15,38 +14,17 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   invalid?: boolean;
 }
 
-/**
- * Switch is a representation of an on-off state – like a light switch. So you can use Switch to toggle binary states.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-switch--docs
- */
 export const Switch = forwardRef<HTMLInputElement, Props>(
-  (
-    {
-      value,
-      checked,
-      onChange,
-      id: idProp,
-      label,
-      disabled: disabledProp,
-      invalid: invalidProp = false,
-      ...inputProps
-    },
-    ref
-  ) => {
+  ({ value, checked, onChange, id, label, disabled, invalid = false, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
 
     const styles = useStyles2(getSwitchStyles);
-    const generatedId = useId();
-    const fieldContext = useFieldContext();
-    const invalid = invalidProp ?? fieldContext.invalid;
-    const disabled = disabledProp ?? fieldContext.disabled;
-    const switchId = idProp ?? fieldContext.id ?? generatedId;
+    const switchIdRef = useRef(id ? id : uniqueId('switch-'));
 
     return (
-      <div className={cx(styles.switch, invalid && styles.invalid)} data-testid={selectors.components.Switch.container}>
+      <div className={cx(styles.switch, invalid && styles.invalid)}>
         <input
           type="checkbox"
           role="switch"
@@ -55,13 +33,13 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
           onChange={(event) => {
             !disabled && onChange?.(event);
           }}
-          id={switchId}
-          aria-invalid={!!invalid}
+          id={switchIdRef.current}
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchId} aria-label={label} />
-        <Icon name="check" size="xs" />
+        <label htmlFor={switchIdRef.current} aria-label={label}>
+          <Icon name="check" size="xs" />
+        </label>
       </div>
     );
   }
@@ -77,29 +55,13 @@ export interface InlineSwitchProps extends Props {
 }
 
 export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
-  (
-    {
-      transparent,
-      className,
-      showLabel,
-      label,
-      value,
-      disabled: disabledProp,
-      id: idProp,
-      invalid: invalidProp,
-      ...props
-    },
-    ref
-  ) => {
+  ({ transparent, className, showLabel, label, value, id, invalid, ...props }, ref) => {
     const styles = useStyles2(getSwitchStyles, transparent);
-    const defaultId = useId();
-    const fieldContext = useFieldContext();
-    const invalid = invalidProp ?? fieldContext.invalid;
-    const disabled = disabledProp ?? fieldContext.disabled;
-    const id = idProp ?? fieldContext.id ?? defaultId;
 
     return (
-      <div className={cx(styles.inlineContainer, className, disabled && styles.disabled, invalid && styles.invalid)}>
+      <div
+        className={cx(styles.inlineContainer, className, props.disabled && styles.disabled, invalid && styles.invalid)}
+      >
         {showLabel && (
           <label
             htmlFor={id}
@@ -108,15 +70,7 @@ export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
             {label}
           </label>
         )}
-        <Switch
-          {...props}
-          disabled={disabled}
-          invalid={invalid}
-          id={id}
-          label={showLabel ? undefined : label}
-          ref={ref}
-          value={value}
-        />
+        <Switch {...props} id={id} label={label} ref={ref} value={value} />
       </div>
     );
   }
@@ -126,8 +80,8 @@ InlineSwitch.displayName = 'Switch';
 
 const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
   switch: css({
-    width: theme.spacing(4),
-    height: theme.spacing(2),
+    width: '32px',
+    height: '16px',
     position: 'relative',
     lineHeight: 1,
 
@@ -138,48 +92,42 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       zIndex: -1000,
       position: 'absolute',
 
-      '&:checked': {
-        '~ label': {
-          background: theme.colors.accent.main,
-          borderColor: theme.colors.accent.main,
+      '&:checked + label': {
+        background: theme.colors.primary.main,
+        borderColor: theme.colors.primary.main,
 
-          '&:hover': {
-            background: theme.colors.accent.shade,
-          },
+        '&:hover': {
+          background: theme.colors.primary.shade,
         },
 
-        '~ svg': {
-          transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
-          background: theme.colors.accent.contrastText,
-          color: theme.colors.accent.main,
+        svg: {
+          transform: 'translate3d(17px, -50%, 0)',
+          background: theme.colors.primary.contrastText,
+          color: theme.colors.primary.main,
         },
       },
 
-      '&:disabled': {
-        '~ label': {
-          background: theme.colors.action.disabledBackground,
-          borderColor: theme.colors.border.weak,
-          cursor: 'not-allowed',
-        },
+      '&:disabled + label': {
+        background: theme.colors.action.disabledBackground,
+        borderColor: theme.colors.border.weak,
+        cursor: 'not-allowed',
 
-        '~ svg': {
+        svg: {
           background: theme.colors.text.disabled,
         },
       },
 
-      '&:disabled:checked': {
-        '~ label': {
-          background: theme.colors.accent.transparent,
-        },
+      '&:disabled:checked + label': {
+        background: theme.colors.primary.transparent,
 
-        '~ svg': {
-          color: theme.colors.accent.contrastText,
+        svg: {
+          color: theme.colors.primary.contrastText,
         },
       },
 
-      '&:focus ~ label, &:focus-visible ~ label': getFocusStyles(theme),
+      '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
 
-      '&:focus:not(:focus-visible) ~ label': getMouseFocusStyles(theme),
+      '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
     },
 
     label: {
@@ -189,33 +137,28 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       borderRadius: theme.shape.radius.pill,
       background: theme.components.input.background,
       border: `1px solid ${theme.components.input.borderColor}`,
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: 'all 0.3s ease',
-      },
+      transition: 'all 0.3s ease',
 
       '&:hover': {
         borderColor: theme.components.input.borderHover,
       },
-    },
-    svg: {
-      position: 'absolute',
-      display: 'block',
-      color: 'transparent',
-      width: theme.spacing(1.5),
-      height: theme.spacing(1.5),
-      borderRadius: theme.shape.radius.circle,
-      background: theme.colors.text.secondary,
-      boxShadow: theme.shadows.z1,
-      left: 0,
-      pointerEvents: 'none',
-      top: '50%',
-      transform: `translate3d(${theme.spacing(0.25)}, -50%, 0)`,
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)',
-      },
 
-      '@media (forced-colors: active)': {
-        border: `1px solid ${theme.colors.accent.contrastText}`,
+      svg: {
+        position: 'absolute',
+        display: 'block',
+        color: 'transparent',
+        width: '12px',
+        height: '12px',
+        borderRadius: theme.shape.radius.circle,
+        background: theme.colors.text.secondary,
+        boxShadow: theme.shadows.z1,
+        top: '50%',
+        transform: 'translate3d(1px, -50%, 0)',
+        transition: 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)',
+
+        '@media (forced-colors: active)': {
+          border: `1px solid ${theme.colors.primary.contrastText}`,
+        },
       },
     },
   }),
@@ -237,9 +180,9 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
     },
   }),
   disabled: css({
-    backgroundColor: transparent ? 'transparent' : 'rgba(204, 204, 220, 0.04)',
+    backgroundColor: 'rgba(204, 204, 220, 0.04)',
     color: 'rgba(204, 204, 220, 0.6)',
-    border: `1px solid ${transparent ? 'transparent' : 'rgba(204, 204, 220, 0.04)'}`,
+    border: '1px solid rgba(204, 204, 220, 0.04)',
   }),
   inlineLabel: css({
     cursor: 'pointer',
@@ -251,7 +194,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
     color: theme.colors.text.primary,
   }),
   invalid: css({
-    'input ~ label, input:checked ~ label, input:hover ~ label': {
+    'input + label, input:checked + label, input:hover + label': {
       border: `1px solid ${theme.colors.error.border}`,
     },
   }),

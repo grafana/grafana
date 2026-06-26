@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { EditorField, EditorRow, EditorRows } from '@grafana/plugin-ui';
+import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
-import { type CloudWatchMetricsQuery } from '../../../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../../../datasource';
+import { CloudWatchDatasource } from '../../../../datasource';
 import SQLGenerator from '../../../../language/cloudwatch-sql/SQLGenerator';
+import { CloudWatchMetricsQuery } from '../../../../types';
 
 import SQLBuilderSelectRow from './SQLBuilderSelectRow';
 import SQLFilter from './SQLFilter';

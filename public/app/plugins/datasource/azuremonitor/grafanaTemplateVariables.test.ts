@@ -1,7 +1,6 @@
-import { AzureQueryType } from './dataquery.gen';
+import createMockDatasource from './__mocks__/datasource';
 import { migrateQuery, migrateStringQueriesToObjectQueries } from './grafanaTemplateVariableFns';
-import createMockDatasource from './mocks/datasource';
-import { type AzureMonitorQuery } from './types/query';
+import { AzureMonitorQuery, AzureQueryType } from './types';
 
 describe('migrateStringQueriesToObjectQueries', () => {
   const expectedMigrations: Array<{ input: string; output: AzureMonitorQuery }> = [

@@ -3,13 +3,12 @@ package migrator
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"golang.org/x/exp/slices"
+	"xorm.io/xorm"
 )
 
 var (
@@ -27,18 +26,11 @@ type Dialect interface {
 	ShowCreateNull() bool
 	SQLType(col *Column) string
 	SupportEngine() bool
-	// LikeOperator returns SQL snippet and query parameter for case-insensitive LIKE operation, with optional wildcards (%) before/after the pattern.
-	LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string)
+	LikeStr() string
 	Default(col *Column) string
-	// BooleanValue can be used as an argument in SELECT or INSERT statements. For constructing
-	// raw SQL queries, please use BooleanStr instead.
-	BooleanValue(bool) any
-	// BooleanStr should only be used to construct SQL statements (strings). For arguments to queries, use BooleanValue instead.
 	BooleanStr(bool) string
 	DateTimeFunc(string) string
 	BatchSize() int
-	UnionDistinct() string // this is the default UNION type
-	UnionAll() string
 
 	OrderBy(order string) string
 
@@ -75,10 +67,7 @@ type Dialect interface {
 
 	CleanDB(engine *xorm.Engine) error
 	TruncateDBTables(engine *xorm.Engine) error
-	// CreateDatabaseFromSnapshot is called when migration log table is not found.
-	// Dialect can recreate all tables from existing snapshot. After successful (nil error) return,
-	// migrator will list migrations from the log, and apply all missing migrations.
-	CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, migrationLogTableName string, logger log.Logger) error
+	NoOpSQL() string
 
 	IsUniqueConstraintViolation(err error) bool
 	ErrorMessage(err error) string
@@ -150,15 +139,8 @@ func (b *BaseDialect) AndStr() string {
 	return "AND"
 }
 
-func (b *BaseDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
-	param := pattern
-	if wildcardBefore {
-		param = "%" + param
-	}
-	if wildcardAfter {
-		param = param + "%"
-	}
-	return fmt.Sprintf("%s LIKE ?", column), param
+func (b *BaseDialect) LikeStr() string {
+	return "LIKE"
 }
 
 func (b *BaseDialect) OrStr() string {
@@ -202,7 +184,7 @@ func (b *BaseDialect) CreateTableSQL(table *Table) string {
 	}
 
 	if len(pkList) > 1 {
-		quotedCols := make([]string, 0, len(pkList))
+		quotedCols := []string{}
 		for _, col := range pkList {
 			quotedCols = append(quotedCols, b.dialect.Quote(col))
 		}
@@ -232,7 +214,7 @@ func (b *BaseDialect) CreateIndexSQL(tableName string, index *Index) string {
 
 	idxName := index.XName(tableName)
 
-	quotedCols := make([]string, 0, len(index.Cols))
+	quotedCols := []string{}
 	for _, col := range index.Cols {
 		quotedCols = append(quotedCols, b.dialect.Quote(col))
 	}
@@ -254,7 +236,7 @@ func (b *BaseDialect) CopyTableData(sourceTable string, targetTable string, sour
 	targetColsSQL := b.QuoteColList(targetCols)
 
 	quote := b.dialect.Quote
-	return fmt.Sprintf("INSERT INTO %s (%s)\nSELECT %s\nFROM %s", quote(targetTable), targetColsSQL, sourceColsSQL, quote(sourceTable))
+	return fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s", quote(targetTable), targetColsSQL, sourceColsSQL, quote(sourceTable))
 }
 
 func (b *BaseDialect) DropTable(tableName string) string {
@@ -356,8 +338,8 @@ func (b *BaseDialect) CleanDB(engine *xorm.Engine) error {
 	return nil
 }
 
-func (b *BaseDialect) CreateDatabaseFromSnapshot(ctx context.Context, engine *xorm.Engine, migrationLogTableName string, logger log.Logger) error {
-	return nil
+func (b *BaseDialect) NoOpSQL() string {
+	return "SELECT 0;"
 }
 
 func (b *BaseDialect) TruncateDBTables(engine *xorm.Engine) error {
@@ -475,12 +457,4 @@ func (b *BaseDialect) Update(ctx context.Context, tx *session.SessionTx, tableNa
 
 func (b *BaseDialect) Concat(strs ...string) string {
 	return fmt.Sprintf("CONCAT(%s)", strings.Join(strs, ", "))
-}
-
-func (b *BaseDialect) UnionDistinct() string {
-	return "UNION"
-}
-
-func (b *BaseDialect) UnionAll() string {
-	return "UNION ALL"
 }

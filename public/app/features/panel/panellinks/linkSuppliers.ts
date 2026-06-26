@@ -1,18 +1,18 @@
 import {
-  type DataLink,
-  type DisplayValue,
-  type FieldDisplay,
+  DataLink,
+  DisplayValue,
+  FieldDisplay,
   formattedValueToString,
   getFieldDisplayValuesProxy,
   getTimeField,
-  type InterpolateFunction,
-  type Labels,
-  type LinkModelSupplier,
-  type ScopedVar,
-  type ScopedVars,
+  InterpolateFunction,
+  Labels,
+  LinkModelSupplier,
+  ScopedVar,
+  ScopedVars,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 
 import { getLinkSrv } from './link_srv';
@@ -69,7 +69,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
             name: dataFrame.name,
             refId: dataFrame.refId,
           },
-          text: t('panel.get-field-links-supplier.text.series', 'Series'),
+          text: 'Series',
         };
 
         const field = value.colIndex !== undefined ? dataFrame.fields[value.colIndex] : undefined;
@@ -80,7 +80,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
               name: field.name,
               labels: field.labels,
             },
-            text: t('panel.get-field-links-supplier.text.field', 'Field'),
+            text: 'Field',
           };
 
           if (value.rowIndex !== undefined && value.rowIndex >= 0) {
@@ -92,7 +92,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
                 text: formattedValueToString(value.display),
                 time: timeField ? timeField.values[value.rowIndex] : undefined,
               },
-              text: t('panel.get-field-links-supplier.text.value', 'Value'),
+              text: 'Value',
             };
           }
 
@@ -107,7 +107,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
                   rowIndex: value.rowIndex!,
                 }),
               },
-              text: t('panel.get-field-links-supplier.text.data', 'Data'),
+              text: 'Data',
             };
           }
         } else {
@@ -119,7 +119,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
               text: formattedValueToString(value.display),
               calc: value.name,
             },
-            text: t('panel.get-field-links-supplier.text.value', 'Value'),
+            text: 'Value',
           };
         }
       } else {
@@ -136,6 +136,25 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
 
       return links.map((link: DataLink) => {
         return getLinkSrv().getDataLinkUIModel(link, replace, value);
+      });
+    },
+  };
+};
+
+export const getPanelLinksSupplier = (
+  panel: PanelModel,
+  replaceVariables?: InterpolateFunction
+): LinkModelSupplier<PanelModel> | undefined => {
+  const links = panel.links;
+
+  if (!links || links.length === 0) {
+    return undefined;
+  }
+
+  return {
+    getLinks: () => {
+      return links.map((link) => {
+        return getLinkSrv().getDataLinkUIModel(link, replaceVariables || panel.replaceVariables, panel);
       });
     },
   };

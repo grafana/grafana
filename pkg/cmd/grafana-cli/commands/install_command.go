@@ -90,7 +90,6 @@ type pluginInstallOpts struct {
 	repoURL   string
 	pluginURL string
 	pluginDir string
-	gcomToken string
 }
 
 func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
@@ -99,7 +98,6 @@ func newInstallPluginOpts(c utils.CommandLine) pluginInstallOpts {
 		repoURL:   c.PluginRepoURL(),
 		pluginURL: c.PluginURL(),
 		pluginDir: c.PluginDirectory(),
-		gcomToken: c.GrafanaComProxyAPIToken(),
 	}
 }
 
@@ -125,7 +123,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		if p, ok := services.PluginVersionInstalled(pluginID, version, o.pluginDir); ok {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
 			for _, depP := range p.JSONData.Dependencies.Plugins {
-				if err := doInstallPlugin(ctx, depP.ID, "", o, installing); err != nil {
+				if err := doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
 					return err
 				}
 			}
@@ -134,13 +132,14 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 	}
 
 	repository := repo.NewManager(repo.ManagerCfg{
-		SkipTLSVerify:      o.insecure,
-		BaseURL:            o.repoURL,
-		Logger:             services.Logger,
-		GrafanaComAPIToken: o.gcomToken,
+		SkipTLSVerify: o.insecure,
+		BaseURL:       o.repoURL,
+		Logger:        services.Logger,
 	})
 
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+	// FIXME: Re-enable grafanaVersion. This check was broken in 10.2 so disabling it for the moment.
+	// Expected to be re-enabled in 12.x.
+	compatOpts := repo.NewCompatOpts("", runtime.GOOS, runtime.GOARCH)
 
 	var archive *repo.PluginArchive
 	var err error
@@ -159,7 +158,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		if p, ok := services.PluginVersionInstalled(pluginID, archiveInfo.Version, o.pluginDir); ok {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, archiveInfo.Version)
 			for _, depP := range p.JSONData.Dependencies.Plugins {
-				if err = doInstallPlugin(ctx, depP.ID, "", o, installing); err != nil {
+				if err = doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
 					return err
 				}
 			}
@@ -179,7 +178,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 
 	for _, dep := range extractedArchive.Dependencies {
 		services.Logger.Infof("Fetching %s dependency %s...", pluginID, dep.ID)
-		err = doInstallPlugin(ctx, dep.ID, "", pluginInstallOpts{
+		err = doInstallPlugin(ctx, dep.ID, dep.Version, pluginInstallOpts{
 			insecure:  o.insecure,
 			repoURL:   o.repoURL,
 			pluginDir: o.pluginDir,

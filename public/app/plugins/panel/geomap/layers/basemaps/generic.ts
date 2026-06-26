@@ -1,15 +1,8 @@
-import type OpenLayersMap from 'ol/Map';
+import Map from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type GrafanaTheme2,
-  type EventBus,
-  textUtil,
-} from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
 
 export interface XYZConfig {
   url: string;
@@ -30,31 +23,20 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
   description: 'Add map from a generic tile layer',
   isBaseMap: true,
 
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<XYZConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => ({
+  create: async (map: Map, options: MapLayerOptions<XYZConfig>, eventBus: EventBus, theme: GrafanaTheme2) => ({
     init: () => {
       const cfg = { ...options.config };
       if (!cfg.url) {
         cfg.url = defaultXYZConfig.url;
         cfg.attribution = cfg.attribution ?? defaultXYZConfig.attribution;
       }
-      const noRepeat = options.noRepeat ?? false;
-      const interpolatedUrl = textUtil.sanitizeUrl(getTemplateSrv().replace(cfg.url));
-      const interpolatedAttribution = textUtil.sanitizeTextPanelContent(getTemplateSrv().replace(cfg.attribution));
-
       return new TileLayer({
         source: new XYZ({
-          url: interpolatedUrl,
-          attributions: interpolatedAttribution,
-          wrapX: !noRepeat,
-          minZoom: cfg.minZoom,
-          maxZoom: cfg.maxZoom,
+          url: cfg.url,
+          attributions: cfg.attribution, // singular?
         }),
         minZoom: cfg.minZoom,
+        maxZoom: cfg.maxZoom,
       });
     },
     registerOptionsUI: (builder) => {
@@ -62,7 +44,7 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         .addTextInput({
           path: 'config.url',
           name: 'URL template',
-          description: 'Must include {x}, {y} or {-y}, and {z} placeholders. Dashboard variables are supported.',
+          description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
           settings: {
             placeholder: defaultXYZConfig.url,
           },
@@ -72,26 +54,6 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
           name: 'Attribution',
           settings: {
             placeholder: defaultXYZConfig.attribution,
-          },
-        })
-        .addNumberInput({
-          path: 'config.minZoom',
-          name: 'Min zoom',
-          description: 'Minimum zoom level. Tiles are not loaded below this level.',
-          settings: {
-            placeholder: '0',
-            min: 0,
-            max: 30,
-          },
-        })
-        .addNumberInput({
-          path: 'config.maxZoom',
-          name: 'Max zoom',
-          description: 'Maximum zoom level provided by the server. Beyond this level, tiles are upscaled.',
-          settings: {
-            placeholder: '18',
-            min: 0,
-            max: 30,
           },
         });
     },

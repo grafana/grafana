@@ -1,33 +1,33 @@
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { MultiSelect, type MultiSelectCommonProps } from '@grafana/ui';
-import { type MuteTiming, useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
-import { type BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
+import { SelectableValue } from '@grafana/data';
+import { MultiSelect, MultiSelectCommonProps } from '@grafana/ui';
+import { useSelectableMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
+import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
-const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<string> => ({
+const mapMuteTiming = ({ name, time_intervals }: MuteTimeInterval): SelectableValue<string> => ({
   value: name,
   label: name,
   description: time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND '),
 });
 
-/** Provides a MultiSelect with available time intervals for the given alertmanager */
-const TimeIntervalSelector = ({
+/** Provides a MultiSelect with available mute timings for the given alertmanager */
+const MuteTimingsSelector = ({
   alertmanager,
   selectProps,
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
-  const { data } = useMuteTimings({ alertmanager, skip: selectProps.disabled, filterUsable: true });
+  const { data } = useSelectableMuteTimings({ alertmanager });
 
-  const timeIntervalOptions = (data || []).map((value) => mapTimeInterval(value));
+  const muteTimingOptions = data?.map((value) => mapMuteTiming(value)) || [];
 
   return (
     <MultiSelect
-      aria-label={t('alerting.time-intervals-selector.aria-label-time-intervals', 'Time intervals')}
-      options={timeIntervalOptions}
-      placeholder={t('alerting.time-intervals-selector.placeholder-select-time-intervals', 'Select time intervals...')}
+      aria-label="Mute timings"
+      options={muteTimingOptions}
+      placeholder="Select mute timings..."
       {...selectProps}
     />
   );
 };
 
-export default TimeIntervalSelector;
+export default MuteTimingsSelector;

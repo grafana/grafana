@@ -1,8 +1,8 @@
 import { lastValueFrom, Observable } from 'rxjs';
 
-import { type DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
-import { type LogFilter } from './LogViewFilters';
+import { LogFilter } from './LogViewFilters';
 import { createFilterTransformation } from './filterTransformation';
 
 const data = [

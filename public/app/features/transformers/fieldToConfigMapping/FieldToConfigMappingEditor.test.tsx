@@ -1,15 +1,10 @@
-import { fireEvent, render, screen, getByLabelText, within, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, getByText, getByLabelText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { ReducerID, toDataFrame, FieldType } from '@grafana/data';
-import { mockComboboxRect } from '@grafana/test-utils';
+import { toDataFrame, FieldType } from '@grafana/data';
 
-import { type Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
-
-beforeAll(() => {
-  mockComboboxRect();
-});
+import { Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -61,7 +56,7 @@ describe('FieldToConfigMappingEditor', () => {
     setup({ mappings: [{ fieldName: 'max', handlerKey: 'min' }] });
 
     const select = (await screen.findByTestId('max-config-key')).childNodes[0];
-    await userEvent.click(getByLabelText(select as HTMLElement, 'Clear value'));
+    await userEvent.click(getByLabelText(select as HTMLElement, 'select-clear-value'));
 
     expect(mockOnChange).toHaveBeenCalledWith(expect.arrayContaining([]));
   });
@@ -78,21 +73,16 @@ describe('FieldToConfigMappingEditor', () => {
 
     const reducer = await screen.findByTestId('max-reducer');
 
-    expect(within(reducer).getByDisplayValue('All values')).toBeInTheDocument();
+    expect(getByText(reducer, 'All values')).toBeInTheDocument();
   });
 
   it('Can change reducer', async () => {
-    const user = userEvent.setup({ applyAccept: false });
     setup();
 
-    const reducerCell = await screen.findByTestId('max-reducer');
-    await user.click(within(reducerCell).getByRole('combobox'));
+    const reducer = await (await screen.findByTestId('max-reducer')).childNodes[0];
 
-    await waitFor(() => {
-      expect(document.getElementById(`combobox-option-${ReducerID.last}`)).toBeInTheDocument();
-    });
-
-    await user.click(document.getElementById(`combobox-option-${ReducerID.last}`)!);
+    await fireEvent.keyDown(reducer, { keyCode: 40 });
+    await selectOptionInTest(reducer as HTMLElement, 'Last');
 
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.arrayContaining([{ fieldName: 'max', handlerKey: 'max', reducerId: 'last' }])

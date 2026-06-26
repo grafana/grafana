@@ -1,12 +1,16 @@
 import { useState } from 'react';
 
-import { type DataSourceApi, type SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
-import { type QueryBuilderOperationParamEditorProps, type VisualQueryModeller } from '@grafana/plugin-ui';
+import { SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
+import { QueryBuilderOperationParamEditorProps, VisualQueryModeller } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
+import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiDatasource } from '../../datasource';
+import { getLogQueryFromMetricsQuery, isQueryWithError } from '../../queryUtils';
 import { extractUnwrapLabelKeysFromDataFrame } from '../../responseUtils';
 import { getOperationParamId } from '../operationUtils';
-import { type LokiVisualQuery } from '../types';
+import { LokiVisualQuery } from '../types';
 
 export function UnwrapParamEditor({
   onChange,
@@ -28,9 +32,11 @@ export function UnwrapParamEditor({
       inputId={getOperationParamId(operationId, index)}
       onOpenMenu={async () => {
         // This check is always true, we do it to make typescript happy
-        setState({ isLoading: true });
-        const options = await loadUnwrapOptions(query, datasource, queryModeller, timeRange);
-        setState({ options, isLoading: undefined });
+        if (datasource instanceof LokiDatasource && config.featureToggles.lokiQueryHints) {
+          setState({ isLoading: true });
+          const options = await loadUnwrapOptions(query, datasource, queryModeller, timeRange);
+          setState({ options, isLoading: undefined });
+        }
       }}
       isLoading={state.isLoading}
       allowCustomValue
@@ -49,18 +55,17 @@ export function UnwrapParamEditor({
 
 async function loadUnwrapOptions(
   query: LokiVisualQuery,
-  datasource: DataSourceApi,
+  datasource: LokiDatasource,
   queryModeller: VisualQueryModeller,
   timeRange = getDefaultTimeRange()
 ): Promise<Array<SelectableValue<string>>> {
   const queryExpr = queryModeller.renderQuery(query);
-  if (!('getDataSamples' in datasource) || typeof datasource.getDataSamples !== 'function') {
+  const logExpr = getLogQueryFromMetricsQuery(queryExpr);
+  if (isQueryWithError(datasource.interpolateString(logExpr, placeHolderScopedVars))) {
     return [];
   }
-  // the query is a metric query, we need to set metricQueryToLogConversion to true to getSamples use the log query
-  const samples = await datasource.getDataSamples({ expr: queryExpr, refId: 'unwrap_samples' }, timeRange, {
-    convertMetricQueryToLogQuery: true,
-  });
+
+  const samples = await datasource.getDataSamples({ expr: logExpr, refId: 'unwrap_samples' }, timeRange);
   const unwrapLabels = extractUnwrapLabelKeysFromDataFrame(samples[0]);
 
   const labelOptions = unwrapLabels.map((label) => ({

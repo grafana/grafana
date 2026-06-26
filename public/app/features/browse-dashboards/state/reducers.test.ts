@@ -1,9 +1,8 @@
 import { config } from '@grafana/runtime';
-import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
 
 import { sharedWithMeFolder, wellFormedDashboard, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
-import { type BrowseDashboardsState } from '../types';
+import { BrowseDashboardsState } from '../types';
 
 import { fetchNextChildrenPageFulfilled, setAllSelection, setFolderOpenState, setItemSelectionState } from './reducers';
 
@@ -347,32 +346,6 @@ describe('browse-dashboards reducers', () => {
 
       expect(state.selectedItems.folder[sharedWithMe.uid]).toBeFalsy();
     });
-
-    it('does not allow the starred folders container or its children to be selected', () => {
-      let seed = 1;
-      const folder = wellFormedFolder(seed++).item;
-      const starredFolders = wellFormedFolder(seed++, undefined, { uid: STARRED_FOLDERS_UID, url: undefined }).item;
-      const starredChild = wellFormedFolder(seed++, undefined, {
-        uid: `${STARRED_FOLDERS_UID}/real-folder`,
-        parentUID: STARRED_FOLDERS_UID,
-      }).item;
-
-      const state = createInitialState();
-      state.rootItems = fullyLoadedViewItemCollection([starredFolders, folder]);
-      state.childrenByParentUID[STARRED_FOLDERS_UID] = fullyLoadedViewItemCollection([starredChild]);
-
-      setItemSelectionState(state, {
-        type: 'setItemSelectionState',
-        payload: { item: starredFolders, isSelected: true },
-      });
-      setItemSelectionState(state, {
-        type: 'setItemSelectionState',
-        payload: { item: starredChild, isSelected: true },
-      });
-
-      expect(state.selectedItems.folder[STARRED_FOLDERS_UID]).toBeFalsy();
-      expect(state.selectedItems.folder[starredChild.uid]).toBeFalsy();
-    });
   });
 
   describe('setAllSelection', () => {
@@ -492,24 +465,6 @@ describe('browse-dashboards reducers', () => {
         folder: {},
         panel: {},
       });
-    });
-
-    it("doesn't select the starred folders container or its children when selecting all", () => {
-      const state = createInitialState();
-      const starredFolders = wellFormedFolder(10, undefined, { uid: STARRED_FOLDERS_UID, url: undefined }).item;
-      const starredChild = wellFormedFolder(11, undefined, {
-        uid: `${STARRED_FOLDERS_UID}/real-folder`,
-        parentUID: STARRED_FOLDERS_UID,
-      }).item;
-
-      state.rootItems = fullyLoadedViewItemCollection([topLevelFolder, starredFolders]);
-      state.childrenByParentUID[STARRED_FOLDERS_UID] = fullyLoadedViewItemCollection([starredChild]);
-      state.childrenByParentUID[topLevelFolder.uid] = fullyLoadedViewItemCollection([childDashboard, childFolder]);
-
-      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true, folderUID: undefined } });
-
-      expect(state.selectedItems.folder[STARRED_FOLDERS_UID]).toBeFalsy();
-      expect(state.selectedItems.folder[starredChild.uid]).toBeFalsy();
     });
   });
 });

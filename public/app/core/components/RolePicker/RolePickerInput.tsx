@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { type FormEvent, type HTMLProps, useEffect, useRef, type JSX } from 'react';
+import { FormEvent, HTMLProps, useEffect, useRef } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, getInputStyles, sharedInputStyle, Tooltip, Icon, Spinner } from '@grafana/ui';
-import { getFocusStyles } from '@grafana/ui/internal';
-import { type Role } from 'app/types/accessControl';
+import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+
+import { Role } from '../../../types';
 
 import { ValueContainer } from './ValueContainer';
 import { ROLE_PICKER_WIDTH } from './constants';
@@ -88,7 +88,7 @@ export const RolePickerInput = ({
           onMouseDown={stopPropagation}
           onChange={onInputChange}
           data-testid="role-picker-input"
-          placeholder={isFocused ? t('role-picker.input.placeholder-select-role', 'Select role') : undefined}
+          placeholder={isFocused ? 'Select role' : ''}
           value={query}
         />
       )}
@@ -107,7 +107,7 @@ interface RolesLabelProps {
   numberOfRoles: number;
 }
 
-const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabelProps): JSX.Element => {
+export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabelProps): JSX.Element => {
   const styles = useStyles2((theme) => getTooltipStyles(theme));
 
   return (
@@ -116,9 +116,7 @@ const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabel
         <Tooltip
           content={
             <div className={styles.tooltip}>
-              {appliedRoles?.map((role) => (
-                <p key={role.uid}>{role.group + ':' + (role.displayName || role.name)}</p>
-              ))}
+              {appliedRoles?.map((role) => <p key={role.uid}>{role.group + ':' + (role.displayName || role.name)}</p>)}
             </div>
           }
         >
@@ -127,11 +125,7 @@ const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabel
           }`}</ValueContainer>
         </Tooltip>
       ) : (
-        !showBuiltInRole && (
-          <ValueContainer>
-            <Trans i18nKey="role-picker.input.no-roles">No roles assigned</Trans>
-          </ValueContainer>
-        )
+        !showBuiltInRole && <ValueContainer>No roles assigned</ValueContainer>
       )}
     </>
   );

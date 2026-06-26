@@ -74,34 +74,32 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 	ctx, span := s.tracer.Start(ctx, "SSE.TransformData")
 	defer func() {
 		var respStatus string
-		switch err {
-		case nil:
+		switch {
+		case err == nil:
 			respStatus = "success"
 		default:
 			respStatus = "failure"
 		}
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		s.metrics.ExpressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
+		s.metrics.expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
 
 		span.End()
 	}()
 
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
-	pipeline, err := s.buildPipeline(ctx, req)
+	pipeline, err := s.BuildPipeline(req)
 	if err != nil {
 		return nil, err
 	}
 
-	// Execute the pipeline. Disabled nodes (e.g. those with missing dependencies)
-	// inject their errors into the result vars during execution; downstream nodes
-	// fail via the existing Mode 1 dependency-error path.
+	// Execute the pipeline
 	responses, err := s.ExecutePipeline(ctx, now, pipeline)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get which queries have the Hide property so those queries' results
+	// Get which queries have the Hide property so they those queries' results
 	// can be excluded from the response.
 	hidden, err := hiddenRefIDs(req.Queries)
 	if err != nil {

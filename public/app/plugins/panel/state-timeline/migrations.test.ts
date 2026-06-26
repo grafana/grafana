@@ -1,4 +1,4 @@
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 
 import { timelinePanelChangedHandler } from './migrations';
 
@@ -46,16 +46,6 @@ const discreteInV8 = {
       $$hashKey: 'object:369',
       color: '#E24D42',
       text: '5',
-    },
-    {
-      $$hashKey: 'object:369',
-      color: '#FF0', // Should get linked to the range map below
-      text: 'AAA',
-    },
-    {
-      $$hashKey: 'object:369',
-      color: '#F0F', // Should get linked to the range map below
-      text: 'ONE',
     },
   ],
   crosshairColor: '#8F070C',

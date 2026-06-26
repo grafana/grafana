@@ -1,156 +1,81 @@
 // Libraries
 import { css } from '@emotion/css';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Alert, Box, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { type DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
-import { DashboardRoutes } from 'app/types/dashboard';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
+import { DashboardRoutes } from 'app/types';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
-import { type DashboardScene } from '../scene/DashboardScene';
-import { useScenesFlickeringFix } from '../utils/utils';
+import { DashboardScene } from '../scene/DashboardScene';
 
-import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
-import { SoloPanelPageLogo } from './SoloPanelPageLogo';
+import { useSoloPanel } from './useSoloPanel';
 
-export interface Props
-  extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; hideLogo?: UrlQueryValue }> {}
+export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> {}
 
 /**
  * Used for iframe embedding and image rendering of single panels
  */
 export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
-  const { dashboard, loadError } = stateManager.useState();
-  const { uid = '', type, slug } = useParams();
-
-  useScenesFlickeringFix();
+  const { dashboard } = stateManager.useState();
+  const { uid = '' } = useParams();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });
+    stateManager.loadDashboard({ uid, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, uid, type, slug]);
+  }, [stateManager, queryParams, uid]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;
-  }
-
-  if (loadError) {
-    return (
-      <Box justifyContent={'center'} alignItems={'center'} display={'flex'} height={'100%'}>
-        <Alert severity="error" title={t('dashboard.errors.failed-to-load', 'Failed to load dashboard')}>
-          {loadError.message}
-        </Alert>
-      </Box>
-    );
   }
 
   if (!dashboard) {
     return <PageLoader />;
   }
 
-  return (
-    <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true}>
-      <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} hideLogo={queryParams.hideLogo} />
-    </UrlSyncContextProvider>
-  );
+  return <SoloPanelRenderer dashboard={dashboard} panelId={queryParams.panelId} />;
 }
 
 export default SoloPanelPage;
 
-export function SoloPanelRenderer({
-  dashboard,
-  panelId,
-  hideLogo,
-  children,
-}: {
-  dashboard: DashboardScene;
-  panelId: string;
-  hideLogo?: UrlQueryValue;
-  children?: ReactNode;
-}) {
-  const { controls, body } = dashboard.useState();
-  const refreshPicker = controls?.useState()?.refreshPicker;
+export function SoloPanelRenderer({ dashboard, panelId }: { dashboard: DashboardScene; panelId: string }) {
+  const [panel, error] = useSoloPanel(dashboard, panelId);
   const styles = useStyles2(getStyles);
-  const soloPanelContext = useDefineSoloPanelContext(panelId)!;
-  const [isHovered, setIsHovered] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const dashDeactivate = dashboard.activate();
-    const refreshDeactivate = refreshPicker?.activate();
+  if (error) {
+    return <Alert title={error} />;
+  }
 
-    return () => {
-      dashDeactivate();
-      refreshDeactivate?.();
-    };
-  }, [dashboard, refreshPicker]);
+  if (!panel) {
+    return (
+      <span>
+        Loading <Spinner />
+      </span>
+    );
+  }
 
   return (
-    <div
-      ref={containerRef}
-      className={styles.container}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <SoloPanelPageLogo containerRef={containerRef} isHovered={isHovered} hideLogo={hideLogo} />
-      {renderHiddenVariables(dashboard)}
-      <div className={styles.panelWrapper}>
-        <SoloPanelContextProvider value={soloPanelContext} dashboard={dashboard} singleMatch={true}>
-          <body.Component model={body} />
-          {children}
-        </SoloPanelContextProvider>
-      </div>
+    <div className={styles.container}>
+      <panel.Component model={panel} />
     </div>
   );
 }
 
-// Some variables like ScopesVariable needs
-// to be rendered for their logic to work even if hidden
-function renderHiddenVariables(dashboard: DashboardScene) {
-  if (!dashboard.state.$variables) {
-    return null;
-  }
-
-  const variables = dashboard.state.$variables.state.variables;
-
-  return (
-    <>
-      {variables.map((variable) => {
-        if (variable.UNSAFE_renderAsHidden) {
-          return <variable.Component model={variable} key={variable.state.key} />;
-        }
-
-        return null;
-      })}
-    </>
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => {
-  const panelWrapper = css({
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    position: 'fixed',
+    bottom: 0,
+    right: 0,
+    margin: 0,
+    left: 0,
+    top: 0,
     width: '100%',
     height: '100%',
-  });
-
-  return {
-    container: css({
-      position: 'fixed',
-      bottom: 0,
-      right: 0,
-      margin: 0,
-      left: 0,
-      top: 0,
-      width: '100%',
-      height: '100%',
-    }),
-    panelWrapper,
-  };
-};
+  }),
+});

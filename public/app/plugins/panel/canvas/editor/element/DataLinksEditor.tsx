@@ -1,26 +1,19 @@
-import { type StandardEditorProps, type DataLink, VariableSuggestionsScope } from '@grafana/data';
+import { StandardEditorProps, DataLink, VariableSuggestionsScope, OneClickMode } from '@grafana/data';
 import { DataLinksInlineEditor } from '@grafana/ui';
-import { type CanvasElementOptions } from 'app/features/canvas/element';
+import { CanvasElementOptions } from 'app/features/canvas/element';
 
 type Props = StandardEditorProps<DataLink[], CanvasElementOptions>;
 
 export function DataLinksEditor({ value, onChange, item, context }: Props) {
-  const actions = item.settings?.actions || [];
+  const oneClickMode = item.settings?.oneClickMode;
 
   return (
     <DataLinksInlineEditor
       links={value}
-      onChange={(links) => {
-        if (links.some(({ oneClick }) => oneClick === true)) {
-          actions.forEach((action) => {
-            action.oneClick = false;
-          });
-        }
-        onChange(links);
-      }}
+      onChange={onChange}
       getSuggestions={() => (context.getSuggestions ? context.getSuggestions(VariableSuggestionsScope.Values) : [])}
       data={[]}
-      showOneClick={true}
+      showOneClick={oneClickMode === OneClickMode.Link}
     />
   );
 }

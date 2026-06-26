@@ -7,24 +7,10 @@ package server
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginauth "github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
-	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
-	gsmEncryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
-	secretService "github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -33,14 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
-	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
-	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
-	"github.com/grafana/grafana/pkg/services/authz"
-	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
@@ -55,36 +37,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
-	"github.com/grafana/grafana/pkg/storage/unified"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
-	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
-	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
-)
-
-var provisioningExtras = wire.NewSet(
-	extras.ProvideProvisioningOSSRepositoryExtras,
-	extras.ProvideProvisioningOSSConnectionExtras,
-	extras.ProvideFactoryFromConfig,
-)
-
-var configProviderExtras = wire.NewSet(
-	configprovider.ProvideService,
 )
 
 var wireExtsBasicSet = wire.NewSet(
@@ -103,14 +67,10 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
-	wire.Bind(new(pluginauth.RBACCleaner), new(*acimpl.Service)),
 	validations.ProvideValidator,
-	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
-	validations.ProvideURLValidator,
-	wire.Bind(new(validations.DataSourceRequestURLValidator), new(*validations.OSSDataSourceRequestURLValidator)),
+	wire.Bind(new(validations.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
-	legacysql.NewDatabaseProvider,
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 	migrations.ProvideOSSMigrations,
@@ -125,9 +85,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
-	secretkeeper.ProvideService,
-	wire.Bind(new(contracts.KeeperService), new(*secretkeeper.OSSKeeperService)),
-	secretService.ProvideConsolidationService,
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	guardian.ProvideGuardian,
@@ -137,8 +94,10 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
-	publicdashboards.ProvideMiddleware,
-	publicdashboards.ProvideServiceWrapper,
+	publicdashboardsApi.ProvideMiddleware,
+	wire.Bind(new(publicdashboards.Middleware), new(*publicdashboardsApi.Middleware)),
+	publicdashboardsService.ProvideServiceWrapper,
+	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
 	caching.ProvideCachingService,
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 	secretsMigrator.ProvideSecretsMigrator,
@@ -147,30 +106,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
-	builders.ProvideDashboardStats,
-	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
-	search2.ProvideDocumentBuilders,
-	sandbox.ProvideService,
-	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
-	wire.Struct(new(unified.Options), "*"),
-	resource.NewGCGate,
-	unified.ProvideUnifiedStorageClient,
-	sql.ProvideStorageBackend,
-	sql.ProvideKV,
-	sql.ProvideResourceDB,
-	vector.ProvideVectorBackend,
-	embedderprovider.ProvideEmbedder,
-	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
-	aggregatorrunner.ProvideNoopAggregatorConfigurator,
-	apisregistry.WireSetExts,
-	gsmKMSProviders.ProvideOSSKMSProviders,
-	gsmEncryptionManager.ProvideOSSDataKeyCache,
-	secret.ProvideSecureValueClient,
-	provisioningExtras,
-	configProviderExtras,
-	advisor.ProvideAppInstaller,
-	zStore.ProvideDefaultStoreProvider,
-	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -200,52 +135,14 @@ var wireExtsBaseCLISet = wire.NewSet(
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
-	configProviderExtras,
 )
 
 // wireModuleServerSet is a wire set for the ModuleServer.
 var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
-	// Tracing
-	tracing.ProvideTracingConfig,
-	tracing.ProvideService,
-	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
-	// Unified storage
-	resource.ProvideStorageMetrics,
-	resource.ProvideIndexMetrics,
-	resource.ProvideVectorMetrics,
-	// Overridden by enterprise
-	ProvideNoopModuleRegisterer,
-	sql.ProvideStorageBackend,
-	// Zanzana store provider
-	zStore.ProvideDefaultStoreProvider,
-	// Zanzana MT reconciler CRD list
-	authz.ProvideReconcileCRDs,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
 	standalone.ProvideAPIServerFactory,
-)
-
-// wireExtsDashboardStatsSet provides the dashboard stats dependency for the
-// InitializeDashboardStats injector. Kept separate from wireExtsSet so the
-// injector can receive already-constructed dependencies as parameters
-// without duplicate bindings.
-var wireExtsDashboardStatsSet = wire.NewSet(
-	builders.ProvideDashboardStats,
-	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
-)
-
-// wireExtsSearchSupportSet provides the document builders together with the
-// dashboard stats they use, for the InitializeSearchSupport injector.
-var wireExtsSearchSupportSet = wire.NewSet(
-	wireExtsDashboardStatsSet,
-	migrations.ProvideOSSMigrations,
-	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
-	bus.ProvideBus,
-	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
-	sqlstore.ProvideService,
-	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
-	search2.ProvideDocumentBuilders,
 )

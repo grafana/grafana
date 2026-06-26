@@ -1,11 +1,11 @@
 import { render } from '@testing-library/react';
 
 import {
-  type DisplayValue,
+  DisplayValue,
   VizOrientation,
   ThresholdsMode,
   FALLBACK_COLOR,
-  type Field,
+  Field,
   FieldType,
   getDisplayProcessor,
   createTheme,
@@ -14,7 +14,7 @@ import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode } from '@
 
 import {
   BarGauge,
-  type Props,
+  Props,
   getTextValueColor,
   getBasicAndGradientStyles,
   getBarGradient,
@@ -56,7 +56,6 @@ function getProps(propOverrides?: Partial<Props>): Props {
     theme,
     orientation: VizOrientation.Horizontal,
     namePlacement: BarGaugeNamePlacement.Auto,
-    isOverflow: false,
   };
 
   Object.assign(props, propOverrides);

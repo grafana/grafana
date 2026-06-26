@@ -2,18 +2,15 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
-import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
-import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
+import { isRecordingRuleByType } from '../../utils/rules';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -21,7 +18,6 @@ import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/Simplifie
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
 import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
-import { PolicyTreeSelector } from './notificaton-preview/PolicyTreeSelector';
 
 type NotificationsStepProps = {
   alertUid?: string;
@@ -45,108 +41,81 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
-  const [type, manualRouting] = watch(['type', 'manualRouting']);
+  const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
-  const isGrafanaManaged = isGrafanaManagedRuleByType(type);
-  const simplifiedModeInNotificationsStepEnabled = config.featureToggles.alertingNotificationsStepMode ?? false;
+  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
 
-  const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && hasInternalAlertmanagerEnabled;
+  const shouldAllowSimplifiedRouting =
+    type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
 
-  function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
+  function onCloseLabelsEditor(
+    labelsToUpdate?: Array<{
+      key: string;
+      value: string;
+    }>
+  ) {
     if (labelsToUpdate) {
       setValue('labels', labelsToUpdate);
     }
     setShowLabelsEditor(false);
   }
-
-  if (isGrafanaRecordingRuleByType(type)) {
+  if (!type) {
     return null;
   }
 
-  const step = !isGrafanaManaged ? 4 : 5;
-
-  const switchMode =
-    isGrafanaManaged && simplifiedModeInNotificationsStepEnabled
-      ? {
-          isAdvancedMode: !manualRouting,
-          setAdvancedMode: (isAdvanced: boolean) => {
-            setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
-            setValue('manualRouting', !isAdvanced);
-          },
-        }
-      : undefined;
-
-  const title = (() => {
-    if (isRecordingRuleByType(type)) {
-      return 'Add labels';
-    }
-    if (isGrafanaManaged) {
-      return 'Configure notifications';
-    }
-    return 'Configure labels and notifications';
-  })();
-
   return (
     <RuleEditorSection
-      stepNo={step}
-      title={title}
+      stepNo={4}
+      title={isRecordingRuleByType(type) ? 'Add labels' : 'Configure labels and notifications'}
       description={
         <Stack direction="row" gap={0.5} alignItems="center">
           {isRecordingRuleByType(type) ? (
             <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="alerting.notifications-step.labels-better-manage-recording-rules">
-                Add labels to help you better manage your recording rules.
-              </Trans>
+              Add labels to help you better manage your recording rules.
             </Text>
           ) : (
             shouldAllowSimplifiedRouting && (
               <Text variant="bodySmall" color="secondary">
-                <Trans i18nKey="alerting.notifications-step.recipient-notification-fires">
-                  Select who should receive a notification when an alert rule fires.
-                </Trans>
+                Select who should receive a notification when an alert rule fires.
               </Text>
             )
           )}
         </Stack>
       }
-      switchMode={switchMode}
       fullWidth
     >
-      {!isGrafanaManaged && (
-        <>
-          <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
-          <LabelsEditorModal
-            isOpen={showLabelsEditor}
-            onClose={onCloseLabelsEditor}
-            dataSourceName={dataSourceName}
-            initialLabels={getValues('labels')}
-          />
-        </>
-      )}
+      <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
+      <LabelsEditorModal
+        isOpen={showLabelsEditor}
+        onClose={onCloseLabelsEditor}
+        dataSourceName={dataSourceName}
+        initialLabels={getValues('labels')}
+      />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">
-            <Trans i18nKey="alerting.notifications-step.recipient">Recipient</Trans>
+          <Text element="h5">Notifications</Text>
+          <Text variant="bodySmall" color="secondary">
+            Select who should receive a notification when an alert rule fires.
           </Text>
         </div>
       )}
-      {shouldAllowSimplifiedRouting && simplifiedModeInNotificationsStepEnabled && (
-        <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
-      )}
-      {shouldAllowSimplifiedRouting && !simplifiedModeInNotificationsStepEnabled && (
+      {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
         <ManualAndAutomaticRouting alertUid={alertUid} />
-      )}
-      {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
+      ) : // when simplified routing is not enabled, render the notification preview as we did before
+      shouldRenderpreview ? (
+        <AutomaticRooting alertUid={alertUid} />
+      ) : null}
     </RuleEditorSection>
   );
 };
 
 /**
  * Preconditions:
+ * - simplified routing is enabled
  * - the alert rule is a grafana rule
  *
  * This component will render the switch between the select contact point routing and the notification policy routing.
@@ -162,20 +131,8 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   const [manualRouting] = watch(['manualRouting']);
 
   const routingOptions = [
-    {
-      label: t(
-        'alerting.manual-and-automatic-routing.routing-options.label.select-contact-point',
-        'Select contact point'
-      ),
-      value: RoutingOptions.ContactPoint,
-    },
-    {
-      label: t(
-        'alerting.manual-and-automatic-routing.routing-options.label.use-notification-policy',
-        'Use notification policy'
-      ),
-      value: RoutingOptions.NotificationPolicy,
-    },
+    { label: 'Select contact point', value: RoutingOptions.ContactPoint },
+    { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
   ];
 
   const onRoutingOptionChange = (option: RoutingOptions) => {
@@ -201,31 +158,6 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   );
 }
 
-/**
- * Preconditions:
- * - simple mode for notifications step is enabled
- * - the alert rule is a grafana rule
- *
- * This component will render the switch between the select contact point routing and the notification policy routing.
- * It also renders the section body of the NotificationsStep, depending on the routing option selected.
- * If select contact point routing is selected, it will render the SimplifiedRouting component.
- * If notification policy routing is selected, it will render the AutomaticRouting component.
- *
- */
-function ManualAndAutomaticRoutingSimplified({ alertUid }: { alertUid?: string }) {
-  const { watch } = useFormContext<RuleFormValues>();
-
-  const [manualRouting] = watch(['manualRouting']);
-
-  return (
-    <Stack direction="column" gap={2}>
-      <RoutingOptionDescription manualRouting={manualRouting} />
-
-      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
-    </Stack>
-  );
-}
-
 interface AutomaticRootingProps {
   alertUid?: string;
 }
@@ -240,57 +172,48 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
     'name',
     'manualRouting',
   ]);
-  const selectedPolicy = watch('selectedPolicy');
-
-  const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
-
-  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend
-  // in both toggle states), falling back to the legacy __grafana_managed_route__ label, so the
-  // notification preview fetches the correct routing tree instead of always defaulting to root.
-  const policyNameForPreview = selectedPolicy || labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
-
   return (
-    <Stack direction="column" gap={2}>
-      {multiplePoliciesEnabled && <PolicyTreeSelector />}
-      <NotificationPreview
-        alertQueries={queries}
-        customLabels={labels}
-        condition={condition}
-        folder={folder}
-        alertName={alertName}
-        alertUid={alertUid}
-        policyName={policyNameForPreview}
-      />
-    </Stack>
+    <NotificationPreview
+      alertQueries={queries}
+      customLabels={labels}
+      condition={condition}
+      folder={folder}
+      alertName={alertName}
+      alertUid={alertUid}
+    />
   );
 }
 
 // Auxiliar components to build the texts and descriptions in the NotificationsStep
-export function NeedHelpInfoForNotificationPolicy() {
+function NeedHelpInfoForNotificationPolicy() {
   return (
     <NeedHelpInfo
       contentText={
         <Stack gap={1} direction="column">
           <Stack direction="column" gap={0}>
-            <Trans i18nKey="alerting.need-help-info-for-notification-policy.notification-policies">
+            <>
               Firing alert instances are routed to notification policies based on matching labels. The default
               notification policy matches all alert instances.
-            </Trans>
+            </>
           </Stack>
           <Stack direction="column" gap={0}>
-            <Trans i18nKey="alerting.need-help-info-for-notification-policy.custom-labels">
+            <>
               Custom labels change the way your notifications are routed. First, add labels to your alert rule and then
               connect them to your notification policy by adding label matchers.
-            </Trans>
-            <TextLink href={DOCS_URL_NOTIFICATION_POLICIES} external>
-              <Trans i18nKey="alerting.need-help-info-for-notification-policy.read-more">
-                Read about notification policies.
-              </Trans>
-            </TextLink>
+            </>
+            <a
+              href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Text color="link">
+                Read about notification policies. <Icon name="external-link-alt" />
+              </Text>
+            </a>
           </Stack>
         </Stack>
       }
-      title={t('alerting.need-help-info-for-notification-policy.title-notification-routing', 'Notification routing')}
+      title="Notification routing"
     />
   );
 }
@@ -300,27 +223,24 @@ function NeedHelpInfoForContactpoint() {
     <NeedHelpInfo
       contentText={
         <>
-          <Trans i18nKey="alerting.need-help-info-for-contactpoint.select-contact-point">
-            Select a contact point to notify all recipients in it.
-          </Trans>
-          <br />
-          <Trans i18nKey="alerting.need-help-info-for-contactpoint.customize-notifications">
-            Muting, grouping, and timings options allow you to customize how notifications are sent.
-          </Trans>
+          Select a contact point to notify all recipients in it.
           <br />
           <br />
-          <Trans i18nKey="alerting.need-help-info-for-contactpoint.notification-policies">
-            Alternatively, toggle the <b>Advanced options</b> button to route notifications using notification policies
-            for greater flexibility.
-          </Trans>
+          Notifications for firing alert instances are grouped based on folder and alert rule name.
+          <br />
+          The wait time before sending the first notification for a new group of alerts is 30 seconds.
+          <br />
+          The waiting time before sending a notification about changes in the alert group after the first notification
+          has been sent is 5 minutes.
+          <br />
+          The wait time before resending a notification that has already been sent successfully is 4 hours.
+          <br />
+          Grouping and wait time values are defined in your default notification policy.
         </>
       }
-      externalLink={DOCS_URL_NOTIFICATIONS}
+      externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/"
       linkText="Read more about notifications"
-      title={t(
-        'alerting.need-help-info-for-contactpoint.title-notify-by-selecting-a-contact-point',
-        'Notify by selecting a contact point'
-      )}
+      title="Notify contact points"
     />
   );
 }
@@ -328,19 +248,13 @@ interface NotificationsStepDescriptionProps {
   manualRouting: boolean;
 }
 
-const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
+export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
   return (
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">
         {manualRouting
-          ? t(
-              'alerting.routing-option-description.manual',
-              'Notifications for firing alerts are routed to a selected contact point.'
-            )
-          : t(
-              'alerting.routing-option-description.matching-labels',
-              'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'
-            )}
+          ? 'Notifications for firing alerts are routed to a selected contact point.'
+          : 'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
     </Stack>

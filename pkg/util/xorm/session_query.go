@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
+	"xorm.io/core"
 )
 
 func (session *Session) genQuerySQL(sqlOrArgs ...interface{}) (string, []interface{}, error) {
@@ -127,7 +127,7 @@ func value2String(rawValue *reflect.Value) (str string, err error) {
 		str = fmt.Sprintf("%v", vv.Complex())
 	/* TODO: unsupported types below
 	   case reflect.Map:
-	   case reflect.Pointer:
+	   case reflect.Ptr:
 	   case reflect.Uintptr:
 	   case reflect.UnsafePointer:
 	   case reflect.Chan, reflect.Func, reflect.Interface:

@@ -2,9 +2,9 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { dateTime } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { type ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types';
 
-import { createDefaultInitialState } from './testHelpers';
+import { createDefaultInitialState } from './helpers';
 import { changeRangeAction, timeReducer, updateTime } from './time';
 
 const mockTimeSrv = {

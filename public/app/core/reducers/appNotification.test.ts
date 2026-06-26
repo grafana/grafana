@@ -1,4 +1,4 @@
-import { AppNotificationSeverity, type AppNotificationsState } from 'app/types/appNotifications';
+import { AppNotificationSeverity, AppNotificationsState } from 'app/types/';
 
 import { appNotificationsReducer, clearNotification, notifyApp } from './appNotification';
 

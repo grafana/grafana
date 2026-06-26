@@ -2,20 +2,45 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 
-	"github.com/grafana/alerting/models"
+	alertingNotify "github.com/grafana/alerting/notify"
 
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func (am *alertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig ngmodels.Integration, alert models.TestReceiversConfigAlertParams) (models.IntegrationStatus, error) {
-	cfg, err := IntegrationToIntegrationConfig(integrationConfig)
-	if err != nil {
-		return models.IntegrationStatus{}, err
+func (am *alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
+	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
+	for _, r := range c.Receivers {
+		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
+		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
+				UID:                   gr.UID,
+				Name:                  gr.Name,
+				Type:                  gr.Type,
+				DisableResolveMessage: gr.DisableResolveMessage,
+				Settings:              json.RawMessage(gr.Settings),
+				SecureSettings:        gr.SecureSettings,
+			})
+		}
+		receivers = append(receivers, &alertingNotify.APIReceiver{
+			ConfigReceiver: r.Receiver,
+			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+				Integrations: integrations,
+			},
+		})
 	}
-	return am.Base.TestIntegration(ctx, receiverName, cfg, alert)
+	var alert *alertingNotify.TestReceiversConfigAlertParams
+	if c.Alert != nil {
+		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
+	}
+
+	return am.Base.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
+		Alert:     alert,
+		Receivers: receivers,
+	})
 }
 
-func (am *alertmanager) GetReceivers(_ context.Context) ([]models.ReceiverStatus, error) {
-	return am.Base.GetReceiversStatus(), nil
+func (am *alertmanager) GetReceivers(_ context.Context) ([]apimodels.Receiver, error) {
+	return am.Base.GetReceivers(), nil
 }

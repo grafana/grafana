@@ -1,12 +1,22 @@
 import { render, waitFor } from '@testing-library/react';
 
-import { type SQLExpression } from '../types';
+import { config } from '@grafana/runtime';
+
+import { SQLExpression } from '../types';
 import { makeVariable } from '../utils/testHelpers';
 
 import { DatasetSelector } from './DatasetSelector';
 import { buildMockDatasetSelectorProps, buildMockTableSelectorProps } from './SqlComponents.testHelpers';
 import { TableSelector } from './TableSelector';
 import { removeQuotesForMultiVariables } from './visual-query-builder/SQLWhereRow';
+
+beforeEach(() => {
+  config.featureToggles.sqlDatasourceDatabaseSelection = true;
+});
+
+afterEach(() => {
+  config.featureToggles.sqlDatasourceDatabaseSelection = false;
+});
 
 describe('DatasetSelector', () => {
   it('should only query the database when needed', async () => {

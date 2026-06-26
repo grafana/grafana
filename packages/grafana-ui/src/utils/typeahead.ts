@@ -1,8 +1,8 @@
 import { default as calculateSize } from 'calculate-size';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { type CompletionItemGroup, type CompletionItem, CompletionItemKind } from '../types/completion';
+import { CompletionItemGroup, CompletionItem, CompletionItemKind } from '../types/completion';
 
 export const flattenGroupItems = (groupedItems: CompletionItemGroup[]): CompletionItem[] => {
   return groupedItems.reduce((all: CompletionItem[], { items, label }) => {
@@ -41,14 +41,14 @@ export const calculateListSizes = (theme: GrafanaTheme2, allItems: CompletionIte
   };
 };
 
-const calculateItemHeight = (longestLabelHeight: number, theme: GrafanaTheme2) => {
+export const calculateItemHeight = (longestLabelHeight: number, theme: GrafanaTheme2) => {
   const horizontalPadding = theme.spacing.gridSize * 2;
   const itemHeight = longestLabelHeight + horizontalPadding;
 
   return itemHeight;
 };
 
-const calculateListWidth = (longestLabelWidth: number, theme: GrafanaTheme2) => {
+export const calculateListWidth = (longestLabelWidth: number, theme: GrafanaTheme2) => {
   const verticalPadding = theme.spacing.gridSize * 3;
   const maxWidth = 800;
   const listWidth = Math.min(Math.max(longestLabelWidth + verticalPadding, 200), maxWidth);
@@ -56,7 +56,7 @@ const calculateListWidth = (longestLabelWidth: number, theme: GrafanaTheme2) => 
   return listWidth;
 };
 
-const calculateListHeight = (itemHeight: number, allItems: CompletionItem[]) => {
+export const calculateListHeight = (itemHeight: number, allItems: CompletionItem[]) => {
   const numberOfItemsToShow = Math.min(allItems.length, 10);
   const minHeight = 100;
   const totalHeight = numberOfItemsToShow * itemHeight;

@@ -1,4 +1,4 @@
-import { type DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 
 import { alertingApi } from './alertingApi';
 

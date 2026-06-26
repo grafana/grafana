@@ -18,9 +18,7 @@
   "links": [],
   "panels": [
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -219,9 +217,7 @@
       "type": "stat"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {

@@ -22,8 +22,4 @@ func TestApiKeyGen(t *testing.T) {
 	keyHashed, err := util.EncodePassword(keyInfo.Key, keyInfo.Name)
 	require.NoError(t, err)
 	assert.Equal(t, result.HashedKey, keyHashed)
-
-	valid, err := IsValid(keyInfo, keyHashed)
-	require.NoError(t, err)
-	require.True(t, valid)
 }

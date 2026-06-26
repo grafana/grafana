@@ -1,4 +1,4 @@
-import { type PanelModel } from '@grafana/data';
+import { PanelModel } from '@grafana/data';
 
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 

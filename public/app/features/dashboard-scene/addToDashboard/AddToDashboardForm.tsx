@@ -1,17 +1,16 @@
 import { partial } from 'lodash';
-import { type ReactElement, useEffect, useState } from 'react';
-import { Controller, type DeepMap, type FieldError, type FieldErrors, useForm } from 'react-hook-form';
+import { ReactElement, useEffect, useState } from 'react';
+import { Controller, DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
 
-import { type SelectableValue, type TimeRange } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { type Panel } from '@grafana/schema';
+import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
-import { addToDashboard, type SubmissionError } from './addToDashboard';
+import { addToDashboard, SubmissionError } from './addToDashboard';
 
 enum SaveTarget {
   NewDashboard = 'new-dashboard',
@@ -41,11 +40,7 @@ export interface Props<TOptions = undefined> {
   children?: React.ReactNode;
 }
 
-/**
- * Internal implementation used by the exposed versioned wrapper.
- * For stability/versioning guidance, refer to AddToDashboardFormExposedComponent.
- */
-export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefined = undefined>({
+export function AddToDashboardForm<TOptions = undefined>({
   onClose,
   buildPanel,
   timeRange,
@@ -69,14 +64,14 @@ export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefi
 
   if (canCreateDashboard) {
     saveTargets.push({
-      label: t('dashboard-scene.add-to-dashboard-form.label.new-dashboard', 'New dashboard'),
+      label: 'New dashboard',
       value: SaveTarget.NewDashboard,
     });
   }
 
   if (canWriteDashboard) {
     saveTargets.push({
-      label: t('dashboard-scene.add-to-dashboard-form.label.existing-dashboard', 'Existing dashboard'),
+      label: 'Existing dashboard',
       value: SaveTarget.ExistingDashboard,
     });
   }
@@ -95,7 +90,7 @@ export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefi
       queries: panel.targets,
     });
 
-    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange, options });
+    const error = addToDashboard({ dashboardUid, panel, openInNewTab, timeRange });
     if (error) {
       setSubmissionError(error);
       return;
@@ -117,13 +112,7 @@ export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefi
         <Controller
           control={control}
           render={({ field: { ref, ...field } }) => (
-            <Field
-              label={t('dashboard-scene.add-to-dashboard-form.label-target-dashboard', 'Target dashboard')}
-              description={t(
-                'dashboard-scene.add-to-dashboard-form.description-choose-where-to-add-the-panel',
-                'Choose where to add the panel.'
-              )}
-            >
+            <Field label="Target dashboard" description="Choose where to add the panel.">
               <RadioButtonGroup options={saveTargets} {...field} id="e2d-save-target" />
             </Field>
           )}
@@ -138,11 +127,8 @@ export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefi
             <Controller
               render={({ field: { ref, value, onChange, ...field } }) => (
                 <Field
-                  label={t('dashboard-scene.add-to-dashboard-form.label-dashboard', 'Dashboard')}
-                  description={t(
-                    'dashboard-scene.add-to-dashboard-form.description-select-which-dashboard-panel-created',
-                    'Select in which dashboard the panel will be created.'
-                  )}
+                  label="Dashboard"
+                  description="Select in which dashboard the panel will be created."
                   error={errors.dashboardUid?.message}
                   invalid={!!errors.dashboardUid}
                 >
@@ -157,31 +143,20 @@ export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefi
               control={control}
               name="dashboardUid"
               shouldUnregister
-              rules={{
-                required: {
-                  value: true,
-                  message: t(
-                    'dashboard-scene.add-to-dashboard-form.message.this-field-is-required',
-                    'This field is required.'
-                  ),
-                },
-              }}
+              rules={{ required: { value: true, message: 'This field is required.' } }}
             />
           );
         })()}
 
       {submissionError && (
-        <Alert
-          severity="error"
-          title={t('dashboard-scene.add-to-dashboard-form.title-error-adding-the-panel', 'Error adding the panel')}
-        >
+        <Alert severity="error" title="Error adding the panel">
           {submissionError.message}
         </Alert>
       )}
 
       <Modal.ButtonRow>
         <Button type="reset" onClick={onClose} fill="outline" variant="secondary">
-          <Trans i18nKey="dashboard-scene.add-to-dashboard-form.cancel">Cancel</Trans>
+          Cancel
         </Button>
         <Button
           type="submit"
@@ -189,10 +164,10 @@ export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefi
           onClick={handleSubmit(partial(onSubmit, true))}
           icon="external-link-alt"
         >
-          <Trans i18nKey="dashboard-scene.add-to-dashboard-form.open-in-new-tab">Open in new tab</Trans>
+          Open in new tab
         </Button>
         <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
-          <Trans i18nKey="dashboard-scene.add-to-dashboard-form.open-dashboard">Open dashboard</Trans>
+          Open dashboard
         </Button>
       </Modal.ButtonRow>
     </form>
@@ -206,9 +181,3 @@ function assertIsSaveToExistingDashboardError(
   // explicitly assert its type so that TS can narrow down FormDTO to SaveToExistingDashboard
   // when we use it in the form.
 }
-
-export interface AbsolutePathOptions {
-  useAbsolutePath: boolean;
-}
-
-export default AddToDashboardForm;

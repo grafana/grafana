@@ -12,18 +12,15 @@ import (
 
 type Installer interface {
 	// Add adds a new plugin.
-	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
+	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
 	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID, version string) error
 }
 
 type PluginSource interface {
-	// PluginClass is the associated Class of plugin for this source
 	PluginClass(ctx context.Context) Class
-	// DefaultSignature is the (optional) default signature information for this source
-	DefaultSignature(ctx context.Context, pluginID string) (Signature, bool)
-	// Discover finds and returns plugin bundles from this source
-	Discover(ctx context.Context) ([]*FoundBundle, error)
+	PluginURIs(ctx context.Context) []string
+	DefaultSignature(ctx context.Context) (Signature, bool)
 }
 
 type FileStore interface {
@@ -36,33 +33,31 @@ type File struct {
 	ModTime time.Time
 }
 
-type AddOpts struct {
+type CompatOpts struct {
 	grafanaVersion string
 
 	os   string
 	arch string
-
-	url string
 }
 
-func (co AddOpts) GrafanaVersion() string {
+func (co CompatOpts) GrafanaVersion() string {
 	return co.grafanaVersion
 }
 
-func (co AddOpts) OS() string {
+func (co CompatOpts) OS() string {
 	return co.os
 }
 
-func (co AddOpts) Arch() string {
+func (co CompatOpts) Arch() string {
 	return co.arch
 }
 
-func (co AddOpts) URL() string {
-	return co.url
+func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
+	return CompatOpts{grafanaVersion: grafanaVersion, arch: arch, os: os}
 }
 
-func NewAddOpts(grafanaVersion, os, arch, url string) AddOpts {
-	return AddOpts{grafanaVersion: grafanaVersion, arch: arch, os: os, url: url}
+func NewSystemCompatOpts(os, arch string) CompatOpts {
+	return CompatOpts{arch: arch, os: os}
 }
 
 type UpdateInfo struct {
@@ -72,25 +67,9 @@ type UpdateInfo struct {
 type FS interface {
 	fs.FS
 
-	Type() FSType
 	Base() string
 	Files() ([]string, error)
 	Rel(string) (string, error)
-}
-
-type FSType string
-
-const (
-	FSTypeCDN   FSType = "cdn"
-	FSTypeLocal FSType = "local"
-)
-
-func (f FSType) CDN() bool {
-	return f == FSTypeCDN
-}
-
-func (f FSType) Local() bool {
-	return f == FSTypeLocal
 }
 
 type FSRemover interface {
@@ -117,6 +96,11 @@ type BackendFactoryProvider interface {
 	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
 }
 
+type SecretsPluginManager interface {
+	// SecretsManager returns a secretsmanager plugin
+	SecretsManager(ctx context.Context) *Plugin
+}
+
 type StaticRouteResolver interface {
 	Routes(ctx context.Context) []*StaticRoute
 }
@@ -133,10 +117,12 @@ type PluginLoaderAuthorizer interface {
 
 type Licensing interface {
 	Environment() []string
+
 	Edition() string
+
 	Path() string
+
 	AppURL() string
-	ContentDeliveryPrefix() string
 }
 
 type SignatureCalculator interface {

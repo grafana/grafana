@@ -1,7 +1,7 @@
 import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
@@ -14,8 +14,8 @@ const defaultDatasource = mockDataSource({
   type: 'test',
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
+  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
   getDataSourceSrv: () => ({
     getInstanceSettings: () => ({ ...defaultDatasource }),
   }),

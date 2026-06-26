@@ -3,7 +3,7 @@ package annotationstest
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeCleaner struct {
@@ -13,6 +13,6 @@ func NewFakeCleaner() *fakeCleaner {
 	return &fakeCleaner{}
 }
 
-func (f *fakeCleaner) Run(_ context.Context, _ annotations.CleanupSettings) (int64, int64, error) {
+func (f *fakeCleaner) Run(ctx context.Context, cfg *setting.Cfg) (int64, int64, error) {
 	return 0, 0, nil
 }

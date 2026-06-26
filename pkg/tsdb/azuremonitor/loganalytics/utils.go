@@ -1,39 +1,27 @@
 package loganalytics
 
 import (
-	"compress/flate"
-	"compress/gzip"
 	"fmt"
-	"io"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/andybalholm/brotli"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
-func AddCustomDataLink(frame data.Frame, dataLink data.DataLink, singleField bool) data.Frame {
+func AddCustomDataLink(frame data.Frame, dataLink data.DataLink) data.Frame {
 	for i := range frame.Fields {
 		if frame.Fields[i].Config == nil {
 			frame.Fields[i].Config = &data.FieldConfig{}
 		}
 
 		frame.Fields[i].Config.Links = append(frame.Fields[i].Config.Links, dataLink)
-
-		// Queries using the trace viz only need the link added to a single field
-		if singleField {
-			break
-		}
 	}
 	return frame
 }
-
-const SingleField bool = true
-const MultiField bool = false
 
 func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 	linkTitle := "View query in Azure Portal"
@@ -47,7 +35,7 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 		URL:         dl,
 	}
 
-	frame = AddCustomDataLink(frame, deepLink, MultiField)
+	frame = AddCustomDataLink(frame, deepLink)
 
 	return frame
 }
@@ -59,18 +47,18 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 // 4. the ds toggle is set to true
 func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled bool) (bool, error) {
 	if fromAlert {
-		return false, backend.DownstreamError(fmt.Errorf("basic Logs queries cannot be used for alerts"))
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries cannot be used for alerts"), false)
 	}
 	if len(resources) != 1 {
-		return false, backend.DownstreamError(fmt.Errorf("basic logs queries cannot be run against multiple resources"))
+		return false, errorsource.DownstreamError(fmt.Errorf("basic logs queries cannot be run against multiple resources"), false)
 	}
 
 	if !strings.Contains(strings.ToLower(resources[0]), "microsoft.operationalinsights/workspaces") {
-		return false, backend.DownstreamError(fmt.Errorf("basic logs queries may only be run against Log Analytics workspaces"))
+		return false, errorsource.DownstreamError(fmt.Errorf("basic logs queries may only be run against Log Analytics workspaces"), false)
 	}
 
 	if !basicLogsEnabled {
-		return false, backend.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this data source"))
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this data source"), false)
 	}
 
 	return true, nil
@@ -81,7 +69,7 @@ func ParseResultFormat(queryResultFormat *dataquery.ResultFormat, queryType data
 	if queryResultFormat != nil && *queryResultFormat != "" {
 		return *queryResultFormat
 	}
-	if queryType == dataquery.AzureQueryTypeLogAnalytics {
+	if queryType == dataquery.AzureQueryTypeAzureLogAnalytics {
 		// Default to time series format for logs queries. It was time series before this change
 		return dataquery.ResultFormatTimeSeries
 	}
@@ -147,41 +135,4 @@ func ConvertTime(timeStamp string) (time.Time, error) {
 
 func GetDataVolumeRawQuery(table string) string {
 	return fmt.Sprintf("Usage \n| where DataType == \"%s\"\n| where IsBillable == true\n| summarize BillableDataGB = round(sum(Quantity) / 1000, 3)", table)
-}
-
-// This function handles various compression mechanisms that may have been used on a response body
-func decode(encoding string, original io.ReadCloser) ([]byte, error) {
-	var reader io.Reader
-	var err error
-	switch encoding {
-	case "gzip":
-		reader, err = gzip.NewReader(original)
-		if err != nil {
-			return nil, err
-		}
-		defer func() {
-			if err := reader.(io.ReadCloser).Close(); err != nil {
-				backend.Logger.Warn("Failed to close reader body", "err", err)
-			}
-		}()
-	case "deflate":
-		reader = flate.NewReader(original)
-		defer func() {
-			if err := reader.(io.ReadCloser).Close(); err != nil {
-				backend.Logger.Warn("Failed to close reader body", "err", err)
-			}
-		}()
-	case "br":
-		reader = brotli.NewReader(original)
-	case "":
-		reader = original
-	default:
-		return nil, fmt.Errorf("unexpected encoding type %v", err)
-	}
-
-	body, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
 }

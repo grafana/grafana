@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
@@ -69,7 +70,7 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 
 	a := ProvideService(cfg,
 		router,
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		usertest.NewUserServiceFake(),
 		&authinfotest.FakeService{},
 		ldap.ProvideGroupsService(),
@@ -578,8 +579,8 @@ search_base_dns = ["dc=grafana,dc=org"]`)
 		{
 			url:          "/api/admin/ldap/reload",
 			method:       http.MethodPost,
-			desc:         "ReloadLDAPCfg should return 410 Gone status code",
-			expectedCode: http.StatusGone,
+			desc:         "ReloadLDAPCfg should return 200 for user with correct permissions",
+			expectedCode: http.StatusOK,
 			permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPConfigReload},
 			},
@@ -676,18 +677,4 @@ search_base_dns = ["dc=grafana,dc=org"]`)
 
 func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
 	return &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)}}
-}
-
-// Pins: identityFromLDAPUser maps user.Groups → Identity.ExternalGroups.
-func TestService_identityFromLDAPUser_ExternalGroups(t *testing.T) {
-	s := &Service{cfg: &ldap.Config{}}
-
-	id := s.identityFromLDAPUser(&login.ExternalUserInfo{
-		Login:  "alice",
-		Email:  "alice@example.com",
-		Groups: []string{"cn=admins,ou=groups", "cn=devs,ou=groups"},
-	})
-
-	assert.Equal(t, []string{"cn=admins,ou=groups", "cn=devs,ou=groups"}, id.ExternalGroups)
-	assert.Empty(t, id.Groups, "Identity.Groups must not be populated with IdP groups")
 }

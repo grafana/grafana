@@ -1,26 +1,31 @@
 import { css } from '@emotion/css';
-import { type SerializedError } from '@reduxjs/toolkit';
-import { type FC, type JSX, type ReactElement, useMemo, useState } from 'react';
+import { SerializedError } from '@reduxjs/toolkit';
+import pluralize from 'pluralize';
+import { useMemo, ReactElement, useState, FC } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { GRAFANA_RULES_SOURCE_NAME, getRulesDataSources } from '../../utils/datasource';
+import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeDataSourceLink } from '../../utils/misc';
 import { isRulerNotSupportedResponse } from '../../utils/rules';
 
 export function RuleListErrors(): ReactElement {
   const [expanded, setExpanded] = useState(false);
   const [closed, setClosed] = useLocalStorage('grafana.unifiedalerting.hideErrors', false);
+  const dataSourceConfigRequests = useUnifiedAlertingSelector((state) => state.dataSources);
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const styles = useStyles2(getStyles);
 
   const errors = useMemo((): JSX.Element[] => {
-    const [promRequestErrors, rulerRequestErrors] = [promRuleRequests, rulerRuleRequests].map((requests) =>
+    const [dataSourceConfigErrors, promRequestErrors, rulerRequestErrors] = [
+      dataSourceConfigRequests,
+      promRuleRequests,
+      rulerRuleRequests,
+    ].map((requests) =>
       getRulesDataSources().reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
         (result, dataSource) => {
           const error = requests[dataSource.name]?.error;
@@ -37,42 +42,33 @@ export function RuleListErrors(): ReactElement {
 
     const result: JSX.Element[] = [];
 
-    const unknownError = t('alerting.rule-list-errors.unknown-error', 'Unknown error.');
-
     if (grafanaPromError) {
-      result.push(
-        <>
-          <Trans i18nKey="alerting.rule-list-errors.failed-to-load-grafana-rules-state">
-            Failed to load Grafana rules state:
-          </Trans>{' '}
-          {grafanaPromError.message || unknownError}
-        </>
-      );
+      result.push(<>Failed to load Grafana rules state: {grafanaPromError.message || 'Unknown error.'}</>);
     }
     if (grafanaRulerError) {
+      result.push(<>Failed to load Grafana rules config: {grafanaRulerError.message || 'Unknown error.'}</>);
+    }
+
+    dataSourceConfigErrors.forEach(({ dataSource, error }) => {
       result.push(
         <>
-          <Trans i18nKey="alerting.rule-list-errors.failed-to-load-grafana-rules-config">
-            Failed to load Grafana rules config:
-          </Trans>{' '}
-          {grafanaRulerError?.message || unknownError}
+          Failed to load the data source configuration for{' '}
+          <a href={makeDataSourceLink(dataSource.uid)} className={styles.dsLink}>
+            {dataSource.name}
+          </a>
+          : {error.message || 'Unknown error.'}
         </>
       );
-    }
+    });
 
     promRequestErrors.forEach(({ dataSource, error }) =>
       result.push(
         <>
-          <Trans
-            i18nKey="alerting.rule-list-errors.failed-to-load-rules-state"
-            values={{ dataSource: dataSource.name }}
-          >
-            Failed to load rules state from{' '}
-            <a href={makeDataSourceLink(dataSource.uid)} className={styles.dsLink}>
-              {'{{dataSource}}'}
-            </a>
-          </Trans>
-          : {error.message || unknownError}
+          Failed to load rules state from{' '}
+          <a href={makeDataSourceLink(dataSource.uid)} className={styles.dsLink}>
+            {dataSource.name}
+          </a>
+          : {error.message || 'Unknown error.'}
         </>
       )
     );
@@ -80,22 +76,17 @@ export function RuleListErrors(): ReactElement {
     rulerRequestErrors.forEach(({ dataSource, error }) =>
       result.push(
         <>
-          <Trans
-            i18nKey="alerting.rule-list-errors.failed-to-load-rules-config"
-            values={{ dataSource: dataSource.name }}
-          >
-            Failed to load rules config from{' '}
-            <a href={makeDataSourceLink(dataSource.uid)} className={styles.dsLink}>
-              {'{{dataSource}}'}
-            </a>
-          </Trans>
-          : {error.message || unknownError}
+          Failed to load rules config from{' '}
+          <a href={makeDataSourceLink(dataSource.uid)} className={styles.dsLink}>
+            {dataSource.name}
+          </a>
+          : {error.message || 'Unknown error.'}
         </>
       )
     );
 
     return result;
-  }, [promRuleRequests, rulerRuleRequests, styles.dsLink]);
+  }, [dataSourceConfigRequests, promRuleRequests, rulerRuleRequests, styles.dsLink]);
 
   return (
     <>
@@ -105,10 +96,7 @@ export function RuleListErrors(): ReactElement {
       {!!errors.length && !closed && (
         <Alert
           data-testid="cloud-rulessource-errors"
-          title={t(
-            'alerting.rule-list-errors.cloud-rulessource-errors-title-errors-loading-rules',
-            'Errors loading rules'
-          )}
+          title="Errors loading rules"
           severity="error"
           onRemove={() => setClosed(true)}
         >
@@ -124,16 +112,7 @@ export function RuleListErrors(): ReactElement {
                   size="sm"
                   onClick={() => setExpanded(true)}
                 >
-                  <Trans
-                    i18nKey="alerting.rule-list-errors.more-errors"
-                    count={errors.length - 1}
-                    tOptions={{
-                      defaultValue_one: '{{count}} more errors',
-                      defaultValue_other: '{{count}} more errors',
-                    }}
-                  >
-                    {'{{count}}'} more errors
-                  </Trans>
+                  {errors.length - 1} more {pluralize('error', errors.length - 1)}
                 </Button>
               )}
             </>
@@ -154,21 +133,9 @@ const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
 
   return (
     <div className={styles.floatRight}>
-      <Tooltip
-        content={t('alerting.error-summary-button.content-show-all-errors', 'Show all errors')}
-        placement="bottom"
-      >
+      <Tooltip content="Show all errors" placement="bottom">
         <Button fill="text" variant="destructive" icon="exclamation-triangle" onClick={onClick}>
-          <Trans
-            i18nKey="alerting.rule-list-errors.button-errors"
-            count={count}
-            tOptions={{
-              defaultValue_one: '{{count}} errors',
-              defaultValue_other: '{{count}} errors',
-            }}
-          >
-            {'{{count}}'} errors
-          </Trans>
+          {count > 1 ? <>{count} errors</> : <>1 error</>}
         </Button>
       </Tooltip>
     </div>
@@ -185,6 +152,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   dsLink: css({
     fontWeight: theme.typography.fontWeightBold,
-    color: theme.colors.text.link,
   }),
 });

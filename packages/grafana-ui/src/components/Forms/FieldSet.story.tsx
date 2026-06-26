@@ -1,12 +1,11 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { Button } from '../Button/Button';
-import { Input } from '../Input/Input';
+import { Input, Form, FieldSet, Field } from '@grafana/ui';
 
-import { Field } from './Field';
-import { FieldSet, type Props } from './FieldSet';
+import { Button } from '../Button';
+
+import { Props } from './FieldSet';
 import mdx from './FieldSet.mdx';
-import { Form } from './Form';
 
 const meta: Meta<typeof FieldSet> = {
   title: 'Forms/FieldSet',

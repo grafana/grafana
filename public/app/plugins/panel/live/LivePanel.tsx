@@ -1,31 +1,30 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { PureComponent } from 'react';
-import { type Unsubscribable, type PartialObserver } from 'rxjs';
+import { Unsubscribable, PartialObserver } from 'rxjs';
 
 import {
-  type GrafanaTheme2,
-  type PanelProps,
-  type LiveChannelStatusEvent,
+  GrafanaTheme2,
+  PanelProps,
+  LiveChannelStatusEvent,
   isValidLiveChannelAddress,
-  type LiveChannelEvent,
+  LiveChannelEvent,
   isLiveChannelStatusEvent,
   isLiveChannelMessageEvent,
   LiveChannelConnectionState,
-  type PanelData,
+  PanelData,
   LoadingState,
   applyFieldOverrides,
-  type LiveChannelAddress,
+  LiveChannelAddress,
   StreamingDataFrame,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 import { Alert, stylesFactory, JSONFormatter, CustomScrollbar } from '@grafana/ui';
 
 import { TablePanel } from '../table/TablePanel';
 
 import { LivePublish } from './LivePublish';
-import { type LivePanelOptions, MessageDisplayMode, MessagePublishMode } from './types';
+import { LivePanelOptions, MessageDisplayMode, MessagePublishMode } from './types';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
@@ -126,12 +125,9 @@ export class LivePanel extends PureComponent<Props, State> {
     const preformatted = `[feature_toggles]
     enable = live`;
     return (
-      <Alert title={t('live.live-panel.title-grafana-live', 'Grafana Live')} severity="info">
-        <p>
-          <Trans i18nKey="live.live-panel.grafana-requires-feature">Grafana live requires a feature flag to run</Trans>
-        </p>
+      <Alert title="Grafana Live" severity="info">
+        <p>Grafana live requires a feature flag to run</p>
 
-        {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
         <b>custom.ini:</b>
         <pre>{preformatted}</pre>
       </Alert>
@@ -145,10 +141,8 @@ export class LivePanel extends PureComponent<Props, State> {
     if (!message) {
       return (
         <div>
-          <h4>
-            <Trans i18nKey="live.live-panel.waiting-for-data">Waiting for data:</Trans>
-          </h4>
-          {options.channel?.scope}/{options.channel?.stream}/{options.channel?.path}
+          <h4>Waiting for data:</h4>
+          {options.channel?.scope}/{options.channel?.namespace}/{options.channel?.path}
         </div>
       );
     }
@@ -252,17 +246,15 @@ export class LivePanel extends PureComponent<Props, State> {
     const { addr, error } = this.state;
     if (!addr) {
       return (
-        <Alert title={t('live.live-panel.title-grafana-live', 'Grafana Live')} severity="info">
-          <Trans i18nKey="live.live-panel.panel-editor-channel">Use the panel editor to pick a channel</Trans>
+        <Alert title="Grafana Live" severity="info">
+          Use the panel editor to pick a channel
         </Alert>
       );
     }
     if (error) {
       return (
         <div>
-          <h2>
-            <Trans i18nKey="live.live-panel.error">Error</Trans>
-          </h2>
+          <h2>ERROR</h2>
           <div>{JSON.stringify(error)}</div>
         </div>
       );

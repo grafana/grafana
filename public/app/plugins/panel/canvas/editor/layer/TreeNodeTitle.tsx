@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
-import { type ElementState } from 'app/features/canvas/runtime/element';
+import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { LayerActionID } from '../../types';
-import { type TreeViewEditorProps } from '../element/elementEditor';
+import { TreeViewEditorProps } from '../element/elementEditor';
 
-import { type TreeElement } from './tree';
+import { TreeElement } from './tree';
 
 interface Props {
   settings: TreeViewEditorProps;
@@ -73,17 +72,17 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
         <div className={styles.actionButtonsWrapper}>
           <IconButton
             name="copy"
-            title={t('canvas.tree-node-title.title-duplicate', 'Duplicate')}
+            title="Duplicate"
             className={styles.actionIcon}
             onClick={() => onDuplicate(element)}
-            tooltip={t('canvas.tree-node-title.tooltip-duplicate', 'Duplicate')}
+            tooltip="Duplicate"
           />
           <IconButton
             name="trash-alt"
-            title={t('canvas.tree-node-title.title-remove', 'Remove')}
+            title="remove"
             className={styles.actionIcon}
             onClick={() => onDelete(element)}
-            tooltip={t('canvas.tree-node-title.tooltip-remove', 'Remove')}
+            tooltip="Remove"
           />
         </div>
       )}

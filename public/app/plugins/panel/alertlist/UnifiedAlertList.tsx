@@ -1,23 +1,21 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
-import { type GrafanaTheme2, type PanelProps } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   Alert,
   BigValue,
-  BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  Link,
+  CustomScrollbar,
   LoadingPlaceholder,
-  ScrollContainer,
   useStyles2,
 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
@@ -37,26 +35,19 @@ import {
 } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { type ThunkDispatch, useDispatch } from 'app/types/store';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { ThunkDispatch, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertingAction, useAlertingAbility } from '../../../features/alerting/unified/hooks/useAbilities';
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
-import { type AlertingRule, type CombinedRuleWithLocation } from '../../../types/unified-alerting';
+import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
-import {
-  GroupMode,
-  SortOrder,
-  STAT_THRESHOLDS_DEFAULT,
-  type StateFilter,
-  type UnifiedAlertListOptions,
-  ViewMode,
-} from './types';
+import { GroupMode, SortOrder, StateFilter, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
-import { buildAlertingListUrl, filterAlerts, getStatDisplayValue } from './util';
+import { filterAlerts } from './util';
 
 function getStateList(state: StateFilter) {
   const reducer = (list: string[], [stateKey, value]: [string, boolean]) => {
@@ -69,20 +60,15 @@ function getStateList(state: StateFilter) {
   return Object.entries(state).reduce(reducer, []);
 }
 
-// In grouped mode, instances from multiple alert rules are merged into arbitrary groups,
-// so the per-rule backend limit of INSTANCES_DISPLAY_LIMIT is too low — a single group
-// can easily exceed it by combining instances across rules. We use a higher limit here.
-const GROUPED_INSTANCES_LIMIT = 100;
-
 const fetchPromAndRuler = ({
   dispatch,
-  limitAlerts,
+  limitInstances,
   matcherList,
   dataSourceName,
   stateList,
 }: {
   dispatch: ThunkDispatch;
-  limitAlerts: number | undefined;
+  limitInstances: boolean;
   matcherList?: Matcher[] | undefined;
   dataSourceName?: string;
   stateList: string[];
@@ -91,7 +77,7 @@ const fetchPromAndRuler = ({
     dispatch(
       fetchPromAndRulerRulesAction({
         rulesSourceName: dataSourceName,
-        limitAlerts,
+        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
         matcher: matcherList,
         state: stateList,
       })
@@ -99,7 +85,7 @@ const fetchPromAndRuler = ({
   } else {
     dispatch(
       fetchAllPromAndRulerRulesAction(false, {
-        limitAlerts,
+        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
         matcher: matcherList,
         state: stateList,
       })
@@ -129,10 +115,10 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
-  const dashboardRef = useRef<DashboardModel | undefined>(undefined);
+  let dashboard: DashboardModel | undefined = undefined;
 
   useEffectOnce(() => {
-    dashboardRef.current = getDashboardSrv().getCurrent();
+    dashboard = getDashboardSrv().getCurrent();
   });
 
   const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
@@ -156,20 +142,13 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
   //See https://github.com/grafana/grafana/pull/70482
-  const isGroupedMode = options.groupMode === GroupMode.Custom;
-  const effectiveLimitAlerts = isGroupedMode
-    ? GROUPED_INSTANCES_LIMIT
-    : limitInstances
-      ? INSTANCES_DISPLAY_LIMIT
-      : undefined;
-
   const {
     currentData: grafanaPromRules = [],
     isLoading: grafanaRulesLoading,
     refetch: refetchGrafanaPromRules,
   } = usePrometheusRulesByNamespaceQuery(
     {
-      limitAlerts: effectiveLimitAlerts,
+      limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
       matcher: matcherList,
       state: stateList,
     },
@@ -179,19 +158,15 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
     if (!promRulesRequests.loading) {
-      fetchPromAndRuler({ dispatch, limitAlerts: effectiveLimitAlerts, matcherList, dataSourceName, stateList });
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
     }
-  }, [dispatch, matcherList, stateList, effectiveLimitAlerts, dataSourceName, promRulesRequests.loading]);
-
-  useEffect(() => {
-    const dashboard = dashboardRef.current;
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => {
       if (shouldFetchGrafanaRules) {
         refetchGrafanaPromRules();
       }
 
       if (!dataSourceName || dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-        fetchPromAndRuler({ dispatch, limitAlerts: effectiveLimitAlerts, matcherList, dataSourceName, stateList });
+        fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
       }
     });
     return () => {
@@ -199,20 +174,22 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     };
   }, [
     dispatch,
+    dashboard,
     matcherList,
     stateList,
-    effectiveLimitAlerts,
+    limitInstances,
     dataSourceName,
     refetchGrafanaPromRules,
     shouldFetchGrafanaRules,
+    promRulesRequests.loading,
   ]);
 
   const handleInstancesLimit = (limit: boolean) => {
     if (limit) {
-      fetchPromAndRuler({ dispatch, limitAlerts: INSTANCES_DISPLAY_LIMIT, matcherList, dataSourceName, stateList });
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
       toggleLimit(true);
     } else {
-      fetchPromAndRuler({ dispatch, limitAlerts: undefined, matcherList, dataSourceName, stateList });
+      fetchPromAndRuler({ dispatch, limitInstances: false, matcherList, dataSourceName, stateList });
       toggleLimit(false);
     }
   };
@@ -242,92 +219,41 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
 
   return (
-    <ScrollContainer minHeight="100%">
-      {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
-      {havePreviousResults && (
-        <section>
-          {props.options.viewMode === ViewMode.Stat && (
-            <StatView
-              rules={rules}
-              width={props.width}
-              height={props.height}
-              options={parsedOptions}
-              dashboardUid={options.dashboardAlerts ? dashboardRef.current?.uid : undefined}
-              styles={styles}
-            />
-          )}
-          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
-            <GroupedModeView rules={rules} options={parsedOptions} />
-          )}
-          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
-            <UngroupedModeView
-              rules={rules}
-              options={parsedOptions}
-              handleInstancesLimit={handleInstancesLimit}
-              limitInstances={limitInstances}
-              hideViewRuleLinkText={hideViewRuleLinkText}
-            />
-          )}
-        </section>
-      )}
-      {/* loading moved here to avoid twitching  */}
-      {renderLoading && <LoadingPlaceholder text={t('alertlist.unified-alert-list.text-loading', 'Loading...')} />}
-    </ScrollContainer>
+    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+      <div className={styles.container}>
+        {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+        {havePreviousResults && (
+          <section>
+            {props.options.viewMode === ViewMode.Stat && (
+              <BigValue
+                width={props.width}
+                height={props.height}
+                graphMode={BigValueGraphMode.None}
+                textMode={BigValueTextMode.Auto}
+                justifyMode={BigValueJustifyMode.Auto}
+                theme={config.theme2}
+                value={{ text: `${rules.length}`, numeric: rules.length }}
+              />
+            )}
+            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
+              <GroupedModeView rules={rules} options={parsedOptions} />
+            )}
+            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
+              <UngroupedModeView
+                rules={rules}
+                options={parsedOptions}
+                handleInstancesLimit={handleInstancesLimit}
+                limitInstances={limitInstances}
+                hideViewRuleLinkText={hideViewRuleLinkText}
+              />
+            )}
+          </section>
+        )}
+        {/* loading moved here to avoid twitching  */}
+        {renderLoading && <LoadingPlaceholder text="Loading..." />}
+      </div>
+    </CustomScrollbar>
   );
-}
-
-function StatView({
-  rules,
-  width,
-  height,
-  options,
-  dashboardUid,
-  styles,
-}: {
-  rules: CombinedRuleWithLocation[];
-  width: number;
-  height: number;
-  options: UnifiedAlertListOptions;
-  dashboardUid?: string;
-  styles: ReturnType<typeof getStyles>;
-}) {
-  const enhancementsEnabled = Boolean(config.featureToggles.alertingAlertListPanelEnhancements);
-
-  const displayValue = enhancementsEnabled
-    ? getStatDisplayValue(
-        rules.length,
-        options.statColorMode ?? BigValueColorMode.None,
-        options.statThresholds ?? STAT_THRESHOLDS_DEFAULT,
-        options.statValueMappings ?? [],
-        config.theme2
-      )
-    : { text: `${rules.length}`, numeric: rules.length };
-
-  const colorMode = enhancementsEnabled ? (options.statColorMode ?? BigValueColorMode.None) : BigValueColorMode.None;
-
-  const bigValue = (
-    <BigValue
-      colorMode={colorMode}
-      width={width}
-      height={height}
-      graphMode={BigValueGraphMode.None}
-      textMode={BigValueTextMode.Auto}
-      justifyMode={BigValueJustifyMode.Auto}
-      theme={config.theme2}
-      value={displayValue}
-    />
-  );
-
-  if (enhancementsEnabled) {
-    const href = buildAlertingListUrl(options, dashboardUid);
-    return (
-      <Link href={href} className={styles.statLink}>
-        {bigValue}
-      </Link>
-    );
-  }
-
-  return bigValue;
 }
 
 function sortRules(sortOrder: SortOrder, rules: CombinedRuleWithLocation[]) {
@@ -380,14 +306,13 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     return (
       (options.stateFilter.firing && alertingRule.state === PromAlertingRuleState.Firing) ||
       (options.stateFilter.pending && alertingRule.state === PromAlertingRuleState.Pending) ||
-      (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive) ||
-      (options.stateFilter.recovering && alertingRule.state === PromAlertingRuleState.Recovering)
+      (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive)
     );
   });
 
-  if (options.folder && options.folder.uid) {
+  if (options.folder) {
     filteredRules = filteredRules.filter((rule) => {
-      return rule.namespace.uid === options.folder.uid;
+      return rule.namespaceName === options.folder.title;
     });
   }
   if (options.datasource) {
@@ -400,7 +325,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   }
 
-  // Remove rules having 0 instances unless explicitly configured
+  // Remove rules having 0 instances
   // AlertInstances filters instances and we need to prevent situation
   // when we display a rule with 0 instances
   filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
@@ -414,12 +339,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
           alertingRule.alerts ?? []
         )
       : [];
-    if (
-      filteredAlerts.length ||
-      (alertingRule?.state === PromAlertingRuleState.Inactive &&
-        options.showInactiveAlerts &&
-        !options.alertInstanceLabelFilter.length)
-    ) {
+    if (filteredAlerts.length) {
       // We intentionally don't set alerts to filteredAlerts
       // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
       rules.push(rule);
@@ -435,6 +355,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 0, 0.25, 0),
     lineHeight: theme.typography.body.lineHeight,
     marginBottom: 0,
+  }),
+  container: css({
+    overflowY: 'auto',
+    height: '100%',
   }),
   alertRuleList: css({
     display: 'flex',
@@ -523,15 +447,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   hidden: css({
     display: 'none',
   }),
-  statLink: css({
-    display: 'block',
-    width: '100%',
-    height: '100%',
-    textDecoration: 'none',
-    '&:hover': {
-      textDecoration: 'none',
-    },
-  }),
 });
 
 export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>) {
@@ -540,11 +455,7 @@ export function UnifiedAlertListPanel(props: PanelProps<UnifiedAlertListOptions>
 
   if (!gmaReadAllowed && !externalReadAllowed) {
     return (
-      <Alert title={t('alertlist.unified-alert-list-panel.title-permission-required', 'Permission required')}>
-        <Trans i18nKey="alertlist.unified-alert-list-panel.body-permission-required">
-          Sorry, you do not have the required permissions to read alert rules.
-        </Trans>
-      </Alert>
+      <Alert title="Permission required">Sorry, you do not have the required permissions to read alert rules</Alert>
     );
   }
 

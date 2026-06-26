@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
-import { type FeatureLike } from 'ol/Feature';
+import { FeatureLike } from 'ol/Feature';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { type DataFrame, FieldType, getFieldDisplayName, type GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
-import { type GeomapLayerHover } from 'app/plugins/panel/geomap/event';
+import { GeomapLayerHover } from 'app/plugins/panel/geomap/event';
+import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
 import { DataHoverRow } from './DataHoverRow';
-import { renderValue } from './renderValue';
 
 type Props = {
   layers: GeomapLayerHover[];
@@ -25,7 +25,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
   };
 
   return (
-    <TabContent data-testid="data-hover-rows" data-active-tab={activeTabIndex}>
+    <TabContent>
       {layers.map(
         (geomapLayer, index) =>
           index === activeTabIndex && (
@@ -38,6 +38,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
                   return shouldDisplayCollapse ? (
                     <Collapse
                       key={key}
+                      collapsible
                       label={generateLabel(feature, idx)}
                       isOpen={rowMap.get(key)}
                       onToggle={() => {

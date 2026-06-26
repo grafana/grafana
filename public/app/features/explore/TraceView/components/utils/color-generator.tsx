@@ -15,7 +15,7 @@
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { colors } from '@grafana/ui';
 
 // TS needs the precise return type

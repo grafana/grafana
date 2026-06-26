@@ -3,7 +3,6 @@ package dtos
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -29,10 +28,6 @@ type Folder struct {
 	ParentUID string `json:"parentUid,omitempty"`
 	// the parent folders starting from the root going down
 	Parents []Folder `json:"parents,omitempty"`
-
-	// When the folder belongs to a repository
-	// NOTE: this is only populated when folders are managed by unified storage
-	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }
 
 type FolderSearchHit struct {
@@ -40,8 +35,4 @@ type FolderSearchHit struct {
 	UID       string `json:"uid" xorm:"uid"`
 	Title     string `json:"title"`
 	ParentUID string `json:"parentUid,omitempty"`
-
-	// When the folder belongs to a repository
-	// NOTE: this is only populated when folders are managed by unified storage
-	ManagedBy utils.ManagerKind `json:"managedBy,omitempty"`
 }

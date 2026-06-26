@@ -1,7 +1,7 @@
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
-import { type EditorProps } from '../QueryEditor';
+import { EditorProps } from '../QueryEditor';
 
 const liveTestDataChannels = [
   {

@@ -1,15 +1,15 @@
 import { debounce, union, without } from 'lodash';
-import { type PropsWithChildren, createContext, useContext, useEffect, useRef } from 'react';
+import { createContext, useContext, PropsWithChildren, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { config, getAppEvents } from '@grafana/runtime';
-import { AlertmanagerChoice, type GrafanaAlertingConfiguration } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice, GrafanaAlertingConfiguration } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { dataSourcesApi } from '../../api/dataSourcesApi';
 import {
-  type ExternalAlertmanagerDataSourceWithStatus,
+  ExternalAlertmanagerDataSourceWithStatus,
   useExternalDataSourceAlertmanagers,
 } from '../../hooks/useExternalAmSelector';
 import { deleteAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';

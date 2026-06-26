@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
-import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+
+import { DecoratedRevisionModel } from '../VersionsEditView';
 
 import { DiffGroup } from './DiffGroup';
-import LazyDiffViewer from './LazyDiffViewer';
+import { DiffViewer } from './DiffViewer';
 import { RevertDashboardModal } from './RevertDashboardModal';
 import { jsonDiff } from './utils';
 
@@ -14,7 +14,7 @@ type DiffViewProps = {
   isNewLatest: boolean;
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
-  diffData: { lhs: object; rhs: object };
+  diffData: { lhs: string; rhs: string };
   onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
 };
 
@@ -27,22 +27,12 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
       <Stack justifyContent="space-between" alignItems="center">
         <Stack alignItems="center">
           <span className={cx(styles.versionInfo, styles.noMarginBottom)}>
-            <Trans
-              i18nKey="dashboard-scene.version-history-comparison.old-version-updated"
-              values={{ version: baseInfo.version, editor: baseInfo.createdBy, timeAgo: baseInfo.ageString }}
-            >
-              <strong>Version {'{{version}}'}</strong> updated by {'{{editor}}'} {'{{timeAgo}}'}
-            </Trans>
+            <strong>Version {baseInfo.version}</strong> updated by {baseInfo.createdBy} {baseInfo.ageString}
             {baseInfo.message}
           </span>
           <Icon name="arrow-right" size="sm" />
           <span className={styles.versionInfo}>
-            <Trans
-              i18nKey="dashboard-scene.version-history-comparison.new-version-updated"
-              values={{ version: newInfo.version, editor: newInfo.createdBy, timeAgo: newInfo.ageString }}
-            >
-              <strong>Version {'{{version}}'}</strong> updated by {'{{editor}}'} {'{{timeAgo}}'}
-            </Trans>
+            <strong>Version {newInfo.version}</strong> updated by {newInfo.createdBy} {newInfo.ageString}
             {newInfo.message}
           </span>
         </Stack>
@@ -60,12 +50,7 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
                   });
                 }}
               >
-                <Trans
-                  i18nKey="dashboard-scene.version-history.comparison.button-restore"
-                  values={{ version: baseInfo.version }}
-                >
-                  Restore to version {'{{version}}'}
-                </Trans>
+                Restore to version {baseInfo.version}
               </Button>
             )}
           </ModalsController>
@@ -77,11 +62,8 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, diffData, isNewLat
       ))}
 
       <Box paddingTop={2}>
-        <CollapsableSection
-          isOpen={false}
-          label={t('dashboard-scene.version-history-comparison.label-view-json-diff', 'View JSON diff')}
-        >
-          <LazyDiffViewer
+        <CollapsableSection isOpen={false} label="View JSON Diff">
+          <DiffViewer
             oldValue={JSON.stringify(diffData.lhs, null, 2)}
             newValue={JSON.stringify(diffData.rhs, null, 2)}
           />

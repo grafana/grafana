@@ -36,7 +36,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -88,7 +89,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -104,7 +107,8 @@
         {
           "alias": "__house_locations",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "labels": "",
           "min": 0,
@@ -119,7 +123,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -171,7 +176,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -187,7 +194,8 @@
         {
           "alias": "__house_locations",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "min": 0,
           "noise": 10,
@@ -202,7 +210,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -254,7 +263,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -270,7 +281,8 @@
         {
           "alias": "__house_locations",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "min": 0,
           "noise": 10,
@@ -285,7 +297,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -337,7 +350,9 @@
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -353,7 +368,8 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "min": 0,
           "refId": "A",
@@ -367,7 +383,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -419,7 +436,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -434,49 +453,56 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "E",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "F",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "G",
           "scenarioId": "random_walk"
@@ -487,7 +513,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -539,7 +566,9 @@
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -554,49 +583,56 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "E",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "F",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "G",
           "scenarioId": "random_walk"
@@ -607,7 +643,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -661,7 +698,9 @@
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -677,7 +716,8 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "max": 200,
           "min": 0,
@@ -694,7 +734,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -748,7 +789,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -764,7 +807,8 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "max": 200,
           "min": 0,
@@ -781,7 +825,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -835,7 +880,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -851,7 +898,8 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "max": 200,
           "min": 0,
@@ -881,7 +929,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -933,7 +982,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -949,7 +1000,8 @@
         {
           "alias": "__house_locations",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "labels": "",
           "min": 0,
@@ -964,7 +1016,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1016,7 +1069,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -1032,7 +1087,8 @@
         {
           "alias": "__house_locations",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "min": 0,
           "noise": 10,
@@ -1047,7 +1103,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1099,7 +1156,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -1115,7 +1174,8 @@
         {
           "alias": "__house_locations",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "min": 0,
           "noise": 10,
@@ -1130,7 +1190,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1182,7 +1243,9 @@
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -1198,7 +1261,8 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "min": 0,
           "refId": "A",
@@ -1212,7 +1276,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1264,7 +1329,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -1279,49 +1346,56 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "E",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "F",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "G",
           "scenarioId": "random_walk"
@@ -1332,7 +1406,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1384,7 +1459,9 @@
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -1399,49 +1476,56 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "C",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "D",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "E",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "F",
           "scenarioId": "random_walk"
         },
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "G",
           "scenarioId": "random_walk"
@@ -1452,7 +1536,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1506,7 +1591,9 @@
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -1522,7 +1609,8 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "max": 200,
           "min": 0,
@@ -1539,7 +1627,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1593,7 +1682,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -1609,7 +1700,8 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "max": 200,
           "min": 0,
@@ -1626,7 +1718,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1680,7 +1773,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["mean"],
+          "calcs": [
+            "mean"
+          ],
           "fields": "",
           "values": false
         },
@@ -1696,7 +1791,8 @@
         {
           "alias": "__server_names",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "max": 200,
           "min": 0,
@@ -1713,7 +1809,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1751,7 +1848,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -1764,7 +1863,8 @@
         {
           "csvContent": "time, value\n2023-12-13T00:00:00Z, 0\n2023-12-13T00:00:00Z, 100",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1775,7 +1875,9 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "default": true,
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1813,7 +1915,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -1826,7 +1930,8 @@
         {
           "csvContent": "time, value\n2023-12-13T00:00:00Z, 50\n2023-12-13T00:00:00Z, 100\n2023-12-13T00:00:00Z, 50",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1837,7 +1942,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1875,7 +1981,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -1888,7 +1996,8 @@
         {
           "csvContent": "time, value\n2023-12-13T00:00:00Z, 0\n2023-12-13T00:00:00Z, 0",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1899,7 +2008,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1907,13 +2017,6 @@
             "mode": "thresholds"
           },
           "mappings": [],
-          "links": [
-            {
-              "targetBlank": false,
-              "title": "Go to dashboard",
-              "url": "/d/EJ8_d9jZk?q=${__value.text}"
-            }
-          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1944,7 +2047,9 @@
         "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": true
         },
@@ -1957,7 +2062,8 @@
         {
           "csvContent": "Name, value\nName1, 10\nName2, 20",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -1965,69 +2071,15 @@
       ],
       "title": "Value Options All",
       "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 86
-      },
-      "id": 33,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.2.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-testdata-datasource"
-          },
-          "refId": "A",
-          "scenarioId": "random_walk",
-          "seriesCount": 0
-        }
-      ],
-      "title": "No data",
-      "type": "stat"
     }
   ],
   "refresh": "",
   "schemaVersion": 39,
-  "tags": ["gdev", "panel-tests", "graph-ng"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
   "templating": {
     "list": []
   },
@@ -2036,7 +2088,18 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
   },
   "timezone": "",
   "title": "Panel Tests - Stat",

@@ -1,16 +1,14 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { t } from '@grafana/i18n';
-
-import { type IconSize } from '../../types/icon';
+import { IconSize } from '../../types/icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
-import { type TooltipPlacement } from '../Tooltip/types';
+import { TooltipPlacement } from '../Tooltip';
 
-import { TableCellInspectorMode } from './TableCellInspector';
-import { getTextAlign } from './cellUtils';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellProps } from './types';
+import { TableCellInspector, TableCellInspectorMode } from './TableCellInspector';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
+import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
   previewMode: TableCellInspectorMode;
@@ -22,14 +20,9 @@ interface CommonButtonProps {
   tooltipPlacement: TooltipPlacement;
 }
 
-export function CellActions({
-  field,
-  cell,
-  previewMode,
-  showFilters,
-  onCellFilterAdded,
-  setInspectCell,
-}: CellActionProps) {
+export function CellActions({ field, cell, previewMode, showFilters, onCellFilterAdded }: CellActionProps) {
+  const [isInspecting, setIsInspecting] = useState(false);
+
   const isRightAligned = getTextAlign(field) === 'flex-end';
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const commonButtonProps: CommonButtonProps = {
@@ -55,53 +48,37 @@ export function CellActions({
   );
 
   return (
-    <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
-      <Stack gap={0.5}>
-        {inspectEnabled && (
-          <IconButton
-            name="eye"
-            tooltip={t('grafana-ui.table.cell-inspect', 'Inspect value')}
-            onClick={() => {
-              if (setInspectCell) {
-                let mode = TableCellInspectorMode.text;
-                let inspectValue = cell.value;
-                try {
-                  const parsed = typeof inspectValue === 'string' ? JSON.parse(inspectValue) : inspectValue;
-                  const isPlainObj =
-                    typeof parsed === 'object' &&
-                    parsed !== null &&
-                    !Array.isArray(parsed) &&
-                    (Object.getPrototypeOf(parsed) === Object.prototype || Object.getPrototypeOf(parsed) === null);
-                  if (Array.isArray(parsed) || isPlainObj) {
-                    inspectValue = JSON.stringify(parsed, null, 2);
-                    mode = TableCellInspectorMode.code;
-                  }
-                } catch {
-                  // do nothing
-                }
-                setInspectCell({ value: inspectValue, mode });
-              }
-            }}
-            {...commonButtonProps}
-          />
-        )}
-        {showFilters && (
-          <IconButton
-            name={'search-plus'}
-            onClick={onFilterFor}
-            tooltip={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
-            {...commonButtonProps}
-          />
-        )}
-        {showFilters && (
-          <IconButton
-            name={'search-minus'}
-            onClick={onFilterOut}
-            tooltip={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
-            {...commonButtonProps}
-          />
-        )}
-      </Stack>
-    </div>
+    <>
+      <div className={`cellActions${isRightAligned ? ' cellActionsLeft' : ''}`}>
+        <Stack gap={0.5}>
+          {inspectEnabled && (
+            <IconButton
+              name="eye"
+              tooltip="Inspect value"
+              onClick={() => {
+                setIsInspecting(true);
+              }}
+              {...commonButtonProps}
+            />
+          )}
+          {showFilters && (
+            <IconButton name={'search-plus'} onClick={onFilterFor} tooltip="Filter for value" {...commonButtonProps} />
+          )}
+          {showFilters && (
+            <IconButton name={'search-minus'} onClick={onFilterOut} tooltip="Filter out value" {...commonButtonProps} />
+          )}
+        </Stack>
+      </div>
+
+      {isInspecting && (
+        <TableCellInspector
+          mode={previewMode}
+          value={cell.value}
+          onDismiss={() => {
+            setIsInspecting(false);
+          }}
+        />
+      )}
+    </>
   );
 }

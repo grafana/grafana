@@ -1,16 +1,16 @@
 {
-  "targetDefaults": {
-    "build": {
-      "outputs": ["{projectRoot}/dist"],
-      "cache": true
-    },
-    "generate": {
-      "cache": true
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "nx/tasks-runners/default",
+      "options": {
+        "cacheableOperations": ["build", "generate"]
+      }
     }
   },
-  "tui": {
-    "autoExit": true,
-    "enabled": false
+  "targetDefaults": {
+    "build": {
+      "outputs": ["{projectRoot}/dist"]
+    }
   },
   "defaultBase": "main"
 }

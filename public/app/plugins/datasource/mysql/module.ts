@@ -1,12 +1,12 @@
 import { DataSourcePlugin } from '@grafana/data';
-import { type SQLQuery, SqlQueryEditorLazy } from '@grafana/sql';
+import { SQLQuery, SqlQueryEditor } from '@grafana/sql';
 
 import { CheatSheet } from './CheatSheet';
 import { MySqlDatasource } from './MySqlDatasource';
 import { ConfigurationEditor } from './configuration/ConfigurationEditor';
-import { type MySQLOptions } from './types';
+import { MySQLOptions } from './types';
 
 export const plugin = new DataSourcePlugin<MySqlDatasource, SQLQuery, MySQLOptions>(MySqlDatasource)
-  .setQueryEditor(SqlQueryEditorLazy)
+  .setQueryEditor(SqlQueryEditor)
   .setQueryEditorHelp(CheatSheet)
   .setConfigEditor(ConfigurationEditor);

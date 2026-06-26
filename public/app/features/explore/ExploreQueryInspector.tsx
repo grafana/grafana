@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { connect, type ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { CoreApp, type GrafanaTheme2, LoadingState } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { defaultTimeZone, type TimeZone } from '@grafana/schema';
-import { TabbedContainer, type TabConfig, useStyles2 } from '@grafana/ui';
+import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
+import { defaultTimeZone, TimeZone } from '@grafana/schema';
+import { TabbedContainer, TabConfig, useStyles2 } from '@grafana/ui';
 import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -15,10 +14,9 @@ import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { mixedRequestId } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { type ExploreItemState } from 'app/types/explore';
-import { type StoreState } from 'app/types/store';
+import { StoreState, ExploreItemState } from 'app/types';
 
-import { type GetDataOptions } from '../query/state/PanelQueryRunner';
+import { GetDataOptions } from '../query/state/PanelQueryRunner';
 
 import { runQueries } from './state/query';
 
@@ -48,21 +46,21 @@ export function ExploreQueryInspector(props: Props) {
   }, []);
 
   const statsTab: TabConfig = {
-    label: t('explore.explore-query-inspector.stats-tab.label.stats', 'Stats'),
+    label: 'Stats',
     value: 'stats',
     icon: 'chart-line',
     content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone ?? defaultTimeZone} />,
   };
 
   const jsonTab: TabConfig = {
-    label: t('explore.explore-query-inspector.json-tab.label.json', 'JSON'),
+    label: 'JSON',
     value: 'json',
     icon: 'brackets-curly',
     content: <InspectJSONTab data={queryResponse} onClose={onClose} />,
   };
 
   const dataTab: TabConfig = {
-    label: t('explore.explore-query-inspector.data-tab.label.data', 'Data'),
+    label: 'Data',
     value: 'data',
     icon: 'database',
     content: (
@@ -80,7 +78,7 @@ export function ExploreQueryInspector(props: Props) {
   };
 
   const queryTab: TabConfig = {
-    label: t('explore.explore-query-inspector.query-tab.label.query', 'Query'),
+    label: 'Query',
     value: 'query',
     icon: 'info-circle',
     content: (
@@ -97,7 +95,7 @@ export function ExploreQueryInspector(props: Props) {
   const tabs = [statsTab, queryTab, jsonTab, dataTab];
   if (errors?.length) {
     const errorTab: TabConfig = {
-      label: t('explore.explore-query-inspector.error-tab.label.error', 'Error'),
+      label: 'Error',
       value: 'error',
       icon: 'exclamation-triangle',
       content: <InspectErrorTab errors={errors} />,

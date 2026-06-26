@@ -9,28 +9,24 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestUserService(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
-	userService := LegacyService{
+	userService := Service{
 		store:        userStore,
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
-		db:           db.InitTestDB(t),
 	}
 	userService.cfg = setting.NewCfg()
 
@@ -61,7 +57,6 @@ func TestUserService(t *testing.T) {
 		require.Equal(t, "login", u.Login)
 		require.Equal(t, "name", u.Name)
 		require.Equal(t, "email", u.Email)
-		require.False(t, u.IsProvisioned)
 	})
 
 	t.Run("delete user store returns error", func(t *testing.T) {
@@ -102,7 +97,7 @@ func TestUserService(t *testing.T) {
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
 		userStore := newUserStoreFake()
 		orgService := orgtest.NewOrgServiceFake()
-		userService := LegacyService{
+		userService := Service{
 			store:        userStore,
 			orgService:   orgService,
 			cacheService: localcache.ProvideService(),
@@ -156,8 +151,8 @@ func TestUserService(t *testing.T) {
 }
 
 func TestService_Update(t *testing.T) {
-	setup := func(opts ...func(svc *LegacyService)) *LegacyService {
-		service := &LegacyService{
+	setup := func(opts ...func(svc *Service)) *Service {
+		service := &Service{
 			store:  &FakeUserStore{},
 			tracer: tracing.InitializeTracerForTest(),
 		}
@@ -168,7 +163,7 @@ func TestService_Update(t *testing.T) {
 	}
 
 	t.Run("should return error if old password does not match stored password", func(t *testing.T) {
-		service := setup(func(svc *LegacyService) {
+		service := setup(func(svc *Service) {
 			stored, err := user.Password("test").Hash("salt")
 			require.NoError(t, err)
 
@@ -182,7 +177,7 @@ func TestService_Update(t *testing.T) {
 	})
 
 	t.Run("should return error new password is not valid", func(t *testing.T) {
-		service := setup(func(svc *LegacyService) {
+		service := setup(func(svc *Service) {
 			stored, err := user.Password("test").Hash("salt")
 			require.NoError(t, err)
 			svc.cfg = setting.NewCfg()
@@ -198,7 +193,7 @@ func TestService_Update(t *testing.T) {
 
 	t.Run("Can set using org", func(t *testing.T) {
 		orgID := int64(1)
-		service := setup(func(svc *LegacyService) {
+		service := setup(func(svc *Service) {
 			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: orgID}}}
 		})
 		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
@@ -207,7 +202,7 @@ func TestService_Update(t *testing.T) {
 
 	t.Run("Cannot set using org when user is not member of it", func(t *testing.T) {
 		orgID := int64(1)
-		service := setup(func(svc *LegacyService) {
+		service := setup(func(svc *Service) {
 			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: 2}}}
 		})
 		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
@@ -218,7 +213,7 @@ func TestService_Update(t *testing.T) {
 func TestUpdateLastSeenAt(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
-	userService := LegacyService{
+	userService := Service{
 		store:        userStore,
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
@@ -247,7 +242,7 @@ func TestMetrics(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
 
-	userService := LegacyService{
+	userService := Service{
 		store:        userStore,
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
@@ -270,100 +265,6 @@ func TestMetrics(t *testing.T) {
 	})
 }
 
-func TestIntegrationCreateUser(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	cfg := setting.NewCfg()
-	ss := db.InitTestDB(t)
-	userStore := &sqlStore{
-		db:      ss,
-		dialect: ss.GetDialect(),
-		logger:  log.NewNopLogger(),
-		cfg:     cfg,
-	}
-
-	t.Run("SkipOrgSetup=true: InsertOrgUser is not called, DefaultOrgRole is ignored", func(t *testing.T) {
-		var inserted *org.OrgUser
-		userService := LegacyService{
-			store: userStore,
-			orgService: &orgtest.FakeOrgService{
-				InsertOrgUserFn: func(_ context.Context, orgUser *org.OrgUser) (int64, error) {
-					inserted = orgUser
-					return 1, nil
-				},
-			},
-			cacheService: localcache.ProvideService(),
-			teamService:  &teamtest.FakeService{},
-			tracer:       tracing.InitializeTracerForTest(),
-			cfg:          setting.NewCfg(),
-			db:           ss,
-		}
-		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
-			Email:          "skip@example.com",
-			Login:          "skipuser",
-			Name:           "skipuser",
-			DefaultOrgRole: "Editor",
-			SkipOrgSetup:   true,
-		})
-		require.NoError(t, err)
-		require.Nil(t, inserted, "InsertOrgUser must not be called when SkipOrgSetup=true")
-	})
-
-	t.Run("SkipOrgSetup=false, empty DefaultOrgRole: org_user inserted with AutoAssignOrgRole", func(t *testing.T) {
-		var inserted *org.OrgUser
-		cfg := setting.NewCfg()
-		cfg.AutoAssignOrg = true
-		cfg.AutoAssignOrgRole = string(org.RoleViewer)
-		userService := LegacyService{
-			store: userStore,
-			orgService: &orgtest.FakeOrgService{
-				InsertOrgUserFn: func(_ context.Context, orgUser *org.OrgUser) (int64, error) {
-					inserted = orgUser
-					return 1, nil
-				},
-			},
-			cacheService: localcache.ProvideService(),
-			teamService:  &teamtest.FakeService{},
-			tracer:       tracing.InitializeTracerForTest(),
-			cfg:          cfg,
-			db:           ss,
-		}
-		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
-			Email: "fallback@example.com",
-			Login: "fallbackuser",
-			Name:  "fallbackuser",
-		})
-		require.NoError(t, err)
-		require.NotNil(t, inserted, "InsertOrgUser must be called when SkipOrgSetup=false")
-		assert.Equal(t, org.RoleViewer, inserted.Role, "Role must come from cfg.AutoAssignOrgRole when DefaultOrgRole is empty")
-	})
-
-	t.Run("create user should roll back created user if OrgUser cannot be created", func(t *testing.T) {
-		userService := LegacyService{
-			store: userStore,
-			orgService: &orgtest.FakeOrgService{InsertOrgUserFn: func(ctx context.Context, orgUser *org.OrgUser) (int64, error) {
-				return 0, errors.New("some error")
-			}},
-			cacheService: localcache.ProvideService(),
-			teamService:  &teamtest.FakeService{},
-			tracer:       tracing.InitializeTracerForTest(),
-			cfg:          setting.NewCfg(),
-			db:           ss,
-		}
-		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
-			Email: "email",
-			Login: "login",
-			Name:  "name",
-		})
-		require.Error(t, err)
-
-		usr, err := userService.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "login"})
-		require.Nil(t, usr)
-		require.Error(t, err)
-		require.ErrorIs(t, err, user.ErrUserNotFound)
-	})
-}
-
 type FakeUserStore struct {
 	ExpectedUser                            *user.User
 	ExpectedSignedInUser                    *user.SignedInUser
@@ -372,7 +273,6 @@ type FakeUserStore struct {
 	ExpectedError                           error
 	ExpectedDeleteUserError                 error
 	ExpectedCountUserAccountsWithEmptyRoles int64
-	ExpectedListUsersByIdOrUid              []*user.User
 }
 
 func newUserStoreFake() *FakeUserStore {
@@ -391,12 +291,8 @@ func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
 
-func (f *FakeUserStore) GetByUID(context.Context, string) (*user.User, error) {
+func (f *FakeUserStore) GetByUID(context.Context, int64, string) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeUserStore) ListByIdOrUID(context.Context, []string, []int64) ([]*user.User, error) {
-	return f.ExpectedListUsersByIdOrUid, f.ExpectedError
 }
 
 func (f *FakeUserStore) LoginConflict(context.Context, string, string) error {

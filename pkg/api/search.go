@@ -36,7 +36,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	deleted := c.Query("deleted")
 	permission := dashboardaccess.PERMISSION_VIEW
 
-	if deleted == "true" && c.GetOrgRole() != org.RoleAdmin {
+	if deleted == "true" && c.SignedInUser.GetOrgRole() != org.RoleAdmin {
 		return response.Error(http.StatusUnauthorized, "Unauthorized", nil)
 	}
 
@@ -88,7 +88,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Page:          page,
 		IsStarred:     starred == "true",
 		IsDeleted:     deleted == "true",
-		OrgId:         c.GetOrgID(),
+		OrgId:         c.SignedInUser.GetOrgID(),
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
 		Type:          dashboardType,
@@ -118,7 +118,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 func (hs *HTTPServer) ListSortOptions(c *contextmodel.ReqContext) response.Response {
 	opts := hs.SearchService.SortOptions()
 
-	res := make([]util.DynMap, 0, len(opts))
+	res := []util.DynMap{}
 	for _, o := range opts {
 		res = append(res, util.DynMap{
 			"name":        o.Name,

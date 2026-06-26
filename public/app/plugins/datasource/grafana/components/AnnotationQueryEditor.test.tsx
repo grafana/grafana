@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { type GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from '../types';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from '../types';
 
 import AnnotationQueryEditor from './AnnotationQueryEditor';
 

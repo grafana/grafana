@@ -3,16 +3,14 @@ package resource
 import (
 	"context"
 	"fmt"
-	"io"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
-	dto "github.com/prometheus/client_model/go"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 	"gocloud.dev/blob"
 )
-
-var _ CDKBucket = (*fakeCDKBucket)(nil)
 
 type fakeCDKBucket struct {
 	attributesFunc func(ctx context.Context, key string) (*blob.Attributes, error)
@@ -21,9 +19,6 @@ type fakeCDKBucket struct {
 	signedURLFunc  func(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error)
 	listFunc       func(opts *blob.ListOptions) *blob.ListIterator
 	listPageFunc   func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error)
-	deleteFunc     func(ctx context.Context, key string) error
-	uploadFunc     func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error
-	downloadFunc   func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error
 }
 
 func (f *fakeCDKBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
@@ -68,27 +63,6 @@ func (f *fakeCDKBucket) ListPage(ctx context.Context, pageToken []byte, pageSize
 	return nil, nil, nil
 }
 
-func (f *fakeCDKBucket) Delete(ctx context.Context, key string) error {
-	if f.deleteFunc != nil {
-		return f.deleteFunc(ctx, key)
-	}
-	return nil
-}
-
-func (f *fakeCDKBucket) Upload(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
-	if f.uploadFunc != nil {
-		return f.uploadFunc(ctx, key, r, opts)
-	}
-	return nil
-}
-
-func (f *fakeCDKBucket) Download(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
-	if f.downloadFunc != nil {
-		return f.downloadFunc(ctx, key, w, opts)
-	}
-	return nil
-}
-
 func TestInstrumentedBucket(t *testing.T) {
 	operations := []struct {
 		name      string
@@ -130,25 +104,8 @@ func TestInstrumentedBucket(t *testing.T) {
 				}
 			},
 			call: func(instrumentedBucket *InstrumentedBucket) error {
-				return instrumentedBucket.WriteAll(context.Background(), "key", []byte("data"), nil)
-			},
-		},
-		{
-			name:      "Delete",
-			operation: "Delete",
-			setup: func(fakeBucket *fakeCDKBucket, success bool) {
-				if success {
-					fakeBucket.deleteFunc = func(ctx context.Context, key string) error {
-						return nil
-					}
-				} else {
-					fakeBucket.deleteFunc = func(ctx context.Context, key string) error {
-						return fmt.Errorf("some error")
-					}
-				}
-			},
-			call: func(instrumentedBucket *InstrumentedBucket) error {
-				return instrumentedBucket.Delete(context.Background(), "key")
+				err := instrumentedBucket.WriteAll(context.Background(), "key", []byte("data"), nil)
+				return err
 			},
 		},
 		{
@@ -171,42 +128,6 @@ func TestInstrumentedBucket(t *testing.T) {
 			},
 		},
 		{
-			name:      "Upload",
-			operation: "Upload",
-			setup: func(fakeBucket *fakeCDKBucket, success bool) {
-				if success {
-					fakeBucket.uploadFunc = func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
-						return nil
-					}
-				} else {
-					fakeBucket.uploadFunc = func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
-						return fmt.Errorf("some error")
-					}
-				}
-			},
-			call: func(instrumentedBucket *InstrumentedBucket) error {
-				return instrumentedBucket.Upload(context.Background(), "key", nil, nil)
-			},
-		},
-		{
-			name:      "Download",
-			operation: "Download",
-			setup: func(fakeBucket *fakeCDKBucket, success bool) {
-				if success {
-					fakeBucket.downloadFunc = func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
-						return nil
-					}
-				} else {
-					fakeBucket.downloadFunc = func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
-						return fmt.Errorf("some error")
-					}
-				}
-			},
-			call: func(instrumentedBucket *InstrumentedBucket) error {
-				return instrumentedBucket.Download(context.Background(), "key", nil, nil)
-			},
-		},
-		{
 			name:      "SignedURL",
 			operation: "SignedURL",
 			setup: func(fakeBucket *fakeCDKBucket, success bool) {
@@ -222,25 +143,6 @@ func TestInstrumentedBucket(t *testing.T) {
 			},
 			call: func(instrumentedBucket *InstrumentedBucket) error {
 				_, err := instrumentedBucket.SignedURL(context.Background(), "key", nil)
-				return err
-			},
-		},
-		{
-			name:      "ListPage",
-			operation: "ListPage",
-			setup: func(fakeBucket *fakeCDKBucket, success bool) {
-				if success {
-					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
-						return []*blob.ListObject{}, nil, nil
-					}
-				} else {
-					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
-						return nil, nil, fmt.Errorf("some error")
-					}
-				}
-			},
-			call: func(instrumentedBucket *InstrumentedBucket) error {
-				_, _, err := instrumentedBucket.ListPage(context.Background(), nil, 10, nil)
 				return err
 			},
 		},
@@ -266,7 +168,8 @@ func TestInstrumentedBucket(t *testing.T) {
 			t.Run(op.name+" "+tc.name, func(t *testing.T) {
 				fakeBucket := &fakeCDKBucket{}
 				reg := prometheus.NewPedanticRegistry()
-				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg)
+				tracer := otel.Tracer("test")
+				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg, tracer)
 
 				op.setup(fakeBucket, tc.success)
 				err := op.call(instrumentedBucket)
@@ -277,11 +180,8 @@ func TestInstrumentedBucket(t *testing.T) {
 					require.Error(t, err)
 				}
 
-				obs, err := instrumentedBucket.latency.GetMetricWithLabelValues(op.operation, tc.expectedCountLabel)
-				require.NoError(t, err)
-				m := &dto.Metric{}
-				require.NoError(t, obs.(prometheus.Metric).Write(m))
-				require.Equal(t, uint64(1), m.Histogram.GetSampleCount())
+				count := testutil.ToFloat64(instrumentedBucket.requests.WithLabelValues(op.operation, tc.expectedCountLabel))
+				require.Equal(t, 1.0, count)
 			})
 		}
 	}

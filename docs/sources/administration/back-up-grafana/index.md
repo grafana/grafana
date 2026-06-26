@@ -8,7 +8,7 @@ labels:
     - enterprise
     - oss
 title: Back up Grafana
-weight: 100
+weight: 80
 menuTitle: Back up Grafana
 ---
 

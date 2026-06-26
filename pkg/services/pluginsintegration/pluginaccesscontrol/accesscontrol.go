@@ -7,6 +7,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -18,8 +19,6 @@ const (
 
 	// App Plugins actions
 	ActionAppAccess = "plugins.app:access"
-
-	pluginsMaintainerRoleName = ac.FixedRolePrefix + "plugins:maintainer"
 )
 
 var (
@@ -45,10 +44,7 @@ func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool
 	}
 }
 
-// FixedRoleRegistrations returns plugin role registrations with grants adjusted
-// for the running instance. When pluginAdminEnabled is false the maintainer
-// role receives no grants (plugin install/uninstall is disabled).
-func FixedRoleRegistrations(pluginAdminEnabled bool) []ac.RoleRegistration {
+func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -64,7 +60,7 @@ func FixedRoleRegistrations(pluginAdminEnabled bool) []ac.RoleRegistration {
 	PluginsWriter := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins:writer",
-			DisplayName: "Writer",
+			DisplayName: "Plugin Writer",
 			Description: "Enable and disable plugins and edit plugins' settings",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
@@ -73,29 +69,25 @@ func FixedRoleRegistrations(pluginAdminEnabled bool) []ac.RoleRegistration {
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
-
-	maintainerGrants := []string{ac.RoleGrafanaAdmin}
-	if !pluginAdminEnabled {
-		maintainerGrants = []string{}
-	}
 	PluginsMaintainer := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        pluginsMaintainerRoleName,
-			DisplayName: "Maintainer",
+			Name:        ac.FixedRolePrefix + "plugins:maintainer",
+			DisplayName: "Plugin Maintainer",
 			Description: "Install, uninstall plugins. Needs to be assigned globally.",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
 				{Action: ActionInstall},
 			},
 		},
-		Grants: maintainerGrants,
+		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
-	return []ac.RoleRegistration{AppPluginsReader, PluginsWriter, PluginsMaintainer}
-}
+	if !cfg.PluginAdminEnabled ||
+		(cfg.PluginAdminExternalManageEnabled && !features.IsEnabledGlobally(featuremgmt.FlagManagedPluginsInstall)) {
+		PluginsMaintainer.Grants = []string{}
+	}
 
-func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
-	return service.DeclareFixedRoles(FixedRoleRegistrations(cfg.PluginAdminEnabled)...)
+	return service.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsMaintainer)
 }
 
 var datasourcesActions = map[string]bool{

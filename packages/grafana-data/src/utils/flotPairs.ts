@@ -1,7 +1,7 @@
 import { NullValueMode } from '../types/data';
-import { type Field } from '../types/dataFrame';
-import { type GraphSeriesValue } from '../types/graph';
-import { type TimeRange } from '../types/time';
+import { Field } from '../types/dataFrame';
+import { GraphSeriesValue } from '../types/graph';
+import { TimeRange } from '../types/time';
 
 export interface FlotPairsOptions {
   xField: Field;

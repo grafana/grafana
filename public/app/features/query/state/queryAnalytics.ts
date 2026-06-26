@@ -1,5 +1,5 @@
-import { type PanelData, LoadingState, type DataSourceApi, urlUtil, CoreApp } from '@grafana/data';
-import { reportMetaAnalytics, MetaAnalyticsEventName, type DataRequestEventPayload } from '@grafana/runtime';
+import { PanelData, LoadingState, DataSourceApi, urlUtil, CoreApp } from '@grafana/data';
+import { reportMetaAnalytics, MetaAnalyticsEventName, DataRequestEventPayload } from '@grafana/runtime';
 
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
@@ -24,14 +24,13 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       eventName: MetaAnalyticsEventName.DataRequest,
       source: data.request.app,
       datasourceName: datasource.name,
+      datasourceId: datasource.id,
       datasourceUid: datasource.uid,
       datasourceType: datasource.type,
       dataSize: 0,
       panelId: 0,
       panelPluginId: data.request?.panelPluginId,
       duration: data.request.endTime! - data.request.startTime,
-      ...(data?.request?.panelId && Number.isInteger(data.request.panelId) && { panelId: data.request.panelId }),
-      ...(data?.request?.panelName && { panelName: data.request.panelName }),
     };
 
     enrichWithInfo(eventData, data);
@@ -63,9 +62,13 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
     eventData.totalQueries = Object.keys(queryCacheStatus).length;
     eventData.cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
+    if (data.request && Number.isInteger(data.request.panelId)) {
+      eventData.panelId = data.request.panelId;
+    }
 
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard) {
+      eventData.dashboardId = dashboard.id;
       eventData.dashboardName = dashboard.title;
       eventData.dashboardUid = dashboard.uid;
       eventData.folderName = dashboard.meta.folderTitle;
@@ -75,7 +78,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
 function enrichWithErrorData(eventData: DataRequestEventPayload, data: PanelData) {
   if (data.errors?.length) {
-    eventData.error = data.errors.map((e) => e.message).join(', ');
+    eventData.error = data.errors.join(', ');
   } else if (data.error) {
     eventData.error = data.error.message;
   }

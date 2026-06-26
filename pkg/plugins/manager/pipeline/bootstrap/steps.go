@@ -5,13 +5,11 @@ import (
 	"path"
 	"slices"
 
-	"github.com/Machiel/slugify"
-
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/pluginassets"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -24,25 +22,24 @@ type DefaultConstructor struct {
 }
 
 // DefaultConstructFunc is the default ConstructFunc used for the Construct step of the Bootstrap stage.
-func DefaultConstructFunc(cfg *config.PluginManagementCfg, signatureCalculator plugins.SignatureCalculator, assetProvider pluginassets.Provider) ConstructFunc {
-	return NewDefaultConstructor(cfg, signatureCalculator, assetProvider).Construct
+func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) ConstructFunc {
+	return NewDefaultConstructor(signatureCalculator, assetPath).Construct
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
-func DefaultDecorateFuncs(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) []DecorateFunc {
+func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
 		AppChildDecorateFunc(),
 		SkipHostEnvVarsDecorateFunc(cfg),
-		LoadingStrategyDecorateFunc(cfg, cdn),
 	}
 }
 
 // NewDefaultConstructor returns a new DefaultConstructor.
-func NewDefaultConstructor(cfg *config.PluginManagementCfg, signatureCalculator plugins.SignatureCalculator, assetProvider pluginassets.Provider) *DefaultConstructor {
+func NewDefaultConstructor(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) *DefaultConstructor {
 	return &DefaultConstructor{
-		pluginFactoryFunc:   NewDefaultPluginFactory(&cfg.Features, assetProvider).createPlugin,
+		pluginFactoryFunc:   NewDefaultPluginFactory(assetPath).createPlugin,
 		signatureCalculator: signatureCalculator,
 		log:                 log.New("plugins.construct"),
 	}
@@ -140,18 +137,11 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 }
 
 // SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
-// It will be set to true if the plugin is not present in the ForwardHostEnvVars plugin ids list.
+// It will be set to true if the FlagPluginsSkipHostEnvVars feature flag is set, and the plugin is not present in the
+// ForwardHostEnvVars plugin ids list.
 func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.SkipHostEnvVars = !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
-		return p, nil
-	}
-}
-
-// LoadingStrategyDecorateFunc returns a DecorateFunc that calculates and sets the loading strategy for the plugin.
-func LoadingStrategyDecorateFunc(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) DecorateFunc {
-	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-		p.LoadingStrategy = pluginassets.CalculateLoadingStrategy(p, cfg, cdn)
+		p.SkipHostEnvVars = cfg.Features.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
 		return p, nil
 	}
 }

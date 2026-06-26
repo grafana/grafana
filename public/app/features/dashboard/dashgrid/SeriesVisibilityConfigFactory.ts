@@ -1,20 +1,20 @@
 import {
   ByNamesMatcherMode,
-  type ConfigOverrideRule,
-  type DataFrame,
-  type DynamicConfigValue,
-  type FieldConfigSource,
+  ConfigOverrideRule,
+  DataFrame,
+  DynamicConfigValue,
+  FieldConfigSource,
   FieldMatcherID,
   fieldMatchers,
   FieldType,
   getFieldDisplayName,
   isSystemOverrideWithRef,
-  type SystemConfigOverrideRule,
+  SystemConfigOverrideRule,
 } from '@grafana/data';
 import { SeriesVisibilityChangeMode } from '@grafana/ui';
 
 const displayOverrideRef = 'hideSeriesFrom';
-export const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
+const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
 
 export function seriesVisibilityConfigFactory(
   label: string,
@@ -97,7 +97,7 @@ function createOverride(
     value: {
       viz: true,
       legend: false,
-      tooltip: true,
+      tooltip: false,
     },
   };
 
@@ -118,7 +118,7 @@ function createOverride(
         value: {
           viz: true,
           legend: false,
-          tooltip: true,
+          tooltip: false,
         },
       },
     ],

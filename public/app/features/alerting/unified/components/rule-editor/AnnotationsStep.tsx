@@ -4,22 +4,20 @@ import { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
-import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
-import { type RuleFormValues } from '../../types/rule-form';
+import { DashboardModel } from '../../../../dashboard/state';
+import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
-import { DOCS_URL_ANNOTATIONS } from '../../utils/docs';
-import { isGrafanaManagedRuleByType } from '../../utils/rules';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
-import { DashboardPicker, type PanelDTO, getVisualPanels } from './DashboardPicker';
+import { DashboardPicker, getVisualPanels, PanelDTO } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
-import { type DashboardResponse, useDashboardQuery } from './useDashboardQuery';
+import { useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
@@ -33,29 +31,28 @@ const AnnotationsStep = () => {
     setValue,
   } = useFormContext<RuleFormValues>();
   const annotations = watch('annotations');
-  const type = watch('type');
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = Number(annotations.find((annotation) => annotation.key === Annotation.panelID)?.value);
 
-  const [selectedDashboard, setSelectedDashboard] = useState<DashboardResponse | undefined>(undefined);
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardModel | undefined>(undefined);
   const [selectedPanel, setSelectedPanel] = useState<PanelDTO | undefined>(undefined);
 
-  const { dashboard, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
+  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
 
   useEffect(() => {
-    if (isDashboardFetching || !dashboard) {
+    if (isDashboardFetching || !dashboardModel) {
       return;
     }
 
-    setSelectedDashboard(dashboard);
+    setSelectedDashboard(dashboardModel);
 
-    const allPanels = getVisualPanels(dashboard);
+    const allPanels = getVisualPanels(dashboardModel);
     const currentPanel = allPanels.find((panel) => panel.id === selectedPanelId);
     setSelectedPanel(currentPanel);
-  }, [selectedPanelId, dashboard, isDashboardFetching]);
+  }, [selectedPanelId, dashboardModel, isDashboardFetching]);
 
   const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: number) => {
     const updatedAnnotations = produce(annotations, (draft) => {
@@ -99,45 +96,23 @@ const AnnotationsStep = () => {
           <Trans i18nKey="alerting.annotations.description">Add more context to your alert notifications.</Trans>
         </Text>
         <NeedHelpInfo
-          externalLink={DOCS_URL_ANNOTATIONS}
-          linkText={`Read about annotations`}
-          contentText={
-            <>
-              <p>
-                {t(
-                  'alerting.rule-form.annotations.description1',
-                  'Annotations add additional information to alerts, helping alert responders identify and address potential issues.'
-                )}
-              </p>
-              <p>
-                {t(
-                  'alerting.rule-form.annotations.description2',
-                  'For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.'
-                )}
-              </p>
-              {t(
-                'alerting.rule-form.annotations.description3',
-                'Annotations can contain a combination of text and template code, which is used to include data from queries.'
-              )}
-            </>
-          }
-          title={t('alerting.annotations-step.get-annotations-section-description.title-annotations', 'Annotations')}
+          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
+          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
+          Annotations can contain a combination of text and template code.`}
+          title="Annotations"
         />
       </Stack>
     );
   }
-  // when using Grafana managed rules, the annotations step is the 6th step, as we have an additional step for the configure labels and notifications
-  const step = isGrafanaManagedRuleByType(type) ? 6 : 5;
 
   return (
     <RuleEditorSection
-      stepNo={step}
+      stepNo={5}
       title={t('alerting.annotations.title', 'Configure notification message')}
       description={getAnnotationsSectionDescription()}
       fullWidth
     >
       <Stack direction="column" gap={1}>
-        {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
@@ -151,7 +126,6 @@ const AnnotationsStep = () => {
                   annotations={annotations}
                   annotation={annotation}
                   index={index}
-                  labelId={`annotation-${index}`}
                 />
                 {selectedDashboardUid && selectedPanelId && annotationField.key === Annotation.dashboardUID && (
                   <DashboardAnnotationField
@@ -163,53 +137,46 @@ const AnnotationsStep = () => {
                     onDeleteClick={handleDeleteDashboardAnnotation}
                   />
                 )}
-                <div className={styles.annotationValueContainer}>
-                  <Field
-                    hidden={
-                      annotationField.key === Annotation.dashboardUID || annotationField.key === Annotation.panelID
-                    }
-                    className={cx(styles.flexRowItemMargin, styles.field)}
-                    invalid={!!errors.annotations?.[index]?.value?.message}
-                    error={errors.annotations?.[index]?.value?.message}
-                    noMargin
-                  >
-                    <ValueInputComponent
-                      data-testid={`annotation-value-${index}`}
-                      id={`annotation-${index}`}
-                      className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                      {...register(`annotations.${index}.value`)}
-                      placeholder={
-                        isUrl
-                          ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                            'https://'
-                          : (annotationField.key &&
-                              t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
-                                key: annotationField.key,
-                              })) ||
-                            t(
-                              'alerting.annotations-step.placeholder-value-input-default',
-                              'Enter custom annotation content...'
-                            )
+
+                {
+                  <div className={styles.annotationValueContainer}>
+                    <Field
+                      hidden={
+                        annotationField.key === Annotation.dashboardUID || annotationField.key === Annotation.panelID
                       }
-                      defaultValue={annotationField.value}
-                    />
-                  </Field>
-                  {!annotationLabels[annotation] && (
-                    <Button
-                      type="button"
-                      className={styles.deleteAnnotationButton}
-                      aria-label={t('alerting.annotations-step.aria-label-delete-annotation', 'delete annotation')}
-                      icon="trash-alt"
-                      variant="secondary"
-                      onClick={() => remove(index)}
-                    />
-                  )}
-                </div>
+                      className={cx(styles.flexRowItemMargin, styles.field)}
+                      invalid={!!errors.annotations?.[index]?.value?.message}
+                      error={errors.annotations?.[index]?.value?.message}
+                    >
+                      <ValueInputComponent
+                        data-testid={`annotation-value-${index}`}
+                        className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                        {...register(`annotations.${index}.value`)}
+                        placeholder={
+                          isUrl
+                            ? 'https://'
+                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
+                              'Enter custom annotation content...'
+                        }
+                        defaultValue={annotationField.value}
+                      />
+                    </Field>
+                    {!annotationLabels[annotation] && (
+                      <Button
+                        type="button"
+                        className={styles.deleteAnnotationButton}
+                        aria-label="delete annotation"
+                        icon="trash-alt"
+                        variant="secondary"
+                        onClick={() => remove(index)}
+                      />
+                    )}
+                  </div>
+                }
               </div>
             </div>
           );
         })}
-
         <Stack direction="row" gap={1}>
           <div className={styles.addAnnotationsButtonContainer}>
             <Button
@@ -220,11 +187,11 @@ const AnnotationsStep = () => {
                 append({ key: '', value: '' });
               }}
             >
-              <Trans i18nKey="alerting.annotations-step.add-custom-annotation">Add custom annotation</Trans>
+              Add custom annotation
             </Button>
             {!selectedDashboard && (
               <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
-                <Trans i18nKey="alerting.annotations-step.link-dashboard-and-panel">Link dashboard and panel</Trans>
+                Link dashboard and panel
               </Button>
             )}
           </div>

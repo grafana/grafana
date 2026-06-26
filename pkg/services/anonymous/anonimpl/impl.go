@@ -45,7 +45,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 	a := &AnonDeviceService{
 		log:            log.New("anonymous-session-service"),
 		localCache:     localcache.New(29*time.Minute, 15*time.Minute),
-		anonStore:      anonstore.ProvideAnonDBStore(sqlStore, cfg.Anonymous.DeviceLimit),
+		anonStore:      anonstore.ProvideAnonDBStore(sqlStore, cfg.AnonymousDeviceLimit),
 		serverLock:     serverLockService,
 		cfg:            cfg,
 		limitValidator: validator,
@@ -60,7 +60,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 		anonDeviceService: a,
 	}
 
-	if cfg.Anonymous.Enabled {
+	if cfg.AnonymousEnabled {
 		authBroker.RegisterClient(anonClient)
 		authBroker.RegisterPostLoginHook(a.untagDevice, 100)
 	}
@@ -171,7 +171,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 
 // ListDevices returns all devices that have been updated between the given times.
 func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*anonstore.Device, error) {
-	if !a.cfg.Anonymous.Enabled {
+	if !a.cfg.AnonymousEnabled {
 		a.log.Debug("Anonymous access is disabled, returning empty result")
 		return []*anonstore.Device{}, nil
 	}
@@ -181,7 +181,7 @@ func (a *AnonDeviceService) ListDevices(ctx context.Context, from *time.Time, to
 
 // CountDevices returns the number of devices that have been updated between the given times.
 func (a *AnonDeviceService) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
-	if !a.cfg.Anonymous.Enabled {
+	if !a.cfg.AnonymousEnabled {
 		a.log.Debug("Anonymous access is disabled, returning empty result")
 		return 0, nil
 	}
@@ -190,7 +190,7 @@ func (a *AnonDeviceService) CountDevices(ctx context.Context, from time.Time, to
 }
 
 func (a *AnonDeviceService) SearchDevices(ctx context.Context, query *anonstore.SearchDeviceQuery) (*anonstore.SearchDeviceQueryResult, error) {
-	if !a.cfg.Anonymous.Enabled {
+	if !a.cfg.AnonymousEnabled {
 		a.log.Debug("Anonymous access is disabled, returning empty result")
 		return nil, nil
 	}

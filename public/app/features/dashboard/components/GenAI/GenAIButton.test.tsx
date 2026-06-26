@@ -5,12 +5,12 @@ import { render } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { GenAIButton, type GenAIButtonProps } from './GenAIButton';
-import { StreamStatus, useLLMStream } from './hooks';
+import { GenAIButton, GenAIButtonProps } from './GenAIButton';
+import { StreamStatus, useOpenAIStream } from './hooks';
 import { EventTrackingSrc } from './tracking';
-import { type Role } from './utils';
+import { Role } from './utils';
 
-const mockedUseLLMStreamState = {
+const mockedUseOpenAiStreamState = {
   messages: [],
   setMessages: jest.fn(),
   reply: 'I am a robot',
@@ -20,7 +20,7 @@ const mockedUseLLMStreamState = {
 };
 
 jest.mock('./hooks', () => ({
-  useLLMStream: jest.fn(() => mockedUseLLMStreamState),
+  useOpenAIStream: jest.fn(() => mockedUseOpenAiStreamState),
   StreamStatus: {
     IDLE: 'idle',
     GENERATING: 'generating',
@@ -37,7 +37,7 @@ describe('GenAIButton', () => {
 
   describe('when LLM plugin is not configured', () => {
     beforeAll(() => {
-      jest.mocked(useLLMStream).mockReturnValue({
+      jest.mocked(useOpenAIStream).mockReturnValue({
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.IDLE,
@@ -65,7 +65,7 @@ describe('GenAIButton', () => {
       setMessagesMock.mockClear();
       setShouldStopMock.mockClear();
 
-      jest.mocked(useLLMStream).mockReturnValue({
+      jest.mocked(useOpenAIStream).mockReturnValue({
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.IDLE,
@@ -151,7 +151,7 @@ describe('GenAIButton', () => {
     const setShouldStopMock = jest.fn();
 
     beforeEach(() => {
-      jest.mocked(useLLMStream).mockReturnValue({
+      jest.mocked(useOpenAIStream).mockReturnValue({
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.GENERATING,
@@ -222,7 +222,7 @@ describe('GenAIButton', () => {
       };
 
       jest
-        .mocked(useLLMStream)
+        .mocked(useOpenAIStream)
         .mockImplementationOnce((options) => {
           options?.onResponse?.(reply);
           return returnValue;
@@ -257,7 +257,7 @@ describe('GenAIButton', () => {
       setMessagesMock.mockClear();
       setShouldStopMock.mockClear();
 
-      jest.mocked(useLLMStream).mockReturnValue({
+      jest.mocked(useOpenAIStream).mockReturnValue({
         messages: [],
         error: new Error('Something went wrong'),
         streamStatus: StreamStatus.IDLE,
@@ -308,7 +308,7 @@ describe('GenAIButton', () => {
       await userEvent.hover(tooltip);
       expect(tooltip).toBeVisible();
       expect(tooltip).toHaveTextContent(
-        'Failed to generate content using LLM. Please try again or if the problem persists, contact your organization admin.'
+        'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
       );
     });
 
@@ -331,7 +331,7 @@ describe('GenAIButton', () => {
       await userEvent.hover(tooltip);
       expect(tooltip).toBeVisible();
       expect(tooltip).toHaveTextContent(
-        'Failed to generate content using LLM. Please try again or if the problem persists, contact your organization admin.'
+        'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
       );
     });
 

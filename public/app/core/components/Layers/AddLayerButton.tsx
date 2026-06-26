@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { ValuePicker } from '@grafana/ui';
 
 export type AddLayerButtonProps = {

@@ -8,12 +8,11 @@ import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explor
 import { updateTime } from 'app/features/explore/state/time';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
-import { type ExploreItemState } from 'app/types/explore';
-import { type ThunkDispatch } from 'app/types/store';
+import { ExploreItemState, ThunkDispatch } from 'app/types';
 
-import { getUrlStateFromPaneState } from '../external.utils';
+import { getUrlStateFromPaneState } from '../index';
 import { urlDiff } from '../internal.utils';
-import { type ExploreURLV1 } from '../migrators/v1';
+import { ExploreURLV1 } from '../migrators/v1';
 
 export function syncFromURL(
   urlState: ExploreURLV1,
@@ -74,7 +73,6 @@ export function syncFromURL(
           queries: withUniqueRefIds(queries),
           range: fromURLRange(range),
           panelsState,
-          compact: !!urlPane.compact,
           position: i,
           eventBridge: new EventBusSrv(),
         })

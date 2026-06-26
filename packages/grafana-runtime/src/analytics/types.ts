@@ -1,6 +1,6 @@
-import { type CoreApp } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 
-import { type EchoEvent, type EchoEventType } from '../services/EchoSrv';
+import { EchoEvent, EchoEventType } from '../services/EchoSrv';
 
 /**
  * Describes the basic dashboard information that can be passed as the meta
@@ -10,6 +10,7 @@ import { type EchoEvent, type EchoEventType } from '../services/EchoSrv';
  */
 export interface DashboardInfo {
   /** @deprecated -- use UID not internal ID */
+  dashboardId: number;
   dashboardUid: string;
   dashboardName: string;
   folderName?: string;
@@ -23,10 +24,7 @@ export interface DashboardInfo {
 export interface DataRequestInfo extends Partial<DashboardInfo> {
   source?: CoreApp | string;
   datasourceName: string;
-  /**
-   * @deprecated will be removed in G13
-   */
-  datasourceId?: number;
+  datasourceId: number;
   datasourceUid: string;
   datasourceType: string;
   panelId?: number;
@@ -105,12 +103,6 @@ export type PageviewEchoEvent = EchoEvent<EchoEventType.Pageview, PageviewEchoEv
 export interface InteractionEchoEventPayload {
   interactionName: string;
   properties?: Record<string, any>;
-  /**
-   * If true, the event is dispatched to {@link EchoSrv} subscribers but is
-   * not forwarded to analytics backends. Use for high-frequency UI signals
-   * that downstream subscribers care about but shouldn't pollute analytics.
-   */
-  silent?: boolean;
 }
 
 /**

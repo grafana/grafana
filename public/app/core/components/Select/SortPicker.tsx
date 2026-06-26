@@ -1,10 +1,9 @@
 import { useAsync } from 'react-use';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { SelectableValue } from '@grafana/data';
 import { Icon, Select } from '@grafana/ui';
 import { DEFAULT_SORT } from 'app/features/search/constants';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { getGrafanaSearcher } from 'app/features/search/service';
 
 export interface Props {
   onChange: (sortValue: SelectableValue) => void;
@@ -13,25 +12,13 @@ export interface Props {
   getSortOptions?: () => Promise<SelectableValue[]>;
   filter?: string[];
   isClearable?: boolean;
-  disabled?: boolean;
-  /** Width of the underlying Select. Leave undefined to fill the container. */
-  width?: number | 'auto';
 }
 
 const defaultSortOptionsGetter = (): Promise<SelectableValue[]> => {
   return getGrafanaSearcher().getSortOptions();
 };
 
-export function SortPicker({
-  onChange,
-  value,
-  placeholder,
-  filter,
-  getSortOptions,
-  isClearable,
-  disabled,
-  width,
-}: Props) {
+export function SortPicker({ onChange, value, placeholder, filter, getSortOptions, isClearable }: Props) {
   // Using sync Select and manual options fetching here since we need to find the selected option by value
   const options = useAsync<() => Promise<SelectableValue[]>>(async () => {
     const vals = await (getSortOptions ?? defaultSortOptionsGetter)();
@@ -49,15 +36,14 @@ export function SortPicker({
   return (
     <Select
       key={value}
-      width={width}
+      width={28}
       onChange={onChange}
       value={options.value?.find((opt) => opt.value === value) ?? null}
       options={options.value}
-      aria-label={t('sort-picker.select-aria-label', 'Sort')}
+      aria-label="Sort"
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
       prefix={<Icon name={isDesc ? 'sort-amount-down' : 'sort-amount-up'} />}
       isClearable={isClearable}
-      disabled={disabled}
     />
   );
 }

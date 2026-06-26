@@ -1,4 +1,4 @@
-import { type LevelItem } from './dataTransform';
+import { LevelItem } from './dataTransform';
 import { levelsToString, textToDataContainer, trimLevelsString } from './testHelpers';
 
 describe('textToDataContainer', () => {

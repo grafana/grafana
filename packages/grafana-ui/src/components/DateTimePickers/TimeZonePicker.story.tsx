@@ -1,11 +1,11 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { TimeZonePicker } from './TimeZonePicker';
+import { TimeZonePicker } from '@grafana/ui';
 
 const meta: Meta<typeof TimeZonePicker> = {
-  title: 'Date time pickers/TimeZonePicker',
+  title: 'Pickers and Editors/TimePickers/TimeZonePicker',
   component: TimeZonePicker,
   parameters: {
     controls: {

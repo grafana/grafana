@@ -1,6 +1,6 @@
 import { createDataFrame } from '../dataframe/processDataFrame';
 import { dateTime } from '../datetime/moment_wrapper';
-import { type TimeRange } from '../types/time';
+import { TimeRange } from '../types/time';
 
 import { getFlotPairs, getFlotPairsConstant } from './flotPairs';
 

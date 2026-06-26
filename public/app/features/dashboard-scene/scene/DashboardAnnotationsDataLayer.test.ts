@@ -1,13 +1,6 @@
 import { map, of } from 'rxjs';
 
-import {
-  type DataSourceApi,
-  type DataQueryRequest,
-  DataTopic,
-  type PanelData,
-  LoadingState,
-  toDataFrame,
-} from '@grafana/data';
+import { DataSourceApi, DataQueryRequest, PanelData, LoadingState } from '@grafana/data';
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
@@ -46,10 +39,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('DashboardAnnotationsDataLayer', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('should use PublicAnnotationsDataSource when config.publicDashboardAccessToken is set', () => {
     const dataLayer = new DashboardAnnotationsDataLayer({
       name: 'Annotations & Alerts',
@@ -78,44 +67,5 @@ describe('DashboardAnnotationsDataLayer', () => {
 
     expect(PublicAnnotationsDataSource).toHaveBeenCalledTimes(1);
     expect(getDataSourceSrvSpy).not.toHaveBeenCalled();
-  });
-
-  it('should put annotation data in series with DataTopic.Annotations so data layers can merge it', (done) => {
-    runRequestMock.mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
-      return of(null).pipe(
-        map(() => ({
-          state: LoadingState.Done,
-          series: [
-            toDataFrame({
-              fields: [
-                { name: 'time', values: [1000, 2000] },
-                { name: 'text', values: ['annotation 1', 'annotation 2'] },
-              ],
-            }),
-          ],
-          timeRange: request.range,
-        }))
-      );
-    });
-
-    const dataLayer = new DashboardAnnotationsDataLayer({
-      name: 'Test',
-      query: {
-        enable: true,
-        iconColor: 'red',
-        name: 'Test',
-      },
-    });
-
-    dataLayer.activate();
-
-    dataLayer.getResultsStream().subscribe((result) => {
-      if (result.data.state === LoadingState.Done) {
-        expect(result.data.series).toHaveLength(1);
-        expect(result.data.annotations).toBeUndefined();
-        expect(result.data.series[0].meta?.dataTopic).toBe(DataTopic.Annotations);
-        done();
-      }
-    });
   });
 });

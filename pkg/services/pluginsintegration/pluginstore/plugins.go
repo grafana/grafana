@@ -17,7 +17,6 @@ type Plugin struct {
 
 	// App fields
 	Parent          *ParentPlugin
-	Children        []string
 	IncludedInAppID string
 	DefaultNavURL   string
 	Pinned          bool
@@ -30,15 +29,12 @@ type Plugin struct {
 	Error *plugins.Error
 
 	// SystemJS fields
-	Module          string
-	BaseURL         string
-	LoadingStrategy plugins.LoadingStrategy
+	Module  string
+	BaseURL string
 
 	Angular plugins.AngularMeta
 
 	ExternalService *auth.ExternalService
-
-	Translations map[string]string
 }
 
 func (p Plugin) SupportsStreaming() bool {
@@ -77,33 +73,18 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		SignatureOrg:      p.SignatureOrg,
 		Error:             p.Error,
 		Module:            p.Module,
-		LoadingStrategy:   p.LoadingStrategy,
 		BaseURL:           p.BaseURL,
 		ExternalService:   p.ExternalService,
 		Angular:           p.Angular,
-		Translations:      p.Translations,
 	}
 
 	if p.Parent != nil {
-		dto.Parent = &ParentPlugin{ID: p.Parent.ID, Version: p.Parent.Info.Version}
-	}
-
-	if len(p.Children) > 0 {
-		children := make([]string, 0, len(p.Children))
-		for _, child := range p.Children {
-			if child != nil {
-				children = append(children, child.ID)
-			}
-		}
-		if len(children) > 0 {
-			dto.Children = children
-		}
+		dto.Parent = &ParentPlugin{ID: p.Parent.ID}
 	}
 
 	return dto
 }
 
 type ParentPlugin struct {
-	ID      string
-	Version string
+	ID string
 }

@@ -77,8 +77,7 @@ func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
 
 func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		existing := &ngmodels.AdminConfiguration{}
-		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Get(existing)
+		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Exist()
 		if err != nil {
 			return err
 		}
@@ -88,27 +87,7 @@ func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) erro
 			return err
 		}
 
-		cols := buildUpdateCols(cmd.AdminConfiguration)
-		if len(cols) == 0 {
-			return nil
-		}
-		_, err = sess.Table("ngalert_configuration").ID(existing.ID).Cols(cols...).Update(cmd.AdminConfiguration)
+		_, err = sess.Table("ngalert_configuration").AllCols().Update(cmd.AdminConfiguration)
 		return err
 	})
-}
-
-// buildUpdateCols builds a list of column names to update based on which fields of the admin configuration are set.
-// this is necessary to avoid overwriting fields with null values when they are not included in the update request.
-func buildUpdateCols(adminConfig *ngmodels.AdminConfiguration) []string {
-	var cols []string
-
-	if adminConfig.SendAlertsTo != nil {
-		cols = append(cols, "send_alerts_to")
-	}
-
-	if adminConfig.ExternalAlertmanagerUID != nil {
-		cols = append(cols, "external_alertmanager_uid")
-	}
-
-	return cols
 }

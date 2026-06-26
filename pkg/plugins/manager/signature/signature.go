@@ -49,7 +49,7 @@ func (s *Validation) ValidateSignature(plugin *plugins.Plugin) error {
 		}
 	}
 
-	if plugin.IsCorePlugin() {
+	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 		return nil
 	}
 

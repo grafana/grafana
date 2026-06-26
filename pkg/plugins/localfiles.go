@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -26,10 +28,6 @@ type LocalFS struct {
 // basePath must use os-specific path separator for Open() to work properly.
 func NewLocalFS(basePath string) LocalFS {
 	return LocalFS{basePath: basePath}
-}
-
-func (f LocalFS) Type() FSType {
-	return FSTypeLocal
 }
 
 // fileIsAllowed takes an absolute path to a file and an os.FileInfo for that file, and it checks if access to that
@@ -108,7 +106,7 @@ func (f LocalFS) walkFunc(basePath string, acc map[string]struct{}) filepath.Wal
 // If a nil error is returned, the caller should take care of calling Close() the returned fs.File.
 // If the file does not exist, ErrFileNotExist is returned.
 func (f LocalFS) Open(name string) (fs.File, error) {
-	cleanPath, err := CleanRelativePath(name)
+	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +151,7 @@ func (f LocalFS) Files() ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		clenRelPath, err := CleanRelativePath(relPath)
+		clenRelPath, err := util.CleanRelativePath(relPath)
 		if err != nil {
 			continue
 		}
@@ -217,10 +215,6 @@ func NewStaticFS(fs FS) (StaticFS, error) {
 	}, nil
 }
 
-func (f StaticFS) Type() FSType {
-	return f.FS.Type()
-}
-
 // Open checks that name is an allowed file and, if so, it returns a fs.File to access it, by calling the
 // underlying FS' Open() method.
 // If access is denied, the function returns ErrFileNotExist.
@@ -240,15 +234,6 @@ func (f StaticFS) Files() ([]string, error) {
 		files = append(files, fn)
 	}
 	return files, nil
-}
-
-func (f StaticFS) Remove() error {
-	if remover, ok := f.FS.(FSRemover); ok {
-		if err := remover.Remove(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // LocalFile implements a fs.File for accessing the local filesystem.

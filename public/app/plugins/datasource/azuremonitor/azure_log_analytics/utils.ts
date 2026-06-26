@@ -1,7 +1,7 @@
-import { type TypedVariableModel } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 
-import { type AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
-import { type EngineSchema } from '../types/types';
+import { EngineSchema } from '../types';
+import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 // matches (name):(type) = (defaultValue)
 // e.g. fromRangeStart:datetime = datetime(null)

@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import transformTraceData from '../../model/transform-trace-data';
-import { type TraceResponse } from '../../types/trace';
+import { TraceResponse, transformTraceData } from '../../index';
 
 /*
                     ┌──────────┐        |

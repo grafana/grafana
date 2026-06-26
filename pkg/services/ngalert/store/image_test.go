@@ -12,11 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationSaveAndGetImage(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	// our database schema uses second precision for timestamps
 	store.TimeNow = func() time.Time {
@@ -85,7 +86,9 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 }
 
 func TestIntegrationGetImages(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	// our database schema uses second precision for timestamps
 	store.TimeNow = func() time.Time {
@@ -165,7 +168,9 @@ func TestIntegrationGetImages(t *testing.T) {
 }
 
 func TestIntegrationDeleteExpiredImages(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	// our database schema uses second precision for timestamps
 	store.TimeNow = func() time.Time {

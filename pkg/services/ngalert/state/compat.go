@@ -2,7 +2,6 @@ package state
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -16,10 +15,8 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -51,8 +48,8 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 		nA[alertingModels.ValueStringAnnotation] = alertState.LastEvaluationString
 	}
 
-	if alertState.Image != nil {
-		attachImageAnnotations(alertState.Image, nA)
+	if alertState.Image != nil && alertState.Image.Token != "" {
+		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
 	}
 
 	if alertState.StateReason != "" {
@@ -61,12 +58,6 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 
 	if alertState.OrgID != 0 {
 		nA[alertingModels.OrgIDAnnotation] = strconv.FormatInt(alertState.OrgID, 10)
-	}
-
-	// Propagate the namespace/folder UID as an annotation because the label is stripped before sending.
-	// This is required by notification history.
-	if namespaceUID, ok := nL[alertingModels.NamespaceUIDLabel]; ok && namespaceUID != "" {
-		nA[alertingModels.NamespaceUIDLabel] = namespaceUID
 	}
 
 	var urlStr string
@@ -96,14 +87,9 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 		return errorAlert(nL, nA, alertState, urlStr)
 	}
 
-	startsAt := strfmt.DateTime(alertState.StartsAt)
-	if alertState.FiredAt != nil {
-		startsAt = strfmt.DateTime(*alertState.FiredAt)
-	}
-
 	return &models.PostableAlert{
 		Annotations: models.LabelSet(nA),
-		StartsAt:    startsAt,
+		StartsAt:    strfmt.DateTime(alertState.StartsAt),
 		EndsAt:      strfmt.DateTime(alertState.EndsAt),
 		Alert: models.Alert{
 			Labels:       models.LabelSet(nL),
@@ -166,87 +152,4 @@ func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.U
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}
 	return alerts
-}
-
-// attachImageAnnotations attaches image annotations to the alert.
-func attachImageAnnotations(image *ngModels.Image, a data.Labels) {
-	if image.Token != "" {
-		a[alertingModels.ImageTokenAnnotation] = image.Token
-	}
-	if image.URL != "" {
-		a[alertingModels.ImageURLAnnotation] = image.URL
-	}
-}
-
-// AlertInstanceToState converts a persisted AlertInstance to an in-memory State.
-func AlertInstanceToState(entry *ngModels.AlertInstance, logger log.Logger) *State {
-	cacheID := entry.Labels.Fingerprint()
-
-	var resultFp data.Fingerprint
-	if entry.ResultFingerprint != "" {
-		fp, err := strconv.ParseUint(entry.ResultFingerprint, 16, 64)
-		if err != nil {
-			logger.Error("Failed to parse result fingerprint of alert instance", "error", err, "rule_uid", entry.RuleUID)
-		}
-		resultFp = data.Fingerprint(fp)
-	}
-
-	var stateError error
-	if entry.LastError != "" {
-		stateError = errors.New(entry.LastError)
-	}
-
-	var values map[string]float64
-	var latestResult *Evaluation
-	if len(entry.LastResult.Values) > 0 || entry.LastResult.Condition != "" {
-		values = entry.LastResult.Values
-		latestResult = &Evaluation{
-			EvaluationTime:  entry.LastEvalTime,
-			EvaluationState: translateInstanceState(entry.CurrentState),
-			Values:          values,
-			Condition:       entry.LastResult.Condition,
-		}
-	}
-
-	return &State{
-		AlertRuleUID:         entry.RuleUID,
-		OrgID:                entry.RuleOrgID,
-		CacheID:              cacheID,
-		Labels:               map[string]string(entry.Labels),
-		State:                translateInstanceState(entry.CurrentState),
-		StateReason:          entry.CurrentReason,
-		LastEvaluationString: "",
-		StartsAt:             entry.CurrentStateSince,
-		EndsAt:               entry.CurrentStateEnd,
-		FiredAt:              entry.FiredAt,
-		LastEvaluationTime:   entry.LastEvalTime,
-		EvaluationDuration:   entry.EvaluationDuration,
-		Annotations:          entry.Annotations,
-		ResultFingerprint:    resultFp,
-		ResolvedAt:           entry.ResolvedAt,
-		LastSentAt:           entry.LastSentAt,
-		Error:                stateError,
-		Values:               values,
-		LatestResult:         latestResult,
-	}
-}
-
-// translateInstanceState converts InstanceStateType to eval.State.
-func translateInstanceState(state ngModels.InstanceStateType) eval.State {
-	switch state {
-	case ngModels.InstanceStateFiring:
-		return eval.Alerting
-	case ngModels.InstanceStateNormal:
-		return eval.Normal
-	case ngModels.InstanceStateError:
-		return eval.Error
-	case ngModels.InstanceStateNoData:
-		return eval.NoData
-	case ngModels.InstanceStatePending:
-		return eval.Pending
-	case ngModels.InstanceStateRecovering:
-		return eval.Recovering
-	default:
-		return eval.Error
-	}
 }

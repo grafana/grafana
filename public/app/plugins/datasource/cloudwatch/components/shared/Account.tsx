@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/plugin-ui';
+import { SelectableValue } from '@grafana/data';
+import { EditorField } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
 export interface Props {

@@ -8,16 +8,16 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -71,7 +71,6 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	result := user.AdminCreateUserResponse{
 		Message: "User created",
 		ID:      usr.ID,
-		UID:     usr.UID,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -159,7 +158,8 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 	}
 
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil && authInfo != nil {
-		if hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule) {
+		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
+		if login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule) {
 			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
 		}
 	}
@@ -223,7 +223,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.preferenceService.Delete(ctx, &pref.DeleteCommand{UserID: cmd.UserID}); err != nil {
+		if err := hs.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
@@ -362,13 +362,12 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Response {
-	id := web.Params(c.Req)[":id"]
-	userID, err := strconv.ParseInt(id, 10, 64)
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.GetID() == authlib.NewTypeID(authlib.TypeUser, id) {
+	if c.SignedInUser.GetID() == identity.NewTypedID(claims.TypeUser, userID) {
 		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 

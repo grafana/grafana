@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useId } from '@react-aria/utils';
-import { type FormEvent, type PropsWithChildren, type ReactElement, type ReactNode } from 'react';
+import { FormEvent, PropsWithChildren, ReactElement } from 'react';
+import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Field, TextArea, useStyles2 } from '@grafana/ui';
 
 interface VariableTextAreaFieldProps {
@@ -16,8 +17,7 @@ interface VariableTextAreaFieldProps {
   required?: boolean;
   testId?: string;
   onBlur?: (event: FormEvent<HTMLTextAreaElement>) => void;
-  description?: ReactNode;
-  noMargin?: boolean;
+  description?: React.ReactNode;
 }
 
 export function VariableTextAreaField({
@@ -31,14 +31,13 @@ export function VariableTextAreaField({
   ariaLabel,
   required,
   width,
-  noMargin,
   testId,
 }: PropsWithChildren<VariableTextAreaFieldProps>): ReactElement {
   const styles = useStyles2(getStyles);
   const id = useId();
 
   return (
-    <Field label={name} description={description} htmlFor={id} noMargin={noMargin}>
+    <Field label={name} description={description} htmlFor={id}>
       <TextArea
         id={id}
         rows={2}

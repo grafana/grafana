@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
+import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
 import { EditableTitle } from './EditableTitle';
-import { type PageInfoItem } from './types';
+import { PageInfoItem } from './types';
 
 export interface Props {
   navItem: NavModelItem;
@@ -22,20 +22,20 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
 
+  const titleElement = onEditTitle ? (
+    <EditableTitle value={navItem.text} onEdit={onEditTitle} />
+  ) : (
+    <div className={styles.title}>
+      {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
+      {renderTitle ? renderTitle(navItem.text) : <h1>{navItem.text}</h1>}
+    </div>
+  );
+
   return (
     <div className={styles.pageHeader}>
       <div className={styles.topRow}>
         <div className={styles.titleInfoContainer}>
-          <div className={styles.title}>
-            {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-            {onEditTitle ? (
-              <EditableTitle value={navItem.text} onEdit={onEditTitle} />
-            ) : renderTitle ? (
-              renderTitle(navItem.text)
-            ) : (
-              <h1>{navItem.text}</h1>
-            )}
-          </div>
+          {titleElement}
           {info && <PageInfo info={info} />}
         </div>
         <div className={styles.actions}>{actions}</div>

@@ -1,8 +1,8 @@
 import {
-  type QueryBuilderOperation,
-  type QueryBuilderOperationDefinition,
-  type QueryBuilderOperationParamDef,
-} from '@grafana/plugin-ui';
+  QueryBuilderOperation,
+  QueryBuilderOperationDefinition,
+  QueryBuilderOperationParamDef,
+} from '@grafana/experimental';
 
 import { defaultAddOperationHandler } from './operationUtils';
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
@@ -95,7 +95,6 @@ export const binaryScalarOperations: QueryBuilderOperationDefinition[] = binaryS
     name: opDef.name,
     params,
     defaultParams,
-    toggleable: true,
     alternativesKey: 'binary scalar operations',
     category: LokiVisualQueryOperationCategory.BinaryOps,
     renderer: getSimpleBinaryRenderer(opDef.sign),

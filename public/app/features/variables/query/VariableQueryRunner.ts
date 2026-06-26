@@ -1,24 +1,24 @@
-import { merge, type Observable, of, Subject, throwError, type Unsubscribable } from 'rxjs';
+import { merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
 import { catchError, filter, finalize, mergeMap, take, takeUntil } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   CoreApp,
-  type DataQuery,
-  type DataQueryRequest,
-  type DataSourceApi,
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
   LoadingState,
-  type PanelData,
-  type QueryVariableModel,
-  type ScopedVars,
-  generateUUID,
+  PanelData,
+  QueryVariableModel,
+  ScopedVars,
 } from '@grafana/data';
-import { type StoreState, type ThunkDispatch } from 'app/types/store';
 
 import { dispatch, getState } from '../../../store/store';
+import { StoreState, ThunkDispatch } from '../../../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest } from '../../query/state/runRequest';
 import { getLastKey, getVariable } from '../state/selectors';
-import { type KeyedVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { getTemplatedRegex } from '../utils';
 
 import { toMetricFindValuesOperator, updateOptionsState, validateVariableSelection } from './operators';
@@ -185,7 +185,7 @@ export class VariableQueryRunner {
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
-      requestId: generateUUID(),
+      requestId: uuidv4(),
       timezone: '',
       range,
       interval: '',

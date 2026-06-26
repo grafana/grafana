@@ -2,7 +2,6 @@ package sqleng
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -15,18 +14,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
-	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-
-	"github.com/grafana/grafana/pkg/tsdb/mssql/kerberos"
-	"github.com/grafana/grafana/pkg/tsdb/mssql/utils"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -77,7 +69,6 @@ type DataSourceInfo struct {
 	Updated                 time.Time
 	UID                     string
 	DecryptedSecureJSONData map[string]string
-	OrgID                   int64
 }
 
 type DataPluginConfiguration struct {
@@ -97,12 +88,6 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 	userError              string
-	azureSettings          *azsettings.AzureSettings
-	azureCredentials       azcredentials.AzureCredentials
-	kerberosAuth           kerberos.KerberosAuth
-	driverName             string
-	proxyClient            proxy.Client
-	dbConnections          sync.Map
 }
 
 type QueryJson struct {
@@ -128,45 +113,16 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	return e.queryResultTransformer.TransformQueryError(logger, err)
 }
 
-func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanceSettings, userFacingDefaultError string, config DataPluginConfiguration,
-	log log.Logger, azureSettings *azsettings.AzureSettings) (*DataSourceHandler, error) {
-	queryResultTransformer := utils.MSSQLQueryResultTransformer{
-		UserError: userFacingDefaultError,
-	}
-	driverName := "mssql"
-	if config.DSInfo.JsonData.AuthenticationType == azureAuthentication {
-		driverName = "azuresql"
-	}
-
-	azureCredentials, err := utils.GetAzureCredentials(settings)
-	if err != nil {
-		return nil, fmt.Errorf("error reading azure credentials")
-	}
-
-	kerberosAuth, err := kerberos.GetKerberosSettings(settings)
-	if err != nil {
-		return nil, fmt.Errorf("error getting kerberos settings: %w", err)
-	}
-
-	proxyClient, err := settings.ProxyClient(ctx)
-	if err != nil {
-		log.Error("mssql proxy creation failed", "error", err)
-		return nil, fmt.Errorf("mssql proxy creation failed")
-	}
-
+func NewQueryDataHandler(userFacingDefaultError string, db *sql.DB, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
 	queryDataHandler := DataSourceHandler{
-		queryResultTransformer: &queryResultTransformer,
-		macroEngine:            newMssqlMacroEngine(),
+		queryResultTransformer: queryResultTransformer,
+		macroEngine:            macroEngine,
 		timeColumnNames:        []string{"time"},
 		log:                    log,
 		dsInfo:                 config.DSInfo,
 		rowLimit:               config.RowLimit,
 		userError:              userFacingDefaultError,
-		azureSettings:          azureSettings,
-		azureCredentials:       azureCredentials,
-		kerberosAuth:           kerberosAuth,
-		driverName:             driverName,
-		proxyClient:            proxyClient,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -177,22 +133,7 @@ func NewQueryDataHandler(ctx context.Context, settings backend.DataSourceInstanc
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
-	// Every auth method besides Azure AD Current User Identity can use a persistent DB connection
-	if config.DSInfo.JsonData.AuthenticationType != azureAuthentication || azureCredentials.AzureAuthType() != azcredentials.AzureAuthCurrentUserIdentity {
-		cnnstr, err := generateConnectionString(config.DSInfo, azureCredentials, kerberosAuth, log, azureSettings, "")
-		if err != nil {
-			return nil, err
-		}
-
-		db, err := newMSSQL(driverName, config.RowLimit, config.DSInfo, cnnstr, log, proxyClient)
-		if err != nil {
-			log.Error("Failed connecting to MSSQL", "err", err)
-			return nil, err
-		}
-
-		queryDataHandler.db = db
-	}
-
+	queryDataHandler.db = db
 	return &queryDataHandler, nil
 }
 
@@ -208,50 +149,16 @@ func (e *DataSourceHandler) Dispose() {
 			e.log.Error("Failed to dispose db", "error", err)
 		}
 	}
-
-	// Clear any cached user-specific connections
-	e.dbConnections.Range(func(_, conn interface{}) bool {
-		_ = conn.(*sql.DB).Close()
-		return true
-	})
-	e.dbConnections.Clear()
-
 	e.log.Debug("DB disposed")
 }
 
-func (e *DataSourceHandler) getDB(ctx context.Context) (*sql.DB, error) {
-	e.log.Debug("Getting DB...")
-	if e.dsInfo.JsonData.AuthenticationType != azureAuthentication || e.azureCredentials.AzureAuthType() != azcredentials.AzureAuthCurrentUserIdentity {
-		if e.db == nil {
-			return nil, fmt.Errorf("database connection is not initialized")
-		}
-		return e.db, nil
-	}
+func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	err := e.db.Ping()
 
-	userCtx, ok := azusercontext.GetCurrentUser(ctx)
-	if !ok {
-		return nil, fmt.Errorf("failed to get user from context for Azure Current User authentication")
-	}
-	cacheKey := fmt.Sprintf("mssql-%d-%x-%x-%s", e.dsInfo.OrgID, sha256.Sum256([]byte(userCtx.User.Email)), sha256.Sum256([]byte(userCtx.IdToken)), e.dsInfo.UID)
-
-	conn, ok := e.dbConnections.Load(cacheKey)
-	if ok {
-		return conn.(*sql.DB), nil
-	}
-
-	cnnstr, err := generateConnectionString(e.dsInfo, e.azureCredentials, e.kerberosAuth, e.log, e.azureSettings, userCtx.IdToken)
 	if err != nil {
-		return nil, err
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: e.TransformQueryError(e.log, err).Error()}, nil
 	}
-
-	db, err := newMSSQL(e.driverName, e.rowLimit, e.dsInfo, cnnstr, e.log, e.proxyClient)
-	if err != nil {
-		e.log.Error("Failed connecting to MSSQL", "err", err)
-		return nil, err
-	}
-	e.dbConnections.Store(cacheKey, db)
-
-	return db, nil
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -333,9 +240,6 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		emptyFrame.SetMeta(&data.FrameMeta{
 			ExecutedQueryString: query,
 		})
-		if isDownstreamError(err) {
-			source = backend.ErrorSourceDownstream
-		}
 		queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
 		queryResult.dataResponse.ErrorSource = source
 		queryResult.dataResponse.Frames = data.Frames{&emptyFrame}
@@ -352,12 +256,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	db, err := e.getDB(queryContext)
-	if err != nil {
-		errAppendDebug("retrieving database connection failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin)
-		return
-	}
-	rows, err := db.QueryContext(queryContext, interpolatedQuery)
+	rows, err := e.db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourceDownstream)
 		return
@@ -374,19 +273,12 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	frame := e.processResponse(qm, rows, interpolatedQuery, errAppendDebug, logger)
-
-	queryResult.dataResponse.Frames = data.Frames{frame}
-	ch <- queryResult
-}
-
-func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, interpolatedQuery string, errAppendDebug func(string, error, string, backend.ErrorSource), logger log.Logger) *data.Frame {
 	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
 	frame, err := sqlutil.FrameFromRows(rows, e.rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
 		errAppendDebug("convert frame from rows error", err, interpolatedQuery, backend.ErrorSourcePlugin)
-		return nil
+		return
 	}
 
 	if frame.Meta == nil {
@@ -401,19 +293,21 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 	// additionally-needed frame data stays intact and is correctly passed to our visulization.
 	if frame.Rows() == 0 {
 		frame.Fields = []*data.Field{}
-		return frame
+		queryResult.dataResponse.Frames = data.Frames{frame}
+		ch <- queryResult
+		return
 	}
 
 	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
 		errAppendDebug("converting time columns failed", err, interpolatedQuery, backend.ErrorSourcePlugin)
-		return nil
+		return
 	}
 
 	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
-			errAppendDebug("db has no time column", errors.New("time column is missing; make sure your data includes a time column for time series format or switch to a table format that doesn't require it"), interpolatedQuery, backend.ErrorSourceDownstream)
-			return nil
+			errAppendDebug("db has no time column", errors.New("no time column found"), interpolatedQuery, backend.ErrorSourceDownstream)
+			return
 		}
 
 		// Make sure to name the time field 'Time' to be backward compatible with Grafana pre-v8.
@@ -431,7 +325,7 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err, interpolatedQuery, backend.ErrorSourcePlugin)
-				return nil
+				return
 			}
 		}
 
@@ -442,7 +336,7 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
 				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery, backend.ErrorSourcePlugin)
-				return nil
+				return
 			}
 
 			// Before 8x, a special metric column was used to name time series. The LongToWide transforms that into a metric label on the value field.
@@ -460,45 +354,25 @@ func (e *DataSourceHandler) processResponse(qm *dataQueryModel, rows *sql.Rows, 
 				}
 			}
 		}
-		if qm.FillMissing != nil && qm.Interval > 0 {
-			frame = e.applyFill(frame, qm, logger)
+		if qm.FillMissing != nil {
+			// we align the start-time
+			startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
+			alignedTimeRange := backend.TimeRange{
+				From: time.Unix(startUnixTime, 0),
+				To:   qm.TimeRange.To,
+			}
+
+			var err error
+			frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval)
+			if err != nil {
+				logger.Error("Failed to resample dataframe", "err", err)
+				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
+			}
 		}
 	}
 
-	return frame
-}
-
-// applyFill resamples frame using the fill configuration in qm. If the number
-// of fill points would exceed the row limit the fill is skipped and a warning
-// notice is appended to the frame instead.
-func (e *DataSourceHandler) applyFill(frame *data.Frame, qm *dataQueryModel, logger log.Logger) *data.Frame {
-	// we align the start-time
-	startUnixTime := qm.TimeRange.From.Unix() / int64(qm.Interval.Seconds()) * int64(qm.Interval.Seconds())
-	alignedTimeRange := backend.TimeRange{
-		From: time.Unix(startUnixTime, 0),
-		To:   qm.TimeRange.To,
-	}
-
-	// Guard against excessive memory allocation from fill operations that span
-	// a very large time range relative to the fill interval.
-	numFillPoints := int64(alignedTimeRange.To.Sub(alignedTimeRange.From) / qm.Interval)
-	if numFillPoints > e.rowLimit {
-		e.log.Warn("Skipping fill: number of fill points exceeds row limit",
-			"numFillPoints", numFillPoints, "rowLimit", e.rowLimit)
-		frame.AppendNotices(data.Notice{
-			Text:     "Fill operation skipped: time range and interval would require more points than the configured row limit",
-			Severity: data.NoticeSeverityWarning,
-		})
-		return frame
-	}
-
-	var err error
-	frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval) //nolint:staticcheck
-	if err != nil {
-		logger.Error("Failed to resample dataframe", "err", err)
-		frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
-	}
-	return frame
+	queryResult.dataResponse.Frames = data.Frames{frame}
+	ch <- queryResult
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
@@ -575,7 +449,7 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 			}
 		}
 
-		if qm.Format == dataQueryFormatTable && strings.EqualFold(col, "timeend") {
+		if qm.Format == dataQueryFormatTable && col == "timeend" {
 			qm.timeEndIndex = i
 			continue
 		}
@@ -773,21 +647,4 @@ func epochPrecisionToMS(value float64) float64 {
 	}
 
 	return value
-}
-
-func isDownstreamError(err error) bool {
-	if backend.IsDownstreamError(err) {
-		return true
-	}
-	resultProcessingDownstreamErrors := []error{
-		data.ErrorInputFieldsWithoutRows,
-		data.ErrorSeriesUnsorted,
-		data.ErrorNullTimeValues,
-	}
-	for _, e := range resultProcessingDownstreamErrors {
-		if errors.Is(err, e) {
-			return true
-		}
-	}
-	return false
 }

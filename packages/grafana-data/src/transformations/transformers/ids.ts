@@ -27,7 +27,6 @@ export enum DataTransformerID {
   rowsToFields = 'rowsToFields',
   prepareTimeSeries = 'prepareTimeSeries',
   convertFieldType = 'convertFieldType',
-  convertFrameType = 'convertFrameType',
   fieldLookup = 'fieldLookup',
   heatmap = 'heatmap',
   spatial = 'spatial',
@@ -42,6 +41,5 @@ export enum DataTransformerID {
   formatTime = 'formatTime',
   formatString = 'formatString',
   regression = 'regression',
-  smoothing = 'smoothing',
   groupToNestedTable = 'groupToNestedTable',
 }

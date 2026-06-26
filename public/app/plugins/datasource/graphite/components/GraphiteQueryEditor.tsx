@@ -1,15 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { actions } from '../state/actions';
-import {
-  GraphiteQueryEditorContext,
-  type GraphiteQueryEditorProps,
-  useDispatch,
-  useGraphiteState,
-} from '../state/context';
+import { GraphiteQueryEditorContext, GraphiteQueryEditorProps, useDispatch, useGraphiteState } from '../state/context';
 
 import { FunctionsSection } from './FunctionsSection';
 import { GraphiteTextEditor } from './GraphiteTextEditor';
@@ -58,7 +53,6 @@ function GraphiteQueryEditorContent() {
         icon="pen"
         variant="secondary"
         aria-label="Toggle editor mode"
-        tooltip={state?.queryModel?.error}
         onClick={() => {
           dispatch(actions.toggleEditorMode());
         }}

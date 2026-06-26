@@ -1,18 +1,17 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { type MouseEvent, memo } from 'react';
+import { MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { type Field, getFieldColorModeForField, type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { Icon, useTheme2 } from '@grafana/ui';
 
-import { type HoverState } from './NodeGraph';
-import { type NodeDatum } from './types';
+import { HoverState } from './NodeGraph';
+import { NodeDatum } from './types';
 import { statToString } from './utils';
 
 export const nodeR = 40;
-const highlightedNodeColor = '#a00';
+export const highlightedNodeColor = '#a00';
 
 const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   mainGroup: css({
@@ -95,11 +94,7 @@ export const Node = memo(function Node(props: {
   }
 
   return (
-    <g
-      data-node-id={node.id}
-      className={styles.mainGroup}
-      aria-label={t('nodeGraph.node.aria-label-node-title', 'Node: {{nodeName}}', { nodeName: node.title })}
-    >
+    <g data-node-id={node.id} className={styles.mainGroup} aria-label={`Node: ${node.title}`}>
       <circle
         data-testid={`node-circle-${node.id}`}
         className={node.highlighted ? styles.filledCircle : styles.mainCircle}

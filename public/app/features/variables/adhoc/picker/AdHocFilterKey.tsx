@@ -1,7 +1,6 @@
-import { type ReactElement } from 'react';
+import { ReactElement } from 'react';
 
-import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 import { Icon, SegmentAsync } from '@grafana/ui';
 
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
@@ -18,15 +17,6 @@ const MIN_WIDTH = 90;
 export const AdHocFilterKey = ({ datasource, onChange, disabled, filterKey, allFilters }: Props) => {
   const loadKeys = () => fetchFilterKeys(datasource, filterKey, allFilters);
   const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource, filterKey, allFilters);
-
-  const plusSegment: ReactElement = (
-    <span
-      className="gf-form-label query-part"
-      aria-label={t('variables.ad-hoc-filter-key.plus-segment.aria-label-add-filter', 'Add Filter')}
-    >
-      <Icon name="plus" />
-    </span>
-  );
 
   if (filterKey === null) {
     return (
@@ -60,6 +50,12 @@ export const AdHocFilterKey = ({ datasource, onChange, disabled, filterKey, allF
 
 export const REMOVE_FILTER_KEY = '-- remove filter --';
 const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
+
+const plusSegment: ReactElement = (
+  <span className="gf-form-label query-part" aria-label="Add Filter">
+    <Icon name="plus" />
+  </span>
+);
 
 const fetchFilterKeys = async (
   datasource: DataSourceRef,

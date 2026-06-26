@@ -1,12 +1,20 @@
 import { css } from '@emotion/css';
 
-import { FieldMatcherID, type GrafanaTheme2, type SelectableValue, type TransformerUIProps } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useFieldMatchersOptions, useStyles2 } from '@grafana/ui';
+import {
+  FieldMatcherID,
+  GrafanaTheme2,
+  PluginState,
+  SelectableValue,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
+import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
 
-import { type ConfigFromQueryTransformOptions } from './configFromQuery';
+import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 
 export interface Props extends TransformerUIProps<ConfigFromQueryTransformOptions> {}
 
@@ -38,39 +46,30 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
-  const matchers = useFieldMatchersOptions();
+  const matchers = fieldMatchersUI
+    .list()
+    .filter((o) => !o.excludeFromPicker)
+    .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }));
 
   return (
     <>
       <InlineFieldRow>
-        <InlineField
-          label={t('transformers.config-from-query-transformer-editor.label-config-query', 'Config query')}
-          labelWidth={20}
-        >
+        <InlineField label="Config query" labelWidth={20}>
           <Select onChange={onRefIdChange} options={refIds} value={currentRefId} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField
-          label={t('transformers.config-from-query-transformer-editor.label-apply-to', 'Apply to')}
-          labelWidth={20}
-        >
+        <InlineField label="Apply to" labelWidth={20}>
           <Select onChange={onMatcherChange} options={matchers} value={currentMatcher.id} width={30} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField
-          label={t('transformers.config-from-query-transformer-editor.label-apply-to-options', 'Apply to options')}
-          labelWidth={20}
-          className={styles.matcherOptions}
-        >
+        <InlineField label="Apply to options" labelWidth={20} className={styles.matcherOptions}>
           <matcherUI.component
-            id={matcherUI.id}
             matcher={matcherUI.matcher}
             data={input}
             options={currentMatcher.options}
             onChange={onMatcherConfigChange}
-            scope={currentMatcher.scope}
           />
         </InlineField>
       </InlineFieldRow>
@@ -87,6 +86,17 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     </>
   );
 }
+
+export const configFromQueryTransformRegistryItem: TransformerRegistryItem<ConfigFromQueryTransformOptions> = {
+  id: configFromDataTransformer.id,
+  editor: ConfigFromQueryTransformerEditor,
+  transformation: configFromDataTransformer,
+  name: configFromDataTransformer.name,
+  description: configFromDataTransformer.description,
+  state: PluginState.beta,
+  categories: new Set([TransformerCategory.CalculateNewFields]),
+  help: getTransformationContent(configFromDataTransformer.id).helperDocs,
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   matcherOptions: css({

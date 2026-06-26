@@ -7,10 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 var (
@@ -27,23 +27,14 @@ var (
 )
 
 type AuthService struct {
-	db                        db.DB
-	features                  featuremgmt.FeatureToggles
-	dashSvc                   dashboards.DashboardService
-	searchDashboardsPageLimit int64
-	maxDepth                  int
+	db       db.DB
+	features featuremgmt.FeatureToggles
 }
 
-func NewAuthService(db db.DB, features featuremgmt.FeatureToggles, dashSvc dashboards.DashboardService, cfg *setting.Cfg) *AuthService {
-	section := cfg.Raw.Section("annotations")
-	searchDashboardsPageLimit := section.Key("search_dashboards_page_limit").MustInt64(1000)
-
+func NewAuthService(db db.DB, features featuremgmt.FeatureToggles) *AuthService {
 	return &AuthService{
-		db:                        db,
-		features:                  features,
-		dashSvc:                   dashSvc,
-		searchDashboardsPageLimit: searchDashboardsPageLimit,
-		maxDepth:                  cfg.MaxNestedFolderDepth,
+		db:       db,
+		features: features,
 	}
 }
 
@@ -60,26 +51,36 @@ func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQ
 	}
 	scopeTypes := annotationScopeTypes(scopes)
 	_, canAccessOrgAnnotations := scopeTypes[annotations.Organization.String()]
-	if query.AnnotationID != 0 {
-		annotationDashboardUID, err := authz.getAnnotationDashboard(ctx, query)
-		if err != nil {
-			return nil, ErrAccessControlInternal.Errorf("failed to fetch annotations: %w", err)
-		}
-		query.DashboardUID = annotationDashboardUID
+	_, canAccessDashAnnotations := scopeTypes[annotations.Dashboard.String()]
+	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+		canAccessDashAnnotations = true
 	}
 
-	visibleDashboards, err := authz.dashboardsWithVisibleAnnotations(ctx, query)
-	if err != nil {
-		return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
+	var visibleDashboards map[string]int64
+	var err error
+	if canAccessDashAnnotations {
+		if query.AnnotationID != 0 {
+			annotationDashboardID, err := authz.getAnnotationDashboard(ctx, query)
+			if err != nil {
+				return nil, ErrAccessControlInternal.Errorf("failed to fetch annotations: %w", err)
+			}
+			query.DashboardID = annotationDashboardID
+		}
+
+		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, query)
+		if err != nil {
+			return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
+		}
 	}
 
 	return &AccessResources{
-		Dashboards:              visibleDashboards,
-		CanAccessOrgAnnotations: canAccessOrgAnnotations,
+		Dashboards:               visibleDashboards,
+		CanAccessDashAnnotations: canAccessDashAnnotations,
+		CanAccessOrgAnnotations:  canAccessOrgAnnotations,
 	}, nil
 }
 
-func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query annotations.ItemQuery) (string, error) {
+func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query annotations.ItemQuery) (int64, error) {
 	var items []annotations.Item
 	params := make([]any, 0)
 	err := authz.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -87,7 +88,7 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query anno
 			SELECT
 				a.id,
 				a.org_id,
-				a.dashboard_uid
+				a.dashboard_id
 			FROM annotation as a
 			WHERE a.org_id = ? AND a.id = ?
 			`
@@ -96,36 +97,62 @@ func (authz *AuthService) getAnnotationDashboard(ctx context.Context, query anno
 		return sess.SQL(sql, params...).Find(&items)
 	})
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if len(items) == 0 {
-		return "", ErrAccessControlInternal.Errorf("annotation not found")
+		return 0, ErrAccessControlInternal.Errorf("annotation not found")
 	}
 
-	return items[0].DashboardUID, nil
+	return items[0].DashboardID, nil
 }
 
 func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, query annotations.ItemQuery) (map[string]int64, error) {
-	var dashboardUIDs []string
-	if query.DashboardUID != "" {
-		dashboardUIDs = []string{query.DashboardUID}
+	recursiveQueriesSupported, err := authz.db.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
 	}
 
-	dashs, err := authz.dashSvc.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{
-		DashboardUIDs: dashboardUIDs,
-		OrgId:         query.SignedInUser.GetOrgID(),
-		SignedInUser:  query.SignedInUser,
-		Page:          query.Page,
-		Type:          model.TypeAnnotation,
-		Limit:         authz.searchDashboardsPageLimit,
+	filterType := searchstore.TypeDashboard
+	if authz.features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
+		filterType = searchstore.TypeAnnotation
+	}
+
+	filters := []any{
+		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, filterType, authz.features, recursiveQueriesSupported),
+		searchstore.OrgFilter{OrgId: query.OrgID},
+	}
+
+	if query.DashboardUID != "" {
+		filters = append(filters, searchstore.DashboardFilter{
+			UIDs: []string{query.DashboardUID},
+		})
+	}
+	if query.DashboardID != 0 {
+		filters = append(filters, searchstore.DashboardIDFilter{
+			IDs: []int64{query.DashboardID},
+		})
+	}
+
+	sb := &searchstore.Builder{Dialect: authz.db.GetDialect(), Filters: filters, Features: authz.features}
+	// This is a limit for a batch size, not for the end query result.
+	var limit int64 = 1000
+	if query.Page == 0 {
+		query.Page = 1
+	}
+	sql, params := sb.ToSQL(limit, query.Page)
+
+	visibleDashboards := make(map[string]int64)
+	var res []dashboardProjection
+
+	err = authz.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(sql, params...).Find(&res)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	visibleDashboards := make(map[string]int64)
-	for _, d := range dashs {
-		visibleDashboards[d.UID] = d.ID
+	for _, p := range res {
+		visibleDashboards[p.UID] = p.ID
 	}
 
 	return visibleDashboards, nil

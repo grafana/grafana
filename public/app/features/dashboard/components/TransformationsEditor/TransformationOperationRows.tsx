@@ -1,8 +1,8 @@
-import { type DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
+import { DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
 
 import { TransformationOperationRow } from './TransformationOperationRow';
-import { type TransformationData } from './TransformationsEditor';
-import { type TransformationsEditorTransformation } from './types';
+import { TransformationData } from './TransformationsEditor';
+import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowsProps {
   data: TransformationData;

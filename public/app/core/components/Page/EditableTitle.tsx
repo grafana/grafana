@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
 
@@ -18,60 +17,41 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
-  const shouldSkipBlurSubmit = useRef(false);
 
   // sync local value with prop value
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
-  const onCancel = () => {
-    setLocalValue(value);
-    setErrorMessage(undefined);
-    setIsEditing(false);
-  };
+  const onCommitChange = useCallback(
+    async (event: React.FormEvent<HTMLInputElement>) => {
+      const newValue = event.currentTarget.value;
 
-  const onBlur = (event: React.FormEvent<HTMLInputElement>) => {
-    if (shouldSkipBlurSubmit.current) {
-      shouldSkipBlurSubmit.current = false;
-      return;
-    }
-
-    void onSubmit(event);
-  };
-
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement | HTMLInputElement>) => {
-    event.preventDefault();
-    if (isLoading) {
-      return;
-    }
-
-    if (!localValue) {
-      setErrorMessage(t('page.editable-title.required', 'Please enter a title'));
-      return;
-    }
-
-    if (localValue === value) {
-      onCancel();
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await onEdit(localValue);
-      setErrorMessage(undefined);
-      setIsEditing(false);
-    } catch (error) {
-      if (isFetchError(error)) {
-        setErrorMessage(error.data.message);
-      } else if (error instanceof Error) {
-        setErrorMessage(error.message);
+      if (!newValue) {
+        setErrorMessage('Please enter a title');
+      } else if (newValue === value) {
+        // no need to bother saving if the value hasn't changed
+        // just clear any previous error messages and exit edit mode
+        setErrorMessage(undefined);
+        setIsEditing(false);
       } else {
-        setErrorMessage(t('page.editable-title.error', 'An unknown error occurred'));
+        setIsLoading(true);
+        try {
+          await onEdit(newValue);
+          setErrorMessage(undefined);
+          setIsEditing(false);
+        } catch (error) {
+          if (isFetchError(error)) {
+            setErrorMessage(error.data.message);
+          } else if (error instanceof Error) {
+            setErrorMessage(error.message);
+          }
+        }
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
-  };
+    },
+    [onEdit, value]
+  );
 
   return !isEditing ? (
     <div className={styles.textContainer}>
@@ -84,66 +64,29 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
         <Text element="h1" truncate>
           {localValue}
         </Text>
-        <IconButton
-          name="pen"
-          size="lg"
-          tooltip={t('page.editable-title.edit-tooltip', 'Edit title')}
-          onClick={() => setIsEditing(true)}
-        />
+        <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
       </div>
     </div>
   ) : (
-    <form className={styles.inputContainer} onSubmit={onSubmit}>
-      <Field
-        className={styles.field}
-        label={
-          <label htmlFor="page-editable-title" className="sr-only">
-            <Trans i18nKey="page.editable-title.label">Name</Trans>
-          </label>
-        }
-        disabled={isLoading}
-        loading={isLoading}
-        invalid={!!errorMessage}
-        error={errorMessage}
-        noMargin
-      >
+    <div className={styles.inputContainer}>
+      <Field className={styles.field} loading={isLoading} invalid={!!errorMessage} error={errorMessage}>
         <Input
-          id="page-editable-title"
-          type="text"
           className={styles.input}
           defaultValue={localValue}
-          placeholder={t('page.editable-title.placeholder', 'Name')}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              onCommitChange(event);
+            }
+          }}
           // perfectly reasonable to autofocus here since we've made a conscious choice by clicking the edit button
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
-          autoComplete="off"
-          onBlur={onBlur}
+          onBlur={onCommitChange}
           onChange={(event) => setLocalValue(event.currentTarget.value)}
           onFocus={() => setIsEditing(true)}
         />
       </Field>
-      <div className={styles.buttons}>
-        <IconButton
-          name="check"
-          size="lg"
-          variant="secondary"
-          tooltip={t('page.editable-title.save-tooltip', 'Save')}
-          type="submit"
-          disabled={isLoading}
-        />
-        <IconButton
-          name="times"
-          size="lg"
-          variant="secondary"
-          tooltip={t('page.editable-title.cancel-tooltip', 'Cancel')}
-          onMouseDown={() => {
-            shouldSkipBlurSubmit.current = true;
-          }}
-          onClick={onCancel}
-          disabled={isLoading}
-        />
-      </div>
-    </form>
+    </div>
   );
 };
 
@@ -169,23 +112,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     inputContainer: css({
       display: 'flex',
-      alignItems: 'baseline',
       flex: 1,
-      gap: theme.spacing(1),
     }),
     textWrapper: css({
       alignItems: 'center',
       display: 'flex',
       gap: theme.spacing(1),
-      height: theme.spacing(theme.components.height.md),
-    }),
-    buttons: css({
-      display: 'flex',
-      gap: theme.spacing(1),
-      position: 'relative',
-      // align the buttons to the center of the input
-      // do this via baseline + top to avoid issues when an error shows
-      top: theme.spacing(-0.25),
     }),
   };
 };

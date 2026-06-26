@@ -1,12 +1,10 @@
 package azmoncredentials
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
 )
 
@@ -97,7 +95,7 @@ func getFromLegacy(data map[string]interface{}, secureData map[string]string) (a
 		clientSecret := secureData["clientSecret"]
 
 		if secureData["clientSecret"] == "" {
-			return nil, backend.DownstreamError(errors.New("unable to instantiate credentials, clientSecret must be set"))
+			return nil, fmt.Errorf("unable to instantiate credentials, clientSecret must be set")
 		}
 
 		credentials := &azcredentials.AzureClientSecretCredentials{

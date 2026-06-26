@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
-import { type AdHocVariableFilter } from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { AdHocVariableFilter } from '@grafana/data';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { AdHocFilter } from './AdHocFilter';
 

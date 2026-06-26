@@ -17,10 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,18 +40,18 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 
 			hs.DashboardService = svc
 
-			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-			hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(svc, nil))
+			hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
+			guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 		})
 	}
 
 	allowedUser := userWithPermissions(1, []accesscontrol.Permission{
 		{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
-		{Action: dashboardsnapshots.ActionSnapshotsDelete},
 	})
 
 	t.Run("User should not be able to delete snapshot without permissions", func(t *testing.T) {
 		svc := dashboards.NewFakeDashboardService(t)
+		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{UID: "1"}, nil)
 		server := setup(t, svc, 0, "")
 
 		res, err := server.Send(webtest.RequestWithSignedInUser(
@@ -115,7 +116,7 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 		server := setup(t, svc, 1, "")
 		res, err := server.Send(webtest.RequestWithSignedInUser(
 			server.NewRequest(http.MethodDelete, "/api/snapshots/12345", nil),
-			allowedUser,
+			&user.SignedInUser{UserID: 1, OrgID: 1},
 		))
 
 		require.NoError(t, err)
@@ -157,7 +158,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				assert.Equal(t, http.MethodGet, externalRequest.Method)
 				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
-				assert.Equal(t, "/api/snapshots-delete/54321", externalRequest.URL.EscapedPath())
+				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
 			})
 	})
 
@@ -377,7 +378,6 @@ func buildHttpServer(d dashboardsnapshots.Service, snapshotEnabled bool) *HTTPSe
 		Cfg: &setting.Cfg{
 			SnapshotEnabled: snapshotEnabled,
 		},
-		AccessControl: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 	return hs
 }
@@ -404,10 +404,9 @@ func setUpSnapshotTest(t *testing.T, userId int64, deleteUrl string) dashboardsn
 	}
 	if deleteUrl != "" {
 		res.External = true
-		// Stored URL must include a deleteKey path segment; the function rebuilds the path.
-		res.ExternalDeleteURL = deleteUrl + "/api/snapshots-delete/" + res.DeleteKey
+		res.ExternalDeleteURL = deleteUrl
 	}
-	dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil).Maybe()
+	dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil)
 	dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
 	return dashSnapSvc
 }

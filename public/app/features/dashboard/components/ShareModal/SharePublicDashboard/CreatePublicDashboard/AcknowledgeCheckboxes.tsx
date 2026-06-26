@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { type UseFormRegister } from 'react-hook-form';
+import { UseFormRegister } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { Checkbox, FieldSet, LinkButton, useStyles2, Stack } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Checkbox, FieldSet, HorizontalGroup, LinkButton, useStyles2, VerticalGroup } from '@grafana/ui/src';
+import { t, Trans } from 'app/core/internationalization';
 
-import { type SharePublicDashboardAcknowledgmentInputs } from './CreatePublicDashboard';
+import { SharePublicDashboardAcknowledgmentInputs } from './CreatePublicDashboard';
 
 type Acknowledge = {
   type: keyof SharePublicDashboardAcknowledgmentInputs;
@@ -27,7 +27,6 @@ export const AcknowledgeCheckboxes = ({
   register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
 }) => {
   const styles = useStyles2(getStyles);
-
   const ACKNOWLEDGES: Acknowledge[] = [
     {
       type: 'publicAcknowledgment',
@@ -84,9 +83,9 @@ export const AcknowledgeCheckboxes = ({
         </Trans>
       </p>
       <FieldSet disabled={disabled}>
-        <Stack direction="column" gap={2}>
+        <VerticalGroup spacing="md">
           {ACKNOWLEDGES.map((acknowledge) => (
-            <Stack key={acknowledge.type} gap={0} alignItems="center">
+            <HorizontalGroup key={acknowledge.type} spacing="none" align="center">
               <Checkbox
                 {...register(acknowledge.type, { required: true })}
                 label={acknowledge.description}
@@ -101,9 +100,9 @@ export const AcknowledgeCheckboxes = ({
                 rel="noopener noreferrer"
                 tooltip={acknowledge.info.tooltip}
               />
-            </Stack>
+            </HorizontalGroup>
           ))}
-        </Stack>
+        </VerticalGroup>
       </FieldSet>
     </>
   );

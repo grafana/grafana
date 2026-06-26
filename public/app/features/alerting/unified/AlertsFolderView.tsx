@@ -1,26 +1,26 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Card, FilterInput, Icon, Pagination, Select, Stack, TagList, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2, Stack } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { getQueryParamValue } from 'app/core/utils/query';
-import { type FolderDTO } from 'app/types/folders';
-import { type GrafanaRuleDefinition, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { FolderState, useDispatch } from 'app/types';
+import { CombinedRule } from 'app/types/unified-alerting';
 
+import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
+import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
 import { combineMatcherStrings, labelsMatchMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
-import { rulesNav } from './utils/navigation';
+import { createViewLink } from './utils/misc';
 
 interface Props {
-  folder: FolderDTO;
-  rules: RulerGrafanaRuleDTO[];
+  folder: FolderState;
 }
 
 enum SortOrder {
@@ -33,20 +33,31 @@ const sortOptions: Array<SelectableValue<SortOrder>> = [
   { label: 'Alphabetically [Z-A]', value: SortOrder.Descending },
 ];
 
-export const AlertsFolderView = ({ folder, rules }: Props) => {
+export const AlertsFolderView = ({ folder }: Props) => {
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
 
   const onTagClick = (tagName: string) => {
     const matchersString = combineMatcherStrings(labelFilter, tagName);
     setLabelFilter(matchersString);
   };
 
+  useEffect(() => {
+    dispatch(fetchPromRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+    dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+  }, [dispatch]);
+
+  const combinedNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
   const { nameFilter, labelFilter, sortOrder, setNameFilter, setLabelFilter, setSortOrder } =
     useAlertsFolderViewParams();
 
-  const filteredRules = filterAndSortRules(rules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
-  const hasNoResults = filteredRules.length === 0;
+  const matchingNamespace = combinedNamespaces.find((namespace) => namespace.uid === folder.uid);
 
+  const alertRules = matchingNamespace?.groups.flatMap((group) => group.rules) ?? [];
+
+  const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
+
+  const hasNoResults = alertRules.length === 0 || filteredRules.length === 0;
   const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
   return (
@@ -55,10 +66,7 @@ export const AlertsFolderView = ({ folder, rules }: Props) => {
         <FilterInput
           value={nameFilter}
           onChange={setNameFilter}
-          placeholder={t(
-            'alerting.alerts-folder-view.name-filter-placeholder-search-alert-rules-by-name',
-            'Search alert rules by name'
-          )}
+          placeholder="Search alert rules by name"
           data-testid="name-filter"
         />
         <Stack direction="row">
@@ -67,41 +75,32 @@ export const AlertsFolderView = ({ folder, rules }: Props) => {
             onChange={({ value }) => value && setSortOrder(value)}
             options={sortOptions}
             width={25}
-<<<<<<< HEAD
             aria-label="Sort"
             placeholder={`Sort (Default А-Я)`}
-=======
-            aria-label={t('alerting.alerts-folder-view.aria-label-sort', 'Sort')}
-            placeholder={t('alerting.alerts-folder-view.placeholder-sort-default-az', 'Sort (Default A-Z)')}
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
             prefix={<Icon name={sortOrder === SortOrder.Ascending ? 'sort-amount-up' : 'sort-amount-down'} />}
           />
           <FilterInput
             value={labelFilter}
             onChange={setLabelFilter}
-            placeholder={t(
-              'alerting.alerts-folder-view.label-filter-placeholder-search-alerts-by-labels',
-              'Search alerts by labels'
-            )}
+            placeholder="Search alerts by labels"
             className={styles.filterLabelsInput}
             data-testid="label-filter"
           />
         </Stack>
 
-        <Stack direction="column">
-          {pageItems.map(({ grafana_alert, labels = {} }) => (
+        <Stack direction="column" gap={1}>
+          {pageItems.map((currentRule) => (
             <Card
-              key={grafana_alert.uid}
-              noMargin
-              href={createGrafanaRuleViewLink(grafana_alert)}
+              key={currentRule.name}
+              href={createViewLink('grafana', currentRule, '')}
               className={styles.card}
               data-testid="alert-card-row"
             >
-              <Card.Heading>{grafana_alert.title}</Card.Heading>
+              <Card.Heading>{currentRule.name}</Card.Heading>
               <Card.Tags>
                 <TagList
                   onClick={onTagClick}
-                  tags={Object.entries(labels).map(([label, value]) => `${label}=${value}`)}
+                  tags={Object.entries(currentRule.labels).map(([label, value]) => `${label}=${value}`)}
                 />
               </Card.Tags>
               <Card.Meta>
@@ -112,11 +111,7 @@ export const AlertsFolderView = ({ folder, rules }: Props) => {
             </Card>
           ))}
         </Stack>
-        {hasNoResults && (
-          <div className={styles.noResults}>
-            <Trans i18nKey="alerting.alerts-folder-view.no-alert-rules-found">No alert rules found</Trans>
-          </div>
-        )}
+        {hasNoResults && <div className={styles.noResults}>No alert rules found</div>}
         <div className={styles.pagination}>
           <Pagination
             currentPage={page}
@@ -143,16 +138,13 @@ function useAlertsFolderViewParams() {
   const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewParams.labelFilter) ?? '');
 
   const sortParam = searchParams.get(AlertFolderViewParams.sortOrder);
-  const defaultSortOrder = (() => {
-    if (sortParam === SortOrder.Ascending) {
-      return SortOrder.Ascending;
-    }
-    if (sortParam === SortOrder.Descending) {
-      return SortOrder.Descending;
-    }
-    return undefined;
-  })();
-  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(defaultSortOrder);
+  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(
+    sortParam === SortOrder.Ascending
+      ? SortOrder.Ascending
+      : sortParam === SortOrder.Descending
+        ? SortOrder.Descending
+        : undefined
+  );
 
   useDebounce(
     () =>
@@ -172,40 +164,26 @@ function useAlertsFolderViewParams() {
 }
 
 function filterAndSortRules(
-  originalRules: RulerGrafanaRuleDTO[],
+  originalRules: CombinedRule[],
   nameFilter: string,
   labelFilter: string,
   sortOrder: SortOrder
 ) {
   const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
-  const rules = originalRules.filter((rule) => {
-    const nameMatch = rule.grafana_alert.title.toLowerCase().includes(nameFilter.toLowerCase());
-    const labelMatch = labelsMatchMatchers(rule.labels ?? {}, matchers);
-    return nameMatch && labelMatch;
-  });
-
-  return orderBy(rules, (rule) => rule.grafana_alert.title.toLowerCase(), [
-    sortOrder === SortOrder.Ascending ? 'asc' : 'desc',
-  ]);
-}
-
-function createGrafanaRuleViewLink(ruleDefinition: GrafanaRuleDefinition): string {
-  return rulesNav.detailsPageLink(
-    GRAFANA_RULES_SOURCE_NAME,
-    {
-      uid: ruleDefinition.uid,
-      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-    },
-    undefined
+  const rules = originalRules.filter(
+    (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
   );
+
+  return orderBy(rules, (x) => x.name.toLowerCase(), [sortOrder === SortOrder.Ascending ? 'asc' : 'desc']);
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: theme.spacing(1),
   }),
   card: css({
     gridTemplateColumns: 'auto 1fr 2fr',
+    margin: 0,
   }),
   pagination: css({
     alignSelf: 'center',
@@ -218,7 +196,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   noResults: css({
     padding: theme.spacing(2),
     backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.lg,
     fontStyle: 'italic',
   }),
 });

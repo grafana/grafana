@@ -8,11 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/stretchr/testify/require"
 )
 
 func loadTestData(tb testing.TB, file string) []byte {
@@ -188,7 +187,7 @@ func BenchmarkConverter_Convert_Wide(b *testing.B) {
 	converter := NewConverter()
 	b.ReportAllocs()
 	b.ResetTimer()
-	for range b.N {
+	for i := 0; i < b.N; i++ {
 		_, err := converter.Convert(testData)
 		if err != nil {
 			b.Fatal(err)
@@ -201,7 +200,7 @@ func BenchmarkConverter_Convert_LabelsColumn(b *testing.B) {
 	converter := NewConverter(WithUseLabelsColumn(true))
 	b.ReportAllocs()
 	b.ResetTimer()
-	for range b.N {
+	for i := 0; i < b.N; i++ {
 		_, err := converter.Convert(testData)
 		if err != nil {
 			b.Fatal(err)

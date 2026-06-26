@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 
 import { DiffValues } from './DiffValues';
-import { type Diff, getDiffText } from './utils';
+import { Diff, getDiffText } from './utils';
 
 type DiffTitleProps = {
   diff?: Diff;
@@ -26,7 +26,7 @@ export const DiffTitle = ({ diff, title }: DiffTitleProps) => {
   return diff ? (
     <>
       <Icon type="mono" name="circle" className={styles[diff.op]} size="xs" />{' '}
-      <span className={styles.embolden}>{title}</span> <span>{getDiffText(diff, diff.path?.length > 1)}</span>{' '}
+      <span className={styles.embolden}>{title}</span> <span>{getDiffText(diff, diff.path.length > 1)}</span>{' '}
       <DiffValues diff={diff} />
     </>
   ) : (
@@ -45,10 +45,10 @@ const getDiffTitleStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.success.main,
   }),
   replace: css({
-    color: theme.colors.warning.main,
+    color: theme.colors.success.main,
   }),
   move: css({
-    color: theme.colors.warning.main,
+    color: theme.colors.success.main,
   }),
   copy: css({
     color: theme.colors.success.main,
@@ -60,7 +60,7 @@ const getDiffTitleStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.success.main,
   }),
   remove: css({
-    color: theme.colors.error.main,
+    color: theme.colors.success.main,
   }),
   withoutDiff: css({
     marginBottom: theme.spacing(1),

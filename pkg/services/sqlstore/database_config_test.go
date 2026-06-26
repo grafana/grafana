@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type databaseConfigTest struct {
@@ -31,7 +30,7 @@ var databaseConfigTestCases = []databaseConfigTest{
 		name:       "MySQL IPv4",
 		dbType:     "mysql",
 		dbHost:     "1.2.3.4:5678",
-		expConnStr: ":@tcp(1.2.3.4:5678)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode=ANSI_QUOTES",
+		expConnStr: ":@tcp(1.2.3.4:5678)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 	},
 	{
 		name:       "Postgres IPv4",
@@ -65,13 +64,13 @@ var databaseConfigTestCases = []databaseConfigTest{
 		name:       "MySQL IPv4 (Default Port)",
 		dbType:     "mysql",
 		dbHost:     "1.2.3.4",
-		expConnStr: ":@tcp(1.2.3.4)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode=ANSI_QUOTES",
+		expConnStr: ":@tcp(1.2.3.4)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 	},
 	{
 		name:       "MySQL IPv6",
 		dbType:     "mysql",
 		dbHost:     "[fe80::24e8:31b2:91df:b177]:1234",
-		expConnStr: ":@tcp([fe80::24e8:31b2:91df:b177]:1234)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode=ANSI_QUOTES",
+		expConnStr: ":@tcp([fe80::24e8:31b2:91df:b177]:1234)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 	},
 	{
 		name:       "Postgres IPv6",
@@ -83,7 +82,7 @@ var databaseConfigTestCases = []databaseConfigTest{
 		name:       "MySQL IPv6 (Default Port)",
 		dbType:     "mysql",
 		dbHost:     "[::1]",
-		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode=ANSI_QUOTES",
+		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 	},
 	{
 		name:       "Postgres IPv6 (Default Port)",
@@ -96,11 +95,19 @@ var databaseConfigTestCases = []databaseConfigTest{
 		dbURL: "://invalid.com/",
 		err:   &url.Error{Op: "parse", URL: "://invalid.com/", Err: errors.New("missing protocol scheme")},
 	},
+	{
+		name:       "MySQL with ANSI_QUOTES mode",
+		dbType:     "mysql",
+		dbHost:     "[::1]",
+		features:   featuremgmt.WithFeatures(featuremgmt.FlagMysqlAnsiQuotes),
+		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&sql_mode='ANSI_QUOTES'",
+	},
 }
 
 func TestIntegrationSQLConnectionString(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	for _, testCase := range databaseConfigTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			cfg := makeDatabaseTestConfig(t, testCase)

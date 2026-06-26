@@ -1,7 +1,7 @@
 import { PluginType } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 
-import { getCatalogPluginMock, getPluginsStateMock } from '../mocks/mockHelpers';
+import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
 
 import { selectPlugins } from './selectors';
 

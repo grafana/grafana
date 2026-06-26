@@ -1,111 +1,94 @@
 import debounce from 'debounce-promise';
-import { forwardRef, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { type AsyncSelectProps, AsyncSelect } from '@grafana/ui';
-import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
+import { SelectableValue } from '@grafana/data';
+import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { type DashboardDTO } from 'app/types/dashboard';
+import { DashboardSearchItem } from 'app/features/search/types';
+import { DashboardDTO } from 'app/types';
 
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];
   onChange?: (value?: DashboardPickerDTO) => void;
 }
 
-export type DashboardPickerDTO = Pick<DashboardQueryResult, 'uid' | 'name'> &
+export type DashboardPickerDTO = Pick<DashboardDTO['dashboard'], 'uid' | 'title'> &
   Pick<DashboardDTO['meta'], 'folderUid' | 'folderTitle'>;
 
 const formatLabel = (folderTitle = 'Dashboards', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
 
 async function findDashboards(query = '') {
-  const result = await getGrafanaSearcher().search({ query, kind: ['dashboard'], limit: 100 });
-  const locationInfo = await getGrafanaSearcher().getLocationInfo();
-
-  return result.view.toArray().map((item) => {
-    const folderTitle = locationInfo[item.location]?.name;
-    return {
+  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchItem[]) => {
+    return result.map((item: DashboardSearchItem) => ({
       value: {
-        uid: item.uid,
-        name: item.name,
-        folderTitle,
-        folderUid: item.location,
+        // dashboards uid here is always defined as this endpoint does not return the default home dashboard
+        uid: item.uid!,
+        title: item.title,
+        folderTitle: item.folderTitle,
+        folderUid: item.folderUid,
       },
-      label: formatLabel(folderTitle, item.name),
-    };
+      label: formatLabel(item?.folderTitle, item.title),
+    }));
   });
 }
 
 const getDashboards = debounce(findDashboards, 250, { leading: true });
 
 // TODO: this component should provide a way to apply different filters to the search APIs
-export const DashboardPicker = forwardRef<HTMLElement, Props>(
-  ({ value, onChange, placeholder = 'Select dashboard', noOptionsMessage = 'No dashboards found', ...props }, ref) => {
-    const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
+export const DashboardPicker = ({
+  value,
+  onChange,
+  placeholder = 'Select dashboard',
+  noOptionsMessage = 'No dashboards found',
+  ...props
+}: Props) => {
+  const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
 
-    // This is required because the async select does not match the raw uid value
-    // We can not use a simple Select because the dashboard search should not return *everything*
-    useEffect(() => {
-      if (!value || value === current?.value?.uid) {
-        return;
+  // This is required because the async select does not match the raw uid value
+  // We can not use a simple Select because the dashboard search should not return *everything*
+  useEffect(() => {
+    if (!value || value === current?.value?.uid) {
+      return;
+    }
+
+    (async () => {
+      // value was manually changed from outside or we are rendering for the first time.
+      // We need to fetch dashboard information.
+      const res = await getDashboardAPI().getDashboardDTO(value);
+      if (res.dashboard) {
+        setCurrent({
+          value: {
+            uid: res.dashboard.uid,
+            title: res.dashboard.title,
+            folderTitle: res.meta.folderTitle,
+            folderUid: res.meta.folderUid,
+          },
+          label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
+        });
       }
+    })();
+    // we don't need to rerun this effect every time `current` changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
-      (async () => {
-        // value was manually changed from outside or we are rendering for the first time.
-        // We need to fetch dashboard information.
-        const api = await getDashboardAPI();
-        const dto = await api.getDashboardDTO(value, undefined);
+  const onPicked = useCallback(
+    (sel: SelectableValue<DashboardPickerDTO>) => {
+      setCurrent(sel);
+      onChange?.(sel?.value);
+    },
+    [onChange, setCurrent]
+  );
 
-        if (isDashboardV2Resource(dto)) {
-          setCurrent({
-            value: {
-              uid: dto.metadata.name,
-              name: dto.spec.title,
-              folderTitle: dto.metadata.annotations?.[AnnoKeyFolderTitle],
-              folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
-            },
-            label: formatLabel(dto.metadata.annotations?.[AnnoKeyFolder], dto.spec.title),
-          });
-        } else {
-          if (dto.dashboard) {
-            setCurrent({
-              value: {
-                uid: dto.dashboard.uid,
-                name: dto.dashboard.title,
-                folderTitle: dto.meta.folderTitle,
-                folderUid: dto.meta.folderUid,
-              },
-              label: formatLabel(dto.meta?.folderTitle, dto.dashboard.title),
-            });
-          }
-        }
-      })();
-      // we don't need to rerun this effect every time `current` changes
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value]);
-
-    const onPicked = useCallback(
-      (sel: SelectableValue<DashboardPickerDTO>) => {
-        setCurrent(sel);
-        onChange?.(sel?.value);
-      },
-      [onChange, setCurrent]
-    );
-
-    return (
-      <AsyncSelect
-        loadOptions={getDashboards}
-        onChange={onPicked}
-        placeholder={placeholder}
-        noOptionsMessage={noOptionsMessage}
-        value={current}
-        defaultOptions={true}
-        {...props}
-        selectRef={ref}
-      />
-    );
-  }
-);
-DashboardPicker.displayName = 'DashboardPicker';
+  return (
+    <AsyncSelect
+      loadOptions={getDashboards}
+      onChange={onPicked}
+      placeholder={placeholder}
+      noOptionsMessage={noOptionsMessage}
+      value={current}
+      defaultOptions={true}
+      {...props}
+    />
+  );
+};

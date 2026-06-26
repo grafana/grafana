@@ -1,33 +1,23 @@
 package definitions
 
-import "github.com/grafana/alerting/definition"
-
 // swagger:route GET /v1/provisioning/templates provisioning stable RouteGetTemplates
 //
-// Get all notification template groups.
-//
-// Deprecated: true
+// Get all notification templates.
 //
 //     Responses:
 //       200: NotificationTemplates
-//       403: ForbiddenError
 
 // swagger:route GET /v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
-// Get a notification template group.
-//
-// Deprecated: true
+// Get a notification template.
 //
 //     Responses:
 //       200: NotificationTemplate
-//       403: ForbiddenError
 //       404: PublicError
 
 // swagger:route PUT /v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
-// Updates an existing notification template group.
-//
-// Deprecated: true
+// Updates an existing notification template.
 //
 //     Consumes:
 //     - application/json
@@ -35,30 +25,26 @@ import "github.com/grafana/alerting/definition"
 //     Responses:
 //       202: NotificationTemplate
 //       400: PublicError
-//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
-// Delete a notification template group.
-//
-// Deprecated: true
+// Delete a template.
 //
 //     Responses:
 //       204: description: The template was deleted successfully.
-//       403: ForbiddenError
 //       409: PublicError
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
 type RouteGetTemplateParam struct {
-	// Template group name
+	// Template Name
 	// in:path
 	Name string `json:"name"`
 }
 
 // swagger:parameters stable RouteDeleteTemplate
 type RouteDeleteTemplateParam struct {
-	// Template group name
+	// Template name
 	// in:path
 	Name string `json:"name"`
 
@@ -69,12 +55,11 @@ type RouteDeleteTemplateParam struct {
 
 // swagger:model
 type NotificationTemplate struct {
-	UID             string                  `json:"-" yaml:"-"`
-	Name            string                  `json:"name"`
-	Template        string                  `json:"template"`
-	Provenance      Provenance              `json:"provenance,omitempty"`
-	ResourceVersion string                  `json:"version,omitempty"`
-	Kind            definition.TemplateKind `json:"-" yaml:"-"`
+	UID             string     `json:"-" yaml:"-"`
+	Name            string     `json:"name"`
+	Template        string     `json:"template"`
+	Provenance      Provenance `json:"provenance,omitempty"`
+	ResourceVersion string     `json:"version,omitempty"`
 }
 
 // swagger:model
@@ -95,4 +80,12 @@ type NotificationTemplatePayload struct {
 type NotificationTemplateHeaders struct {
 	// in:header
 	XDisableProvenance string `json:"X-Disable-Provenance"`
+}
+
+func (t *NotificationTemplate) ResourceType() string {
+	return "template"
+}
+
+func (t *NotificationTemplate) ResourceID() string {
+	return t.Name
 }

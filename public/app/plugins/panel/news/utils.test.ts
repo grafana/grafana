@@ -1,6 +1,6 @@
 import { DataFrameView } from '@grafana/data';
 
-import { type Feed, type NewsItem } from './types';
+import { Feed, NewsItem } from './types';
 import { feedToDataFrame } from './utils';
 
 describe('news', () => {

@@ -1,19 +1,20 @@
-import { type Action } from 'redux';
+import { Action } from 'redux';
 
-import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
-import { type DataSourcePluginCategory } from 'app/types/datasources';
-import { type StoreState, useDispatch, useSelector } from 'app/types/store';
+import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from 'app/types';
 
 import { ROUTES } from '../../connections/constants';
 import { DataSourceCategories } from '../components/DataSourceCategories';
 import { DataSourceTypeCardList } from '../components/DataSourceTypeCardList';
-import { useAddDatasource, useLoadDataSourcePlugins } from '../state/hooks';
-import { setDataSourceTypeSearchQuery } from '../state/reducers';
-import { getFilteredDataSourcePlugins } from '../state/selectors';
+import {
+  useAddDatasource,
+  useLoadDataSourcePlugins,
+  getFilteredDataSourcePlugins,
+  setDataSourceTypeSearchQuery,
+} from '../state';
 
 export function NewDataSource() {
   useLoadDataSourcePlugins();
@@ -38,7 +39,7 @@ export function NewDataSource() {
   );
 }
 
-type ViewProps = {
+export type ViewProps = {
   dataSources: DataSourcePluginMeta[];
   dataSourceCategories: DataSourcePluginCategory[];
   searchQuery: string;
@@ -47,7 +48,7 @@ type ViewProps = {
   onSetSearchQuery: (q: string) => Action;
 };
 
-function NewDataSourceView({
+export function NewDataSourceView({
   dataSources,
   dataSourceCategories,
   searchQuery,
@@ -63,17 +64,10 @@ function NewDataSourceView({
     <>
       {/* Search */}
       <div className="page-action-bar">
-        <FilterInput
-          value={searchQuery}
-          onChange={onSetSearchQuery}
-          placeholder={t(
-            'datasources.new-data-source-view.placeholder-filter-by-name-or-type',
-            'Filter by name or type'
-          )}
-        />
+        <FilterInput value={searchQuery} onChange={onSetSearchQuery} placeholder="Filter by name or type" />
         <div className="page-action-bar__spacer" />
         <LinkButton href={ROUTES.DataSources} fill="outline" variant="secondary" icon="arrow-left">
-          <Trans i18nKey="datasources.new-data-source-view.cancel">Cancel</Trans>
+          Cancel
         </LinkButton>
       </div>
 

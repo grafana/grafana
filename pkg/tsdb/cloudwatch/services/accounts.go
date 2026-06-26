@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	oam "github.com/aws/aws-sdk-go-v2/service/oam"
-	oamtypes "github.com/aws/aws-sdk-go-v2/service/oam/types"
-	"github.com/aws/smithy-go"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/oam"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
@@ -18,20 +17,26 @@ type AccountsService struct {
 	models.OAMAPIProvider
 }
 
-var NewAccountsService = func(oamClient models.OAMAPIProvider) models.AccountsProvider {
+func NewAccountsService(oamClient models.OAMAPIProvider) models.AccountsProvider {
 	return &AccountsService{oamClient}
 }
 
 func (a *AccountsService) GetAccountsForCurrentUserOrRole(ctx context.Context) ([]resources.ResourceResponse[resources.Account], error) {
 	var nextToken *string
-	sinks := []oamtypes.ListSinksItem{}
+	sinks := []*oam.ListSinksItem{}
 	for {
-		response, err := a.ListSinks(ctx, &oam.ListSinksInput{NextToken: nextToken})
+		response, err := a.ListSinksWithContext(ctx, &oam.ListSinksInput{NextToken: nextToken})
 		if err != nil {
-			smithyErr := &smithy.GenericAPIError{}
-			if errors.As(err, &smithyErr) && smithyErr.Code == "AccessDeniedException" {
-				return nil, fmt.Errorf("%w: %s", ErrAccessDeniedException, smithyErr.Message)
+			var aerr awserr.Error
+			if errors.As(err, &aerr) {
+				switch aerr.Code() {
+				// unlike many other services, OAM doesn't define this error code. however, it's returned in case calling role/user has insufficient permissions
+				case "AccessDeniedException":
+					return nil, fmt.Errorf("%w: %s", ErrAccessDeniedException, aerr.Message())
+				}
 			}
+		}
+		if err != nil {
 			return nil, fmt.Errorf("ListSinks error: %w", err)
 		}
 
@@ -57,7 +62,7 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole(ctx context.Context) (
 
 	nextToken = nil
 	for {
-		links, err := a.ListAttachedLinks(ctx, &oam.ListAttachedLinksInput{
+		links, err := a.ListAttachedLinksWithContext(ctx, &oam.ListAttachedLinksInput{
 			SinkIdentifier: sinkIdentifier,
 			NextToken:      nextToken,
 		})
@@ -81,5 +86,5 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole(ctx context.Context) (
 		nextToken = links.NextToken
 	}
 
-	return valuesToListMetricResponse(response), nil
+	return valuesToListMetricRespone(response), nil
 }

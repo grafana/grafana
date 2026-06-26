@@ -2,64 +2,53 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { Trans, t } from '@grafana/i18n';
-import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Button, CustomScrollbar, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
+import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
 import {
-  type PostableRulerRuleGroupDTO,
-  type RulerRuleDTO,
-  type RulerRuleGroupDTO,
+  PostableRulerRuleGroupDTO,
+  RulerRuleDTO,
+  RulerRuleGroupDTO,
 } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
-import { useReturnTo } from '../../../hooks/useReturnTo';
-import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../../rule-editor/formDefaults';
-import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import { RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { formValuesToRulerGrafanaRuleDTO, getDefaultQueries } from '../../../utils/rule-form';
-import { rulerRuleType } from '../../../utils/rules';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL, formValuesToRulerGrafanaRuleDTO } from '../../../utils/rule-form';
+import { isGrafanaRulerRule } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
-import { type ExportFormats, HclExportProvider, allGrafanaExportProviders } from '../../export/providers';
+import { ExportFormats, allGrafanaExportProviders } from '../../export/providers';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
-import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
-import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
+import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
 import { NotificationsStep } from '../NotificationsStep';
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
 
 interface ModifyExportRuleFormProps {
-  alertUid?: string;
+  alertUid: string;
   ruleForm?: RuleFormValues;
 }
 
 export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFormProps) {
-  const defaultValuesForNewRule: RuleFormValues = useMemo(() => {
-    const defaultRuleType = RuleFormType.grafana;
-
-    return {
-      ...getDefaultFormValues(),
-      condition: 'C',
-      queries: getDefaultQueries(false),
-      type: defaultRuleType,
-      evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
-    };
-  }, []);
-
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
-    defaultValues: ruleForm ?? defaultValuesForNewRule,
+    defaultValues: ruleForm,
     shouldFocusError: true,
   });
+  const [queryParams] = useQueryParams();
 
-  const existing = Boolean(ruleForm);
+  const existing = Boolean(ruleForm); // always should be true
   const notifyApp = useAppNotification();
-  const { returnTo } = useReturnTo('/alerting/list');
+  const returnTo = !queryParams.returnTo ? '/alerting/list' : String(queryParams.returnTo);
 
   const [exportData, setExportData] = useState<RuleFormValues | undefined>(undefined);
+
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
+  const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const onInvalid = (): void => {
     notifyApp.error('There are errors in the form. Please correct them and try again!');
@@ -81,39 +70,48 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
     setExportData(undefined);
   }, [setExportData]);
 
+  const actionButtons = [
+    <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
+      Cancel
+    </LinkButton>,
+    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
+      Export
+    </Button>,
+  ];
+
   return (
-    <FormProvider {...formAPI}>
-      <Stack direction="column">
+    <>
+      <FormProvider {...formAPI}>
+        <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={(e) => e.preventDefault()}>
           <div>
-            <Stack direction="column" gap={3}>
-              {/* Step 1 */}
-              <AlertRuleNameAndMetric />
-              {/* Step 2 */}
-              <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} mode="draft" />
-              {/* Step 3-4-5 */}
-              <GrafanaFolderAndLabelsStep />
+            <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
+              <Stack direction="column" gap={3}>
+                {/* Step 1 */}
+                <AlertRuleNameAndMetric />
+                {/* Step 2 */}
+                <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
+                {/* Step 3-4-5 */}
 
-              {/* Step 4 & 5 */}
-              <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={true} />
-              {/* Notifications step*/}
-              <NotificationsStep alertUid={alertUid} />
-              {/* Annotations only for cloud and Grafana */}
-              <AnnotationsStep />
-            </Stack>
+                <GrafanaEvaluationBehavior
+                  evaluateEvery={evaluateEvery}
+                  setEvaluateEvery={setEvaluateEvery}
+                  existing={Boolean(existing)}
+                  enableProvisionedGroups={true}
+                />
+
+                {/* Step 4 & 5 */}
+                {/* Notifications step*/}
+                <NotificationsStep alertUid={alertUid} />
+                {/* Annotations only for cloud and Grafana */}
+                <AnnotationsStep />
+              </Stack>
+            </CustomScrollbar>
           </div>
         </form>
         {exportData && <GrafanaRuleDesignExporter exportValues={exportData} onClose={onClose} uid={alertUid} />}
-        <Stack direction="row">
-          <Button key="export-rule" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
-            <Trans i18nKey="alerting.modify-export-rule-form.action-buttons.export">Export</Trans>
-          </Button>
-          <LinkButton href={returnTo} key="cancel" variant="secondary" onClick={() => submit(undefined)}>
-            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-          </LinkButton>
-        </Stack>
-      </Stack>
-    </FormProvider>
+      </FormProvider>
+    </>
   );
 }
 
@@ -133,21 +131,21 @@ interface GrafanaRuleDesignExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
   exportValues: RuleFormValues;
-  uid?: string;
+  uid: string;
 }
 export const getPayloadToExport = (
+  uid: string,
   formValues: RuleFormValues,
-  existingGroup: RulerRuleGroupDTO<RulerRuleDTO> | null | undefined,
-  ruleUid?: string
+  existingGroup: RulerRuleGroupDTO<RulerRuleDTO> | null | undefined
 ): PostableRulerRuleGroupDTO => {
   const grafanaRuleDto = formValuesToRulerGrafanaRuleDTO(formValues);
 
-  const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: ruleUid } };
+  const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: uid } };
   if (existingGroup?.rules) {
     // we have to update the rule in the group in the same position if it exists, otherwise we have to add it at the end
     let alreadyExistsInGroup = false;
     const updatedRules = existingGroup.rules.map((rule: RulerRuleDTO) => {
-      if (rulerRuleType.grafana.rule(rule) && rule.grafana_alert.uid === ruleUid) {
+      if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === uid) {
         alreadyExistsInGroup = true;
         return updatedRule;
       } else {
@@ -165,17 +163,17 @@ export const getPayloadToExport = (
   } else {
     // we have to create a new group with the updated rule
     return {
-      name: existingGroup?.name ?? formValues.group,
+      name: existingGroup?.name ?? '',
       rules: [updatedRule],
     };
   }
 };
 
-const useGetPayloadToExport = (values: RuleFormValues, ruleUid?: string) => {
+const useGetPayloadToExport = (values: RuleFormValues, uid: string) => {
   const rulerGroupDto = useGetGroup(values.folder?.uid ?? '', values.group);
   const payload: PostableRulerRuleGroupDTO = useMemo(() => {
-    return getPayloadToExport(values, rulerGroupDto?.value, ruleUid);
-  }, [ruleUid, rulerGroupDto, values]);
+    return getPayloadToExport(uid, values, rulerGroupDto?.value);
+  }, [uid, rulerGroupDto, values]);
   return { payload, loadingGroup: rulerGroupDto.loading };
 };
 
@@ -191,11 +189,11 @@ const GrafanaRuleDesignExportPreview = ({
   const nameSpaceUID = exportValues.folder?.uid ?? '';
 
   useEffect(() => {
-    !loadingGroup && payload.name && getExport({ payload, format: exportFormat, nameSpaceUID });
+    !loadingGroup && getExport({ payload, format: exportFormat, nameSpaceUID });
   }, [nameSpaceUID, exportFormat, payload, getExport, loadingGroup]);
 
   if (exportData.isLoading) {
-    return <LoadingPlaceholder text={t('alerting.grafana-rule-design-export-preview.text-loading', 'Loading....')} />;
+    return <LoadingPlaceholder text="Loading...." />;
   }
 
   const downloadFileName = `modify-export-${payload.name}-${uid}-${new Date().getTime()}`;
@@ -213,23 +211,19 @@ const GrafanaRuleDesignExportPreview = ({
 interface GrafanaRuleDesignExporterProps {
   onClose: () => void;
   exportValues: RuleFormValues;
-  uid?: string;
+  uid: string;
 }
 
-const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
-  const exportingNewRule = !uid;
-  const initialTab = exportingNewRule ? 'hcl' : 'yaml';
-  const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
-
-  const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
+export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
     <GrafanaExportDrawer
-      title={t('alerting.grafana-rule-design-exporter.title-export-group', 'Export Group')}
+      title={'Export Group'}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={formatProviders}
+      formatProviders={Object.values(allGrafanaExportProviders)}
     >
       <GrafanaRuleDesignExportPreview
         exportFormat={activeTab}

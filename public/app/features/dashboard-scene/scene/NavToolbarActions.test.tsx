@@ -4,31 +4,16 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, locationService } from '@grafana/runtime';
+import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
-import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { type DashboardMeta } from 'app/types/dashboard';
+import { DashboardMeta } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
-import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
 import { ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-
-jest.mock('../utils/interactions', () => ({
-  DashboardInteractions: {
-    editSessionStarted: jest.fn(),
-    editButtonClicked: jest.fn(),
-  },
-}));
-
-const localStorageMock = mockLocalStorage();
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
-  writable: true,
-});
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
   playlistSrv: {
@@ -157,60 +142,30 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
       expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
     });
-    describe('edit dashboard button tracking', () => {
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
-        setup();
-        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
-          dashboardUid: 'dash-1',
-          outlineExpanded: true,
-        });
-      });
-
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
-        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'false');
-        setup();
-        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
-          dashboardUid: 'dash-1',
-          outlineExpanded: true,
-        });
-      });
-
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.edit-pane.outline.collapsed is true', async () => {
-        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'true');
-        setup();
-        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-        expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
-          dashboardUid: 'dash-1',
-          outlineExpanded: false,
-        });
-      });
-    });
-
-    describe('where dashboard is not editable', () => {
-      it('should set dashboard to editable on make editable button press', async () => {
-        const { dashboard } = setup({}, true);
-        await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
-
-        expect(dashboard.state.editable).toBe(true);
-        expect(dashboard.state.meta.canEdit).toBe(true);
-        expect(dashboard.state.meta.canSave).toBe(true);
-      });
-    });
   });
 
   describe('Given new sharing button', () => {
-    it('Should show new share button', async () => {
+    it('Should show old share button when newDashboardSharingComponent FF is disabled', async () => {
+      setup();
+
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+      const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
+      expect(newShareButton).not.toBeInTheDocument();
+      const newExportButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
+      expect(newExportButton).not.toBeInTheDocument();
+    });
+    it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = true;
       setup();
 
       expect(await screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
       const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).toBeInTheDocument();
     });
-    it('Should show new export button', async () => {
+    it('Should show new export button when newDashboardSharingComponent FF is enabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = true;
       setup();
-      const newExportButton = screen.getByRole('button', { name: /export dashboard/i });
+      const newExportButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.NewExportButton.container);
       expect(newExportButton).toBeInTheDocument();
     });
   });
@@ -223,10 +178,18 @@ describe('NavToolbarActions', () => {
 
       expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
     });
+    it('should not show link button when is not found dashboard', () => {
+      setup({
+        isSnapshot: true,
+        dashboardNotFound: true,
+      });
+
+      expect(screen.queryByTestId('button-snapshot')).not.toBeInTheDocument();
+    });
   });
 });
 
-function setup(meta?: DashboardMeta, editable?: boolean) {
+function setup(meta?: DashboardMeta) {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     meta: {
@@ -241,7 +204,6 @@ function setup(meta?: DashboardMeta, editable?: boolean) {
       ...meta,
     },
     title: 'hello',
-    editable: editable || true,
     uid: 'dash-1',
     body: DefaultGridLayoutManager.fromVizPanels([
       new VizPanel({

@@ -1,21 +1,23 @@
-import { type PanelPluginMeta } from '@grafana/data';
+import { MouseEventHandler } from 'react';
+
+import { PanelPluginMeta } from '@grafana/data';
 
 import { PanelTypeCard } from './PanelTypeCard';
 
 interface Props {
   isCurrent: boolean;
   plugin: PanelPluginMeta;
-  onSelect: (withModKey?: boolean) => void;
+  onClick: MouseEventHandler<HTMLDivElement>;
   disabled: boolean;
 }
 
-export const VizTypePickerPlugin = ({ isCurrent, plugin, onSelect, disabled }: Props) => {
+export const VizTypePickerPlugin = ({ isCurrent, plugin, onClick, disabled }: Props) => {
   return (
     <PanelTypeCard
       title={plugin.name}
       plugin={plugin}
       description={plugin.info.description}
-      onSelect={onSelect}
+      onClick={onClick}
       isCurrent={isCurrent}
       disabled={disabled}
       showBadge={true}

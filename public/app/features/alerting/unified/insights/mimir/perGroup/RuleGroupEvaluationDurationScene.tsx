@@ -1,12 +1,12 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes';
-import { type DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { INSTANCE_ID, PANEL_STYLES } from '../../../home/Insights';
-import { InsightsMenuButton } from '../../InsightsMenuButton';
+import { InsightsRatingModal } from '../../RatingModal';
 
 export function getRuleGroupEvaluationDurationScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
-    ? `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group", stack_id="${INSTANCE_ID}"}`
+    ? `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group", id="${INSTANCE_ID}"}`
     : `grafanacloud_instance_rule_group_last_duration_seconds{rule_group="$rule_group"}`;
 
   const query = new SceneQueryRunner({
@@ -37,7 +37,7 @@ export function getRuleGroupEvaluationDurationScene(datasource: DataSourceRef, p
           fixedColor: 'blue',
         })
       )
-      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
+      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
       .build(),
   });
 }

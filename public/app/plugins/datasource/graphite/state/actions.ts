@@ -1,14 +1,9 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { type TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 
-import { type FuncInstance } from '../gfunc';
-import {
-  type GraphiteQuery,
-  type GraphiteQueryEditorDependencies,
-  type GraphiteSegment,
-  type GraphiteTag,
-} from '../types';
+import { FuncInstance } from '../gfunc';
+import { GraphiteQuery, GraphiteQueryEditorDependencies, GraphiteSegment, GraphiteTag } from '../types';
 
 /**
  * List of possible actions changing the state of QueryEditor

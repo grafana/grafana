@@ -1,12 +1,6 @@
 import grafanaAlertmanagerConfig from 'app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config';
-import {
-  getUserDefinedRoutingTree,
-  setRoutingTree,
-} from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { type AlertManagerCortexConfig, type AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
-
-import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
+import { AlertManagerCortexConfig, AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
 
 //////////////////////////
 // Alertmanager configs //
@@ -14,6 +8,7 @@ import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 
 /** **INITIAL** state of alertmanager configs for different scenarios */
 const ALERTMANAGER_CONFIGS: Record<string, AlertManagerCortexConfig> = {
+  // TODO in followup PR: Move mock AM config to TS file rather than JSON
   [GRAFANA_RULES_SOURCE_NAME]: grafanaAlertmanagerConfig,
 };
 
@@ -29,11 +24,6 @@ export const setupAlertmanagerConfigMapDefaultState = () => {
  */
 export const setAlertmanagerConfig = (alertmanagerName: string, config: AlertManagerCortexConfig) => {
   ALERTMANAGER_CONFIG_MAP.set(alertmanagerName, config);
-
-  if (alertmanagerName === GRAFANA_RULES_SOURCE_NAME) {
-    const routingTree = getUserDefinedRoutingTree(config);
-    setRoutingTree(ROOT_ROUTE_NAME, routingTree);
-  }
 };
 
 /**

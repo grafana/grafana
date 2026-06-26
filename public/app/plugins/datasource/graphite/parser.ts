@@ -1,5 +1,5 @@
 import { Lexer } from './lexer';
-import { type GraphiteParserError } from './types';
+import { GraphiteParserError } from './types';
 import { isGraphiteParserError } from './utils';
 
 export class Parser {

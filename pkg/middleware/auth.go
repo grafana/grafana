@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -48,8 +48,7 @@ func notAuthorized(c *contextmodel.ReqContext) {
 		writeRedirectCookie(c)
 	}
 
-	var tokenRotationErr authn.TokenNeedsRotationError
-	if errors.As(c.LookupTokenErr, &tokenRotationErr) {
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
 		if !c.UseSessionStorageRedirect {
 			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
 			return
@@ -138,7 +137,9 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 	}
 }
 
-func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, logger log.Logger) func(c *contextmodel.ReqContext) {
+func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, features featuremgmt.FeatureToggles,
+	logger log.Logger,
+) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		pluginID := web.Params(c.Req)[":id"]
 		p, exists := ps.Plugin(c.Req.Context(), pluginID)
@@ -162,11 +163,12 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, log
 			}
 
 			if normalizeIncludePath(u.Path) == path {
-				if i.RequiresRBACAction() && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, i.Action)) {
+				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
+				if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, i.Action)) {
 					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
 					permitted = false
 					break
-				} else if !i.RequiresRBACAction() && !c.HasUserRole(i.Role) {
+				} else if !useRBAC && !c.HasUserRole(i.Role) {
 					permitted = false
 					break
 				}
@@ -207,7 +209,7 @@ func Auth(options *AuthOptions) web.Handler {
 			if !forceLogin {
 				orgIDValue := c.Req.URL.Query().Get("orgId")
 				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
-				if err == nil && orgID > 0 && orgID != c.GetOrgID() {
+				if err == nil && orgID > 0 && orgID != c.SignedInUser.GetOrgID() {
 					forceLogin = true
 				}
 			}
@@ -233,10 +235,9 @@ func Auth(options *AuthOptions) web.Handler {
 	}
 }
 
-// snapshotPublicModeOrPermission allows access when snapshot public mode is enabled,
-// otherwise requires the user to be signed in and have the given permission.
-func snapshotPublicModeOrPermission(cfg *setting.Cfg, ac2 ac.AccessControl, action string) web.Handler {
-	evaluator := ac.EvalPermission(action)
+// SnapshotPublicModeOrSignedIn creates a middleware that allows access
+// if snapshot public mode is enabled or if user is signed in.
+func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
 	return func(c *contextmodel.ReqContext) {
 		if cfg.SnapshotPublicMode {
 			return
@@ -246,29 +247,7 @@ func snapshotPublicModeOrPermission(cfg *setting.Cfg, ac2 ac.AccessControl, acti
 			notAuthorized(c)
 			return
 		}
-
-		hasAccess, err := ac2.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-		if err != nil {
-			c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
-			return
-		}
-		if !hasAccess {
-			c.JsonApiErr(http.StatusForbidden, "forbidden", nil)
-			return
-		}
 	}
-}
-
-// SnapshotPublicModeOrCreate creates a middleware that allows access
-// if snapshot public mode is enabled or if user has creation permission.
-func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
-	return snapshotPublicModeOrPermission(cfg, ac2, dashboards.ActionSnapshotsCreate)
-}
-
-// SnapshotPublicModeOrDelete creates a middleware that allows access
-// if snapshot public mode is enabled or if user has delete permission.
-func SnapshotPublicModeOrDelete(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
-	return snapshotPublicModeOrPermission(cfg, ac2, dashboards.ActionSnapshotsDelete)
 }
 
 func ReqNotSignedIn(c *contextmodel.ReqContext) {

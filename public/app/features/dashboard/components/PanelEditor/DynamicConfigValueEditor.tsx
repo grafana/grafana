@@ -3,14 +3,13 @@ import { useId } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import {
-  type DynamicConfigValue,
-  type FieldConfigOptionsRegistry,
+  DynamicConfigValue,
+  FieldConfigOptionsRegistry,
   FieldConfigProperty,
-  type FieldOverrideContext,
-  type GrafanaTheme2,
+  FieldOverrideContext,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';
+import { Counter, Field, HorizontalGroup, IconButton, Label, useStyles2 } from '@grafana/ui';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
@@ -34,7 +33,6 @@ export const DynamicConfigValueEditor = ({
   searchQuery,
 }: DynamicConfigValueEditorProps) => {
   const styles = useStyles2(getStyles);
-
   const item = registry?.getIfExists(property.id);
 
   const componentId = useId();
@@ -56,7 +54,7 @@ export const DynamicConfigValueEditor = ({
   const renderLabel =
     (includeDescription = true, includeCounter = false) =>
     (isExpanded = false) => (
-      <Stack justifyContent="space-between">
+      <HorizontalGroup justify="space-between">
         <Label
           category={labelCategory}
           description={includeDescription ? item.description : undefined}
@@ -73,17 +71,10 @@ export const DynamicConfigValueEditor = ({
         </Label>
         {!isSystemOverride && (
           <div>
-            <IconButton
-              name="times"
-              onClick={onRemove}
-              tooltip={t(
-                'dashboard.dynamic-config-value-editor.render-label.tooltip-remove-property',
-                'Remove property'
-              )}
-            />
+            <IconButton name="times" onClick={onRemove} tooltip="Remove label" />
           </div>
         )}
-      </Stack>
+      </HorizontalGroup>
     );
   /* eslint-enable react/display-name */
 

@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import { useRef, useEffect, useId } from 'react';
+import { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { parser } from '@grafana/lezer-logql';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
-import { useTheme2, ReactMonacoEditor, type Monaco, type monacoTypes, type MonacoEditor } from '@grafana/ui';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
-import { type Props } from './MonacoQueryFieldProps';
+import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/completionUtils';
@@ -88,7 +89,6 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       '.monaco-editor .suggest-widget': {
         minWidth: '50%',
       },
-      overflow: 'hidden',
     }),
     placeholder: css({
       '::after': {
@@ -110,7 +110,7 @@ const MonacoQueryField = ({
   onChange,
   timeRange,
 }: Props) => {
-  const foooooooooooo = useId();
+  const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -188,7 +188,7 @@ const MonacoQueryField = ({
         }}
         onMount={(editor, monaco) => {
           // Monaco has a bug where it runs actions on all instances (https://github.com/microsoft/monaco-editor/issues/2947), so we ensure actions are executed on instance-level with this ContextKey.
-          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + foooooooooooo, false);
+          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
             isEditorFocused.set(false);
@@ -269,7 +269,7 @@ const MonacoQueryField = ({
             () => {
               onRunQueryRef.current(editor.getValue());
             },
-            'isEditorFocused' + foooooooooooo
+            'isEditorFocused' + id
           );
 
           // Fixes Monaco capturing the search key binding and displaying a useless search box within the Editor.

@@ -60,6 +60,14 @@ datasources:
     secureJsonData:
       httpHeaderValue1: "Token mytoken"
 
+  - name: gdev-opentsdb
+    type: opentsdb
+    access: proxy
+    url: http://opentsdb:4242
+    jsonData:
+      tsdbResolution: 1
+      tsdbVersion: 1
+
   - name: gdev-elasticsearch
     type: elasticsearch
     access: proxy
@@ -163,14 +171,6 @@ datasources:
 
   - name: gdev-loki
     type: loki
-    uid: gdev-loki
     access: proxy
     url: http://loki:3100
-    editable: false
-
-  - name: gdev-pyroscope
-    type: grafana-pyroscope-datasource
-    uid: gdev-pyroscope
-    access: proxy
-    url: http://pyroscope:4040
     editable: false

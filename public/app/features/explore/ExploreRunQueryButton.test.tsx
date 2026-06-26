@@ -1,14 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
-import { DatasourceSrvMock, type MockDataSourceApi } from 'test/mocks/datasource_srv';
+import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { type DataSourceApi } from '@grafana/data';
-import { type DataQuery } from '@grafana/schema';
+import { DataSourceApi } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
-import { type ExploreItemState, type ExploreState } from 'app/types/explore';
+import { ExploreItemState, ExploreState } from 'app/types';
 
-import { type Props, ExploreRunQueryButton } from './ExploreRunQueryButton';
+import { Props, ExploreRunQueryButton } from './ExploreRunQueryButton';
 import { makeExplorePaneState } from './state/utils';
 
 interface MockQuery extends DataQuery {

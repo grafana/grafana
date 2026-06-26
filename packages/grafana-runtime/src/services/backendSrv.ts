@@ -1,4 +1,4 @@
-import { type Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 /**
  * Used to initiate a remote call via the {@link BackendSrv}
@@ -71,12 +71,6 @@ export type BackendSrvRequest = {
   responseType?: 'json' | 'text' | 'arraybuffer' | 'blob';
 
   /**
-   * Used to cancel an open connection
-   * https://developer.mozilla.org/en-US/docs/Web/API/AbortController
-   */
-  abortSignal?: AbortSignal;
-
-  /**
    * The credentials read-only property of the Request interface indicates whether the user agent should send cookies from the other domain in the case of cross-origin requests.
    */
   credentials?: RequestCredentials;
@@ -85,12 +79,6 @@ export type BackendSrvRequest = {
    * @deprecated withCredentials is deprecated in favor of credentials
    */
   withCredentials?: boolean;
-
-  /**
-   * Set to true to validate the URL path to prevent path traversal attacks.
-   * Use this when constructing URLs from user input.
-   */
-  validatePath?: boolean;
 };
 
 /**
@@ -153,7 +141,7 @@ export function isFetchError<T = any>(e: unknown): e is FetchError<T> {
  *
  * @remarks
  * By default, Grafana displays an error message alert if the remote call fails. To prevent this from
- * happening `showErrorAlert = false` on the options object.
+ * happening `showErrorAlert = true` on the options object.
  *
  * @public
  */
@@ -185,14 +173,6 @@ export interface BackendSrv {
    * Observable http request interface
    */
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>>;
-
-  /**
-   * Observe each raw chunk in the response.  This is useful when reading values from
-   * a long living HTTP connection like the kubernetes WATCH command.
-   *
-   * Each chunk includes the full response headers and the `data` property is filled with the chunk.
-   */
-  chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>>;
 }
 
 let singletonInstance: BackendSrv;

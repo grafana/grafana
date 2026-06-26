@@ -1,13 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import {
-  type DataFrame,
-  DataTransformerID,
-  type Field,
-  FieldType,
-  type SynchronousDataTransformerInfo,
-} from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { DataFrame, DataTransformerID, Field, FieldType, SynchronousDataTransformerInfo } from '@grafana/data';
 
 import { getDistinctLabels } from '../utils';
 
@@ -16,17 +9,14 @@ export interface JoinByLabelsTransformOptions {
   join?: string[];
 }
 
-export const getJoinByLabelsTransformer: () => SynchronousDataTransformerInfo<JoinByLabelsTransformOptions> = () => ({
+export const joinByLabelsTransformer: SynchronousDataTransformerInfo<JoinByLabelsTransformOptions> = {
   id: DataTransformerID.joinByLabels,
-  name: t('transformers.get-join-by-labels-transformer.name.join-by-labels', 'Join by labels'),
-  description: t(
-    'transformers.get-join-by-labels-transformer.description.flatten-labeled-results-table-joined-labels',
-    'Flatten labeled results into a table joined by labels.'
-  ),
+  name: 'Join by labels',
+  description: 'Flatten labeled results into a table joined by labels.',
   defaultOptions: {},
 
   operator: (options, ctx) => (source) =>
-    source.pipe(map((data) => getJoinByLabelsTransformer().transformer(options, ctx)(data))),
+    source.pipe(map((data) => joinByLabelsTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: JoinByLabelsTransformOptions) => {
     return (data: DataFrame[]) => {
@@ -36,7 +26,7 @@ export const getJoinByLabelsTransformer: () => SynchronousDataTransformerInfo<Jo
       return [joinByLabels(options, data)];
     };
   },
-});
+};
 
 interface JoinValues {
   keys: string[];
@@ -45,7 +35,7 @@ interface JoinValues {
 
 export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFrame[]): DataFrame {
   if (!options.value?.length) {
-    return getErrorFrame('No value label configured');
+    return getErrorFrame('No value labele configured');
   }
   const distinctLabels = getDistinctLabels(data);
   if (distinctLabels.size < 1) {
@@ -114,11 +104,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
     }
   }
 
-  const frame: DataFrame = {
-    fields: [],
-    length: nameValues[0].length,
-    refId: `${DataTransformerID.joinByLabels}-${data.map((frame) => frame.refId).join('-')}`,
-  };
+  const frame: DataFrame = { fields: [], length: nameValues[0].length };
   for (let i = 0; i < join.length; i++) {
     frame.fields.push({
       name: join[i],

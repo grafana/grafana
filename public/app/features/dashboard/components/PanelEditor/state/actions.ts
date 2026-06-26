@@ -1,14 +1,21 @@
 import { pick } from 'lodash';
 
+import store from 'app/core/store';
 import { removePanel } from 'app/features/dashboard/utils/panel';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
-import { type ThunkResult } from 'app/types/store';
+import { ThunkResult } from 'app/types';
 
-import { type DashboardModel } from '../../../state/DashboardModel';
-import { type PanelModel } from '../../../state/PanelModel';
+import { DashboardModel, PanelModel } from '../../../state';
 
-import { closeEditor, updateEditorInitState } from './reducers';
+import {
+  closeEditor,
+  PANEL_EDITOR_UI_STATE_STORAGE_KEY,
+  PanelEditorUIState,
+  setDiscardChanges,
+  setPanelEditorUIState,
+  updateEditorInitState,
+} from './reducers';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return async (dispatch) => {
@@ -23,7 +30,18 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
   };
 }
 
-function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: DashboardModel | null): ThunkResult<void> {
+export function discardPanelChanges(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { getPanel } = getStore().panelEditor;
+    getPanel().configRev = 0;
+    dispatch(setDiscardChanges(true));
+  };
+}
+
+export function updateDuplicateLibraryPanels(
+  modifiedPanel: PanelModel,
+  dashboard: DashboardModel | null
+): ThunkResult<void> {
   return (dispatch) => {
     if (modifiedPanel.libraryPanel?.uid === undefined || !dashboard) {
       return;
@@ -142,5 +160,17 @@ export function exitPanelEditor(): ThunkResult<void> {
 }
 
 function hasPanelChangedInPanelEdit(panel: PanelModel) {
-  return panel.hasChanged || panel.hasSavedPanelEditChange;
+  return panel.hasChanged || panel.hasSavedPanelEditChange || panel.isAngularPlugin();
+}
+
+export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const nextState = { ...getStore().panelEditor.ui, ...uiState };
+    dispatch(setPanelEditorUIState(nextState));
+    try {
+      store.setObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, nextState);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 }

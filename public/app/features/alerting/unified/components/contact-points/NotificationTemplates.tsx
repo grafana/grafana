@@ -1,4 +1,3 @@
-import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -12,27 +11,11 @@ export const NotificationTemplates = () => {
   const { data: templates, isLoading, error } = useNotificationTemplates({ alertmanager: selectedAlertmanager ?? '' });
 
   if (error) {
-    return (
-      <Alert
-        title={t(
-          'alerting.notification-templates.title-failed-to-fetch-notification-templates',
-          'Failed to fetch notification templates'
-        )}
-      >
-        {stringifyErrorLike(error)}
-      </Alert>
-    );
+    return <Alert title="Failed to fetch notification templates">{stringifyErrorLike(error)}</Alert>;
   }
 
   if (isLoading) {
-    return (
-      <LoadingPlaceholder
-        text={t(
-          'alerting.notification-templates.text-loading-notification-templates',
-          'Loading notification templates'
-        )}
-      />
-    );
+    return <LoadingPlaceholder text="Loading notification templates" />;
   }
 
   if (templates) {

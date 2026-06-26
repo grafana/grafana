@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { type PropsWithChildren, type RefCallback, type JSX } from 'react';
+import { isString } from 'lodash';
+import { PropsWithChildren, RefCallback } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type SelectableValue, getTimeZoneInfo } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, getTimeZoneInfo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 
 import { TimeZoneDescription } from './TimeZoneDescription';
@@ -32,7 +33,7 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (typeof data.value !== 'string') {
+  if (!isString(data.value)) {
     return null;
   }
 
@@ -71,7 +72,7 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
   const timestamp = Date.now();
   const containerStyles = cx(styles.container, isFocused && styles.containerFocused);
 
-  if (typeof data.value !== 'string') {
+  if (!isString(data.value)) {
     return null;
   }
 
@@ -119,8 +120,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexShrink: 0,
     whiteSpace: 'nowrap',
     cursor: 'pointer',
-    padding: theme.spacing(0.75, 1, 0.5),
-    borderRadius: theme.shape.radius.default,
+    padding: '6px 8px 4px',
 
     '&:hover': {
       background: theme.colors.action.hover,

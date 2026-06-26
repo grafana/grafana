@@ -1,6 +1,6 @@
 import { Chance } from 'chance';
 
-import { type FolderDTO } from 'app/types/folders';
+import { FolderDTO } from 'app/types';
 
 export function mockFolderDTO(seed = 1, partial?: Partial<FolderDTO>): FolderDTO {
   const random = Chance(seed);

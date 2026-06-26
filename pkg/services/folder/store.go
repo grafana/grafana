@@ -38,13 +38,14 @@ type Store interface {
 
 	// GetChildren returns the set of immediate children folders (depth=1) of the
 	// given folder.
-	GetChildren(ctx context.Context, q GetChildrenQuery) ([]*FolderReference, error)
+	GetChildren(ctx context.Context, q GetChildrenQuery) ([]*Folder, error)
+
+	// GetHeight returns the height of the folder tree. When parentUID is set, the function would
+	// verify in the meanwhile that parentUID is not present in the subtree of the folder with the given UID.
+	GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error)
 
 	// GetFolders returns folders with given uids
 	GetFolders(ctx context.Context, q GetFoldersFromStoreQuery) ([]*Folder, error)
-	// GetDescendants returns all descendants of a folder (with no guaranteed order)
+	// GetDescendants returns all descendants of a folder
 	GetDescendants(ctx context.Context, orgID int64, anchestor_uid string) ([]*Folder, error)
-
-	// CountInOrg returns the number of folders in the given org
-	CountInOrg(ctx context.Context, orgID int64) (int64, error)
 }

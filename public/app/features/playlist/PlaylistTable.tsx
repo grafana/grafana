@@ -1,13 +1,13 @@
-import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 
-import { t } from '@grafana/i18n';
 import { FieldSet } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { PlaylistTableRows } from './PlaylistTableRows';
-import { type PlaylistItemUI } from './types';
+import { PlaylistItem } from './types';
 
 interface Props {
-  items: PlaylistItemUI[];
+  items: PlaylistItem[];
   deleteItem: (idx: number) => void;
   moveItem: (src: number, dst: number) => void;
 }

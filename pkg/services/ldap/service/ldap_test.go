@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/stretchr/testify/require"
@@ -308,6 +309,7 @@ func TestReload(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.description, func(t *testing.T) {
 			ldapImpl := &LDAPImpl{
+				features:     featuremgmt.WithManager(featuremgmt.FlagSsoSettingsApi),
 				loadingMutex: &sync.Mutex{},
 			}
 
@@ -542,6 +544,7 @@ func TestValidate(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.description, func(t *testing.T) {
 			ldapImpl := &LDAPImpl{
+				features:     featuremgmt.WithManager(featuremgmt.FlagSsoSettingsApi),
 				loadingMutex: &sync.Mutex{},
 			}
 

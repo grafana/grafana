@@ -4,7 +4,7 @@ import "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 const (
 	ActionRead        = "licensing:read"
-	ActionWrite       = "licensing:write"
+	ActionUpdate      = "licensing:write"
 	ActionDelete      = "licensing:delete"
 	ActionReportsRead = "licensing.reports:read"
 )

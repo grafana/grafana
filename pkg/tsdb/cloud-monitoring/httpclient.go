@@ -23,21 +23,17 @@ type routeInfo struct {
 var routes = map[string]routeInfo{
 	cloudMonitor: {
 		method: "GET",
-		url:    "https://monitoring.",
+		url:    "https://monitoring.googleapis.com",
 		scopes: []string{cloudMonitorScope},
 	},
 	resourceManager: {
 		method: "GET",
-		url:    "https://cloudresourcemanager.",
+		url:    "https://cloudresourcemanager.googleapis.com",
 		scopes: []string{resourceManagerScope},
 	},
 }
 
 func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middleware, error) {
-	if model.authenticationType == forwardOAuthIdentityAuthentication {
-		return nil, nil
-	}
-
 	providerConfig := tokenprovider.Config{
 		RoutePath:         routePath,
 		RouteMethod:       routes[routePath].method,
@@ -49,34 +45,17 @@ func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middlewa
 	var provider tokenprovider.TokenProvider
 	switch model.authenticationType {
 	case gceAuthentication:
-		if model.usingImpersonation {
-			providerConfig.TargetPrincipal = model.serviceAccountToImpersonate
-			provider = tokenprovider.NewImpersonatedGceAccessTokenProvider(providerConfig)
-		} else {
-			provider = tokenprovider.NewGceAccessTokenProvider(providerConfig)
-		}
+		provider = tokenprovider.NewGceAccessTokenProvider(providerConfig)
 	case jwtAuthentication:
 		providerConfig.JwtTokenConfig = &tokenprovider.JwtTokenConfig{
 			Email:      model.clientEmail,
 			URI:        model.tokenUri,
 			PrivateKey: []byte(model.privateKey),
 		}
-		if model.usingImpersonation {
-			providerConfig.TargetPrincipal = model.serviceAccountToImpersonate
-			provider = tokenprovider.NewImpersonatedJwtAccessTokenProvider(providerConfig)
-		} else {
-			provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
-		}
+		provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
 	}
 
 	return tokenprovider.AuthMiddleware(provider), nil
-}
-
-func buildURL(route string, universeDomain string) string {
-	if universeDomain == "" {
-		universeDomain = "googleapis.com"
-	}
-	return routes[route].url + universeDomain
 }
 
 func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvider *httpclient.Provider, route string) (*http.Client, error) {
@@ -85,8 +64,6 @@ func newHTTPClient(model *datasourceInfo, opts httpclient.Options, clientProvide
 		return nil, err
 	}
 
-	if m != nil {
-		opts.Middlewares = append(opts.Middlewares, m)
-	}
+	opts.Middlewares = append(opts.Middlewares, m)
 	return clientProvider.New(opts)
 }

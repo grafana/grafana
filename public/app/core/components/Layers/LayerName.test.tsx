@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type LayerNameProps, LayerName } from './LayerName';
+import { LayerNameProps, LayerName } from './LayerName';
 
 describe('LayerName', () => {
   it('Can edit title', async () => {

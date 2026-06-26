@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { type DirectionDimensionConfig, DirectionDimensionMode, ConnectionDirection } from '@grafana/schema';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { type Scene } from 'app/features/canvas/runtime/scene';
+import { config } from 'app/core/config';
+import { ConnectionDirection } from 'app/features/canvas/element';
+import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { type ConnectionCoordinates } from '../../panelcfg.gen';
-import { type ConnectionState } from '../../types';
+import { ConnectionCoordinates } from '../../panelcfg.gen';
+import { ConnectionState } from '../../types';
 import {
   calculateAngle,
   calculateCoordinates,
@@ -47,10 +47,7 @@ export const ConnectionSVG = ({
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = config.theme2.colors.text.primary;
   const defaultArrowSize = 2;
-  const defaultArrowDirection: DirectionDimensionConfig = {
-    mode: DirectionDimensionMode.Fixed,
-    fixed: ConnectionDirection.Forward,
-  };
+  const defaultArrowDirection = ConnectionDirection.Forward;
   const maximumVertices = 10;
 
   const [selectedConnection, setSelectedConnection] = useState<ConnectionState | undefined>(undefined);
@@ -165,12 +162,7 @@ export const ConnectionSVG = ({
           const yDist = yEnd - yStart;
 
           const { strokeColor, strokeWidth, strokeRadius, arrowDirection, lineStyle, shouldAnimate } =
-            getConnectionStyles(
-              info,
-              scene,
-              defaultArrowSize,
-              defaultArrowDirection.fixed ?? ConnectionDirection.Forward
-            );
+            getConnectionStyles(info, scene, defaultArrowSize, defaultArrowDirection);
 
           const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 

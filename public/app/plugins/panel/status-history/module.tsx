@@ -1,11 +1,10 @@
-import { FieldColorModeId, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { AxisPlacement, VisibilityMode } from '@grafana/schema';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
-import { type Options, type FieldConfig, defaultFieldConfig } from './panelcfg.gen';
+import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
+import { StatusHistorySuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
   .useFieldConfig({
@@ -18,22 +17,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
           mode: FieldColorModeId.Thresholds,
         },
       },
-      [FieldConfigProperty.Links]: {
-        settings: {
-          showOneClick: true,
-        },
-      },
-      [FieldConfigProperty.Actions]: {
-        hideFromDefaults: false,
-      },
     },
     useCustomConfig: (builder) => {
-      const category = [t('status-history.category-status-history', 'Status history')];
       builder
         .addSliderInput({
           path: 'lineWidth',
-          name: t('status-history.name-line-width', 'Line width'),
-          category,
+          name: 'Line width',
           defaultValue: defaultFieldConfig.lineWidth,
           settings: {
             min: 0,
@@ -43,8 +32,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         })
         .addSliderInput({
           path: 'fillOpacity',
-          name: t('status-history.name-fill-opacity', 'Fill opacity'),
-          category,
+          name: 'Fill opacity',
           defaultValue: defaultFieldConfig.fillOpacity,
           settings: {
             min: 0,
@@ -54,33 +42,25 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         });
 
       commonOptionsBuilder.addHideFrom(builder);
-      commonOptionsBuilder.addAxisPlacement(
-        builder,
-        (placement) => placement === AxisPlacement.Auto || placement === AxisPlacement.Hidden
-      );
-      commonOptionsBuilder.addAxisWidth(builder);
     },
   })
   .setPanelOptions((builder) => {
-    const category = [t('status-history.category-status-history', 'Status history')];
     builder
       .addRadio({
         path: 'showValue',
-        name: t('status-history.name-show-values', 'Show values'),
-        category,
+        name: 'Show values',
         settings: {
           options: [
-            { value: VisibilityMode.Auto, label: t('status-history.show-values-options.label-auto', 'Auto') },
-            { value: VisibilityMode.Always, label: t('status-history.show-values-options.label-always', 'Always') },
-            { value: VisibilityMode.Never, label: t('status-history.show-values-options.label-never', 'Never') },
+            { value: VisibilityMode.Auto, label: 'Auto' },
+            { value: VisibilityMode.Always, label: 'Always' },
+            { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
         defaultValue: VisibilityMode.Auto,
       })
       .addSliderInput({
         path: 'rowHeight',
-        name: t('status-history.name-row-height', 'Row height'),
-        category,
+        name: 'Row height',
         defaultValue: 0.9,
         settings: {
           min: 0,
@@ -90,71 +70,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
       })
       .addSliderInput({
         path: 'colWidth',
-        name: t('status-history.name-column-width', 'Column width'),
-        category,
+        name: 'Column width',
         defaultValue: 0.9,
         settings: {
           min: 0,
           max: 1,
           step: 0.01,
         },
-      })
-      .addNumberInput({
-        path: 'perPage',
-        name: t('status-history.name-page-size', 'Page size (enable pagination)'),
-        category,
-        settings: {
-          min: 1,
-          step: 1,
-          integer: true,
-        },
       });
 
-    commonOptionsBuilder.addLegendOptions(builder, false, true);
+    commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder);
-    addAnnotationOptions(builder);
   })
-  .setSuggestionsSupplier((ds) => {
-    if (!ds.hasData) {
-      return;
-    }
-
-    // This panel needs a time field and a string or number field
-    if (
-      !ds.hasFieldType(FieldType.time) ||
-      (!ds.hasFieldType(FieldType.string) && !ds.hasFieldType(FieldType.number))
-    ) {
-      return;
-    }
-
-    // If there are many series then they won't fit on y-axis so this panel is not good fit
-    if (ds.fieldCountByType(FieldType.number) >= 30) {
-      return;
-    }
-
-    // if there a lot of data points for each series then this is not a good match
-    if (ds.rowCountMax > 100) {
-      return;
-    }
-
-    // Probably better ways to filter out this by inspecting the types of string values so view this as temporary
-    if (ds.hasPreferredVisualisationType('logs')) {
-      return;
-    }
-
-    return [
-      {
-        cardOptions: {
-          previewModifier: (s) => {
-            s.options!.legend = {
-              placement: 'bottom',
-              calcs: [],
-              showLegend: false,
-            };
-            s.options!.colWidth = 0.7;
-          },
-        },
-      },
-    ];
-  })
+  .setSuggestionsSupplier(new StatusHistorySuggestionsSupplier())
   .setDataSupport({ annotations: true });

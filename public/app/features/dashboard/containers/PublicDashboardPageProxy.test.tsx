@@ -1,17 +1,16 @@
 import { screen, waitFor } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
-import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
-import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { locationService, setRunRequest } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
-import PublicDashboardPageProxy, { type PublicDashboardPageProxyProps } from './PublicDashboardPageProxy';
+import { DashboardRoutes } from '../../../types';
 
-const { PublicDashboardScene } = e2eSelectors.pages;
+import PublicDashboardPageProxy, { PublicDashboardPageProxyProps } from './PublicDashboardPageProxy';
+
+const { PublicDashboardScene, PublicDashboard } = e2eSelectors.pages;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -27,16 +26,6 @@ jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
   useParams: () => ({ accessToken: 'an-access-token' }),
 }));
-
-const runRequestMock = jest.fn().mockReturnValue(
-  of<PanelData>({
-    state: LoadingState.Done,
-    series: [],
-    timeRange: getDefaultTimeRange(),
-    annotations: [],
-  })
-);
-setRunRequest(runRequestMock);
 
 function setup(props: Partial<PublicDashboardPageProxyProps>) {
   return render(
@@ -61,19 +50,32 @@ function setup(props: Partial<PublicDashboardPageProxyProps>) {
 
 describe('PublicDashboardPageProxy', () => {
   beforeEach(() => {
-    // Mock console methods to avoid jest-fail-on-console issues
-    jest.spyOn(console, 'warn').mockImplementation();
+    config.featureToggles.publicDashboardsScene = false;
 
     // Mock the dashboard UID response so we don't get any refused connection errors
     // from this test (as the fetch polyfill means this logic would actually try and call the API)
-    jest.spyOn(backendSrv, 'getPublicDashboardByUid').mockResolvedValue({ dashboard: {}, meta: {} } as DashboardDTO);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jest.spyOn(backendSrv, 'getPublicDashboardByUid').mockResolvedValue({ dashboard: {}, meta: {} } as any);
   });
 
-  it('should render PublicDashboardScenePage', async () => {
-    setup({});
+  describe('when scene feature enabled', () => {
+    it('should render PublicDashboardScenePage if publicDashboardsScene is enabled', async () => {
+      config.featureToggles.publicDashboardsScene = true;
+      setup({});
 
-    await waitFor(() => {
-      expect(screen.queryByTestId(PublicDashboardScene.page)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId(PublicDashboardScene.page)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('when scene feature disabled', () => {
+    it('should render PublicDashboardPage if publicDashboardsScene is disabled', async () => {
+      setup({});
+
+      await waitFor(() => {
+        expect(screen.queryByTestId(PublicDashboard.page)).toBeInTheDocument();
+      });
     });
   });
 });

@@ -1,31 +1,27 @@
 import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
-import { type CSSProperties, useCallback, useMemo, useState } from 'react';
-import { useAsync, useDebounce } from 'react-use';
-import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
+import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { useDebounce } from 'react-use';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import {
   Alert,
   Button,
+  clearButtonStyles,
   FilterInput,
   Icon,
   LoadingPlaceholder,
   Modal,
   Tooltip,
-  clearButtonStyles,
   useStyles2,
 } from '@grafana/ui';
-import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardDTO } from 'app/types/dashboard';
 
-import { type DashboardResponse, useDashboardQuery } from './useDashboardQuery';
+import { DashboardModel } from '../../../../dashboard/state';
+import { dashboardApi } from '../../api/dashboardApi';
+
+import { useDashboardQuery } from './useDashboardQuery';
 
 export interface PanelDTO {
   id?: number;
@@ -34,11 +30,9 @@ export interface PanelDTO {
   collapsed?: boolean;
 }
 
-const collator = new Intl.Collator();
-
 function panelSort(a: PanelDTO, b: PanelDTO) {
   if (a.title && b.title) {
-    return collator.compare(a.title, b.title);
+    return a.title.localeCompare(b.title);
   }
   if (a.title && !b.title) {
     return 1;
@@ -57,35 +51,29 @@ interface DashboardPickerProps {
   onDismiss: () => void;
 }
 
-const useFilteredDashboards = (dashboardFilter: string) => {
-  return useAsync(async () => {
-    const results = await getGrafanaSearcher().search({
-      query: dashboardFilter,
-      kind: ['dashboard'],
-    });
-    const locationInfo = await getGrafanaSearcher().getLocationInfo();
-
-    return { dashboards: results.view.toArray(), locationInfo };
-  }, [dashboardFilter]);
-};
-
 export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDismiss }: DashboardPickerProps) => {
   const styles = useStyles2(getPickerStyles);
+
   const [selectedDashboardUid, setSelectedDashboardUid] = useState(dashboardUid);
   const [selectedPanelId, setSelectedPanelId] = useState(panelId);
+
   const [dashboardFilter, setDashboardFilter] = useState('');
   const [debouncedDashboardFilter, setDebouncedDashboardFilter] = useState('');
+
   const [panelFilter, setPanelFilter] = useState('');
-  const { value, loading: isDashSearchFetching } = useFilteredDashboards(debouncedDashboardFilter);
-  const { dashboard, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
+  const { useSearchQuery } = dashboardApi;
+
+  const { currentData: filteredDashboards = [], isFetching: isDashSearchFetching } = useSearchQuery({
+    query: debouncedDashboardFilter,
+  });
+  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
+
   const handleDashboardChange = useCallback((dashboardUid: string) => {
     setSelectedDashboardUid(dashboardUid);
     setSelectedPanelId(undefined);
   }, []);
 
-  const { dashboards: filteredDashboards = [], locationInfo: locationInfo = {} } = value || {};
-
-  const allDashboardPanels = getVisualPanels(dashboard);
+  const allDashboardPanels = getVisualPanels(dashboardModel);
 
   const filteredPanels =
     allDashboardPanels
@@ -125,19 +113,18 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const DashboardRow = ({ index, style }: { index: number; style?: CSSProperties }) => {
     const dashboard = filteredDashboards[index];
     const isSelected = selectedDashboardUid === dashboard.uid;
-    const folderTitle = locationInfo?.[dashboard.location]?.name ?? 'Dashboards';
 
     return (
       <button
         type="button"
-        title={dashboard.name}
+        title={dashboard.title}
         style={style}
         className={cx(styles.rowButton, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
         onClick={() => handleDashboardChange(dashboard.uid)}
       >
-        <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{dashboard.name}</div>
+        <div className={cx(styles.dashboardTitle, styles.rowButtonTitle)}>{dashboard.title}</div>
         <div className={styles.dashboardFolder}>
-          <Icon name="folder" /> {folderTitle}
+          <Icon name="folder" /> {dashboard.folderTitle ?? 'Dashboards'}
         </div>
       </button>
     );
@@ -165,22 +152,12 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           {panelTitle}
         </div>
         {!isAlertingCompatible && !disabled && (
-          <Tooltip
-            content={t(
-              'alerting.dashboard-picker.panel-row.tooltip-alert-tab-support',
-              'The alert tab and alert annotations are only supported on graph and timeseries panels.'
-            )}
-          >
+          <Tooltip content="The alert tab and alert annotations are only supported on graph and timeseries panels.">
             <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
           </Tooltip>
         )}
         {disabled && (
-          <Tooltip
-            content={t(
-              'alerting.dashboard-picker.panel-row.content-panel-valid-identifier',
-              'This panel does not have a valid identifier.'
-            )}
-          >
+          <Tooltip content="This panel does not have a valid identifier.">
             <Icon name="info-circle" data-testid="info-icon" />
           </Tooltip>
         )}
@@ -188,11 +165,9 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     );
   };
 
-  const fallbackDashboardsString = t('alerting.dashboard-picker.fallback-dashboards-string', 'Dashboards');
-
   return (
     <Modal
-      title={t('alerting.dashboard-picker.title-select-dashboard-and-panel', 'Select dashboard and panel')}
+      title="Select dashboard and panel"
       closeOnEscape
       isOpen={isOpen}
       onDismiss={onDismiss}
@@ -200,34 +175,15 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       contentClassName={styles.modalContent}
     >
       {/* This alert shows if the selected dashboard is not found in the first page of dashboards */}
-      {!selectedDashboardIsInPageResult && dashboardUid && dashboard && (
-        <Alert
-          title={t('alerting.dashboard-picker.title-current-selection', 'Current selection')}
-          severity="info"
-          topSpacing={0}
-          bottomSpacing={1}
-          className={styles.modalAlert}
-        >
+      {!selectedDashboardIsInPageResult && dashboardUid && dashboardModel && (
+        <Alert title="Current selection" severity="info" topSpacing={0} bottomSpacing={1} className={styles.modalAlert}>
           <div>
-            <Trans
-              i18nKey="alerting.dashboard-picker.current-selection-dashboard"
-              values={{
-                dashboardTitle: getDashboardTitle(dashboard),
-                dashboardUid: getDashboardUid(dashboard),
-                folderTitle: getDashboardFolderTitle(dashboard) ?? fallbackDashboardsString,
-              }}
-            >
-              Dashboard: {'{{dashboardTitle}}'} ({'{{ dashboardUid }}'}) in folder {'{{ folderTitle }}'}
-            </Trans>
+            Dashboard: {dashboardModel.title} ({dashboardModel.uid}) in folder{' '}
+            {dashboardModel.meta?.folderTitle ?? 'Dashboards'}
           </div>
           {currentPanel && (
             <div>
-              <Trans
-                i18nKey="alerting.dashboard-picker.current-selection-panel"
-                values={{ panelTitle: currentPanel.title, panelId: currentPanel.id }}
-              >
-                Panel: {'{{ panelTitle }}'} ({'{{ panelId }}'})
-              </Trans>
+              Panel: {currentPanel.title} ({currentPanel.id})
             </div>
           )}
         </Alert>
@@ -236,28 +192,20 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         <FilterInput
           value={dashboardFilter}
           onChange={setDashboardFilter}
-          title={t('alerting.dashboard-picker.title-search-dashboard', 'Search dashboard')}
-          placeholder={t('alerting.dashboard-picker.placeholder-search-dashboard', 'Search dashboard')}
+          title="Search dashboard"
+          placeholder="Search dashboard"
           autoFocus
         />
-        <FilterInput
-          value={panelFilter}
-          onChange={setPanelFilter}
-          title={t('alerting.dashboard-picker.title-search-panel', 'Search panel')}
-          placeholder={t('alerting.dashboard-picker.placeholder-search-panel', 'Search panel')}
-        />
+        <FilterInput value={panelFilter} onChange={setPanelFilter} title="Search panel" placeholder="Search panel" />
 
         <div className={styles.column}>
           {isDashSearchFetching && (
-            <LoadingPlaceholder
-              text={t('alerting.dashboard-picker.text-loading-dashboards', 'Loading dashboards...')}
-              className={styles.loadingPlaceholder}
-            />
+            <LoadingPlaceholder text="Loading dashboards..." className={styles.loadingPlaceholder} />
           )}
 
           {!isDashSearchFetching && (
             <AutoSizer>
-              {({ height, width }: Size) => (
+              {({ height, width }) => (
                 <FixedSizeList
                   ref={scrollToItem}
                   itemSize={50}
@@ -275,23 +223,16 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         <div className={styles.column}>
           {!selectedDashboardUid && !isDashboardFetching && (
             <div className={styles.selectDashboardPlaceholder}>
-              <div>
-                <Trans i18nKey="alerting.dashboard-picker.select-dashboard-available-panels">
-                  Select a dashboard to get a list of available panels
-                </Trans>
-              </div>
+              <div>Select a dashboard to get a list of available panels</div>
             </div>
           )}
           {isDashboardFetching && (
-            <LoadingPlaceholder
-              text={t('alerting.dashboard-picker.text-loading-dashboard', 'Loading dashboard...')}
-              className={styles.loadingPlaceholder}
-            />
+            <LoadingPlaceholder text="Loading dashboard..." className={styles.loadingPlaceholder} />
           )}
 
           {selectedDashboardUid && !isDashboardFetching && (
             <AutoSizer>
-              {({ width, height }: Size) => (
+              {({ width, height }) => (
                 <FixedSizeList itemSize={32} height={height} width={width} itemCount={filteredPanels.length}>
                   {PanelRow}
                 </FixedSizeList>
@@ -302,7 +243,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       </div>
       <Modal.ButtonRow>
         <Button type="button" variant="secondary" onClick={onDismiss} fill="text">
-          <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+          Cancel
         </Button>
         <Button
           type="button"
@@ -314,85 +255,25 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
             }
           }}
         >
-          <Trans i18nKey="alerting.dashboard-picker.confirm">Confirm</Trans>
+          Confirm
         </Button>
       </Modal.ButtonRow>
     </Modal>
   );
 };
 
-export function getVisualPanels(dashboardDTO: DashboardResponse | undefined) {
-  if (!dashboardDTO) {
+export function getVisualPanels(dashboardModel: DashboardModel | undefined) {
+  if (!dashboardModel) {
     return [];
   }
 
-  // process v2 dashboard
-  if (isDashboardV2Resource(dashboardDTO)) {
-    return Object.values(dashboardDTO.spec.elements).map((element) => ({
-      id: element.spec.id,
-      title: element.spec.title,
-      type: element.kind === 'Panel' ? element.spec.vizConfig.group : 'LibraryPanel',
-      ...(element.kind === 'LibraryPanel' && {
-        libraryPanel: {
-          uid: element.spec.libraryPanel.uid,
-          name: element.spec.libraryPanel.name,
-        },
-      }),
-    }));
-  }
-
-  // process v1 dashboard
-  const { dashboard } = dashboardDTO;
-
-  if (!dashboard || !dashboard.panels) {
-    return [];
-  }
-
-  const panelsWithoutRows = dashboard.panels.filter((panel) => panel.type !== 'row');
-  const panelsNestedInRows = dashboard.panels
+  const panelsWithoutRows = dashboardModel.panels.filter((panel) => panel.type !== 'row');
+  const panelsNestedInRows = dashboardModel.panels
     .filter((rowPanel) => rowPanel.collapsed)
     .flatMap((collapsedRow) => collapsedRow.panels ?? []);
 
   const allDashboardPanels = [...panelsWithoutRows, ...panelsNestedInRows];
   return allDashboardPanels;
-}
-
-export function getDashboardTitle(dashboardDTO: DashboardResponse | undefined) {
-  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
-    return '';
-  }
-
-  if (isDashboardV2Resource(dashboardDTO)) {
-    return dashboardDTO.spec.title;
-  }
-
-  return dashboardDTO.dashboard.title;
-}
-
-export function getDashboardUid(dashboardDTO: DashboardResponse | undefined) {
-  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
-    return '';
-  }
-
-  if (isDashboardV2Resource(dashboardDTO)) {
-    return dashboardDTO.metadata.name;
-  }
-
-  return dashboardDTO.dashboard.uid;
-}
-
-function getDashboardFolderTitle(dashboardDTO: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | undefined) {
-  if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
-    return undefined;
-  }
-
-  if (isDashboardV2Resource(dashboardDTO)) {
-    return dashboardDTO.metadata.annotations?.[AnnoKeyFolderTitle];
-  }
-
-  const { meta } = dashboardDTO;
-
-  return meta.folderTitle;
 }
 
 const isValidPanel = (panel: PanelDTO): boolean => {

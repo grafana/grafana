@@ -1,28 +1,23 @@
-import uPlot, { type Axis, type AlignedData, type Scale } from 'uplot';
+import uPlot, { Axis, AlignedData, Scale } from 'uplot';
 
-import {
-  colorManipulator,
-  type DataFrame,
-  dateTimeFormat,
-  type GrafanaTheme2,
-  systemDateFormats,
-  type TimeZone,
-} from '@grafana/data';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import {
   StackingMode,
   VisibilityMode,
-  type ScaleDirection,
+  ScaleDirection,
   ScaleOrientation,
-  type VizTextDisplayOptions,
-  type VizLegendOptions,
+  VizTextDisplayOptions,
+  VizLegendOptions,
 } from '@grafana/schema';
 import { measureText } from '@grafana/ui';
-import { timeUnitSize, type StackingGroup, preparePlotData2 } from '@grafana/ui/internal';
+import { timeUnitSize } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { StackingGroup, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 const intervals = systemDateFormats.interval;
 
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { findRects, intersects, pointWithin, Quadtree, type Rect } from './quadtree';
+import { findRects, intersects, pointWithin, Quadtree, Rect } from './quadtree';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -551,8 +546,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         });
 
         barsColors.push({
-          fill:
-            fillOpacity < 1 ? colors.map((c) => (c != null ? colorManipulator.alpha(c, fillOpacity) : null)) : colors,
+          fill: fillOpacity < 1 ? colors.map((c) => (c != null ? alpha(c, fillOpacity) : null)) : colors,
           stroke: colors,
         });
       }

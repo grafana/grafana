@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
+import { config, locationService } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { t } from 'app/core/internationalization';
+import { DashboardModel } from 'app/features/dashboard/state';
 import {
   getCopiedPanelPlugin,
   onAddLibraryPanel,
@@ -14,17 +13,16 @@ import {
   onPasteCopiedPanel,
 } from 'app/features/dashboard/utils/dashboard';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../../state/reducers';
 
-interface Props {
+export interface Props {
   dashboard: DashboardModel;
 }
 
 const AddPanelMenu = ({ dashboard }: Props) => {
-  const { error, value: panels = [] } = useListedPanelPluginMetas();
-  const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(panels), [panels]);
+  const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(), []);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
@@ -41,6 +39,17 @@ const AddPanelMenu = ({ dashboard }: Props) => {
           dispatch(setInitialDatasource(undefined));
         }}
       />
+      {config.featureToggles.vizAndWidgetSplit && (
+        <Menu.Item
+          key="add-widget"
+          testId={selectors.pages.AddDashboard.itemButton('Add new widget menu item')}
+          label={t('dashboard.add-menu.widget', 'Widget')}
+          onClick={() => {
+            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_widget' });
+            locationService.partial({ addWidget: true });
+          }}
+        />
+      )}
       <Menu.Item
         key="add-row"
         testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}
@@ -67,7 +76,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
           DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
           onPasteCopiedPanel(dashboard, copiedPanelPlugin);
         }}
-        disabled={!copiedPanelPlugin || Boolean(error)}
+        disabled={!copiedPanelPlugin}
       />
     </Menu>
   );

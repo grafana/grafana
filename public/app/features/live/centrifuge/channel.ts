@@ -1,22 +1,21 @@
 import {
-  type Subscription,
-  type JoinContext,
-  type LeaveContext,
-  type PublicationContext,
-  type SubscriptionErrorContext,
-  type SubscribedContext,
-  type UnsubscribedContext,
+  Subscription,
+  JoinContext,
+  LeaveContext,
+  PublicationContext,
+  SubscriptionErrorContext,
+  SubscribedContext,
 } from 'centrifuge';
-import { Subject, Observable } from 'rxjs';
+import { Subject, of, Observable } from 'rxjs';
 
 import {
-  type LiveChannelStatusEvent,
-  type LiveChannelEvent,
+  LiveChannelStatusEvent,
+  LiveChannelEvent,
   LiveChannelEventType,
   LiveChannelConnectionState,
-  type LiveChannelPresenceStatus,
-  type LiveChannelAddress,
-  type DataFrameJSON,
+  LiveChannelPresenceStatus,
+  LiveChannelAddress,
+  DataFrameJSON,
   isValidLiveChannelAddress,
 } from '@grafana/data';
 
@@ -102,12 +101,9 @@ export class CentrifugeLiveChannel<T = any> {
         }
         this.sendStatus(ctx.data);
       })
-      .on('unsubscribed', (ctx: UnsubscribedContext) => {
+      .on('unsubscribed', () => {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Disconnected;
-        if (ctx.code >= 100) {
-          this.currentStatus.error = ctx.reason;
-        }
         this.sendStatus();
       })
       .on('subscribing', () => {
@@ -179,8 +175,6 @@ export class CentrifugeLiveChannel<T = any> {
     });
   }
 
-  publish = (data: unknown) => this.subscription?.publish(data);
-
   /**
    * This will close and terminate all streams for this channel
    */
@@ -209,4 +203,25 @@ export class CentrifugeLiveChannel<T = any> {
     this.sendStatus();
     this.disconnect();
   }
+}
+
+export function getErrorChannel<TMessage>(msg: string, id: string, addr: LiveChannelAddress) {
+  return {
+    id,
+    opened: Date.now(),
+    addr,
+
+    // return an error
+    getStream: () =>
+      of({
+        type: LiveChannelEventType.Status,
+        id,
+        timestamp: Date.now(),
+        state: LiveChannelConnectionState.Invalid,
+        error: msg,
+      }),
+
+    // already disconnected
+    disconnect: () => {},
+  };
 }

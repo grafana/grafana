@@ -1,10 +1,10 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { Divider } from './Divider';
 import mdx from './Divider.mdx';
 
 const meta: Meta<typeof Divider> = {
-  title: 'Layout/Divider',
+  title: 'General/Divider',
   component: Divider,
   parameters: {
     docs: {

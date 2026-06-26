@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
-import { t } from '@grafana/i18n';
-import { Button, Stack } from '@grafana/ui';
+import { urlUtil } from '@grafana/data';
+import { logInfo } from '@grafana/runtime';
+import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useDispatch } from 'app/types/store';
-import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { useDispatch } from 'app/types';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
-import { trackRuleListNavigation } from '../Analytics';
+import { LogMessages, trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
 import { NoRulesSplash } from '../components/rules/NoRulesCTA';
@@ -17,17 +19,13 @@ import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
+import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
-import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
-
-import { AlertsActivityBanner } from './AlertsActivityBanner';
-import { RuleListPageTitle } from './RuleListPageTitle';
-import { RuleListActionButtons } from './components/RuleListActionButtons';
+import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -40,7 +38,6 @@ const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
 const RuleListV1 = () => {
-  const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [expandAll, setExpandAll] = useState(false);
@@ -50,11 +47,8 @@ const RuleListV1 = () => {
   const [queryParams] = useQueryParams();
   const { filterState, hasActiveFilters } = useRulesFilter();
 
-  const hasActiveLabelsFilter = filterState.labels.length > 0;
-
-  const queryParamView = queryParams.view;
-  const viewType = queryParamView === 'state' || queryParamView === 'groups' ? queryParamView : 'groups';
-  const view = VIEWS[viewType] ? viewType : 'groups';
+  const queryParamView = queryParams.view as keyof typeof VIEWS;
+  const view = VIEWS[queryParamView] ? queryParamView : 'groups';
 
   const ViewComponent = VIEWS[view];
 
@@ -83,7 +77,7 @@ const RuleListV1 = () => {
     return noRules && state.dispatched;
   });
 
-  const limitAlerts = hasActiveLabelsFilter ? undefined : LIMIT_ALERTS;
+  const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
   // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
   const [_, fetchRules] = useAsyncFn(async () => {
     if (!loading) {
@@ -121,15 +115,8 @@ const RuleListV1 = () => {
   return (
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
-    <AlertingPageWrapper
-      navId={navId}
-      pageNav={pageNav}
-      isLoading={false}
-      renderTitle={(title) => <RuleListPageTitle title={title} />}
-      actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}
-    >
+    <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
       <Stack direction="column">
-        <AlertsActivityBanner />
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (
@@ -140,9 +127,7 @@ const RuleListV1 = () => {
                 variant="secondary"
                 onClick={() => setExpandAll(!expandAll)}
               >
-                {expandAll
-                  ? t('alerting.rule-list-v1.collapse-all', 'Collapse all')
-                  : t('alerting.rule-list-v1.expand-all', 'Expand all')}
+                {expandAll ? 'Collapse all' : 'Expand all'}
               </Button>
             )}
           </Stack>
@@ -155,4 +140,28 @@ const RuleListV1 = () => {
   );
 };
 
-export default RuleListV1;
+export default withErrorBoundary(RuleListV1, { style: 'page' });
+
+export function CreateAlertButton() {
+  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+
+  const location = useLocation();
+
+  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+
+  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
+
+  if (canCreateGrafanaRules || canCreateCloudRules) {
+    return (
+      <LinkButton
+        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
+        icon="plus"
+        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+      >
+        New alert rule
+      </LinkButton>
+    );
+  }
+  return null;
+}

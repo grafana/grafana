@@ -14,9 +14,8 @@
 
 import { render, screen } from '@testing-library/react';
 
-import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
-
-import { trace } from '../mocks';
+import { defaultFilters } from '../../../useSearch';
+import { trace } from '../TracePageHeader.test';
 
 import TracePageSearchBar from './TracePageSearchBar';
 
@@ -24,14 +23,19 @@ describe('<TracePageSearchBar>', () => {
   const TracePageSearchBarWithProps = (props: { matches: string[] | undefined }) => {
     const searchBarProps = {
       trace: trace,
-      search: DEFAULT_SPAN_FILTERS,
+      search: defaultFilters,
       spanFilterMatches: props.matches ? new Set(props.matches) : undefined,
+      showSpanFilterMatchesOnly: false,
       setShowSpanFilterMatchesOnly: jest.fn(),
       setFocusedSpanIdForSearch: jest.fn(),
       focusedSpanIndexForSearch: -1,
       setFocusedSpanIndexForSearch: jest.fn(),
+      setShowCriticalPathSpansOnly: jest.fn(),
       datasourceType: '',
+      clear: jest.fn(),
+      totalSpans: 100,
       showSpanFilters: true,
+      showCriticalPathSpansOnly: false,
     };
 
     return <TracePageSearchBar {...searchBarProps} />;
@@ -41,9 +45,16 @@ describe('<TracePageSearchBar>', () => {
     expect(() => render(<TracePageSearchBarWithProps matches={[]} />)).not.toThrow();
   });
 
-  it('renders show all spans switch', async () => {
-    render(<TracePageSearchBarWithProps matches={['span1']} />);
-    const matchesSwitch = await screen.findByRole('switch', { name: 'Show all spans' });
+  it('renders clear filter button', () => {
+    render(<TracePageSearchBarWithProps matches={[]} />);
+    const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
+    expect(clearFiltersButton).toBeInTheDocument();
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
+  });
+
+  it('renders show span filter matches only switch', async () => {
+    render(<TracePageSearchBarWithProps matches={[]} />);
+    const matchesSwitch = screen.getByRole('switch', { name: 'Show matches only switch' });
     expect(matchesSwitch).toBeInTheDocument();
   });
 });

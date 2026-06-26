@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { configureStore } from 'app/store/configureStore';
 
@@ -48,16 +48,16 @@ describe('MegaMenu', () => {
 
   it('should render children', async () => {
     setup();
-    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section Section name' }));
     expect(await screen.findByRole('link', { name: 'Child1' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
   });
 
   it('should render grandchildren', async () => {
     setup();
-    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section Section name' }));
     expect(await screen.findByRole('link', { name: 'Child1' })).toBeInTheDocument();
-    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Child1' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section Child1' }));
     expect(await screen.findByRole('link', { name: 'Grandchild1' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
   });

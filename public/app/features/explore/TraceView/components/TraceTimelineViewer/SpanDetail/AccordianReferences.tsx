@@ -15,12 +15,11 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type Field, type GrafanaTheme2, type LinkModel } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
+import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { type TraceSpanReference } from '../../types/trace';
+import { TraceSpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -36,16 +35,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   AccordianReferences: css({
     label: 'AccordianReferences',
+    border: `1px solid ${autoColor(theme, '#d8d8d8')}`,
     position: 'relative',
+    marginBottom: '0.25rem',
   }),
   AccordianReferencesHeader: css({
     label: 'AccordianReferencesHeader',
+    background: autoColor(theme, '#e4e4e4'),
     color: 'inherit',
     display: 'block',
-    padding: '0.25rem 0',
+    padding: '0.25rem 0.5rem',
+    '&:hover': {
+      background: autoColor(theme, '#dadada'),
+    },
   }),
   AccordianReferencesContent: css({
     label: 'AccordianReferencesContent',
+    background: autoColor(theme, '#f0f0f0'),
     borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
     padding: '0.5rem 0.5rem 0.25rem 0.5rem',
   }),
@@ -91,7 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   debugLabel: css({
     margin: '0 5px 0 5px',
     '&::before': {
-      color: autoColor(theme, '#666'),
+      color: '#bbb',
       content: 'attr(data-label)',
     },
   }),
@@ -125,7 +131,7 @@ type ReferenceItemProps = {
 };
 
 // export for test
-function References(props: ReferenceItemProps) {
+export function References(props: ReferenceItemProps) {
   const { data, createFocusSpanLink, openedItems, onItemToggle, interactive } = props;
   const styles = useStyles2(getStyles);
 
@@ -145,8 +151,7 @@ function References(props: ReferenceItemProps) {
                   </span>
                 ) : (
                   <span className={cx('span-svc-name', styles.title)}>
-                    <Trans i18nKey="explore.accordian-references.view-linked-span">View Linked Span</Trans>{' '}
-                    <Icon name="external-link-alt" />
+                    View Linked Span <Icon name="external-link-alt" />
                   </span>
                 )}
                 <small className={styles.debugInfo}>
@@ -168,7 +173,8 @@ function References(props: ReferenceItemProps) {
                 highContrast
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
-                label={t('explore.references.label-attributes', 'attributes')}
+                label={'attributes'}
+                linksGetter={null}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>
@@ -212,11 +218,9 @@ const AccordianReferences = ({
       <HeaderComponent className={styles.AccordianReferencesHeader} {...headerProps}>
         {arrow}
         <strong>
-          <span>
-            <Trans i18nKey="explore.accordian-references.references">References</Trans>
-          </span>
+          <span>References</span>
         </strong>{' '}
-        <Counter value={data.length} />
+        ({data.length})
       </HeaderComponent>
       {isOpen && (
         <References

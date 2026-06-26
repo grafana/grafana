@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, InfoBox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
-import { getModalStyles } from '@grafana/ui/internal';
+import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
 
 interface Props {
   maxConcurrentSessions?: number;
@@ -12,7 +11,6 @@ interface Props {
 export const TokenRevokedModal = (props: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-
   const modalStyles = getModalStyles(theme);
 
   const showMaxConcurrentSessions = Boolean(props.maxConcurrentSessions);
@@ -24,34 +22,25 @@ export const TokenRevokedModal = (props: Props) => {
   return (
     <Portal>
       <div className={modalStyles.modal}>
-        <InfoBox
-          title={t(
-            'users.token-revoked-modal.title-you-have-been-automatically-signed-out',
-            'You have been automatically signed out'
-          )}
-          severity="warning"
-          className={styles.infobox}
-        >
+        <InfoBox title="You have been automatically signed out" severity="warning" className={styles.infobox}>
           <div className={styles.text}>
             <p>
-              <Trans
-                i18nKey="users.token-revoked-modal.auto-revoked"
-                values={{ numSessions: showMaxConcurrentSessions ? props.maxConcurrentSessions : '' }}
-              >
-                Your session token was automatically revoked because you have reached{' '}
-                <strong>the maximum number of {'{{numSessions}}'} concurrent sessions</strong> for your account.
-              </Trans>
+              Your session token was automatically revoked because you have reached
+              <strong>
+                {` the maximum number of ${
+                  showMaxConcurrentSessions ? props.maxConcurrentSessions : ''
+                } concurrent sessions `}
+              </strong>
+              for your account.
             </p>
             <p>
-              <Trans i18nKey="users.token-revoked-modal.resume-message">
-                <strong>To resume your session, sign in again.</strong>
-                Contact your administrator or visit the license page to review your quota if you are repeatedly signed
-                out automatically.
-              </Trans>
+              <strong>To resume your session, sign in again.</strong>
+              Contact your administrator or visit the license page to review your quota if you are repeatedly signed out
+              automatically.
             </p>
           </div>
           <Button size="md" variant="primary" onClick={redirectToLogin}>
-            <Trans i18nKey="users.token-revoked-modal.sign-in">Sign in</Trans>
+            Sign in
           </Button>
         </InfoBox>
       </div>

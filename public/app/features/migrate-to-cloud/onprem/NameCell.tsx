@@ -2,21 +2,16 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import {
-  useGetDashboardByUidQuery,
-  useGetLibraryElementByUidQuery,
-} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { type DataSourceInstanceSettings } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { type CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
-import { getSvgSize } from '@grafana/ui/internal';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
+import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
+import { Trans } from 'app/core/internationalization';
+import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 
-import { type LocalPlugin } from '../../plugins/admin/types';
+import { useGetDashboardByUidQuery, useGetLibraryElementByUidQuery } from '../api';
 
-import { iconNameForResource } from './resourceInfo';
-import { type ResourceTableItem } from './types';
+import { ResourceTableItem } from './types';
 
 export function NameCell(props: CellProps<ResourceTableItem>) {
   const data = props.row.original;
@@ -101,9 +96,7 @@ function DashboardInfo({ data }: { data: ResourceTableItem }) {
         <Text italic>
           <Trans i18nKey="migrate-to-cloud.resource-table.dashboard-load-error">Unable to load dashboard</Trans>
         </Text>
-        <Text color="secondary">
-          <Trans i18nKey="migrate-to-cloud.dashboard-info.dashboard">Dashboard {{ dashboardUID }}</Trans>
-        </Text>
+        <Text color="secondary">Dashboard {dashboardUID}</Text>
       </>
     );
   }
@@ -124,7 +117,7 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   const folderUID = data.refId;
   const skipApiCall = !!data.name && !!data.parentName;
 
-  const { data: folderData, isLoading, isError } = useGetFolderQueryFacade(skipApiCall ? undefined : folderUID);
+  const { data: folderData, isLoading, isError } = useGetFolderQuery(folderUID, { skip: skipApiCall });
 
   const folderName = data.name || folderData?.title;
   const folderParentName = data.parentName || folderData?.parents?.[folderData.parents.length - 1]?.title;
@@ -132,14 +125,8 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   if (isError) {
     return (
       <>
-        <Text italic>
-          <Trans i18nKey="migrate-to-cloud.folder-info.unable-to-load-folder">Unable to load folder</Trans>
-        </Text>
-        <Text color="secondary">
-          <Trans i18nKey="migrate-to-cloud.folder-info.folder" values={{ folderUid: data.refId }}>
-            Folder {'{{folderUid}}'}
-          </Trans>
-        </Text>
+        <Text italic>Unable to load folder</Text>
+        <Text color="secondary">Folder {data.refId}</Text>
       </>
     );
   }
@@ -179,7 +166,7 @@ function LibraryElementInfo({ data }: { data: ResourceTableItem }) {
         </Text>
 
         <Text color="secondary">
-          <Trans i18nKey="migrate-to-cloud.resource-table.error-library-element-sub">Library Element {{ uid }}</Trans>
+          <Trans i18nKey="migrate-to-cloud.resource-table.error-library-element-sub">Library Element {uid}</Trans>
         </Text>
       </>
     );
@@ -218,22 +205,33 @@ function BasicResourceInfo({ data }: { data: ResourceTableItem }) {
 function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const styles = useStyles2(getIconStyles);
   const datasource = useDatasource(resource.type === 'DATASOURCE' ? resource.refId : undefined);
-  const pluginLogo = usePluginLogo(resource.type === 'PLUGIN' ? resource.plugin : undefined);
 
-  // Handle special cases for icons.
-  if (resource.type === 'DATASOURCE' && datasource?.meta?.info?.logos?.small) {
-    return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
-  } else if (resource.type === 'PLUGIN' && pluginLogo) {
-    return <img className={styles.icon} src={pluginLogo} alt="" />;
-  } else {
-    // Generic icons for all other resource types.
-    const iconName = iconNameForResource(resource.type);
-    if (iconName) {
-      return <Icon size="xl" name={iconName} />;
-    }
+  switch (resource.type) {
+    case 'DASHBOARD':
+      return <Icon size="xl" name="dashboard" />;
+    case 'FOLDER':
+      return <Icon size="xl" name="folder" />;
+    case 'DATASOURCE':
+      if (datasource?.meta?.info?.logos?.small) {
+        return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
+      }
+
+      return <Icon size="xl" name="database" />;
+    case 'LIBRARY_ELEMENT':
+      return <Icon size="xl" name="library-panel" />;
+    case 'MUTE_TIMING':
+      return <Icon size="xl" name="bell" />;
+    case 'NOTIFICATION_TEMPLATE':
+      return <Icon size="xl" name="bell" />;
+    case 'CONTACT_POINT':
+      return <Icon size="xl" name="bell" />;
+    case 'NOTIFICATION_POLICY':
+      return <Icon size="xl" name="bell" />;
+    case 'ALERT_RULE':
+      return <Icon size="xl" name="bell" />;
+    default:
+      return undefined;
   }
-
-  return undefined;
 }
 
 function getIconStyles() {
@@ -258,15 +256,4 @@ function useDatasource(datasourceUID: string | undefined): DataSourceInstanceSet
   }, [datasourceUID]);
 
   return datasource;
-}
-
-function usePluginLogo(plugin: LocalPlugin | undefined): string | undefined {
-  const logos = useMemo(() => {
-    if (!plugin) {
-      return undefined;
-    }
-    return plugin?.info?.logos;
-  }, [plugin]);
-
-  return logos?.small;
 }

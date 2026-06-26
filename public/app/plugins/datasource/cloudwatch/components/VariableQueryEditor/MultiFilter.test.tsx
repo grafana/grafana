@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
+import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 
 import { MultiFilter } from './MultiFilter';
 

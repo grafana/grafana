@@ -1,10 +1,10 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { StoryFn, Meta } from '@storybook/react';
 import { useState } from 'react';
 
-import { Combobox } from '../Combobox/Combobox';
 import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Input } from '../Input/Input';
+import { Select } from '../Select/Select';
 import { Switch } from '../Switch/Switch';
 import { TextArea } from '../TextArea/TextArea';
 
@@ -12,7 +12,7 @@ import { AutoSaveField } from './AutoSaveField';
 import mdx from './AutoSaveField.mdx';
 
 const meta: Meta = {
-  title: 'Inputs/AutoSaveField',
+  title: 'Forms/AutoSaveField',
   component: AutoSaveField,
   parameters: {
     docs: {
@@ -97,12 +97,11 @@ Basic.args = {
 };
 
 export const AllComponents: StoryFn = (args) => {
-  const [inputTextValue, setInputTextValue] = useState('');
-  const [comoboboxValue, setComboboxValue] = useState('');
-  const [radioButtonValue, setRadioButtonValue] = useState('');
-  const [checkBoxValue, setCheckBoxValue] = useState(false);
+  const [selected, setSelected] = useState('');
+  const [checkBoxTest, setCheckBoxTest] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
-  const [switchValue, setSwitchValue] = useState(false);
+  const [inputTextValue, setInputTextValue] = useState('');
+  const [switchTest, setSwitchTest] = useState(false);
 
   return (
     <div>
@@ -118,14 +117,13 @@ export const AllComponents: StoryFn = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Combobox as child" {...args}>
+      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Select as child" {...args}>
         {(onChange) => (
-          <Combobox
+          <Select
             options={themeOptions}
-            value={comoboboxValue}
+            value={args.weekPickerValue}
             onChange={(v) => {
               onChange(v.value);
-              setComboboxValue(v.value);
             }}
           />
         )}
@@ -138,9 +136,9 @@ export const AllComponents: StoryFn = (args) => {
         {(onChange) => (
           <RadioButtonGroup
             options={themeOptions}
-            value={radioButtonValue}
+            value={selected}
             onChange={(themeOption) => {
-              setRadioButtonValue(themeOption);
+              setSelected(themeOption);
               onChange(themeOption);
             }}
           />
@@ -156,11 +154,11 @@ export const AllComponents: StoryFn = (args) => {
             label="Checkbox test"
             description="This is a checkbox input"
             name="checkbox-test"
-            value={checkBoxValue}
+            value={checkBoxTest}
             onChange={(e) => {
               const value = e.currentTarget.checked;
               onChange(value);
-              setCheckBoxValue(value);
+              setCheckBoxTest(value);
             }}
           />
         )}
@@ -190,10 +188,10 @@ export const AllComponents: StoryFn = (args) => {
           <Switch
             label="Switch test"
             name="switch-test"
-            value={switchValue}
+            value={switchTest}
             onChange={(e) => {
               onChange(e.currentTarget.checked);
-              setSwitchValue(e.currentTarget.checked);
+              setSwitchTest(e.currentTarget.checked);
             }}
           />
         )}

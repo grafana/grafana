@@ -135,8 +135,10 @@ func checkPattern(pattern string) (typ patternType, rawPattern string, wildcards
 
 func NewLeaf(parent *Tree, pattern string, handle Handle) *Leaf {
 	typ, rawPattern, wildcards, reg := checkPattern(pattern)
-	optional := len(pattern) > 0 && pattern[0] == '?'
-
+	optional := false
+	if len(pattern) > 0 && pattern[0] == '?' {
+		optional = true
+	}
 	return &Leaf{parent, typ, pattern, rawPattern, wildcards, reg, optional, handle}
 }
 
@@ -346,8 +348,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params map[strin
 		if err != nil {
 			return nil, false
 		}
-		switch leaf.typ {
-		case _PATTERN_PATH_EXT:
+		if leaf.typ == _PATTERN_PATH_EXT {
 			j := strings.LastIndex(unescapedURL, ".")
 			if j > -1 {
 				params[":path"] = unescapedURL[:j]
@@ -356,11 +357,10 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params map[strin
 				params[":path"] = unescapedURL
 			}
 			return leaf.handle, true
-		case _PATTERN_MATCH_ALL:
+		} else if leaf.typ == _PATTERN_MATCH_ALL {
 			params["*"] = unescapedURL
 			params["*"+strconv.Itoa(globLevel)] = unescapedURL
 			return leaf.handle, true
-		default: // ignore
 		}
 	}
 	return nil, false

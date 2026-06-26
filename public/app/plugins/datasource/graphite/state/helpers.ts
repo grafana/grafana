@@ -1,12 +1,12 @@
 import { clone, some } from 'lodash';
 
-import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { createErrorNotification } from '../../../../core/copy/appNotification';
+import { notifyApp } from '../../../../core/reducers/appNotification';
+import { dispatch } from '../../../../store/store';
+import { FuncInstance } from '../gfunc';
+import { GraphiteTagOperator } from '../types';
 
-import { type FuncInstance } from '../gfunc';
-import { type GraphiteTagOperator } from '../types';
-
-import { type GraphiteQueryEditorState } from './store';
+import { GraphiteQueryEditorState } from './store';
 
 /**
  * Helpers used by reducers and providers. They modify state object directly so should operate on a copy of the state.
@@ -44,7 +44,7 @@ export async function buildSegments(state: GraphiteQueryEditorState, modifyLastS
 /**
  * Add "select metric" segment at the end
  */
-function addSelectMetricSegment(state: GraphiteQueryEditorState): void {
+export function addSelectMetricSegment(state: GraphiteQueryEditorState): void {
   state.queryModel.addSelectMetricSegment();
   state.segments.push({ value: 'select metric', fake: true });
 }
@@ -158,8 +158,7 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
     return;
   }
 
-  const oldResolvedTarget = state.queryModel.target.targetFull ?? state.queryModel.target.target;
-  const oldTargetRemovedSpaces = oldResolvedTarget.replace(/\s+/g, '');
+  let oldTarget = state.queryModel.target.target;
   // Interpolate from other queries:
   // Because of mixed data sources the list may contain queries for non-Graphite data sources. To ensure a valid query
   // is used for interpolation we should check required properties are passed though in theory it allows to interpolate
@@ -168,10 +167,11 @@ export function handleTargetChanged(state: GraphiteQueryEditorState): void {
     (state.queries || []).filter((query) => 'target' in query && typeof query.target === 'string')
   );
 
-  const newResolvedTarget = state.queryModel.target.targetFull ?? state.queryModel.target.target;
-  const newTargetRemovedSpaces = newResolvedTarget.replace(/\s+/g, '');
+  // remove spaces from old and new targets
+  const newTarget = state.queryModel.target.target.replace(/\s+/g, '');
+  oldTarget = oldTarget.replace(/\s+/g, '');
 
-  if (newTargetRemovedSpaces !== oldTargetRemovedSpaces && !state.paused) {
+  if (newTarget !== oldTarget && !state.paused) {
     state.refresh();
   }
 }
@@ -185,10 +185,7 @@ export function handleMetricsAutoCompleteError(
 ): GraphiteQueryEditorState {
   if (!state.metricAutoCompleteErrorShown) {
     state.metricAutoCompleteErrorShown = true;
-    getAppEvents().publish({
-      type: AppEvents.alertError.name,
-      payload: [`Fetching metrics failed: ${error.message}.`],
-    });
+    dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
   }
   return state;
 }
@@ -199,10 +196,7 @@ export function handleMetricsAutoCompleteError(
 export function handleTagsAutoCompleteError(state: GraphiteQueryEditorState, error: Error): GraphiteQueryEditorState {
   if (!state.tagsAutoCompleteErrorShown) {
     state.tagsAutoCompleteErrorShown = true;
-    getAppEvents().publish({
-      type: AppEvents.alertError.name,
-      payload: [`Fetching tags failed: ${error.message}.`],
-    });
+    dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));
   }
   return state;
 }

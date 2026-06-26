@@ -1,22 +1,22 @@
 import { PureComponent } from 'react';
 
 import {
-  type DataSourcePluginOptionsEditorProps,
+  DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
-  store,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, DataSourceHttpSettings, Field, FieldSet, Select, Switch } from '@grafana/ui';
+import { config } from 'app/core/config';
+import store from 'app/core/store';
 
-import { type GraphiteOptions, GraphiteType } from '../types';
+import { GraphiteOptions, GraphiteType } from '../types';
 import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
 
 import { MappingsConfiguration } from './MappingsConfiguration';
 import { fromString, toString } from './parseLokiLabelMappings';
 
-const SHOW_MAPPINGS_HELP_KEY = 'grafana.datasources.graphite.config.showMappingsHelp';
+export const SHOW_MAPPINGS_HELP_KEY = 'grafana.datasources.graphite.config.showMappingsHelp';
 
 const graphiteVersions = GRAPHITE_VERSIONS.map((version) => ({ label: `${version}.x`, value: version }));
 

@@ -1,13 +1,13 @@
 import {
-  type ColumnDefinition,
+  ColumnDefinition,
   getStandardSQLCompletionProvider,
-  type LanguageCompletionProvider,
-  type LinkedToken,
-  type TableDefinition,
-  type TableIdentifier,
+  LanguageCompletionProvider,
+  LinkedToken,
+  TableDefinition,
+  TableIdentifier,
   TokenType,
-} from '@grafana/plugin-ui';
-import { type DB, type SQLQuery } from '@grafana/sql';
+} from '@grafana/experimental';
+import { DB, SQLQuery } from '@grafana/sql';
 
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;

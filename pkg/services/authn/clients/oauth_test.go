@@ -14,17 +14,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
-	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -75,11 +71,10 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return error when state from ipd does not match stored state",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{},
-					URL:    mustParseURL("http://grafana.com/?state=some-other-state"),
-				},
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://grafana.com/?state=some-other-state"),
+			},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -88,11 +83,10 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return error when pkce is configured but the cookie is not present",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{},
-					URL:    mustParseURL("http://grafana.com/?state=some-state"),
-				},
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://grafana.com/?state=some-state"),
+			},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -101,11 +95,10 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return error when email is empty",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{},
-					URL:    mustParseURL("http://grafana.com/?state=some-state"),
-				},
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://grafana.com/?state=some-state"),
+			},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -117,18 +110,17 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return error when email is not allowed",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{},
-					URL:    mustParseURL("http://grafana.com/?state=some-state"),
-				},
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://grafana.com/?state=some-state"),
+			},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
-			userInfo:         &social.BasicUserInfo{Email: "some@example.com"},
+			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
 			isEmailAllowed:   false,
 			expectedErr:      errOAuthEmailNotAllowed,
 		},
@@ -146,17 +138,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
-			userInfo:         &social.BasicUserInfo{Email: "some@example.com"},
+			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
 			isEmailAllowed:   false,
 			expectedErr:      errOAuthUserInfo,
 		},
 		{
 			desc: "should return identity for valid request",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{},
-					URL:    mustParseURL("http://grafana.com/?state=some-state"),
-				},
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://grafana.com/?state=some-state"),
+			},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -167,16 +158,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
-				Email:  "some@example.com",
+				Email:  "some@email.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@example.com",
+				Email:           "some@email.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				ExternalGroups:  []string{"grp1", "grp2"},
+				Groups:          []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -191,11 +182,10 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return identity for valid request - and lookup user by email",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{},
-					URL:    mustParseURL("http://grafana.com/?state=some-state"),
-				},
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://grafana.com/?state=some-state"),
+			},
 			},
 			oauthCfg:              &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			allowInsecureTakeover: true,
@@ -207,16 +197,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
-				Email:  "some@example.com",
+				Email:  "some@email.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@example.com",
+				Email:           "some@email.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				ExternalGroups:  []string{"grp1", "grp2"},
+				Groups:          []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -225,7 +215,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 					AllowSignUp:     true,
 					FetchSyncedUser: true,
 					SyncOrgRoles:    true,
-					LookUpParams:    login.UserLookupParams{Email: new("some@example.com")},
+					LookUpParams:    login.UserLookupParams{Email: strPtr("some@email.com")},
 				},
 			},
 		},
@@ -245,71 +235,14 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:    "123",
 				Name:  "name",
-				Email: "some@example.com",
+				Email: "some@email.com",
 				Role:  "Admin",
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@example.com",
+				Email:           "some@email.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				OAuthToken:      &oauth2.Token{},
-				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
-				ClientParams: authn.ClientParams{
-					SyncUser:        true,
-					SyncTeams:       true,
-					AllowSignUp:     true,
-					FetchSyncedUser: true,
-					SyncOrgRoles:    true,
-					LookUpParams:    login.UserLookupParams{},
-				},
-			},
-		},
-		{
-			desc: "should return error when no refresh token is available and feature toggle is enabled",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{},
-					URL:    mustParseURL("http://grafana.com/?state=some-state"),
-				},
-			},
-			oauthCfg:              &social.OAuthInfo{UsePKCE: true, Enabled: true, UseRefreshToken: true},
-			features:              []any{featuremgmt.FlagRefreshTokenRequired},
-			allowInsecureTakeover: true,
-			addStateCookie:        true,
-			stateCookieValue:      "some-state",
-			addPKCECookie:         true,
-			pkceCookieValue:       "some-pkce-value",
-			isEmailAllowed:        true,
-			expectedErr:           errOAuthMissingRefreshToken,
-		},
-		{
-			desc: "should return identity when no refresh token is available and feature toggle is disabled",
-			req: &authn.Request{
-				HTTPRequest: &http.Request{
-					Header: map[string][]string{},
-					URL:    mustParseURL("http://grafana.com/?state=some-state"),
-				},
-			},
-			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true, UseRefreshToken: true},
-			addStateCookie:   true,
-			stateCookieValue: "some-state",
-			addPKCECookie:    true,
-			pkceCookieValue:  "some-pkce-value",
-			isEmailAllowed:   true,
-			userInfo: &social.BasicUserInfo{
-				Id:     "123",
-				Name:   "name",
-				Email:  "some@example.com",
-				Role:   "Admin",
-				Groups: []string{"grp1", "grp2"},
-			},
-			expectedIdentity: &authn.Identity{
-				Email:           "some@example.com",
-				AuthenticatedBy: login.AzureADAuthModule,
-				AuthID:          "123",
-				Name:            "name",
-				ExternalGroups:  []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -356,7 +289,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, settingsProvider, featuremgmt.WithFeatures(tt.features...), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, settingsProvider, featuremgmt.WithFeatures(tt.features...))
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -367,8 +300,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
 				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
-				assert.Equal(t, tt.expectedIdentity.ExternalGroups, identity.ExternalGroups)
-				assert.Empty(t, identity.Groups, "IdP groups must not leak into Identity.Groups")
+				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
@@ -422,7 +354,9 @@ func TestOAuth_RedirectURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			authCodeUrlCalled := false
+			var (
+				authCodeUrlCalled = false
+			)
 
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
@@ -437,7 +371,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 
 			cfg := setting.NewCfg()
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, &setting.OSSImpl{Cfg: cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, &setting.OSSImpl{Cfg: cfg}, featuremgmt.WithFeatures())
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -531,7 +465,7 @@ func TestOAuth_Logout(t *testing.T) {
 			)
 
 			mockService := &oauthtokentest.MockOauthTokenService{
-				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) *oauth2.Token {
+				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester) *oauth2.Token {
 					getTokenCalled = true
 					token := &oauth2.Token{
 						AccessToken: "some.access.token",
@@ -541,7 +475,7 @@ func TestOAuth_Logout(t *testing.T) {
 						"id_token": "some.id.token",
 					})
 				},
-				InvalidateOAuthTokensFunc: func(_ context.Context, _ identity.Requester, _ *oauthtoken.TokenRefreshMetadata) error {
+				InvalidateOAuthTokensFunc: func(_ context.Context, _ *login.UserAuth) error {
 					invalidateTokenCalled = true
 					return nil
 				},
@@ -550,9 +484,9 @@ func TestOAuth_Logout(t *testing.T) {
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
 			}
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures())
 
-			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser}, &usertoken.UserToken{})
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 
 			assert.Equal(t, tt.expectedOK, ok)
 			if tt.expectedOK {
@@ -610,8 +544,7 @@ func TestIsEnabled(t *testing.T) {
 				nil,
 				fakeSocialSvc,
 				&setting.OSSImpl{Cfg: cfg},
-				featuremgmt.WithFeatures(),
-				tracing.InitializeTracerForTest())
+				featuremgmt.WithFeatures())
 			assert.Equal(t, tt.expected, c.IsEnabled())
 		})
 	}

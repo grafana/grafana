@@ -24,17 +24,8 @@ func TestNewRedisChannel(t *testing.T) {
 		redis: rdb,
 	}
 
-	t.Run("default queue size when 0 is passed", func(t *testing.T) {
-		channel := newRedisChannel(p, "testKey", "testChannel", "testType", 0)
-		require.NotNil(t, channel)
-		require.Equal(t, 200, cap(channel.(*RedisChannel).msgc))
-	})
-
-	t.Run("custom queue size", func(t *testing.T) {
-		channel := newRedisChannel(p, "testKey", "testChannel", "testType", 500)
-		require.NotNil(t, channel)
-		require.Equal(t, 500, cap(channel.(*RedisChannel).msgc))
-	})
+	channel := newRedisChannel(p, "testKey", "testChannel", "testType")
+	require.NotNil(t, channel)
 }
 
 func TestBroadcastAndHandleMessages(t *testing.T) {
@@ -56,7 +47,7 @@ func TestBroadcastAndHandleMessages(t *testing.T) {
 		messagesSentSize: prometheus.NewCounterVec(prometheus.CounterOpts{}, []string{update}),
 	}
 
-	channel := newRedisChannel(p, "testKey", channelName, "testType", 0).(*RedisChannel)
+	channel := newRedisChannel(p, "testKey", channelName, "testType").(*RedisChannel)
 
 	pubSub := rdb.Subscribe(context.Background(), channelName)
 	msgs := pubSub.Channel()

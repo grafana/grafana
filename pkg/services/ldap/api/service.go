@@ -93,16 +93,20 @@ func ProvideService(
 // - basic:
 //
 // Responses:
-// 410: goneError
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
-	s.log.Warn("Obsolete and Permanently moved API endpoint called", "path", c.Req.URL.Path)
+	if !s.cfg.Enabled {
+		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
+	}
 
-	// Respond with a 410 Gone status code
-	return response.Error(
-		http.StatusGone,
-		"This endpoint has been removed. LDAP configuration is now loaded from SSO settings.",
-		nil,
-	)
+	if err := s.ldapService.ReloadConfig(); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to reload LDAP config", err)
+	}
+
+	return response.Success("LDAP config reloaded")
 }
 
 // swagger:route GET /admin/ldap/status admin_ldap getLDAPStatus
@@ -323,7 +327,7 @@ func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Iden
 		IsGrafanaAdmin:  user.IsGrafanaAdmin,
 		AuthenticatedBy: user.AuthModule,
 		AuthID:          user.AuthId,
-		ExternalGroups:  user.Groups,
+		Groups:          user.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:     true,
 			SyncTeams:    true,
@@ -350,7 +354,7 @@ func splitName(name string) (string, string) {
 
 // fetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
 func (user *LDAPUserDTO) fetchOrgs(ctx context.Context, orga org.Service) error {
-	orgIds := make([]int64, 0, len(user.OrgRoles))
+	orgIds := []int64{}
 
 	for _, or := range user.OrgRoles {
 		orgIds = append(orgIds, or.OrgId)

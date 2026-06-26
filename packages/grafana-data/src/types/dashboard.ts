@@ -1,7 +1,7 @@
-import { type DataTransformerConfig } from '@grafana/schema';
+import { DataTransformerConfig } from '@grafana/schema';
 
-import { type FieldConfigSource } from './fieldOverrides';
-import { type DataQuery, type DataSourceRef } from './query';
+import { FieldConfigSource } from './fieldOverrides';
+import { DataQuery, DataSourceRef } from './query';
 
 export enum DashboardCursorSync {
   Off,

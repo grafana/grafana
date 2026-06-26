@@ -1,11 +1,11 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { RelativeTimeRangePicker } from './RelativeTimeRangePicker';
 
 const meta: Meta<typeof RelativeTimeRangePicker> = {
-  title: 'Date time pickers/RelativeTimeRangePicker',
+  title: 'Pickers and Editors/TimePickers/RelativeTimeRangePicker',
   component: RelativeTimeRangePicker,
   parameters: {
     controls: {

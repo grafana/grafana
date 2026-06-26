@@ -13,7 +13,6 @@ import (
 )
 
 func TestGComSSOService_LogoutHook(t *testing.T) {
-	// #nosec G101 -- test fixture, not a real credential
 	cfg := &setting.Cfg{
 		GrafanaComURL:         "http://example.com",
 		GrafanaComSSOAPIToken: "sso-api-token",

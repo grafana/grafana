@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { type ReactElement, useId } from 'react';
+import { ReactElement, useId } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { PasswordField } from '../PasswordField/PasswordField';
 
-import { type FormModel } from './LoginCtrl';
+import { FormModel } from './LoginCtrl';
 
 interface Props {
   children: ReactElement;

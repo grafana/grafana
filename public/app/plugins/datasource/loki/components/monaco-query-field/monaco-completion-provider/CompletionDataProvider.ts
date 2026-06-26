@@ -1,12 +1,12 @@
 import { chain } from 'lodash';
 
-import { type HistoryItem, type TimeRange } from '@grafana/data';
+import { HistoryItem, TimeRange } from '@grafana/data';
 
-import type LanguageProvider from '../../../LanguageProvider';
+import LanguageProvider from '../../../LanguageProvider';
 import { escapeLabelValueInExactSelector } from '../../../languageUtils';
-import { type ParserAndLabelKeysResult, type LokiQuery } from '../../../types';
+import { ParserAndLabelKeysResult, LokiQuery } from '../../../types';
 
-import { type Label } from './situation';
+import { Label } from './situation';
 
 interface HistoryRef {
   current: Array<HistoryItem<LokiQuery>>;

@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Field, IconButton, useStyles2 } from '@grafana/ui';
 
@@ -27,14 +26,8 @@ export function Preview({ rawSql, datasourceType }: PreviewProps) {
 
   const labelElement = (
     <div className={styles.labelWrapper}>
-      <span className={styles.label}>
-        <Trans i18nKey="grafana-sql.components.preview.label-element.preview">Preview</Trans>
-      </span>
-      <IconButton
-        tooltip={t('grafana-sql.components.preview.label-element.tooltip-copy-to-clipboard', 'Copy to clipboard')}
-        onClick={() => copyPreview(rawSql)}
-        name="copy"
-      />
+      <span className={styles.label}>Preview</span>
+      <IconButton tooltip="Copy to clipboard" onClick={() => copyPreview(rawSql)} name="copy" />
     </div>
   );
 

@@ -125,7 +125,8 @@
             "name": "tnn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {
@@ -140,7 +141,8 @@
             "name": "t6nn",
             "type": "string",
             "typeInfo": {
-              "frame": "string"
+              "frame": "string",
+              "nullable": true
             }
           },
           {

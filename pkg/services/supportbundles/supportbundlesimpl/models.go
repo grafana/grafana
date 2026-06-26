@@ -14,7 +14,7 @@ const (
 var (
 	bundleReaderRole = accesscontrol.RoleDTO{
 		Name:        "fixed:support.bundles:reader",
-		DisplayName: "Reader",
+		DisplayName: "Support bundle reader",
 		Description: "List and download support bundles",
 		Group:       "Support bundles",
 		Permissions: []accesscontrol.Permission{
@@ -24,7 +24,7 @@ var (
 
 	bundleWriterRole = accesscontrol.RoleDTO{
 		Name:        "fixed:support.bundles:writer",
-		DisplayName: "Writer",
+		DisplayName: "Support bundle writer",
 		Description: "Create, delete, list and download support bundles",
 		Group:       "Support bundles",
 		Permissions: []accesscontrol.Permission{
@@ -35,21 +35,20 @@ var (
 	}
 )
 
-// FixedRoleRegistrations returns support-bundle role registrations with grants
-// adjusted for the running instance. When serverAdminOnly is true the grants
-// are restricted to GrafanaAdmin; otherwise both OrgAdmin and GrafanaAdmin
-// receive the roles.
-func FixedRoleRegistrations(serverAdminOnly bool) []accesscontrol.RoleRegistration {
+func (s *Service) declareFixedRoles(ac accesscontrol.Service) error {
 	grants := []string{string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin}
-	if serverAdminOnly {
+	if s.serverAdminOnly {
 		grants = []string{accesscontrol.RoleGrafanaAdmin}
 	}
-	return []accesscontrol.RoleRegistration{
-		{Role: bundleWriterRole, Grants: grants},
-		{Role: bundleReaderRole, Grants: grants},
-	}
-}
 
-func (s *Service) declareFixedRoles(ac accesscontrol.Service) error {
-	return ac.DeclareFixedRoles(FixedRoleRegistrations(s.serverAdminOnly)...)
+	bundleReader := accesscontrol.RoleRegistration{
+		Role:   bundleReaderRole,
+		Grants: grants,
+	}
+	bundleWriter := accesscontrol.RoleRegistration{
+		Role:   bundleWriterRole,
+		Grants: grants,
+	}
+
+	return ac.DeclareFixedRoles(bundleWriter, bundleReader)
 }

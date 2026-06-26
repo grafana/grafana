@@ -2,12 +2,12 @@ import { defaults } from 'lodash';
 import { useMemo, useState } from 'react';
 import { useMount } from 'react-use';
 
-import { CoreApp, type QueryEditorProps } from '@grafana/data';
-import { Alert, ButtonCascader, type CascaderOption, TextLink } from '@grafana/ui';
+import { CoreApp, QueryEditorProps } from '@grafana/data';
+import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
-import { defaultParcaDataQuery, defaultParcaQueryType, type ParcaDataQuery as Parca } from '../dataquery.gen';
-import { type ParcaDataSource } from '../datasource';
-import { type ParcaDataSourceOptions, type ProfileTypeMessage, type Query } from '../types';
+import { defaultParcaDataQuery, defaultParcaQueryType, ParcaDataQuery as Parca } from '../dataquery.gen';
+import { ParcaDataSource } from '../datasource';
+import { ParcaDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -16,9 +16,7 @@ import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<ParcaDataSource, Query, ParcaDataSourceOptions>;
 
-const DEPRECATION_DATE = '2nd of January 2027';
-
-const defaultQuery: Partial<Parca> = {
+export const defaultQuery: Partial<Parca> = {
   ...defaultParcaDataQuery,
   queryType: defaultParcaQueryType,
 };
@@ -86,43 +84,28 @@ export function QueryEditor(props: Props) {
   let query = normalizeQuery(props.query, props.app);
 
   return (
-    <>
-      <Alert severity="warning" title="Parca data source is deprecated">
-        The built-in Parca data source will be removed from Grafana after v13.1.0. You can use the external Parca data
-        source plugin instead:{' '}
-        <TextLink href="https://github.com/grafana/grafana-parca-datasource" external>
-          https://github.com/grafana/grafana-parca-datasource
-        </TextLink>
-        . Please note that as part of its deprecation path, this plugin is not supported on Grafana Cloud. The plugin is
-        scheduled for deprecation on {DEPRECATION_DATE} and will no longer receive updates after that time.
-      </Alert>
-      <EditorRows>
-        <EditorRow stackProps={{ wrap: false, gap: 1 }}>
-          <ButtonCascader
-            onChange={onProfileTypeChange}
-            options={cascaderOptions}
-            buttonProps={{ variant: 'secondary' }}
-          >
-            {selectedProfileName}
-          </ButtonCascader>
-          <LabelsEditor
-            value={query.labelSelector}
-            onChange={onLabelSelectorChange}
-            datasource={props.datasource}
-            onRunQuery={handleRunQuery}
-          />
-        </EditorRow>
-        <EditorRow>
-          <QueryOptions
-            query={query}
-            onQueryTypeChange={(val) => {
-              props.onChange({ ...query, queryType: val });
-            }}
-            app={props.app}
-          />
-        </EditorRow>
-      </EditorRows>
-    </>
+    <EditorRows>
+      <EditorRow stackProps={{ wrap: false, gap: 1 }}>
+        <ButtonCascader onChange={onProfileTypeChange} options={cascaderOptions} buttonProps={{ variant: 'secondary' }}>
+          {selectedProfileName}
+        </ButtonCascader>
+        <LabelsEditor
+          value={query.labelSelector}
+          onChange={onLabelSelectorChange}
+          datasource={props.datasource}
+          onRunQuery={handleRunQuery}
+        />
+      </EditorRow>
+      <EditorRow>
+        <QueryOptions
+          query={query}
+          onQueryTypeChange={(val) => {
+            props.onChange({ ...query, queryType: val });
+          }}
+          app={props.app}
+        />
+      </EditorRow>
+    </EditorRows>
   );
 }
 

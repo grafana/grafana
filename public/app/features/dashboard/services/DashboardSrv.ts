@@ -1,9 +1,11 @@
-import { t } from '@grafana/i18n';
-import { type BackendSrvRequest } from '@grafana/runtime';
-import { type Dashboard } from '@grafana/schema';
+import { AppEvents } from '@grafana/data';
+import { BackendSrvRequest } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { type DashboardMeta } from 'app/types/dashboard';
+import { DashboardMeta } from 'app/types';
 
 import { RemovePanelEvent } from '../../../types/events';
 import { DashboardModel } from '../state/DashboardModel';
@@ -16,7 +18,8 @@ export interface SaveDashboardOptions {
   message?: string;
   /** The UID of the folder to save the dashboard in. Overrides `folderId`. */
   folderUid?: string;
-  /** Set to `true` if you want to overwrite an existing dashboard with a given dashboard UID. */
+  /** Set to `true` if you want to overwrite existing dashboard with newer version,
+   *  same dashboard title in folder or same dashboard uid. */
   overwrite?: boolean;
   /** Set the dashboard refresh interval.
    *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
@@ -49,25 +52,49 @@ export class DashboardSrv {
     }
   };
 
-  async saveJSONDashboard(json: string) {
+  saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
-    return (await getDashboardAPI()).saveDashboard({
+    return getDashboardAPI().saveDashboard({
       dashboard: parsedJson,
       folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
-      message: t('dashboard.dashboard-srv.message.edit-dashboard-json', 'Edit Dashboard JSON'),
-      k8s: this.dashboard?.meta.k8s,
     });
   }
 
-  async saveDashboard(
+  saveDashboard(
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    return (await getDashboardAPI()).saveDashboard({
+    return getDashboardAPI().saveDashboard({
       message: data.message,
       folderUid: data.folderUid,
       dashboard: data.dashboard.getSaveModelClone(),
       showErrorAlert: requestOptions?.showErrorAlert,
+    });
+  }
+
+  starDashboard(dashboardUid: string, isStarred: boolean) {
+    const backendSrv = getBackendSrv();
+
+    const request = {
+      showSuccessAlert: false,
+      url: '/api/user/stars/dashboard/uid/' + dashboardUid,
+      method: isStarred ? 'DELETE' : 'POST',
+    };
+
+    return backendSrv.request(request).then(() => {
+      const newIsStarred = !isStarred;
+
+      if (this.dashboard?.uid === dashboardUid) {
+        this.dashboard.meta.isStarred = newIsStarred;
+      }
+
+      const message = newIsStarred
+        ? t('notifications.starred-dashboard', 'Dashboard starred')
+        : t('notifications.unstarred-dashboard', 'Dashboard unstarred');
+
+      appEvents.emit(AppEvents.alertSuccess, [message]);
+
+      return newIsStarred;
     });
   }
 }

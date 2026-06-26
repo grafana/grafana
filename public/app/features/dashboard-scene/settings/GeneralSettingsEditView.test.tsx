@@ -1,8 +1,5 @@
-import { render, screen } from 'test/test-utils';
-
 import { behaviors, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { type DashboardMeta } from 'app/types/dashboard';
 
 import * as utils from '../pages/utils';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -115,37 +112,18 @@ describe('GeneralSettingsEditView', () => {
       expect(settings.getDashboardControls()?.state.hideTimeControls).toBe(true);
     });
   });
-
-  describe('Folder field visibility', () => {
-    it('renders the Folder field for a normal dashboard', async () => {
-      const { settings } = await buildTestScene();
-      render(<settings.Component model={settings} />);
-      expect(await screen.findByText('Folder')).toBeInTheDocument();
-    });
-
-    it('hides the Folder field when the dashboard is a template', async () => {
-      const { settings } = await buildTestScene({ canEdit: true, isDashboardTemplate: true });
-      render(<settings.Component model={settings} />);
-
-      // Other labels still render
-      expect(await screen.findByText('Tags')).toBeInTheDocument();
-      // Folder field is gone
-      expect(screen.queryByText('Folder')).not.toBeInTheDocument();
-    });
-  });
 });
 
-async function buildTestScene(metaOverrides: Partial<DashboardMeta> = {}) {
+async function buildTestScene() {
   const settings = new GeneralSettingsEditView({});
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
-    $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off }), new behaviors.LiveNowTimer({})],
+    $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off })],
     controls: new DashboardControls({}),
     title: 'hello',
     uid: 'dash-1',
     meta: {
       canEdit: true,
-      ...metaOverrides,
     },
     editview: settings,
   });

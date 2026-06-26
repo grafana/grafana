@@ -1,4 +1,5 @@
-# collectd-write-graphite
+collectd-write-graphite
+=======================
 
 Basic collectd-based server monitoring. Sends stats to Graphite.
 
@@ -13,7 +14,8 @@ Collectd metrics:
 - Network interface
 - Swap
 
-## Environment variables
+Environment variables
+---------------------
 
 - `HOST_NAME`
   - Will be sent to Graphite

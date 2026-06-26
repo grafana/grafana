@@ -29,7 +29,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -108,7 +109,8 @@
         {
           "csvFileName": "flight_info_by_state.csv",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_file"
@@ -116,7 +118,8 @@
         {
           "csvFileName": "population_by_state.csv",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "B",
           "scenarioId": "csv_file"
@@ -127,7 +130,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -212,7 +216,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -315,7 +320,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "simulation",
@@ -332,7 +338,11 @@
     }
   ],
   "schemaVersion": 37,
-  "tags": ["gdev", "panel-tests", "geomap"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "geomap"
+  ],
   "templating": {
     "list": []
   },

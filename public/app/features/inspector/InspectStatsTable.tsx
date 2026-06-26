@@ -4,9 +4,9 @@ import {
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  type GrafanaTheme2,
-  type QueryResultMetaStat,
-  type TimeZone,
+  GrafanaTheme2,
+  QueryResultMetaStat,
+  TimeZone,
 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 

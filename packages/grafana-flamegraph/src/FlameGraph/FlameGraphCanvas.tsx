@@ -1,22 +1,14 @@
 import { css } from '@emotion/css';
-import { type MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import {
-  type ClickedItemData,
-  type ColorScheme,
-  type ColorSchemeDiff,
-  type PaneView,
-  type SelectedView,
-  type ViewMode,
-  type TextAlign,
-} from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
-import FlameGraphContextMenu, { type GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
+import FlameGraphContextMenu, { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
-import { type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
+import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
 
 type Props = {
@@ -48,9 +40,7 @@ type Props = {
   collapsing?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
 
-  selectedView?: SelectedView;
-  viewMode?: ViewMode;
-  paneView?: PaneView;
+  selectedView: SelectedView;
   search: string;
 };
 
@@ -78,8 +68,6 @@ const FlameGraphCanvas = ({
   collapsing,
   getExtraContextMenuButtons,
   selectedView,
-  viewMode,
-  paneView,
   search,
 }: Props) => {
   const styles = getStyles();
@@ -237,8 +225,6 @@ const FlameGraphCanvas = ({
           allGroupsExpanded={Array.from(collapsedMap.values()).every((i) => !i.collapsed)}
           getExtraContextMenuButtons={getExtraContextMenuButtons}
           selectedView={selectedView}
-          viewMode={viewMode}
-          paneView={paneView}
           search={search}
         />
       )}
@@ -289,7 +275,7 @@ export const convertPixelCoordinatesToBarCoordinates = (
 ): LevelItem | undefined => {
   let next: LevelItem | undefined = root;
   let currentLevel = direction === 'children' ? 0 : depth - 1;
-  const levelIndex = Math.floor(pos.y / PIXELS_PER_LEVEL);
+  const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
   let found = undefined;
 
   while (next) {

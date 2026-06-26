@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { type DB, type SQLExpression, type SQLQuery } from '../types';
+import { DB, SQLExpression, SQLQuery } from '../types';
 
 interface UseSqlChange {
   db: DB;

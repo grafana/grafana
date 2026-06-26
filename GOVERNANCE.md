@@ -7,6 +7,7 @@ This document describes the rules and governance of the project. It is meant to 
 - **Maintainers**: Maintainers lead an individual project or parts thereof ([`MAINTAINERS.md`][maintainers]).
 
 - **Projects**: A single repository in the Grafana GitHub organization and listed below is referred to as a project:
+
   - clock-panel
   - devtools
   - gel-app

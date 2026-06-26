@@ -1,7 +1,6 @@
 package writer
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -21,9 +20,6 @@ type TestRemoteWriteTarget struct {
 	mtx             sync.Mutex
 	RequestsCount   int
 	LastRequestBody string
-	LastHeaders     http.Header
-
-	ExpectedPath string
 }
 
 func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
@@ -32,19 +28,16 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 	target := &TestRemoteWriteTarget{
 		RequestsCount:   0,
 		LastRequestBody: "",
-		LastHeaders:     http.Header{},
-		ExpectedPath:    RemoteWriteEndpoint,
 	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != target.ExpectedPath {
-			require.Fail(t, fmt.Sprintf("Received unexpected request for endpoint %s", r.URL.Path))
+		if r.URL.Path != RemoteWriteEndpoint {
+			require.Fail(t, "Received unexpected request for endpoint %s", r.URL.Path)
 		}
 
 		target.mtx.Lock()
 		defer target.mtx.Unlock()
 		target.RequestsCount += 1
-		target.LastHeaders = r.Header.Clone()
 		bd, err := io.ReadAll(r.Body)
 		defer func() {
 			_ = r.Body.Close()
@@ -66,13 +59,12 @@ func (s *TestRemoteWriteTarget) Close() {
 	s.srv.Close()
 }
 
-func (s *TestRemoteWriteTarget) DatasourceURL() string {
-	return s.srv.URL
-}
-
 func (s *TestRemoteWriteTarget) ClientSettings() setting.RecordingRuleSettings {
 	return setting.RecordingRuleSettings{
-		Timeout: 1 * time.Second,
+		URL:               s.srv.URL + RemoteWriteEndpoint,
+		Timeout:           1 * time.Second,
+		BasicAuthUsername: "",
+		BasicAuthPassword: "",
 	}
 }
 
@@ -82,5 +74,4 @@ func (s *TestRemoteWriteTarget) Reset() {
 	defer s.mtx.Unlock()
 	s.RequestsCount = 0
 	s.LastRequestBody = ""
-	s.LastHeaders = http.Header{}
 }

@@ -33,14 +33,14 @@ const duration = {
 };
 
 /** @alpha */
-interface CreateTransitionOptions {
+export interface CreateTransitionOptions {
   duration?: number | string;
   easing?: string;
   delay?: number | string;
 }
 
 /** @alpha */
-function create(props: string | string[] = ['all'], options: CreateTransitionOptions = {}) {
+export function create(props: string | string[] = ['all'], options: CreateTransitionOptions = {}) {
   const { duration: durationOption = duration.standard, easing: easingOption = easing.easeInOut, delay = 0 } = options;
 
   return (Array.isArray(props) ? props : [props])
@@ -55,11 +55,11 @@ function create(props: string | string[] = ['all'], options: CreateTransitionOpt
 
 type ReducedMotionProps = 'no-preference' | 'reduce';
 
-function handleMotion(...props: ReducedMotionProps[]) {
+export function handleMotion(...props: ReducedMotionProps[]) {
   return `@media ${props.map((prop) => `(prefers-reduced-motion: ${prop})`).join(',')}`;
 }
 
-function getAutoHeightDuration(height: number) {
+export function getAutoHeightDuration(height: number) {
   if (!height) {
     return 0;
   }

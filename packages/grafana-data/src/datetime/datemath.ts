@@ -1,24 +1,18 @@
-import { isDate } from 'lodash';
+import { includes, isDate } from 'lodash';
 
-import { type TimeZone } from '@grafana/schema';
+import { TimeZone } from '../types/time';
 
 import {
-  type DateTime,
+  DateTime,
   dateTime,
   dateTimeAsMoment,
   dateTimeForTimeZone,
-  type DateTimeInput,
-  type DurationUnit,
+  DurationUnit,
   isDateTime,
   ISO_8601,
 } from './moment_wrapper';
 
-const units: string[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'] satisfies DurationUnit[];
-const MAX_MATH_TOKEN_DIGITS = 5;
-
-export const isDurationUnit = (value: string): value is DurationUnit => {
-  return units.includes(value);
-};
+const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'];
 
 /**
  * Determine if a string contains a relative date time.
@@ -37,7 +31,6 @@ export function isMathString(text: string | DateTime | Date): boolean {
 }
 
 /**
- * @deprecated use toDateTime instead
  * Parses different types input to a moment instance. There is a specific formatting language that can be used
  * if text arg is string. See unit tests for examples.
  * @param text
@@ -53,41 +46,14 @@ export function parse(
   if (!text) {
     return undefined;
   }
-  return toDateTime(text, { roundUp, timezone, fiscalYearStartMonth });
-}
 
-export interface ConversionOptions {
-  /**
-   * Set the time to endOf time unit, otherwise to startOf time unit.
-   */
-  roundUp?: boolean;
-  /**
-   * Only string 'utc' is acceptable here, for anything else, local timezone is used.
-   */
-  timezone?: TimeZone;
-  /**
-   * Setting for which month is the first month of the fiscal year.
-   */
-  fiscalYearStartMonth?: number;
-  /**
-   * DateTimeInput to use as now. Useful when parsing multiple values and now needs to be the same. Without this, comparing results from subsequent parses is not guaranteed to be deterministic.
-   */
-  now?: DateTimeInput;
-}
-
-/**
- * @param dateTimeRep A DateTime object, a Date object or a string representation of a specific time.
- * @param options Options for converting to DateTime
- * @returns A DateTime object if possible, undefined if not.
- */
-export function toDateTime(dateTimeRep: string | DateTime | Date, options: ConversionOptions): DateTime | undefined {
-  if (typeof dateTimeRep !== 'string') {
-    if (isDateTime(dateTimeRep)) {
-      return dateTimeRep;
+  if (typeof text !== 'string') {
+    if (isDateTime(text)) {
+      return text;
     }
 
-    if (isDate(dateTimeRep)) {
-      return dateTime(dateTimeRep);
+    if (isDate(text)) {
+      return dateTime(text);
     }
 
     // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
@@ -98,17 +64,17 @@ export function toDateTime(dateTimeRep: string | DateTime | Date, options: Conve
     let index = -1;
     let parseString = '';
 
-    if (dateTimeRep.substring(0, 3) === 'now') {
-      time = dateTimeForTimeZone(options.timezone, options.now);
-      mathString = dateTimeRep.substring('now'.length);
+    if (text.substring(0, 3) === 'now') {
+      time = dateTimeForTimeZone(timezone);
+      mathString = text.substring('now'.length);
     } else {
-      index = dateTimeRep.indexOf('||');
+      index = text.indexOf('||');
       if (index === -1) {
-        parseString = dateTimeRep;
+        parseString = text;
         mathString = ''; // nothing else
       } else {
-        parseString = dateTimeRep.substring(0, index);
-        mathString = dateTimeRep.substring(index + 2);
+        parseString = text.substring(0, index);
+        mathString = text.substring(index + 2);
       }
       // We're going to just require ISO8601 timestamps, k?
       time = dateTime(parseString, ISO_8601);
@@ -118,7 +84,7 @@ export function toDateTime(dateTimeRep: string | DateTime | Date, options: Conve
       return time;
     }
 
-    return parseDateMath(mathString, time, options.roundUp, options.fiscalYearStartMonth);
+    return parseDateMath(mathString, time, roundUp, fiscalYearStartMonth);
   }
 }
 
@@ -182,8 +148,7 @@ export function parseDateMath(
       const numFrom = i;
       while (!isNaN(parseInt(strippedMathString.charAt(i), 10))) {
         i++;
-        // limit per token instead of entire str to avoid large parses
-        if (i - numFrom > MAX_MATH_TOKEN_DIGITS) {
+        if (i > 10) {
           return undefined;
         }
       }
@@ -204,9 +169,11 @@ export function parseDateMath(
       isFiscal = true;
     }
 
-    const unit = unitString;
+    const unit = unitString as DurationUnit;
 
-    if (isDurationUnit(unit)) {
+    if (!includes(units, unit)) {
+      return undefined;
+    } else {
       if (type === 0) {
         if (isFiscal) {
           roundToFiscal(fiscalYearStartMonth, result, unit, roundUp);
@@ -222,8 +189,6 @@ export function parseDateMath(
       } else if (type === 2) {
         result.subtract(num, unit);
       }
-    } else {
-      return undefined;
     }
   }
   return result;

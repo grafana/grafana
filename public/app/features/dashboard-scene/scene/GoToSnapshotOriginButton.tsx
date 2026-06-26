@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
 import { textUtil } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal, ToolbarButton } from '@grafana/ui';
 
-import { appEvents } from '../../../core/app_events';
+import appEvents from '../../../core/app_events';
+import { t } from '../../../core/internationalization';
 import { ShowModalReactEvent } from '../../../types/events';
 
 export function GoToSnapshotOriginButton(props: { originalURL: string }) {
@@ -20,7 +20,7 @@ export function GoToSnapshotOriginButton(props: { originalURL: string }) {
   );
 }
 
-export const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
+const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
   const relativeURL = originalUrl ?? '';
   const sanitizedRelativeURL = textUtil.sanitizeUrl(relativeURL);
   try {
@@ -31,10 +31,7 @@ export const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
         new ShowModalReactEvent({
           component: ConfirmModal,
           props: {
-            title: t(
-              'dashboard-scene.on-open-snapshot-original-dashboard.title.proceed-to-external-site',
-              'Proceed to external site?'
-            ),
+            title: 'Proceed to external site?',
             modalClass: css({
               width: 'max-content',
               maxWidth: '80vw',
@@ -48,7 +45,7 @@ export const onOpenSnapshotOriginalDashboard = (originalUrl: string) => {
               </>
             ),
             confirmVariant: 'primary',
-            confirmText: t('dashboard-scene.on-open-snapshot-original-dashboard.confirmText.proceed', 'Proceed'),
+            confirmText: 'Proceed',
             onConfirm: () => {
               window.location.href = sanitizedAppUrl.href;
             },

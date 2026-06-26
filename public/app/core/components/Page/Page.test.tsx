@@ -2,12 +2,12 @@ import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { type NavModelItem, PageLayoutType } from '@grafana/data';
+import { NavModelItem, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { Page } from './Page';
-import { type PageProps } from './types';
+import { PageProps } from './types';
 
 const pageNav: NavModelItem = {
   text: 'pageNav title',
@@ -21,7 +21,6 @@ const setup = (props: Partial<PageProps>) => {
     {
       id: HOME_NAV_ID,
       text: 'Home',
-      url: '/',
     },
     {
       text: 'Section name',

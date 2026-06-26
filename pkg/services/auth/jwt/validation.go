@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 )
 
 func (s *AuthService) initClaimExpectations() error {
@@ -35,13 +35,13 @@ func (s *AuthService) initClaimExpectations() error {
 			case []any:
 				for _, val := range value {
 					if v, ok := val.(string); ok {
-						s.expectRegistered.AnyAudience = append(s.expectRegistered.AnyAudience, v)
+						s.expectRegistered.Audience = append(s.expectRegistered.Audience, v)
 					} else {
 						return fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
 					}
 				}
 			case string:
-				s.expectRegistered.AnyAudience = []string{value}
+				s.expectRegistered.Audience = []string{value}
 			default:
 				return fmt.Errorf("%q expectation has invalid type %T, array or string expected", key, value)
 			}

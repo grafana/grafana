@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { type Annotation, annotationLabels } from '../utils/constants';
+import { Annotation, annotationLabels } from '../utils/constants';
 
 import { DetailsField } from './DetailsField';
 import { Tokenize } from './Tokenize';
@@ -65,7 +65,7 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
   return <>{tokenizeValue}</>;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   well: css({
     wordBreak: 'break-word',
   }),

@@ -1,6 +1,6 @@
 import { useLayoutEffect } from 'react';
 
-import { UPlotConfigBuilder } from '../../../components/uPlot/config/UPlotConfigBuilder';
+import { UPlotConfigBuilder } from '../../../components';
 
 interface ZoomPluginProps {
   onZoom: (range: { from: number; to: number }) => void;

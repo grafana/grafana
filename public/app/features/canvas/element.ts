@@ -1,19 +1,15 @@
-import { type ComponentType } from 'react';
+import { ComponentType } from 'react';
 
-import { type DataLink, type PanelOptionsSupplier, type RegistryItem, type Action } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { type ColorDimensionConfig, type ScaleDimensionConfig, type DirectionDimensionConfig } from '@grafana/schema';
-import {
-  type BackgroundConfig,
-  type Constraint,
-  type LineConfig,
-  type Placement,
-} from 'app/plugins/panel/canvas/panelcfg.gen';
+import { DataLink, RegistryItem, OneClickMode, Action } from '@grafana/data';
+import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
+import { config } from 'app/core/config';
+import { BackgroundConfig, Constraint, LineConfig, Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { type LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
-import { type DimensionContext } from '../dimensions/context';
+import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
+import { DimensionContext } from '../dimensions';
 
-import { type StandardEditorConfig } from './types';
+import { StandardEditorConfig } from './types';
 
 /**
  * This gets saved in panel json
@@ -38,6 +34,7 @@ export interface CanvasElementOptions<TConfig = any> {
   connections?: CanvasConnection[];
   links?: DataLink[];
   actions?: Action[];
+  oneClickMode?: OneClickMode;
 }
 
 // Unit is percentage from the middle of the element
@@ -51,6 +48,13 @@ export enum ConnectionPath {
   Straight = 'straight',
 }
 
+export enum ConnectionDirection {
+  Forward = 'forward',
+  Reverse = 'reverse',
+  Both = 'both',
+  None = 'none',
+}
+
 export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
@@ -61,7 +65,7 @@ export interface CanvasConnection {
   lineStyle?: LineStyleConfig;
   vertices?: ConnectionCoordinates[];
   radius?: ScaleDimensionConfig;
-  direction?: DirectionDimensionConfig;
+  direction?: ConnectionDirection;
   sourceOriginal?: ConnectionCoordinates;
   targetOriginal?: ConnectionCoordinates;
   // See https://github.com/anseki/leader-line#options for more examples of more properties

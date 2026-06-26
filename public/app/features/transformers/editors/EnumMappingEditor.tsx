@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { type DataFrame, type EnumFieldConfig, type GrafanaTheme2 } from '@grafana/data';
-import { type ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
-import { Trans } from '@grafana/i18n';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { DataFrame, EnumFieldConfig, GrafanaTheme2 } from '@grafana/data';
+import { ConvertFieldTypeTransformerOptions } from '@grafana/data/src/transformations/transformers/convertFieldType';
+import { Button, HorizontalGroup, InlineFieldRow, useStyles2, VerticalGroup } from '@grafana/ui';
 
 import EnumMappingRow from './EnumMappingRow';
 
@@ -119,18 +118,17 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
   };
 
   return (
-    <Stack direction="column" rowGap={0.5}>
-      <Stack>
+    <InlineFieldRow>
+      <HorizontalGroup>
         <Button size="sm" icon="plus" onClick={() => generateEnumValues()} className={styles.button}>
-          <Trans i18nKey="transformers.enum-mapping-editor.generate-enum-values-from-data">
-            Generate enum values from data
-          </Trans>
+          Generate enum values from data
         </Button>
         <Button size="sm" icon="plus" onClick={() => onAddEnumRow()} className={styles.button}>
-          <Trans i18nKey="transformers.enum-mapping-editor.add-enum-value">Add enum value</Trans>
+          Add enum value
         </Button>
-      </Stack>
-      <Stack>
+      </HorizontalGroup>
+
+      <VerticalGroup>
         <table className={styles.compactTable}>
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="sortable-enum-config-mappings" direction="vertical">
@@ -158,8 +156,8 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
             </Droppable>
           </DragDropContext>
         </table>
-      </Stack>
-    </Stack>
+      </VerticalGroup>
+    </InlineFieldRow>
   );
 };
 

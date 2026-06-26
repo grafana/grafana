@@ -2,14 +2,14 @@ import { chain } from 'lodash';
 
 import { stringToJsRegex } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { type ThunkResult } from 'app/types/store';
 
+import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
-import { type KeyedVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { toVariablePayload } from '../utils';
 
 import { createDataSourceOptions } from './reducer';
@@ -51,7 +51,7 @@ export const initDataSourceVariableEditor =
     const dataSources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: true });
     const dataSourceTypes = chain(dataSources)
       .uniqBy('meta.id')
-      .map((ds) => {
+      .map((ds: any) => {
         return { text: ds.meta.name, value: ds.meta.id };
       })
       .value();

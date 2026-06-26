@@ -1,11 +1,12 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
-import { Pagination } from './Pagination';
+import { Pagination } from '@grafana/ui';
+
 import mdx from './Pagination.mdx';
 
 const meta: Meta<typeof Pagination> = {
-  title: 'Navigation/Pagination',
+  title: 'Buttons/Pagination',
   component: Pagination,
   parameters: {
     docs: {

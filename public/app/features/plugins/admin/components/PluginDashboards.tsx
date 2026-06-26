@@ -1,86 +1,107 @@
 import { extend } from 'lodash';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { PureComponent } from 'react';
 
-import { AppEvents, type PluginMeta, type DataSourceApi } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { appEvents } from 'app/core/app_events';
+import { appEvents } from 'app/core/core';
 import DashboardsTable from 'app/features/datasources/components/DashboardsTable';
-import { type PluginDashboard } from 'app/types/plugins';
+import { PluginDashboard } from 'app/types';
 
 interface Props {
   plugin: PluginMeta;
   datasource?: DataSourceApi;
 }
 
-export const PluginDashboards = memo(function PluginDashboards({ plugin, datasource }: Props) {
-  const [dashboards, setDashboards] = useState<PluginDashboard[]>([]);
-  const [loading, setLoading] = useState(true);
+interface State {
+  dashboards: PluginDashboard[];
+  loading: boolean;
+}
 
-  useEffect(() => {
-    setLoading(true);
+export class PluginDashboards extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      loading: true,
+      dashboards: [],
+    };
+  }
+
+  async componentDidMount() {
+    const pluginId = this.props.plugin.id;
     getBackendSrv()
-      .get(`/api/plugins/${plugin.id}/dashboards`)
+      .get(`/api/plugins/${pluginId}/dashboards`)
       .then((dashboards) => {
-        setDashboards(dashboards);
-        setLoading(false);
+        this.setState({ dashboards, loading: false });
       });
-  }, [plugin.id]);
+  }
 
-  const importDashboard = useCallback(
-    (dash: PluginDashboard, overwrite: boolean) => {
-      const installCmd = {
-        pluginId: plugin.id,
-        path: dash.path,
-        overwrite: overwrite,
-        inputs: datasource
-          ? [
-              {
-                name: '*',
-                type: 'datasource',
-                pluginId: datasource.meta.id,
-                value: datasource.name,
-              },
-            ]
-          : [],
-      };
+  importAll = () => {
+    this.importNext(0);
+  };
 
-      return getBackendSrv()
-        .post(`/api/dashboards/import`, installCmd)
-        .then((res: PluginDashboard) => {
-          appEvents.emit(AppEvents.alertSuccess, ['Dashboard Imported', dash.title]);
-          extend(dash, res);
-          setDashboards((prev) => [...prev]);
+  private importNext = (index: number) => {
+    const { dashboards } = this.state;
+    return this.import(dashboards[index], true).then(() => {
+      if (index + 1 < dashboards.length) {
+        return new Promise<void>((resolve) => {
+          setTimeout(() => {
+            this.importNext(index + 1).then(() => {
+              resolve();
+            });
+          }, 500);
         });
-    },
-    [plugin.id, datasource]
-  );
+      } else {
+        return Promise.resolve();
+      }
+    });
+  };
 
-  const remove = useCallback((dash: PluginDashboard) => {
+  import = (dash: PluginDashboard, overwrite: boolean) => {
+    const { plugin, datasource } = this.props;
+
+    const installCmd = {
+      pluginId: plugin.id,
+      path: dash.path,
+      overwrite: overwrite,
+      inputs: datasource
+        ? [
+            {
+              name: '*',
+              type: 'datasource',
+              pluginId: datasource.meta.id,
+              value: datasource.name,
+            },
+          ]
+        : [],
+    };
+
+    return getBackendSrv()
+      .post(`/api/dashboards/import`, installCmd)
+      .then((res: PluginDashboard) => {
+        appEvents.emit(AppEvents.alertSuccess, ['Dashboard Imported', dash.title]);
+        extend(dash, res);
+        this.setState({ dashboards: [...this.state.dashboards] });
+      });
+  };
+
+  remove = (dash: PluginDashboard) => {
     getBackendSrv()
       .delete('/api/dashboards/uid/' + dash.uid)
       .then(() => {
         dash.imported = false;
-        setDashboards((prev) => [...prev]);
+        this.setState({ dashboards: [...this.state.dashboards] });
       });
-  }, []);
+  };
 
-  if (loading) {
-    return (
-      <div>
-        <Trans i18nKey="plugins.plugin-dashboards.loading">Loading...</Trans>
-      </div>
-    );
-  }
-  if (!dashboards || !dashboards.length) {
-    return (
-      <div>
-        <Trans i18nKey="plugins.plugin-dashboards.dashboards-included-plugin">
-          No dashboards are included with this plugin
-        </Trans>
-      </div>
-    );
-  }
+  render() {
+    const { loading, dashboards } = this.state;
+    if (loading) {
+      return <div>loading...</div>;
+    }
+    if (!dashboards || !dashboards.length) {
+      return <div>No dashboards are included with this plugin</div>;
+    }
 
-  return <DashboardsTable dashboards={dashboards} onImport={importDashboard} onRemove={remove} />;
-});
+    return <DashboardsTable dashboards={dashboards} onImport={this.import} onRemove={this.remove} />;
+  }
+}

@@ -1,10 +1,10 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import mdx from './DataSourceHttpSettings.mdx';
-import { type HttpSettingsProps } from './types';
+import { HttpSettingsProps } from './types';
 
 const settingsMock: HttpSettingsProps['dataSourceConfig'] = {
   id: 4,
@@ -32,11 +32,11 @@ const settingsMock: HttpSettingsProps['dataSourceConfig'] = {
     password: true,
   },
   secureJsonFields: {},
-  readOnly: false,
+  readOnly: true,
 };
 
 const meta: Meta<typeof DataSourceHttpSettings> = {
-  title: 'Plugins/DataSourceHttpSettings',
+  title: 'Data Source/DataSourceHttpSettings',
   component: DataSourceHttpSettings,
   parameters: {
     controls: {

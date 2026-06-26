@@ -2,16 +2,16 @@ import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type GrafanaTheme2, type SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
+import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
-import { type Dimensions, type MetricStat } from '../../../dataquery.gen';
-import { type CloudWatchDatasource } from '../../../datasource';
+import { CloudWatchDatasource } from '../../../datasource';
 import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../hooks';
+import { Dimensions, MetricStat } from '../../../types';
 import { appendTemplateVariables } from '../../../utils/utils';
 
-import { type DimensionFilterCondition } from './Dimensions';
+import { DimensionFilterCondition } from './Dimensions';
 
 export interface Props {
   metricStat: MetricStat;

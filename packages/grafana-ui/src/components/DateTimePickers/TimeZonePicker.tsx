@@ -1,22 +1,22 @@
+import { toLower, isEmpty, isString } from 'lodash';
 import { useMemo, useCallback } from 'react';
 
 import {
-  type SelectableValue,
+  SelectableValue,
   getTimeZoneInfo,
-  type TimeZoneInfo,
+  TimeZoneInfo,
   getTimeZoneGroups,
-  type GroupedTimeZones,
-  type TimeZone,
+  GroupedTimeZones,
+  TimeZone,
   InternalTimeZones,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 
+import { t } from '../../utils/i18n';
 import { Select } from '../Select/Select';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
-import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
-import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
+import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZonePicker/TimeZoneOption';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -31,9 +31,6 @@ export interface Props {
   openMenuOnFocus?: boolean;
 }
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/date-time-pickers-timezonepicker--docs
- */
 export const TimeZonePicker = (props: Props) => {
   const {
     onChange,
@@ -45,7 +42,7 @@ export const TimeZonePicker = (props: Props) => {
     disabled = false,
     inputId,
     menuShouldPortal = true,
-    openMenuOnFocus = false,
+    openMenuOnFocus = true,
   } = props;
   const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);
@@ -54,7 +51,7 @@ export const TimeZonePicker = (props: Props) => {
 
   const onChangeTz = useCallback(
     (selectable: SelectableValue<string>) => {
-      if (!selectable || typeof selectable.value !== 'string') {
+      if (!selectable || !isString(selectable.value)) {
         return onChange(value);
       }
       onChange(selectable.value);
@@ -89,33 +86,28 @@ interface SelectableZoneGroup extends SelectableValue<string> {
 const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): SelectableZoneGroup[] => {
   const now = Date.now();
 
-  const timeZoneGroups = useMemo(() => {
-    return getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {
-      const options = group.zones.reduce((options: SelectableZone[], zone) => {
-        const info = getTimeZoneInfo(zone, now);
+  const timeZoneGroups = getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {
+    const options = group.zones.reduce((options: SelectableZone[], zone) => {
+      const info = getTimeZoneInfo(zone, now);
 
-        if (!info) {
-          return options;
-        }
-
-        const name = getTimeZoneTitle(info);
-
-        options.push({
-          label: name,
-          value: info.zone,
-          searchIndex: getSearchIndex(name, info, now),
-        });
-
+      if (!info) {
         return options;
-      }, []);
+      }
 
-      return {
-        label: group.name,
-        options,
-      };
-    });
-  }, [includeInternal, now]);
+      options.push({
+        label: info.name,
+        value: info.zone,
+        searchIndex: getSearchIndex(info, now),
+      });
 
+      return options;
+    }, []);
+
+    return {
+      label: group.name,
+      options,
+    };
+  });
   return timeZoneGroups;
 };
 
@@ -128,20 +120,20 @@ const useSelectedTimeZone = (
       return undefined;
     }
 
-    const tz = timeZone?.toLowerCase() ?? '';
+    const tz = toLower(timeZone);
 
     const group = groups.find((group) => {
       if (!group.label) {
         return isInternal(tz);
       }
-      return tz.startsWith(group.label.toLowerCase());
+      return tz.startsWith(toLower(group.label));
     });
 
     return group?.options.find((option) => {
-      if (tz === '') {
+      if (isEmpty(tz)) {
         return option.value === InternalTimeZones.default;
       }
-      return option.value?.toLowerCase() === tz;
+      return toLower(option.value) === tz;
     });
   }, [groups, timeZone]);
 };
@@ -163,24 +155,20 @@ const useFilterBySearchIndex = () => {
     if (!searchQuery || !option.data || !option.data.searchIndex) {
       return true;
     }
-    return option.data.searchIndex.indexOf(searchQuery.toLowerCase()) > -1;
+    return option.data.searchIndex.indexOf(toLower(searchQuery)) > -1;
   }, []);
 };
 
-const getSearchIndex = (label: string, info: TimeZoneInfo, timestamp: number): string => {
+const getSearchIndex = (info: TimeZoneInfo, timestamp: number): string => {
   const parts: string[] = [
-    info.zone.toLowerCase(),
-    info.abbreviation.toLowerCase(),
-    formatUtcOffset(timestamp, info.zone).toLowerCase(),
+    toLower(info.name),
+    toLower(info.abbreviation),
+    toLower(formatUtcOffset(timestamp, info.zone)),
   ];
 
-  if (label !== info.zone) {
-    parts.push(label.toLowerCase());
-  }
-
   for (const country of info.countries) {
-    parts.push(country.name.toLowerCase());
-    parts.push(country.code.toLowerCase());
+    parts.push(toLower(country.name));
+    parts.push(toLower(country.code));
   }
 
   return parts.join('|');

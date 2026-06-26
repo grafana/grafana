@@ -1,10 +1,9 @@
-import { type Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import { type DataQueryRequest, type DataQueryResponse, type DataSourceInstanceSettings } from '@grafana/data';
-import { type TemplateSrv } from '@grafana/runtime';
+import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
-import { type CloudWatchAnnotationQuery } from '../dataquery.gen';
-import { type CloudWatchJsonData, type CloudWatchQuery } from '../types';
+import { CloudWatchAnnotationQuery, CloudWatchJsonData, CloudWatchQuery } from '../types';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
 

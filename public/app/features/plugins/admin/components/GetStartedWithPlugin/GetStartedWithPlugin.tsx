@@ -1,9 +1,9 @@
-import { type ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 import { PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { type CatalogPlugin } from '../../types';
+import { CatalogPlugin } from '../../types';
 
 import { GetStartedWithApp } from './GetStartedWithApp';
 import { GetStartedWithDataSource } from './GetStartedWithDataSource';
@@ -13,7 +13,10 @@ type Props = {
 };
 
 export function GetStartedWithPlugin({ plugin }: Props): ReactElement | null {
-  const isInstalled = config.pluginAdminExternalManageEnabled ? plugin.isFullyInstalled : plugin.isInstalled;
+  const isInstalled =
+    config.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled
+      ? plugin.isFullyInstalled
+      : plugin.isInstalled;
 
   if (!isInstalled || plugin.isDisabled) {
     return null;

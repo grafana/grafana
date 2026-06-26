@@ -1,13 +1,11 @@
 import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { Trans } from '@grafana/i18n';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type Organization } from 'app/types/organization';
+import { AccessControlAction, Organization } from 'app/types';
 
 import { AdminOrgsTable } from './AdminOrgsTable';
 
@@ -36,7 +34,7 @@ export default function AdminListOrgsPages() {
       navId="global-orgs"
       actions={
         <LinkButton icon="plus" href="org/new" disabled={!canCreateOrg}>
-          <Trans i18nKey="admin.orgs.new-org-button">New org</Trans>
+          New org
         </LinkButton>
       }
     >

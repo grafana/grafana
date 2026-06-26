@@ -2040,9 +2040,7 @@
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2179,9 +2177,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2332,9 +2328,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2484,9 +2478,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2964,9 +2956,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {

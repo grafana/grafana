@@ -1,14 +1,13 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { type PopoverContent } from '../Tooltip/types';
+import { PopoverContent, Tooltip } from '../Tooltip';
 
-import { type LabelProps } from './Label';
+import { LabelProps } from './Label';
 
 export interface Props extends Omit<LabelProps, 'css' | 'description' | 'category'> {
   /** Content for the labels tooltip. If provided, an info icon with the tooltip content
@@ -25,11 +24,6 @@ export interface Props extends Omit<LabelProps, 'css' | 'description' | 'categor
   as?: React.ElementType;
 }
 
-/**
- * A horizontal variant of Label, primarily used in query editors. Can be combined with form components that expect a label, eg. `Input`, `Checkbox`, `Combobox`.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-inlinelabel--docs
- */
 export const InlineLabel = ({
   children,
   className,
@@ -54,7 +48,7 @@ export const InlineLabel = ({
   );
 };
 
-const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?: number | 'auto') => {
+export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?: number | 'auto') => {
   return {
     label: css({
       display: 'flex',

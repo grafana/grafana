@@ -1,5 +1,5 @@
-import { type NavModel } from '@grafana/data';
-import { useSelector } from 'app/types/store';
+import { NavModel } from '@grafana/data';
+import { useSelector } from 'app/types';
 
 import { getNavModel } from '../selectors/navModel';
 

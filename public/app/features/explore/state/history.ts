@@ -1,4 +1,7 @@
-import { type DataQuery } from '@grafana/schema';
+import { createAction } from '@reduxjs/toolkit';
+
+import { HistoryItem } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import {
   addToRichHistory,
   deleteAllFromRichHistory,
@@ -9,11 +12,10 @@ import {
   updateRichHistorySettings,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
-import { type RichHistoryQuery } from 'app/types/explore';
-import { type ThunkResult } from 'app/types/store';
+import { RichHistoryQuery, ThunkResult } from 'app/types';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
-import { type RichHistorySearchFilters, type RichHistorySettings } from '../../../core/utils/richHistoryTypes';
+import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 
 import {
   richHistoryLimitExceededAction,
@@ -22,6 +24,15 @@ import {
   richHistoryStorageFullAction,
   richHistoryUpdatedAction,
 } from './main';
+
+//
+// Actions and Payloads
+//
+
+export interface HistoryUpdatedPayload {
+  history: HistoryItem[];
+}
+export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
 
 //
 // Action creators

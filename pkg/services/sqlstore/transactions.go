@@ -2,37 +2,18 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"math/rand/v2"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 var tsclogger = log.New("sqlstore.transactions")
-
-// SQLITE_BUSY backoff parameters for retrying transactions. We use exponential
-// backoff with full jitter so concurrent writers don't all wake up and collide
-// again on the same tick.
-const (
-	txnRetryBaseDelay = 100 * time.Millisecond
-	txnRetryMaxDelay  = 2 * time.Second
-)
-
-// txnRetryBackoff returns the sleep duration for the given retry attempt
-// (0-indexed): a uniformly random value in [0, capped exponential delay).
-//
-// The exponential delay doubles each retry (100ms, 200ms, 400ms, ...) and is
-// clamped to txnRetryMaxDelay. The retry count is clamped before shifting so
-// that large TransactionRetries values can't overflow the shift.
-func txnRetryBackoff(retry int) time.Duration {
-	retry = min(retry, 10)
-	delay := min(txnRetryBaseDelay<<retry, txnRetryMaxDelay)
-	return rand.N(delay)
-}
 
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
@@ -82,19 +63,16 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	// Special handling of database-locked errors for SQLite: retry with exponential
-	// backoff and jitter, up to TransactionRetries times.
-	if r, ok := engine.Dialect().(xorm.DialectWithRetryableErrors); ok {
-		if retry < ss.dbCfg.TransactionRetries && r.RetryOnError(err) {
-			if rollErr := sess.Rollback(); rollErr != nil {
-				return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
-			}
-
-			sleep := txnRetryBackoff(retry)
-			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "sleep", sleep)
-			time.Sleep(sleep)
-			return ss.inTransactionWithRetryCtx(ctx, engine, bus, callback, retry+1)
+	// special handling of database locked errors for sqlite, then we can retry 5 times
+	var sqlError sqlite3.Error
+	if errors.As(err, &sqlError) && retry < ss.dbCfg.TransactionRetries && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+		if rollErr := sess.Rollback(); rollErr != nil {
+			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}
+
+		time.Sleep(time.Millisecond * time.Duration(10))
+		ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
+		return ss.inTransactionWithRetryCtx(ctx, engine, bus, callback, retry+1)
 	}
 
 	if err != nil {

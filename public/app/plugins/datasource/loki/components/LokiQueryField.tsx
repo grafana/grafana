@@ -1,10 +1,10 @@
-import { PureComponent, type ReactNode } from 'react';
+import { PureComponent, ReactNode } from 'react';
 
-import { type QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 
-import { type LokiDatasource } from '../datasource';
+import { LokiDatasource } from '../datasource';
 import { shouldRefreshLabels } from '../languageUtils';
-import { type LokiQuery, type LokiOptions } from '../types';
+import { LokiQuery, LokiOptions } from '../types';
 
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 

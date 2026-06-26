@@ -15,25 +15,7 @@ import (
 	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-func TestManagedPermissionsActionSetsFilter(t *testing.T) {
-	filter := accesscontrol.ManagedPermissionsActionSetsFilter()
-
-	// The filter should exclude individual dashboard/folder actions from managed roles
-	assert.Contains(t, filter, "role.name LIKE 'managed:%'")
-	assert.Contains(t, filter, "permission.kind IN ('dashboards', 'folders')")
-	assert.Contains(t, filter, "AND NOT")
-
-	// The filter should preserve action set permissions
-	assert.Contains(t, filter, "'dashboards:view'")
-	assert.Contains(t, filter, "'dashboards:edit'")
-	assert.Contains(t, filter, "'dashboards:admin'")
-	assert.Contains(t, filter, "'folders:view'")
-	assert.Contains(t, filter, "'folders:edit'")
-	assert.Contains(t, filter, "'folders:admin'")
-}
 
 type filterDatasourcesTestCase struct {
 	desc        string
@@ -50,9 +32,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationFilter_Datasources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestFilter_Datasources(t *testing.T) {
 	tests := []filterDatasourcesTestCase{
 		{
 			desc:    "expect all data sources to be returned",

@@ -1,27 +1,19 @@
-import { type Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import { type DataQuery, type LogsSortOrder } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 
-import { BusEventWithPayload } from '../events/types';
+import { KeyValue, Labels } from './data';
+import { DataFrame } from './dataFrame';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi, QueryFixAction, QueryFixType } from './datasource';
+import { AbsoluteTimeRange } from './time';
+export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
-import { type ScopedVars } from './ScopedVars';
-import { type KeyValue, type Labels } from './data';
-import { type DataFrame } from './dataFrame';
-import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceApi,
-  type QueryFixAction,
-  type QueryFixType,
-} from './datasource';
-import { type AbsoluteTimeRange } from './time';
 /**
  * Mapping of log level abbreviation to canonical log level.
  * Supported levels are reduce to limit color variation.
  */
 export enum LogLevel {
   emerg = 'critical',
-  emergency = 'critical',
   fatal = 'critical',
   alert = 'critical',
   crit = 'critical',
@@ -39,7 +31,6 @@ export enum LogLevel {
   debug = 'debug',
   trace = 'trace',
   unknown = 'unknown',
-  unspecified = '',
 }
 
 /**
@@ -105,7 +96,6 @@ export interface LogRowModel {
   uid: string;
   uniqueLabels?: Labels;
   datasourceType?: string;
-  datasourceUid?: string;
 }
 
 export interface LogsModel {
@@ -142,9 +132,6 @@ export enum LogsDedupDescription {
 export interface LogRowContextOptions {
   direction?: LogRowContextQueryDirection;
   limit?: number;
-  scopedVars?: ScopedVars;
-  // Optional. Size of the time window to get logs before of after the referenced entry.
-  timeWindowMs?: number;
 }
 
 export enum LogRowContextQueryDirection {
@@ -183,15 +170,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * @alpha
    * @internal
    */
-  getLogRowContextUi?(
-    row: LogRowModel,
-    runContextQuery?: () => void,
-    origQuery?: TQuery,
-    scopedVars?: ScopedVars
-  ): React.ReactNode;
-
-  // Does the datasource support the user adjusting the time range in the logs context window? https://github.com/grafana/grafana/pull/109901
-  supportsAdjustableWindow?: boolean;
+  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
@@ -200,13 +179,6 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   }
 
   return 'getLogRowContext' in datasource;
-};
-
-export const hasLogsLabelTypesSupport = (datasource: unknown): datasource is DataSourceWithLogsLabelTypesSupport => {
-  if (!datasource || typeof datasource !== 'object') {
-    return false;
-  }
-  return 'getLabelDisplayTypeFromFrame' in datasource;
 };
 
 /**
@@ -263,6 +235,7 @@ export type LogsVolumeCustomMetaData = {
  * Data sources that support supplementary queries in Explore.
  * This will enable users to see additional data when running original queries.
  * Supported supplementary queries are defined in SupplementaryQueryType enum.
+ * @internal
  */
 export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
   /**
@@ -286,7 +259,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
   /**
    * Returns supplementary query types that data source supports.
    */
-  getSupportedSupplementaryQueryTypes(dsRequest?: DataQueryRequest<DataQuery>): SupplementaryQueryType[];
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
   /**
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
    * If the provided query is not suitable for the provided supplementary query type, undefined should be returned.
@@ -296,8 +269,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
   datasource: DataSourceApi | (DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery>),
-  type: SupplementaryQueryType,
-  dsRequest?: DataQueryRequest<DataQuery>
+  type: SupplementaryQueryType
 ): datasource is DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery> => {
   if (!datasource) {
     return false;
@@ -307,7 +279,7 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
     ('getDataProvider' in datasource || 'getSupplementaryRequest' in datasource) &&
     'getSupplementaryQuery' in datasource &&
     'getSupportedSupplementaryQueryTypes' in datasource &&
-    datasource.getSupportedSupplementaryQueryTypes(dsRequest).includes(type)
+    datasource.getSupportedSupplementaryQueryTypes().includes(type)
   );
 };
 
@@ -383,14 +355,6 @@ export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery
 }
 
 /**
- * Logs data sources that support custom field groupings within logs details in the Logs Panel.
- * If this method is defined, the return value will be used to group fields in the Logs Panel.
- */
-export interface DataSourceWithLogsLabelTypesSupport {
-  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): null | string;
-}
-
-/**
  * @internal
  */
 export const hasQueryModificationSupport = <TQuery extends DataQuery>(
@@ -403,11 +367,3 @@ export const hasQueryModificationSupport = <TQuery extends DataQuery>(
     'getSupportedQueryModifications' in datasource
   );
 };
-
-export interface LogSortOrderChangePayload {
-  order: LogsSortOrder;
-}
-
-export class LogSortOrderChangeEvent extends BusEventWithPayload<LogSortOrderChangePayload> {
-  static type = 'logs-sort-order-change';
-}

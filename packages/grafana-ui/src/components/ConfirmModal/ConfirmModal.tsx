@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
-import type { JSX } from 'react';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { type ButtonVariant } from '../Button/Button';
+import { IconName } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+import { ButtonVariant } from '../Button';
 import { Modal } from '../Modal/Modal';
 
 import { ConfirmContent } from './ConfirmContent';
@@ -25,15 +26,15 @@ export interface ConfirmModalProps {
   dismissText?: string;
   /** Variant for dismiss button */
   dismissVariant?: ButtonVariant;
+  /** Icon for the modal header */
+  icon?: IconName;
   /** Additional styling for modal container */
   modalClass?: string;
   /** Text user needs to fill in before confirming */
   confirmationText?: string;
   /** Text for alternative button */
   alternativeText?: string;
-  /** Confirm button variant
-   * @deprecated Use `confirmVariant` instead. This prop will be removed in a future release.
-   */
+  /** Confirm button variant */
   confirmButtonVariant?: ButtonVariant;
   /** Confirm action callback
    * Return a promise to disable the confirm button until the promise is resolved
@@ -47,11 +48,6 @@ export interface ConfirmModalProps {
   disabled?: boolean;
 }
 
-/**
- * Used to request user for action confirmation, e.g. deleting items. Triggers provided `onConfirm` callback.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-confirmmodal--docs
- */
 export const ConfirmModal = ({
   isOpen,
   title,
@@ -64,16 +60,17 @@ export const ConfirmModal = ({
   dismissVariant = 'secondary',
   alternativeText,
   modalClass,
+  icon = 'exclamation-triangle',
   onConfirm,
   onDismiss,
   onAlternative,
-  confirmButtonVariant,
+  confirmButtonVariant = 'destructive',
   disabled,
 }: ConfirmModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   return (
-    <Modal className={cx(styles.modal, modalClass)} title={title} isOpen={isOpen} onDismiss={onDismiss}>
+    <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <ConfirmContent
         body={body}
         description={description}
@@ -82,7 +79,7 @@ export const ConfirmModal = ({
         dismissButtonVariant={dismissVariant}
         confirmPromptText={confirmationText}
         alternativeButtonLabel={alternativeText}
-        confirmButtonVariant={confirmButtonVariant ?? confirmVariant}
+        confirmButtonVariant={confirmButtonVariant}
         onConfirm={onConfirm}
         onDismiss={onDismiss}
         onAlternative={onAlternative}

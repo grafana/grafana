@@ -5,12 +5,9 @@ INSERT INTO `resource_history`
         `resource`,
         `namespace`,
         `name`,
-        `folder`,
         `previous_resource_version`,
-        `generation`,
         `value`,
-        `action`,
-        `key_path`
+        `action`
     )
     VALUES (
         '',
@@ -18,11 +15,8 @@ INSERT INTO `resource_history`
         'rr',
         'nn',
         'name',
-        'fldr',
         1234,
-        789,
         '[]',
-        'UNKNOWN',
-        ''
+        'UNKNOWN'
     )
 ;

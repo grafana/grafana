@@ -1,46 +1,33 @@
-import { type Meta, type StoryFn, type StoryObj } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs, useState, useEffect } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { Meta, StoryFn, StoryObj } from '@storybook/react';
+import { Chance } from 'chance';
+import React, { ComponentProps, useCallback, useEffect, useState } from 'react';
 
-import { Button } from '../Button/Button';
+import { SelectableValue } from '@grafana/data';
+
+import { useTheme2 } from '../../themes/ThemeContext';
+import { Alert } from '../Alert/Alert';
+import { Divider } from '../Divider/Divider';
 import { Field } from '../Forms/Field';
+import { Select, AsyncSelect } from '../Select/Select';
 
-import { Combobox, type ComboboxProps } from './Combobox';
-import mdx from './Combobox.mdx';
-import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
-import { type ComboboxOption } from './types';
+import { Combobox, ComboboxOption } from './Combobox';
 
-type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
-  numberOfOptions: number;
-};
-type Story<T extends string | number = string> = StoryObj<PropsAndCustomArgs<T>>;
+const chance = new Chance();
+
+type PropsAndCustomArgs = ComponentProps<typeof Combobox> & { numberOfOptions: number };
 
 const meta: Meta<PropsAndCustomArgs> = {
-  title: 'Inputs/Combobox',
+  title: 'Forms/Combobox',
   component: Combobox,
-  parameters: {
-    docs: {
-      page: mdx,
-    },
-  },
   args: {
     loading: undefined,
     invalid: undefined,
-    width: 20,
-    isClearable: false,
+    width: undefined,
     placeholder: 'Select an option...',
     options: [
-      {
-        label: 'Apple',
-        value: 'apple',
-        description: 'Apples are a great source of fiber and vitamin C.',
-      },
-      {
-        label: 'Banana',
-        value: 'banana',
-        description:
-          'Bananas are a great source of potassium, fiber, and vitamin C. They are also a great snack for on the go.',
-      },
+      { label: 'Apple', value: 'apple' },
+      { label: 'Banana', value: 'banana' },
       { label: 'Carrot', value: 'carrot' },
       // Long label to test overflow
       {
@@ -53,289 +40,340 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: 'Fennel', value: 'fennel' },
       { label: 'Grape', value: 'grape' },
       { label: 'Honeydew', value: 'honeydew' },
-      {
-        label: 'Iceberg Lettuce',
-        value: 'iceberg-lettuce',
-        description:
-          'this is a very long description that should be longer than the longest option label which should make the options list as long as the longest description. Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-      },
+      { label: 'Iceberg Lettuce', value: 'iceberg-lettuce' },
       { label: 'Jackfruit', value: 'jackfruit' },
+      { label: '1', value: 1 },
+      { label: '2', value: 2 },
+      { label: '3', value: 3 },
     ],
     value: 'banana',
   },
+
+  render: (args) => <BasicWithState {...args} />,
+  decorators: [InDevDecorator],
 };
-export default meta;
 
-const loadOptionsAction = action('options called');
-const onChangeAction = action('onChange called');
-
-const BaseCombobox: StoryFn<PropsAndCustomArgs> = (args) => {
-  const [dynamicArgs, setArgs] = useArgs();
-
+const BasicWithState: StoryFn<typeof Combobox> = (args) => {
+  const [value, setValue] = useState(args.value);
   return (
     <Field label="Test input" description="Input with a few options">
       <Combobox
+        id="test-combobox"
         {...args}
-        {...dynamicArgs}
-        onChange={(value: ComboboxOption | null) => {
-          setArgs({ value: value?.value || null });
-          onChangeAction(value);
+        value={value}
+        onChange={(val) => {
+          setValue(val?.value || null);
+          action('onChange')(val);
         }}
       />
     </Field>
   );
 };
 
-export const Basic: Story = {
-  render: BaseCombobox,
+type Story = StoryObj<typeof Combobox>;
+
+export const Basic: Story = {};
+
+async function generateOptions(amount: number): Promise<ComboboxOption[]> {
+  return Array.from({ length: amount }, (_, index) => ({
+    label: chance.sentence({ words: index % 5 }),
+    value: chance.guid(),
+  }));
+}
+
+const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
+  const [value, setValue] = useState<string | null>(null);
+  const [options, setOptions] = useState<ComboboxOption[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => {
+      generateOptions(numberOfOptions).then((options) => {
+        setIsLoading(false);
+        setOptions(options);
+        setValue(options[5].value);
+      });
+    }, 1000);
+  }, [numberOfOptions]);
+
+  return (
+    <Combobox
+      {...args}
+      loading={isLoading}
+      options={options}
+      value={value}
+      onChange={(opt) => {
+        setValue(opt?.value || null);
+        action('onChange')(opt);
+      }}
+    />
+  );
 };
 
-export const AutoSize: Story = {
+const SelectComparisonStory: StoryFn<typeof Combobox> = (args) => {
+  const [comboboxValue, setComboboxValue] = useState(args.value);
+  const theme = useTheme2();
+
+  if (typeof args.options === 'function') {
+    throw new Error('This story does not support async options');
+  }
+
+  return (
+    <div style={{ border: '1px solid ' + theme.colors.border.weak, padding: 16 }}>
+      <Field label="Combobox with default size">
+        <Combobox
+          id="combobox-default-size"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with default size">
+        <Select
+          id="select-default-size"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Divider />
+
+      <Field label="Combobox with explicit size (25)">
+        <Combobox
+          id="combobox-explicit-size"
+          width={25}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with explicit size (25)">
+        <Select
+          id="select-explicit-size"
+          width={25}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Divider />
+
+      <Field label="Combobox with auto width, minWidth 15">
+        <Combobox
+          id="combobox-auto-size"
+          width="auto"
+          minWidth={15}
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with auto width">
+        <Select
+          id="select-auto-size"
+          width="auto"
+          value={comboboxValue}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Combobox with auto width, minWidth 15, empty value">
+        <Combobox
+          id="combobox-auto-size-empty"
+          width="auto"
+          minWidth={15}
+          value={null}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Select with auto width, empty value">
+        <Select
+          id="select-auto-size-empty"
+          width="auto"
+          value={null}
+          options={args.options}
+          onChange={(val) => {
+            setComboboxValue(val?.value || null);
+            action('onChange')(val);
+          }}
+        />
+      </Field>
+    </div>
+  );
+};
+
+export const AutoSize: StoryObj<PropsAndCustomArgs> = {
   args: {
     width: 'auto',
     minWidth: 5,
     maxWidth: 200,
   },
-  render: BaseCombobox,
 };
 
-export const OptionIcons: Story = {
-  args: {
-    width: 'auto',
-    value: 'one',
-    options: [
-      { label: 'One', value: 'one', group: 'Group 1', icon: 'text-fields' },
-      { label: 'Two', value: 'two', group: 'Group 1', icon: 'text-fields' },
-      { label: 'Three', value: 'three', group: 'Group 2', icon: 'keyboard' },
-      { label: 'Four', value: 'four', group: 'Group 2', icon: 'keyboard' },
-    ],
-  },
-  render: BaseCombobox,
-};
-
-export const CustomValue: Story = {
-  args: {
-    createCustomValue: true,
-  },
-  render: BaseCombobox,
-};
-
-const onIsOpenChangeAction = action('onIsOpenChange');
-
-export const ControlledOpenState: Story = {
-  name: 'Control isOpen',
-  args: {
-    value: null,
-    placeholder: 'Choose fruit…',
-  },
-
-  render: function ControlledOpenStateStory(args: PropsAndCustomArgs) {
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [dynamicArgs, setArgs] = useArgs();
-
-    return (
-      <>
-        <Field
-          label="Controlled dropdown open"
-          description="Button triggers combobox open via isOpen and onIsOpenChange. Close with Escape or by selecting."
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Combobox
-              {...args}
-              {...dynamicArgs}
-              isOpen={dropdownOpen}
-              onIsOpenChange={(open) => {
-                onIsOpenChangeAction(open);
-                setDropdownOpen(open);
-              }}
-              onChange={(value: ComboboxOption | null) => {
-                setArgs({ value: value?.value ?? null });
-                onChangeAction(value);
-              }}
-            />
-          </div>
-        </Field>
-        <Button variant="primary" onClick={() => setDropdownOpen(true)}>
-          Open dropdown
-        </Button>
-      </>
-    );
-  },
-};
-
-export const GroupsWithMixedLabels: Story = {
-  args: {
-    options: [
-      { label: 'One', value: 'one', group: 'Group 1' },
-      { label: 'Two', value: 'two', group: 'Group 1' },
-      { label: 'Three', value: 'three', group: 'Group 3' },
-      { label: 'Four', value: 'four', group: 'Group 1' },
-      { label: 'Five', value: 'five' },
-      { label: 'Six', value: 'six' },
-      { label: 'Seven', value: 'seven', group: 'Group 2' },
-      { label: 'Eight', value: 'eight', group: 'Group 3' },
-      { label: 'Nine', value: 'nine', group: 'Group 3' },
-      { label: 'Ten', value: 'ten', group: 'Group 3' },
-      { label: 'Eleven', value: 'eleven' },
-    ],
-    value: '',
-  },
-  render: BaseCombobox,
-};
-
-export const Groups: Story = {
-  args: {
-    options: await generateGroupingOptions(500),
-    value: '34',
-  },
-  render: BaseCombobox,
-};
-
-export const ManyOptions: Story = {
+export const ManyOptions: StoryObj<PropsAndCustomArgs> = {
   args: {
     numberOfOptions: 1e5,
     options: undefined,
     value: undefined,
   },
-  render: function ManyOptions({ numberOfOptions, ...args }: PropsAndCustomArgs) {
-    const [dynamicArgs, setArgs] = useArgs();
-    const [options, setOptions] = useState<ComboboxOption[]>([]);
+  render: ManyOptionsStory,
+};
 
-    useEffect(() => {
-      setTimeout(() => {
-        generateOptions(numberOfOptions).then((options) => {
-          setOptions(options);
-          setArgs({ value: options[5].value });
-        });
-      }, 1000);
-    }, [numberOfOptions, setArgs]);
-
-    const { onChange, ...rest } = args;
-    return (
-      <Field label="Test input" description={options.length ? 'Input with a few options' : 'Preparing options...'}>
-        <Combobox
-          {...rest}
-          {...dynamicArgs}
-          options={options}
-          onChange={(value: ComboboxOption | null) => {
-            setArgs({ value: value?.value || null });
-            onChangeAction(value);
-          }}
-        />
-      </Field>
-    );
+export const CustomValue: StoryObj<PropsAndCustomArgs> = {
+  args: {
+    createCustomValue: true,
   },
 };
 
-function loadOptionsWithLabels(inputValue: string) {
-  loadOptionsAction(inputValue);
-  return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`);
-}
+const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  // Combobox
+  const [selectedOption, setSelectedOption] = useState<ComboboxOption<string> | null>(null);
 
-export const AsyncOptionsWithLabels: Story = {
-  name: 'Async - values + labels',
-  args: {
-    options: loadOptionsWithLabels,
-    value: { label: 'Option 69', value: '69' },
-    placeholder: 'Select an option',
-  },
-  render: function AsyncOptionsWithLabels(args: PropsAndCustomArgs) {
-    const [dynamicArgs, setArgs] = useArgs();
+  // AsyncSelect
+  const [asyncSelectValue, setAsyncSelectValue] = useState<SelectableValue<string> | null>(null);
 
-    return (
+  // This simulates a kind of search API call
+  const loadOptionsWithLabels = useCallback((inputValue: string) => {
+    console.info(`Load options called with value '${inputValue}' `);
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+  }, []);
+
+  const loadOptionsOnlyValues = useCallback((inputValue: string) => {
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`).then((options) =>
+      options.map((opt) => ({ value: opt.label! }))
+    );
+  }, []);
+
+  return (
+    <>
       <Field
-        label='Async options fn returns objects like { label: "Option 69", value: "69" }'
-        description="Search for 'break' to see an error"
+        label="Options with labels"
+        description="This tests when options have both a label and a value. Consumers are required to pass in a full ComboboxOption as a value with a label"
       >
         <Combobox
-          {...args}
-          {...dynamicArgs}
-          onChange={(value: ComboboxOption | null) => {
-            onChangeAction(value);
-            setArgs({ value });
+          id="test-combobox-one"
+          placeholder="Select an option"
+          options={loadOptionsWithLabels}
+          value={selectedOption}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+          createCustomValue={args.createCustomValue}
+        />
+      </Field>
+
+      <Field
+        label="Options without labels"
+        description="Or without labels, where consumer can just pass in a raw scalar value Value"
+      >
+        <Combobox
+          id="test-combobox-two"
+          placeholder="Select an option"
+          options={loadOptionsOnlyValues}
+          value={selectedOption?.value ?? null}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+          createCustomValue={args.createCustomValue}
+        />
+      </Field>
+
+      <Field label="Compared to AsyncSelect">
+        <AsyncSelect
+          id="test-async-select"
+          placeholder="Select an option"
+          loadOptions={loadOptionsWithLabels}
+          value={asyncSelectValue}
+          defaultOptions
+          onChange={(val) => {
+            action('onChange')(val);
+            setAsyncSelectValue(val);
           }}
         />
       </Field>
-    );
-  },
+    </>
+  );
 };
 
-function loadOptionsOnlyValues(inputValue: string) {
-  loadOptionsAction(inputValue);
-  return fakeSearchAPI(`http://example.com/search?errorOnQuery=break&query=${inputValue}`).then((options) =>
-    options.map((opt) => ({ value: opt.label! }))
+export const Async: StoryObj<PropsAndCustomArgs> = {
+  render: AsyncStory,
+};
+
+export const ComparisonToSelect: StoryObj<PropsAndCustomArgs> = {
+  args: {
+    numberOfOptions: 100,
+  },
+  render: SelectComparisonStory,
+};
+
+export default meta;
+
+function InDevDecorator(Story: React.ElementType) {
+  return (
+    <div>
+      <Alert title="This component is still in development!" severity="info">
+        Combobox is still in development and not able to be used externally.
+        <br />
+        Within the Grafana repo, it can be used by importing it from{' '}
+        <span style={{ fontFamily: 'monospace' }}>@grafana/ui/src/unstable</span>
+      </Alert>
+      <Story />
+    </div>
   );
 }
 
-export const AsyncOptionsWithOnlyValues: Story = {
-  name: 'Async - values only',
-  args: {
-    options: loadOptionsOnlyValues,
-    value: { value: 'Option 69' },
-    placeholder: 'Select an option',
-  },
-  render: function AsyncOptionsWithOnlyValues(args: PropsAndCustomArgs) {
-    const [dynamicArgs, setArgs] = useArgs();
+let fakeApiOptions: Array<ComboboxOption<string>>;
+async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOption<string>>> {
+  const searchParams = new URL(urlString).searchParams;
 
-    return (
-      <Field
-        label='Async options fn returns objects like { value: "69" }'
-        description="Search for 'break' to see an error"
-      >
-        <Combobox
-          {...args}
-          {...dynamicArgs}
-          onChange={(value: ComboboxOption | null) => {
-            onChangeAction(value);
-            setArgs({ value });
-          }}
-        />
-      </Field>
-    );
-  },
-};
+  if (!fakeApiOptions) {
+    fakeApiOptions = await generateOptions(1000);
+  }
 
-const noop = () => {};
+  const searchQuery = searchParams.get('query')?.toLowerCase();
 
-export const PositioningTest: Story = {
-  render: (args: PropsAndCustomArgs) => {
-    if (typeof args.options === 'function') {
-      throw new Error('This story does not support async options');
-    }
+  if (!searchQuery || searchQuery.length === 0) {
+    return Promise.resolve(fakeApiOptions.slice(0, 10));
+  }
 
-    function renderColumnOfComboboxes(pos: string) {
-      return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            flex: 1,
-          }}
-        >
-          <Combobox {...args} placeholder={`${pos} top`} options={args.options} value={null} onChange={noop} />
-          <Combobox {...args} placeholder={`${pos} middle`} options={args.options} value={null} onChange={noop} />
-          <Combobox {...args} placeholder={`${pos} bottom`} options={args.options} value={null} onChange={noop} />
-        </div>
-      );
-    }
+  const filteredOptions = Promise.resolve(
+    fakeApiOptions.filter((opt) => opt.label?.toLowerCase().includes(searchQuery))
+  );
 
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
+  const delay = searchQuery.length % 2 === 0 ? 200 : 1000;
 
-          // approx the height of the dev alert, and three margins. exact doesn't matter
-          minHeight: 'calc(100vh - (105px + 16px + 16px + 16px))',
-          justifyContent: 'space-between',
-          gap: 32,
-        }}
-      >
-        {renderColumnOfComboboxes('Left')}
-        {renderColumnOfComboboxes('Middle')}
-        {renderColumnOfComboboxes('Right')}
-      </div>
-    );
-  },
-};
+  return new Promise<Array<ComboboxOption<string>>>((resolve) => {
+    setTimeout(() => resolve(filteredOptions), delay);
+  });
+}

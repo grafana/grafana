@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import type { JSX } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 

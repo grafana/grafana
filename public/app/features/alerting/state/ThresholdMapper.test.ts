@@ -1,6 +1,6 @@
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state';
 
-import { ThresholdMapper, hiddenReducerTypes } from './ThresholdMapper';
+import { hiddenReducerTypes, ThresholdMapper } from './ThresholdMapper';
 import alertDef from './alertDef';
 
 const visibleReducerTypes = alertDef.reducerTypes

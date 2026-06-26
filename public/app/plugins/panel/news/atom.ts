@@ -1,5 +1,5 @@
 import { getProperty } from './feed';
-import { type Feed } from './types';
+import { Feed } from './types';
 
 export function parseAtomFeed(txt: string): Feed {
   const domParser = new DOMParser();
@@ -10,7 +10,7 @@ export function parseAtomFeed(txt: string): Feed {
       title: getProperty(node, 'title'),
       link: node.querySelector('link')?.getAttribute('href') ?? '',
       content: getProperty(node, 'content'),
-      pubDate: getProperty(node, 'published') || getProperty(node, 'updated'),
+      pubDate: getProperty(node, 'published'),
       ogImage: node.querySelector("meta[property='og:image']")?.getAttribute('content'),
     })),
   };

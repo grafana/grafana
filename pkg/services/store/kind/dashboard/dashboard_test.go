@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -56,7 +55,6 @@ func dsLookupForTests() DatasourceLookup {
 
 func TestReadDashboard(t *testing.T) {
 	inputs := []string{
-		"absolute-garbage",
 		"check-string-datasource-id",
 		"all-panels",
 		"panel-graph/graph-shared-tooltips",
@@ -73,12 +71,6 @@ func TestReadDashboard(t *testing.T) {
 		"special-datasource-types",
 		"panels-without-datasources",
 		"panel-with-library-panel-field",
-		"k8s-wrapper",
-		"k8s-wrapper-editable-string",
-		"k8s-wrapper-tags-string",
-		"k8s-wrapper-with-parsing-errors",
-		"v2-elements",
-		"scenarios/all-colapsed-rows-public",
 	}
 
 	devdash := "../../../../../devenv/dev-dashboards/"
@@ -97,7 +89,7 @@ func TestReadDashboard(t *testing.T) {
 		}
 		require.NoError(t, err)
 
-		dash, err := ReadDashboard(f, dsLookupForTests())
+		dash, err := readDashboard(f, dsLookupForTests())
 		sortDatasources(dash)
 
 		require.NoError(t, err)
@@ -121,60 +113,8 @@ func TestReadDashboard(t *testing.T) {
 	}
 }
 
-// TestReadDashboardRecursionLimits ensures that maliciously deep nesting of `spec` or
-// `panels` is bounded so the parser cannot be driven into unbounded recursion.
-func TestReadDashboardRecursionLimits(t *testing.T) {
-	t.Run("deeply nested spec terminates and does not recurse past the limit", func(t *testing.T) {
-		// {"spec":{"spec":{ ... {"title":"deep"} ... }}}
-		json := `{"title":"deep"}`
-		for i := 0; i < 100; i++ {
-			json = `{"spec":` + json + `}`
-		}
-
-		dash, err := ReadDashboard(strings.NewReader(json), dsLookupForTests())
-		require.NoError(t, err)
-		require.NotNil(t, dash)
-		// Only one spec is ever followed, so the inner "deep" title is never reached.
-		require.Empty(t, dash.Title)
-	})
-
-	t.Run("deeply nested panels are bounded by maxPanelDepth", func(t *testing.T) {
-		// A chain of nested rows, each carrying the next in its "panels" array.
-		panel := `{"type":"row","id":100,"panels":[]}`
-		for i := 99; i >= 0; i-- {
-			panel = fmt.Sprintf(`{"type":"row","id":%d,"panels":[%s]}`, i, panel)
-		}
-		json := fmt.Sprintf(`{"title":"nested","panels":[%s]}`, panel)
-
-		dash, err := ReadDashboard(strings.NewReader(json), dsLookupForTests())
-		require.NoError(t, err)
-		require.NotNil(t, dash)
-		require.Len(t, dash.Panels, 1)
-
-		// Walk the Collapsed chain; the depth must be bounded regardless of input depth.
-		depth := 0
-		for panels := dash.Panels; len(panels) > 0; panels = panels[0].Collapsed {
-			depth++
-		}
-		// The top-level panel is read at depth 0 and may recurse up to maxPanelDepth,
-		// yielding maxPanelDepth+1 panel objects in the chain.
-		require.Equal(t, maxPanelDepth+1, depth)
-	})
-
-	t.Run("a single spec and one-level row nesting parse normally", func(t *testing.T) {
-		json := `{"apiVersion":"v1","kind":"Dashboard","metadata":{},"spec":{` +
-			`"title":"ok","panels":[{"type":"row","id":1,"panels":[{"type":"timeseries","id":2}]}]}}`
-
-		dash, err := ReadDashboard(strings.NewReader(json), dsLookupForTests())
-		require.NoError(t, err)
-		require.Equal(t, "ok", dash.Title)
-		require.Len(t, dash.Panels, 1)
-		require.Len(t, dash.Panels[0].Collapsed, 1)
-	})
-}
-
 // assure consistent ordering of datasources to prevent random failures of `assert.JSONEq`
-func sortDatasources(dash *DashboardSummaryInfo) {
+func sortDatasources(dash *dashboardInfo) {
 	sort.Slice(dash.Datasource, func(i, j int) bool {
 		return strings.Compare(dash.Datasource[i].UID, dash.Datasource[j].UID) > 0
 	})

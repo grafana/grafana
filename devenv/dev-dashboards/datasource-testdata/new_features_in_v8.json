@@ -41,7 +41,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 8,
@@ -68,7 +68,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -165,7 +165,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 15,
@@ -345,7 +345,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 13,
@@ -372,7 +372,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -437,7 +437,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -527,7 +527,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 3,
@@ -554,7 +554,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -674,7 +674,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -767,7 +767,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 3,
@@ -794,7 +794,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 6,
@@ -821,7 +821,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -942,7 +942,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -1063,7 +1063,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -1184,7 +1184,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 8,
@@ -1211,7 +1211,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -1315,7 +1315,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "description": "",
       "fieldConfig": {
@@ -1422,7 +1422,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "description": "",
       "fieldConfig": {
@@ -1529,7 +1529,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 5,
@@ -1556,7 +1556,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -1669,7 +1669,9 @@
       "maxDataPoints": 50,
       "options": {
         "legend": {
-          "calcs": ["last"],
+          "calcs": [
+            "last"
+          ],
           "displayMode": "list",
           "placement": "bottom"
         },
@@ -1771,7 +1773,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 5,
@@ -1798,7 +1800,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -1819,7 +1821,10 @@
             },
             "lineInterpolation": "linear",
             "lineStyle": {
-              "dash": [10, 10],
+              "dash": [
+                10,
+                10
+              ],
               "fill": "dash"
             },
             "lineWidth": 2,
@@ -1861,7 +1866,10 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [10, 20],
+                  "dash": [
+                    10,
+                    20
+                  ],
                   "fill": "dash"
                 }
               }
@@ -1876,7 +1884,10 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [10, 30],
+                  "dash": [
+                    10,
+                    30
+                  ],
                   "fill": "dash"
                 }
               }
@@ -1891,7 +1902,11 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [30, 3, 3],
+                  "dash": [
+                    30,
+                    3,
+                    3
+                  ],
                   "fill": "dash"
                 }
               }
@@ -1917,7 +1932,10 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [0, 10],
+                  "dash": [
+                    0,
+                    10
+                  ],
                   "fill": "dot"
                 }
               }
@@ -2107,7 +2125,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -2128,7 +2146,10 @@
             },
             "lineInterpolation": "linear",
             "lineStyle": {
-              "dash": [10, 10],
+              "dash": [
+                10,
+                10
+              ],
               "fill": "dash"
             },
             "lineWidth": 2,
@@ -2170,7 +2191,10 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [10, 20],
+                  "dash": [
+                    10,
+                    20
+                  ],
                   "fill": "dash"
                 }
               }
@@ -2185,7 +2209,10 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [10, 30],
+                  "dash": [
+                    10,
+                    30
+                  ],
                   "fill": "dash"
                 }
               }
@@ -2200,7 +2227,11 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [30, 3, 3],
+                  "dash": [
+                    30,
+                    3,
+                    3
+                  ],
                   "fill": "dash"
                 }
               }
@@ -2226,7 +2257,10 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [0, 10],
+                  "dash": [
+                    0,
+                    10
+                  ],
                   "fill": "dot"
                 }
               }
@@ -2416,7 +2450,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -2437,7 +2471,10 @@
             },
             "lineInterpolation": "linear",
             "lineStyle": {
-              "dash": [10, 10],
+              "dash": [
+                10,
+                10
+              ],
               "fill": "solid"
             },
             "lineWidth": 1,
@@ -2541,7 +2578,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "gridPos": {
         "h": 3,
@@ -2568,7 +2605,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -2673,7 +2710,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -2777,7 +2814,11 @@
   ],
   "refresh": false,
   "schemaVersion": 33,
-  "tags": ["gdev", "graph-ng", "demo"],
+  "tags": [
+    "gdev",
+    "graph-ng",
+    "demo"
+  ],
   "templating": {
     "list": []
   },
@@ -2786,7 +2827,17 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    "refresh_intervals": [
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
   },
   "timezone": "",
   "title": "New Features in v8.0",

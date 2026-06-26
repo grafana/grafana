@@ -13,18 +13,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationDeleteCorrelation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ctx := NewTestEnv(t)
 
 	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin2",
-		Login:          "admin2",
+		Password:       "admin",
+		Login:          "admin",
 	})
 
 	editorUser := ctx.createUser(user.CreateUserCommand{
@@ -50,6 +50,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	}
 	dataSource = ctx.createDs(createDsCommand)
 	writableDs := dataSource.UID
+	writableDsId := dataSource.ID
 	writableDsOrgId := dataSource.OrgID
 
 	t.Run("Unauthenticated users shouldn't be able to delete correlations", func(t *testing.T) {
@@ -239,7 +240,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 
 		res := ctx.Delete(DeleteParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s", writableDs),
+			url:  fmt.Sprintf("/api/datasources/%d", writableDsId),
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)

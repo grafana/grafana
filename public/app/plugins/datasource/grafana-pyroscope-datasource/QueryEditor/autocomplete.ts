@@ -1,6 +1,4 @@
-import { type monacoTypes, type Monaco } from '@grafana/ui';
-
-import { formatLabelName } from '../utils';
+import { monacoTypes, Monaco } from '@grafana/ui';
 
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
@@ -73,7 +71,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.labels.map((key) => {
           return {
             label: key,
-            insertText: `{${formatLabelName(key)}="`,
+            insertText: `{${key}="`,
             type: 'LABEL_NAME',
           };
         });
@@ -82,7 +80,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.labels.map((key) => {
           return {
             label: key,
-            insertText: formatLabelName(key),
+            insertText: key,
             type: 'LABEL_NAME',
           };
         });
@@ -119,14 +117,14 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   }
 }
 
-type CompletionType = 'LABEL_NAME' | 'LABEL_VALUE';
+export type CompletionType = 'LABEL_NAME' | 'LABEL_VALUE';
 type Completion = {
   type: CompletionType;
   label: string;
   insertText: string;
 };
 
-type Label = {
+export type Label = {
   name: string;
   value: string;
 };
@@ -149,11 +147,11 @@ export type Situation =
       otherLabels: Label[];
     };
 
-const labelNameRegex = /(?:"(?:\\.|[^\\"])*"|[a-zA-Z_][a-zA-Z0-9_]*)/;
+const labelNameRegex = /[a-zA-Z_][a-zA-Z0-9_]*/;
 const labelValueRegex = /[^"]*/; // anything except a double quote
 const labelPairsRegex = new RegExp(`(${labelNameRegex.source})="(${labelValueRegex.source})"`, 'g');
 const inLabelValueRegex = new RegExp(`(${labelNameRegex.source})=("?)${labelValueRegex.source}$`);
-const inLabelNameRegex = new RegExp(/[{,]\s*(?:"(?:\\.|[^\\"])*"?|[a-zA-Z0-9_]*)$/);
+const inLabelNameRegex = new RegExp(/[{,]\s*[a-zA-Z0-9_]*$/);
 
 /**
  * Figure out where is the cursor and what kind of suggestions are appropriate.
@@ -172,10 +170,7 @@ function getSituation(text: string, offset: number): Situation {
   // Get all the labels so far in the query, so we can do some more filtering.
   const matches = text.matchAll(labelPairsRegex);
   const existingLabels = Array.from(matches).reduce<Label[]>((acc, match) => {
-    let [_, name, value] = match;
-    if (name.startsWith('"') && name.endsWith('"')) {
-      name = name.slice(1, -1).replace(/\\(.)/g, '$1');
-    }
+    const [_, name, value] = match[1];
     acc.push({ name, value });
     return acc;
   }, []);
@@ -183,13 +178,9 @@ function getSituation(text: string, offset: number): Situation {
   // Check if we are editing a label value right now. If so also get name of the label
   const matchLabelValue = text.substring(0, offset).match(inLabelValueRegex);
   if (matchLabelValue) {
-    let labelName = matchLabelValue[1];
-    if (labelName.startsWith('"') && labelName.endsWith('"')) {
-      labelName = labelName.slice(1, -1).replace(/\\(.)/g, '$1');
-    }
     return {
       type: 'IN_LABEL_VALUE',
-      labelName,
+      labelName: matchLabelValue[1],
       betweenQuotes: !!matchLabelValue[2],
       otherLabels: existingLabels,
     };

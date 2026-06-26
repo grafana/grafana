@@ -1,11 +1,11 @@
 // ConfigCard.tsx
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
-import { type IrmCardConfiguration } from './ConfigureIRM';
+import { IrmCardConfiguration } from './ConfigureIRM';
 import { ProgressBar, StepsStatus } from './ProgressBar';
 
 interface ConfigCardProps {
@@ -16,7 +16,6 @@ interface ConfigCardProps {
 
 export function ConfigCard({ config, handleActionClick, isLoading = false }: ConfigCardProps) {
   const styles = useStyles2(getStyles);
-
   return (
     <Stack direction={'column'} gap={1} justifyContent={'space-around'}>
       <div className={styles.cardContent}>
@@ -40,13 +39,7 @@ export function ConfigCard({ config, handleActionClick, isLoading = false }: Con
             )}
           </Stack>
           <Stack direction={'column'}>
-            {!isLoading ? (
-              config.description
-            ) : (
-              <LoadingPlaceholder
-                text={t('gops.config-card.text-loading-configuration', 'Loading configuration....')}
-              />
-            )}
+            {!isLoading ? config.description : <LoadingPlaceholder text="Loading configuration...." />}
             {/* Only show ProgressBar when not loading */}
             {!isLoading && config.stepsDone && config.totalStepsToDo && (
               <ProgressBar stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />

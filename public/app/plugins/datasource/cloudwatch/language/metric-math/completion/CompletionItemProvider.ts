@@ -1,11 +1,11 @@
-import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { type ResourcesAPI } from '../../../resources/ResourcesAPI';
+import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
-import { type LinkedToken } from '../../monarch/LinkedToken';
+import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
-import { SuggestionKind, CompletionItemPriority, type StatementPosition } from '../../monarch/types';
+import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
 import {
   METRIC_MATH_FNS,
   METRIC_MATH_KEYWORDS,

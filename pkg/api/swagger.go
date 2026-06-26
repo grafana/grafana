@@ -22,7 +22,7 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 
 	// The swagger based api navigator
 	r.Get("/swagger", func(c *contextmodel.ReqContext) {
-		ctx := c.Req.Context()
+		ctx := c.Context.Req.Context()
 		assets, err := webassets.GetWebAssets(ctx, hs.Cfg, hs.License)
 		if err != nil {
 			errhttp.Write(ctx, err, c.Resp)
@@ -30,13 +30,14 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 		}
 
 		data := map[string]any{
-			"Nonce":  c.RequestNonce,
-			"Assets": assets,
+			"Nonce":          c.RequestNonce,
+			"Assets":         assets,
+			"FavIcon":        "public/img/fav32.png",
+			"AppleTouchIcon": "public/img/apple-touch-icon.png",
 		}
 		if hs.Cfg.CSPEnabled {
 			data["CSPEnabled"] = true
-			hosts := middleware.CSPHostLists{FormActionAdditionalHosts: hs.Cfg.FormActionAdditionalHosts}
-			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, hosts, c.RequestNonce)
+			data["CSPContent"] = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, hs.Cfg.AppURL, c.RequestNonce)
 		}
 
 		c.HTML(http.StatusOK, "swagger", data)

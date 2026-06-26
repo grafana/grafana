@@ -25,7 +25,11 @@ cards:
   items:
     - title: Introduction
       href: ./fundamentals/
-      description: Learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team's ability to resolve issues quickly.
+      description: Learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly.
+      height: 24
+    - title: Set up
+      href: ./set-up/
+      description: Set up your implementation of Grafana Alerting.
       height: 24
     - title: Configure alert rules
       href: ./alerting-rules/
@@ -35,17 +39,13 @@ cards:
       href: ./configure-notifications/
       description: Choose how, when, and where to send your alert notifications.
       height: 24
-    - title: Monitor alerts
-      href: ./monitor-status/
+    - title: Detect and respond
+      href: ./manage-notifications/
       description: Monitor, respond to, and triage issues within your services.
       height: 24
-    - title: Additional configuration
-      href: ./set-up/
-      description: Use advanced configuration to customize your alerting setup and improve security, scalability, and automation in complex environments.
-      height: 24
-    - title: Best practices
-      href: ./best-practices/
-      description: Get practical guidance for handling common alert issues, and explore examples for creating both basic and advanced alerts.
+    - title: Monitor
+      href: ./monitor/
+      description: Monitor your alerting metrics to ensure you identify potential issues before they become critical.
       height: 24
 ---
 
@@ -59,8 +59,7 @@ Monitor your incoming metrics data or log entries and set up your Grafana Alerti
 
 In this way, you eliminate the need for manual monitoring and provide a first line of defense against system outages or changes that could turn into major incidents.
 
-Using Grafana Alerting, you create queries and expressions from multiple data sources, no matter where you store your data, giving you the flexibility to combine your data and alert on your metrics and logs in new and unique ways.
-You can then create, manage, and take action on your alerts from a single, consolidated view, and improve your team's ability to identify and resolve issues quickly.
+Using Grafana Alerting, you create queries and expressions from multiple data sources — no matter where your data is stored — giving you the flexibility to combine your data and alert on your metrics and logs in new and unique ways. You can then create, manage, and take action on your alerts from a single, consolidated view, and improve your team’s ability to identify and resolve issues quickly.
 
 ## Explore
 

@@ -3,16 +3,15 @@ package template
 import (
 	"context"
 	"errors"
-	"math"
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestLabelsString(t *testing.T) {
@@ -72,157 +71,6 @@ func TestExpandError(t *testing.T) {
 	assert.Equal(t, "failed to expand template '{{': unexpected {{", err.Error())
 }
 
-func TestNewData(t *testing.T) {
-	t.Run("uses evaluation string when no datasource nodes", func(t *testing.T) {
-		res := eval.Result{
-			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: false,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.0),
-				},
-			},
-		}
-
-		data := NewData(map[string]string{}, res)
-		assert.Equal(t, "[ var='A' labels={instance=foo} value=10 ]", data.Value)
-	})
-
-	t.Run("uses single datasource node value when exactly one exists", func(t *testing.T) {
-		res := eval.Result{
-			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.0),
-				},
-				"B": {
-					Var:              "B",
-					IsDatasourceNode: false,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(20.0),
-				},
-			},
-		}
-
-		data := NewData(map[string]string{}, res)
-		assert.Equal(t, 10.0, data.Value)
-	})
-
-	t.Run("uses evaluation string when multiple datasource nodes exist", func(t *testing.T) {
-		res := eval.Result{
-			EvaluationString: "[ var='A' labels={instance=foo} value=10 ]",
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.0),
-				},
-				"B": {
-					Var:              "B",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "bar"},
-					Value:            new(20.0),
-				},
-			},
-		}
-
-		data := NewData(map[string]string{}, res)
-		assert.Equal(t, "[ var='A' labels={instance=foo} value=10 ]", data.Value)
-	})
-}
-
-// TestDatasourceValueInTemplating tests the behavior of the $value variable in alert templates.
-// $value behavior has been changed to return a numeric value from the datasource query
-// when only a single datasource is used in the alerting rule. If more datasources are used,
-// $value will return the evaluation string.
-//
-// This change makes Grafana's templating more compatible with Prometheus templating,
-// where $value and .Value return the numeric value of the alert query.
-func TestDatasourceValueInTemplating(t *testing.T) {
-	t.Run("nil datasource value is rendered as NaN", func(t *testing.T) {
-		res := eval.Result{
-			EvaluationString: "[ var='A' labels={instance=foo} value=no data ]",
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            nil, // nil value
-				},
-			},
-		}
-
-		data := NewData(map[string]string{}, res)
-		// In Prometheus, a nil value would be rendered as NaN
-		assert.True(t, math.IsNaN(data.Value.(float64)))
-	})
-
-	t.Run("single datasource node uses query value", func(t *testing.T) {
-		res := eval.Result{
-			EvaluationString: "[ var='A' labels={instance=foo} value=10, var='B' labels={instance=foo} value=20, var='C' labels={instance=foo} value=30 ]",
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.0),
-				},
-				"B": {
-					Var:              "B",
-					IsDatasourceNode: false,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(20.0),
-				},
-				"C": {
-					Var:              "C",
-					IsDatasourceNode: false,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(30.0),
-				},
-			},
-		}
-
-		data := NewData(map[string]string{}, res)
-		assert.Equal(t, 10.0, data.Value)
-	})
-
-	t.Run("multiple datasource nodes uses evaluation string", func(t *testing.T) {
-		evalStr := "[ var='A' labels={instance=foo} value=10, var='B' labels={instance=foo} value=20, var='C' labels={instance=foo} value=30 ]"
-		res := eval.Result{
-			EvaluationString: evalStr,
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.0),
-				},
-				"B": {
-					Var:              "B",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(20.0),
-				},
-				"C": {
-					Var:              "C",
-					IsDatasourceNode: false,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(30.0),
-				},
-			},
-		}
-
-		data := NewData(map[string]string{}, res)
-		assert.Equal(t, evalStr, data.Value)
-	})
-}
-
 func TestExpandTemplate(t *testing.T) {
 	pathPrefix := "/path/prefix"
 	externalURL, err := url.Parse("http://localhost" + pathPrefix)
@@ -253,7 +101,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{"instance": "foo"},
-					Value:  new(1.0),
+					Value:  util.Pointer(1.0),
 				},
 			},
 		},
@@ -264,10 +112,9 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:              "A",
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(1.1),
-					IsDatasourceNode: true,
+					Var:    "A",
+					Labels: data.Labels{"instance": "foo"},
+					Value:  util.Pointer(1.1),
 				},
 			},
 		},
@@ -278,10 +125,9 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			Values: map[string]eval.NumberValueCapture{
 				"A": {
-					Var:              "A",
-					Labels:           data.Labels{},
-					Value:            new(1.0),
-					IsDatasourceNode: true,
+					Var:    "A",
+					Labels: data.Labels{},
+					Value:  util.Pointer(1.0),
 				},
 			},
 		},
@@ -299,58 +145,6 @@ func TestExpandTemplate(t *testing.T) {
 			},
 		},
 		expected: "foo has value NaN",
-	}, {
-		name: "$value is expanded into a number for a single datasource query",
-		text: `
-			current $value is: {{ $value }}
-			current .Value is: {{ .Value }}
-		`,
-		alertInstance: eval.Result{
-			Values: map[string]eval.NumberValueCapture{
-				"query": {
-					Var:              "query",
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.123),
-					IsDatasourceNode: true,
-				},
-				"math": {
-					Var:              "math",
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.0),
-					IsDatasourceNode: false,
-				},
-			},
-			EvaluationString: "[ var='query' labels={instance=foo} value=10.123, var='math' labels={instance=foo} value=10 ]",
-		},
-		expected: `current $value is: 10.123
-			current .Value is: 10.123
-		`,
-	}, {
-		name: "$value is expanded into a string for multi-datasource query",
-		text: `
-			current $value is: {{ $value }}
-			current .Value is: {{ .Value }}
-		`,
-		alertInstance: eval.Result{
-			Values: map[string]eval.NumberValueCapture{
-				"query": {
-					Var:              "query",
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.123),
-					IsDatasourceNode: true,
-				},
-				"second-query": {
-					Var:              "second-query",
-					Labels:           data.Labels{"instance": "bar"},
-					Value:            new(20.456),
-					IsDatasourceNode: true,
-				},
-			},
-			EvaluationString: "[ var='query' labels={instance=foo} value=10.123, var='second-query' labels={instance=bar} value=20.456 ]",
-		},
-		expected: `current $value is: [ var='query' labels={instance=foo} value=10.123, var='second-query' labels={instance=bar} value=20.456 ]
-			current .Value is: [ var='query' labels={instance=foo} value=10.123, var='second-query' labels={instance=bar} value=20.456 ]
-		`,
 	}, {
 		name: "assert value string is expanded into $value",
 		text: "{{ $value }}",
@@ -387,22 +181,22 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  new(0.0),
+					Value:  util.Pointer(0.0),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  new(1.0),
+					Value:  util.Pointer(1.0),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  new(1048576.0),
+					Value:  util.Pointer(1048576.0),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  new(.12),
+					Value:  util.Pointer(.12),
 				},
 			},
 		},
@@ -422,42 +216,42 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  new(0.0),
+					Value:  util.Pointer(0.0),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  new(1.0),
+					Value:  util.Pointer(1.0),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  new(60.0),
+					Value:  util.Pointer(60.0),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  new(3600.0),
+					Value:  util.Pointer(3600.0),
 				},
 				"E": {
 					Var:    "E",
 					Labels: data.Labels{},
-					Value:  new(86400.0),
+					Value:  util.Pointer(86400.0),
 				},
 				"F": {
 					Var:    "F",
 					Labels: data.Labels{},
-					Value:  new(86400.0 + 3600.0),
+					Value:  util.Pointer(86400.0 + 3600.0),
 				},
 				"G": {
 					Var:    "G",
 					Labels: data.Labels{},
-					Value:  new(-(86400*2 + 3600*3 + 60*4 + 5.0)),
+					Value:  util.Pointer(-(86400*2 + 3600*3 + 60*4 + 5.0)),
 				},
 				"H": {
 					Var:    "H",
 					Labels: data.Labels{},
-					Value:  new(899.99),
+					Value:  util.Pointer(899.99),
 				},
 			},
 		},
@@ -477,37 +271,37 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  new(.1),
+					Value:  util.Pointer(.1),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  new(.0001),
+					Value:  util.Pointer(.0001),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  new(.12345),
+					Value:  util.Pointer(.12345),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  new(60.1),
+					Value:  util.Pointer(60.1),
 				},
 				"E": {
 					Var:    "E",
 					Labels: data.Labels{},
-					Value:  new(60.5),
+					Value:  util.Pointer(60.5),
 				},
 				"F": {
 					Var:    "F",
 					Labels: data.Labels{},
-					Value:  new(1.2345),
+					Value:  util.Pointer(1.2345),
 				},
 				"G": {
 					Var:    "G",
 					Labels: data.Labels{},
-					Value:  new(12.345),
+					Value:  util.Pointer(12.345),
 				},
 			},
 		},
@@ -637,56 +431,8 @@ func TestExpandTemplate(t *testing.T) {
 		name:     "check that safeHtml doesn't error or panic",
 		text:     "{{ \"<b>\" | safeHtml }}",
 		expected: "<b>",
-	}, {
-		name: "$value numeric comparison with single datasource",
-		text: `{{ if eq $value 1.0 }}equal{{ else }}not equal{{ end }}`,
-		alertInstance: eval.Result{
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(1.0),
-				},
-			},
-		},
-		expected: "equal",
-	}, {
-		name: "humanize with string $value (multiple datasources)",
-		text: `{{ humanize $value }}`,
-		alertInstance: eval.Result{
-			EvaluationString: "1234567.0",
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(10.0),
-				},
-				"B": {
-					Var:              "B",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "bar"},
-					Value:            new(20.0),
-				},
-			},
-		},
-		expected: "1.235M",
-	}, {
-		name: "humanize with numeric $value (single datasource)",
-		text: `{{ humanize $value }}`,
-		alertInstance: eval.Result{
-			Values: map[string]eval.NumberValueCapture{
-				"A": {
-					Var:              "A",
-					IsDatasourceNode: true,
-					Labels:           data.Labels{"instance": "foo"},
-					Value:            new(1234567.0),
-				},
-			},
-		},
-		expected: "1.235M",
-	}}
+	},
+	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

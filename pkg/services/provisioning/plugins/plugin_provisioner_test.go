@@ -8,11 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 func TestPluginProvisioner(t *testing.T) {
@@ -39,16 +37,7 @@ func TestPluginProvisioner(t *testing.T) {
 		store := &mockStore{}
 		orgMock := orgtest.NewOrgServiceFake()
 		orgMock.ExpectedOrg = &org.Org{ID: 4}
-		ap := PluginProvisioner{
-			log:            log.New("test"),
-			cfgProvider:    reader,
-			pluginSettings: store,
-			orgService:     orgMock,
-			pluginStore: pluginstore.NewFakePluginStore(
-				pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-plugin"}},
-				pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-plugin-2"}},
-			),
-		}
+		ap := PluginProvisioner{log: log.New("test"), cfgProvider: reader, pluginSettings: store, orgService: orgMock}
 
 		err := ap.applyChanges(context.Background(), "")
 		require.NoError(t, err)
@@ -78,50 +67,6 @@ func TestPluginProvisioner(t *testing.T) {
 			require.Equal(t, tc.ExpectedJSONData, cmd.JSONData)
 			require.Equal(t, tc.ExpectedSecureJSONData, cmd.SecureJSONData)
 		}
-	})
-
-	t.Run("Should return error trying to disable an auto-enabled plugin", func(t *testing.T) {
-		cfg := []*pluginsAsConfig{
-			{
-				Apps: []*appFromConfig{
-					{PluginID: "test-plugin", OrgID: 2, Enabled: false},
-				},
-			},
-		}
-		reader := &testConfigReader{result: cfg}
-		store := &mockStore{}
-		ap := PluginProvisioner{
-			log:            log.New("test"),
-			cfgProvider:    reader,
-			pluginSettings: store,
-			pluginStore: pluginstore.NewFakePluginStore(
-				pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-plugin", AutoEnabled: true}},
-			),
-		}
-
-		err := ap.applyChanges(context.Background(), "")
-		require.ErrorIs(t, err, ErrPluginProvisioningAutoEnabled)
-	})
-
-	t.Run("Should return error trying to configure a non-existing plugin", func(t *testing.T) {
-		cfg := []*pluginsAsConfig{
-			{
-				Apps: []*appFromConfig{
-					{PluginID: "test-plugin", OrgID: 2, Enabled: false},
-				},
-			},
-		}
-		reader := &testConfigReader{result: cfg}
-		store := &mockStore{}
-		ap := PluginProvisioner{
-			log:            log.New("test"),
-			cfgProvider:    reader,
-			pluginSettings: store,
-			pluginStore:    pluginstore.NewFakePluginStore(),
-		}
-
-		err := ap.applyChanges(context.Background(), "")
-		require.ErrorIs(t, err, ErrPluginProvisioningNotFound)
 	})
 }
 

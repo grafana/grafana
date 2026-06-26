@@ -12,44 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { memo } from 'react';
+import * as React from 'react';
 
-import { t } from '@grafana/i18n';
 import { IconButton, Input } from '@grafana/ui';
 
 type Props = {
-  value?: string;
+  value: string | undefined;
   onChange: (value: string) => void;
 };
 
-const SearchBarInput = memo(({ value = '', onChange }: Props) => {
-  const clearUiFind = () => {
-    onChange('');
+export default class SearchBarInput extends React.PureComponent<Props> {
+  static defaultProps: Partial<Props> = {
+    value: undefined,
   };
 
-  const suffix = (
-    <>
-      {value && value.length && (
-        <IconButton
-          name="times"
-          onClick={clearUiFind}
-          tooltip={t('explore.search-bar-input.suffix.tooltip-clear-input', 'Clear input')}
+  clearUiFind = () => {
+    this.props.onChange('');
+  };
+
+  render() {
+    const { value } = this.props;
+
+    const suffix = (
+      <>{value && value.length && <IconButton name="times" onClick={this.clearUiFind} tooltip="Clear input" />}</>
+    );
+
+    return (
+      <div style={{ width: '200px' }}>
+        <Input
+          placeholder="Find..."
+          onChange={(e) => this.props.onChange(e.currentTarget.value)}
+          suffix={suffix}
+          value={value}
         />
-      )}
-    </>
-  );
-
-  return (
-    <div style={{ width: '200px' }}>
-      <Input
-        placeholder={t('explore.search-bar-input.placeholder-find', 'Find...')}
-        onChange={(e) => onChange(e.currentTarget.value)}
-        suffix={suffix}
-        value={value}
-      />
-    </div>
-  );
-});
-SearchBarInput.displayName = 'SearchBarInput';
-
-export default SearchBarInput;
+      </div>
+    );
+  }
+}

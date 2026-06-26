@@ -19,13 +19,6 @@ export interface RichHistorySettings {
   lastUsedDatasourceFilters?: string[];
 }
 
-export const DEFAULT_RICH_HISTORY_SETTINGS: RichHistorySettings = {
-  retentionPeriod: 14,
-  starredTabAsFirstTab: false,
-  activeDatasourcesOnly: false,
-  lastUsedDatasourceFilters: [],
-};
-
 export type RichHistorySearchFilters = {
   search: string;
   sortOrder: SortOrder;
@@ -35,7 +28,6 @@ export type RichHistorySearchFilters = {
   // so the resulting timerange from this will be [now - from, now - to].
   from?: number;
   to?: number;
-  // true if only starred entries should be returned, false if ALL entries should be returned,
   starred: boolean;
   page?: number;
 };

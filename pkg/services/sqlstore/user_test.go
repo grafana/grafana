@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,8 +11,9 @@ import (
 // admin user: getOrCreateOrg was unable to find the existing org.
 // https://github.com/grafana/grafana/issues/71781
 func TestIntegrationGetOrCreateOrg(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
 	ss, _ := InitTestDB(t)
 
 	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {

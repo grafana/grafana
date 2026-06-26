@@ -16,23 +16,40 @@ labels:
 menuTitle: Query editor
 title: Google Cloud Monitoring query editor
 weight: 300
+refs:
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  add-template-variables-add-interval-variable:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-an-interval-variable
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-an-interval-variable
 ---
 
 # Google Cloud Monitoring query editor
 
 This topic explains querying specific to the Google Cloud Monitoring data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
-## Query types
+## Choose a query editing mode
 
-The Google Cloud Monitoring query editor supports the following query types:
+The Google Cloud Monitoring query editor helps you build queries for two types of data, which both return time series data:
 
-| Query type                                                            | Description                                                                                      |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [**Builder**](#query-metrics)                                         | Build metrics queries visually by selecting a service, metric, filters, and aggregation options. |
-| [**MQL**](#use-the-monitoring-query-language)                         | Write queries using the Monitoring Query Language for advanced use cases.                        |
-| [**Service Level Objectives (SLO)**](#query-service-level-objectives) | Query SLO data to track service reliability and error budgets.                                   |
-| [**PromQL**](#query-with-promql)                                      | Write Prometheus-style queries against Google Cloud Monitoring metrics.                          |
+- [Metrics](#query-metrics)
+
+  You can also create [Monitoring Query Language (MQL)](#use-the-monitoring-query-language) queries.
+
+- [Service Level Objectives (SLO)](#query-service-level-objectives)
+
+You also use the query editor when you [annotate](#apply-annotations) visualizations.
 
 ## Query metrics
 
@@ -42,24 +59,15 @@ The metrics query editor helps you select metrics, group and aggregate by labels
 
 ### Create a metrics query
 
-1. Select **Builder** in the **Query type** dropdown.
+1. Select the **Metrics** option in the **Query Type** dropdown.
 1. Select a project from the **Project** dropdown.
 1. Select a Google Cloud Platform service from the **Service** dropdown.
 1. Select a metric from the **Metric** dropdown.
 1. _(Optional)_ Use the plus and minus icons in the filter and group-by sections to add and remove filters or group-by clauses.
 
 Google Cloud Monitoring supports several metrics types, such as `GAUGE`, `DELTA,` and `CUMULATIVE`.
-Each supports different aggregation options, such as reducers and aligners. Additionally, metrics have specific value types that can be either scalar or a distribution.
-
-The metrics query editor lists available aggregation methods for a selected metric, and sets a default aggregation, reducer and aligner when you select a metric.
-
-In the case that the metric value type is a distribution, the aggregation will be set by default to the mean. For scalar value types, there is no aggregation by default.
-
-The various metrics are documented [here](https://cloud.google.com/monitoring/api/metrics_gcp) and further details on the kinds and types of metrics can be found [here](https://cloud.google.com/monitoring/api/v3/kinds-and-types).
-
-{{< admonition type="note" >}}
-Distribution metrics are typically best visualized as either a heatmap or histogram. When visualizing in this way, aggregation is not necessary. However, for other visualization types, performance degradation may be observed when attempting to query distribution metrics that are not aggregated due to the number of potential buckets that can be returned. For more information on how to visualize distribution metrics refer to [this page](https://cloud.google.com/monitoring/charts/charting-distribution-metrics).
-{{< /admonition >}}
+Each supports different aggregation options, such as reducers and aligners.
+The metrics query editor lists available aggregation methods for a selected metric, and sets a default reducer and aligner when you select a metric.
 
 ### Apply a filter
 
@@ -147,7 +155,7 @@ The default values for "cloud monitoring auto" are:
 
 The other automatic option is "grafana auto", which automatically sets the Group By time depending on the time range chosen and width of the time series panel.
 
-For more information about "grafana auto", refer to [Interval variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-an-interval-variable).
+For more information about "grafana auto", refer to [Interval variable](ref:add-template-variables-add-interval-variable).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -217,21 +225,9 @@ To understand basic MQL concepts, refer to [Introduction to Monitoring Query Lan
 
 **To create an MQL query:**
 
-1. Select **MQL** in the **Query type** dropdown.
+1. Select the **Metrics** option in the **Query Type** dropdown.
 1. Select a project from the **Project** dropdown.
 1. Enter your MQL query in the text area.
-1. _(Optional)_ Configure the **Graph period** setting.
-
-Press `Shift+Enter` to run the query.
-
-#### Configure MQL options
-
-The following options are available for MQL queries:
-
-| Setting          | Description                                                                                                                                           |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Alias by**     | Control the format of legend keys. Refer to [Set alias patterns for MQL queries](#set-alias-patterns-for-mql-queries) for available patterns.         |
-| **Graph period** | Enable the toggle to override the default time period. Select a period from the dropdown to control the granularity of the returned time series data. |
 
 ### Set alias patterns for MQL queries
 
@@ -250,7 +246,7 @@ To understand basic concepts in service monitoring, refer to the [Google Cloud M
 
 **To create an SLO query:**
 
-1. Select **Service Level Objectives (SLO)** in the **Query type** dropdown.
+1. Select the **Service Level Objectives (SLO)** option in the **Query Type** dropdown.
 1. Select a project from the **Project** dropdown.
 1. Select an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
 1. Select an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
@@ -280,46 +276,41 @@ The **Alias By** field helps you control the format of legend keys for SLO queri
 
 SLO queries use the same alignment period functionality as [metric queries](#define-the-alignment-period).
 
-## Query with PromQL
+### Create a Prometheus query
 
-The PromQL query type allows you to query Google Cloud Monitoring metrics using Prometheus Query Language (PromQL) syntax. This is useful if you're familiar with PromQL from Prometheus or Grafana Mimir and want to use the same query syntax with Google Cloud Monitoring data.
+**To create an Prometheus query:**
 
-For more information about PromQL support in Google Cloud Monitoring, refer to the [Google Cloud documentation on PromQL](https://cloud.google.com/monitoring/promql).
-
-### Create a PromQL query
-
-To create a PromQL query:
-
-1. Select **PromQL** in the **Query type** dropdown.
+1. Select the **PromQL** option in the **Query Type** dropdown.
 1. Select a project from the **Project** dropdown.
-1. Enter your PromQL query in the text area.
+1. Enter your Prometheus query in the text area.
+1. Enter a Min Step interval. The **Min step** setting defines the lower bounds on the interval between data points. For example, set this to `1h` to hint that measurements are taken hourly. This setting supports the `$__interval` and `$__rate_interval` macros.
 
-### Configure PromQL options
+## Apply annotations
 
-The following options are available for PromQL queries:
+{{< figure src="/static/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
-| Setting      | Description                                                                                                                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Min step** | Defines the lower bounds on the interval between data points. For example, set this to `1h` to hint that measurements are taken hourly. Supports the `$__interval` and `$__rate_interval` macros. |
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
+You can add annotation queries in the Dashboard menu's Annotations view.
 
-### PromQL query examples
+Rendering annotations is expensive, and it's important to limit the number of rows returned.
+There's no support for displaying Google Cloud Monitoring's annotations and events, but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.
 
-The following examples show common PromQL query patterns for Google Cloud Monitoring:
+With the query editor for annotations, you can select a metric and filters.
+The `Title` and `Text` fields support templating and can use data returned from the query.
 
-**Query CPU utilization for Compute Engine instances:**
+For example, the Title field could have the following text:
 
-```promql
-compute_googleapis_com:instance_cpu_utilization
-```
+`{{metric.type}} has value: {{metric.value}}`
 
-**Filter by label:**
+Example result: `monitoring.googleapis.com/uptime_check/http_status has this value: 502`
 
-```promql
-compute_googleapis_com:instance_cpu_utilization{instance_name="my-instance"}
-```
+### Patterns for the annotation query editor
 
-**Calculate the rate of a counter metric:**
-
-```promql
-rate(logging_googleapis_com:log_entry_count[5m])
-```
+| Alias pattern format     | Description                       | Alias pattern example            | Example result                                    |
+| ------------------------ | --------------------------------- | -------------------------------- | ------------------------------------------------- |
+| `{{metric.value}}`       | Value of the metric/point.        | `{{metric.value}}`               | `555`                                             |
+| `{{metric.type}}`        | Returns the full Metric Type.     | `{{metric.type}}`                | `compute.googleapis.com/instance/cpu/utilization` |
+| `{{metric.name}}`        | Returns the metric name part.     | `{{metric.name}}`                | `instance/cpu/utilization`                        |
+| `{{metric.service}}`     | Returns the service part.         | `{{metric.service}}`             | `compute`                                         |
+| `{{metric.label.xxx}}`   | Returns the metric label value.   | `{{metric.label.instance_name}}` | `grafana-1-prod`                                  |
+| `{{resource.label.xxx}}` | Returns the resource label value. | `{{resource.label.zone}}`        | `us-east1-b`                                      |

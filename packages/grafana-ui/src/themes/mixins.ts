@@ -1,6 +1,6 @@
 import tinycolor from 'tinycolor2';
 
-import { type GrafanaTheme, type GrafanaTheme2, type Radii } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 
 export function cardChrome(theme: GrafanaTheme2): string {
   return `
@@ -65,91 +65,20 @@ export function getFocusStyles(theme: GrafanaTheme2) {
   return {
     outline: '2px dotted transparent',
     outlineOffset: '2px',
-    boxShadow: `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.accent.main}`,
+    boxShadow: `0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main}`,
     transitionTimingFunction: `cubic-bezier(0.19, 1, 0.22, 1)`,
     transitionDuration: '0.2s',
     transitionProperty: 'outline, outline-offset, box-shadow',
   };
 }
 
-export function getButtonFocusStyles(theme: GrafanaTheme2) {
-  return {
-    ...getFocusStyles(theme),
-    transitionProperty: undefined,
-  };
-}
-
 // max-width is set up based on .grafana-tooltip class that's used in dashboard
 export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
   overflow: 'hidden',
-  background: theme.colors.background.elevated,
+  background: theme.colors.background.secondary,
   boxShadow: theme.shadows.z2,
   maxWidth: '800px',
   padding: theme.spacing(1),
   borderRadius: theme.shape.radius.default,
   zIndex: theme.zIndex.tooltip,
 });
-
-/**
- * `pill`/`circle` are excluded as they aren't meaningful inside the relative radius calculations.
- */
-type RadiusToken = keyof Omit<Radii, 'pill' | 'circle'>;
-
-/**
- * Parses a radius value (either a number or a radius token) to a CSS string.
- */
-const parseRadius = (theme: GrafanaTheme2, radius?: number | RadiusToken): string => {
-  if (radius === undefined) {
-    return theme.shape.radius.default;
-  }
-  return typeof radius === 'number' ? `${radius}px` : theme.shape.radius[radius];
-};
-
-interface ExternalRadiusAdditionalOptions {
-  selfBorderWidth?: number;
-  childBorderRadius?: number | RadiusToken;
-}
-/**
- * Calculates a border radius for an element, based on border radius of its child.
- *
- * @param theme
- * @param offset - The distance to offset from the child element, should be >= 0.
- * @param additionalOptions
- * @param additionalOptions.selfBorderWidth - The border width of the element itself (default: 1)
- * @param additionalOptions.childBorderRadius - The border radius of the child element, either a px number or a radius token name ('default' | 'md' | 'sm' | 'lg') (default: theme default radius)
- * @returns A CSS calc() expression that returns the relative external radius value
- */
-export const getExternalRadius = (
-  theme: GrafanaTheme2,
-  offset: number,
-  additionalOptions: ExternalRadiusAdditionalOptions = {}
-) => {
-  const { selfBorderWidth = 1, childBorderRadius } = additionalOptions;
-
-  return `calc(max(0px, ${parseRadius(theme, childBorderRadius)} + ${offset}px + ${selfBorderWidth}px))`;
-};
-
-interface InternalRadiusAdditionalOptions {
-  parentBorderWidth?: number;
-  parentBorderRadius?: number | RadiusToken;
-}
-
-/**
- * Calculates a border radius for an element, based on border radius of its parent.
- *
- * @param theme
- * @param offset - The distance to offset from the parent element, should be >= 0.
- * @param additionalOptions
- * @param additionalOptions.parentBorderWidth - The border width of the parent element (default: 1)
- * @param additionalOptions.parentBorderRadius - The border radius of the parent element, either a px number or a radius token name ('default' | 'md' | 'sm' | 'lg') (default: theme default radius)
- * @returns A CSS calc() expression that returns the relative internal radius value
- */
-export const getInternalRadius = (
-  theme: GrafanaTheme2,
-  offset: number,
-  additionalOptions: InternalRadiusAdditionalOptions = {}
-) => {
-  const { parentBorderWidth = 1, parentBorderRadius } = additionalOptions;
-
-  return `calc(max(0px, ${parseRadius(theme, parentBorderRadius)} - ${offset}px - ${parentBorderWidth}px))`;
-};

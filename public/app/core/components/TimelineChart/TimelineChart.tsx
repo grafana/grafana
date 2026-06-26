@@ -1,19 +1,16 @@
-import { useCallback } from 'react';
+import { Component } from 'react';
 
-import { type DataFrame, FALLBACK_COLOR, FieldType, type TimeRange } from '@grafana/data';
-import {
-  type TimelineValueAlignment,
-  TooltipDisplayMode,
-  type VisibilityMode,
-  type VizTooltipOptions,
-} from '@grafana/schema';
-import { type UPlotConfigBuilder, VizLayout, VizLegend, type VizLegendItem } from '@grafana/ui';
+import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
+import { VisibilityMode, TimelineValueAlignment, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
+import { UPlotConfigBuilder, VizLayout, VizLegend, VizLegendItem } from '@grafana/ui';
 
-import { GraphNG, type GraphNGProps } from '../GraphNG/GraphNG';
-import { getXAxisConfig } from '../TimeSeries/utils';
+import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
 
-import { preparePlotConfigBuilder, type TimelineMode } from './utils';
+import { preparePlotConfigBuilder, TimelineMode } from './utils';
 
+/**
+ * @alpha
+ */
 export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
   rowHeight?: number;
@@ -26,95 +23,70 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   paginationRev?: string;
 }
 
-const propsToDiff = [
-  'rowHeight',
-  'colWidth',
-  'showValue',
-  'mergeValues',
-  'alignValue',
-  'tooltip',
-  'paginationRev',
-  'annotationLanes',
-  'theme',
-];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue', 'tooltip', 'paginationRev'];
 
-export const TimelineChart = (props: TimelineProps) => {
-  const { frames, timeZone, rowHeight, tooltip, legend, legendItems } = props;
+export class TimelineChart extends Component<TimelineProps> {
+  getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
+    const field = this.props.frames[frameIdx]?.fields[fieldIdx];
 
-  const getValueColor = useCallback(
-    (frameIdx: number, fieldIdx: number, value: unknown) => {
-      const field = frames[frameIdx]?.fields[fieldIdx];
-
-      if (field?.display) {
-        const disp = field.display(value); // will apply color modes
-        if (disp.color) {
-          return disp.color;
-        }
+    if (field?.display) {
+      const disp = field.display(value); // will apply color modes
+      if (disp.color) {
+        return disp.color;
       }
+    }
 
-      return FALLBACK_COLOR;
-    },
-    [frames]
-  );
+    return FALLBACK_COLOR;
+  };
 
-  const prepConfig = useCallback(
-    (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-      return preparePlotConfigBuilder({
-        frame: alignedFrame,
-        getTimeRange,
-        allFrames: frames,
-        ...props,
+  prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
+    return preparePlotConfigBuilder({
+      frame: alignedFrame,
+      getTimeRange,
+      allFrames: this.props.frames,
+      ...this.props,
 
-        // Ensure timezones is passed as an array
-        timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
+      // Ensure timezones is passed as an array
+      timeZones: Array.isArray(this.props.timeZone) ? this.props.timeZone : [this.props.timeZone],
 
-        // When there is only one row, use the full space
-        rowHeight: alignedFrame.fields.length > 2 ? rowHeight : 1,
-        getValueColor: getValueColor,
+      // When there is only one row, use the full space
+      rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
+      getValueColor: this.getValueColor,
 
-        hoverMulti: tooltip?.mode === TooltipDisplayMode.Multi,
-        xAxisConfig: getXAxisConfig(props.annotationLanes),
-      });
-    },
-    [frames, props, timeZone, rowHeight, getValueColor, tooltip]
-  );
+      hoverMulti: this.props.tooltip?.mode === TooltipDisplayMode.Multi,
+    });
+  };
 
-  const renderLegend = useCallback(
-    (config: UPlotConfigBuilder) => {
-      if (!config || !legendItems || !legend || legend.showLegend === false) {
-        return null;
-      }
+  renderLegend = (config: UPlotConfigBuilder) => {
+    const { legend, legendItems } = this.props;
 
-      return (
-        <VizLayout.Legend placement={legend.placement}>
-          <VizLegend
-            placement={legend.placement}
-            items={legendItems}
-            displayMode={legend.displayMode}
-            overflow={legend.overflow}
-            readonly
-          />
-        </VizLayout.Legend>
-      );
-    },
-    [legend, legendItems]
-  );
+    if (!config || !legendItems || !legend || legend.showLegend === false) {
+      return null;
+    }
 
-  return (
-    <GraphNG
-      {...props}
-      fields={{
-        x: (f) => f.type === FieldType.time,
-        y: (f) =>
-          f.type === FieldType.number ||
-          f.type === FieldType.boolean ||
-          f.type === FieldType.string ||
-          f.type === FieldType.enum,
-      }}
-      prepConfig={prepConfig}
-      propsToDiff={propsToDiff}
-      renderLegend={renderLegend}
-      omitHideFromViz={true}
-    />
-  );
-};
+    return (
+      <VizLayout.Legend placement={legend.placement}>
+        <VizLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} readonly />
+      </VizLayout.Legend>
+    );
+  };
+
+  render() {
+    return (
+      <GraphNG
+        {...this.props}
+        fields={{
+          x: (f) => f.type === FieldType.time,
+          y: (f) =>
+            f.type === FieldType.number ||
+            f.type === FieldType.boolean ||
+            f.type === FieldType.string ||
+            f.type === FieldType.enum,
+        }}
+        prepConfig={this.prepConfig}
+        propsToDiff={propsToDiff}
+        renderLegend={this.renderLegend}
+      />
+    );
+  }
+}

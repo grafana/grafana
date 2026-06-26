@@ -1,14 +1,13 @@
 import { createAction } from '@reduxjs/toolkit';
 import { omit } from 'lodash';
 
-import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
-import { type PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
+import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaRulerRule, mockRulerAlertingRule, mockRulerGrafanaRule, mockRulerRecordingRule } from '../../mocks';
 import { fromRulerRule } from '../../utils/rule-id';
 
 import {
-  type SwapOperation,
   addRuleAction,
   deleteRuleAction,
   moveRuleGroupAction,
@@ -18,6 +17,7 @@ import {
   reorderRulesInRuleGroupAction,
   ruleGroupReducer,
   swapItems,
+  SwapOperation,
   updateRuleAction,
   updateRuleGroupAction,
 } from './ruleGroups';

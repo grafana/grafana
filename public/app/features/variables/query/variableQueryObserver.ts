@@ -1,12 +1,12 @@
-import { type Observer, type Subscription } from 'rxjs';
+import { Observer, Subscription } from 'rxjs';
 
 import { LoadingState } from '@grafana/data';
 
-import { type UpdateOptionsResults } from './VariableQueryRunner';
+import { UpdateOptionsResults } from './VariableQueryRunner';
 
 export function variableQueryObserver(
-  resolve: (value?: unknown) => void,
-  reject: (value?: unknown) => void,
+  resolve: (value?: any) => void,
+  reject: (value?: any) => void,
   subscription: Subscription
 ): Observer<UpdateOptionsResults> {
   const observer: Observer<UpdateOptionsResults> = {

@@ -1,8 +1,7 @@
 import { isString } from 'lodash';
 
 import { ALIGNMENT_PERIODS, SELECTORS } from './constants';
-import { MetricFindQueryTypes, type ValueTypes } from './dataquery.gen';
-import type CloudMonitoringDatasource from './datasource';
+import CloudMonitoringDatasource from './datasource';
 import {
   extractServicesFromMetricDescriptors,
   getAggregationOptionsByMetric,
@@ -10,7 +9,8 @@ import {
   getLabelKeys,
   getMetricTypesByService,
 } from './functions';
-import { type CloudMonitoringVariableQuery, type MetricDescriptor } from './types/types';
+import { ValueTypes, MetricFindQueryTypes } from './types/query';
+import { CloudMonitoringVariableQuery, MetricDescriptor } from './types/types';
 
 export default class CloudMonitoringMetricFindQuery {
   constructor(private datasource: CloudMonitoringDatasource) {}
@@ -174,6 +174,6 @@ export default class CloudMonitoringMetricFindQuery {
   }
 
   toFindQueryResult(x: any) {
-    return isString(x) ? { text: x, expandable: true } : { ...x, text: x.label || x.value, expandable: true };
+    return isString(x) ? { text: x, expandable: true } : { ...x, expandable: true };
   }
 }

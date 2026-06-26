@@ -1,4 +1,4 @@
-import { type AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types';
 
 export type ResourcePermission = {
   id: number;
@@ -7,12 +7,10 @@ export type ResourcePermission = {
   isInherited: boolean;
   isServiceAccount: boolean;
   userId?: number;
-  userUid?: string;
   userLogin?: string;
   userAvatarUrl?: string;
   team?: string;
   teamId?: number;
-  teamUid?: string;
   teamAvatarUrl?: string;
   builtInRole?: string;
   actions: AccessControlAction[];
@@ -22,8 +20,8 @@ export type ResourcePermission = {
 };
 
 export type SetPermission = {
-  userUid?: string;
-  teamUid?: string;
+  userId?: number;
+  teamId?: number;
   builtInRole?: string;
   permission: string;
   target: PermissionTarget;

@@ -2,9 +2,9 @@ import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { CoreApp } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Field, LoadingPlaceholder, Alert, TextLink } from '@grafana/ui';
+import { Field, LoadingPlaceholder, Alert } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   dsUid?: string;
@@ -34,12 +34,13 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
         <span>
           <Trans i18nKey="correlations.query-editor.query-description">
             Define the query that is run when the link is clicked. You can use{' '}
-            <TextLink
+            <a
               href="https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/"
-              external
+              target="_blank"
+              rel="noreferrer"
             >
               variables
-            </TextLink>{' '}
+            </a>{' '}
             to access specific field values.
           </Trans>
         </span>

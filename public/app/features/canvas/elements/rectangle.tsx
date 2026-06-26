@@ -1,35 +1,36 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { PureComponent } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
-import { type DimensionContext } from 'app/features/dimensions/context';
+import { GrafanaTheme2, OneClickMode } from '@grafana/data';
+import { stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
 import {
-  type CanvasElementItem,
-  type CanvasElementOptions,
-  type CanvasElementProps,
+  CanvasElementItem,
+  CanvasElementOptions,
+  CanvasElementProps,
   defaultBgColor,
   defaultTextColor,
 } from '../element';
-import { Align, type TextConfig, type TextData, VAlign } from '../types';
+import { Align, TextConfig, TextData, VAlign } from '../types';
 
-const RectangleDisplay = memo<CanvasElementProps<TextConfig, TextData>>(({ data }) => {
-  const styles = useStyles2(getStyles, data);
+class RectangleDisplay extends PureComponent<CanvasElementProps<TextConfig, TextData>> {
+  render() {
+    const { data } = this.props;
+    const styles = getStyles(config.theme2, data);
 
-  return (
-    <div className={styles.container}>
-      <span className={styles.span}>{data?.text}</span>
-    </div>
-  );
-});
+    return (
+      <div className={styles.container}>
+        <span className={styles.span}>{data?.text}</span>
+      </div>
+    );
+  }
+}
 
-RectangleDisplay.displayName = 'RectangleDisplay';
-
-const getStyles = (theme: GrafanaTheme2, data: TextData | undefined) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
   container: css({
     position: 'absolute',
     height: '100%',
@@ -43,7 +44,7 @@ const getStyles = (theme: GrafanaTheme2, data: TextData | undefined) => ({
     fontSize: `${data?.size}px`,
     color: data?.color,
   }),
-});
+}));
 
 export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
   id: 'rectangle',
@@ -71,6 +72,7 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
         fixed: defaultBgColor,
       },
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
     links: options?.links ?? [],
   }),
 
@@ -95,20 +97,20 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.rectangle-item.category-rectangle', 'Rectangle')];
+    const category = ['Rectangle'];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: t('canvas.rectangle-item.name-text', 'Text'),
+        name: 'Text',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: t('canvas.rectangle-item.name-text-color', 'Text color'),
+        name: 'Text color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -116,12 +118,12 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.align',
-        name: t('canvas.rectangle-item.name-align-text', 'Align text'),
+        name: 'Align text',
         settings: {
           options: [
-            { value: Align.Left, label: t('canvas.rectangle-item.label.left', 'Left') },
-            { value: Align.Center, label: t('canvas.rectangle-item.label.center', 'Center') },
-            { value: Align.Right, label: t('canvas.rectangle-item.label.right', 'Right') },
+            { value: Align.Left, label: 'Left' },
+            { value: Align.Center, label: 'Center' },
+            { value: Align.Right, label: 'Right' },
           ],
         },
         defaultValue: Align.Left,
@@ -129,12 +131,12 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: t('canvas.rectangle-item.name-vertical-align', 'Vertical align'),
+        name: 'Vertical align',
         settings: {
           options: [
-            { value: VAlign.Top, label: t('canvas.rectangle-item.label.top', 'Top') },
-            { value: VAlign.Middle, label: t('canvas.rectangle-item.label.middle', 'Middle') },
-            { value: VAlign.Bottom, label: t('canvas.rectangle-item.label.bottom', 'Bottom') },
+            { value: VAlign.Top, label: 'Top' },
+            { value: VAlign.Middle, label: 'Middle' },
+            { value: VAlign.Bottom, label: 'Bottom' },
           ],
         },
         defaultValue: VAlign.Middle,
@@ -142,9 +144,9 @@ export const rectangleItem: CanvasElementItem<TextConfig, TextData> = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: t('canvas.rectangle-item.name-text-size', 'Text size'),
+        name: 'Text size',
         settings: {
-          placeholder: t('canvas.rectangle-item.placeholder.auto', 'Auto'),
+          placeholder: 'Auto',
         },
       });
   },

@@ -1,20 +1,20 @@
 import {
   CoreApp,
-  type DataFrame,
-  type DataLink,
+  DataFrame,
+  DataLink,
   DataLinkConfigOrigin,
   dateTime,
-  type Field,
+  Field,
   FieldType,
-  type InterpolateFunction,
+  InterpolateFunction,
   SupportedTransformationType,
-  type TimeRange,
+  TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { setTemplateSrv, reportInteraction } from '@grafana/runtime';
 
 import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
-import { type ContextSrv, setContextSrv } from '../../../core/services/context_srv';
+import { ContextSrv, setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
 import { getFieldLinksForExplore, getVariableUsageInfo } from './links';
@@ -100,7 +100,7 @@ describe('explore links utils', () => {
 
       expect(links[0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1","datasource":{"uid":"uid_1"}}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
         )}`
       );
       expect(links[0].title).toBe('test_ds');
@@ -115,7 +115,7 @@ describe('explore links utils', () => {
 
       expect(splitfn).toBeCalledWith({
         datasourceUid: 'uid_1',
-        queries: [{ query: 'query_1', datasource: { uid: 'uid_1' } }],
+        queries: [{ query: 'query_1' }],
         range,
         panelsState: {
           trace: {
@@ -178,7 +178,7 @@ describe('explore links utils', () => {
       expect(links).toHaveLength(1);
       expect(links[0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
         )}`
       );
     });
@@ -197,7 +197,7 @@ describe('explore links utils', () => {
       expect(links).toHaveLength(1);
       expect(links[0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
         )}`
       );
     });
@@ -225,7 +225,7 @@ describe('explore links utils', () => {
       expect(links).toHaveLength(1);
       expect(links[0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
         )}`
       );
     });
@@ -267,7 +267,7 @@ describe('explore links utils', () => {
       expect(links).toHaveLength(1);
       expect(links[0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}]}'
         )}`
       );
     });
@@ -306,7 +306,7 @@ describe('explore links utils', () => {
       expect(links[0]).toHaveLength(1);
       expect(links[0][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo env=dev}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo env=dev}"}]}'
         )}`
       );
 
@@ -319,7 +319,7 @@ describe('explore links utils', () => {
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=bar env=prod}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=bar env=prod}"}]}'
         )}`
       );
     });
@@ -357,13 +357,13 @@ describe('explore links utils', () => {
       expect(links[0]).toHaveLength(1);
       expect(links[0][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=banana}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=banana}"}]}'
         )}`
       );
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=apple}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=apple}"}]}'
         )}`
       );
     });
@@ -414,13 +414,13 @@ describe('explore links utils', () => {
       expect(links[0]).toHaveLength(1);
       expect(links[0][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=broccoli}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=broccoli}"}]}'
         )}`
       );
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=cauliflower}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=cauliflower}"}]}'
         )}`
       );
     });
@@ -453,13 +453,13 @@ describe('explore links utils', () => {
       expect(links[0]).toHaveLength(1);
       expect(links[0][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo isOnline=true}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo isOnline=true}"}]}'
         )}`
       );
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=bar isOnline=false}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=bar isOnline=false}"}]}'
         )}`
       );
     });
@@ -505,13 +505,13 @@ describe('explore links utils', () => {
       expect(links[0]).toHaveLength(1);
       expect(links[0][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform}"}]}'
         )}`
       );
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform2}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform2}"}]}'
         )}`
       );
     });
@@ -552,20 +552,20 @@ describe('explore links utils', () => {
       expect(links[0]).toHaveLength(1);
       expect(links[0][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=loki env=prod}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=loki env=prod}"}]}'
         )}`
       );
       expect(links[1]).toHaveLength(1);
       expect(links[1][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=dev}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=dev}"}]}'
         )}`
       );
 
       expect(links[2]).toHaveLength(1);
       expect(links[2][0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=prod}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=prod}"}]}'
         )}`
       );
     });
@@ -655,7 +655,7 @@ describe('explore links utils', () => {
       expect(links[0].variables![0].value).toBe('');
       expect(links[0].href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=test}","datasource":{"uid":"uid_1"}}]}'
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=test}"}]}'
         )}`
       );
     });

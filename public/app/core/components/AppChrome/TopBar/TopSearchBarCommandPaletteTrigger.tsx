@@ -1,46 +1,52 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
-import React, { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { getInputStyles, Icon, Text, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { getFocusStyles } from '@grafana/ui/internal';
-import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { config } from '@grafana/runtime';
+import { getInputStyles, Icon, Text, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
-import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
-
-export const TopSearchBarCommandPaletteTrigger = React.memo(() => {
+export function TopSearchBarCommandPaletteTrigger() {
+  const theme = useTheme2();
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   const { query: kbar } = useKBar((kbarState) => ({
     kbarSearchQuery: kbarState.searchQuery,
     kbarIsOpen: kbarState.visualState === VisualState.showing,
   }));
 
-  const isLargeScreen = useMediaQueryMinWidth('lg');
+  const breakpoint = isSingleTopNav ? theme.breakpoints.values.lg : theme.breakpoints.values.sm;
+
+  const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
+
+  useMediaQueryChange({
+    breakpoint,
+    onChange: (e) => {
+      setIsSmallScreen(!e.matches);
+    },
+  });
 
   const onOpenSearch = () => {
     kbar.toggle();
   };
 
-  if (!isLargeScreen) {
+  if (isSmallScreen) {
     return (
-      <>
-        <ToolbarButton
-          iconOnly
-          icon="search"
-          aria-label={t('nav.search.placeholderCommandPalette', 'Search...')}
-          onClick={onOpenSearch}
-        />
-        <NavToolbarSeparator />
-      </>
+      <ToolbarButton
+        iconOnly
+        icon="search"
+        aria-label={t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
+        onClick={onOpenSearch}
+      />
     );
   }
 
   return <PretendTextInput onClick={onOpenSearch} />;
-});
-TopSearchBarCommandPaletteTrigger.displayName = 'TopSearchBarCommandPaletteTrigger';
+}
 
 interface PretendTextInputProps {
   onClick: () => void;
@@ -62,11 +68,12 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
         </div>
 
         <button className={styles.fakeInput} onClick={onClick}>
-          {t('nav.search.placeholderCommandPalette', 'Search...')}
+          {t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
         </button>
 
         <div className={styles.suffix}>
-          <Text variant="bodySmall">{`${modKey}+k`}</Text>
+          <Icon name="keyboard" />
+          <Text variant="bodySmall">{modKey}+k</Text>
         </div>
       </div>
     </div>
@@ -77,15 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   const baseStyles = getInputStyles({ theme });
 
   return {
-    wrapper: cx(
-      baseStyles.wrapper,
-      css({
-        width: 'auto',
-        minWidth: 140,
-        maxWidth: 350,
-        flexGrow: 1,
-      })
-    ),
+    wrapper: baseStyles.wrapper,
     inputWrapper: baseStyles.inputWrapper,
     prefix: baseStyles.prefix,
     suffix: css([
@@ -112,5 +111,18 @@ const getStyles = (theme: GrafanaTheme2) => {
         '&:focus-visible': getFocusStyles(theme),
       },
     ]),
+
+    button: css({
+      // height: 32,
+      width: '100%',
+      textAlign: 'center',
+
+      '> *': {
+        width: '100%',
+        textAlign: 'center',
+        justifyContent: 'center',
+        gap: '1ch',
+      },
+    }),
   };
 };

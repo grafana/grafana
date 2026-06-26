@@ -1,14 +1,14 @@
 import debounce from 'debounce-promise';
-import { type MouseEvent, useCallback, useEffect, useMemo, useState, type JSX } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue, urlUtil } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { AsyncSelect, Button, Modal } from '@grafana/ui';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { t, Trans } from 'app/core/internationalization';
 
+import { DashboardSearchItem } from '../../../search/types';
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';
-import { type LibraryElementDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 
 export interface OpenLibraryPanelModalProps {
   onDismiss: () => void;
@@ -18,7 +18,7 @@ export interface OpenLibraryPanelModalProps {
 export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPanelModalProps): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(0);
-  const [option, setOption] = useState<SelectableValue<DashboardQueryResult> | undefined>(undefined);
+  const [option, setOption] = useState<SelectableValue<DashboardSearchItem> | undefined>(undefined);
   useEffect(() => {
     const getConnected = async () => {
       const connectedDashboards = await getLibraryPanelConnectedDashboards(libraryPanel.uid);
@@ -31,7 +31,6 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
     [libraryPanel.uid]
   );
   const debouncedLoadOptions = useMemo(() => debounce(loadOptions, 300, { leading: true }), [loadOptions]);
-
   const onViewPanel = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     locationService.push(urlUtil.renderUrl(`/d/${option?.value?.uid}`, {}));
@@ -55,16 +54,7 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
         {connected > 0 ? (
           <>
             <p>
-              <Trans
-                i18nKey="library-panels.modal.body"
-                count={connected}
-                tOptions={{
-                  defaultValue_one:
-                    'This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:',
-                  defaultValue_other:
-                    'This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:',
-                }}
-              >
+              <Trans i18nKey="library-panels.modal.body" count={connected}>
                 This panel is being used in {{ count: connected }} dashboard. Please choose which dashboard to view the
                 panel in:
               </Trans>
@@ -99,9 +89,9 @@ async function loadOptionsAsync(uid: string, searchString: string, setLoading: (
   setLoading(true);
   const searchHits = await getConnectedDashboards(uid);
   const options = searchHits
-    ?.filter((d) => d.name.toLowerCase().includes(searchString.toLowerCase()))
-    .map((d) => ({ label: d.name, value: d }));
+    .filter((d) => d.title.toLowerCase().includes(searchString.toLowerCase()))
+    .map((d) => ({ label: d.title, value: d }));
   setLoading(false);
 
-  return options || [];
+  return options;
 }

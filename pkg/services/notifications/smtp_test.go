@@ -185,8 +185,9 @@ func TestSmtpSend(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 
-		messages, err := srv.WaitForMessagesAndPurge(1, 5*time.Second)
-		require.NoError(t, err)
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
+		messages := srv.MessagesAndPurge()
 		require.Len(t, messages, 1)
 		sentMsg := messages[0]
 
@@ -236,8 +237,9 @@ func TestSmtpSend(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 
-		messages, err := srv.WaitForMessagesAndPurge(1, 5*time.Second)
-		require.NoError(t, err)
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
+		messages := srv.MessagesAndPurge()
 		require.Len(t, messages, 1)
 		sentMsg := messages[0]
 
@@ -296,8 +298,9 @@ func TestSmtpSend(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 3, count)
 
-		messages, err := srv.WaitForMessagesAndPurge(3, 5*time.Second)
-		require.NoError(t, err)
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
+		messages := srv.MessagesAndPurge()
 		assert.Len(t, messages, 3)
 
 		// sort for test consistency

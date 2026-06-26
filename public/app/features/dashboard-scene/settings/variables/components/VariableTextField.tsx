@@ -1,5 +1,5 @@
 import { useId } from '@react-aria/utils';
-import { type FormEvent, type PropsWithChildren } from 'react';
+import { FormEvent, PropsWithChildren } from 'react';
 import * as React from 'react';
 
 import { Field, Input } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { Field, Input } from '@grafana/ui';
 interface VariableTextFieldProps {
   value?: string;
   defaultValue?: string;
-  name?: string;
+  name: string;
   placeholder?: string;
   onChange?: (event: FormEvent<HTMLInputElement>) => void;
   testId?: string;

@@ -3,13 +3,12 @@ package modules
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	infratracing "github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/modules/tracing"
 )
 
 type Engine interface {
@@ -17,59 +16,43 @@ type Engine interface {
 	Shutdown(context.Context, string) error
 }
 
-type Registry interface {
-	RegisterModule(name string, fn func() (services.Service, error))
-	RegisterInvisibleModule(name string, fn func() (services.Service, error))
-}
-
 type Manager interface {
-	services.NamedService
-	Registry
-	Engine
+	RegisterModule(name string, fn initFn)
+	RegisterInvisibleModule(name string, fn initFn)
 }
 
 var _ Engine = (*service)(nil)
-var _ Registry = (*service)(nil)
+var _ Manager = (*service)(nil)
 
 // service manages the registration and lifecycle of modules.
 type service struct {
-	services.NamedService
+	log     log.Logger
+	targets []string
 
-	log           log.Logger
-	targets       []string
-	dependencyMap map[string][]string
-
-	moduleManager  *tracing.ModuleManagerWrapper
+	moduleManager  *modules.Manager
 	serviceManager *services.Manager
 	serviceMap     map[string]services.Service
 }
 
 func New(
-	logger log.Logger,
 	targets []string,
 ) *service {
-	s := &service{
-		log:           logger,
-		targets:       targets,
-		dependencyMap: dependencyMap,
-		moduleManager: tracing.WrapModuleManager(modules.NewManager(logger)),
+	logger := log.New("modules")
+
+	return &service{
+		log:     logger,
+		targets: targets,
+
+		moduleManager: modules.NewManager(logger),
 		serviceMap:    map[string]services.Service{},
 	}
-	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("modules.service")
-	return s
 }
 
-func (m *service) WithDependencies(dependencyMap map[string][]string) *service {
-	m.dependencyMap = dependencyMap
-	return m
-}
-
-func (m *service) starting(ctx context.Context) error {
+// Run starts all registered modules.
+func (m *service) Run(ctx context.Context) error {
 	var err error
-	m.moduleManager.SetContext(ctx)
-	_, span := infratracing.Start(ctx, "modules.service.starting")
-	defer span.End()
-	for mod, targets := range m.dependencyMap {
+
+	for mod, targets := range dependencyMap {
 		if !m.moduleManager.IsModuleRegistered(mod) {
 			continue
 		}
@@ -109,101 +92,56 @@ func (m *service) starting(ctx context.Context) error {
 
 	listener := newServiceListener(m.log, m)
 	m.serviceManager.AddListener(listener)
-	if err := m.serviceManager.StartAsync(ctx); err != nil {
-		return err
-	}
-	if err := m.serviceManager.AwaitHealthy(ctx); err != nil {
-		m.serviceManager.StopAsync()
-		stopErr := m.serviceManager.AwaitStopped(context.Background())
-		if failure := m.firstServiceManagerFailure(); failure != nil {
-			return failure
-		}
-		if stopErr != nil {
-			return errors.Join(err, stopErr)
-		}
-		return err
-	}
-	return nil
-}
 
-func (m *service) running(ctx context.Context) error {
-	_, span := infratracing.Start(ctx, "modules.service.running")
-	defer span.End()
-
-	// If no service manager was created (no modules registered), just wait for context
-	if m.serviceManager == nil {
-		<-ctx.Done()
-		return nil
-	}
-
-	stopCtx := context.Background()
-	return m.serviceManager.AwaitStopped(stopCtx)
-}
-
-func (m *service) stopping(failureReason error) error {
-	spanCtx, span := infratracing.Start(context.Background(), "modules.service.stopping")
-	defer span.End()
-	m.log.Debug("Stopping module service manager", "reason", failureReason)
-
-	// If no service manager was created (no modules registered), nothing to stop
-	if m.serviceManager == nil {
-		return nil
-	}
-
-	m.serviceManager.StopAsync()
-	if err := m.serviceManager.AwaitStopped(spanCtx); err != nil {
-		m.log.Error("Failed to stop module service manager", "error", err)
+	m.log.Debug("Starting module service manager", "targets", strings.Join(m.targets, ","))
+	// wait until a service fails or stop signal was received
+	err = m.serviceManager.StartAsync(ctx)
+	if err != nil {
 		return err
 	}
 
-	return m.firstServiceManagerFailure()
-}
+	err = m.serviceManager.AwaitStopped(ctx)
+	if err != nil {
+		return err
+	}
 
-func (m *service) firstServiceManagerFailure() error {
 	failed := m.serviceManager.ServicesByState()[services.Failed]
 	for _, f := range failed {
-		// The service listener logs error details for all failed modules, so here we return
-		// the first error that is not an expected shutdown signal.
-		cause := f.FailureCase()
-		if errors.Is(cause, modules.ErrStopProcess) || errors.Is(cause, context.Canceled) {
-			continue
+		// the service listener will log error details for all modules that failed,
+		// so here we return the first error that is not ErrStopProcess
+		if !errors.Is(f.FailureCase(), modules.ErrStopProcess) {
+			return f.FailureCase()
 		}
-		return cause
 	}
 
 	return nil
-}
-
-// Run starts all registered modules.
-func (m *service) Run(ctx context.Context) error {
-	spanCtx, span := infratracing.Start(ctx, "modules.service.Run")
-	defer span.End()
-	if err := m.StartAsync(spanCtx); err != nil {
-		return err
-	}
-	stopCtx := context.Background()
-	return m.AwaitTerminated(stopCtx)
 }
 
 // Shutdown stops all modules and waits for them to stop.
 func (m *service) Shutdown(ctx context.Context, reason string) error {
-	spanCtx, span := infratracing.Start(ctx, "modules.service.Shutdown")
-	defer span.End()
-	m.StopAsync()
-	return m.AwaitTerminated(spanCtx)
+	if m.serviceManager == nil {
+		m.log.Debug("No modules registered, nothing to stop...")
+		return nil
+	}
+	m.serviceManager.StopAsync()
+	m.log.Info("Awaiting services to be stopped...", "reason", reason)
+	return m.serviceManager.AwaitStopped(ctx)
 }
 
+type initFn func() (services.Service, error)
+
 // RegisterModule registers a module with the dskit module manager.
-func (m *service) RegisterModule(name string, fn func() (services.Service, error)) {
+func (m *service) RegisterModule(name string, fn initFn) {
 	m.moduleManager.RegisterModule(name, fn)
 }
 
 // RegisterInvisibleModule registers an invisible module with the dskit module manager.
 // Invisible modules are not visible to the user, and are intended to be used as dependencies.
-func (m *service) RegisterInvisibleModule(name string, fn func() (services.Service, error)) {
-	m.moduleManager.RegisterInvisibleModule(name, fn)
+func (m *service) RegisterInvisibleModule(name string, fn initFn) {
+	m.moduleManager.RegisterModule(name, fn, modules.UserInvisibleModule)
 }
 
+// IsModuleEnabled returns true if the module is enabled.
 func (m *service) IsModuleEnabled(name string) bool {
 	return stringsContain(m.targets, name)
 }

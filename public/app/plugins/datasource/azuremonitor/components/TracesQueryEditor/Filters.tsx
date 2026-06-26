@@ -1,13 +1,11 @@
 import { uniq } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { EditorList } from '@grafana/plugin-ui';
+import { SelectableValue } from '@grafana/data';
+import { EditorList } from '@grafana/experimental';
 import { Field } from '@grafana/ui';
 
-import { type AzureTracesFilter } from '../../dataquery.gen';
-import { type AzureQueryEditorFieldProps } from '../../types/types';
+import { AzureQueryEditorFieldProps, AzureTracesFilter } from '../../types';
 
 import { makeRenderItem } from './Filter';
 import { tablesSchema } from './consts';
@@ -61,7 +59,7 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup, range 
   };
 
   return (
-    <Field label={t('components.filters.label-filters', 'Filters')}>
+    <Field label="Filters">
       <EditorList
         items={filters}
         onChange={changedFunc}

@@ -3,8 +3,8 @@
  */
 
 import { isDateTime } from '../datetime/moment_wrapper';
-import { type ExploreUrlState, type URLRange } from '../types/explore';
-import { type RawTimeRange } from '../types/time';
+import { ExploreUrlState, URLRange } from '../types/explore';
+import { RawTimeRange } from '../types/time';
 
 /**
  * Type to represent the value of a single query variable.
@@ -60,7 +60,12 @@ function toUrlParams(a: any, encodeAsAngularJS = true) {
 
   const add = (k: string, v: any) => {
     v = typeof v === 'function' ? v() : v === null ? '' : v === undefined ? '' : v;
-    s[s.length] = encodingFunction(k, true) + '=' + encodingFunction(v, true);
+    if (typeof v !== 'boolean') {
+      s[s.length] = encodingFunction(k, true) + '=' + encodingFunction(v, true);
+    } else {
+      const valueQueryPart = v ? '' : '=' + encodingFunction('false', true);
+      s[s.length] = encodingFunction(k, true) + valueQueryPart;
+    }
   };
 
   const buildParams = (prefix: string, obj: any) => {
@@ -155,7 +160,7 @@ function getUrlSearchParams(): UrlQueryMap {
  * Attribution: Code dervived from https://github.com/angular/angular.js/master/src/Angular.js#L1396
  * @returns {Object.<string,boolean|Array>}
  */
-function parseKeyValue(keyValue: string) {
+export function parseKeyValue(keyValue: string) {
   const obj: any = {};
   const parts = (keyValue || '').split('&');
 

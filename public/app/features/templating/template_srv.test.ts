@@ -1,5 +1,5 @@
-import { dateTime, type QueryVariableModel, type TimeRange, type TypedVariableModel } from '@grafana/data';
-import { type VariableInterpolation } from '@grafana/runtime';
+import { dateTime, QueryVariableModel, TimeRange, TypedVariableModel } from '@grafana/data';
+import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -13,16 +13,15 @@ import {
   TestVariable,
 } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
-import { mockDataSource } from '../alerting/unified/mocks';
-import { type VariableAdapter, variableAdapters } from '../variables/adapters';
+import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
+import { VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
 
-import { type TemplateSrv } from './template_srv';
+import { TemplateSrv } from './template_srv';
 
 const key = 'key';
 
@@ -219,14 +218,16 @@ describe('templateSrv', () => {
         { type: 'adhoc', name: 'test', datasource: { uid: 'oogle' }, filters: [1] },
         { type: 'adhoc', name: 'test2', datasource: { uid: '$ds' }, filters: [2] },
       ]);
-      setupDataSources(
-        mockDataSource({
-          name: 'oogle',
-          uid: 'oogle',
-        }),
-        mockDataSource({
-          name: 'logstash',
-          uid: 'logstash-id',
+      setDataSourceSrv(
+        new MockDataSourceSrv({
+          oogle: mockDataSource({
+            name: 'oogle',
+            uid: 'oogle',
+          }),
+          logstash: mockDataSource({
+            name: 'logstash',
+            uid: 'logstash-id',
+          }),
         })
       );
     });
@@ -902,29 +903,6 @@ describe('templateSrv', () => {
       expect(podVar.type).toBe('query');
       expect(podVar.current.value).toEqual(['pA', 'pB']);
       expect(podVar.current.text).toEqual(['podA', 'podB']);
-    });
-
-    it('Can use containsTemplate to check if a variable exists', () => {
-      window.__grafanaSceneContext = new EmbeddedScene({
-        $variables: new SceneVariableSet({
-          variables: [
-            new QueryVariable({ name: 'server', value: 'serverA', text: 'Server A', query: { refId: 'A' } }),
-            new QueryVariable({ name: 'pods', value: ['pA', 'pB'], text: ['podA', 'podB'], query: { refId: 'A' } }),
-            new DataSourceVariable({ name: 'ds', value: 'dsA', text: 'dsA', pluginId: 'prometheus' }),
-            new CustomVariable({ name: 'custom', value: 'A', text: 'A', query: 'A, B, C' }),
-            new IntervalVariable({ name: 'interval', value: '1m', intervals: ['1m', '2m'] }),
-          ],
-        }),
-        body: new SceneCanvasText({ text: 'hello' }),
-      });
-
-      window.__grafanaSceneContext.activate();
-
-      expect(_templateSrv.containsTemplate('${server}')).toBe(true);
-      expect(_templateSrv.containsTemplate('${pods}')).toBe(true);
-      expect(_templateSrv.containsTemplate('${ds}')).toBe(true);
-      expect(_templateSrv.containsTemplate('${custom}')).toBe(true);
-      expect(_templateSrv.containsTemplate('${interval}')).toBe(true);
     });
 
     it('Should return timeRange from scenes context', () => {

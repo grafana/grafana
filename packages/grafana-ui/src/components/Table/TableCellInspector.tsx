@@ -1,16 +1,12 @@
-import { css } from '@emotion/css';
+import { isString } from 'lodash';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-
-import { useStyles2 } from '../../themes/ThemeContext';
+import { Trans } from '../../utils/i18n';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Drawer } from '../Drawer/Drawer';
 import { Stack } from '../Layout/Stack/Stack';
 import { CodeEditor } from '../Monaco/CodeEditor';
-import { Tab } from '../Tabs/Tab';
-import { TabsBar } from '../Tabs/TabsBar';
+import { Tab, TabsBar } from '../Tabs';
 
 export enum TableCellInspectorMode {
   code = 'code',
@@ -18,22 +14,35 @@ export enum TableCellInspectorMode {
 }
 
 interface TableCellInspectorProps {
-  value: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any;
   onDismiss: () => void;
   mode: TableCellInspectorMode;
 }
 
-const toString = (value: unknown): string => {
-  if (typeof value === 'string') {
-    return value;
-  }
-  return value?.toString?.() ?? '';
-};
-
 export function TableCellInspector({ value, onDismiss, mode }: TableCellInspectorProps) {
+  let displayValue = value;
   const [currentMode, setMode] = useState(mode);
-  const text = toString(value).trim();
-  const styles = useStyles2(getStyles);
+
+  if (isString(value)) {
+    const trimmedValue = value.trim();
+    // Exclude numeric strings like '123' from being displayed in code/JSON mode
+    if (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code') {
+      try {
+        value = JSON.parse(value);
+        displayValue = JSON.stringify(value, null, '  ');
+      } catch (error: any) {
+        // Display helpful error to help folks diagnose json errors
+        console.log(
+          'Failed to parse JSON in Table cell inspector (this will cause JSON to not print nicely): ',
+          error.message
+        );
+      }
+    }
+  } else {
+    displayValue = JSON.stringify(value);
+  }
+  let text = displayValue;
 
   const tabs = [
     {
@@ -59,7 +68,7 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
   );
 
   return (
-    <Drawer onClose={onDismiss} title={t('grafana-ui.table.inspect-drawer-title', 'Inspect value')} tabs={tabBar}>
+    <Drawer onClose={onDismiss} title="Inspect value" tabs={tabBar}>
       <Stack direction="column" gap={2}>
         <ClipboardButton icon="copy" getText={() => text} style={{ marginLeft: 'auto', width: '200px' }}>
           <Trans i18nKey="grafana-ui.table.copy">Copy to Clipboard</Trans>
@@ -70,23 +79,15 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
             height={500}
             language="json"
             showLineNumbers={true}
-            showMiniMap={(text ? text.length : 0) > 100}
+            showMiniMap={(text && text.length) > 100}
             value={text}
             readOnly={true}
             wordWrap={true}
           />
         ) : (
-          <pre className={styles.textContainer}>{text}</pre>
+          <pre>{text}</pre>
         )}
       </Stack>
     </Drawer>
   );
 }
-
-// TODO: should we have different empty styles?
-const getStyles = (theme: GrafanaTheme2) => ({
-  textContainer: css({
-    color: theme.colors.text.secondary,
-    minHeight: 42,
-  }),
-});

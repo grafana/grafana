@@ -1,27 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { contextSrv } from 'app/core/services/context_srv';
-import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
-import { type Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
-import { AccessControlAction } from 'app/types/accessControl';
+import { Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
 
-jest.mock('app/core/services/context_srv');
-const mockContextSrv = jest.mocked(contextSrv);
-const grantAllPermissions = () => {
-  grantUserPermissions([AccessControlAction.SnapshotsDelete]);
-  mockContextSrv.hasPermissionInMetadata.mockImplementation(() => true);
-  mockContextSrv.hasPermission.mockImplementation(() => true);
-};
-const grantNoPermissions = () => {
-  grantUserPermissions([]);
-  mockContextSrv.hasPermissionInMetadata.mockImplementation(() => false);
-  mockContextSrv.hasPermission.mockImplementation(() => false);
-};
-
 describe('SnapshotListTableRow', () => {
+  const mockOnRemove = jest.fn();
   const mockSnapshot = {
     key: 'test',
     name: 'Test Snapshot',
@@ -30,8 +15,6 @@ describe('SnapshotListTableRow', () => {
   };
 
   it('renders correctly', () => {
-    const mockOnRemove = jest.fn();
-    grantAllPermissions();
     render(
       <table>
         <tbody>
@@ -46,8 +29,6 @@ describe('SnapshotListTableRow', () => {
   });
 
   it('adds the correct href to the name, url and view buttons', () => {
-    const mockOnRemove = jest.fn();
-    grantAllPermissions();
     render(
       <table>
         <tbody>
@@ -65,8 +46,6 @@ describe('SnapshotListTableRow', () => {
   });
 
   it('calls onRemove when delete button is clicked', async () => {
-    const mockOnRemove = jest.fn();
-    grantAllPermissions();
     render(
       <table>
         <tbody>
@@ -78,26 +57,8 @@ describe('SnapshotListTableRow', () => {
     expect(mockOnRemove).toHaveBeenCalled();
   });
 
-  it('delete button should be disabled when no permissions', async () => {
-    const mockOnRemove = jest.fn();
-    grantNoPermissions();
-    render(
-      <table>
-        <tbody>
-          <SnapshotListTableRow snapshot={mockSnapshot} onRemove={mockOnRemove} />
-        </tbody>
-      </table>
-    );
-
-    const deleteButton = screen.getByRole('button');
-    expect(deleteButton).toHaveAttribute('aria-disabled', 'true');
-    await userEvent.click(deleteButton);
-    expect(mockOnRemove).not.toHaveBeenCalled();
-  });
-
   describe('for an external snapshot', () => {
     let mockSnapshotWithExternal: Snapshot;
-    const mockOnRemove = jest.fn();
 
     beforeEach(() => {
       mockSnapshotWithExternal = {

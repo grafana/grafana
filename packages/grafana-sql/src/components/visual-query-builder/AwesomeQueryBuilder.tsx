@@ -1,23 +1,21 @@
 import {
-  type BaseOperator,
   BasicConfig,
-  type Config,
-  type Field,
-  type ImmutableList,
-  type JsonTree,
-  type Operator,
-  type OperatorOptionsI,
-  type Settings,
+  Config,
+  JsonTree,
+  Operator,
+  OperatorOptionsI,
+  Settings,
+  SimpleField,
+  SqlFormatOperator,
   Utils,
-  type ValueSource,
-  type WidgetProps,
-  type Widgets,
+  ValueSource,
+  Widgets,
 } from '@react-awesome-query-builder/ui';
+import { List } from 'immutable';
 import { isString } from 'lodash';
 
 import { dateTime, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 import { Button, DateTimePicker, Input, Select } from '@grafana/ui';
 
 const buttonLabels = {
@@ -35,11 +33,11 @@ const macros = [TIME_FILTER];
 
 // Widgets are the components rendered for each field type see the docs for more info
 // https://github.com/ukrbublik/react-awesome-query-builder/blob/master/CONFIG.adoc#configwidgets
-const widgets: Widgets = {
+export const widgets: Widgets = {
   ...BasicConfig.widgets,
   text: {
     ...BasicConfig.widgets.text,
-    factory: function TextInput(props: WidgetProps) {
+    factory: function TextInput(props) {
       return (
         <Input
           value={props?.value || ''}
@@ -51,7 +49,7 @@ const widgets: Widgets = {
   },
   number: {
     ...BasicConfig.widgets.number,
-    factory: function NumberInput(props: WidgetProps) {
+    factory: function NumberInput(props) {
       return (
         <Input
           value={props?.value}
@@ -64,12 +62,12 @@ const widgets: Widgets = {
   },
   datetime: {
     ...BasicConfig.widgets.datetime,
-    factory: function DateTimeInput(props: WidgetProps) {
+    factory: function DateTimeInput(props) {
       if (props?.operator === Op.MACROS) {
         return (
           <Select
             id={props.id}
-            aria-label={t('grafana-sql.components.widgets.aria-label-macros-value-selector', 'Macros value selector')}
+            aria-label="Macros value selector"
             menuShouldPortal
             options={macros.map(toOption)}
             value={props?.value}
@@ -112,7 +110,7 @@ const widgets: Widgets = {
 
 // Settings are the configuration options for the query builder see the docs for more info
 // https://github.com/ukrbublik/react-awesome-query-builder/blob/master/CONFIG.adoc#configsettings
-const settings: Settings = {
+export const settings: Settings = {
   ...BasicConfig.settings,
   canRegroup: false,
   maxNesting: 1,
@@ -125,7 +123,7 @@ const settings: Settings = {
     return (
       <Select
         id={conjProps?.id}
-        aria-label={t('grafana-sql.components.settings.aria-label-conjunction', 'Conjunction')}
+        aria-label="Conjunction"
         data-testid={selectors.components.SQLQueryEditor.filterConjunction}
         menuShouldPortal
         options={conjProps?.conjunctionOptions ? Object.keys(conjProps?.conjunctionOptions).map(toOption) : undefined}
@@ -141,7 +139,7 @@ const settings: Settings = {
       <Select
         id={fieldProps?.id}
         width={25}
-        aria-label={t('grafana-sql.components.settings.aria-label-field', 'Field')}
+        aria-label="Field"
         data-testid={selectors.components.SQLQueryEditor.filterField}
         menuShouldPortal
         options={fieldProps?.items.map((f) => {
@@ -165,9 +163,7 @@ const settings: Settings = {
     return (
       <Button
         type="button"
-        aria-label={t('grafana-sql.components.settings.title-button-filter', '{{ buttonLabel }} filter', {
-          buttonLabel: buttonProps?.label,
-        })}
+        title={`${buttonProps?.label} filter`}
         onClick={buttonProps?.onClick}
         variant="secondary"
         size="md"
@@ -180,7 +176,7 @@ const settings: Settings = {
     return (
       <Select
         options={operatorProps?.items.map((op) => ({ label: op.label, value: op.key }))}
-        aria-label={t('grafana-sql.components.settings.aria-label-operator', 'Operator')}
+        aria-label="Operator"
         data-testid={selectors.components.SQLQueryEditor.filterOperator}
         menuShouldPortal
         value={operatorProps?.selectedKey}
@@ -242,74 +238,91 @@ export type { Config };
 
 const noop = () => '';
 
+const isSqlFormatOp = (func: unknown): func is SqlFormatOperator => {
+  return typeof func === 'function';
+};
+
 function getCustomOperators(config: BasicConfig) {
   const { ...supportedOperators } = config.operators;
 
   // IN operator expects array, override IN formatter for multi-value variables
-  const sqlFormatInOp = supportedOperators[Op.IN].sqlFormatOp?.bind(config.ctx) || noop;
-  const formatInOp = supportedOperators[Op.IN].formatOp?.bind(config.ctx) || noop;
+  const sqlFormatInOpOrNoop = () => {
+    const sqlFormatOp = supportedOperators[Op.IN].sqlFormatOp;
+    if (isSqlFormatOp(sqlFormatOp)) {
+      return sqlFormatOp;
+    }
+    return noop;
+  };
+
   const customSqlInFormatter = (
     field: string,
     op: string,
-    value: string | string[] | ImmutableList<string>,
-    valueSrc: ValueSource | undefined,
-    valueType: string | undefined,
-    opDef: Operator | undefined,
-    operatorOptions: OperatorOptionsI | undefined,
-    fieldDef: Field | undefined
+    value: string | List<string>,
+    valueSrc: ValueSource,
+    valueType: string,
+    opDef: Operator,
+    operatorOptions: OperatorOptionsI,
+    fieldDef: SimpleField
   ) => {
-    return sqlFormatInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
+    return sqlFormatInOpOrNoop()(
+      field,
+      op,
+      splitIfString(value),
+      valueSrc,
+      valueType,
+      opDef,
+      operatorOptions,
+      fieldDef
+    );
+  };
+  // NOT IN operator expects array, override NOT IN formatter for multi-value variables
+  const sqlFormatNotInOpOrNoop = () => {
+    const sqlFormatOp = supportedOperators[Op.NOT_IN].sqlFormatOp;
+    if (isSqlFormatOp(sqlFormatOp)) {
+      return sqlFormatOp;
+    }
+    return noop;
   };
 
-  // NOT IN operator expects array, override NOT IN formatter for multi-value variables
-  const sqlFormatNotInOp = supportedOperators[Op.NOT_IN].sqlFormatOp?.bind(config.ctx) || noop;
-  const formatNotInOp = supportedOperators[Op.NOT_IN].formatOp?.bind(config.ctx) || noop;
   const customSqlNotInFormatter = (
     field: string,
     op: string,
-    value: string | string[] | ImmutableList<string>,
-    valueSrc: ValueSource | undefined,
-    valueType: string | undefined,
-    opDef: Operator | undefined,
-    operatorOptions: OperatorOptionsI | undefined,
-    fieldDef: Field | undefined
+    value: string | List<string>,
+    valueSrc: ValueSource,
+    valueType: string,
+    opDef: Operator,
+    operatorOptions: OperatorOptionsI,
+    fieldDef: SimpleField
   ) => {
-    return sqlFormatNotInOp(field, op, splitIfString(value), valueSrc, valueType, opDef, operatorOptions, fieldDef);
+    return sqlFormatNotInOpOrNoop()(
+      field,
+      op,
+      splitIfString(value),
+      valueSrc,
+      valueType,
+      opDef,
+      operatorOptions,
+      fieldDef
+    );
   };
 
-  const customOperators: Record<string, BaseOperator> = {
+  const customOperators = {
     ...supportedOperators,
     [Op.IN]: {
       ...supportedOperators[Op.IN],
-      formatOp: (
-        field: string,
-        op: string,
-        value: string | string[] | ImmutableList<string>,
-        valueSrc?: ValueSource
-      ) => {
-        return formatInOp(field, op, splitIfString(value), valueSrc);
-      },
       sqlFormatOp: customSqlInFormatter,
     },
     [Op.NOT_IN]: {
       ...supportedOperators[Op.NOT_IN],
-      formatOp: (
-        field: string,
-        op: string,
-        value: string | string[] | ImmutableList<string>,
-        valueSrc?: ValueSource
-      ) => {
-        return formatNotInOp(field, op, splitIfString(value), valueSrc);
-      },
       sqlFormatOp: customSqlNotInFormatter,
     },
     [Op.MACROS]: {
-      label: t('grafana-sql.components.get-custom-operators.custom-operators.label.macros', 'Macros'),
-      sqlFormatOp: (field: string, _operator: string, value: string | string[] | ImmutableList<string>) => {
+      label: 'Macros',
+      sqlFormatOp: (field: string, _operator: string, value: string | List<string>) => {
         if (value === TIME_FILTER) {
           return `$__timeFilter(${field})`;
         }
-        throw new Error('Invalid macro');
+        return value;
       },
     },
   };
@@ -318,7 +331,7 @@ function getCustomOperators(config: BasicConfig) {
 }
 
 // value: string | List<string> but AQB uses a different version of Immutable
-function splitIfString(value: string | string[] | ImmutableList<string>) {
+function splitIfString(value: any) {
   if (isString(value)) {
     return value.split(',');
   }

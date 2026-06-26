@@ -9,14 +9,10 @@ import (
 
 func (s *UserAuthTokenService) Run(ctx context.Context) error {
 	ticker := time.NewTicker(time.Hour)
-	cfg, err := s.cfgProvider.Get(ctx)
-	if err != nil {
-		return err
-	}
-	maxInactiveLifetime := cfg.LoginMaxInactiveLifetime
-	maxLifetime := cfg.LoginMaxLifetime
+	maxInactiveLifetime := s.cfg.LoginMaxInactiveLifetime
+	maxLifetime := s.cfg.LoginMaxLifetime
 
-	err = s.serverLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func(context.Context) {
+	err := s.serverLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func(context.Context) {
 		if _, err := s.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
 			s.log.Error("An error occurred while deleting expired tokens", "err", err)
 		}

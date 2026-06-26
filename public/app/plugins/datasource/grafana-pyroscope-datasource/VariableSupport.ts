@@ -1,15 +1,10 @@
-import { from, map, type Observable, of } from 'rxjs';
+import { from, map, Observable, of } from 'rxjs';
 
-import {
-  CustomVariableSupport,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type MetricFindValue,
-} from '@grafana/data';
+import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, MetricFindValue } from '@grafana/data';
 
 import { getProfileTypeLabel, VariableQueryEditor } from './VariableQueryEditor';
-import { type PyroscopeDataSource } from './datasource';
-import { type ProfileTypeMessage, type VariableQuery } from './types';
+import { PyroscopeDataSource } from './datasource';
+import { ProfileTypeMessage, VariableQuery } from './types';
 
 export interface DataAPI {
   getProfileTypes(start: number, end: number): Promise<ProfileTypeMessage[]>;

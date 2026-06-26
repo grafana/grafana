@@ -6,8 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	jose "github.com/go-jose/go-jose/v4"
-	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -70,8 +69,7 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (map[string]a
 	s.log.Debug("Parsing JSON Web Token")
 
 	strToken = sanitizeJWT(strToken)
-	token, err := jwt.ParseSigned(strToken, []jose.SignatureAlgorithm{jose.EdDSA, jose.HS256, jose.HS384,
-		jose.HS512, jose.RS512, jose.RS256, jose.ES256, jose.ES384, jose.ES512, jose.PS256, jose.PS384, jose.PS512})
+	token, err := jwt.ParseSigned(strToken)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +106,7 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (map[string]a
 // HasSubClaim checks if the provided JWT token contains a non-empty "sub" claim.
 // Returns true if it contains, otherwise returns false.
 func HasSubClaim(jwtToken string) bool {
-	parsed, err := jwt.ParseSigned(sanitizeJWT(jwtToken), []jose.SignatureAlgorithm{jose.EdDSA, jose.HS256, jose.HS384,
-		jose.HS512, jose.RS512, jose.RS256, jose.ES256, jose.ES384, jose.ES512, jose.PS256, jose.PS384, jose.PS512})
+	parsed, err := jwt.ParseSigned(sanitizeJWT(jwtToken))
 	if err != nil {
 		return false
 	}

@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 
 import { Breadcrumbs } from './Breadcrumbs';
-import { type Breadcrumb } from './types';
+import { Breadcrumb } from './types';
 
 const mockBreadcrumbs: Breadcrumb[] = [
   { text: 'Home', href: '/home' },

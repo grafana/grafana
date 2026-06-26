@@ -2,14 +2,13 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { type llm } from '@grafana/llm';
-import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text, Stack } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
-import { StreamStatus, TIMEOUT, useLLMStream } from './hooks';
-import { AutoGenerateItem, type EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
-import { DEFAULT_LLM_MODEL, type Message, sanitizeReply } from './utils';
+import { StreamStatus, useOpenAIStream } from './hooks';
+import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
+import { OAI_MODEL, DEFAULT_OAI_MODEL, Message, sanitizeReply } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
@@ -24,7 +23,7 @@ export interface GenAIButtonProps {
   // Temperature for the LLM plugin. Default is 1.
   // Closer to 0 means more conservative, closer to 1 means more creative.
   temperature?: number;
-  model?: llm.Model;
+  model?: OAI_MODEL;
   // Event tracking source. Send as `src` to Rudderstack event
   eventTrackingSrc: EventTrackingSrc;
   // Whether the button should be disabled
@@ -36,10 +35,6 @@ export interface GenAIButtonProps {
     toggletip will be enabled.
   */
   tooltip?: string;
-  // Optional callback to receive history updates
-  onHistoryChange?: (history: string[]) => void;
-  // Optional timeout for the LLM stream. Default is 10 seconds
-  timeout?: number;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
 
@@ -47,29 +42,20 @@ export const GenAIButton = ({
   text = 'Auto-generate',
   toggleTipTitle = '',
   onClick: onClickProp,
-  model = DEFAULT_LLM_MODEL,
+  model = DEFAULT_OAI_MODEL,
   messages,
   onGenerate,
   temperature = 1,
   eventTrackingSrc,
   disabled,
   tooltip,
-  onHistoryChange,
-  timeout = TIMEOUT,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
   const [history, setHistory] = useState<string[]>([]);
-  const unshiftHistoryEntry = useCallback(
-    (historyEntry: string) => {
-      setHistory((h) => {
-        const newHistory = [historyEntry, ...h];
-        return newHistory;
-      });
-      onHistoryChange?.([historyEntry, ...history]);
-    },
-    [onHistoryChange, history]
-  );
+  const unshiftHistoryEntry = useCallback((historyEntry: string) => {
+    setHistory((h) => [historyEntry, ...h]);
+  }, []);
 
   const onResponse = useCallback(
     (reply: string) => {
@@ -80,11 +66,10 @@ export const GenAIButton = ({
     [onGenerate, unshiftHistoryEntry]
   );
 
-  const { setMessages, stopGeneration, value, error, streamStatus } = useLLMStream({
+  const { setMessages, stopGeneration, value, error, streamStatus } = useOpenAIStream({
     model,
     temperature,
     onResponse,
-    timeout,
   });
 
   const [showHistory, setShowHistory] = useState(false);
@@ -100,7 +85,7 @@ export const GenAIButton = ({
 
   const showTooltip = error || tooltip ? undefined : false;
   const tooltipContent = error
-    ? 'Failed to generate content using LLM. Please try again or if the problem persists, contact your organization admin.'
+    ? 'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
     : tooltip || '';
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -195,7 +180,6 @@ export const GenAIButton = ({
               onApplySuggestion={onApplySuggestion}
               updateHistory={unshiftHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}
-              timeout={timeout}
             />
           }
           placement="left-start"
@@ -213,7 +197,7 @@ export const GenAIButton = ({
   };
 
   return (
-    <Stack direction="row" gap={0.5} alignItems="center">
+    <div className={styles.wrapper}>
       {isGenerating && <Spinner size="sm" className={styles.spinner} />}
       {isFirstHistoryEntry ? (
         <Tooltip show={showTooltip} interactive content={tooltipContent}>
@@ -222,11 +206,14 @@ export const GenAIButton = ({
       ) : (
         renderButtonWithToggletip()
       )}
-    </Stack>
+    </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'flex',
+  }),
   spinner: css({
     color: theme.colors.text.link,
   }),

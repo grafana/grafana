@@ -1,16 +1,16 @@
-import { type ComponentType } from 'react';
-import { type Observable } from 'rxjs';
+import { ComponentType } from 'react';
+import { Observable } from 'rxjs';
 
 import {
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type DataSourceApi,
-  type DataSourceJsonData,
-  type DataSourceOptionsType,
-  type DataSourceQueryType,
-  type QueryEditorProps,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourceOptionsType,
+  DataSourceQueryType,
+  QueryEditorProps,
 } from './datasource';
-import { type DataQuery } from './query';
+import { DataQuery } from './query';
 
 /**
  * Enum with the different variable support types

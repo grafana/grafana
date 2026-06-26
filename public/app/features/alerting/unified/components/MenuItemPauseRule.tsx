@@ -1,15 +1,18 @@
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
+import {
+  isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
+  getRuleGroupLocationFromCombinedRule,
+} from 'app/features/alerting/unified/utils/rules';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 import { usePauseRuleInGroup } from '../hooks/ruleGroup/usePauseAlertRule';
 import { isLoading } from '../hooks/useAsync';
 import { stringifyErrorLike } from '../utils/misc';
 
 interface Props {
-  uid: string;
-  isPaused: boolean;
-  groupIdentifier: GrafanaRuleGroupIdentifier;
+  rule: CombinedRule;
   /**
    * Method invoked after the request to change the paused state has completed
    */
@@ -20,18 +23,27 @@ interface Props {
  * Menu item to display correct text for pausing/resuming an alert,
  * and triggering API call to do so
  */
-const MenuItemPauseRule = ({ uid, isPaused, groupIdentifier, onPauseChange }: Props) => {
+const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
   const notifyApp = useAppNotification();
   const [pauseRule, updateState] = usePauseRuleInGroup();
 
-  const [icon, title] = isPaused ? ['play' as const, 'Resume evaluation'] : ['pause' as const, 'Pause evaluation'];
+  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+  const icon = isPaused ? 'play' : 'pause';
+  const title = isPaused ? 'Resume evaluation' : 'Pause evaluation';
 
   /**
    * Triggers API call to update the current rule to the new `is_paused` state
    */
   const setRulePause = async (newIsPaused: boolean) => {
+    if (!isGrafanaRulerRule(rule.rulerRule)) {
+      return;
+    }
+
     try {
-      await pauseRule.execute(groupIdentifier, uid, newIsPaused);
+      const ruleGroupId = getRuleGroupLocationFromCombinedRule(rule);
+      const ruleUID = rule.rulerRule.grafana_alert.uid;
+
+      await pauseRule.execute(ruleGroupId, ruleUID, newIsPaused);
     } catch (error) {
       notifyApp.error(`Failed to ${newIsPaused ? 'pause' : 'resume'} the rule: ${stringifyErrorLike(error)}`);
       return;

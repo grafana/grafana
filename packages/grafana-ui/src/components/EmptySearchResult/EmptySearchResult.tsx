@@ -1,19 +1,13 @@
 import { css } from '@emotion/css';
-import type { JSX } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
-interface Props {
+export interface Props {
   children: JSX.Element | string;
 }
 
-/**
- * @deprecated Use `<EmptyState variant="not-found" />` instead.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-deprecated-emptysearchresult--docs
- */
 const EmptySearchResult = ({ children }: Props) => {
   const styles = useStyles2(getStyles);
   return <div className={styles.container}>{children}</div>;

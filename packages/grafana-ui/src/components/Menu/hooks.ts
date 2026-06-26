@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useState } from 'react';
+import { RefObject, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
@@ -6,7 +6,7 @@ const UNFOCUSED = -1;
 
 /** @internal */
 export interface UseMenuFocusProps {
-  localRef: RefObject<HTMLElement | null>;
+  localRef: RefObject<HTMLDivElement>;
   isMenuOpen?: boolean;
   close?: () => void;
   onOpen?: (focusOnItem: (itemId: number) => void) => void;
@@ -82,15 +82,9 @@ export const useMenuFocus = ({
         setFocusedItem(menuItemsCount - 1);
         break;
       case 'Enter':
-      case ' ':
         event.preventDefault();
         event.stopPropagation();
-        const focusedElement = menuItems?.[focusedItem];
-        const hasSubMenu = Boolean(focusedElement?.querySelector('[data-role="menuitem"]'));
-
-        if (!hasSubMenu) {
-          focusedElement?.click();
-        }
+        menuItems?.[focusedItem]?.click();
         break;
       case 'Escape':
         onClose?.();

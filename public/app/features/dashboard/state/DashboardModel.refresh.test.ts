@@ -1,6 +1,6 @@
-import { appEvents } from '../../../core/app_events';
+import { appEvents } from '../../../core/core';
 import { VariablesChanged } from '../../variables/types';
-import { getTimeSrv, setTimeSrv, type TimeSrv } from '../services/TimeSrv';
+import { getTimeSrv, setTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 import { PanelModel } from './PanelModel';
 import { createDashboardModelFixture } from './__fixtures__/dashboardFixtures';

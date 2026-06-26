@@ -143,7 +143,6 @@ type UpdateOrgUserCommand struct {
 type OrgUserDTO struct {
 	OrgID              int64           `json:"orgId" xorm:"org_id"`
 	UserID             int64           `json:"userId" xorm:"user_id"`
-	UID                string          `json:"uid" xorm:"uid"`
 	Email              string          `json:"email"`
 	Name               string          `json:"name"`
 	AvatarURL          string          `json:"avatarUrl" xorm:"avatar_url"`
@@ -151,13 +150,12 @@ type OrgUserDTO struct {
 	Role               string          `json:"role"`
 	LastSeenAt         time.Time       `json:"lastSeenAt"`
 	Updated            time.Time       `json:"-"`
-	Created            time.Time       `json:"created"`
+	Created            time.Time       `json:"-"`
 	LastSeenAtAge      string          `json:"lastSeenAtAge"`
 	AccessControl      map[string]bool `json:"accessControl,omitempty"`
 	IsDisabled         bool            `json:"isDisabled"`
 	AuthLabels         []string        `json:"authLabels" xorm:"-"`
 	IsExternallySynced bool            `json:"isExternallySynced"`
-	IsProvisioned      bool            `json:"isProvisioned"`
 }
 
 type RemoveOrgUserCommand struct {
@@ -188,8 +186,6 @@ type SearchOrgUsersQuery struct {
 	SortOpts []model.SortOption
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
-	// Flag used to exclude hidden users from the result
-	ExcludeHiddenUsers bool
 
 	User identity.Requester
 }
@@ -199,12 +195,6 @@ type SearchOrgUsersQueryResult struct {
 	OrgUsers   []*OrgUserDTO `json:"orgUsers"`
 	Page       int           `json:"page"`
 	PerPage    int           `json:"perPage"`
-}
-
-type SearchOrgUsersByEmailsQuery struct {
-	OrgID              int64
-	Emails             []string
-	ExcludeHiddenUsers bool
 }
 
 type ByOrgName []*UserOrgDTO

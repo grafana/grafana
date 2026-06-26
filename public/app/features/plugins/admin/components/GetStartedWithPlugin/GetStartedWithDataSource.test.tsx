@@ -4,9 +4,9 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { PluginSignatureStatus } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction } from 'app/types';
 
-import { type CatalogPlugin } from '../../types';
+import { CatalogPlugin } from '../../types';
 
 import { GetStartedWithDataSource } from './GetStartedWithDataSource';
 
@@ -32,16 +32,15 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
+  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
-  managed: {
-    enabled: false,
-    strategy: undefined,
-  },
 };
 
 describe('GetStartedWithDataSource', () => {
+  const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
   const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
+  config.featureToggles.managedPluginsInstall = true;
   config.pluginAdminExternalManageEnabled = true;
 
   const contextSrv = new ContextSrv();
@@ -52,10 +51,11 @@ describe('GetStartedWithDataSource', () => {
   setContextSrv(contextSrv);
 
   afterAll(() => {
+    config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
     config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
   });
 
-  it('should disable button when pluginAdminExternalManaged is enabled, but plugin.isFullyInstalled is false', () => {
+  it('should disable button when managedPluginsInstall and pluginAdminExternalManaged are enabled, but plugin.isFullyInstalled is false', () => {
     render(
       <TestProvider>
         <GetStartedWithDataSource plugin={{ ...plugin, isFullyInstalled: false }} />
@@ -67,7 +67,7 @@ describe('GetStartedWithDataSource', () => {
     expect(el).toBeDisabled();
   });
 
-  it('should disable button when pluginAdminExternalManaged enabled, but plugin.isFullyInstalled is true', () => {
+  it('should disable button when managedPluginsInstall and pluginAdminExternalManaged are enabled, but plugin.isFullyInstalled is true', () => {
     render(
       <TestProvider>
         <GetStartedWithDataSource plugin={{ ...plugin, isFullyInstalled: true }} />

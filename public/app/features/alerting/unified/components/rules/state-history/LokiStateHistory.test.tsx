@@ -1,9 +1,9 @@
-import { HttpResponse, http } from 'msw';
-import { type Props } from 'react-virtualized-auto-sizer';
+import { http, HttpResponse } from 'msw';
+import { Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { type DataFrameJSON } from '@grafana/data';
+import { DataFrameJSON } from '@grafana/data';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import LokiStateHistory from './LokiStateHistory';
@@ -20,20 +20,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
-// Mock useMeasure from LogTimelineViewer > TimelineChart > GraphNG > VizLayout
-// so it always renders the chart
-jest.mock('react-use', () => {
-  const reactUse = jest.requireActual('react-use');
-  return {
-    ...reactUse,
-    useMeasure: () => {
-      const setRef = () => {};
-      return [setRef, { height: 300, width: 500 }];
-    },
-  };
-});
-
-beforeEach(() => {
+beforeAll(() => {
   server.use(
     http.get('/api/v1/rules/history', () =>
       HttpResponse.json<DataFrameJSON>({
@@ -89,12 +76,8 @@ window.HTMLElement.prototype.scrollIntoView = jest.fn();
 const ui = {
   loadingIndicator: byText('Loading...'),
   timestampViewer: byRole('list', { name: 'State history by timestamp' }),
-<<<<<<< HEAD
   record: byRole('listitem'),
   noRecords: byText('No state transitions have occurred in the Последние 30 дней'),
-=======
-  noRecords: byText('No state transitions have occurred in the last 30 days'),
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
   timelineChart: byTestId('uplot-main-div'),
 };
 

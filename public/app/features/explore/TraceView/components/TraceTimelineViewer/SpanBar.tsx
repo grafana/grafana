@@ -18,18 +18,16 @@ import { groupBy as _groupBy } from 'lodash';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
-import type TNil from '../types/TNil';
-import { type TraceSpan, type CriticalPathSection } from '../types/trace';
+import { TraceSpan, TNil, CriticalPathSection } from '../types';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
-import { type ViewedBoundsFunctionType } from './utils';
+import { ViewedBoundsFunctionType } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -45,11 +43,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     bar: css({
       label: 'bar',
-      borderRadius: theme.shape.radius.sm,
+      borderRadius: theme.shape.radius.default,
       minWidth: '2px',
       position: 'absolute',
-      height: '40%',
-      top: '30%',
+      height: '36%',
+      top: '32%',
     }),
     rpc: css({
       label: 'rpc',
@@ -93,7 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     criticalPath: css({
       position: 'absolute',
-      top: '44%',
+      top: '45%',
       height: '11%',
       zIndex: 2,
       overflow: 'hidden',
@@ -218,9 +216,7 @@ function SpanBar({
             placement="top"
             content={
               <div>
-                <Trans i18nKey="explore.span-bar.tooltip-critical-path">
-                  A segment on the <em>critical path</em> of the overall trace / request / workflow.
-                </Trans>
+                A segment on the <em>critical path</em> of the overall trace / request / workflow.
               </div>
             }
           >

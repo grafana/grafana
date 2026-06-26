@@ -9,13 +9,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
+
+func Pointer[T any](v T) *T { return &v }
 
 func TestSQLEngine(t *testing.T) {
 	dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
@@ -74,19 +74,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*int64{
-				new(tSeconds),
+				Pointer(tSeconds),
 			}),
 			data.NewField("time3", nil, []int64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*int64{
-				new(tMilliseconds),
+				Pointer(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []int64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*int64{
-				new(tNanoSeconds),
+				Pointer(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*int64{
 				nilPointer,
@@ -118,19 +118,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*uint64{
-				new(tSeconds),
+				Pointer(tSeconds),
 			}),
 			data.NewField("time3", nil, []uint64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*uint64{
-				new(tMilliseconds),
+				Pointer(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []uint64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*uint64{
-				new(tNanoSeconds),
+				Pointer(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*uint64{
 				nilPointer,
@@ -160,7 +160,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*int32{
-				new(tSeconds),
+				Pointer(tSeconds),
 			}),
 			data.NewField("time7", nil, []*int32{
 				nilInt,
@@ -185,7 +185,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*uint32{
-				new(tSeconds),
+				Pointer(tSeconds),
 			}),
 			data.NewField("time7", nil, []*uint32{
 				nilInt,
@@ -211,19 +211,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*float64{
-				new(tSeconds),
+				Pointer(tSeconds),
 			}),
 			data.NewField("time3", nil, []float64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*float64{
-				new(tMilliseconds),
+				Pointer(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []float64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*float64{
-				new(tNanoSeconds),
+				Pointer(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*float64{
 				nilPointer,
@@ -253,7 +253,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*float32{
-				new(tSeconds),
+				Pointer(tSeconds),
 			}),
 			data.NewField("time7", nil, []*float32{
 				nilInt,
@@ -274,61 +274,61 @@ func TestSQLEngine(t *testing.T) {
 				int64(1),
 			}),
 			data.NewField("value2", nil, []*int64{
-				new(int64(1)),
+				Pointer(int64(1)),
 			}),
 			data.NewField("value3", nil, []int32{
 				int32(1),
 			}),
 			data.NewField("value4", nil, []*int32{
-				new(int32(1)),
+				Pointer(int32(1)),
 			}),
 			data.NewField("value5", nil, []int16{
 				int16(1),
 			}),
 			data.NewField("value6", nil, []*int16{
-				new(int16(1)),
+				Pointer(int16(1)),
 			}),
 			data.NewField("value7", nil, []int8{
 				int8(1),
 			}),
 			data.NewField("value8", nil, []*int8{
-				new(int8(1)),
+				Pointer(int8(1)),
 			}),
 			data.NewField("value9", nil, []float64{
 				float64(1),
 			}),
 			data.NewField("value10", nil, []*float64{
-				new(1.0),
+				Pointer(1.0),
 			}),
 			data.NewField("value11", nil, []float32{
 				float32(1),
 			}),
 			data.NewField("value12", nil, []*float32{
-				new(float32(1)),
+				Pointer(float32(1)),
 			}),
 			data.NewField("value13", nil, []uint64{
 				uint64(1),
 			}),
 			data.NewField("value14", nil, []*uint64{
-				new(uint64(1)),
+				Pointer(uint64(1)),
 			}),
 			data.NewField("value15", nil, []uint32{
 				uint32(1),
 			}),
 			data.NewField("value16", nil, []*uint32{
-				new(uint32(1)),
+				Pointer(uint32(1)),
 			}),
 			data.NewField("value17", nil, []uint16{
 				uint16(1),
 			}),
 			data.NewField("value18", nil, []*uint16{
-				new(uint16(1)),
+				Pointer(uint16(1)),
 			}),
 			data.NewField("value19", nil, []uint8{
 				uint8(1),
 			}),
 			data.NewField("value20", nil, []*uint8{
-				new(uint8(1)),
+				Pointer(uint8(1)),
 			}),
 		)
 		for i := 0; i < len(originFrame.Fields); i++ {
@@ -422,271 +422,6 @@ func TestSQLEngine(t *testing.T) {
 		assert.True(t, transformer.transformQueryErrorWasCalled)
 		assert.Equal(t, err, resultErr)
 		assert.ErrorIs(t, err, resultErr)
-	})
-}
-
-func TestConvertResultsToFrame(t *testing.T) {
-	// Import the pgx packages needed for testing
-	// These imports are included in the main file but need to be accessible for tests
-	t.Run("convertResultsToFrame with single result", func(t *testing.T) {
-		// Create mock field descriptions
-		fieldDescs := []pgconn.FieldDescription{
-			{Name: "id", DataTypeOID: pgtype.Int4OID},
-			{Name: "name", DataTypeOID: pgtype.TextOID},
-			{Name: "value", DataTypeOID: pgtype.Float8OID},
-		}
-
-		// Create mock result data
-		mockRows := [][][]byte{
-			{[]byte("1"), []byte("test1"), []byte("10.5")},
-			{[]byte("2"), []byte("test2"), []byte("20.7")},
-		}
-
-		// Create mock result
-		result := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows,
-		}
-		result.CommandTag = pgconn.NewCommandTag("SELECT 2")
-
-		results := []*pgconn.Result{result}
-
-		frame, err := convertResultsToFrame(results, 1000)
-		require.NoError(t, err)
-		require.NotNil(t, frame)
-		require.Equal(t, 3, len(frame.Fields))
-		require.Equal(t, 2, frame.Rows())
-
-		// Verify field names
-		require.Equal(t, "id", frame.Fields[0].Name)
-		require.Equal(t, "name", frame.Fields[1].Name)
-		require.Equal(t, "value", frame.Fields[2].Name)
-	})
-
-	t.Run("convertResultsToFrame with multiple compatible results", func(t *testing.T) {
-		// Create mock field descriptions (same structure for both results)
-		fieldDescs := []pgconn.FieldDescription{
-			{Name: "id", DataTypeOID: pgtype.Int4OID},
-			{Name: "name", DataTypeOID: pgtype.TextOID},
-		}
-
-		// Create first result
-		mockRows1 := [][][]byte{
-			{[]byte("1"), []byte("test1")},
-			{[]byte("2"), []byte("test2")},
-		}
-		result1 := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows1,
-		}
-		result1.CommandTag = pgconn.NewCommandTag("SELECT 2")
-
-		// Create second result with same structure
-		mockRows2 := [][][]byte{
-			{[]byte("3"), []byte("test3")},
-			{[]byte("4"), []byte("test4")},
-		}
-		result2 := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows2,
-		}
-		result2.CommandTag = pgconn.NewCommandTag("SELECT 2")
-
-		results := []*pgconn.Result{result1, result2}
-
-		frame, err := convertResultsToFrame(results, 1000)
-		require.NoError(t, err)
-		require.NotNil(t, frame)
-		require.Equal(t, 2, len(frame.Fields))
-		require.Equal(t, 4, frame.Rows()) // Should have rows from both results
-
-		// Verify field names
-		require.Equal(t, "id", frame.Fields[0].Name)
-		require.Equal(t, "name", frame.Fields[1].Name)
-	})
-
-	t.Run("convertResultsToFrame with row limit", func(t *testing.T) {
-		// Create mock field descriptions
-		fieldDescs := []pgconn.FieldDescription{
-			{Name: "id", DataTypeOID: pgtype.Int4OID},
-		}
-
-		// Create mock result data with 3 rows
-		mockRows := [][][]byte{
-			{[]byte("1")},
-			{[]byte("2")},
-			{[]byte("3")},
-		}
-
-		result := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows,
-		}
-		result.CommandTag = pgconn.NewCommandTag("SELECT 3")
-
-		results := []*pgconn.Result{result}
-
-		// Set row limit to 2
-		frame, err := convertResultsToFrame(results, 2)
-		require.NoError(t, err)
-		require.NotNil(t, frame)
-		require.Equal(t, 1, len(frame.Fields))
-		require.Equal(t, 2, frame.Rows()) // Should be limited to 2 rows
-
-		// Should have a notice about the limit
-		require.NotNil(t, frame.Meta)
-		require.Len(t, frame.Meta.Notices, 1)
-		require.Contains(t, frame.Meta.Notices[0].Text, "Results have been limited to 2")
-	})
-
-	t.Run("convertResultsToFrame with mixed SELECT and non-SELECT results", func(t *testing.T) {
-		// Create a non-SELECT result (should be skipped)
-		nonSelectResult := &pgconn.Result{}
-		nonSelectResult.CommandTag = pgconn.NewCommandTag("UPDATE 1")
-
-		// Create a SELECT result
-		fieldDescs := []pgconn.FieldDescription{
-			{Name: "id", DataTypeOID: pgtype.Int4OID},
-		}
-		mockRows := [][][]byte{
-			{[]byte("1")},
-		}
-		selectResult := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows,
-		}
-		selectResult.CommandTag = pgconn.NewCommandTag("SELECT 1")
-
-		results := []*pgconn.Result{nonSelectResult, selectResult}
-
-		frame, err := convertResultsToFrame(results, 1000)
-		require.NoError(t, err)
-		require.NotNil(t, frame)
-		require.Equal(t, 1, len(frame.Fields))
-		require.Equal(t, 1, frame.Rows())
-	})
-
-	t.Run("convertResultsToFrame with no row-returning results", func(t *testing.T) {
-		// UPDATE and INSERT have no FieldDescriptions, so should return an empty frame
-		result1 := &pgconn.Result{}
-		result1.CommandTag = pgconn.NewCommandTag("UPDATE 1")
-
-		result2 := &pgconn.Result{}
-		result2.CommandTag = pgconn.NewCommandTag("INSERT 1")
-
-		results := []*pgconn.Result{result1, result2}
-
-		frame, err := convertResultsToFrame(results, 1000)
-		require.NoError(t, err)
-		require.NotNil(t, frame)
-		require.Equal(t, 0, len(frame.Fields))
-		require.Equal(t, 0, frame.Rows())
-	})
-
-	t.Run("convertResultsToFrame with EXPLAIN ANALYZE result", func(t *testing.T) {
-		// EXPLAIN ANALYZE returns rows with a non-SELECT command tag ("EXPLAIN"),
-		// but has FieldDescriptions and should not be filtered out.
-		fieldDescs := []pgconn.FieldDescription{
-			{Name: "QUERY PLAN", DataTypeOID: pgtype.TextOID},
-		}
-		mockRows := [][][]byte{
-			{[]byte("Seq Scan on t  (cost=0.00..1.01 rows=1 width=4) (actual time=0.010..0.011 rows=1 loops=1)")},
-			{[]byte("Planning Time: 0.1 ms")},
-			{[]byte("Execution Time: 0.2 ms")},
-		}
-		result := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows,
-		}
-		result.CommandTag = pgconn.NewCommandTag("EXPLAIN")
-
-		frame, err := convertResultsToFrame([]*pgconn.Result{result}, 1000)
-		require.NoError(t, err)
-		require.NotNil(t, frame)
-		require.Equal(t, 1, len(frame.Fields))
-		require.Equal(t, "QUERY PLAN", frame.Fields[0].Name)
-		require.Equal(t, 3, frame.Rows())
-	})
-
-	t.Run("convertResultsToFrame with multiple results and row limit per result", func(t *testing.T) {
-		// Create mock field descriptions (same structure for both results)
-		fieldDescs := []pgconn.FieldDescription{
-			{Name: "id", DataTypeOID: pgtype.Int4OID},
-		}
-
-		// Create first result with 3 rows
-		mockRows1 := [][][]byte{
-			{[]byte("1")},
-			{[]byte("2")},
-			{[]byte("3")},
-		}
-		result1 := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows1,
-		}
-		result1.CommandTag = pgconn.NewCommandTag("SELECT 3")
-
-		// Create second result with 3 rows
-		mockRows2 := [][][]byte{
-			{[]byte("4")},
-			{[]byte("5")},
-			{[]byte("6")},
-		}
-		result2 := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows2,
-		}
-		result2.CommandTag = pgconn.NewCommandTag("SELECT 3")
-
-		results := []*pgconn.Result{result1, result2}
-
-		// Set row limit to 2 (should limit each result to 2 rows)
-		frame, err := convertResultsToFrame(results, 2)
-		require.NoError(t, err)
-		require.NotNil(t, frame)
-		require.Equal(t, 1, len(frame.Fields))
-		require.Equal(t, 4, frame.Rows()) // 2 rows from each result
-
-		// Should have notices about the limit from both results
-		require.NotNil(t, frame.Meta)
-		require.Len(t, frame.Meta.Notices, 2)
-		require.Contains(t, frame.Meta.Notices[0].Text, "Results have been limited to 2")
-		require.Contains(t, frame.Meta.Notices[1].Text, "Results have been limited to 2")
-	})
-
-	t.Run("convertResultsToFrame handles null values correctly", func(t *testing.T) {
-		// Create mock field descriptions
-		fieldDescs := []pgconn.FieldDescription{
-			{Name: "id", DataTypeOID: pgtype.Int4OID},
-			{Name: "name", DataTypeOID: pgtype.TextOID},
-		}
-
-		// Create mock result data with null values
-		mockRows := [][][]byte{
-			{[]byte("1"), nil},     // null name
-			{nil, []byte("test2")}, // null id
-		}
-
-		result := &pgconn.Result{
-			FieldDescriptions: fieldDescs,
-			Rows:              mockRows,
-		}
-		result.CommandTag = pgconn.NewCommandTag("SELECT 2")
-
-		results := []*pgconn.Result{result}
-
-		frame, err := convertResultsToFrame(results, 1000)
-		require.NoError(t, err)
-		require.NotNil(t, frame)
-		require.Equal(t, 2, len(frame.Fields))
-		require.Equal(t, 2, frame.Rows())
-
-		// Check that null values are handled correctly
-		// The exact representation depends on the field type, but should not panic
-		require.NotPanics(t, func() {
-			frame.Fields[0].At(1) // null id
-			frame.Fields[1].At(0) // null name
-		})
 	})
 }
 

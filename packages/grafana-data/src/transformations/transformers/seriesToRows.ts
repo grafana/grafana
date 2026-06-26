@@ -6,13 +6,13 @@ import { sortDataFrame } from '../../dataframe/processDataFrame';
 import { isTimeSeriesFrames } from '../../dataframe/utils';
 import { getFrameDisplayName } from '../../field/fieldState';
 import {
-  type Field,
+  Field,
   FieldType,
   TIME_SERIES_METRIC_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '../../types/dataFrame';
-import { type DataTransformerInfo } from '../../types/transformations';
+import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
@@ -37,10 +37,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
 
         const timeFieldByIndex: Record<number, number> = {};
         const targetFields = new Set<string>();
-        const dataFrame = new MutableDataFrame({
-          refId: `${DataTransformerID.seriesToRows}-${data.map((frame) => frame.refId).join('-')}`,
-          fields: [],
-        });
+        const dataFrame = new MutableDataFrame();
         const metricField: Field = {
           name: TIME_SERIES_METRIC_FIELD_NAME,
           values: [],

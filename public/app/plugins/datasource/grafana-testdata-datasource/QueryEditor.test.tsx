@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { QueryEditor, type Props } from './QueryEditor';
+import { QueryEditor, Props } from './QueryEditor';
+import { scenarios } from './__mocks__/scenarios';
 import { defaultQuery } from './constants';
 import { TestDataQueryType } from './dataquery';
-import { type TestDataDataSource } from './datasource';
-import { scenarios } from './mocks/scenarios';
+import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
 beforeEach(() => {

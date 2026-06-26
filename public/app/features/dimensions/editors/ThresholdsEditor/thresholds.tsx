@@ -1,27 +1,30 @@
-import { memo } from 'react';
+import { PureComponent } from 'react';
 
-import {
-  type StandardEditorProps,
-  type ThresholdsConfig,
-  ThresholdsMode,
-  type ThresholdsFieldConfigSettings,
-} from '@grafana/data';
+import { StandardEditorProps, ThresholdsConfig, ThresholdsMode, ThresholdsFieldConfigSettings } from '@grafana/data';
 
 import { ThresholdsEditor } from './ThresholdsEditor';
 
 type Props = StandardEditorProps<ThresholdsConfig, ThresholdsFieldConfigSettings>;
 
-export const ThresholdsValueEditor = memo(({ value, onChange }: Props) => {
-  const thresholdsValue = value ?? {
-    mode: ThresholdsMode.Percentage,
+export class ThresholdsValueEditor extends PureComponent<Props> {
+  constructor(props: Props) {
+    super(props);
+  }
 
-    // Must be sorted by 'value', first value is always -Infinity
-    steps: [
-      // anything?
-    ],
-  };
+  render() {
+    const { onChange } = this.props;
+    let value = this.props.value;
+    if (!value) {
+      value = {
+        mode: ThresholdsMode.Percentage,
 
-  return <ThresholdsEditor thresholds={thresholdsValue} onChange={onChange} />;
-});
+        // Must be sorted by 'value', first value is always -Infinity
+        steps: [
+          // anything?
+        ],
+      };
+    }
 
-ThresholdsValueEditor.displayName = 'ThresholdsValueEditor';
+    return <ThresholdsEditor thresholds={value} onChange={onChange} />;
+  }
+}

@@ -1,29 +1,28 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 
 import {
-  type DataFrame,
+  DataFrame,
   FieldType,
-  type GrafanaTheme2,
+  GrafanaTheme2,
   MutableDataFrame,
-  type ThresholdsConfig,
+  ThresholdsConfig,
   ThresholdsMode,
-  type FieldConfig,
+  FieldConfig,
   formattedValueToString,
-  type Field,
+  Field,
 } from '@grafana/data';
+import { Button, Table } from '@grafana/ui';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { Button } from '../Button/Button';
 
-import { Table } from './Table';
 import mdx from './Table.mdx';
-import { type FooterItem, TableCellDisplayMode, type TableCustomCellOptions } from './types';
+import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
 
 const meta: Meta<typeof Table> = {
-  title: 'Plugins/Table',
+  title: 'Visualizations/Table',
   component: Table,
   parameters: {
     controls: {
@@ -31,34 +30,6 @@ const meta: Meta<typeof Table> = {
     },
     docs: {
       page: mdx,
-    },
-    a11y: {
-      config: {
-        // TODO comment out rules that are currently failing in the story and fix them one by one
-        // see https://github.com/grafana/grafana/issues/117606
-        rules: [
-          {
-            id: 'aria-required-children',
-            enabled: false,
-          },
-          {
-            id: 'aria-required-parent',
-            enabled: false,
-          },
-          {
-            id: 'empty-table-header',
-            enabled: false,
-          },
-          {
-            // This does not need to be fixed! It is already specified in the storybook root preview.
-            // Once the other a11y issues are fixed, it can be removed.
-            // Unfortunately we have to duplicate it here because you can't inherit *and* append additional config rules...
-            id: 'scrollable-region-focusable',
-            selector: 'body',
-            enabled: false,
-          },
-        ],
-      },
     },
   },
   args: {
@@ -289,16 +260,7 @@ export const Footer: StoryFn<typeof Table> = (args) => {
   );
 };
 
-export const Pagination: StoryFn<typeof Table> = (args) => {
-  const theme = useTheme2();
-  const data = buildData(theme, {});
-
-  return (
-    <DashboardStoryCanvas>
-      <Table {...args} data={data} />
-    </DashboardStoryCanvas>
-  );
-};
+export const Pagination: StoryFn<typeof Table> = (args) => <Basic {...args} />;
 Pagination.args = {
   enablePagination: true,
 };

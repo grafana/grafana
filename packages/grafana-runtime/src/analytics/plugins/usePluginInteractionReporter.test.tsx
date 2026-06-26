@@ -2,11 +2,11 @@ import { renderHook } from '@testing-library/react';
 import * as React from 'react';
 
 import {
-  type DataSourceInstanceSettings,
+  DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   PluginContextProvider,
-  type PluginMeta,
-  type PluginMetaInfo,
+  PluginMeta,
+  PluginMetaInfo,
   PluginSignatureStatus,
   PluginType,
 } from '@grafana/data';
@@ -249,8 +249,8 @@ function createPluginMetaInfo(info: Partial<PluginMetaInfo> = {}): PluginMetaInf
     description: 'Standard gauge visualization',
     links: [],
     logos: {
-      large: '',
-      small: '',
+      large: 'public/app/plugins/panel/gauge/img/icon_gauge.svg',
+      small: 'public/app/plugins/panel/gauge/img/icon_gauge.svg',
     },
     screenshots: [],
     updated: '',
@@ -265,6 +265,7 @@ function createDataSourceInstanceSettings(
   const { meta, ...rest } = settings;
 
   return {
+    id: 1,
     uid: '',
     name: '',
     meta: createPluginMeta(meta),

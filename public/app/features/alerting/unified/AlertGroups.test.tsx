@@ -1,30 +1,28 @@
-import { HttpResponse, http } from 'msw';
 import { render, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AccessControlAction } from 'app/types/accessControl';
+import { setDataSourceSrv } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types';
 
 import AlertGroups from './AlertGroups';
-import { setupMswServer } from './mockApi';
-import { grantUserPermissions, mockAlertGroup, mockAlertmanagerAlert, mockDataSource } from './mocks';
+import { fetchAlertGroups } from './api/alertmanager';
+import {
+  grantUserPermissions,
+  mockAlertGroup,
+  mockAlertmanagerAlert,
+  mockDataSource,
+  MockDataSourceSrv,
+} from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { DataSourceType } from './utils/datasource';
 
-const server = setupMswServer();
-
-const dataSources = {
-  am: mockDataSource({
-    name: 'Alertmanager',
-    type: DataSourceType.Alertmanager,
-  }),
+jest.mock('./api/alertmanager');
+const mocks = {
+  api: {
+    fetchAlertGroups: jest.mocked(fetchAlertGroups),
+  },
 };
-
-/** Override the alert groups endpoint for the test alertmanager datasource. */
-function mockAlertGroupsResponse(groups: object[]) {
-  server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', () => HttpResponse.json(groups)));
-}
 
 const renderAmNotifications = () => {
   return render(
@@ -34,13 +32,22 @@ const renderAmNotifications = () => {
   );
 };
 
+const dataSources = {
+  am: mockDataSource({
+    name: 'Alertmanager',
+    type: DataSourceType.Alertmanager,
+  }),
+};
+
 const ui = {
   group: byTestId('alert-group'),
   groupCollapseToggle: byTestId('alert-group-collapse-toggle'),
   groupTable: byTestId('alert-group-table'),
+  row: byTestId('row'),
   collapseToggle: byTestId(selectors.components.AlertRules.toggle),
   silenceButton: byText('Silence'),
   sourceButton: byText('See alert rule'),
+  matcherInput: byTestId('search-query-input'),
   groupByContainer: byTestId('group-by-container'),
   groupByInput: byRole('combobox', { name: /group by label keys/i }),
   clearButton: byRole('button', { name: 'Clear filters' }),
@@ -58,20 +65,24 @@ describe('AlertGroups', () => {
   });
 
   beforeEach(() => {
-    setupDataSources(dataSources.am);
+    setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
   afterEach(() => {
-    server.resetHandlers();
+    mocks.api.fetchAlertGroups.mockClear();
   });
 
   it('loads and shows groups', async () => {
-    mockAlertGroupsResponse([
-      mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
-      mockAlertGroup(),
-    ]);
+    mocks.api.fetchAlertGroups.mockImplementation(() => {
+      return Promise.resolve([
+        mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
+        mockAlertGroup(),
+      ]);
+    });
 
     const { user } = renderAmNotifications();
+
+    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
 
     const groups = await ui.group.findAll();
 
@@ -91,8 +102,8 @@ describe('AlertGroups', () => {
 
   it('should group by custom grouping', async () => {
     const regions = ['NASA', 'EMEA', 'APAC'];
-    mockAlertGroupsResponse(
-      regions.map((region) =>
+    mocks.api.fetchAlertGroups.mockImplementation(() => {
+      const groups = regions.map((region) =>
         mockAlertGroup({
           labels: { region },
           alerts: [
@@ -104,11 +115,12 @@ describe('AlertGroups', () => {
             mockAlertmanagerAlert({ fingerprint: '3', labels: { region, appName: 'frontend', env: 'production' } }),
           ],
         })
-      )
-    );
+      );
+      return Promise.resolve(groups);
+    });
 
     const { user } = renderAmNotifications();
-    await waitForElementToBeRemoved(ui.loadingIndicator.query());
+    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
     let groups = await ui.group.findAll();
     const groupByInput = ui.groupByInput.get();
     const groupByWrapper = ui.groupByContainer.get();
@@ -161,10 +173,11 @@ describe('AlertGroups', () => {
       labels: { region: 'NASA', appName: 'billing' },
       receivers: [{ name: 'slack' }, { name: 'email' }],
     });
-    mockAlertGroupsResponse([
+    const amGroups = [
       mockAlertGroup({ receiver: { name: 'slack' }, labels: { region: 'NASA' }, alerts: [alert] }),
       mockAlertGroup({ receiver: { name: 'email' }, labels: { region: 'NASA' }, alerts: [alert] }),
-    ]);
+    ];
+    mocks.api.fetchAlertGroups.mockResolvedValue(amGroups);
 
     const { user } = renderAmNotifications();
     await waitForElementToBeRemoved(ui.loadingIndicator.query());
@@ -181,78 +194,16 @@ describe('AlertGroups', () => {
   });
 
   it('should combine multiple ungrouped groups', async () => {
-    mockAlertGroupsResponse([
-      mockAlertGroup({ labels: {} }),
-      mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
-    ]);
+    mocks.api.fetchAlertGroups.mockImplementation(() => {
+      const groups = [
+        mockAlertGroup({ labels: {} }),
+        mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),
+      ];
+      return Promise.resolve(groups);
+    });
     renderAmNotifications();
     await waitFor(() => {
       expect(ui.group.getAll()).toHaveLength(1);
     });
-  });
-
-  it('sends filter query params to the backend when label search is set', async () => {
-    const requests: Request[] = [];
-    server.use(
-      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', ({ request }) => {
-        requests.push(request);
-        return HttpResponse.json([]);
-      })
-    );
-
-    render(
-      <AlertmanagerProvider accessType={'instance'}>
-        <AlertGroups />
-      </AlertmanagerProvider>,
-      { historyOptions: { initialEntries: ['/?queryString=severity%3D"critical"'] } }
-    );
-
-    await waitFor(() => expect(requests.length).toBeGreaterThan(0));
-    const url = new URL(requests[0].url);
-    expect(url.searchParams.get('filter')).toBe('severity="critical"');
-  });
-
-  it('sends receiver query param to the backend for single receiver selection', async () => {
-    const requests: Request[] = [];
-    server.use(
-      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', ({ request }) => {
-        requests.push(request);
-        return HttpResponse.json([]);
-      })
-    );
-
-    render(
-      <AlertmanagerProvider accessType={'instance'}>
-        <AlertGroups />
-      </AlertmanagerProvider>,
-      { historyOptions: { initialEntries: ['/?receivers=pagerduty'] } }
-    );
-
-    await waitFor(() => expect(requests.length).toBeGreaterThan(0));
-    const url = new URL(requests[0].url);
-    expect(url.searchParams.get('receiver')).toBe('pagerduty');
-  });
-
-  it('sends active/silenced/inhibited flags when alertState filter is set', async () => {
-    const requests: Request[] = [];
-    server.use(
-      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', ({ request }) => {
-        requests.push(request);
-        return HttpResponse.json([]);
-      })
-    );
-
-    render(
-      <AlertmanagerProvider accessType={'instance'}>
-        <AlertGroups />
-      </AlertmanagerProvider>,
-      { historyOptions: { initialEntries: ['/?alertState=active'] } }
-    );
-
-    await waitFor(() => expect(requests.length).toBeGreaterThan(0));
-    const url = new URL(requests[0].url);
-    expect(url.searchParams.get('active')).toBe('true');
-    expect(url.searchParams.get('silenced')).toBe('false');
-    expect(url.searchParams.get('inhibited')).toBe('false');
   });
 });

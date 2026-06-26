@@ -1,29 +1,24 @@
-import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
-import { type SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
-import { type DataQuery, type DataSourceRef } from '@grafana/schema';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { config } from '@grafana/runtime';
+import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { PanelModel } from 'app/features/dashboard/state';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
-export function createPanelDataProvider(
-  panel: PanelModel,
-  panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
-): SceneDataProvider | undefined {
+export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
   // Skip setting query runner for panels without queries
   if (!panel.targets?.length) {
     return undefined;
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (panelMetas[panel.type]?.skipDataQuery) {
+  if (config.panels[panel.type]?.skipDataQuery) {
     return undefined;
   }
 
   let dataProvider: SceneDataProvider | undefined = undefined;
 
   dataProvider = new SceneQueryRunner({
-    // If panel.datasource is not defined, we use the first datasource from the targets (queries)
-    datasource: panel.datasource ?? findFirstDatasource(panel.targets),
+    datasource: panel.datasource ?? undefined,
     queries: panel.targets,
     maxDataPoints: panel.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
@@ -41,18 +36,4 @@ export function createPanelDataProvider(
     $data: dataProvider,
     transformations: panel.transformations || [],
   });
-}
-
-function findFirstDatasource(targets: DataQuery[]): DataSourceRef | undefined {
-  const datasource = targets.find((t) => Boolean(t.datasource))?.datasource;
-  if (!datasource) {
-    return undefined;
-  }
-
-  const dsRef: DataSourceRef = {
-    ...(datasource?.type && { type: datasource?.type }),
-    ...(datasource?.uid && { uid: datasource?.uid }),
-  };
-
-  return dsRef;
 }

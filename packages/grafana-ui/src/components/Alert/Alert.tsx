@@ -1,17 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
+import { AriaRole, HTMLAttributes, ReactNode } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-import { type IconName } from '../../types/icon';
+import { useTheme2 } from '../../themes';
+import { IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
-import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -25,15 +23,8 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
-  /** Custom action element rendered in the alert's button area, independently from the dismiss button. */
-  action?: ReactNode;
 }
 
-/**
- * An alert displays an important message in a way that attracts the user's attention without interrupting the user's task.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-alert--docs
- */
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
     {
@@ -46,7 +37,6 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       topSpacing,
       className,
       severity = 'error',
-      action,
       ...restProps
     },
     ref
@@ -63,15 +53,13 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     const role = restProps['role'] || rolesBySeverity[severity];
     const ariaLabel = restProps['aria-label'] || title;
 
-    const closeLabel = t('grafana-ui.alert.close-button', 'Close alert');
-
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
         <Box
           data-testid={selectors.components.Alert.alertV2(severity)}
           display="flex"
           backgroundColor={severity}
-          borderRadius="lg"
+          borderRadius="default"
           paddingY={1}
           paddingX={2}
           borderStyle="solid"
@@ -85,27 +73,17 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             </div>
           </Box>
 
-          <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box paddingY={1} flex={1} minWidth="50%">
-              <Text color="primary" weight="medium">
-                {title}
-              </Text>
-              {children && <div className={styles.content}>{children}</div>}
-            </Box>
-            <Stack alignItems="center" wrap="wrap">
-              {action}
-              {onRemove && buttonContent && (
-                <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
-                  {buttonContent}
-                </Button>
-              )}
-            </Stack>
-          </Stack>
+          <Box paddingY={1} grow={1}>
+            <Text color="primary" weight="medium">
+              {title}
+            </Text>
+            {children && <div className={styles.content}>{children}</div>}
+          </Box>
           {/* If onRemove is specified, giving preference to onRemove */}
           {onRemove && !buttonContent && (
             <div className={styles.close}>
               <Button
-                aria-label={closeLabel}
+                aria-label="Close alert"
                 icon="times"
                 onClick={onRemove}
                 type="button"
@@ -113,6 +91,14 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
                 variant="secondary"
               />
             </div>
+          )}
+
+          {onRemove && buttonContent && (
+            <Box marginLeft={1} display="flex" alignItems="center">
+              <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
+                {buttonContent}
+              </Button>
+            </Box>
           )}
         </Box>
       </div>
@@ -122,7 +108,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getIconFromSeverity = (severity: AlertVariant): IconName => {
+export const getIconFromSeverity = (severity: AlertVariant): IconName => {
   switch (severity) {
     case 'error':
       return 'exclamation-circle';
@@ -160,7 +146,6 @@ const getStyles = (
         bottom: 0,
         right: 0,
         background: theme.colors.background.primary,
-        borderRadius: theme.shape.radius.default,
         zIndex: -1,
       },
     }),

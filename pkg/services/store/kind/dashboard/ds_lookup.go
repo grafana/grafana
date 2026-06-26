@@ -100,9 +100,6 @@ func (d *DsLookup) ByRef(ref *DataSourceRef) *DataSourceRef {
 	if ref == nil {
 		return d.defaultDS
 	}
-	if ref.UID == "default" && ref.Type == "" {
-		return d.defaultDS
-	}
 
 	key := ""
 	if ref.UID != "" {
@@ -120,13 +117,7 @@ func (d *DsLookup) ByRef(ref *DataSourceRef) *DataSourceRef {
 		return ds
 	}
 
-	ds, ok = d.byName[key]
-	if ok {
-		return ds
-	}
-
-	// With nothing was found (or configured), use the original reference
-	return ref
+	return d.byName[key]
 }
 
 func (d *DsLookup) ByType(dsType string) []DataSourceRef {

@@ -6,7 +6,7 @@ describe('grafana data source', () => {
   it('supports time region query', () => {
     const frame = doTimeRegionQuery(
       'test',
-      { fromDayOfWeek: 1, toDayOfWeek: 2, timezone: 'utc' },
+      { fromDayOfWeek: 1, toDayOfWeek: 2 },
       {
         from: dateTime('2023-03-01'),
         to: dateTime('2023-03-31'),
@@ -14,7 +14,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'utc'
     );
 
     expect(toDataFrameDTO(frame!)).toMatchInlineSnapshot(`
@@ -38,10 +39,10 @@ describe('grafana data source', () => {
             "name": "timeEnd",
             "type": "time",
             "values": [
-              1678233600000,
-              1678838400000,
-              1679443200000,
-              1680048000000,
+              1678233599000,
+              1678838399000,
+              1679443199000,
+              1680047999000,
             ],
           },
           {
@@ -79,7 +80,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'utc'
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -99,7 +101,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678147200000,
+            1678147199000,
           ],
         },
         {
@@ -131,7 +133,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'utc'
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -151,7 +154,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678165200000,
+            1678165199000,
           ],
         },
         {
@@ -183,7 +186,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'utc'
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -203,7 +207,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678168800000,
+            1678168799000,
           ],
         },
         {
@@ -235,7 +239,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'utc'
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -255,7 +260,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678143600000,
+            1678143599000,
           ],
         },
         {
@@ -287,7 +292,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'utc'
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -307,7 +313,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678122000000,
+            1678121999000,
           ],
         },
         {
@@ -339,7 +345,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'Asia/Dubai'
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -359,7 +366,7 @@ describe('grafana data source', () => {
           "name": "timeEnd",
           "type": "time",
           "values": [
-            1678147200000,
+            1678147199000,
           ],
         },
         {
@@ -391,7 +398,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'America/Chicago'
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`
@@ -443,7 +451,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'America/Chicago'
     );
 
     expect(toDataFrameDTO(frame!).fields).toMatchInlineSnapshot(`

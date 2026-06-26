@@ -1,39 +1,35 @@
-import { memo } from 'react';
+import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { Button, LoadingPlaceholder, ScrollContainer, Text } from '@grafana/ui';
-import { type UserDTO, type UserOrg } from 'app/types/user';
+import { Button, LoadingPlaceholder } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
+import { UserDTO, UserOrg } from 'app/types';
 
-interface Props {
+export interface Props {
   user: UserDTO | null;
   orgs: UserOrg[];
   isLoading: boolean;
   setUserOrg: (org: UserOrg) => void;
 }
 
-const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) => {
-  if (isLoading) {
+export class UserOrganizations extends PureComponent<Props> {
+  render() {
+    const { isLoading, orgs, user } = this.props;
+
+    if (isLoading) {
+      return <LoadingPlaceholder text="Loading organizations..." />;
+    }
+
+    if (orgs.length === 0) {
+      return null;
+    }
+
     return (
-      <LoadingPlaceholder
-        text={t('profile.user-organizations.text-loading-organizations', 'Loading organizations...')}
-      />
-    );
-  }
-
-  if (orgs.length === 0) {
-    return null;
-  }
-
-  return (
-    <div>
-      <div className="page-sub-heading">
-        <Text variant="h3" element="h2">
+      <div>
+        <h3 className="page-sub-heading">
           <Trans i18nKey="user-orgs.title">Organizations</Trans>
-        </Text>
-      </div>
+        </h3>
 
-      <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.orgsTable}>
           <thead>
             <tr>
@@ -62,7 +58,7 @@ const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) =>
                         variant="secondary"
                         size="sm"
                         onClick={() => {
-                          setUserOrg(org);
+                          this.props.setUserOrg(org);
                         }}
                       >
                         <Trans i18nKey="user-orgs.select-org-button">Select organisation</Trans>
@@ -74,11 +70,9 @@ const UserOrganizations = memo<Props>(({ isLoading, orgs, user, setUserOrg }) =>
             })}
           </tbody>
         </table>
-      </ScrollContainer>
-    </div>
-  );
-});
-
-UserOrganizations.displayName = 'UserOrganizations';
+      </div>
+    );
+  }
+}
 
 export default UserOrganizations;

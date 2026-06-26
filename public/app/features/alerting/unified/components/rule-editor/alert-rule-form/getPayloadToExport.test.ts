@@ -1,16 +1,15 @@
-import { type RulerRuleDTO, type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { mockRulerGrafanaRecordingRule, mockRulerGrafanaRule } from '../../../mocks';
-import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
-import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { Annotation } from '../../../utils/constants';
+import { getDefaultFormValues } from '../../../utils/rule-form';
 
 import { getPayloadToExport } from './ModifyExportRuleForm';
 
 const rule1 = mockRulerGrafanaRule(
   {
     for: '1m',
-    keep_firing_for: '1m',
     labels: { severity: 'critical', region: 'region1' },
     annotations: { [Annotation.summary]: 'This grafana rule1' },
   },
@@ -20,7 +19,6 @@ const rule1 = mockRulerGrafanaRule(
 const rule2 = mockRulerGrafanaRule(
   {
     for: '1m',
-    keep_firing_for: '1m',
     labels: { severity: 'notcritical', region: 'region2' },
     annotations: { [Annotation.summary]: 'This grafana rule2' },
   },
@@ -30,7 +28,6 @@ const rule2 = mockRulerGrafanaRule(
 const rule3 = mockRulerGrafanaRule(
   {
     for: '1m',
-    keep_firing_for: '1m',
     labels: { severity: 'notcritical3', region: 'region3' },
     annotations: { [Annotation.summary]: 'This grafana rule2' },
   },
@@ -41,7 +38,6 @@ const rule4 = mockRulerGrafanaRecordingRule(
   {
     labels: { severity: 'notcritical4', region: 'region4' },
     annotations: { [Annotation.summary]: 'This grafana rule4' },
-    keep_firing_for: '1m',
   },
   { uid: 'uid-rule-4', title: 'Rule4', data: [] }
 );
@@ -68,7 +64,6 @@ const formValuesForRule2Updated: RuleFormValues = {
   name: 'Rule2 updated',
   labels: [{ key: 'newLabel', value: 'newLabel' }],
   annotations: [{ key: 'summary', value: 'This grafana rule2 updated' }],
-  keepFiringFor: '1m',
 };
 const formValuesForRecordingRule4Updated: RuleFormValues = {
   ...defaultValues,
@@ -118,9 +113,7 @@ const expectedModifiedRule2 = (uid: string) => ({
     no_data_state: 'NoData',
     title: 'Rule2 updated',
     uid: uid,
-    missing_series_evals_to_resolve: 0,
   },
-  keep_firing_for: '1m',
   labels: {
     newLabel: 'newLabel',
   },
@@ -148,6 +141,7 @@ const expectedModifiedRule4 = (uid: string) => ({
       },
     ],
     is_paused: false,
+    notification_settings: undefined,
     record: {
       metric: 'Rule4 updated',
       from: 'A',
@@ -168,16 +162,16 @@ describe('getPayloadFromDto', () => {
 
   it('should return a ModifyExportPayload with the updated rule added to a group with this rule belongs, in the same position', () => {
     // for alerting rule
-    const resultForAlerting = getPayloadToExport(formValuesForRule2Updated, groupDto, 'uid-rule-2');
+    const resultForAlerting = getPayloadToExport('uid-rule-2', formValuesForRule2Updated, groupDto);
     expect(resultForAlerting).toEqual({
       name: 'Test Group',
       rules: [rule1, expectedModifiedRule2('uid-rule-2'), rule3, rule4],
     });
     // for recording rule
     const resultForRecording = getPayloadToExport(
+      'uid-rule-4',
       { ...formValuesForRecordingRule4Updated, type: RuleFormType.grafanaRecording },
-      groupDto,
-      'uid-rule-4'
+      groupDto
     );
     expect(resultForRecording).toEqual({
       name: 'Test Group',
@@ -186,16 +180,16 @@ describe('getPayloadFromDto', () => {
   });
   it('should return a ModifyExportPayload with the updated rule added to a non empty rule where this rule does not belong, in the last position', () => {
     // for alerting rule
-    const result = getPayloadToExport(formValuesForRule2Updated, groupDto, 'uid-rule-5');
+    const result = getPayloadToExport('uid-rule-5', formValuesForRule2Updated, groupDto);
     expect(result).toEqual({
       name: 'Test Group',
       rules: [rule1, rule2, rule3, rule4, expectedModifiedRule2('uid-rule-5')],
     });
     // for recording rule
     const resultForRecording = getPayloadToExport(
+      'uid-rule-5',
       { ...formValuesForRecordingRule4Updated, type: RuleFormType.grafanaRecording },
-      groupDto,
-      'uid-rule-5'
+      groupDto
     );
     expect(resultForRecording).toEqual({
       name: 'Test Group',
@@ -208,7 +202,7 @@ describe('getPayloadFromDto', () => {
       name: 'Empty Group',
       rules: [],
     };
-    const result = getPayloadToExport(formValuesForRule2Updated, emptyGroupDto, 'uid-rule-2');
+    const result = getPayloadToExport('uid-rule-2', formValuesForRule2Updated, emptyGroupDto);
     expect(result).toEqual({
       name: 'Empty Group',
       rules: [expectedModifiedRule2('uid-rule-2')],

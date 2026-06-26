@@ -1,8 +1,8 @@
-import { type ThunkResult } from 'app/types/store';
+import { ThunkResult } from 'app/types';
 
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { type KeyedVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { toVariablePayload } from '../utils';
 
 import { createConstantOptionsFromQuery } from './reducer';

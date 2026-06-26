@@ -34,7 +34,6 @@
     </script>
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="msapplication-TileColor" content="#2b5797" />
     <meta name="msapplication-config" content="public/img/browserconfig.xml" />
@@ -275,23 +274,6 @@
         assets: [[.Assets]]
       };
 
-      // For the image-renderer to check support for render bindings
-      [[if .RenderBindingSupported]]
-      window.__grafanaRenderBindingSupported = true;
-      [[end]]
-
-      [[if .AssetSriChecksEnabled]]
-        // For enabling SRI checks on dynamically loaded Grafana assets
-        window.__grafanaAssetSriChecksEnabled = true;
-      [[end]]
-
-      [[if .NewPreferencesPage]]
-        window.__grafanaNewPreferencesPage = true;
-      [[end]]
-
-      // FEMT index.html uses this, and we want to keep the index.ts the same for both
-      window.__grafana_boot_data_promise = Promise.resolve();
-
       // Set theme to match system only on startup.
       // Do not react to changes in system theme after startup.
       if (window.grafanaBootData.user.theme === "system") {
@@ -372,26 +354,13 @@
     <!-- End Google Tag Manager -->
     [[end]]
 
-    [[if .AssetSriChecksEnabled ]]
-      [[range $asset := .Assets.JSFiles]]
-        <script
-        nonce="[[$.Nonce]]"
-        src="[[$asset.FilePath]]"
-        integrity="[[$asset.Integrity]]"
-        crossorigin="anonymous"
-        type="text/javascript"
-        defer
-      ></script>
-      [[end]]
-    [[else]]
-      [[range $asset := .Assets.JSFiles]]
-        <script
-        nonce="[[$.Nonce]]"
-        src="[[$asset.FilePath]]"
-        type="text/javascript"
-        defer
-      ></script>
-      [[end]]
+    [[range $asset := .Assets.JSFiles]]
+      <script
+      nonce="[[$.Nonce]]"
+      src="[[$asset.FilePath]]"
+      type="text/javascript"
+      defer
+    ></script>
     [[end]]
 
     <script nonce="[[.Nonce]]">

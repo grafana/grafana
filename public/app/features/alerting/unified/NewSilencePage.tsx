@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { t } from '@grafana/i18n';
+import { withErrorBoundary } from '@grafana/ui';
 import {
   defaultsFromQuery,
   getDefaultSilenceFormValues,
@@ -9,10 +9,9 @@ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/cons
 import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
+import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { SilencesEditor } from './components/silences/SilencesEditor';
 import { useAlertmanager } from './state/AlertmanagerContext';
-import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 const SilencesEditorComponent = () => {
   const location = useLocation();
@@ -27,7 +26,7 @@ const SilencesEditorComponent = () => {
 
   return (
     <>
-      <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
       <SilencesEditor
         formValues={formValues}
         alertManagerSourceName={selectedAlertmanager}
@@ -40,11 +39,8 @@ const SilencesEditorComponent = () => {
 function NewSilencePage() {
   const pageNav = {
     id: 'silence-new',
-    text: t('alerting.new-silence-page.page-nav.text.silence-alert-rule', 'Silence alert rule'),
-    subTitle: t(
-      'alerting.new-silence-page.page-nav.subTitle.configure-silences-notifications-particular-alert',
-      'Configure silences to stop notifications from a particular alert rule'
-    ),
+    text: 'Silence alert rule',
+    subTitle: 'Configure silences to stop notifications from a particular alert rule',
   };
   return (
     <AlertmanagerPageWrapper navId="silences" pageNav={pageNav} accessType="instance">
@@ -52,5 +48,4 @@ function NewSilencePage() {
     </AlertmanagerPageWrapper>
   );
 }
-
-export default withPageErrorBoundary(NewSilencePage);
+export default withErrorBoundary(NewSilencePage, { style: 'page' });

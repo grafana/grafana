@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type PluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 
 import { config } from '../../config';
 

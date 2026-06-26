@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { AuthDrawerUnconnected, type Props } from './AuthDrawer';
+import { AuthDrawerUnconnected, Props } from './AuthDrawer';
 
 const defaultProps: Props = {
   onClose: jest.fn(),

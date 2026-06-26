@@ -77,7 +77,7 @@ func parseQueryType(jsonPointerValue *string) (QueryType, error) {
 		case "range":
 			return QueryTypeRange, nil
 		default:
-			return QueryTypeRange, backend.DownstreamError(fmt.Errorf("invalid queryType: %s", jsonValue))
+			return QueryTypeRange, fmt.Errorf("invalid queryType: %s", jsonValue)
 		}
 	}
 }
@@ -97,7 +97,7 @@ func parseDirection(jsonPointerValue *string) (Direction, error) {
 		case "scan":
 			return DirectionBackward, nil
 		default:
-			return DirectionBackward, backend.DownstreamError(fmt.Errorf("invalid queryDirection: %s", jsonValue))
+			return DirectionBackward, fmt.Errorf("invalid queryDirection: %s", jsonValue)
 		}
 	}
 }
@@ -125,7 +125,7 @@ func parseSupportingQueryType(jsonPointerValue *string) SupportingQueryType {
 	}
 }
 
-func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool) ([]*lokiQuery, error) {
+func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
 		model, err := parseQueryModel(query.JSON)
@@ -154,9 +154,7 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			return nil, err
 		}
 
-		expr := interpolateVariables(model.Expr, interval, timeRange, queryType, step)
-
-		limitsConfig := generateLimitsConfig(model, interval, timeRange, queryType, step)
+		expr := interpolateVariables(depointerizer(model.Expr), interval, timeRange, queryType, step)
 
 		direction, err := parseDirection(model.Direction)
 		if err != nil {
@@ -173,13 +171,6 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			legendFormat = *model.LegendFormat
 		}
 
-		if logqlScopesEnabled {
-			rewrittenExpr, err := ApplyScopes(expr, model.Scopes)
-			if err == nil {
-				expr = rewrittenExpr
-			}
-		}
-
 		supportingQueryType := parseSupportingQueryType(model.SupportingQueryType)
 
 		qs = append(qs, &lokiQuery{
@@ -193,22 +184,17 @@ func parseQuery(queryContext *backend.QueryDataRequest, logqlScopesEnabled bool)
 			End:                 end,
 			RefID:               query.RefID,
 			SupportingQueryType: supportingQueryType,
-			Scopes:              model.Scopes,
-			LimitsContext:       limitsConfig,
 		})
 	}
 
 	return qs, nil
 }
 
-func generateLimitsConfig(model *QueryJSONModel, interval time.Duration, timeRange time.Duration, queryType QueryType, step time.Duration) LimitsContext {
-	var limitsConfig LimitsContext
-	// Only supply limits context config if we have expression, and from and to
-	if model.LimitsContext != nil && model.LimitsContext.Expr != "" && model.LimitsContext.From > 0 && model.LimitsContext.To > 0 {
-		// If a limits expression was provided, interpolate it and parse the time range
-		limitsConfig.Expr = interpolateVariables(model.LimitsContext.Expr, interval, timeRange, queryType, step)
-		limitsConfig.From = time.UnixMilli(model.LimitsContext.From)
-		limitsConfig.To = time.UnixMilli(model.LimitsContext.To)
+func depointerizer[T any](v *T) T {
+	var emptyValue T
+	if v != nil {
+		emptyValue = *v
 	}
-	return limitsConfig
+
+	return emptyValue
 }

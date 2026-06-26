@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { type IconName, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconName, Text, useStyles2 } from '@grafana/ui';
 import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 import { getFirstCompatibleDataSource } from 'app/features/alerting/unified/utils/datasource';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
@@ -104,7 +103,7 @@ export function ConfigureIRM() {
   return (
     <>
       <Text element="h4" variant="h4">
-        <Trans i18nKey="gops.configure-irm.configure">Configure</Trans>
+        Configure
       </Text>
       <section className={styles.container}>
         {configuration.map((config) => (
@@ -125,7 +124,7 @@ export function ConfigureIRM() {
         )}
       </section>
       <Text element="h4" variant="h4">
-        <Trans i18nKey="gops.configure-irm.irm-apps">IRM apps</Trans>
+        IRM apps
       </Text>
     </>
   );

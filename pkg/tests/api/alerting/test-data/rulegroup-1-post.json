@@ -24,8 +24,7 @@
           }
         ],
         "no_data_state": "NoData",
-        "exec_err_state": "Alerting",
-        "missing_series_evals_to_resolve": 1
+        "exec_err_state": "Alerting"
       }
     },
     {
@@ -50,28 +49,7 @@
           }
         ],
         "no_data_state": "NoData",
-        "exec_err_state": "Alerting",
-        "missing_series_evals_to_resolve": 2
-      }
-    },
-    {
-      "grafana_alert": {
-        "title": "RecordingRule1",
-        "data": [
-          {
-            "refId": "A",
-            "datasourceUid": "__expr__",
-            "model": {
-              "expression": "1 + 1",
-              "type": "math"
-            }
-          }
-        ],
-        "record": {
-          "metric": "test_metric",
-          "from": "A",
-          "target_datasource_uid": "test-datasource-uid"
-        }
+        "exec_err_state": "Alerting"
       }
     }
   ]

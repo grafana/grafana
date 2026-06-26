@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { type ConnectionCoordinates } from 'app/features/canvas/element';
+import { ConnectionCoordinates } from 'app/features/canvas/element';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;

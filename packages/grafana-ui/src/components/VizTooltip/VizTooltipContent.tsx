@@ -1,34 +1,25 @@
 import { css } from '@emotion/css';
-import { type CSSProperties, type ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 
 import { VizTooltipRow } from './VizTooltipRow';
-import { type VizTooltipItem } from './types';
+import { VizTooltipItem } from './types';
 
 interface VizTooltipContentProps {
-  /** The rows to render, one per series or field. */
   items: VizTooltipItem[];
   children?: ReactNode;
-  /** When true the content area becomes vertically scrollable, constrained by `maxHeight`. */
   scrollable?: boolean;
-  /**
-   * Whether the tooltip is currently pinned (locked open by the user).
-   * When pinned, label and value cells become clickable to copy their text to the clipboard.
-   * Defaults to `false`.
-   */
-  isPinned?: boolean;
-  /** Maximum height in pixels of the scrollable content area. Only applied when `scrollable` is true. */
+  isPinned: boolean;
   maxHeight?: number;
 }
 
-/** @alpha */
 export const VizTooltipContent = ({
   items,
   children,
-  isPinned = false,
+  isPinned,
   scrollable = false,
   maxHeight,
 }: VizTooltipContentProps) => {
@@ -43,7 +34,7 @@ export const VizTooltipContent = ({
 
   return (
     <div className={styles.wrapper} style={scrollableStyle}>
-      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle, isHiddenFromViz }, i) => (
+      {items.map(({ label, value, color, colorIndicator, colorPlacement, isActive, lineStyle }, i) => (
         <VizTooltipRow
           key={i}
           label={label}
@@ -52,10 +43,10 @@ export const VizTooltipContent = ({
           colorIndicator={colorIndicator}
           colorPlacement={colorPlacement}
           isActive={isActive}
+          justify={'space-between'}
           isPinned={isPinned}
           lineStyle={lineStyle}
           showValueScroll={!scrollable}
-          isHiddenFromViz={isHiddenFromViz}
         />
       ))}
       {children}
@@ -69,7 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flex: 1,
     gap: 2,
-    borderTop: `1px solid ${theme.colors.border.weak}`,
+    borderTop: `1px solid ${theme.colors.border.medium}`,
     padding: theme.spacing(1),
   }),
 });

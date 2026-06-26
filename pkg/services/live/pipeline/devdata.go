@@ -11,9 +11,7 @@ import (
 	"time"
 
 	"github.com/centrifugal/centrifuge"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/util/httpclient"
 
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
@@ -65,25 +63,24 @@ func postTestData() {
 		}
 		jsonData, _ := json.Marshal(d)
 		log.Println(string(jsonData))
-		httpClient := httpclient.New()
 
 		req, _ := http.NewRequest("POST", "http://localhost:3000/api/live/pipeline/push/stream/json/auto", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		resp, err := httpClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
 		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/push/pipeline/push/stream/json/tip", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		resp, err = httpClient.Do(req)
+		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
 		_ = resp.Body.Close()
 		req, _ = http.NewRequest("POST", "http://localhost:3000/api/live/pipeline/push/stream/json/exact", bytes.NewReader(jsonData))
 		req.Header.Set("Authorization", "Bearer "+os.Getenv("GF_TOKEN"))
-		resp, err = httpClient.Do(req)
+		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -141,22 +138,22 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 		},
 		{
-			Namespace: "default",
-			Pattern:   "stream/influx/input",
+			OrgId:   1,
+			Pattern: "stream/influx/input",
 			Converter: NewAutoInfluxConverter(AutoInfluxConverterConfig{
 				FrameFormat: "labels_column",
 			}),
 		},
 		{
-			Namespace: "default",
-			Pattern:   "stream/influx/input/:rest",
+			OrgId:   1,
+			Pattern: "stream/influx/input/:rest",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 			},
 		},
 		{
-			Namespace: "default",
-			Pattern:   "stream/influx/input/cpu",
+			OrgId:   1,
+			Pattern: "stream/influx/input/cpu",
 			// TODO: Would be fine to have KeepLabelsProcessor, but we need to know frame type
 			// since there are cases when labels attached to a field, and cases where labels
 			// set in a first frame column (in Influx converter). For example, this will allow
@@ -177,19 +174,19 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 		},
 		{
-			Namespace:       "default",
+			OrgId:           1,
 			Pattern:         "stream/influx/input/cpu/spikes",
 			FrameOutputters: []FrameOutputter{NewManagedStreamFrameOutput(f.ManagedStream)},
 		},
 		{
-			Namespace:       "default",
+			OrgId:           1,
 			Pattern:         "stream/json/auto",
 			Converter:       NewAutoJsonConverter(AutoJsonConverterConfig{}),
 			FrameOutputters: []FrameOutputter{NewManagedStreamFrameOutput(f.ManagedStream)},
 		},
 		{
-			Namespace: "default",
-			Pattern:   "stream/json/tip",
+			OrgId:   1,
+			Pattern: "stream/json/tip",
 			Converter: NewAutoJsonConverter(AutoJsonConverterConfig{
 				FieldTips: map[string]Field{
 					"value3": {
@@ -212,8 +209,8 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 		},
 		{
-			Namespace: "default",
-			Pattern:   "stream/json/exact/value3/changes",
+			OrgId:   1,
+			Pattern: "stream/json/exact/value3/changes",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 				NewRemoteWriteFrameOutput(
@@ -227,22 +224,22 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 		},
 		{
-			Namespace: "default",
-			Pattern:   "stream/json/exact/annotation/changes",
+			OrgId:   1,
+			Pattern: "stream/json/exact/annotation/changes",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 			},
 		},
 		{
-			Namespace: "default",
-			Pattern:   "stream/json/exact/condition",
+			OrgId:   1,
+			Pattern: "stream/json/exact/condition",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 			},
 		},
 		{
-			Namespace: "default",
-			Pattern:   "stream/json/exact/value4/state",
+			OrgId:   1,
+			Pattern: "stream/json/exact/value4/state",
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
 			},

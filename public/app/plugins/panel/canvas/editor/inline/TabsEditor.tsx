@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Tab, TabsBar } from '@grafana/ui';
+import { Tab, TabsBar } from '@grafana/ui/src';
 
 import { InlineEditTabs } from '../../types';
 

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useState, useMemo, useEffect } from 'react';
-import { useAsyncFn, useDebounce } from 'react-use';
+import { useAsyncFn } from 'react-use';
+import useDebounce from 'react-use/lib/useDebounce';
 
-import { formattedValueToString, getValueFormat, type TimeRange } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { formattedValueToString, getValueFormat, TimeRange } from '@grafana/data';
 import { Icon, Spinner, useTheme2 } from '@grafana/ui';
 
-import { type DB, type SQLQuery, type ValidationResults } from '../../types';
+import { DB, SQLQuery, ValidationResults } from '../../types';
 
 export interface QueryValidatorProps {
   db: DB;
@@ -79,8 +79,7 @@ export function QueryValidator({ db, query, onValidate, range }: QueryValidatorP
     <>
       {state.loading && (
         <div className={styles.info}>
-          <Spinner inline={true} size="xs" />{' '}
-          <Trans i18nKey="grafana-sql.components.query-validator.validating-query">Validating query...</Trans>
+          <Spinner inline={true} size="xs" /> Validating query...
         </div>
       )}
       {!state.loading && state.value && (
@@ -88,12 +87,9 @@ export function QueryValidator({ db, query, onValidate, range }: QueryValidatorP
           <>
             {state.value.isValid && state.value.statistics && (
               <div className={styles.valid}>
-                <Trans
-                  i18nKey="grafana-sql.components.query-validator.query-will-process"
-                  values={{ bytes: formattedValueToString(valueFormatter(state.value.statistics.TotalBytesProcessed)) }}
-                >
-                  <Icon name="check" /> This query will process <strong>{'{{bytes}}'}</strong> when run.
-                </Trans>
+                <Icon name="check" /> This query will process{' '}
+                <strong>{formattedValueToString(valueFormatter(state.value.statistics.TotalBytesProcessed))}</strong>{' '}
+                when run.
               </div>
             )}
           </>

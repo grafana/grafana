@@ -2,8 +2,7 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { type ClassicCondition, ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
-import { isRangeEvaluator } from '../utils/expressionTypes';
+import { ClassicCondition, ExpressionQueryType, ThresholdExpressionQuery } from '../types';
 
 export const updateRefId = createAction<string | undefined>('thresold/updateRefId');
 export const updateThresholdType = createAction<{
@@ -30,22 +29,6 @@ export const thresholdReducer = createReducer<ThresholdExpressionQuery>(
     builder.addCase(updateThresholdType, (state, action) => {
       const typeInPayload = action.payload.evalFunction;
       const onError = action.payload.onError;
-
-      // Determine arity change before overwriting the type.
-      // Only reset params when crossing the single ↔ range boundary:
-      //   single → range : reset to [0, 0]  (need two params)
-      //   range  → single: reset to [0]     (drop second param; fixes stale [from, to] array)
-      //   single → single: preserve existing value (fixes value silently resetting to 0)
-      //   range  → range : preserve existing values
-      const previouslyRange = isRangeEvaluator(state.conditions[0].evaluator.type);
-      const nowRange = isRangeEvaluator(typeInPayload);
-      if (previouslyRange !== nowRange) {
-        state.conditions[0].evaluator.params = nowRange ? [0, 0] : [0];
-      } else if (!nowRange) {
-        // Ensure single-value types always carry exactly one param element.
-        // Older rules may have been saved with a 2-element array from a prior range type.
-        state.conditions[0].evaluator.params = [state.conditions[0].evaluator.params[0] ?? 0];
-      }
 
       //set new type in evaluator
       state.conditions[0].evaluator.type = typeInPayload;
@@ -121,29 +104,11 @@ function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
   if (type === EvalFunction.IsBelow) {
     return EvalFunction.IsAbove;
   }
-  if (type === EvalFunction.IsEqual) {
-    return EvalFunction.IsNotEqual;
-  }
-  if (type === EvalFunction.IsNotEqual) {
-    return EvalFunction.IsEqual;
-  }
-  if (type === EvalFunction.IsGreaterThanEqual) {
-    return EvalFunction.IsLessThanEqual;
-  }
-  if (type === EvalFunction.IsLessThanEqual) {
-    return EvalFunction.IsGreaterThanEqual;
-  }
   if (type === EvalFunction.IsWithinRange) {
     return EvalFunction.IsOutsideRange;
   }
   if (type === EvalFunction.IsOutsideRange) {
     return EvalFunction.IsWithinRange;
-  }
-  if (type === EvalFunction.IsWithinRangeIncluded) {
-    return EvalFunction.IsOutsideRangeIncluded;
-  }
-  if (type === EvalFunction.IsOutsideRangeIncluded) {
-    return EvalFunction.IsWithinRangeIncluded;
   }
   return EvalFunction.IsBelow;
 }
@@ -161,12 +126,7 @@ export function isInvalid(condition: ClassicCondition) {
   const { type, params: loadParams } = evaluator;
   const { params: unloadParams } = unloadEvaluator;
 
-  if (
-    type === EvalFunction.IsWithinRange ||
-    type === EvalFunction.IsOutsideRange ||
-    type === EvalFunction.IsWithinRangeIncluded ||
-    type === EvalFunction.IsOutsideRangeIncluded
-  ) {
+  if (type === EvalFunction.IsWithinRange || type === EvalFunction.IsOutsideRange) {
     if (unloadParams[0] === undefined || Number.isNaN(unloadParams[0])) {
       return { errorMsgFrom: 'This value cannot be empty' };
     }
@@ -189,26 +149,6 @@ export function isInvalid(condition: ClassicCondition) {
         return { errorMsg: `Enter a number more than or equal to ${firstParamInEvaluator}` };
       }
       break;
-    case EvalFunction.IsEqual:
-      if (firstParamInUnloadEvaluator === firstParamInEvaluator) {
-        return { errorMsg: `Enter a different number than ${firstParamInEvaluator}` };
-      }
-      break;
-    case EvalFunction.IsNotEqual:
-      if (firstParamInUnloadEvaluator !== firstParamInEvaluator) {
-        return { errorMsg: `Enter the same number as ${firstParamInEvaluator}` };
-      }
-      break;
-    case EvalFunction.IsGreaterThanEqual:
-      if (firstParamInUnloadEvaluator >= firstParamInEvaluator) {
-        return { errorMsg: `Enter a number less than ${firstParamInEvaluator}` };
-      }
-      break;
-    case EvalFunction.IsLessThanEqual:
-      if (firstParamInUnloadEvaluator <= firstParamInEvaluator) {
-        return { errorMsg: `Enter a number more than ${firstParamInEvaluator}` };
-      }
-      break;
     case EvalFunction.IsOutsideRange:
       if (firstParamInUnloadEvaluator < firstParamInEvaluator) {
         return { errorMsgFrom: `Enter a number more than or equal to ${firstParamInEvaluator}` };
@@ -223,22 +163,6 @@ export function isInvalid(condition: ClassicCondition) {
       }
       if (secondParamInUnloadEvaluator < secondParamInEvaluator) {
         return { errorMsgTo: `Enter a number be more than or equal to ${secondParamInEvaluator}` };
-      }
-      break;
-    case EvalFunction.IsOutsideRangeIncluded:
-      if (firstParamInUnloadEvaluator <= firstParamInEvaluator) {
-        return { errorMsgFrom: `Enter a number more than ${firstParamInEvaluator}` };
-      }
-      if (secondParamInUnloadEvaluator >= secondParamInEvaluator) {
-        return { errorMsgTo: `Enter a number less than ${secondParamInEvaluator}` };
-      }
-      break;
-    case EvalFunction.IsWithinRangeIncluded:
-      if (firstParamInUnloadEvaluator >= firstParamInEvaluator) {
-        return { errorMsgFrom: `Enter a number less than ${firstParamInEvaluator}` };
-      }
-      if (secondParamInUnloadEvaluator <= secondParamInEvaluator) {
-        return { errorMsgTo: `Enter a number be more than ${secondParamInEvaluator}` };
       }
       break;
     default:

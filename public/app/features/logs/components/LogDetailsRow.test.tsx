@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { type ComponentProps } from 'react';
+import { ComponentProps } from 'react';
 
-import { type Field, CoreApp, FieldType, type LinkModel } from '@grafana/data';
+import { CoreApp, FieldType, LinkModel } from '@grafana/data';
+import { Field } from '@grafana/data/';
 
 import { LogDetailsRow } from './LogDetailsRow';
-import { createLogRow } from './mocks/logRow';
+import { createLogRow } from './__mocks__/logRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;
 
@@ -143,7 +144,7 @@ describe('LogDetailsRow', () => {
     it('should be invisible unless mouse is over', () => {
       setup({ parsedValues: ['test value'] });
       // This tests a regression where the button was always visible.
-      expect(screen.getByLabelText('Copy value to clipboard')).not.toBeVisible();
+      expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
       // Asserting visibility on mouse-over is currently not possible.
     });
   });

@@ -1,31 +1,27 @@
 package builder
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/prometheus/client_golang/prometheus"
+
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // TODO: this (or something like it) belongs in grafana-app-sdk,
 // but lets keep it here while we iterate on a few simple examples
 type APIGroupBuilder interface {
+	// Get the main group name
+	GetGroupVersion() schema.GroupVersion
+
 	// Add the kinds to the server scheme
 	InstallSchema(scheme *runtime.Scheme) error
 
@@ -41,62 +37,20 @@ type APIGroupBuilder interface {
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 
-	// Do not return anything unless you have special circumstances! This is a list of resources that are allowed to be accessed in v0alpha1, with AllResourcesAllowed allowing all in the group.
-	// This is to prevent accidental exposure of experimental APIs. While developing, use the feature flag `grafanaAPIServerWithExperimentalAPIs`.
-	// And then, when you're ready to expose this to the end user, go to v1beta1 instead.
-	AllowedV0Alpha1Resources() []string
-}
+	// Get the API routes for each version
+	GetAPIRoutes() *APIRoutes
 
-const AllResourcesAllowed = "*"
-
-type APIGroupVersionProvider interface {
-	GetGroupVersion() schema.GroupVersion
-}
-
-type APIGroupVersionsProvider interface {
-	GetGroupVersions() []schema.GroupVersion
-}
-
-type APIGroupAuthorizer interface {
+	// Optionally add an authorization hook
+	// Standard namespace checking will happen before this is called, specifically
+	// the namespace must matches an org|stack that the user belongs to
 	GetAuthorizer() authorizer.Authorizer
 }
 
-// APIGroupAuditor allows different API groups to opt-in and provide their own auditing policy evaluator function.
-// Auditing is only enabled if this is implemented. If no customization is needed, you can use the default evaluator,
-// `pkg/apiserver/auditing.NewDefaultGrafanaPolicyRuleEvaluator()`.
-type APIGroupAuditor interface {
-	GetPolicyRuleEvaluator() audit.PolicyRuleEvaluator
-}
-
-type APIGroupMutation interface {
-	// Mutate allows the builder to make changes to the object before it is persisted.
-	// Context is used only for timeout/deadline/cancellation and tracing information.
-	Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
-}
-
-type APIGroupValidation interface {
-	// Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate
-	// Context is used only for timeout/deadline/cancellation and tracing information.
-	Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
-}
-
-type APIGroupRouteProvider interface {
-	// Support direct HTTP routes from an APIGroup
-	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
-}
-
-type APIGroupPostStartHookProvider interface {
-	// GetPostStartHooks returns a list of functions that will be called after the server has started
-	GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error)
-}
-
 type APIGroupOptions struct {
-	Scheme              *runtime.Scheme
-	OptsGetter          generic.RESTOptionsGetter
-	DualWriteBuilder    grafanarest.DualWriteBuilder
-	MetricsRegister     prometheus.Registerer
-	StorageOptsRegister apistore.StorageOptionsRegister
-	StorageOpts         *options.StorageOptions
+	Scheme           *runtime.Scheme
+	OptsGetter       generic.RESTOptionsGetter
+	DualWriteBuilder grafanarest.DualWriteBuilder
+	MetricsRegister  prometheus.Registerer
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
@@ -123,43 +77,4 @@ type APIRoutes struct {
 
 type APIRegistrar interface {
 	RegisterAPI(builder APIGroupBuilder)
-	RegisterAppInstaller(installer appsdkapiserver.AppInstaller)
-}
-
-// HTTPRouteRegistrar can be implemented by builders that need to register
-// routes directly on Grafana's HTTP router (not the k8s apiserver's GoRestful
-// container). This is useful for cluster-global endpoints that don't fit the
-// k8s namespace model. RegisterHTTPRoutes is called automatically by
-// service.RegisterAPI when a builder implements this interface.
-type HTTPRouteRegistrar interface {
-	RegisterHTTPRoutes(rr routing.RouteRegister)
-}
-
-func getGroup(builder APIGroupBuilder) (string, error) {
-	if v, ok := builder.(APIGroupVersionProvider); ok {
-		return v.GetGroupVersion().Group, nil
-	}
-
-	if v, ok := builder.(APIGroupVersionsProvider); ok {
-		if len(v.GetGroupVersions()) == 0 {
-			return "", fmt.Errorf("unable to get group: builder returned no versions")
-		}
-
-		return v.GetGroupVersions()[0].Group, nil
-	}
-
-	return "", fmt.Errorf("unable to get group: builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
-}
-
-func GetGroupVersions(builder APIGroupBuilder) []schema.GroupVersion {
-	if v, ok := builder.(APIGroupVersionProvider); ok {
-		return []schema.GroupVersion{v.GetGroupVersion()}
-	}
-
-	if v, ok := builder.(APIGroupVersionsProvider); ok {
-		return v.GetGroupVersions()
-	}
-
-	// this should never happen
-	panic("builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
 }

@@ -1,16 +1,10 @@
-import {
-  type DataFrame,
-  type Field,
-  FieldType,
-  outerJoinDataFrames,
-  type TimeRange,
-  applyNullInsertThreshold,
-  roundDecimals,
-} from '@grafana/data';
-import { NULL_EXPAND, NULL_REMOVE, NULL_RETAIN, nullToUndefThreshold } from '@grafana/data/internal';
+import { DataFrame, Field, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
+import { NULL_EXPAND, NULL_REMOVE, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToUndefThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullToUndefThreshold';
 import { GraphDrawStyle } from '@grafana/schema';
 
-import { type XYFieldMatchers } from './types';
+import { XYFieldMatchers } from './types';
 
 function isVisibleBarField(f: Field) {
   return (
@@ -18,7 +12,7 @@ function isVisibleBarField(f: Field) {
   );
 }
 
-function getRefField(frame: DataFrame, refFieldName?: string | null) {
+export function getRefField(frame: DataFrame, refFieldName?: string | null) {
   return frame.fields.find((field) => {
     // note: getFieldDisplayName() would require full DF[]
     return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;
@@ -50,22 +44,20 @@ function applySpanNullsThresholds(frame: DataFrame, refFieldName?: string | null
   return frame;
 }
 
-function getXField(dimFields: XYFieldMatchers, frame: DataFrame, frames: DataFrame[]) {
-  for (let field of frame.fields) {
-    if (dimFields.x(field, frame, frames)) {
-      return field;
+export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
+  let xField: Field;
+  loop: for (let frame of frames) {
+    for (let field of frame.fields) {
+      if (dimFields.x(field, frame, frames)) {
+        xField = field;
+        break loop;
+      }
     }
   }
 
-  return;
-}
-
-export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   // apply null insertions at interval
   frames = frames.map((frame) => {
-    const xField = getXField(dimFields, frame, frames);
-
-    if (xField != null && !xField.state?.nullThresholdApplied) {
+    if (!xField?.state?.nullThresholdApplied) {
       return applyNullInsertThreshold({
         frame,
         refFieldName: xField.name,
@@ -83,45 +75,22 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
   );
 
   // to make bar widths of all series uniform (equal to narrowest bar series), find smallest distance between x points
-  let minXDeltaGlobal: number | null = null;
+  let minXDelta = Infinity;
 
   if (numBarSeries > 1) {
-    // collect for each frame and only set minXDeltaGlobal if they're different
-    const minXDeltas = new Set<number>();
-
     frames.forEach((frame) => {
       if (!frame.fields.some(isVisibleBarField)) {
         return;
       }
 
-      const xField = getXField(dimFields, frame, frames);
-
-      if (xField == null) {
-        return;
-      }
-
-      let minXDeltaFrame = Infinity;
-
       const xVals = xField.values;
 
       for (let i = 0; i < xVals.length; i++) {
         if (i > 0) {
-          minXDeltaFrame = Math.min(minXDeltaFrame, xVals[i] - xVals[i - 1]);
+          minXDelta = Math.min(minXDelta, xVals[i] - xVals[i - 1]);
         }
-      }
-
-      if (minXDeltaFrame !== Infinity) {
-        if (!Number.isInteger(minXDeltaFrame)) {
-          minXDeltaFrame = roundDecimals(minXDeltaFrame, 6);
-        }
-
-        minXDeltas.add(minXDeltaFrame);
       }
     });
-
-    if (minXDeltas.size > 1) {
-      minXDeltaGlobal = Math.min(...minXDeltas);
-    }
   }
 
   let alignedFrame = outerJoinDataFrames({
@@ -149,16 +118,16 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
   });
 
   if (alignedFrame) {
-    alignedFrame = applySpanNullsThresholds(alignedFrame, alignedFrame.fields[0].name);
+    alignedFrame = applySpanNullsThresholds(alignedFrame, xField!.name);
 
-    // append 2 null vals at minXDeltaGlobal to bar series
-    if (minXDeltaGlobal != null) {
+    // append 2 null vals at minXDelta to bar series
+    if (minXDelta !== Infinity) {
       alignedFrame.fields.forEach((f, fi) => {
         let vals = f.values;
 
         if (fi === 0) {
           let lastVal = vals[vals.length - 1];
-          vals.push(lastVal + minXDeltaGlobal, lastVal + 2 * minXDeltaGlobal);
+          vals.push(lastVal + minXDelta, lastVal + 2 * minXDelta);
         } else if (isVisibleBarField(f)) {
           vals.push(null, null);
         } else {

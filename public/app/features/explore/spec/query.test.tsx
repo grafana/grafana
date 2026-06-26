@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { type Props } from 'react-virtualized-auto-sizer';
+import { Props } from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 
@@ -50,7 +50,7 @@ describe('Explore: handle running/not running query', () => {
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
 
     // Make sure we render the logs panel
-    await screen.findByRole('heading', { name: /^Logs$/ });
+    await screen.findByText(/^Logs$/);
 
     // Make sure we render the log line
     await screen.findByText(/custom log line/i);

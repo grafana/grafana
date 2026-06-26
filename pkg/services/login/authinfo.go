@@ -2,24 +2,22 @@ package login
 
 import (
 	"context"
-	"strings"
+
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-//go:generate mockery --name AuthInfoService --structname MockAuthInfoService --outpkg authinfotest --filename auth_info_service_mock.go --output ./authinfotest/
 type AuthInfoService interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
-	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
-	GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]string, error)
+	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
 }
 
-//go:generate mockery --name Store --structname MockAuthInfoStore --outpkg authinfotest --filename auth_info_store_mock.go --output ./authinfotest/
 type Store interface {
 	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
-	GetUsersRecentlyUsedLabel(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
-	GetUserAuthModules(ctx context.Context, userID int64) ([]string, error)
+	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
@@ -60,23 +58,89 @@ const (
 	OktaLabel         = "Okta"
 )
 
-// GetAuthProviderLabel returns the label for the given auth module.
-// Used for frontend to display a more user friendly label.
+// IsExternnalySynced is used to tell if the user roles are externally synced
+// true means that the org role sync is handled by Grafana
+// Note: currently the users authinfo is overridden each time the user logs in
+// https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
+// this means that if the user has multiple auth providers and one of them is set to sync org roles
+// then IsExternallySynced will be true for this one provider and false for the others
+func IsExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
+	// provider enabled in config
+	if !IsProviderEnabled(cfg, authModule, oauthInfo) {
+		return false
+	}
+	// first check SAML, LDAP and JWT
+	switch authModule {
+	case SAMLAuthModule:
+		return !cfg.SAMLSkipOrgRoleSync
+	case LDAPAuthModule:
+		return !cfg.LDAPSkipOrgRoleSync
+	case JWTModule:
+		return !cfg.JWTAuth.SkipOrgRoleSync
+	}
+	switch authModule {
+	case GoogleAuthModule, OktaAuthModule, AzureADAuthModule, GitLabAuthModule, GithubAuthModule, GrafanaComAuthModule, GenericOAuthModule:
+		if oauthInfo == nil {
+			return false
+		}
+		return !oauthInfo.SkipOrgRoleSync
+	}
+	return true
+}
+
+// IsGrafanaAdminExternallySynced returns true if Grafana server admin role is being managed by an external auth provider, and false otherwise.
+// Grafana admin role sync is available for JWT, OAuth providers and LDAP.
+// For JWT and OAuth providers there is an additional config option `allow_assign_grafana_admin` that has to be enabled for Grafana Admin role to be synced.
+func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, oauthInfo *social.OAuthInfo, authModule string) bool {
+	if !IsExternallySynced(cfg, authModule, oauthInfo) {
+		return false
+	}
+
+	switch authModule {
+	case JWTModule:
+		return cfg.JWTAuth.AllowAssignGrafanaAdmin
+	case SAMLAuthModule:
+		return cfg.SAMLRoleValuesGrafanaAdmin != ""
+	case LDAPAuthModule:
+		return true
+	default:
+		return oauthInfo != nil && oauthInfo.AllowAssignGrafanaAdmin
+	}
+}
+
+func IsProviderEnabled(cfg *setting.Cfg, authModule string, oauthInfo *social.OAuthInfo) bool {
+	switch authModule {
+	case SAMLAuthModule:
+		return cfg.SAMLAuthEnabled
+	case LDAPAuthModule:
+		return cfg.LDAPAuthEnabled
+	case JWTModule:
+		return cfg.JWTAuth.Enabled
+	case GoogleAuthModule, OktaAuthModule, AzureADAuthModule, GitLabAuthModule, GithubAuthModule, GrafanaComAuthModule, GenericOAuthModule:
+		if oauthInfo == nil {
+			return false
+		}
+		return oauthInfo.Enabled
+	}
+	return false
+}
+
+// used for frontend to display a more user friendly label
 func GetAuthProviderLabel(authModule string) string {
 	switch authModule {
-	case GithubAuthModule, strings.TrimPrefix(GithubAuthModule, "oauth_"):
+	case GithubAuthModule:
 		return GithubLabel
-	case GoogleAuthModule, strings.TrimPrefix(GoogleAuthModule, "oauth_"):
+	case GoogleAuthModule:
 		return GoogleLabel
-	case AzureADAuthModule, strings.TrimPrefix(AzureADAuthModule, "oauth_"):
+	case AzureADAuthModule:
 		return AzureADLabel
-	case GitLabAuthModule, strings.TrimPrefix(GitLabAuthModule, "oauth_"):
+	case GitLabAuthModule:
 		return GitLabLabel
-	case OktaAuthModule, strings.TrimPrefix(OktaAuthModule, "oauth_"):
+	case OktaAuthModule:
 		return OktaLabel
-	case GrafanaComAuthModule, GrafanaNetAuthModule, strings.TrimPrefix(GrafanaComAuthModule, "oauth_"), strings.TrimPrefix(GrafanaNetAuthModule, "oauth_"):
+	case GrafanaComAuthModule, GrafanaNetAuthModule:
 		return GrafanaComLabel
-	case SAMLAuthModule, strings.TrimPrefix(SAMLAuthModule, "auth."):
+	case SAMLAuthModule:
 		return SAMLLabel
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
 		return LDAPLabel
@@ -84,7 +148,7 @@ func GetAuthProviderLabel(authModule string) string {
 		return JWTLabel
 	case AuthProxyAuthModule:
 		return AuthProxyLabel
-	case GenericOAuthModule, strings.TrimPrefix(GenericOAuthModule, "oauth_"):
+	case GenericOAuthModule:
 		return GenericOAuthLabel
 	default:
 		return "Unknown"

@@ -51,9 +51,9 @@ func (s *connectionAccess) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.datasources.GetDataSource(ctx, name)
+	return s.datasources.Get(ctx, name)
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.datasources.ListDataSources(ctx)
+	return s.datasources.List(ctx)
 }

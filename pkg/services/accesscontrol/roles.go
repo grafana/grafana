@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -23,8 +24,7 @@ const (
 
 	ManagedRolePrefix = "managed:"
 
-	PluginRolePrefix    = "plugins:"
-	PluginRoleUIDPrefix = "plugins_"
+	PluginRolePrefix = "plugins:"
 
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
@@ -43,7 +43,7 @@ const (
 var (
 	ldapReaderRole = RoleDTO{
 		Name:        "fixed:ldap:reader",
-		DisplayName: "Reader",
+		DisplayName: "LDAP reader",
 		Description: "Read LDAP configuration and status.",
 		Group:       "LDAP",
 		Permissions: []Permission{
@@ -58,7 +58,7 @@ var (
 
 	ldapWriterRole = RoleDTO{
 		Name:        "fixed:ldap:writer",
-		DisplayName: "Writer",
+		DisplayName: "LDAP writer",
 		Description: "Read and update LDAP configuration and read LDAP status.",
 		Group:       "LDAP",
 		Permissions: ConcatPermissions(ldapReaderRole.Permissions, []Permission{
@@ -73,9 +73,9 @@ var (
 
 	orgUsersWriterRole = RoleDTO{
 		Name:        "fixed:org.users:writer",
-		DisplayName: "Writer (organizational)",
+		DisplayName: "Organization user writer",
 		Description: "Within a single organization, add a user, invite a user, read information about a user and their role, remove a user from that organization, or change the role of a user.",
-		Group:       "User administration",
+		Group:       "User administration (organizational)",
 		Permissions: ConcatPermissions(orgUsersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionOrgUsersAdd,
@@ -94,9 +94,9 @@ var (
 
 	orgUsersReaderRole = RoleDTO{
 		Name:        "fixed:org.users:reader",
-		DisplayName: "Reader (organizational)",
+		DisplayName: "Organization user reader",
 		Description: "Read users within a single organization.",
-		Group:       "User administration",
+		Group:       "User administration (organizational)",
 		Permissions: []Permission{
 			{
 				Action: ActionOrgUsersRead,
@@ -111,7 +111,7 @@ var (
 
 	SettingsReaderRole = RoleDTO{
 		Name:        "fixed:settings:reader",
-		DisplayName: "Reader",
+		DisplayName: "Setting reader",
 		Description: "Read Grafana instance settings.",
 		Group:       "Settings",
 		Permissions: []Permission{
@@ -124,7 +124,7 @@ var (
 
 	statsReaderRole = RoleDTO{
 		Name:        "fixed:stats:reader",
-		DisplayName: "Reader",
+		DisplayName: "Statistics reader",
 		Description: "Read Grafana instance statistics.",
 		Group:       "Statistics",
 		Permissions: []Permission{
@@ -136,9 +136,9 @@ var (
 
 	usersReaderRole = RoleDTO{
 		Name:        "fixed:users:reader",
-		DisplayName: "Reader (global)",
+		DisplayName: "User reader",
 		Description: "Read all users and their information, such as team memberships, authentication tokens, and quotas.",
-		Group:       "User administration",
+		Group:       "User administration (global)",
 		Permissions: []Permission{
 			{
 				Action: ActionUsersRead,
@@ -157,9 +157,9 @@ var (
 
 	usersWriterRole = RoleDTO{
 		Name:        "fixed:users:writer",
-		DisplayName: "Writer (global)",
+		DisplayName: "User writer",
 		Description: "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
-		Group:       "User administration",
+		Group:       "User administration (global)",
 		Permissions: ConcatPermissions(usersReaderRole.Permissions, []Permission{
 			{
 				Action: ActionUsersPasswordUpdate,
@@ -273,14 +273,6 @@ var (
 				Action: ActionSettingsWrite,
 				Scope:  ScopeSettingsOAuth("ldap"),
 			},
-			{
-				Action: ActionSettingsRead,
-				Scope:  ScopeSettingsSCIM,
-			},
-			{
-				Action: ActionSettingsWrite,
-				Scope:  ScopeSettingsSCIM,
-			},
 		},
 	}
 
@@ -303,7 +295,7 @@ var (
 
 	usagestatsReaderRole = RoleDTO{
 		Name:        "fixed:usagestats:reader",
-		DisplayName: "Usage report reader",
+		DisplayName: "Usage stats report reader",
 		Description: "View usage statistics report",
 		Group:       "Statistics",
 		Permissions: []Permission{
@@ -312,8 +304,8 @@ var (
 	}
 )
 
-// FixedRoleRegistrations returns all OSS core role registrations declared by this package.
-func FixedRoleRegistrations() []RoleRegistration {
+// Declare OSS roles to the accesscontrol service
+func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -361,16 +353,11 @@ func FixedRoleRegistrations() []RoleRegistration {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	return []RoleRegistration{
+	return service.DeclareFixedRoles(
 		ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter,
 		authenticationConfigWriter, generalAuthConfigWriter, usageStatsReader,
-	}
-}
-
-// Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(service Service) error {
-	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
+	)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {

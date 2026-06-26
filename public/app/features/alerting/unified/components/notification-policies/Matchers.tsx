@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { take, takeRight, uniqueId } from 'lodash';
-import { type FC } from 'react';
+import { FC } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
-import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { GrafanaTheme2 } from '@grafana/data';
+import { getTagColorsFromName, useStyles2, Stack } from '@grafana/ui';
+import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
-import { type MatcherFormatter, matcherFormatter } from '../../utils/matchers';
+import { MatcherFormatter, matcherFormatter } from '../../utils/matchers';
 import { PopupCard } from '../HoverCard';
 
 type MatchersProps = { matchers: ObjectMatcher[]; formatter?: MatcherFormatter };
@@ -22,28 +22,31 @@ const Matchers: FC<MatchersProps> = ({ matchers, formatter = 'default' }) => {
   const hasMoreMatchers = rest.length > 0;
 
   return (
-    <Stack direction="row" gap={1} alignItems="center" wrap="wrap" data-testid="label-matchers">
-      {firstFew.map((matcher) => (
-        <MatcherBadge key={uniqueId()} matcher={matcher} formatter={formatter} />
-      ))}
-      {hasMoreMatchers && (
-        <PopupCard
-          arrow
-          placement="top"
-          content={
-            <Stack direction="column" gap={1} alignItems="start" justifyContent="start">
-              {rest.map((matcher) => (
-                <MatcherBadge key={uniqueId()} matcher={matcher} />
-              ))}
-            </Stack>
-          }
-        >
-          <span>
-            <div className={styles.metadata}>{`and ${rest.length} more`}</div>
-          </span>
-        </PopupCard>
-      )}
-    </Stack>
+    <span data-testid="label-matchers">
+      <Stack direction="row" gap={1} alignItems="center" wrap={'wrap'}>
+        {firstFew.map((matcher) => (
+          <MatcherBadge key={uniqueId()} matcher={matcher} formatter={formatter} />
+        ))}
+        {/* TODO hover state to show all matchers we're not showing */}
+        {hasMoreMatchers && (
+          <PopupCard
+            arrow
+            placement="top"
+            content={
+              <>
+                {rest.map((matcher) => (
+                  <MatcherBadge key={uniqueId()} matcher={matcher} />
+                ))}
+              </>
+            }
+          >
+            <span>
+              <div className={styles.metadata}>{`and ${rest.length} more`}</div>
+            </span>
+          </PopupCard>
+        )}
+      </Stack>
+    </span>
   );
 };
 
@@ -52,10 +55,16 @@ interface MatcherBadgeProps {
   formatter?: MatcherFormatter;
 }
 
-export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
+const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
   const styles = useStyles2(getStyles);
 
-  return <div className={styles.matcher(matcher[0]).wrapper}>{matcherFormatter[formatter](matcher)}</div>;
+  return (
+    <div className={styles.matcher(matcher[0]).wrapper}>
+      <Stack direction="row" gap={0} alignItems="baseline">
+        {matcherFormatter[formatter](matcher)}
+      </Stack>
+    </div>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -75,9 +84,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
         // Ensure we preserve whitespace, as otherwise it's not noticeable _at all_
         // when rendering the matcher, and is only noticeable when editing
         whiteSpace: 'pre',
-
-        textOverflow: 'ellipsis',
-        overflow: 'hidden',
       }),
     };
   },

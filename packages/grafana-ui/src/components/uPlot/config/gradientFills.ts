@@ -1,12 +1,12 @@
 import tinycolor from 'tinycolor2';
-import type uPlot from 'uplot';
+import uPlot from 'uplot';
 
 import {
   colorManipulator,
-  type FieldColorMode,
+  FieldColorMode,
   FieldColorModeId,
-  type GrafanaTheme2,
-  type ThresholdsConfig,
+  GrafanaTheme2,
+  ThresholdsConfig,
   ThresholdsMode,
 } from '@grafana/data';
 import { ScaleOrientation } from '@grafana/schema';
@@ -83,7 +83,7 @@ export function getHueGradientFn(
   };
 }
 
-enum GradientDirection {
+export enum GradientDirection {
   Right = 0,
   Up = 1,
   Left = 2,
@@ -176,7 +176,7 @@ export function scaleGradient(u: uPlot, scaleKey: string, scaleStops: ScaleValue
   return grd;
 }
 
-function getDataRange(plot: uPlot, scaleKey: string) {
+export function getDataRange(plot: uPlot, scaleKey: string) {
   let sc = plot.scales[scaleKey];
 
   let min = Infinity;

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.yaml.in/yaml/v3"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )

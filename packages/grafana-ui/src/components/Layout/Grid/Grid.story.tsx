@@ -1,7 +1,6 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
-import { Card } from '../../Card/Card';
+import { useTheme2 } from '../../../themes';
 
 import { Grid } from './Grid';
 import mdx from './Grid.mdx';
@@ -11,7 +10,7 @@ const dimensions = Array.from({ length: 9 }).map(() => ({
 }));
 
 const meta: Meta<typeof Grid> = {
-  title: 'Layout/Grid',
+  title: 'General/Layout/Grid',
   component: Grid,
   parameters: {
     docs: {
@@ -24,12 +23,13 @@ const meta: Meta<typeof Grid> = {
 };
 
 export const ColumnsNumber: StoryFn<typeof Grid> = (args) => {
+  const theme = useTheme2();
   return (
     <Grid {...args}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <Card key={i} style={dimensions[i]}>
-          <Card.Heading>N# {i}</Card.Heading>
-        </Card>
+        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center', ...dimensions[i] }}>
+          N# {i}
+        </div>
       ))}
     </Grid>
   );
@@ -39,9 +39,6 @@ ColumnsNumber.argTypes = {
     control: 'select',
     options: ['stretch', 'flex-start', 'flex-end', 'center', 'baseline', 'start', 'end', 'self-start', 'self-end'],
   },
-  gap: SpacingTokenControl,
-  rowGap: SpacingTokenControl,
-  columnGap: SpacingTokenControl,
 };
 ColumnsNumber.args = {
   columns: 3,
@@ -53,20 +50,16 @@ ColumnsNumber.parameters = {
 };
 
 export const ColumnsMinWidth: StoryFn<typeof Grid> = (args) => {
+  const theme = useTheme2();
   return (
-    <Grid {...args}>
+    <Grid gap={args.gap} minColumnWidth={args.minColumnWidth}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <Card key={i}>
-          <Card.Heading>N# {i}</Card.Heading>
-        </Card>
+        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center' }}>
+          N# {i}
+        </div>
       ))}
     </Grid>
   );
-};
-ColumnsMinWidth.argTypes = {
-  gap: SpacingTokenControl,
-  rowGap: SpacingTokenControl,
-  columnGap: SpacingTokenControl,
 };
 ColumnsMinWidth.args = {
   minColumnWidth: 21,

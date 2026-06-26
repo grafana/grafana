@@ -3,7 +3,6 @@ package cloudmonitoring
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 type annotationEvent struct {
@@ -25,10 +25,10 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	resp := backend.NewQueryDataResponse()
 	dr, queryRes, _, err := queries[0].run(ctx, req, s, dsInfo, logger)
 	if dr.Error != nil {
-		resp.Responses[queries[0].getRefID()] = backend.ErrorResponseWithErrorSource(dr.Error)
+		errorsource.AddErrorToResponse(queries[0].getRefID(), resp, dr.Error)
 	}
 	if err != nil {
-		resp.Responses[queries[0].getRefID()] = backend.ErrorResponseWithErrorSource(err)
+		errorsource.AddErrorToResponse(queries[0].getRefID(), resp, err)
 		return resp, err
 	}
 
@@ -39,16 +39,11 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 		} `json:"timeSeriesList"`
 	}{}
 
-	if len(req.Queries) != 1 {
-		return nil, errors.New("multiple queries received in annotation-request")
-	}
-
-	// It's okay to use the first query for annotations as there should only be one
 	firstQuery := req.Queries[0]
 	err = json.Unmarshal(firstQuery.JSON, &tslq)
 	if err != nil {
 		logger.Error("error unmarshaling query", "error", err, "statusSource", backend.ErrorSourceDownstream)
-		resp.Responses[firstQuery.RefID] = backend.ErrorResponseWithErrorSource(err)
+		errorsource.AddErrorToResponse(firstQuery.RefID, resp, err)
 		return resp, nil
 	}
 
@@ -57,7 +52,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	resp.Responses[firstQuery.RefID] = *dr
 
 	if err != nil {
-		resp.Responses[firstQuery.RefID] = backend.ErrorResponseWithErrorSource(err)
+		errorsource.AddErrorToResponse(firstQuery.RefID, resp, err)
 		return resp, err
 	}
 

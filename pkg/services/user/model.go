@@ -15,9 +15,6 @@ func (f *HelpFlags1) AddFlag(flag HelpFlags1)     { *f |= flag }
 const (
 	HelpFlagGettingStartedPanelDismissed HelpFlags1 = 1 << iota
 	HelpFlagDashboardHelp1
-	HelpFlagEnterpriseAuth1
-	HelpFlagSyntheticMonitoring1
-	HelpFlagIRM1
 )
 
 type UpdateEmailActionType string
@@ -45,22 +42,11 @@ type User struct {
 
 	IsAdmin          bool
 	IsServiceAccount bool
-	OrgID            int64  `xorm:"org_id"`
-	OrgRole          string `xorm:"-"`
+	OrgID            int64 `xorm:"org_id"`
 
 	Created    time.Time
 	Updated    time.Time
 	LastSeenAt time.Time
-
-	IsProvisioned bool `xorm:"is_provisioned"`
-
-	ExternalAuthInfo []ExternalAuthInfo `xorm:"-" json:"-"`
-}
-
-type ExternalAuthInfo struct {
-	Module      string
-	AuthID      string
-	ExternalUID string
 }
 
 type CreateUserCommand struct {
@@ -78,8 +64,6 @@ type CreateUserCommand struct {
 	SkipOrgSetup     bool
 	DefaultOrgRole   string
 	IsServiceAccount bool
-	IsProvisioned    bool
-	ExternalAuthInfo []ExternalAuthInfo
 }
 
 type GetUserByLoginQuery struct {
@@ -105,11 +89,8 @@ type UpdateUserCommand struct {
 	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
 	// If OrgID is included update current org for user
-	OrgID            *int64             `json:"-"`
-	HelpFlags1       *HelpFlags1        `json:"-"`
-	IsProvisioned    *bool              `json:"-"`
-	OrgRole          *string            `json:"-"`
-	ExternalAuthInfo []ExternalAuthInfo `json:"-"`
+	OrgID      *int64      `json:"-"`
+	HelpFlags1 *HelpFlags1 `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {
@@ -133,9 +114,7 @@ type SearchUsersQuery struct {
 	SortOpts     []model.SortOption
 	Filters      []Filter
 
-	IsDisabled           *bool
-	IsProvisioned        *bool
-	IncludeAccessControl bool
+	IsDisabled *bool
 }
 
 type SearchUserQueryResult struct {
@@ -151,17 +130,13 @@ type UserSearchHitDTO struct {
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
-	Role          string               `json:"role"`
-	AccessControl map[string]bool      `json:"accessControl,omitempty"`
 	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`
-	IsProvisioned bool                 `json:"isProvisioned"`
 	LastSeenAt    time.Time            `json:"lastSeenAt"`
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
-	Created       time.Time            `json:"created" xorm:"created"`
 }
 
 type GetUserProfileQuery struct {
@@ -186,9 +161,6 @@ type UserProfileDTO struct {
 	CreatedAt                      time.Time       `json:"createdAt"`
 	AvatarURL                      string          `json:"avatarUrl"`
 	AccessControl                  map[string]bool `json:"accessControl,omitempty"`
-	IsProvisioned                  bool            `json:"isProvisioned"`
-
-	AuthModules []string `json:"-"`
 }
 
 // implement Conversion interface to define custom field mapping (xorm feature)
@@ -241,7 +213,8 @@ type GetUserByIDQuery struct {
 }
 
 type GetUserByUIDQuery struct {
-	UID string
+	OrgID int64
+	UID   string
 }
 
 type StartVerifyEmailCommand struct {
@@ -291,7 +264,6 @@ const (
 
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
-	UID     string `json:"uid"`
 	Message string `json:"message"`
 }
 

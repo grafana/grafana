@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { type Field, FieldColorModeId, type GrafanaTheme2 } from '@grafana/data';
+import { Field, FieldColorModeId, GrafanaTheme2 } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
-import { Icon, useStyles2, useTheme2, VizLegend, type VizLegendItem, VizLegendListItem } from '@grafana/ui';
+import { Icon, useStyles2, useTheme2, VizLegend, VizLegendItem, VizLegendListItem } from '@grafana/ui';
 
-import { type Config } from './layout';
-import { type NodeDatum } from './types';
+import { Config } from './layout';
+import { NodeDatum } from './types';
 
 function getStyles() {
   return {
@@ -55,12 +55,7 @@ export const Legend = function Legend(props: Props) {
       itemRenderer={(item) => {
         return (
           <>
-            <VizLegendListItem
-              item={item}
-              className={styles.item}
-              onLabelClick={sortable ? onClick : undefined}
-              allItemsSelected={false}
-            />
+            <VizLegendListItem item={item} className={styles.item} onLabelClick={sortable ? onClick : undefined} />
             {sortable &&
               (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'arrow-up' : 'arrow-down'} /> : '')}
           </>

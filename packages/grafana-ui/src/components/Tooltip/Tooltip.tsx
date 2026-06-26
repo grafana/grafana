@@ -1,26 +1,26 @@
 import {
   arrow,
   autoUpdate,
+  flip,
   FloatingArrow,
   offset,
+  shift,
   useDismiss,
   useFloating,
   useFocus,
   useHover,
   useInteractions,
-  safePolygon,
 } from '@floating-ui/react';
-import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
+import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
-import { type PopoverContent, type TooltipPlacement } from './types';
+import { PopoverContent, TooltipPlacement } from './types';
 
 export interface TooltipProps {
   theme?: 'info' | 'error' | 'info-alt';
@@ -34,22 +34,24 @@ export interface TooltipProps {
   interactive?: boolean;
 }
 
-/**
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-tooltip--docs
- */
 export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
   ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const arrowRef = useRef(null);
     const [controlledVisible, setControlledVisible] = useState(show);
     const isOpen = show ?? controlledVisible;
-    const floatingUIPlacement = getPlacement(placement);
 
     // the order of middleware is important!
     // `arrow` should almost always be at the end
     // see https://floating-ui.com/docs/arrow#order
     const middleware = [
       offset(8),
-      ...getPositioningMiddleware(floatingUIPlacement),
+      flip({
+        fallbackAxisSideDirection: 'end',
+        // see https://floating-ui.com/docs/flip#combining-with-shift
+        crossAxis: false,
+        boundary: document.body,
+      }),
+      shift(),
       arrow({
         element: arrowRef,
       }),
@@ -57,7 +59,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
     const { context, refs, floatingStyles } = useFloating({
       open: isOpen,
-      placement: floatingUIPlacement,
+      placement: getPlacement(placement),
       onOpenChange: setControlledVisible,
       middleware,
       whileElementsMounted: autoUpdate,
@@ -65,7 +67,9 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
     const tooltipId = useId();
 
     const hover = useHover(context, {
-      handleClose: interactive ? safePolygon() : undefined,
+      delay: {
+        close: interactive ? 100 : 0,
+      },
       move: false,
     });
     const focus = useFocus(context);
@@ -127,7 +131,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
 Tooltip.displayName = 'Tooltip';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,

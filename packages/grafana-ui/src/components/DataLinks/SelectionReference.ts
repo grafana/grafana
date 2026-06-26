@@ -1,4 +1,4 @@
-import { type VirtualElement } from '@popperjs/core/lib/types';
+import { VirtualElement } from '@popperjs/core/lib/types';
 
 export class SelectionReference implements VirtualElement {
   getBoundingClientRect() {

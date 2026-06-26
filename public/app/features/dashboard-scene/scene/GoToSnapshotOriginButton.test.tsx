@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 
-import { appEvents } from '../../../core/app_events';
+import appEvents from '../../../core/app_events';
 import { ShowModalReactEvent } from '../../../types/events';
 
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
@@ -11,11 +11,10 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 describe('GoToSnapshotOriginButton component', () => {
   beforeEach(async () => {
     locationService.push('/');
-    const win: typeof globalThis = window;
-    const location = win.location;
+    const location = window.location;
     //@ts-ignore
-    delete win.location;
-    win.location = {
+    delete window.location;
+    window.location = {
       ...location,
       href: 'http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash',
     };

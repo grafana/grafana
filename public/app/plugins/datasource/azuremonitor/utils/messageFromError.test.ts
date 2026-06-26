@@ -1,4 +1,4 @@
-import { invalidNamespaceError } from '../mocks/errors';
+import { invalidNamespaceError } from '../__mocks__/errors';
 
 import messageFromError from './messageFromError';
 

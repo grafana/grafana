@@ -1,11 +1,9 @@
-import { type Matcher, MatcherOperator, type Route } from '../../../../plugins/datasource/alertmanager/types';
+import { Matcher, MatcherOperator, Route } from '../../../../plugins/datasource/alertmanager/types';
 
 import {
   encodeMatcher,
   getMatcherQueryParams,
   isPromQLStyleMatcher,
-  isValidRE2Regex,
-  labelsToMatchersParam,
   matcherToObjectMatcher,
   normalizeMatchers,
   parseMatcher,
@@ -15,7 +13,6 @@ import {
   parseQueryParamMatchers,
   quoteWithEscape,
   quoteWithEscapeIfRequired,
-  unquoteIfRequired,
   unquoteWithUnescape,
 } from './matchers';
 
@@ -50,14 +47,6 @@ describe('Unified Alerting matchers', () => {
       expect(matchers).toHaveLength(1);
       expect(matchers[0].name).toBe('alertname');
       expect(matchers[0].value).toBe('TestData 1');
-    });
-
-    it('should not crash when matcher is not valid', () => {
-      expect(() => {
-        parseQueryParamMatchers(['alertname']);
-      }).not.toThrow();
-
-      expect(parseQueryParamMatchers(['alertname'])).toHaveLength(0);
     });
   });
 
@@ -137,16 +126,6 @@ describe('unquoteWithUnescape', () => {
   it('should not unescape unquoted string', () => {
     const unquoted = unquoteWithUnescape('un\\"quo\\\\ted');
     expect(unquoted).toBe('un\\"quo\\\\ted');
-  });
-});
-
-describe('unquoteIfRequired', () => {
-  it('should unquote strings with no special character', () => {
-    expect(unquoteIfRequired('"test"')).toBe('test');
-  });
-
-  it('should not unquote strings with special character', () => {
-    expect(unquoteIfRequired('"test this"')).toBe('"test this"');
   });
 });
 
@@ -275,20 +254,6 @@ describe('parsePromQLStyleMatcherLooseSafe', () => {
       { name: 'baz-bar.foo', value: 'bazz', isEqual: true, isRegex: false },
     ]);
   });
-
-  it.each([
-    'state:firing',
-    'state:nodata',
-    'High CPU Usage',
-    'Payment Gateway Errors',
-    'auth.service.SessionTimeout',
-    'prod/api-gateway',
-    'eu-west/em-processor',
-    'k8s-cluster-alerts',
-    'PaymentService-Prod',
-  ])('should return empty array for non-matcher legacy queryString input "%s"', (input) => {
-    expect(parsePromQLStyleMatcherLooseSafe(input)).toEqual([]);
-  });
 });
 
 describe('parsePromQLStyleMatcherLoose', () => {
@@ -311,50 +276,5 @@ describe('parsePromQLStyleMatcherLoose', () => {
       { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
       { isEqual: true, isRegex: false, name: 'bar', value: 'baz' },
     ]);
-  });
-});
-
-describe('labelsToMatchersParam', () => {
-  it('should return undefined for empty labels', () => {
-    expect(labelsToMatchersParam({})).toBeUndefined();
-  });
-
-  it('should convert single label to matcher param', () => {
-    expect(labelsToMatchersParam({ alertname: 'cpu' })).toBe('{alertname="cpu"}');
-  });
-
-  it('should convert multiple labels to matcher param', () => {
-    expect(labelsToMatchersParam({ alertname: 'cpu', env: 'prod' })).toBe('{alertname="cpu",env="prod"}');
-  });
-
-  it('should escape special characters in values', () => {
-    expect(labelsToMatchersParam({ alertname: 'cpu"alert' })).toBe('{alertname="cpu\\"alert"}');
-  });
-
-  it('should handle labels with special characters', () => {
-    expect(labelsToMatchersParam({ 'job-name': 'my\\job' })).toBe('{job-name="my\\\\job"}');
-  });
-});
-
-describe('isValidRE2Regex', () => {
-  it('accepts valid regex patterns', () => {
-    expect(isValidRE2Regex('foo.*bar')).toBe(true);
-    expect(isValidRE2Regex('frontend|backend')).toBe(true);
-    expect(isValidRE2Regex('[a-z]+')).toBe(true);
-    expect(isValidRE2Regex('')).toBe(true);
-  });
-
-  it('rejects invalid regex patterns', () => {
-    expect(isValidRE2Regex('[')).toBe(false);
-    expect(isValidRE2Regex('(unclosed')).toBe(false);
-    expect(isValidRE2Regex('*invalid')).toBe(false);
-  });
-
-  it('accepts RE2 inline flag groups that would throw in plain JS', () => {
-    expect(isValidRE2Regex('(?i)foo')).toBe(true);
-    expect(isValidRE2Regex('(?s)foo.bar')).toBe(true);
-    expect(isValidRE2Regex('(?im)foo')).toBe(true);
-    expect(isValidRE2Regex('(?-i)foo')).toBe(true);
-    expect(isValidRE2Regex('(?i)(?m)foo')).toBe(true);
   });
 });

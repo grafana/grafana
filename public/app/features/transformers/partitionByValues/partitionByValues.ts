@@ -1,17 +1,15 @@
-import { cloneDeep } from 'lodash';
 import { map } from 'rxjs';
 
 import {
-  type DataFrame,
+  DataFrame,
   DataTransformerID,
-  type SynchronousDataTransformerInfo,
+  SynchronousDataTransformerInfo,
   getFieldMatcher,
-  type DataTransformContext,
-  type FieldMatcher,
-  cacheFieldDisplayNames,
+  DataTransformContext,
+  FieldMatcher,
 } from '@grafana/data';
-import { getMatcherConfig, noopTransformer } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
+import { getMatcherConfig } from '@grafana/data/src/transformations/transformers/filterByName';
+import { noopTransformer } from '@grafana/data/src/transformations/transformers/noop';
 
 import { partition } from './partition';
 
@@ -65,42 +63,38 @@ function buildFieldLabels(names: string[], values: unknown[]) {
   return labels;
 }
 
-export const getPartitionByValuesTransformer: () => SynchronousDataTransformerInfo<PartitionByValuesTransformerOptions> =
-  () => ({
-    id: DataTransformerID.partitionByValues,
-    name: t('transformers.get-partition-by-values-transformer.name.partition-by-values', 'Partition by values'),
-    description: t(
-      'transformers.get-partition-by-values-transformer.description.split-oneframe-dataset-multiple-series',
-      'Split a one-frame dataset into multiple series.'
-    ),
-    defaultOptions: {
-      keepFields: false,
-    },
+export const partitionByValuesTransformer: SynchronousDataTransformerInfo<PartitionByValuesTransformerOptions> = {
+  id: DataTransformerID.partitionByValues,
+  name: 'Partition by values',
+  description: `Splits a one-frame dataset into multiple series discriminated by unique/enum values in one or more fields.`,
+  defaultOptions: {
+    keepFields: false,
+  },
 
-    operator: (options, ctx) => (source) =>
-      source.pipe(map((data) => getPartitionByValuesTransformer().transformer(options, ctx)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => partitionByValuesTransformer.transformer(options, ctx)(data))),
 
-    transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
-      const matcherConfig = getMatcherConfig({ names: options.fields });
+  transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
+    const matcherConfig = getMatcherConfig(ctx, { names: options.fields });
 
-      if (!matcherConfig) {
-        return noopTransformer.transformer({}, ctx);
+    if (!matcherConfig) {
+      return noopTransformer.transformer({}, ctx);
+    }
+
+    const matcher = getFieldMatcher(matcherConfig);
+
+    return (data: DataFrame[]) => {
+      if (!data.length) {
+        return data;
       }
-
-      const matcher = getFieldMatcher(matcherConfig);
-
-      return (data: DataFrame[]) => {
-        if (!data.length) {
-          return data;
-        }
-        // error if > 1 frame?
-        return partitionByValues(data[0], matcher, options);
-      };
-    },
-  });
+      // error if > 1 frame?
+      return partitionByValues(data[0], matcher, options);
+    };
+  },
+};
 
 // Split a single frame dataset into multiple frames based on values in a set of fields
-function _partitionByValues(
+export function partitionByValues(
   frame: DataFrame,
   matcher: FieldMatcher,
   options?: PartitionByValuesTransformerOptions
@@ -151,7 +145,6 @@ function _partitionByValues(
 
     return {
       name: frameName,
-      refId: `${frame.refId}-${frameName}`,
       meta: frame.meta,
       length: idxs.length,
       fields: filteredFields.map((f) => {
@@ -165,7 +158,7 @@ function _partitionByValues(
         return {
           name: f.name,
           type: f.type,
-          config: cloneDeep(f.config),
+          config: f.config,
           labels: {
             ...f.labels,
             ...fieldLabels,
@@ -175,79 +168,4 @@ function _partitionByValues(
       }),
     };
   });
-}
-
-// since this transformation splits one frame into multiple, we end up with duplicate field names across all frames
-// this is normally okay since getFieldDisplayName() -> calculateFieldDisplayName() avoids creating duplicate names
-// by using other sources of entropy such as refIds, frame names, field labels, and increments.
-
-// however, this does *not* work if a field has been renamed by the user or datasource (config.displayName or config.displayNameFromDS).
-// Organize fields transformation or field overrides are common places where this happens.
-// in this situation the auto-namer is skipped, and we end up with multiple fields named exactly the same.
-
-// consequently, onToggleSeriesVisibility() (from usePanelContext) does not have a unique field name to use for applying a
-// fieldMatcher that controls field.config.hideFrom.viz
-
-// so what we need to do to make this work is either make field.name unique or make field.config.displayName unique.
-// since field.name might need to be used for data links and subsequent drill down queries, we cannot overwrite it.
-// therefore, the code below [unfortunately] has to modify field.config.displayName by using calculateFieldDisplayName() logic.
-// this will have the side-effect of the displayName being a more verbose variant of what the user indicated, except in panels that
-// know how to remove common prefixes/suffixes from field names in tooltip and legend rendering (like XYChart)
-export function partitionByValues(
-  frame: DataFrame,
-  matcher: FieldMatcher,
-  options?: PartitionByValuesTransformerOptions
-) {
-  // remember original field names, we'll need to restore them later
-  let fieldNames: Record<string, string> = {};
-
-  let frame2 = {
-    ...frame,
-
-    fields: frame.fields.map((f) => {
-      let f2 = f;
-
-      let renameTo = f.config.displayNameFromDS ?? f.config.displayName;
-
-      if (renameTo) {
-        f2 = {
-          ...f,
-          config: {
-            ...f.config,
-          },
-          state: {
-            ...f.state,
-          },
-        };
-
-        fieldNames[renameTo] = f.name;
-        f2.name = renameTo;
-
-        delete f2.config.displayName;
-        delete f2.config.displayNameFromDS;
-        delete f2.state?.displayName;
-      }
-
-      return f2;
-    }),
-  };
-
-  let frames2 = _partitionByValues(frame2, matcher, options);
-
-  cacheFieldDisplayNames(frames2);
-
-  // restore original field names
-  frames2.forEach((frame) => {
-    frame.fields.forEach((field) => {
-      if (field.name in fieldNames) {
-        field.name = fieldNames[field.name] ?? field.name;
-        field.config.displayName = field.state!.displayName!;
-      }
-
-      delete field.state?.displayName;
-      delete field.state?.multipleFrames;
-    });
-  });
-
-  return frames2;
 }

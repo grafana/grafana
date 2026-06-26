@@ -1,12 +1,10 @@
 import { useCallback } from 'react';
 
-import { llm } from '@grafana/llm';
-
-import { type DashboardModel } from '../../state/DashboardModel';
+import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
-import { getDashboardChanges, type Message, Role } from './utils';
+import { getDashboardChanges, Message, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;
@@ -44,7 +42,7 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate, disabled }:
       messages={messages}
       onGenerate={onGenerate}
       temperature={0}
-      model={llm.Model.BASE}
+      model={'gpt-3.5-turbo-16k'}
       eventTrackingSrc={EventTrackingSrc.dashboardChanges}
       toggleTipTitle={'Improve your dashboard changes summary'}
       disabled={disabled}

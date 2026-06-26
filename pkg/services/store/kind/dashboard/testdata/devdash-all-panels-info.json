@@ -228,7 +228,7 @@
       ]
     }
   ],
-  "schemaVersion": 36,
+  "schemaVersion": 33,
   "linkCount": 2,
   "timeFrom": "now-6h",
   "timeTo": "now",

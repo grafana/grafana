@@ -14,12 +14,8 @@
 
 import Chance from 'chance';
 
-import { type TraceKeyValuePair } from '@grafana/data';
-import {
-  type TraceSpanData,
-  type TraceProcess,
-  type TraceResponse,
-} from 'app/features/explore/TraceView/components/types/trace';
+import { TraceKeyValuePair } from '@grafana/data';
+import { TraceSpanData, TraceProcess, TraceResponse } from 'app/features/explore/TraceView/components/types/trace';
 
 import { getSpanId } from '../selectors/span';
 
@@ -71,8 +67,8 @@ interface ChanceMixins {
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const chance = new Chance() as Chance.Chance & ChanceMixins;
 
-const SERVICE_LIST = ['serviceA', 'serviceB', 'serviceC', 'serviceD', 'serviceE', 'serviceF'];
-const OPERATIONS_LIST = [
+export const SERVICE_LIST = ['serviceA', 'serviceB', 'serviceC', 'serviceD', 'serviceE', 'serviceF'];
+export const OPERATIONS_LIST = [
   'GET',
   'PUT',
   'POST',

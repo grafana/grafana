@@ -8,7 +8,7 @@ on:
         type: string
       latest:
         required: false
-        default: "0"
+        default: false
         description: Mark this release as latest (`1`) or not (`0`, default)
         type: string
       dry_run:
@@ -23,7 +23,6 @@ on:
         type: string
       latest:
         required: false
-        default: "0"
         description: Mark this release as latest (`1`) or not (`0`, default)
         type: string
       dry_run:
@@ -31,29 +30,19 @@ on:
         default: false
         type: boolean
 
-permissions: {}
+permissions:
+  # contents: write allows the action(s) to create github releases
+  contents: write
 
 jobs:
   main:
-    permissions:
-      # contents: write allows the action(s) to create github releases
-      contents: write
-      id-token: write
-    runs-on: ubuntu-arm64-small
+    runs-on: ubuntu-latest
     steps:
       - name: Create GitHub release (manually invoked)
-        uses: grafana/grafana-github-actions-go/github-release@main # zizmor: ignore[unpinned-uses]
+        uses: grafana/grafana-github-actions-go/github-release@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
+          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
           latest: ${{ inputs.latest }}
           dry_run: ${{ inputs.dry_run }}
-  deploy-storybook:
-    needs: main
-    if: ${{ !inputs.dry_run && inputs.latest == '1' }}
-    permissions:
-      contents: read
-      id-token: write
-    uses: grafana/grafana/.github/workflows/deploy-storybook.yml@main
-    with:
-      version: ${{ inputs.version }}

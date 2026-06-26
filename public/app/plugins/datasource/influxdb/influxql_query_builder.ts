@@ -1,9 +1,9 @@
 import { reduce } from 'lodash';
 
-import { escapeRegex, type ScopedVars } from '@grafana/data';
-import { type TemplateSrv } from '@grafana/runtime';
+import { escapeRegex, ScopedVars } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
-import { DEFAULT_POLICY, type InfluxQueryTag, type MetadataQueryType } from './types';
+import { DEFAULT_POLICY, InfluxQueryTag, MetadataQueryType } from './types';
 
 export const buildMetadataQuery = (params: {
   type: MetadataQueryType;
@@ -15,7 +15,6 @@ export const buildMetadataQuery = (params: {
   tags?: InfluxQueryTag[];
   withKey?: string;
   withMeasurementFilter?: string;
-  withTimeFilter?: string;
 }): string => {
   let query = '';
   let {
@@ -28,7 +27,6 @@ export const buildMetadataQuery = (params: {
     tags,
     withKey,
     withMeasurementFilter,
-    withTimeFilter,
   } = params;
 
   switch (type) {
@@ -91,9 +89,8 @@ export const buildMetadataQuery = (params: {
     query += ' WITH KEY = "' + keyIdentifier + '"';
   }
 
-  let whereConditions: string[] = [];
   if (tags && tags.length > 0) {
-    whereConditions = reduce<InfluxQueryTag, string[]>(
+    const whereConditions = reduce<InfluxQueryTag, string[]>(
       tags,
       (memo, tag) => {
         // do not add a condition for the key we want to explore for
@@ -111,13 +108,10 @@ export const buildMetadataQuery = (params: {
       },
       []
     );
-  }
 
-  let shouldUseTime = isValidTimeFilter(withTimeFilter) && type !== 'MEASUREMENTS';
-  if (whereConditions.length > 0) {
-    query += ' WHERE ' + whereConditions.join(' ') + (shouldUseTime ? ' AND time > now() - ' + withTimeFilter : '');
-  } else {
-    query += shouldUseTime ? ' WHERE time > now() - ' + withTimeFilter : '';
+    if (whereConditions.length > 0) {
+      query += ' WHERE ' + whereConditions.join(' ');
+    }
   }
 
   if (type === 'MEASUREMENTS') {
@@ -130,36 +124,8 @@ export const buildMetadataQuery = (params: {
   return query;
 };
 
-// Function to validate the provided time filter value
-function isValidTimeFilter(value?: string): boolean {
-  if (!value || typeof value !== 'string') {
-    return false;
-  }
-
-  // Normalize microseconds unit
-  const normalizedValue = value.replace(/µ/g, 'u');
-
-  const validUnits = new Set(['ns', 'u', 'ms', 's', 'm', 'h', 'd', 'w']);
-  const pattern = /(\d+)(ns|u|ms|s|m|h|d|w)/g;
-  const usedUnits = new Set<string>();
-
-  let match: RegExpExecArray | null;
-  let totalLength = 0;
-
-  while ((match = pattern.exec(normalizedValue)) !== null) {
-    const [fullMatch, numberPart, unit] = match;
-    totalLength += fullMatch.length;
-
-    if (!validUnits.has(unit) || usedUnits.has(unit) || numberPart.startsWith('0')) {
-      return false;
-    }
-    usedUnits.add(unit);
-  }
-  return totalLength === normalizedValue.length;
-}
-
 // A merge of query_builder/renderTagCondition and influx_query_model/renderTagCondition
-function renderTagCondition(
+export function renderTagCondition(
   tag: InfluxQueryTag,
   index: number,
   templateSrv: TemplateSrv,

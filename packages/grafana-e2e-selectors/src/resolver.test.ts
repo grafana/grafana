@@ -14,7 +14,7 @@ describe('Resolver', () => {
     );
     expect(pages.Alerting.AddAlertRule.url).toBe('/alerting/new/alerting');
     expect(pages.AddDashboard.Settings.Variables.Edit.url('test')).toBe(
-      '/dashboard/new?orgId=1&editview=variables&editIndex=test'
+      '/dashboard/new?orgId=1&editview=templating&editIndex=test'
     );
   });
 
@@ -51,7 +51,7 @@ describe('Resolver', () => {
     expect(pages.Alerting.AddAlertRule.url).toBe('/alerting/new');
   });
 
-  it('should throw an error if an invalid semver range is used in versioned selector', () => {
+  it('should throw error if an invalid semver range is used in versioned selector', () => {
     expect(() =>
       resolveSelectors({
         Alerting: {

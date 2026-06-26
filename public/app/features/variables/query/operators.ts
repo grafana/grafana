@@ -1,4 +1,4 @@
-import { from, of, type OperatorFunction } from 'rxjs';
+import { from, of, OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
@@ -6,15 +6,15 @@ import {
   getFieldDisplayName,
   getProcessedDataFrames,
   isDataFrame,
-  type MetricFindValue,
-  type PanelData,
-  type QueryVariableModel,
+  MetricFindValue,
+  PanelData,
+  QueryVariableModel,
 } from '@grafana/data';
-import { type ThunkDispatch } from 'app/types/store';
 
+import { ThunkDispatch } from '../../../types';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { type getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { updateVariableOptions } from './reducer';
 
@@ -143,7 +143,7 @@ export function validateVariableSelection(args: {
     );
 }
 
-export function areMetricFindValues(data: unknown[]): data is MetricFindValue[] {
+export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
   if (!data) {
     return false;
   }

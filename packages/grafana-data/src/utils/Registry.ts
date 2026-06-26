@@ -1,5 +1,5 @@
 import { PluginState } from '../types/plugin';
-import { type SelectableValue } from '../types/select';
+import { SelectableValue } from '../types/select';
 
 export interface RegistryItem {
   id: string; // Unique Key -- saved in configs
@@ -82,11 +82,7 @@ export class Registry<T extends RegistryItem> {
     return v;
   }
 
-  selectOptions(
-    current?: string[],
-    filter?: (ext: T) => boolean,
-    formatLabel: (ext: T) => string = (ext) => ext.name
-  ): RegistrySelectInfo {
+  selectOptions(current?: string[], filter?: (ext: T) => boolean): RegistrySelectInfo {
     if (!this.initialized) {
       this.initialize();
     }
@@ -113,7 +109,7 @@ export class Registry<T extends RegistryItem> {
 
       const option = {
         value: ext.id,
-        label: formatLabel(ext),
+        label: ext.name,
         description: ext.description,
       };
 

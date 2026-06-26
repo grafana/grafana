@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useId } from 'react';
+import { uniqueId } from 'lodash';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
 
 import { RadioButtonDot } from './RadioButtonDot';
 
@@ -22,11 +22,6 @@ export interface RadioButtonListProps<T> {
   className?: string;
 }
 
-/**
- * RadioButtonList is used to select a single value from multiple mutually exclusive options usually in a vertical manner.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-radiobuttonlist--docs
- */
 export function RadioButtonList<T extends string | number | readonly string[]>({
   name,
   id,
@@ -38,8 +33,7 @@ export function RadioButtonList<T extends string | number | readonly string[]>({
   disabledOptions = [],
 }: RadioButtonListProps<T>) {
   const styles = useStyles2(getStyles);
-  const generatedId = useId();
-  const internalId = id ?? generatedId;
+  const internalId = id ?? uniqueId('radiogroup-list-');
 
   return (
     <div id={id} className={cx(styles.container, className)} role="radiogroup">

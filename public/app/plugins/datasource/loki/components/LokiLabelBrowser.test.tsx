@@ -3,14 +3,14 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 
-import type LokiLanguageProvider from '../LanguageProvider';
+import LokiLanguageProvider from '../LanguageProvider';
 
 import {
   buildSelector,
   facetLabels,
-  type SelectableLabel,
+  SelectableLabel,
   UnthemedLokiLabelBrowser,
-  type BrowserProps,
+  BrowserProps,
 } from './LokiLabelBrowser';
 
 // we have to mock out reportInteraction, otherwise it crashes the test.

@@ -3,7 +3,7 @@
   "template_file_provenances": {},
   "alertmanager_config": {
     "route": {
-      "receiver": "empty",
+      "receiver": "grafana-default-email",
       "routes": [
         {
           "object_matchers": [
@@ -14,13 +14,7 @@
             ]
           ],
           "mute_time_intervals": [
-            "test-interval",
-            "persisted-interval"
-          ],
-          "active_time_intervals": [
-            "test-interval",
-            "persisted-interval",
-            "test-interval-for-active-time-interval"
+            "test-interval", "persisted-interval"
           ]
         }
       ]
@@ -43,20 +37,20 @@
             "end_time": "23:59"
           }
         ]
-      },
-      {
-        "name": "test-interval-for-active-time-interval",
-        "time_intervals": [
-          {
-            "start_time": "06:00",
-            "end_time": "23:59"
-          }
-        ]
       }
     ],
     "receivers": [
       {
-        "name": "empty"
+        "name": "grafana-default-email",
+        "grafana_managed_receiver_configs": [
+          {
+            "type": "email",
+            "name": "email receiver",
+            "settings": {
+              "addresses": "<example@email.com>"
+            }
+          }
+        ]
       }
     ]
   }

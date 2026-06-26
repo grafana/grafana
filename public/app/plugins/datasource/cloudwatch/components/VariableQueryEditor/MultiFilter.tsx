@@ -1,10 +1,10 @@
 import { isEqual } from 'lodash';
 import { useEffect, useState } from 'react';
 
-import { EditorList } from '@grafana/plugin-ui';
+import { EditorList } from '@grafana/experimental';
 
 import { type CloudWatchDatasource } from '../../datasource';
-import { type MultiFilters } from '../../types';
+import { MultiFilters } from '../../types';
 
 import { MultiFilterItem } from './MultiFilterItem';
 

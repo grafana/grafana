@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import { type Dispatch, type SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { FileDropzone, useStyles2, Button, type DropzoneFile, Field } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { FileDropzone, useStyles2, Button, DropzoneFile, Field } from '@grafana/ui';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { MediaType } from '../types';
@@ -18,14 +17,14 @@ interface Props {
 interface ErrorResponse {
   message: string;
 }
-function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
+export function FileDropzoneCustomChildren({ secondaryText = 'Drag and drop here or browse' }) {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.iconWrapper}>
       <small className={styles.small}>{secondaryText}</small>
       <Button type="button" icon="upload">
-        <Trans i18nKey="dimensions.file-dropzone-custom-children.upload">Upload</Trans>
+        Upload
       </Button>
     </div>
   );
@@ -36,7 +35,7 @@ export const FileUploader = ({ mediaType, setFormData, setUpload, error }: Props
   const [file, setFile] = useState<string>('');
 
   const Preview = () => (
-    <Field label={t('dimensions.file-uploader.preview.label-preview', 'Preview')}>
+    <Field label="Preview">
       <div className={styles.iconPreview}>
         {mediaType === MediaType.Icon && <SanitizedSVG src={file} className={styles.img} />}
         {mediaType === MediaType.Image && <img src={file} alt="Preview of the uploaded file" className={styles.img} />}

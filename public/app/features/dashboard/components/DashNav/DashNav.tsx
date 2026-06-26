@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { memo, type ReactNode } from 'react';
-import { connect, type ConnectedProps } from 'react-redux';
+import { memo, ReactNode } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import {
   ButtonGroup,
@@ -13,40 +13,54 @@ import {
   useForceUpdate,
   ToolbarButtonRow,
   ConfirmModal,
+  Badge,
 } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
+import { updateNavIndex } from 'app/core/actions';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
+import { t, Trans } from 'app/core/internationalization';
+import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
+import { removeNavIndex } from 'app/core/reducers/navModel';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PublicDashboardBadgeLegacy } from 'app/features/dashboard-scene/scene/new-toolbar/actions/PublicDashboardBadge';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
-import { type KioskMode } from 'app/types/dashboard';
+import { KioskMode, StoreState } from 'app/types';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import {
-  type DynamicDashNavButtonModel,
+  DynamicDashNavButtonModel,
   dynamicDashNavActions,
   registerDynamicDashNavAction,
 } from '../../../dashboard-scene/utils/registerDynamicDashNavAction';
 
+import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ShareButton } from './ShareButton';
 
 const mapDispatchToProps = {
+  removeNavIndex,
+  setStarred,
   updateTimeZoneForSession,
+  updateNavIndex,
 };
 
-const connector = connect(null, mapDispatchToProps);
+const mapStateToProps = (state: StoreState) => ({
+  navIndex: state.navIndex,
+});
 
-interface OwnProps {
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+const selectors = e2eSelectors.pages.Dashboard.DashNav;
+
+export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
   kioskMode?: KioskMode | null;
@@ -65,7 +79,7 @@ export function addCustomRightAction(content: DynamicDashNavButtonModel) {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const DashNav = memo<Props>((props) => {
+export const DashNav = memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   useLocation();
   const forceUpdate = useForceUpdate();
@@ -79,7 +93,6 @@ const DashNav = memo<Props>((props) => {
   };
 
   const notifyApp = useAppNotification();
-
   const onOpenSnapshotOriginal = () => {
     try {
       const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
@@ -89,10 +102,7 @@ const DashNav = memo<Props>((props) => {
           new ShowModalReactEvent({
             component: ConfirmModal,
             props: {
-              title: t(
-                'dashboard.dash-nav.on-open-snapshot-original.title.proceed-to-external-site',
-                'Proceed to external site?'
-              ),
+              title: 'Proceed to external site?',
               modalClass: modalStyles,
               body: (
                 <>
@@ -103,7 +113,7 @@ const DashNav = memo<Props>((props) => {
                 </>
               ),
               confirmVariant: 'primary',
-              confirmText: t('dashboard.dash-nav.on-open-snapshot-original.confirmText.proceed', 'Proceed'),
+              confirmText: 'Proceed',
               onConfirm: gotoSnapshotOrigin,
             },
           })
@@ -114,6 +124,34 @@ const DashNav = memo<Props>((props) => {
     } catch (err) {
       notifyApp.error('Invalid URL', err instanceof Error ? err.message : undefined);
     }
+  };
+
+  const onStarDashboard = () => {
+    DashboardInteractions.toolbarFavoritesClick();
+    const dashboardSrv = getDashboardSrv();
+    const { dashboard, navIndex, removeNavIndex, setStarred, updateNavIndex } = props;
+
+    dashboardSrv.starDashboard(dashboard.uid, Boolean(dashboard.meta.isStarred)).then((newState) => {
+      setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
+      const starredNavItem = navIndex['starred'];
+      if (newState) {
+        starredNavItem.children?.push({
+          id: ID_PREFIX + dashboard.uid,
+          text: dashboard.title,
+          url: dashboard.meta.url ?? '',
+          parentItem: starredNavItem,
+        });
+      } else {
+        removeNavIndex(ID_PREFIX + dashboard.uid);
+        const indexToRemove = starredNavItem.children?.findIndex((element) => element.id === ID_PREFIX + dashboard.uid);
+        if (indexToRemove) {
+          starredNavItem.children?.splice(indexToRemove, 1);
+        }
+      }
+      updateNavIndex(starredNavItem);
+      dashboard.meta.isStarred = newState;
+      forceUpdate();
+    });
   };
 
   const onOpenSettings = () => {
@@ -147,29 +185,56 @@ const DashNav = memo<Props>((props) => {
   };
 
   const renderLeftActions = () => {
+    const isDevEnv = config.buildInfo.env === 'development';
+
     const { dashboard, kioskMode } = props;
-    const { canStar } = dashboard.meta;
+    const { canStar, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
     if (kioskMode || isPlaylistRunning()) {
       return [];
     }
 
-    // uid check narrows the type for StarToolbarButton's required `id` prop
-    if (canStar && dashboard.uid) {
+    if (canStar) {
+      let desc = isStarred
+        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
+        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
       buttons.push(
-        <StarToolbarButton
+        <DashNavButton
+          tooltip={desc}
+          icon={isStarred ? 'favorite' : 'star'}
+          iconType={isStarred ? 'mono' : 'default'}
+          iconSize="lg"
+          onClick={onStarDashboard}
           key="button-star"
-          group="dashboard.grafana.app"
-          kind="Dashboard"
-          title={dashboard.title}
-          id={dashboard.uid}
         />
       );
     }
 
-    if (dashboard.uid) {
-      buttons.push(<PublicDashboardBadgeLegacy key="public-dashboard-badge" uid={dashboard.uid} />);
+    if (dashboard.meta.publicDashboardEnabled) {
+      // TODO: This will be replaced with the new badge component. Color is required but gets override by css
+      buttons.push(
+        <Badge
+          color="blue"
+          text="Public"
+          key="public-dashboard-button-badge"
+          className={publicBadgeStyle}
+          data-testid={selectors.publicDashboardTag}
+        />
+      );
+    }
+
+    if (isDevEnv && config.featureToggles.dashboardScene) {
+      buttons.push(
+        <DashNavButton
+          key="button-scenes"
+          tooltip={'View as Scene'}
+          icon="apps"
+          onClick={() => {
+            locationService.partial({ scenes: true });
+          }}
+        />
+      );
     }
 
     addCustomContent(dynamicDashNavActions.left, buttons);
@@ -210,14 +275,18 @@ const DashNav = memo<Props>((props) => {
   };
 
   const renderRightActions = () => {
-    const { dashboard, isFullscreen, hideTimePicker } = props;
-    const { canSave, canEdit, showSettings, canShare, isEmbedded } = dashboard.meta;
+    const { dashboard, isFullscreen, kioskMode, hideTimePicker } = props;
+    const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
 
     if (isPlaylistRunning()) {
       return [renderPlaylistControls(), renderTimeControls()];
+    }
+
+    if (kioskMode === KioskMode.TV) {
+      return [renderTimeControls()];
     }
 
     if (snapshotUrl) {
@@ -272,7 +341,8 @@ const DashNav = memo<Props>((props) => {
         />
       );
     }
-    if (canShare && !isEmbedded) {
+
+    if (canShare) {
       buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
 
@@ -301,7 +371,15 @@ const DashNav = memo<Props>((props) => {
 
 DashNav.displayName = 'DashNav';
 
+export default connector(DashNav);
+
 const modalStyles = css({
   width: 'max-content',
   maxWidth: '80vw',
+});
+
+const publicBadgeStyle = css({
+  color: 'grey',
+  backgroundColor: 'transparent',
+  border: '1px solid',
 });

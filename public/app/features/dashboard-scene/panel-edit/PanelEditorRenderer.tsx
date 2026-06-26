@@ -1,52 +1,33 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { type SceneComponentProps } from '@grafana/scenes';
-import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
+import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { getDashboardSceneFor } from '../utils/utils';
+import { UnlinkModal } from '../scene/UnlinkModal';
+import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
-import { LibraryPanelEditModals } from './LibraryPanelEditModals';
-import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
-import { type PanelEditor } from './PanelEditor';
+import { PanelEditor } from './PanelEditor';
+import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
-import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
 
-// v1 panel editor. PanelEditNext/PanelEditorRendererNext.tsx is the v2 version and renders the same
-// PanelEditor scene, so anything the user can see here (modals, panes, toolbar actions) needs to
-// exist there too until we drop v1.
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
-  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
-  const styles = useStyles2(getStyles, visualRefreshEnabled);
-  const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const styles = useStyles2(getStyles);
 
-  const isScrollingLayout = useScrollReflowLimit();
-
-  const theme = useTheme2();
-  const panePadding = useMemo(() => +theme.spacing(2).replace(/px$/, ''), [theme]);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 330,
-      usePixels: true,
-      collapsed: isInitiallyCollapsed,
-      collapseBelowPixels: MIN_SUGGESTIONS_PANE_WIDTH + panePadding,
-      disabled: isScrollingLayout,
+      initialSize: 0.75,
+      paneOptions: {
+        collapseBelowPixels: 250,
+        snapOpenToPixels: 400,
+      },
     });
-
-  useEffect(() => {
-    setIsCollapsed(splitterState.collapsed);
-  }, [splitterState.collapsed, setIsCollapsed]);
 
   return (
     <>
@@ -64,15 +45,12 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           {splitterState.collapsed && (
             <div className={styles.expandOptionsWrapper}>
               <ToolbarButton
-                tooltip={t('dashboard-scene.panel-editor-renderer.tooltip-open-options-pane', 'Open options pane')}
+                tooltip={'Open options pane'}
                 icon={'arrow-to-right'}
                 onClick={onToggleCollapse}
                 variant="canvas"
                 className={styles.rotate180}
-                aria-label={t(
-                  'dashboard-scene.panel-editor-renderer.aria-label-open-options-pane',
-                  'Open options pane'
-                )}
+                aria-label={'Open options pane'}
               />
             </div>
           )}
@@ -85,31 +63,28 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 }
 
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
-  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const dashboard = getDashboardSceneFor(model);
-  const { dataPane, tableView } = model.useState();
+  const { dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal, tableView } = model.useState();
   const panel = model.getPanel();
+  const libraryPanel = getLibraryPanelBehavior(panel);
   const { controls } = dashboard.useState();
-  const styles = useStyles2(getStyles, visualRefreshEnabled);
-
-  const isScrollingLayout = useScrollReflowLimit();
+  const styles = useStyles2(getStyles);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'column',
       dragPosition: 'start',
       initialSize: 0.5,
-      collapseBelowPixels: 150,
-      disabled: isScrollingLayout,
+      paneOptions: {
+        collapseBelowPixels: 150,
+      },
     });
 
   containerProps.className = cx(containerProps.className, styles.container);
 
-  if (!dataPane && !isScrollingLayout) {
+  if (!dataPane) {
     primaryProps.style.flexGrow = 1;
   }
-
-  primaryProps.className = cx(primaryProps.className, styles.viz, isScrollingLayout && styles.fixedSizeViz);
 
   return (
     <div className={cx(styles.pageContainer, controls && styles.pageContainerWithControls)}>
@@ -120,30 +95,40 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       )}
       <div {...containerProps}>
         <div {...primaryProps}>
-          <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
+          <VizWrapper panel={panel} tableView={tableView} />
         </div>
-        <LibraryPanelEditModals model={model} />
+        {showLibraryPanelSaveModal && libraryPanel && (
+          <SaveLibraryVizPanelModal
+            libraryPanel={libraryPanel}
+            onDismiss={model.onDismissLibraryPanelSaveModal}
+            onConfirm={model.onConfirmSaveLibraryPanel}
+            onDiscard={model.onDiscard}
+          ></SaveLibraryVizPanelModal>
+        )}
+        {showLibraryPanelUnlinkModal && libraryPanel && (
+          <UnlinkModal
+            onDismiss={model.onDismissUnlinkLibraryPanelModal}
+            onConfirm={model.onConfirmUnlinkLibraryPanel}
+            isOpen
+          />
+        )}
         {dataPane && (
           <>
             <div {...splitterProps} />
-            <div
-              {...secondaryProps}
-              className={cx(secondaryProps.className, isScrollingLayout && styles.fullSizeEditor)}
-            >
+            <div {...secondaryProps}>
               {splitterState.collapsed && (
                 <div className={styles.expandDataPane}>
                   <Button
-                    tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
+                    tooltip={'Open query pane'}
                     icon={'arrow-to-right'}
                     onClick={onToggleCollapse}
                     variant="secondary"
                     size="sm"
                     className={styles.openDataPaneButton}
-                    aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
+                    aria-label={'Open query pane'}
                   />
                 </div>
               )}
-              {/* @ts-expect-error - dataPane is a union type of PanelDataPane and PanelDataPaneNext */}
               {!splitterState.collapsed && <dataPane.Component model={dataPane} />}
             </div>
           </>
@@ -153,8 +138,23 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   );
 }
 
-function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
-  const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
+interface VizWrapperProps {
+  panel: VizPanel;
+  tableView?: VizPanel;
+}
+
+function VizWrapper({ panel, tableView }: VizWrapperProps) {
+  const styles = useStyles2(getStyles);
+  const panelToShow = tableView ?? panel;
+
+  return (
+    <div className={styles.vizWrapper}>
+      <panelToShow.Component model={panelToShow} />
+    </div>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
   return {
     pageContainer: css({
       display: 'grid',
@@ -163,9 +163,6 @@ function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
       gridTemplateColumns: `1fr`,
       gridTemplateRows: '1fr',
       height: '100%',
-      [scrollReflowMediaQuery]: {
-        gridTemplateColumns: `100%`,
-      },
     }),
     pageContainerWithControls: css({
       gridTemplateAreas: `
@@ -190,16 +187,6 @@ function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
       position: 'absolute',
       width: '100%',
       height: '100%',
-      overflow: 'unset',
-      [scrollReflowMediaQuery]: {
-        height: 'auto',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(470px, 1fr) 330px',
-        gridTemplateRows: '1fr',
-        gap: theme.spacing(1),
-        position: 'static',
-        width: '100%',
-      },
     }),
     body: css({
       label: 'body',
@@ -208,19 +195,11 @@ function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
       flexDirection: 'column',
       minHeight: 0,
     }),
-    optionsPane: css(
-      {
-        flexDirection: 'column',
-        borderLeft: `1px solid ${theme.colors.border.weak}`,
-        background: theme.colors.background.primary,
-        marginTop: theme.spacing(2),
-        borderTop: `1px solid ${theme.colors.border.weak}`,
-        borderTopLeftRadius: theme.shape.radius.lg,
-      },
-      visualRefreshEnabled && {
-        borderBottomRightRadius: theme.shape.radius.lg,
-      }
-    ),
+    optionsPane: css({
+      flexDirection: 'column',
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
+    }),
     expandOptionsWrapper: css({
       display: 'flex',
       flexDirection: 'column',
@@ -244,6 +223,7 @@ function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
       flexDirection: 'column',
       flexGrow: 0,
       gridArea: 'controls',
+      padding: theme.spacing(2, 0, 2, 2),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),
@@ -252,14 +232,10 @@ function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
         rotate: '-90deg',
       },
     }),
-    viz: css({
+    vizWrapper: css({
+      height: '100%',
+      width: '100%',
       paddingLeft: theme.spacing(2),
-    }),
-    fixedSizeViz: css({
-      height: '100vh',
-    }),
-    fullSizeEditor: css({
-      height: 'max-content',
     }),
   };
 }

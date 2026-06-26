@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2, MenuItem, Icon, ContextMenu, useTheme2 } from '@grafana/ui';
+import { useStyles2, MenuItem, Icon, ContextMenu } from '@grafana/ui';
 
-import { type SpanLinkDef } from '../types/links';
+import { SpanLinkDef } from '../types/links';
 
 interface SpanLinksProps {
   links: SpanLinkDef[];
@@ -19,8 +18,7 @@ const renderMenuItems = (
   closeMenu: () => void,
   datasourceType: string
 ) => {
-  links.sort((linkA, linkB) => {
-    // eslint-disable-next-line @grafana/no-locale-compare
+  links.sort(function (linkA, linkB) {
     return (linkA.title || 'link').toLowerCase().localeCompare((linkB.title || 'link').toLowerCase());
   });
 
@@ -51,8 +49,7 @@ const renderMenuItems = (
 };
 
 export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) => {
-  const theme = useTheme2();
-  const styles = useStyles2(() => getStyles(theme, color));
+  const styles = useStyles2(() => getStyles(color));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
@@ -64,8 +61,8 @@ export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) 
         onClick={(e) => {
           setIsMenuOpen(true);
           setMenuPosition({
-            x: e.clientX,
-            y: e.clientY,
+            x: e.pageX,
+            y: e.pageY,
           });
         }}
         className={styles.button}
@@ -86,11 +83,12 @@ export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) 
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, color: string) => ({
+const getStyles = (color: string) => ({
   wrapper: css({
     border: 'none',
-    borderBottom: `2px solid ${color}CF`,
-    paddingInline: '4px',
+    background: `${color}10`,
+    borderBottom: `1px solid ${color}CF`,
+    paddingRight: '4px',
   }),
   button: css({
     background: 'transparent',

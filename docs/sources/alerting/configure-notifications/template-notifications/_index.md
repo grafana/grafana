@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Template notifications
-weight: 450
+weight: 430
 refs:
   template-annotations-and-labels:
     - pattern: /docs/grafana/
@@ -85,11 +85,11 @@ The notification message would look like this:
   Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
 ```
 
-{{< admonition type="note" >}}
+{{% admonition type="note" %}}
 Avoid adding extra information about alert instances in notification templates, as this information will only be visible in the notification message.
 
 Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
-{{< /admonition >}}
+{{% /admonition %}}
 
 #### Select a notification template for a contact point
 
@@ -99,25 +99,7 @@ The notification template is assigned to the contact point to determine the noti
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" caption="A flow of the alert notification process, from querying the alert rule to sending the alert notification message." >}}
 
-By default, Grafana provides default templates, such as `{{define "default.title"}}` and `{{define "default.message"}}`, to format notification messages.
-
-## Grafana Cloud AI-generated templates
-
-Grafana Cloud users can use built-in AI tool to generate templates in the appropriate [alerting template language](/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/language/) for you.
-
-To use AI to create your template, follow these steps:
-
-1. Go to **Alerting -> Contact points**.
-
-1. Click the Notification Templates tab then, click the **+ New notification template** button.
-
-1. Name your template.
-
-1. In the Template group section, click the **Generate with AI** button.
-
-1. Supply the AI tool with a prompt or select from one of the example prompts and edit that if necessary.
-
-1. Click **Save**.
+By default, Grafana provides default templates, such as `default.title` and `default.message`, to format notification messages.
 
 ## More information
 
@@ -126,7 +108,3 @@ For further details on how to write notification templates, refer to:
 - [Select, create, and preview a notification template](ref:manage-notification-templates)
 - [Notification template reference](ref:reference)
 - [Notification template examples](ref:examples)
-
-{{< admonition type="tip" >}}
-For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).
-{{< /admonition  >}}

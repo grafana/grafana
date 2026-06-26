@@ -1,6 +1,6 @@
 import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
-import { LokiQueryType } from '../dataquery.gen';
+import { LokiQueryType } from '../types';
 
 import { shouldUpdateStats } from './stats';
 

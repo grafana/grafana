@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { PageToolbar } from './PageToolbar';
+import { PageToolbar } from '..';
 
 const resizeWindow = (x: number, y: number) => {
   global.innerWidth = x;

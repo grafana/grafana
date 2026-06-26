@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export function getUplotStyles(theme: GrafanaTheme2) {
   return css({
@@ -10,10 +10,6 @@ export function getUplotStyles(theme: GrafanaTheme2) {
 
     '.u-select': {
       background: 'rgba(120, 120, 130, 0.2)',
-    },
-
-    '.u-over.zoom-drag': {
-      cursor: 'zoom-in',
     },
 
     '.u-hz .u-cursor-x, .u-vt .u-cursor-y': {

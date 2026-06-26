@@ -1,10 +1,11 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { Avatar } from './Avatar';
+import { Avatar } from '@grafana/ui';
+
 import mdx from './Avatar.mdx';
 
 const meta: Meta<typeof Avatar> = {
-  title: 'Iconography/Avatar',
+  title: 'General/UsersIndicator/Avatar',
   component: Avatar,
   parameters: {
     docs: { page: mdx },

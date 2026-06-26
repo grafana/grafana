@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
+	"xorm.io/core"
 )
 
 func (engine *Engine) buildConds(table *core.Table, bean any,
@@ -74,7 +74,7 @@ func (engine *Engine) buildConds(table *core.Table, bean any,
 			}
 		}
 
-		if fieldType.Kind() == reflect.Pointer {
+		if fieldType.Kind() == reflect.Ptr {
 			if fieldValue.IsNil() {
 				if includeNil {
 					conds = append(conds, builder.Eq{colName: nil})

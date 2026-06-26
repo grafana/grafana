@@ -8,7 +8,7 @@ export abstract class FunctionalVector<T = unknown> {
   abstract get(index: number): T;
 
   // Implement "iterator protocol"
-  *iterator(): Generator<T> {
+  *iterator() {
     for (let i = 0; i < this.length; i++) {
       yield this.get(i);
     }
@@ -153,13 +153,13 @@ export abstract class FunctionalVector<T = unknown> {
   findIndex(predicate: (value: T, index: number, obj: T[]) => unknown, thisArg?: any): number {
     return this.toArray().findIndex(predicate, thisArg);
   }
-  entries(): ArrayIterator<[number, T]> {
+  entries(): IterableIterator<[number, T]> {
     return this.toArray().entries();
   }
-  keys(): ArrayIterator<number> {
+  keys(): IterableIterator<number> {
     return this.toArray().keys();
   }
-  values(): ArrayIterator<T> {
+  values(): IterableIterator<T> {
     return this.toArray().values();
   }
   includes(searchElement: T, fromIndex?: number | undefined): boolean {

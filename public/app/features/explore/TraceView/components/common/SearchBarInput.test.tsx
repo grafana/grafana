@@ -18,16 +18,15 @@ import SearchBarInput from './SearchBarInput';
 
 describe('SearchBarInput', () => {
   describe('rendering', () => {
-    const onChange = jest.fn();
     it('renders as expected with no value', () => {
-      render(<SearchBarInput onChange={onChange} />);
+      render(<SearchBarInput />);
       const searchBarInput = screen.queryByPlaceholderText('Find...');
       expect(searchBarInput).toBeInTheDocument();
       expect(searchBarInput?.getAttribute('value')).toEqual('');
     });
 
     it('renders as expected with value', () => {
-      render(<SearchBarInput onChange={onChange} value="value" />);
+      render(<SearchBarInput value="value" />);
       const searchBarInput = screen.queryByPlaceholderText('Find...');
       expect(searchBarInput).toBeInTheDocument();
       expect(searchBarInput?.getAttribute('value')).toEqual('value');

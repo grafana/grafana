@@ -1,26 +1,18 @@
-import {
-  type AnnotationQuery,
-  getDataSourceRef,
-  type NavModel,
-  type NavModelItem,
-  PageLayoutType,
-} from '@grafana/data';
+import { AnnotationQuery, getDataSourceRef, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
-import { NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';
-import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { AnnotationSettingsEdit } from './annotations/AnnotationSettingsEdit';
-import { AnnotationSettingsList } from './annotations/AnnotationSettingsList';
-import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
+import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from './annotations';
+import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export enum MoveDirection {
   UP = -1,
@@ -73,7 +65,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
   public onNew = async () => {
     const newAnnotationQuery: AnnotationQuery = {
-      name: NEW_ANNOTATION_NAME,
+      name: newAnnotationName,
       enable: true,
       datasource: this.getDataSourceRefForAnnotation(),
       iconColor: 'red',
@@ -126,7 +118,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       name: annotation.name,
       isEnabled: Boolean(annotation.enable),
       isHidden: Boolean(annotation.hide),
-      placement: annotation.placement,
       query: annotation,
     });
 

@@ -1,16 +1,15 @@
-import { dateTime, locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
+import { dateTime, locationUtil, TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { contextSrv } from '../../../../core/services/context_srv';
-import { type PanelModel } from '../../state/PanelModel';
+import { PanelModel } from '../../state';
 
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
   selectedTheme?: string;
-  panelId?: string;
-  timeFrom?: string;
+  panel?: { timeFrom?: string; id: number };
   search?: string;
   range?: TimeRange;
   orgId?: number;
@@ -19,17 +18,17 @@ export interface BuildParamsArgs {
 export function buildParams({
   useCurrentTimeRange,
   selectedTheme,
-  panelId,
-  timeFrom,
+  panel,
   search = window.location.search,
   range = getTimeSrv().timeRange(),
-  orgId = contextSrv.user.orgId,
+  orgId = config.bootData.user.orgId,
 }: BuildParamsArgs): URLSearchParams {
   const searchParams = new URLSearchParams(search);
+  const relative = panel?.timeFrom;
 
   // Use panel's relative time if it's set
-  if (timeFrom) {
-    const { from, to } = rangeUtil.describeTextRange(timeFrom);
+  if (relative) {
+    const { from, to } = rangeUtil.describeTextRange(relative);
     searchParams.set('from', from);
     searchParams.set('to', to);
   } else {
@@ -47,8 +46,8 @@ export function buildParams({
     searchParams.set('theme', selectedTheme!);
   }
 
-  if (panelId && !searchParams.has('editPanel')) {
-    searchParams.set('viewPanel', panelId);
+  if (panel && !searchParams.has('editPanel')) {
+    searchParams.set('viewPanel', String(panel.id));
   }
 
   // Token is unique to the authenticated identity and should not be shared with the URL,
@@ -79,12 +78,7 @@ export async function buildShareUrl(
   shortenUrl?: boolean
 ) {
   const baseUrl = buildBaseUrl();
-  const params = buildParams({
-    useCurrentTimeRange,
-    selectedTheme,
-    panelId: panel?.id ? String(panel.id) : undefined,
-    timeFrom: panel?.timeFrom,
-  });
+  const params = buildParams({ useCurrentTimeRange, selectedTheme, panel });
   const shareUrl = urlUtil.appendQueryToUrl(baseUrl, params.toString());
   if (shortenUrl) {
     return await createShortLink(shareUrl);
@@ -92,22 +86,15 @@ export async function buildShareUrl(
   return shareUrl;
 }
 
-function buildSoloUrl(
+export function buildSoloUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panelId?: string,
-  timeFrom?: string,
+  panel?: { timeFrom?: string; id: number },
   range?: TimeRange
 ) {
   const baseUrl = buildBaseUrl();
-  const params = buildParams({
-    useCurrentTimeRange,
-    selectedTheme,
-    panelId: panelId,
-    timeFrom,
-    range,
-  });
+  const params = buildParams({ useCurrentTimeRange, selectedTheme, panel, range });
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
@@ -118,8 +105,8 @@ function buildSoloUrl(
     soloUrl = `${config.appUrl}d-solo/${dashboardUid}`;
   }
 
-  const editOrViewPanel = params.get('editPanel') ?? params.get('viewPanel') ?? '';
-  params.set('panelId', editOrViewPanel);
+  const panelId = params.get('editPanel') ?? params.get('viewPanel') ?? '';
+  params.set('panelId', panelId);
   params.delete('editPanel');
   params.delete('viewPanel');
 
@@ -132,17 +119,10 @@ export function buildImageUrl(
   selectedTheme?: string,
   panel?: PanelModel
 ) {
-  let soloUrl = buildSoloUrl(
-    useCurrentTimeRange,
-    dashboardUid,
-    selectedTheme,
-    panel?.id ? String(panel.id) : undefined,
-    panel?.timeFrom
-  );
+  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
   imageUrl +=
-    `&hideLogo=true` +
     `&width=${config.rendererDefaultImageWidth}` +
     `&height=${config.rendererDefaultImageHeight}` +
     `&scale=${config.rendererDefaultImageScale}` +
@@ -155,15 +135,14 @@ export function buildIframeHtml(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panelId?: string,
-  timeFrom?: string,
+  panel?: { timeFrom?: string; id: number },
   range?: TimeRange
 ) {
-  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panelId, timeFrom, range);
+  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel, range);
   return `<iframe src="${soloUrl}" width="450" height="200" frameborder="0"></iframe>`;
 }
 
-function getLocalTimeZone() {
+export function getLocalTimeZone() {
   const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
 
   // Older browser does not the internationalization API
@@ -184,7 +163,9 @@ function getLocalTimeZone() {
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
 
-export const getTrackingSource = (panel?: Object | undefined) => {
+export const getTrackingSource = (
+  panel?: PanelModel | SceneObjectRef<VizPanel> | { timeFrom?: string; id: number }
+) => {
   return panel ? 'panel' : 'dashboard';
 };
 
@@ -199,6 +180,4 @@ export const shareDashboardType: {
   pdf: 'pdf',
   report: 'report',
   publicDashboard: 'public_dashboard',
-  inviteUser: 'invite_user',
-  image: 'image',
 };

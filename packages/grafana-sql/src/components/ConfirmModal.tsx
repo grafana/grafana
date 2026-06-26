@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { useRef, useEffect } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 type ConfirmModalProps = {
@@ -28,35 +27,26 @@ export function ConfirmModal({ isOpen, onCancel, onDiscard, onCopy }: ConfirmMod
       title={
         <div className={styles.modalHeaderTitle}>
           <Icon name="exclamation-triangle" size="lg" />
-          <span className={styles.titleText}>
-            <Trans i18nKey="grafana-sql.components.confirm-modal.warning">Warning</Trans>
-          </span>
+          <span className={styles.titleText}>Warning</span>
         </div>
       }
-      ariaLabel={t('grafana-sql.components.confirm-modal.warning', 'Warning')}
       onDismiss={onCancel}
       isOpen={isOpen}
     >
       <p>
-        <Trans i18nKey="grafana-sql.components.confirm-modal.builder-mode">
-          Builder mode does not display changes made in code. The query builder will display the last changes you made
-          in builder mode.
-        </Trans>
+        Builder mode does not display changes made in code. The query builder will display the last changes you made in
+        builder mode.
       </p>
-      <p>
-        <Trans i18nKey="grafana-sql.components.confirm-modal.clipboard">
-          Do you want to copy your code to the clipboard?
-        </Trans>
-      </p>
+      <p>Do you want to copy your code to the clipboard?</p>
       <Modal.ButtonRow>
         <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
-          <Trans i18nKey="grafana-sql.components.confirm-modal.cancel">Cancel</Trans>
+          Cancel
         </Button>
         <Button variant="destructive" type="button" onClick={onDiscard} ref={buttonRef}>
-          <Trans i18nKey="grafana-sql.components.confirm-modal.discard-code-and-switch">Discard code and switch</Trans>
+          Discard code and switch
         </Button>
         <Button variant="primary" onClick={onCopy}>
-          <Trans i18nKey="grafana-sql.components.confirm-modal.copy-code-and-switch">Copy code and switch</Trans>
+          Copy code and switch
         </Button>
       </Modal.ButtonRow>
     </Modal>

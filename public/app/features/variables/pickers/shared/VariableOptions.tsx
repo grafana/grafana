@@ -1,16 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { memo, type MouseEvent, type HTMLProps } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
-import { type GrafanaTheme2, type VariableOption } from '@grafana/data';
+import { GrafanaTheme2, VariableOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { Tooltip, clearButtonStyles, useStyles2, useTheme2 } from '@grafana/ui';
-import checkboxPng from 'img/checkbox.png';
-import checkboxWhitePng from 'img/checkbox_white.png';
+import { Tooltip, Themeable2, withTheme2, clearButtonStyles, stylesFactory } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { ALL_VARIABLE_VALUE } from '../../constants';
 
-export interface Props extends Omit<HTMLProps<HTMLUListElement>, 'onToggle'> {
+export interface Props extends React.HTMLProps<HTMLUListElement>, Themeable2 {
   multi: boolean;
   values: VariableOption[];
   selectedValues: VariableOption[];
@@ -23,122 +22,122 @@ export interface Props extends Omit<HTMLProps<HTMLUListElement>, 'onToggle'> {
   id: string;
 }
 
-export const VariableOptions = memo(
-  ({ multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, ...restProps }: Props) => {
-    const theme = useTheme2();
-    const styles = useStyles2(getStyles);
-    const buttonReset = clearButtonStyles(theme);
+class VariableOptions extends PureComponent<Props> {
+  onToggle = (option: VariableOption) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    const clearOthers = event.shiftKey || event.ctrlKey || event.metaKey;
+    this.handleEvent(event);
+    this.props.onToggle(option, clearOthers);
+  };
 
-    const handleEvent = (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-    };
+  onToggleAll = (event: React.MouseEvent<HTMLButtonElement>) => {
+    this.handleEvent(event);
+    this.props.onToggleAll();
+  };
 
-    const handleToggle = (option: VariableOption) => (event: MouseEvent<HTMLButtonElement>) => {
-      const clearOthers = event.shiftKey || event.ctrlKey || event.metaKey;
-      handleEvent(event);
-      onToggle(option, clearOthers);
-    };
+  handleEvent(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
-    const handleToggleAll = (event: MouseEvent<HTMLButtonElement>) => {
-      handleEvent(event);
-      onToggleAll();
-    };
-
-    const isAllOptionConfigured = values.some((option) => option.value === ALL_VARIABLE_VALUE);
-
-    const renderMultiToggle = () => {
-      if (!multi) {
-        return null;
-      }
-
-      const tooltipContent = () => <Trans i18nKey="variable.picker.option-tooltip">Clear selections</Trans>;
-      return (
-        <Tooltip content={tooltipContent} placement={'top'}>
-          <button
-            className={cx(
-              buttonReset,
-              styles.variableOption,
-              styles.variableOptionColumnHeader,
-              styles.noStyledButton,
-              { [styles.noPaddingBotton]: isAllOptionConfigured }
-            )}
-            role="checkbox"
-            aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
-            onClick={handleToggleAll}
-            aria-label={t('variables.variable-options.aria-label-toggle-all-values', 'Toggle all values')}
-            data-placement="top"
-          >
-            <span
-              className={cx(styles.variableOptionIcon, {
-                [styles.variableOptionIconManySelected]: selectedValues.length > 1,
-              })}
-            ></span>
-            <Trans i18nKey="variable.picker.option-selected-values" values={{ numSelected: selectedValues.length }}>
-              Selected ({'{{numSelected}}'})
-            </Trans>
-          </button>
-        </Tooltip>
-      );
-    };
+  render() {
+    // Don't want to pass faulty rest props to the div
+    const { multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, theme, ...restProps } = this.props;
+    const styles = getStyles(theme);
 
     return (
       <div className={styles.variableValueDropdown}>
         <div className={styles.variableOptionsWrapper}>
           <ul
             className={styles.variableOptionsColumn}
-            data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
+            aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
             {...restProps}
           >
-            {renderMultiToggle()}
-            {values.map((option, index) => {
-              const isAllOption = option.value === ALL_VARIABLE_VALUE;
-
-              return (
-                <li key={`${option.value}`}>
-                  <button
-                    data-testid={selectors.components.Variables.variableOption}
-                    role="checkbox"
-                    type="button"
-                    aria-checked={option.selected}
-                    className={cx(
-                      buttonReset,
-                      styles.variableOption,
-                      {
-                        [styles.highlighted]: index === highlightIndex,
-                        [styles.variableAllOption]: isAllOption,
-                      },
-                      styles.noStyledButton
-                    )}
-                    onClick={handleToggle(option)}
-                  >
-                    <span
-                      className={cx(styles.variableOptionIcon, {
-                        [styles.variableOptionIconSelected]: option.selected,
-                        [styles.hideVariableOptionIcon]: !multi,
-                      })}
-                    ></span>
-                    <span
-                      data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(
-                        `${option.text}`
-                      )}
-                    >
-                      {isAllOption ? t('variable.picker.option-all', 'All') : option.text}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
+            {this.renderMultiToggle()}
+            {values.map((option, index) => this.renderOption(option, index))}
           </ul>
         </div>
       </div>
     );
   }
-);
-VariableOptions.displayName = 'VariableOptions';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  const checkboxImageUrl = theme.isDark ? checkboxPng : checkboxWhitePng;
+  renderOption(option: VariableOption, index: number) {
+    const { highlightIndex, multi, theme } = this.props;
+    const styles = getStyles(theme);
+
+    const isAllOption = option.value === ALL_VARIABLE_VALUE;
+
+    return (
+      <li key={`${option.value}`}>
+        <button
+          data-testid={selectors.components.Variables.variableOption}
+          role="checkbox"
+          type="button"
+          aria-checked={option.selected}
+          className={cx(
+            clearButtonStyles(theme),
+            styles.variableOption,
+            {
+              [styles.highlighted]: index === highlightIndex,
+              [styles.variableAllOption]: isAllOption,
+            },
+            styles.noStyledButton
+          )}
+          onClick={this.onToggle(option)}
+        >
+          <span
+            className={cx(styles.variableOptionIcon, {
+              [styles.variableOptionIconSelected]: option.selected,
+              [styles.hideVariableOptionIcon]: !multi,
+            })}
+          ></span>
+          <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
+            {isAllOption ? t('variable.picker.option-all', 'All') : option.text}
+          </span>
+        </button>
+      </li>
+    );
+  }
+
+  renderMultiToggle() {
+    const { multi, selectedValues, theme, values } = this.props;
+    const styles = getStyles(theme);
+    const isAllOptionConfigured = values.some((option) => option.value === ALL_VARIABLE_VALUE);
+
+    if (!multi) {
+      return null;
+    }
+
+    const tooltipContent = () => <Trans i18nKey="variable.picker.option-tooltip">Clear selections</Trans>;
+    return (
+      <Tooltip content={tooltipContent} placement={'top'}>
+        <button
+          className={cx(
+            clearButtonStyles(theme),
+            styles.variableOption,
+            styles.variableOptionColumnHeader,
+            styles.noStyledButton,
+            { [styles.noPaddingBotton]: isAllOptionConfigured }
+          )}
+          role="checkbox"
+          aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
+          onClick={this.onToggleAll}
+          aria-label="Toggle all values"
+          data-placement="top"
+        >
+          <span
+            className={cx(styles.variableOptionIcon, {
+              [styles.variableOptionIconManySelected]: selectedValues.length > 1,
+            })}
+          ></span>
+          <Trans i18nKey="variable.picker.option-selected-values">Selected</Trans> ({selectedValues.length})
+        </button>
+      </Tooltip>
+    );
+  }
+}
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  const checkboxImageUrl = theme.isDark ? 'public/img/checkbox.png' : 'public/img/checkbox_white.png';
 
   return {
     hideVariableOptionIcon: css({
@@ -213,4 +212,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingBottom: 0,
     }),
   };
-};
+});
+
+export default withTheme2(VariableOptions);

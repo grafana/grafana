@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -28,11 +28,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: 1,
       backgroundColor: theme.colors.border.medium,
       height: 24,
-      flexShrink: 0,
-      flexGrow: 0,
-      [theme.breakpoints.down('sm')]: {
-        display: 'none',
-      },
     }),
   };
 };

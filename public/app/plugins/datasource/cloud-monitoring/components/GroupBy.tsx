@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup } from '@grafana/plugin-ui';
+import { SelectableValue } from '@grafana/data';
+import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { MultiSelect } from '@grafana/ui';
 
 import { SYSTEM_LABELS } from '../constants';
-import { type TimeSeriesList } from '../dataquery.gen';
 import { labelsToGroupedOptions } from '../functions';
-import { type MetricDescriptor } from '../types/types';
+import { TimeSeriesList } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 import { Aggregation } from './Aggregation';
 

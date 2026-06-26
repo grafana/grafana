@@ -1,6 +1,6 @@
-import { FieldType, type DataFrame, dateTime } from '@grafana/data';
+import { FieldType, DataFrame, dateTime } from '@grafana/data';
 
-import { type Feed } from './types';
+import { Feed } from './types';
 
 export function feedToDataFrame(feed: Feed): DataFrame {
   const date: number[] = [];

@@ -1,20 +1,17 @@
-import { type FC, type HTMLAttributes } from 'react';
-import type * as React from 'react';
+import { FC, HTMLAttributes } from 'react';
+import * as React from 'react';
 
-import { type NavModel, type NavModelItem, type PageLayoutType } from '@grafana/data';
-import { type PluginPageBackground } from '@grafana/runtime';
+import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 
-import { type ScrollRefElement } from '../NativeScrollbar';
+import { ScrollRefElement } from '../NativeScrollbar';
 
-import { type PageContents } from './PageContents';
+import { PageContents } from './PageContents';
 
 export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
-  /** Determines the background color of the page. Defaults to primary. */
-  background?: PluginPageBackground;
   /** Can be used to place info inline with the heading */
   info?: PageInfoItem[];
   /** Can be used to place actions inline with the heading */

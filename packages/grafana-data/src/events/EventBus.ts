@@ -1,16 +1,17 @@
+import { IScope } from 'angular';
 import EventEmitter from 'eventemitter3';
-import { type Unsubscribable, Observable, type Subscriber } from 'rxjs';
+import { Unsubscribable, Observable, Subscriber } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import {
-  type EventBus,
-  type LegacyEmitter,
-  type BusEventHandler,
-  type BusEventType,
-  type LegacyEventHandler,
-  type BusEvent,
-  type AppEvent,
-  type EventFilterOptions,
+  EventBus,
+  LegacyEmitter,
+  BusEventHandler,
+  BusEventType,
+  LegacyEventHandler,
+  BusEvent,
+  AppEvent,
+  EventFilterOptions,
 } from './types';
 
 /**
@@ -65,7 +66,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     }
   }
 
-  on<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>) {
+  on<T>(event: AppEvent<T> | string, handler: LegacyEventHandler<T>, scope?: IScope) {
     // console.log(`Deprecated emitter function used (on), use $on`);
 
     // need this wrapper to make old events compatible with old handlers
@@ -77,6 +78,13 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
       this.emitter.on(event, handler.wrapper);
     } else {
       this.emitter.on(event.name, handler.wrapper);
+    }
+
+    if (scope) {
+      const unbind = scope.$on('$destroy', () => {
+        this.off(event, handler);
+        unbind();
+      });
     }
   }
 

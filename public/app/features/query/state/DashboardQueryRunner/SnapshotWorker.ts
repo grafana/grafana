@@ -1,14 +1,10 @@
-import { type Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
-import { type AnnotationEvent } from '@grafana/data';
+import { AnnotationEvent } from '@grafana/data';
 
-import { type DashboardModel } from '../../../dashboard/state/DashboardModel';
+import { DashboardModel } from '../../../dashboard/state';
 
-import {
-  type DashboardQueryRunnerOptions,
-  type DashboardQueryRunnerWorker,
-  type DashboardQueryRunnerWorkerResult,
-} from './types';
+import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult, getAnnotationsByPanelId, translateQueryResult } from './utils';
 
 export class SnapshotWorker implements DashboardQueryRunnerWorker {

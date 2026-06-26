@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
-// UrlBuilder builds the URL for calling the Azure Monitor API
-type UrlBuilder struct {
+// urlBuilder builds the URL for calling the Azure Monitor API
+type urlBuilder struct {
 	ResourceURI *string
 
 	// Following fields will be used to generate a ResourceURI
@@ -20,7 +20,7 @@ type UrlBuilder struct {
 	MetricDefinition    *string
 }
 
-func (params *UrlBuilder) BuildResourceURI() (*string, error) {
+func (params *urlBuilder) buildResourceURI() (*string, error) {
 	if params.ResourceURI != nil && *params.ResourceURI != "" {
 		return params.ResourceURI, nil
 	}
@@ -35,7 +35,7 @@ func (params *UrlBuilder) BuildResourceURI() (*string, error) {
 
 	if metricNamespace == nil || *metricNamespace == "" {
 		if params.MetricDefinition == nil || *params.MetricDefinition == "" {
-			return nil, backend.DownstreamError(fmt.Errorf("no metricNamespace or metricDefiniton value provided"))
+			return nil, errorsource.DownstreamError(fmt.Errorf("no metricNamespace or metricDefiniton value provided"), false)
 		}
 		metricNamespace = params.MetricDefinition
 	}
@@ -47,7 +47,7 @@ func (params *UrlBuilder) BuildResourceURI() (*string, error) {
 		provider = metricNamespaceArray[0]
 		metricNamespaceArray = metricNamespaceArray[1:]
 	} else {
-		return nil, backend.DownstreamError(fmt.Errorf("metricNamespace is not in the correct format"))
+		return nil, errorsource.DownstreamError(fmt.Errorf("metricNamespace is not in the correct format"), false)
 	}
 
 	var resourceNameArray []string
@@ -78,7 +78,7 @@ func (params *UrlBuilder) BuildResourceURI() (*string, error) {
 		if i < len(resourceNameArray) {
 			urlArray = append(urlArray, namespace, resourceNameArray[i])
 		} else {
-			return nil, backend.DownstreamError(fmt.Errorf("resourceNameArray does not have enough elements"))
+			return nil, errorsource.DownstreamError(fmt.Errorf("resourceNameArray does not have enough elements"), false)
 		}
 	}
 

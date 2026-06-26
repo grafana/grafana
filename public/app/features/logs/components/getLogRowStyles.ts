@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
-import { colorManipulator, type GrafanaTheme2, LogLevel } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, LogLevel } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
 
 export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
@@ -72,15 +72,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logRows: css({
       position: 'relative',
     }),
-    shortcut: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      color: theme.colors.text.secondary,
-      opacity: 0.7,
-      fontSize: theme.typography.bodySmall.fontSize,
-      marginTop: theme.spacing(1),
-    }),
     logsRowsTable: css({
       label: 'logs-rows',
       fontFamily: theme.typography.fontFamilyMonospace,
@@ -99,11 +90,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       width: '100%',
       cursor: 'pointer',
       verticalAlign: 'top',
-
-      '&:focus-within': {
-        outline: `2px solid ${theme.colors.primary.border}`,
-        outlineOffset: '-2px',
-      },
 
       '&:hover': {
         '.log-row-menu': {
@@ -144,6 +130,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logsRowToggleDetails: css({
       label: 'logs-row-toggle-details__level',
       fontSize: '9px',
+      paddingTop: '5px',
       maxWidth: '15px',
     }),
     logsRowLocalTime: css({
@@ -206,6 +193,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     logDetailsLabel: css({
       label: 'logs-row-details__label',
       maxWidth: '30em',
+      minMidth: '20em',
       padding: theme.spacing(0, 1),
       overflowWrap: 'break-word',
     }),
@@ -224,29 +212,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
         backgroundColor: hoverBgColor,
       },
     }),
-    detailsToggle: css({
-      appearance: 'none',
-      background: 'none',
-      border: 'none',
-      padding: 0,
-      // Don't increase the height of the row
-      maxHeight: '19px',
-
-      // Don't show default button box-shadow on focus, we apply outline to the entire row instead
-      '&:focus-visible': {
-        boxShadow: 'none',
-      },
-
-      '&:focus': {
-        outline: 0,
-      },
-      '&:after': {
-        content: '""',
-        inset: 0,
-        position: 'absolute',
-      },
-    }),
-
     // Log row
     topVerticalAlign: css({
       label: 'topVerticalAlign',
@@ -313,6 +278,9 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       },
     }),
     logLine: css({
+      backgroundColor: 'transparent',
+      border: 'none',
+      diplay: 'inline',
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       letterSpacing: theme.typography.bodySmall.letterSpacing,

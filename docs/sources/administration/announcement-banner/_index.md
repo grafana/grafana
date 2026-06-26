@@ -9,7 +9,6 @@ labels:
 menuTitle: Announcement banner
 title: Create and configure announcement banner
 description: How to create an announcement banner to show important updates and information at the top of every Grafana page.
-weight: 5500
 ---
 
 # Create an announcement banner

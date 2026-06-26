@@ -2,21 +2,24 @@ package notifier
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/notify/nfstatus"
+	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,9 +31,6 @@ const (
 
 	// How long we keep silences in the kvstore after they've expired.
 	silenceRetention = 5 * 24 * time.Hour
-
-	// How long we keep flushes in the kvstore after they've expired.
-	flushRetention = 5 * 24 * time.Hour
 )
 
 type AlertingStore interface {
@@ -42,28 +42,24 @@ type AlertingStore interface {
 type stateStore interface {
 	SaveSilences(ctx context.Context, st alertingNotify.State) (int64, error)
 	SaveNotificationLog(ctx context.Context, st alertingNotify.State) (int64, error)
-	SaveFlushLog(ctx context.Context, st alertingNotify.State) (int64, error)
 	GetSilences(ctx context.Context) (string, error)
 	GetNotificationLog(ctx context.Context) (string, error)
-	GetFlushLog(ctx context.Context) (string, error)
 }
 
 type alertmanager struct {
 	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
 
-	ConfigMetrics        *metrics.AlertmanagerConfigMetrics
-	Store                AlertingStore
-	stateStore           stateStore
-	DefaultConfiguration string
-	decryptFn            alertingNotify.GetDecryptedValueFn
-	crypto               Crypto
-	features             featuremgmt.FeatureToggles
-	dynamicLimits        alertingNotify.DynamicLimits
+	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
+	Settings            *setting.Cfg
+	Store               AlertingStore
+	stateStore          stateStore
+	NotificationService notifications.Service
 
-	// We store the applied hash here instead of relying on Base's ConfigHash() to work around a bug where Base can
-	// modify the configuration during ApplyConfig. This causes the change detection to fail in niche cases.
-	appliedHash alertingNotify.ConfigFingerprint
+	decryptFn alertingNotify.GetDecryptedValueFn
+	orgID     int64
+
+	withAutogen bool
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -95,17 +91,13 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 
 func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
-	m *metrics.Alertmanager, featureToggles featuremgmt.FeatureToggles, crypto Crypto, notificationHistorian nfstatus.NotificationHistorian,
+	m *metrics.Alertmanager, withAutogen bool,
 ) (*alertmanager, error) {
 	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err
 	}
 	silences, err := stateStore.GetSilences(ctx)
-	if err != nil {
-		return nil, err
-	}
-	flushLog, err := stateStore.GetFlushLog(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -129,75 +121,38 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
-	l := log.New("ngalert.notifier")
 
-	dispatchTimer := GetDispatchTimer(featureToggles)
-
-	var flushLogOptions *maintenanceOptions
-	if dispatchTimer == alertingNotify.DispatchTimerSync {
-		flushLogOptions = &maintenanceOptions{
-			initialState:         flushLog,
-			retention:            flushRetention,
-			maintenanceFrequency: maintenanceInterval,
-			maintenanceFunc: func(state alertingNotify.State) (int64, error) {
-				// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-				return stateStore.SaveFlushLog(context.Background(), state)
-			},
-		}
-	}
-
-	opts := alertingNotify.GrafanaAlertmanagerOpts{
+	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
 		Silences:           silencesOptions,
 		Nflog:              nflogOptions,
-		FlushLog:           flushLogOptions,
-		DispatchTimer:      dispatchTimer,
 		Limits: alertingNotify.Limits{
 			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
 		},
-		EmailSender:           &emailSender{ns},
-		ImageProvider:         newImageProvider(store, l.New("component", "image-provider")),
-		Decrypter:             decryptFn,
-		Version:               setting.BuildVersion,
-		TenantKey:             "orgID",
-		TenantID:              orgID,
-		Peer:                  peer,
-		Logger:                l,
-		Metrics:               alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l),
-		NotificationHistorian: notificationHistorian,
-
-		BuildWithManifestBuilder: true,
 	}
 
-	gam, err := alertingNotify.NewGrafanaAlertmanager(opts)
+	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
+	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l))
 	if err != nil {
 		return nil, err
 	}
 
-	limits := alertingNotify.DynamicLimits{
-		Dispatcher: nilLimits{},
-		Templates: alertingTemplates.Limits{
-			MaxTemplateOutputSize: cfg.UnifiedAlerting.AlertmanagerMaxTemplateOutputSize,
-		},
-	}
-	if err := limits.Templates.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid template limits: %w", err)
-	}
-
 	am := &alertmanager{
-		Base:                 gam,
-		ConfigMetrics:        m.AlertmanagerConfigMetrics,
-		DefaultConfiguration: cfg.UnifiedAlerting.DefaultConfiguration,
-		Store:                store,
-		stateStore:           stateStore,
-		logger:               l.New("component", "alertmanager", opts.TenantKey, opts.TenantID), // similar to what the base does
-		decryptFn:            decryptFn,
-		crypto:               crypto,
-		features:             featureToggles,
-		dynamicLimits:        limits,
+		Base:                gam,
+		ConfigMetrics:       m.AlertmanagerConfigMetrics,
+		Settings:            cfg,
+		Store:               store,
+		NotificationService: ns,
+		orgID:               orgID,
+		decryptFn:           decryptFn,
+		stateStore:          stateStore,
+		logger:              l,
+
+		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
+		withAutogen: withAutogen,
 	}
 
 	return am, nil
@@ -214,14 +169,112 @@ func (am *alertmanager) StopAndWait() {
 	am.Base.StopAndWait()
 }
 
-// ApplyConfig applies the configuration to the Alertmanager.
-func (am *alertmanager) ApplyConfig(_ context.Context, cfg alertingNotify.NotificationsConfiguration) (bool, error) {
-	var configChanged bool
+// SaveAndApplyDefaultConfig saves the default configuration to the database and applies it to the Alertmanager.
+// It rolls back the save if we fail to apply the configuration.
+func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	var outerErr error
 	am.Base.WithLock(func() {
-		configChanged, outerErr = am.applyConfig(cfg)
+		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: am.Settings.UnifiedAlerting.DefaultConfiguration,
+			Default:                   true,
+			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+			OrgID:                     am.orgID,
+			LastApplied:               time.Now().UTC().Unix(),
+		}
+
+		cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
+		if err != nil {
+			outerErr = err
+			return
+		}
+
+		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
+			if am.withAutogen {
+				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
+				if err != nil {
+					return err
+				}
+			}
+			_, err = am.applyConfig(cfg)
+			return err
+		})
+		if err != nil {
+			outerErr = err
+			return
+		}
 	})
-	return configChanged, outerErr
+
+	return outerErr
+}
+
+// SaveAndApplyConfig saves the configuration the database and applies the configuration to the Alertmanager.
+// It rollbacks the save if we fail to apply the configuration.
+func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	// Remove autogenerated config from the user config before saving it, may not be necessary as we already remove
+	// the autogenerated config before provenance guard. However, this is low impact and a good safety net.
+	RemoveAutogenConfigIfExists(cfg.AlertmanagerConfig.Route)
+	rawConfig, err := json.Marshal(&cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
+	}
+
+	var outerErr error
+	am.Base.WithLock(func() {
+		cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: string(rawConfig),
+			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+			OrgID:                     am.orgID,
+			LastApplied:               time.Now().UTC().Unix(),
+		}
+
+		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
+			if am.withAutogen {
+				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, false)
+				if err != nil {
+					return err
+				}
+			}
+
+			_, err = am.applyConfig(cfg)
+			return err
+		})
+		if err != nil {
+			outerErr = err
+			return
+		}
+	})
+
+	return outerErr
+}
+
+// ApplyConfig applies the configuration to the Alertmanager.
+func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
+	var err error
+	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
+	if err != nil {
+		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
+	}
+
+	var outerErr error
+	am.Base.WithLock(func() {
+		if am.withAutogen {
+			err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
+			if err != nil {
+				outerErr = err
+				return
+			}
+		}
+		// Note: Adding the autogen config here causes alert_configuration_history to update last_applied more often.
+		// Since we will now update last_applied when autogen changes even if the user-created config remains the same.
+		// To fix this however, the local alertmanager needs to be able to tell the difference between user-created and
+		// autogen config, which may introduce cross-cutting complexity.
+		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg); err != nil {
+			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
+			return
+		}
+	})
+
+	return outerErr
 }
 
 type AggregateMatchersUsage struct {
@@ -231,26 +284,22 @@ type AggregateMatchersUsage struct {
 	ObjectMatchers int
 }
 
-func (am *alertmanager) updateConfigMetrics(cfg alertingNotify.NotificationsConfiguration) {
+func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig, cfgSize int) {
 	var amu AggregateMatchersUsage
-	am.aggregateRouteMatchers(cfg.RoutingTree, &amu)
-	am.aggregateInhibitMatchers(cfg.InhibitRules, &amu)
+	am.aggregateRouteMatchers(cfg.AlertmanagerConfig.Route, &amu)
+	am.aggregateInhibitMatchers(cfg.AlertmanagerConfig.InhibitRules, &amu)
 	am.ConfigMetrics.Matchers.Set(float64(amu.Matchers))
 	am.ConfigMetrics.MatchRE.Set(float64(amu.MatchRE))
 	am.ConfigMetrics.Match.Set(float64(amu.Match))
 	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
 
 	am.ConfigMetrics.ConfigHash.
-		WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
-		Set(hashAsMetricValue(am.appliedHash))
+		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		Set(hashAsMetricValue(am.Base.ConfigHash()))
 
-	if rawCfg, err := json.Marshal(cfg); err == nil {
-		am.ConfigMetrics.ConfigSizeBytes.
-			WithLabelValues(strconv.FormatInt(am.Base.TenantID(), 10)).
-			Set(float64(len(rawCfg)))
-	} else {
-		am.logger.Error("Failed to update config size metric", "configHash", am.appliedHash.String(), "error", err)
-	}
+	am.ConfigMetrics.ConfigSizeBytes.
+		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		Set(float64(cfgSize))
 }
 
 func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
@@ -263,7 +312,7 @@ func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *Aggregat
 	}
 }
 
-func (am *alertmanager) aggregateInhibitMatchers(rules []apimodels.InhibitRule, amu *AggregateMatchersUsage) {
+func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu *AggregateMatchersUsage) {
 	for _, r := range rules {
 		amu.Matchers += len(r.SourceMatchers)
 		amu.Matchers += len(r.TargetMatchers)
@@ -277,23 +326,89 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []apimodels.InhibitRule, 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *alertmanager) applyConfig(cfg alertingNotify.NotificationsConfiguration) (bool, error) {
+func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
+	// First, let's make sure this config is not already loaded
+	rawConfig, err := json.Marshal(cfg)
+	if err != nil {
+		// In theory, this should never happen.
+		return false, err
+	}
+
 	// If configuration hasn't changed, we've got nothing to do.
-	configHash := alertingNotify.CalculateConfigFingerprint(cfg)
-	if am.appliedHash == configHash {
+	configHash := md5.Sum(rawConfig)
+	if am.Base.ConfigHash() == configHash {
 		am.logger.Debug("Config hasn't changed, skipping configuration sync.")
 		return false, nil
 	}
 
-	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%d", configHash))
-	err := am.Base.ApplyConfig(cfg)
+	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
+	err = am.Base.ApplyConfig(AlertingConfiguration{
+		rawAlertmanagerConfig:    rawConfig,
+		configHash:               configHash,
+		route:                    cfg.AlertmanagerConfig.Route.AsAMRoute(),
+		inhibitRules:             cfg.AlertmanagerConfig.InhibitRules,
+		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
+		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
+		templates:                ToTemplateDefinitions(cfg),
+		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
+		receiverIntegrationsFunc: am.buildReceiverIntegrations,
+	})
 	if err != nil {
-		return false, fmt.Errorf("unable to apply configuration: %w", err)
+		return false, err
 	}
-	am.appliedHash = configHash
 
-	am.updateConfigMetrics(cfg)
+	am.updateConfigMetrics(cfg, len(rawConfig))
 	return true, nil
+}
+
+// applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
+func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig) error {
+	configChanged, err := am.applyConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	if configChanged {
+		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
+			OrgID:             am.orgID,
+			ConfigurationHash: hash,
+		}
+		return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
+	}
+
+	return nil
+}
+
+func (am *alertmanager) AppURL() string {
+	return am.Settings.AppURL
+}
+
+// buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
+func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
+	receiverCfg, err := alertingNotify.BuildReceiverConfiguration(context.Background(), receiver, am.decryptFn)
+	if err != nil {
+		return nil, err
+	}
+	s := &sender{am.NotificationService}
+	img := newImageProvider(am.Store, log.New("ngalert.notifier.image-provider"))
+	integrations, err := alertingNotify.BuildReceiverIntegrations(
+		receiverCfg,
+		tmpl,
+		img,
+		LoggerFactory,
+		func(n receivers.Metadata) (receivers.WebhookSender, error) {
+			return s, nil
+		},
+		func(n receivers.Metadata) (receivers.EmailSender, error) {
+			return s, nil
+		},
+		am.orgID,
+		setting.BuildVersion,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return integrations, nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
@@ -338,10 +453,12 @@ type nilLimits struct{}
 
 func (n nilLimits) MaxNumberOfAggregationGroups() int { return 0 }
 
-const mask53 = (1 << 53) - 1
-
-func hashAsMetricValue(data alertingNotify.ConfigFingerprint) float64 {
-	// Prometheus stores metric values as float64, which can exactly represent integers only up to 2^53−1.
-	// Directly casting the hash is probably fine here as well, since we don't really care about magnitudes or rates.
-	return float64(data.Overall & mask53)
+// This function is taken from upstream, modified to take a [16]byte instead of a []byte.
+// https://github.com/prometheus/alertmanager/blob/30fa9cd44bc91c0d6adcc9985609bb08a09a127b/config/coordinator.go#L149-L156
+func hashAsMetricValue(data [16]byte) float64 {
+	// We only want 48 bits as a float64 only has a 53 bit mantissa.
+	smallSum := data[0:6]
+	bytes := make([]byte, 8)
+	copy(bytes, smallSum)
+	return float64(binary.LittleEndian.Uint64(bytes))
 }

@@ -1,17 +1,10 @@
-import {
-  type DataSourceApi,
-  type DataSourceWithQueryExportSupport,
-  type DataSourceWithQueryImportSupport,
-} from '@grafana/data';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { type DataQuery } from '@grafana/schema';
+import { DataSourceApi, DataSourceWithQueryExportSupport, DataSourceWithQueryImportSupport } from '@grafana/data';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataQuery } from '@grafana/schema';
+import { TestQuery } from 'app/core/utils/query.test';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { updateQueries } from './updateQueries';
-
-interface TestQuery extends DataQuery {
-  name?: string;
-}
 
 const oldUidDS = {
   uid: 'old-uid',
@@ -422,10 +415,10 @@ describe('updateQueries with import', () => {
       ];
 
       const updated = await updateQueries(
-        newUidDSWithAbstract as unknown as DataSourceApi,
-        (newUidDSWithAbstract as unknown as DataSourceApi).uid,
+        newUidDSWithAbstract as any,
+        (newUidDSWithAbstract as any).uid,
         queries,
-        oldUidDSWithAbstract as unknown as DataSourceApi
+        oldUidDSWithAbstract as any
       );
 
       expect(exportSpy).toHaveBeenCalledWith(queries);
@@ -499,10 +492,10 @@ describe('updateQueries with import', () => {
       ];
 
       const updated = await updateQueries(
-        newUidDSWithAbstract as unknown as DataSourceApi,
-        (newUidDSWithAbstract as unknown as DataSourceApi).uid,
+        newUidDSWithAbstract as any,
+        (newUidDSWithAbstract as any).uid,
         queries,
-        oldUidDSWithAbstract as unknown as DataSourceApi
+        oldUidDSWithAbstract as any
       );
 
       expect(updated.length).toEqual(1);

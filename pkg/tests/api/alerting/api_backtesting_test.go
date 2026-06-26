@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"path"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -16,12 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestBacktesting(t *testing.T) {
-	dir, grafanaPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
@@ -32,11 +34,17 @@ func TestBacktesting(t *testing.T) {
 		EnableLog: false,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, grafanaPath)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
 
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
-	input, err := testData.ReadFile(path.Join("test-data", "api_backtesting_data.json"))
+	input, err := os.ReadFile(filepath.Join("api_backtesting_data.json"))
 	require.NoError(t, err)
 	var testData map[string]apimodels.BacktestConfig
 	require.NoError(t, json.Unmarshal(input, &testData))
@@ -54,7 +62,7 @@ func TestBacktesting(t *testing.T) {
 			Type:   "testdata",
 			Access: datasources.DS_ACCESS_PROXY,
 			UID:    query.DatasourceUID,
-			UserID: 1,
+			UserID: userId,
 			OrgID:  1,
 		}
 		_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
@@ -68,7 +76,7 @@ func TestBacktesting(t *testing.T) {
 			require.Truef(t, ok, "The data file does not contain a field `data`")
 
 			status, body := apiCli.SubmitRuleForBacktesting(t, request)
-			require.Equalf(t, http.StatusOK, status, "Response: %s", body)
+			require.Equal(t, http.StatusOK, status)
 			var result data.Frame
 			require.NoErrorf(t, json.Unmarshal([]byte(body), &result), "cannot parse response to data frame")
 		})
@@ -107,7 +115,6 @@ func TestBacktesting(t *testing.T) {
 			resourcepermissions.SetResourcePermissionCommand{
 				Actions: []string{
 					accesscontrol.ActionAlertingRuleRead,
-					accesscontrol.ActionAlertingRuleUpdate,
 				},
 				Resource:          "folders",
 				ResourceID:        "*",

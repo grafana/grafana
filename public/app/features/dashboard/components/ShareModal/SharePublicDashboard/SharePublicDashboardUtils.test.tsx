@@ -1,11 +1,12 @@
-import { type DataSourceRef, type DataQuery, type TypedVariableModel } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
+import { DataSourceRef, DataQuery } from '@grafana/data/src/types/query';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import {
-  type PublicDashboard,
+  PublicDashboard,
   dashboardHasTemplateVariables,
   publicDashboardPersisted,
   generatePublicDashboardUrl,
@@ -17,22 +18,23 @@ const mockDS = mockDataSource({
   type: 'mock-ds-type',
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: () =>
-      Promise.resolve(
-        new DataSourceWithBackend({
-          ...mockDS,
-          meta: {
-            ...mockDS.meta,
-            alerting: true,
-            backend: true,
-          },
-        })
-      ),
-  }),
-}));
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () =>
+        Promise.resolve(
+          new DataSourceWithBackend({
+            ...mockDS,
+            meta: {
+              ...mockDS.meta,
+              alerting: true,
+              backend: true,
+            },
+          })
+        ),
+    }),
+  };
+});
 
 describe('dashboardHasTemplateVariables', () => {
   it('false', () => {

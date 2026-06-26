@@ -1,7 +1,7 @@
 import { Component, createRef } from 'react';
-import uPlot, { type AlignedData, type Options } from 'uplot';
+import uPlot, { AlignedData, Options } from 'uplot';
 
-import { type PlotProps } from './types';
+import { PlotProps } from './types';
 import { pluginLog } from './utils';
 
 import 'uplot/dist/uPlot.min.css';
@@ -31,16 +31,19 @@ type UPlotChartState = {
 export class UPlotChart extends Component<PlotProps, UPlotChartState> {
   plotContainer = createRef<HTMLDivElement>();
   plotCanvasBBox = createRef<DOMRect>();
-  plotInstance: uPlot | null = null;
 
   constructor(props: PlotProps) {
     super(props);
+
+    this.state = {
+      plot: null,
+    };
   }
 
   reinitPlot() {
     let { width, height, plotRef } = this.props;
 
-    this.plotInstance?.destroy();
+    this.state.plot?.destroy();
 
     if (width === 0 && height === 0) {
       return;
@@ -66,7 +69,7 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
       plotRef(plot);
     }
 
-    this.plotInstance = plot;
+    this.setState({ plot });
   }
 
   componentDidMount() {
@@ -74,19 +77,21 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
   }
 
   componentWillUnmount() {
-    this.plotInstance?.destroy();
+    this.state.plot?.destroy();
   }
 
   componentDidUpdate(prevProps: PlotProps) {
+    let { plot } = this.state;
+
     if (!sameDims(prevProps, this.props)) {
-      this.plotInstance?.setSize({
+      plot?.setSize({
         width: Math.floor(this.props.width),
         height: Math.floor(this.props.height),
       });
     } else if (!sameConfig(prevProps, this.props)) {
       this.reinitPlot();
     } else if (!sameData(prevProps, this.props)) {
-      this.plotInstance?.setData(this.props.data as AlignedData);
+      plot?.setData(this.props.data as AlignedData);
     }
   }
 

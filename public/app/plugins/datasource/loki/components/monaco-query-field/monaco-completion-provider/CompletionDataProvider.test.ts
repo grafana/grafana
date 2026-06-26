@@ -1,12 +1,12 @@
-import { type HistoryItem, dateTime } from '@grafana/data';
+import { HistoryItem, dateTime } from '@grafana/data';
 
 import LokiLanguageProvider from '../../../LanguageProvider';
-import { type LokiDatasource } from '../../../datasource';
-import { createLokiDatasource } from '../../../mocks/datasource';
-import { type LokiQuery } from '../../../types';
+import { createLokiDatasource } from '../../../__mocks__/datasource';
+import { LokiDatasource } from '../../../datasource';
+import { LokiQuery } from '../../../types';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
-import { type Label } from './situation';
+import { Label } from './situation';
 
 const history: Array<HistoryItem<LokiQuery>> = [
   {

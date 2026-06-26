@@ -8,6 +8,8 @@ jest.mocked(worker.postMessage).mockImplementation(() => {
   worker.onmessage?.({
     data: {
       hasChanges: true,
+      hasTimeChanges: true,
+      hasVariableValueChanges: true,
     },
   } as unknown as MessageEvent);
 });

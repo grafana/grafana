@@ -1,9 +1,9 @@
-import { Observable, type Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
-import { type DataFrame, type DataFrameJSON, type DataQueryError, type DataQueryResponse } from '@grafana/data';
-import { type FetchError } from '@grafana/runtime';
+import { DataFrame, DataFrameJSON, DataQueryError, DataQueryResponse } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 
-import { type StartQueryRequest } from '../types';
+import { StartQueryRequest } from '../types';
 
 type Result = { frames: DataFrameJSON[]; error?: string };
 

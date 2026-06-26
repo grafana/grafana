@@ -1,19 +1,15 @@
 import { useEffect } from 'react';
 
-import { config } from '@grafana/runtime';
-import { useUpdateCorrelationMutation } from 'app/api/clients/correlations/v0alpha1';
-
-import { Wizard } from '../components/Wizard/Wizard';
-import { type Correlation } from '../types';
+import { Wizard } from '../components/Wizard';
+import { Correlation } from '../types';
 import { useCorrelations } from '../useCorrelations';
-import { generatePartialEditSpec } from '../utils';
 
 import { ConfigureCorrelationBasicInfoForm } from './ConfigureCorrelationBasicInfoForm';
 import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm';
 import { ConfigureCorrelationTargetForm } from './ConfigureCorrelationTargetForm';
 import { CorrelationFormNavigation } from './CorrelationFormNavigation';
 import { CorrelationsFormContextProvider } from './correlationsFormContext';
-import { type EditFormDTO } from './types';
+import { EditFormDTO } from './types';
 
 interface Props {
   onUpdated: () => void;
@@ -21,15 +17,7 @@ interface Props {
   readOnly?: boolean;
 }
 
-export const EditCorrelationFormWrapper = ({ onUpdated, correlation, readOnly = false }: Props) => {
-  if (config.featureToggles.kubernetesCorrelations) {
-    return <EditCorrelationFormAppPlatform onUpdated={onUpdated} correlation={correlation} readOnly={readOnly} />;
-  }
-
-  return <EditCorrelationFormLegacy onUpdated={onUpdated} correlation={correlation} readOnly={readOnly} />;
-};
-
-const EditCorrelationFormLegacy = ({ onUpdated, correlation, readOnly = false }: Props) => {
+export const EditCorrelationForm = ({ onUpdated, correlation, readOnly = false }: Props) => {
   const {
     update: { execute, loading, error, value },
   } = useCorrelations();
@@ -46,34 +34,6 @@ const EditCorrelationFormLegacy = ({ onUpdated, correlation, readOnly = false }:
 
   return (
     <CorrelationsFormContextProvider data={{ loading, readOnly, correlation }}>
-      <Wizard<EditFormDTO>
-        defaultValues={correlation}
-        pages={[ConfigureCorrelationBasicInfoForm, ConfigureCorrelationTargetForm, ConfigureCorrelationSourceForm]}
-        onSubmit={readOnly ? (e) => () => {} : onSubmit}
-        navigation={CorrelationFormNavigation}
-      />
-    </CorrelationsFormContextProvider>
-  );
-};
-
-const EditCorrelationFormAppPlatform = ({ onUpdated, correlation, readOnly = false }: Props) => {
-  const [update, { isLoading, error, data }] = useUpdateCorrelationMutation();
-
-  // we use PATCH/update and build a partial spec here because PUT/replace requires us to specify
-  // the full app platform correlation including the api version and metadata,
-  // which we do not store in the frontend
-  const onSubmit = (data: EditFormDTO) => {
-    return update({ name: correlation.uid, patch: { spec: generatePartialEditSpec(data, correlation) } });
-  };
-
-  useEffect(() => {
-    if (!error && !isLoading && data) {
-      onUpdated();
-    }
-  }, [error, onUpdated, isLoading, data]);
-
-  return (
-    <CorrelationsFormContextProvider data={{ loading: isLoading, readOnly, correlation }}>
       <Wizard<EditFormDTO>
         defaultValues={correlation}
         pages={[ConfigureCorrelationBasicInfoForm, ConfigureCorrelationTargetForm, ConfigureCorrelationSourceForm]}

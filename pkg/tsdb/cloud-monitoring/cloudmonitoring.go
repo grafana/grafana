@@ -3,7 +3,6 @@ package cloudmonitoring
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -23,6 +22,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
@@ -50,25 +50,15 @@ var (
 )
 
 const (
-	gceAuthentication                  = "gce"
-	jwtAuthentication                  = "jwt"
-	forwardOAuthIdentityAuthentication = "forwardOAuthIdentity"
-	annotationQueryType                = dataquery.QueryTypeANNOTATION
-	timeSeriesListQueryType            = dataquery.QueryTypeTIMESERIESLIST
-	timeSeriesQueryQueryType           = dataquery.QueryTypeTIMESERIESQUERY
-	sloQueryType                       = dataquery.QueryTypeSLO
-	promQLQueryType                    = dataquery.QueryTypePROMQL
-	crossSeriesReducerDefault          = "REDUCE_NONE"
-	perSeriesAlignerDefault            = "ALIGN_MEAN"
-)
-
-const fromAlertHeaderName = "FromAlert"
-
-const (
-	forwardOAuthIdentityMissingDefaultProjectMessage = "Default project is required when using OAuth passthrough authentication."
-	forwardOAuthIdentityUnauthorizedMessage          = "401 Unauthorized: Usage of this data source requires you to be authenticated via Google OAuth. If you are signed in via Google, your session token may have expired — sign out and back in to refresh it."
-	forwardOAuthIdentityForbiddenMessage             = "403 Forbidden: Permission denied. Make sure the https://www.googleapis.com/auth/monitoring.read scope is configured in Grafana's Google OAuth settings, and that the signed-in user has the Monitoring Viewer role on the default project."
-	forwardOAuthIdentityAlertingNotSupportedMessage  = "alerting queries are not supported with the Forward OAuth Identity authentication type; use Google JWT File or GCE Default Service Account for data sources used by alerting rules"
+	gceAuthentication         = "gce"
+	jwtAuthentication         = "jwt"
+	annotationQueryType       = dataquery.QueryTypeAnnotation
+	timeSeriesListQueryType   = dataquery.QueryTypeTimeSeriesList
+	timeSeriesQueryQueryType  = dataquery.QueryTypeTimeSeriesQuery
+	sloQueryType              = dataquery.QueryTypeSlo
+	promQLQueryType           = dataquery.QueryTypePromQL
+	crossSeriesReducerDefault = "REDUCE_NONE"
+	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
@@ -103,15 +93,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	if dsInfo.oauthPassThru && defaultProject == "" {
-		return &backend.CheckHealthResult{
-			Status:  backend.HealthStatusError,
-			Message: forwardOAuthIdentityMissingDefaultProjectMessage,
-		}, nil
-	}
-
-	url := fmt.Sprintf("%s/v3/projects/%s/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	url := fmt.Sprintf("%v/v3/projects/%v/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
+	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -131,14 +114,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	if res.StatusCode != 200 {
 		status = backend.HealthStatusError
 		message = res.Status
-		if dsInfo.oauthPassThru {
-			switch res.StatusCode {
-			case http.StatusUnauthorized:
-				message = forwardOAuthIdentityUnauthorizedMessage
-			case http.StatusForbidden:
-				message = forwardOAuthIdentityForbiddenMessage
-			}
-		}
 	}
 	return &backend.CheckHealthResult{
 		Status:  status,
@@ -158,30 +133,22 @@ type Service struct {
 }
 
 type datasourceInfo struct {
-	id                          int64
-	updated                     time.Time
-	url                         string
-	authenticationType          string
-	defaultProject              string
-	clientEmail                 string
-	tokenUri                    string
-	universeDomain              string
-	services                    map[string]datasourceService
-	privateKey                  string
-	usingImpersonation          bool
-	serviceAccountToImpersonate string
-	oauthPassThru               bool
+	id                 int64
+	updated            time.Time
+	url                string
+	authenticationType string
+	defaultProject     string
+	clientEmail        string
+	tokenUri           string
+	services           map[string]datasourceService
+	privateKey         string
 }
 
 type datasourceJSONData struct {
-	AuthenticationType          string `json:"authenticationType"`
-	DefaultProject              string `json:"defaultProject"`
-	ClientEmail                 string `json:"clientEmail"`
-	TokenURI                    string `json:"tokenUri"`
-	UniverseDomain              string `json:"universeDomain"`
-	UsingImpersonation          bool   `json:"usingImpersonation"`
-	ServiceAccountToImpersonate string `json:"serviceAccountToImpersonate"`
-	OAuthPassThru               bool   `json:"oauthPassThru"`
+	AuthenticationType string `json:"authenticationType"`
+	DefaultProject     string `json:"defaultProject"`
+	ClientEmail        string `json:"clientEmail"`
+	TokenURI           string `json:"tokenUri"`
 }
 
 type datasourceService struct {
@@ -202,18 +169,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		dsInfo := &datasourceInfo{
-			id:                          settings.ID,
-			updated:                     settings.Updated,
-			url:                         settings.URL,
-			authenticationType:          jsonData.AuthenticationType,
-			defaultProject:              jsonData.DefaultProject,
-			clientEmail:                 jsonData.ClientEmail,
-			tokenUri:                    jsonData.TokenURI,
-			universeDomain:              jsonData.UniverseDomain,
-			usingImpersonation:          jsonData.UsingImpersonation,
-			serviceAccountToImpersonate: jsonData.ServiceAccountToImpersonate,
-			oauthPassThru:               jsonData.OAuthPassThru,
-			services:                    map[string]datasourceService{},
+			id:                 settings.ID,
+			updated:            settings.Updated,
+			url:                settings.URL,
+			authenticationType: jsonData.AuthenticationType,
+			defaultProject:     jsonData.DefaultProject,
+			clientEmail:        jsonData.ClientEmail,
+			tokenUri:           jsonData.TokenURI,
+			services:           map[string]datasourceService{},
 		}
 
 		dsInfo.privateKey, err = utils.GetPrivateKey(&settings)
@@ -226,17 +189,13 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		if jsonData.AuthenticationType == forwardOAuthIdentityAuthentication {
-			opts.ForwardHTTPHeaders = true
-		}
-
-		for name := range routes {
+		for name, info := range routes {
 			client, err := newHTTPClient(dsInfo, opts, &httpClientProvider, name)
 			if err != nil {
 				return nil, err
 			}
 			dsInfo.services[name] = datasourceService{
-				url:    buildURL(name, dsInfo.universeDomain),
+				url:    info.url,
 				client: client,
 			}
 		}
@@ -249,7 +208,7 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters any) []string 
 	metricTypeFilterArray := []string{"metric.type", "=", metricTypeFilter}
 	if prevFilters != nil {
 		filtersIface := prevFilters.([]any)
-		filters := make([]string, 0, len(filtersIface))
+		filters := []string{}
 		for _, f := range filtersIface {
 			filters = append(filters, f.(string))
 		}
@@ -257,6 +216,10 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters any) []string 
 		return append(filters, metricTypeFilterArray...)
 	}
 	return metricTypeFilterArray
+}
+
+func strPtr(s string) *string {
+	return &s
 }
 
 func migrateRequest(req *backend.QueryDataRequest) error {
@@ -277,7 +240,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if err != nil {
 				return err
 			}
-			q.QueryType = string(dataquery.QueryTypeTIMESERIESLIST)
+			q.QueryType = string(dataquery.QueryTypeTimeSeriesList)
 			gq := grafanaQuery{
 				TimeSeriesList: &mq,
 			}
@@ -298,7 +261,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 
 		// Migrate type to queryType, which is only used for annotations
 		if rawQuery["type"] != nil && rawQuery["type"].(string) == "annotationQuery" {
-			q.QueryType = string(dataquery.QueryTypeANNOTATION)
+			q.QueryType = string(dataquery.QueryTypeAnnotation)
 		}
 		if rawQuery["queryType"] != nil {
 			q.QueryType = rawQuery["queryType"].(string)
@@ -312,9 +275,9 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 				rawQuery["timeSeriesQuery"] = &dataquery.TimeSeriesQuery{
 					ProjectName: toString(metricQuery["projectName"]),
 					Query:       toString(metricQuery["query"]),
-					GraphPeriod: toString(metricQuery["graphPeriod"]),
+					GraphPeriod: strPtr(toString(metricQuery["graphPeriod"])),
 				}
-				q.QueryType = string(dataquery.QueryTypeTIMESERIESQUERY)
+				q.QueryType = string(dataquery.QueryTypeTimeSeriesQuery)
 			} else {
 				tslb, err := json.Marshal(metricQuery)
 				if err != nil {
@@ -330,7 +293,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					tsl.Filters = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
 				}
 				rawQuery["timeSeriesList"] = tsl
-				q.QueryType = string(dataquery.QueryTypeTIMESERIESLIST)
+				q.QueryType = string(dataquery.QueryTypeTimeSeriesList)
 			}
 			// AliasBy is now a top level property
 			if metricQuery["aliasBy"] != nil {
@@ -343,7 +306,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			q.JSON = b
 		}
 
-		if rawQuery["sloQuery"] != nil && q.QueryType == string(dataquery.QueryTypeSLO) {
+		if rawQuery["sloQuery"] != nil && q.QueryType == string(dataquery.QueryTypeSlo) {
 			sloQuery := rawQuery["sloQuery"].(map[string]any)
 			// AliasBy is now a top level property
 			if sloQuery["aliasBy"] != nil {
@@ -380,13 +343,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	// OAuth passthrough requires a signed-in user to source the bearer token from.
-	// Alert rule evaluations run without a user context, so fail fast with a clear
-	// message rather than letting the request reach GCM with no Authorization header.
-	if dsInfo.oauthPassThru && req.Headers[fromAlertHeaderName] == "true" {
-		return nil, backend.DownstreamError(errors.New(forwardOAuthIdentityAlertingNotSupportedMessage))
-	}
-
 	// There aren't any possible downstream errors here
 	queries, err := s.buildQueryExecutors(logger, req)
 	if err != nil {
@@ -394,7 +350,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	switch req.Queries[0].QueryType {
-	case string(dataquery.QueryTypeANNOTATION):
+	case string(dataquery.QueryTypeAnnotation):
 		return s.executeAnnotationQuery(ctx, req, *dsInfo, queries, logger)
 	default:
 		return s.executeTimeSeriesQuery(ctx, req, *dsInfo, queries, logger)
@@ -407,16 +363,16 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	for _, queryExecutor := range queries {
 		dr, queryRes, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
 		if err != nil {
-			resp.Responses[queryExecutor.getRefID()] = backend.ErrorResponseWithErrorSource(err)
+			errorsource.AddErrorToResponse(queryExecutor.getRefID(), resp, err)
 			return resp, err
 		}
 		err = queryExecutor.parseResponse(dr, queryRes, executedQueryString, logger)
 		if err != nil {
 			dr.Error = err
-			// If the error is a downstream error, set the error source
-			if backend.IsDownstreamError(err) {
-				dr.ErrorSource = backend.ErrorSourceDownstream
-			}
+			// // Default to a plugin error if there's no source
+			errWithSource := errorsource.SourceError(backend.ErrorSourcePlugin, err, false)
+			dr.Error = errWithSource.Unwrap()
+			dr.ErrorSource = errWithSource.ErrorSource()
 		}
 
 		resp.Responses[queryExecutor.getRefID()] = *dr
@@ -436,11 +392,11 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 
 func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
 	cloudMonitoringQueryExecutors := make([]cloudMonitoringQueryExecutor, 0, len(req.Queries))
+	startTime := req.Queries[0].TimeRange.From
+	endTime := req.Queries[0].TimeRange.To
+	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
-	for index, query := range req.Queries {
-		startTime := req.Queries[index].TimeRange.From
-		endTime := req.Queries[index].TimeRange.To
-		durationSeconds := int(endTime.Sub(startTime).Seconds())
+	for _, query := range req.Queries {
 		q, err := queryModel(query)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
@@ -448,11 +404,10 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 
 		var queryInterface cloudMonitoringQueryExecutor
 		switch query.QueryType {
-		case string(dataquery.QueryTypeTIMESERIESLIST), string(dataquery.QueryTypeANNOTATION):
+		case string(dataquery.QueryTypeTimeSeriesList), string(dataquery.QueryTypeAnnotation):
 			cmtsf := &cloudMonitoringTimeSeriesList{
-				refID:     query.RefID,
-				aliasBy:   q.AliasBy,
-				timeRange: req.Queries[index].TimeRange,
+				refID:   query.RefID,
+				aliasBy: q.AliasBy,
 			}
 			if q.TimeSeriesList.View == nil || *q.TimeSeriesList.View == "" {
 				fullString := "FULL"
@@ -461,35 +416,34 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			cmtsf.parameters = q.TimeSeriesList
 			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
-		case string(dataquery.QueryTypeTIMESERIESQUERY):
+		case string(dataquery.QueryTypeTimeSeriesQuery):
 			queryInterface = &cloudMonitoringTimeSeriesQuery{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
 				parameters: q.TimeSeriesQuery,
 				IntervalMS: query.Interval.Milliseconds(),
-				timeRange:  req.Queries[index].TimeRange,
+				timeRange:  req.Queries[0].TimeRange,
 				logger:     logger,
 			}
-		case string(dataquery.QueryTypeSLO):
+		case string(dataquery.QueryTypeSlo):
 			cmslo := &cloudMonitoringSLO{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
 				parameters: q.SloQuery,
-				timeRange:  req.Queries[index].TimeRange,
 			}
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmslo
-		case string(dataquery.QueryTypePROMQL):
+		case string(dataquery.QueryTypePromQL):
 			cmp := &cloudMonitoringProm{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
 				parameters: q.PromQLQuery,
-				timeRange:  req.Queries[index].TimeRange,
+				timeRange:  req.Queries[0].TimeRange,
 				logger:     logger,
 			}
 			queryInterface = cmp
 		default:
-			return nil, backend.DownstreamError(fmt.Errorf("unrecognized query type %q", query.QueryType))
+			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
 		}
 
 		cloudMonitoringQueryExecutors = append(cloudMonitoringQueryExecutors, queryInterface)
@@ -637,10 +591,7 @@ func (s *Service) ensureProject(ctx context.Context, dsInfo datasourceInfo, proj
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
 		project, err := s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
-		if err != nil {
-			return project, backend.DownstreamError(err)
-		}
-		return project, nil
+		return project, errorsource.DownstreamError(err, false)
 	}
 	return dsInfo.defaultProject, nil
 }
@@ -659,11 +610,7 @@ func unmarshalResponse(res *http.Response, logger log.Logger) (cloudMonitoringRe
 
 	if res.StatusCode/100 != 2 {
 		logger.Error("Request failed", "status", res.Status, "body", string(body), "statusSource", backend.ErrorSourceDownstream)
-		statusErr := fmt.Errorf("query failed: %s", string(body))
-		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
-			return cloudMonitoringResponse{}, backend.DownstreamError(statusErr)
-		}
-		return cloudMonitoringResponse{}, backend.PluginError(statusErr)
+		return cloudMonitoringResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("query failed: %s", string(body)), false)
 	}
 
 	var data cloudMonitoringResponse
@@ -676,7 +623,7 @@ func unmarshalResponse(res *http.Response, logger log.Logger) (cloudMonitoringRe
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string, unit string, period string, logger log.Logger) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string, period *string, logger log.Logger) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
@@ -697,8 +644,8 @@ func addConfigData(frames data.Frames, dl string, unit string, period string, lo
 		if frames[i].Fields[0].Config == nil {
 			frames[i].Fields[0].Config = &data.FieldConfig{}
 		}
-		if period != "" {
-			err := addInterval(period, frames[i].Fields[0])
+		if period != nil && *period != "" {
+			err := addInterval(*period, frames[i].Fields[0])
 			if err != nil {
 				logger.Error("Failed to add interval: %s", err, "statusSource", backend.ErrorSourceDownstream)
 			}

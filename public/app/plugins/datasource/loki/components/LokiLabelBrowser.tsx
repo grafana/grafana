@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { type ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
 import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { type CoreApp, type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
-  type HighlightPart,
+  HighlightPart,
   Input,
   Label,
   LoadingPlaceholder,
@@ -18,7 +18,7 @@ import {
   Stack,
 } from '@grafana/ui';
 
-import type LokiLanguageProvider from '../LanguageProvider';
+import LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
 // Hard limit on labels to render
@@ -26,7 +26,6 @@ const MAX_LABEL_COUNT = 1000;
 const MAX_VALUE_COUNT = 10000;
 const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
-const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
 export interface BrowserProps {
   languageProvider: LokiLanguageProvider;
@@ -69,10 +68,7 @@ export function buildSelector(labels: SelectableLabel[]): string {
   const selectedLabels = [];
   for (const label of labels) {
     if (label.selected && label.values && label.values.length > 0) {
-      const selectedValues = label.values
-        .filter((value) => value.selected)
-        .map((value) => value.name)
-        .sort(collator.compare); // sort selected values alphabetically
+      const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
       if (selectedValues.length > 1) {
         selectedLabels.push(`${label.name}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`);
       } else if (selectedValues.length === 1) {
@@ -101,13 +97,7 @@ export function facetLabels(
           label.values?.filter((value) => value.selected).map((value) => value.name) || []
         );
         // Values for this label have not been requested yet, let's use the facetted ones as the initial values
-        existingValues = possibleValues
-          .slice()
-          .sort(collator.compare) // sort raw label values alphabetically
-          .map((value) => ({
-            name: value,
-            selected: selectedValues.has(value),
-          }));
+        existingValues = possibleValues.map((value) => ({ name: value, selected: selectedValues.has(value) }));
       }
       return { ...label, loading: false, values: existingValues, facets: existingValues.length };
     }

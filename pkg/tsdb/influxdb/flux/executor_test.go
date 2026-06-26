@@ -19,8 +19,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/simplejson"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // --------------------------------------------------------------
@@ -60,11 +61,8 @@ func executeMockedQuery(t *testing.T, name string, query queryModel) *backend.Da
 	runner := &MockRunner{
 		testDataPath: name + ".csv",
 	}
-	if query.MaxSeries == 0 {
-		query.MaxSeries = 50
-	}
 
-	dr := executeQuery(context.Background(), glog, query, runner, query.MaxSeries)
+	dr := executeQuery(context.Background(), glog, query, runner, 50)
 	return &dr
 }
 
@@ -154,9 +152,9 @@ func TestAggregateGrouping(t *testing.T) {
 	expectedFrame := data.NewFrame("",
 		data.NewField("Time", nil, []*time.Time{&t1, &t2, &t3}),
 		data.NewField("Value", map[string]string{"host": "hostname.ru"}, []*float64{
-			new(8.291),
-			new(0.534),
-			new(0.667),
+			util.Pointer(8.291),
+			util.Pointer(0.534),
+			util.Pointer(0.667),
 		}),
 	)
 	expectedFrame.Meta = &data.FrameMeta{}
@@ -189,7 +187,7 @@ func TestNonStandardTimeColumn(t *testing.T) {
 		data.NewField("_start_water", map[string]string{"st": "1"}, []*time.Time{&t1}),
 		data.NewField("_stop_water", map[string]string{"st": "1"}, []*time.Time{&t2}),
 		data.NewField("_value", map[string]string{"st": "1"}, []*float64{
-			new(156.304),
+			util.Pointer(156.304),
 		}),
 	)
 	expectedFrame.Meta = &data.FrameMeta{}
@@ -245,16 +243,6 @@ func assertDataResponseDimensions(t *testing.T, dr *backend.DataResponse, rows i
 	require.Equal(t, fields[1].Len(), columns)
 }
 
-func TestMaxSeriesExceeded(t *testing.T) {
-	// unfortunately the golden-response style tests do not support
-	// responses that contain errors, so we can only do manual checks
-	// on the DataResponse
-	dr := executeMockedQuery(t, "multiple", queryModel{MaxSeries: 1, MaxDataPoints: 100})
-
-	require.ErrorAs(t, dr.Error, &maxSeriesExceededError{})
-	require.Equal(t, backend.ErrorSourceDownstream, dr.ErrorSource)
-}
-
 func TestMaxDataPointsExceededNoAggregate(t *testing.T) {
 	// unfortunately the golden-response style tests do not support
 	// responses that contain errors, so we can only do manual checks
@@ -263,7 +251,6 @@ func TestMaxDataPointsExceededNoAggregate(t *testing.T) {
 
 	// it should contain the error-message
 	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2. Try using the aggregateWindow() function in your query to reduce the number of points returned.")
-	require.Equal(t, backend.ErrorSourceDownstream, dr.ErrorSource)
 	assertDataResponseDimensions(t, dr, 2, 21)
 }
 
@@ -275,7 +262,6 @@ func TestMaxDataPointsExceededWithAggregate(t *testing.T) {
 
 	// it should contain the error-message
 	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2.")
-	require.Equal(t, backend.ErrorSourceDownstream, dr.ErrorSource)
 	assertDataResponseDimensions(t, dr, 2, 21)
 }
 

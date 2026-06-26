@@ -1,32 +1,26 @@
 import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
-import { config } from '@grafana/runtime';
-import { type DashboardViewItem } from 'app/features/search/types';
-import { type StoreState, useDispatch, useSelector } from 'app/types/store';
+import { DashboardViewItem } from 'app/features/search/types';
+import { useSelector, StoreState, useDispatch } from 'app/types';
 
-import { PAGE_SIZE } from '../api/constants';
+import { PAGE_SIZE } from '../api/services';
+import { isSharedWithMe } from '../components/utils';
 import {
-  type BrowseDashboardsState,
-  type DashboardsTreeItem,
-  type DashboardTreeSelection,
-  type DashboardViewItemWithUIItems,
-  type UIDashboardViewItem,
+  BrowseDashboardsState,
+  DashboardsTreeItem,
+  DashboardTreeSelection,
+  DashboardViewItemWithUIItems,
+  UIDashboardViewItem,
 } from '../types';
-import {
-  isSharedWithMe,
-  isVirtualStarredFolder,
-  isVirtualTeamFolder,
-  starredFoldersEnabled,
-} from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
-const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
-const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
+export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
+export const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
 
 const flatTreeSelector = createSelector(
   rootItemsSelector,
@@ -145,7 +139,7 @@ export function useLoadNextChildrenPage(
  * @param openFolders Object of UID to whether that item is expanded or not
  * @param level level of item in the tree. Only to be specified when called recursively.
  */
-function createFlatTree(
+export function createFlatTree(
   folderUID: string | undefined,
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
@@ -189,19 +183,12 @@ function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    // Add a divider after the last virtual folder (shared with me / team folders / starred folders)
-    const starredOn = starredFoldersEnabled();
-    const isLastVirtualFolder =
-      isVirtualStarredFolder(thisItem.item.uid) ||
-      (isVirtualTeamFolder(thisItem.item.uid) && !starredOn) ||
-      (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders && !starredOn);
-
-    if (isLastVirtualFolder) {
+    if (isSharedWithMe(thisItem.item.uid)) {
       items.push({
         item: {
           kind: 'ui',
           uiKind: 'divider',
-          uid: `${thisItem.item.uid}-divider`,
+          uid: 'shared-with-me-divider',
         },
         parentUID,
         level: level + 1,

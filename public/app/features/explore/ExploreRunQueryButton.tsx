@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { type ConnectedProps, connect } from 'react-redux';
+import { ConnectedProps, connect } from 'react-redux';
 
-import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
-import { Button, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { useSelector } from 'app/types/store';
+import { DataQuery } from '@grafana/schema';
+import { Button, ButtonVariant, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { t } from '@grafana/ui/src/utils/i18n';
+import { useSelector } from 'app/types';
 
 import { changeDatasource } from './state/datasource';
 import { setQueries } from './state/query';
@@ -22,12 +22,13 @@ interface ExploreRunQueryButtonProps {
   queries: DataQuery[];
   rootDatasourceUid?: string;
   disabled?: boolean;
+  variant?: ButtonVariant;
   onClick?: () => void;
 }
 
 export type Props = ConnectedProps<typeof connector> & ExploreRunQueryButtonProps;
 
-/*
+/* 
 This component does not validate datasources before running them. Root datasource validation should happen outside this component and can pass in an undefined if invalid
 If query level validation is done and a query datasource is invalid, pass in disabled = true
 */
@@ -36,6 +37,7 @@ export function ExploreRunQueryButton({
   rootDatasourceUid,
   queries,
   disabled = false,
+  variant = 'secondary',
   onClick,
   changeDatasource,
   setQueries,
@@ -82,7 +84,7 @@ export function ExploreRunQueryButton({
       const buttonText = runQueryText(exploreId, rootDatasourceUid);
       return (
         <Button
-          variant={'primary'}
+          variant={variant}
           aria-label={buttonText.translation}
           onClick={() => {
             runQuery(exploreId);
@@ -108,7 +110,6 @@ export function ExploreRunQueryButton({
                   runQuery(pane[0]);
                   onClick?.();
                 }}
-                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 label={`${paneLabel}: ${buttonText.translation}`}
                 disabled={isInvalid || pane[0] === undefined}
               />
@@ -119,14 +120,7 @@ export function ExploreRunQueryButton({
 
       return (
         <Dropdown onVisibleChange={(state) => setOpenRunQueryButton(state)} placement="bottom-start" overlay={menu}>
-          <ToolbarButton
-            aria-label={t(
-              'explore.explore-run-query-button.run-button.aria-label-run-query-options',
-              'Run query options'
-            )}
-            variant="canvas"
-            isOpen={openRunQueryButton}
-          >
+          <ToolbarButton aria-label="run query options" variant="canvas" isOpen={openRunQueryButton}>
             {t('explore.run-query.run-query-button', 'Run query')}
           </ToolbarButton>
         </Dropdown>

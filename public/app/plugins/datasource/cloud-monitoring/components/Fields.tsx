@@ -1,4 +1,4 @@
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { Field, Select } from '@grafana/ui';
 
 interface VariableQueryFieldProps {

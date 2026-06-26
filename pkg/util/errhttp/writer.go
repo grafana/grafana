@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"reflect"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -33,7 +32,7 @@ type ErrorOptions struct {
 // generic 500 Internal Server Error payload by default, this is
 // overrideable by providing [WithFallback] for a custom fallback
 // error.
-func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(ErrorOptions) ErrorOptions) int {
+func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(ErrorOptions) ErrorOptions) {
 	opt := ErrorOptions{}
 	for _, o := range opts {
 		opt = o(opt)
@@ -41,16 +40,6 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 
 	var gErr errutil.Error
 	if !errors.As(err, &gErr) {
-		// Write k8s response if this is a k8s error
-		k8s, ok := err.(apierrors.APIStatus)
-		if ok {
-			status := k8s.Status()
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(int(status.Code))
-			_ = json.NewEncoder(w).Encode(status)
-			return int(status.Code)
-		}
-
 		gErr = fallbackOrInternalError(err, opt)
 	}
 
@@ -74,7 +63,6 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 	if err != nil {
 		defaultLogger.FromContext(ctx).Error("error while writing error", "error", err)
 	}
-	return pub.StatusCode
 }
 
 // WithFallback sets the default error returned to the user if the error

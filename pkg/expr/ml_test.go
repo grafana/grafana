@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/ml"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -62,12 +61,12 @@ func TestMLNodeExecute(t *testing.T) {
 		features:      nil,
 		pluginsClient: pluginsClient,
 		tracer:        nil,
-		metrics:       metrics.NewSSEMetrics(nil),
+		metrics:       newMetrics(nil),
 	}
 
 	cmdResponse := data.NewFrame("test",
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("Value", nil, []*float64{new(1.0)}),
+		data.NewField("Value", nil, []*float64{fp(1)}),
 	)
 
 	cmd := &ml.FakeCommand{
@@ -199,7 +198,7 @@ func TestMLNodeExecute(t *testing.T) {
 			features:      nil,
 			pluginsClient: pluginsClient,
 			tracer:        nil,
-			metrics:       metrics.NewSSEMetrics(nil),
+			metrics:       newMetrics(nil),
 		}
 
 		cmd := &ml.FakeCommand{

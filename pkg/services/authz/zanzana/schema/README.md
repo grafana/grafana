@@ -2,76 +2,109 @@
 
 Here's some notes about [OpenFGA authorization model](https://openfga.dev/docs/modeling/getting-started) (schema) using to model access control in Grafana.
 
-## GroupResource level permissions
+## Org-level permissions
 
-A relation to a group_resource object grants access to all objects of the GroupResource.
-They take the form of `{ “user”: “user:1”, relation: “read”, object:”group_resource:dashboard.grafana.app/dashboards” }`. This
-example would grant `user:1` access to all `dashboard.grafana.app/dashboards` in the namespace.
+Most of the permissions are exist in org. Users, teams, dashboards, folders and other objects also related to specific org.
 
-## Folder level permissions
+## Dashboards and folders
 
-Folders have a type in our schema, this is different from most of our other resources where we use the generic type for
-them. This is because we want to store the folder tree relations.
+Folder hierarchy is stored directly in OpenFGA database. Each dashboard has parent folder and every folder could have sub-folders. Root-level folders do not have parents, but instead, they related to specific org:
 
-To grant a user access to a specific folder we store `{ “user”: “user:1”, relation: “read”, object:”folder:<name>” }`
+```text
+type org
+  relations
+    define instance: [instance]
+    define member: [user]
 
-To grant a user access to sub resources of a folder we store `{ “user”: “user:1”, relation: “resource_read”, object:”folder:<uid>”}` with additional context.
-This context holds all GroupResources in a list e.g. `{ "subresources": ["dashboard.grafana.app/dashboards", "alerting.grafana.app/rules" ] }`.
+type folder
+    relations
+      define parent: [folder]
+      define org: [org]
 
-## Resource level permissions
-
-Most of our resource should use the generic resource type.
-
-To grant a user direct access to a specific resource we store `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<name>” }` with additional context.
-This context store the GroupResource. `{ "group_resource": "dashboard.grafana.app/dashboards" }`. This is required so we can filter them out for list requests.
-
-## Subresources
-
-Subresources enable more granular permissions for the resources. Example might be access to public dashboards or access to dashboard settings.
-
-To grant a user access to the subresource of the specific resource we store following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>/<resource_name>” }` with additional context `{ "group_resource": "dashboard.grafana.app/dashboards/<subresource>" }`
-
-It's also possible to grant user access to all subresources for specific resource type. It can be done with following tuple: `{ “user”: “user:1”, relation: “read”, object:”resource:dashboard.grafana.app/dashboards/<subresource>” }`.
-
-For the typed resources (like folders, users, teams, etc) subresources work in a little bit different way. Since typed resources only have ID in the name, subresources are added to the `subresource_filter`. For example, to grant user access to folder subresource, following tuple will be created:
-
-```
-{ “user”: “user:1”, relation: “resource_read”, object:”folder:<uid>” }
-context: { "subresource_filter": ["folder.grafana.app/folders/<subresource>"] }
+type dashboard
+  relations
+    define org: [org]
+    define parent: [folder]
 ```
 
-Note that relation is translated from `read` to `resource_read`. This is required to distinguish access between resource and its subresources. When check request is performed, we check if request contains subresource. If so, context filter and translated relation are used.
+Therefore, folders tree is stored as tuples like this:
+
+```text
+folder:<org_id>-<folder_uid> parent dashboard:<org_id>-<dashboard_uid>
+folder:<org_id>-<folder_uid> parent folder:<org_id>-<folder_uid>
+org:<org_id> org folder:<org_id>-<folder_uid>
+```
 
 ## Managed permissions
 
 In the RBAC model managed permissions stored as a special "managed" role permissions. OpenFGA model allows to assign permissions directly to users, so it produces following tuples:
 
 ```text
-user:<user_uid> read folder:<folder_uid>
+user:<user_uid> read folder:<org_id>-<folder_uid>
 ```
 
 It's also possible to assign permissions for team members using `#member` relation:
 
 ```text
-team:<team_uid>#member read folder:<folder_uid>
+team:<team_uid>#member read folder:<org_id>-<folder_uid>
 ```
+
+It's important to understand that folder permissions cannot be directly assigned to teams, because it's restricted by schema:
+
+```text
+type folder
+    relations
+      define parent: [folder]
+      define org: [org]
+
+      define read: [user, team#member, role#assignee] or read from parent or folder_read from org
+
+type team
+  relations
+    define org: [org]
+    define admin: [user]
+    define member: [user] or admin
+```
+
+Therefore, `team#member` can have `read` relation to folder and user will be automatically granted the same permission if it has `member` relation to specific team.
 
 ## Roles and role assignments
 
-RBAC authorization model grants permissions to users through roles and role assignments. All permissions are linked to roles and then roles granted to users. To model this in OpenFGA we use `role` type.
+RBAC authorization model grants permissions to users through roles and role assignments. All permissions are linked to roles and then roles granted to users. To model this in OpenFGA, we use org-level permission and `role` type.
 
-To understand how RBAC permissions linked to roles, let's take a look at the folder read permission as example:
+To understand how RBAC permissions linked to roles, let's take a look at the dashboard read permission as example:
 
 ```text
+type org
+  relations
+    define instance: [instance]
+    define member: [user]
+
+    define folder_read: [role#assignee]
+
 type role
   relations
+    define org: [org]
     define assignee: [user, team#member, role#assignee]
 
 type folder
   relations
     define parent: [folder]
+    define org: [org]
 
-    define read: [user, team#member, role#assignee] or view or read from parent
+    define read: [user, team#member, role#assignee] or read from parent or folder_read from org
 ```
 
-According to the schema, user can get `read` access to folder if it has `read` relation granted directly to the folder or its parent folders.
+According to the schema, user can get `read` access to dashboard if it has `read` relation granted directly to the dashboard ot its parent folders, or by having `folder_read from org`. If we take a look at `folder_read` definition in the org type, we could see that this relation could be granted to `role#assignee`. So in order to allow user to read all dahboards in org, following tuples should be added:
+
+```text
+role:<org_id>-<role_uid>#assignee folder_read org:<org_uid>
+user:<user_uid> assignee role:<role_uid>
+```
+
+In case of `Admin` basic role, it will be looking like:
+
+```text
+role:1-basic_admin#assignee folder_read org:1
+user:admin assignee role:1-basic_admin
+```

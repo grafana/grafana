@@ -1,4 +1,4 @@
-import { type IconName } from '@grafana/data';
+import { IconName } from '@grafana/data';
 
 export const BASE_PATH = 'admin/authentication/';
 
@@ -9,7 +9,6 @@ export const UIMap: Record<string, [IconName, string]> = {
   google: ['google', 'Google'],
   generic_oauth: ['lock', 'Generic OAuth'],
   grafana_com: ['grafana', 'Grafana.com'],
-  azuread: ['microsoft', 'Entra ID'],
+  azuread: ['microsoft', 'Azure AD'],
   okta: ['okta', 'Okta'],
-  scim: ['scim', 'SCIM'],
 };

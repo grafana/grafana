@@ -1,11 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { HttpResponse, http } from 'msw';
-import { type SetupServer } from 'msw/node';
+import { http, HttpResponse } from 'msw';
+import { SetupServer } from 'msw/node';
 import { getWrapper } from 'test/test-utils';
 
-import { type DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockAlertmanagersResponse } from '../mocks/alertmanagerApi';
 

@@ -1,11 +1,11 @@
 import {
   createTheme,
-  type DataFrame,
-  type DisplayProcessor,
-  type Field,
+  DataFrame,
+  DisplayProcessor,
+  Field,
   FieldType,
   getDisplayProcessor,
-  type GrafanaTheme2,
+  GrafanaTheme2,
 } from '@grafana/data';
 
 import { SampleUnit } from '../types';
@@ -46,7 +46,7 @@ export function nestedSetToLevels(
   let offset = 0;
 
   let parent: LevelItem | undefined = undefined;
-  const uniqueLabels: Record<string, LevelItem[]> = Object.create(null);
+  const uniqueLabels: Record<string, LevelItem[]> = {};
 
   for (let i = 0; i < container.data.length; i++) {
     const currentLevel = container.getLevel(i);
@@ -219,7 +219,7 @@ export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
   return '';
 }
 
-type CheckFieldsResult = {
+export type CheckFieldsResult = {
   wrongTypeFields: Array<{ name: string; expectedTypes: FieldType[]; type: FieldType }>;
   missingFields: string[];
 };
@@ -237,7 +237,7 @@ export function checkFields(data: DataFrame): CheckFieldsResult | undefined {
 
   for (const field of fields) {
     const [name, types] = field;
-    const frameField = data?.fields.find((f) => f.name === name);
+    const frameField = data.fields.find((f) => f.name === name);
     if (!frameField) {
       missingFields.push(name);
       continue;

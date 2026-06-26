@@ -1,26 +1,16 @@
-import { type SelectableValue } from '@grafana/data';
-import {
-  MatcherOperator,
-  type ObjectMatcher,
-  ROUTES_META_SYMBOL,
-  type Route,
-  type RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { uniqueId } from 'lodash';
 
-import { type FormAmRoute } from '../types/amroutes';
-import { type MatcherFieldValue } from '../types/silence-form';
+import { SelectableValue } from '@grafana/data';
+import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+
+import { FormAmRoute } from '../types/amroutes';
+import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { encodeMatcher, normalizeMatchers, parseMatcherToArray, unquoteWithUnescape } from './matchers';
-import { findExistingRoute, hashRoute } from './routeTree';
+import { findExistingRoute } from './routeTree';
 import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
-
-/** Returns the provenance string for a route, preferring the symbol-keyed k8s metadata
- *  over the legacy top-level field. */
-export function extractNotificationPolicyProvenance(route: Route): string | undefined {
-  return route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
-}
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -61,7 +51,6 @@ export const commonGroupByOptions = [
 
 export const emptyRoute: FormAmRoute = {
   id: '',
-  name: '',
   overrideGrouping: false,
   groupBy: defaultGroupBy,
   object_matchers: [],
@@ -73,29 +62,24 @@ export const emptyRoute: FormAmRoute = {
   groupIntervalValue: '',
   repeatIntervalValue: '',
   muteTimeIntervals: [],
-  activeTimeIntervals: [],
 };
 
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
-// ⚠️ make sure this function uses _stable_ identifiers!
-export function addUniqueIdentifierToRoute(route: Route, position = route.name ?? '0'): RouteWithID {
-  const routeHash = hashRoute(route);
-  const routes = route.routes ?? [];
-
+export function addUniqueIdentifierToRoute(route: Route): RouteWithID {
   return {
-    id: `${position}-${routeHash}`,
+    id: uniqueId('route-'),
     ...route,
-    routes: routes.map((route, index) => addUniqueIdentifierToRoute(route, `${position}-${index}`)),
+    routes: (route.routes ?? []).map(addUniqueIdentifierToRoute),
   };
 }
 
-// returns route, and a record mapping id to existing route
-export const amRouteToFormAmRoute = (route: RouteWithID | undefined): FormAmRoute => {
+//returns route, and a record mapping id to existing route
+export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): FormAmRoute => {
   if (!route) {
     return emptyRoute;
   }
 
-  const id = route.id;
+  const id = 'id' in route ? route.id : uniqueId('route-');
 
   if (Object.keys(route).length === 0) {
     const formAmRoute = { ...emptyRoute, id };
@@ -125,7 +109,6 @@ export const amRouteToFormAmRoute = (route: RouteWithID | undefined): FormAmRout
 
   return {
     id,
-    name: route.name ?? '',
     // Frontend migration to use object_matchers instead of matchers, match, and match_re
     object_matchers: [
       ...matchers,
@@ -143,7 +126,6 @@ export const amRouteToFormAmRoute = (route: RouteWithID | undefined): FormAmRout
     repeatIntervalValue: route.repeat_interval ?? '',
     routes: formRoutes,
     muteTimeIntervals: route.mute_time_intervals ?? [],
-    activeTimeIntervals: route.active_time_intervals ?? [],
   };
 };
 
@@ -200,7 +182,6 @@ export const formAmRouteToAmRoute = (
     repeat_interval,
     routes: routes,
     mute_time_intervals: formAmRoute.muteTimeIntervals,
-    active_time_intervals: formAmRoute.activeTimeIntervals,
     receiver: receiver,
   };
 
@@ -248,6 +229,14 @@ export function promDurationValidator(duration?: string) {
 
   return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
 }
+
+// function to convert ObjectMatchers to a array of strings
+export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
+  return matchers.map((matcher) => {
+    const [name, operator, value] = matcher;
+    return `${name}${operator}${value}`;
+  });
+};
 
 export const repeatIntervalValidator = (repeatInterval: string, groupInterval = '') => {
   if (repeatInterval.length === 0) {

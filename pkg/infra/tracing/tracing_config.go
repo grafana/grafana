@@ -1,15 +1,12 @@
 package tracing
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
-	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type TracingConfig struct {
@@ -26,14 +23,9 @@ type TracingConfig struct {
 	ServiceVersion string
 
 	ProfilingIntegration bool
-	Insecure             bool
 }
 
-func ProvideTracingConfig(cfgProvider configprovider.ConfigProvider) (*TracingConfig, error) {
-	cfg, err := cfgProvider.Get(context.Background())
-	if err != nil {
-		return nil, err
-	}
+func ProvideTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 	return ParseTracingConfig(cfg)
 }
 
@@ -55,7 +47,7 @@ func NewJaegerTracingConfig(address string, propagation string) (*TracingConfig,
 	return cfg, nil
 }
 
-func NewOTLPTracingConfig(address string, propagation string, insecure bool) (*TracingConfig, error) {
+func NewOTLPTracingConfig(address string, propagation string) (*TracingConfig, error) {
 	if address == "" {
 		return nil, fmt.Errorf("address cannot be empty")
 	}
@@ -64,7 +56,6 @@ func NewOTLPTracingConfig(address string, propagation string, insecure bool) (*T
 	cfg.enabled = otlpExporter
 	cfg.Address = address
 	cfg.Propagation = propagation
-	cfg.Insecure = insecure
 	return cfg, nil
 }
 
@@ -96,12 +87,6 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 	tc.CustomAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(legacyTags))
 	if err != nil {
 		return nil, err
-	}
-
-	// Allow overriding service name via configuration
-	serviceName := section.Key("service_name").MustString("")
-	if serviceName != "" {
-		tc.ServiceName = serviceName
 	}
 
 	// if sampler_type is set in tracing.opentelemetry, we ignore the config in tracing.jaeger
@@ -137,7 +122,6 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 		tc.enabled = otlpExporter
 	}
 	tc.Propagation = section.Key("propagation").MustString("")
-	tc.Insecure = section.Key("insecure").MustBool(true)
 	return tc, nil
 }
 

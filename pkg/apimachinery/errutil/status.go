@@ -29,10 +29,6 @@ const (
 	// contained instructions.
 	// HTTP status code 422.
 	StatusUnprocessableEntity CoreStatus = "Unprocessable Entity"
-	// StatusUnsupportedMediaType means that the server does not support
-	// the request payload's media type.
-	// HTTP status code 415.
-	StatusUnsupportedMediaType CoreStatus = CoreStatus(metav1.StatusReasonUnsupportedMediaType)
 	// StatusConflict means that the server cannot fulfill the request
 	// there is a conflict in the current state of a resource
 	// HTTP status code 409.
@@ -111,8 +107,6 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusGatewayTimeout
 	case StatusUnprocessableEntity:
 		return http.StatusUnprocessableEntity
-	case StatusUnsupportedMediaType:
-		return http.StatusUnsupportedMediaType
 	case StatusConflict:
 		return http.StatusConflict
 	case StatusTooManyRequests:
@@ -142,8 +136,6 @@ func (s CoreStatus) LogLevel() LogLevel {
 	case StatusNotFound:
 		return LevelInfo
 	case StatusTimeout:
-		return LevelInfo
-	case StatusUnsupportedMediaType:
 		return LevelInfo
 	case StatusUnprocessableEntity:
 		return LevelInfo

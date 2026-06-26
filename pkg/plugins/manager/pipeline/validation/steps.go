@@ -3,6 +3,7 @@ package validation
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -56,11 +57,6 @@ func newModuleJSValidator() *ModuleJSValidator {
 }
 
 func (v *ModuleJSValidator) Validate(_ context.Context, p *plugins.Plugin) error {
-	// CDN plugins are ignored because the module.js is guaranteed to exist
-	if p.FS.Type().CDN() {
-		return nil
-	}
-
 	if !p.IsRenderer() && !p.IsCorePlugin() {
 		f, err := p.FS.Open("module.js")
 		if err != nil {
@@ -96,11 +92,6 @@ func newAngularDetector(cfg *config.PluginManagementCfg, angularInspector angula
 }
 
 func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error {
-	// CDN plugins are ignored because they should not be using Angular
-	if p.FS.Type().CDN() {
-		return nil
-	}
-
 	if p.IsExternalPlugin() {
 		var err error
 
@@ -113,7 +104,7 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		}
 
 		// Do not initialize plugins if they're using Angular and Angular support is disabled
-		if p.Angular.Detected {
+		if p.Angular.Detected && !a.cfg.AngularSupportEnabled {
 			a.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginId", p.ID)
 			return (&plugins.Error{
 				PluginID:  p.ID,
@@ -121,5 +112,6 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 			}).WithMessage("angular plugins are not supported")
 		}
 	}
+	p.Angular.HideDeprecation = slices.Contains(a.cfg.HideAngularDeprecation, p.ID)
 	return nil
 }

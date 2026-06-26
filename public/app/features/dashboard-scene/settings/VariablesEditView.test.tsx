@@ -1,19 +1,23 @@
-import { render as RTLRender } from '@testing-library/react';
-import * as React from 'react';
 import { of } from 'rxjs';
-import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   FieldType,
   LoadingState,
-  type PanelData,
+  PanelData,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
+import {
+  SceneVariableSet,
+  CustomVariable,
+  VizPanel,
+  AdHocFiltersVariable,
+  SceneVariableState,
+  SceneTimeRange,
+} from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -22,10 +26,6 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
-
-function render(component: React.ReactNode) {
-  return RTLRender(<TestProvider>{component}</TestProvider>);
-}
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -42,8 +42,8 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
+  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
@@ -212,34 +212,46 @@ describe('VariablesEditView', () => {
     });
   });
 
-  describe('Provisioned by data source section', () => {
+  describe('Variables name validation', () => {
     let variableView: VariablesEditView;
+    let variable1: SceneVariableState;
+    let variable2: SceneVariableState;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       const result = await buildTestScene();
       variableView = result.variableView;
+
+      const variables = variableView.getVariables();
+      variable1 = variables[0].state;
+      variable2 = variables[1].state;
     });
 
-    it('should not show Provisioned by data source section when no variables have origin', () => {
-      const { queryByText } = render(<variableView.Component model={variableView} />);
-
-      expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
+    it('should not return error on same name and key', () => {
+      expect(variableView.onValidateVariableName(variable1.name, variable1.key)[0]).toBe(false);
     });
 
-    it('should show Provisioned by data source section when at least one variable has origin', async () => {
-      const variables = variableView.getVariableSet().state.variables;
-      const originVariable = new CustomVariable({
-        name: 'dsVar',
-        query: 'val1, val2',
-        value: 'val1',
-        text: 'val1',
-        origin: { type: 'datasource', group: 'prometheus' },
-      });
-      variableView.getVariableSet().setState({ variables: [...variables, originVariable] });
+    it('should not return error if name is unique', () => {
+      expect(variableView.onValidateVariableName('unique_variable_name', variable1.key)[0]).toBe(false);
+    });
 
-      const { getByText } = render(<variableView.Component model={variableView} />);
+    it('should return error if global variable name is used', () => {
+      expect(variableView.onValidateVariableName('__', variable1.key)[0]).toBe(true);
+    });
 
-      expect(getByText('Provisioned by data source')).toBeInTheDocument();
+    it('should not return error if global variable name is used not at the beginning ', () => {
+      expect(variableView.onValidateVariableName('test__', variable1.key)[0]).toBe(false);
+    });
+
+    it('should return error if name is empty', () => {
+      expect(variableView.onValidateVariableName('', variable1.key)[0]).toBe(true);
+    });
+
+    it('should return error if non word characters are used', () => {
+      expect(variableView.onValidateVariableName('-', variable1.key)[0]).toBe(true);
+    });
+
+    it('should return error if variable name is taken', () => {
+      expect(variableView.onValidateVariableName(variable2.name, variable1.key)[0]).toBe(true);
     });
   });
 

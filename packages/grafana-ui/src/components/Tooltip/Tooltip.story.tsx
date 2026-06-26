@@ -1,6 +1,6 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { Button } from '../Button/Button';
+import { Button } from '../Button';
 import { Stack } from '../Layout/Stack/Stack';
 import mdx from '../Tooltip/Tooltip.mdx';
 

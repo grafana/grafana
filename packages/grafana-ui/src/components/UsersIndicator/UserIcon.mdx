@@ -1,4 +1,4 @@
-import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
+import { Meta, ArgTypes } from '@storybook/blocks';
 import { UserIcon } from './UserIcon';
 
 <Meta title="MDX|UserIcon" component={UserIcon} />
@@ -66,6 +66,6 @@ export interface UserView {
     avatarUrl?: string;
   };
   /** Datetime string when the user was last active */
-  lastActiveAt?: DateTimeInput;
+  lastActiveAt: DateTimeInput;
 }
 ```

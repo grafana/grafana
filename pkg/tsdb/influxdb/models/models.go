@@ -1,16 +1,11 @@
 package models
 
-import (
-	"time"
-
-	"github.com/influxdata/influxql"
-)
+import "time"
 
 type Query struct {
 	Measurement  string
 	Policy       string
 	Tags         []*Tag
-	AdhocFilters []*Tag
 	GroupBy      []*QueryPart
 	Selects      []*Select
 	RawQuery     string
@@ -23,7 +18,6 @@ type Query struct {
 	OrderByTime  string
 	RefID        string
 	ResultFormat string
-	Statement    influxql.Statement
 }
 
 type Tag struct {

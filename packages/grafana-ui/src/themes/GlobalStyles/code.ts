@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export function getCodeStyles(theme: GrafanaTheme2) {
   return css({
@@ -10,7 +10,7 @@ export function getCodeStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.primary,
       color: theme.colors.text.primary,
       border: `1px solid ${theme.colors.border.medium}`,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: '4px',
     },
 
     code: {

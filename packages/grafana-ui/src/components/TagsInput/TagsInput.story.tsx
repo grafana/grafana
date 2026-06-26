@@ -1,13 +1,13 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
-import { Field } from '../Forms/Field';
+import { StoryExample } from '../../utils/storybook/StoryExample';
 
 import { TagsInput } from './TagsInput';
 import mdx from './TagsInput.mdx';
 
 const meta: Meta<typeof TagsInput> = {
-  title: 'Inputs/TagsInput',
+  title: 'Forms/TagsInput',
   component: TagsInput,
   parameters: {
     docs: {
@@ -19,21 +19,17 @@ const meta: Meta<typeof TagsInput> = {
   },
 };
 
-export const Basic: StoryFn<typeof TagsInput> = ({ disabled, invalid, ...rest }) => {
+export const Basic: StoryFn<typeof TagsInput> = (props) => {
   const [tags, setTags] = useState<string[]>([]);
-  return (
-    <Field label="Tags" disabled={disabled} invalid={invalid}>
-      <TagsInput {...rest} tags={tags} onChange={setTags} />
-    </Field>
-  );
+  return <TagsInput {...props} tags={tags} onChange={setTags} />;
 };
 
-export const WithManyTags: StoryFn<typeof TagsInput> = ({ disabled, invalid, ...rest }) => {
+export const WithManyTags = () => {
   const [tags, setTags] = useState<string[]>(['dashboard', 'prod', 'server', 'frontend', 'game', 'kubernetes']);
   return (
-    <Field label="With many tags" disabled={disabled} invalid={invalid}>
-      <TagsInput {...rest} tags={tags} onChange={setTags} />
-    </Field>
+    <StoryExample name="With many tags">
+      <TagsInput tags={tags} onChange={setTags} />
+    </StoryExample>
   );
 };
 

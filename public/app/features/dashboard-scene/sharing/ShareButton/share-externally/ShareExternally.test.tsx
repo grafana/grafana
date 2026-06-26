@@ -2,23 +2,23 @@ import { screen, waitForElementToBeRemoved } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
   CustomVariable,
   SceneQueryRunner,
   SceneTimeRange,
   SceneVariableSet,
   VizPanel,
-  type VizPanelState,
+  VizPanelState,
 } from '@grafana/scenes';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
 import { contextSrv } from '../../../../../core/services/context_srv';
 import * as sharePublicDashboardUtils from '../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene, type DashboardSceneState } from '../../../scene/DashboardScene';
+import { DashboardScene, DashboardSceneState } from '../../../scene/DashboardScene';
 import { activateFullSceneTree } from '../../../utils/test-utils';
 import { ShareDrawer } from '../../ShareDrawer/ShareDrawer';
 
@@ -31,6 +31,7 @@ setPluginImportUtils({
 });
 
 beforeEach(() => {
+  config.featureToggles.newDashboardSharingComponent = true;
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });

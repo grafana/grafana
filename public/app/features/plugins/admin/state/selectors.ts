@@ -1,21 +1,19 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { debounce } from 'lodash';
 
-import { type PluginError, type PluginType, unEscapeStringFromRegex } from '@grafana/data';
+import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { filterByKeyword, isPluginUpdatable } from '../helpers';
-import { RequestStatus, type PluginCatalogStoreState } from '../types';
+import { filterByKeyword, isPluginUpdateable } from '../helpers';
+import { RequestStatus, PluginCatalogStoreState } from '../types';
 
 import { pluginsAdapter } from './reducer';
 
-const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
+export const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
 
-const selectItems = createSelector(selectRoot, ({ items }) => items);
+export const selectItems = createSelector(selectRoot, ({ items }) => items);
 
-const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
-
-export { selectById };
+export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
 const debouncedTrackSearch = debounce((count) => {
   reportInteraction('plugins_search', {
@@ -71,7 +69,7 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
-      if (filters.hasUpdate !== undefined && (plugin.hasUpdate !== filters.hasUpdate || !isPluginUpdatable(plugin))) {
+      if (filters.hasUpdate !== undefined && (plugin.hasUpdate !== filters.hasUpdate || !isPluginUpdateable(plugin))) {
         return false;
       }
 
@@ -101,7 +99,8 @@ export const selectPluginErrors = (filterByPluginType?: PluginType) =>
   });
 
 // The following selectors are used to get information about the outstanding or completed plugins-related network requests.
-const selectRequest = (actionType: string) => createSelector(selectRoot, ({ requests = {} }) => requests[actionType]);
+export const selectRequest = (actionType: string) =>
+  createSelector(selectRoot, ({ requests = {} }) => requests[actionType]);
 
 export const selectIsRequestPending = (actionType: string) =>
   createSelector(selectRequest(actionType), (request) => request?.status === RequestStatus.Pending);

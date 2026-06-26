@@ -2,52 +2,28 @@ package client
 
 import (
 	"context"
-	"errors"
 
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	authlib "github.com/grafana/authlib/types"
-
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-var _ authlib.AccessClient = (*NoopClient)(nil)
-var _ zanzana.Client = (*NoopClient)(nil)
-
-func NewNoopClient() *NoopClient {
+func NewNoop() *NoopClient {
 	return &NoopClient{}
 }
 
 type NoopClient struct{}
 
-func (nc *NoopClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-	return authlib.CheckResponse{}, nil
-}
-
-func (nc *NoopClient) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return nil, authlib.NoopZookie{}, nil
-}
-
-func (nc *NoopClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	return authlib.BatchCheckResponse{}, errors.New("not implemented")
-}
-
-func (nc *NoopClient) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (nc NoopClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+func (nc NoopClient) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
 	return nil, nil
 }
 
-func (nc NoopClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
-	return nil
-}
-
-func (nc NoopClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
-	return nil
-}
-
-func (nc NoopClient) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
+func (nc NoopClient) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
 	return nil, nil
+}
+
+func (nc NoopClient) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	return nil, nil
+}
+
+func (nc NoopClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+	return nil
 }

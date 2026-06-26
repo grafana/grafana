@@ -1,25 +1,25 @@
 import { mapValues } from 'lodash';
-import { type Observable, Subject, type Subscription, type Unsubscribable } from 'rxjs';
+import { Observable, Subject, Subscription, Unsubscribable } from 'rxjs';
 
 import {
-  type DataFrameJSON,
+  DataFrameJSON,
   dataFrameToJSON,
-  type DataQueryResponse,
+  DataQueryResponse,
   FieldType,
-  type LiveChannelAddress,
+  LiveChannelAddress,
   LiveChannelConnectionState,
-  type LiveChannelEvent,
+  LiveChannelEvent,
   LiveChannelEventType,
-  type LiveChannelLeaveEvent,
+  LiveChannelLeaveEvent,
   LiveChannelScope,
   LoadingState,
   StreamingDataFrame,
 } from '@grafana/data';
 import { StreamingFrameAction } from '@grafana/runtime';
 
-import { isStreamingResponseData, type StreamingResponseData, StreamingResponseDataType } from '../data/utils';
+import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
 
-import { type DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
+import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
 
 type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];
@@ -155,7 +155,7 @@ describe('LiveDataStream', () => {
 
   const dummyLiveChannelAddress: LiveChannelAddress = {
     scope: LiveChannelScope.Grafana,
-    stream: 'stream',
+    namespace: 'stream',
     path: 'abc',
   };
 

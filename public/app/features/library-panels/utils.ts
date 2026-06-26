@@ -1,7 +1,7 @@
-import { type PanelModel } from '../dashboard/state/PanelModel';
+import { PanelModel } from '../dashboard/state';
 
 import { addLibraryPanel, updateLibraryPanel } from './state/api';
-import { type LibraryElementDTO, type PanelModelWithLibraryPanel } from './types';
+import { LibraryElementDTO, PanelModelWithLibraryPanel } from './types';
 
 export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderUid: string): Promise<LibraryElementDTO> {
   const panelSaveModel = toPanelSaveModel(panel);

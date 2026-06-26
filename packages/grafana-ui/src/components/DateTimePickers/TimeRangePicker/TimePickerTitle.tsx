@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { memo, type PropsWithChildren } from 'react';
+import { memo, PropsWithChildren } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

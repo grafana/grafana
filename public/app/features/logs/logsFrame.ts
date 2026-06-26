@@ -1,4 +1,4 @@
-import { type DataFrame, FieldCache, FieldType, type FieldWithIndex, DataFrameType, type Labels } from '@grafana/data';
+import { DataFrame, FieldCache, FieldType, FieldWithIndex, DataFrameType, Labels } from '@grafana/data';
 
 import { parseLegacyLogsFrame } from './legacyLogsFrame';
 
@@ -29,46 +29,27 @@ function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldW
   return field.type === fieldType ? field : undefined;
 }
 
-export const LOGS_DATAPLANE_TIMESTAMP_NAME = 'timestamp';
-export const LOGS_DATAPLANE_BODY_NAME = 'body';
-export const DATAPLANE_SEVERITY_NAME = 'severity';
-export const DATAPLANE_ID_NAME = 'id';
-export const DATAPLANE_LABELS_NAME = 'labels';
-export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
+const DATAPLANE_TIMESTAMP_NAME = 'timestamp';
+const DATAPLANE_BODY_NAME = 'body';
+const DATAPLANE_SEVERITY_NAME = 'severity';
+const DATAPLANE_ID_NAME = 'id';
+const DATAPLANE_LABELS_NAME = 'labels';
 
-// NOTE: this is a hot fn, we need to avoid allocating new objects here
 export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
-  let needsSerialization = false;
+  const result: Labels = {};
 
-  for (const k in logFrameLabels) {
-    const v = logFrameLabels[k];
+  Object.entries(logFrameLabels).forEach(([k, v]) => {
+    result[k] = typeof v === 'string' ? v : JSON.stringify(v);
+  });
 
-    if (typeof v !== 'string') {
-      needsSerialization = true;
-      break;
-    }
-  }
-
-  if (needsSerialization) {
-    let labels: Labels = {};
-
-    for (const k in logFrameLabels) {
-      const v = logFrameLabels[k];
-      labels[k] = typeof v === 'string' ? v : JSON.stringify(v);
-    }
-
-    return labels;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return logFrameLabels as Labels;
+  return result;
 }
 
-export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
+function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   const cache = new FieldCache(frame);
 
-  const timestampField = getField(cache, LOGS_DATAPLANE_TIMESTAMP_NAME, FieldType.time);
-  const bodyField = getField(cache, LOGS_DATAPLANE_BODY_NAME, FieldType.string);
+  const timestampField = getField(cache, DATAPLANE_TIMESTAMP_NAME, FieldType.time);
+  const bodyField = getField(cache, DATAPLANE_BODY_NAME, FieldType.string);
 
   // these two are mandatory
   if (timestampField === undefined || bodyField === undefined) {

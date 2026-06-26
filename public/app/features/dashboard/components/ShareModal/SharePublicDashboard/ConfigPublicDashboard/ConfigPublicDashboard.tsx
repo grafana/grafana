@@ -1,24 +1,34 @@
 import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { Button, ClipboardButton, Field, Input, Stack, Label, ModalsController, Switch, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import {
+  Button,
+  ClipboardButton,
+  Field,
+  HorizontalGroup,
+  Input,
+  Label,
+  ModalsController,
+  Switch,
+  useStyles2,
+} from '@grafana/ui/src';
+import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Trans, t } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   usePauseOrResumePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
-import { AccessControlAction } from 'app/types/accessControl';
-import { useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
+import { AccessControlAction, useSelector } from '../../../../../../types';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
 import { shareDashboardType } from '../../utils';
@@ -30,7 +40,7 @@ import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   isEmailSharingEnabled,
-  type PublicDashboard,
+  PublicDashboard,
 } from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
@@ -56,7 +66,7 @@ interface Props {
   dashboard: DashboardModel | DashboardScene;
 }
 
-function ConfigPublicDashboardBase({
+export function ConfigPublicDashboardBase({
   onRevoke,
   timeRange,
   hasTemplateVariables = false,
@@ -157,7 +167,7 @@ function ConfigPublicDashboardBase({
       </Field>
 
       <Field className={styles.fieldSpace}>
-        <Stack>
+        <Layout>
           <Switch
             {...register('isPaused')}
             disabled={disableInputs}
@@ -176,7 +186,7 @@ function ConfigPublicDashboardBase({
           >
             <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">Pause sharing dashboard</Trans>
           </Label>
-        </Stack>
+        </Layout>
       </Field>
 
       <Field className={styles.fieldSpace}>
@@ -197,12 +207,12 @@ function ConfigPublicDashboardBase({
         </SettingsBar>
       </Field>
 
-      <Stack
-        direction={isDesktop ? 'row' : 'column'}
-        justifyContent={isDesktop ? 'flex-end' : 'flex-start'}
-        alignItems={isDesktop ? 'center' : 'stretch'}
+      <Layout
+        orientation={isDesktop ? 0 : 1}
+        justify={isDesktop ? 'flex-end' : 'flex-start'}
+        align={isDesktop ? 'center' : 'normal'}
       >
-        <Stack justifyContent="flex-end">
+        <HorizontalGroup justify="flex-end">
           <Button
             title={t('public-dashboard.config.revoke-public-URL-button-title', 'Revoke public URL')}
             onClick={onRevoke}
@@ -214,8 +224,8 @@ function ConfigPublicDashboardBase({
           >
             <Trans i18nKey="public-dashboard.config.revoke-public-URL-button">Revoke public URL</Trans>
           </Button>
-        </Stack>
-      </Stack>
+        </HorizontalGroup>
+      </Layout>
     </div>
   );
 }

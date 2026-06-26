@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { Cascader, type CascaderOption } from '@grafana/ui';
+import { Cascader, CascaderOption } from '@grafana/ui';
 
-import { type ProfileTypeMessage } from './types';
+import { PyroscopeDataSource } from './datasource';
+import { ProfileTypeMessage } from './types';
 
 type Props = {
   initialProfileTypeId?: string;
@@ -61,4 +62,24 @@ function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption
     }
     return Array.from(mainTypes.values());
   }, [profileTypes]);
+}
+
+/**
+ * Loads the profile types.
+ *
+ * This is exported and not used directly in the ProfileTypesCascader component because in some case we need to know
+ * the profileTypes before rendering the cascader.
+ * @param datasource
+ */
+export function useProfileTypes(datasource: PyroscopeDataSource) {
+  const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>();
+
+  useEffect(() => {
+    (async () => {
+      const profileTypes = await datasource.getProfileTypes();
+      setProfileTypes(profileTypes);
+    })();
+  }, [datasource]);
+
+  return profileTypes;
 }

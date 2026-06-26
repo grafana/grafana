@@ -1,11 +1,11 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
 import { RadioButtonDot } from './RadioButtonDot';
-import { RadioButtonList, type RadioButtonListProps } from './RadioButtonList';
+import { RadioButtonList, RadioButtonListProps } from './RadioButtonList';
 import mdx from './RadioButtonList.mdx';
 
 const defaultOptions: Array<SelectableValue<string>> = [
@@ -17,7 +17,7 @@ const defaultOptions: Array<SelectableValue<string>> = [
 ];
 
 const meta: Meta<typeof RadioButtonList> = {
-  title: 'Inputs/RadioButtonList',
+  title: 'Forms/RadioButtonList',
   component: RadioButtonList,
   parameters: {
     controls: {

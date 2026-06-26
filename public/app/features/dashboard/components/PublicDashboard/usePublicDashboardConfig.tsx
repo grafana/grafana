@@ -1,14 +1,12 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';
-import grafanaTextLogoLightSvg from 'img/grafana_text_logo_light.svg';
 
 const FOOTER_URL = 'https://grafana.com/?src=grafananet&cnt=public-dashboards';
-const GRAFANA_LOGO_LIGHT_URL = grafanaTextLogoLightSvg;
-const GRAFANA_LOGO_DARK_URL = grafanaTextLogoDarkSvg;
+const GRAFANA_LOGO_LIGHT_URL = 'public/img/grafana_text_logo_light.svg';
+const GRAFANA_LOGO_DARK_URL = 'public/img/grafana_text_logo_dark.svg';
 const GRAFANA_LOGO_DEFAULT_VALUE = 'grafana-logo';
 
 export interface PublicDashboardCfg {

@@ -1,4 +1,4 @@
-import { type UrlQueryMap } from '@grafana/data';
+import { UrlQueryMap } from '@grafana/data';
 
 /**
  * @public

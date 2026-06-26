@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -30,7 +29,9 @@ func TestMain(m *testing.M) {
 
 // TestIntegrationIndexView tests the Grafana index view.
 func TestIntegrationIndexView(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	t.Run("CSP enabled", func(t *testing.T) {
 		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -41,14 +42,12 @@ func TestIntegrationIndexView(t *testing.T) {
 
 		// nolint:bodyclose
 		resp, html := makeRequest(t, addr, nil)
-		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self' ;`, resp.Header.Get("Content-Security-Policy"))
+		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self';`, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce="[^"]+"`, html)
 	})
 
 	t.Run("CSP disabled", func(t *testing.T) {
-		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-			EnableCSP: false,
-		})
+		grafDir, cfgPath := testinfra.CreateGrafDir(t)
 		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
@@ -96,7 +95,7 @@ func loginUser(t *testing.T, addr, username, password string) *http.Cookie {
 		Password string `json:"password"`
 	}
 
-	data, err := json.Marshal(&body{username, password}) // #nosec G117 -- test login request marshal
+	data, err := json.Marshal(&body{username, password})
 	require.NoError(t, err)
 
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/login", addr), bytes.NewReader(data))
@@ -126,7 +125,9 @@ func loginUser(t *testing.T, addr, username, password string) *http.Cookie {
 
 // TestIntegrationIndexViewAnalytics tests the Grafana index view has the analytics identifiers.
 func TestIntegrationIndexViewAnalytics(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	testCases := []struct {
 		name           string
@@ -146,7 +147,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			name:           "okta only and last",
 			authModule:     login.OktaAuthModule,
 			setID:          "uuid-1234-5678-9101",
-			wantIdentifier: "test@grafana.com@http://localhost:3000/",
+			wantIdentifier: "admin@grafana.com@http://localhost:3000/",
 		},
 		{
 			name:           "gcom last",
@@ -164,22 +165,20 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			addr, env := testinfra.StartGrafanaEnv(t, grafDir, cfgPath)
 			store := env.SQLStore
 			createdUser := testinfra.CreateUser(t, store, env.Cfg, user.CreateUserCommand{
-				Login:    "test",
-				Password: "test",
-				Email:    "test@grafana.com",
+				Login:    "admin",
+				Password: "admin",
+				Email:    "admin@grafana.com",
 				OrgID:    1,
 			})
 
 			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
-			authInfoStore, err := authinfoimpl.ProvideStore(store, secretsService)
-			require.NoError(t, err)
+			authInfoStore := authinfoimpl.ProvideStore(store, secretsService)
 
 			// insert user_auth relationship
-			err = authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
+			err := authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
 				AuthModule: tc.authModule,
 				AuthId:     tc.setID,
 				UserId:     createdUser.ID,
-				UserUID:    createdUser.UID,
 			})
 			require.NoError(t, err)
 			if tc.secondModule != "" {
@@ -189,13 +188,12 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 					AuthModule: tc.secondModule,
 					AuthId:     tc.secondID,
 					UserId:     createdUser.ID,
-					UserUID:    createdUser.UID,
 				})
 				require.NoError(t, err)
 			}
 
 			// perform login
-			session := loginUser(t, addr, "test", "test")
+			session := loginUser(t, addr, "admin", "admin")
 
 			// nolint:bodyclose
 			response, html := makeRequest(t, addr, session)

@@ -1,20 +1,40 @@
 import { cloneDeep } from 'lodash';
 
-import { type TypedVariableModel, type VariableType } from '@grafana/data';
+import { TypedVariableModel, VariableType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { type ThunkResult } from 'app/types/store';
 
+import { ThunkResult } from '../../../types';
 import { variableAdapters } from '../adapters';
 import { initInspect } from '../inspect/reducer';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getNewVariableIndex, getVariable, getVariablesByKey } from '../state/selectors';
 import { addVariable, removeVariable } from '../state/sharedReducer';
-import { type AddVariable, type KeyedVariableIdentifier, type VariableIdentifier } from '../state/types';
-import { toStateKey } from '../toStateKey';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+import { AddVariable, KeyedVariableIdentifier, VariableIdentifier } from '../state/types';
+import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from '../utils';
 
-import { changeVariableNameFailed, changeVariableNameSucceeded } from './reducer';
+import {
+  changeVariableNameFailed,
+  changeVariableNameSucceeded,
+  variableEditorMounted,
+  variableEditorUnMounted,
+} from './reducer';
+
+export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
+  return async (dispatch) => {
+    const { rootStateKey } = identifier;
+    dispatch(
+      toKeyedAction(rootStateKey, variableEditorMounted({ name: getVariable(identifier).name, id: identifier.id }))
+    );
+  };
+};
+
+export const variableEditorUnMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
+  return async (dispatch, getState) => {
+    const { rootStateKey } = identifier;
+    dispatch(toKeyedAction(rootStateKey, variableEditorUnMounted(toVariablePayload(identifier))));
+  };
+};
 
 export const changeVariableName = (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
@@ -44,7 +64,7 @@ export const changeVariableName = (identifier: KeyedVariableIdentifier, newName:
   };
 };
 
-const completeChangeVariableName =
+export const completeChangeVariableName =
   (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> =>
   (dispatch, getState) => {
     const { rootStateKey } = identifier;

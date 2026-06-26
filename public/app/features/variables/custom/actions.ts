@@ -1,10 +1,10 @@
 import { getTemplateSrv } from '@grafana/runtime';
-import { type ThunkResult } from 'app/types/store';
+import { ThunkResult } from 'app/types';
 
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
-import { type KeyedVariableIdentifier } from '../state/types';
+import { KeyedVariableIdentifier } from '../state/types';
 import { toVariablePayload } from '../utils';
 
 import { createCustomOptionsFromQuery } from './reducer';

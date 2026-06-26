@@ -1,4 +1,4 @@
-import { render, waitFor } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
@@ -7,7 +7,6 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
-import { mimirDataSource } from '../../mocks/server/configure';
 
 import { RuleDetails } from './RuleDetails';
 
@@ -15,7 +14,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn(),
   useReturnToPrevious: jest.fn(),
-  useAppPluginEnabled: jest.fn().mockReturnValue({ loading: false, error: undefined, value: false }),
 }));
 
 jest.mock('../../hooks/useIsRuleEditable');
@@ -33,8 +31,6 @@ const ui = {
 };
 
 setupMswServer();
-
-const { dataSource: mimirDs } = mimirDataSource();
 
 beforeAll(() => {
   jest.clearAllMocks();
@@ -67,7 +63,6 @@ describe('RuleDetails RBAC', () => {
 
       // Act
       render(<RuleDetails rule={grafanaRule} />);
-      await waitFor(() => {});
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
@@ -79,7 +74,6 @@ describe('RuleDetails RBAC', () => {
 
       // Act
       render(<RuleDetails rule={grafanaRule} />);
-      await waitFor(() => {});
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();
@@ -87,7 +81,7 @@ describe('RuleDetails RBAC', () => {
   });
 
   describe('Cloud rules action buttons', () => {
-    const cloudRule = getCloudRule({ name: 'Cloud' }, { rulesSource: mimirDs });
+    const cloudRule = getCloudRule({ name: 'Cloud' });
 
     it('Should not render Edit button for users with the update permission', async () => {
       // Arrange
@@ -95,7 +89,6 @@ describe('RuleDetails RBAC', () => {
 
       // Act
       render(<RuleDetails rule={cloudRule} />);
-      await waitFor(() => {});
 
       // Assert
       expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
@@ -107,7 +100,6 @@ describe('RuleDetails RBAC', () => {
 
       // Act
       render(<RuleDetails rule={cloudRule} />);
-      await waitFor(() => {});
 
       // Assert
       expect(ui.actionButtons.delete.query()).not.toBeInTheDocument();

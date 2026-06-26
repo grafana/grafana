@@ -1,5 +1,3 @@
-import { type TablePlan } from './types';
-
 export interface AzureLogAnalyticsMetadata {
   functions: AzureLogAnalyticsMetadataFunction[];
   resourceTypes: AzureLogAnalyticsMetadataResourceType[];
@@ -9,18 +7,18 @@ export interface AzureLogAnalyticsMetadata {
   categories: AzureLogAnalyticsMetadataCategory[];
 }
 
-interface AzureLogAnalyticsMetadataCategory {
+export interface AzureLogAnalyticsMetadataCategory {
   id: string;
   displayName: string;
   related: AzureLogAnalyticsMetadataCategoryRelated;
 }
 
-interface AzureLogAnalyticsMetadataCategoryRelated {
+export interface AzureLogAnalyticsMetadataCategoryRelated {
   tables: string[];
   functions?: string[];
 }
 
-interface AzureLogAnalyticsMetadataFunction {
+export interface AzureLogAnalyticsMetadataFunction {
   id: string;
   name: string;
   displayName?: string;
@@ -30,13 +28,13 @@ interface AzureLogAnalyticsMetadataFunction {
   related: AzureLogAnalyticsMetadataFunctionRelated;
 }
 
-interface AzureLogAnalyticsMetadataFunctionRelated {
+export interface AzureLogAnalyticsMetadataFunctionRelated {
   solutions: string[];
   categories?: string[];
   tables: string[];
 }
 
-interface AzureLogAnalyticsMetadataResourceType {
+export interface AzureLogAnalyticsMetadataResourceType {
   id: string;
   type: string;
   displayName: string;
@@ -44,18 +42,18 @@ interface AzureLogAnalyticsMetadataResourceType {
   related: AzureLogAnalyticsMetadataResourceTypeRelated;
 }
 
-interface AzureLogAnalyticsMetadataResourceTypeRelated {
+export interface AzureLogAnalyticsMetadataResourceTypeRelated {
   tables: string[];
   workspaces: string[];
 }
 
-interface AzureLogAnalyticsMetadataSolution {
+export interface AzureLogAnalyticsMetadataSolution {
   id: string;
   name: string;
   related: AzureLogAnalyticsMetadataSolutionRelated;
 }
 
-interface AzureLogAnalyticsMetadataSolutionRelated {
+export interface AzureLogAnalyticsMetadataSolutionRelated {
   tables: string[];
   functions: string[];
   workspaces: string[];
@@ -70,8 +68,6 @@ export interface AzureLogAnalyticsMetadataTable {
   related: AzureLogAnalyticsMetadataTableRelated;
   isTroubleshootingAllowed?: boolean;
   hasData?: boolean;
-  // TablePlan does not come directly from the API - we determine it
-  plan?: TablePlan;
 }
 
 export interface AzureLogAnalyticsMetadataColumn {
@@ -81,13 +77,13 @@ export interface AzureLogAnalyticsMetadataColumn {
   isPreferredFacet?: boolean;
 }
 
-interface AzureLogAnalyticsMetadataTableRelated {
+export interface AzureLogAnalyticsMetadataTableRelated {
   categories?: string[];
   solutions: string[];
   functions?: string[];
 }
 
-interface AzureLogAnalyticsMetadataWorkspace {
+export interface AzureLogAnalyticsMetadataWorkspace {
   id: string;
   resourceId: string;
   name: string;
@@ -95,6 +91,6 @@ interface AzureLogAnalyticsMetadataWorkspace {
   related: AzureLogAnalyticsMetadataWorkspaceRelated;
 }
 
-interface AzureLogAnalyticsMetadataWorkspaceRelated {
+export interface AzureLogAnalyticsMetadataWorkspaceRelated {
   solutions: string[];
 }

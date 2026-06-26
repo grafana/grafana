@@ -2,49 +2,31 @@ package resource
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 // Package-level errors.
 var (
-	ErrNotImplementedYet = errors.New("not implemented yet")
-
-	ErrResourceAlreadyExists error = &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Reason:  metav1.StatusReasonAlreadyExists,
-			Message: "the resource already exists",
-			Code:    http.StatusConflict,
-		},
-	}
+	ErrOptimisticLockingFailed = errors.New("optimistic locking failed")
+	ErrNotImplementedYet       = errors.New("not implemented yet")
 )
 
-func NewBadRequestError(msg string) *resourcepb.ErrorResult {
-	return &resourcepb.ErrorResult{
+func NewBadRequestError(msg string) *ErrorResult {
+	return &ErrorResult{
 		Message: msg,
 		Code:    http.StatusBadRequest,
 		Reason:  string(metav1.StatusReasonBadRequest),
 	}
 }
 
-func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
-	return &resourcepb.ErrorResult{
-		Code:   http.StatusNotFound,
-		Reason: string(metav1.StatusReasonNotFound),
-		Details: &resourcepb.ErrorDetails{
+func NewNotFoundError(key *ResourceKey) *ErrorResult {
+	return &ErrorResult{
+		Code: http.StatusNotFound,
+		Details: &ErrorDetails{
 			Group: key.Group,
 			Kind:  key.Resource, // yup, resource as kind same is true in apierrors.NewNotFound()
 			Name:  key.Name,
@@ -52,89 +34,22 @@ func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	}
 }
 
-func NewTooManyRequestsError(msg string) *resourcepb.ErrorResult {
-	return &resourcepb.ErrorResult{
-		Message: msg,
-		Code:    http.StatusTooManyRequests,
-		Reason:  string(metav1.StatusReasonTooManyRequests),
-	}
-}
-
-func NewConflictStatusError(group, resource, name, message string) *apierrors.StatusError {
-	return apierrors.NewConflict(schema.GroupResource{
-		Group:    group,
-		Resource: resource,
-	}, name, fmt.Errorf("%s", message))
-}
-
-func newInvalidFieldError(
-	obj utils.GrafanaMetaAccessor,
-	detail string,
-	path string,
-	morePath ...string,
-) *resourcepb.ErrorResult {
-	gvk := obj.GetGroupVersionKind()
-	return &resourcepb.ErrorResult{
-		Message: detail,
-		Code:    http.StatusUnprocessableEntity,
-		Reason:  string(metav1.StatusReasonInvalid),
-		Details: &resourcepb.ErrorDetails{
-			Name:  obj.GetName(),
-			Group: gvk.Group,
-			Kind:  gvk.Kind,
-			Uid:   string(obj.GetUID()),
-			Causes: []*resourcepb.ErrorCause{
-				{
-					Reason: string(field.ErrorTypeForbidden),
-					Field:  field.NewPath(path, morePath...).String(),
-				},
-			},
-		},
-	}
-}
-
-func newRequiredFieldError(
-	obj utils.GrafanaMetaAccessor,
-	detail string,
-	path string,
-	morePath ...string,
-) *resourcepb.ErrorResult {
-	gvk := obj.GetGroupVersionKind()
-	return &resourcepb.ErrorResult{
-		Message: detail,
-		Code:    http.StatusUnprocessableEntity,
-		Reason:  string(metav1.StatusReasonInvalid),
-		Details: &resourcepb.ErrorDetails{
-			Name:  obj.GetName(),
-			Group: gvk.Group,
-			Kind:  gvk.Kind,
-			Uid:   string(obj.GetUID()),
-			Causes: []*resourcepb.ErrorCause{
-				{
-					Reason: string(field.ErrorTypeRequired),
-					Field:  field.NewPath(path, morePath...).String(),
-				},
-			},
-		},
-	}
-}
-
 // Convert golang errors to status result errors that can be returned to a client
-func AsErrorResult(err error) *resourcepb.ErrorResult {
+func AsErrorResult(err error) *ErrorResult {
 	if err == nil {
 		return nil
 	}
 
-	var apistatus apierrors.APIStatus
-	if errors.As(err, &apistatus) {
+	apistatus, ok := err.(apierrors.APIStatus)
+	if ok {
 		s := apistatus.Status()
-		res := &resourcepb.ErrorResult{
+		res := &ErrorResult{
 			Message: s.Message,
 			Reason:  string(s.Reason),
 			Code:    s.Code,
 		}
 		if s.Details != nil {
-			res.Details = &resourcepb.ErrorDetails{
+			res.Details = &ErrorDetails{
 				Group:             s.Details.Group,
 				Kind:              s.Details.Kind,
 				Name:              s.Details.Name,
@@ -142,7 +57,7 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 				RetryAfterSeconds: s.Details.RetryAfterSeconds,
 			}
 			for _, c := range s.Details.Causes {
-				res.Details.Causes = append(res.Details.Causes, &resourcepb.ErrorCause{
+				res.Details.Causes = append(res.Details.Causes, &ErrorCause{
 					Reason:  string(c.Type),
 					Message: c.Message,
 					Field:   c.Field,
@@ -152,20 +67,14 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 		return res
 	}
 
-	code := 500
-
-	st, ok := grpcstatus.FromError(err)
-	if ok {
-		code = runtime.HTTPStatusFromCode(st.Code())
-	}
-
-	return &resourcepb.ErrorResult{
+	// TODO... better conversion??
+	return &ErrorResult{
 		Message: err.Error(),
-		Code:    int32(code),
+		Code:    500,
 	}
 }
 
-func GetError(res *resourcepb.ErrorResult) error {
+func GetError(res *ErrorResult) error {
 	if res == nil {
 		return nil
 	}
@@ -193,33 +102,4 @@ func GetError(res *resourcepb.ErrorResult) error {
 		}
 	}
 	return status
-}
-
-func HandleQueueError[T any](err error, makeResp func(*resourcepb.ErrorResult) *T) (*T, error) {
-	if errors.Is(err, scheduler.ErrTenantQueueFull) {
-		return makeResp(NewTooManyRequestsError("tenant queue is full, please try again later")), nil
-	}
-	return makeResp(AsErrorResult(err)), nil
-}
-
-var (
-	ErrNamespaceRequired                 = "namespace is required"
-	ErrResourceVersionInvalid            = "resource version must be positive"
-	ErrActionRequired                    = "action is required"
-	ErrActionInvalid                     = "action is invalid: must be one of 'created', 'updated', or 'deleted'"
-	ErrNameMustBeEmptyWhenNamespaceEmpty = "name must be empty when namespace is empty"
-)
-
-type ValidationError struct {
-	Field string
-	Value string
-	Msg   string
-}
-
-func (e ValidationError) Error() string {
-	return fmt.Sprintf("%s '%s' is invalid: %s", e.Field, e.Value, e.Msg)
-}
-
-func NewValidationError(field, value, msg string) error {
-	return ValidationError{Field: field, Value: value, Msg: msg}
 }

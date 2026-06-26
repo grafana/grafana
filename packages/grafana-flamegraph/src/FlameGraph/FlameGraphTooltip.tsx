@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type DisplayValue, getValueFormat, type GrafanaTheme2, type ValueFormatter } from '@grafana/data';
+import { DisplayValue, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 
-import { type CollapseConfig, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
+import { CollapseConfig, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -122,11 +122,6 @@ type DiffTableData = {
   diff: string | number;
 };
 
-const formatWithSuffix = (value: number, formatter: ValueFormatter): string => {
-  const displayValue = formatter(value);
-  return displayValue.text + displayValue.suffix;
-};
-
 export const getDiffTooltipData = (
   data: FlameGraphDataContainer,
   item: LevelItem,
@@ -153,7 +148,7 @@ export const getDiffTooltipData = (
       label: '% of total',
       baseline: percentageLeft + '%',
       comparison: percentageRight + '%',
-      diff: formatWithSuffix(diff, shortValFormat) + '%',
+      diff: shortValFormat(diff).text + '%',
     },
     {
       rowId: '2',
@@ -165,9 +160,9 @@ export const getDiffTooltipData = (
     {
       rowId: '3',
       label: 'Samples',
-      baseline: formatWithSuffix(valueLeft, shortValFormat),
-      comparison: formatWithSuffix(item.valueRight!, shortValFormat),
-      diff: formatWithSuffix(item.valueRight! - valueLeft, shortValFormat),
+      baseline: shortValFormat(valueLeft).text,
+      comparison: shortValFormat(item.valueRight!).text,
+      diff: shortValFormat(item.valueRight! - valueLeft).text,
     },
   ];
 };

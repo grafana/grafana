@@ -1,13 +1,14 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { Meta, StoryFn } from '@storybook/react';
+
+import { Box } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { Box } from '../Layout/Box/Box';
 
-import { type UseSplitterOptions, useSplitter } from './useSplitter';
+import { UseSplitterOptions, useSplitter } from './useSplitter';
 import mdx from './useSplitter.mdx';
 
 const meta: Meta = {
-  title: 'Utilities/useSplitter',
+  title: 'General/Layout/useSplitter',
   parameters: {
     docs: { page: mdx },
     controls: {

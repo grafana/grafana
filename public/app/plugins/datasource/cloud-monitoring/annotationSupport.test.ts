@@ -1,9 +1,14 @@
-import { type AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery } from '@grafana/data';
 
+import { createMockDatasource } from './__mocks__/cloudMonitoringDatasource';
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
-import { AlignmentTypes, QueryType, MetricKind, type LegacyCloudMonitoringAnnotationQuery } from './dataquery.gen';
-import { createMockDatasource } from './mocks/cloudMonitoringDatasource';
-import { type CloudMonitoringQuery } from './types/query';
+import {
+  AlignmentTypes,
+  CloudMonitoringQuery,
+  QueryType,
+  MetricKind,
+  LegacyCloudMonitoringAnnotationQuery,
+} from './types/query';
 
 const query: CloudMonitoringQuery = {
   refId: 'query',

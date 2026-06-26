@@ -1,33 +1,25 @@
-import { useMemo, useCallback, type FormEvent } from 'react';
+import { css } from '@emotion/css';
+import { useMemo, useCallback } from 'react';
+import * as React from 'react';
 
 import {
   FieldMatcherID,
   fieldMatchers,
-  type FieldValueMatcherConfig,
+  FieldValueMatcherConfig,
   fieldReducers,
   ReducerID,
-  type SelectableValue,
+  SelectableValue,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
 
-import { Combobox } from '../Combobox/Combobox';
-import { type ComboboxOption } from '../Combobox/types';
+import { useStyles2 } from '../../themes';
 import { Input } from '../Input/Input';
-import { Stack } from '../Layout/Stack/Stack';
+import { Select } from '../Select/Select';
 
-import { type MatcherUIProps, type FieldMatcherUIRegistryItem } from './types';
+import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
 type Props = MatcherUIProps<FieldValueMatcherConfig>;
-
-const toComboboxOption = <T extends string | number>(
-  value: SelectableValue<string | number | T>
-): ComboboxOption<T> => ({
-  label: value.label,
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  value: value.value! as T,
-  description: value.description,
-});
 
 export const comparisonOperationOptions = [
   { label: '==', value: ComparisonOperation.EQ },
@@ -43,12 +35,13 @@ function isBooleanReducer(r: ReducerID) {
   return r === ReducerID.allIsNull || r === ReducerID.allIsZero;
 }
 
-export const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
+export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
+  const styles = useStyles2(getStyles);
   const reducer = useMemo(() => fieldReducers.selectOptions([options?.reducer]), [options?.reducer]);
 
   const onSetReducer = useCallback(
-    (selection: ComboboxOption<ReducerID>) => {
-      return onChange({ ...options, reducer: selection.value });
+    (selection: SelectableValue<string>) => {
+      return onChange({ ...options, reducer: selection.value! as ReducerID });
     },
     [options, onChange]
   );
@@ -61,7 +54,7 @@ export const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
   );
 
   const onChangeValue = useCallback(
-    (e: FormEvent<HTMLInputElement>) => {
+    (e: React.FormEvent<HTMLInputElement>) => {
       const value = e.currentTarget.valueAsNumber;
       return onChange({ ...options, value });
     },
@@ -72,46 +65,47 @@ export const FieldValueMatcherEditor = ({ id, options, onChange }: Props) => {
   const isBool = isBooleanReducer(opts.reducer);
 
   return (
-    <Stack direction="column" gap={1}>
-      <Stack direction="row" gap={0.5}>
-        <Combobox<ReducerID>
-          id={id}
-          value={toComboboxOption<ReducerID>(reducer.current[0])}
-          options={reducer.options.map((o) => toComboboxOption<ReducerID>(o))}
-          onChange={onSetReducer}
-          placeholder={t('grafana-ui.field-value-matcher.select-field-placeholder', 'Select field reducer')}
-        />
-        {opts.reducer && !isBool && (
-          <>
-            <Combobox
-              value={comparisonOperationOptions.find((v) => v.value === opts.op)}
-              options={comparisonOperationOptions}
-              onChange={onChangeOp}
-              aria-label={t('grafana-ui.field-value-matcher.operator-label', 'Comparison operator')}
-              width={19}
-            />
+    <div className={styles.spot}>
+      <Select
+        value={reducer.current}
+        options={reducer.options}
+        onChange={onSetReducer}
+        placeholder="Select field reducer"
+      />
+      {opts.reducer && !isBool && (
+        <>
+          <Select
+            value={comparisonOperationOptions.find((v) => v.value === opts.op)}
+            options={comparisonOperationOptions}
+            onChange={onChangeOp}
+            aria-label={'Comparison operator'}
+            width={19}
+          />
 
-            <Input
-              type="number"
-              value={opts.value}
-              onChange={onChangeValue}
-              aria-label={t('grafana-ui.field-value-matcher.reducer-value-label', 'Reducer value')}
-            />
-          </>
-        )}
-      </Stack>
-    </Stack>
+          <Input type="number" value={opts.value} onChange={onChangeValue} />
+        </>
+      )}
+    </div>
   );
 };
 
-export const getFieldValueMatcherItem: () => FieldMatcherUIRegistryItem<FieldValueMatcherConfig> = () => ({
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    spot: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignContent: 'flex-end',
+      gap: '4px',
+    }),
+  };
+};
+
+export const fieldValueMatcherItem: FieldMatcherUIRegistryItem<FieldValueMatcherConfig> = {
   id: FieldMatcherID.byValue,
   component: FieldValueMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byValue),
-  name: t('grafana-ui.matchers-ui.name-fields-with-value', 'Fields with values'),
-  description: t(
-    'grafana-ui.matchers-ui.description-fields-with-value',
-    'Set properties for fields with reducer condition'
-  ),
+  name: 'Fields with values',
+  description: 'Set properties for fields with reducer condition',
   optionsToLabel: (options) => `${options?.reducer} ${options?.op} ${options?.value}`,
-});
+};

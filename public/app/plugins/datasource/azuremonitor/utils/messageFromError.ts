@@ -1,6 +1,6 @@
 import { isValidElement } from 'react';
 
-import { type AzureMonitorErrorish } from '../types/types';
+import { AzureMonitorErrorish } from '../types';
 
 export function messageFromElement(error: AzureMonitorErrorish): AzureMonitorErrorish | undefined {
   if (isValidElement(error)) {

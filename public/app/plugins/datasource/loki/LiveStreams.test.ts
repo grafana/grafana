@@ -3,10 +3,10 @@ import { Observable, Subject, of, throwError, concat } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 
-import { type DataFrame, DataFrameView, formatLabels, type Labels } from '@grafana/data';
+import { DataFrame, DataFrameView, formatLabels, Labels } from '@grafana/data';
 
 import { LiveStreams } from './LiveStreams';
-import { type LokiTailResponse } from './types';
+import { LokiTailResponse } from './types';
 
 interface ErrorException extends Error {
   code?: number;

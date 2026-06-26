@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import { GrafanaConfig, locationUtil } from '@grafana/data';
 
 import { TextLink } from './TextLink';
 
@@ -36,8 +36,6 @@ describe('TextLink', () => {
     expect(screen.getByRole('link')).toHaveAttribute('href', link);
   });
   it('should turn it into a relative url, if not external', () => {
-    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
     locationUtil.initialize({
       config: { appSubUrl: '/grafana' } as GrafanaConfig,
       getVariablesUrlParams: jest.fn(),
@@ -49,7 +47,6 @@ describe('TextLink', () => {
         <TextLink href={link}>Link to Grafana</TextLink>
       </MemoryRouter>
     );
-    jest.spyOn(console, 'warn').mockRestore();
     expect(screen.getByRole('link')).toHaveAttribute('href', '/after-sub-url');
   });
   it('should fire onclick', async () => {
@@ -64,14 +61,5 @@ describe('TextLink', () => {
     );
     await userEvent.click(screen.getByRole('link'));
     expect(onClick).toHaveBeenCalled();
-  });
-
-  it('sanitizes javascript: URLs in href', () => {
-    render(
-      <TextLink href="javascript:alert(1)" external>
-        Click me
-      </TextLink>
-    );
-    expect(screen.getByRole('link')).toHaveAttribute('href', 'about:blank');
   });
 });

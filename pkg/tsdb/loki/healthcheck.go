@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	logger := s.logger.With("endpoint", "checkHealth")
+	logger := s.logger.With("endpoint", "CheckHealth")
 	ds, err := s.im.Get(ctx, req.PluginContext)
 	// check that the datasource exists
 	if err != nil {
@@ -39,7 +40,7 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Servic
 	step := "1s"
 	qt := "instant"
 	qm := dataquery.LokiDataQuery{
-		Expr:      "vector(1)+vector(1)",
+		Expr:      util.Pointer("vector(1)+vector(1)"),
 		Step:      &step,
 		QueryType: &qt,
 	}
@@ -78,7 +79,7 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Servic
 
 	fieldValueLen := resp.Responses[refID].Frames[0].Fields[0].Len()
 	if fieldValueLen != 1 {
-		return getHealthCheckMessage(fmt.Errorf("invalid dataframe field value length, expected %d got %d", 1, fieldValueLen), logger)
+		return getHealthCheckMessage(fmt.Errorf("invalid dataframe field value length, expected %d got %d", 1, fieldLen), logger)
 	}
 
 	rspValue := resp.Responses[refID].Frames[0].Fields[1].At(0).(float64)

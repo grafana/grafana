@@ -1,22 +1,20 @@
 import {
   toDataFrame,
-  type DataFrame,
+  DataFrame,
   FieldType,
   toDataFrameDTO,
-  type DataFrameDTO,
+  DataFrameDTO,
   DataFrameType,
   getFrameDisplayName,
 } from '@grafana/data';
 
-import { getPrepareTimeSeriesTransformer, type PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
+import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 const ctx = {
   interpolate: (v: string) => v,
 };
 
 describe('Prepare time series transformer', () => {
-  const prepareTimeSeriesTransformer = getPrepareTimeSeriesTransformer();
-
   it('should transform wide to multi', () => {
     const source = [
       toDataFrame({
@@ -421,7 +419,7 @@ function toEquableDataFrame(source: DataFrame): DataFrame {
   return toDataFrame({
     meta: undefined,
     ...source,
-    fields: source.fields.map((field) => {
+    fields: source.fields.map((field: any) => {
       return {
         ...field,
         config: {},

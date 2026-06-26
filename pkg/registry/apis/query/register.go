@@ -1,32 +1,24 @@
 package query
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
-	"runtime"
-	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apiruntime "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	claims "github.com/grafana/authlib/types"
-	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
-	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -35,54 +27,43 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	_ builder.APIGroupBuilder      = (*QueryAPIBuilder)(nil)
-	_ builder.OpenAPIPostProcessor = (*QueryAPIBuilder)(nil)
-)
+var _ builder.APIGroupBuilder = (*QueryAPIBuilder)(nil)
 
 type QueryAPIBuilder struct {
-	log                  log.Logger
-	concurrentQueryLimit int
-	features             featuremgmt.FeatureToggles
+	log                    log.Logger
+	concurrentQueryLimit   int
+	userFacingDefaultError string
+	features               featuremgmt.FeatureToggles
 
-	authorizer authorizer.Authorizer
-
-	tracer                 tracing.Tracer
-	metrics                *metrics.ExprMetrics
-	instanceProvider       clientapi.InstanceProvider
-	registry               datasourceV0.DataSourceApiServerRegistry
-	converter              *expr.ResultConverter
-	queryTypes             *datasourceV0.QueryTypeDefinitionList
-	legacyDatasourceLookup service.LegacyDataSourceLookup
-	connections            datasourceV0.DataSourceConnectionProvider
-	reportStatus           func(context.Context, int)
+	tracer     tracing.Tracer
+	metrics    *queryMetrics
+	parser     *queryParser
+	client     DataSourceClientSupplier
+	registry   query.DataSourceApiServerRegistry
+	converter  *expr.ResultConverter
+	queryTypes *query.QueryTypeDefinitionList
 }
 
-func NewQueryAPIBuilder(
-	features featuremgmt.FeatureToggles,
-	instanceProvider clientapi.InstanceProvider,
-	ar authorizer.Authorizer,
-	registry datasourceV0.DataSourceApiServerRegistry,
+func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
+	client DataSourceClientSupplier,
+	registry query.DataSourceApiServerRegistry,
+	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
-	legacyDatasourceLookup service.LegacyDataSourceLookup,
-	connections datasourceV0.DataSourceConnectionProvider,
-	concurrentQueryLimit int,
-	reportStatus func(context.Context, int),
 ) (*QueryAPIBuilder, error) {
+	reader := expr.NewExpressionQueryReader(features)
+
 	// Include well typed query definitions
-	var queryTypes *datasourceV0.QueryTypeDefinitionList
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes) {
+	var queryTypes *query.QueryTypeDefinitionList
+	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
 		// Read the expression query definitions
 		raw, err := expr.QueryTypeDefinitionListJSON()
 		if err != nil {
 			return nil, err
 		}
-		queryTypes = &datasourceV0.QueryTypeDefinitionList{}
+		queryTypes = &query.QueryTypeDefinitionList{}
 		err = json.Unmarshal(raw, queryTypes)
 		if err != nil {
 			return nil, err
@@ -90,28 +71,23 @@ func NewQueryAPIBuilder(
 	}
 
 	return &QueryAPIBuilder{
-		concurrentQueryLimit: concurrentQueryLimit,
+		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
-		instanceProvider:     instanceProvider,
-		authorizer:           ar,
+		client:               client,
 		registry:             registry,
-		metrics:              metrics.NewQueryServiceExpressionsMetrics(registerer),
+		parser:               newQueryParser(reader, legacy, tracer),
+		metrics:              newQueryMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
-		connections:          connections,
 		converter: &expr.ResultConverter{
 			Features: features,
 			Tracer:   tracer,
 		},
-		legacyDatasourceLookup: legacyDatasourceLookup,
-		reportStatus:           reportStatus,
 	}, nil
 }
 
-func RegisterAPIService(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
+func RegisterAPIService(features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dataSourcesService datasources.DataSourceService,
 	pluginStore pluginstore.Store,
@@ -120,94 +96,62 @@ func RegisterAPIService(
 	pCtxProvider *plugincontext.Provider,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
-	legacyDatasourceLookup service.LegacyDataSourceLookup,
-	exprService *expr.Service,
+	legacy service.LegacyDataSourceLookup,
 ) (*QueryAPIBuilder, error) {
-	if !featuremgmt.AnyEnabled(features,
-		featuremgmt.FlagQueryService,
-		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !(features.IsEnabledGlobally(featuremgmt.FlagQueryService) ||
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil, nil // skip registration unless explicitly added (or all experimental are added)
-	}
-
-	ar := authorizer.AuthorizerFunc(
-		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			// we only verify that we have a valid user.
-			// the "real" check will happen when the specific
-			// data sources are loaded.
-			_, ok := claims.AuthInfoFrom(ctx)
-			if !ok {
-				return authorizer.DecisionDeny, "valid user is required", nil
-			}
-
-			return authorizer.DecisionAllow, "", nil
-		})
-
-	statusMetric := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana",
-		Subsystem: "ds_querier",
-		Name:      "requests_total",
-	}, []string{"status_code"})
-	registerer.MustRegister(statusMetric)
-
-	reportStatus := func(ctx context.Context, statusCode int) {
-		statusMetric.With(prometheus.Labels{
-			"status_code": strconv.Itoa(statusCode),
-		}).Inc()
 	}
 
 	builder, err := NewQueryAPIBuilder(
 		features,
-		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
-		ar,
+		&CommonDataSourceClientSupplier{
+			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider),
+		},
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
-		registerer,
-		tracer,
-		legacyDatasourceLookup,
-		dataSourcesService, // datasourceV0.DataSourceConnectionProvider
-		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
-		reportStatus,
+		legacy, registerer, tracer,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	// TODO, finish rename return datasourceV0.SchemeGroupVersion
-	return schema.GroupVersion{Group: "query.grafana.app", Version: datasourceV0.VERSION}
+	return query.SchemeGroupVersion
 }
 
-func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&datasourceV0.DataSourceApiServer{},
-		&datasourceV0.DataSourceApiServerList{},
-		&datasourceV0.DataSourceConnectionList{},
-		&datasourceV0.QueryDataRequest{},
-		&datasourceV0.QueryDataResponse{},
-		&datasourceV0.QueryTypeDefinition{},
-		&datasourceV0.QueryTypeDefinitionList{},
-		&datasourceV0.QueryResponseSQLSchemas{},
+		&query.DataSourceApiServer{},
+		&query.DataSourceApiServerList{},
+		&query.QueryDataRequest{},
+		&query.QueryDataResponse{},
+		&query.QueryTypeDefinition{},
+		&query.QueryTypeDefinitionList{},
 	)
 }
 
-func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
-	gv := b.GetGroupVersion()
-	addKnownTypes(scheme, gv)
-	metav1.AddToGroupVersion(scheme, gv)
-	return scheme.SetVersionPriority(gv)
-}
-
-func (b *QueryAPIBuilder) AllowedV0Alpha1Resources() []string {
-	return []string{builder.AllResourcesAllowed}
+func (b *QueryAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	addKnownTypes(scheme, query.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, query.SchemeGroupVersion)
+	return scheme.SetVersionPriority(query.SchemeGroupVersion)
 }
 
 func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
-	gv := datasourceV0.SchemeGroupVersion
+	gv := query.SchemeGroupVersion
 
 	storage := map[string]rest.Storage{}
 
-	// k8s needs a real storage registered -- we add this, but hide it for now
-	// because connections and queries are handled directly
-	storage["noop"] = &noopREST{}
+	plugins := newPluginsStorage(b.registry)
+	storage[plugins.resourceInfo.StoragePath()] = plugins
+	if !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		// The plugin registry is still experimental, and not yet accurate
+		// For standard k8s api discovery to work, at least one resource must be registered
+		// While this feature is under development, we can return an empty list for non-dev instances
+		plugins.returnEmptyList = true
+	}
+
+	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
+	storage["query"] = newQueryREST(b)
 
 	// Register the expressions query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
@@ -217,11 +161,16 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 }
 
 func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return datasourceV0.GetOpenAPIDefinitions
+	return query.GetOpenAPIDefinitions
+}
+
+// Register additional routes with the server
+func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return nil
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return b.authorizer
+	return nil // default is OK
 }
 
 func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -239,7 +188,7 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		},
 		QueryTypes:       b.queryTypes,
 		Root:             root,
-		QueryPath:        "namespaces/{namespace}/query",
+		QueryPath:        "namespaces/{namespace}/query/{name}",
 		QueryDescription: "Query any datasources (with expressions)",
 
 		// An explicit set of examples (otherwise we iterate the query type examples)
@@ -306,29 +255,10 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		return oas, nil
 	}
 
-	// Use the same request body for query as sql schemas
-	query, ok := oas.Paths.Paths[root+"namespaces/{namespace}/query"]
-	if !ok || query.Post == nil || query.Post.RequestBody == nil {
-		return nil, fmt.Errorf("could not find query path")
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
-	query.Post.OperationId = "queryDatasources"
-	query.Post.Tags = []string{"Query"}
-
-	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
-	if ok && sqlschemas.Post != nil {
-		sqlschemas.Post.RequestBody = query.Post.RequestBody
-	}
-
-	// Add the core definitions
-	for k, v := range b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} }) {
-		switch k {
-		case "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse":
-			oas.Components.Schemas[k] = &v.Schema
-		}
-	}
-
-	// Remove the noop path -- it was only required to make k8s behave normally
-	delete(oas.Paths.Paths, root+"noop/{name}")
-
 	return oas, nil
 }

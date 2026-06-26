@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { useDispatch } from 'app/types/store';
+import { useDispatch } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
 
@@ -29,11 +28,7 @@ export default function NewDashboardWithDS() {
     return (
       <Page navId="dashboards">
         <Page.Contents>
-          <div>
-            <Trans i18nKey="dashboard.new-dashboard-with-ds.not-found">
-              Data source with UID &quot;{{ datasourceUid }}&quot; not found.
-            </Trans>
-          </div>
+          <div>Data source with UID &quot;{datasourceUid}&quot; not found.</div>
         </Page.Contents>
       </Page>
     );

@@ -1,4 +1,4 @@
-import { AnnoKeyCreatedBy, type Resource } from './types';
+import { AnnoKeyCreatedBy, Resource } from './types';
 
 interface MyObjSpec {
   value: string;

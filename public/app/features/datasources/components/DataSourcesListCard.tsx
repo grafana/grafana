@@ -1,32 +1,26 @@
 import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
-import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
-import { trackExploreClicked } from '../tracking';
+import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
-
-import { BuildDashboardButton } from './BuildDashboardButton';
-import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 export interface Props {
   dataSource: DataSourceSettings;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
-  failure?: DatasourceFailureDetails;
 }
 
-export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, failure }: Props) {
+export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
   return (
-    <Card noMargin href={hasWriteRights ? dsLink : undefined}>
+    <Card href={hasWriteRights ? dsLink : undefined}>
       <Card.Heading>{dataSource.name}</Card.Heading>
       <Card.Figure>
         <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
@@ -36,14 +30,26 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
           dataSource.typeName,
           dataSource.url,
           dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
-          failure?.severity && (
-            <DataSourceFailureBadge key="unhealthy-badge" severity={failure.severity} message={failure.message} />
-          ),
         ]}
       </Card.Meta>
       <Card.Tags>
         {/* Build Dashboard */}
-        <BuildDashboardButton dataSource={dataSource} size="md" fill="outline" context="datasource_list" />
+        <LinkButton
+          icon="apps"
+          fill="outline"
+          variant="secondary"
+          href={`dashboard/new-with-ds/${dataSource.uid}`}
+          onClick={() => {
+            trackCreateDashboardClicked({
+              grafana_version: config.buildInfo.version,
+              datasource_uid: dataSource.uid,
+              plugin_name: dataSource.typeName,
+              path: location.pathname,
+            });
+          }}
+        >
+          Build a dashboard
+        </LinkButton>
 
         {/* Explore */}
         {hasExploreRights && (
@@ -58,11 +64,11 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
                 grafana_version: config.buildInfo.version,
                 datasource_uid: dataSource.uid,
                 plugin_name: dataSource.typeName,
-                path: window.location.pathname,
+                path: location.pathname,
               });
             }}
           >
-            <Trans i18nKey="datasources.data-sources-list-card.explore">Explore</Trans>
+            Explore
           </LinkButton>
         )}
       </Card.Tags>
@@ -73,7 +79,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
 function DataSourcesListCardSkeleton({ hasExploreRights }: Pick<Props, 'hasExploreRights'>) {
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
-    <Card noMargin>
+    <Card>
       <Card.Heading>
         <Skeleton width={140} />
       </Card.Heading>

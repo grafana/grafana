@@ -1,10 +1,8 @@
-import { type LinkedToken } from '../../monarch/LinkedToken';
+import { LinkedToken } from '../../monarch/LinkedToken';
 import { StatementPosition } from '../../monarch/types';
 import { AND, ASC, BY, DESC, EQUALS, FROM, GROUP, NOT_EQUALS, ORDER, SCHEMA, SELECT, WHERE } from '../language';
 
 import { SQLTokenTypes } from './types';
-
-// about getStatementPosition: public/app/plugins/datasource/cloudwatch/language/cloudwatch-ppl/completion/statementPosition.ts
 
 export function getStatementPosition(currentToken: LinkedToken | null): StatementPosition {
   const previousNonWhiteSpace = currentToken?.getPreviousNonWhiteSpaceToken();

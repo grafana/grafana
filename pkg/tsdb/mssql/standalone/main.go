@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 )
 
@@ -20,7 +20,8 @@ func main() {
 	// ID). When datasource configuration changed Dispose method will be called and
 	// new datasource instance created using NewSampleDatasource factory.
 	logger := backend.NewLoggerWith("logger", "tsdb.mssql")
-	if err := datasource.Manage("mssql", mssql.NewInstanceSettings(logger), datasource.ManageOpts{}); err != nil {
+	cfg := setting.NewCfg()
+	if err := datasource.Manage("mssql", mssql.NewInstanceSettings(cfg, logger), datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}

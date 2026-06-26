@@ -1,18 +1,18 @@
 import { cx, css } from '@emotion/css';
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
+import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { getFocusStyles, getMouseFocusStyles, mediaUp } from '../../themes/mixins';
-import { type IconSize } from '../../types/icon';
-import { getActiveButtonStyles, getPropertiesForVariant } from '../Button/Button';
+import { styleMixins, useStyles2 } from '../../themes';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { IconSize } from '../../types/icon';
+import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Tooltip } from '../Tooltip';
 
-interface BaseProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+type CommonProps = {
   /** Icon name */
   icon?: IconName | React.ReactNode;
   /** Icon size */
@@ -35,91 +35,77 @@ interface BaseProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconOnly?: boolean;
   /** Show highlight dot */
   isHighlighted?: boolean;
-}
+};
 
-interface BasePropsWithChildren extends BaseProps {
-  children: ReactNode;
-}
-
-interface BasePropsWithTooltip extends BaseProps {
-  tooltip: string;
-}
-
-interface BasePropsWithAriaLabel extends BaseProps {
-  ['aria-label']: string;
-}
-
-export type ToolbarButtonProps = BasePropsWithChildren | BasePropsWithTooltip | BasePropsWithAriaLabel;
+export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'canvas';
 
-/**
- * Multiple buttons that form a toolbar. Each button can contain an icon, image and text. There are three variants of the ToolbarButton: default, primary and destructive.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-toolbarbutton--docs
- */
-export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((props, ref) => {
-  const styles = useStyles2(getStyles);
-  const {
-    tooltip,
-    icon,
-    iconSize,
-    className,
-    children,
-    imgSrc,
-    imgAlt,
-    fullWidth,
-    isOpen,
-    narrow,
-    variant = 'default',
-    iconOnly,
-    'aria-label': ariaLabel,
-    isHighlighted,
-    ...rest
-  } = props;
-
-  const buttonStyles = cx(
+export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
+  (
     {
-      [styles.button]: true,
-      [styles.buttonFullWidth]: fullWidth,
-      [styles.narrow]: narrow,
+      tooltip,
+      icon,
+      iconSize,
+      className,
+      children,
+      imgSrc,
+      imgAlt,
+      fullWidth,
+      isOpen,
+      narrow,
+      variant = 'default',
+      iconOnly,
+      'aria-label': ariaLabel,
+      isHighlighted,
+      ...rest
     },
-    styles[variant],
-    className
-  );
+    ref
+  ) => {
+    const styles = useStyles2(getStyles);
 
-  const contentStyles = cx({
-    [styles.content]: true,
-    [styles.contentWithIcon]: !!icon,
-    [styles.contentWithRightIcon]: isOpen !== undefined,
-  });
+    const buttonStyles = cx(
+      {
+        [styles.button]: true,
+        [styles.buttonFullWidth]: fullWidth,
+        [styles.narrow]: narrow,
+      },
+      styles[variant],
+      className
+    );
 
-  const body = (
-    <button
-      ref={ref}
-      className={buttonStyles}
-      aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
-      aria-expanded={isOpen}
-      type="button"
-      {...rest}
-    >
-      {renderIcon(icon, iconSize)}
-      {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
-      {children && !iconOnly && <div className={contentStyles}>{children}</div>}
-      {isOpen === false && <Icon name="angle-down" />}
-      {isOpen === true && <Icon name="angle-up" />}
-      {isHighlighted && <div className={styles.highlight} />}
-    </button>
-  );
+    const contentStyles = cx({
+      [styles.content]: true,
+      [styles.contentWithIcon]: !!icon,
+      [styles.contentWithRightIcon]: isOpen !== undefined,
+    });
 
-  return tooltip ? (
-    <Tooltip ref={ref} content={tooltip} placement="bottom">
-      {body}
-    </Tooltip>
-  ) : (
-    body
-  );
-});
+    const body = (
+      <button
+        ref={ref}
+        className={buttonStyles}
+        aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
+        aria-expanded={isOpen}
+        {...rest}
+      >
+        {renderIcon(icon, iconSize)}
+        {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
+        {children && !iconOnly && <div className={contentStyles}>{children}</div>}
+        {isOpen === false && <Icon name="angle-down" />}
+        {isOpen === true && <Icon name="angle-up" />}
+        {isHighlighted && <div className={styles.highlight} />}
+      </button>
+    );
+
+    return tooltip ? (
+      <Tooltip ref={ref} content={tooltip} placement="bottom">
+        {body}
+      </Tooltip>
+    ) : (
+      body
+    );
+  }
+);
 
 ToolbarButton.displayName = 'ToolbarButton';
 
@@ -147,14 +133,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     color: theme.colors.text.primary,
     background: theme.colors.secondary.main,
 
-    '&:hover, &:focus': {
+    '&:hover': {
       color: theme.colors.text.primary,
       background: theme.colors.secondary.shade,
       border: `1px solid ${theme.colors.border.medium}`,
-    },
-
-    '&:active': {
-      ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
     },
   });
 
@@ -172,13 +154,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.secondary.border}`,
       whiteSpace: 'nowrap',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+        transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
           duration: theme.transitions.duration.short,
         }),
-      },
-
-      [theme.breakpoints.down('md')]: {
-        width: 'auto !important',
       },
 
       '&:focus, &:focus-visible': {
@@ -187,6 +165,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
+
+      '&:hover': {
+        boxShadow: theme.shadows.z1,
+      },
 
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
@@ -208,11 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         color: theme.colors.text.primary,
-        background: theme.colors.action.hover,
-      },
-
-      '&:active': {
-        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+        background: theme.colors.background.secondary,
       },
     }),
     canvas: defaultOld,
@@ -253,7 +231,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'none',
       paddingLeft: theme.spacing(1),
 
-      [`@media ${mediaUp(theme.v1.breakpoints.md)}`]: {
+      [`@media ${styleMixins.mediaUp(theme.v1.breakpoints.md)}`]: {
         display: 'block',
       },
     }),

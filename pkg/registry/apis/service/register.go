@@ -12,7 +12,6 @@ import (
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -27,19 +26,17 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *ServiceAPIBuilder {
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 		return nil // skip registration unless opting into aggregator mode
 	}
 
 	builder := NewServiceAPIBuilder()
-	apiregistration.RegisterAPI(builder)
+	apiregistration.RegisterAPI(NewServiceAPIBuilder())
 	return builder
 }
 
 func (b *ServiceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	//nolint:staticcheck // not yet migrated to Resource Authorizer
-	return roleauthorizer.NewRoleAuthorizer()
+	return nil // default authorizer is fine
 }
 
 func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -71,10 +68,6 @@ func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func (b *ServiceAPIBuilder) AllowedV0Alpha1Resources() []string {
-	return []string{builder.AllResourcesAllowed}
-}
-
 func (b *ServiceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	scheme := opts.Scheme
 	optsGetter := opts.OptsGetter
@@ -94,4 +87,9 @@ func (b *ServiceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 
 func (b *ServiceAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return service.GetOpenAPIDefinitions
+}
+
+// Register additional routes with the server
+func (b *ServiceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return nil
 }

@@ -1,12 +1,11 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { useState, type JSX } from 'react';
+import { action } from '@storybook/addon-actions';
+import { Meta, StoryFn } from '@storybook/react';
+import { useState } from 'react';
 import * as React from 'react';
-import { action } from 'storybook/actions';
 
-import { Icon } from '../Icon/Icon';
+import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
 
-import { SegmentInput, type SegmentInputProps } from './SegmentInput';
-import { SegmentSection } from './SegmentSection';
+import { SegmentInputProps } from './SegmentInput';
 
 const SegmentFrame = ({ children }: React.PropsWithChildren) => (
   <>
@@ -30,7 +29,7 @@ export const BasicInput = () => {
 };
 
 const meta: Meta<typeof SegmentInput> = {
-  title: 'Inputs/SegmentInput',
+  title: 'Data Source/Segment/SegmentInput',
   component: SegmentInput,
 };
 
@@ -94,7 +93,6 @@ export const InputWithAutoFocus = () => {
         <InputComponent initialValue="test" key={i} />
       ))}
       <button
-        aria-label="Add"
         type="button"
         className="gf-form-label query-part"
         onClick={() => {

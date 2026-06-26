@@ -10,7 +10,7 @@ import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 // )
 export type ReactMonacoEditorProps = Omit<EditorProps, 'theme'>;
 
-type CodeEditorChangeHandler = (value: string) => void;
+export type CodeEditorChangeHandler = (value: string) => void;
 export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];
 
 export type { monacoType as monacoTypes };
@@ -114,7 +114,7 @@ export interface CodeEditorSuggestionItem {
  * but changing the code comments to contain the proper default values to
  * prevent the consumer of the CodeEditor to get incorrect documentation in editor.
  */
-interface MonacoOptionsWithGrafanaDefaults extends monacoType.editor.IStandaloneEditorConstructionOptions {
+export interface MonacoOptionsWithGrafanaDefaults extends monacoType.editor.IStandaloneEditorConstructionOptions {
   /**
    * Enable custom contextmenu.
    * Defaults to false.

@@ -6,14 +6,13 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/stretchr/testify/require"
 )
 
 func TestInvalidReceiverError_Error(t *testing.T) {
 	e := alertingNotify.IntegrationValidationError{
-		Integration: &models.IntegrationConfig{
+		Integration: &alertingNotify.GrafanaIntegrationConfig{
 			Name: "test",
 			Type: "test-type",
 			UID:  "uid",
@@ -25,7 +24,7 @@ func TestInvalidReceiverError_Error(t *testing.T) {
 
 func TestReceiverTimeoutError_Error(t *testing.T) {
 	e := alertingNotify.IntegrationTimeoutError{
-		Integration: &models.IntegrationConfig{
+		Integration: &alertingNotify.GrafanaIntegrationConfig{
 			Name: "test",
 			UID:  "uid",
 		},
@@ -46,7 +45,7 @@ func (e timeoutError) Timeout() bool {
 
 func TestProcessNotifierError(t *testing.T) {
 	t.Run("assert ReceiverTimeoutError is returned for context deadline exceeded", func(t *testing.T) {
-		r := &models.IntegrationConfig{
+		r := &alertingNotify.GrafanaIntegrationConfig{
 			Name: "test",
 			UID:  "uid",
 		}
@@ -57,7 +56,7 @@ func TestProcessNotifierError(t *testing.T) {
 	})
 
 	t.Run("assert ReceiverTimeoutError is returned for *url.Error timeout", func(t *testing.T) {
-		r := &models.IntegrationConfig{
+		r := &alertingNotify.GrafanaIntegrationConfig{
 			Name: "test",
 			UID:  "uid",
 		}
@@ -73,7 +72,7 @@ func TestProcessNotifierError(t *testing.T) {
 	})
 
 	t.Run("assert unknown error is returned unmodified", func(t *testing.T) {
-		r := &models.IntegrationConfig{
+		r := &alertingNotify.GrafanaIntegrationConfig{
 			Name: "test",
 			UID:  "uid",
 		}

@@ -1,4 +1,4 @@
-import { type E2ESelectors } from '@grafana/e2e-selectors';
+import { E2ESelectors } from '@grafana/e2e-selectors';
 
 export const components = {
   configEditor: {
@@ -16,18 +16,6 @@ export const components = {
     },
     clientSecret: {
       input: 'data-testid client-secret',
-    },
-    clientCertificate: {
-      input: 'data-testid client-certificate',
-    },
-    privateKey: {
-      input: 'data-testid private-key',
-    },
-    certificatePassword: {
-      input: 'data-testid private-key-password',
-    },
-    certificateFormat: {
-      select: 'data-testid certificate-format',
     },
     loadSubscriptions: {
       button: 'data-testid load-subscriptions',
@@ -76,17 +64,6 @@ export const components = {
           input: 'data-testid resource-picker-resource',
         },
       },
-      filters: {
-        subscription: {
-          input: 'data-testid resource-picker-filter-subscription',
-        },
-        type: {
-          input: 'data-testid resource-picker-filter-type',
-        },
-        location: {
-          input: 'data-testid resource-picker-filter-location',
-        },
-      },
     },
     metricsQueryEditor: {
       container: { input: 'data-testid azure-monitor-metrics-query-editor-with-experimental-ui' },
@@ -99,19 +76,10 @@ export const components = {
       formatSelection: {
         input: 'data-testid format-selection',
       },
-      runQuery: {
-        button: 'data-testid run-query',
-      },
-    },
-    logsQueryBuilder: {
-      container: { input: 'data-testid azure-monitor-logs-query-builder' },
     },
     argsQueryEditor: {
       container: {
         input: 'data-testid azure-monitor-arg-query-editor',
-      },
-      scope: {
-        input: 'data-testid azure-monitor-arg-query-editor-scope',
       },
       subscriptions: {
         input: 'data-testid azure-monitor-args-subscription',
@@ -144,9 +112,6 @@ export const components = {
     },
     region: {
       input: 'data-testid region',
-    },
-    customNamespace: {
-      input: 'data-testid custom-namespace',
     },
   },
 };

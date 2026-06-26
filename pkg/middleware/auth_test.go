@@ -7,12 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -29,17 +30,13 @@ import (
 )
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
-	return contexthandler.ProvideService(setting.NewCfg(), &authntest.FakeService{
+	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
 	}, featuremgmt.WithFeatures())
 }
 
 func TestAuth_Middleware(t *testing.T) {
-	ac := &actest.FakeAccessControl{}
-	acGrant := &actest.FakeAccessControl{ExpectedEvaluate: true}
-	acErr := &actest.FakeAccessControl{ExpectedErr: errors.New("ac backend down")}
-
 	type testCase struct {
 		desc           string
 		identity       *authn.Identity
@@ -69,7 +66,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return 200 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
+			identity:       &authn.Identity{Type: claims.TypeAnonymous},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
@@ -77,7 +74,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user with forceLogin query string",
 			path:           "/secure?forceLogin=true",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
+			identity:       &authn.Identity{Type: claims.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -85,7 +82,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedIn should return redirect anonymous user when orgId in query string is different from currently used",
 			path:           "/secure?orgId=2",
 			authMiddleware: ReqSignedIn,
-			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
+			identity:       &authn.Identity{Type: claims.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusFound,
 		},
@@ -93,7 +90,7 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 401 for anonymous user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
+			identity:       &authn.Identity{Type: claims.TypeAnonymous},
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
 		},
@@ -101,89 +98,33 @@ func TestAuth_Middleware(t *testing.T) {
 			desc:           "ReqSignedInNoAnonymous should return 200 for authenticated user",
 			path:           "/api/secure",
 			authMiddleware: ReqSignedInNoAnonymous,
-			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
+			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
 		{
-			desc:           "SnapshotPublicModeOrCreate public mode disabled should return 200 for authenticated user with snapshots:create",
+			desc:           "snapshot public mode disabled should return 200 for authenticated user",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, acGrant),
-			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
+			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
+			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
 		{
-			desc:           "SnapshotPublicModeOrCreate public mode disabled should return 403 for authenticated user without snapshots:create",
+			desc:           "snapshot public mode disabled should return 401 for unauthenticated request",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
-			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
-			expecedReached: false,
-			expectedCode:   http.StatusForbidden,
-		},
-		{
-			desc:           "SnapshotPublicModeOrCreate public mode disabled should return 401 for unauthenticated request",
-			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
+			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
 			authErr:        errors.New("no auth"),
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
 		},
 		{
-			desc:           "SnapshotPublicModeOrCreate public mode enabled should return 200 for unauthenticated request",
+			desc:           "snapshot public mode enabled should return 200 for unauthenticated request",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: true}, ac),
+			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: true}),
 			authErr:        errors.New("no auth"),
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
-		},
-		{
-			desc:           "SnapshotPublicModeOrCreate public mode disabled should return 500 when access control engine errors",
-			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, acErr),
-			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
-			expecedReached: false,
-			expectedCode:   http.StatusInternalServerError,
-		},
-		{
-			desc:           "SnapshotPublicModeOrDelete public mode disabled should return 200 for authenticated user with snapshots:delete",
-			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: false}, acGrant),
-			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
-			expecedReached: true,
-			expectedCode:   http.StatusOK,
-		},
-		{
-			desc:           "SnapshotPublicModeOrDelete public mode disabled should return 403 for authenticated user without snapshots:delete",
-			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: false}, ac),
-			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
-			expecedReached: false,
-			expectedCode:   http.StatusForbidden,
-		},
-		{
-			desc:           "SnapshotPublicModeOrDelete public mode disabled should return 401 for unauthenticated request",
-			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: false}, ac),
-			authErr:        errors.New("no auth"),
-			expecedReached: false,
-			expectedCode:   http.StatusUnauthorized,
-		},
-		{
-			desc:           "SnapshotPublicModeOrDelete public mode enabled should return 200 for unauthenticated request",
-			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: true}, ac),
-			authErr:        errors.New("no auth"),
-			expecedReached: true,
-			expectedCode:   http.StatusOK,
-		},
-		{
-			desc:           "SnapshotPublicModeOrDelete public mode disabled should return 500 when access control engine errors",
-			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: false}, acErr),
-			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
-			expecedReached: false,
-			expectedCode:   http.StatusInternalServerError,
 		},
 	}
 
@@ -262,10 +203,11 @@ func TestRoleAppPluginAuth(t *testing.T) {
 							0: tc.role,
 						},
 					})
+					features := featuremgmt.WithFeatures()
 					logger := &logtest.Fake{}
 					ac := &actest.FakeAccessControl{}
 
-					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, logger), func(c *contextmodel.ReqContext) {
+					sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
 						c.JSON(http.StatusOK, map[string]interface{}{})
 					})
 					sc.fakeReq("GET", path).exec()
@@ -284,9 +226,10 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				0: org.RoleViewer,
 			},
 		})
+		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
-		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, logger), func(c *contextmodel.ReqContext) {
+		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, &pluginstore.FakePluginStore{}, features, logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/test").exec()
@@ -301,6 +244,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				0: org.RoleViewer,
 			},
 		})
+		features := featuremgmt.WithFeatures()
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
 		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, pluginstore.NewFakePluginStore(pluginstore.Plugin{
@@ -314,7 +258,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				},
 			},
-		}), logger), func(c *contextmodel.ReqContext) {
+		}), features, logger), func(c *contextmodel.ReqContext) {
 			c.JSON(http.StatusOK, map[string]interface{}{})
 		})
 		sc.fakeReq("GET", "/a/test-app/notExistingPath").exec()
@@ -362,6 +306,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 				logger := &logtest.Fake{}
+				features := featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall)
 				ac := &actest.FakeAccessControl{
 					ExpectedEvaluate: tc.evalResult,
 					ExpectedErr:      tc.evalErr,
@@ -381,7 +326,7 @@ func TestRoleAppPluginAuth(t *testing.T) {
 					},
 				})
 
-				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, logger), func(c *contextmodel.ReqContext) {
+				sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, ps, features, logger), func(c *contextmodel.ReqContext) {
 					c.JSON(http.StatusOK, map[string]interface{}{})
 				})
 				sc.fakeReq("GET", path).exec()

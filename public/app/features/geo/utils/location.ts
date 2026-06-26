@@ -1,21 +1,20 @@
-import { type Geometry } from 'ol/geom';
+import { Geometry } from 'ol/geom';
 
 import {
-  type FieldMatcher,
+  FieldMatcher,
   getFieldMatcher,
   FieldMatcherID,
-  type DataFrame,
-  type Field,
+  DataFrame,
+  Field,
   getFieldDisplayName,
   FieldType,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
+import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 
 import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
-import { getGazetteer, type Gazetteer } from '../gazetteer/gazetteer';
+import { getGazetteer, Gazetteer } from '../gazetteer/gazetteer';
 
-type FieldFinder = (frame: DataFrame) => Field | undefined;
+export type FieldFinder = (frame: DataFrame) => Field | undefined;
 
 function getFieldFinder(matcher: FieldMatcher): FieldFinder {
   return (frame: DataFrame) => {
@@ -67,16 +66,6 @@ const defaultMatchers: LocationFieldMatchers = {
   lookup: matchLowerNames(new Set(['lookup'])),
   geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
 };
-
-/**
- * suggestions needs to run sync, and we just want to use the default matchers in that situation.
- */
-export function getDefaultLocationMatchers(): LocationFieldMatchers {
-  return {
-    ...defaultMatchers,
-    mode: FrameGeometrySourceMode.Auto,
-  };
-}
 
 export async function getLocationMatchers(src?: FrameGeometrySource): Promise<LocationFieldMatchers> {
   const info: LocationFieldMatchers = {
@@ -189,7 +178,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
         };
       }
       return {
-        warning: t('geo.get-geometry-field.warning-unable-to-find', 'Unable to find location fields'),
+        warning: 'Unable to find location fields',
       };
 
     case FrameGeometrySourceMode.Coords:
@@ -201,7 +190,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
         };
       }
       return {
-        warning: t('geo.get-geometry-field.warning-select-lat-long', 'Select latitude/longitude fields'),
+        warning: 'Select latitude/longitude fields',
       };
 
     case FrameGeometrySourceMode.Geohash:
@@ -213,7 +202,7 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
         };
       }
       return {
-        warning: t('geo.get-geometry-field.warning-select-geohash', 'Select geohash field'),
+        warning: 'Select geohash field',
       };
 
     case FrameGeometrySourceMode.Lookup:
@@ -226,13 +215,13 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
           };
         }
         return {
-          warning: t('geo.get-geometry-field.warning-gazetteer-not-found', 'Gazetteer not found'),
+          warning: 'Gazetteer not found',
         };
       }
       return {
-        warning: t('geo.get-geometry-field.warning-select-lookup', 'Select lookup field'),
+        warning: 'Select lookup field',
       };
   }
 
-  return { warning: t('geo.get-geometry-field.warning-no-geometry', 'unable to find geometry') };
+  return { warning: 'unable to find geometry' };
 }

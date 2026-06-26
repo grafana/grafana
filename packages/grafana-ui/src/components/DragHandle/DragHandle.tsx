@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export type DragHandlePosition = 'middle' | 'start' | 'end';
 
 export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandlePosition) => {
   const position = handlePosition || 'middle';
   const baseColor = theme.colors.emphasize(theme.colors.background.secondary, 0.15);
-  const hoverColor = theme.colors.accent.border;
+  const hoverColor = theme.colors.primary.border;
   const clickTargetSize = theme.spacing(2);
   const handlebarThickness = 4;
   const handlebarWidth = 200;
@@ -33,9 +33,7 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
     '&:before': {
       content: '""',
       position: 'absolute',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create('border-color'),
-      },
+      transition: theme.transitions.create('border-color'),
       zIndex: 1,
     },
 
@@ -43,9 +41,7 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
       background: baseColor,
       content: '""',
       position: 'absolute',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create('background'),
-      },
+      transition: theme.transitions.create('background'),
       transform: 'translate(-50%, -50%)',
       borderRadius: theme.shape.radius.pill,
       zIndex: 1,
@@ -62,20 +58,6 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
     },
   });
 
-  const beforeVertical = {
-    borderRight: '1px solid transparent',
-    height: '100%',
-    left: verticalOffset,
-    transform: 'translateX(-50%)',
-  };
-
-  const beforeHorizontal = {
-    borderTop: '1px solid transparent',
-    top: horizontalOffset,
-    transform: 'translateY(-50%)',
-    width: '100%',
-  };
-
   return {
     dragHandleVertical: cx(
       dragHandleBase,
@@ -83,7 +65,12 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
         cursor: 'col-resize',
         width: clickTargetSize,
 
-        '&:before': beforeVertical,
+        '&:before': {
+          borderRight: '1px solid transparent',
+          height: '100%',
+          left: verticalOffset,
+          transform: 'translateX(-50%)',
+        },
 
         '&:after': {
           left: verticalOffset,
@@ -99,7 +86,12 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
         height: clickTargetSize,
         cursor: 'row-resize',
 
-        '&:before': beforeHorizontal,
+        '&:before': {
+          borderTop: '1px solid transparent',
+          top: horizontalOffset,
+          transform: 'translateY(-50%)',
+          width: '100%',
+        },
 
         '&:after': {
           left: '50%',
@@ -107,24 +99,6 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
           height: handlebarThickness,
           width: handlebarWidth,
         },
-      })
-    ),
-    dragHandleBaseVertical: cx(
-      dragHandleBase,
-      css({
-        cursor: 'col-resize',
-        width: clickTargetSize,
-
-        '&:before': beforeVertical,
-      })
-    ),
-    dragHandleBaseHorizontal: cx(
-      dragHandleBase,
-      css({
-        cursor: 'row-resize',
-        height: clickTargetSize,
-
-        '&:before': beforeHorizontal,
       })
     ),
   };

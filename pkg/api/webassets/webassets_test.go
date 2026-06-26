@@ -10,7 +10,7 @@ import (
 )
 
 func TestReadWebassets(t *testing.T) {
-	assets, err := ReadWebAssetsFromFile("testdata/build/assets-manifest.json")
+	assets, err := readWebAssetsFromFile("testdata/sample-assets-manifest.json")
 	require.NoError(t, err)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")

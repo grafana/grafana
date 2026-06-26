@@ -1,35 +1,32 @@
-import { type Unsubscribable } from 'rxjs';
+import { Unsubscribable } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   AppEvents,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
-  type LiveChannelAddress,
+  LiveChannelAddress,
   LiveChannelConnectionState,
-  type LiveChannelEvent,
+  LiveChannelEvent,
   LiveChannelScope,
-  generateUUID,
 } from '@grafana/data';
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
-import { appEvents } from 'app/core/app_events';
-import { contextSrv } from 'app/core/services/context_srv';
+import { appEvents, contextSrv } from 'app/core/core';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
 import { DashboardChangedModal } from './DashboardChangedModal';
-import { type DashboardEvent, DashboardEventAction } from './types';
+import { DashboardEvent, DashboardEventAction } from './types';
 
 // sessionId is not a security-sensitive value.
 // It is used for filtering out dashboard edit events from the same browsing session
-const sessionId = generateUUID();
+const sessionId = uuidv4();
 
 class DashboardWatcher {
-  private static readonly IGNORE_SAVE_WINDOW_MS = 5000;
-
   channel?: LiveChannelAddress; // path to the channel
   uid?: string;
-  ignoreSave = 0; // save any events until this time passes
+  ignoreSave?: boolean;
   editing = false;
   lastEditing?: DashboardEvent;
   subscription?: Unsubscribable;
@@ -67,7 +64,7 @@ class DashboardWatcher {
     if (uid !== this.uid) {
       this.channel = {
         scope: LiveChannelScope.Grafana,
-        stream: 'dashboard',
+        namespace: 'dashboard',
         path: `uid/${uid}`,
       };
       this.leave();
@@ -86,19 +83,8 @@ class DashboardWatcher {
     this.uid = undefined;
   }
 
-  // ignore the next 5 seconds of save events
   ignoreNextSave() {
-    this.ignoreSave = Date.now() + DashboardWatcher.IGNORE_SAVE_WINDOW_MS;
-  }
-
-  // Suppress save events indefinitely until clearIgnoreSave() is called.
-  // Used by provisioned saves where Git operations can exceed the 5s window.
-  ignoreSaveIndefinitely() {
-    this.ignoreSave = Infinity;
-  }
-
-  clearIgnoreSave() {
-    this.ignoreSave = 0;
+    this.ignoreSave = true;
   }
 
   getRecentEditingEvent() {
@@ -123,16 +109,13 @@ class DashboardWatcher {
           return; // skip internal messages
         }
 
-        const { action, message } = event.message;
+        const { action } = event.message;
         switch (action) {
           case DashboardEventAction.EditingStarted:
           case DashboardEventAction.Saved: {
             if (this.ignoreSave) {
-              if (this.ignoreSave < Date.now()) {
-                this.ignoreSave = 0; // process the event
-              } else {
-                return;
-              }
+              this.ignoreSave = false;
+              return;
             }
 
             const dash = getDashboardSrv().getCurrent();
@@ -141,13 +124,7 @@ class DashboardWatcher {
               return;
             }
 
-            let showPopup = this.editing || dash.hasUnsavedChanges();
-
-            // Dashboard could have unsaved changes but if user has already restored from a version
-            // the reloadPage should be called below
-            if (message?.includes('Restored from version')) {
-              showPopup = false;
-            }
+            const showPopup = this.editing || dash.hasUnsavedChanges();
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {

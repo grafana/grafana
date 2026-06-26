@@ -1,13 +1,14 @@
-/* eslint-disable @grafana/i18n/no-untranslated-strings */
+/* eslint-disable @grafana/no-untranslated-strings */
 /** @jsxImportSource @emotion/react */
+/** @jsxRuntime classic */
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
-import React, { Profiler, type ProfilerOnRenderCallback, useState, type FC } from 'react';
+import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { Button } from '../Button/Button';
+import { useStyles2, useTheme2 } from '../../themes';
+import { Button } from '../Button';
 import { Stack } from '../Layout/Stack/Stack';
 
 export function EmotionPerfTest() {
@@ -27,7 +28,7 @@ export function EmotionPerfTest() {
   );
 }
 
-const TestScenario: FC<{ name: string; Component: FC<TestComponentProps> }> = ({ name, Component }) => {
+export const TestScenario: FC<{ name: string; Component: FC<TestComponentProps> }> = ({ name, Component }) => {
   const [render, setRender] = useState(0);
 
   return (

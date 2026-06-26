@@ -3,22 +3,20 @@ package provisioning
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"hash/fnv"
-	"maps"
 	"slices"
 	"strings"
 	"unsafe"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
-	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
@@ -29,45 +27,16 @@ type MuteTimingService struct {
 	log                    log.Logger
 	validator              validation.ProvenanceStatusTransitionValidator
 	ruleNotificationsStore AlertRuleNotificationSettingsStore
-	routeService           timeIntervalRouteRefService
-	includeImported        bool
 }
 
-type timeIntervalRouteRefService interface {
-	RenameTimeIntervalInRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, oldName string, newName string) map[*v1.Route]int
-}
-
-func NewMuteTimingService(
-	config alertmanagerConfigStore,
-	prov ProvisioningStore,
-	xact TransactionManager,
-	log log.Logger,
-	ns AlertRuleNotificationSettingsStore,
-	routeService timeIntervalRouteRefService,
-	validator validation.ProvenanceStatusTransitionValidator,
-) *MuteTimingService {
+func NewMuteTimingService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger, ns AlertRuleNotificationSettingsStore) *MuteTimingService {
 	return &MuteTimingService{
 		configStore:            config,
 		provenanceStore:        prov,
 		xact:                   xact,
 		log:                    log,
-		validator:              validator,
+		validator:              validation.ValidateProvenanceRelaxed,
 		ruleNotificationsStore: ns,
-		routeService:           routeService,
-		includeImported:        false,
-	}
-}
-
-func (svc *MuteTimingService) WithIncludeImported() *MuteTimingService {
-	return &MuteTimingService{
-		configStore:            svc.configStore,
-		provenanceStore:        svc.provenanceStore,
-		xact:                   svc.xact,
-		log:                    svc.log,
-		validator:              svc.validator,
-		ruleNotificationsStore: svc.ruleNotificationsStore,
-		routeService:           svc.routeService,
-		includeImported:        true,
 	}
 }
 
@@ -78,10 +47,9 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 		return nil, err
 	}
 
-	grafanaIntervals := getGrafanaTimeIntervals(rev)
-	importedIntervals := svc.getImportedTimeIntervals(rev)
+	intervals := getTimeIntervals(rev)
 
-	if len(grafanaIntervals)+len(importedIntervals) == 0 {
+	if len(intervals) == 0 {
 		return []definitions.MuteTimeInterval{}, nil
 	}
 
@@ -90,81 +58,55 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 		return nil, err
 	}
 
-	result := make([]definitions.MuteTimeInterval, 0, len(grafanaIntervals))
-	for _, interval := range grafanaIntervals {
-		prov, ok := provenances[(&definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval(interval)}).ResourceID()]
-		if !ok {
-			prov = models.ProvenanceNone
-		}
-
-		result = append(result, newMuteTimingInterval(interval, definitions.Provenance(prov)))
-	}
-
-	for _, interval := range importedIntervals {
-		result = append(result, newMuteTimingInterval(interval, definitions.Provenance(models.ProvenanceConvertedPrometheus)))
-	}
-
-	slices.SortFunc(result, func(a, b definitions.MuteTimeInterval) int {
+	slices.SortFunc(intervals, func(a, b config.MuteTimeInterval) int {
 		return strings.Compare(a.Name, b.Name)
 	})
-
+	result := make([]definitions.MuteTimeInterval, 0, len(intervals))
+	for _, interval := range intervals {
+		version := calculateMuteTimeIntervalFingerprint(interval)
+		def := definitions.MuteTimeInterval{
+			UID:              legacy_storage.NameToUid(interval.Name),
+			MuteTimeInterval: interval,
+			Version:          version,
+		}
+		if prov, ok := provenances[def.ResourceID()]; ok {
+			def.Provenance = definitions.Provenance(prov)
+		}
+		result = append(result, def)
+	}
 	return result, nil
 }
 
-// GetMuteTimingByUID returns a mute timing by UID
-func (svc *MuteTimingService) GetMuteTimingByUID(ctx context.Context, uid string, orgID int64) (definitions.MuteTimeInterval, error) {
-	revision, err := svc.configStore.Get(ctx, orgID)
+// GetMuteTiming returns a mute timing by name
+func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
+	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	result, found, err := svc.getMuteTimingByUID(ctx, revision, orgID, uid)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
+	mt, found := getMuteTimingByName(rev, nameOrUID)
+	if !found {
+		name, err := legacy_storage.UidToName(nameOrUID)
+		if err == nil {
+			mt, found = getMuteTimingByName(rev, name)
+		}
 	}
-	if found {
-		return result, nil
-	}
-
-	return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
-}
-
-// GetMuteTimingByName returns a mute timing by name.
-func (svc *MuteTimingService) GetMuteTimingByName(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error) {
-	revision, err := svc.configStore.Get(ctx, orgID)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
-
-	mti, found, err := svc.getMuteTimingByName(ctx, revision, orgID, name)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	} else if !found {
+	if !found {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 	}
 
-	return mti, nil
-}
+	result := definitions.MuteTimeInterval{
+		UID:              legacy_storage.NameToUid(mt.Name),
+		MuteTimeInterval: mt,
+		Version:          calculateMuteTimeIntervalFingerprint(mt),
+	}
 
-// getMuteTiming is a helper that tries to get a mute timing by name first, then UID if not found by name.
-func (svc *MuteTimingService) getMuteTiming(ctx context.Context, revision *legacy_storage.ConfigRevision, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
-	result, found, err := svc.getMuteTimingByName(ctx, revision, orgID, nameOrUID)
+	prov, err := svc.provenanceStore.GetProvenance(ctx, &result, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	if found {
-		return result, nil
-	}
-
-	result, found, err = svc.getMuteTimingByUID(ctx, revision, orgID, nameOrUID)
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
-	if found {
-		return result, nil
-	}
-
-	return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
+	result.Provenance = definitions.Provenance(prov)
+	return result, nil
 }
 
 // CreateMuteTiming adds a new mute timing within the specified org. The created mute timing is returned.
@@ -173,20 +115,16 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
-	if err := svc.validator(ctx, models.ProvenanceNone, models.Provenance(mt.Provenance)); err != nil {
-		return definitions.MuteTimeInterval{}, err
-	}
-
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	if grafanaTimeIntervalExists(revision, mt.Name) {
+	_, found := getMuteTimingByName(revision, mt.Name)
+	if found {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
-
-	revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, v1.TimeInterval(mt.MuteTimeInterval))
+	revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt.MuteTimeInterval))
 
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
@@ -197,8 +135,12 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-
-	return newMuteTimingInterval(v1.MuteTimeInterval(mt.MuteTimeInterval), mt.Provenance), nil
+	return definitions.MuteTimeInterval{
+		UID:              legacy_storage.NameToUid(mt.Name),
+		MuteTimeInterval: mt.MuteTimeInterval,
+		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
+		Provenance:       mt.Provenance,
+	}, nil
 }
 
 // UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, ErrMuteTimingsNotFound is returned.
@@ -212,59 +154,53 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	var found bool
-	var existing definitions.MuteTimeInterval
+	var old config.MuteTimeInterval
+	found := false
 	if mt.UID != "" {
-		existing, found, err = svc.getMuteTimingByUID(ctx, revision, orgID, mt.UID)
+		name, err := legacy_storage.UidToName(mt.UID)
+		if err == nil {
+			old, found = getMuteTimingByName(revision, name)
+		}
 	} else {
-		existing, found, err = svc.getMuteTimingByName(ctx, revision, orgID, mt.Name)
+		old, found = getMuteTimingByName(revision, mt.Name)
 	}
-	if err != nil {
-		return definitions.MuteTimeInterval{}, err
-	} else if !found {
+	if !found {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 	}
 
-	if existing.Name != mt.Name { // if mute timing is renamed, check if this name is already taken
-		if grafanaTimeIntervalExists(revision, mt.Name) {
-			return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
-		}
-	}
-
-	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
-		return definitions.MuteTimeInterval{}, makeErrMuteTimeIntervalOrigin(existing, "update")
-	}
-
-	// check that provenance is not changed in an invalid way
-	if err := svc.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(mt.Provenance)); err != nil {
+	// check optimistic concurrency
+	err = svc.checkOptimisticConcurrency(old, models.Provenance(mt.Provenance), mt.Version, "update")
+	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	existingInterval := v1.MuteTimeInterval(existing.MuteTimeInterval)
-
-	// check optimistic concurrency
-	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(mt.Provenance), mt.Version, "update"); err != nil {
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &definitions.MuteTimeInterval{MuteTimeInterval: old}, orgID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+	if err := svc.validator(storedProvenance, models.Provenance(mt.Provenance)); err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
 
 	// TODO add diff and noop detection
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// if the name of the time interval changed
-		if existingInterval.Name != mt.Name {
-			deleteTimeInterval(revision, existingInterval)
-			revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, v1.TimeInterval(mt.MuteTimeInterval))
+		if old.Name != mt.Name {
+			deleteTimeInterval(revision, old)
+			revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt.MuteTimeInterval))
 
-			err = svc.renameTimeIntervalInDependentResources(ctx, orgID, revision, existingInterval.Name, mt.Name, models.Provenance(mt.Provenance))
+			err = svc.renameTimeIntervalInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, old.Name, mt.Name, models.Provenance(mt.Provenance))
 			if err != nil {
 				return err
 			}
 
-			err = svc.provenanceStore.DeleteProvenance(ctx, &existing, orgID)
+			err = svc.provenanceStore.DeleteProvenance(ctx, &definitions.MuteTimeInterval{MuteTimeInterval: old}, orgID)
 			if err != nil {
 				return err
 			}
 		} else {
-			updateTimeInterval(revision, v1.MuteTimeInterval(mt.MuteTimeInterval))
+			updateTimeInterval(revision, mt.MuteTimeInterval)
 		}
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
@@ -274,8 +210,12 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-
-	return newMuteTimingInterval(v1.MuteTimeInterval(mt.MuteTimeInterval), mt.Provenance), nil
+	return definitions.MuteTimeInterval{
+		UID:              legacy_storage.NameToUid(mt.Name),
+		MuteTimeInterval: mt.MuteTimeInterval,
+		Version:          calculateMuteTimeIntervalFingerprint(mt.MuteTimeInterval),
+		Provenance:       mt.Provenance,
+	}, err
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
@@ -285,157 +225,91 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		return err
 	}
 
-	existing, err := svc.getMuteTiming(ctx, revision, nameOrUID, orgID)
-	if err != nil && !errors.Is(err, ErrTimeIntervalNotFound) {
-		return err
-	} else if errors.Is(err, ErrTimeIntervalNotFound) {
+	existing, found := getMuteTimingByName(revision, nameOrUID)
+	if !found {
+		name, err := legacy_storage.UidToName(nameOrUID)
+		if err == nil {
+			existing, found = getMuteTimingByName(revision, name)
+		}
+	}
+	if !found {
+		svc.log.FromContext(ctx).Debug("Time interval was not found. Skip deleting", "name", nameOrUID)
 		return nil
 	}
 
-	// Block deletes of imported intervals
-	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
-		return makeErrMuteTimeIntervalOrigin(existing, "delete")
+	target := definitions.MuteTimeInterval{MuteTimeInterval: existing, Provenance: provenance}
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &target, orgID)
+	if err != nil {
+		return err
 	}
-
-	existingInterval := v1.MuteTimeInterval(existing.MuteTimeInterval)
-
-	if err := svc.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
+	if err := svc.validator(storedProvenance, models.Provenance(provenance)); err != nil {
 		return err
 	}
 
-	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
-		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
+	if isMuteTimeInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
+		ns, _ := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
-		return MakeErrTimeIntervalInUse(true, slices.Collect(maps.Keys(ns)))
+		return MakeErrTimeIntervalInUse(true, maps.Keys(ns))
 	}
 
-	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(provenance), version, "delete"); err != nil {
+	err = svc.checkOptimisticConcurrency(existing, models.Provenance(provenance), version, "delete")
+	if err != nil {
 		return err
 	}
-	deleteTimeInterval(revision, existingInterval)
+	deleteTimeInterval(revision, existing)
 
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		keys, err := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
+		keys, err := svc.ruleNotificationsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		if err != nil {
 			return err
 		}
 		if len(keys) > 0 {
-			return MakeErrTimeIntervalInUse(false, slices.Collect(maps.Keys(keys)))
+			return MakeErrTimeIntervalInUse(false, maps.Keys(keys))
 		}
 
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.DeleteProvenance(ctx, &existingInterval, orgID)
+		return svc.provenanceStore.DeleteProvenance(ctx, &target, orgID)
 	})
 }
 
-func isTimeIntervalInUseInRoutes(name string, route *v1.Route) bool {
+func isMuteTimeInUseInRoutes(name string, route *definitions.Route) bool {
 	if route == nil {
 		return false
 	}
 	if slices.Contains(route.MuteTimeIntervals, name) {
 		return true
 	}
-
-	if slices.Contains(route.ActiveTimeIntervals, name) {
-		return true
-	}
-
 	for _, route := range route.Routes {
-		if isTimeIntervalInUseInRoutes(name, route) {
+		if isMuteTimeInUseInRoutes(name, route) {
 			return true
 		}
 	}
 	return false
 }
 
-func (svc *MuteTimingService) getMuteTimingByName(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, name string) (definitions.MuteTimeInterval, bool, error) {
-	grafanaIntervals := getGrafanaTimeIntervals(revision)
-	if idx := slices.IndexFunc(grafanaIntervals, findByName(name)); idx != -1 {
-		interval := grafanaIntervals[idx]
-
-		prov, err := svc.provenanceStore.GetProvenance(ctx, &definitions.MuteTimeInterval{UID: legacy_storage.NameToUid(interval.Name), MuteTimeInterval: config.MuteTimeInterval(interval)}, orgID)
-		if err != nil {
-			return definitions.MuteTimeInterval{}, false, err
-		}
-
-		return newMuteTimingInterval(interval, definitions.Provenance(prov)), true, nil
-	}
-
-	return definitions.MuteTimeInterval{}, false, nil
-}
-
-func (svc *MuteTimingService) getMuteTimingByUID(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, uid string) (definitions.MuteTimeInterval, bool, error) {
-	grafanaIntervals := getGrafanaTimeIntervals(revision)
-	if idx := slices.IndexFunc(grafanaIntervals, findByUID(uid)); idx != -1 {
-		interval := grafanaIntervals[idx]
-
-		prov, err := svc.provenanceStore.GetProvenance(ctx, &definitions.MuteTimeInterval{UID: legacy_storage.NameToUid(interval.Name), MuteTimeInterval: config.MuteTimeInterval(interval)}, orgID)
-		if err != nil {
-			return definitions.MuteTimeInterval{}, false, err
-		}
-
-		return newMuteTimingInterval(interval, definitions.Provenance(prov)), true, nil
-	}
-
-	if importedIntervals := svc.getImportedTimeIntervals(revision); len(importedIntervals) > 0 {
-		if idx := slices.IndexFunc(importedIntervals, findByUID(uid)); idx != -1 {
-			interval := importedIntervals[idx]
-
-			return newMuteTimingInterval(interval, definitions.Provenance(models.ProvenanceConvertedPrometheus)), true, nil
-		}
-	}
-
-	return definitions.MuteTimeInterval{}, false, nil
-}
-
-func (svc *MuteTimingService) getImportedTimeIntervals(rev *legacy_storage.ConfigRevision) []v1.MuteTimeInterval {
-	if !svc.includeImported {
-		return nil
-	}
-
-	imported, err := rev.Imported()
-	if err != nil {
-		svc.log.Warn("failed to get imported config revision for mute time intervals", "error", err)
-		return nil
-	}
-
-	intervals, err := imported.GetMuteTimeIntervals()
-	if err != nil {
-		svc.log.Warn("failed to get imported mute time intervals", "error", err)
-		return nil
-	}
-
-	return intervals
-}
-
-func findByName(name string) func(v1.MuteTimeInterval) bool {
-	return func(interval v1.MuteTimeInterval) bool {
+func getMuteTimingByName(rev *legacy_storage.ConfigRevision, name string) (config.MuteTimeInterval, bool) {
+	intervals := getTimeIntervals(rev)
+	idx := slices.IndexFunc(intervals, func(interval config.MuteTimeInterval) bool {
 		return interval.Name == name
+	})
+	if idx == -1 {
+		return config.MuteTimeInterval{}, false
 	}
+	return intervals[idx], true
 }
 
-func findByUID(uid string) func(v1.MuteTimeInterval) bool {
-	return func(interval v1.MuteTimeInterval) bool {
-		return legacy_storage.NameToUid(interval.Name) == uid
-	}
-}
-
-func getGrafanaTimeIntervals(rev *legacy_storage.ConfigRevision) []v1.MuteTimeInterval {
-	result := make([]v1.MuteTimeInterval, 0, len(rev.Config.AlertmanagerConfig.TimeIntervals)+len(rev.Config.AlertmanagerConfig.MuteTimeIntervals))
+func getTimeIntervals(rev *legacy_storage.ConfigRevision) []config.MuteTimeInterval {
+	result := make([]config.MuteTimeInterval, 0, len(rev.Config.AlertmanagerConfig.TimeIntervals)+len(rev.Config.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range rev.Config.AlertmanagerConfig.TimeIntervals {
-		result = append(result, v1.MuteTimeInterval(interval))
+		result = append(result, config.MuteTimeInterval(interval))
 	}
 	return append(result, rev.Config.AlertmanagerConfig.MuteTimeIntervals...)
 }
 
-func grafanaTimeIntervalExists(rev *legacy_storage.ConfigRevision, name string) bool {
-	grafanaIntervals := getGrafanaTimeIntervals(rev)
-	return slices.IndexFunc(grafanaIntervals, findByName(name)) != -1
-}
-
-func updateTimeInterval(rev *legacy_storage.ConfigRevision, interval v1.MuteTimeInterval) {
+func updateTimeInterval(rev *legacy_storage.ConfigRevision, interval config.MuteTimeInterval) {
 	for idx := range rev.Config.AlertmanagerConfig.MuteTimeIntervals {
 		if rev.Config.AlertmanagerConfig.MuteTimeIntervals[idx].Name == interval.Name {
 			rev.Config.AlertmanagerConfig.MuteTimeIntervals[idx] = interval
@@ -444,20 +318,22 @@ func updateTimeInterval(rev *legacy_storage.ConfigRevision, interval v1.MuteTime
 	}
 	for idx := range rev.Config.AlertmanagerConfig.TimeIntervals {
 		if rev.Config.AlertmanagerConfig.TimeIntervals[idx].Name == interval.Name {
-			rev.Config.AlertmanagerConfig.TimeIntervals[idx] = v1.TimeInterval(interval)
+			rev.Config.AlertmanagerConfig.TimeIntervals[idx] = config.TimeInterval(interval)
 			return
 		}
 	}
 }
 
-func deleteTimeInterval(rev *legacy_storage.ConfigRevision, interval v1.MuteTimeInterval) {
-	rev.Config.AlertmanagerConfig.MuteTimeIntervals = slices.DeleteFunc(rev.Config.AlertmanagerConfig.MuteTimeIntervals, findByName(interval.Name))
-	rev.Config.AlertmanagerConfig.TimeIntervals = slices.DeleteFunc(rev.Config.AlertmanagerConfig.TimeIntervals, func(i v1.TimeInterval) bool {
+func deleteTimeInterval(rev *legacy_storage.ConfigRevision, interval config.MuteTimeInterval) {
+	rev.Config.AlertmanagerConfig.MuteTimeIntervals = slices.DeleteFunc(rev.Config.AlertmanagerConfig.MuteTimeIntervals, func(i config.MuteTimeInterval) bool {
+		return i.Name == interval.Name
+	})
+	rev.Config.AlertmanagerConfig.TimeIntervals = slices.DeleteFunc(rev.Config.AlertmanagerConfig.TimeIntervals, func(i config.TimeInterval) bool {
 		return i.Name == interval.Name
 	})
 }
 
-func calculateMuteTimeIntervalFingerprint(interval v1.MuteTimeInterval) string {
+func calculateMuteTimeIntervalFingerprint(interval config.MuteTimeInterval) string {
 	sum := fnv.New64()
 
 	writeBytes := func(b []byte) {
@@ -512,7 +388,7 @@ func calculateMuteTimeIntervalFingerprint(interval v1.MuteTimeInterval) string {
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func (svc *MuteTimingService) checkOptimisticConcurrency(current v1.MuteTimeInterval, provenance models.Provenance, desiredVersion string, action string) error {
+func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTimeInterval, provenance models.Provenance, desiredVersion string, action string) error {
 	if desiredVersion == "" {
 		if provenance != models.ProvenanceFile {
 			// if version is not specified and it's not a file provisioning, emit a log message to reflect that optimistic concurrency is disabled for this request
@@ -527,43 +403,45 @@ func (svc *MuteTimingService) checkOptimisticConcurrency(current v1.MuteTimeInte
 	return nil
 }
 
-func (svc *MuteTimingService) renameTimeIntervalInDependentResources(ctx context.Context, orgID int64, rev *legacy_storage.ConfigRevision, oldName, newName string, timeIntervalProvenance models.Provenance) error {
+func (svc *MuteTimingService) renameTimeIntervalInDependentResources(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, timeIntervalProvenance models.Provenance) error {
 	validate := validation.ValidateProvenanceOfDependentResources(timeIntervalProvenance)
 	// if there are no references to the old time interval, exit
+	updatedRoutes := replaceMuteTiming(route, oldName, newName)
 	canUpdate := true
-	updatedRouteCnt := 0
-	if updatedRoutes := svc.routeService.RenameTimeIntervalInRoutes(ctx, rev, oldName, newName); len(updatedRoutes) > 0 {
-		for route, updatedCnt := range updatedRoutes {
-			if updatedCnt > 0 {
-				updatedRouteCnt += updatedCnt
-				routeProvenance, err := svc.provenanceStore.GetProvenance(ctx, route, orgID)
-				if err != nil {
-					return err
-				}
-				canUpdate = canUpdate && validate(routeProvenance)
-			}
+	if updatedRoutes > 0 {
+		routeProvenance, err := svc.provenanceStore.GetProvenance(ctx, route, orgID)
+		if err != nil {
+			return err
 		}
+		canUpdate = validate(routeProvenance)
 	}
-
 	dryRun := !canUpdate
 	affected, invalidProvenance, err := svc.ruleNotificationsStore.RenameTimeIntervalInNotificationSettings(ctx, orgID, oldName, newName, validate, dryRun)
 	if err != nil {
 		return err
 	}
 	if !canUpdate || len(invalidProvenance) > 0 {
-		return MakeErrTimeIntervalDependentResourcesProvenance(updatedRouteCnt > 0, invalidProvenance)
+		return MakeErrTimeIntervalDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
 	}
-	if len(affected) > 0 || updatedRouteCnt > 0 {
-		svc.log.FromContext(ctx).Info("Updated rules and routes that use renamed time interval", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRouteCnt)
+	if len(affected) > 0 || updatedRoutes > 0 {
+		svc.log.FromContext(ctx).Info("Updated rules and routes that use renamed time interval", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
 	}
 	return nil
 }
 
-func newMuteTimingInterval(interval v1.MuteTimeInterval, provenance definitions.Provenance) definitions.MuteTimeInterval {
-	return definitions.MuteTimeInterval{
-		UID:              legacy_storage.NameToUid(interval.Name),
-		MuteTimeInterval: config.MuteTimeInterval(interval),
-		Version:          calculateMuteTimeIntervalFingerprint(interval),
-		Provenance:       provenance,
+func replaceMuteTiming(route *definitions.Route, oldName, newName string) int {
+	if route == nil {
+		return 0
 	}
+	updated := 0
+	for idx := range route.MuteTimeIntervals {
+		if route.MuteTimeIntervals[idx] == oldName {
+			route.MuteTimeIntervals[idx] = newName
+			updated++
+		}
+	}
+	for _, route := range route.Routes {
+		updated += replaceMuteTiming(route, oldName, newName)
+	}
+	return updated
 }

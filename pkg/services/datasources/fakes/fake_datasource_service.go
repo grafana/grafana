@@ -4,10 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/grafana/authlib/types"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -16,37 +14,16 @@ type FakeDataSourceService struct {
 	lastID                int64
 	DataSources           []*datasources.DataSource
 	SimulatePluginFailure bool
-
-	// UID -> Headers
-	DataSourceHeaders map[string]http.Header
-}
-
-// ListConnections implements datasources.DataSourceService.
-func (s *FakeDataSourceService) ListConnections(ctx context.Context, query v0alpha1.DataSourceConnectionQuery) (*v0alpha1.DataSourceConnectionList, error) {
-	return &v0alpha1.DataSourceConnectionList{}, nil
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
 
 func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, dataSource := range s.DataSources {
-		idMatch := query.ID != 0 && query.ID == dataSource.ID // nolint:staticcheck
+		idMatch := query.ID != 0 && query.ID == dataSource.ID
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
-		nameMatch := query.Name != "" && query.Name == dataSource.Name // nolint:staticcheck
+		nameMatch := query.Name != "" && query.Name == dataSource.Name
 		if idMatch || nameMatch || uidMatch {
-			return dataSource, nil
-		}
-	}
-	return nil, datasources.ErrDataSourceNotFound
-}
-
-func (s *FakeDataSourceService) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
-	ns, err := types.ParseNamespace(namespace)
-	if err != nil {
-		return nil, err
-	}
-	for _, dataSource := range s.DataSources {
-		if name == dataSource.UID && ns.OrgID == dataSource.OrgID && group == dataSource.Type {
 			return dataSource, nil
 		}
 	}
@@ -97,12 +74,11 @@ func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasour
 		s.lastID = int64(len(s.DataSources) - 1)
 	}
 	dataSource := &datasources.DataSource{
-		ID:       s.lastID + 1,
-		Name:     cmd.Name,
-		Type:     cmd.Type,
-		UID:      cmd.UID,
-		OrgID:    cmd.OrgID,
-		JsonData: cmd.JsonData,
+		ID:    s.lastID + 1,
+		Name:  cmd.Name,
+		Type:  cmd.Type,
+		UID:   cmd.UID,
+		OrgID: cmd.OrgID,
 	}
 	s.DataSources = append(s.DataSources, dataSource)
 	return dataSource, nil
@@ -145,7 +121,11 @@ func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *dataso
 }
 
 func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
-	return make(map[string]string), nil
+	if s.SimulatePluginFailure {
+		return nil, datasources.ErrDatasourceSecretsPluginUserFriendly{Err: "unknown error"}
+	}
+	values := make(map[string]string)
+	return values, nil
 }
 
 func (s *FakeDataSourceService) DecryptedValue(ctx context.Context, ds *datasources.DataSource, key string) (string, bool, error) {
@@ -161,5 +141,5 @@ func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datas
 }
 
 func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
-	return s.DataSourceHeaders[ds.UID], nil
+	return nil, nil
 }

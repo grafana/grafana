@@ -17,7 +17,6 @@ const (
 	BackendTypeAnnotations BackendType = "annotations"
 	BackendTypeLoki        BackendType = "loki"
 	BackendTypeMultiple    BackendType = "multiple"
-	BackendTypePrometheus  BackendType = "prometheus"
 	BackendTypeNoop        BackendType = "noop"
 )
 
@@ -28,7 +27,6 @@ func ParseBackendType(s string) (BackendType, error) {
 		BackendTypeAnnotations: {},
 		BackendTypeLoki:        {},
 		BackendTypeMultiple:    {},
-		BackendTypePrometheus:  {},
 		BackendTypeNoop:        {},
 	}
 	p := BackendType(norm)

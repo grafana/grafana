@@ -21,22 +21,25 @@
       }
     ]
   },
+  "description": "",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 21273,
   "links": [
     {
       "asDropdown": true,
       "icon": "external link",
-      "tags": ["gdev", "graph-ng"],
+      "tags": [
+        "gdev",
+        "graph-ng"
+      ],
       "title": "Graph Tests",
       "type": "dashboards"
     }
   ],
+  "liveNow": false,
   "panels": [
     {
-      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -44,13 +47,13 @@
         "y": 0
       },
       "id": 44,
-      "panels": [],
       "title": "Enums",
       "type": "row"
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "description": "This visualizes a time series of enumerated values, displaying minimum, maximum, and average values over time to track fluctuations and trends",
       "fieldConfig": {
@@ -96,7 +99,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -159,13 +162,13 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
-          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686730601000,\n          1686730610000,\n          1686730615000,\n          1686730635000,\n          1686730666000,\n          1686730679000,\n          1686730700000,\n          1686730705000\n        ],\n        [\n          97.56700088585262,\n          97.51875596242603,\n          97.88367836664669,\n          97.64813860191066,\n          97.46344237059202,\n          97.06932713353162,\n          97.11185691118344,\n          97.4315327939052\n        ],\n        [\n          96.17381933561288,\n          96.86449303671965,\n          95.5851820937877,\n          96.94658694041154,\n          96.7433590164638,\n          96.74913605945137,\n          95.61938577725707,\n          96.24186355022567\n        ],\n        [\n          99.69898997339244,\n          98.68620205532211,\n          99.5800005905314,\n          98.2998754185445,\n          98.02873998081307,\n          99.01798295660049,\n          97.95260164072228,\n          98.24811606848421\n        ],\n        [\n          \"ON\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"STANDBY\",\n          \"OFF\"\n        ]\n      ]\n    }\n  }\n]",
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Info\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"2023-06-14T08:16:41Z\",\n          \"2023-06-14T08:16:50Z\",\n          \"2023-06-14T08:16:55Z\",\n          \"2023-06-14T08:17:15Z\",\n          \"2023-06-14T08:17:46Z\",\n          \"2023-06-14T08:17:59Z\",\n          \"2023-06-14T08:18:20Z\",\n          \"2023-06-14T08:18:25Z\"\n        ],\n        [\n          97.56700088585262,\n          97.51875596242603,\n          97.88367836664669,\n          97.64813860191066,\n          97.46344237059202,\n          97.06932713353162,\n          97.11185691118344,\n          97.4315327939052\n        ],\n        [\n          96.17381933561288,\n          96.86449303671965,\n          95.5851820937877,\n          96.94658694041154,\n          96.7433590164638,\n          96.74913605945137,\n          95.61938577725707,\n          96.24186355022567\n        ],\n        [\n          99.69898997339244,\n          98.68620205532211,\n          99.5800005905314,\n          98.2998754185445,\n          98.02873998081307,\n          99.01798295660049,\n          97.95260164072228,\n          98.24811606848421\n        ],\n        [\n          \"down\",\n          \"down\",\n          \"up\",\n          \"down\",\n          \"down\",\n          \"down\",\n          \"up\",\n          \"up\"\n        ],\n        [\n          \"ON\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"STANDBY\",\n          \"OFF\"\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
           "scenarioId": "raw_frame"
         }
@@ -179,7 +182,11 @@
               {
                 "destinationType": "enum",
                 "enumConfig": {
-                  "text": ["OFF", "STANDBY", "ON"]
+                  "text": [
+                    "OFF",
+                    "STANDBY",
+                    "ON"
+                  ]
                 },
                 "targetField": "Status"
               }
@@ -192,7 +199,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "description": "",
       "fieldConfig": {
@@ -201,7 +209,6 @@
             "mode": "thresholds"
           },
           "custom": {
-            "axisPlacement": "auto",
             "fillOpacity": 70,
             "hideFrom": {
               "legend": false,
@@ -218,7 +225,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -275,13 +282,13 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "grafana-testdata-datasource",
+            "uid": "PD8C576611E62080A"
           },
-          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          1686730601000,\n          1686730610000,\n          1686730615000,\n          1686730635000,\n          1686730666000,\n          1686730679000,\n          1686730700000,\n          1686730705000\n        ],\n        [\n          97.56700088585262,\n          97.51875596242603,\n          97.88367836664669,\n          97.64813860191066,\n          97.46344237059202,\n          97.06932713353162,\n          97.11185691118344,\n          97.4315327939052\n        ],\n        [\n          96.17381933561288,\n          96.86449303671965,\n          95.5851820937877,\n          96.94658694041154,\n          96.7433590164638,\n          96.74913605945137,\n          95.61938577725707,\n          96.24186355022567\n        ],\n        [\n          99.69898997339244,\n          98.68620205532211,\n          99.5800005905314,\n          98.2998754185445,\n          98.02873998081307,\n          99.01798295660049,\n          97.95260164072228,\n          98.24811606848421\n        ],\n        [\n          \"ON\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"STANDBY\",\n          \"OFF\"\n        ]\n      ]\n    }\n  }\n]",
+          "rawFrameContent": "[\n  {\n    \"schema\": {\n      \"refId\": \"A\",\n      \"name\": \"A\",\n      \"fields\": [\n        {\n          \"name\": \"Time\",\n          \"type\": \"time\",\n          \"typeInfo\": {\n            \"frame\": \"time.Time\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Value\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Min\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Max\",\n          \"type\": \"number\",\n          \"typeInfo\": {\n            \"frame\": \"float64\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        },\n        {\n          \"name\": \"Status\",\n          \"type\": \"string\",\n          \"typeInfo\": {\n            \"frame\": \"string\",\n            \"nullable\": true\n          },\n          \"config\": {}\n        }\n      ]\n    },\n    \"data\": {\n      \"values\": [\n        [\n          \"2023-06-14T08:16:41Z\",\n          \"2023-06-14T08:16:50Z\",\n          \"2023-06-14T08:16:55Z\",\n          \"2023-06-14T08:17:15Z\",\n          \"2023-06-14T08:17:46Z\",\n          \"2023-06-14T08:17:59Z\",\n          \"2023-06-14T08:18:20Z\",\n          \"2023-06-14T08:18:25Z\"\n        ],\n        [\n          97.56700088585262,\n          97.51875596242603,\n          97.88367836664669,\n          97.64813860191066,\n          97.46344237059202,\n          97.06932713353162,\n          97.11185691118344,\n          97.4315327939052\n        ],\n        [\n          96.17381933561288,\n          96.86449303671965,\n          95.5851820937877,\n          96.94658694041154,\n          96.7433590164638,\n          96.74913605945137,\n          95.61938577725707,\n          96.24186355022567\n        ],\n        [\n          99.69898997339244,\n          98.68620205532211,\n          99.5800005905314,\n          98.2998754185445,\n          98.02873998081307,\n          99.01798295660049,\n          97.95260164072228,\n          98.24811606848421\n        ],\n        [\n          \"ON\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"OFF\",\n          \"ON\",\n          \"STANDBY\",\n          \"OFF\"\n        ]\n      ]\n    }\n  }\n]",
           "refId": "A",
           "scenarioId": "raw_frame"
         }
@@ -295,7 +302,11 @@
               {
                 "destinationType": "enum",
                 "enumConfig": {
-                  "text": ["OFF", "STANDBY", "ON"]
+                  "text": [
+                    "OFF",
+                    "STANDBY",
+                    "ON"
+                  ]
                 },
                 "targetField": "Status"
               }
@@ -307,7 +318,6 @@
       "type": "state-timeline"
     },
     {
-      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -315,13 +325,12 @@
         "y": 17
       },
       "id": 43,
-      "panels": [],
       "title": "Gaps and connected",
       "type": "row"
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -366,7 +375,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -385,6 +394,7 @@
         "y": 18
       },
       "id": 3,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -397,7 +407,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "alias": "",
@@ -433,7 +443,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "description": "Series A have no nulls and is not aligned with series B",
       "fieldConfig": {
@@ -480,7 +490,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -499,6 +509,7 @@
         "y": 18
       },
       "id": 2,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -511,7 +522,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "alias": "",
@@ -555,7 +566,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "description": "",
       "fieldConfig": {
@@ -602,7 +613,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -621,6 +632,7 @@
         "y": 18
       },
       "id": 6,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -633,7 +645,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "alias": "",
@@ -697,7 +709,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -742,7 +754,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -761,6 +773,7 @@
         "y": 25
       },
       "id": 4,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -773,7 +786,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "alias": "",
@@ -809,7 +822,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "description": "Series A have no nulls and is not aligned with series B",
       "fieldConfig": {
@@ -856,7 +869,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -875,6 +888,7 @@
         "y": 25
       },
       "id": 5,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -887,7 +901,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "alias": "",
@@ -931,7 +945,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "description": "Should look the same as above\n",
       "fieldConfig": {
@@ -978,7 +992,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -997,6 +1011,7 @@
         "y": 25
       },
       "id": 7,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -1009,7 +1024,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "targets": [
         {
           "alias": "",
@@ -1073,7 +1088,7 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -1118,7 +1133,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1182,7 +1197,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.2.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -1217,11 +1232,12 @@
         }
       ],
       "title": "Null values in first series & show gaps ",
+      "transformations": [],
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -1266,7 +1282,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1330,7 +1346,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.2.0-pre",
       "targets": [
         {
           "alias": "",
@@ -1365,11 +1381,13 @@
         }
       ],
       "title": "Null values in second series show gaps (bugged)",
+      "transformations": [],
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1417,7 +1435,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1447,7 +1465,6 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "refId": "A",
@@ -1460,7 +1477,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1508,7 +1526,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1538,11 +1556,11 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1554,7 +1572,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1599,7 +1618,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1630,11 +1649,11 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1646,7 +1665,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1691,7 +1711,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1722,11 +1742,11 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1738,7 +1758,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1783,7 +1804,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1814,11 +1835,11 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1830,7 +1851,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1875,7 +1897,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1887,7 +1909,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 10,
         "w": 8,
         "x": 0,
         "y": 61
@@ -1906,11 +1928,11 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -1922,7 +1944,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -1967,7 +1990,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -1979,7 +2002,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 10,
         "w": 8,
         "x": 8,
         "y": 61
@@ -1998,11 +2021,11 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -2014,7 +2037,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2059,7 +2083,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -2071,7 +2095,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
+        "h": 10,
         "w": 8,
         "x": 16,
         "y": 61
@@ -2090,11 +2114,11 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_metric_values",
@@ -2102,190 +2126,6 @@
         }
       ],
       "title": "Higher density (mostly nulls, no leading/trailing)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 0,
-        "y": 66
-      },
-      "id": 47,
-      "maxDataPoints": 150,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.1.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-testdata-datasource"
-          },
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "8"
-        }
-      ],
-      "title": "Higher density (mostly nulls, one leading point)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "grafana-testdata-datasource"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 8,
-        "y": 66
-      },
-      "id": 48,
-      "maxDataPoints": 150,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.1.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-testdata-datasource"
-          },
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,8"
-        }
-      ],
-      "title": "Higher density (mostly nulls, one trailing point)",
       "type": "timeseries"
     },
     {
@@ -2303,7 +2143,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "grafana-testdata-datasource",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2348,7 +2189,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -2379,13 +2220,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "alias": "",
           "csvContent": "time, val\n2023-06-14T08:16:41Z, 20\n2023-06-14T08:16:42Z, 22\n2023-06-14T08:16:43Z, 24\n2023-06-14T08:16:45Z, 10\n2023-06-14T08:16:46Z, 12\n2023-06-14T08:17:46Z, 13\n2023-06-14T08:17:47Z, 14\n2023-06-14T08:17:57Z, 20\n2023-06-14T08:17:58Z, null\n2023-06-14T08:18:00Z, 22\n2023-06-14T08:18:25Z, 22",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -2396,7 +2238,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2441,7 +2284,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -2472,13 +2315,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "alias": "",
           "csvContent": "x, val\n1, 20\n2, 22\n3, 24\n5, 10\n6, 12\n66, 13\n67, 14\n77, 20\n78, null\n80, 22\n105, 22",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -2489,7 +2333,8 @@
     },
     {
       "datasource": {
-        "type": "grafana-testdata-datasource"
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -2497,7 +2342,6 @@
             "mode": "thresholds"
           },
           "custom": {
-            "axisPlacement": "auto",
             "fillOpacity": 70,
             "hideFrom": {
               "legend": false,
@@ -2514,7 +2358,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "#EAB839",
@@ -2560,13 +2404,14 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "alias": "",
           "csvContent": "time, val\n2023-06-14T08:16:41Z, 20\n2023-06-14T08:16:42Z, 22\n2023-06-14T08:16:43Z, 24\n2023-06-14T08:16:45Z, 10\n2023-06-14T08:16:46Z, 12\n2023-06-14T08:17:46Z, 13\n2023-06-14T08:17:47Z, 14\n2023-06-14T08:17:57Z, 20\n2023-06-14T08:17:58Z, null\n2023-06-14T08:18:00Z, 22\n2023-06-14T08:18:25Z, 22",
           "datasource": {
-            "type": "grafana-testdata-datasource"
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
           },
           "refId": "A",
           "scenarioId": "csv_content"
@@ -2623,7 +2468,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -2654,7 +2499,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -2716,7 +2561,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -2747,7 +2592,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -2772,7 +2617,6 @@
             "mode": "thresholds"
           },
           "custom": {
-            "axisPlacement": "auto",
             "fillOpacity": 70,
             "hideFrom": {
               "legend": false,
@@ -2789,7 +2633,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "#EAB839",
@@ -2835,7 +2679,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -2897,7 +2741,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -2928,7 +2772,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -2990,7 +2834,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -3021,7 +2865,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -3046,7 +2890,6 @@
             "mode": "thresholds"
           },
           "custom": {
-            "axisPlacement": "auto",
             "fillOpacity": 70,
             "hideFrom": {
               "legend": false,
@@ -3063,7 +2906,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "#EAB839",
@@ -3109,7 +2952,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -3171,7 +3014,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -3202,7 +3045,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -3264,7 +3107,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -3295,7 +3138,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -3320,7 +3163,6 @@
             "mode": "thresholds"
           },
           "custom": {
-            "axisPlacement": "auto",
             "fillOpacity": 70,
             "hideFrom": {
               "legend": false,
@@ -3337,7 +3179,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "#EAB839",
@@ -3383,7 +3225,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.1.0-pre",
+      "pluginVersion": "7.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -3398,10 +3240,17 @@
       "type": "state-timeline"
     }
   ],
-  "preload": false,
   "refresh": false,
-  "schemaVersion": 41,
-  "tags": ["gdev", "panel-tests", "graph-ng", "timeseries", "trend", "state-timeline", "transform"],
+  "schemaVersion": 39,
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng",
+    "timeseries",
+    "trend",
+    "state-timeline",
+    "transform"
+  ],
   "templating": {
     "list": []
   },
@@ -3413,5 +3262,6 @@
   "timezone": "",
   "title": "Panel Tests - Graph NG - Discrete panels",
   "uid": "8mmCAF1Mz",
-  "version": 1
+  "version": 25,
+  "weekStart": ""
 }

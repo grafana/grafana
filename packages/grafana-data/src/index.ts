@@ -16,8 +16,6 @@ export {
   guessFieldTypeFromValue,
   guessFieldTypeForField,
   guessFieldTypes,
-} from './dataframe/guessFieldType';
-export {
   isTableData,
   isDataFrame,
   isDataFrameWithValue,
@@ -52,8 +50,6 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
-  alignTimeRangeCompareData,
-  shouldAlignTimeCompare,
 } from './dataframe/utils';
 export {
   StreamingDataFrame,
@@ -102,7 +98,7 @@ export {
 } from './text/string';
 export { type TextMatch, findHighlightChunksInText, findMatchesInText, parseFlags } from './text/text';
 export { type RenderMarkdownOptions, renderMarkdown, renderTextPanelMarkdown } from './text/markdown';
-export { textUtil, validatePath, PathValidationError } from './text/sanitize';
+export { textUtil } from './text/sanitize';
 
 // Events
 export { eventFactory } from './events/eventFactory';
@@ -140,8 +136,7 @@ export {
   getFieldColorMode,
   fieldColorModeRegistry,
   type FieldColorMode,
-  /** @internal */
-  getColorByStringHash,
+  getFieldSeriesColor,
 } from './field/fieldColor';
 export { FieldConfigOptionsRegistry } from './field/FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './field/thresholds';
@@ -151,8 +146,6 @@ export {
   applyRawFieldOverrides,
   useFieldOverrides,
   getFieldDataContextClone,
-  DataLinksContext,
-  useDataLinksContext,
 } from './field/fieldOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
@@ -161,7 +154,7 @@ export {
   cacheFieldDisplayNames,
   getUniqueFieldName,
 } from './field/fieldState';
-export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta, getFieldSeriesColor } from './field/scale';
+export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta } from './field/scale';
 export {
   type ReduceDataOptions,
   VAR_SERIES_NAME,
@@ -212,13 +205,7 @@ export {
 } from './field/overrides/processors';
 
 // Utils
-export {
-  PanelOptionsEditorBuilder,
-  FieldConfigEditorBuilder,
-  type NestedValueAccess,
-  type NestedPanelOptions,
-  isNestedPanelOptions,
-} from './utils/OptionsUIBuilders';
+export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './utils/OptionsUIBuilders';
 export { getFlotPairs, getFlotPairsConstant } from './utils/flotPairs';
 export { locationUtil } from './utils/location';
 export { urlUtil, type UrlQueryMap, type UrlQueryValue, serializeStateToUrlParam, toURLRange } from './utils/url';
@@ -258,16 +245,7 @@ export {
   CSVReader,
   toCSV,
 } from './utils/csv';
-export {
-  parseLabels,
-  findCommonLabels,
-  findUniqueLabels,
-  matchAllLabels,
-  formatLabels,
-  extractFacetedLabels,
-  resolveFacetedFilterNames,
-  FIELD_NAME_FACET_KEY,
-} from './utils/labels';
+export { parseLabels, findCommonLabels, findUniqueLabels, matchAllLabels, formatLabels } from './utils/labels';
 export { roundDecimals, guessDecimals } from './utils/numbers';
 export { objRemoveUndefined, isEmptyObject } from './utils/object';
 export { classicColors } from './utils/namedColorsPalette';
@@ -277,13 +255,10 @@ export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/u
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
-export { store, Store } from './utils/store';
+export { store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
-export { throwIfAngular } from './utils/throwIfAngular';
-export { fuzzySearch } from './utils/fuzzySearch';
-export { generateUUID, isUUID } from './utils/uuid';
 
-// Transformations
+// Tranformations
 export { standardTransformers } from './transformations/transformers';
 export {
   fieldMatchers,
@@ -340,7 +315,7 @@ export type { ThemeRichColor, GrafanaTheme2 } from './themes/types';
 export type { ThemeColors } from './themes/createColors';
 export type { ThemeBreakpoints, ThemeBreakpointsKey } from './themes/breakpoints';
 export type { ThemeShadows } from './themes/createShadows';
-export type { ThemeShape, Radii } from './themes/createShape';
+export type { ThemeShape } from './themes/createShape';
 export type { ThemeTypography, ThemeTypographyVariant, ThemeTypographyVariantTypes } from './themes/createTypography';
 export type { ThemeTransitions } from './themes/createTransitions';
 export type { ThemeSpacing, ThemeSpacingTokens } from './themes/createSpacing';
@@ -351,6 +326,11 @@ export { ThemeContext } from './themes/context';
 
 // ValueFormats
 export {
+  type FormattedValue,
+  type ValueFormatter,
+  type ValueFormat,
+  type ValueFormatCategory,
+  type ValueFormatterIndex,
   formattedValueToString,
   toFixed,
   toFixedScaled,
@@ -361,16 +341,10 @@ export {
   locale,
   simpleCountUnit,
   stringFormater,
-} from './valueFormats/baseFormatters';
-export { getValueFormat, getValueFormatterIndex, getValueFormats } from './valueFormats/valueFormats';
-
-export {
-  type FormattedValue,
-  type ValueFormatter,
-  type ValueFormat,
-  type ValueFormatCategory,
-  type ValueFormatterIndex,
-} from './types/valueFormats';
+  getValueFormat,
+  getValueFormatterIndex,
+  getValueFormats,
+} from './valueFormats/valueFormats';
 
 // datetime
 export * as dateMath from './datetime/datemath';
@@ -429,7 +403,6 @@ export { type DateTimeOptionsWhenParsing, dateTimeParse } from './datetime/parse
 export {
   intervalToAbbreviatedDurationString,
   parseDuration,
-  reverseParseDuration,
   addDurationToDate,
   durationToMilliseconds,
   isValidDate,
@@ -444,14 +417,7 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
-export {
-  PanelPlugin,
-  type PanelOptionsSupplier,
-  type SetFieldConfigOptionsArgs,
-  type StandardOptionConfig,
-  type PanelScreenshotContext,
-  type PanelScreenshotHandler,
-} from './panel/PanelPlugin';
+export { PanelPlugin, type SetFieldConfigOptionsArgs, type StandardOptionConfig } from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,
   filterFieldConfigOverrides,
@@ -460,24 +426,10 @@ export {
   isStandardFieldProp,
   type OptionDefaults,
 } from './panel/getPanelOptionsWithDefaults';
-export { type PanelDataSummary, getPanelDataSummary } from './panel/suggestions/getPanelDataSummary';
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
-export {
-  type PluginContextType,
-  type DataSourcePluginContextType,
-  PluginContext,
-} from './context/plugins/PluginContext';
-export {
-  type RestrictedGrafanaApisContextType,
-  type RestrictedGrafanaApisAllowList,
-  type DashboardMutationAPI,
-  type DashboardMutationResult,
-  RestrictedGrafanaApisContext,
-  RestrictedGrafanaApisContextProvider,
-  useRestrictedGrafanaApis,
-} from './context/plugins/RestrictedGrafanaApis';
+export { type PluginContextType, type DataSourcePluginContextType } from './context/plugins/PluginContext';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
@@ -490,11 +442,8 @@ export { getLinksSupplier } from './field/fieldOverrides';
 // Types
 export { isUnsignedPluginSignature } from './types/pluginSignature';
 export type {
-  AzureSettings,
-  AzureCloudInfo,
   CurrentUserDTO,
   AnalyticsSettings,
-  AppPluginConfig,
   BootData,
   OAuth,
   OAuthSettings,
@@ -502,8 +451,6 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
-  PreinstalledPlugin,
-  UnifiedAlertingConfig,
 } from './types/config';
 export { availableIconsIndex, type IconName, isIconName, toIconName } from './types/icon';
 export type { WithAccessControlMetadata } from './types/accesscontrol';
@@ -536,8 +483,6 @@ export type {
   ExploreLogsPanelState,
   SplitOpenOptions,
   SplitOpen,
-  TraceSearchProps,
-  TraceSearchTag,
 } from './types/explore';
 export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
 export type { FlotDataPoint } from './types/flot';
@@ -548,7 +493,6 @@ export {
   VariableRefresh,
   VariableSort,
   VariableHide,
-  type VariableRegexApplyTo,
   type VariableType,
   type VariableModel,
   type TypedVariableModel,
@@ -562,7 +506,6 @@ export {
   type QueryVariableModel,
   type TextBoxVariableModel,
   type ConstantVariableModel,
-  type SwitchVariableModel,
   type VariableWithMultiSupport,
   type VariableWithOptions,
   type DashboardProps,
@@ -602,34 +545,23 @@ export type { FeatureToggles } from './types/featureToggles.gen';
 export {
   PluginExtensionTypes,
   PluginExtensionPoints,
-  PluginExtensionExposedComponents,
-  PluginExtensionPointPatterns,
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
-  type PluginExtensionComponentMeta,
-  type ComponentTypeWithExtensionMeta,
-  type PluginExtensionFunction,
+  type PluginExtensionConfig,
+  type PluginExtensionLinkConfig,
+  type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
-  type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
-  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
-  type PluginExtensionDataSourceConfigActionsContext,
-  type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
-  type PluginExtensionAddedFunctionConfig,
-  type PluginExtensionResourceAttributesContext,
-  type CentralAlertHistorySceneV1Props,
 } from './types/pluginExtensions';
-export { type PrometheusQueryResultsV1Props } from './types/exposedComponentProps';
 export {
   type ScopeDashboardBindingSpec,
-  type ScopeDashboardBindingStatus,
   type ScopeDashboardBinding,
   type ScopeFilterOperator,
   type ScopeSpecFilter,
@@ -640,8 +572,6 @@ export {
   type ScopeNodeSpec,
   type ScopeNode,
   scopeFilterOperatorMap,
-  reverseScopeFilterOperatorMap,
-  isEqualityOrMultiOperator,
 } from './types/scopes';
 export {
   PluginState,
@@ -663,7 +593,6 @@ export {
   type PluginMetaInfo,
   type PluginConfigPageProps,
   type PluginConfigPage,
-  type ExtensionInfo,
 } from './types/plugin';
 export {
   type InterpolateFunction,
@@ -680,10 +609,15 @@ export {
   type PanelMenuItem,
   type AngularPanelMenuItem,
   type PanelPluginDataSupport,
+  type VisualizationSuggestion,
+  type PanelDataSummary,
+  type VisualizationSuggestionsSupplier,
   VizOrientation,
+  VisualizationSuggestionScore,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestionsListAppender,
 } from './types/panel';
 export {
-  type DataSourceConfigValidationAPI,
   type DataSourcePluginOptionsEditorProps,
   type DataSourceQueryType,
   type DataSourceOptionsType,
@@ -692,8 +626,6 @@ export {
   type DataSourceConstructor,
   type DataSourceGetTagKeysOptions,
   type DataSourceGetTagValuesOptions,
-  type DataSourceGetDrilldownsApplicabilityOptions,
-  type DataSourceGetRecommendedDrilldownsOptions,
   type MetadataInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
@@ -710,11 +642,10 @@ export {
   type QueryFixAction,
   type QueryHint,
   type MetricFindValue,
-  type DrilldownsApplicability,
-  type DrilldownRecommendation,
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
+  type DataSourceSelectItem,
   type AnnotationQueryRequest,
   type HistoryItem,
   type GetTagResponse,
@@ -743,15 +674,6 @@ export {
   type ApplyFieldOverrideOptions,
   FieldConfigProperty,
 } from './types/fieldOverrides';
-export {
-  type VisualizationSuggestion,
-  type VisualizationSuggestionsSupplier,
-  type PanelPluginVisualizationSuggestion,
-  type VisualizationSuggestionsBuilder,
-  VisualizationSuggestionScore,
-  type VisualizationPresetsSupplier,
-  type VisualizationPresetsContext,
-} from './types/suggestions';
 export {
   type MatcherConfig,
   type DataTransformContext,
@@ -826,8 +748,6 @@ export {
   type LogRowContextOptions,
   LogRowContextQueryDirection,
   type DataSourceWithLogsContextSupport,
-  type DataSourceWithLogsLabelTypesSupport,
-  hasLogsLabelTypesSupport,
   hasLogsContextSupport,
   SupplementaryQueryType,
   type SupplementaryQueryOptions,
@@ -844,8 +764,6 @@ export {
   type DataSourceWithQueryModificationSupport,
   hasToggleableQueryFiltersSupport,
   hasQueryModificationSupport,
-  LogSortOrderChangeEvent,
-  type LogSortOrderChangePayload,
 } from './types/logs';
 export {
   type AnnotationQuery,
@@ -876,6 +794,7 @@ export {
   DataLinkConfigOrigin,
   SupportedTransformationType,
   type InternalDataLink,
+  type LinkTarget,
   type LinkModel,
   type LinkModelSupplier,
   VariableOrigin,
@@ -883,20 +802,13 @@ export {
   VariableSuggestionsScope,
   OneClickMode,
 } from './types/dataLink';
-export { type LinkTarget } from './types/linkTarget';
 export {
   type Action,
   type ActionModel,
-  type ActionVariable,
-  type ActionVariableInput,
-  ActionType,
   HttpRequestMethod,
-  ActionVariableType,
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
-  type FetchOptions,
-  type InfinityOptions,
 } from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {
@@ -952,5 +864,3 @@ export {
   userHasAllPermissions,
   userHasAnyPermission,
 } from './rbac/rbac';
-
-export { type UserStorage } from './types/userStorage';

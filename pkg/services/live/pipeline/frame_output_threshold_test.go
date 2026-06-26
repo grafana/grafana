@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 )
 
 func TestThresholdOutput_Output(t *testing.T) {
@@ -58,7 +57,7 @@ func TestThresholdOutput_NoPreviousFrame_SingleRow(t *testing.T) {
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
 
-	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(ns string, channel string) (*data.Frame, bool, error) {
+	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		return nil, false, nil
 	})
 
@@ -106,7 +105,7 @@ func TestThresholdOutput_NoPreviousFrame_MultipleRows(t *testing.T) {
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
 
-	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(ns string, channel string) (*data.Frame, bool, error) {
+	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		return nil, false, nil
 	}).Times(1)
 
@@ -162,7 +161,7 @@ func TestThresholdOutput_WithPreviousFrame_SingleRow(t *testing.T) {
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
 
-	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(ns string, channel string) (*data.Frame, bool, error) {
+	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		f1 := data.NewField("time", nil, make([]time.Time, 1))
 		f1.Set(0, time.Now())
 		f2 := data.NewField("test", nil, make([]*float64, 1))
@@ -210,7 +209,7 @@ func TestThresholdOutput_WithPreviousFrame_MultipleRows(t *testing.T) {
 
 	mockStorage := NewMockFrameGetSetter(mockCtrl)
 
-	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(ns string, channel string) (*data.Frame, bool, error) {
+	mockStorage.EXPECT().Get(gomock.Any(), gomock.Any()).DoAndReturn(func(orgID int64, channel string) (*data.Frame, bool, error) {
 		f1 := data.NewField("time", nil, make([]time.Time, 1))
 		f1.Set(0, time.Now())
 		f2 := data.NewField("test", nil, make([]*float64, 1))

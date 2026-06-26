@@ -1,14 +1,17 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { type PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
+import { AngularComponent } from '@grafana/runtime';
 
-type RootPanelsState = Record<string, PanelState>;
+export type RootPanelsState = Record<string, PanelState>;
 
-interface PanelState {
+export interface PanelState {
   plugin?: PanelPlugin;
+  angularComponent?: AngularComponent;
+  instanceState?: unknown | null;
 }
 
-const initialState: RootPanelsState = {};
+export const initialState: RootPanelsState = {};
 
 const panelsSlice = createSlice({
   name: 'panels',
@@ -26,17 +29,44 @@ const panelsSlice = createSlice({
     removePanel: (state, action: PayloadAction<{ key: string }>) => {
       delete state[action.payload.key];
     },
+    removeAllPanels: (state) => {
+      Object.keys(state).forEach((key) => delete state[key]);
+    },
+    setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
+      state[action.payload.key].instanceState = action.payload.value;
+    },
+    setPanelAngularComponent: (state, action: PayloadAction<SetPanelAngularComponentPayload>) => {
+      const panelState = state[action.payload.key];
+      panelState.angularComponent = action.payload.angularComponent;
+    },
   },
 });
 
-interface PanelModelAndPluginReadyPayload {
+export interface PanelModelAndPluginReadyPayload {
   key: string;
   plugin: PanelPlugin;
 }
 
-export const { panelModelAndPluginReady, removePanel } = panelsSlice.actions;
+export interface SetPanelAngularComponentPayload {
+  key: string;
+  angularComponent: AngularComponent;
+}
 
-const panelsReducer = panelsSlice.reducer;
+export interface SetPanelInstanceStatePayload {
+  key: string;
+  value: unknown;
+}
+
+export const {
+  panelModelAndPluginReady,
+  setPanelAngularComponent,
+  setPanelInstanceState,
+  changePanelKey,
+  removePanel,
+  removeAllPanels,
+} = panelsSlice.actions;
+
+export const panelsReducer = panelsSlice.reducer;
 
 export default {
   panels: panelsReducer,

@@ -1,4 +1,4 @@
-import { type PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 
 import { config } from '../config';
 

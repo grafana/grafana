@@ -7,8 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	claims "github.com/grafana/authlib/types"
-
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -80,7 +79,7 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 
 	req.Header.Del("Cookie")
 
-	sortedCookies := make([]string, 0, len(keepCookies))
+	sortedCookies := []string{}
 	for name := range keepCookies {
 		sortedCookies = append(sortedCookies, name)
 	}
@@ -90,6 +89,12 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 		c := keepCookies[name]
 		req.AddCookie(c)
 	}
+}
+
+// SetProxyResponseHeaders sets proxy response headers.
+// Sets Content-Security-Policy: sandbox
+func SetProxyResponseHeaders(header http.Header) {
+	header.Set("Content-Security-Policy", "sandbox")
 }
 
 // SetViaHeader adds Grafana's reverse proxy to the proxy chain.

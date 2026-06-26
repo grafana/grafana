@@ -1,7 +1,7 @@
-import { Permissions } from 'app/core/components/AccessControl/Permissions';
+import { Permissions } from 'app/core/components/AccessControl';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type ServiceAccountDTO } from 'app/types/serviceaccount';
+
+import { AccessControlAction, ServiceAccountDTO } from '../../types';
 
 type ServiceAccountPermissionsProps = {
   serviceAccount: ServiceAccountDTO;
@@ -15,10 +15,11 @@ export const ServiceAccountPermissions = (props: ServiceAccountPermissionsProps)
 
   return (
     <Permissions
+      title="Permissions"
       addPermissionTitle="Add permission"
       buttonLabel="Add permission"
       resource="serviceaccounts"
-      resourceId={props.serviceAccount.uid}
+      resourceId={props.serviceAccount.id}
       canSetPermissions={canSetPermissions}
     />
   );

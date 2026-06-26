@@ -1,54 +1,60 @@
 import { css } from '@emotion/css';
-import { type FC, forwardRef } from 'react';
+import { forwardRef, FC } from 'react';
+import { createFilter, GroupBase, OptionsOrGroups } from 'react-select';
 
-import { type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Combobox, type ComboboxOption, Field, useStyles2 } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Field, Select, useStyles2 } from '@grafana/ui';
 
-export type AsyncOptionsLoader = (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
-
-interface AlertLabelDropdownProps {
+export interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;
   onOpenMenu?: () => void;
-  options: ComboboxOption[] | AsyncOptionsLoader;
+  options: SelectableValue[];
   defaultValue?: SelectableValue;
   type: 'key' | 'value';
-  isLoading?: boolean;
+}
+const _customFilter = createFilter({ ignoreCase: false });
+function customFilter(opt: SelectableValue, searchQuery: string) {
+  return _customFilter(
+    {
+      label: opt.label ?? '',
+      value: opt.value ?? '',
+      data: {},
+    },
+    searchQuery
+  );
 }
 
+const handleIsValidNewOption = (
+  inputValue: string,
+  _: SelectableValue<string> | null,
+  options: OptionsOrGroups<SelectableValue<string>, GroupBase<SelectableValue<string>>>
+) => {
+  const exactValueExists = options.some((el) => el.label === inputValue);
+  const valueIsNotEmpty = inputValue.trim().length;
+  return !Boolean(exactValueExists) && Boolean(valueIsNotEmpty);
+};
+
 const AlertLabelDropdown: FC<AlertLabelDropdownProps> = forwardRef<HTMLDivElement, AlertLabelDropdownProps>(
-  function LabelPicker({ onChange, options, defaultValue, type, onOpenMenu = () => {}, isLoading = false }, ref) {
+  function LabelPicker({ onChange, options, defaultValue, type, onOpenMenu = () => {} }, ref) {
     const styles = useStyles2(getStyles);
-
-    const handleChange = (option: ComboboxOption<string> | null) => {
-      if (option) {
-        onChange({
-          label: option.label || option.value,
-          value: option.value,
-          description: option.description,
-        });
-      }
-    };
-
-    const currentValue = defaultValue
-      ? {
-          label: defaultValue.label || defaultValue.value,
-          value: defaultValue.value,
-          description: defaultValue.description,
-        }
-      : undefined;
 
     return (
       <div ref={ref}>
-        <Field noMargin disabled={false} data-testid={`alertlabel-${type}-picker`} className={styles.resetMargin}>
-          <Combobox<string>
-            placeholder={t('alerting.alert-label-dropdown.placeholder-select', 'Choose {{type}}', { type })}
-            width={25}
+        <Field disabled={false} data-testid={`alertlabel-${type}-picker`} className={styles.resetMargin}>
+          <Select<string>
+            placeholder={`Choose ${type}`}
+            width={29}
+            className="ds-picker select-container"
+            backspaceRemovesValue={false}
+            onChange={onChange}
+            onOpenMenu={onOpenMenu}
+            filterOption={customFilter}
+            isValidNewOption={handleIsValidNewOption}
             options={options}
-            value={currentValue}
-            onChange={handleChange}
-            createCustomValue={true}
-            data-testid={`alertlabel-${type}-combobox`}
+            maxMenuHeight={500}
+            noOptionsMessage="No labels found"
+            defaultValue={defaultValue}
+            allowCustomValue
           />
         </Field>
       </div>

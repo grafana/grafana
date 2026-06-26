@@ -1,4 +1,4 @@
-import { type SceneObject } from '@grafana/scenes';
+import { SceneObject } from '@grafana/scenes';
 
 export enum TabId {
   Queries = 'queries',
@@ -15,8 +15,4 @@ export interface PanelDataPaneTab extends SceneObject {
   renderTab: (props: PanelDataTabHeaderProps) => React.JSX.Element;
   getTabLabel(): string;
   tabId: TabId;
-}
-
-export interface PanelEditorInterface {
-  onToggleQueryEditorVersion: () => void;
 }

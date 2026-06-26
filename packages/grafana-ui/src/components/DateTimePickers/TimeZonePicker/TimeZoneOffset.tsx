@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
+import { isString } from 'lodash';
 
-import { type GrafanaTheme2, type TimeZone, dateTimeFormat } from '@grafana/data';
+import { GrafanaTheme2, TimeZone, dateTimeFormat } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes';
 
 interface Props {
   timestamp: number;
@@ -14,7 +15,7 @@ export const TimeZoneOffset = (props: Props) => {
   const { timestamp, timeZone, className } = props;
   const styles = useStyles2(getStyles);
 
-  if (typeof timeZone !== 'string') {
+  if (!isString(timeZone)) {
     return null;
   }
 

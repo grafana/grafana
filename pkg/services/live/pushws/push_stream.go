@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
 	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
@@ -48,8 +47,8 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := identity.GetRequester(r.Context())
-	if err != nil {
+	user, ok := livecontext.GetContextSignedUser(r.Context())
+	if !ok {
 		logger.Error("No user found in context")
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
@@ -71,7 +70,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		stream, err := s.managedStreamRunner.GetOrCreateStream(user.GetNamespace(), liveDto.ScopeStream, streamID)
+		stream, err := s.managedStreamRunner.GetOrCreateStream(user.GetOrgID(), liveDto.ScopeStream, streamID)
 		if err != nil {
 			logger.Error("Error getting stream", "error", err)
 			continue

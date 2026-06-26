@@ -1,4 +1,4 @@
-import { type GraphiteLokiMapping } from '../types';
+import { GraphiteLokiMapping } from '../types';
 
 /**
  * Converts a simple string used in LokiLogsMappings component (e.g. "servers.(name).*")

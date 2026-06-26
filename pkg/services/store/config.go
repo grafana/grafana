@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,7 +24,7 @@ type GlobalStorageConfig struct {
 	Roots []RootStorageConfig `json:"roots"`
 }
 
-func LoadStorageConfig(cfg *setting.Cfg) (*GlobalStorageConfig, error) {
+func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*GlobalStorageConfig, error) {
 	changed := false
 	fpath := filepath.Join(cfg.DataPath, "storage", "storage.json")
 	g := &GlobalStorageConfig{}
@@ -81,6 +82,8 @@ type RootStorageConfig struct {
 	Disk *StorageLocalDiskConfig `json:"disk,omitempty"`
 	Git  *StorageGitConfig       `json:"git,omitempty"`
 	SQL  *StorageSQLConfig       `json:"sql,omitempty"`
+	S3   *StorageS3Config        `json:"s3,omitempty"`
+	GCS  *StorageGCSConfig       `json:"gcs,omitempty"`
 }
 
 type StorageLocalDiskConfig struct {
@@ -104,6 +107,23 @@ type StorageGitConfig struct {
 
 type StorageSQLConfig struct {
 	// SQLStorage will prefix all paths with orgId for isolation between orgs
+}
+
+type StorageS3Config struct {
+	Bucket string `json:"bucket"`
+	Folder string `json:"folder"`
+
+	// SECURE!!!
+	AccessKey string `json:"accessKey"`
+	SecretKey string `json:"secretKey"`
+	Region    string `json:"region"`
+}
+
+type StorageGCSConfig struct {
+	Bucket string `json:"bucket"`
+	Folder string `json:"folder"`
+
+	CredentialsFile string `json:"credentialsFile"`
 }
 
 func newStorage(cfg RootStorageConfig, _ string) (storageRuntime, error) {

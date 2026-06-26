@@ -2,20 +2,18 @@ import saveAs from 'file-saver';
 import * as XLSX from 'xlsx';
 
 import {
-  type CSVConfig,
-  type DataFrame,
+  CSVConfig,
+  DataFrame,
   DataTransformerID,
-  dateTime,
   dateTimeFormat,
-  type LogsModel,
+  LogsModel,
   MutableDataFrame,
   toCSV,
 } from '@grafana/data';
+import { transformToOTLP } from '@grafana-plugins/tempo/resultTransformer';
 
 import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
-
-import { transformToOTLP } from './transformToOTLP';
-import { transformToZipkin } from './transformToZipkin';
+import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/transforms';
 
 /**
  * Downloads a DataFrame as a TXT file.
@@ -23,27 +21,25 @@ import { transformToZipkin } from './transformToZipkin';
  * @param {(Pick<LogsModel, 'meta' | 'rows'>)} logsModel
  * @param {string} title
  */
-export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title = '', fields: string[] = []) {
+export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title: string) {
   let textToDownload = '';
 
-  if (logsModel.meta?.length) {
-    logsModel.meta?.forEach((metaItem) => {
-      const string = `${metaItem.label ? `${metaItem.label}: ` : ''}${JSON.stringify(metaItem.value)}\n`;
-      textToDownload = textToDownload + string;
-    });
-    textToDownload = textToDownload + '\n\n';
-  }
+  logsModel.meta?.forEach((metaItem) => {
+    const string = `${metaItem.label}: ${JSON.stringify(metaItem.value)}\n`;
+    textToDownload = textToDownload + string;
+  });
+  textToDownload = textToDownload + '\n\n';
 
   logsModel.rows.forEach((row) => {
-    const entry = !fields.length ? row.entry : fields.map((field) => row.labels[field] ?? '').join(' ');
-    const newRow = row.timeEpochMs + '\t' + dateTime(row.timeEpochMs).toISOString() + '\t' + entry + '\n';
+    const newRow = row.timeEpochMs + '\t' + row.entry + '\n';
     textToDownload = textToDownload + newRow;
   });
 
   const blob = new Blob([textToDownload], {
     type: 'text/plain;charset=utf-8',
   });
-  const fileName = `${title ? `${title}-logs` : 'Logs'}-${dateTimeFormat(new Date())}.txt`;
+
+  const fileName = `${title}-logs-${dateTimeFormat(new Date())}.txt`;
   saveAs(blob, fileName);
 }
 
@@ -59,40 +55,14 @@ export function downloadDataFrameAsCsv(
   dataFrame: DataFrame,
   title: string,
   csvConfig?: CSVConfig,
-  transformId: DataTransformerID = DataTransformerID.noop,
-  excelCompatibilityMode = false,
-  trailingNewline = false
+  transformId: DataTransformerID = DataTransformerID.noop
 ) {
-  let blob;
-  const newline = trailingNewline ? (csvConfig?.newline ?? '\r\n') : '';
+  const dataFrameCsv = toCSV([dataFrame], csvConfig);
+  const bomChar = csvConfig?.useExcelHeader ? String.fromCharCode(0xfeff) : '';
 
-<<<<<<< HEAD
   const blob = new Blob([bomChar, dataFrameCsv], {
     type: 'text/csv;charset=windows-1251;',
   });
-=======
-  if (excelCompatibilityMode) {
-    /**
-     * This compatibility mode creates a utf16le csv file that uses \t as the delimiter.
-     * This is to fix an issue where excel does not recognize the BOM indicating UTF-8 when the SEP= meta data header is present.
-     * Without the SEP= metadata header excel will try to use the system list separator.
-     * If the CSV was created on a system where the separator was ',' it will not work on a system where the separator is ';'
-     * This is common on locales where ',' is the decimal separator.
-     *
-     * When excel opens a utf16le csv file it will no longer try to use the system list separator, and instead use \t as the separator.
-     */
-    const dataFrameCsv = toCSV([dataFrame], { ...csvConfig, useExcelHeader: false, delimiter: '\t' }) + newline;
-    const utf16le = new Uint16Array(Array.from('\ufeff' + dataFrameCsv).map((char) => char.charCodeAt(0)));
-    blob = new Blob([utf16le], {
-      type: 'text/csv;charset=utf-16le',
-    });
-  } else {
-    const dataFrameCsv = toCSV([dataFrame], csvConfig) + newline;
-    blob = new Blob([dataFrameCsv], {
-      type: 'text/csv;charset=utf-8',
-    });
-  }
->>>>>>> fd443127ae3147c35dcab1af745f7481cb2711bc
 
   const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
   const fileName = `${title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;

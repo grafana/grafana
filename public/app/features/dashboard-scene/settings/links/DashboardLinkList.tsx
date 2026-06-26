@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { type DashboardLink } from '@grafana/schema';
+import { GrafanaTheme2 } from '@grafana/data';
+import { DashboardLink } from '@grafana/schema';
 import { Button, DeleteButton, EmptyState, Icon, IconButton, Stack, TagList, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 interface DashboardLinkListProps {
   links: DashboardLink[];
@@ -52,30 +52,19 @@ export function DashboardLinkList({
     );
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTableRowElement>, idx: number) {
-    if (e.target === e.currentTarget && (e.key === ' ' || e.key === 'Enter')) {
-      e.preventDefault();
-      onEdit(idx);
-    }
-  }
-
   return (
     <>
       <table role="grid" className="filter-table filter-table--hover">
         <thead>
           <tr>
-            <th>
-              <Trans i18nKey="dashboard-scene.dashboard-link-list.type">Type</Trans>
-            </th>
-            <th>
-              <Trans i18nKey="dashboard-scene.dashboard-link-list.info">Info</Trans>
-            </th>
+            <th>Type</th>
+            <th>Info</th>
             <th colSpan={3} />
           </tr>
         </thead>
         <tbody>
           {links.map((link, idx) => (
-            <tr key={`${link.title}-${idx}`} onKeyDown={(e) => handleKeyDown(e, idx)} tabIndex={0}>
+            <tr key={`${link.title}-${idx}`}>
               <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                 <Icon name="external-link-alt" /> &nbsp; {link.type}
               </td>
@@ -88,36 +77,20 @@ export function DashboardLinkList({
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 {idx !== 0 && (
-                  <IconButton
-                    name="arrow-up"
-                    onClick={() => onOrderChange(idx, -1)}
-                    tooltip={t('dashboard-scene.dashboard-link-list.tooltip-move-link-up', 'Move link up')}
-                  />
+                  <IconButton name="arrow-up" onClick={() => onOrderChange(idx, -1)} tooltip="Move link up" />
                 )}
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 {links.length > 1 && idx !== links.length - 1 ? (
-                  <IconButton
-                    name="arrow-down"
-                    onClick={() => onOrderChange(idx, 1)}
-                    tooltip={t('dashboard-scene.dashboard-link-list.tooltip-move-link-down', 'Move link down')}
-                  />
+                  <IconButton name="arrow-down" onClick={() => onOrderChange(idx, 1)} tooltip="Move link down" />
                 ) : null}
               </td>
               <td style={{ width: '1%' }} role="gridcell">
-                <IconButton
-                  name="copy"
-                  onClick={() => onDuplicate(link)}
-                  tooltip={t('dashboard-scene.dashboard-link-list.tooltip-copy-link', 'Copy link')}
-                />
+                <IconButton name="copy" onClick={() => onDuplicate(link)} tooltip="Copy link" />
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 <DeleteButton
-                  aria-label={t(
-                    'dashboard-scene.dashboard-link-list.delete-aria-label',
-                    'Delete link with title "{{title}}"',
-                    { title: link.title }
-                  )}
+                  aria-label={`Delete link with title "${link.title}"`}
                   size="sm"
                   onConfirm={() => onDelete(idx)}
                 />
@@ -127,7 +100,7 @@ export function DashboardLinkList({
         </tbody>
       </table>
       <Button className={styles.newLinkButton} icon="plus" onClick={onNew}>
-        <Trans i18nKey="dashboard-scene.dashboard-link-list.new-link">New link</Trans>
+        New link
       </Button>
     </>
   );

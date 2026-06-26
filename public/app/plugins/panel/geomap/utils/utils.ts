@@ -1,32 +1,14 @@
-import type Feature from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
-import type Geometry from 'ol/geom/Geometry';
-import type Point from 'ol/geom/Point';
+import { Map as OpenLayersMap } from 'ol';
 import { defaults as interactionDefaults } from 'ol/interaction';
-import type BaseLayer from 'ol/layer/Base';
-import LayerGroup from 'ol/layer/Group';
-import ImageLayer from 'ol/layer/Image';
-import TileLayer from 'ol/layer/Tile';
-import VectorLayer from 'ol/layer/Vector';
-import VectorImage from 'ol/layer/VectorImage';
-import WebGLPointsLayer from 'ol/layer/WebGLPoints';
-import type ImageSource from 'ol/source/Image';
-import type TileSource from 'ol/source/Tile';
-import type VectorSource from 'ol/source/Vector';
 
-import { type DataFrame, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { getTemplateSrv } from '@grafana/runtime';
-import { getColorDimension } from 'app/features/dimensions/color';
-import { getScalarDimension } from 'app/features/dimensions/scalar';
-import { getScaledDimension } from 'app/features/dimensions/scale';
-import { getTextDimension } from 'app/features/dimensions/text';
+import { SelectableValue } from '@grafana/data';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data/src';
+import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
-import { type GeomapPanel } from '../GeomapPanel';
-import { type Options } from '../panelcfg.gen';
-import { defaultStyleConfig, type StyleConfig, type StyleConfigState, type StyleDimensions } from '../style/types';
-import { type MapLayerState } from '../types';
+import { GeomapPanel } from '../GeomapPanel';
+import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
+import { Options, MapLayerState } from '../types';
 
 export function getStyleDimension(
   frame: DataFrame | undefined,
@@ -92,20 +74,11 @@ async function initGeojsonFiles() {
   }
 }
 
-/**
- * Checks if an object contains any Grafana template variables
- * @param obj - The object to check for variables
- * @returns true if the object contains any template variables
- */
-export const hasVariableDependencies = (obj: object): boolean => {
-  return getTemplateSrv().containsTemplate(JSON.stringify(obj));
-};
-
 export const getNewOpenLayersMap = (panel: GeomapPanel, options: Options, div: HTMLDivElement) => {
   const view = panel.initMapView(options.view);
   return (panel.map = new OpenLayersMap({
     view: view,
-    pixelRatio: window.devicePixelRatio, // or zoom?
+    pixelRatio: 1, // or zoom?
     layers: [], // loaded explicitly below
     controls: [],
     target: div,
@@ -135,13 +108,13 @@ export const notifyPanelEditor = (geomapPanel: GeomapPanel, layers: MapLayerStat
 export const getNextLayerName = (panel: GeomapPanel) => {
   let idx = panel.layers.length; // since basemap is 0, this looks right
   while (true && idx < 100) {
-    const name = t('geomap.utils.get-next-layer-name', 'Layer {{name}}', { name: idx++ });
+    const name = `Layer ${idx++}`;
     if (!panel.byName.has(name)) {
       return name;
     }
   }
 
-  return t('geomap.utils.get-next-layer-name', 'Layer {{name}}', { name: Date.now() });
+  return `Layer ${Date.now()}`;
 };
 
 export function isSegmentVisible(
@@ -163,38 +136,11 @@ export function isSegmentVisible(
   return false;
 }
 
-/**
- * Checks if a layer has data to display
- * @param layer The OpenLayers layer to check
- * @returns boolean indicating if the layer has data
- */
-export function hasLayerData(
-  layer:
-    | LayerGroup
-    | VectorLayer<VectorSource<Feature<Geometry>>>
-    | VectorImage<VectorSource<Feature<Geometry>>>
-    | WebGLPointsLayer<VectorSource<Feature<Point>>>
-    | TileLayer<TileSource>
-    | ImageLayer<ImageSource>
-    | BaseLayer
-): boolean {
-  if (layer instanceof LayerGroup) {
-    return layer
-      .getLayers()
-      .getArray()
-      .some((subLayer) => hasLayerData(subLayer));
+export const isUrl = (url: string) => {
+  try {
+    const newUrl = new URL(url);
+    return newUrl.protocol.includes('http');
+  } catch (_) {
+    return false;
   }
-  if (layer instanceof VectorLayer || layer instanceof VectorImage) {
-    const source = layer.getSource();
-    return source != null && source.getFeatures().length > 0;
-  }
-  if (layer instanceof WebGLPointsLayer) {
-    const source = layer.getSource();
-    return source != null && source.getFeatures().length > 0;
-  }
-  if (layer instanceof TileLayer || layer instanceof ImageLayer) {
-    // For tile/image layers, check if they have a source
-    return Boolean(layer.getSource());
-  }
-  return false;
-}
+};

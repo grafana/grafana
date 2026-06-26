@@ -1,15 +1,15 @@
 import { mergeMap, from } from 'rxjs';
 
 import {
-  type DataFrame,
+  DataFrame,
   DataTransformerID,
-  type Field,
-  type FieldMatcher,
+  Field,
+  FieldMatcher,
   FieldMatcherID,
   fieldMatchers,
-  type DataTransformerInfo,
+  DataTransformerInfo,
 } from '@grafana/data';
-import { GAZETTEER_OPTIONS, type Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
+import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
 
 export interface FieldLookupOptions {
   lookupField?: string;
@@ -19,7 +19,7 @@ export interface FieldLookupOptions {
 export const fieldLookupTransformer: DataTransformerInfo<FieldLookupOptions> = {
   id: DataTransformerID.fieldLookup,
   name: 'Lookup fields from resource',
-  description: 'Use a field value to lookup countries, states, or airports.',
+  description: 'Retrieve matching data based on specified field',
   defaultOptions: {},
 
   operator: (options) => (source) => source.pipe(mergeMap((data) => from(doGazetteerXform(data, options)))),
@@ -28,7 +28,7 @@ export const fieldLookupTransformer: DataTransformerInfo<FieldLookupOptions> = {
 async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions): Promise<DataFrame[]> {
   const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get(options?.lookupField);
 
-  const gazetteer = await getGazetteer(options?.gazetteer ?? GAZETTEER_OPTIONS.countries.path);
+  const gazetteer = await getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH);
 
   if (!gazetteer.frame) {
     return Promise.reject('missing frame in gazetteer');
@@ -53,7 +53,7 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer
 
       if (matcher(field, frame, frames)) {
         const values = field.values;
-        const gazetteerFieldValuesBuffer: unknown[][] = [];
+        const gazetteerFieldValuesBuffer: any[][] = [];
 
         for (const gazetteerField of gazetteerFields) {
           const buffer = new Array(frameLength);

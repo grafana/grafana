@@ -5,27 +5,28 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { KioskMode } from 'app/types';
 
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
+import { TOGGLE_BUTTON_ID } from './NavToolbar/NavToolbar';
+import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 interface Props {}
 
 export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
-  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
+  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
 
   const ref = useRef(null);
   const backdropRef = useRef(null);
   const animationSpeed = theme.transitions.duration.shortest;
-  const animationStyles = useStyles2(getAnimStyles, animationSpeed, visualRefreshEnabled);
+  const animationStyles = useStyles2(getAnimStyles, animationSpeed);
 
   const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
   const onClose = () => chrome.setMegaMenuOpen(false);
@@ -36,18 +37,16 @@ export function AppChromeMenu({}: Props) {
       isOpen: true,
       onClose,
       shouldCloseOnInteractOutside: (element) => {
-        // don't close when interacting with a select menu inside the mega menu
-        // e.g. for the org switcher
-        const isSelectMenu = document
-          .querySelector(`[data-testid="${selectors.components.Select.menu}"]`)
-          ?.contains(element);
-        return !isSelectMenu;
+        // don't close when clicking on the menu toggle, let the toggle button handle that
+        // this prevents some nasty flickering when the menu is open and the toggle button is clicked
+        const isMenuToggle = document.getElementById(TOGGLE_BUTTON_ID)?.contains(element);
+        return !isMenuToggle;
       },
     },
     ref
   );
-  const { dialogProps } = useDialog({ 'aria-label': t('navigation.megamenu.dialog-label', 'Navigation') }, ref);
-  const styles = useStyles2(getStyles, visualRefreshEnabled);
+  const { dialogProps } = useDialog({}, ref);
+  const styles = useStyles2(getStyles, searchBarHidden);
 
   return (
     <div className={styles.wrapper}>
@@ -81,16 +80,27 @@ export function AppChromeMenu({}: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
+const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
+  let topPosition = searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2;
+
+  if (config.featureToggles.singleTopNav) {
+    topPosition = 0;
+  }
+
   return {
     backdrop: css({
+      backdropFilter: 'blur(1px)',
       backgroundColor: theme.components.overlay.background,
       bottom: 0,
       left: 0,
       position: 'fixed',
       right: 0,
-      top: 0,
+      top: searchBarHidden || config.featureToggles.singleTopNav ? 0 : TOP_BAR_LEVEL_HEIGHT,
       zIndex: theme.zIndex.modalBackdrop,
+
+      [theme.breakpoints.up('md')]: {
+        top: topPosition,
+      },
     }),
     menu: css({
       display: 'flex',
@@ -101,12 +111,13 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       // Needs to below navbar should we change the navbarFixed? add add a new level?
       zIndex: theme.zIndex.modal,
       position: 'fixed',
-      top: 0,
-      backgroundColor: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
+      top: searchBarHidden || config.featureToggles.singleTopNav ? 0 : TOP_BAR_LEVEL_HEIGHT,
+      backgroundColor: theme.colors.background.primary,
       flex: '1 1 0',
 
       [theme.breakpoints.up('md')]: {
         right: 'unset',
+        top: topPosition,
       },
     }),
     wrapper: css({
@@ -119,7 +130,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   };
 };
 
-const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number, visualRefreshEnabled: boolean) => {
+const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const commonTransition = {
     [theme.transitions.handleMotion('no-preference')]: {
       transitionDuration: `${animationDuration}ms`,
@@ -147,7 +158,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number, visualRe
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },

@@ -1,111 +1,80 @@
 import { merge } from 'lodash';
-import { z } from 'zod';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
-import { resolvePaletteRefs } from './palette_new';
-import { type DeepRequired, type ThemeRichColor, ThemeRichColorInputSchema } from './types';
+import { DeepPartial, ThemeRichColor } from './types';
 
-const ThemeColorsModeSchema = z.enum(['light', 'dark']);
 /** @internal */
-type ThemeColorsMode = z.infer<typeof ThemeColorsModeSchema>;
+export type ThemeColorsMode = 'light' | 'dark';
 
-const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
-  z
-    .object({
-      mode: ThemeColorsModeSchema,
-
-      primary: color,
-      secondary: color,
-      tertiary: color,
-      accent: color,
-      info: color,
-      error: color,
-      success: color,
-      warning: color,
-
-      text: z.object({
-        primary: z.string().optional(),
-        secondary: z.string().optional(),
-        disabled: z.string().optional(),
-        link: z.string().optional(),
-        /** Used for auto white or dark text on colored backgrounds */
-        maxContrast: z.string().optional(),
-      }),
-
-      background: z.object({
-        /** Body background */
-        canvas: z.string().optional(),
-        /** Page container background */
-        page: z.string().optional(),
-        /** Primary content pane background (panels etc) */
-        primary: z.string().optional(),
-        /** Cards and elements that need to stand out on the primary background */
-        secondary: z.string().optional(),
-        /**
-         * For popovers and menu backgrounds. This is the same color as primary in most light themes but in dark
-         * themes it has a brighter shade to help give it contrast against the primary background.
-         **/
-        elevated: z.string().optional(),
-      }),
-
-      border: z.object({
-        weak: z.string().optional(),
-        medium: z.string().optional(),
-        strong: z.string().optional(),
-      }),
-
-      gradients: z.object({
-        brandVertical: z.string().optional(),
-        brandHorizontal: z.string().optional(),
-      }),
-
-      action: z.object({
-        /** Used for selected menu item / select option */
-        selected: z.string().optional(),
-        /**
-         * @alpha (Do not use from plugins)
-         * Used for selected items when background only change is not enough (Currently only used for FilterPill)
-         **/
-        selectedBorder: z.string().optional(),
-        /** Used for hovered menu item / select option */
-        hover: z.string().optional(),
-        /** Used for button/colored background hover opacity */
-        hoverOpacity: z.number().optional(),
-        /** Used focused menu item / select option */
-        focus: z.string().optional(),
-        /** Used for disabled buttons and inputs */
-        disabledBackground: z.string().optional(),
-        /** Disabled text */
-        disabledText: z.string().optional(),
-        /** Disablerd opacity */
-        disabledOpacity: z.number().optional(),
-      }),
-
-      scrollbar: z.string().optional(),
-      hoverFactor: z.number(),
-      contrastThreshold: z.number(),
-      tonalOffset: z.number(),
-    })
-    .partial();
-
-// Need to override the zod type to include the generic properly
 /** @internal */
-type ThemeColorsBase<TColor> = DeepRequired<
-  Omit<
-    z.infer<ReturnType<typeof createThemeColorsBaseSchema>>,
-    'primary' | 'secondary' | 'tertiary' | 'info' | 'error' | 'success' | 'warning'
-  >
-> & {
+export interface ThemeColorsBase<TColor> {
+  mode: ThemeColorsMode;
+
   primary: TColor;
   secondary: TColor;
-  tertiary: TColor;
-  accent: TColor;
   info: TColor;
   error: TColor;
   success: TColor;
   warning: TColor;
-};
+
+  text: {
+    primary: string;
+    secondary: string;
+    disabled: string;
+    link: string;
+    /** Used for auto white or dark text on colored backgrounds */
+    maxContrast: string;
+  };
+
+  background: {
+    /** Dashboard and body background */
+    canvas: string;
+    /** Primary content pane background (panels etc) */
+    primary: string;
+    /** Cards and elements that need to stand out on the primary background */
+    secondary: string;
+  };
+
+  border: {
+    weak: string;
+    medium: string;
+    strong: string;
+  };
+
+  gradients: {
+    brandVertical: string;
+    brandHorizontal: string;
+  };
+
+  action: {
+    /** Used for selected menu item / select option */
+    selected: string;
+    /**
+     * @alpha (Do not use from plugins)
+     * Used for selected items when background only change is not enough (Currently only used for FilterPill)
+     **/
+    selectedBorder: string;
+    /** Used for hovered menu item / select option */
+    hover: string;
+    /** Used for button/colored background hover opacity */
+    hoverOpacity: number;
+    /** Used focused menu item / select option */
+    focus: string;
+    /** Used for disabled buttons and inputs */
+    disabledBackground: string;
+    /** Disabled text */
+    disabledText: string;
+    /** Disablerd opacity */
+    disabledOpacity: number;
+  };
+
+  hoverFactor: number;
+  contrastThreshold: number;
+  tonalOffset: number;
+}
+
+export interface ThemeHoverStrengh {}
 
 /** @beta */
 export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
@@ -115,10 +84,8 @@ export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
   emphasize(color: string, amount?: number): string;
 }
 
-export const ThemeColorsInputSchema = createThemeColorsBaseSchema(ThemeRichColorInputSchema);
-
 /** @internal */
-export type ThemeColorsInput = z.infer<typeof ThemeColorsInputSchema>;
+export type ThemeColorsInput = DeepPartial<ThemeColorsBase<ThemeRichColor>>;
 
 class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'dark';
@@ -127,15 +94,15 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgb(54, 57, 64)`,
-    medium: `rgb(68, 70, 78)`,
-    strong: `rgb(85, 87, 96)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
+    medium: `rgba(${this.whiteBase}, 0.20)`,
+    strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
     primary: `rgb(${this.whiteBase})`,
     secondary: `rgba(${this.whiteBase}, 0.65)`,
-    disabled: `rgba(${this.whiteBase}, 0.61)`,
+    disabled: `rgba(${this.whiteBase}, 0.6)`,
     link: palette.blueDarkText,
     maxContrast: palette.white,
   };
@@ -147,20 +114,13 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: palette.gray20,
-    shade: palette.gray25,
+    main: `rgba(${this.whiteBase}, 0.10)`,
+    shade: `rgba(${this.whiteBase}, 0.14)`,
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
     border: `rgba(${this.whiteBase}, 0.08)`,
   };
-
-  tertiary = {
-    main: palette.purpleDarkMain,
-    text: palette.purpleDarkText,
-  };
-
-  accent = this.primary;
 
   info = this.primary;
 
@@ -181,10 +141,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   background = {
     canvas: palette.gray05,
-    page: palette.gray10,
     primary: palette.gray10,
     secondary: palette.gray15,
-    elevated: palette.gray15,
   };
 
   action = {
@@ -202,8 +160,6 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandHorizontal: 'linear-gradient(270deg, #F55F3E 0%, #FF8833 100%)',
     brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%)',
   };
-
-  scrollbar = `rgba(${this.whiteBase}, 0.3)`;
 
   contrastThreshold = 3;
   hoverFactor = 0.03;
@@ -224,32 +180,25 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   text = {
     primary: `rgba(${this.blackBase}, 1)`,
     secondary: `rgba(${this.blackBase}, 0.75)`,
-    disabled: `rgba(${this.blackBase}, 0.65)`,
+    disabled: `rgba(${this.blackBase}, 0.64)`,
     link: this.primary.text,
     maxContrast: palette.black,
   };
 
   border = {
-    weak: `rgb(229, 229, 230)`,
-    medium: `rgb(189, 191, 192)`,
-    strong: `rgb(167, 169, 171)`,
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.30)`,
+    strong: `rgba(${this.blackBase}, 0.40)`,
   };
 
   secondary = {
-    main: palette.gray90,
-    shade: palette.gray85,
+    main: `rgba(${this.blackBase}, 0.08)`,
+    shade: `rgba(${this.blackBase}, 0.15)`,
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
     border: this.border.weak,
   };
-
-  tertiary = {
-    main: palette.purpleLightMain,
-    text: palette.purpleLightText,
-  };
-
-  accent = this.primary;
 
   info = {
     main: palette.blueLightMain,
@@ -273,11 +222,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   background = {
-    canvas: palette.gray100,
-    page: palette.white,
+    canvas: palette.gray90,
     primary: palette.white,
-    secondary: palette.gray95,
-    elevated: palette.white,
+    secondary: palette.gray100,
   };
 
   action = {
@@ -296,23 +243,18 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%)',
   };
 
-  scrollbar = `rgba(${this.blackBase}, 0.3)`;
-
   contrastThreshold = 3;
   hoverFactor = 0.03;
   tonalOffset = 0.2;
 }
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {
-  colors = resolvePaletteRefs(colors);
   const dark = new DarkColors();
   const light = new LightColors();
   const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
   const {
     primary = base.primary,
     secondary = base.secondary,
-    tertiary = base.tertiary,
-    accent = base.accent,
     info = base.info,
     warning = base.warning,
     success = base.success,
@@ -335,7 +277,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
     color = { ...color, name };
     if (!color.main) {
-      color.main = base[name].main;
+      throw new Error(`Missing main color for ${name}`);
     }
     if (!color.text) {
       color.text = color.main;
@@ -363,8 +305,6 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       ...base,
       primary: getRichColor({ color: primary, name: 'primary' }),
       secondary: getRichColor({ color: secondary, name: 'secondary' }),
-      tertiary: getRichColor({ color: tertiary, name: 'tertiary' }),
-      accent: getRichColor({ color: accent, name: 'accent' }),
       info: getRichColor({ color: info, name: 'info' }),
       error: getRichColor({ color: error, name: 'error' }),
       success: getRichColor({ color: success, name: 'success' }),
@@ -378,8 +318,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   );
 }
 
-type RichColorNames = 'primary' | 'secondary' | 'tertiary' | 'accent' | 'info' | 'error' | 'success' | 'warning';
 interface GetRichColorProps {
   color: Partial<ThemeRichColor>;
-  name: RichColorNames;
+  name: string;
 }

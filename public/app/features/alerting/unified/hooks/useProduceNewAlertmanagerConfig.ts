@@ -1,12 +1,10 @@
-import { type Action } from '@reduxjs/toolkit';
+import { Action } from '@reduxjs/toolkit';
 import reduceReducers from 'reduce-reducers';
 
-import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { muteTimingsReducer } from '../reducers/alertmanager/muteTimings';
-import { routesReducer } from '../reducers/alertmanager/notificationPolicyRoutes';
-import { notificationTemplatesReducer } from '../reducers/alertmanager/notificationTemplates';
 import { receiversReducer } from '../reducers/alertmanager/receivers';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 
@@ -16,7 +14,7 @@ const ERR_NO_ACTIVE_AM = new Error('no active Alertmanager');
 
 const { useLazyGetAlertmanagerConfigurationQuery, useUpdateAlertmanagerConfigurationMutation } = alertmanagerApi;
 
-const initialAlertmanagerConfiguration: AlertManagerCortexConfig = {
+export const initialAlertmanagerConfiguration: AlertManagerCortexConfig = {
   alertmanager_config: {
     receivers: [],
     route: {},
@@ -28,13 +26,7 @@ const initialAlertmanagerConfiguration: AlertManagerCortexConfig = {
   template_files: {},
 };
 
-const configurationReducer = reduceReducers(
-  initialAlertmanagerConfiguration,
-  muteTimingsReducer,
-  receiversReducer,
-  notificationTemplatesReducer,
-  routesReducer
-);
+const configurationReducer = reduceReducers(initialAlertmanagerConfiguration, muteTimingsReducer, receiversReducer);
 
 /**
  * This hook will make sure we are always applying actions that mutate the Alertmanager configuration

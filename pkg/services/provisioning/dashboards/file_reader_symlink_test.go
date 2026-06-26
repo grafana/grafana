@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -27,7 +26,7 @@ func TestProvisionedSymlinkedFolder(t *testing.T) {
 		Options: map[string]any{"path": symlinkedFolder},
 	}
 
-	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil, nil, setting.NewCfg())
+	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil, nil)
 	if err != nil {
 		t.Error("expected err to be nil")
 	}

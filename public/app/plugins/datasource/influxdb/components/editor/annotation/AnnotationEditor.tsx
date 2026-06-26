@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-import { type QueryEditorProps } from '@grafana/data';
-import { InlineFormLabel, Input, Stack } from '@grafana/ui';
+import { QueryEditorProps } from '@grafana/data/src';
+import { InlineFormLabel, Input, Stack } from '@grafana/ui/src';
 
-import type InfluxDatasource from '../../../datasource';
-import { type InfluxOptions, type InfluxQuery } from '../../../types';
+import InfluxDatasource from '../../../datasource';
+import { InfluxOptions, InfluxQuery } from '../../../types';
 
 export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, InfluxQuery, InfluxOptions>) => {
   const { query, onChange } = props;

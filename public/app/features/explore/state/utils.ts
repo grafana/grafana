@@ -1,41 +1,44 @@
 import { uniq } from 'lodash';
 
 import {
-  type AbsoluteTimeRange,
-  type DataSourceApi,
+  AbsoluteTimeRange,
+  DataSourceApi,
   dateMath,
-  type DateTime,
-  type EventBusExtended,
+  DateTime,
+  EventBusExtended,
   getDefaultTimeRange,
-  type HistoryItem,
+  HistoryItem,
   isDateTime,
   LoadingState,
-  type LogRowModel,
-  type PanelData,
-  type RawTimeRange,
-  type ScopedVars,
-  store,
-  type TimeFragment,
-  type TimeRange,
+  LogRowModel,
+  PanelData,
+  RawTimeRange,
+  ScopedVars,
+  TimeFragment,
+  TimeRange,
   toUtc,
-  type URLRange,
-  type URLRangeValue,
+  URLRange,
+  URLRangeValue,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { type DataQuery, type DataSourceJsonData, type DataSourceRef, type TimeZone } from '@grafana/schema';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { type ExploreItemState, type ExplorePanelData, type RichHistoryQuery } from 'app/types/explore';
-import { type StoreState } from 'app/types/store';
+import { ExplorePanelData, StoreState } from 'app/types';
+import { ExploreItemState, RichHistoryQuery } from 'app/types/explore';
 
+import store from '../../../core/store';
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
-import { DEFAULT_RANGE } from './constants';
-
 export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
+
+export const DEFAULT_RANGE = {
+  from: `now-${config.exploreDefaultTimeOffset}`,
+  to: 'now',
+};
 
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
@@ -75,9 +78,6 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
-  compact: false,
-  queriesChangedIndex: 0,
-  queriesChangedIndexAtRun: 0,
   ...overrides,
 });
 

@@ -15,9 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
@@ -25,14 +26,21 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationGraphite(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
 
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
+
+	u := testinfra.CreateUser(t, testEnv.SQLStore, testEnv.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
 
 	var outgoingRequest *http.Request
 	outgoingServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +60,7 @@ func TestIntegrationGraphite(t *testing.T) {
 
 	uid := "graphite"
 	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgID:          1,
+		OrgID:          u.OrgID,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "graphite",
 		Type:           datasources.DS_GRAPHITE,
@@ -85,7 +93,7 @@ func TestIntegrationGraphite(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)

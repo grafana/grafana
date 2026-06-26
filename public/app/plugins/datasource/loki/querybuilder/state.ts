@@ -1,7 +1,6 @@
-import { QueryEditorMode } from '@grafana/plugin-ui';
+import { QueryEditorMode } from '@grafana/experimental';
 
-import { LokiQueryType } from '../dataquery.gen';
-import { type LokiQuery } from '../types';
+import { LokiQuery, LokiQueryType } from '../types';
 
 const queryEditorModeDefaultLocalStorageKey = 'LokiQueryEditorModeDefault';
 
@@ -14,7 +13,7 @@ export function changeEditorMode(query: LokiQuery, editorMode: QueryEditorMode, 
   onChange({ ...query, editorMode });
 }
 
-function getDefaultEditorMode(expr: string) {
+export function getDefaultEditorMode(expr: string) {
   // If we already have an expression default to code view
   if (expr != null && expr !== '') {
     return QueryEditorMode.Code;

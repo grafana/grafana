@@ -3,15 +3,15 @@ import { of } from 'rxjs';
 import {
   dataFrameToJSON,
   getDefaultTimeRange,
-  type DataSourceInstanceSettings,
+  DataSourceInstanceSettings,
   FieldType,
   createDataFrame,
 } from '@grafana/data';
-import { type FetchResponse } from '@grafana/runtime';
-import { type SQLQuery, makeVariable } from '@grafana/sql';
+import { FetchResponse } from '@grafana/runtime';
+import { SQLQuery, makeVariable } from '@grafana/sql';
 
 import { MySqlDatasource } from '../MySqlDatasource';
-import { type MySQLOptions } from '../types';
+import { MySQLOptions } from '../types';
 
 const fetchMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -19,12 +19,6 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     fetch: fetchMock,
   }),
-}));
-
-const uid = '0000';
-jest.mock('@grafana/data', () => ({
-  ...jest.requireActual('@grafana/data'),
-  generateUUID: () => uid,
 }));
 
 describe('MySQLDatasource', () => {
@@ -140,7 +134,7 @@ describe('MySQLDatasource', () => {
     it('should return a list of fields when fetchFields is called', async () => {
       const fetchFieldsResponse = {
         results: {
-          [`fields-${uid}`]: {
+          fields: {
             refId: 'fields',
             frames: [
               dataFrameToJSON(

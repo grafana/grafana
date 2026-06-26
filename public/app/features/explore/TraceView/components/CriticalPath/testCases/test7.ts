@@ -26,8 +26,7 @@
                └──────────────┘           |
 */
 
-import transformTraceData from '../../model/transform-trace-data';
-import { type TraceResponse } from '../../types/trace';
+import { TraceResponse, transformTraceData } from '../../index';
 
 const trace: TraceResponse = {
   traceID: 'trace-abc',

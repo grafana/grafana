@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,12 +16,11 @@ func Test_parseRedisConnStr(t *testing.T) {
 		ShouldErr     bool
 	}{
 		"all redis options should parse": {
-			"addr=127.0.0.1:6379,pool_size=100,db=1,username=grafana,password=grafanaRocks,ssl=false",
+			"addr=127.0.0.1:6379,pool_size=100,db=1,password=grafanaRocks,ssl=false",
 			&redis.Options{
 				Addr:      "127.0.0.1:6379",
 				PoolSize:  100,
 				DB:        1,
-				Username:  "grafana",
 				Password:  "grafanaRocks",
 				Network:   "tcp",
 				TLSConfig: nil,
@@ -34,15 +33,6 @@ func Test_parseRedisConnStr(t *testing.T) {
 				Addr:     "127.0.0.1:6379",
 				PoolSize: 100,
 				Network:  "tcp",
-			},
-			false,
-		},
-		"network unix should parse": {
-			"network=unix,addr=/var/run/redis/redis.sock,pool_size=100",
-			&redis.Options{
-				Addr:     "/var/run/redis/redis.sock",
-				PoolSize: 100,
-				Network:  "unix",
 			},
 			false,
 		},

@@ -1,22 +1,18 @@
 import { css, cx } from '@emotion/css';
-import { useId, type HTMLAttributes } from 'react';
+import { HTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
 import { getChildId } from '../../utils/reactUtils';
 
-import { FieldContext } from './FieldContext';
 import { FieldValidationMessage } from './FieldValidationMessage';
-import { Label, getLabelStyles } from './Label';
-import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
+import { Label } from './Label';
 
-type ChildProps = Record<string, unknown>;
-
-export interface FieldProps extends HTMLAttributes<HTMLElement> {
+export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
-  children: React.ReactElement<ChildProps>;
+  children: React.ReactElement;
   /** Label for the field */
   label?: React.ReactNode;
   /** Description of the field */
@@ -35,8 +31,6 @@ export interface FieldProps extends HTMLAttributes<HTMLElement> {
   horizontal?: boolean;
   /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
   validationMessageHorizontalOverflow?: boolean;
-  /** Whether to use a <fieldset> + <legend> for rendering the label. Only use for RadioButtonGroup */
-  useFieldset?: boolean;
 
   className?: string;
   /**
@@ -45,19 +39,12 @@ export interface FieldProps extends HTMLAttributes<HTMLElement> {
    *  https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label#attr-for
    */
   htmlFor?: string;
-  /** Remove the bottom margin */
-  noMargin?: boolean;
 }
 
-/**
- * Field is the basic component for rendering form elements together with labels and description.
- *
- * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-field--docs
- */
 export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   (
     {
-      label: labelProp,
+      label,
       description,
       horizontal,
       invalid,
@@ -69,86 +56,49 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       className,
       validationMessageHorizontalOverflow,
       htmlFor,
-      noMargin,
-      useFieldset: useFieldsetProp,
       ...otherProps
     }: FieldProps,
     ref
   ) => {
-    const styles = useStyles2(getFieldStyles, noMargin);
-    const labelStyles = useStyles2(getLabelStyles);
-    const useFieldset = useFieldsetProp ?? children.type === RadioButtonGroup;
-    const label = typeof labelProp === 'string' ? `${labelProp}${required ? ' *' : ''}` : labelProp;
-    const fieldId = useId();
-    const errorId = useId();
-    const inputId = htmlFor ?? getChildId(children) ?? fieldId;
+    const styles = useStyles2(getFieldStyles);
+    const inputId = htmlFor ?? getChildId(children);
 
-    let labelElement = label;
-
-    if (useFieldset) {
-      if (typeof label === 'string') {
-        labelElement = (
-          <legend className={labelStyles.label}>
-            <div className={labelStyles.labelContent}>{label}</div>
-            {description && <span className={labelStyles.description}>{description}</span>}
-          </legend>
-        );
-      } else {
-        labelElement = <legend className={labelStyles.label}>{label}</legend>;
-      }
-    } else if (typeof label === 'string') {
-      labelElement = (
+    const labelElement =
+      typeof label === 'string' ? (
         <Label htmlFor={inputId} description={description}>
-          {label}
+          {`${label}${required ? ' *' : ''}`}
         </Label>
+      ) : (
+        label
       );
-    }
 
-    // @deprecated — passing props via children is discouraged and will be removed at some point, use FieldContext instead
-    const childProps: ChildProps = deleteUndefinedProps({ invalid, disabled, loading });
-    if (invalid && error) {
-      // this should probably use aria-errormessage, but seems like voiceover still doesn't support that...
-      childProps['aria-describedby'] = errorId;
-    }
-    const Wrapper = useFieldset ? 'fieldset' : 'div';
+    const childProps = deleteUndefinedProps({ invalid, disabled, loading });
     return (
-      <FieldContext.Provider
-        value={{
-          id: inputId,
-          invalid,
-          disabled,
-          loading,
-          'aria-describedby': invalid && error ? errorId : undefined,
-        }}
-      >
-        <Wrapper className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
-          {labelElement}
-          <div>
-            <div ref={ref}>
-              {React.cloneElement(children, children.type !== React.Fragment ? childProps : undefined)}
-            </div>
-            {invalid && error && !horizontal && (
-              <div
-                className={cx(styles.fieldValidationWrapper, {
-                  [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
-                })}
-              >
-                <FieldValidationMessage id={errorId}>{error}</FieldValidationMessage>
-              </div>
-            )}
-          </div>
-
-          {invalid && error && horizontal && (
+      <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
+        {labelElement}
+        <div>
+          <div ref={ref}>{React.cloneElement(children, childProps)}</div>
+          {invalid && error && !horizontal && (
             <div
-              className={cx(styles.fieldValidationWrapper, styles.fieldValidationWrapperHorizontal, {
+              className={cx(styles.fieldValidationWrapper, {
                 [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
               })}
             >
-              <FieldValidationMessage id={errorId}>{error}</FieldValidationMessage>
+              <FieldValidationMessage>{error}</FieldValidationMessage>
             </div>
           )}
-        </Wrapper>
-      </FieldContext.Provider>
+        </div>
+
+        {invalid && error && horizontal && (
+          <div
+            className={cx(styles.fieldValidationWrapper, styles.fieldValidationWrapperHorizontal, {
+              [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+            })}
+          >
+            <FieldValidationMessage>{error}</FieldValidationMessage>
+          </div>
+        )}
+      </div>
     );
   }
 );
@@ -165,11 +115,11 @@ function deleteUndefinedProps<T extends Object>(obj: T): Partial<T> {
   return obj;
 }
 
-const getFieldStyles = (theme: GrafanaTheme2, noMargin?: boolean) => ({
+export const getFieldStyles = (theme: GrafanaTheme2) => ({
   field: css({
     display: 'flex',
     flexDirection: 'column',
-    marginBottom: theme.spacing(noMargin ? 0 : 2),
+    marginBottom: theme.spacing(2),
   }),
   fieldHorizontal: css({
     flexDirection: 'row',

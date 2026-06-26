@@ -1,8 +1,8 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { useState } from 'react';
+import { action } from '@storybook/addon-actions';
+import { Meta, StoryFn } from '@storybook/react';
 
-import { Combobox } from '../Combobox/Combobox';
 import { Input } from '../Input/Input';
+import { Select } from '../Select/Select';
 
 import { InlineField } from './InlineField';
 import mdx from './InlineField.mdx';
@@ -75,22 +75,24 @@ grow.args = {
   grow: true,
 };
 
-export const withCombobox: StoryFn<typeof InlineField> = (args) => {
-  const comboboxOptions = [
-    { value: 1, label: 'One' },
-    { value: 2, label: 'Two' },
-  ];
-  const [selected, setSelected] = useState(1);
+export const withSelect: StoryFn<typeof InlineField> = (args) => {
   return (
     <InlineField {...args}>
-      <Combobox width={16} onChange={(v) => setSelected(v.value)} options={comboboxOptions} value={selected} />
+      <Select
+        width={16}
+        onChange={action('item selected')}
+        options={[
+          { value: 1, label: 'One' },
+          { value: 2, label: 'Two' },
+        ]}
+      />
     </InlineField>
   );
 };
 
-withCombobox.args = {
+withSelect.args = {
   ...basic.args,
-  label: 'Combobox option',
+  label: 'Select option',
 };
 
 export const multiple: StoryFn<typeof InlineField> = () => {

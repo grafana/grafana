@@ -1,8 +1,8 @@
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Trans } from 'app/core/internationalization';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { shareDashboardType } from '../ShareModal/utils';

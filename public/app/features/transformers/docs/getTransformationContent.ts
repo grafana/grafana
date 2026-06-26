@@ -1,9 +1,6 @@
-import { FALLBACK_DOCS_LINK } from './constants';
+import { transformationDocsContent, getLinkToDocs, ImageRenderType } from './content';
 
-export async function getTransformationContent(id: string): Promise<{ name: string; helperDocs: string }> {
-  const { transformationDocsContent, ImageRenderType } = await import(
-    /* webpackChunkName: "transformer-docs" */ './content'
-  );
+export function getTransformationContent(id: string): { name: string; helperDocs: string } {
   if (id in transformationDocsContent) {
     const { name, getHelperDocs, links } = transformationDocsContent[id];
 
@@ -26,7 +23,7 @@ export async function getTransformationContent(id: string): Promise<{ name: stri
         name,
         helperDocs: `
         ${cleansedMarkdown}
-        ${FALLBACK_DOCS_LINK}
+        ${getLinkToDocs()}
   ${renderedLinks}
         `,
       };
@@ -37,7 +34,7 @@ export async function getTransformationContent(id: string): Promise<{ name: stri
       name,
       helperDocs: `
       ${cleansedMarkdown}
-      ${FALLBACK_DOCS_LINK}
+      ${getLinkToDocs()}
       `,
     };
   }
@@ -45,7 +42,7 @@ export async function getTransformationContent(id: string): Promise<{ name: stri
   // If the transformation has no documentation, return an external link to the online documentation.
   return {
     name: 'No documentation found',
-    helperDocs: FALLBACK_DOCS_LINK,
+    helperDocs: getLinkToDocs(),
   };
 }
 

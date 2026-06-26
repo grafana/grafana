@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { PureComponent, useState } from 'react';
 import * as React from 'react';
 
 import { Button, InlineField, InlineFieldRow, Input } from '@grafana/ui';
@@ -83,52 +83,48 @@ const CSVWaveEditor = (props: WaveProps) => {
           onBlur={() => onValueChange('labels', labels)}
         />
       </InlineField>
-      <Button
-        aria-label={last ? 'Add wave' : 'Remove wave'}
-        icon={last ? 'plus' : 'minus'}
-        variant="secondary"
-        onClick={onAction}
-      />
+      <Button icon={last ? 'plus' : 'minus'} variant="secondary" onClick={onAction} />
     </InlineFieldRow>
   );
 };
 
-export const CSVWavesEditor = memo(({ waves, onChange }: WavesProps) => {
-  const handleChange = (index: number, wave?: CSVWave) => {
-    let wavesArray = [...(waves ?? defaultCSVWaveQuery)];
+export class CSVWavesEditor extends PureComponent<WavesProps> {
+  onChange = (index: number, wave?: CSVWave) => {
+    let waves = [...(this.props.waves ?? defaultCSVWaveQuery)];
     if (wave) {
-      wavesArray[index] = { ...wave };
+      waves[index] = { ...wave };
     } else {
       // remove the element
-      wavesArray.splice(index, 1);
+      waves.splice(index, 1);
     }
-    onChange(wavesArray);
+    this.props.onChange(waves);
   };
 
-  const onAdd = () => {
-    const wavesArray = [...(waves ?? defaultCSVWaveQuery)];
-    wavesArray.push({ ...defaultCSVWaveQuery[0] });
-    onChange(wavesArray);
+  onAdd = () => {
+    const waves = [...(this.props.waves ?? defaultCSVWaveQuery)];
+    waves.push({ ...defaultCSVWaveQuery[0] });
+    this.props.onChange(waves);
   };
 
-  let wavesArray = waves ?? defaultCSVWaveQuery;
-  if (!wavesArray.length) {
-    wavesArray = defaultCSVWaveQuery;
+  render() {
+    let waves = this.props.waves ?? defaultCSVWaveQuery;
+    if (!waves.length) {
+      waves = defaultCSVWaveQuery;
+    }
+
+    return (
+      <>
+        {waves.map((wave, index) => (
+          <CSVWaveEditor
+            key={`${index}/${wave.valuesCSV}`}
+            wave={wave}
+            index={index}
+            onAdd={this.onAdd}
+            onChange={this.onChange}
+            last={index === waves.length - 1}
+          />
+        ))}
+      </>
+    );
   }
-
-  return (
-    <>
-      {wavesArray.map((wave, index) => (
-        <CSVWaveEditor
-          key={`${index}/${wave.valuesCSV}`}
-          wave={wave}
-          index={index}
-          onAdd={onAdd}
-          onChange={handleChange}
-          last={index === wavesArray.length - 1}
-        />
-      ))}
-    </>
-  );
-});
-CSVWavesEditor.displayName = 'CSVWavesEditor';
+}

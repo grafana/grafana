@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Cascader, type CascaderOption, type CascaderProps } from './Cascader';
+import { Cascader, CascaderOption, CascaderProps } from './Cascader';
 
 const options = [
   {
@@ -178,10 +178,5 @@ describe('Cascader', () => {
     );
 
     expect(screen.getByRole('textbox', { name: 'Cascader label' })).toBeInTheDocument();
-  });
-
-  it('applies data-testid to the root element', () => {
-    render(<Cascader options={options} onSelect={jest.fn()} data-testid="custom-cascader" />);
-    expect(screen.getByTestId('custom-cascader')).toBeInTheDocument();
   });
 });

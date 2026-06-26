@@ -2,15 +2,15 @@ import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, SegmentAsync, useStyles2 } from '@grafana/ui';
 
-import { type GraphiteTag } from '../graphite_query';
+import { GraphiteTag } from '../graphite_query';
 import { actions } from '../state/actions';
 import { useDispatch } from '../state/context';
 import { getTagsAsSegmentsSelectables } from '../state/providers';
-import { type GraphiteQueryEditorState } from '../state/store';
-import { type GraphiteSegment } from '../types';
+import { GraphiteQueryEditorState } from '../state/store';
+import { GraphiteSegment } from '../types';
 
 import { PlayButton } from './PlayButton';
 import { TagEditor } from './TagEditor';

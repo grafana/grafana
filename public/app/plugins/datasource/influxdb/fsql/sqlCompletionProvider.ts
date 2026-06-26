@@ -2,16 +2,16 @@ import {
   CompletionItemKind,
   CompletionItemPriority,
   getStandardSQLCompletionProvider,
-  type LanguageCompletionProvider,
-  type LinkedToken,
-  type PositionContext,
-  type StatementPlacementProvider,
+  LanguageCompletionProvider,
+  LinkedToken,
+  PositionContext,
+  StatementPlacementProvider,
   SuggestionKind,
-  type SuggestionKindProvider,
-  type TableDefinition,
-  type TableIdentifier,
+  SuggestionKindProvider,
+  TableDefinition,
+  TableIdentifier,
   TokenType,
-} from '@grafana/plugin-ui';
+} from '@grafana/experimental';
 
 interface CompletionProviderGetterArgs {
   getMeta: (t?: TableIdentifier) => Promise<TableDefinition[]>;
@@ -35,7 +35,7 @@ const customSuggestionKind = {
 
 const FROMKEYWORD = 'FROM';
 
-const customStatementPlacementProvider: StatementPlacementProvider = () => [
+export const customStatementPlacementProvider: StatementPlacementProvider = () => [
   {
     id: customStatementPlacement.afterDatabase,
     resolve: (currentToken, previousKeyword, previousNonWhiteSpace) => {
@@ -52,7 +52,7 @@ const customStatementPlacementProvider: StatementPlacementProvider = () => [
   },
 ];
 
-const customSuggestionKinds: (getMeta: CompletionProviderGetterArgs['getMeta']) => SuggestionKindProvider =
+export const customSuggestionKinds: (getMeta: CompletionProviderGetterArgs['getMeta']) => SuggestionKindProvider =
   (getMeta) => () => [
     {
       id: SuggestionKind.Tables,

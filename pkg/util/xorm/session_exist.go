@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
+	"xorm.io/core"
 )
 
 // Exist returns true if the record exist otherwise return false
@@ -61,7 +61,7 @@ func (session *Session) Exist(bean ...any) (bool, error) {
 			}
 		} else {
 			beanValue := reflect.ValueOf(bean[0])
-			if beanValue.Kind() != reflect.Pointer {
+			if beanValue.Kind() != reflect.Ptr {
 				return false, errors.New("needs a pointer")
 			}
 

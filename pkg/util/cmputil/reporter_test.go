@@ -112,11 +112,11 @@ func TestIsAddedDeleted_Collections(t *testing.T) {
 		left := testStruct{}
 		right := testStruct{
 			Number:    rand.Float64(),
-			NumberPtr: new(rand.Float64()),
+			NumberPtr: util.Pointer(rand.Float64()),
 			Text:      util.GenerateShortUID(),
-			TextPtr:   new(util.GenerateShortUID()),
+			TextPtr:   util.Pointer(util.GenerateShortUID()),
 			Flag:      true,
-			FlagPtr:   new(true),
+			FlagPtr:   util.Pointer(true),
 			SubStruct: subStruct{
 				Data: rand.Float64(),
 			},

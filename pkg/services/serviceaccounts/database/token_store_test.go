@@ -6,15 +6,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/satokengen"
+	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestStore_AddServiceAccountToken(t *testing.T) {
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	user := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
@@ -29,7 +26,7 @@ func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			keyName := t.Name()
-			key, err := satokengen.New(keyName)
+			key, err := apikeygen.New(user.OrgID, keyName)
 			require.NoError(t, err)
 
 			cmd := serviceaccounts.AddServiceAccountTokenCommand{
@@ -76,15 +73,13 @@ func TestIntegration_Store_AddServiceAccountToken(t *testing.T) {
 	}
 }
 
-func TestIntegration_Store_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestStore_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
 	saToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, saToCreate)
 
 	keyName := t.Name()
-	key, err := satokengen.New(keyName)
+	key, err := apikeygen.New(sa.OrgID, keyName)
 	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
@@ -98,15 +93,13 @@ func TestIntegration_Store_AddServiceAccountToken_WrongServiceAccount(t *testing
 	require.Error(t, err, "It should not be possible to add token to non-existing service account")
 }
 
-func TestIntegration_Store_RevokeServiceAccountToken(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestStore_RevokeServiceAccountToken(t *testing.T) {
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
 
 	keyName := t.Name()
-	key, err := satokengen.New(keyName)
+	key, err := apikeygen.New(sa.OrgID, keyName)
 	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
@@ -140,15 +133,13 @@ func TestIntegration_Store_RevokeServiceAccountToken(t *testing.T) {
 	require.Fail(t, "Key not found")
 }
 
-func TestIntegration_Store_DeleteServiceAccountToken(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestStore_DeleteServiceAccountToken(t *testing.T) {
 	userToCreate := tests.TestUser{Login: "servicetestwithTeam@admin", IsServiceAccount: true}
 	db, store := setupTestDatabase(t)
 	sa := tests.SetupUserServiceAccount(t, db, store.cfg, userToCreate)
 
 	keyName := t.Name()
-	key, err := satokengen.New(keyName)
+	key, err := apikeygen.New(sa.OrgID, keyName)
 	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{

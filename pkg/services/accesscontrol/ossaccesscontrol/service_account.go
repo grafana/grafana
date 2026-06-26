@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -36,32 +35,14 @@ type ServiceAccountPermissionsService struct {
 	*resourcepermissions.Service
 }
 
-// ServiceAccountPermissionsRoleRegistrations returns the templated reader/writer
-// fixed roles for service account resource permissions
-// (fixed:serviceaccounts.permissions:reader and :writer). These mirror the roles
-// declared by ProvideServiceAccountPermissions through resourcepermissions.New;
-// the identity fields below must match the Options passed there.
-func ServiceAccountPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
-	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
-		Resource:       serviceAccountPermissionsResource,
-		APIGroup:       serviceAccountPermissionsAPIGroup,
-		ReaderRoleName: permissionReaderRoleName,
-		WriterRoleName: permissionWriterRoleName,
-		RoleGroup:      serviceAccountPermissionsRoleGroup,
-	})
-}
-
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
-	restConfigProvider apiserver.DirectRestConfigProvider,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:           serviceAccountPermissionsResource,
-		ResourceAttribute:  "id",
-		APIGroup:           serviceAccountPermissionsAPIGroup,
-		ResourceTranslator: serviceaccounts.UIDToIDHandler(serviceAccountRetrieverService),
+		Resource:          "serviceaccounts",
+		ResourceAttribute: "id",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideServiceAccountPermissions.ResourceValidator")
 			defer span.End()
@@ -85,10 +66,9 @@ func ProvideServiceAccountPermissions(
 			"Edit":  ServiceAccountEditActions,
 			"Admin": ServiceAccountAdminActions,
 		},
-		ReaderRoleName:     permissionReaderRoleName,
-		WriterRoleName:     permissionWriterRoleName,
-		RoleGroup:          serviceAccountPermissionsRoleGroup,
-		RestConfigProvider: restConfigProvider,
+		ReaderRoleName: "Service account permission reader",
+		WriterRoleName: "Service account permission writer",
+		RoleGroup:      "Service accounts",
 	}
 
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)

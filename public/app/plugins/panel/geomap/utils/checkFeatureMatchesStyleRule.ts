@@ -1,8 +1,8 @@
-import { type FeatureLike } from 'ol/Feature';
+import { FeatureLike } from 'ol/Feature';
 
-import { compareValues } from '@grafana/data/internal';
+import { compareValues } from '@grafana/data/src/transformations/matchers/compareValues';
 
-import { type FeatureRuleConfig } from '../types';
+import { FeatureRuleConfig } from '../types';
 
 /**
  * Check whether feature has property value that matches rule

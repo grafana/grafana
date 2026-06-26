@@ -6,25 +6,26 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/authz"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestLegacyAccessClient_Check(t *testing.T) {
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
 	t.Run("should reject when when no configuration for resource exist", func(t *testing.T) {
 		a := accesscontrol.NewLegacyAccessClient(ac)
 
-		res, err := a.Check(context.Background(), &identity.StaticRequester{}, authlib.CheckRequest{
+		res, err := a.Check(context.Background(), &identity.StaticRequester{}, authz.CheckRequest{
 			Verb:      "get",
 			Resource:  "dashboards",
 			Namespace: "default",
 			Name:      "1",
-		}, "")
+		})
 		assert.NoError(t, err)
 		assert.Equal(t, false, res.Allowed)
 	})
@@ -42,12 +43,12 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:2"},
 		)
 
-		res, err := a.Check(context.Background(), ident, authlib.CheckRequest{
+		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
 			Name:      "1",
-		}, "")
+		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, res.Allowed)
@@ -66,11 +67,11 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read"},
 		)
 
-		res, err := a.Check(context.Background(), ident, authlib.CheckRequest{
+		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "list",
 			Namespace: "default",
 			Resource:  "dashboards",
-		}, "")
+		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, res.Allowed)
@@ -89,12 +90,12 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:1"},
 		)
 
-		res, err := a.Check(context.Background(), ident, authlib.CheckRequest{
+		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
 			Name:      "1",
-		}, "")
+		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, res.Allowed)
@@ -114,22 +115,22 @@ func TestLegacyAccessClient_Check(t *testing.T) {
 
 		ident := newIdent(accesscontrol.Permission{})
 
-		res, err := a.Check(context.Background(), ident, authlib.CheckRequest{
+		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
 			Name:      "1",
-		}, "")
+		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, true, res.Allowed)
 
-		res, err = a.Check(context.Background(), ident, authlib.CheckRequest{
+		res, err = a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "create",
 			Namespace: "default",
 			Resource:  "dashboards",
 			Name:      "1",
-		}, "")
+		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, false, res.Allowed)

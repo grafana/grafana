@@ -20,7 +20,7 @@ import defaultConfig from '../../constants/default-config';
  * Merge the embedded config from the query service (if present) with the
  * default config from `../../constants/default-config`.
  */
-function getConfig() {
+export default function getConfig() {
   return defaultConfig;
 }
 

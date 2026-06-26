@@ -22,10 +22,11 @@ on:
         required: false
         default: false
         type: boolean
-      work_branch:
-        required: false
-        type: string
-        description: "Use specific branch for changelog"
+    secrets:
+      GRAFANA_DELIVERY_BOT_APP_ID:
+        required: true
+      GRAFANA_DELIVERY_BOT_APP_PEM:
+        required: true
 
   workflow_dispatch:
     inputs:
@@ -49,86 +50,52 @@ on:
         required: false
         default: false
         type: boolean
-      work_branch:
-        required: false
-        type: string
-        description: "Use specific branch for changelog"
 
-permissions: {}
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   main:
-    env:
-      RUN_ID: ${{ github.run_id }}
-      VERSION: ${{ inputs.version }}
-      PREVIOUS_VERISON: ${{ inputs.previous_version }}
-      TARGET: ${{ inputs.target }}
-      DRY_RUN: ${{ inputs.dry_run }}
-    runs-on: ubuntu-arm64-small
+    runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: write
-      pull-requests: write
     steps:
-      - name: Get GitHub App token
-        id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          github_app: grafana-pr-automation
-          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release' || 'main' }}
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v5"
+        uses: "actions/checkout@v4"
         with:
           ref: main
           sparse-checkout: |
             .github/workflows
-            .github/actions
             CHANGELOG.md
             .nvmrc
             .prettierignore
             .prettierrc.js
           fetch-depth: 0
           fetch-tags: true
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
+      - name: Setup nodejs environment
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: "Configure git user"
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local --add --bool push.autoSetupRemote true
       - name: "Create branch"
-        run: |
-          if [[ "$WORK_BRANCH" == '' ]]; then
-            WORK_BRANCH="changelog/${RUN_ID}/${VERSION}"
-          fi
-          # Persist the resolved branch name for later steps.
-          echo "WORK_BRANCH=$WORK_BRANCH" >> "$GITHUB_ENV"
-
-          # Checkout the changelog branch if it exists so this run patches on top of any
-          # previously accumulated changelog entries; otherwise start from the main checkout.
-          if git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH"; then
-            git switch --track "origin/$WORK_BRANCH"
-          else
-            git switch -c "$WORK_BRANCH"
-          fi
-        env:
-          WORK_BRANCH: ${{ inputs.work_branch }}
-      # ghcommit-action commits to an existing remote branch via the Git Data API; it does
-      # not create the branch itself. Pre-create the ref at the current HEAD when it is not
-      # already on the remote so the subsequent commit has a target.
-      - name: "Pre-create branch on remote"
-        if: inputs.dry_run != true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if ! git show-ref --verify --quiet "refs/remotes/origin/$WORK_BRANCH"; then
-            BASE_SHA=$(git rev-parse HEAD)
-            gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
-              --method POST \
-              -f "ref=refs/heads/$WORK_BRANCH" \
-              -f "sha=${BASE_SHA}"
-          fi
+        run: git checkout -b "changelog/${{ github.run_id }}/${{ inputs.version }}"
       - name: "Generate changelog"
         id: changelog
-        uses: ./.github/actions/changelog
+        uses: ./.github/workflows/actions/changelog
         with:
           previous: ${{ inputs.previous_version }}
-          github_token: ${{ steps.get-github-app-token.outputs.token }}
+          github_token: ${{ steps.generate_token.outputs.token }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md
       - name: "Patch CHANGELOG.md"
@@ -136,24 +103,24 @@ jobs:
           # Prepare CHANGELOG.md content with version delimiters
           (
             echo
-            echo "# ${VERSION} ($(date '+%F'))"
+            echo "# ${{ inputs.version}} ($(date '+%F'))"
             echo
             cat changelog_items.md
           ) > CHANGELOG.part
 
           # Check if a version exists in the changelog
-          if grep -q "<!-- ${VERSION} START" CHANGELOG.md ; then
+          if grep -q "<!-- ${{ inputs.version}} START" CHANGELOG.md ; then
             # Replace the content between START and END delimiters
-            echo "Version ${VERSION} is found in the CHANGELOG.md, patching contents..."
-            sed -i -e "/${VERSION} START/,/${VERSION} END/{//!d;}" \
-                   -e "/${VERSION} START/r CHANGELOG.part" CHANGELOG.md
+            echo "Version ${{ inputs.version }} is found in the CHANGELOG.md, patching contents..."
+            sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
+                   -e '/${{ inputs.version }} START/r CHANGELOG.part' CHANGELOG.md
           else
             # Prepend changelog part to the main changelog file
-            echo "Version $VERSION not found in the CHANGELOG.md"
+            echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
             (
-              echo "<!-- ${VERSION} START -->"
+              echo "<!-- ${{ inputs.version }} START -->"
               cat CHANGELOG.part
-              echo "<!-- ${VERSION} END -->"
+              echo "<!-- ${{ inputs.version }} END -->"
               cat CHANGELOG.md
             ) > CHANGELOG.tmp
             mv CHANGELOG.tmp CHANGELOG.md
@@ -163,43 +130,19 @@ jobs:
 
       - name: "Prettify CHANGELOG.md"
         run: npx prettier --write CHANGELOG.md
-      # Commit through the GitHub commit API (not `git commit`/`git push`) so GitHub signs
-      # the commit, satisfying the repo's required-signatures rule. empty: "true" preserves
-      # the previous `git commit --allow-empty` behaviour for runs with no changelog diff.
       - name: "Commit changelog changes"
-        if: inputs.dry_run != true
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
-        with:
-          commit_message: "Update changelog"
-          repo: ${{ github.repository }}
-          branch: ${{ env.WORK_BRANCH }}
-          empty: "true"
-          file_pattern: "CHANGELOG.md"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
+      - name: "git push"
+        if: ${{ inputs.dry_run }} != true
+        run: git push
       - name: "Create changelog PR"
-        run: |
-          if gh pr view &>/dev/null; then
-            echo "Changelog pr has already been created"
-          else
-
-            gh pr create \
-              --dry-run="${DRY_RUN}" \
-              --draft \
-              --label "no-backport" \
-              --label "no-changelog" \
-              -B "${TARGET}" \
-              -H "${WORK_BRANCH}" \
-              --title "Release: update changelog for ${TARGET}" \
-              --body "Changelog changes for release versions:"
-          fi
+        run: >
+          gh pr create \
+            --dry-run=${{ inputs.dry_run }} \
+            --label "no-backport" \
+            --label "no-changelog" \
+            -B "${{ inputs.target }}" \
+            --title "Release: update changelog for ${{ inputs.version }}" \
+            --body "Changelog changes for release ${{ inputs.version }}"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Add release version to PR description"
-        if: inputs.dry_run != true
-        run: |
-          gh pr view --json body --jq .body > pr_body.md
-          echo " -  ${VERSION}" >> pr_body.md
-          gh pr edit --body-file pr_body.md
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}

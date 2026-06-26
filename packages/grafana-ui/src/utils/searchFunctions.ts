@@ -1,4 +1,4 @@
-import { type CompletionItem, type SearchFunction } from '../types/completion';
+import { CompletionItem, SearchFunction } from '../types';
 
 import { fuzzyMatch } from './fuzzy';
 

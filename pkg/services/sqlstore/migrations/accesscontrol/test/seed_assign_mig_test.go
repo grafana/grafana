@@ -19,7 +19,7 @@ func TestPreventOnCallAccessSeed(t *testing.T) {
 		BuiltinRole, Action, Scope, Origin string
 	}
 
-	want := []SeedAssignment{ //nolint:prealloc
+	want := []SeedAssignment{
 		{BuiltinRole: "Admin", Action: "plugins.app:access", Scope: "plugins:id:grafana-oncall-app", Origin: "grafana-oncall-app"},
 		{BuiltinRole: "Editor", Action: "plugins.app:access", Scope: "plugins:id:grafana-oncall-app", Origin: "grafana-oncall-app"},
 		{BuiltinRole: "Viewer", Action: "plugins.app:access", Scope: "plugins:id:grafana-oncall-app", Origin: "grafana-oncall-app"},

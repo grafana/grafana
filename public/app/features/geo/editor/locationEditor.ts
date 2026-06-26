@@ -1,6 +1,5 @@
-import { type Field, FieldType, type PanelOptionsEditorBuilder, type DataFrame } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
+import { Field, FieldType, PanelOptionsEditorBuilder, DataFrame } from '@grafana/data';
+import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
 
 import { LocationModeEditor } from './locationModeEditor';
@@ -15,7 +14,7 @@ export function addLocationFields<TOptions>(
   builder.addCustomEditor({
     id: 'modeEditor',
     path: `${prefix}mode`,
-    name: t('geo.location-editor.name-location-mode', 'Location Mode'),
+    name: 'Location Mode',
     editor: LocationModeEditor,
     settings: { data, source },
   });
@@ -26,18 +25,18 @@ export function addLocationFields<TOptions>(
       builder
         .addFieldNamePicker({
           path: `${prefix}latitude`,
-          name: t('geo.location-editor.name-latitude-field', 'Latitude field'),
+          name: 'Latitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
-            noFieldsMessage: t('geo.location-editor.latitude-field.no-fields-message', 'No numeric fields found'),
+            noFieldsMessage: 'No numeric fields found',
           },
         })
         .addFieldNamePicker({
           path: `${prefix}longitude`,
-          name: t('geo.location-editor.name-longitude-field', 'Longitude field'),
+          name: 'Longitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
-            noFieldsMessage: t('geo.location-editor.longitude-field.no-fields-message', 'No numeric fields found'),
+            noFieldsMessage: 'No numeric fields found',
           },
         });
       break;
@@ -45,10 +44,10 @@ export function addLocationFields<TOptions>(
     case FrameGeometrySourceMode.Geohash:
       builder.addFieldNamePicker({
         path: `${prefix}geohash`,
-        name: t('geo.location-editor.name-geohash-field', 'Geohash field'),
+        name: 'Geohash field',
         settings: {
           filter: (f: Field) => f.type === FieldType.string,
-          noFieldsMessage: t('geo.location-editor.geohash-field.no-fields-message', 'No strings fields found'),
+          noFieldsMessage: 'No strings fields found',
         },
       });
       break;
@@ -57,16 +56,16 @@ export function addLocationFields<TOptions>(
       builder
         .addFieldNamePicker({
           path: `${prefix}lookup`,
-          name: t('geo.location-editor.name-lookup-field', 'Lookup field'),
+          name: 'Lookup field',
           settings: {
             filter: (f: Field) => f.type === FieldType.string,
-            noFieldsMessage: t('geo.location-editor.lookup-field.no-fields-message', 'No strings fields found'),
+            noFieldsMessage: 'No strings fields found',
           },
         })
         .addCustomEditor({
           id: 'gazetteer',
           path: `${prefix}gazetteer`,
-          name: t('geo.location-editor.name-gazetteer', 'Gazetteer'),
+          name: 'Gazetteer',
           editor: GazetteerPathEditor,
         });
   }

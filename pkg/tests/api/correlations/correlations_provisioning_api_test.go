@@ -13,18 +13,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ctx := NewTestEnv(t)
 
 	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin2",
-		Login:          "admin2",
+		Password:       "admin",
+		Login:          "admin",
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
@@ -33,6 +33,22 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		OrgID: adminUser.User.OrgID,
 	}
 	dataSource := ctx.createDs(createDsCommand)
+
+	needsMigration := ctx.createCorrelation(correlations.CreateCorrelationCommand{
+		SourceUID: dataSource.UID,
+		TargetUID: &dataSource.UID,
+		OrgId:     dataSource.OrgID,
+		Label:     "needs migration",
+		Type:      correlations.CorrelationType("query"),
+		Config: correlations.CorrelationConfig{
+			Field:  "foo",
+			Target: map[string]any{},
+			Transformations: []correlations.Transformation{
+				{Type: "logfmt"},
+			},
+		},
+		Provisioned: false,
+	})
 
 	ctx.createCorrelation(correlations.CreateCorrelationCommand{
 		SourceUID: dataSource.UID,
@@ -68,21 +84,28 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 	})
 
 	t.Run("Correctly marks existing correlations as provisioned", func(t *testing.T) {
-		// should be added
-		ctx.createCorrelation(correlations.CreateCorrelationCommand{
-			SourceUID: dataSource.UID,
-			OrgId:     dataSource.OrgID,
-			TargetUID: &dataSource.UID,
-			Label:     "different",
-			Config: correlations.CorrelationConfig{
-				Field:  "foo",
-				Target: map[string]any{},
-				Transformations: []correlations.Transformation{
-					{Type: "logfmt"},
-				},
-			},
+		// should be updated
+		ctx.createOrUpdateCorrelation(correlations.CreateCorrelationCommand{
+			SourceUID:   needsMigration.SourceUID,
+			OrgId:       needsMigration.OrgID,
+			TargetUID:   needsMigration.TargetUID,
+			Label:       needsMigration.Label,
+			Description: needsMigration.Description,
+			Config:      needsMigration.Config,
 			Provisioned: true,
-			Type:        correlations.CorrelationType("query"),
+			Type:        needsMigration.Type,
+		})
+
+		// should be added
+		ctx.createOrUpdateCorrelation(correlations.CreateCorrelationCommand{
+			SourceUID:   needsMigration.SourceUID,
+			OrgId:       needsMigration.OrgID,
+			TargetUID:   needsMigration.TargetUID,
+			Label:       "different",
+			Description: needsMigration.Description,
+			Config:      needsMigration.Config,
+			Provisioned: true,
+			Type:        needsMigration.Type,
 		})
 
 		res := ctx.Get(GetParams{
@@ -98,13 +121,15 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Len(t, response.Correlations, 3)
+		require.Len(t, response.Correlations, 4)
 
 		unordered := make(map[string]correlations.Correlation)
 		for _, v := range response.Correlations {
 			unordered[v.Label] = v
 		}
 
+		// existing correlation is updated
+		require.EqualValues(t, true, unordered["needs migration"].Provisioned)
 		// other existing correlations are not changed
 		require.EqualValues(t, false, unordered["existing"].Provisioned)
 		// new correlation is added
@@ -150,6 +175,6 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		})
 
 		require.Error(t, err)
-		require.ErrorIs(t, err, correlations.ErrConfigTypeDeprecated)
+		require.ErrorIs(t, err, correlations.ErrInvalidConfigType)
 	})
 }

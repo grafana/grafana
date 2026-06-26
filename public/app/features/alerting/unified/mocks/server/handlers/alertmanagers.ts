@@ -1,7 +1,7 @@
-import { HttpResponse, type JsonBodyType, type StrictResponse, http } from 'msw';
+import { http, HttpResponse, JsonBodyType, StrictResponse } from 'msw';
 
-import { type TemplatesTestPayload } from 'app/features/alerting/unified/api/templateApi';
-import receiversMock from 'app/features/alerting/unified/components/contact-points/mocks/receivers.mock.json';
+import { TemplatesTestPayload } from 'app/features/alerting/unified/api/templateApi';
+import receiversMock from 'app/features/alerting/unified/components/contact-points/__mocks__/receivers.mock.json';
 import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 import { defaultGrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import {
@@ -11,7 +11,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/server/handlers/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { type AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 export const grafanaAlertingConfigurationStatusHandler = (
   response = defaultGrafanaAlertingConfigurationStatusResponse
@@ -32,7 +32,7 @@ const getInvalidMatcher = (matchers: string[]) => {
   });
 };
 
-const alertmanagerAlertsListHandler = () =>
+export const alertmanagerAlertsListHandler = () =>
   http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ params, request }) => {
     const matchers = new URL(request.url).searchParams.getAll('filter');
 
@@ -90,7 +90,7 @@ const getAlertmanagerStatusHandler = () =>
     return HttpResponse.json({ message: 'data source not found', traceID: '' }, { status: 404 });
   });
 
-const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
+export const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
 
 /** Perform some basic validation on the config that we expect the backend to also do */
 const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
@@ -118,7 +118,7 @@ const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => 
   return null;
 };
 
-const updateAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
+export const updateAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
   http.post<{ name: string }>('/api/alertmanager/:name/config/api/v1/alerts', async ({ request, params }) => {
     if (responseOverride) {
       return responseOverride;
@@ -142,7 +142,7 @@ const getGrafanaAlertmanagerTemplatePreview = () =>
       const body = await request.json();
 
       if (body?.template.startsWith('{{')) {
-        return HttpResponse.json({ results: [{ name: 'asdasd', text: `some example preview for ${body.template}` }] });
+        return HttpResponse.json({ results: [{ name: 'asdasd', text: `some example preview for ${body.name}` }] });
       }
 
       return HttpResponse.json({});
@@ -159,6 +159,12 @@ const getReceiversHandler = () =>
     return HttpResponse.json({ message: 'Not found.' }, { status: 404 });
   });
 
+const testReceiversHandler = () =>
+  http.post('/api/alertmanager/grafana/config/api/v1/receivers/test', () => {
+    // TODO: scaffold out response as needed by tests
+    return HttpResponse.json({});
+  });
+
 const getGroupsHandler = () =>
   http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', () =>
     // TODO: Scaffold out response with better data as required by tests
@@ -172,6 +178,7 @@ const handlers = [
   updateAlertmanagerConfigHandler(),
   getGrafanaAlertmanagerTemplatePreview(),
   getReceiversHandler(),
+  testReceiversHandler(),
   getGroupsHandler(),
   getAlertmanagerStatusHandler(),
 ];

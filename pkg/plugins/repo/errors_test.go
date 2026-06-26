@@ -37,17 +37,11 @@ func TestErrorTemplates(t *testing.T) {
 	require.Equal(t, "plugin.unsupportedVersion", base.Public().MessageID)
 	require.Equal(t, "grafana-test-app v1.0.0 is not supported on your system darwin-amd64", base.Public().Message)
 
-	err = ErrVersionNotFound("grafana-test-app", "1.0.0")
+	err = ErrVersionNotFound("grafana-test-app", "1.0.0", "darwin-amd64")
 	require.True(t, errors.As(err, base))
 	require.Equal(t, http.StatusNotFound, base.Public().StatusCode)
 	require.Equal(t, "plugin.versionNotFound", base.Public().MessageID)
-	require.Equal(t, "grafana-test-app v1.0.0 was not returned by the Grafana.com catalog. The version may not exist, or the configured Grafana.com proxy token ([grafana_com].proxy_token or GF_GRAFANA_COM_PROXY_TOKEN) may lack the required scopes.", base.Public().Message)
-
-	err = ErrVersionNotCompatible("grafana-test-app", "1.0.0", "10.0.0")
-	require.True(t, errors.As(err, base))
-	require.Equal(t, http.StatusNotFound, base.Public().StatusCode)
-	require.Equal(t, "plugin.versionNotCompatible", base.Public().MessageID)
-	require.Equal(t, "grafana-test-app v1.0.0 is not compatible with your Grafana version: 10.0.0", base.Public().Message)
+	require.Equal(t, "grafana-test-app v1.0.0 either does not exist or is not supported on your system darwin-amd64", base.Public().Message)
 
 	err = ErrArcNotFound("grafana-test-app", "darwin-amd64")
 	require.True(t, errors.As(err, base))
@@ -55,13 +49,11 @@ func TestErrorTemplates(t *testing.T) {
 	require.Equal(t, "plugin.archNotFound", base.Public().MessageID)
 	require.Equal(t, "grafana-test-app is not compatible with your system architecture: darwin-amd64", base.Public().Message)
 
-	expectedChecksum := "abcdef1234567890"
-	computedChecksum := "abcdef0987654321"
-	err = ErrChecksumMismatch("http://localhost:6481/grafana-test-app/versions/1.0.0/download", expectedChecksum, computedChecksum)
+	err = ErrChecksumMismatch("http://localhost:6481/grafana-test-app/versions/1.0.0/download")
 	require.True(t, errors.As(err, base))
 	require.Equal(t, http.StatusUnprocessableEntity, base.Public().StatusCode)
 	require.Equal(t, "plugin.checksumMismatch", base.Public().MessageID)
-	require.Equal(t, "expected SHA256 checksum (abcdef1234567890) does not match the downloaded archive (http://localhost:6481/grafana-test-app/versions/1.0.0/download) computed SHA256 checksum (abcdef0987654321) - please contact security@grafana.com", base.Public().Message)
+	require.Equal(t, "expected SHA256 checksum does not match the downloaded archive (http://localhost:6481/grafana-test-app/versions/1.0.0/download) - please contact security@grafana.com", base.Public().Message)
 
 	err = ErrCorePlugin("grafana-test-app")
 	require.True(t, errors.As(err, base))

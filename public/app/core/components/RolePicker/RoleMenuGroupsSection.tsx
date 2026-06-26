@@ -1,17 +1,16 @@
 import { forwardRef, useCallback, useState } from 'react';
 
 import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
-import { isNotDelegatable } from 'app/core/utils/roles';
-import { type Role } from 'app/types/accessControl';
+import { Role } from 'app/types';
 
 import { RoleMenuGroupOption } from './RoleMenuGroupOption';
 import { RoleMenuOption } from './RoleMenuOption';
 import { RolePickerSubMenu } from './RolePickerSubMenu';
 import { getStyles } from './styles';
+import { isNotDelegatable } from './utils';
 
 interface RoleMenuGroupsSectionProps {
   roles: Role[];
-  isFiltered?: boolean;
   renderedName: string;
   showGroups?: boolean;
   optionGroups: Array<{
@@ -34,7 +33,6 @@ export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSe
   (
     {
       roles,
-      isFiltered,
       renderedName,
       showGroups,
       optionGroups,
@@ -80,10 +78,7 @@ export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSe
                     value={groupOption.value}
                     isSelected={groupSelected(groupOption.value) || groupPartiallySelected(groupOption.value)}
                     partiallySelected={groupPartiallySelected(groupOption.value)}
-                    disabled={groupOption.options?.every(
-                      (option) =>
-                        isNotDelegatable(option) || selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped)
-                    )}
+                    disabled={groupOption.options?.every(isNotDelegatable)}
                     onChange={onGroupChange}
                     onOpenSubMenu={onOpenSubMenu}
                     onCloseSubMenu={onCloseSubMenu}
@@ -103,12 +98,10 @@ export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSe
                 ))
               : roles.map((option) => (
                   <RoleMenuOption
-                    useFilteredDisplayName={isFiltered}
                     data={option}
                     key={option.uid}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                     disabled={isNotDelegatable(option)}
-                    mapped={!!(option.uid && selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped))}
                     onChange={onRoleChange}
                     hideDescription
                   />

@@ -1,16 +1,15 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
-import { action } from 'storybook/actions';
-import { useArgs } from 'storybook/preview-api';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { Meta, StoryFn } from '@storybook/react';
 
 import { dateTime, DefaultTimeZone } from '@grafana/data';
-
-import { TimeRangePicker } from './TimeRangePicker';
+import { TimeRangePicker } from '@grafana/ui';
 
 const to = dateTime();
 const from = to.subtract(6, 'h');
 
 const meta: Meta<typeof TimeRangePicker> = {
-  title: 'Date time pickers/TimeRangePicker',
+  title: 'Pickers and Editors/TimePickers/TimeRangePicker',
   component: TimeRangePicker,
   args: {
     value: {

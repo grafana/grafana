@@ -15,7 +15,6 @@ describe('getTimeZoneInfo', () => {
       const result = getTimeZoneInfo('browser', Date.now());
       expect(result?.ianaName).toBe('Pacific/Easter');
     });
-
     it('should resolve for utc timezone', () => {
       const result = getTimeZoneInfo('utc', Date.now());
       expect(result?.ianaName).toBe('UTC');

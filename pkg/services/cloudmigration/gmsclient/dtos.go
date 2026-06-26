@@ -50,8 +50,6 @@ type EventRequestDTO struct {
 	Event              LocalEventType `json:"event"`
 	Error              string         `json:"error"`
 	DurationIfFinished time.Duration  `json:"duration"`
-	UserUID            string         `json:"userUid"`
-	GrafanaVersion     string         `json:"grafanaVersion"`
 }
 
 type LocalEventType string
@@ -75,7 +73,3 @@ var (
 	GMSErrorMessageInstanceCheckingError = "checking if instance is reachable"
 	GMSErrorMessageInstanceFetching      = "fetching instance by stack id"
 )
-
-type StartSnapshotRequestDTO struct {
-	Algo string `json:"algo,omitempty"`
-}

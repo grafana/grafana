@@ -1,19 +1,15 @@
 {
-  "extends": "../../scripts/tsconfig.base.json",
   "compilerOptions": {
-    "declaration": true,
     "jsx": "react-jsx",
     "baseUrl": "./",
-    "declarationDir": "./dist/types",
+    "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "allowJs": true,
-    "rootDir": "../../",
-    "rootDirs": ["."],
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true
+    "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],
+  "extends": "@grafana/tsconfig",
   "include": [
     "../../public/test/setupTests.ts",
     "../../public/app/types/jquery/*.ts",

@@ -1,13 +1,12 @@
 import { useState } from 'react';
 
-import { t } from '@grafana/i18n';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { type ExportFormats, allGrafanaExportProviders } from './providers';
+import { allGrafanaExportProviders, ExportFormats } from './providers';
 
 interface GrafanaReceiverExportPreviewProps {
   exportFormat: ExportFormats;
@@ -31,7 +30,7 @@ const GrafanaReceiverExportPreview = ({
   const downloadFileName = `cp-${receiverName}-${new Date().getTime()}`;
 
   if (isFetching) {
-    return <LoadingPlaceholder text={t('alerting.grafana-receiver-export-preview.text-loading', 'Loading....')} />;
+    return <LoadingPlaceholder text="Loading...." />;
   }
 
   return (

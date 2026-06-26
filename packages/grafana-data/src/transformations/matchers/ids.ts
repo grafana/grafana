@@ -2,7 +2,6 @@
 
 // Builtin Predicates
 // not using 'any' and 'never' since they are reserved keywords
-/** @deprecated will be removed in a future release */
 export enum MatcherID {
   anyMatch = 'anyMatch', // checks children
   allMatch = 'allMatch', // checks children

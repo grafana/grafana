@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { times } from 'lodash';
 
-import { type DataFrame, toDataFrame } from '@grafana/data';
+import { DataFrame, toDataFrame } from '@grafana/data';
 
 import { ExpressionResult, getGroupedByStateAndSeriesCount } from './Expression';
 

@@ -1,16 +1,9 @@
 import { merge } from 'lodash';
-import { type DeepPartial } from 'react-hook-form';
-import { DatasourceSrvMock } from 'test/mocks/datasource_srv';
+import { DeepPartial } from 'react-hook-form';
 
-import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
-import { type FetchError, type FetchResponse } from '@grafana/runtime';
+import { FetchError, FetchResponse } from '@grafana/runtime';
 
-import {
-  type Correlation,
-  type CreateCorrelationResponse,
-  type RemoveCorrelationResponse,
-  type UpdateCorrelationResponse,
-} from '../types';
+import { Correlation, CreateCorrelationResponse, RemoveCorrelationResponse, UpdateCorrelationResponse } from '../types';
 
 export function createFetchCorrelationsResponse<T>(overrides?: DeepPartial<FetchResponse>): FetchResponse<T> {
   return merge(
@@ -18,10 +11,7 @@ export function createFetchCorrelationsResponse<T>(overrides?: DeepPartial<Fetch
       data: undefined,
       status: 200,
       url: '',
-      config: {
-        url: '',
-        abortSignal: undefined,
-      },
+      config: { url: '' },
       type: 'basic',
       statusText: 'Ok',
       redirected: false,
@@ -62,18 +52,4 @@ export function createRemoveCorrelationResponse(): RemoveCorrelationResponse {
   return {
     message: 'Correlation removed',
   };
-}
-
-export class MockDataSourceSrv extends DatasourceSrvMock {
-  private ds: DataSourceInstanceSettings[];
-  constructor(datasources: Record<string, DataSourceInstanceSettings>) {
-    super({} as DataSourceApi, {});
-    this.ds = Object.values(datasources);
-  }
-  getList(): DataSourceInstanceSettings[] {
-    return this.ds;
-  }
-  getInstanceSettings(name?: string): DataSourceInstanceSettings | undefined {
-    return name ? this.ds.find((ds) => ds.name === name) : undefined;
-  }
 }

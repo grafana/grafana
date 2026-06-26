@@ -1,12 +1,12 @@
-import type OpenLayersMap from 'ol/Map';
+import Map from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type EventBus } from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, EventBus } from '@grafana/data';
 
 export const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
-  name: 'OpenStreetMap',
+  name: 'Open Street Map',
   description: 'Add map from a collaborative free geographic world database',
   isBaseMap: true,
 
@@ -14,12 +14,10 @@ export const standard: MapLayerRegistryItem = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions, eventBus: EventBus) => ({
+  create: async (map: Map, options: MapLayerOptions, eventBus: EventBus) => ({
     init: () => {
-      const noRepeat = options.noRepeat ?? false;
-
       return new TileLayer({
-        source: new OSM({ wrapX: !noRepeat }),
+        source: new OSM(),
       });
     },
   }),

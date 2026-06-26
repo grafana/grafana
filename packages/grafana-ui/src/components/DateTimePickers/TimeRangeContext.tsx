@@ -1,6 +1,6 @@
-import { type ReactNode, createContext, useEffect, useMemo, useState, useContext } from 'react';
+import { ReactNode, createContext, useEffect, useMemo, useState, useContext } from 'react';
 
-import { type TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 
 type TimeRangeContextValue = TimeRangeContextHookValue & {
   // These are to be used internally and aren't passed to the users of the hook.
@@ -42,15 +42,7 @@ export function TimeRangeProvider({ children }: { children: ReactNode }) {
       sync: (value: TimeRange) => setSyncedValue(value),
       unSync: () => setSyncedValue(undefined),
       addPicker: () => setPickersCount((val) => val + 1),
-      removePicker: () => {
-        setPickersCount((val) => {
-          const newVal = val - 1;
-          if (newVal < 2) {
-            setSyncedValue(undefined);
-          }
-          return newVal;
-        });
-      },
+      removePicker: () => setPickersCount((val) => val - 1),
       syncPossible: pickersCount > 1,
       synced: Boolean(syncedValue),
       syncedValue,

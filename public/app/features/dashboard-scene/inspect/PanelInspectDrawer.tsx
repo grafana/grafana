@@ -1,17 +1,21 @@
-import { Trans, t } from '@grafana/i18n';
+import { useLocation } from 'react-router-dom-v5-compat';
+
+import { locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
-  type SceneComponentProps,
+  SceneComponentProps,
   SceneObjectBase,
-  type SceneObjectState,
+  SceneObjectState,
   sceneGraph,
-  type VizPanel,
-  type SceneObjectRef,
+  VizPanel,
+  SceneObjectRef,
 } from '@grafana/scenes';
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
 import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { InspectTab } from 'app/features/inspector/types';
 
+import { getDashboardUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { HelpWizard } from './HelpWizard/HelpWizard';
@@ -20,11 +24,10 @@ import { InspectJsonTab } from './InspectJsonTab';
 import { InspectMetaDataTab } from './InspectMetaDataTab';
 import { InspectQueryTab } from './InspectQueryTab';
 import { InspectStatsTab } from './InspectStatsTab';
-import { type SceneInspectTab } from './types';
+import { SceneInspectTab } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: SceneInspectTab[];
-  currentTab: InspectTab;
   panelRef: SceneObjectRef<VizPanel>;
   pluginNotLoaded?: boolean;
   canEdit?: boolean;
@@ -88,21 +91,36 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   }
 
   onClose = () => {
-    getDashboardSceneFor(this).closeModal();
+    const dashboard = getDashboardSceneFor(this);
+    locationService.push(
+      getDashboardUrl({
+        uid: dashboard.state.uid,
+        slug: dashboard.state.meta.slug,
+        currentQueryParams: locationService.getLocation().search,
+        updateQuery: {
+          inspect: null,
+          inspectTab: null,
+        },
+      })
+    );
   };
 }
 
 function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
-  const { tabs, pluginNotLoaded, panelRef, currentTab } = model.useState();
+  const { tabs, pluginNotLoaded, panelRef } = model.useState();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
 
   if (!tabs) {
     return null;
   }
 
-  const vizPanel = panelRef!.resolve();
-  const activeTab = tabs.find((tab) => tab.getTabValue() === currentTab) ?? tabs[0];
+  const urlTab = queryParams.get('inspectTab');
+  const currentTab = tabs.find((tab) => tab.getTabValue() === urlTab) ?? tabs[0];
 
-  if (currentTab === InspectTab.Help) {
+  const vizPanel = panelRef!.resolve();
+
+  if (urlTab === InspectTab.Help) {
     return <HelpWizard panel={vizPanel} onClose={model.onClose} />;
   }
 
@@ -118,10 +136,8 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
               <Tab
                 key={tab.state.key!}
                 label={tab.getTabLabel()}
-                active={tab === activeTab}
-                onChangeTab={() => {
-                  model.setState({ currentTab: tab.getTabValue() });
-                }}
+                active={tab === currentTab}
+                href={locationUtil.getUrlForPartial(location, { inspectTab: tab.getTabValue() })}
               />
             );
           })}
@@ -129,15 +145,11 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
       }
     >
       {pluginNotLoaded && (
-        <Alert
-          title={t('dashboard-scene.panel-inspect-renderer.title-panel-plugin-not-loaded', 'Panel plugin not loaded')}
-        >
-          <Trans i18nKey="dashboard-scene.panel-inspect-renderer.body-panel-plugin-not-loaded">
-            Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
-          </Trans>
+        <Alert title="Panel plugin not loaded">
+          Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
         </Alert>
       )}
-      {activeTab.Component && <activeTab.Component model={activeTab} />}
+      {currentTab && currentTab.Component && <currentTab.Component model={currentTab} />}
     </Drawer>
   );
 }

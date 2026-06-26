@@ -1,16 +1,21 @@
-import { type PropsWithChildren } from 'react';
+import * as React from 'react';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes';
+import { IconName } from '../../types';
 
 import { getModalStyles } from './getModalStyles';
 
 interface Props {
   title: string;
   id?: string;
+  /** @deprecated */
+  icon?: IconName;
+  /** @deprecated */
+  iconTooltip?: string;
 }
 
 /** @internal */
-export const ModalHeader = ({ title, children, id }: PropsWithChildren<Props>) => {
+export const ModalHeader = ({ icon, iconTooltip, title, children, id }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getModalStyles);
 
   return (

@@ -29,7 +29,10 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -53,7 +56,10 @@
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -69,15 +75,22 @@
         "showRecentlyViewed": false,
         "showSearch": true,
         "showStarred": false,
-        "tags": ["panel-tests"]
+        "tags": [
+          "panel-tests"
+        ]
       },
       "pluginVersion": "9.0.0-pre",
-      "tags": ["panel-tests"],
+      "tags": [
+        "panel-tests"
+      ],
       "title": "tag: panel-tests",
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -93,15 +106,24 @@
         "showRecentlyViewed": false,
         "showSearch": true,
         "showStarred": false,
-        "tags": ["gdev", "demo"]
+        "tags": [
+          "gdev",
+          "demo"
+        ]
       },
       "pluginVersion": "9.0.0-pre",
-      "tags": ["gdev", "demo"],
+      "tags": [
+        "gdev",
+        "demo"
+      ],
       "title": "tag: dashboard-demo",
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -117,15 +139,24 @@
         "showRecentlyViewed": false,
         "showSearch": true,
         "showStarred": false,
-        "tags": ["gdev", "datasource-test"]
+        "tags": [
+          "gdev",
+          "datasource-test"
+        ]
       },
       "pluginVersion": "9.0.0-pre",
-      "tags": ["gdev", "datasource-test"],
+      "tags": [
+        "gdev",
+        "datasource-test"
+      ],
       "title": "Data source tests",
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -141,15 +172,24 @@
         "showRecentlyViewed": false,
         "showSearch": true,
         "showStarred": false,
-        "tags": ["templating", "gdev"]
+        "tags": [
+          "templating",
+          "gdev"
+        ]
       },
       "pluginVersion": "9.0.0-pre",
-      "tags": ["templating", "gdev"],
+      "tags": [
+        "templating",
+        "gdev"
+      ],
       "title": "tag: templating ",
       "type": "dashlist"
     },
     {
-      "datasource": { "type": "grafana-testdata-datasource" },
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -165,10 +205,16 @@
         "showRecentlyViewed": false,
         "showSearch": true,
         "showStarred": false,
-        "tags": ["gdev", "transform"]
+        "tags": [
+          "gdev",
+          "transform"
+        ]
       },
       "pluginVersion": "9.0.0-pre",
-      "tags": ["gdev", "demo"],
+      "tags": [
+        "gdev",
+        "demo"
+      ],
       "title": "tag: transforms",
       "type": "dashlist"
     }
@@ -183,7 +229,29 @@
     "to": "now"
   },
   "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
   },
   "timezone": "",
   "title": "Grafana Dev Overview & Home",

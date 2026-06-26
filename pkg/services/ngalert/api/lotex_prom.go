@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -16,16 +15,16 @@ type promEndpoints struct {
 	rules, alerts string
 }
 
-var (
-	prometheusEndpoints = promEndpoints{
+var dsTypeToLotexRoutes = map[string]promEndpoints{
+	"prometheus": {
 		rules:  "/api/v1/rules",
 		alerts: "/api/v1/alerts",
-	}
-	lokiEndpoints = promEndpoints{
+	},
+	"loki": {
 		rules:  "/prometheus/api/v1/rules",
 		alerts: "/prometheus/api/v1/alerts",
-	}
-)
+	},
+}
 
 type LotexProm struct {
 	log log.Logger
@@ -92,15 +91,9 @@ func (p *LotexProm) getEndpoints(ctx *contextmodel.ReqContext) (*promEndpoints, 
 		return nil, fmt.Errorf("URL for this data source is empty")
 	}
 
-	var routes promEndpoints
-	switch {
-	case isPrometheusCompatible(ds.Type):
-		routes = prometheusEndpoints
-	case ds.Type == datasources.DS_LOKI:
-		routes = lokiEndpoints
-	default:
-		return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus, amazon prometheus, azure prometheus")
+	routes, ok := dsTypeToLotexRoutes[ds.Type]
+	if !ok {
+		return nil, fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
 	}
-
 	return &routes, nil
 }

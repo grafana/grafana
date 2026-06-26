@@ -1,12 +1,12 @@
 import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { type FetchDataArgs } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
+import { FetchDataArgs } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type ThunkResult } from 'app/types/store';
-import { type OrgUser } from 'app/types/user';
+import { OrgUser } from 'app/types';
+
+import { AccessControlAction, ThunkResult } from '../../../types';
 
 import {
   usersLoaded,
@@ -36,10 +36,7 @@ export function loadUsers(): ThunkResult<void> {
         dispatch(rolesFetchBegin());
         const orgId = contextSrv.user.orgId;
         const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
-        const roles = await getBackendSrv().post(`/api/access-control/users/roles/search?includeMapped=true`, {
-          userIds,
-          orgId,
-        });
+        const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
         users.orgUsers.forEach((u: OrgUser) => {
           u.roles = roles ? roles[u.userId] || [] : [];
         });

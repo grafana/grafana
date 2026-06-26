@@ -1,21 +1,12 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import {
-  type DataSourceInstanceSettings,
-  type DataSourcePluginMeta,
-  type DataSourceRef,
-  FieldType,
-  getDefaultTimeRange,
-  LoadingState,
-  toDataFrame,
-} from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { config } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { MockDataSourceApi } from '../../../../../test/mocks/datasource_srv';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelMenuBehavior } from '../../scene/PanelMenuBehavior';
@@ -28,34 +19,8 @@ jest.mock('./utils.ts', () => ({
   getGithubMarkdown: () => new Uint8Array(1024 * 1024).toString(),
 }));
 
-const grafanaDsInstanceSettings = {
-  name: 'Grafana',
-  uid: '-- Grafana --',
-  meta: {
-    annotations: true,
-  } as DataSourcePluginMeta,
-  readOnly: false,
-  type: 'grafana',
-} as DataSourceInstanceSettings;
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      get: (ref: DataSourceRef) => {
-        return Promise.resolve(new MockDataSourceApi(grafanaDsInstanceSettings));
-      },
-    };
-  },
-}));
-
-setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
-});
-
-function setup() {
-  const { panel } = buildTestScene();
+async function setup() {
+  const { panel } = await buildTestScene();
   panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
   return render(<HelpWizard panel={panel} onClose={() => {}} />);
@@ -73,9 +38,6 @@ describe('HelpWizard', () => {
   it('should not render support bundle info if user does not have support bundle access', async () => {
     config.supportBundlesEnabled = false;
     setup();
-
-    // waiting for data tab to be visible ensures all async processing is done
-    await screen.findByTestId('data-testid Tab Data');
 
     expect(screen.queryByText('You can also retrieve a support bundle')).not.toBeInTheDocument();
   });
@@ -118,7 +80,7 @@ describe('SupportSnapshot', () => {
   });
 });
 
-function buildTestScene() {
+async function buildTestScene() {
   const menu = new VizPanelMenu({
     $behaviors: [panelMenuBehavior],
   });
@@ -163,6 +125,8 @@ function buildTestScene() {
     },
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
+
+  await new Promise((r) => setTimeout(r, 1));
 
   return { scene, panel, menu };
 }

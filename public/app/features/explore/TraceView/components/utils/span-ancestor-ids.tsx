@@ -14,8 +14,7 @@
 
 import { find as _find, get as _get } from 'lodash';
 
-import type TNil from '../types/TNil';
-import { type TraceSpan } from '../types/trace';
+import { TNil, TraceSpan } from '../types';
 
 function getFirstAncestor(span: TraceSpan): TraceSpan | TNil {
   return _get(

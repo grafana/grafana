@@ -1,9 +1,9 @@
-import { type DataSourceInstanceSettings, type PluginMetaInfo, PluginType } from '@grafana/data';
+import { DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { defaultParcaQueryType } from './dataquery.gen';
 import { ParcaDataSource } from './datasource';
-import { type Query } from './types';
+import { Query } from './types';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -43,6 +43,7 @@ describe('Parca data source', () => {
 });
 
 const defaultSettings: DataSourceInstanceSettings = {
+  id: 0,
   uid: 'parca',
   type: 'profiling',
   name: 'parca',

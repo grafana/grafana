@@ -1,34 +1,20 @@
-import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { withErrorBoundary } from '@grafana/ui';
 
-import { useTimeIntervalsNav } from '../../navigation/useNotificationConfigNav';
-import { getTimeIntervalParentUrl } from '../../utils/navigation';
-import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 
 import MuteTimingForm from './MuteTimingForm';
 
-function NewMuteTimingPage() {
-  const { navId } = useTimeIntervalsNav();
-  const useV2Nav = config.featureToggles.alertingNavigationV2;
-  const parentUrl = getTimeIntervalParentUrl(useV2Nav);
+const NewMuteTimingPage = () => (
+  <AlertmanagerPageWrapper
+    navId="am-routes"
+    pageNav={{
+      id: 'alert-policy-new',
+      text: 'Add mute timing',
+    }}
+    accessType="notification"
+  >
+    <MuteTimingForm />
+  </AlertmanagerPageWrapper>
+);
 
-  return (
-    <AlertmanagerPageWrapper
-      navId={navId}
-      pageNav={{
-        id: 'alert-policy-new',
-        text: t('alerting.new-mute-timing-page.text.add-time-interval', 'New time interval'),
-        parentItem: {
-          text: t('alerting.time-intervals.title', 'Time intervals'),
-          url: parentUrl,
-        },
-      }}
-      accessType="notification"
-    >
-      <MuteTimingForm />
-    </AlertmanagerPageWrapper>
-  );
-}
-
-export default withPageErrorBoundary(NewMuteTimingPage);
+export default withErrorBoundary(NewMuteTimingPage, { style: 'page' });

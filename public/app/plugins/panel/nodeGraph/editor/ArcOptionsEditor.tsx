@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 
-import { type Field, type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { Field, GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/internal';
+import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
-import { type ArcOption, type Options as NodeGraphOptions } from '../panelcfg.gen';
+import { ArcOption, NodeGraphOptions } from '../types';
 
 type Settings = { filter: (field: Field) => boolean };
 type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], Settings, NodeGraphOptions, undefined>;
@@ -55,18 +54,12 @@ export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorP
                 updateField(i, 'color', val);
               }}
             />
-            <Button
-              size="sm"
-              icon="minus"
-              variant="secondary"
-              onClick={() => removeArc(i)}
-              aria-label={t('nodeGraph.arc-options-editor.title-remove-arc', 'Remove arc')}
-            />
+            <Button size="sm" icon="minus" variant="secondary" onClick={() => removeArc(i)} title="Remove arc" />
           </div>
         );
       })}
       <Button size={'sm'} icon="plus" onClick={addArc} variant="secondary">
-        <Trans i18nKey="nodeGraph.arc-options-editor.add-arc">Add arc</Trans>
+        Add arc
       </Button>
     </>
   );

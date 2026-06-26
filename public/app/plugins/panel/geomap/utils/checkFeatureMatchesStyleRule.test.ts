@@ -1,4 +1,4 @@
-import Feature from 'ol/Feature';
+import { Feature } from 'ol';
 
 import { ComparisonOperation } from '@grafana/schema';
 

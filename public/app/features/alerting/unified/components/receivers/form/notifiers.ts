@@ -1,12 +1,10 @@
-import { type ReactElement } from 'react';
+import { NotifierDTO } from '../../../../../../types';
 
-import { type NotifierDTO } from 'app/features/alerting/unified/types/alerting';
-
-interface NotifierMetadata {
+export interface NotifierMetadata {
   enabled: boolean;
   order: number;
   description?: string;
-  badge?: ReactElement;
+  iconUrl?: string;
 }
 
 export interface Notifier {

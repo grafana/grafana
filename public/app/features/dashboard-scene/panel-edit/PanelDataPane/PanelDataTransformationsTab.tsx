@@ -1,43 +1,26 @@
 import { css } from '@emotion/css';
-import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
-import { throttle } from 'lodash';
-import { useCallback, useMemo, useState } from 'react';
+import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
+import { useState } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
+import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
 import {
-  type SceneComponentProps,
-  SceneDataTransformer,
   SceneObjectBase,
-  type SceneObjectRef,
-  type SceneObjectState,
-  type SceneQueryRunner,
-  type VizPanel,
+  SceneComponentProps,
+  SceneDataTransformer,
+  SceneQueryRunner,
+  SceneObjectRef,
+  VizPanel,
+  SceneObjectState,
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
-import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { getQueryRunnerFor } from '../../utils/utils';
-import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
-import { PanelDataPane } from './PanelDataPane';
-import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
-import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
-import { scrollToQueryRow } from './utils';
-
-const SET_TIMEOUT = 750;
-const reportTransformationEditInteraction = throttle((context: string, type: string) => {
-  reportInteraction('grafana_panel_transformations_clicked', {
-    context,
-    type,
-    action: 'edit',
-  });
-}, TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME);
+import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
 interface PanelDataTransformationsTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -51,7 +34,7 @@ export class PanelDataTransformationsTab
   tabId = TabId.Transformations;
 
   getTabLabel() {
-    return t('dashboard-scene.panel-data-transformations-tab.tab-label', 'Transformations');
+    return 'Transformations';
   }
 
   public renderTab(props: PanelDataTabHeaderProps) {
@@ -82,59 +65,14 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
-
-  // Type guard to ensure transformations are DataTransformerConfig[]
-  const transformations = useMemo<DataTransformerConfig[]>(() => {
-    return Array.isArray(transformsWrongType)
-      ? transformsWrongType.filter(
-          (t): t is DataTransformerConfig =>
-            t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
-        )
-      : [];
-  }, [transformsWrongType]);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const transformations: DataTransformerConfig[] = transformsWrongType as unknown as DataTransformerConfig[];
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
-
-  const onGoToQueries = useCallback(() => {
-    const parent = model.parent;
-    if (!(parent instanceof PanelDataPane)) {
-      return;
-    }
-
-    const queriesTab = parent.state.tabs.find((tab) => tab.tabId === TabId.Queries);
-    if (!(queriesTab instanceof PanelDataQueriesTab)) {
-      return;
-    }
-
-    // Always create a new SQL expression (it will be added to the end of the queries array)
-    queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
-
-    // Navigate to the Queries tab
-    parent.onChangeTab(queriesTab);
-
-    // Scroll to the newly created SQL query after tab renders
-    setTimeout(() => {
-      const queries = queriesTab.getQueries();
-      // The newly added query is the last one in the array
-      if (queries.length > 0) {
-        const newQuery = queries[queries.length - 1];
-        if (newQuery?.refId) {
-          scrollToQueryRow(newQuery.refId);
-        }
-      }
-    }, SET_TIMEOUT);
-  }, [model]);
-
-  const onAddTransformation = useCallback(
-    (transformationId: string) => {
-      model.onChangeTransformations([...transformations, { id: transformationId, options: {} }]);
-    },
-    [model, transformations]
-  );
 
   if (!data || !sourceData.data) {
     return;
@@ -152,20 +90,13 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       }}
       isOpen={drawerOpen}
       series={data.series}
-    />
+    ></TransformationsDrawer>
   );
 
   if (transformations.length < 1) {
     return (
       <>
-        <EmptyTransformationsMessage
-          onShowPicker={openDrawer}
-          onGoToQueries={onGoToQueries}
-          onAddTransformation={onAddTransformation}
-          data={sourceData.data.series}
-          datasourceUid={sourceData.datasource?.uid}
-          queries={sourceData.queries}
-        />
+        <EmptyTransformationsMessage onShowPicker={openDrawer}></EmptyTransformationsMessage>
         {transformationsDrawer}
       </>
     );
@@ -181,9 +112,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onClick={openDrawer}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
-            Add another transformation
-          </Trans>
+          Add another transformation
         </Button>
         <Button
           data-testid={selectors.components.Transforms.removeAllTransformationsButton}
@@ -192,27 +121,15 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           variant="secondary"
           onClick={() => setConfirmModalOpen(true)}
         >
-          <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-            Delete all transformations
-          </Trans>
+          Delete all transformations
         </Button>
       </ButtonGroup>
       <ConfirmModal
         isOpen={confirmModalOpen}
-        title={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
-          'Delete all transformations?'
-        )}
-        body={t(
-          'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
-          'By deleting all transformations, you will go back to the main selection screen.'
-        )}
-        confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
+        title="Delete all transformations?"
+        body="By deleting all transformations, you will go back to the main selection screen."
+        confirmText="Delete all"
         onConfirm={() => {
-          reportInteraction('grafana_panel_transformations_clicked', {
-            context: 'transformations_list',
-            action: 'delete_all',
-          });
           model.onChangeTransformations([]);
           setConfirmModalOpen(false);
         }}
@@ -256,23 +173,11 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
             <div ref={provided.innerRef} {...provided.droppableProps}>
               <TransformationOperationRows
                 onChange={(index, transformation) => {
-                  if (transformation?.id) {
-                    reportTransformationEditInteraction('transformations_list', transformation.id);
-                  }
                   const newTransformations = transformations.slice();
                   newTransformations[index] = transformation;
                   model.onChangeTransformations(newTransformations);
                 }}
                 onRemove={(index) => {
-                  const removed = transformations[index];
-                  if (removed?.id) {
-                    reportInteraction('grafana_panel_transformations_clicked', {
-                      context: 'transformations_list',
-                      type: removed.id,
-                      action: 'delete',
-                      total_transformations: transformations.length - 1,
-                    });
-                  }
                   const newTransformations = transformations.slice();
                   newTransformations.splice(index, 1);
                   model.onChangeTransformations(newTransformations);

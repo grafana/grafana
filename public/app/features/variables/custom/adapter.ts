@@ -1,12 +1,11 @@
 import { cloneDeep } from 'lodash';
 
-import { type CustomVariableModel } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { CustomVariableModel } from '@grafana/data';
 
 import { dispatch } from '../../../store/store';
-import { type VariableAdapter } from '../adapters';
+import { VariableAdapter } from '../adapters';
 import { ALL_VARIABLE_TEXT } from '../constants';
-import { optionPickerFactory } from '../pickers/OptionsPicker/OptionsPicker';
+import { optionPickerFactory } from '../pickers';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
@@ -17,10 +16,7 @@ import { customVariableReducer, initialCustomVariableModelState } from './reduce
 export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableModel> => {
   return {
     id: 'custom',
-    description: t(
-      'variables.create-custom-variable-adapter.description.define-variable-values-manually',
-      'Define variable values manually'
-    ),
+    description: 'Define variable values manually',
     name: 'Custom',
     initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,

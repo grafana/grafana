@@ -4,20 +4,14 @@ import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
-import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { AccessControlAction } from 'app/types';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import * as analytics from '../../Analytics';
-import { setupMswServer } from '../../mockApi';
-import { mockCombinedRule } from '../../mocks';
-import { mimirDataSource } from '../../mocks/server/configure';
+import { mockCombinedRule, mockDataSource } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { RuleListGroupView } from './RuleListGroupView';
-
-jest.mock('@grafana/assistant', () => ({
-  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
-}));
 
 jest.spyOn(analytics, 'logInfo');
 
@@ -30,9 +24,6 @@ setPluginLinksHook(() => ({
   links: [],
   isLoading: false,
 }));
-
-setupMswServer();
-const mimirDs = mimirDataSource();
 
 describe('RuleListGroupView', () => {
   describe('RBAC', () => {
@@ -128,7 +119,7 @@ function getGrafanaNamespace(): CombinedRuleNamespace {
 function getCloudNamespace(): CombinedRuleNamespace {
   return {
     name: 'Cloud Test Namespace',
-    rulesSource: mimirDs.dataSource,
+    rulesSource: mockDataSource(),
     groups: [
       {
         name: 'Prom group',

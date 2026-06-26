@@ -1,8 +1,7 @@
 import { omitBy } from 'lodash';
-import { type Observable, of, throwError } from 'rxjs';
 
-import { deprecationWarning, validatePath } from '@grafana/data';
-import { type BackendSrvRequest } from '@grafana/runtime';
+import { deprecationWarning } from '@grafana/data';
+import { BackendSrvRequest } from '@grafana/runtime';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
   const method = options.method;
@@ -16,7 +15,6 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
     headers,
     body,
     credentials,
-    signal: options.abortSignal,
   };
 };
 
@@ -91,12 +89,7 @@ export const isContentTypeJson = (headers: Headers) => {
   const contentType = headers.get('content-type');
   if (
     contentType &&
-    [
-      'application/json',
-      'application/json-patch+json',
-      'application/merge-patch+json',
-      'application/strategic-merge-patch+json',
-    ].includes(contentType.toLowerCase())
+    (contentType.toLowerCase() === 'application/json' || contentType.toLowerCase() === 'application/merge-patch+json')
   ) {
     return true;
   }
@@ -142,6 +135,7 @@ export async function parseResponseBody<T>(
           console.warn(`${response.url} returned an invalid JSON`);
           return {} as T;
         }
+
         return await response.json();
 
       case 'text':
@@ -158,7 +152,7 @@ export async function parseResponseBody<T>(
   return textData as T;
 }
 
-function serializeParams(data: Record<string, string | number | boolean | Array<string | number | boolean>>): string {
+function serializeParams(data: Record<string, any>): string {
   return Object.keys(data)
     .map((key) => {
       const value = data[key];
@@ -170,25 +164,10 @@ function serializeParams(data: Record<string, string | number | boolean | Array<
     .join('&');
 }
 
-/**
- * Formats and validates the URL.
- * If options.validatePath is true, this will throw an exception if the URL fails validation.
- * @param options - The options to parse.
- * @returns An observable that emits the parsed URL or an error if the URL fails validation.
- */
-export const parseUrlFromOptions = (options: BackendSrvRequest): Observable<string> => {
-  try {
-    const cleanParams = omitBy(options.params, (v) => v === undefined || (v && v.length === 0));
-    const serializedParams = serializeParams(cleanParams);
-
-    const url = options.validatePath //
-      ? validatePath(options.url)
-      : options.url;
-
-    return options.params && serializedParams.length ? of(`${url}?${serializedParams}`) : of(url);
-  } catch (error) {
-    return throwError(() => error);
-  }
+export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
+  const cleanParams = omitBy(options.params, (v) => v === undefined || (v && v.length === 0));
+  const serializedParams = serializeParams(cleanParams);
+  return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
 };
 
 export const parseCredentials = (options: BackendSrvRequest): RequestCredentials => {

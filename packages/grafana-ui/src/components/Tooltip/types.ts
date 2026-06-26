@@ -1,5 +1,4 @@
-import { type Placement } from '@floating-ui/react';
-import type { JSX } from 'react';
+import { Placement } from '@floating-ui/react';
 
 export interface PopoverContentProps {
   /**
@@ -8,11 +7,8 @@ export interface PopoverContentProps {
    * It will be removed in a future release.
    */
   updatePopperPosition?: () => void;
-
-  hidePopper?: () => void;
 }
 
-// hidePopper is only available to popover content when it is passed as a function
 export type PopoverContent = string | React.ReactElement | ((props: PopoverContentProps) => JSX.Element);
 
 export type TooltipPlacement = Placement | 'auto' | 'auto-start' | 'auto-end';

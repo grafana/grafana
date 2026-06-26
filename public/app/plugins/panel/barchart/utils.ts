@@ -1,11 +1,11 @@
-import uPlot, { type Padding } from 'uplot';
+import uPlot, { Padding } from 'uplot';
 
 import {
-  type DataFrame,
-  type Field,
-  type FieldConfigSource,
+  DataFrame,
+  Field,
+  FieldConfigSource,
   FieldType,
-  type GrafanaTheme2,
+  GrafanaTheme2,
   cacheFieldDisplayNames,
   formattedValueToString,
   getDisplayProcessor,
@@ -13,8 +13,7 @@ import {
   getFieldSeriesColor,
   outerJoinDataFrames,
 } from '@grafana/data';
-import { decoupleHideFromState } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
+import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
 import {
   AxisColorMode,
   AxisPlacement,
@@ -22,7 +21,7 @@ import {
   GraphThresholdsStyleMode,
   GraphTransform,
   ScaleDistribution,
-  type TimeZone,
+  TimeZone,
   TooltipDisplayMode,
   VizOrientation,
 } from '@grafana/schema';
@@ -34,12 +33,13 @@ import {
   UPlotConfigBuilder,
   measureText,
 } from '@grafana/ui';
-import { type AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
+import { AxisProps, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
-import { type BarsOptions, getConfig } from './bars';
-import { type FieldConfig, type Options, defaultFieldConfig } from './panelcfg.gen';
+import { BarsOptions, getConfig } from './bars';
+import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
 
 interface BarSeries {
@@ -57,13 +57,8 @@ export function prepSeries(
   xFieldName?: string,
   colorFieldName?: string
 ): BarSeries {
-  // this allows PanelDataErrorView to show the default noValue message
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
-    return {
-      warn: '',
-      series: [],
-      _rest: [],
-    };
+    return { series: [], _rest: [], warn: 'No data in response' };
   }
 
   cacheFieldDisplayNames(frames);
@@ -126,7 +121,7 @@ export function prepSeries(
     let warn: string | null = null;
 
     if (fields.length === 1) {
-      warn = t('bar-chart.warn.missing-numeric', 'No numeric fields found');
+      warn = 'No numeric fields found';
     }
 
     frame.fields = fields;
@@ -147,7 +142,7 @@ export function prepSeries(
     series: [],
     _rest: [],
     color: null,
-    warn: t('bar-chart.warn.missing-series', 'Bar charts require a string or time field'),
+    warn: 'Bar charts requires a string or time field',
   };
 }
 
@@ -253,7 +248,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       // use opacity from first numeric field
       let opacityField = frame.fields.find((f) => f.type === FieldType.number)!;
 
-      fillOpacity = (opacityField?.config?.custom?.fillOpacity ?? 100) / 100;
+      fillOpacity = (opacityField.config.custom.fillOpacity ?? 100) / 100;
 
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame.fields[seriesIdx];
@@ -424,7 +419,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       direction: vizOrientation.yDir,
       distribution: customConfig.scaleDistribution?.type,
       log: customConfig.scaleDistribution?.log,
-      decimals: field.config.decimals,
     });
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
@@ -451,7 +445,6 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
         tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
         grid: { show: customConfig.axisGridShow },
-        decimals: field.config.decimals,
       };
 
       if (customConfig.axisBorderShow) {

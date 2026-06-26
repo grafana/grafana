@@ -1,4 +1,4 @@
-import { type SearchQueryParams } from './types';
+import { SearchQueryParams } from './types';
 import { parseRouteParams } from './utils';
 
 describe('Search utils', () => {
@@ -22,23 +22,6 @@ describe('Search utils', () => {
       expect(parseRouteParams(params2)).toEqual({
         query: 'test',
         tag: ['test'],
-      });
-    });
-
-    it('should return ownerReference as array, if present', () => {
-      const params = { ownerReference: 'iam.grafana.app/v0alpha1/Team/test-team', query: 'test' };
-      expect(parseRouteParams(params)).toEqual({
-        query: 'test',
-        ownerReference: ['iam.grafana.app/v0alpha1/Team/test-team'],
-      });
-
-      const params2: Partial<SearchQueryParams> = {
-        ownerReference: ['iam.grafana.app/v0alpha1/Team/test-team'],
-        query: 'test',
-      };
-      expect(parseRouteParams(params2)).toEqual({
-        query: 'test',
-        ownerReference: ['iam.grafana.app/v0alpha1/Team/test-team'],
       });
     });
 

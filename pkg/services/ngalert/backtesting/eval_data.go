@@ -85,12 +85,9 @@ func (d *dataEvaluator) Eval(_ context.Context, from time.Time, interval time.Du
 				EvaluatedAt: now,
 			})
 		}
-		cont, err := callback(i, now, result)
+		err := callback(i, now, result)
 		if err != nil {
 			return err
-		}
-		if !cont {
-			break
 		}
 	}
 	return nil

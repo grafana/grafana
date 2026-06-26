@@ -1,12 +1,12 @@
 import { cloneDeep } from 'lodash';
 
-import { type DataSourceInstanceSettings, type DataSourceVariableModel } from '@grafana/data';
-import { getMockPlugins } from '@grafana/data/test';
+import { DataSourceInstanceSettings, DataSourceVariableModel } from '@grafana/data';
+import { getMockPlugins } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
 import { getVariableTestContext } from '../state/helpers';
-import { type VariablesState } from '../state/types';
+import { VariablesState } from '../state/types';
 import { toVariablePayload } from '../utils';
 
 import { createDataSourceVariableAdapter } from './adapter';

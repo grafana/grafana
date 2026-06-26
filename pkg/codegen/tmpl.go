@@ -31,7 +31,6 @@ type (
 		Using         []codejen.NamedJenny
 		From          string
 		Leader        string
-		CuePath       string
 	}
 
 	tvars_resource struct {

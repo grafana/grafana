@@ -1,31 +1,31 @@
-import { map, type Observable, defer, mergeMap } from 'rxjs';
+import { map, Observable, defer, mergeMap } from 'rxjs';
 
 import {
-  type DataFrameJSON,
-  type DataQueryRequest,
-  type DataQueryResponse,
-  type LiveChannelEvent,
+  DataFrameJSON,
+  DataQueryRequest,
+  DataQueryResponse,
+  LiveChannelEvent,
   LiveChannelScope,
   LoadingState,
   StreamingDataFrame,
 } from '@grafana/data';
 import { getGrafanaLiveSrv, config } from '@grafana/runtime';
 
-import { type LokiDatasource } from './datasource';
-import { type LokiQuery } from './types';
+import { LokiDatasource } from './datasource';
+import { LokiQuery } from './types';
 
 /**
  * Calculate a unique key for the query.  The key is used to pick a channel and should
  * be unique for each distinct query execution plan.  This key is not secure and is only picked to avoid
  * possible collisions
  */
-async function getLiveStreamKey(query: LokiQuery): Promise<string> {
+export async function getLiveStreamKey(query: LokiQuery): Promise<string> {
   const str = JSON.stringify({ expr: query.expr });
 
   const msgUint8 = new TextEncoder().encode(str); // encode as (utf-8) Uint8Array
   const hashBuffer = await crypto.subtle.digest('SHA-1', msgUint8); // hash the message
   const hashArray = Array.from(new Uint8Array(hashBuffer.slice(0, 8))); // first 8 bytes
-  return `${query.datasource?.uid}/${hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')}/${config.bootData.user.orgId}`;
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 // This will get both v1 and v2 result formats
@@ -65,7 +65,7 @@ export function doLokiChannelStream(
       return getGrafanaLiveSrv()
         .getStream({
           scope: LiveChannelScope.DataSource,
-          stream: ds.uid,
+          namespace: ds.uid,
           path: `tail/${key}`,
           data: {
             ...query,

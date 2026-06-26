@@ -1,11 +1,11 @@
 import { LoadingState } from '@grafana/data';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 
 import {
   deleteLibraryPanelModalReducer,
-  type DeleteLibraryPanelModalState,
+  DeleteLibraryPanelModalState,
   initialDeleteLibraryPanelModalState,
   searchCompleted,
 } from './reducer';
@@ -25,7 +25,7 @@ describe('deleteLibraryPanelModalReducer', () => {
 
   describe('when searchCompleted is dispatched', () => {
     it('then state should be correct', () => {
-      const dashboards = [{ name: 'A' }, { name: 'B' }] as DashboardQueryResult[];
+      const dashboards = [{ title: 'A' }, { title: 'B' }] as DashboardSearchItem[];
       reducerTester<DeleteLibraryPanelModalState>()
         .givenReducer(deleteLibraryPanelModalReducer, initialDeleteLibraryPanelModalState)
         .whenActionIsDispatched(searchCompleted({ dashboards }))

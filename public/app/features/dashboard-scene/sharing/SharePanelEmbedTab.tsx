@@ -1,21 +1,16 @@
-import { type TimeRange } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import {
-  type SceneComponentProps,
-  sceneGraph,
-  SceneObjectBase,
-  type SceneObjectRef,
-  type VizPanel,
-} from '@grafana/scenes';
+import { TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
+import { t } from 'app/core/internationalization';
 import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEmbed';
 import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
-import { type DashboardScene } from '../scene/DashboardScene';
-import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
-import { getDashboardUrl } from '../utils/getDashboardUrl';
-import { getDashboardSceneFor } from '../utils/utils';
+import { DashboardScene } from '../scene/DashboardScene';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
-import { type SceneShareTabState } from './types';
+import { SceneShareTabState } from './types';
 
 export interface SharePanelEmbedTabState extends SceneShareTabState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -30,7 +25,9 @@ export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState>
   }
 
   public getTabLabel() {
-    return t('share-panel.drawer.share-embed-title', 'Share embed');
+    return config.featureToggles.newDashboardSharingComponent
+      ? t('share-panel.drawer.share-embed-title', 'Share embed')
+      : t('share-modal.tab-title.panel-embed', 'Embed');
   }
 }
 
@@ -40,14 +37,17 @@ function SharePanelEmbedTabRenderer({ model }: SceneComponentProps<SharePanelEmb
 
   const dash = getDashboardSceneFor(model);
   const { uid: dashUid } = dash.useState();
+  const id = getPanelIdForVizPanel(p);
   const timeRangeState = sceneGraph.getTimeRange(p);
 
   const timeFrom = timeRangeState instanceof PanelTimeRange ? timeRangeState.state.timeFrom : undefined;
 
   return (
     <ShareEmbed
-      panelId={p.getPathId()}
-      timeFrom={timeFrom}
+      panel={{
+        id,
+        timeFrom,
+      }}
       range={timeRangeState.state.value}
       dashboard={{ uid: dashUid ?? '', time: timeRangeState.state.value }}
       buildIframe={getIframeBuilder(dash)}
@@ -62,15 +62,15 @@ const getIframeBuilder =
     useCurrentTimeRange: boolean,
     _dashboardUid: string,
     selectedTheme?: string,
-    panelId?: string,
-    timeFrom?: string,
+    panel?: { timeFrom?: string; id: number },
     range?: TimeRange
   ) => {
-    const params = buildParams({ useCurrentTimeRange, selectedTheme, panelId, timeFrom, range });
-    const editOrViewPanel = params.get('editPanel') ?? params.get('viewPanel') ?? '';
-    params.set('panelId', editOrViewPanel);
+    const params = buildParams({ useCurrentTimeRange, selectedTheme, panel, range });
+    const panelId = params.get('editPanel') ?? params.get('viewPanel') ?? '';
+    params.set('panelId', panelId);
     params.delete('editPanel');
     params.delete('viewPanel');
+    params.set('__feature.dashboardSceneSolo', 'true');
 
     const soloUrl = getDashboardUrl({
       absolute: true,

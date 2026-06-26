@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_SPAN_FILTERS, DEFAULT_TAG_FILTERS } from 'app/features/explore/state/constants';
-
-import { type TraceSpan } from '../types/trace';
+import { defaultFilters, defaultTagFilter } from '../../useSearch';
+import { TraceSpan } from '../types';
 
 import { filterSpans } from './filter-spans';
 
@@ -124,222 +123,208 @@ describe('filterSpans', () => {
   const spans = [span0, span2] as TraceSpan[];
 
   it('should return `undefined` if spans is falsy', () => {
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, spanName: 'operationName' }, null)).toBe(undefined);
+    expect(filterSpans({ ...defaultFilters, spanName: 'operationName' }, null)).toBe(undefined);
   });
 
   // Service / span name
   it('should return spans whose serviceName match a filter', () => {
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0' }, spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName2' }, spans)).toEqual(new Set([spanID2]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName2', serviceNameOperator: '!=' }, spans)
-    ).toEqual(new Set([spanID0]));
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName0' }, spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName2' }, spans)).toEqual(new Set([spanID2]));
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName2', serviceNameOperator: '!=' }, spans)).toEqual(
+      new Set([spanID0])
+    );
   });
 
   it('should return spans whose operationName match a filter', () => {
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, spanName: 'operationName0' }, spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, spanName: 'operationName2' }, spans)).toEqual(new Set([spanID2]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, spanName: 'operationName2', spanNameOperator: '!=' }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, spanName: 'operationName0' }, spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans({ ...defaultFilters, spanName: 'operationName2' }, spans)).toEqual(new Set([spanID2]));
+    expect(filterSpans({ ...defaultFilters, spanName: 'operationName2', spanNameOperator: '!=' }, spans)).toEqual(
       new Set([spanID0])
     );
   });
 
   // Durations
   it('should return spans whose duration match a filter', () => {
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, from: '2ns' }, spans)).toEqual(new Set([spanID0, spanID2]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, from: '2us' }, spans)).toEqual(new Set([spanID0, spanID2]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, from: '2ms' }, spans)).toEqual(new Set([spanID0, spanID2]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, from: '3.05ms' }, spans)).toEqual(new Set([spanID2]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, from: '3.05ms', fromOperator: '>=' }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, from: '2ns' }, spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans({ ...defaultFilters, from: '2us' }, spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans({ ...defaultFilters, from: '2ms' }, spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans({ ...defaultFilters, from: '3.05ms' }, spans)).toEqual(new Set([spanID2]));
+    expect(filterSpans({ ...defaultFilters, from: '3.05ms', fromOperator: '>=' }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, from: '3.05ms', fromOperator: '>=', to: '4ms' }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, from: '3.05ms', fromOperator: '>=', to: '4ms' }, spans)).toEqual(
       new Set([spanID0])
     );
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, to: '4ms' }, spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, to: '5ms', toOperator: '<=' }, spans)).toEqual(
-      new Set([spanID0, spanID2])
-    );
+    expect(filterSpans({ ...defaultFilters, to: '4ms' }, spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans({ ...defaultFilters, to: '5ms', toOperator: '<=' }, spans)).toEqual(new Set([spanID0, spanID2]));
   });
 
   // Tags
   it('should return spans whose tags kv.key match a filter', () => {
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1' }] }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1' }] }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey0' }] }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey0' }] }, spans)).toEqual(
       new Set([spanID0])
     );
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey2' }] }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey2' }] }, spans)).toEqual(
       new Set([spanID2])
     );
     expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey2', operator: '!=' }] },
-        spans
-      )
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey2', operator: '!=' }] }, spans)
     ).toEqual(new Set([spanID0]));
   });
 
   it('should return spans whose kind, statusCode, statusMessage, libraryName, libraryVersion, traceState, or id match a filter', () => {
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'kind' }] }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind' }] }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
     expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'kind', value: 'kind0' }] }, spans)
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind', value: 'kind0' }] }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'kind', operator: '!=', value: 'kind0' }] },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind', operator: '!=', value: 'kind0' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'status' }] }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status' }] }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
     expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'status', value: 'unset' }] }, spans)
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status', value: 'unset' }] }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'status', operator: '!=', value: 'unset' }] },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status', operator: '!=', value: 'unset' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
 
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'status.message' }] }, spans)
-    ).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status.message' }] }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'status.message', value: 'statusMessage0' }] },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status.message', value: 'statusMessage0' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'status.message', operator: '!=', value: 'statusMessage0' }],
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'status.message', operator: '!=', value: 'statusMessage0' }],
         },
         spans
       )
     ).toEqual(new Set([spanID2]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'library.name' }] }, spans)
-    ).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.name' }] }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'library.name', value: 'libraryName' }] },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.name', value: 'libraryName' }] },
         spans
       )
     ).toEqual(new Set([spanID0, spanID2]));
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'library.name', operator: '!=', value: 'libraryName' }],
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'library.name', operator: '!=', value: 'libraryName' }],
         },
         spans
       )
     ).toEqual(new Set([]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'library.version' }] }, spans)
-    ).toEqual(new Set([spanID0, spanID2]));
-    expect(
-      filterSpans(
-        {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'library.version', value: 'libraryVersion0' }],
-        },
-        spans
-      )
-    ).toEqual(new Set([spanID0]));
-    expect(
-      filterSpans(
-        {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'library.version', operator: '!=', value: 'libraryVersion0' }],
-        },
-        spans
-      )
-    ).toEqual(new Set([spanID2]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'trace.state' }] }, spans)
-    ).toEqual(new Set([spanID0, spanID2]));
-    expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'trace.state', value: 'traceState0' }] },
-        spans
-      )
-    ).toEqual(new Set([spanID0]));
-    expect(
-      filterSpans(
-        {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'trace.state', operator: '!=', value: 'traceState0' }],
-        },
-        spans
-      )
-    ).toEqual(new Set([spanID2]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'id' }] }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.version' }] }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
     expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'id', value: 'span-id-0' }] }, spans)
+      filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.version', value: 'libraryVersion0' }] },
+        spans
+      )
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'id', operator: '!=', value: 'span-id-0' }] },
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'library.version', operator: '!=', value: 'libraryVersion0' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'trace.state' }] }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
+    expect(
+      filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'trace.state', value: 'traceState0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpans(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'trace.state', operator: '!=', value: 'traceState0' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id' }] }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
+    expect(
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id', value: 'span-id-0' }] }, spans)
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpans(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id', operator: '!=', value: 'span-id-0' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
   });
 
   it('should return spans whose process.tags kv.key match a filter', () => {
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey1' }] }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey0' }] }, spans)).toEqual(
+      new Set([spanID0])
+    );
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey2' }] }, spans)).toEqual(
+      new Set([spanID2])
+    );
     expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'processTagKey1' }] }, spans)
-    ).toEqual(new Set([spanID0, spanID2]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'processTagKey0' }] }, spans)
-    ).toEqual(new Set([spanID0]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'processTagKey2' }] }, spans)
-    ).toEqual(new Set([spanID2]));
-    expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'processTagKey2', operator: '!=' }] },
-        spans
-      )
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey2', operator: '!=' }] }, spans)
     ).toEqual(new Set([spanID0]));
   });
 
   it('should return spans whose logs have a field whose kv.key match a filter', () => {
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey1' }] }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey0' }] }, spans)).toEqual(
+      new Set([spanID0])
+    );
+    expect(filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey2' }] }, spans)).toEqual(
+      new Set([spanID2])
+    );
     expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'logFieldKey1' }] }, spans)
-    ).toEqual(new Set([spanID0, spanID2]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'logFieldKey0' }] }, spans)
-    ).toEqual(new Set([spanID0]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'logFieldKey2' }] }, spans)
-    ).toEqual(new Set([spanID2]));
-    expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'logFieldKey2', operator: '!=' }] },
-        spans
-      )
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey2', operator: '!=' }] }, spans)
     ).toEqual(new Set([spanID0]));
   });
 
   it('it should return logs have a name which matches the filter', () => {
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, query: 'logName0' }, spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans({ ...defaultFilters, query: 'logName0' }, spans)).toEqual(new Set([spanID0]));
   });
 
   it('should return no spans when logs is null', () => {
     const nullSpan = { ...span0, logs: null };
     expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'logFieldKey1' }] }, [
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey1' }] }, [
         nullSpan,
       ] as unknown as TraceSpan[])
     ).toEqual(new Set([]));
@@ -347,50 +332,35 @@ describe('filterSpans', () => {
 
   it("should return spans whose tags' kv.key and kv.value match a filter", () => {
     expect(
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1' }] }, spans)
+    ).toEqual(new Set([spanID0]));
+    expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue1' }] },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1', operator: '=' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
-        {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue1', operator: '=' }],
-        },
-        spans
-      )
-    ).toEqual(new Set([spanID0]));
-    expect(
-      filterSpans(
-        {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue1', operator: '!=' }],
-        },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1', operator: '!=' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
     expect(
       filterSpans(
-        {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', operator: '=~', value: 'tagValue' }],
-        },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '=~', value: 'tagValue' }] },
         spans
       )
     ).toEqual(new Set([spanID0, spanID2]));
     expect(
       filterSpans(
-        {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', operator: '!~', value: 'tagValue1' }],
-        },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '!~', value: 'tagValue1' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', operator: '!~', value: 'tag' }] },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '!~', value: 'tag' }] },
         spans
       )
     ).toEqual(new Set([]));
@@ -398,23 +368,14 @@ describe('filterSpans', () => {
 
   it("should not return spans whose tags' kv.key match a filter but kv.value/operator does not match", () => {
     expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', operator: '!=' }] },
-        spans
-      )
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '!=' }] }, spans)
     ).toEqual(new Set());
     expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey2', operator: '!=' }] },
-        spans
-      )
+      filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey2', operator: '!=' }] }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
-        {
-          ...DEFAULT_SPAN_FILTERS,
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue1', operator: '!=' }],
-        },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1', operator: '!=' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
@@ -425,10 +386,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey1' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey0' },
+            { ...defaultTagFilter, key: 'tagKey1' },
+            { ...defaultTagFilter, key: 'tagKey0' },
           ],
         },
         spans
@@ -437,10 +398,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue1' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey0' },
+            { ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1' },
+            { ...defaultTagFilter, key: 'tagKey0' },
           ],
         },
         spans
@@ -449,10 +410,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue1' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey0', value: 'tagValue0' },
+            { ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1' },
+            { ...defaultTagFilter, key: 'tagKey0', value: 'tagValue0' },
           ],
         },
         spans
@@ -463,10 +424,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey0' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey2' },
+            { ...defaultTagFilter, key: 'tagKey0' },
+            { ...defaultTagFilter, key: 'tagKey2' },
           ],
         },
         spans
@@ -475,10 +436,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey0', value: '' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey2' },
+            { ...defaultTagFilter, key: 'tagKey0', value: '' },
+            { ...defaultTagFilter, key: 'tagKey2' },
           ],
         },
         spans
@@ -489,10 +450,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey0', value: 'tagValue0' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey2' },
+            { ...defaultTagFilter, key: 'tagKey0', value: 'tagValue0' },
+            { ...defaultTagFilter, key: 'tagKey2' },
           ],
         },
         spans
@@ -501,10 +462,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey0', value: 'tagValue0' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey2', value: 'tagValue2' },
+            { ...defaultTagFilter, key: 'tagKey0', value: 'tagValue0' },
+            { ...defaultTagFilter, key: 'tagKey2', value: 'tagValue2' },
           ],
         },
         spans
@@ -513,10 +474,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue1' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue2' },
+            { ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1' },
+            { ...defaultTagFilter, key: 'tagKey1', value: 'tagValue2' },
           ],
         },
         spans
@@ -525,10 +486,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           tags: [
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey1', value: 'tagValue1' },
-            { ...DEFAULT_TAG_FILTERS, key: 'tagKey2', value: 'tagValue2' },
+            { ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1' },
+            { ...defaultTagFilter, key: 'tagKey2', value: 'tagValue2' },
           ],
         },
         spans
@@ -536,78 +497,69 @@ describe('filterSpans', () => {
     ).toEqual(new Set());
 
     // query
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, query: 'serviceName0' }, spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, query: 'tagKey1' }, spans)).toEqual(new Set([spanID0, spanID2]));
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, query: 'does_not_exist' }, spans)).toEqual(new Set([]));
+    expect(filterSpans({ ...defaultFilters, query: 'serviceName0' }, spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans({ ...defaultFilters, query: 'tagKey1' }, spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans({ ...defaultFilters, query: 'does_not_exist' }, spans)).toEqual(new Set([]));
   });
 
   // Multiple
   it('should return spans with multiple filters', () => {
     // service name + span name
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', spanName: 'operationName0' }, spans)
-    ).toEqual(new Set([spanID0]));
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', spanName: 'operationName2' }, spans)
-    ).toEqual(new Set([]));
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName0' }, spans)).toEqual(
+      new Set([spanID0])
+    );
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName2' }, spans)).toEqual(
+      new Set([])
+    );
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', spanName: 'operationName2', spanNameOperator: '!=' },
+        { ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName2', spanNameOperator: '!=' },
         spans
       )
     ).toEqual(new Set([spanID0]));
 
     // service name + span name + duration
     expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', spanName: 'operationName0', from: '2ms' },
-        spans
-      )
+      filterSpans({ ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName0', from: '2ms' }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', spanName: 'operationName0', to: '2ms' },
-        spans
-      )
+      filterSpans({ ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName0', to: '2ms' }, spans)
     ).toEqual(new Set([]));
     expect(
-      filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName2', spanName: 'operationName2', to: '6ms' },
-        spans
-      )
+      filterSpans({ ...defaultFilters, serviceName: 'serviceName2', spanName: 'operationName2', to: '6ms' }, spans)
     ).toEqual(new Set([spanID2]));
 
     // service name + tag key
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey0' }] },
+        { ...defaultFilters, serviceName: 'serviceName0', tags: [{ ...defaultTagFilter, key: 'tagKey0' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1' }] },
+        { ...defaultFilters, serviceName: 'serviceName0', tags: [{ ...defaultTagFilter, key: 'tagKey1' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName2', tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1' }] },
+        { ...defaultFilters, serviceName: 'serviceName2', tags: [{ ...defaultTagFilter, key: 'tagKey1' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName2', tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey2' }] },
+        { ...defaultFilters, serviceName: 'serviceName2', tags: [{ ...defaultTagFilter, key: 'tagKey2' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           serviceName: 'serviceName0',
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey1', operator: '!=' }],
+          tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '!=' }],
         },
         spans
       )
@@ -615,38 +567,38 @@ describe('filterSpans', () => {
 
     // duration + tag
     expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, from: '2ms', tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey0' }] }, spans)
+      filterSpans({ ...defaultFilters, from: '2ms', tags: [{ ...defaultTagFilter, key: 'tagKey0' }] }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, to: '5ms', toOperator: '<=', tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey2' }] },
+        { ...defaultFilters, to: '5ms', toOperator: '<=', tags: [{ ...defaultTagFilter, key: 'tagKey2' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
 
     // query + other
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', query: 'tag' }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName0', query: 'tag' }, spans)).toEqual(
       new Set([spanID0])
     );
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', query: 'tagKey2' }, spans)).toEqual(
+    expect(filterSpans({ ...defaultFilters, serviceName: 'serviceName0', query: 'tagKey2' }, spans)).toEqual(
       new Set([])
     );
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName2', spanName: 'operationName2', query: 'tagKey1' },
+        { ...defaultFilters, serviceName: 'serviceName2', spanName: 'operationName2', query: 'tagKey1' },
         spans
       )
     ).toEqual(new Set([spanID2]));
     expect(
       filterSpans(
-        { ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName2', spanName: 'operationName2', to: '6ms', query: 'kind2' },
+        { ...defaultFilters, serviceName: 'serviceName2', spanName: 'operationName2', to: '6ms', query: 'kind2' },
         spans
       )
     ).toEqual(new Set([spanID2]));
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           serviceName: 'serviceName0',
           spanName: 'operationName0',
           from: '2ms',
@@ -660,40 +612,17 @@ describe('filterSpans', () => {
     expect(
       filterSpans(
         {
-          ...DEFAULT_SPAN_FILTERS,
+          ...defaultFilters,
           serviceName: 'serviceName0',
           spanName: 'operationName2',
           spanNameOperator: '!=',
           from: '3.05ms',
           fromOperator: '>=',
           to: '3.5ms',
-          tags: [{ ...DEFAULT_TAG_FILTERS, key: 'tagKey2', operator: '!=' }],
+          tags: [{ ...defaultTagFilter, key: 'tagKey2', operator: '!=' }],
         },
         spans
       )
     ).toEqual(new Set([spanID0]));
-  });
-
-  it('filters by critical path', () => {
-    const criticalPath = [
-      { spanId: spanID0, section_start: 0, section_end: 1000 },
-      { spanId: spanID2, section_start: 1000, section_end: 2000 },
-    ];
-
-    // Only critical path spans should be returned
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, criticalPathOnly: true }, spans, criticalPath)).toEqual(
-      new Set([spanID0, spanID2])
-    );
-
-    // Critical path filtering combined with other filters
-    expect(
-      filterSpans({ ...DEFAULT_SPAN_FILTERS, serviceName: 'serviceName0', criticalPathOnly: true }, spans, criticalPath)
-    ).toEqual(new Set([spanID0]));
-
-    // When criticalPathOnly is false, critical path should not be applied
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, criticalPathOnly: false }, spans, criticalPath)).toEqual(undefined);
-
-    // When no criticalPath is provided, filtering should not be applied
-    expect(filterSpans({ ...DEFAULT_SPAN_FILTERS, criticalPathOnly: true }, spans)).toEqual(undefined);
   });
 });

@@ -1,8 +1,8 @@
-import { type PanelModel } from '@grafana/data';
+import { PanelModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { type FolderDTO } from 'app/types/folders';
+import { FolderDTO } from 'app/types';
 
-import { type Options } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 async function getFolderUID(folderID: number): Promise<string> {
   // folderID 0 is always the fake General/Dashboards folder, which always has a UID of empty string

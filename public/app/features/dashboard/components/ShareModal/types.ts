@@ -1,9 +1,8 @@
-import type * as React from 'react';
+import * as React from 'react';
 
-import { type NavModelItem } from '@grafana/data';
-import { type LibraryPanel } from '@grafana/schema';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { NavModelItem } from '@grafana/data';
+import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 export interface ShareModalTabProps {
   dashboard: DashboardModel;

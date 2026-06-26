@@ -1,22 +1,24 @@
 import { css, cx } from '@emotion/css';
-import { memo } from 'react';
+import { PureComponent } from 'react';
 
-import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
+import { getTemplateSrv } from '@grafana/runtime/src';
 import {
   CodeEditor,
-  type CodeEditorSuggestionItem,
+  CodeEditorSuggestionItem,
   CodeEditorSuggestionItemKind,
   InlineFormLabel,
   LinkButton,
+  MonacoEditor,
   Segment,
-  useStyles2,
-} from '@grafana/ui';
+  Themeable2,
+  withTheme2,
+} from '@grafana/ui/src';
 
-import type InfluxDatasource from '../../../../datasource';
-import { type InfluxQuery } from '../../../../types';
+import InfluxDatasource from '../../../../datasource';
+import { InfluxQuery } from '../../../../types';
 
-interface Props {
+interface Props extends Themeable2 {
   onChange: (query: InfluxQuery) => void;
   query: InfluxQuery;
   // `datasource` is not used internally, but this component is used at some places
@@ -92,18 +94,22 @@ v1.tagValues(
   },
 ];
 
-export const FluxQueryEditor = memo(function FluxQueryEditor({ query, onChange }: Props) {
-  const styles = useStyles2(getStyles);
+class UnthemedFluxQueryEditor extends PureComponent<Props> {
+  onFluxQueryChange = (query: string) => {
+    this.props.onChange({ ...this.props.query, query });
+  };
 
-  function onFluxQueryChange(q: string) {
-    onChange({ ...query, query: q });
-  }
+  onSampleChange = (val: SelectableValue<string>) => {
+    this.props.onChange({
+      ...this.props.query,
+      query: val.value!,
+    });
 
-  function onSampleChange(val: SelectableValue<string>) {
-    onChange({ ...query, query: val.value! });
-  }
+    // Angular HACK: Since the target does not actually change!
+    this.forceUpdate();
+  };
 
-  function getSuggestions(): CodeEditorSuggestionItem[] {
+  getSuggestions = (): CodeEditorSuggestionItem[] => {
     const sugs: CodeEditorSuggestionItem[] = [
       {
         label: 'v.timeRangeStart',
@@ -147,48 +153,69 @@ export const FluxQueryEditor = memo(function FluxQueryEditor({ query, onChange }
     });
 
     return sugs;
-  }
+  };
 
-  const helpTooltip = (
-    <div>
-      Type: <i>ctrl+space</i> to show template variable suggestions <br />
-      Many queries can be copied from Chronograf
-    </div>
-  );
+  // For some reason in angular, when this component gets re-mounted, the width
+  // is not set properly.  This forces the layout shortly after mount so that it
+  // displays OK.  Note: this is not an issue when used directly in react
+  editorDidMountCallbackHack = (editor: MonacoEditor) => {
+    setTimeout(() => editor.layout(), 100);
+  };
 
-  return (
-    <>
-      <CodeEditor
-        height={'100%'}
-        containerStyles={styles.editorContainerStyles}
-        language="sql"
-        value={query.query || ''}
-        onBlur={onFluxQueryChange}
-        onSave={onFluxQueryChange}
-        showMiniMap={false}
-        showLineNumbers={true}
-        getSuggestions={getSuggestions}
-      />
-      <div className={cx('gf-form-inline', styles.editorActions)}>
-        <LinkButton
-          icon="external-link-alt"
-          variant="secondary"
-          target="blank"
-          href="https://docs.influxdata.com/influxdb/latest/query-data/get-started/"
-        >
-          Flux language syntax
-        </LinkButton>
-        <Segment options={samples} value="Sample query" onChange={onSampleChange} className={styles.segmentStyles} />
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label gf-form-label--grow"></div>
-        </div>
-        <InlineFormLabel width={5} tooltip={helpTooltip}>
-          Help
-        </InlineFormLabel>
+  render() {
+    const { query, theme } = this.props;
+    const styles = getStyles(theme);
+
+    const helpTooltip = (
+      <div>
+        Type: <i>ctrl+space</i> to show template variable suggestions <br />
+        Many queries can be copied from Chronograf
       </div>
-    </>
-  );
-});
+    );
+
+    return (
+      <>
+        <CodeEditor
+          height={'100%'}
+          containerStyles={styles.editorContainerStyles}
+          language="sql"
+          value={query.query || ''}
+          onBlur={this.onFluxQueryChange}
+          onSave={this.onFluxQueryChange}
+          showMiniMap={false}
+          showLineNumbers={true}
+          getSuggestions={this.getSuggestions}
+          onEditorDidMount={this.editorDidMountCallbackHack}
+        />
+        <div className={cx('gf-form-inline', styles.editorActions)}>
+          <LinkButton
+            icon="external-link-alt"
+            variant="secondary"
+            target="blank"
+            href="https://docs.influxdata.com/influxdb/latest/query-data/get-started/"
+          >
+            Flux language syntax
+          </LinkButton>
+          <Segment
+            options={samples}
+            value="Sample query"
+            onChange={this.onSampleChange}
+            className={css({
+              marginTop: theme.spacing(-0.5),
+              marginLeft: theme.spacing(0.5),
+            })}
+          />
+          <div className="gf-form gf-form--grow">
+            <div className="gf-form-label gf-form-label--grow"></div>
+          </div>
+          <InlineFormLabel width={5} tooltip={helpTooltip}>
+            Help
+          </InlineFormLabel>
+        </div>
+      </>
+    );
+  }
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   editorContainerStyles: css({
@@ -202,8 +229,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editorActions: css({
     marginTop: '6px',
   }),
-  segmentStyles: css({
-    marginTop: theme.spacing(-0.5),
-    marginLeft: theme.spacing(0.5),
-  }),
 });
+
+export const FluxQueryEditor = withTheme2(UnthemedFluxQueryEditor);

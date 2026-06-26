@@ -3,7 +3,7 @@ package ualert
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/util/xorm"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -23,12 +23,6 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("add last_applied column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
 		Name: "last_applied", Type: migrator.DB_Int, Nullable: false, Default: "0",
-	}))
-	mg.AddMigration("add message column to alert_rule_version", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_rule_version"}, &migrator.Column{
-		Name: "message", Type: migrator.DB_Text, Nullable: true,
-	}))
-	mg.AddMigration("add column external_alertmanager_uid in ngalert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "ngalert_configuration"}, &migrator.Column{
-		Name: "external_alertmanager_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: true,
 	}))
 	// End of migration log, add new migrations above this line.
 }
@@ -201,8 +195,6 @@ func alertInstanceMigration(mg *migrator.Migrator) {
 	}))
 }
 
-var titleUniqueIndex = &migrator.Index{Cols: []string{"org_id", "namespace_uid", "title"}, Type: migrator.UniqueIndex}
-
 func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
 	// DO NOT EDIT
 	alertRule := migrator.Table{
@@ -253,7 +245,9 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 		Cols: []string{"org_id", "title"}, Type: migrator.UniqueIndex,
 	}))
 
-	mg.AddMigration("add index in alert_rule on org_id, namespase_uid and title columns", migrator.NewAddIndexMigration(alertRule, titleUniqueIndex))
+	mg.AddMigration("add index in alert_rule on org_id, namespase_uid and title columns", migrator.NewAddIndexMigration(alertRule, &migrator.Index{
+		Cols: []string{"org_id", "namespace_uid", "title"}, Type: migrator.UniqueIndex,
+	}))
 
 	mg.AddMigration("add dashboard_uid column to alert_rule", migrator.NewAddColumnMigration(
 		migrator.Table{Name: "alert_rule"},
@@ -306,13 +300,7 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 	mg.AddMigration("fix is_paused column for alert_rule table", migrator.NewRawSQLMigration("").
 		Postgres(`ALTER TABLE alert_rule ALTER COLUMN is_paused SET DEFAULT false;
 UPDATE alert_rule SET is_paused = false;`))
-
-	mg.AddMigration("alter table alert_rule alter column rule_group_idx type to bigint", migrator.NewRawSQLMigration("").
-		Mysql("ALTER TABLE alert_rule MODIFY rule_group_idx BIGINT;").
-		Postgres("ALTER TABLE alert_rule ALTER COLUMN rule_group_idx TYPE BIGINT;"))
 }
-
-var alertRuleVersionUDX_OrgIdRuleUIDVersion = &migrator.Index{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex}
 
 func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 	// DO NOT EDIT
@@ -337,12 +325,12 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'Alerting'"},
 		},
 		Indices: []*migrator.Index{
-			alertRuleVersionUDX_OrgIdRuleUIDVersion,
+			{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"rule_org_id", "rule_namespace_uid", "rule_group"}, Type: migrator.IndexType},
 		},
 	}
 	mg.AddMigration("create alert_rule_version table", migrator.NewAddTableMigration(alertRuleVersion))
-	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersionUDX_OrgIdRuleUIDVersion))
+	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersion.Indices[0]))
 	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_namespace_uid and rule_group columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersion.Indices[1]))
 
 	mg.AddMigration("alter alert_rule_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
@@ -381,10 +369,6 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("fix is_paused column for alert_rule_version table", migrator.NewRawSQLMigration("").
 		Postgres(`ALTER TABLE alert_rule_version ALTER COLUMN is_paused SET DEFAULT false;
 UPDATE alert_rule_version SET is_paused = false;`))
-
-	mg.AddMigration("alter table alert_rule_version alter column rule_group_idx type to bigint", migrator.NewRawSQLMigration("").
-		Mysql("ALTER TABLE alert_rule_version MODIFY rule_group_idx BIGINT;").
-		Postgres("ALTER TABLE alert_rule_version ALTER COLUMN rule_group_idx TYPE BIGINT;"))
 }
 
 func addAlertmanagerConfigMigrations(mg *migrator.Migrator) {
@@ -584,9 +568,4 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 		}
 	}
 	return nil
-}
-
-func DropTitleUniqueIndexMigration(mg *migrator.Migrator) {
-	mg.AddMigration("remove title in folder unique index",
-		migrator.NewDropIndexMigration(migrator.Table{Name: "alert_rule"}, titleUniqueIndex))
 }

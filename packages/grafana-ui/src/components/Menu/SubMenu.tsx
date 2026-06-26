@@ -1,20 +1,18 @@
-import { css } from '@emotion/css';
-import { autoUpdate, useFloating } from '@floating-ui/react';
-import { memo, type CSSProperties, type ReactElement } from 'react';
+import { css, cx } from '@emotion/css';
+import { memo, CSSProperties, ReactElement, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { getPositioningMiddleware } from '../../utils/floating';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
-import { type MenuItemProps } from './MenuItem';
+import { MenuItemProps } from './MenuItem';
 import { useMenuFocus } from './hooks';
+import { isElementOverflowing } from './utils';
 
 /** @internal */
 export interface SubMenuProps {
-  parentItemRef: React.RefObject<HTMLElement | null>;
   /** List of menu items of the subMenu */
   items?: Array<ReactElement<MenuItemProps>>;
   /** Open */
@@ -25,29 +23,22 @@ export interface SubMenuProps {
   customStyle?: CSSProperties;
 }
 
-const SUBMENU_POSITION = 'right-start';
-
 /** @internal */
-export const SubMenu = memo(({ parentItemRef, items, isOpen, close, customStyle }: SubMenuProps) => {
+export const SubMenu = memo(({ items, isOpen, close, customStyle }: SubMenuProps) => {
   const styles = useStyles2(getStyles);
-  // the order of middleware is important!
-  const middleware = [...getPositioningMiddleware(SUBMENU_POSITION)];
-
-  const { refs, floatingStyles } = useFloating({
-    open: isOpen,
-    placement: SUBMENU_POSITION,
-    middleware,
-    whileElementsMounted: autoUpdate,
-    elements: {
-      reference: parentItemRef.current,
-    },
-  });
-
+  const localRef = useRef<HTMLDivElement>(null);
   const [handleKeys] = useMenuFocus({
-    localRef: refs.floating,
+    localRef,
     isMenuOpen: isOpen,
     close,
   });
+
+  const [pushLeft, setPushLeft] = useState(false);
+  useEffect(() => {
+    if (isOpen && localRef.current) {
+      setPushLeft(isElementOverflowing(localRef.current));
+    }
+  }, [isOpen]);
 
   return (
     <>
@@ -56,13 +47,10 @@ export const SubMenu = memo(({ parentItemRef, items, isOpen, close, customStyle 
       </div>
       {isOpen && (
         <div
-          ref={refs.setFloating}
-          className={styles.subMenu}
+          ref={localRef}
+          className={cx(styles.subMenu, { [styles.pushLeft]: pushLeft })}
           data-testid={selectors.components.Menu.SubMenu.container}
-          style={{
-            ...floatingStyles,
-            ...customStyle,
-          }}
+          style={customStyle}
         >
           <div tabIndex={-1} className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
             {items}
@@ -89,13 +77,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
     }),
     itemsWrapper: css({
-      background: theme.colors.background.elevated,
-      padding: theme.spacing(0.5),
+      background: theme.colors.background.primary,
       boxShadow: theme.shadows.z3,
       display: 'inline-block',
       borderRadius: theme.shape.radius.default,
     }),
+    pushLeft: css({
+      right: '100%',
+      left: 'unset',
+    }),
     subMenu: css({
+      position: 'absolute',
+      top: 0,
+      left: '100%',
       zIndex: theme.zIndex.dropdown,
     }),
   };

@@ -1,19 +1,23 @@
 import { css, cx } from '@emotion/css';
-import { memo } from 'react';
+import { PureComponent } from 'react';
 
-import { type GrafanaTheme2, type MetadataInspectorProps, rangeUtil } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { MetadataInspectorProps, rangeUtil } from '@grafana/data';
+import { stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
 
-import { type GraphiteDatasource } from '../datasource';
+import { GraphiteDatasource } from '../datasource';
 import { getRollupNotice, getRuntimeConsolidationNotice, parseSchemaRetentions } from '../meta';
-import { type GraphiteOptions, type GraphiteQuery, type MetricTankSeriesMeta } from '../types';
+import { GraphiteOptions, GraphiteQuery, MetricTankSeriesMeta } from '../types';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
 
-export const MetricTankMetaInspector = memo(function MetricTankMetaInspector({ data }: Props) {
-  const styles = useStyles2(getStyles);
+export interface State {
+  index: number;
+}
 
-  function renderMeta(meta: MetricTankSeriesMeta, key: string) {
+export class MetricTankMetaInspector extends PureComponent<Props, State> {
+  renderMeta(meta: MetricTankSeriesMeta, key: string) {
+    const styles = getStyles();
     const buckets = parseSchemaRetentions(meta['schema-retentions']);
     const rollupNotice = getRollupNotice([meta]);
     const runtimeNotice = getRuntimeConsolidationNotice([meta]);
@@ -85,69 +89,73 @@ export const MetricTankMetaInspector = memo(function MetricTankMetaInspector({ d
     );
   }
 
-  // away to dedupe them
-  const seriesMetas: Record<string, MetricTankSeriesMeta> = {};
+  render() {
+    const { data } = this.props;
 
-  for (const series of data) {
-    const seriesMetaList: MetricTankSeriesMeta[] | undefined = series?.meta?.custom?.seriesMetaList;
-    if (seriesMetaList) {
-      for (const metaItem of seriesMetaList) {
-        // key is to dedupe as many series will have identitical meta
-        const key = `${JSON.stringify(metaItem)}`;
+    // away to dedupe them
+    const seriesMetas: Record<string, MetricTankSeriesMeta> = {};
 
-        if (seriesMetas[key]) {
-          seriesMetas[key].count += metaItem.count;
-        } else {
-          seriesMetas[key] = metaItem;
+    for (const series of data) {
+      const seriesMetaList: MetricTankSeriesMeta[] | undefined = series?.meta?.custom?.seriesMetaList;
+      if (seriesMetaList) {
+        for (const metaItem of seriesMetaList) {
+          // key is to dedupe as many series will have identitical meta
+          const key = `${JSON.stringify(metaItem)}`;
+
+          if (seriesMetas[key]) {
+            seriesMetas[key].count += metaItem.count;
+          } else {
+            seriesMetas[key] = metaItem;
+          }
         }
       }
     }
+
+    if (Object.keys(seriesMetas).length === 0) {
+      return <div>No response meta data</div>;
+    }
+
+    return (
+      <div>
+        <h2 className="page-heading">Metrictank Lineage</h2>
+        {Object.keys(seriesMetas).map((key) => this.renderMeta(seriesMetas[key], key))}
+      </div>
+    );
   }
+}
 
-  if (Object.keys(seriesMetas).length === 0) {
-    return <div>No response meta data</div>;
-  }
-
-  return (
-    <div>
-      <h2 className="page-heading">Metrictank Lineage</h2>
-      {Object.keys(seriesMetas).map((key) => renderMeta(seriesMetas[key], key))}
-    </div>
-  );
-});
-
-const getStyles = (theme: GrafanaTheme2) => {
-  const { v1 } = theme;
-  const borderColor = v1.isDark ? v1.palette.gray25 : v1.palette.gray85;
-  const background = v1.isDark ? v1.palette.dark1 : v1.palette.white;
-  const headerBg = v1.isDark ? v1.palette.gray15 : v1.palette.gray85;
+const getStyles = stylesFactory(() => {
+  const { theme } = config;
+  const borderColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray85;
+  const background = theme.isDark ? theme.palette.dark1 : theme.palette.white;
+  const headerBg = theme.isDark ? theme.palette.gray15 : theme.palette.gray85;
 
   return {
     metaItem: css({
       background: background,
       border: `1px solid ${borderColor}`,
-      marginBottom: v1.spacing.md,
+      marginBottom: theme.spacing.md,
     }),
     metaItemHeader: css({
       background: headerBg,
-      padding: `${v1.spacing.xs} ${v1.spacing.md}`,
-      fontSize: v1.typography.size.md,
+      padding: `${theme.spacing.xs} ${theme.spacing.md}`,
+      fontSize: theme.typography.size.md,
       display: 'flex',
       justifyContent: 'space-between',
     }),
     metaItemBody: css({
-      padding: v1.spacing.md,
+      padding: theme.spacing.md,
     }),
     stepHeading: css({
-      fontSize: v1.typography.size.md,
+      fontSize: theme.typography.size.md,
     }),
     stepDescription: css({
-      fontSize: v1.typography.size.sm,
-      color: v1.colors.textWeak,
-      marginBottom: v1.spacing.sm,
+      fontSize: theme.typography.size.sm,
+      color: theme.colors.textWeak,
+      marginBottom: theme.spacing.sm,
     }),
     step: css({
-      marginBottom: v1.spacing.lg,
+      marginBottom: theme.spacing.lg,
 
       '&:last-child': {
         marginBottom: 0,
@@ -155,22 +163,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     bucket: css({
       display: 'flex',
-      marginBottom: v1.spacing.sm,
-      borderRadius: v1.border.radius.sm,
+      marginBottom: theme.spacing.sm,
+      borderRadius: theme.border.radius.sm,
     }),
     bucketInterval: css({
       flexGrow: 0,
       width: '60px',
     }),
     bucketRetention: css({
-      background: `linear-gradient(0deg, ${v1.palette.blue85}, ${v1.palette.blue95})`,
+      background: `linear-gradient(0deg, ${theme.palette.blue85}, ${theme.palette.blue95})`,
       textAlign: 'center',
-      color: v1.palette.white,
-      marginRight: v1.spacing.md,
-      borderRadius: v1.border.radius.sm,
+      color: theme.palette.white,
+      marginRight: theme.spacing.md,
+      borderRadius: theme.border.radius.sm,
     }),
     bucketRetentionActive: css({
-      background: `linear-gradient(0deg, ${v1.palette.greenBase}, ${v1.palette.greenShade})`,
+      background: `linear-gradient(0deg, ${theme.palette.greenBase}, ${theme.palette.greenShade})`,
     }),
   };
-};
+});

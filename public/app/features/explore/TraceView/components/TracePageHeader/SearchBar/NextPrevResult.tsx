@@ -14,18 +14,17 @@
 
 import { css, cx } from '@emotion/css';
 import { get, maxBy, values } from 'lodash';
-import { memo, type Dispatch, type SetStateAction, useEffect, useCallback } from 'react';
+import { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Icon, type PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
+import { getButtonStyles } from '@grafana/ui/src/components/Button';
 
-import { type Trace } from '../../types/trace';
-import { getServiceDisplayName } from '../../utils/service-name';
+import { Trace } from '../../types';
 
-type NextPrevResultProps = {
+export type NextPrevResultProps = {
   trace: Trace;
   spanFilterMatches: Set<string> | undefined;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
@@ -114,13 +113,14 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
   };
 
   const buttonEnabled = (spanFilterMatches && spanFilterMatches?.size > 0) ?? false;
+  const buttonClass = buttonEnabled ? styles.button : cx(styles.button, styles.buttonDisabled);
 
   const getTooltip = useCallback(
     (content: PopoverContent) => {
       return (
         <Tooltip content={content} placement="top">
           <span className={styles.tooltip}>
-            <Icon name="info-circle" size="sm" />
+            <Icon name="info-circle" size="md" />
           </span>
         </Tooltip>
       );
@@ -135,12 +135,8 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
           <span>{`${trace.spans.length} spans`}</span>
           {getTooltip(
             <>
-              <div>
-                <Trans i18nKey="explore.next-prev-result.services">Services: {{ services }}</Trans>
-              </div>
-              <div>
-                <Trans i18nKey="explore.next-prev-result.depth">Depth: {{ depth }}</Trans>
-              </div>
+              <div>Services: {services}</div>
+              <div>Depth: {depth}</div>
             </>
           )}
         </>
@@ -150,9 +146,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
         if (spanFilterMatches.size === 0) {
           metadata = (
             <>
-              <span>
-                <Trans i18nKey="explore.get-matches-metadata.matches">0 matches</Trans>
-              </span>
+              <span>0 matches</span>
               {getTooltip(
                 'There are 0 span matches for the filters selected. Please try removing some of the selected filters.'
               )}
@@ -168,7 +162,7 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
           const matchedServices: string[] = [];
           spanFilterMatches.forEach((spanID) => {
             if (trace.processes[spanID]) {
-              matchedServices.push(getServiceDisplayName(trace.processes[spanID]));
+              matchedServices.push(trace.processes[spanID].serviceName);
             }
           });
 
@@ -178,16 +172,9 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
               {getTooltip(
                 <>
                   <div>
-                    <Trans
-                      i18nKey="explore.next-prev-result.services-span-filter-matches"
-                      values={{ total: new Set(matchedServices).size }}
-                    >
-                      Services: {'{{total}}'}/{{ services }}
-                    </Trans>
+                    Services: {new Set(matchedServices).size}/{services}
                   </div>
-                  <div>
-                    <Trans i18nKey="explore.next-prev-result.depth-span-filter-matches">Depth: {{ depth }}</Trans>
-                  </div>
+                  <div>Depth: {depth}</div>
                 </>
               )}
             </>
@@ -200,76 +187,64 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
     [focusedSpanIndexForSearch, getTooltip, spanFilterMatches, trace.processes, trace.spans]
   );
 
-  const services = new Set(values(trace.processes).map((p) => getServiceDisplayName(p))).size;
+  const services = new Set(values(trace.processes).map((p) => p.serviceName)).size;
   const depth = get(maxBy(trace.spans, 'depth'), 'depth', 0) + 1;
 
   return (
-    <div className={styles.container}>
+    <>
+      <span className={styles.matches}>{getMatchesMetadata(depth, services)}</span>
       <div className={buttonEnabled ? styles.buttons : cx(styles.buttons, styles.buttonsDisabled)}>
-        <Button
-          aria-label={t('explore.next-prev-result.aria-label-prev', 'Prev result button')}
-          variant="secondary"
-          size="md"
-          icon="arrow-up"
-          disabled={!buttonEnabled}
+        <div
+          aria-label="Prev result button"
+          className={buttonClass}
           onClick={(event) => prevResult(event, buttonEnabled)}
           onKeyDown={(event) => prevResultOnKeyDown(event, buttonEnabled)}
+          role="button"
           tabIndex={buttonEnabled ? 0 : -1}
-        />
-        <Button
-          aria-label={t('explore.next-prev-result.aria-label-next', 'Next result button')}
-          variant="secondary"
-          size="md"
-          icon="arrow-down"
-          disabled={!buttonEnabled}
+        >
+          Prev
+        </div>
+        <div
+          aria-label="Next result button"
+          className={buttonClass}
           onClick={(event) => nextResult(event, buttonEnabled)}
           onKeyDown={(event) => nextResultOnKeyDown(event, buttonEnabled)}
           role="button"
           tabIndex={buttonEnabled ? 0 : -1}
-        />
+        >
+          Next
+        </div>
       </div>
-      <span className={styles.matches}>{getMatchesMetadata(depth, services)}</span>
-    </div>
+    </>
   );
 });
 
 export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
+  const buttonStyles = getButtonStyles({
+    theme,
+    variant: 'secondary',
+    size: showSpanFilters ? 'md' : 'sm',
+    iconOnly: false,
+    fill: 'outline',
+  });
+
   return {
-    container: css({
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-    }),
     buttons: css({
       display: 'inline-flex',
-      gap: 1,
+      gap: '4px',
     }),
     buttonsDisabled: css({
       cursor: 'not-allowed',
     }),
-    button: {
-      padding: theme.spacing(0, 1),
-    },
-    iconButton: css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
+    button: buttonStyles.button,
+    buttonDisabled: css(buttonStyles.disabled, { pointerEvents: 'none' }),
     matches: css({
+      marginRight: theme.spacing(2),
       textWrap: 'nowrap',
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      color: theme.colors.text.primary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
     }),
     tooltip: css({
       color: '#aaa',
-      marginLeft: theme.spacing(0.5),
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      margin: '0 0 0 5px',
     }),
   };
 };
