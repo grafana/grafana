@@ -42,4 +42,4 @@ You can take the following actions in the **Variables** section of the sidebar:
 In addition to [managing variables](#manage-variables), the **Variables** section lets you quickly identify whether variables have any dependencies.
 To check, click **Show dependencies** at the bottom of the list, which opens the dependencies diagram:
 
-{{< figure src="screenshot-variable-dependencies-v13.2.png" max-width="300px" alt="ependency map showing relationships between dashboard variables" >}}
+{{< figure src="screenshot-variable-dependencies-v13.2.png" max-width="300px" alt="Dependency map showing relationships between dashboard variables" >}}
