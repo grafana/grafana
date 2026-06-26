@@ -91,8 +91,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
   };
 
   // GitHub and GitHub Enterprise share the same fields; only the URL placeholder host
-  // differs. GitHub Enterprise derives its server host from the repository URL, so it
-  // needs no separate serverUrl field.
+  // differs.
   const github = (host: string): Record<string, FieldConfig> => ({
     token: {
       label: t('provisioning.github.token-label', 'Personal Access Token'),

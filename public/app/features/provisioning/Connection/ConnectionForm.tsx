@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, isFetchError, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Combobox, Field, Input, Stack } from '@grafana/ui';
+import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -16,6 +16,7 @@ import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
+import { isGitHubBased } from '../utils/repositoryTypes';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -167,38 +168,9 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             />
           </Field>
 
-          {selectedType === 'githubEnterprise' && (
-            <Field
-              noMargin
-              label={t('provisioning.connection-form.label-server-url', 'Server URL')}
-              description={t(
-                'provisioning.connection-form.description-server-url',
-                'The URL of your GitHub Enterprise'
-              )}
-              invalid={!!errors.serverUrl}
-              error={errors.serverUrl?.message}
-              required={!isEdit}
-            >
-              <Input
-                id="serverUrl"
-                {...register('serverUrl', {
-                  required: !isEdit
-                    ? t('provisioning.connection-form.error-required', 'This field is required')
-                    : false,
-                })}
-                placeholder={t(
-                  'provisioning.connection-form.placeholder-server-url',
-                  'https://your-custom-github-enterprise-url.com or <slug>.ghe.com'
-                )}
-              />
-            </Field>
+          {isGitHubBased(selectedType) && (
+            <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} type={selectedType} />
           )}
-
-          <GitHubConnectionFields
-            required={!isEdit}
-            privateKeyConfigured={Boolean(privateKey)}
-            type={data?.spec?.type || 'github'}
-          />
 
           <WebhookDisabledField
             registration={register('webhookDisabled')}

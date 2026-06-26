@@ -42,11 +42,11 @@ const getRepositoryTypeConfigs = (): RepositoryTypeConfig[] => [
     label: t('provisioning.repository-types.github-enterprise', 'GitHub Enterprise'),
     description: t(
       'provisioning.repository-types.github-enterprise-description',
-      'Connect to GitHub Enterprise Server repositories'
+      'Connect to GitHub Enterprise Server or Github Enterprise Cloud repositories'
     ),
     tooltip: t(
       'provisioning.repository-types.github-enterprise-tooltip',
-      'Enhanced GitHub integration for self-hosted GitHub Enterprise Server with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
+      'Enhanced GitHub integration for self-hosted GitHub Enterprise Server or Github Enterprise Cloud with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.'
     ),
     icon: 'github' as const,
   },

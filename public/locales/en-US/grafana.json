@@ -13061,7 +13061,6 @@
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
-      "description-server-url": "The URL of your GitHub Enterprise Server",
       "description-title": "A human-readable name for this connection",
       "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
       "error-delete-connection": "Failed to delete connection",
@@ -13074,7 +13073,6 @@
       "label-installation-id": "GitHub Installation ID",
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
-      "label-server-url": "Server URL",
       "label-title": "Title",
       "label-webhook-disabled": "Disable webhook integration",
       "not-found": "Connection not found",
@@ -13085,7 +13083,6 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-server-url": "https://your-custom-github-enterprise-url.com",
       "placeholder-title": "My GitHub App"
     },
     "connection-options": {
@@ -13257,7 +13254,7 @@
       "url-required": "Repository URL is required"
     },
     "github-enterprise": {
-      "server-url-description": "The custom server URL where your Github Enterprise Server is hosted. It is required.",
+      "server-url-description": "The custom server URL where your Github Enterprise is hosted.",
       "server-url-label": "Custom server URL"
     },
     "gitlab": {
@@ -13617,8 +13614,8 @@
       "github": "GitHub",
       "github-description": "Connect to GitHub repositories",
       "github-enterprise": "GitHub Enterprise",
-      "github-enterprise-description": "Connect to GitHub Enterprise Server repositories",
-      "github-enterprise-tooltip": "Enhanced GitHub integration for self-hosted GitHub Enterprise Server with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
+      "github-enterprise-description": "Connect to GitHub Enterprise Server or Github Enterprise Cloud repositories",
+      "github-enterprise-tooltip": "Enhanced GitHub integration for self-hosted GitHub Enterprise Server or Github Enterprise Cloud with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "github-tooltip": "Enhanced GitHub integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "gitlab": "GitLab",
       "gitlab-description": "Connect to GitLab repositories",
