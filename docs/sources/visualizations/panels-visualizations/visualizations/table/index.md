@@ -502,12 +502,12 @@ Actions add a button to a cell that triggers a basic, unauthenticated API call w
 <!-- prettier-ignore-start -->
 | Option             | Description  |
 | ------------------ | ------------ |
-| URL                | Enter the request URL. |
-| Method             | Choose from **GET** and **POST**. |
-| Content-Type       | Select an option in the header editor. Choose from **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**. |
+| Endpoint           | Enter the endpoint URL. |
+| Method             | Choose from **GET**, **POST**, and **PUT**. |
+| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
 | Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Headers            | Enter as many **Key**, **Value** pairs as you need. |
-| Body               | Enter the body of the API call. |
+| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
+| Payload            | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
