@@ -14,6 +14,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,8 +27,9 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 	return &ServiceAPIBuilder{}
 }
 
-func RegisterAPIService(cfg *setting.Cfg, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *ServiceAPIBuilder {
-	if !cfg.EnableKubernetesAggregator {
+func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *ServiceAPIBuilder {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) && !cfg.EnableKubernetesAggregator {
 		return nil // skip registration unless opting into aggregator mode
 	}
 

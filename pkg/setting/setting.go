@@ -815,6 +815,9 @@ type Cfg struct {
 	// EnableKubernetesAggregator routes API traffic through a kube-aggregator layer
 	// (required for Kubernetes-style API aggregation, e.g. the service API builder).
 	EnableKubernetesAggregator bool
+
+	// Enable CAP token based authentication in grafana's embedded kube-aggregator
+	EnableKubernetesAggregatorCapTokenAuth bool
 }
 
 type UnifiedStorageConfig struct {

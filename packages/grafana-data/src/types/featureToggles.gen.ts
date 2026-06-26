@@ -489,6 +489,16 @@ export interface FeatureToggles {
   */
   groupByVariable?: boolean;
   /**
+  * Enable grafana's embedded kube-aggregator
+  * @default false
+  */
+  kubernetesAggregator?: boolean;
+  /**
+  * Enable CAP token based authentication in grafana's embedded kube-aggregator
+  * @default false
+  */
+  kubernetesAggregatorCapTokenAuth?: boolean;
+  /**
   * Enables the use of scope filters in Grafana
   * @default false
   */
