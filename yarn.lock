@@ -3053,7 +3053,7 @@ __metadata:
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-svg-import: "npm:3.0.0"
-    rxjs: "npm:7.8.2"
+    rxjs: "npm:^7.8.2"
     sass-loader: "npm:16.0.5"
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
