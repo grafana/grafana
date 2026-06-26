@@ -20,10 +20,10 @@ import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
-import { isDeepSearchMockEnabled } from './api/deepSearchMock';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
-import { type CommandPaletteAction } from './types';
+import { type CommandPaletteAction, getActionSectionId } from './types';
 import { useMatches } from './useMatches';
+import { SECTION_DEEP_SEARCH } from './values';
 
 export function CommandPalette() {
   useRegisterStaticActions();
@@ -66,8 +66,7 @@ function CommandPaletteContents() {
   // vector-search endpoint flag and the command-palette flag
   const dashboardVectorSearchEnabled = useFlagDashboardVectorSearch();
   const vectorSearchCmdkEnabled = useFlagGrafanaVectorSearchCmdk();
-  // TODO: dev-only mock override, remove before merging
-  const deepSearchEnabled = (dashboardVectorSearchEnabled && vectorSearchCmdkEnabled) || isDeepSearchMockEnabled();
+  const deepSearchEnabled = dashboardVectorSearchEnabled && vectorSearchCmdkEnabled;
   const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
     searchQuery,
     show: !currentRootActionId,
@@ -113,6 +112,7 @@ function CommandPaletteContents() {
               isFetchingDeepSearchResults={isFetchingDeepSearchResults}
               showDeepSearch={showDeepSearch}
               onNavigate={queryToggle}
+              deepSearchEnabled={deepSearchEnabled}
             />
           </div>
         </FocusScope>
@@ -160,6 +160,8 @@ interface RenderResultsProps {
   isFetchingDeepSearchResults: boolean;
   showDeepSearch: boolean;
   onNavigate: () => void;
+  // For event reporting
+  deepSearchEnabled: boolean;
 }
 
 const RenderResults = ({
@@ -170,6 +172,7 @@ const RenderResults = ({
   isFetchingDeepSearchResults,
   showDeepSearch,
   onNavigate,
+  deepSearchEnabled,
 }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const { query, activeIndex } = useKBar((state) => ({ activeIndex: state.activeIndex }));
@@ -208,6 +211,30 @@ const RenderResults = ({
     }
     return results;
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
+
+  // Analytics: single place to assemble the command_palette_action_selected payload,
+  // shared by the keyword list and the deep search column.
+  const reportActionSelected = useCallback(
+    (params: { actionId?: string; actionName?: string; index: number; section?: string; deepSearch: boolean }) => {
+      reportInteraction('command_palette_action_selected', {
+        actionId: params.actionId,
+        actionName: params.actionName,
+        // Position of the selected item from the top of its column (excludes section headers)
+        index: params.index,
+        // Stable, language-agnostic section slug from the action's sectionId, e.g.
+        // "recent-dashboards" / "pages" / "deep-search"
+        section: params.section,
+        isDeepSearchEnabled: deepSearchEnabled,
+        isDeepSearchAction: params.deepSearch,
+        // Whether the deep search column had finished loading at selection time
+        isDeepSearchLoaded: showDeepSearch && !isFetchingDeepSearchResults,
+        deepSearchItemsCount: deepSearchResults.length,
+        // Number of selectable items in the old search column
+        itemsCount: items.filter((item) => typeof item !== 'string').length,
+      });
+    },
+    [showDeepSearch, isFetchingDeepSearchResults, deepSearchResults.length, items, deepSearchEnabled]
+  );
 
   const keywordListRef = useRef<HTMLDivElement | null>(null);
   const deepSearchNavRef = useRef<DeepSearchNavHandle>(null);
@@ -392,6 +419,15 @@ const RenderResults = ({
             items={items}
             maxHeight={650}
             scrollRef={keywordListRef}
+            onItemSelected={(item, rawIndex) =>
+              reportActionSelected({
+                actionId: item.id,
+                actionName: item.name,
+                index: items.slice(0, rawIndex).filter((entry) => typeof entry !== 'string').length,
+                section: getActionSectionId(item),
+                deepSearch: false,
+              })
+            }
             onRender={({ item, active }) => {
               const isFirst = items[0] === item;
 
@@ -413,6 +449,15 @@ const RenderResults = ({
             results={deepSearchResults}
             isFetching={isFetchingDeepSearchResults}
             onNavigate={onNavigate}
+            onResultSelected={(index) =>
+              reportActionSelected({
+                actionId: deepSearchResults[index]?.dashboardUid,
+                actionName: deepSearchResults[index]?.title,
+                index,
+                section: SECTION_DEEP_SEARCH,
+                deepSearch: true,
+              })
+            }
             navRef={deepSearchNavRef}
           />
         </div>

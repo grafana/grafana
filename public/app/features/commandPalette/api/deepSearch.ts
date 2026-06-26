@@ -2,8 +2,6 @@ import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/rtkq/dashboard/
 import { getBackendSrv } from '@grafana/runtime';
 import { type SearchAPIResponse, type SearchHit } from 'app/features/search/service/unified';
 
-import { isDeepSearchMockEnabled, mockSearchDashboardVector } from './deepSearchMock';
-
 // Core unified-storage semantic search, exposed as a sibling of the lexical
 // `/search` route. Gated behind the dashboardVectorSearch feature toggle and
 // only functional when the vector backend is configured (501 otherwise).
@@ -66,11 +64,6 @@ export async function searchDashboardVector(
   query: string,
   { limit, abortSignal }: DeepSearchOptions = {}
 ): Promise<DeepSearchPanelResult[]> {
-  // TODO: dev-only mock, remove before merging
-  // if (isDeepSearchMockEnabled()) {
-  //   return mockSearchDashboardVector(query, limit);
-  // }
-
   const response = await getBackendSrv().get<SearchAPIResponse>(
     DASHBOARD_VECTOR_SEARCH_URL,
     { query, ...(limit !== undefined && { limit }) },

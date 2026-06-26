@@ -24,6 +24,8 @@ interface DeepSearchResultsProps {
   isFetching: boolean;
   /** Called when a result navigation is triggered, so the palette can close itself. */
   onNavigate: () => void;
+  /** Called when a result is selected (for analytics), with its index in the column. */
+  onResultSelected?: (index: number) => void;
   navRef?: React.Ref<DeepSearchNavHandle>;
 }
 
@@ -31,7 +33,13 @@ interface DeepSearchResultsProps {
  * The semantic search column of the command palette. Shows one card per
  * dashboard with the panel snippets that matched the query.
  */
-export function DeepSearchResults({ results, isFetching, onNavigate, navRef }: DeepSearchResultsProps) {
+export function DeepSearchResults({
+  results,
+  isFetching,
+  onNavigate,
+  onResultSelected,
+  navRef,
+}: DeepSearchResultsProps) {
   const styles = useStyles2(getStyles);
   const itemRefs = useRef<Array<HTMLAnchorElement | null>>([]);
 
@@ -60,6 +68,7 @@ export function DeepSearchResults({ results, isFetching, onNavigate, navRef }: D
               }}
               result={result}
               onNavigate={onNavigate}
+              onSelect={() => onResultSelected?.(index)}
             />
           ))}
         </div>
@@ -71,13 +80,16 @@ export function DeepSearchResults({ results, isFetching, onNavigate, navRef }: D
 interface DeepSearchResultItemProps {
   result: DeepSearchDashboardResult;
   onNavigate: () => void;
+  /** Reports the selection (fires for modifier clicks too, which open a new tab). */
+  onSelect?: () => void;
 }
 
 export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSearchResultItemProps>(
-  ({ result, onNavigate }, ref) => {
+  ({ result, onNavigate, onSelect }, ref) => {
     const styles = useStyles2(getStyles);
 
     const onClick = (ev: React.MouseEvent) => {
+      onSelect?.();
       // Modifier clicks open a new tab, so the palette should stay open —
       // same behavior as the keyword results in KBarResults
       if (!(ev.ctrlKey || ev.metaKey || ev.shiftKey)) {
@@ -114,14 +126,6 @@ export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSear
 );
 
 DeepSearchResultItem.displayName = 'DeepSearchResultItem';
-
-/**
- * Converts a raw cosine distance (0 = best, 2 = worst) into a 0–1 similarity
- * score (1 = best) for display. Clamped in case of floating-point drift.
- */
-function toSimilarity(distance: number): number {
-  return Math.max(0, Math.min(1, 1 - distance / 2));
-}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

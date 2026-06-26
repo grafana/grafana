@@ -21,6 +21,11 @@ interface KBarResultsProps {
   maxHeight?: number;
   /** The scroll container, focusable so keyboard navigation can target the list. */
   scrollRef?: React.MutableRefObject<HTMLDivElement | null>;
+  /**
+   * Called when an item is selected (click or keyboard Enter, which dispatches a
+   * click on the row). Receives the raw index into `items`, for analytics.
+   */
+  onItemSelected?: (item: ActionImpl, index: number) => void;
 }
 
 export const KBarResults = (props: KBarResultsProps) => {
@@ -165,7 +170,11 @@ export const KBarResults = (props: KBarResultsProps) => {
             onPointerMove: () =>
               pointerMoved && activeIndex !== virtualRow.index && query.setActiveIndex(virtualRow.index),
             onPointerDown: () => query.setActiveIndex(virtualRow.index),
-            onClick: (ev: React.MouseEvent) => execute(ev, item),
+            onClick: (ev: React.MouseEvent) => {
+              // Report before perform, since perform may close the palette / navigate away
+              props.onItemSelected?.(item, virtualRow.index);
+              execute(ev, item);
+            },
           };
           const active = !isStringItem && virtualRow.index === activeIndex;
 

@@ -47,6 +47,7 @@ const rootScopeAction = {
   name: 'Scopes',
   priority: 8,
   section: 'Scopes',
+  sectionId: 'scopes',
 };
 
 const nodes: NodesMap = {
@@ -201,6 +202,7 @@ describe('useRegisterScopesActions', () => {
         perform: expect.any(Function),
         priority: 8,
         section: 'Scopes',
+        sectionId: 'scopes',
         subtitle: 'some parent',
       },
     ];

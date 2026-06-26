@@ -12,7 +12,7 @@ export const MAX_SNIPPETS_PER_DASHBOARD = 3;
 
 // Relative-to-best cutoff for 'global' scope (scores are cosine distance, 0 = best):
 // keep panels whose distance is within this margin of the closest match.
-const RELEVANCE_MARGIN = 0.1;
+const RELEVANCE_MARGIN = 0.2;
 
 // Vector search is slower than the keyword search (200ms debounce), so wait
 // longer before firing — the deep column loads independently anyway

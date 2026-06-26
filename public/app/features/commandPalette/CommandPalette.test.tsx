@@ -2,7 +2,7 @@ import { KBarProvider } from 'kbar';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
 import { useAssistant } from '@grafana/assistant';
-import { setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
+import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
 import {
   setGetObservablePluginLinks,
   useFlagDashboardVectorSearch,
@@ -24,6 +24,11 @@ setGetObservablePluginLinks(getObservablePluginLinks);
 
 setBackendSrv(backendSrv);
 const server = setupMockServer();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -66,6 +71,7 @@ describe('CommandPalette', () => {
     (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
     (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(true);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
+    (reportInteraction as jest.Mock).mockClear();
   });
 
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {
@@ -287,6 +293,67 @@ describe('CommandPalette', () => {
       });
       expect(deepSearchCalled).toBe(false);
       expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('command_palette_action_selected analytics', () => {
+    afterEach(() => {
+      server.events.removeAllListeners();
+    });
+
+    it('reports deep-search context when a deep search result is clicked', async () => {
+      // The deep card is a real <a href>, so clicking it makes jsdom log an
+      // (unimplemented) navigation error — suppress it; we only care about the report
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      server.use(
+        getVectorSearchHandler([
+          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
+          { name: 'dash-2', title: 'Checkout', snippet: 'panel two', score: 0.1 },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      const link = await screen.findByRole('link', { name: /API latency/ }, { timeout: 3000 });
+      await user.click(link);
+
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'command_palette_action_selected',
+        expect.objectContaining({
+          actionName: 'API latency',
+          index: 0,
+          group: 'deep-search',
+          deep_search: true,
+          deep_search_loaded: true,
+          deep_search_count: 2,
+          old_search_count: expect.any(Number),
+        })
+      );
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('reports deep_search false when a keyword result is selected', async () => {
+      server.use(getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 }]));
+
+      setup();
+      const user = userEvent.setup();
+      // "dark" matches the static change-theme action (a command, not a link, so no navigation)
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'dark');
+      const options = await screen.findAllByRole('option', {}, { timeout: 3000 });
+      await user.click(options[0]);
+
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'command_palette_action_selected',
+        expect.objectContaining({
+          deep_search: false,
+          index: expect.any(Number),
+          // Stable slug, not the translated section header ("Preferences")
+          group: 'preferences',
+          old_search_count: expect.any(Number),
+        })
+      );
     });
   });
 });
