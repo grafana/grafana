@@ -10,8 +10,7 @@ import { type DeepSearchPanelResult, searchDashboardVector } from '../api/deepSe
 export const DEEP_SEARCH_FETCH_LIMIT = 50;
 export const MAX_SNIPPETS_PER_DASHBOARD = 3;
 
-// Relative-to-best cutoff for 'global' scope (scores are cosine distance, 0 = best):
-// keep panels whose distance is within this margin of the closest match.
+// Relative-to-best cutoff. Keep panels whose distance is within this margin of the closest match.
 const RELEVANCE_MARGIN = 0.2;
 
 // Vector search is slower than the keyword search (200ms debounce), so wait
@@ -63,14 +62,9 @@ function parseSnippetTags(content: string): string[] {
 /**
  * Cleans a snippet for display. The backend content is a breadcrumb line
  * (folder → dashboard → row → panel → description) followed by a "Tags:" line
- * and the raw query expressions. We keep only the breadcrumb — tags render as
- * pills, and raw queries add little value in the palette — and drop the leading
+ * and the raw query expressions line. We keep only the breadcrumb here. Drops the leading
  * folder/dashboard-title segments from it (already shown as the card header +
- * subtitle, so repeating them is noise). Titles can contain " — " but never the
- * " → " breadcrumb separator, so each is exactly one segment: the folder segment
- * equals the resolved folder title, and the dashboard segment is the prefix of
- * the card title (which is `dashboardTitle — panelTitle`). Row name and panel
- * title are kept. Snippets without a breadcrumb (e.g. the mock) pass through.
+ * subtitle, so repeating them is noise).
  */
 function formatSnippet(snippet: string, cardTitle: string, folderTitle?: string): string {
   const segments = snippet.split('\n')[0].split(BREADCRUMB_SEPARATOR);
@@ -78,6 +72,8 @@ function formatSnippet(snippet: string, cardTitle: string, folderTitle?: string)
   let start = 0;
   while (start < segments.length) {
     const segment = segments[start];
+    // This seems complicated, but the exact parts of the breadcrumb does not seem to be guarantied, and so we can't
+    // just take a segment with specific index.
     const isFolder = folderTitle !== undefined && segment === folderTitle;
     const isDashboard = segment === cardTitle || cardTitle.startsWith(segment + ' — ');
     if (!isFolder && !isDashboard) {
@@ -95,7 +91,7 @@ function formatSnippet(snippet: string, cardTitle: string, folderTitle?: string)
  * The breadcrumb's first line holds each title as its own " → " segment, and
  * the dashboard title is the one segment that is a prefix of the hit title
  * (folder/row/panel/description segments are not). Falls back to the hit title
- * when there's no breadcrumb to parse (e.g. the mock).
+ * when there's no breadcrumb to parse.
  */
 function extractDashboardTitle(content: string, hitTitle: string): string {
   const segments = content.split('\n')[0].split(BREADCRUMB_SEPARATOR);
@@ -105,9 +101,7 @@ function extractDashboardTitle(content: string, hitTitle: string): string {
 
 /**
  * Relative-to-best cutoff over a set of distance scores (0 = best): the closest
- * match plus RELEVANCE_MARGIN. Keeps panels comparable to the best result and
- * drops the long tail, while adapting to query difficulty (a hard query with a
- * worse best score still keeps a band around it). The best panel always survives.
+ * match plus RELEVANCE_MARGIN.
  */
 function relativeToBestCutoff(scores: number[]): number {
   if (scores.length === 0) {
@@ -118,16 +112,11 @@ function relativeToBestCutoff(scores: number[]): number {
 
 /**
  * Groups panel-level search results into one entry per dashboard. Dashboards are
- * kept in backend order — i.e. the position where each dashboard's first (best)
- * panel hit appears — since the backend returns hits in ascending-distance order
- * and the Map preserves first-insertion order.
+ * kept in backend order.
  *
  * Panels worse (higher distance) than the cutoff are dropped entirely. The cutoff is
- * relative-to-best over all matched panels (best + margin). The best panel
- * always survives (its score can't exceed either cutoff). Dashboard disappears
- * if its best panel is more than a margin past the overall best. Surviving snippets
- * are sorted by score and capped at MAX_SNIPPETS_PER_DASHBOARD; matchedPanelCount
- * counts all survivors.
+ * relative-to-best over all matched panels (best + margin). Dashboard disappears
+ * if its best panel is more than a margin past the overall best.
  */
 export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSearchDashboardResult[] {
   const matched = results.filter((result) => result.dashboardUid);
