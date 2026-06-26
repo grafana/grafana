@@ -54,6 +54,22 @@ describe('resourceKinds registry', () => {
       expect(info.key).toBe(key);
     }
   });
+
+  it('returns a localized singular label for each kind', () => {
+    expect(resourceKindInfos.folder.getLabel()).toBe('folder');
+    expect(resourceKindInfos.dashboard.getLabel()).toBe('dashboard');
+    expect(resourceKindInfos.playlist.getLabel()).toBe('playlist');
+    expect(resourceKindInfos.librarypanel.getLabel()).toBe('library panel');
+  });
+
+  it('carries a list-cache invalidation action only for kinds committed through the shared drawer', () => {
+    // Playlists commit via SaveProvisionedResourceDrawer and must refresh their list afterwards;
+    // dashboards/folders use their own forms, so they don't carry an invalidation action.
+    expect(resourceKindInfos.playlist.invalidateListTags?.()).toMatchObject({ type: expect.any(String) });
+    expect(resourceKindInfos.folder.invalidateListTags).toBeUndefined();
+    expect(resourceKindInfos.dashboard.invalidateListTags).toBeUndefined();
+    expect(resourceKindInfos.librarypanel.invalidateListTags).toBeUndefined();
+  });
 });
 
 describe('getKindInfoByResource', () => {

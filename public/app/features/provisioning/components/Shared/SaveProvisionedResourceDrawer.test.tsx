@@ -315,4 +315,18 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(screen.queryByRole('button', { name: /^delete$/i })).not.toBeInTheDocument();
     });
   });
+
+  it('renders nothing when the resource is not a registered provisioning kind', () => {
+    // The resource's apiVersion/kind don't resolve to a registry entry, so the resolver bails out.
+    setup({
+      resource: {
+        apiVersion: 'unknown.example.com/v1',
+        kind: 'Unknown',
+        metadata: { name: 'x' },
+        spec: { title: 'X' },
+      },
+    });
+
+    expect(screen.queryByRole('heading', { name: /provisioned/i })).not.toBeInTheDocument();
+  });
 });
