@@ -105,26 +105,23 @@ jobs:
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
-    services:
-      mysql:
-        image: mysql:8.0.43
-        env:
-          MYSQL_ROOT_PASSWORD: rootpass
-          MYSQL_DATABASE: grafana_tests
-          MYSQL_USER: grafana
-          MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
-        ports:
-          - 3306:3306
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Start MySQL via docker compose
+        run: make devenv sources=mysql_tests mysql_version=8.0.43
       - name: Setup Go
         uses: ./.github/actions/setup-go
-      - name: Setup MySQL devenv
-        run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+      - name: Wait for MySQL
+        run: |
+          for _ in $(seq 1 60); do
+            mysql -h 127.0.0.1 -P 3306 -uroot -prootpass -e 'SELECT 1' >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          echo "MySQL did not become ready in time" >&2
+          exit 1
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -135,6 +132,9 @@ jobs:
           CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
           CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Cleanup MySQL
+        if: always()
+        run: make devenv-down sources=mysql_tests
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -251,22 +251,13 @@ jobs:
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
-    services:
-      mysql:
-        image: mysql:8.0.43
-        env:
-          MYSQL_ROOT_PASSWORD: rootpass
-          MYSQL_DATABASE: grafana_tests
-          MYSQL_USER: grafana
-          MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
-        ports:
-          - 3306:3306
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Start MySQL via docker compose
+        run: make devenv sources=mysql_tests mysql_version=8.0.43
       - name: Get GitHub App token
         id: get-github-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
@@ -280,8 +271,14 @@ jobs:
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
         uses: ./.github/actions/setup-go
-      - name: Setup MySQL devenv
-        run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+      - name: Wait for MySQL
+        run: |
+          for _ in $(seq 1 60); do
+            mysql -h 127.0.0.1 -P 3306 -uroot -prootpass -e 'SELECT 1' >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          echo "MySQL did not become ready in time" >&2
+          exit 1
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -292,6 +289,9 @@ jobs:
           CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
           CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Cleanup MySQL
+        if: always()
+        run: make devenv-down sources=mysql_tests
 
   postgres-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
