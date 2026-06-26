@@ -85,6 +85,8 @@ export const FlagKeys = {
   PluginsUseMTPlugins: "plugins.useMTPlugins",
   /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
   ProvisioningGitConventions: "provisioning.gitConventions",
+  /** Enable support for Github Enterprise */
+  ProvisioningGithubEnterprise: "provisioning.githubEnterprise",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
   /** Allow setting folder metadata for provisioned folders */
@@ -507,6 +509,17 @@ export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioning.gitConventions", false, options).value;
+};
+
+/**
+ * Enable support for Github Enterprise
+ *
+ * **Details:**
+ * - flag key: `provisioning.githubEnterprise`
+ * - default value: `false`
+ */
+export const useFlagProvisioningGithubEnterprise = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.githubEnterprise", false, options).value;
 };
 
 /**

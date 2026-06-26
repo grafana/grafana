@@ -17,6 +17,7 @@ declare module "@openfeature/core" {
     | "provisioningFolderMetadata"
     | "provisioning.readmes"
     | "provisioning.gitConventions"
+    | "provisioning.githubEnterprise"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"

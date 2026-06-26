@@ -4254,6 +4254,24 @@
     },
     {
       "metadata": {
+        "name": "provisioning.githubEnterprise",
+        "resourceVersion": "1782489225893",
+        "creationTimestamp": "2026-06-26T13:53:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-26 15:53:45.893725 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable support for Github Enterprise",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "provisioning.readmes",
         "resourceVersion": "1781078230859",
         "creationTimestamp": "2026-05-22T09:03:04Z",

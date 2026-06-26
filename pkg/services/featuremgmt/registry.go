@@ -288,6 +288,15 @@ var (
 			Generate:        Generate{Go: true, React: true},
 		},
 		{
+			Name:            "provisioning.githubEnterprise",
+			Description:     "Enable support for Github Enterprise",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			Generate:        Generate{React: true},
+		},
+		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
